@@ -152,25 +152,26 @@ type Cfg struct {
 	Logger log.Logger
 
 	// HTTP Server Settings
-	CertFile         string
-	KeyFile          string
-	HTTPAddr         string
-	HTTPPort         string
-	AppURL           string
-	AppSubURL        string
-	ServeFromSubPath bool
-	StaticRootPath   string
-	Protocol         Scheme
-	SocketGid        int
-	SocketMode       int
-	SocketPath       string
-	RouterLogging    bool
-	Domain           string
-	CDNRootURL       *url.URL
-	ReadTimeout      time.Duration
-	EnableGzip       bool
-	EnforceDomain    bool
-	MinTLSVersion    string
+	CertFile          string
+	KeyFile           string
+	HTTPAddr          string
+	HTTPPort          string
+	AppURL            string
+	AppSubURL         string
+	ServeFromSubPath  bool
+	StaticRootPath    string
+	Protocol          Scheme
+	SocketGid         int
+	SocketMode        int
+	SocketPath        string
+	RouterLogging     bool
+	Domain            string
+	CDNRootURL        *url.URL
+	ReadTimeout       time.Duration
+	EnableGzip        bool
+	EnforceDomain     bool
+	MinTLSVersion     string
+	CertWatchInterval time.Duration
 
 	// Security settings
 	SecretKey             string
@@ -1845,6 +1846,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.AppSubURL = AppSubUrl
 	cfg.ServeFromSubPath = ServeFromSubPath
 	cfg.Protocol = HTTPScheme
+	cfg.CertWatchInterval = server.Key("certs_watch_interval").MustDuration(0)
 
 	protocolStr := valueAsString(server, "protocol", "http")
 

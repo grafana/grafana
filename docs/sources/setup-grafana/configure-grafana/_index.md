@@ -286,6 +286,17 @@ Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
+### certs_watch_interval
+
+Periodicity at which `cert_key` and `cert_file` would be watched for changes.
+By default it is disabled. If enabled, then periodically `cert_key` and `cert_file`
+are watched for changes, if there is change seen then those are certs are loaded automatically.
+
+{{% admonition type="warning" %}}
+After the new certificates are loaded, connections which are established with old certificates
+will not work and those connections needs to be reloaded. 
+{{% /admonition %}}
+
 ### socket_gid
 
 GID where the socket should be set when `protocol=socket`.
