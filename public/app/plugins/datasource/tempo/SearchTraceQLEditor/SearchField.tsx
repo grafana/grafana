@@ -33,6 +33,8 @@ interface Props {
   hideTag?: boolean;
   hideValue?: boolean;
   query: string;
+  isMulti?: boolean;
+  allowCustomValue?: boolean;
 }
 const SearchField = ({
   filter,
@@ -45,6 +47,8 @@ const SearchField = ({
   hideTag,
   hideValue,
   query,
+  isMulti = true,
+  allowCustomValue = true,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const scopedTag = useMemo(() => filterScopedTag(filter), [filter]);
@@ -159,7 +163,7 @@ const SearchField = ({
           )}
           value={filter.tag}
           onChange={(v) => {
-            updateFilter({ ...filter, tag: v?.value });
+            updateFilter({ ...filter, tag: v?.value, value: [] });
           }}
           placeholder="Select tag"
           isClearable
@@ -195,10 +199,10 @@ const SearchField = ({
             }
           }}
           placeholder="Select value"
-          isClearable={false}
+          isClearable={true}
           aria-label={`select ${filter.id} value`}
-          allowCustomValue={true}
-          isMulti
+          allowCustomValue={allowCustomValue}
+          isMulti={isMulti}
           allowCreateWhileLoading
         />
       )}

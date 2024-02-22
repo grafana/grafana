@@ -341,8 +341,10 @@ export const TooltipPlugin2 = ({
     });
 
     config.addHook('setSelect', (u) => {
-      if (clientZoom || queryZoom != null) {
-        if (maybeZoomAction(u.cursor!.event)) {
+      let e = u.cursor!.event;
+
+      if (e != null && (clientZoom || queryZoom != null)) {
+        if (maybeZoomAction(e)) {
           if (clientZoom && yDrag) {
             if (u.select.height >= MIN_ZOOM_DIST) {
               for (let key in u.scales!) {

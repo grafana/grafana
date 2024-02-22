@@ -89,11 +89,9 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagClientTokenRotation) {
-		if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
-			c.Redirect(hs.Cfg.AppSubURL + "/")
-			return
-		}
+	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+		c.Redirect(hs.Cfg.AppSubURL + "/")
+		return
 	}
 
 	viewData, err := setIndexViewData(hs, c)

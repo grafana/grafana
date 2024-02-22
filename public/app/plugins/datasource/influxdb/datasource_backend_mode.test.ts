@@ -293,6 +293,22 @@ describe('InfluxDataSource Backend Mode', () => {
       const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
       expect(qData).toBe(qe);
     });
+
+    it('should interpolate variable inside a regex pattern', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        tags: [
+          {
+            key: 'key',
+            operator: '=~',
+            value: '/^.*-$var1$/',
+          },
+        ],
+      };
+      const res = ds.applyVariables(query, {});
+      const expected = `/^.*-var1$/`;
+      expect(res.tags?.[0].value).toEqual(expected);
+    });
   });
 
   describe('metric find query', () => {

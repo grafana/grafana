@@ -95,6 +95,20 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
 
+## Copy an existing dashboard
+
+To copy an existing dashboard, follow these steps:
+
+1. Click **Dashboards** in the primary menu.
+1. Open the dashboard to be copied.
+1. Click **Settings** (gear icon) in the top right of the dashboard.
+1. Click **Save as** in the top-right corner of the dashboard.
+1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
+
+   By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is located in the same folder.
+
+1. Click **Save**.
+
 ## Configure repeating rows
 
 You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels][].

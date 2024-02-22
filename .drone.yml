@@ -654,6 +654,8 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
+    false; fi
   - apt-get update
   - apt-get install -yq zip
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
@@ -1060,7 +1062,7 @@ steps:
   name: yarn-install
 - commands:
   - pip3 install codespell
-  - codespell -I .codespellignore docs/
+  - codespell -I docs/.codespellignore docs/
   image: python:3.8
   name: codespell
 - commands:
@@ -1420,7 +1422,7 @@ steps:
   name: yarn-install
 - commands:
   - pip3 install codespell
-  - codespell -I .codespellignore docs/
+  - codespell -I docs/.codespellignore docs/
   image: python:3.8
   name: codespell
 - commands:
@@ -1928,6 +1930,8 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
+    false; fi
   - apt-get update
   - apt-get install -yq zip
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
@@ -4800,6 +4804,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c5243aaa05fbb21c64d03465f079ad710c9dcddb81db19b89ebb61cc9b60bc72
+hmac: 14033c6fa9749db7c17aca8b404569c8e4bcb51e39cdb39b300870758db10c48
 
 ...
