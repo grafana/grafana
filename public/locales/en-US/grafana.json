@@ -876,6 +876,10 @@
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
     },
+    "migrate-to-cloud": {
+      "subtitle": "Copy data sources, dashboards, and alerts from this installation to a cloud stack",
+      "title": "Migrate to Grafana Cloud"
+    },
     "monitoring": {
       "subtitle": "Monitoring and infrastructure apps",
       "title": "Observability"
