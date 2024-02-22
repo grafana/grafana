@@ -534,11 +534,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
-      if (body.state.children.length === 0) {
-        this.setState({ isEmpty: true });
-      } else {
-        this.setState({ isEmpty: false });
-      }
+      this.setState({ isEmpty: body.state.children.length === 0 });
+
       return;
     }
 
