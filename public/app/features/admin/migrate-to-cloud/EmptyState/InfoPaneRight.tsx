@@ -25,9 +25,8 @@ export const InfoPaneRight = () => {
           linkHref="https://grafana.com/pricing"
         >
           <Trans i18nKey="migrate-to-cloud.pricing.body">
-            {
-              "Grafana Cloud has a generous free plan and a 14 day unlimited usage trial. After your trial expires, you'll be billed based on usage over the free plan limits."
-            }
+            Grafana Cloud has a generous free plan and a 14 day unlimited usage trial. After your trial expires,
+            you&apos;ll be billed based on usage over the free plan limits.
           </Trans>
         </InfoItem>
         <InfoItem
@@ -36,9 +35,8 @@ export const InfoPaneRight = () => {
           linkHref="https://grafana.com/docs/grafana-cloud/account-management/migration-guide"
         >
           <Trans i18nKey="migrate-to-cloud.can-i-move.body">
-            {
-              "Once you connect this installation to a cloud stack, you'll be able to upload data sources and dashboards."
-            }
+            Once you connect this installation to a cloud stack, you&apos;ll be able to upload data sources and
+            dashboards.
           </Trans>
         </InfoItem>
       </Stack>

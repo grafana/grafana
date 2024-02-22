@@ -15,9 +15,9 @@ export const InfoPaneLeft = () => {
           linkHref="https://grafana.com/products/cloud"
         >
           <Trans i18nKey="migrate-to-cloud.what-is-cloud.body">
-            {
-              "Grafana cloud is a fully managed cloud-hosted observability platform ideal for cloud native environments. It's everything you love about Grafana without the overhead of maintaining, upgrading, and supporting an installation."
-            }
+            Grafana cloud is a fully managed cloud-hosted observability platform ideal for cloud native environments.
+            It&apos;s everything you love about Grafana without the overhead of maintaining, upgrading, and supporting
+            an installation.
           </Trans>
         </InfoItem>
         <InfoItem
@@ -36,9 +36,9 @@ export const InfoPaneLeft = () => {
           linkHref="https://trust.grafana.com"
         >
           <Trans i18nKey="migrate-to-cloud.is-it-secure.body">
-            {
-              "Grafana Labs is committed to maintaining the highest standards of data privacy and security. By implementing industry-standard security technologies and procedures, we help protect our customers' data from unauthorized access, use, or disclosure."
-            }
+            Grafana Labs is committed to maintaining the highest standards of data privacy and security. By implementing
+            industry-standard security technologies and procedures, we help protect our customers&apos; data from
+            unauthorized access, use, or disclosure.
           </Trans>
         </InfoItem>
       </Stack>
