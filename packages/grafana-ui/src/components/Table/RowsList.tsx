@@ -206,6 +206,8 @@ export const RowsList = (props: RowsListProps) => {
 
   for (const field of data.fields) {
     const fieldOptions = field.config.custom as TableFieldOptions;
+
+    // Should also check fieldOptions.cellOptions.applyToRow
     if (fieldOptions.cellOptions?.type === TableCellDisplayMode.ColorBackground) {
       rowBg = (rowIndex: number) => {
         const display = field.display!(field.values.get(rowIndex));
@@ -232,7 +234,7 @@ export const RowsList = (props: RowsListProps) => {
       }
 
       if (rowBg) {
-        style.backgroundColor = rowBg(indexForPagination);
+        style.backgroundColor = rowBg(index);
         style.color = getTextColorForAlphaBackground(style.backgroundColor!, tableStyles.theme.isDark);
       }
 

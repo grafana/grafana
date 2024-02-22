@@ -122,10 +122,11 @@ Colored text cell options
 
 Colored background cell options
 
-| Property | Type   | Required | Default | Description                                                                                                                                                                            |
-|----------|--------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`   | string | **Yes**  |         |                                                                                                                                                                                        |
-| `mode`   | string | No       |         | Display mode to the "Colored Background" display<br/>mode for table cells. Either displays a solid color (basic mode)<br/>or a gradient.<br/>Possible values are: `basic`, `gradient`. |
+| Property     | Type    | Required | Default | Description                                                                                                                                                                            |
+|--------------|---------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`       | string  | **Yes**  |         |                                                                                                                                                                                        |
+| `applyToRow` | boolean | No       |         |                                                                                                                                                                                        |
+| `mode`       | string  | No       |         | Display mode to the "Colored Background" display<br/>mode for table cells. Either displays a solid color (basic mode)<br/>or a gradient.<br/>Possible values are: `basic`, `gradient`. |
 
 ### TableDataLinksCellOptions
 
