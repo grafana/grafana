@@ -28,23 +28,11 @@ export function getPanelIdForVizPanel(panel: SceneObject): number {
  * This will also  try lookup based on panelId
  */
 export function findVizPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
-  return findPanelTypeByKey(scene, key, VizPanel);
-}
-
-export function findLibraryPanelByKey(scene: SceneObject, key: string | undefined): LibraryVizPanel | null {
-  return findPanelTypeByKey(scene, key, LibraryVizPanel);
-}
-
-function findPanelTypeByKey<PanelType>(
-  scene: SceneObject,
-  key: string | undefined,
-  panelType: { new (...args: never[]): PanelType }
-): PanelType | null {
   if (!key) {
     return null;
   }
 
-  const panel = findVizPanelInternal(scene, key, panelType);
+  const panel = findVizPanelInternal(scene, key);
   if (panel) {
     return panel;
   }
@@ -55,23 +43,21 @@ function findPanelTypeByKey<PanelType>(
     return null;
   }
 
-  return findVizPanelInternal(scene, getVizPanelKeyForPanelId(id), panelType);
+  return findVizPanelInternal(scene, getVizPanelKeyForPanelId(id));
 }
 
-function findVizPanelInternal<PanelType>(
-  scene: SceneObject,
-  key: string | undefined,
-  panelType: { new (...args: never[]): PanelType }
-): PanelType | null {
+function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizPanel | null {
   if (!key) {
     return null;
   }
 
   const panel = sceneGraph.findObject(scene, (obj) => obj.state.key === key);
   if (panel) {
-    if (panel instanceof panelType) {
+    if (panel instanceof VizPanel) {
       return panel;
     }
+  } else {
+    throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
   }
 
   return null;
