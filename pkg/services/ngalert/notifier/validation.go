@@ -27,8 +27,8 @@ type staticValidator struct {
 // apiAlertingConfig contains the methods required to validate NotificationSettings and create autogen routes.
 type apiAlertingConfig[R receiver] interface {
 	GetReceivers() []R
-	GetTimeIntervals() []config.TimeInterval
 	GetMuteTimeIntervals() []config.MuteTimeInterval
+	GetTimeIntervals() []config.TimeInterval
 	GetRoute() *definitions.Route
 }
 
@@ -44,10 +44,10 @@ func NewNotificationSettingsValidator[R receiver](am apiAlertingConfig[R]) Notif
 	}
 
 	availableTimeIntervals := make(map[string]struct{})
-	for _, interval := range am.GetTimeIntervals() {
+	for _, interval := range am.GetMuteTimeIntervals() {
 		availableTimeIntervals[interval.Name] = struct{}{}
 	}
-	for _, interval := range am.GetMuteTimeIntervals() {
+	for _, interval := range am.GetTimeIntervals() {
 		availableTimeIntervals[interval.Name] = struct{}{}
 	}
 
