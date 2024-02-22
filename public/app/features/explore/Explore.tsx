@@ -367,7 +367,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { timeZone, queryResponse, absoluteRange, eventBus } = this.props;
 
     const groupedByPlugin = groupBy(queryResponse?.customFrames, 'meta.preferredVisualisationPluginId');
-    const height = maxBy(queryResponse?.customFrames, 'meta.preferredVisualisationPanelHeight')?.meta?.preferredVisualisationPanelHeight ?? 400
 
     return Object.entries(groupedByPlugin).map(([pluginId, frames], index) => {
       return (
@@ -379,7 +378,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             frames={frames}
             state={queryResponse.state}
             absoluteRange={absoluteRange}
-            height={height}
             width={width}
             splitOpenFn={this.onSplitOpen(pluginId)}
             eventBus={eventBus}

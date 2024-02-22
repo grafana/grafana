@@ -10,7 +10,6 @@ import { useExploreDataLinkPostProcessor } from './hooks/useExploreDataLinkPostP
 
 export interface Props {
   width: number;
-  height: number;
   timeZone: string;
   pluginId: string;
   frames: DataFrame[];
@@ -22,7 +21,6 @@ export interface Props {
 
 export function CustomContainer({
   width,
-  height,
   timeZone,
   state,
   pluginId,
@@ -55,7 +53,7 @@ export function CustomContainer({
 
   return (
     <PanelContextProvider value={panelContext}>
-      <PanelChrome title={plugin.name} width={width} height={height} loadingState={state}>
+      <PanelChrome title={plugin.name} width={width} loadingState={state}>
         {(innerWidth, innerHeight) => (
           <PanelRenderer
             data={{ series: frames, state: state, timeRange }}
