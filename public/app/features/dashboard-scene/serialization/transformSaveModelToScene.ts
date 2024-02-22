@@ -81,7 +81,7 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   return scene;
 }
 
-export function createSceneObjectsForPanels(oldPanels: PanelModel[], isSnapshot: boolean): SceneGridItemLike[] {
+export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
   // collects all panels and rows
   const panels: SceneGridItemLike[] = [];
 
@@ -248,7 +248,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     version: oldModel.version,
     body: new SceneGridLayout({
       isLazy: true,
-      children: createSceneObjectsForPanels(oldModel.panels, oldModel.isSnapshot()),
+      children: createSceneObjectsForPanels(oldModel.panels),
     }),
     $timeRange: new SceneTimeRange({
       from: oldModel.time.from,
