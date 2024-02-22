@@ -21,9 +21,9 @@ weight: 1300
 
 ## Technical notes
 
-### Legacy alerting -> unified alerting dry-run on start
+### Legacy alerting -> Grafana Alerting dry-run on start
 
-In preparation for the removal of Legacy alerting in v11, Grafana will initiate a dry-run of the upgrade from legacy alerting to unified alerting on every startup if an instance is not already upgraded. This operation will log the outcomes of the upgrade attempt and identify any issues requiring attention before the actual upgrade can be successfully executed. No changes will be made during the dry-run.
+If you haven't already upgraded to Grafana Alerting from legacy Alerting, Grafana will initiate a dry-run of the upgrade every time the instance restarts. This is in preparation for the removal of legacy Alerting in Grafana v11. The dry-run logs the results of the upgrade attempt and identifies any issues requiring attention before you can successfully execute the upgrade. No changes are made during the dry-run.
 
 You can disable this behaviour using the feature flag `alertingUpgradeDryrunOnStart`:
 
