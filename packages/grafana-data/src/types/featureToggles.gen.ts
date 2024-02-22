@@ -31,7 +31,6 @@ export interface FeatureToggles {
   correlations?: boolean;
   exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
-  traceToMetrics?: boolean;
   autoMigrateOldPanels?: boolean;
   autoMigrateGraphPanel?: boolean;
   autoMigrateTablePanel?: boolean;

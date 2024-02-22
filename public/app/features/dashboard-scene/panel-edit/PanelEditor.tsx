@@ -2,16 +2,9 @@ import * as H from 'history';
 
 import { NavIndex } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { SceneGridItem, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-import {
-  findVizPanelByKey,
-  getDashboardSceneFor,
-  getPanelIdForVizPanel,
-  getVizPanelKeyForPanelId,
-  isLibraryPanelChild,
-} from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
@@ -19,7 +12,6 @@ import { PanelOptionsPane } from './PanelOptionsPane';
 import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
-  controls?: SceneObject[];
   isDirty?: boolean;
   panelId: number;
   optionsPane: PanelOptionsPane;
@@ -34,7 +26,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public constructor(state: PanelEditorState) {
     super(state);
-
     this.addActivationHandler(this._activationHandler.bind(this));
   }
 
@@ -92,26 +83,19 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public commitChanges() {
     const dashboard = getDashboardSceneFor(this);
-    const sourcePanel = findVizPanelByKey(dashboard.state.body, getVizPanelKeyForPanelId(this.state.panelId));
 
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
-    if (sourcePanel!.parent instanceof SceneGridItem) {
-      sourcePanel!.parent.setState({ body: this.state.vizManager.state.panel.clone() });
-    }
+    this.state.vizManager.commitChanges();
   }
 }
 
 export function buildPanelEditScene(panel: VizPanel): PanelEditor {
-  const vizPanelMgr = new VizPanelManager(
-    panel.clone(),
-    isLibraryPanelChild(panel) ? (panel.parent?.clone() as LibraryVizPanel) : undefined
-  );
   return new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),
     optionsPane: new PanelOptionsPane({}),
-    vizManager: vizPanelMgr,
+    vizManager: VizPanelManager.createFor(panel),
   });
 }
