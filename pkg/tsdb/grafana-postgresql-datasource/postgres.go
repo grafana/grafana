@@ -115,7 +115,7 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:        sqlCfg.DefaultMaxOpenConns,
-			MaxIdleConns:        sqlCfg.DefaultMaxOpenConns,
+			MaxIdleConns:        sqlCfg.DefaultMaxIdleConns,
 			ConnMaxLifetime:     sqlCfg.DefaultMaxConnLifetimeSeconds,
 			Timescaledb:         false,
 			ConfigurationMethod: "file-path",
