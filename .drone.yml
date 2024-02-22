@@ -685,14 +685,6 @@ steps:
   - gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report
   - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
   - "echo \"E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}\""
-  - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi
-  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
-    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright
-    plugin e2e tests. <br /> <br /> Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to
-    browse the Playwright report and trace viewer. <br /> For information on how to
-    run Playwright tests locally, refer to the [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests).
-    \"}"'
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -2048,14 +2040,6 @@ steps:
   - gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report
   - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
   - "echo \"E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}\""
-  - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi
-  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
-    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright
-    plugin e2e tests. <br /> <br /> Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to
-    browse the Playwright report and trace viewer. <br /> For information on how to
-    run Playwright tests locally, refer to the [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests).
-    \"}"'
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -5002,6 +4986,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a5a6c760ba9a2fc2ad1556d71de7416e8650c47fccdd605ec5fc1ddb17c79dcf
+hmac: 6e83691e952d44e4651eaf411bc92495952fc8f6f8b4342e69d28779552888b7
 
 ...
