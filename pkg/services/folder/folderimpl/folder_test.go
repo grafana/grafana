@@ -290,9 +290,9 @@ func TestIntegrationFolderService(t *testing.T) {
 				}).Return(nil).Once()
 				service.features = featuremgmt.WithFeatures("dashboardRestore")
 
-				var folderUid string
+				var folderUids []string
 				dashStore.On("SoftDeleteDashboardsInFolders", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-					folderUid = args.Get(2).(string)
+					folderUids = args.Get(2).([]string)
 				}).Return(nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
@@ -306,7 +306,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				require.NotNil(t, actualCmd)
 				require.Equal(t, orgID, actualCmd.OrgID)
 				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
-				require.Equal(t, f.UID, folderUid)
+				require.Equal(t, f.UID, folderUids[0])
 			})
 
 			t.Cleanup(func() {
