@@ -3,7 +3,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneDebugger } from '@grafana/scenes';
+import { SceneComponentProps } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -22,7 +22,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
-  const showDebugger = location.search.includes('scene-debugger');
 
   if (editview) {
     return (
@@ -48,14 +47,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       <div className={styles.controlsWrapper}>
         {scopeSelector && !isScopesExpanded && <scopeSelector.Component model={scopeSelector} />}
 
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-            {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
-          </div>
-        )}
+        {controls && <controls.Component model={controls} />}
       </div>
       <div className={cx(styles.body)}>
         <bodyToRender.Component model={bodyToRender} />

@@ -76,7 +76,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** NavToolbar actions */
   actions?: SceneObject[];
   /** Fixed row at the top of the canvas with for example variables and time range controls */
-  controls?: SceneObject[];
+  controls?: DashboardControls;
   /** True when editing */
   isEditing?: boolean;
   /** True when user made a change */
@@ -585,7 +585,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       app: CoreApp.Dashboard,
       dashboardUID: this.state.uid,
       panelId,
-      panelPluginType: panel?.state.pluginId,
+      panelPluginId: panel?.state.pluginId,
       scope: this.state.scopeSelector?.getSelectedScope(),
     };
   }
