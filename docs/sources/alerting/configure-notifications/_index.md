@@ -29,7 +29,7 @@ Optionally, you can add notification templates to contact points for reuse and c
 
 [Create contact point integrations][configure-integrations]
 
-[Create notification policies[create-notification-policies]]
+[Create notification policies][create-notification-policies]
 
 {{% docs/reference %}}
 [create-contact-points]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points"
