@@ -5,8 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Grid, Stack, useStyles2 } from '@grafana/ui';
 
 import { CallToAction } from './CallToAction';
-import { InfoPane1 } from './InfoPane1';
-import { InfoPane2 } from './InfoPane2';
+import { InfoPaneLeft } from './InfoPaneLeft';
+import { InfoPaneRight } from './InfoPaneRight';
 
 export const EmptyState = () => {
   const styles = useStyles2(getStyles);
@@ -22,8 +22,8 @@ export const EmptyState = () => {
             lg: 2,
           }}
         >
-          <InfoPane1 />
-          <InfoPane2 />
+          <InfoPaneLeft />
+          <InfoPaneRight />
         </Grid>
       </Stack>
     </div>

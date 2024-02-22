@@ -5,7 +5,7 @@ import { t, Trans } from 'app/core/internationalization';
 
 import { InfoItem } from './InfoItem';
 
-export const InfoPane1 = () => {
+export const InfoPaneLeft = () => {
   return (
     <Box padding={2} backgroundColor="secondary">
       <Stack gap={2} direction="column">
