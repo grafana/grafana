@@ -295,10 +295,12 @@ describe('DashboardPage', () => {
   describe('When dashboard unmounts', () => {
     it('Should call close action', async () => {
       const { rerender, unmount } = setup({ dashboard: getTestDashboard() });
+      mockCleanUpDashboardAndVariables.mockReset();
+
       rerender({ dashboard: getTestDashboard() });
       unmount();
       await waitFor(() => {
-        expect(mockCleanUpDashboardAndVariables).toHaveBeenCalledTimes(2);
+        expect(mockCleanUpDashboardAndVariables).toHaveBeenCalledTimes(1);
       });
     });
   });
@@ -306,13 +308,15 @@ describe('DashboardPage', () => {
   describe('When dashboard changes', () => {
     it('Should call clean up action and init', async () => {
       const { rerender } = setup({ dashboard: getTestDashboard() });
+      mockCleanUpDashboardAndVariables.mockReset();
+
       rerender({ dashboard: getTestDashboard() });
       rerender({
         match: { params: { uid: 'new-uid' } } as unknown as match,
         dashboard: getTestDashboard({ title: 'Another dashboard' }),
       });
       await waitFor(() => {
-        expect(mockCleanUpDashboardAndVariables).toHaveBeenCalledTimes(2);
+        expect(mockCleanUpDashboardAndVariables).toHaveBeenCalledTimes(1);
         expect(mockInitDashboard).toHaveBeenCalledTimes(2);
       });
     });
