@@ -79,7 +79,11 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'eye',
         shortcut: 'e',
         onClick: () => DashboardInteractions.panelMenuItemClicked('edit'),
+<<<<<<< HEAD
         href: getEditPanelUrl(panelId),
+=======
+        href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
+>>>>>>> b92b5b1afa2 (change library panel so that the dashboard key is attached to the panel instead of the library panel)
       });
     }
 

@@ -408,7 +408,7 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     title: panel.title,
     uid: panel.libraryPanel.uid,
     name: panel.libraryPanel.name,
-    key: getVizPanelKeyForPanelId(panel.id),
+    panelKey: getVizPanelKeyForPanelId(panel.id),
   });
 
   return new SceneGridItem({
