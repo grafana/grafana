@@ -91,10 +91,6 @@ The following table describes the ways in which you can configure your trace to 
 
 ## Trace to metrics
 
-{{% admonition type="note" %}}
-This feature is behind the `traceToMetrics` [feature toggle](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#feature_toggles). This feature is enabled in Grafana Cloud.
-{{% /admonition %}}
-
 The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Tempo.
 
 {{< youtube id="TkapvLeMMpc" >}}
