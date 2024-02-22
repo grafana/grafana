@@ -32,7 +32,7 @@ func TestPasswowrdService_ValidatePasswordHardcodePolicy(t *testing.T) {
 		{
 			name:                        "should return error when the password has less than 12 characters and strong password policy is enabled",
 			passwordTest:                NUMBER,
-			expectedError:               ErrPasswordTooShort,
+			expectedError:               ErrPasswordPolicyInfringe,
 			strongPasswordPolicyEnabled: true,
 		},
 		{
