@@ -7,9 +7,11 @@ import {
   DataFrame,
   DataFrameType,
   DataTransformerConfig,
+  DisplayProcessor,
   Field,
   FieldType,
   guessFieldTypeForField,
+  LogLevel,
   LogsSortOrder,
   sortDataFrame,
   SplitOpen,
@@ -18,10 +20,15 @@ import {
   ValueLinkConfig,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AdHocFilterItem, Table } from '@grafana/ui';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
+import { AdHocFilterItem, Table, TableCellDisplayMode } from '@grafana/ui';
+import {
+  FILTER_FOR_OPERATOR,
+  FILTER_OUT_OPERATOR,
+  TableCellBackgroundDisplayMode,
+} from '@grafana/ui/src/components/Table/types';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
+import { getLogLevelColor, getLogLevelStyles } from '../../logs/components/getLogRowStyles';
 import { getFieldLinksForExplore } from '../utils/links';
 
 import { FieldNameMeta } from './LogsTableWrap';
@@ -67,6 +74,27 @@ export function LogsTable(props: Props) {
       });
       // `getLinks` and `applyFieldOverrides` are taken from TableContainer.tsx
       for (const field of frameWithOverrides.fields) {
+        const cellOptions = {
+          type: TableCellDisplayMode.ColorBackground,
+          applyToRow: true,
+          mode: TableCellBackgroundDisplayMode.Basic,
+        };
+
+        const initialDisplay = field.display;
+
+        const display: DisplayProcessor = (value, decimals) => {
+          if (value && typeof value === 'string' && Object.values(LogLevel).includes(value)) {
+            return {
+              color: getLogLevelColor(config.theme2, value),
+              text: value,
+            };
+          }
+          if (initialDisplay) {
+            return initialDisplay(value, decimals);
+          }
+          return undefined;
+        };
+
         field.getLinks = (config: ValueLinkConfig) => {
           return getFieldLinksForExplore({
             field,
@@ -81,6 +109,7 @@ export function LogsTable(props: Props) {
           custom: {
             inspect: true,
             filterable: true, // This sets the columns to be filterable
+            cellOptions: field.name === 'level' ? cellOptions : undefined,
             width: getInitialFieldWidth(field),
             ...field.config.custom,
           },
@@ -90,6 +119,8 @@ export function LogsTable(props: Props) {
 
         // If it's a string, then try to guess for a better type for numeric support in viz
         field.type = field.type === FieldType.string ? guessFieldTypeForField(field) ?? FieldType.string : field.type;
+
+        field.display = field.name === 'level' ? display : field.display;
       }
 
       return frameWithOverrides;

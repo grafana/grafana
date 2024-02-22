@@ -5,7 +5,7 @@ import tinycolor from 'tinycolor2';
 import { colorManipulator, GrafanaTheme2, LogLevel } from '@grafana/data';
 import { styleMixins } from '@grafana/ui';
 
-export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
+export const getLogLevelColor = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;
   switch (logLevel) {
     case LogLevel.crit:
@@ -30,6 +30,11 @@ export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => 
       logColor = '#6ed0e0';
       break;
   }
+
+  return logColor;
+};
+export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
+  const logColor = getLogLevelColor(theme, logLevel);
 
   return {
     logsRowLevelColor: css`
