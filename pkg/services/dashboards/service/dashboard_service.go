@@ -422,10 +422,18 @@ func (dr *DashboardServiceImpl) GetSoftDeletedDashboard(ctx context.Context, org
 }
 
 func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
+	if !dr.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+		return fmt.Errorf("feature flag %s is not enabled", featuremgmt.FlagDashboardRestore)
+	}
+
 	return dr.dashboardStore.RestoreDashboard(ctx, orgID, dashboardUID)
 }
 
 func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
+	if !dr.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+		return fmt.Errorf("feature flag %s is not enabled", featuremgmt.FlagDashboardRestore)
+	}
+
 	provisionedData, _ := dr.GetProvisionedDashboardDataByDashboardUID(ctx, orgID, dashboardUID)
 	if provisionedData != nil && provisionedData.ID != 0 {
 		return dashboards.ErrDashboardCannotDeleteProvisionedDashboard

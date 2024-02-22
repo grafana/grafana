@@ -273,7 +273,7 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 	return queryResult, nil
 }
 
-func (hs *HTTPServer) RestoreDashboard(c *contextmodel.ReqContext) response.Response {
+func (hs *HTTPServer) RestoreDeletedDashboard(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 
 	dash, err := hs.DashboardService.GetSoftDeletedDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
@@ -286,19 +286,19 @@ func (hs *HTTPServer) RestoreDashboard(c *contextmodel.ReqContext) response.Resp
 		return response.Err(err)
 	}
 
-	if canRestore, err := guardian.CanDelete(); err != nil || !canRestore {
+	if canRestore, err := guardian.CanSave(); err != nil || !canRestore {
 		return dashboardGuardianResponse(err)
 	}
 
 	err = hs.DashboardService.RestoreDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
 	if err != nil {
-		return response.Error(http.StatusNotFound, "Dashboard cannot be restored", err)
+		return response.Error(http.StatusInternalServerError, "Dashboard cannot be restored", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s restored", dash.Title),
-		"id":      dash.ID,
+		"id":      dash.UID,
 	})
 }
 
