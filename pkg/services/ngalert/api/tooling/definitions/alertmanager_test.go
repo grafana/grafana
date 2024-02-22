@@ -572,6 +572,63 @@ func Test_ConfigUnmashaling(t *testing.T) {
 			`,
 		},
 		{
+			desc: "duplicate time interval names should error",
+			err:  errors.New("time interval \"test1\" is not unique"),
+			input: `
+				{
+				  "route": {
+					"receiver": "grafana-default-email"
+				  },
+				  "time_intervals": [
+					{
+					  "name": "test1",
+					  "time_intervals": [
+						{
+						  "times": [
+							{
+							  "start_time": "00:00",
+							  "end_time": "12:00"
+							}
+						  ]
+						}
+					  ]
+					},
+					{
+						"name": "test1",
+						"time_intervals": [
+						  {
+							"times": [
+							  {
+								"start_time": "00:00",
+								"end_time": "12:00"
+							  }
+							]
+						  }
+						]
+					  }
+				  ],
+				  "templates": null,
+				  "receivers": [
+					{
+					  "name": "grafana-default-email",
+					  "grafana_managed_receiver_configs": [
+						{
+						  "uid": "uxwfZvtnz",
+						  "name": "email receiver",
+						  "type": "email",
+						  "disableResolveMessage": false,
+						  "settings": {
+							"addresses": "<example@email.com>"
+						  },
+						  "secureFields": {}
+						}
+					  ]
+					}
+				  ]
+				}
+			`,
+		},
+		{
 			desc: "duplicate mute time interval names should error",
 			err:  errors.New("mute time interval \"test1\" is not unique"),
 			input: `
