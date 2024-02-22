@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { AdHocVariableFilter, GrafanaTheme2 } from '@grafana/data';
+import { AdHocVariableFilter, GrafanaTheme2, VariableHide } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -211,6 +211,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
       new AdHocFiltersVariable({
         name: VAR_FILTERS,
         datasource: trailDS,
+        hide: VariableHide.hideLabel,
         layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
