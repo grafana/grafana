@@ -8,6 +8,7 @@ import { roundDecimals } from '../../utils';
 
 import { DataTransformerID } from './ids';
 import { AlignedData, join } from './joinDataFrames';
+import { nullToValueField } from './nulls/nullToValue';
 import { transformationsVariableSupport } from './utils';
 
 /**
@@ -394,8 +395,14 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   let config: FieldConfig | undefined = undefined;
 
   for (const frame of frames) {
-    for (const field of frame.fields) {
+    for (let field of frame.fields) {
       if (field.type === FieldType.number) {
+        const noValue = Number(field.config?.noValue);
+        if (!Number.isNaN(noValue)) {
+          field = nullToValueField(field, noValue);
+        } else {
+          field = { ...field, values: field.values.filter((v) => v != null) };
+        }
         let fieldHist = histogram(field.values, getBucket, histFilter, histSort);
         histograms.push(fieldHist);
         counts.push({
