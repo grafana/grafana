@@ -35,9 +35,9 @@ func (srv *UpgradeSrv) RoutePostUpgradeOrg(c *contextmodel.ReqContext) response.
 	summary, err := srv.upgradeService.MigrateOrg(c.Req.Context(), c.OrgID, c.QueryBool("skipExisting"))
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {
-			return response.Error(http.StatusConflict, "Upgrade already in progress", err)
+			return ErrResp(http.StatusConflict, err, "Upgrade already in progress")
 		}
-		return response.Error(http.StatusInternalServerError, "Server error", err)
+		return ErrResp(http.StatusInternalServerError, err, "Server error")
 	}
 	return response.JSON(http.StatusOK, summary)
 }
@@ -46,9 +46,9 @@ func (srv *UpgradeSrv) RouteGetOrgUpgrade(c *contextmodel.ReqContext) response.R
 	state, err := srv.upgradeService.GetOrgMigrationState(c.Req.Context(), c.OrgID)
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {
-			return response.Error(http.StatusConflict, "Upgrade already in progress", err)
+			return ErrResp(http.StatusConflict, err, "Upgrade already in progress")
 		}
-		return response.Error(http.StatusInternalServerError, "Server error", err)
+		return ErrResp(http.StatusInternalServerError, err, "Server error")
 	}
 	return response.JSON(http.StatusOK, state)
 }
@@ -57,9 +57,9 @@ func (srv *UpgradeSrv) RouteDeleteOrgUpgrade(c *contextmodel.ReqContext) respons
 	err := srv.upgradeService.RevertOrg(c.Req.Context(), c.OrgID)
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {
-			return response.Error(http.StatusConflict, "Upgrade already in progress", err)
+			return ErrResp(http.StatusConflict, err, "Upgrade already in progress")
 		}
-		return response.Error(http.StatusInternalServerError, "Server error", err)
+		return ErrResp(http.StatusInternalServerError, err, "Server error")
 	}
 	return response.JSON(http.StatusOK, util.DynMap{"message": "Grafana Alerting resources deleted for this organization."})
 }
@@ -78,9 +78,9 @@ func (srv *UpgradeSrv) RoutePostUpgradeAlert(c *contextmodel.ReqContext, dashboa
 	summary, err := srv.upgradeService.MigrateAlert(c.Req.Context(), c.OrgID, dashboardId, panelId)
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {
-			return response.Error(http.StatusConflict, "Upgrade already in progress", err)
+			return ErrResp(http.StatusConflict, err, "Upgrade already in progress")
 		}
-		return response.Error(http.StatusInternalServerError, "Server error", err)
+		return ErrResp(http.StatusInternalServerError, err, "Server error")
 	}
 	return response.JSON(http.StatusOK, summary)
 }
@@ -94,9 +94,9 @@ func (srv *UpgradeSrv) RoutePostUpgradeDashboard(c *contextmodel.ReqContext, das
 	summary, err := srv.upgradeService.MigrateDashboardAlerts(c.Req.Context(), c.OrgID, dashboardId, c.QueryBool("skipExisting"))
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {
-			return response.Error(http.StatusConflict, "Upgrade already in progress", err)
+			return ErrResp(http.StatusConflict, err, "Upgrade already in progress")
 		}
-		return response.Error(http.StatusInternalServerError, "Server error", err)
+		return ErrResp(http.StatusInternalServerError, err, "Server error")
 	}
 	return response.JSON(http.StatusOK, summary)
 }
@@ -105,9 +105,9 @@ func (srv *UpgradeSrv) RoutePostUpgradeAllDashboards(c *contextmodel.ReqContext)
 	summary, err := srv.upgradeService.MigrateAllDashboardAlerts(c.Req.Context(), c.OrgID, c.QueryBool("skipExisting"))
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {
-			return response.Error(http.StatusConflict, "Upgrade already in progress", err)
+			return ErrResp(http.StatusConflict, err, "Upgrade already in progress")
 		}
-		return response.Error(http.StatusInternalServerError, "Server error", err)
+		return ErrResp(http.StatusInternalServerError, err, "Server error")
 	}
 	return response.JSON(http.StatusOK, summary)
 }
@@ -121,9 +121,9 @@ func (srv *UpgradeSrv) RoutePostUpgradeChannel(c *contextmodel.ReqContext, chann
 	summary, err := srv.upgradeService.MigrateChannel(c.Req.Context(), c.OrgID, channelId)
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {
-			return response.Error(http.StatusConflict, "Upgrade already in progress", err)
+			return ErrResp(http.StatusConflict, err, "Upgrade already in progress")
 		}
-		return response.Error(http.StatusInternalServerError, "Server error", err)
+		return ErrResp(http.StatusInternalServerError, err, "Server error")
 	}
 	return response.JSON(http.StatusOK, summary)
 }
@@ -132,9 +132,9 @@ func (srv *UpgradeSrv) RoutePostUpgradeAllChannels(c *contextmodel.ReqContext) r
 	summary, err := srv.upgradeService.MigrateAllChannels(c.Req.Context(), c.OrgID, c.QueryBool("skipExisting"))
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {
-			return response.Error(http.StatusConflict, "Upgrade already in progress", err)
+			return ErrResp(http.StatusConflict, err, "Upgrade already in progress")
 		}
-		return response.Error(http.StatusInternalServerError, "Server error", err)
+		return ErrResp(http.StatusInternalServerError, err, "Server error")
 	}
 	return response.JSON(http.StatusOK, summary)
 }

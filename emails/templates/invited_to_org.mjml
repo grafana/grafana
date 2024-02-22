@@ -4,7 +4,7 @@
   <!-- css styling -->
   <mj-include path="./partials/layout/theme.css" type="css" css-inline="inline" />
   <mj-head>
-    <!-- ⬇ Don't forget to specifify an email subject! Use the HTML comment below ⬇ -->
+    <!-- ⬇ Don't forget to specify an email subject! Use the HTML comment below ⬇ -->
     <mj-title>
       {{ Subject .Subject .TemplateData "{{ .InvitedBy }} has added you to the {{ .OrgName }} organization" }}
     </mj-title>
