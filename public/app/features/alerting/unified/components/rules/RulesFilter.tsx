@@ -8,7 +8,13 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { logInfo, LogMessages, trackRulesListViewChange, trackRulesSearchInteraction } from '../../Analytics';
+import {
+  logInfo,
+  LogMessages,
+  trackRulesListViewChange,
+  trackRulesSearchComponentInteraction,
+  trackRulesSearchInputInteraction,
+} from '../../Analytics';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth } from '../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../utils/rules';
@@ -90,12 +96,12 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     });
 
     setFilterKey((key) => key + 1);
-    trackRulesSearchInteraction({ filter: 'dataSourceNames', triggeredBy: 'component' });
+    trackRulesSearchComponentInteraction('dataSourceNames');
   };
 
   const handleDashboardChange = (dashboardUid: string | undefined) => {
     updateFilters({ ...filterState, dashboardUid });
-    trackRulesSearchInteraction({ filter: 'dashboardUid', triggeredBy: 'component' });
+    trackRulesSearchComponentInteraction('dashboardUid');
   };
 
   const clearDataSource = () => {
@@ -106,17 +112,17 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
   const handleAlertStateChange = (value: PromAlertingRuleState) => {
     logInfo(LogMessages.clickingAlertStateFilters);
     updateFilters({ ...filterState, ruleState: value });
-    trackRulesSearchInteraction({ filter: 'ruleState', triggeredBy: 'component' });
+    trackRulesSearchComponentInteraction('ruleState');
   };
 
   const handleRuleTypeChange = (ruleType: PromRuleType) => {
     updateFilters({ ...filterState, ruleType });
-    trackRulesSearchInteraction({ filter: 'ruleType', triggeredBy: 'component' });
+    trackRulesSearchComponentInteraction('ruleType');
   };
 
   const handleRuleHealthChange = (ruleHealth: RuleHealth) => {
     updateFilters({ ...filterState, ruleHealth });
-    trackRulesSearchInteraction({ filter: 'ruleHealth', triggeredBy: 'component' });
+    trackRulesSearchComponentInteraction('ruleHealth');
   };
 
   const handleClearFiltersClick = () => {
@@ -217,6 +223,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               onSubmit={handleSubmit((data) => {
                 setSearchQuery(data.searchQuery);
                 searchQueryRef.current?.blur();
+                trackRulesSearchInputInteraction({ oldQuery: searchQuery, newQuery: data.searchQuery });
               })}
             >
               <Field
