@@ -61,7 +61,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
   public getOptions(): Array<SelectableValue<ShowContent>> {
     const panel = this.state.panelRef.resolve();
-    const dataProvider = panel.state.$data;
+    const dataProvider = panel.state.$data ?? panel.parent?.state.$data;
 
     const options: Array<SelectableValue<ShowContent>> = [
       {
