@@ -5,7 +5,7 @@ import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
 import { FIXED_UNIT } from '@grafana/ui';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
-import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
+import { Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
 import { FieldConfig as StateTimeLineFieldConfig } from 'app/plugins/panel/state-timeline/panelcfg.gen';
 import { FieldConfig as StatusHistoryFieldConfig } from 'app/plugins/panel/status-history/panelcfg.gen';
 
@@ -384,7 +384,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     });
   };
 
-  function setHovered(cx: number, cy: number, cys: number[]) {
+  function setHovered(cx: number, cy: number, viaSync = false) {
     hovered.fill(null);
     hoveredAtCursor = null;
 
@@ -392,19 +392,15 @@ export function getConfig(opts: TimelineCoreOptions) {
       return;
     }
 
-    for (let i = 0; i < cys.length; i++) {
-      let cy2 = cys[i];
-
-      qt.get(cx, cy2, 1, 1, (o) => {
-        if (pointWithin(cx, cy2, o.x, o.y, o.x + o.w, o.y + o.h)) {
+    qt.get(cx, 0, uPlot.pxRatio, 1e4, (o) => {
+      if (cx >= o.x && cx <= o.x + o.w) {
+        if (cy >= o.y && cy <= o.y + o.h) {
+          hovered[o.sidx] = hoveredAtCursor = o;
+        } else if (hoverMulti || viaSync) {
           hovered[o.sidx] = o;
-
-          if (Math.abs(cy - cy2) <= o.h / 2) {
-            hoveredAtCursor = o;
-          }
         }
-      });
-    }
+      }
+    });
   }
 
   const cursor: uPlot.Cursor = {
@@ -426,7 +422,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
         let prevHovered = hoveredAtCursor;
 
-        setHovered(cx, cy, hoverMulti ? yMids : [cy]);
+        setHovered(cx, cy, u.cursor.event == null);
 
         if (hoveredAtCursor != null) {
           if (hoveredAtCursor !== prevHovered) {

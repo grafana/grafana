@@ -236,7 +236,9 @@ export const StatusHistoryPanel = ({
                 {options.tooltip.mode !== TooltipDisplayMode.None && (
                   <TooltipPlugin2
                     config={builder}
-                    hoverMode={TooltipHoverMode.xyOne}
+                    hoverMode={
+                      options.tooltip.mode === TooltipDisplayMode.Multi ? TooltipHoverMode.xAll : TooltipHoverMode.xOne
+                    }
                     queryZoom={onChangeTimeRange}
                     syncTooltip={syncTooltip}
                     render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {

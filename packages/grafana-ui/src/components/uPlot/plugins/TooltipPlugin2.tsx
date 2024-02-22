@@ -157,11 +157,11 @@ export const TooltipPlugin2 = ({
     let _isPinned = isPinned;
     let _style = style;
 
-    let isVisible = false;
+    let plotVisible = false;
 
     const updateHovering = () => {
       if (viaSync) {
-        _isHovering = isVisible && _someSeriesIdx && syncTooltip();
+        _isHovering = plotVisible && _someSeriesIdx && syncTooltip();
       } else {
         _isHovering = closestSeriesIdx != null || (hoverMode === TooltipHoverMode.xAll && _someSeriesIdx);
       }
@@ -412,13 +412,13 @@ export const TooltipPlugin2 = ({
       winHgt = window.innerHeight - scrollbarWidth;
     };
 
-    const updateIsVisible = () => {
-      isVisible =
+    const updatePlotVisible = () => {
+      plotVisible =
         _plot!.rect.bottom <= winHgt && _plot!.rect.top >= 0 && _plot!.rect.left >= 0 && _plot!.rect.right <= winWid;
     };
 
     updateWinSize();
-    config.addHook('ready', updateIsVisible);
+    config.addHook('ready', updatePlotVisible);
 
     // fires on mousemoves
     config.addHook('setCursor', (u) => {
@@ -486,7 +486,7 @@ export const TooltipPlugin2 = ({
     });
 
     const onscroll = () => {
-      updateIsVisible();
+      updatePlotVisible();
       _isHovering && !_isPinned && dismiss();
     };
 
