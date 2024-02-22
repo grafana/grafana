@@ -12,6 +12,7 @@ import (
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -184,6 +185,69 @@ func TestIntegrationAlertmanagerConfiguration(t *testing.T) {
 							}},
 						}},
 					},
+				},
+				Receivers: []*apimodels.PostableApiReceiver{{
+					Receiver: config.Receiver{
+						Name: "test",
+					},
+				}},
+			},
+		},
+	}, {
+		name: "configuration with time intervals",
+		cfg: apimodels.PostableUserConfig{
+			AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+				Config: apimodels.Config{
+					Route: &apimodels.Route{
+						Receiver: "test",
+						Routes: []*apimodels.Route{{
+							MuteTimeIntervals: []string{"weekends"},
+						}},
+					},
+					TimeIntervals: []config.TimeInterval{{
+						Name: "weekends",
+						TimeIntervals: []timeinterval.TimeInterval{{
+							Weekdays: []timeinterval.WeekdayRange{{
+								InclusiveRange: timeinterval.InclusiveRange{
+									Begin: 1,
+									End:   5,
+								},
+							}},
+						}},
+					}},
+				},
+				Receivers: []*apimodels.PostableApiReceiver{{
+					Receiver: config.Receiver{
+						Name: "test",
+					},
+				}},
+			},
+		},
+	}, {
+		// TODO: Mute time intervals is deprecated in Alertmanager and scheduled to be
+		// removed before version 1.0. Remove this test when support for mute time
+		// intervals is removed.
+		name: "configuration with mute time intervals",
+		cfg: apimodels.PostableUserConfig{
+			AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+				Config: apimodels.Config{
+					Route: &apimodels.Route{
+						Receiver: "test",
+						Routes: []*apimodels.Route{{
+							MuteTimeIntervals: []string{"weekends"},
+						}},
+					},
+					MuteTimeIntervals: []config.MuteTimeInterval{{
+						Name: "weekends",
+						TimeIntervals: []timeinterval.TimeInterval{{
+							Weekdays: []timeinterval.WeekdayRange{{
+								InclusiveRange: timeinterval.InclusiveRange{
+									Begin: 1,
+									End:   5,
+								},
+							}},
+						}},
+					}},
 				},
 				Receivers: []*apimodels.PostableApiReceiver{{
 					Receiver: config.Receiver{
