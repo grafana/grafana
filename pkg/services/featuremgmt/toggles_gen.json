@@ -1394,7 +1394,8 @@
       "metadata": {
         "name": "traceToMetrics",
         "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
+        "creationTimestamp": "2024-02-16T18:36:28Z",
+        "deletionTimestamp": "2024-02-16T10:09:14Z"
       },
       "spec": {
         "description": "Enable trace to metrics links",
