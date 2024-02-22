@@ -1341,6 +1341,7 @@ export class DashboardModel implements TimeModel {
   }
 
   async hasAngularPlugins(): Promise<boolean> {
+    // Ensure all panel plugins are loaded before checking if they are Angular plugins
     await Promise.all(
       this.panels.map(async (panel) => {
         if (panel.plugin) {
