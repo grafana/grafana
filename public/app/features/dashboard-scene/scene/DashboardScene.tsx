@@ -438,9 +438,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       .splice(0, indexTillNextRow === -1 ? sceneGridLayout.state.children.length : indexTillNextRow)
       .map((child) => child.clone());
 
-    row.setState({
-      children: rowChildren,
-    });
+    if (rowChildren) {
+      row.setState({
+        children: rowChildren,
+      });
+    }
 
     sceneGridLayout.setState({
       children: [row, ...sceneGridLayout.state.children],
