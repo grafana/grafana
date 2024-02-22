@@ -83,7 +83,7 @@
         "name": "pluginsInstrumentationStatusSource",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-19T14:18:02Z"
+        "deletionTimestamp": "2024-02-22T11:46:08Z"
       },
       "spec": {
         "description": "Include a status source label for plugin request metrics and logs",
@@ -1318,7 +1318,8 @@
       "metadata": {
         "name": "exploreScrollableLogsContainer",
         "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
+        "creationTimestamp": "2024-02-16T18:36:28Z",
+        "deletionTimestamp": "2024-02-22T11:46:08Z"
       },
       "spec": {
         "description": "Improves the scrolling behavior of logs in Explore",
