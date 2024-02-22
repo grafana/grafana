@@ -147,10 +147,6 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 		return &mockMetricClient
 	}
 
-	// im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	// 	return DataSource{Settings: models.CloudWatchSettings{}}, nil
-	// })
-
 	t.Run("Queries with the same region should call GetSession with that region 1 time and call GetMetricDataWithContext 1 time", func(t *testing.T) {
 		mockSessionCache := &mockSessionCache{}
 		mockSessionCache.On("GetSession", mock.MatchedBy(

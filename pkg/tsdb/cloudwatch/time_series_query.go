@@ -97,7 +97,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 				}
 
 				if features.IsEnabled(ctx, features.FlagCloudWatchWildCardDimensionValues) {
-					requestQueries, err = e.getDimensionValuesForWildcards(ctx, req.PluginContext, region, client, requestQueries, instance.TagValueCache, instance.Settings.GrafanaSettings.ListMetricsPageLimit)
+					requestQueries, err = e.getDimensionValuesForWildcards(ctx, req.PluginContext, region, client, requestQueries, instance.tagValueCache, instance.Settings.GrafanaSettings.ListMetricsPageLimit)
 					if err != nil {
 						return err
 					}

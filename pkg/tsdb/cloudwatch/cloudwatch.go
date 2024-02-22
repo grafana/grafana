@@ -48,9 +48,9 @@ type DataQueryJson struct {
 type DataSource struct {
 	Settings      models.CloudWatchSettings
 	HTTPClient    *http.Client
-	TagValueCache *cache.Cache
-	ProxyOpts     *proxy.Options
 	Sessions      SessionCache
+	tagValueCache *cache.Cache
+	ProxyOpts     *proxy.Options
 }
 
 const (
@@ -114,7 +114,7 @@ func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 		return DataSource{
 			Settings:      instanceSettings,
 			HTTPClient:    httpClient,
-			TagValueCache: cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+			tagValueCache: cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
 			Sessions:      awsds.NewSessionCache(),
 			// this is used to build a custom dialer when secure socks proxy is enabled
 			ProxyOpts: opts.ProxyOptions,
