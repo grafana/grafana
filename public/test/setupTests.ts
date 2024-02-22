@@ -22,4 +22,6 @@ i18next.use(initReactI18next).init({
 });
 
 // Mock out the worker that detects changes in the dashboard
-jest.mock('app/features/dashboard-scene/saving/workers/createDetectChangesWorker.ts');
+// The mock is needed because JSDOM does not support workers and
+// the factory uses import.meta.url so we can't use it in CommonJS modules.
+jest.mock('app/features/dashboard-scene/saving/createDetectChangesWorker.ts');

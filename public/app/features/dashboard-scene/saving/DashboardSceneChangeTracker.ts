@@ -9,7 +9,7 @@ import {
   SceneVariableSet,
   dataLayers,
 } from '@grafana/scenes';
-import { createWorker } from 'app/features/dashboard-scene/saving/workers/createDetectChangesWorker';
+import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
