@@ -1,6 +1,7 @@
 import React from 'react';
+import { useForm } from 'react-hook-form';
 
-import { Input, Field, FieldSet, Button, Form } from '@grafana/ui';
+import { Input, Field, FieldSet, Button } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
@@ -15,19 +16,20 @@ interface FormDTO {
 
 const OrgProfile = ({ onSubmit, orgName }: Props) => {
   const canWriteOrg = contextSrv.hasPermission(AccessControlAction.OrgsWrite);
+  const initialFormModel: FormDTO = { orgName };
+
+  const { handleSubmit, register } = useForm<FormDTO>({ defaultValues: initialFormModel });
 
   return (
-    <Form defaultValues={{ orgName }} onSubmit={({ orgName }: FormDTO) => onSubmit(orgName)}>
-      {({ register }) => (
-        <FieldSet label="Organization profile" disabled={!canWriteOrg}>
-          <Field label="Organization name">
-            <Input id="org-name-input" type="text" {...register('orgName', { required: true })} />
-          </Field>
+    <form name="organizationProfile" onSubmit={handleSubmit((form) => onSubmit(form.orgName))}>
+      <FieldSet label="Organization profile" disabled={!canWriteOrg}>
+        <Field label="Organization name">
+          <Input id="org-name-input" type="text" {...register('orgName', { required: true })} />
+        </Field>
 
-          <Button type="submit">Update organization name</Button>
-        </FieldSet>
-      )}
-    </Form>
+        <Button type="submit">Update organization name</Button>
+      </FieldSet>
+    </form>
   );
 };
 
