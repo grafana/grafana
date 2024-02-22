@@ -39,7 +39,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
 		sess := fakeSessionCache{}
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &sess}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &sess}, nil
 		})
 		executor := newExecutor(im, log.NewNullLogger())
 
@@ -65,7 +65,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
 		sess := fakeSessionCache{}
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}, Sessions: &sess}, nil
+			return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}, sessions: &sess}, nil
 		})
 
 		executor := newExecutor(im, log.NewNullLogger())
@@ -121,7 +121,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 				syncCalled = false
 				cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
 				im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-					return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}, Sessions: &fakeSessionCache{}}, nil
+					return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}, sessions: &fakeSessionCache{}}, nil
 				})
 
 				executor := newExecutor(im, log.NewNullLogger())
@@ -163,7 +163,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 
 		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}, sessions: &fakeSessionCache{}}, nil
 		})
 
 		executor := newExecutor(im, log.NewNullLogger())
@@ -203,7 +203,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		}, nil)
 		cli.On("GetQueryResultsWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}, nil)
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 		executor := newExecutor(im, log.NewNullLogger())
 
@@ -232,7 +232,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		}, nil)
 		cli.On("GetQueryResultsWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}, nil)
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 		executor := newExecutor(im, log.NewNullLogger())
 
@@ -301,7 +301,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 			Status: aws.String("Complete")}, nil)
 
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 		executor := newExecutor(im, log.NewNullLogger())
 
@@ -346,7 +346,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		}, nil)
 		cli.On("GetQueryResultsWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Running")}, nil)
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{LogsTimeout: models.Duration{Duration: time.Millisecond}}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{LogsTimeout: models.Duration{Duration: time.Millisecond}}, sessions: &fakeSessionCache{}}, nil
 		})
 
 		executor := newExecutor(im, log.NewNullLogger())
@@ -379,7 +379,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 			&fakeAWSError{code: "foo", message: "bar"},
 		)
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 		executor := newExecutor(im, log.NewNullLogger())
 

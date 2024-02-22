@@ -224,7 +224,7 @@ func testInstanceManager(pageLimit int) instancemgmt.InstanceManager {
 			},
 			GrafanaSettings: awsds.AuthSettings{ListMetricsPageLimit: pageLimit},
 		},
-			Sessions: &fakeSessionCache{}}, nil
+			sessions: &fakeSessionCache{}}, nil
 	}))
 }
 

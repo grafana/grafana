@@ -88,7 +88,7 @@ func TestQuery_handleGetLogEvents_passes_nil_start_and_end_times_to_GetLogEvents
 			cli = fakeCWLogsClient{}
 
 			im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-				return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+				return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 			})
 
 			executor := newExecutor(im, log.NewNullLogger())
@@ -122,7 +122,7 @@ func TestQuery_GetLogEvents_returns_response_from_GetLogEvents_to_data_frame_fie
 		return cli
 	}
 	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 	})
 	executor := newExecutor(im, log.NewNullLogger())
 
@@ -206,7 +206,7 @@ func TestQuery_StartQuery(t *testing.T) {
 				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
 					Region: "us-east-2",
 				},
-			}, Sessions: &fakeSessionCache{}}, nil
+			}, sessions: &fakeSessionCache{}}, nil
 		})
 
 		executor := newExecutor(im, log.NewNullLogger())
@@ -263,7 +263,7 @@ func TestQuery_StartQuery(t *testing.T) {
 				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
 					Region: "us-east-2",
 				},
-			}, Sessions: &fakeSessionCache{}}, nil
+			}, sessions: &fakeSessionCache{}}, nil
 		})
 
 		executor := newExecutor(im, log.NewNullLogger())
@@ -321,7 +321,7 @@ func Test_executeStartQuery(t *testing.T) {
 	t.Run("successfully parses information from JSON to StartQueryWithContext", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 		executor := newExecutor(im, log.NewNullLogger())
 
@@ -357,7 +357,7 @@ func Test_executeStartQuery(t *testing.T) {
 	t.Run("does not populate StartQueryInput.limit when no limit provided", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 		executor := newExecutor(im, log.NewNullLogger())
 
@@ -383,7 +383,7 @@ func Test_executeStartQuery(t *testing.T) {
 	t.Run("attaches logGroupIdentifiers if the crossAccount feature is enabled", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 		executor := newExecutor(im, log.NewNullLogger())
 
@@ -419,7 +419,7 @@ func Test_executeStartQuery(t *testing.T) {
 	t.Run("attaches logGroupIdentifiers if the crossAccount feature is enabled and strips out trailing *", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 		executor := newExecutor(im, log.NewNullLogger())
 
@@ -455,7 +455,7 @@ func Test_executeStartQuery(t *testing.T) {
 	t.Run("uses LogGroupNames if the cross account feature flag is not enabled, and log group names is present", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 		executor := newExecutor(im, log.NewNullLogger())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
@@ -490,7 +490,7 @@ func Test_executeStartQuery(t *testing.T) {
 	t.Run("ignores logGroups if feature flag is disabled even if logGroupNames is not present", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 		executor := newExecutor(im, log.NewNullLogger())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
@@ -524,7 +524,7 @@ func Test_executeStartQuery(t *testing.T) {
 	t.Run("it always uses logGroups when feature flag is enabled and ignores log group names", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 		executor := newExecutor(im, log.NewNullLogger())
 		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
@@ -589,7 +589,7 @@ func TestQuery_StopQuery(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 	})
 
 	timeRange := backend.TimeRange{
@@ -684,7 +684,7 @@ func TestQuery_GetQueryResults(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 	})
 
 	executor := newExecutor(im, log.NewNullLogger())

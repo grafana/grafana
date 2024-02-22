@@ -48,7 +48,7 @@ type DataQueryJson struct {
 type DataSource struct {
 	Settings      models.CloudWatchSettings
 	HTTPClient    *http.Client
-	Sessions      SessionCache
+	sessions      SessionCache
 	tagValueCache *cache.Cache
 	ProxyOpts     *proxy.Options
 }
@@ -115,7 +115,7 @@ func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			Settings:      instanceSettings,
 			HTTPClient:    httpClient,
 			tagValueCache: cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
-			Sessions:      awsds.NewSessionCache(),
+			sessions:      awsds.NewSessionCache(),
 			// this is used to build a custom dialer when secure socks proxy is enabled
 			ProxyOpts: opts.ProxyOptions,
 		}, nil
@@ -280,7 +280,7 @@ func (ds *DataSource) newSession(region string) (*session.Session, error) {
 		}
 		region = ds.Settings.Region
 	}
-	sess, err := ds.Sessions.GetSession(awsds.SessionConfig{
+	sess, err := ds.sessions.GetSession(awsds.SessionConfig{
 		// https://github.com/grafana/grafana/issues/46365
 		// HTTPClient: instance.HTTPClient,
 		Settings: awsds.AWSDatasourceSettings{

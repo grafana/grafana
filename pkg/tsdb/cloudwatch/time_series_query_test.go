@@ -153,7 +153,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 			func(config awsds.SessionConfig) bool { return config.Settings.Region == "us-east-1" })). // region from queries is asserted here
 			Return(&session.Session{Config: &aws.Config{}}, nil).Once()
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: mockSessionCache}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: mockSessionCache}, nil
 		})
 		mockMetricClient = mocks.MetricsAPI{}
 		mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
@@ -208,7 +208,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 			Return(&session.Session{Config: &aws.Config{}}, nil, nil).Once()
 
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: sessionCache}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: sessionCache}, nil
 		})
 
 		mockMetricClient = mocks.MetricsAPI{}
@@ -341,7 +341,7 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 	})
 
 	t.Run("passes query label as GetMetricData label", func(t *testing.T) {

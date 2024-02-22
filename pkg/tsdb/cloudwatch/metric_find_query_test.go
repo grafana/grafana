@@ -52,7 +52,7 @@ func TestQuery_Regions(t *testing.T) {
 				AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-2"},
 				GrafanaSettings:       awsds.AuthSettings{ListMetricsPageLimit: 1000},
 			},
-				Sessions: &fakeSessionCache{}}, nil
+				sessions: &fakeSessionCache{}}, nil
 		})
 
 		executor := newExecutor(im, log.NewNullLogger())
@@ -113,7 +113,7 @@ func Test_handleGetRegions_regionCache(t *testing.T) {
 			AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-2"},
 			GrafanaSettings:       awsds.AuthSettings{ListMetricsPageLimit: 1000},
 		},
-			Sessions: &fakeSessionCache{}}, nil
+			sessions: &fakeSessionCache{}}, nil
 	})
 
 	t.Run("AWS only called once for multiple calls to handleGetRegions", func(t *testing.T) {
@@ -165,7 +165,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 
 		filterMap := map[string][]string{
@@ -249,7 +249,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 
 		executor := newExecutor(im, log.NewNullLogger())
@@ -310,7 +310,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, Sessions: &fakeSessionCache{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 
 		tagMap := map[string][]string{
