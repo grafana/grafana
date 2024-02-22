@@ -221,7 +221,7 @@ var (
 		{
 			Name:         "returnToPrevious",
 			Description:  "Enables the return to previous context functionality",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 		},
@@ -381,14 +381,6 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
-			Name:           "clientTokenRotation",
-			Description:    "Replaces the current in-request token rotation so that the client initiates the rotation",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true",
-			Owner:          identityAccessTeam,
-			AllowSelfServe: false,
 		},
 		{
 			Name:           "prometheusDataplane",
@@ -914,13 +906,6 @@ var (
 			Owner:           grafanaBackendPlatformSquad,
 		},
 		{
-			Name:         "pluginsInstrumentationStatusSource",
-			Description:  "Include a status source label for plugin request metrics and logs",
-			FrontendOnly: false,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
 			Stage:           FeatureStagePublicPreview,
@@ -1214,6 +1199,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "expressionParser",
+			Description:     "Enable new expression parser",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:              "groupByVariable",
 			Description:       "Enable groupBy variable support in scenes dashboards",
 			Stage:             FeatureStageExperimental,
@@ -1221,6 +1213,15 @@ var (
 			AllowSelfServe:    false,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:            "alertingUpgradeDryrunOnStart",
+			Description:     "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
+			FrontendOnly:    false,
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 	}
 )

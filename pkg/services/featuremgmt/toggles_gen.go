@@ -207,10 +207,6 @@ const (
 	// Enables running InfluxDB Influxql queries in parallel
 	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
 
-	// FlagClientTokenRotation
-	// Replaces the current in-request token rotation so that the client initiates the rotation
-	FlagClientTokenRotation = "clientTokenRotation"
-
 	// FlagPrometheusDataplane
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from &#39;Value&#39; to the value of the `__name__` label.
 	FlagPrometheusDataplane = "prometheusDataplane"
@@ -495,10 +491,6 @@ const (
 	// Enable searching for dashboards using panel title in search v1
 	FlagPanelTitleSearchInV1 = "panelTitleSearchInV1"
 
-	// FlagPluginsInstrumentationStatusSource
-	// Include a status source label for plugin request metrics and logs
-	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
-
 	// FlagManagedPluginsInstall
 	// Install managed plugins directly from plugins catalog
 	FlagManagedPluginsInstall = "managedPluginsInstall"
@@ -659,7 +651,15 @@ const (
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
+	// FlagExpressionParser
+	// Enable new expression parser
+	FlagExpressionParser = "expressionParser"
+
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
+
+	// FlagAlertingUpgradeDryrunOnStart
+	// When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.
+	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
 )

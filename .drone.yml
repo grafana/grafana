@@ -1062,7 +1062,7 @@ steps:
   name: yarn-install
 - commands:
   - pip3 install codespell
-  - codespell -I .codespellignore docs/
+  - codespell -I docs/.codespellignore docs/
   image: python:3.8
   name: codespell
 - commands:
@@ -1422,7 +1422,7 @@ steps:
   name: yarn-install
 - commands:
   - pip3 install codespell
-  - codespell -I .codespellignore docs/
+  - codespell -I docs/.codespellignore docs/
   image: python:3.8
   name: codespell
 - commands:
@@ -4804,6 +4804,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 2a70d8442b85841e1b882c9562e8cc42b0c4b697a49ee03d086218f79cdff660
+hmac: 14033c6fa9749db7c17aca8b404569c8e4bcb51e39cdb39b300870758db10c48
 
 ...
