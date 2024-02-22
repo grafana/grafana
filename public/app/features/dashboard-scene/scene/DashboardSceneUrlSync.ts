@@ -117,6 +117,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         this._handleLibraryPanel(panel, (p) => {
           this._scene.setState({ editPanel: buildPanelEditScene(p) });
         });
+        return;
       }
       update.editPanel = buildPanelEditScene(panel);
     } else if (editPanel && values.editPanel === null) {
