@@ -86,7 +86,7 @@ type Store interface {
 	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
 	GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*Dashboard, error)
 	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
-	SoftDeleteDashboardsInFolder(ctx context.Context, orgID int64, folderUid string) error
+	SoftDeleteDashboardsInFolders(ctx context.Context, orgID int64, folderUids []string) error
 	RestoreDashboard(ctx context.Context, orgID int64, dashboardUid string) error
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 }

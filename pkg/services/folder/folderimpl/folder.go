@@ -830,14 +830,13 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, folderUIDs []string) error {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+		if err := s.dashboardStore.SoftDeleteDashboardsInFolders(ctx, cmd.OrgID, folderUIDs); err != nil {
+			return toFolderError(err)
+		}
+	}
 	// TODO use bulk delete
 	for _, folderUID := range folderUIDs {
-		if s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-			if err := s.dashboardStore.SoftDeleteDashboardsInFolder(ctx, cmd.OrgID, folderUID); err != nil {
-				return toFolderError(err)
-			}
-		}
-
 		// only hard delete the folder representation in the dashboard store
 		// nolint:staticcheck
 		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules}

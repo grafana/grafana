@@ -291,7 +291,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				service.features = featuremgmt.WithFeatures("dashboardRestore")
 
 				var folderUid string
-				dashStore.On("SoftDeleteDashboardsInFolder", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				dashStore.On("SoftDeleteDashboardsInFolders", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 					folderUid = args.Get(2).(string)
 				}).Return(nil).Once()
 

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -33,6 +34,7 @@ func TestDashboardService(t *testing.T) {
 			dashboardStore:     &fakeStore,
 			folderService:      folderSvc,
 			dashAlertExtractor: &dummyDashAlertExtractor{},
+			features:           featuremgmt.WithFeatures(),
 		}
 
 		origNewDashboardGuardian := guardian.New
@@ -237,7 +239,15 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		t.Run("Delete dashboards in folder", func(t *testing.T) {
-			fakeStore.On("SoftDeleteDashboardsInFolder", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUIDs: []string{"uid"}}
+			fakeStore.On("DeleteDashboardsInFolders", mock.Anything, args).Return(nil).Once()
+			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
+			require.NoError(t, err)
+		})
+
+		t.Run("Soft Delete dashboards in folder", func(t *testing.T) {
+			service.features = featuremgmt.WithFeatures(featuremgmt.FlagDashboardRestore)
+			fakeStore.On("SoftDeleteDashboardsInFolders", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
 			require.NoError(t, err)
 		})

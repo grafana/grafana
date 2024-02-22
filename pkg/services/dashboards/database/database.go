@@ -681,9 +681,22 @@ func (d *dashboardStore) SoftDeleteDashboard(ctx context.Context, orgID int64, d
 	})
 }
 
-func (d *dashboardStore) SoftDeleteDashboardsInFolder(ctx context.Context, orgID int64, folderUid string) error {
+func (d *dashboardStore) SoftDeleteDashboardsInFolders(ctx context.Context, orgID int64, folderUids []string) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE org_id=? AND folder_uid=? AND is_folder=?", time.Now(), orgID, folderUid, d.store.GetDialect().BooleanStr(false))
+		s := strings.Builder{}
+		s.WriteString("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE ")
+		s.WriteString(fmt.Sprintf("folder_uid IN (%s)", strings.Repeat("?,", len(folderUids)-1)+"?"))
+		s.WriteString(" AND org_id = ? AND is_folder = ?")
+
+		sql := s.String()
+		args := make([]any, 0, 3)
+		args = append(args, sql, time.Now())
+		for _, folderUID := range folderUids {
+			args = append(args, folderUID)
+		}
+		args = append(args, orgID, d.store.GetDialect().BooleanStr(false))
+
+		_, err := sess.Exec(args...)
 		return err
 	})
 }

@@ -490,13 +490,13 @@ func (_m *FakeDashboardStore) SoftDeleteDashboard(ctx context.Context, orgID int
 	return r0
 }
 
-// SoftDeleteDashboardsInFolder provides a mock function with given fields: ctx, orgID, folderUid
-func (_m *FakeDashboardStore) SoftDeleteDashboardsInFolder(ctx context.Context, orgID int64, folderUid string) error {
-	ret := _m.Called(ctx, orgID, folderUid)
+// SoftDeleteDashboardsInFolders provides a mock function with given fields: ctx, orgID, folderUids
+func (_m *FakeDashboardStore) SoftDeleteDashboardsInFolders(ctx context.Context, orgID int64, folderUids []string) error {
+	ret := _m.Called(ctx, orgID, folderUids)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
-		r0 = rf(ctx, orgID, folderUid)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, []string) error); ok {
+		r0 = rf(ctx, orgID, folderUids)
 	} else {
 		r0 = ret.Error(0)
 	}
