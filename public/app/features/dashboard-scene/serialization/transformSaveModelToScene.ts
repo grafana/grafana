@@ -1,4 +1,4 @@
-import { TypedVariableModel } from '@grafana/data';
+import { DataFrameDTO, DataFrameJSON, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -36,7 +36,6 @@ import { DashboardDTO } from 'app/types';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -56,6 +55,7 @@ import {
 } from '../utils/utils';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
+import { GRAFANA_DATASOURCE_REF } from './const';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -115,6 +115,11 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
         panels.push(gridItem);
       }
     } else {
+      // when rendering a snapshot created with the legacy Dashboards convert data to new snapshot format to be compatible with Scenes
+      if (panel.snapshotData) {
+        convertOldSnapshotToScenesSnapshot(panel);
+      }
+
       const panelObject = buildGridItemForPanel(panel);
 
       // when processing an expanded row, collect its panels
@@ -268,21 +273,16 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
             layers,
           })
         : undefined,
-    controls: [
-      new DashboardControls({
-        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
-        timeControls: [
-          new SceneTimePicker({}),
-          new SceneRefreshPicker({
-            refresh: oldModel.refresh,
-            intervals: oldModel.timepicker.refresh_intervals,
-            withText: true,
-          }),
-        ],
-        linkControls: new DashboardLinksControls({}),
-        hideTimeControls: oldModel.timepicker.hidden,
+    controls: new DashboardControls({
+      variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
+      timePicker: new SceneTimePicker({}),
+      refreshPicker: new SceneRefreshPicker({
+        refresh: oldModel.refresh,
+        intervals: oldModel.timepicker.refresh_intervals,
+        withText: true,
       }),
-    ],
+      hideTimeControls: oldModel.timepicker.hidden,
+    }),
   });
 
   return dashboardScene;
@@ -377,7 +377,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'textbox') {
     return new TextBoxVariable({
       ...commonProperties,
-      value: variable.query,
+      value: variable?.current?.value?.[0] ?? variable.query,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
@@ -534,3 +534,38 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
     }
   });
 }
+
+const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
+  return snapshotData.map((data) => {
+    return {
+      data: {
+        values: data.fields.map((field) => field.values).filter((values): values is unknown[] => values !== undefined),
+      },
+      schema: {
+        fields: data.fields.map((field) => ({
+          name: field.name,
+          type: field.type,
+          config: field.config,
+        })),
+      },
+    };
+  });
+};
+
+// override panel datasource and targets with snapshot data using the Grafana datasource
+export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
+  // only old snapshots created with old dashboards contains snapshotData
+  if (panel.snapshotData) {
+    panel.datasource = GRAFANA_DATASOURCE_REF;
+    panel.targets = [
+      {
+        refId: panel.snapshotData[0]?.refId ?? '',
+        datasource: panel.datasource,
+        queryType: 'snapshot',
+        // @ts-ignore
+        snapshot: convertSnapshotData(panel.snapshotData),
+      },
+    ];
+    panel.snapshotData = [];
+  }
+};

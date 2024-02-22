@@ -438,7 +438,7 @@ def update_package_json_version():
         ],
         "commands": [
             "apk add --update jq",
-            "new_version=$(cat package.json | jq .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)",
+            "new_version=$(cat package.json | jq -r .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)",
             "echo \"New version: $new_version\"",
             "yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish -y",
             "yarn install --mode=update-lockfile",
@@ -687,7 +687,7 @@ def codespell_step():
         "image": images["python"],
         "commands": [
             "pip3 install codespell",
-            "codespell -I .codespellignore docs/",
+            "codespell -I docs/.codespellignore docs/",
         ],
     }
 

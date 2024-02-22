@@ -876,6 +876,10 @@
     "manage-folder": {
       "subtitle": "Gestionar paneles de control de carpetas y permisos"
     },
+    "migrate-to-cloud": {
+      "subtitle": "",
+      "title": ""
+    },
     "monitoring": {
       "subtitle": "Aplicaciones de supervisión e infraestructura",
       "title": "Observabilidad"

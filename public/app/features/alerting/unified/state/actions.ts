@@ -65,6 +65,7 @@ import {
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
+import { encodeGrafanaNamespace } from '../components/expressions/util';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -803,11 +804,14 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
           }
 
           const newNamespaceAlreadyExists = Boolean(rulesResult[newNamespaceName]);
-          if (newNamespaceName !== namespaceName && newNamespaceAlreadyExists) {
+          const isGrafanaManagedGroup = rulesSourceName === GRAFANA_RULES_SOURCE_NAME;
+          const originalNamespace = isGrafanaManagedGroup ? encodeGrafanaNamespace(namespaceName) : namespaceName;
+
+          if (newNamespaceName !== originalNamespace && newNamespaceAlreadyExists) {
             throw new Error(`Namespace "${newNamespaceName}" already exists.`);
           }
           if (
-            newNamespaceName === namespaceName &&
+            newNamespaceName === originalNamespace &&
             groupName === newGroupName &&
             groupInterval === existingGroup.interval
           ) {
@@ -829,8 +833,8 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
             }
           }
           // if renaming namespace - make new copies of all groups, then delete old namespace
-
-          if (newNamespaceName !== namespaceName) {
+          // this is only possible for cloud rules
+          if (newNamespaceName !== originalNamespace) {
             for (const group of rulesResult[namespaceName]) {
               await setRulerRuleGroup(
                 rulerConfig,

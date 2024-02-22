@@ -1,7 +1,7 @@
 import { Config } from 'app/plugins/panel/nodeGraph/layout';
 import { EdgeDatum, NodeDatum } from 'app/plugins/panel/nodeGraph/types';
 
-const { layout } = jest.requireActual('../../app/plugins/panel/nodeGraph/layout.worker.js');
+const { layout } = jest.requireActual('../../app/plugins/panel/nodeGraph/layout.worker.utils.js');
 
 class LayoutMockWorker {
   timeout: number | undefined;
