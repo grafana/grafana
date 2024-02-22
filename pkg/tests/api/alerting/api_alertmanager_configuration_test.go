@@ -194,7 +194,10 @@ func TestIntegrationAlertmanagerConfiguration(t *testing.T) {
 			},
 		},
 	}, {
-		name: "configuration with time intervals",
+		// TODO: Mute time intervals is deprecated in Alertmanager and scheduled to be
+		// removed before version 1.0. Remove this test when support for mute time
+		// intervals is removed.
+		name: "configuration with mute time intervals",
 		cfg: apimodels.PostableUserConfig{
 			AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
 				Config: apimodels.Config{
@@ -204,7 +207,7 @@ func TestIntegrationAlertmanagerConfiguration(t *testing.T) {
 							MuteTimeIntervals: []string{"weekends"},
 						}},
 					},
-					TimeIntervals: []config.TimeInterval{{
+					MuteTimeIntervals: []config.MuteTimeInterval{{
 						Name: "weekends",
 						TimeIntervals: []timeinterval.TimeInterval{{
 							Weekdays: []timeinterval.WeekdayRange{{
@@ -224,10 +227,7 @@ func TestIntegrationAlertmanagerConfiguration(t *testing.T) {
 			},
 		},
 	}, {
-		// TODO: Mute time intervals is deprecated in Alertmanager and scheduled to be
-		// removed before version 1.0. Remove this test when support for mute time
-		// intervals is removed.
-		name: "configuration with mute time intervals",
+		name: "configuration with time intervals",
 		cfg: apimodels.PostableUserConfig{
 			AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
 				Config: apimodels.Config{
@@ -237,7 +237,7 @@ func TestIntegrationAlertmanagerConfiguration(t *testing.T) {
 							MuteTimeIntervals: []string{"weekends"},
 						}},
 					},
-					MuteTimeIntervals: []config.MuteTimeInterval{{
+					TimeIntervals: []config.TimeInterval{{
 						Name: "weekends",
 						TimeIntervals: []timeinterval.TimeInterval{{
 							Weekdays: []timeinterval.WeekdayRange{{
