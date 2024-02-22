@@ -1344,8 +1344,13 @@ export class DashboardModel implements TimeModel {
     for (const panel of this.panels) {
       let plugin;
       if (!panel.plugin) {
-        plugin = await dispatch(loadPanelPlugin(panel.type));
-        await panel.pluginLoaded(plugin);
+        try {
+          plugin = await dispatch(loadPanelPlugin(panel.type));
+          await panel.pluginLoaded(plugin);
+        } catch (e) {
+          // Plugin not found
+          continue;
+        }
       }
       // Return false for plugins that are angular but have angular.hideDeprecation = false
       const isAngularPanel = panel.isAngularPlugin() && !panel.plugin?.meta.angular?.hideDeprecation;
