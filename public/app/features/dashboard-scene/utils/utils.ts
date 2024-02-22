@@ -28,30 +28,23 @@ export function getPanelIdForVizPanel(panel: SceneObject): number {
  * This will also  try lookup based on panelId
  */
 export function findVizPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
-  if (!key) {
-    return null;
-  }
-
-  const panel = findVizPanelInternal(scene, key, VizPanel);
-  if (panel) {
-    return panel;
-  }
-
-  // Also try to find by panel id
-  const id = parseInt(key, 10);
-  if (isNaN(id)) {
-    return null;
-  }
-
-  return findVizPanelInternal(scene, getVizPanelKeyForPanelId(id), VizPanel);
+  return findPanelTypeByKey(scene, key, VizPanel);
 }
 
 export function findLibraryPanelByKey(scene: SceneObject, key: string | undefined): LibraryVizPanel | null {
+  return findPanelTypeByKey(scene, key, LibraryVizPanel);
+}
+
+function findPanelTypeByKey<PanelType>(
+  scene: SceneObject,
+  key: string | undefined,
+  panelType: { new (...args: never[]): PanelType }
+): PanelType | null {
   if (!key) {
     return null;
   }
 
-  const panel = findVizPanelInternal(scene, key, LibraryVizPanel);
+  const panel = findVizPanelInternal(scene, key, panelType);
   if (panel) {
     return panel;
   }
@@ -62,7 +55,7 @@ export function findLibraryPanelByKey(scene: SceneObject, key: string | undefine
     return null;
   }
 
-  return findVizPanelInternal(scene, getVizPanelKeyForPanelId(id), LibraryVizPanel);
+  return findVizPanelInternal(scene, getVizPanelKeyForPanelId(id), panelType);
 }
 
 function findVizPanelInternal<PanelType>(
