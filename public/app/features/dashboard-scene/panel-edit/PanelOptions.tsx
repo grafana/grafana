@@ -4,7 +4,10 @@ import { sceneGraph } from '@grafana/scenes';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
-import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
+import {
+  getLibraryPanelOptionsCategory2,
+  getVisualizationOptions2,
+} from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
 import { VizPanelManager } from './VizPanelManager';
 
@@ -15,7 +18,7 @@ interface Props {
 }
 
 export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMode }) => {
-  const { panel } = vizManager.state;
+  const { panel, libraryPanel } = vizManager.state;
   const { data } = sceneGraph.getData(panel).useState();
   const { options, fieldConfig } = panel.useState();
   const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panel), [panel]);
@@ -34,6 +37,13 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panel, options, fieldConfig]);
+
+  const libraryPanelOptions = useMemo(() => {
+    if (libraryPanel) {
+      return getLibraryPanelOptionsCategory2(libraryPanel); // TODO: fix this name
+    }
+    return;
+  }, [libraryPanel]);
 
   const justOverrides = useMemo(
     () =>
@@ -57,11 +67,19 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
 
   if (isSearching) {
     mainBoxElements.push(
-      renderSearchHits([panelFrameOptions, ...(visualizationOptions ?? [])], justOverrides, searchQuery)
+      renderSearchHits(
+        [panelFrameOptions, ...(libraryPanelOptions ? [libraryPanelOptions] : []), ...(visualizationOptions ?? [])],
+        justOverrides,
+        searchQuery
+      )
     );
   } else {
     switch (listMode) {
       case OptionFilter.All:
+        if (libraryPanelOptions) {
+          // Library Panel options first
+          mainBoxElements.push(libraryPanelOptions.render());
+        }
         mainBoxElements.push(panelFrameOptions.render());
 
         for (const item of visualizationOptions ?? []) {

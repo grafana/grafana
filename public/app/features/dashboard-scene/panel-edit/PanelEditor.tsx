@@ -4,11 +4,13 @@ import { NavIndex } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneGridItem, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import {
   findVizPanelByKey,
   getDashboardSceneFor,
   getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
+  isLibraryPanelChild,
 } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
@@ -103,8 +105,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 }
 
 export function buildPanelEditScene(panel: VizPanel): PanelEditor {
-  const vizPanelMgr = new VizPanelManager(panel.clone());
-
+  const vizPanelMgr = new VizPanelManager(
+    panel.clone(),
+    isLibraryPanelChild(panel) ? (panel.parent?.clone() as LibraryVizPanel) : undefined
+  );
   return new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),
     optionsPane: new PanelOptionsPane({}),
