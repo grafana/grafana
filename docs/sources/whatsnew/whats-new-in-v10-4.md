@@ -90,8 +90,6 @@ You can now create subtables out of your data using the new **Group to Nested Ta
 
 {{< video-embed src="/media/docs/grafana/screen-recording-10-4-table-group-to-nested-table-transformation.mp4" caption="Group to Nested Table transformation" >}}
 
-## Profiles
-
 ## Alerting
 
 ### Rule evaluation performance improvements
@@ -127,9 +125,3 @@ Grafana Alerting previously evaluated rules at the start of the evaluation inter
 _Generally available in all editions of Grafana_
 
 Grafana can now be used to manage both Prometheus and Mimir Alertmanagers with UTF-8 configurations. For more information, please see the release notes for Alertmanager 0.27.0.
-
-## Logs
-
-## Data sources
-
-## Authentication and authorization
