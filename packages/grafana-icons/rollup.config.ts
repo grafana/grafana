@@ -12,11 +12,6 @@ export default [
     plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), esbuild()],
     output: [
       {
-        format: 'cjs',
-        sourcemap: true,
-        dir: path.dirname(pkg.publishConfig.main),
-      },
-      {
         format: 'esm',
         sourcemap: true,
         dir: path.dirname(pkg.publishConfig.module),
@@ -25,7 +20,7 @@ export default [
     ],
   },
   {
-    input: './compiled/index.d.ts',
+    input: './compiled/src/index.d.ts',
     plugins: [dts()],
     output: {
       file: pkg.publishConfig.types,
