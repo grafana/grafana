@@ -76,16 +76,16 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	rsp := mathexp.Results{}
 
 	duckDB := duck.NewInMemoryDB()
-	frame := &data.Frame{}
+	var frame = &data.Frame{}
 	_, err := duckDB.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
-	if frame != nil {
-		frame.RefID = gr.refID
-		rsp.Values = mathexp.Values{
-			mathexp.Scalar{Frame: frame},
-		}
-	}
 	if err != nil {
 		rsp.Error = err
+		return rsp, nil
+	}
+
+	frame.RefID = gr.refID
+	rsp.Values = mathexp.Values{
+		mathexp.Scalar{Frame: frame},
 	}
 	return rsp, nil
 }
