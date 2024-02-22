@@ -2,4 +2,4 @@
 dist
 node_modules
 compiled
-./icons-gen
+/icons-gen/
