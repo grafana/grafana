@@ -8,13 +8,13 @@ title: Upgrade guide common tasks
 
 ## Upgrade Grafana
 
-The following sections provide instructions for how to upgrade Grafana based on your installation method.
+The following sections provide instructions for how to upgrade Grafana based on your installation method. For more information on where to find configuration files, refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location).
 
 ### Debian
 
 To upgrade Grafana installed from a Debian package (`.deb`), complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to a file named `/etc/grafana/grafana.ini`. This path is specified in the Grafana init.d script using the `--config` file parameter.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
@@ -61,7 +61,7 @@ To upgrade Grafana installed from the binary `.tar.gz` package, complete the fol
 
 To upgrade Grafana installed using RPM or YUM complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to a file named `/etc/grafana/grafana.ini`. This path is specified in the Grafana init.d script using the `--config` file parameter.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
