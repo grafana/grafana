@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { select } from 'react-select-event';
 
 import { LogRowModel, dateTime } from '@grafana/data';
 
@@ -15,22 +15,6 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: () => null,
 }));
-
-jest.mock('app/core/store', () => {
-  return {
-    set() {},
-    get() {},
-    getBool(key: string, defaultValue?: boolean) {
-      const item = window.localStorage.getItem(key);
-      if (item === null) {
-        return defaultValue;
-      } else {
-        return item === 'true';
-      }
-    },
-    delete() {},
-  };
-});
 
 const setupProps = (): LokiContextUiProps => {
   const defaults: LokiContextUiProps = {
@@ -57,10 +41,13 @@ const setupProps = (): LokiContextUiProps => {
 
 const mockLogContextProvider = {
   getInitContextFilters: jest.fn().mockImplementation(() =>
-    Promise.resolve([
-      { value: 'value1', enabled: true, fromParser: false, label: 'label1' },
-      { value: 'value3', enabled: false, fromParser: true, label: 'label3' },
-    ])
+    Promise.resolve({
+      contextFilters: [
+        { value: 'value1', enabled: true, nonIndexed: false, label: 'label1' },
+        { value: 'value3', enabled: false, nonIndexed: true, label: 'label3' },
+      ],
+      preservedFiltersApplied: false,
+    })
   ),
   processContextFiltersToExpr: jest.fn().mockImplementation(
     (contextFilters: ContextFilter[], query: LokiQuery | undefined) =>
@@ -149,8 +136,8 @@ describe('LokiContextUi', () => {
     await waitFor(() => {
       expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
-    const select = await screen.findAllByRole('combobox');
-    await selectOptionInTest(select[0], 'label1="value1"');
+    const selects = await screen.findAllByRole('combobox');
+    await select(selects[0], 'label1="value1"', { container: document.body });
   });
 
   it('finds label3 as a parsed label', async () => {
@@ -159,8 +146,8 @@ describe('LokiContextUi', () => {
     await waitFor(() => {
       expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
-    const select = await screen.findAllByRole('combobox');
-    await selectOptionInTest(select[1], 'label3="value3"');
+    const selects = await screen.findAllByRole('combobox');
+    await select(selects[1], 'label3="value3"', { container: document.body });
   });
 
   it('calls updateFilter when selecting a label', async () => {
@@ -171,7 +158,7 @@ describe('LokiContextUi', () => {
       expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
       expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
-    await selectOptionInTest(screen.getAllByRole('combobox')[1], 'label3="value3"');
+    await select(screen.getAllByRole('combobox')[1], 'label3="value3"', { container: document.body });
     act(() => {
       jest.runAllTimers();
     });
@@ -341,6 +328,37 @@ describe('LokiContextUi', () => {
     await userEvent.click(revertButton);
     await waitFor(() => {
       expect(screen.queryByText('label3="value3"')).not.toBeInTheDocument();
+    });
+  });
+  it('shows if preserved filters are applied', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      logContextProvider: {
+        ...props.logContextProvider,
+        getInitContextFilters: jest.fn().mockImplementation(() =>
+          Promise.resolve({
+            contextFilters: [
+              { value: 'value1', enabled: true, nonIndexed: false, label: 'label1' },
+              { value: 'value3', enabled: false, nonIndexed: true, label: 'label3' },
+            ],
+            preservedFiltersApplied: true,
+          })
+        ),
+      },
+    } as unknown as LokiContextUiProps;
+
+    render(<LokiContextUi {...newProps} />);
+    expect(await screen.findByText('Previously used filters have been applied.')).toBeInTheDocument();
+  });
+
+  it('does not shows if preserved filters are not applied', async () => {
+    // setupProps() already has preservedFiltersApplied: false
+    const props = setupProps();
+
+    render(<LokiContextUi {...props} />);
+    await waitFor(() => {
+      expect(screen.queryByText('Previously used filters have been applied.')).not.toBeInTheDocument();
     });
   });
 });

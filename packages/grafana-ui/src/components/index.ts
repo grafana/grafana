@@ -213,6 +213,7 @@ export { Text } from './Text/Text';
 export { Box } from './Layout/Box/Box';
 export { Stack } from './Layout/Stack/Stack';
 export { Grid } from './Layout/Grid/Grid';
+export { Space } from './Layout/Space';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';
@@ -263,6 +264,10 @@ export { Avatar } from './UsersIndicator/Avatar';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
+export { getDragStyles, type DragHandlePosition } from './DragHandle/DragHandle';
+export { useSplitter } from './Splitter/useSplitter';
+
+export { LayoutItemContext, type LayoutItemContextProps } from './Layout/LayoutItemContext';
 
 /** @deprecated Please use non-legacy versions of these components */
 const LegacyForms = {

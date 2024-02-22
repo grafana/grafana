@@ -10,8 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/oam"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
@@ -25,7 +24,6 @@ type RequestContext struct {
 	OAMAPIProvider        OAMAPIProvider
 	EC2APIProvider        EC2APIProvider
 	Settings              CloudWatchSettings
-	Features              featuremgmt.FeatureToggles
 	Logger                log.Logger
 }
 

@@ -25,9 +25,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -98,10 +98,13 @@ func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceC
 		args.Namespace = c.namespacer(args.User.Identity.GetOrgID())
 	}
 
+	client, err := dynamic.NewForConfig(args.User.NewRestConfig())
+	require.NoError(c.t, err)
+
 	return &K8sResourceClient{
 		t:        c.t,
 		Args:     args,
-		Resource: args.User.Client.Resource(args.GVR).Namespace(args.Namespace),
+		Resource: client.Resource(args.GVR).Namespace(args.Namespace),
 	}
 }
 
@@ -163,8 +166,31 @@ type OrgUsers struct {
 
 type User struct {
 	Identity identity.Requester
-	Client   *dynamic.DynamicClient
 	password string
+	baseURL  string
+}
+
+func (c *User) NewRestConfig() *rest.Config {
+	return &rest.Config{
+		Host:     c.baseURL,
+		Username: c.Identity.GetLogin(),
+		Password: c.password,
+	}
+}
+
+func (c *User) ResourceClient(t *testing.T, gvr schema.GroupVersionResource) dynamic.NamespaceableResourceInterface {
+	client, err := dynamic.NewForConfig(c.NewRestConfig())
+	require.NoError(t, err)
+	return client.Resource(gvr)
+}
+
+func (c *User) RESTClient(t *testing.T, gv *schema.GroupVersion) *rest.RESTClient {
+	cfg := dynamic.ConfigFor(c.NewRestConfig()) // adds negotiated serializers!
+	cfg.GroupVersion = gv
+	cfg.APIPath = "apis" // the plural
+	client, err := rest.RESTClientFor(cfg)
+	require.NoError(t, err)
+	return client
 }
 
 type RequestParams struct {
@@ -351,7 +377,9 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	store.Cfg.AutoAssignOrg = true
 	store.Cfg.AutoAssignOrgId = int(orgId)
 
-	teamSvc := teamimpl.ProvideService(store, store.Cfg)
+	teamSvc, err := teamimpl.ProvideService(store, store.Cfg)
+	require.NoError(c.t, err)
+
 	cache := localcache.ProvideService()
 	userSvc, err := userimpl.ProvideService(store,
 		orgService, store.Cfg, teamSvc, cache, quotaService,
@@ -362,7 +390,7 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	createUser := func(key string, role org.RoleType) User {
 		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
 			DefaultOrgRole: string(role),
-			Password:       key,
+			Password:       user.Password(key),
 			Login:          fmt.Sprintf("%s-%d", key, orgId),
 			OrgID:          orgId,
 		})
@@ -380,19 +408,10 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		require.Equal(c.t, orgId, s.OrgID)
 		require.Equal(c.t, role, s.OrgRole) // make sure the role was set properly
 
-		config := &rest.Config{
-			Host:     baseUrl,
-			Username: s.Login,
-			Password: key,
-		}
-
-		client, err := dynamic.NewForConfig(config)
-		require.NoError(c.t, err)
-
 		return User{
 			Identity: s,
-			Client:   client,
 			password: key,
+			baseURL:  baseUrl,
 		}
 	}
 	return OrgUsers{

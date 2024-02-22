@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
@@ -20,7 +21,7 @@ import {
   AxisColorMode,
   AxisPlacement,
   GraphTransform,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   ScaleDirection,
   ScaleDistribution,
   ScaleOrientation,
@@ -208,8 +209,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
     // Render thresholds in graph
     if (customConfig.thresholdsStyle && field.config.thresholds) {
-      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphTresholdsStyleMode.Off;
-      if (thresholdDisplay !== GraphTresholdsStyleMode.Off) {
+      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphThresholdsStyleMode.Off;
+      if (thresholdDisplay !== GraphThresholdsStyleMode.Off) {
         builder.addThresholds({
           config: customConfig.thresholdsStyle,
           thresholds: field.config.thresholds,
@@ -491,9 +492,10 @@ export function prepareBarChartDisplayValues(
     }
   }
 
-  // If stacking is percent, we need to correct the fields unit and display
+  // If stacking is percent, we need to correct the legend fields unit and display
+  let legendFields: Field[] = cloneDeep(fields);
   if (options.stacking === StackingMode.Percent) {
-    fields.map((field) => {
+    legendFields.map((field) => {
       const alignedFrameField = frame.fields.find(
         (f) => getFieldDisplayName(f, frame) === getFieldDisplayName(f, frame)
       );
@@ -503,18 +505,23 @@ export function prepareBarChartDisplayValues(
     });
   }
 
-  // String field is first
+  // String field is first, make sure fields / legend fields indexes match
   fields.unshift(firstField);
+  legendFields.unshift(firstField);
 
   return {
     aligned: frame,
     colorByField,
     viz: [
       {
-        length: firstField.values.length,
         fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
+        length: firstField.values.length,
       },
     ],
+    legend: {
+      fields: legendFields,
+      length: firstField.values.length,
+    },
   };
 }
 

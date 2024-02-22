@@ -17,6 +17,7 @@ jest.mock('@grafana/runtime', () => ({
     put: putMock,
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     loginError: false,
     buildInfo: {
       version: 'v1.0',
@@ -39,6 +40,7 @@ jest.mock('app/core/core', () => ({
     hasPermission: () => true,
     hasPermissionInMetadata: () => true,
     user: { orgId: 1 },
+    fetchUserPermissions: () => Promise.resolve(),
   },
 }));
 

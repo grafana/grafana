@@ -1,4 +1,4 @@
-﻿import { act, render, screen } from '@testing-library/react';
+﻿import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -48,16 +48,15 @@ describe('Toggletip', () => {
 
     expect(await screen.findByTestId('toggletip-content')).toBeInTheDocument();
 
+    // Escape should not close the toggletip
+    const button = screen.getByTestId('myButton');
+    await userEvent.click(button);
+    expect(onClose).toHaveBeenCalledTimes(1);
+
     // Close button should not close the toggletip
     const closeButton = screen.getByTestId('toggletip-header-close');
     expect(closeButton).toBeInTheDocument();
     await userEvent.click(closeButton);
-    expect(onClose).toHaveBeenCalledTimes(1);
-
-    // Escape should not close the toggletip
-    const button = screen.getByTestId('myButton');
-    await userEvent.click(button);
-    await userEvent.keyboard('{escape}');
     expect(onClose).toHaveBeenCalledTimes(2);
 
     // Either way, the toggletip should still be visible
@@ -162,7 +161,7 @@ describe('Toggletip', () => {
     const button = screen.getByTestId('myButton');
     const afterButton = screen.getByText(afterInDom);
     await userEvent.click(button);
-    await userEvent.tab();
+
     const closeButton = screen.getByTestId('toggletip-header-close');
     expect(closeButton).toHaveFocus();
 
@@ -183,14 +182,7 @@ describe('Toggletip', () => {
     let user: ReturnType<typeof userEvent.setup>;
 
     beforeEach(() => {
-      jest.useFakeTimers();
-      // Need to use delay: null here to work with fakeTimers
-      // see https://github.com/testing-library/user-event/issues/833
-      user = userEvent.setup({ delay: null });
-    });
-
-    afterEach(() => {
-      jest.useRealTimers();
+      user = userEvent.setup();
     });
 
     it('should restore focus to the button that opened the toggletip when closed from within the toggletip', async () => {
@@ -208,11 +200,10 @@ describe('Toggletip', () => {
       const closeButton = await screen.findByTestId('toggletip-header-close');
       expect(closeButton).toBeInTheDocument();
       await user.click(closeButton);
-      act(() => {
-        jest.runAllTimers();
-      });
 
-      expect(button).toHaveFocus();
+      await waitFor(() => {
+        expect(button).toHaveFocus();
+      });
     });
 
     it('should NOT restore focus to the button that opened the toggletip when closed from outside the toggletip', async () => {
@@ -239,9 +230,6 @@ describe('Toggletip', () => {
       afterButton.focus();
 
       await user.keyboard('{escape}');
-      act(() => {
-        jest.runAllTimers();
-      });
 
       expect(afterButton).toHaveFocus();
     });

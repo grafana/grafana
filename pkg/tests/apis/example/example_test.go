@@ -23,14 +23,13 @@ func TestExampleApp(t *testing.T) {
 		AppModeProduction: false, // required for experimental APIs
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServer,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},
 	})
 
 	t.Run("Check runtime info resource", func(t *testing.T) {
 		// Resource is not namespaced!
-		client := helper.Org1.Admin.Client.Resource(schema.GroupVersionResource{
+		client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
 			Group:    "example.grafana.app",
 			Version:  "v0alpha1",
 			Resource: "runtime",
@@ -140,7 +139,7 @@ func TestExampleApp(t *testing.T) {
 	})
 
 	t.Run("Check dummy with subresource", func(t *testing.T) {
-		client := helper.Org1.Viewer.Client.Resource(schema.GroupVersionResource{
+		client := helper.Org1.Viewer.ResourceClient(t, schema.GroupVersionResource{
 			Group:    "example.grafana.app",
 			Version:  "v0alpha1",
 			Resource: "dummy",

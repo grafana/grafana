@@ -16,6 +16,7 @@ import (
 	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -26,8 +27,13 @@ import (
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestHandleRequest(t *testing.T) {
 	t.Run("Should invoke plugin manager QueryData when handling request for query", func(t *testing.T) {
@@ -42,12 +48,13 @@ func TestHandleRequest(t *testing.T) {
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		datasourcePermissions := acmock.NewMockedPermissionsService()
 		quotaService := quotatest.New(false, nil)
+		dsCache := datasourceservice.ProvideCacheService(localcache.ProvideService(), sqlStore, guardian.ProvideGuardian())
 		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, sqlStore.Cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions, quotaService, &pluginstore.FakePluginStore{})
 		require.NoError(t, err)
 
 		pCtxProvider := plugincontext.ProvideService(sqlStore.Cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test"}}},
-		}, dsService, pluginSettings.ProvideService(sqlStore, secretsService), pluginFakes.NewFakeLicensingService(), &config.Cfg{})
+		}, dsCache, dsService, pluginSettings.ProvideService(sqlStore, secretsService), pluginFakes.NewFakeLicensingService(), &config.Cfg{})
 		s := ProvideService(client, nil, dsService, pCtxProvider)
 
 		ds := &datasources.DataSource{ID: 12, Type: "test", JsonData: simplejson.New()}

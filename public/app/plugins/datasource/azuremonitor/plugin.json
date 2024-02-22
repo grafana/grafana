@@ -77,7 +77,7 @@
     },
     { "type": "dashboard", "name": "Azure / Resources Overview", "path": "dashboards/arg.json" }
   ],
-
+  "executable": "gpx_azuremonitor",
   "info": {
     "description": "Data source for Microsoft Azure Monitor & Application Insights",
     "author": {
@@ -98,11 +98,11 @@
       { "name": "Azure Monitor Network", "path": "img/azure_monitor_network.png" },
       { "name": "Azure Monitor CPU", "path": "img/azure_monitor_cpu.png" }
     ],
-    "version": "1.0.0"
+    "version": "%VERSION%"
   },
 
   "dependencies": {
-    "grafanaVersion": "5.2.x",
+    "grafanaDependency": ">=10.3.0",
     "plugins": []
   },
 

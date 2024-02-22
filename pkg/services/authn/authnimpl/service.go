@@ -73,6 +73,7 @@ func ProvideService(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
 	signingKeysService signingkeys.Service, oauthServer oauthserver.OAuth2Server,
+	settingsProviderService setting.Provider,
 ) *Service {
 	s := &Service{
 		log:             log.New("authn.service"),
@@ -93,7 +94,7 @@ func ProvideService(
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
 	if cfg.LoginCookieName != "" {
-		s.RegisterClient(clients.ProvideSession(cfg, sessionService, features))
+		s.RegisterClient(clients.ProvideSession(cfg, sessionService))
 	}
 
 	var proxyClients []authn.ProxyClient
@@ -131,7 +132,7 @@ func ProvideService(
 		}
 	}
 
-	if s.cfg.JWTAuthEnabled {
+	if s.cfg.JWTAuth.Enabled {
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
@@ -140,18 +141,8 @@ func ProvideService(
 	}
 
 	for name := range socialService.GetOAuthProviders() {
-		oauthCfg := socialService.GetOAuthInfoProvider(name)
-		if oauthCfg != nil && oauthCfg.Enabled {
-			clientName := authn.ClientWithPrefix(name)
-
-			connector, errConnector := socialService.GetConnector(name)
-			httpClient, errHTTPClient := socialService.GetOAuthHttpClient(name)
-			if errConnector != nil || errHTTPClient != nil {
-				s.log.Error("Failed to configure oauth client", "client", clientName, "err", errors.Join(errConnector, errHTTPClient))
-			} else {
-				s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthCfg, connector, httpClient, oauthTokenService))
-			}
-		}
+		clientName := authn.ClientWithPrefix(name)
+		s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService))
 	}
 
 	// FIXME (jguer): move to User package
@@ -160,10 +151,16 @@ func ProvideService(
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
 	s.RegisterPostAuthHook(userSyncService.EnableUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
-	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 120)
+	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 130)
 	s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
-	s.RegisterPostAuthHook(sync.ProvidePermissionsSync(accessControlService).SyncPermissionsHook, 110)
+
+	rbacSync := sync.ProvideRBACSync(accessControlService)
+	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
+		s.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
+	}
+
+	s.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 
 	return s
 }

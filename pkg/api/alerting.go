@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -20,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -102,6 +102,7 @@ func (hs *HTTPServer) GetAlerts(c *contextmodel.ReqContext) response.Response {
 			folderID, err := strconv.ParseInt(id, 10, 64)
 			if err == nil {
 				folderIDs = append(folderIDs, folderID)
+				metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetAlerts).Inc()
 			}
 		}
 
@@ -239,14 +240,15 @@ func (hs *HTTPServer) GetAlert(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &res)
 }
 
-func (hs *HTTPServer) GetAlertNotifiers(ngalertEnabled bool) func(*contextmodel.ReqContext) response.Response {
+func (hs *HTTPServer) GetLegacyAlertNotifiers() func(*contextmodel.ReqContext) response.Response {
 	return func(_ *contextmodel.ReqContext) response.Response {
-		if ngalertEnabled {
-			return response.JSON(http.StatusOK, channels_config.GetAvailableNotifiers())
-		}
-		// TODO(codesome): This wont be required in 8.0 since ngalert
-		// will be enabled by default with no disabling. This is to be removed later.
 		return response.JSON(http.StatusOK, alerting.GetNotifiers())
+	}
+}
+
+func (hs *HTTPServer) GetAlertNotifiers() func(*contextmodel.ReqContext) response.Response {
+	return func(_ *contextmodel.ReqContext) response.Response {
+		return response.JSON(http.StatusOK, channels_config.GetAvailableNotifiers())
 	}
 }
 
@@ -521,7 +523,7 @@ func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *alert
 		return err
 	}
 
-	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, res.SecureSettings, setting.SecretKey)
+	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, res.SecureSettings, hs.Cfg.SecretKey)
 	if err != nil {
 		return err
 	}
@@ -550,7 +552,7 @@ func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *
 		return err
 	}
 
-	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, res.SecureSettings, setting.SecretKey)
+	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, res.SecureSettings, hs.Cfg.SecretKey)
 	if err != nil {
 		return err
 	}

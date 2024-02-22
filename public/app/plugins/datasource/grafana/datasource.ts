@@ -216,7 +216,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
     if (target.type === GrafanaAnnotationType.Dashboard) {
       // if no dashboard id yet return
-      if (!options.dashboard.uid) {
+      if (!options.dashboard?.uid) {
         return Promise.resolve({ data: [] });
       }
       // filter by dashboard id

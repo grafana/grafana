@@ -4,14 +4,21 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { useTheme2 } from '@grafana/ui/src';
 
-import { LogsTableNavColumn } from './LogsTableNavColumn';
-import { fieldNameMeta } from './LogsTableWrap';
+import { LogsTableActiveFields } from './LogsTableActiveFields';
+import { LogsTableAvailableFields } from './LogsTableAvailableFields';
+import { FieldNameMeta } from './LogsTableWrap';
 
 function getStyles(theme: GrafanaTheme2) {
   return {
     sidebarWrap: css({
       overflowY: 'scroll',
       height: 'calc(100% - 50px)',
+      /* Hide scrollbar for Chrome, Safari, and Opera */
+      '&::-webkit-scrollbar': {
+        display: 'none',
+      },
+      /* Hide scrollbar for Firefox */
+      scrollbarWidth: 'none',
     }),
     columnHeaderButton: css({
       appearance: 'none',
@@ -39,9 +46,10 @@ function getStyles(theme: GrafanaTheme2) {
 
 export const LogsTableMultiSelect = (props: {
   toggleColumn: (columnName: string) => void;
-  filteredColumnsWithMeta: Record<string, fieldNameMeta> | undefined;
-  columnsWithMeta: Record<string, fieldNameMeta>;
+  filteredColumnsWithMeta: Record<string, FieldNameMeta> | undefined;
+  columnsWithMeta: Record<string, FieldNameMeta>;
   clear: () => void;
+  reorderColumn: (oldIndex: number, newIndex: number) => void;
 }) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -56,14 +64,16 @@ export const LogsTableMultiSelect = (props: {
             Reset
           </button>
         </div>
-        <LogsTableNavColumn
+        <LogsTableActiveFields
+          reorderColumn={props.reorderColumn}
           toggleColumn={props.toggleColumn}
           labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
           valueFilter={(value) => props.columnsWithMeta[value]?.active ?? false}
+          id={'selected-fields'}
         />
 
         <div className={styles.columnHeader}>Fields</div>
-        <LogsTableNavColumn
+        <LogsTableAvailableFields
           toggleColumn={props.toggleColumn}
           labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
           valueFilter={(value) => !props.columnsWithMeta[value]?.active}

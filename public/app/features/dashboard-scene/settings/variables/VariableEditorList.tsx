@@ -5,7 +5,7 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
-import { useStyles2, Stack } from '@grafana/ui';
+import { useStyles2, Stack, Button } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 import { VariableEditorListRow } from './VariableEditorListRow';
@@ -42,7 +42,7 @@ export function VariableEditorList({
         {variables.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
 
         {variables.length > 0 && (
-          <Stack direction="column" gap={4}>
+          <Stack direction="column" gap={3}>
             <div className={styles.tableContainer}>
               <table
                 className="filter-table filter-table--hover"
@@ -80,6 +80,15 @@ export function VariableEditorList({
                 </DragDropContext>
               </table>
             </div>
+            <Stack>
+              <Button
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton}
+                onClick={onAdd}
+                icon="plus"
+              >
+                New variable
+              </Button>
+            </Stack>
           </Stack>
         )}
       </div>
@@ -94,7 +103,6 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
         title="There are no variables yet"
         buttonIcon="calculator-alt"
         buttonTitle="Add variable"
-        buttonDisabled
         infoBox={{
           __html: ` <p>
                     Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server
