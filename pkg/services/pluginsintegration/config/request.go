@@ -39,6 +39,7 @@ func NewRequestConfigProvider(cfg *setting.Cfg, settingProvider setting.Provider
 }
 
 // PluginRequestConfig returns a map of configuration that should be passed in a plugin request.
+// nolint:gocyclo
 func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginID string) map[string]string {
 	m := make(map[string]string)
 
