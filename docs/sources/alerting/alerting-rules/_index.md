@@ -50,7 +50,6 @@ Create, manage, view, and adjust alert rules to alert on your metrics data or lo
 Recording rules are only available for compatible Prometheus or Loki data sources.
 {{< /admonition >}}
 
-
 {{% docs/reference %}}
 [create-mimir-loki-managed-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-rule"
 [create-mimir-loki-managed-rule]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-mimir-loki-managed-rule"
