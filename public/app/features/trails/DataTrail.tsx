@@ -204,9 +204,9 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
     variables: [
       new DataSourceVariable({
         name: VAR_DATASOURCE,
-        label: 'Data source',
+        label: 'Prometheus data source',
         value: initialDS,
-        pluginId: metric === LOGS_METRIC ? 'loki' : 'prometheus',
+        pluginId: 'prometheus',
       }),
       new AdHocFiltersVariable({
         name: VAR_FILTERS,
