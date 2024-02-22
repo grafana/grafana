@@ -20,11 +20,20 @@ weight: 120
 
 An alert rule consists of one or more queries and expressions that select the data you want to measure. It also contains a condition, which is the threshold that an alert rule must meet or exceed in order to fire.
 
-The main components of an alert rule are:
+The main parts of alert rule creation are:
 
-**Query and alert condition**
+1. Select your data source
+1. Query your data
+1. Normalize your data
+1. Set your threshold
+
+**Query, expressions, and alert condition**
 
 What are you monitoring? How are you measuring it?
+
+{{< admonition type="note" >}}
+Expressions can only be used for Grafana-managed alert rules.
+{{< /admonition >}}
 
 **Evaluation**
 
