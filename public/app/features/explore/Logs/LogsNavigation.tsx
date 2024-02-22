@@ -176,7 +176,7 @@ function LogsNavigation({
   const onScrollToTopClick = useCallback(() => {
     reportInteraction('grafana_explore_logs_scroll_top_clicked');
     scrollToTopLogs();
-  }, []);
+  }, [scrollToTopLogs]);
 
   return (
     <div className={styles.navContainer}>
