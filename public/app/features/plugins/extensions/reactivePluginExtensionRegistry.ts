@@ -1,4 +1,4 @@
-import { Observable, OperatorFunction, ReplaySubject, Subject, firstValueFrom, map, scan, startWith } from 'rxjs';
+import { Observable, ReplaySubject, Subject, firstValueFrom, map, scan, startWith } from 'rxjs';
 
 import { logWarning } from '@grafana/runtime';
 
@@ -8,7 +8,7 @@ import { PluginExtensionRegistry, PluginExtensionRegistryItem } from './types';
 import { deepFreeze } from './utils';
 import { isPluginExtensionConfigValid } from './validators';
 
-export class ReactivePluginExtenionRegistry {
+export class ReactivePluginExtensionsRegistry {
   private resultSubject: Subject<PluginPreloadResult>;
   private registrySubject: ReplaySubject<PluginExtensionRegistry>;
 
@@ -20,7 +20,7 @@ export class ReactivePluginExtenionRegistry {
 
     this.resultSubject
       .pipe(
-        createRegistryResults(),
+        scan(resultsToRegistry, {}),
         // Emit an empty object to start the stream (it is only going to do it once during construction, and then just passes down the values)
         startWith({}),
         map((registry) => deepFreeze(registry))
@@ -42,37 +42,36 @@ export class ReactivePluginExtenionRegistry {
   }
 }
 
-function createRegistryResults(): OperatorFunction<PluginPreloadResult, PluginExtensionRegistry> {
-  // TODO: move the scan to the pipeline to simplify the createRegistryResult function
-  return scan<PluginPreloadResult, PluginExtensionRegistry>((registry, result) => {
-    const { pluginId, extensionConfigs, error } = result;
+function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPreloadResult): PluginExtensionRegistry {
+  const { pluginId, extensionConfigs, error } = result;
 
-    if (error) {
-      logWarning(`"${pluginId}" plugin failed to load, skip registering its extensions.`);
+  // TODO: We should probably move this section to where we load the plugin since this is only used
+  // to provide a log to the user.
+  if (error) {
+    logWarning(`"${pluginId}" plugin failed to load, skip registering its extensions.`);
+    return registry;
+  }
+
+  for (const extensionConfig of extensionConfigs) {
+    const { extensionPointId } = extensionConfig;
+
+    if (!extensionConfig || !isPluginExtensionConfigValid(pluginId, extensionConfig)) {
       return registry;
     }
 
-    for (const extensionConfig of extensionConfigs) {
-      const { extensionPointId } = extensionConfig;
+    let registryItem: PluginExtensionRegistryItem = {
+      config: extensionConfig,
 
-      if (!extensionConfig || !isPluginExtensionConfigValid(pluginId, extensionConfig)) {
-        return registry;
-      }
+      // Additional meta information about the extension
+      pluginId,
+    };
 
-      let registryItem: PluginExtensionRegistryItem = {
-        config: extensionConfig,
-
-        // Additional meta information about the extension
-        pluginId,
-      };
-
-      if (!Array.isArray(registry[extensionPointId])) {
-        registry[extensionPointId] = [registryItem];
-      } else {
-        registry[extensionPointId].push(registryItem);
-      }
+    if (!Array.isArray(registry[extensionPointId])) {
+      registry[extensionPointId] = [registryItem];
+    } else {
+      registry[extensionPointId].push(registryItem);
     }
+  }
 
-    return registry;
-  }, {});
+  return registry;
 }

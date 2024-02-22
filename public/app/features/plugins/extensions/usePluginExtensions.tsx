@@ -4,9 +4,9 @@ import { PluginExtension } from '@grafana/data';
 import { GetPluginExtensionsOptions, GetPluginExtensionsResult } from '@grafana/runtime';
 
 import { getPluginExtensions } from './getPluginExtensions';
-import { ReactivePluginExtenionRegistry } from './reactivePluginExtensionRegistry';
+import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 
-export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExtenionRegistry) {
+export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExtensionsRegistry) {
   return function usePluginExtensions(options: GetPluginExtensionsOptions): GetPluginExtensionsResult<PluginExtension> {
     const registry = useObservable(extensionsRegistry.asObservable());
 

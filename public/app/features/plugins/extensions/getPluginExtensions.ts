@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { GetPluginExtensions, reportInteraction } from '@grafana/runtime';
 
-import { ReactivePluginExtenionRegistry } from './reactivePluginExtensionRegistry';
+import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 import type { PluginExtensionRegistry } from './types';
 import {
   isPluginExtensionLinkConfig,
@@ -43,7 +43,7 @@ type GetExtensions = ({
 
 let registry: PluginExtensionRegistry = {};
 
-export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginExtenionRegistry): GetPluginExtensions {
+export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginExtensionsRegistry): GetPluginExtensions {
   // Create a subscription to keep an copy of the registry state for use in the non-async
   // plugin extensions getter.
   extensionRegistry.asObservable().subscribe((r) => {

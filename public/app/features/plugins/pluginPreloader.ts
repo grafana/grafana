@@ -3,7 +3,7 @@ import type { AppPluginConfig } from '@grafana/runtime';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { ReactivePluginExtenionRegistry } from './extensions/reactivePluginExtensionRegistry';
+import { ReactivePluginExtensionsRegistry } from './extensions/reactivePluginExtensionRegistry';
 import * as pluginLoader from './plugin_loader';
 
 export type PluginPreloadResult = {
@@ -12,10 +12,9 @@ export type PluginPreloadResult = {
   extensionConfigs: PluginExtensionConfig[];
 };
 
-// TODO: make sure that we add proper error handling here
 export async function preloadPlugins(
   apps: Record<string, AppPluginConfig> = {},
-  registry: ReactivePluginExtenionRegistry
+  registry: ReactivePluginExtensionsRegistry
 ) {
   startMeasure('frontend_plugins_preload');
   for (const config of Object.values(apps)) {

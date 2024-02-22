@@ -2,7 +2,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { PluginExtensionTypes } from '@grafana/data';
 
-import { ReactivePluginExtenionRegistry } from './reactivePluginExtensionRegistry';
+import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 
 describe('createPluginExtensionsRegistry', () => {
   const originalWarn = global.console.warn;
@@ -16,7 +16,7 @@ describe('createPluginExtensionsRegistry', () => {
   });
 
   it('should return empty registry when no extensions registered', async () => {
-    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
     const observable = reactiveRegistry.asObservable();
     const registry = await firstValueFrom(observable);
     expect(registry).toEqual({});
@@ -24,7 +24,7 @@ describe('createPluginExtensionsRegistry', () => {
 
   it('should be possible to register extensions in the registry', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
 
     reactiveRegistry.register({
       pluginId,
@@ -83,7 +83,7 @@ describe('createPluginExtensionsRegistry', () => {
   it('should be possible to asynchronously register extensions for the same placement (different plugins)', async () => {
     const pluginId1 = 'grafana-basic-app';
     const pluginId2 = 'grafana-basic-app2';
-    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
 
     // Register extensions for the first plugin
     reactiveRegistry.register({
@@ -166,7 +166,7 @@ describe('createPluginExtensionsRegistry', () => {
   it('should be possible to asynchronously register extensions for a different placement (different plugin)', async () => {
     const pluginId1 = 'grafana-basic-app';
     const pluginId2 = 'grafana-basic-app2';
-    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
 
     // Register extensions for the first plugin
     reactiveRegistry.register({
@@ -250,7 +250,7 @@ describe('createPluginExtensionsRegistry', () => {
 
   it('should be possible to asynchronously register extensions for the same placement (same plugin)', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
 
     // Register extensions for the first extension point
     reactiveRegistry.register({
@@ -314,7 +314,7 @@ describe('createPluginExtensionsRegistry', () => {
 
   it('should be possible to asynchronously register extensions for a different placement (same plugin)', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
 
     // Register extensions for the first extension point
     reactiveRegistry.register({
@@ -380,7 +380,7 @@ describe('createPluginExtensionsRegistry', () => {
 
   it('should notify subscribers when the registry changes', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -452,7 +452,7 @@ describe('createPluginExtensionsRegistry', () => {
 
   it('should give the last version of the registry for new subscribers', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -494,7 +494,7 @@ describe('createPluginExtensionsRegistry', () => {
 
   it('should not register extensions for a plugin that had errors', () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -522,7 +522,7 @@ describe('createPluginExtensionsRegistry', () => {
 
   it('should not register an extension if it has an invalid configure() function', () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -550,7 +550,7 @@ describe('createPluginExtensionsRegistry', () => {
 
   it('should not register an extension if it has invalid properties (empty title / description)', () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -577,7 +577,7 @@ describe('createPluginExtensionsRegistry', () => {
 
   it('should not register link extensions with invalid path configured', () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
