@@ -28,6 +28,7 @@ import {
   UserActionEvent,
   GroupByVariable,
   AdHocFiltersVariable,
+  SceneFlexLayout,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
@@ -260,6 +261,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardMacro,
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
+      trackIfIsEmpty,
     ],
     $data:
       layers.length > 0
@@ -525,6 +527,16 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
       case 'panel-menu-shown':
         DashboardInteractions.panelMenuShown();
         break;
+    }
+  });
+}
+
+export function trackIfIsEmpty(parent: DashboardScene) {
+  const { body } = parent.state;
+
+  parent.state.body.subscribeToState(() => {
+    if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
+      parent.setState({ isEmpty: body.state.children.length === 0 });
     }
   });
 }

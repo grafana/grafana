@@ -417,12 +417,8 @@ export function removePanel(dashboard: DashboardScene, panel: VizPanel, ask: boo
   const layout = dashboard.state.body;
 
   if (layout instanceof SceneGridLayout || SceneFlexLayout) {
-    layout.setState({
-      children: panels,
-    });
+    layout.setState({ children: panels });
   }
-
-  dashboard.runIsEmptyCheck();
 }
 
 const onCreateAlert = async (panel: VizPanel) => {
