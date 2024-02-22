@@ -1349,7 +1349,7 @@ export class DashboardModel implements TimeModel {
         }
         try {
           const plugin = await dispatch(loadPanelPlugin(panel.type));
-          await panel.pluginLoaded(plugin);
+          return panel.pluginLoaded(plugin);
         } catch (e) {
           // Plugin not found
           return;
