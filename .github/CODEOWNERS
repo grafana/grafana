@@ -678,8 +678,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/feature-toggle-cleanup.yml @tolzhabayev
 /.github/workflows/scripts/feature-toggle-cleanup/feature-toggle-cleanup.js @tolzhabayev
-/.github/workflows/pr-generate-icons.yml @grafana/grafana-frontend-platform
-/.github/workflows/publish-icons-package.yml @grafana/grafana-frontend-platform
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
