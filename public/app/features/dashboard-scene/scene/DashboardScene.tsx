@@ -526,16 +526,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public runIsEmptyCheck = () => {
-    const { body, viewPanelScene } = this.state;
-
-    if (!!viewPanelScene) {
-      this.setState({ isEmpty: !!viewPanelScene.state.body });
-      return;
-    }
+    const { body } = this.state;
 
     if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
       this.setState({ isEmpty: body.state.children.length === 0 });
-
       return;
     }
 
