@@ -91,6 +91,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   eventsScope = '__global_',
   hoverProximity,
 }) => {
+  // For testing purpose, vertical = false is a new tested feature
+  const isVertical = false;
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
   let alignedFrame: DataFrame;
@@ -113,15 +115,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   let yScaleKey = '';
 
   const xFieldAxisPlacement =
-    xField.config.custom?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden;
+    xField.config.custom?.axisPlacement === AxisPlacement.Hidden
+      ? AxisPlacement.Hidden
+      : isVertical
+        ? AxisPlacement.Bottom
+        : AxisPlacement.Left;
   const xFieldAxisShow = xField.config.custom?.axisPlacement !== AxisPlacement.Hidden;
 
   if (xField.type === FieldType.time) {
     xScaleUnit = 'time';
     builder.addScale({
       scaleKey: xScaleKey,
-      orientation: ScaleOrientation.Horizontal,
-      direction: ScaleDirection.Right,
+      orientation: isVertical ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
+      direction: isVertical ? ScaleDirection.Right : ScaleDirection.Up,
       isTime: true,
       range: () => {
         const r = getTimeRange();
@@ -157,6 +163,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       builder.addHook('drawAxes', (u: uPlot) => {
         u.ctx.save();
 
+        // TODO: if Vertical then time zone labels are hiding the timestamps
         u.ctx.fillStyle = theme.colors.text.primary;
         u.ctx.textAlign = 'left';
         u.ctx.textBaseline = 'bottom';
@@ -182,8 +189,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     builder.addScale({
       scaleKey: xScaleKey,
-      orientation: ScaleOrientation.Horizontal,
-      direction: ScaleDirection.Right,
+      orientation: isVertical ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
+      direction: isVertical ? ScaleDirection.Right : ScaleDirection.Up,
       range: (u, dataMin, dataMax) => [xField.config.min ?? dataMin, xField.config.max ?? dataMax],
     });
 
@@ -243,8 +250,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       tweakScale(
         {
           scaleKey,
-          orientation: ScaleOrientation.Vertical,
-          direction: ScaleDirection.Up,
+          orientation: isVertical ? ScaleOrientation.Vertical : ScaleOrientation.Horizontal,
+          direction: isVertical ? ScaleDirection.Up : ScaleDirection.Right,
           distribution: customConfig.scaleDistribution?.type,
           log: customConfig.scaleDistribution?.log,
           linearThreshold: customConfig.scaleDistribution?.linearThreshold,
@@ -329,7 +336,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             scaleKey,
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
-            placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
+            placement: isVertical ? customConfig.axisPlacement ?? AxisPlacement.Auto : AxisPlacement.Bottom,
             formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
