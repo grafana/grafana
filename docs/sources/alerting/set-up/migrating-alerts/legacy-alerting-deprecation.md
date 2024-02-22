@@ -54,6 +54,5 @@ Refer to our [upgrade instructions][migrating-alerts].
 {{% docs/reference %}}
 [angular_deprecation]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation"
 
-[migrating-alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/migrating-alerts"
-[migrating-alerts]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/migrating-alerts"
+[migrating-alerts]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/migrating-alerts"
 {{% /docs/reference %}}
