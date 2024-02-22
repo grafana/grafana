@@ -503,7 +503,7 @@ require (
 	github.com/mithrandie/go-file/v2 v2.1.0 // indirect
 	github.com/mithrandie/go-text v1.5.4 // indirect
 	github.com/mithrandie/ternary v1.1.1 // indirect
-	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2
+	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // @grafana/enterprise-datasources
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
