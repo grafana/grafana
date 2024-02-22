@@ -56,6 +56,7 @@ import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
+import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
@@ -170,7 +171,9 @@ export class GrafanaApp {
         createAdHocVariableAdapter(),
         createSystemVariableAdapter(),
       ]);
+
       monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
+      setMonacoEnv();
 
       setQueryRunnerFactory(() => new QueryRunner());
       setVariableQueryRunner(new VariableQueryRunner());

@@ -1,5 +1,5 @@
+import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
+
 export default function loadKusto() {
-  return new Promise<void>((resolve) =>
-    __non_webpack_require__(['vs/language/kusto/monaco.contribution'], () => resolve())
-  );
+  return new Worker(new URL('@kusto/monaco-kusto/release/esm/kusto.worker', import.meta.url));
 }
