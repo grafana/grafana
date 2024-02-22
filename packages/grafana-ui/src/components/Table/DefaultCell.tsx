@@ -12,7 +12,7 @@ import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
 import { TableStyles } from './styles';
-import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
+import { CustomCellRendererProps, TableCellOptions, TableCellProps } from './types';
 import { getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
@@ -61,6 +61,19 @@ export const DefaultCell = (props: TableCellProps) => {
     }
   }
 
+  const renderValue = (value: string | ReactElement) => {
+    const CustomWrapper =
+      cellOptions.type === TableCellDisplayMode.CustomWrapper ? cellOptions?.cellWrapperComponent : false;
+    if (CustomWrapper) {
+      return (
+        <CustomWrapper field={field} value={cell.value} rowIndex={row.index} frame={frame}>
+          {value}
+        </CustomWrapper>
+      );
+    }
+    return <>{value}</>;
+  };
+
   return (
     <div
       {...cellProps}
@@ -68,7 +81,8 @@ export const DefaultCell = (props: TableCellProps) => {
       onMouseLeave={showActions ? onMouseLeave : undefined}
       className={cellStyle}
     >
-      {!hasLinks && (isStringValue ? `${value}` : <div className={tableStyles.cellText}>{value}</div>)}
+      {!hasLinks &&
+        (isStringValue ? renderValue(value) : <div className={tableStyles.cellText}>{renderValue(value)}</div>)}
 
       {hasLinks && (
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
@@ -79,11 +93,13 @@ export const DefaultCell = (props: TableCellProps) => {
                   className={cx(clearButtonStyle, getLinkStyle(tableStyles, cellOptions, api.targetClassName))}
                   onClick={api.openMenu}
                 >
-                  {value}
+                  {renderValue(value)}
                 </button>
               );
             } else {
-              return <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
+              return (
+                <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{renderValue(value)}</div>
+              );
             }
           }}
         </DataLinksContextMenu>

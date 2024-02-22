@@ -1,5 +1,5 @@
 import { Property } from 'csstype';
-import { FC } from 'react';
+import { FC, PropsWithChildren } from 'react';
 import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
 import { DataFrame, Field, KeyValue, SelectableValue, TimeRange } from '@grafana/data';
@@ -123,9 +123,18 @@ export interface TableCustomCellOptions {
   type: schema.TableCellDisplayMode.Custom;
 }
 
+/**
+ * @alpha
+ * Can be used to define a custom react wrapper around cells
+ */
+export interface TableCustomCellWrapperOptions {
+  cellWrapperComponent: FC<PropsWithChildren<CustomCellRendererProps>>;
+  type: schema.TableCellDisplayMode.CustomWrapper;
+}
+
 // As cue/schema cannot define function types (as main point of schema is to be serializable) we have to extend the
 // types here with the dynamic API. This means right now this is not usable as a table panel option for example.
-export type TableCellOptions = schema.TableCellOptions | TableCustomCellOptions;
+export type TableCellOptions = schema.TableCellOptions | (TableCustomCellOptions | TableCustomCellWrapperOptions);
 export type TableFieldOptions = Omit<schema.TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
 };
