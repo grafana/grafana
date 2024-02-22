@@ -154,7 +154,7 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
       h = gridItem.state.height ?? 0;
 
       return {
-        id: getPanelIdForVizPanel(gridItem.state.body),
+        id: getPanelIdForVizPanel(gridItem.state.body.state.panel!),
         title: gridItem.state.body.state.title,
         gridPos: { x, y, w, h },
         libraryPanel: {
