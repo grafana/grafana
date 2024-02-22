@@ -416,6 +416,7 @@ export const Components = {
      */
     container: 'Time zone picker select container',
     containerV2: 'data-testid Time zone picker select container',
+    changeTimeSettingsButton: 'data-testid Time zone picker Change time settings button',
   },
   WeekStartPicker: {
     /**
