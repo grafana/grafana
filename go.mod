@@ -92,7 +92,7 @@ require (
 	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3 // @grafana/alerting-squad-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/backend-platform
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/backend-platform
-	github.com/scottlepp/go-duck v0.0.3 // @grafana/grafana-app-platform-squad
+	github.com/scottlepp/go-duck v0.0.4 // @grafana/grafana-app-platform-squad
 	github.com/stretchr/testify v1.8.4 // @grafana/backend-platform
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/backend-platform
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f // @grafana/backend-platform
@@ -490,7 +490,6 @@ require github.com/fullstorydev/grpchan v1.1.1 // @grafana/backend-platform
 require (
 	github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c // indirect
 	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
-	github.com/apache/arrow/go/v16 v16.0.0-20240221194630-e198f309c577 // indirect
 	github.com/apache/thrift v0.18.1 // indirect
 	github.com/bufbuild/protocompile v0.4.0 // indirect
 	github.com/grafana/sqlds/v3 v3.2.0 // indirect
