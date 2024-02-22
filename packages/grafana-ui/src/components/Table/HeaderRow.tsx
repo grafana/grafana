@@ -32,12 +32,9 @@ export const HeaderRow = (props: HeaderRowProps) => {
             aria-label={e2eSelectorsTable.header}
             role="row"
           >
-            {headerGroup.headers.map((column: Column, index: number) => {
-              if (columnHeaders && columnHeaders.has(index)) {
-                return renderHeaderCell(column, tableStyles, showTypeIcons, columnHeaders.get(index));
-              }
-              return renderHeaderCell(column, tableStyles, showTypeIcons);
-            })}
+            {headerGroup.headers.map((column: Column, index: number) => (
+              renderHeaderCell(column, tableStyles, showTypeIcons, columnHeaders.get(index));
+            ))}
           </div>
         );
       })}
