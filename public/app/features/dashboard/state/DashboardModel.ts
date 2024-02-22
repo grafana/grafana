@@ -23,6 +23,7 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
@@ -1339,16 +1340,24 @@ export class DashboardModel implements TimeModel {
     return this.originalDashboard;
   }
 
-  hasAngularPlugins(): boolean {
-    return this.panels.some((panel) => {
+  async hasAngularPlugins(): Promise<boolean> {
+    for (const panel of this.panels) {
+      let plugin;
+      if (!panel.plugin) {
+        plugin = await dispatch(loadPanelPlugin(panel.type));
+        await panel.pluginLoaded(plugin);
+      }
       // Return false for plugins that are angular but have angular.hideDeprecation = false
       const isAngularPanel = panel.isAngularPlugin() && !panel.plugin?.meta.angular?.hideDeprecation;
       let isAngularDs = false;
       if (panel.datasource?.uid) {
         isAngularDs = isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid);
       }
-      return isAngularPanel || isAngularDs;
-    });
+      if (isAngularPanel || isAngularDs) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
