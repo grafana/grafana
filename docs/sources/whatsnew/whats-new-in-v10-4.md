@@ -80,25 +80,17 @@ You can now view your data links inline to help you keep your tables visually st
 
 ![Table inline datalink support](/media/docs/grafana/gif-grafana-10-4-table-inline-datalink.gif)
 
-### Create subtables in table visualizations with Group to Nested Table
+### Create subtables in table visualizations with Group to nested tables
 
 <!-- Nathan Marrs -->
 
 _Available in public preview in all editions of Grafana_
 
-You can now create subtables out of your data using the new **Group to Nested Table** transformation. To use this feature, enable the `groupToNestedTableTransformation` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#preview-feature-toggles).
+You can now create subtables out of your data using the new **Group to nested tables** transformation. To use this feature, enable the `groupToNestedTableTransformation` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#preview-feature-toggles).
 
-{{< video-embed src="/media/docs/grafana/screen-recording-10-4-table-group-to-nested-table-transformation.mp4" caption="Group to Nested Table transformation" >}}
+{{< video-embed src="/media/docs/grafana/screen-recording-10-4-table-group-to-nested-table-transformation.mp4" caption="Group to nested tables transformation" >}}
 
 ## Alerting
-
-### Rule evaluation performance improvements
-
-<!-- Brenda Muir / Ryan Kehoe -->
-
-_Generally available in all editions of Grafana_
-
-Grafana Alerting previously evaluated rules at the start of the evaluation interval. This created a sudden spike of resource utilization, impacting data sources. Rule evaluation is now spread over the entire interval for smoother performance utilization of data sources.
 
 ### Grafana Alerting upgrade with rule preview
 
