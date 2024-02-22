@@ -24,7 +24,7 @@ interface LibraryVizPanelState extends SceneObjectState {
   uid: string;
   name: string;
   panel?: VizPanel;
-  isLoading: boolean;
+  isLoading?: boolean;
   _loadedVersion?: number;
 }
 
