@@ -53,14 +53,10 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 
       <Divider spacing={4} />
       <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
-
       <Divider spacing={4} />
-      {config.featureToggles.traceToMetrics ? (
-        <>
-          <TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
-          <Divider spacing={4} />
-        </>
-      ) : null}
+
+      <TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
+      <Divider spacing={4} />
 
       <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
       <Divider spacing={4} />
