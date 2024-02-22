@@ -16,6 +16,7 @@ interface LibraryVizPanelState extends SceneObjectState {
   uid: string;
   name: string;
   panel?: VizPanel;
+  isLoaded?: boolean;
   panelKey: string;
   _loadedVersion?: number;
 }
@@ -26,6 +27,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
   constructor(state: LibraryVizPanelState) {
     super({
       panel: state.panel ?? getLoadingPanel(state.title, state.panelKey),
+      isLoaded: state.isLoaded ?? false,
       ...state,
     });
 
@@ -33,7 +35,9 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
   }
 
   private _onActivate = () => {
-    this.loadLibraryPanelFromPanelModel();
+    if (!this.state.isLoaded) {
+      this.loadLibraryPanelFromPanelModel();
+    }
   };
 
   private async loadLibraryPanelFromPanelModel() {
@@ -68,7 +72,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
         ],
       });
 
-      this.setState({ panel, _loadedVersion: libPanel.version });
+      this.setState({ panel, _loadedVersion: libPanel.version, isLoaded: true });
     } catch (err) {
       vizPanel.setState({
         _pluginLoadError: 'Unable to load library panel: ' + this.state.uid,

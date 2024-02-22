@@ -136,10 +136,14 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       throw new Error('Panel is not a child of a LibraryVizPanel');
     }
     const libraryPanel = vizPanel.parent;
-    libraryPanel.subscribeToState((n) => {
-      cb(n.panel!);
-    });
-    libraryPanel.activate();
+    if (libraryPanel.state.isLoaded) {
+      cb(vizPanel);
+    } else {
+      libraryPanel.subscribeToState((n) => {
+        cb(n.panel!);
+      });
+      libraryPanel.activate();
+    }
   }
 
   private _handleViewRepeatClone(viewPanel: string) {
