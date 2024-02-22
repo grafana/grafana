@@ -1341,27 +1341,30 @@ export class DashboardModel implements TimeModel {
   }
 
   async hasAngularPlugins(): Promise<boolean> {
-    for (const panel of this.panels) {
-      let plugin;
-      if (!panel.plugin) {
+    await Promise.all(
+      this.panels.map(async (panel) => {
+        if (panel.plugin) {
+          return;
+        }
         try {
-          plugin = await dispatch(loadPanelPlugin(panel.type));
+          const plugin = await dispatch(loadPanelPlugin(panel.type));
           await panel.pluginLoaded(plugin);
         } catch (e) {
           // Plugin not found
-          continue;
+          return;
         }
-      }
+      })
+    );
+
+    return this.panels.some((panel) => {
       // Return false for plugins that are angular but have angular.hideDeprecation = false
       const isAngularPanel = panel.isAngularPlugin() && !panel.plugin?.meta.angular?.hideDeprecation;
       let isAngularDs = false;
       if (panel.datasource?.uid) {
         isAngularDs = isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid);
       }
-      if (isAngularPanel || isAngularDs) {
-        return true;
-      }
-    }
+      return isAngularPanel || isAngularDs;
+    });
     return false;
   }
 }
