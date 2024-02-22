@@ -1883,6 +1883,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.Protocol = HTTPScheme
 	cfg.CertWatchInterval = server.Key("certs_watch_interval").MustDuration(0)
 	cfg.ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
+	cfg.CertWatchInterval = server.Key("certs_watch_interval").MustDuration(0)
 
 	protocolStr := valueAsString(server, "protocol", "http")
 
