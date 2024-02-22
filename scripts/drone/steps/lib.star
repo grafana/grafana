@@ -409,6 +409,7 @@ def playwright_e2e_report_post_link():
             # if the trace doesn't folder exists, it means that there are no failed tests.
             "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi",
             # if it exists, we will post a comment on the PR with the link to the report
+            "export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html",
             "curl -L " +
             "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
             '-H "Accept: application/vnd.github+json" ' +

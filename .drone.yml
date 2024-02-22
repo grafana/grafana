@@ -687,6 +687,7 @@ steps:
     - failure
 - commands:
   - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi
+  - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright
@@ -2016,6 +2017,7 @@ steps:
     - failure
 - commands:
   - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi
+  - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright
@@ -4910,6 +4912,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 1f73fd511f2b35418e228e2bc8d9b07f1df7a00d924b1a921879ef3b248af115
+hmac: 3244d3ed835a52c44eb95626448b05263209dab7b140f8c5fd47aef848c7e1e5
 
 ...
