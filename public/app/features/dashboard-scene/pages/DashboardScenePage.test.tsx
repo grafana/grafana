@@ -194,6 +194,13 @@ describe('DashboardScenePage', () => {
     expect(screen.queryByTitle('Panel A')).not.toBeInTheDocument();
     expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
   });
+
+  it('Shows empty state when dashboard is empty', async () => {
+    loadDashboardMock.mockResolvedValue({ dashboard: { panels: [] }, meta: {} });
+    setup();
+
+    expect(await screen.findByText('Start your new dashboard by adding a visualization')).toBeInTheDocument();
+  });
 });
 
 interface VizOptions {
