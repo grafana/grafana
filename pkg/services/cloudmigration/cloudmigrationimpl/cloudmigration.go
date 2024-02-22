@@ -24,8 +24,8 @@ type Service struct {
 	features  featuremgmt.FeatureToggles
 	dsService datasources.DataSourceService
 
-	api     *api.MigrationAPI
-	metrics *Metrics
+	api *api.MigrationAPI
+	// metrics *Metrics
 }
 
 var LogPrefix = "cloudmigration.service"

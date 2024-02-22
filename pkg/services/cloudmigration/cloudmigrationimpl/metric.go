@@ -3,14 +3,13 @@ package cloudmigrationimpl
 import (
 	"errors"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type Metrics struct {
-	log log.Logger
-}
+// type Metrics struct {
+// 	log log.Logger
+// }
 
 func (s *Service) registerMetrics(prom prometheus.Registerer) error {
 	for _, m := range cloudmigration.PromMetrics {
