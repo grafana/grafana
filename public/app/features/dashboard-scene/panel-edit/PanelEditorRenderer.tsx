@@ -127,13 +127,6 @@ function getStyles(theme: GrafanaTheme2) {
       minHeight: 0,
       gap: '8px',
     }),
-    controls: css({
-      display: 'flex',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      padding: theme.spacing(2, 0, 2, 2),
-    }),
     optionsPane: css({
       flexDirection: 'column',
       borderLeft: `1px solid ${theme.colors.border.weak}`,

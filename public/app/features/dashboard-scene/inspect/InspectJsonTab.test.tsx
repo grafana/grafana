@@ -1,12 +1,21 @@
-import { FieldType, getDefaultTimeRange, LoadingState, standardTransformersRegistry, toDataFrame } from '@grafana/data';
+import { of } from 'rxjs';
+
+import {
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+  PanelData,
+  standardTransformersRegistry,
+  toDataFrame,
+} from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import {
   SceneCanvasText,
-  SceneDataNode,
   SceneDataTransformer,
   SceneGridItem,
   SceneGridLayout,
+  SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
 import * as libpanels from 'app/features/library-panels/state/api';
@@ -34,7 +43,44 @@ jest.mock('@grafana/runtime', () => ({
   getPluginLinkExtensions: jest.fn(() => ({
     extensions: [],
   })),
+  getDataSourceSrv: () => {
+    return {
+      get: jest.fn().mockResolvedValue({
+        getRef: () => ({ uid: 'ds1' }),
+      }),
+      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+    };
+  },
 }));
+
+const runRequestMock = jest.fn().mockReturnValue(
+  of<PanelData>({
+    state: LoadingState.Done,
+    timeRange: getDefaultTimeRange(),
+    series: [
+      toDataFrame({
+        fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
+      }),
+    ],
+    request: {
+      app: 'dashboard',
+      requestId: 'request-id',
+      dashboardUID: 'asd',
+      interval: '1s',
+      panelId: 1,
+      range: getDefaultTimeRange(),
+      targets: [],
+      timezone: 'utc',
+      intervalMs: 1000,
+      startTime: 1,
+      scopedVars: {
+        __sceneObject: { value: new SceneCanvasText({ text: 'asd' }) },
+      },
+    },
+  })
+);
+
+setRunRequest(runRequestMock);
 
 describe('InspectJsonTab', () => {
   it('Can show panel json', async () => {
@@ -121,31 +167,9 @@ function buildTestPanel() {
           },
         },
       ],
-      $data: new SceneDataNode({
-        data: {
-          state: LoadingState.Done,
-          series: [
-            toDataFrame({
-              fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
-            }),
-          ],
-          timeRange: getDefaultTimeRange(),
-          request: {
-            app: 'dashboard',
-            requestId: 'request-id',
-            dashboardUID: 'asd',
-            interval: '1s',
-            panelId: 1,
-            range: getDefaultTimeRange(),
-            targets: [],
-            timezone: 'utc',
-            intervalMs: 1000,
-            startTime: 1,
-            scopedVars: {
-              __sceneObject: { value: new SceneCanvasText({ text: 'asd' }) },
-            },
-          },
-        },
+      $data: new SceneQueryRunner({
+        datasource: { uid: 'abcdef' },
+        queries: [{ refId: 'A' }],
       }),
     }),
   });
