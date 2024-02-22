@@ -51,6 +51,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         width: overflowOnHover ? 'auto' : undefined,
         height: overflowOnHover ? 'auto' : `${rowHeight - 1}px`,
         minHeight: `${rowHeight - 1}px`,
+        wordBreak: overflowOnHover ? 'break-word' : undefined,
         whiteSpace: overflowOnHover ? 'normal' : 'nowrap',
         boxShadow: overflowOnHover ? `0 0 2px ${theme.colors.primary.main}` : undefined,
         background: overflowOnHover ? background ?? theme.components.table.rowHoverBackground : undefined,
