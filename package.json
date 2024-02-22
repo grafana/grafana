@@ -203,7 +203,7 @@
     "rimraf": "5.0.5",
     "rudder-sdk-js": "2.48.1",
     "sass": "1.70.0",
-    "sass-loader": "13.3.2",
+    "sass-loader": "14.1.1",
     "style-loader": "3.3.4",
     "stylelint": "15.11.0",
     "stylelint-config-prettier": "9.0.5",
