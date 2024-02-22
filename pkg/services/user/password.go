@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	ErrPasswordTooShort       = errutil.NewBase(errutil.StatusBadRequest, "password-policy-too-short", errutil.WithPublicMessage("New password is too short"))
-	ErrPasswordPolicyInfringe = errutil.NewBase(errutil.StatusBadRequest, "password-policy-infringe", errutil.WithPublicMessage("New password doesn't comply with the password policy"))
+	ErrPasswordTooShort       = errutil.BadRequest("password.password-policy-too-short", errutil.WithPublicMessage("New password is too short")).Errorf("new password is too short")
+	ErrPasswordPolicyInfringe = errutil.BadRequest("password.password-policy-infringe", errutil.WithPublicMessage("New password doesn't comply with the password policy")).Errorf("new password doesn't comply with the password policy")
 	MinPasswordLength         = 12
 )
 
@@ -38,7 +38,7 @@ func ValidatePassword(newPassword string, config *setting.Cfg) error {
 		return nil
 	}
 	if len(newPassword) < MinPasswordLength {
-		return ErrPasswordTooShort
+		return ErrPasswordPolicyInfringe
 	}
 
 	hasUpperCase := false
