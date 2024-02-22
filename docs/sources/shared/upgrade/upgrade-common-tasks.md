@@ -14,7 +14,7 @@ The following sections provide instructions for how to upgrade Grafana based on 
 
 To upgrade Grafana installed from a Debian package (`.deb`), complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `/etc/grafana/grafana.ini`. This path is specified in the Grafana init.d script using the `--config` file parameter.
+1. In your current installation of Grafana, save your custom configuration changes to a file named `/user/local/etc/grafana/grafana.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
@@ -32,7 +32,7 @@ To upgrade Grafana installed from a Debian package (`.deb`), complete the follow
 
 To upgrade Grafana installed from the Grafana Labs APT repository, complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to a file named `/user/local/etc/grafana/grafana.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
@@ -49,7 +49,7 @@ Grafana automatically updates when you run `apt-get upgrade`.
 
 To upgrade Grafana installed from the binary `.tar.gz` package, complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to the custom configuration file, `custom.ini` or `grafana.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
@@ -61,7 +61,7 @@ To upgrade Grafana installed from the binary `.tar.gz` package, complete the fol
 
 To upgrade Grafana installed using RPM or YUM complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `/etc/grafana/grafana.ini`. This path is specified in the Grafana init.d script using the `--config` file parameter.
+1. In your current installation of Grafana, save your custom configuration changes to a file named `/user/local/etc/grafana/grafana.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
@@ -84,7 +84,7 @@ To upgrade Grafana installed using RPM or YUM complete the following steps:
 
 To upgrade Grafana running in a Docker container, complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to the custom configuration file, `custom.ini` or `grafana.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
@@ -105,7 +105,7 @@ To upgrade Grafana running in a Docker container, complete the following steps:
 
 To upgrade Grafana installed on Windows, complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to a file named `/user/local/etc/conf/custom.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
@@ -119,7 +119,7 @@ To upgrade Grafana installed on Windows, complete the following steps:
 
 To upgrade Grafana installed on Mac, complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to a file named `/user/local/etc/conf/custom.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
