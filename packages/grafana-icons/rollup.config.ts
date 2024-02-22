@@ -12,6 +12,11 @@ export default [
     plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), esbuild()],
     output: [
       {
+        format: 'cjs',
+        sourcemap: true,
+        dir: path.dirname(pkg.publishConfig.main),
+      },
+      {
         format: 'esm',
         sourcemap: true,
         dir: path.dirname(pkg.publishConfig.module),
