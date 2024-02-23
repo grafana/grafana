@@ -4,13 +4,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { NodeGraph } from '@grafana/nodegraph';
 import { ThemeContext } from '@grafana/ui';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
-import { FlameNodeGraph } from './FlameNodeGraph';
+import { FlameNodeGraph } from './FlameNodeGraph/FlameNodeGraph';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';

@@ -84,8 +84,10 @@ export function mergeSubtrees(
     const args = stack.shift()!;
     const indexes = args.items.flatMap((i) => i.itemIndexes);
     const newItem: LevelItem = {
+      label: args.items[0].label,
       // We use the items value instead of value from the data frame, cause we could have changed it in the process
       value: args.items.reduce((acc, i) => acc + i.value, 0),
+      self: args.items.reduce((acc, i) => acc + i.self, 0),
       itemIndexes: indexes,
       // these will change later
       children: [],

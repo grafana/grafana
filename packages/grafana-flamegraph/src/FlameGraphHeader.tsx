@@ -173,7 +173,7 @@ function getViewOptions(width: number, vertical?: boolean): Array<SelectableValu
   let viewOptions: Array<{ value: SelectedView; label: string; description: string }> = [
     { value: SelectedView.TopTable, label: 'Top Table', description: 'Only show top table' },
     { value: SelectedView.FlameGraph, label: 'Flame Graph', description: 'Only show flame graph' },
-    { value: SelectedView.Graph, label: 'Graph', description: 'Only show node graph' },
+    { value: SelectedView.NodeGraph, label: 'Node Graph', description: 'Only show node graph' },
   ];
 
   if (width >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH || vertical) {

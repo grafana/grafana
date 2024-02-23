@@ -85,7 +85,8 @@ export function useLayout(
     }
 
     // Layered layout is better but also more expensive, so we switch to default force based layout for bigger graphs.
-    const finalLayoutType = layoutType === 'layered' && rawNodes.length <= 500 ? 'layered' : 'force';
+    // const finalLayoutType = layoutType === 'layered' && rawNodes.length <= 500 ? 'layered' : 'force';
+    const finalLayoutType = layoutType;
 
     setLoading(true);
     // This is async but as I wanted to still run the sync grid layout, and you cannot return promise from effect so
