@@ -8,7 +8,7 @@ aliases:
   - ../manage-notifications/manage-contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/manage-contact-points/
   - create-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-contact-point/
   - ./alerting-rules/
-  - ./alerting-rules/configure-notifications/manage-contact-points/
+  - ./alerting-rules/manage-notifications/manage-contact-points/
   - alerting/manage-notifications/manage-contact-points/configure-integrations/
   - ./alerting-rules/manage-contact-points/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/
