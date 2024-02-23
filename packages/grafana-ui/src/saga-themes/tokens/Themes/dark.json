@@ -21,7 +21,7 @@
           "type": "color"
         },
         "text": {
-          "value": "{color.magenta.0}",
+          "value": "{color.magenta.50}",
           "type": "color"
         }
       },
@@ -35,7 +35,7 @@
           "type": "color"
         },
         "text": {
-          "value": "{color.green.0}",
+          "value": "{color.green.50}",
           "type": "color"
         }
       },
@@ -49,7 +49,7 @@
           "type": "color"
         },
         "text": {
-          "value": "{color.orange.0}",
+          "value": "{color.orange.50}",
           "type": "color"
         }
       },
@@ -63,7 +63,7 @@
           "type": "color"
         },
         "text": {
-          "value": "{color.blue.0}",
+          "value": "{color.blue.50}",
           "type": "color"
         }
       }
@@ -98,7 +98,7 @@
         "type": "color"
       },
       "max-contrast": {
-        "value": "{color.gray.0}",
+        "value": "{color.gray.50}",
         "type": "color"
       },
       "link": {

@@ -3,7 +3,7 @@
     "core",
     "semantic",
     "component/button",
-    "Theming/dark",
-    "Theming/light"
+    "Themes/dark",
+    "Themes/light"
   ]
 }
