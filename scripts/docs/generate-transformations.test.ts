@@ -1,16 +1,12 @@
-import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
-import { completeTemplate, buildMarkdownContent } from './generate-transformations.ts';
+import { completeTemplate } from './generate-transformations.ts';
 
-describe('Makefile Tests', () => {
-  const rootDir = resolve(__dirname, '../../');
-  const makefilePath = resolve(rootDir, 'docs/Makefile');
-
+describe('makefile script tests', () => {
   it('should execute without error and match the content written to index.md', () => {
-    // Execute the script to generate the markdown content.
-    buildMarkdownContent(); 
+    // Build root directory path.
+    const rootDir = resolve(__dirname, '../../');
 
     // Build path to the generated markdown file.
     const path = resolve(rootDir, 'docs/sources/panels-visualizations/query-transform-data/transform-data/index.md');
