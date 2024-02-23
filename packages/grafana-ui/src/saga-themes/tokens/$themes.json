@@ -17,7 +17,6 @@
     "$figmaModeId": "2649:6",
     "$figmaVariableReferences": {
       "dimension.scale": "a64139c347ff5f767c6b4f36e6c3b800195e4eb9",
-      "spacing.0": "cc63a4bc12b664098b302bf0f824e2622de080c2",
       "spacing.25": "38f60f63d8b656956530e885dc7ac4208aacbf5d",
       "spacing.50": "030c42f7acc6c48d1475b4e39e6de5d039b241a0",
       "spacing.75": "45dba768f2617e3cb126ed3f7bee6fee187d5f27",
@@ -125,12 +124,13 @@
       "color.gray.1200": "c37286fff77a3cc84fa424d2891e27191a9a2e0e",
       "color.gray.1300": "f6d6090ce96e1ac925753923b57b8a524f008334",
       "color.gray.1400": "deccdf43c38e900e9de755a58d8f9af1c79520fa",
-      "boder.borderWidth.0": "11e8a8873e62461b0a32365dbf864a48ca98abb5",
-      "boder.borderWidth.1": "0e54dc2afa0a65149aafcb2dd1c0705b19f74aeb",
-      "boder.borderWidth.2": "49b582c93c108d0c9efe1808b6014dbb5bae59be",
-      "boder.borderWidth.3": "88dbb505f307aeb1e05e718f27ca9ed78e219825",
-      "boder.borderWidth.4": "ce6757c1d5cf83b99531173a6f79e0d729a95590",
-      "boder.borderWidth.5": "7183a2be31a86aec3ee8d1d5def8c0e7344abe65"
+      "border.borderWidth.1": "0e54dc2afa0a65149aafcb2dd1c0705b19f74aeb",
+      "border.borderWidth.2": "49b582c93c108d0c9efe1808b6014dbb5bae59be",
+      "border.borderWidth.3": "88dbb505f307aeb1e05e718f27ca9ed78e219825",
+      "border.borderWidth.4": "ce6757c1d5cf83b99531173a6f79e0d729a95590",
+      "border.borderWidth.5": "7183a2be31a86aec3ee8d1d5def8c0e7344abe65",
+      "border.borderWidth.none": "11e8a8873e62461b0a32365dbf864a48ca98abb5",
+      "spacing.none": "cc63a4bc12b664098b302bf0f824e2622de080c2"
     }
   },
   {

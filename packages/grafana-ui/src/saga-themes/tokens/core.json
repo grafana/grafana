@@ -7,10 +7,6 @@
     }
   },
   "spacing": {
-    "0": {
-      "value": "{dimension.scale}*0",
-      "type": "spacing"
-    },
     "25": {
       "value": "{dimension.scale}*0.25",
       "type": "spacing"
@@ -61,6 +57,10 @@
     },
     "1000": {
       "value": "{dimension.scale}*10",
+      "type": "spacing"
+    },
+    "none": {
+      "value": "{dimension.scale}*0",
       "type": "spacing"
     }
   },
@@ -145,10 +145,6 @@
       }
     },
     "fontSize": {
-      "0": {
-        "value": "{font.fontSize.base}*0.625",
-        "type": "fontSizes"
-      },
       "1": {
         "value": "{font.fontSize.base}*0.75",
         "type": "fontSizes"
@@ -229,16 +225,16 @@
         "value": "{font.fontSize.base}*14",
         "type": "fontSizes"
       },
+      "min": {
+        "value": "{font.fontSize.base}*0.625",
+        "type": "fontSizes"
+      },
       "base": {
         "value": "{dimension.scale}*2",
         "type": "fontSizes"
       }
     },
     "lineHeight": {
-      "0": {
-        "value": "{dimension.scale}*2",
-        "type": "lineHeights"
-      },
       "1": {
         "value": "{dimension.scale}*3",
         "type": "lineHeights"
@@ -301,6 +297,10 @@
       },
       "16": {
         "value": "{dimension.scale}*37",
+        "type": "lineHeights"
+      },
+      "min": {
+        "value": "{dimension.scale}*2",
         "type": "lineHeights"
       }
     },
@@ -369,7 +369,7 @@
         "description": "Standard Corner Radius used throughout Grafana."
       },
       "circle": {
-        "value": "100000",
+        "value": "100%",
         "type": "borderRadius",
         "description": "used to generate full circle elements"
       },
@@ -378,13 +378,35 @@
         "type": "borderRadius",
         "description": "used to generate pill-shaped elements"
       }
+    },
+    "borderWidth": {
+      "1": {
+        "value": "1",
+        "type": "borderWidth"
+      },
+      "2": {
+        "value": "2",
+        "type": "borderWidth"
+      },
+      "3": {
+        "value": "3",
+        "type": "borderWidth"
+      },
+      "4": {
+        "value": "4",
+        "type": "borderWidth"
+      },
+      "5": {
+        "value": "5",
+        "type": "borderWidth"
+      },
+      "none": {
+        "value": "0",
+        "type": "borderWidth"
+      }
     }
   },
   "opacity": {
-    "0": {
-      "value": "0",
-      "type": "opacity"
-    },
     "2": {
       "value": "0.02",
       "type": "opacity"
@@ -452,10 +474,6 @@
     "98": {
       "value": "0.98",
       "type": "opacity"
-    },
-    "100": {
-      "value": "1",
-      "type": "opacity"
     }
   },
   "zIndex": {
@@ -506,7 +524,7 @@
   },
   "color": {
     "blue": {
-      "0": {
+      "50": {
         "value": "#f7f7f7",
         "type": "color"
       },
@@ -548,7 +566,7 @@
       }
     },
     "purple": {
-      "0": {
+      "50": {
         "value": "#eeeff2",
         "type": "color"
       },
@@ -590,7 +608,7 @@
       }
     },
     "red": {
-      "0": {
+      "50": {
         "value": "#fff7fc",
         "type": "color"
       },
@@ -632,7 +650,7 @@
       }
     },
     "magenta": {
-      "0": {
+      "50": {
         "value": "#fffafd",
         "type": "color"
       },
@@ -674,7 +692,7 @@
       }
     },
     "green": {
-      "0": {
+      "50": {
         "value": "#f8fff2",
         "type": "color"
       },
@@ -716,7 +734,7 @@
       }
     },
     "yellow": {
-      "0": {
+      "50": {
         "value": "#f5f5eb",
         "type": "color"
       },
@@ -758,7 +776,7 @@
       }
     },
     "orange": {
-      "0": {
+      "50": {
         "value": "#fffbf7",
         "type": "color"
       },
@@ -800,7 +818,7 @@
       }
     },
     "gray": {
-      "0": {
+      "50": {
         "value": "#ffffff",
         "type": "color"
       },
@@ -859,34 +877,6 @@
       "1400": {
         "value": "#000000",
         "type": "color"
-      }
-    }
-  },
-  "boder": {
-    "borderWidth": {
-      "0": {
-        "value": "0",
-        "type": "borderWidth"
-      },
-      "1": {
-        "value": "1",
-        "type": "borderWidth"
-      },
-      "2": {
-        "value": "2",
-        "type": "borderWidth"
-      },
-      "3": {
-        "value": "3",
-        "type": "borderWidth"
-      },
-      "4": {
-        "value": "4",
-        "type": "borderWidth"
-      },
-      "5": {
-        "value": "5",
-        "type": "borderWidth"
       }
     }
   }

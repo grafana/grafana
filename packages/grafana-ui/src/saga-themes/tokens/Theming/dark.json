@@ -147,10 +147,10 @@
       "value": {
         "color": "#010409bf",
         "type": "dropShadow",
-        "x": 0,
-        "y": 4,
-        "blur": 8,
-        "spread": 0
+        "x": "0",
+        "y": "4",
+        "blur": "8",
+        "spread": "0"
       },
       "type": "boxShadow",
       "oldValue": [
@@ -168,10 +168,10 @@
       "value": {
         "color": "#010409",
         "type": "dropShadow",
-        "x": 0,
-        "y": 8,
-        "blur": 24,
-        "spread": 0
+        "x": "0",
+        "y": "8",
+        "blur": "24",
+        "spread": "0"
       },
       "type": "boxShadow",
       "oldValue": [
