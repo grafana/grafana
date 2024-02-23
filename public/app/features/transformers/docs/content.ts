@@ -54,9 +54,9 @@ Use this transformation to add a new field calculated from two other fields. Eac
     - **Total** - Calculates the cumulative total up to and including the current row.
     - **Mean** - Calculates the mean up to and including the current row.
   - **Window functions** - Apply window functions. The window can either be **trailing** or **centered**.
-    With a trailing window the current row will be the last row in the window. 
-    With a centered window the window will be centered on the current row. 
-    For even window sizes, the window will be centered between the current row, and the previous row. 
+    With a trailing window the current row will be the last row in the window.
+    With a centered window the window will be centered on the current row.
+    For even window sizes, the window will be centered between the current row, and the previous row.
     - **Mean** - Calculates the moving mean or running average.
     - **Stddev** - Calculates the moving standard deviation.
     - **Variance** - Calculates the moving variance.
@@ -187,7 +187,7 @@ Grafana builds value mappings from your query result and applies them to the rea
     name: 'Convert field type',
     getHelperDocs: function () {
       return `
-Use this transformation to modify the field type of a specified field. 
+Use this transformation to modify the field type of a specified field.
 
 This transformation has the following options:
 
@@ -206,12 +206,12 @@ For example, consider the following query that could be modified by selecting th
 
 #### Sample Query
 
-| Time       | Mark      | Value |
-|------------|-----------|-------|
-| 2017-07-01 | above     | 25    |
-| 2018-08-02 | below     | 22    |
-| 2019-09-02 | below     | 29    |
-| 2020-10-04 | above     | 22    |
+| Time       | Mark  | Value |
+|------------|-------|-------|
+| 2017-07-01 | above | 25    |
+| 2018-08-02 | below | 22    |
+| 2019-09-02 | below | 29    |
+| 2020-10-04 | above | 22    |
 
 The result:
 
@@ -315,13 +315,13 @@ You'll get the following output:
 
 #### Transformed Data
 
-| Location  | ID | Name      | Lng         | Lat       | Values |
-|-----------|----|-----------|-------------|-----------|--------|
-| AL        | AL | Alabama   | -80.891064  | 12.448457 | 0      |
-| AK        | AK | Arkansas  | -100.891064 | 24.448457 | 10     |
-| Arizona   |    |           |             |           | 5      |
-| Arkansas  |    |           |             |           | 1      |
-| Somewhere |    |           |             |           | 5      |
+| Location  | ID | Name     | Lng         | Lat       | Values |
+|-----------|----|----------|-------------|-----------|--------|
+| AL        | AL | Alabama  | -80.891064  | 12.448457 | 0      |
+| AK        | AK | Arkansas | -100.891064 | 24.448457 | 10     |
+| Arizona   |    |          |             |           | 5      |
+| Arkansas  |    |          |             |           | 1      |
+| Somewhere |    |          |             |           | 5      |
 
 This transformation lets you augment your data by fetching additional information from external sources, providing a more comprehensive dataset for analysis and visualization.
   `;
