@@ -35,7 +35,7 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 ## Requirements
 
-1. To use images in notifications, Grafana must be set up to use [image rendering][image-rendering]. You can either install the image rendering plugin or run it as a remote rendering service.
+1. To use images in notifications, Grafana must be set up to use image rendering. You can either install the image rendering plugin or run it as a remote rendering service.
 
 2. When a screenshot is taken it is saved to the [data][paths] folder, even if Grafana is configured to upload screenshots to a cloud storage service. Grafana must have write-access to this folder otherwise screenshots cannot be saved to disk and an error will be logged for each failed screenshot attempt.
 
@@ -139,9 +139,3 @@ For example, if a screenshot could not be taken within the expected time (10 sec
 - `grafana_screenshot_successes_total`
 - `grafana_screenshot_upload_failures_total`
 - `grafana_screenshot_upload_successes_total`
-
-{{% docs/reference %}}
-[image-rendering]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering"
-
-[paths]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#paths"
-{{% /docs/reference %}}
