@@ -190,13 +190,9 @@ export function buildMarkdownContent(
   currentDir: string = __dirname,
   writePath = WRITE_PATH
 ) {
+  // Build the path to the Markdown file.
   const indexPath = path.join(currentDir, writePath);
-  console.log(currentDir, 'currentDir');
-  console.log(indexPath, 'indexPath');
 
-  // Write content to Markdown file.
+  // Write content to the Markdown file.
   writeFileSync(indexPath, content, 'utf-8');
 }
-
-// Invoke the function to build the markdown content when the file is run.
-buildMarkdownContent();
