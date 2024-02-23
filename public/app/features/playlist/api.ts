@@ -8,6 +8,7 @@ import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource'
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { dispatch } from 'app/store/store';
 
+import { Resource, ResourceForCreate, ResourceList } from '../apiserver/resource';
 import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search/service';
 
 import { Playlist, PlaylistItem, PlaylistAPI } from './types';
@@ -94,7 +95,7 @@ class K8sAPI implements PlaylistAPI {
 }
 
 // This converts a saved k8s resource into a playlist object
-// the main difference is that k8s uses metdata.name as the uid
+// the main difference is that k8s uses metadata.name as the uid
 // to avoid future confusion, the display name is now called "title"
 function k8sResourceAsPlaylist(r: K8sPlaylist): Playlist {
   const { spec, metadata } = r;
