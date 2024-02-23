@@ -27,7 +27,9 @@ type ProvisioningSrv struct {
 	contactPointService ContactPointService
 	templates           TemplateService
 	muteTimings         MuteTimingService
-	alertRules          AlertRuleService
+	timeIntervals       TimeIntervalService
+
+	alertRules AlertRuleService
 }
 
 type ContactPointService interface {
@@ -55,6 +57,14 @@ type MuteTimingService interface {
 	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
 	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
 	DeleteMuteTiming(ctx context.Context, name string, orgID int64) error
+}
+
+type TimeIntervalService interface {
+	GetTimeIntervals(ctx context.Context, orgID int64) ([]definitions.TimeInterval, error)
+	GetTimeInterval(ctx context.Context, name string, orgID int64) (definitions.TimeInterval, error)
+	CreateTimeInterval(ctx context.Context, ti definitions.TimeInterval, orgID int64) (definitions.TimeInterval, error)
+	UpdateTimeInterval(ctx context.Context, ti definitions.TimeInterval, orgID int64) (definitions.TimeInterval, error)
+	DeleteTimeInterval(ctx context.Context, name string, orgID int64) error
 }
 
 type AlertRuleService interface {
@@ -249,6 +259,14 @@ func (srv *ProvisioningSrv) RouteGetMuteTiming(c *contextmodel.ReqContext, name 
 	return response.JSON(http.StatusOK, timing)
 }
 
+func (srv *ProvisioningSrv) RouteGetTimeInterval(c *contextmodel.ReqContext, name string) response.Response {
+	ti, err := srv.timeIntervals.GetTimeInterval(c.Req.Context(), name, c.SignedInUser.GetOrgID())
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get time interval by name", err)
+	}
+	return response.JSON(http.StatusOK, ti)
+}
+
 func (srv *ProvisioningSrv) RouteGetMuteTimingExport(c *contextmodel.ReqContext, name string) response.Response {
 	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
@@ -271,6 +289,14 @@ func (srv *ProvisioningSrv) RouteGetMuteTimings(c *contextmodel.ReqContext) resp
 	return response.JSON(http.StatusOK, timings)
 }
 
+func (srv *ProvisioningSrv) RouteGetTimeIntervals(c *contextmodel.ReqContext) response.Response {
+	intervals, err := srv.timeIntervals.GetTimeIntervals(c.Req.Context(), c.SignedInUser.GetOrgID())
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get time intervals", err)
+	}
+	return response.JSON(http.StatusOK, intervals)
+}
+
 func (srv *ProvisioningSrv) RouteGetMuteTimingsExport(c *contextmodel.ReqContext) response.Response {
 	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
@@ -289,6 +315,15 @@ func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt d
 	return response.JSON(http.StatusCreated, created)
 }
 
+func (srv *ProvisioningSrv) RoutePostTimeInterval(c *contextmodel.ReqContext, ti definitions.TimeInterval) response.Response {
+	ti.Provenance = determineProvenance(c)
+	created, err := srv.timeIntervals.CreateTimeInterval(c.Req.Context(), ti, c.SignedInUser.GetOrgID())
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create time interval", err)
+	}
+	return response.JSON(http.StatusCreated, created)
+}
+
 func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval, name string) response.Response {
 	mt.Name = name
 	mt.Provenance = determineProvenance(c)
@@ -299,10 +334,28 @@ func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt de
 	return response.JSON(http.StatusAccepted, updated)
 }
 
+func (srv *ProvisioningSrv) RoutePutTimeInterval(c *contextmodel.ReqContext, ti definitions.TimeInterval, name string) response.Response {
+	ti.Name = name
+	ti.Provenance = determineProvenance(c)
+	updated, err := srv.timeIntervals.UpdateTimeInterval(c.Req.Context(), ti, c.SignedInUser.GetOrgID())
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update time interval", err)
+	}
+	return response.JSON(http.StatusAccepted, updated)
+}
+
 func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *contextmodel.ReqContext, name string) response.Response {
 	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.SignedInUser.GetOrgID())
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to delete mute timing", err)
+	}
+	return response.JSON(http.StatusNoContent, nil)
+}
+
+func (srv *ProvisioningSrv) RouteDeleteTimeInterval(c *contextmodel.ReqContext, name string) response.Response {
+	err := srv.timeIntervals.DeleteTimeInterval(c.Req.Context(), name, c.SignedInUser.GetOrgID())
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to delete time interval", err)
 	}
 	return response.JSON(http.StatusNoContent, nil)
 }

@@ -68,6 +68,7 @@ type API struct {
 	ContactPointService  *provisioning.ContactPointService
 	Templates            *provisioning.TemplateService
 	MuteTimings          *provisioning.MuteTimingService
+	TimeIntervals        *provisioning.TimeIntervalService
 	AlertRules           *provisioning.AlertRuleService
 	AlertsRouter         *sender.AlertsRouter
 	EvaluatorFactory     eval.EvaluatorFactory
@@ -149,6 +150,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		contactPointService: api.ContactPointService,
 		templates:           api.Templates,
 		muteTimings:         api.MuteTimings,
+		timeIntervals:       api.TimeIntervals,
 		alertRules:          api.AlertRules,
 	}), m)
 
@@ -158,9 +160,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	}), m)
 
 	api.RegisterNotificationsApiEndpoints(NewNotificationsApi(&NotificationSrv{
-		logger:            logger,
-		receiverService:   api.ReceiverService,
-		muteTimingService: api.MuteTimings,
+		logger:              logger,
+		receiverService:     api.ReceiverService,
+		muteTimingService:   api.MuteTimings,
+		timeIntervalService: api.TimeIntervals,
 	}), m)
 
 	// Inject upgrade endpoints if legacy alerting is enabled and the feature flag is enabled.

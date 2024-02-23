@@ -225,3 +225,27 @@ apiVersion: 1
 # - orgId: 1
 #   # <string, required> name of the mute time interval, must be unique
 #   name: mti_1
+
+# # List of time intervals to import or update
+# timeIntervals:
+#   # <int> organization ID, default = 1
+# - orgId: 1
+#   # <string, required> name of the time interval, must be unique
+#   name: ti_1
+#   # <list> time intervals that should trigger the muting
+#            refer to https://prometheus.io/docs/alerting/latest/configuration/#time_interval-0
+#   time_intervals:
+#    - times:
+#      - start_time: '06:00'
+#        end_time: '23:59'
+#      weekdays: ['monday:wednesday','saturday', 'sunday']
+#      months: ['1:3', 'may:august', 'december']
+#      years: ['2020:2022', '2030']
+#      days_of_month: ['1:5', '-3:-1']
+
+# # List of time intervals that should be deleted
+# deleteTimeIntervals:
+#   # <int> organization ID, default = 1
+# - orgId: 1
+#   # <string, required> name of the time interval, must be unique
+#   name: ti_1

@@ -17,6 +17,7 @@ type ProvisionerConfig struct {
 	ContactPointService        provisioning.ContactPointService
 	NotificiationPolicyService provisioning.NotificationPolicyService
 	MuteTimingService          provisioning.MuteTimingService
+	TimeIntervalService        provisioning.TimeIntervalService
 	TemplateService            provisioning.TemplateService
 }
 
@@ -39,6 +40,11 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	if err != nil {
 		return fmt.Errorf("mute times: %w", err)
 	}
+	tiProvisioner := NewTimeIntervalsProvisioner(logger, cfg.TimeIntervalService)
+	err = tiProvisioner.Provision(ctx, files)
+	if err != nil {
+		return fmt.Errorf("time intervals: %w", err)
+	}
 	ttProvsioner := NewTextTemplateProvisioner(logger, cfg.TemplateService)
 	err = ttProvsioner.Provision(ctx, files)
 	if err != nil {
@@ -56,6 +62,10 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	err = mtProvisioner.Unprovision(ctx, files)
 	if err != nil {
 		return fmt.Errorf("mute times: %w", err)
+	}
+	err = tiProvisioner.Unprovision(ctx, files)
+	if err != nil {
+		return fmt.Errorf("time intervals: %w", err)
 	}
 	err = ttProvsioner.Unprovision(ctx, files)
 	if err != nil {

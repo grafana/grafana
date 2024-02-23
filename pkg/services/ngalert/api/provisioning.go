@@ -68,20 +68,40 @@ func (f *ProvisioningApiHandler) handleRouteGetMuteTiming(ctx *contextmodel.ReqC
 	return f.svc.RouteGetMuteTiming(ctx, name)
 }
 
+func (f *ProvisioningApiHandler) handleRouteGetTimeInterval(ctx *contextmodel.ReqContext, name string) response.Response {
+	return f.svc.RouteGetTimeInterval(ctx, name)
+}
+
 func (f *ProvisioningApiHandler) handleRouteGetMuteTimings(ctx *contextmodel.ReqContext) response.Response {
 	return f.svc.RouteGetMuteTimings(ctx)
+}
+
+func (f *ProvisioningApiHandler) handleRouteGetTimeIntervals(ctx *contextmodel.ReqContext) response.Response {
+	return f.svc.RouteGetTimeIntervals(ctx)
 }
 
 func (f *ProvisioningApiHandler) handleRoutePostMuteTiming(ctx *contextmodel.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
 	return f.svc.RoutePostMuteTiming(ctx, mt)
 }
 
+func (f *ProvisioningApiHandler) handleRoutePostTimeInterval(ctx *contextmodel.ReqContext, ti apimodels.TimeInterval) response.Response {
+	return f.svc.RoutePostTimeInterval(ctx, ti)
+}
+
 func (f *ProvisioningApiHandler) handleRoutePutMuteTiming(ctx *contextmodel.ReqContext, mt apimodels.MuteTimeInterval, name string) response.Response {
 	return f.svc.RoutePutMuteTiming(ctx, mt, name)
 }
 
+func (f *ProvisioningApiHandler) handleRoutePutTimeInterval(ctx *contextmodel.ReqContext, ti apimodels.TimeInterval, name string) response.Response {
+	return f.svc.RoutePutTimeInterval(ctx, ti, name)
+}
+
 func (f *ProvisioningApiHandler) handleRouteDeleteMuteTiming(ctx *contextmodel.ReqContext, name string) response.Response {
 	return f.svc.RouteDeleteMuteTiming(ctx, name)
+}
+
+func (f *ProvisioningApiHandler) handleRouteDeleteTimeInterval(ctx *contextmodel.ReqContext, name string) response.Response {
+	return f.svc.RouteDeleteTimeInterval(ctx, name)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetAlertRules(ctx *contextmodel.ReqContext) response.Response {

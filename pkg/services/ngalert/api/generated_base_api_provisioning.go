@@ -24,6 +24,7 @@ type ProvisioningApi interface {
 	RouteDeleteContactpoints(*contextmodel.ReqContext) response.Response
 	RouteDeleteMuteTiming(*contextmodel.ReqContext) response.Response
 	RouteDeleteTemplate(*contextmodel.ReqContext) response.Response
+	RouteDeleteTimeInterval(*contextmodel.ReqContext) response.Response
 	RouteExportMuteTiming(*contextmodel.ReqContext) response.Response
 	RouteExportMuteTimings(*contextmodel.ReqContext) response.Response
 	RouteGetAlertRule(*contextmodel.ReqContext) response.Response
@@ -40,15 +41,19 @@ type ProvisioningApi interface {
 	RouteGetPolicyTreeExport(*contextmodel.ReqContext) response.Response
 	RouteGetTemplate(*contextmodel.ReqContext) response.Response
 	RouteGetTemplates(*contextmodel.ReqContext) response.Response
+	RouteGetTimeInterval(*contextmodel.ReqContext) response.Response
+	RouteGetTimeIntervals(*contextmodel.ReqContext) response.Response
 	RoutePostAlertRule(*contextmodel.ReqContext) response.Response
 	RoutePostContactpoints(*contextmodel.ReqContext) response.Response
 	RoutePostMuteTiming(*contextmodel.ReqContext) response.Response
+	RoutePostTimeInterval(*contextmodel.ReqContext) response.Response
 	RoutePutAlertRule(*contextmodel.ReqContext) response.Response
 	RoutePutAlertRuleGroup(*contextmodel.ReqContext) response.Response
 	RoutePutContactpoint(*contextmodel.ReqContext) response.Response
 	RoutePutMuteTiming(*contextmodel.ReqContext) response.Response
 	RoutePutPolicyTree(*contextmodel.ReqContext) response.Response
 	RoutePutTemplate(*contextmodel.ReqContext) response.Response
+	RoutePutTimeInterval(*contextmodel.ReqContext) response.Response
 	RouteResetPolicyTree(*contextmodel.ReqContext) response.Response
 }
 
@@ -71,6 +76,11 @@ func (f *ProvisioningApiHandler) RouteDeleteTemplate(ctx *contextmodel.ReqContex
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
 	return f.handleRouteDeleteTemplate(ctx, nameParam)
+}
+func (f *ProvisioningApiHandler) RouteDeleteTimeInterval(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	nameParam := web.Params(ctx.Req)[":name"]
+	return f.handleRouteDeleteTimeInterval(ctx, nameParam)
 }
 func (f *ProvisioningApiHandler) RouteExportMuteTiming(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -136,6 +146,14 @@ func (f *ProvisioningApiHandler) RouteGetTemplate(ctx *contextmodel.ReqContext) 
 func (f *ProvisioningApiHandler) RouteGetTemplates(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteGetTemplates(ctx)
 }
+func (f *ProvisioningApiHandler) RouteGetTimeInterval(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	nameParam := web.Params(ctx.Req)[":name"]
+	return f.handleRouteGetTimeInterval(ctx, nameParam)
+}
+func (f *ProvisioningApiHandler) RouteGetTimeIntervals(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetTimeIntervals(ctx)
+}
 func (f *ProvisioningApiHandler) RoutePostAlertRule(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
 	conf := apimodels.ProvisionedAlertRule{}
@@ -159,6 +177,14 @@ func (f *ProvisioningApiHandler) RoutePostMuteTiming(ctx *contextmodel.ReqContex
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.handleRoutePostMuteTiming(ctx, conf)
+}
+func (f *ProvisioningApiHandler) RoutePostTimeInterval(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Request Body
+	conf := apimodels.TimeInterval{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleRoutePostTimeInterval(ctx, conf)
 }
 func (f *ProvisioningApiHandler) RoutePutAlertRule(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -219,6 +245,16 @@ func (f *ProvisioningApiHandler) RoutePutTemplate(ctx *contextmodel.ReqContext) 
 	}
 	return f.handleRoutePutTemplate(ctx, conf, nameParam)
 }
+func (f *ProvisioningApiHandler) RoutePutTimeInterval(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	nameParam := web.Params(ctx.Req)[":name"]
+	// Parse Request Body
+	conf := apimodels.TimeInterval{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleRoutePutTimeInterval(ctx, conf, nameParam)
+}
 func (f *ProvisioningApiHandler) RouteResetPolicyTree(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteResetPolicyTree(ctx)
 }
@@ -270,6 +306,18 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 				http.MethodDelete,
 				"/api/v1/provisioning/templates/{name}",
 				api.Hooks.Wrap(srv.RouteDeleteTemplate),
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/v1/provisioning/time-intervals/{name}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodDelete, "/api/v1/provisioning/time-intervals/{name}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/v1/provisioning/time-intervals/{name}",
+				api.Hooks.Wrap(srv.RouteDeleteTimeInterval),
 				m,
 			),
 		)
@@ -465,6 +513,30 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 				m,
 			),
 		)
+		group.Get(
+			toMacaronPath("/api/v1/provisioning/time-intervals/{name}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/time-intervals/{name}"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/provisioning/time-intervals/{name}",
+				api.Hooks.Wrap(srv.RouteGetTimeInterval),
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/provisioning/time-intervals"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/time-intervals"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/provisioning/time-intervals",
+				api.Hooks.Wrap(srv.RouteGetTimeIntervals),
+				m,
+			),
+		)
 		group.Post(
 			toMacaronPath("/api/v1/provisioning/alert-rules"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
@@ -498,6 +570,18 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 				http.MethodPost,
 				"/api/v1/provisioning/mute-timings",
 				api.Hooks.Wrap(srv.RoutePostMuteTiming),
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/v1/provisioning/time-intervals"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPost, "/api/v1/provisioning/time-intervals"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/v1/provisioning/time-intervals",
+				api.Hooks.Wrap(srv.RoutePostTimeInterval),
 				m,
 			),
 		)
@@ -570,6 +654,18 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 				http.MethodPut,
 				"/api/v1/provisioning/templates/{name}",
 				api.Hooks.Wrap(srv.RoutePutTemplate),
+				m,
+			),
+		)
+		group.Put(
+			toMacaronPath("/api/v1/provisioning/time-intervals/{name}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPut, "/api/v1/provisioning/time-intervals/{name}"),
+			metrics.Instrument(
+				http.MethodPut,
+				"/api/v1/provisioning/time-intervals/{name}",
+				api.Hooks.Wrap(srv.RoutePutTimeInterval),
 				m,
 			),
 		)

@@ -4276,18 +4276,42 @@
    "type": "string"
   },
   "TimeInterval": {
+   "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
    "properties": {
-    "name": {
+    "days_of_month": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "location": {
      "type": "string"
     },
-    "time_intervals": {
+    "months": {
      "items": {
-      "$ref": "#/definitions/TimeInterval"
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "times": {
+     "items": {
+      "$ref": "#/definitions/TimeRange"
+     },
+     "type": "array"
+    },
+    "weekdays": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "years": {
+     "items": {
+      "type": "string"
      },
      "type": "array"
     }
    },
-   "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
    "type": "object"
   },
   "TimeIntervalItem": {
@@ -4338,6 +4362,12 @@
     }
    },
    "type": "object"
+  },
+  "TimeIntervals": {
+   "items": {
+    "$ref": "#/definitions/TimeInterval"
+   },
+   "type": "array"
   },
   "TimeRange": {
    "description": "Redefining this to avoid an import cycle",
@@ -4724,7 +4754,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4780,7 +4809,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -4835,14 +4863,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -8305,6 +8331,162 @@
      }
     },
     "summary": "Updates an existing notification template.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/v1/provisioning/time-intervals": {
+   "get": {
+    "operationId": "RouteGetTimeIntervals",
+    "responses": {
+     "200": {
+      "description": "TimeIntervals",
+      "schema": {
+       "$ref": "#/definitions/TimeIntervals"
+      }
+     }
+    },
+    "summary": "Get all the time intervals.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePostTimeInterval",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/TimeInterval"
+      }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "TimeInterval",
+      "schema": {
+       "$ref": "#/definitions/TimeInterval"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Create a new time interval.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/v1/provisioning/time-intervals/{name}": {
+   "delete": {
+    "operationId": "RouteDeleteTimeInterval",
+    "parameters": [
+     {
+      "description": "Mute timing name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": " The time interval was deleted successfully."
+     },
+     "409": {
+      "description": "GenericPublicError",
+      "schema": {
+       "$ref": "#/definitions/GenericPublicError"
+      }
+     }
+    },
+    "summary": "Delete a time interval.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "get": {
+    "operationId": "RouteGetTimeInterval",
+    "parameters": [
+     {
+      "description": "Mute timing name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "TimeInterval",
+      "schema": {
+       "$ref": "#/definitions/TimeInterval"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Get a time interval.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePutTimeInterval",
+    "parameters": [
+     {
+      "description": "Mute timing name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/TimeInterval"
+      }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "TimeInterval",
+      "schema": {
+       "$ref": "#/definitions/TimeInterval"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Replace an existing time interval.",
     "tags": [
      "provisioning"
     ]

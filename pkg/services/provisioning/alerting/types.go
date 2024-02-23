@@ -24,6 +24,8 @@ type AlertingFile struct {
 	ResetPolicies       []OrgID
 	MuteTimes           []MuteTime
 	DeleteMuteTimes     []DeleteMuteTime
+	TimeIntervals       []TimeInterval
+	DeleteTimeIntervals []DeleteTimeInterval
 	Templates           []Template
 	DeleteTemplates     []DeleteTemplate
 }
@@ -39,6 +41,8 @@ type AlertingFileV1 struct {
 	ResetPolicies       []values.Int64Value     `json:"resetPolicies" yaml:"resetPolicies"`
 	MuteTimes           []MuteTimeV1            `json:"muteTimes" yaml:"muteTimes"`
 	DeleteMuteTimes     []DeleteMuteTimeV1      `json:"deleteMuteTimes" yaml:"deleteMuteTimes"`
+	TimeIntervals       []TimeIntervalV1        `json:"timeIntervals" yaml:"timeIntervals"`
+	DeleteTimeIntervals []DeleteTimeIntervalV1  `json:"deleteTimeIntervals" yaml:"deleteTimeIntervals"`
 	Templates           []TemplateV1            `json:"templates" yaml:"templates"`
 	DeleteTemplates     []DeleteTemplateV1      `json:"deleteTemplates" yaml:"deleteTemplates"`
 }
@@ -54,6 +58,9 @@ func (fileV1 *AlertingFileV1) MapToModel() (AlertingFile, error) {
 	}
 	if err := fileV1.mapPolicies(&alertingFile); err != nil {
 		return AlertingFile{}, fmt.Errorf("failure parsing policies: %w", err)
+	}
+	if err := fileV1.mapTimeIntervals(&alertingFile); err != nil {
+		return AlertingFile{}, fmt.Errorf("failure parsing time intervals: %w", err)
 	}
 	if err := fileV1.mapMuteTimes(&alertingFile); err != nil {
 		return AlertingFile{}, fmt.Errorf("failure parsing mute times: %w", err)
@@ -74,6 +81,20 @@ func (fileV1 *AlertingFileV1) mapTemplates(alertingFile *AlertingFile) error {
 			return err
 		}
 		alertingFile.DeleteTemplates = append(alertingFile.DeleteTemplates, delReq)
+	}
+	return nil
+}
+
+func (fileV1 *AlertingFileV1) mapTimeIntervals(alertingFile *AlertingFile) error {
+	for _, tiV1 := range fileV1.TimeIntervals {
+		alertingFile.TimeIntervals = append(alertingFile.TimeIntervals, tiV1.mapToModel())
+	}
+	for _, deleteV1 := range fileV1.DeleteTimeIntervals {
+		delReq, err := deleteV1.mapToModel()
+		if err != nil {
+			return err
+		}
+		alertingFile.DeleteTimeIntervals = append(alertingFile.DeleteTimeIntervals, delReq)
 	}
 	return nil
 }

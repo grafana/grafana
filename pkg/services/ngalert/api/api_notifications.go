@@ -15,9 +15,10 @@ import (
 )
 
 type NotificationSrv struct {
-	logger            log.Logger
-	receiverService   ReceiverService
-	muteTimingService MuteTimingService // defined in api_provisioning.go
+	logger              log.Logger
+	receiverService     ReceiverService
+	muteTimingService   MuteTimingService // defined in api_provisioning.go
+	timeIntervalService TimeIntervalService
 }
 
 type ReceiverService interface {

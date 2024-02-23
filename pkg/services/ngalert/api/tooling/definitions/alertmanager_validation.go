@@ -144,6 +144,17 @@ func (r *Route) ValidateMuteTimes(muteTimes map[string]struct{}) error {
 	return nil
 }
 
+func (ti *TimeInterval) Validate() error {
+	s, err := yaml.Marshal(ti.TimeInterval)
+	if err != nil {
+		return err
+	}
+	if err = yaml.Unmarshal(s, &(ti.TimeInterval)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (mt *MuteTimeInterval) Validate() error {
 	s, err := yaml.Marshal(mt.MuteTimeInterval)
 	if err != nil {

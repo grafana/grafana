@@ -3214,6 +3214,167 @@
         }
       }
     },
+    "/v1/provisioning/time-intervals": {
+      "get": {
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Get all the time intervals.",
+        "operationId": "RouteGetTimeIntervals",
+        "responses": {
+          "200": {
+            "description": "TimeIntervals",
+            "schema": {
+              "$ref": "#/definitions/TimeIntervals"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Create a new time interval.",
+        "operationId": "RoutePostTimeInterval",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/TimeInterval"
+            }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "TimeInterval",
+            "schema": {
+              "$ref": "#/definitions/TimeInterval"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/v1/provisioning/time-intervals/{name}": {
+      "get": {
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Get a time interval.",
+        "operationId": "RouteGetTimeInterval",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TimeInterval",
+            "schema": {
+              "$ref": "#/definitions/TimeInterval"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Replace an existing time interval.",
+        "operationId": "RoutePutTimeInterval",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/TimeInterval"
+            }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "TimeInterval",
+            "schema": {
+              "$ref": "#/definitions/TimeInterval"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Delete a time interval.",
+        "operationId": "RouteDeleteTimeInterval",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The time interval was deleted successfully."
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
+          }
+        }
+      }
+    },
     "/v1/rule/backtest": {
       "post": {
         "description": "Test rule",
@@ -7842,16 +8003,40 @@
       "type": "string"
     },
     "TimeInterval": {
+      "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
       "type": "object",
-      "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
       "properties": {
-        "name": {
-          "type": "string"
-        },
-        "time_intervals": {
+        "days_of_month": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/TimeInterval"
+            "type": "string"
+          }
+        },
+        "location": {
+          "type": "string"
+        },
+        "months": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "times": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeRange"
+          }
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "years": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }
@@ -7903,6 +8088,12 @@
         "start_time": {
           "type": "string"
         }
+      }
+    },
+    "TimeIntervals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/TimeInterval"
       }
     },
     "TimeRange": {
@@ -8292,7 +8483,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -8349,7 +8539,6 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -8406,7 +8595,6 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -8414,7 +8602,6 @@
       "$ref": "#/definitions/gettableSilences"
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
