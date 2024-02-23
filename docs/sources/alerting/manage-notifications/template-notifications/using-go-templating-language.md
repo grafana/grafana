@@ -32,7 +32,7 @@ In text/template, templates start with `{{` and end with `}}` irrespective of wh
 
 ## Print
 
-To print the value of something use `{{` and `}}`. You can print the value of dot, a field of dot, the result of a function, and the value of a [variable]({{< relref "#variables" >}}). For example, to print the `Alerts` field where dot refers to `ExtendedData` you would write the following:
+To print the value of something use `{{` and `}}`. You can print the value of dot, a field of dot, the result of a function, and the value of a [variable](#variables). For example, to print the `Alerts` field where dot refers to `ExtendedData` you would write the following:
 
 ```
 {{ .Alerts }}

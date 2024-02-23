@@ -45,6 +45,7 @@ export const getCategories = (): ValueFormatCategory[] => [
         id: 'short',
         fn: scaledUnits(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']),
       },
+      { name: 'SI short', id: 'sishort', fn: SIPrefix('') },
       { name: 'Percent (0-100)', id: 'percent', fn: toPercent },
       { name: 'Percent (0.0-1.0)', id: 'percentunit', fn: toPercentUnit },
       { name: 'Humidity (%H)', id: 'humidity', fn: toFixedUnit('%H') },
