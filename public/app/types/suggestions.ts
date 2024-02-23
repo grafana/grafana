@@ -29,4 +29,5 @@ export enum SuggestionName {
   Logs = 'Logs',
   FlameGraph = 'Flame graph',
   Trace = 'Trace',
+  NodeGraph = 'Node graph',
 }
