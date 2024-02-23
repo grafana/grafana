@@ -83,7 +83,7 @@ The following result set is a data frame that consists of two fields: time and t
 | 2020-01-02 03:05:00 |    47.0     |
 | 2020-01-02 03:06:00 |    48.0     |
 
-You can apply field options to each field (column) of this structure to alter the way its values are displayed. For example, you can set a **Fields with type** override with the following properties:
+You can apply field options to each field (column) of this structure to alter the way its values are displayed. For example, you can set the following override rule:
 
 - Rule: **Fields with type**
 - Field: temperature
@@ -116,7 +116,7 @@ The following result set is a data frame that consists of four fields: time, hig
 | 2020-01-02 03:05:00 | 47.0      | 34.0     | 68       |
 | 2020-01-02 03:06:00 | 48.0      | 31.0     | 68       |
 
-Use the following override rule and properties to add the **Celsius** unit option and remove the decimal place.
+Use the following override rule and properties to add the **Celsius** unit option and remove the decimal place:
 
 - Rule: **Fields with type**
 - Field: temperature
