@@ -73,7 +73,6 @@ Basic.argTypes = {
   paddingBottom: SpacingTokenControl,
   paddingLeft: SpacingTokenControl,
   paddingRight: SpacingTokenControl,
-  direction: { control: 'select', options: ['row', 'row-reverse', 'column', 'column-reverse'] },
   display: { control: 'select', options: ['flex', 'block', 'inline', 'none'] },
   backgroundColor: { control: 'select', options: backgroundOptions },
   borderStyle: { control: 'select', options: borderStyleOptions },
