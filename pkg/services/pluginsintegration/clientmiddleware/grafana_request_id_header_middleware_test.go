@@ -85,9 +85,9 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 		require.Len(t, cdt.CallResourceReq.Headers[GrafanaSignedRequestID], 0)
 	})
 
-	t.Run("Should set Grafana request ID headers if a sanitized data source URL is in the allow list", func(t *testing.T) {
+	t.Run("Should set Grafana request ID headers if a sanitized base data source URL is in the allow list", func(t *testing.T) {
 		cfg := setting.NewCfg()
-		cfg.IPRangeACAllowedURLs = []string{"https://logs.GRAFANA.net/"}
+		cfg.IPRangeACAllowedURLs = []string{"https://logs.GRAFANA.net/some/path"}
 		cfg.IPRangeACSecretKey = "secret"
 		cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
 
