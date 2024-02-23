@@ -56,8 +56,14 @@ const getShortcuts = (modKey: string) => {
           keys: ['d', 'k'],
           description: t('help-modal.shortcuts-description.toggle-kiosk', 'Toggle kiosk mode (hides top nav)'),
         },
-        { keys: ['d', 'E'], description: t('help-modal.shortcuts-description.expand-all-rows', 'Expand all rows') },
-        { keys: ['d', 'C'], description: t('help-modal.shortcuts-description.collapse-all-rows', 'Collapse all rows') },
+        {
+          keys: ['d', '⇧ + e'],
+          description: t('help-modal.shortcuts-description.expand-all-rows', 'Expand all rows'),
+        },
+        {
+          keys: ['d', '⇧ + c'],
+          description: t('help-modal.shortcuts-description.collapse-all-rows', 'Collapse all rows'),
+        },
         {
           keys: ['d', 'a'],
           description: t(
@@ -152,22 +158,24 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
         {Object.values(shortcuts).map(({ category, shortcuts }) => (
           <section key={category}>
             <div className={styles.categoryHeader}>
-              <Text element="h3" variant="h5">
+              <Text element="h3" variant="h5" id={category}>
                 {category}
               </Text>
             </div>
-            <dl className={styles.keysAndDescriptions}>
+            <dl aria-labelledby={category} className={styles.keysAndDescriptions}>
               {shortcuts.map(({ keys, description }) => (
-                <>
-                  <dt key={keys.join()} className={styles.keys}>
+                <React.Fragment key={keys.join()}>
+                  <dt className={styles.keys}>
                     {keys.map((key) => (
                       <Key key={key}>{key}</Key>
                     ))}
                   </dt>
-                  <dd key={description}>
-                    <Text variant="bodySmall">{description}</Text>
+                  <dd>
+                    <Text variant="bodySmall" element="p">
+                      {description}
+                    </Text>
                   </dd>
-                </>
+                </React.Fragment>
               ))}
             </dl>
           </section>
@@ -183,12 +191,34 @@ interface KeyProps {
 
 const Key = ({ children }: KeyProps) => {
   const styles = useStyles2(getStyles);
+  const displayText = useMemo(() => replaceCustomKeyNames(children), [children]);
+  const displayElement = <span dangerouslySetInnerHTML={{ __html: displayText }}></span>;
   return (
-    <span className={styles.shortcutTableKey}>
-      <Text variant="code">{children}</Text>
-    </span>
+    <kbd className={styles.shortcutTableKey}>
+      <Text variant="code">{displayElement}</Text>
+    </kbd>
   );
 };
+
+function replaceCustomKeyNames(key: string) {
+  let displayName;
+  let srName;
+
+  if (key.includes('ctrl')) {
+    displayName = 'ctrl';
+    srName = 'Control';
+  } else if (key.includes('esc')) {
+    displayName = 'esc';
+    srName = 'Escape';
+  } else {
+    return key;
+  }
+
+  return key.replace(
+    displayName,
+    `<span aria-label="${srName}"><span aria-hidden="true" role="none">${displayName}</span></span>`
+  );
+}
 
 function getStyles(theme: GrafanaTheme2) {
   return {
