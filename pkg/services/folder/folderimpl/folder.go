@@ -299,13 +299,9 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 		guardianFunc = g.CanSave
 	}
 
-	hasAccess, err := guardianFunc()
+	parentHasAccess, err := guardianFunc()
 	if err != nil {
 		return nil, err
-	}
-
-	if !hasAccess {
-		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	children, err := s.store.GetChildren(ctx, *q)
@@ -323,6 +319,7 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
 	}
 
+	filtered := make([]*folder.Folder, 0, len(children))
 	for _, f := range children {
 		// fetch folder from dashboard store
 		dashFolder, ok := dashFolders[f.UID]
@@ -335,9 +332,31 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 		// nolint:staticcheck
 		f.ID = dashFolder.ID
+
+		hasAccess := parentHasAccess
+		if !hasAccess {
+			g, err := guardian.NewByUID(ctx, q.UID, q.OrgID, q.SignedInUser)
+			if err != nil {
+				return nil, err
+			}
+
+			guardianFunc := g.CanView
+			if q.Permission == dashboardaccess.PERMISSION_EDIT {
+				guardianFunc = g.CanSave
+			}
+
+			hasAccess, err = guardianFunc()
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if hasAccess {
+			filtered = append(filtered, f)
+		}
 	}
 
-	return children, nil
+	return filtered, nil
 }
 
 func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
