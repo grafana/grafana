@@ -2,11 +2,12 @@
  * Reference: https://react-svgr.com/docs/options/
  */
 module.exports = {
-  icon: true,
+  icon: '{dir}/[name].gen.js',
   typescript: true,
   jsxRuntime: 'automatic',
-  outDir: './icons-gen',
+  outDir: './src/icons-gen',
   template: require('./templates/icon'),
+  indexTemplate: require('./templates/index'),
   svgoConfig: {
     plugins: [
       // Sanitise the SVGs
