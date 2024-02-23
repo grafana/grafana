@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"os"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
@@ -15,13 +17,8 @@ type ExternalIdResponse struct {
 }
 
 func ExternalIdHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
-	reqCtx, err := reqCtxFactory(ctx, pluginCtx, "default")
-	if err != nil {
-		return nil, models.NewHttpError("error in NamespacesHandler", http.StatusInternalServerError, err)
-	}
-
 	response := ExternalIdResponse{
-		ExternalId: reqCtx.Settings.GrafanaSettings.ExternalID,
+		ExternalId: os.Getenv(awsds.GrafanaAssumeRoleExternalIdKeyName),
 	}
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
