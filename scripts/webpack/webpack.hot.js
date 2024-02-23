@@ -30,9 +30,12 @@ module.exports = merge(common, {
     hot: true,
     open: false,
     port: 3333,
-    proxy: {
-      '!/public/build': 'http://localhost:3000',
-    },
+    proxy: [
+      {
+        context: '!/public/build',
+        target: 'http://localhost:3000',
+      },
+    ],
     static: {
       publicPath: '/public/build/',
     },
