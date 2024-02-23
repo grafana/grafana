@@ -14,7 +14,7 @@ type Service interface {
 	GetTeamByID(ctx context.Context, query *GetTeamByIDQuery) (*TeamDTO, error)
 	GetTeamsByUser(ctx context.Context, query *GetTeamsByUserQuery) ([]*TeamDTO, error)
 	GetTeamIDsByUser(ctx context.Context, query *GetTeamIDsByUserQuery) ([]int64, error)
-	AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error
+	AddTeamMember(ctx context.Context, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error
 	UpdateTeamMember(ctx context.Context, cmd *UpdateTeamMemberCommand) error
 	IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error)
 	RemoveTeamMember(ctx context.Context, cmd *RemoveTeamMemberCommand) error
