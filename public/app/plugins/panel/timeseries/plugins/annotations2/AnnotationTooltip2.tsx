@@ -1,33 +1,38 @@
 import { css } from '@emotion/css';
 import React, { useContext, useEffect } from 'react';
 
-import { GrafanaTheme2, textUtil } from '@grafana/data';
-import { HorizontalGroup, IconButton, LayoutItemContext, Tag, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, dateTimeFormat, systemDateFormats, textUtil } from '@grafana/data';
+import { HorizontalGroup, IconButton, LayoutItemContext, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 
 interface Props {
   annoVals: Record<string, any[]>;
   annoIdx: number;
-  timeFormatter: (v: number) => string;
-  canEdit: boolean;
-  canDelete: boolean;
+  timeZone: string;
   onEdit: () => void;
-  onDelete: () => void;
 }
 
-export const AnnotationTooltip2 = ({
-  annoVals,
-  annoIdx,
-  timeFormatter,
-  canEdit,
-  canDelete,
-  onEdit,
-  onDelete,
-}: Props) => {
+const retFalse = () => false;
+
+export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Props) => {
+  const annoId = annoVals.id?.[annoIdx];
+
   const styles = useStyles2(getStyles);
+
+  const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
+
+  const dashboardUID = annoVals.dashboardUID?.[annoIdx];
+  const canEdit = canEditAnnotations(dashboardUID);
+  const canDelete = canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;
 
   const layoutCtx = useContext(LayoutItemContext);
   useEffect(() => layoutCtx.boostZIndex(), [layoutCtx]);
+
+  const timeFormatter = (value: number) =>
+    dateTimeFormat(value, {
+      format: systemDateFormats.fullDate,
+      timeZone,
+    });
 
   let time = timeFormatter(annoVals.time[annoIdx]);
   let text = annoVals.text[annoIdx];
@@ -75,9 +80,8 @@ export const AnnotationTooltip2 = ({
                 <IconButton
                   name={'trash-alt'}
                   size={'sm'}
-                  onClick={onDelete}
+                  onClick={() => onAnnotationDelete(annoId)}
                   tooltip="Delete"
-                  disabled={!annoVals.id?.[annoIdx]}
                 />
               )}
             </div>

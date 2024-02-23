@@ -52,6 +52,13 @@ export const StateTimelinePanel = ({
 }: TimelinePanelProps) => {
   const theme = useTheme2();
 
+  // TODO: we should just re-init when this changes, and have this be a static setting
+  const syncTooltip = useCallback(
+    () => sync?.() === DashboardCursorSync.Tooltip,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
   const isToolTipOpen = useRef<boolean>(false);
 
@@ -163,8 +170,7 @@ export const StateTimelinePanel = ({
     }
   }
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-  const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
 
   return (
     <TimelineChart
@@ -202,13 +208,12 @@ export const StateTimelinePanel = ({
                 {options.tooltip.mode !== TooltipDisplayMode.None && (
                   <TooltipPlugin2
                     config={builder}
-                    hoverMode={TooltipHoverMode.xOne}
+                    hoverMode={
+                      options.tooltip.mode === TooltipDisplayMode.Multi ? TooltipHoverMode.xAll : TooltipHoverMode.xOne
+                    }
                     queryZoom={onChangeTimeRange}
+                    syncTooltip={syncTooltip}
                     render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
-                      if (viaSync) {
-                        return null;
-                      }
-
                       if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
@@ -228,7 +233,7 @@ export const StateTimelinePanel = ({
                           seriesFrame={alignedFrame}
                           dataIdxs={dataIdxs}
                           seriesIdx={seriesIdx}
-                          mode={options.tooltip.mode}
+                          mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
                           timeRange={timeRange}
