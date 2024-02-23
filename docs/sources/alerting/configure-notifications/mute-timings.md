@@ -2,6 +2,7 @@
 aliases:
   - ../notifications/mute-timings/
   - ../unified-alerting/notifications/mute-timings/
+  - ./alerting/manage-notifications/mute-timings/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/mute-timings/
 description: Create mute timings to prevent alerts from firing during a specific and reoccurring period of time
 keywords:
@@ -17,7 +18,7 @@ labels:
     - enterprise
     - oss
 title: Create mute timings
-weight: 420
+weight: 450
 ---
 
 # Create mute timings
