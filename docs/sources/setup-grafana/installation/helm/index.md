@@ -25,7 +25,7 @@ The Grafana open-source community offers Helm Charts for running it on Kubernete
 
 To install Grafana using Helm, ensure you have completed the following:
 
-- Install a Kubernetes server on your machine. For information about installing Kubernetes, refer to [Install Kubernetes](https://kubernetes.io/docs/setup/)
+- Install a Kubernetes server on your machine. For information about installing Kubernetes, refer to [Install Kubernetes](https://kubernetes.io/docs/setup/).
 - Install the latest stable version of Helm. For information on installing Helm, refer to [Install Helm](https://helm.sh/docs/intro/install/).
 
 ## Install Grafana using Helm
