@@ -1,4 +1,6 @@
-import { debounce } from 'lodash';
+// Worker is not three shakable, so we should not import the whole loadash library
+// eslint-disable-next-line lodash/import-scope
+import debounce from 'lodash/debounce';
 
 import { getDashboardChanges } from './getDashboardChanges';
 

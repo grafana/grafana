@@ -159,7 +159,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return () => {
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
-      this._changeTracker?.stopTrackingChanges();
+      this._changeTracker.terminate();
       this.stopUrlSync();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
