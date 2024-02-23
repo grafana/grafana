@@ -22,10 +22,10 @@ selected_pkg="${1-}"
 
 grafana::codegen:run() {
   local generate_root=$1
-  echo "Generating code for ${generate_root}/apis/..."
-  echo "============================================="
   local skipped="true"
   for api_pkg in $(grafana:codegen:lsdirs ./${generate_root}/apis); do
+    echo "Generating code for ${generate_root}/apis/${api_pkg}..."
+    echo "============================================="
     if [[ "${selected_pkg}" != "" && ${api_pkg} != $selected_pkg ]]; then
       continue
     fi
@@ -78,7 +78,7 @@ grafana::codegen:run() {
 }
 
 grafana:codegen:lsdirs() {
-  ls -d ${1}/*/ | xargs basename
+  find ${1}/* -maxdepth 0 -type d | xargs basename -a
 }
 
 grafana::codegen:run pkg
