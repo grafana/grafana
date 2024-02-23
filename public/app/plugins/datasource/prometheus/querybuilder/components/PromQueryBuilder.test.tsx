@@ -59,6 +59,10 @@ const bugQuery: PromVisualQuery = {
   ],
 };
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('PromQueryBuilder', () => {
   it('shows empty just with metric selected', async () => {
     setup();
