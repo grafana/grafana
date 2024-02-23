@@ -318,6 +318,7 @@ gen-ts:
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
 drone: $(DRONE)
+	bash scripts/drone/env-var-check.sh
 	$(DRONE) starlark --format
 	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
