@@ -26,7 +26,6 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.PluginsPath,
 		extractPluginSettings(settingProvider),
 		allowedUnsigned,
-		grafanaCfg.PluginLogBackendRequests,
 		grafanaCfg.PluginsCDNURLTemplate,
 		grafanaCfg.AppURL,
 		grafanaCfg.AppSubURL,
