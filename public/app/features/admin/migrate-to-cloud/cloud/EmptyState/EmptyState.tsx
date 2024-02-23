@@ -13,6 +13,7 @@ export const EmptyState = () => {
   return (
     <div className={styles.container}>
       <Grid
+        alignItems="flex-start"
         gap={1}
         columns={{
           xs: 1,
