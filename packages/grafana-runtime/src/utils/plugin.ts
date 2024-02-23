@@ -62,11 +62,3 @@ export function getPluginImportUtils(): PluginImportUtils {
 
   return pluginImportUtils;
 }
-
-// Grafana relies on RequireJS for Monaco Editor to load.
-// The SystemJS AMD extra creates a global define which causes RequireJS to silently bail.
-// Here we move and reset global define so Monaco Editor loader script continues to work.
-// @ts-ignore
-window.__grafana_amd_define = window.define;
-// @ts-ignore
-window.define = undefined;

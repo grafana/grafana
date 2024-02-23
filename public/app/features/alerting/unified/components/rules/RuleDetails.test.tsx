@@ -1,4 +1,6 @@
+import 'whatwg-fetch';
 import { render, screen, waitFor } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -18,6 +20,7 @@ import { AlertmanagersChoiceResponse } from '../../api/alertmanagerApi';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
 import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
+import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { RuleDetails } from './RuleDetails';
 
@@ -42,7 +45,13 @@ const ui = {
   },
 };
 
-const server = setupServer();
+const server = setupServer(
+  http.get(`/api/plugins/${SupportedPlugin.Incident}/settings`, async () => {
+    return HttpResponse.json({
+      enabled: false,
+    });
+  })
+);
 
 const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,
@@ -74,6 +83,7 @@ beforeEach(() => {
     ],
   });
   server.resetHandlers();
+  mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
 });
 
 describe('RuleDetails RBAC', () => {
@@ -107,7 +117,6 @@ describe('RuleDetails RBAC', () => {
     it('Should not render Silence button for users wihout the instance create permission', async () => {
       // Arrange
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-      mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -118,8 +127,6 @@ describe('RuleDetails RBAC', () => {
     });
 
     it('Should render Silence button for users with the instance create permissions', async () => {
-      mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
-
       // Arrange
       jest
         .spyOn(contextSrv, 'hasPermission')

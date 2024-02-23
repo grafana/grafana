@@ -1,10 +1,8 @@
 import { CoreApp } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridItem,
   SceneGridLayout,
-  SceneRefreshPicker,
   SceneTimeRange,
   SceneQueryRunner,
   SceneVariableSet,
@@ -12,12 +10,10 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
-import { ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
-import { ShowModalReactEvent } from '../../../types/events';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
@@ -25,7 +21,6 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 
 import { DashboardControls } from './DashboardControls';
-import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
 jest.mock('../settings/version-history/HistorySrv');
@@ -74,7 +69,7 @@ describe('DashboardScene', () => {
         ${'links'}       | ${[]}
       `(
         'A change to $prop should set isDirty true',
-        ({ prop, value }: { prop: keyof DashboardSceneState; value: any }) => {
+        ({ prop, value }: { prop: keyof DashboardSceneState; value: unknown }) => {
           const prevState = scene.state[prop];
           scene.setState({ [prop]: value });
 
@@ -97,14 +92,14 @@ describe('DashboardScene', () => {
       });
 
       it('A change to time picker visibility settings should set isDirty true', () => {
-        const dashboardControls = dashboardSceneGraph.getDashboardControls(scene)!;
+        const dashboardControls = scene.state.controls!;
         const prevState = dashboardControls.state.hideTimeControls;
         dashboardControls.setState({ hideTimeControls: true });
 
         expect(scene.state.isDirty).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true });
-        expect(dashboardSceneGraph.getDashboardControls(scene)!.state.hideTimeControls).toEqual(prevState);
+        expect(scene.state.controls!.state.hideTimeControls).toEqual(prevState);
       });
 
       it('A change to time zone should set isDirty true', () => {
@@ -128,13 +123,13 @@ describe('DashboardScene', () => {
       scene.onEnterEditMode();
     });
 
-    it('Should add app, uid, panelId and panelPluginType', () => {
+    it('Should add app, uid, panelId and panelPluginId', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner')!;
       expect(scene.enrichDataRequest(queryRunner)).toEqual({
         app: CoreApp.Dashboard,
         dashboardUID: 'dash-1',
         panelId: 1,
-        panelPluginType: 'table',
+        panelPluginId: 'table',
       });
     });
 
@@ -208,63 +203,6 @@ describe('DashboardScene', () => {
       }
     });
   });
-
-  describe('when opening a dashboard from a snapshot', () => {
-    let scene: DashboardScene;
-    beforeEach(async () => {
-      scene = buildTestScene();
-      locationService.push('/');
-      // mockLocationHref('http://snapshots.grafana.com/snapshots/dashboard/abcdefghi/my-dash');
-      const location = window.location;
-
-      //@ts-ignore
-      delete window.location;
-      window.location = {
-        ...location,
-        href: 'http://snapshots.grafana.com/snapshots/dashboard/abcdefghi/my-dash',
-      };
-      jest.spyOn(appEvents, 'publish');
-    });
-
-    config.appUrl = 'http://snapshots.grafana.com/';
-
-    it('redirects to the original dashboard', () => {
-      scene.setInitialSaveModel({
-        // @ts-ignore
-        snapshot: { originalUrl: '/d/c0d2742f-b827-466d-9269-fb34d6af24ff' },
-      });
-
-      // Call the function
-      scene.onOpenSnapshotOriginalDashboard();
-
-      // Assertions
-      expect(appEvents.publish).toHaveBeenCalledTimes(0);
-      expect(locationService.getLocation().pathname).toEqual('/d/c0d2742f-b827-466d-9269-fb34d6af24ff');
-      expect(window.location.href).toBe('http://snapshots.grafana.com/snapshots/dashboard/abcdefghi/my-dash');
-    });
-
-    it('opens a confirmation modal', () => {
-      scene.setInitialSaveModel({
-        // @ts-ignore
-        snapshot: { originalUrl: 'http://www.anotherdomain.com/' },
-      });
-
-      // Call the function
-      scene.onOpenSnapshotOriginalDashboard();
-
-      // Assertions
-      expect(appEvents.publish).toHaveBeenCalledTimes(1);
-      expect(appEvents.publish).toHaveBeenCalledWith(
-        new ShowModalReactEvent(
-          expect.objectContaining({
-            component: ConfirmModal,
-          })
-        )
-      );
-      expect(locationService.getLocation().pathname).toEqual('/');
-      expect(window.location.href).toBe('http://snapshots.grafana.com/snapshots/dashboard/abcdefghi/my-dash');
-    });
-  });
 });
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
@@ -277,17 +215,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
     $timeRange: new SceneTimeRange({
       timeZone: 'browser',
     }),
-    controls: [
-      new DashboardControls({
-        variableControls: [],
-        linkControls: new DashboardLinksControls({}),
-        timeControls: [
-          new SceneRefreshPicker({
-            intervals: ['1s'],
-          }),
-        ],
-      }),
-    ],
+    controls: new DashboardControls({}),
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({

@@ -65,12 +65,12 @@ var _ authn.RedirectClient = new(OAuth)
 
 func ProvideOAuth(
 	name string, cfg *setting.Cfg, oauthService oauthtoken.OAuthTokenService,
-	socialService social.Service,
+	socialService social.Service, settingsProviderService setting.Provider,
 ) *OAuth {
 	providerName := strings.TrimPrefix(name, "auth.client.")
 	return &OAuth{
 		name, fmt.Sprintf("oauth_%s", providerName), providerName,
-		log.New(name), cfg, oauthService, socialService,
+		log.New(name), cfg, settingsProviderService, oauthService, socialService,
 	}
 }
 
@@ -81,8 +81,9 @@ type OAuth struct {
 	log          log.Logger
 	cfg          *setting.Cfg
 
-	oauthService  oauthtoken.OAuthTokenService
-	socialService social.Service
+	settingsProviderSvc setting.Provider
+	oauthService        oauthtoken.OAuthTokenService
+	socialService       social.Service
 }
 
 func (c *OAuth) Name() string {
@@ -168,7 +169,8 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	})
 
 	lookupParams := login.UserLookupParams{}
-	if c.cfg.OAuthAllowInsecureEmailLookup {
+	allowInsecureEmailLookup := c.settingsProviderSvc.KeyValue("auth", "oauth_allow_insecure_email_lookup").MustBool(false)
+	if allowInsecureEmailLookup {
 		lookupParams.Email = &userInfo.Email
 	}
 

@@ -143,6 +143,7 @@ type Cfg struct {
 	// Rendering
 	ImagesDir                      string
 	CSVsDir                        string
+	PDFsDir                        string
 	RendererUrl                    string
 	RendererCallbackUrl            string
 	RendererAuthToken              string
@@ -217,24 +218,25 @@ type Cfg struct {
 	DefaultHomeDashboardPath string
 
 	// Auth
-	LoginCookieName              string
-	LoginMaxInactiveLifetime     time.Duration
-	LoginMaxLifetime             time.Duration
-	TokenRotationIntervalMinutes int
-	SigV4AuthEnabled             bool
-	SigV4VerboseLogging          bool
-	AzureAuthEnabled             bool
-	AzureSkipOrgRoleSync         bool
-	BasicAuthEnabled             bool
-	AdminUser                    string
-	AdminPassword                string
-	DisableLogin                 bool
-	AdminEmail                   string
-	DisableLoginForm             bool
-	SignoutRedirectUrl           string
-	IDResponseHeaderEnabled      bool
-	IDResponseHeaderPrefix       string
-	IDResponseHeaderNamespaces   map[string]struct{}
+	LoginCookieName               string
+	LoginMaxInactiveLifetime      time.Duration
+	LoginMaxLifetime              time.Duration
+	TokenRotationIntervalMinutes  int
+	SigV4AuthEnabled              bool
+	SigV4VerboseLogging           bool
+	AzureAuthEnabled              bool
+	AzureSkipOrgRoleSync          bool
+	BasicAuthEnabled              bool
+	BasicAuthStrongPasswordPolicy bool
+	AdminUser                     string
+	AdminPassword                 string
+	DisableLogin                  bool
+	AdminEmail                    string
+	DisableLoginForm              bool
+	SignoutRedirectUrl            string
+	IDResponseHeaderEnabled       bool
+	IDResponseHeaderPrefix        string
+	IDResponseHeaderNamespaces    map[string]struct{}
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
@@ -266,24 +268,7 @@ type Cfg struct {
 	OAuthCookieMaxAge             int
 	OAuthAllowInsecureEmailLookup bool
 
-	// JWT Auth
-	JWTAuthEnabled                 bool
-	JWTAuthHeaderName              string
-	JWTAuthURLLogin                bool
-	JWTAuthEmailClaim              string
-	JWTAuthUsernameClaim           string
-	JWTAuthExpectClaims            string
-	JWTAuthJWKSetURL               string
-	JWTAuthCacheTTL                time.Duration
-	JWTAuthKeyFile                 string
-	JWTAuthKeyID                   string
-	JWTAuthJWKSetFile              string
-	JWTAuthAutoSignUp              bool
-	JWTAuthRoleAttributePath       string
-	JWTAuthRoleAttributeStrict     bool
-	JWTAuthAllowAssignGrafanaAdmin bool
-	JWTAuthSkipOrgRoleSync         bool
-
+	JWTAuth AuthJWTSettings
 	// Extended JWT Auth
 	ExtendedJWTAuthEnabled    bool
 	ExtendedJWTExpectIssuer   string
@@ -329,9 +314,10 @@ type Cfg struct {
 	DateFormats DateFormats
 
 	// User
-	UserInviteMaxLifetime time.Duration
-	HiddenUsers           map[string]struct{}
-	CaseInsensitiveLogin  bool // Login and Email will be considered case insensitive
+	UserInviteMaxLifetime        time.Duration
+	HiddenUsers                  map[string]struct{}
+	CaseInsensitiveLogin         bool // Login and Email will be considered case insensitive
+	VerificationEmailMaxLifetime time.Duration
 
 	// Service Accounts
 	SATokenExpirationDayLimit int
@@ -353,7 +339,7 @@ type Cfg struct {
 
 	// IP range access control
 	IPRangeACEnabled     bool
-	IPRangeACAllowedURLs []string
+	IPRangeACAllowedURLs []*url.URL
 	IPRangeACSecretKey   string
 
 	// SQL Data sources
@@ -1194,6 +1180,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readLDAPConfig()
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
+	cfg.readAuthJWTSettings()
 	cfg.readSessionConfig()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
@@ -1606,25 +1593,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
 	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
-
-	// JWT auth
-	authJWT := iniFile.Section("auth.jwt")
-	cfg.JWTAuthEnabled = authJWT.Key("enabled").MustBool(false)
-	cfg.JWTAuthHeaderName = valueAsString(authJWT, "header_name", "")
-	cfg.JWTAuthURLLogin = authJWT.Key("url_login").MustBool(false)
-	cfg.JWTAuthEmailClaim = valueAsString(authJWT, "email_claim", "")
-	cfg.JWTAuthUsernameClaim = valueAsString(authJWT, "username_claim", "")
-	cfg.JWTAuthExpectClaims = valueAsString(authJWT, "expect_claims", "{}")
-	cfg.JWTAuthJWKSetURL = valueAsString(authJWT, "jwk_set_url", "")
-	cfg.JWTAuthCacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
-	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
-	cfg.JWTAuthKeyID = authJWT.Key("key_id").MustString("")
-	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
-	cfg.JWTAuthAutoSignUp = authJWT.Key("auto_sign_up").MustBool(false)
-	cfg.JWTAuthRoleAttributePath = valueAsString(authJWT, "role_attribute_path", "")
-	cfg.JWTAuthRoleAttributeStrict = authJWT.Key("role_attribute_strict").MustBool(false)
-	cfg.JWTAuthAllowAssignGrafanaAdmin = authJWT.Key("allow_assign_grafana_admin").MustBool(false)
-	cfg.JWTAuthSkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
+	cfg.BasicAuthStrongPasswordPolicy = authBasic.Key("password_policy").MustBool(false)
 
 	// Extended JWT auth
 	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")
@@ -1732,6 +1701,13 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 		}
 	}
 
+	verificationEmailMaxLifetimeVal := valueAsString(users, "verification_email_max_lifetime_duration", "1h")
+	verificationEmailMaxLifetimeDuration, err := gtime.ParseDuration(verificationEmailMaxLifetimeVal)
+	if err != nil {
+		return err
+	}
+	cfg.VerificationEmailMaxLifetime = verificationEmailMaxLifetimeDuration
+
 	return nil
 }
 
@@ -1765,6 +1741,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
+	cfg.PDFsDir = filepath.Join(cfg.DataPath, "pdf")
 
 	return nil
 }
@@ -1972,7 +1949,15 @@ func (cfg *Cfg) readDataSourceSecuritySettings() {
 	cfg.IPRangeACEnabled = datasources.Key("enabled").MustBool(false)
 	cfg.IPRangeACSecretKey = datasources.Key("secret_key").MustString("")
 	allowedURLString := datasources.Key("allow_list").MustString("")
-	cfg.IPRangeACAllowedURLs = util.SplitString(allowedURLString)
+	for _, urlString := range util.SplitString(allowedURLString) {
+		allowedURL, err := url.Parse(urlString)
+		if err != nil {
+			cfg.Logger.Error("Error parsing allowed URL for IP range access control", "error", err)
+			continue
+		} else {
+			cfg.IPRangeACAllowedURLs = append(cfg.IPRangeACAllowedURLs, allowedURL)
+		}
+	}
 }
 
 func (cfg *Cfg) readSqlDataSourceSettings() {

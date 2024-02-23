@@ -93,7 +93,7 @@ func TestAzureSettings(t *testing.T) {
 
 			azureSection, err := cfg.Raw.NewSection("azure")
 			require.NoError(t, err)
-			_, err = azureSection.NewKey("user_identity_fallback_credentials_enabled", "true")
+			_, err = azureSection.NewKey("user_identity_enabled", "true")
 			require.NoError(t, err)
 
 			cfg.readAzureSettings()

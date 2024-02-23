@@ -226,6 +226,7 @@ export interface GrafanaConfig {
   rudderstackIntegrationsUrl: string | undefined;
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID?: string;
+  rootFolderUID?: string;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;

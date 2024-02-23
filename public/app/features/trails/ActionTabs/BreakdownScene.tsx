@@ -195,7 +195,8 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       continue;
     }
 
-    const expr = queryDef.queries[0].expr.replace(VAR_GROUP_BY_EXP, String(option.value));
+    const expr = queryDef.queries[0].expr.replaceAll(VAR_GROUP_BY_EXP, String(option.value));
+    const unit = queryDef.unit;
 
     children.push(
       new SceneCSSGridItem({
@@ -215,6 +216,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
             })
           )
           .setHeaderActions(new SelectLabelAction({ labelName: String(option.value) }))
+          .setUnit(unit)
           .build(),
       })
     );

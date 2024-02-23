@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -193,26 +195,56 @@ func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([
 		}
 		return res, nil
 	}
+	return bundles, nil
+}
 
-	if cl == plugins.ClassExternal {
-		// Warn if the plugin is not found in the external plugins directory.
-		asExternal := map[string]bool{}
-		for pluginID, pluginCfg := range c.cfg.PluginSettings {
-			if pluginCfg["as_external"] == "true" {
-				asExternal[pluginID] = true
-			}
-		}
-		for _, bundle := range bundles {
-			if asExternal[bundle.Primary.JSONData.ID] {
-				delete(asExternal, bundle.Primary.JSONData.ID)
-			}
-		}
-		if len(asExternal) > 0 {
-			for p := range asExternal {
-				c.log.Error("Core plugin expected to be loaded as external, but it is missing", "pluginID", p)
-			}
+// DuplicatePluginIDValidation is a filter step that will filter out any plugins that are already registered with the same
+// plugin ID. This includes both the primary plugin and child plugins, which are matched using the plugin.json plugin
+// ID field.
+type DuplicatePluginIDValidation struct {
+	registry registry.Service
+	log      log.Logger
+}
+
+// NewDuplicatePluginIDFilterStep returns a new DuplicatePluginIDValidation.
+func NewDuplicatePluginIDFilterStep(registry registry.Service) *DuplicatePluginIDValidation {
+	return &DuplicatePluginIDValidation{
+		registry: registry,
+		log:      log.New("plugins.dedupe"),
+	}
+}
+
+// Filter will filter out any plugins that have already been registered under the same plugin ID.
+func (d *DuplicatePluginIDValidation) Filter(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+	res := make([]*plugins.FoundBundle, 0, len(bundles))
+
+	var matchesPluginIDFunc = func(fp plugins.FoundPlugin) func(p *plugins.Plugin) bool {
+		return func(p *plugins.Plugin) bool {
+			return p.ID == fp.JSONData.ID
 		}
 	}
 
-	return bundles, nil
+	for _, b := range bundles {
+		ps := d.registry.Plugins(ctx)
+
+		if slices.ContainsFunc(ps, matchesPluginIDFunc(b.Primary)) {
+			d.log.Warn("Skipping loading of plugin as it's a duplicate", "pluginId", b.Primary.JSONData.ID)
+			continue
+		}
+
+		var nonDupeChildren []*plugins.FoundPlugin
+		for _, child := range b.Children {
+			if slices.ContainsFunc(ps, matchesPluginIDFunc(*child)) {
+				d.log.Warn("Skipping loading of child plugin as it's a duplicate", "pluginId", child.JSONData.ID)
+				continue
+			}
+			nonDupeChildren = append(nonDupeChildren, child)
+		}
+		res = append(res, &plugins.FoundBundle{
+			Primary:  b.Primary,
+			Children: nonDupeChildren,
+		})
+	}
+
+	return res, nil
 }
