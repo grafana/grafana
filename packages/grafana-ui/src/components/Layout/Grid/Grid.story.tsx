@@ -6,6 +6,10 @@ import { useTheme2 } from '../../../themes';
 import { Grid } from './Grid';
 import mdx from './Grid.mdx';
 
+const dimensions = Array.from({ length: 9 }).map(() => ({
+  minHeight: `${Math.random() * 100 + 100}px`,
+}));
+
 const meta: Meta<typeof Grid> = {
   title: 'General/Layout/Grid',
   component: Grid,
@@ -22,14 +26,20 @@ const meta: Meta<typeof Grid> = {
 export const ColumnsNumber: StoryFn<typeof Grid> = (args) => {
   const theme = useTheme2();
   return (
-    <Grid gap={args.gap} columns={args.columns}>
+    <Grid {...args}>
       {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} style={{ background: theme.colors.background.secondary, textAlign: 'center' }}>
+        <div key={i} style={{ background: theme.colors.background.secondary, textAlign: 'center', ...dimensions[i] }}>
           N# {i}
         </div>
       ))}
     </Grid>
   );
+};
+ColumnsNumber.argTypes = {
+  alignItems: {
+    control: 'select',
+    options: ['stretch', 'flex-start', 'flex-end', 'center', 'baseline', 'start', 'end', 'self-start', 'self-end'],
+  },
 };
 ColumnsNumber.args = {
   columns: 3,
