@@ -71,8 +71,6 @@ If screenshots should be uploaded to cloud storage then `upload_external_image_s
     # will be persisted to disk for up to temp_data_lifetime.
     upload_external_image_storage = false
 
-For more information on image rendering, refer to [image rendering][image-rendering].
-
 Restart Grafana for the changes to take effect.
 
 ## Advanced configuration
