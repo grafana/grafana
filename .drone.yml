@@ -654,6 +654,60 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - sleep 10s
+  - yarn e2e:playwright
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+    PORT: "3001"
+    PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
+  failure: ignore
+  image: mcr.microsoft.com/playwright:v1.41.2-jammy
+  name: playwright-plugin-e2e
+- commands:
+  - apt-get update
+  - apt-get install -yq zip
+  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
+  - gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report
+  - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
+  - "echo \"E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}\""
+  depends_on:
+  - playwright-plugin-e2e
+  environment:
+    GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
+      from_secret: gcp_upload_artifacts_key
+  failure: ignore
+  image: google/cloud-sdk:431.0.0
+  name: playwright-e2e-report-upload
+  when:
+    status:
+    - success
+    - failure
+- commands:
+  - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi
+  - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
+  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
+    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright
+    plugin e2e tests. <br /> <br /> Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to
+    browse the Playwright report and trace viewer. <br /> For information on how to
+    run Playwright tests locally, refer to the [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests).
+    \"}"'
+  depends_on:
+  - playwright-e2e-report-upload
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: byrnedo/alpine-curl:0.1.8
+  name: playwright-e2e-report-post-link
+  when:
+    status:
+    - success
+    - failure
+- commands:
   - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
     false; fi
   - apt-get update
@@ -1929,6 +1983,60 @@ steps:
       - e2e/cloud-plugins-suite/azure-monitor.spec.ts
     repo:
     - grafana/grafana
+- commands:
+  - sleep 10s
+  - yarn e2e:playwright
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+    PORT: "3001"
+    PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
+  failure: ignore
+  image: mcr.microsoft.com/playwright:v1.41.2-jammy
+  name: playwright-plugin-e2e
+- commands:
+  - apt-get update
+  - apt-get install -yq zip
+  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
+  - gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report
+  - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
+  - "echo \"E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}\""
+  depends_on:
+  - playwright-plugin-e2e
+  environment:
+    GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
+      from_secret: gcp_upload_artifacts_key
+  failure: ignore
+  image: google/cloud-sdk:431.0.0
+  name: playwright-e2e-report-upload
+  when:
+    status:
+    - success
+    - failure
+- commands:
+  - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi
+  - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
+  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
+    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright
+    plugin e2e tests. <br /> <br /> Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to
+    browse the Playwright report and trace viewer. <br /> For information on how to
+    run Playwright tests locally, refer to the [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests).
+    \"}"'
+  depends_on:
+  - playwright-e2e-report-upload
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: byrnedo/alpine-curl:0.1.8
+  name: playwright-e2e-report-post-link
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
     false; fi
@@ -4539,6 +4647,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:13.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mcr.microsoft.com/playwright:v1.41.2-jammy
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -4573,6 +4682,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:13.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
+  - trivy --exit-code 1 --severity HIGH,CRITICAL mcr.microsoft.com/playwright:v1.41.2-jammy
   depends_on:
   - authenticate-gcr
   environment:
@@ -4804,6 +4914,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 043eca32327fd48d9b479c3a51549b30f3825553c55df6220581def9bd22f513
+hmac: bce7b2ac72349019ec0c2ffbdca13c0591110ee53a3bfc72261df0ed05ca025a
 
 ...
