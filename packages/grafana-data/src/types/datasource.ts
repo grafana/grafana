@@ -555,11 +555,12 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
-  panelPluginType?: string;
+  panelPluginId?: string;
   dashboardUID?: string;
 
   /** Filters to dynamically apply to all queries */
   filters?: AdHocVariableFilter[];
+  groupByKeys?: string[];
 
   // Request Timing
   startTime: number;

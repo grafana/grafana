@@ -151,6 +151,8 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
               hideScope={true}
               hideTag={true}
               query={traceQlQuery}
+              isMulti={false}
+              allowCustomValue={false}
             />
           </InlineSearchField>
           <InlineSearchField
@@ -209,6 +211,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
               staticTags={staticTags}
               isTagsLoading={isTagsLoading}
               query={traceQlQuery}
+              requireTagAndValue={true}
             />
           </InlineSearchField>
           {config.featureToggles.metricsSummary && (

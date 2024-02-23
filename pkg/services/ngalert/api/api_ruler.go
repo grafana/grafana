@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -16,10 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -33,6 +36,14 @@ type ConditionValidator interface {
 	Validate(ctx eval.EvaluationContext, condition ngmodels.Condition) error
 }
 
+type AMConfigStore interface {
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*ngmodels.AlertConfiguration, error)
+}
+
+type AMRefresher interface {
+	ApplyConfig(ctx context.Context, orgId int64, dbConfig *ngmodels.AlertConfiguration) error
+}
+
 type RulerSrv struct {
 	xactManager        provisioning.TransactionManager
 	provenanceStore    provisioning.ProvisioningStore
@@ -42,11 +53,18 @@ type RulerSrv struct {
 	cfg                *setting.UnifiedAlertingSettings
 	conditionValidator ConditionValidator
 	authz              RuleAccessControlService
+
+	amConfigStore  AMConfigStore
+	amRefresher    AMRefresher
+	featureManager featuremgmt.FeatureToggles
 }
 
 var (
 	errProvisionedResource = errors.New("request affects resources created via provisioning API")
 )
+
+// ignore fields that are not part of the rule definition
+var ignoreFieldsForValidate = [...]string{"RuleGroupIndex"}
 
 // RouteDeleteAlertRules deletes all alert rules the user is authorized to access in the given namespace
 // or, if non-empty, a specific group of rules in the namespace.
@@ -251,6 +269,10 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		return toNamespaceErrorResponse(err)
 	}
 
+	if err := srv.checkGroupLimits(ruleGroupConfig); err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
+
 	rules, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace, srv.cfg)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -265,10 +287,25 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 	return srv.updateAlertRulesInGroup(c, groupKey, rules)
 }
 
+func (srv RulerSrv) checkGroupLimits(group apimodels.PostableRuleGroupConfig) error {
+	if srv.cfg.RulesPerRuleGroupLimit > 0 && int64(len(group.Rules)) > srv.cfg.RulesPerRuleGroupLimit {
+		srv.log.Warn("Large rule group was edited. Large groups are discouraged and may be rejected in the future.",
+			"limit", srv.cfg.RulesPerRuleGroupLimit,
+			"actual", len(group.Rules),
+			"group", group.Name,
+		)
+	}
+
+	return nil
+}
+
 // updateAlertRulesInGroup calculates changes (rules to add,update,delete), verifies that the user is authorized to do the calculated changes and updates database.
 // All operations are performed in a single transaction
+//
+//nolint:gocyclo
 func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals) response.Response {
 	var finalChanges *store.GroupDelta
+	var dbConfig *ngmodels.AlertConfiguration
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
 		userNamespace, id := c.SignedInUser.GetNamespacedID()
 		logger := srv.log.New("namespace_uid", groupKey.NamespaceUID, "group",
@@ -291,6 +328,24 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 
 		if err := validateQueries(c.Req.Context(), groupChanges, srv.conditionValidator, c.SignedInUser); err != nil {
 			return err
+		}
+
+		newOrUpdatedNotificationSettings := groupChanges.NewOrUpdatedNotificationSettings()
+		if len(newOrUpdatedNotificationSettings) > 0 {
+			dbConfig, err = srv.amConfigStore.GetLatestAlertmanagerConfiguration(c.Req.Context(), groupChanges.GroupKey.OrgID)
+			if err != nil {
+				return fmt.Errorf("failed to get latest configuration: %w", err)
+			}
+			cfg, err := notifier.Load([]byte(dbConfig.AlertmanagerConfiguration))
+			if err != nil {
+				return fmt.Errorf("failed to parse configuration: %w", err)
+			}
+			validator := notifier.NewNotificationSettingsValidator(&cfg.AlertmanagerConfig)
+			for _, s := range newOrUpdatedNotificationSettings {
+				if err := validator.Validate(s); err != nil {
+					return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
+				}
+			}
 		}
 
 		if err := verifyProvisionedRulesNotAffected(c.Req.Context(), srv.provenanceStore, c.SignedInUser.GetOrgID(), groupChanges); err != nil {
@@ -376,6 +431,15 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
+
+	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingSimplifiedRouting) && dbConfig != nil {
+		// This isn't strictly necessary since the alertmanager config is periodically synced.
+		err := srv.amRefresher.ApplyConfig(c.Req.Context(), groupKey.OrgID, dbConfig)
+		if err != nil {
+			srv.log.Warn("Failed to refresh Alertmanager config for org after change in notification settings", "org", c.SignedInUser.GetOrgID(), "error", err)
+		}
+	}
+
 	return changesToResponse(finalChanges)
 }
 
@@ -424,23 +488,25 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 	if prov, exists := provenanceRecords[r.ResourceID()]; exists {
 		provenance = prov
 	}
+
 	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
-			ID:              r.ID,
-			OrgID:           r.OrgID,
-			Title:           r.Title,
-			Condition:       r.Condition,
-			Data:            ApiAlertQueriesFromAlertQueries(r.Data),
-			Updated:         r.Updated,
-			IntervalSeconds: r.IntervalSeconds,
-			Version:         r.Version,
-			UID:             r.UID,
-			NamespaceUID:    r.NamespaceUID,
-			RuleGroup:       r.RuleGroup,
-			NoDataState:     apimodels.NoDataState(r.NoDataState),
-			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),
-			Provenance:      apimodels.Provenance(provenance),
-			IsPaused:        r.IsPaused,
+			ID:                   r.ID,
+			OrgID:                r.OrgID,
+			Title:                r.Title,
+			Condition:            r.Condition,
+			Data:                 ApiAlertQueriesFromAlertQueries(r.Data),
+			Updated:              r.Updated,
+			IntervalSeconds:      r.IntervalSeconds,
+			Version:              r.Version,
+			UID:                  r.UID,
+			NamespaceUID:         r.NamespaceUID,
+			RuleGroup:            r.RuleGroup,
+			NoDataState:          apimodels.NoDataState(r.NoDataState),
+			ExecErrState:         apimodels.ExecutionErrorState(r.ExecErrState),
+			Provenance:           apimodels.Provenance(provenance),
+			IsPaused:             r.IsPaused,
+			NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(r.NotificationSettings),
 		},
 	}
 	forDuration := model.Duration(r.For)
@@ -496,6 +562,9 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 	}
 	if len(groupChanges.Update) > 0 {
 		for _, upd := range groupChanges.Update {
+			if !shouldValidate(upd) {
+				continue
+			}
 			err := validator.Validate(eval.NewContext(ctx, user), upd.New.GetEvalCondition())
 			if err != nil {
 				return fmt.Errorf("%w '%s' (UID: %s): %s", ngmodels.ErrAlertRuleFailedValidation, upd.New.Title, upd.New.UID, err.Error())
@@ -503,6 +572,18 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 		}
 	}
 	return nil
+}
+
+// shouldValidate returns true if the rule is not paused and there are changes in the rule that are not ignored
+func shouldValidate(delta store.RuleDelta) bool {
+	for _, diff := range delta.Diff {
+		if !slices.Contains(ignoreFieldsForValidate[:], diff.Path) {
+			return true
+		}
+	}
+
+	// TODO: consider also checking if rule will be paused after the update
+	return false
 }
 
 // getAuthorizedRuleByUid fetches all rules in group to which the specified rule belongs, and checks whether the user is authorized to access the group.

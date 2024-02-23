@@ -51,9 +51,6 @@ func main() {
 		codegen.PluginTreeListJenny(),
 		codegen.PluginGoTypesJenny("pkg/tsdb"),
 		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
-		kind2pd(rt, corecodegen.DocsJenny(
-			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
-		)),
 		codegen.PluginTSEachMajor(rt),
 	)
 

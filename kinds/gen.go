@@ -47,7 +47,6 @@ func main() {
 			true, // forcing group so that we ignore the top level resource (for now)
 			codegen.TSResourceJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
-		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
 
 	header := codegen.SlashHeaderMapper("kinds/gen.go")

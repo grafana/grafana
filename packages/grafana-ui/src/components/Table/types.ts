@@ -2,7 +2,7 @@ import { Property } from 'csstype';
 import { FC } from 'react';
 import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
-import { DataFrame, Field, KeyValue, SelectableValue, TimeRange } from '@grafana/data';
+import { DataFrame, Field, KeyValue, SelectableValue, TimeRange, FieldConfigSource } from '@grafana/data';
 import * as schema from '@grafana/schema';
 
 import { TableStyles } from './styles';
@@ -97,6 +97,9 @@ export interface Props {
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
+  // The index of the field value that the table will initialize scrolled to
+  initialRowIndex?: number;
+  fieldConfig?: FieldConfigSource;
 }
 
 /**

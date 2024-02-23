@@ -6,6 +6,31 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 6.0.0 (2024-02-16)
+#
+# ### Changed
+#
+# - Require `jq` for human readable `make doc-validator` output.
+#
+# ## 5.4.0 (2024-02-12)
+#
+# ### Changed
+#
+# - Set `WEBSITE_MOUNTS=true` when a user includes the `website` project.
+#
+#   Ensures consistent behavior across repositories.
+#   To disable website mounts, add `export WEBSITE_MOUNTS := false` to your `variables.mk` or `variables.mk.local` file.
+# - Use website mounts and container volumes also when a user includes the `grafana-cloud` project.
+#
+# ## 5.3.0 (2024-02-08)
+#
+# ### Changed
+#
+# - Updated support for plugins monorepo now that multiple projects have been moved into it.
+# - Use `printf` instead of `echo` for better portability of output.
+#
+#   https://www.in-ulm.de/~mascheck/various/echo+printf/
+#
 # ## 5.2.0 (2024-01-18)
 #
 # ### Changed
@@ -197,8 +222,6 @@ readonly DOC_VALIDATOR_SKIP_CHECKS="${DOC_VALIDATOR_SKIP_CHECKS:-^image-}"
 readonly HUGO_REFLINKSERRORLEVEL="${HUGO_REFLINKSERRORLEVEL:-WARNING}"
 readonly VALE_MINALERTLEVEL="${VALE_MINALERTLEVEL:-error}"
 readonly WEBSITE_EXEC="${WEBSITE_EXEC:-make server-docs}"
-# If set, the docs-base image will run a prebuild script that sets up Hugo mounts.
-readonly WEBSITE_MOUNTS="${WEBSITE_MOUNTS:-}"
 
 PODMAN="$(if command -v podman >/dev/null 2>&1; then echo podman; else echo docker; fi)"
 
@@ -270,10 +293,7 @@ SOURCES_helm_charts_mimir_distributed='mimir'
 SOURCES_helm_charts_tempo_distributed='tempo'
 SOURCES_opentelemetry='opentelemetry-docs'
 SOURCES_plugins_grafana_datadog_datasource='datadog-datasource'
-SOURCES_plugins_grafana_jira_datasource='jira-datasource'
-SOURCES_plugins_grafana_mongodb_datasource='mongodb-datasource'
 SOURCES_plugins_grafana_oracle_datasource='oracle-datasource'
-SOURCES_plugins_grafana_splunk_datasource='splunk-datasource'
 
 VERSIONS_as_code='UNVERSIONED'
 VERSIONS_grafana_cloud='UNVERSIONED'
@@ -284,10 +304,7 @@ VERSIONS_grafana_cloud_data_configuration_integrations='UNVERSIONED'
 VERSIONS_grafana_cloud_frontend_observability_faro_web_sdk='UNVERSIONED'
 VERSIONS_opentelemetry='UNVERSIONED'
 VERSIONS_plugins_grafana_datadog_datasource='latest'
-VERSIONS_plugins_grafana_jira_datasource='latest'
-VERSIONS_plugins_grafana_mongodb_datasource='latest'
 VERSIONS_plugins_grafana_oracle_datasource='latest'
-VERSIONS_plugins_grafana_splunk_datasource='latest'
 VERSIONS_technical_documentation='UNVERSIONED'
 VERSIONS_website='UNVERSIONED'
 VERSIONS_writers_toolkit='UNVERSIONED'
@@ -297,10 +314,7 @@ PATHS_helm_charts_mimir_distributed='docs/sources/helm-charts/mimir-distributed'
 PATHS_helm_charts_tempo_distributed='docs/sources/helm-charts/tempo-distributed'
 PATHS_mimir='docs/sources/mimir'
 PATHS_plugins_grafana_datadog_datasource='docs/sources'
-PATHS_plugins_grafana_jira_datasource='docs/sources'
-PATHS_plugins_grafana_mongodb_datasource='docs/sources'
 PATHS_plugins_grafana_oracle_datasource='docs/sources'
-PATHS_plugins_grafana_splunk_datasource='docs/sources'
 PATHS_tempo='docs/sources/tempo'
 PATHS_website='content'
 
@@ -424,7 +438,7 @@ proj_url() {
 $1
 POSIX_HERESTRING
 
-  if [ "${_project}" = 'website' ]; then
+  if [ "${_project}" = website ]; then
     echo "http://localhost:${DOCS_HOST_PORT}/docs/"
 
     unset _project _version
@@ -458,7 +472,7 @@ proj_dst() {
 $1
 POSIX_HERESTRING
 
-  if [ "${_project}" = 'website' ]; then
+  if [ "${_project}" = website ]; then
     echo '/hugo/content'
 
     unset _project _version
@@ -517,7 +531,7 @@ proj_canonical() {
 $1
 POSIX_HERESTRING
 
-  if [ "${_project}" = 'website' ]; then
+  if [ "${_project}" = website ]; then
     echo '/docs'
 
     unset _project _version
@@ -586,12 +600,11 @@ await_build() {
   while [ "${i}" -ne "${max}" ]
   do
     sleep 1
-    debg "Retrying request to webserver assuming the process is still starting up."
+    debg "Retrying request to web server assuming the process is still starting up."
     i=$((i + 1))
 
     if ${req} "${url}"; then
-      echo
-      echo "View documentation locally:"
+      printf '\r\nView documentation locally:\r\n'
       for x in ${url_src_dst_vers}; do
         IFS='^' read -r url _ _ <<POSIX_HERESTRING
 $x
@@ -599,19 +612,18 @@ POSIX_HERESTRING
 
         if [ -n "${url}" ]; then
           if [ "${_url}" != "arbitrary" ]; then
-            echo "  ${url}"
+            printf '\r  %s\r\n' "${url}"
           fi
         fi
       done
-      echo
-      echo 'Press Ctrl+C to stop the server'
+      printf '\r\nPress Ctrl+C to stop the server\r\n'
 
       unset i max req url
       return
     fi
   done
 
-  echo
+  printf '\r\n'
   errr 'The build was interrupted or a build error occurred, check the previous logs for possible causes.'
   note 'You might need to use Ctrl+C to end the process.'
 
@@ -620,16 +632,16 @@ POSIX_HERESTRING
 
 debg() {
   if [ -n "${DEBUG}" ]; then
-    echo "DEBG: $1" >&2
+    printf 'DEBG: %s\r\n' "$1" >&2
   fi
 }
 
 errr() {
-  echo "ERRR: $1" >&2
+  printf 'ERRR: %s\r\n' "$1" >&2
 }
 
 note() {
-  echo "NOTE: $1" >&2
+  printf 'NOTE: %s\r\n' "$1" >&2
 }
 
 url_src_dst_vers="$(url_src_dst_vers "$@")"
@@ -641,8 +653,15 @@ for arg in "$@"; do
   IFS=: read -r _project _ _repo _ <<POSIX_HERESTRING
 ${arg}
 POSIX_HERESTRING
-  if [ "${_project}" = website ]; then
+  if [ "${_project}" = website ] || [ "${_project}" = grafana-cloud ]; then
     note "Please be patient, building the website can take some time."
+
+      # If set, the docs-base image will run a prebuild script that sets up Hugo mounts.
+    if [ "${WEBSITE_MOUNTS}" = false ]; then
+      unset WEBSITE_MOUNTS
+    else
+      readonly WEBSITE_MOUNTS=true
+    fi
 
     _repo="$(repo_path website)"
     volumes="--volume=${_repo}/config:/hugo/config"
@@ -689,8 +708,15 @@ POSIX_HERESTRING
 
 case "${image}" in
   'grafana/doc-validator')
+    if ! command -v jq >/dev/null 2>&1; then
+      errr '`jq` must be installed for the `doc-validator` target to work.'
+      note 'To install `jq`, refer to https://jqlang.github.io/jq/download/,'
+
+      exit 1
+    fi
+
     proj="$(new_proj "$1")"
-    echo
+    printf '\r\n'
     "${PODMAN}" run \
                 --init \
                 --interactive \
@@ -701,12 +727,14 @@ case "${image}" in
                 "${DOCS_IMAGE}" \
                 "--include=${DOC_VALIDATOR_INCLUDE}" \
                 "--skip-checks=${DOC_VALIDATOR_SKIP_CHECKS}" \
-                /hugo/content/docs \
-                "$(proj_canonical "${proj}")" | sed "s#$(proj_dst "${proj}")#sources#"
+                "/hugo/content$(proj_canonical "${proj}")" \
+                "$(proj_canonical "${proj}")" \
+                | sed "s#$(proj_dst "${proj}")#sources#" \
+                | jq -r '"ERROR: \(.location.path):\(.location.range.start.line // 1):\(.location.range.start.column // 1): \(.message)" + if .suggestions[0].text then "\nSuggestion: \(.suggestions[0].text)" else "" end'
     ;;
   'grafana/vale')
     proj="$(new_proj "$1")"
-    echo
+    printf '\r\n'
     "${PODMAN}" run \
                 --init \
                 --interactive \

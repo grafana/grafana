@@ -174,7 +174,7 @@ func (ng *AlertNG) init() error {
 	// using the UTF-8 parser and then fallsback to the classic parser on error.
 	// UTF-8 is permitted in label names. This should be removed when the compat package
 	// is removed from Alertmanager.
-	compat.InitFromFlags(ng.Log, compat.RegisteredMetrics, featurecontrol.NoopFlags{})
+	compat.InitFromFlags(ng.Log, featurecontrol.NoopFlags{})
 
 	// If enabled, configure the remote Alertmanager.
 	// - If several toggles are enabled, the order of precedence is RemoteOnly, RemotePrimary, RemoteSecondary
@@ -232,7 +232,7 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	moa, err := notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, moaLogger, ng.SecretsService, overrides...)
+	moa, err := notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, moaLogger, ng.SecretsService, ng.FeatureToggles, overrides...)
 	if err != nil {
 		return err
 	}
@@ -274,7 +274,7 @@ func (ng *AlertNG) init() error {
 		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
 		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
 		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
-		JitterEvaluations:    schedule.JitterStrategyFrom(ng.FeatureToggles),
+		JitterEvaluations:    schedule.JitterStrategyFrom(ng.Cfg.UnifiedAlerting, ng.FeatureToggles),
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
@@ -301,6 +301,7 @@ func (ng *AlertNG) init() error {
 		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoNormalState),
 		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
 		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
+		RulesPerRuleGroupLimit:         ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
 	}
@@ -325,12 +326,13 @@ func (ng *AlertNG) init() error {
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(ng.store, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, receiverService, ng.Log)
+	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, receiverService, ng.Log, ng.store)
 	templateService := provisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.dashboardService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
-		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()), ng.Log)
+		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
+		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store))
 
 	ng.api = &api.API{
 		Cfg:                  ng.Cfg,

@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -317,6 +319,28 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 		require.Equal(t, newRule3.Title, dbrule3.Title)
 		require.Equal(t, newRule4.Title, dbrule4.Title)
 	})
+
+	t.Run("should fail with unique constraint violation", func(t *testing.T) {
+		rule1 := createRuleInFolder("unique-rule1", 1, "my-namespace")
+		rule2 := createRuleInFolder("unique-rule2", 1, "my-namespace")
+
+		newRule1 := models.CopyRule(rule1)
+		newRule2 := models.CopyRule(rule2)
+		newRule2.Title = newRule1.Title
+
+		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: rule2,
+			New:      *newRule2,
+		},
+		})
+		require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
+		require.NotEqual(t, newRule2.UID, "")
+		require.NotEqual(t, newRule2.Title, "")
+		require.NotEqual(t, newRule2.NamespaceUID, "")
+		require.ErrorContains(t, err, newRule2.UID)
+		require.ErrorContains(t, err, newRule2.Title)
+		require.ErrorContains(t, err, newRule2.NamespaceUID)
+	})
 }
 
 func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
@@ -617,6 +641,177 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		}
 		require.Truef(t, found, "Rule with key %#v was not found in database", keyWithID)
 	}
+
+	_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{deref[0]})
+	require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
+	require.NotEqual(t, deref[0].UID, "")
+	require.NotEqual(t, deref[0].Title, "")
+	require.NotEqual(t, deref[0].NamespaceUID, "")
+	require.ErrorContains(t, err, deref[0].UID)
+	require.ErrorContains(t, err, deref[0].Title)
+	require.ErrorContains(t, err, deref[0].NamespaceUID)
+}
+
+func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
+		Logger:        log.New("test-dbstore"),
+		Cfg:           cfg.UnifiedAlerting,
+	}
+
+	uniqueUids := &sync.Map{}
+	receiverName := "receiver\"-" + uuid.NewString()
+	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithOrgID(1), withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueUID(uniqueUids)))
+	receiveRules := models.GenerateAlertRules(3,
+		models.AlertRuleGen(
+			models.WithOrgID(1),
+			withIntervalMatching(store.Cfg.BaseInterval),
+			models.WithUniqueUID(uniqueUids),
+			models.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName)))))
+	noise := models.GenerateAlertRules(3,
+		models.AlertRuleGen(
+			models.WithOrgID(1),
+			withIntervalMatching(store.Cfg.BaseInterval),
+			models.WithUniqueUID(uniqueUids),
+			models.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(receiverName))))) // simulate collision of names of receiver and mute timing
+	deref := make([]models.AlertRule, 0, len(rules)+len(receiveRules)+len(noise))
+	for _, rule := range append(append(rules, receiveRules...), noise...) {
+		r := *rule
+		r.ID = 0
+		deref = append(deref, r)
+	}
+
+	_, err := store.InsertAlertRules(context.Background(), deref)
+	require.NoError(t, err)
+
+	t.Run("should find rules by receiver name", func(t *testing.T) {
+		expectedUIDs := map[string]struct{}{}
+		for _, rule := range receiveRules {
+			expectedUIDs[rule.UID] = struct{}{}
+		}
+		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID:        1,
+			ReceiverName: receiverName,
+		})
+		require.NoError(t, err)
+		assert.Len(t, actual, len(expectedUIDs))
+		for _, rule := range actual {
+			assert.Contains(t, expectedUIDs, rule.UID)
+		}
+	})
+
+	t.Run("RenameReceiverInNotificationSettings should update all rules that refer to the old receiver", func(t *testing.T) {
+		newName := "new-receiver"
+		affected, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, newName)
+		require.NoError(t, err)
+		require.Equal(t, len(receiveRules), affected)
+
+		expectedUIDs := map[string]struct{}{}
+		for _, rule := range receiveRules {
+			expectedUIDs[rule.UID] = struct{}{}
+		}
+		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID:        1,
+			ReceiverName: newName,
+		})
+		require.NoError(t, err)
+		assert.Len(t, actual, len(expectedUIDs))
+		for _, rule := range actual {
+			assert.Contains(t, expectedUIDs, rule.UID)
+		}
+
+		actual, err = store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID:        1,
+			ReceiverName: receiverName,
+		})
+		require.NoError(t, err)
+		require.Empty(t, actual)
+	})
+}
+
+func TestIntegrationListNotificationSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
+		Logger:        log.New("test-dbstore"),
+		Cfg:           cfg.UnifiedAlerting,
+	}
+
+	uids := &sync.Map{}
+	titles := &sync.Map{}
+	receiverName := `receiver%"-👍'test`
+	rulesWithNotifications := models.GenerateAlertRules(5, models.AlertRuleGen(
+		models.WithOrgID(1),
+		models.WithUniqueUID(uids),
+		models.WithUniqueTitle(titles),
+		withIntervalMatching(store.Cfg.BaseInterval),
+		models.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName))),
+	))
+	rulesInOtherOrg := models.GenerateAlertRules(5, models.AlertRuleGen(
+		models.WithOrgID(2),
+		models.WithUniqueUID(uids),
+		models.WithUniqueTitle(titles),
+		withIntervalMatching(store.Cfg.BaseInterval),
+		models.WithNotificationSettingsGen(models.NotificationSettingsGen()),
+	))
+	rulesWithNoNotifications := models.GenerateAlertRules(5, models.AlertRuleGen(
+		models.WithOrgID(1),
+		models.WithUniqueUID(uids),
+		models.WithUniqueTitle(titles),
+		withIntervalMatching(store.Cfg.BaseInterval),
+		models.WithNoNotificationSettings(),
+	))
+	deref := make([]models.AlertRule, 0, len(rulesWithNotifications)+len(rulesWithNoNotifications)+len(rulesInOtherOrg))
+	for _, rule := range append(append(rulesWithNotifications, rulesWithNoNotifications...), rulesInOtherOrg...) {
+		r := *rule
+		r.ID = 0
+		deref = append(deref, r)
+	}
+
+	_, err := store.InsertAlertRules(context.Background(), deref)
+	require.NoError(t, err)
+
+	result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{OrgID: 1})
+	require.NoError(t, err)
+	require.Len(t, result, len(rulesWithNotifications))
+	for _, rule := range rulesWithNotifications {
+		if !assert.Contains(t, result, rule.GetKey()) {
+			continue
+		}
+		assert.EqualValues(t, rule.NotificationSettings, result[rule.GetKey()])
+	}
+
+	t.Run("should list notification settings by receiver name", func(t *testing.T) {
+		expectedUIDs := map[models.AlertRuleKey]struct{}{}
+		for _, rule := range rulesWithNotifications {
+			expectedUIDs[rule.GetKey()] = struct{}{}
+		}
+
+		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+			OrgID:        1,
+			ReceiverName: receiverName,
+		})
+		require.NoError(t, err)
+		assert.Len(t, actual, len(expectedUIDs))
+		for ruleKey := range actual {
+			assert.Contains(t, expectedUIDs, ruleKey)
+		}
+	})
 }
 
 // createAlertRule creates an alert rule in the database and returns it.
