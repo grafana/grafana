@@ -1,11 +1,9 @@
 import { Observable, ReplaySubject, Subject, firstValueFrom, map, scan, startWith } from 'rxjs';
 
-import { logWarning } from '@grafana/runtime';
-
 import { PluginPreloadResult } from '../pluginPreloader';
 
 import { PluginExtensionRegistry, PluginExtensionRegistryItem } from './types';
-import { deepFreeze } from './utils';
+import { deepFreeze, logWarning } from './utils';
 import { isPluginExtensionConfigValid } from './validators';
 
 export class ReactivePluginExtensionsRegistry {

@@ -5,15 +5,8 @@ import { PluginExtensionTypes } from '@grafana/data';
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 
 describe('createPluginExtensionsRegistry', () => {
-  const originalWarn = global.console.warn;
-
-  beforeAll(() => {
-    global.console.warn = jest.fn();
-  });
-
-  afterAll(() => {
-    global.console.warn = originalWarn;
-  });
+  const consoleWarn = jest.spyOn(console, 'warn').mockImplementation();
+  beforeEach(() => consoleWarn.mockReset());
 
   it('should return empty registry when no extensions registered', async () => {
     const reactiveRegistry = new ReactivePluginExtensionsRegistry();
@@ -513,6 +506,8 @@ describe('createPluginExtensionsRegistry', () => {
       ],
     });
 
+    expect(consoleWarn).toHaveBeenCalled();
+
     observable.subscribe(subscribeCallback);
     expect(subscribeCallback).toHaveBeenCalledTimes(1);
 
@@ -541,6 +536,8 @@ describe('createPluginExtensionsRegistry', () => {
       ],
     });
 
+    expect(consoleWarn).toHaveBeenCalled();
+
     observable.subscribe(subscribeCallback);
     expect(subscribeCallback).toHaveBeenCalledTimes(1);
 
@@ -568,6 +565,8 @@ describe('createPluginExtensionsRegistry', () => {
       ],
     });
 
+    expect(consoleWarn).toHaveBeenCalled();
+
     observable.subscribe(subscribeCallback);
     expect(subscribeCallback).toHaveBeenCalledTimes(1);
 
@@ -594,6 +593,8 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
     });
+
+    expect(consoleWarn).toHaveBeenCalled();
 
     observable.subscribe(subscribeCallback);
     expect(subscribeCallback).toHaveBeenCalledTimes(1);
