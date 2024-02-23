@@ -50,7 +50,7 @@
     "marked-mangle": "1.1.7",
     "moment": "2.30.1",
     "moment-timezone": "0.5.45",
-    "ol": "7.4.0",
+    "ol": "8.2.0",
     "papaparse": "5.4.1",
     "react-use": "17.5.0",
     "regenerator-runtime": "0.14.1",
