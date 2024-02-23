@@ -538,16 +538,15 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
 }
 
 export function trackIfIsEmpty(parent: DashboardScene) {
-  const { body } = parent.state;
+  updateIsEmpty(parent);
 
-  updateIsEmpty(body, parent);
-
-  body.subscribeToState(() => {
-    updateIsEmpty(body, parent);
+  parent.state.body.subscribeToState(() => {
+    updateIsEmpty(parent);
   });
 }
 
-function updateIsEmpty(body: SceneObject, parent: DashboardScene) {
+function updateIsEmpty(parent: DashboardScene) {
+  const { body } = parent.state;
   if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
     parent.setState({ isEmpty: body.state.children.length === 0 });
   }
