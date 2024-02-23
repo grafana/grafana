@@ -2,25 +2,23 @@ import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
-import { completeTemplate } from './generate-transformations.ts';
+import { completeTemplate, buildMarkdownContent } from './generate-transformations.ts';
 
 describe('Makefile Tests', () => {
   const rootDir = resolve(__dirname, '../../');
   const makefilePath = resolve(rootDir, 'docs/Makefile');
 
-  it('should execute makefile without error', () => {
-    const output = execSync(
-      `make -C ${rootDir}/docs -f ${makefilePath} sources/panels-visualizations/query-transform-data/transform-data/index.md`
-    );
+  it('should execute without error and match the content written to index.md', () => {
+    // Execute the script to generate the markdown content.
+    buildMarkdownContent(); 
 
-    // Check that the output does not contain any error messages
-    expect(output.toString()).not.toMatch(/error/i);
-  });
-
-  it('should match the content written to index.md', () => {
+    // Build path to the generated markdown file.
     const path = resolve(rootDir, 'docs/sources/panels-visualizations/query-transform-data/transform-data/index.md');
+
+    // Read the content of the generated markdown file.
     const markdownContent = readFileSync(path, 'utf-8');
 
+    // Normalize the content of the generated markdown file and the content of the JS template and compare.
     expect(normalizeContent(markdownContent)).toEqual(normalizeContent(completeTemplate));
   });
 });
