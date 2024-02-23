@@ -31,9 +31,7 @@ A panel editor includes a query builder and a series of options that you can use
 
 This topic describes how to:
 
-- Open a panel for editing
 - Add a panel title and description
-- View a panel JSON model
 - Configure repeating rows and panels
 
 ## Panel options
