@@ -17,53 +17,43 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
   const { azureCloudOptions, disabled, credentials, onCredentialsChange } = props;
 
   const onAzureCloudChange = (selected: SelectableValue<string>) => {
-    if (credentials.authType === 'clientsecret') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        azureCloud: selected.value,
-      };
-      onCredentialsChange(updated);
-    }
+    const updated: AzureCredentials = {
+      ...credentials,
+      azureCloud: selected.value,
+    };
+    onCredentialsChange(updated);
   };
 
   const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (credentials.authType === 'clientsecret') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        tenantId: event.target.value,
-      };
-      onCredentialsChange(updated);
-    }
+    const updated: AzureCredentials = {
+      ...credentials,
+      tenantId: event.target.value,
+    };
+    onCredentialsChange(updated);
   };
 
   const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (credentials.authType === 'clientsecret') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        clientId: event.target.value,
-      };
-      onCredentialsChange(updated);
-    }
+    const updated: AzureCredentials = {
+      ...credentials,
+      clientId: event.target.value,
+    };
+    onCredentialsChange(updated);
   };
 
   const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (credentials.authType === 'clientsecret') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        clientSecret: event.target.value,
-      };
-      onCredentialsChange(updated);
-    }
+    const updated: AzureCredentials = {
+      ...credentials,
+      clientSecret: event.target.value,
+    };
+    onCredentialsChange(updated);
   };
 
   const onClientSecretReset = () => {
-    if (credentials.authType === 'clientsecret') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        clientSecret: '',
-      };
-      onCredentialsChange(updated);
-    }
+    const updated: AzureCredentials = {
+      ...credentials,
+      clientSecret: '',
+    };
+    onCredentialsChange(updated);
   };
 
   return (
@@ -121,7 +111,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
       </Field>
       {!disabled &&
         (typeof credentials.clientSecret === 'symbol' ? (
-          <Field label="Client Secret" htmlFor="client-secret" required={credentials.authType === 'clientsecret'}>
+          <Field label="Client Secret" htmlFor="client-secret" required>
             <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
               <Input
                 aria-label="Client Secret"
@@ -138,9 +128,9 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
           <Field
             label="Client Secret"
             data-testid={selectors.components.configEditor.clientSecret.input}
-            required={credentials.authType === 'clientsecret'}
+            required
             htmlFor="client-secret"
-            invalid={credentials.authType === 'clientsecret' && !credentials.clientSecret}
+            invalid={!credentials.clientSecret}
             error={'Client secret is required'}
           >
             <Input
