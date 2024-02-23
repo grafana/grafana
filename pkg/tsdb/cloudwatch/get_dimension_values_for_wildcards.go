@@ -14,8 +14,13 @@ import (
 
 // getDimensionValues gets the actual dimension values for dimensions with a wildcard
 func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context, pluginCtx backend.PluginContext, region string,
-	client models.CloudWatchMetricsAPIProvider, origQueries []*models.CloudWatchQuery, tagValueCache *cache.Cache, listMetricsPageLimit int) ([]*models.CloudWatchQuery, error) {
-	metricsClient := clients.NewMetricsClient(client, listMetricsPageLimit)
+	client models.CloudWatchMetricsAPIProvider, origQueries []*models.CloudWatchQuery, tagValueCache *cache.Cache) ([]*models.CloudWatchQuery, error) {
+	instance, err := e.getInstance(ctx, pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	metricsClient := clients.NewMetricsClient(client, instance.Settings.GrafanaSettings.ListMetricsPageLimit)
 	service := services.NewListMetricsService(metricsClient)
 	// create copies of the original query. All the fields besides Dimensions are primitives
 	queries := copyQueries(origQueries)
