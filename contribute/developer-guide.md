@@ -171,9 +171,11 @@ make test-go-integration-postgres
 
 ### Run end-to-end tests
 
-The end to end tests in Grafana use [Cypress](https://www.cypress.io/) to run automated scripts in a headless Chromium browser. Read more about our [e2e framework](/contribute/style-guides/e2e.md).
+The end to end tests in Grafana use [Cypress](https://www.cypress.io/) and [Playwright](https://playwright.dev/) to run automated scripts in a browser. Read more about our Cypress [e2e framework](/contribute/style-guides/e2e.md).
 
-To run the tests:
+#### Running Cypress tests
+
+To run all tests in a headless Chromium browser.
 
 ```
 yarn e2e
@@ -195,6 +197,34 @@ To choose a single test to follow in the browser as it runs, use `yarn e2e:dev`
 
 ```
 yarn e2e:dev
+```
+
+#### To run the Playwright tests:
+
+**Note:** If you're using VS Code as your development editor, it's recommended to install the [Playwright test extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). It allows you to run, debug and generate Playwright tests from within the editor. For more information about the extension and how to install it, refer to the [Playwright documentation](https://playwright.dev/docs/getting-started-vscode).
+
+Each version of Playwright needs specific versions of browser binaries to operate. You will need to use the Playwright CLI to install these browsers.
+
+```
+yarn playwright install chromium
+```
+
+To run all tests in a headless Chromium browser and display results in the terminal.
+
+```
+yarn e2e:playwright
+```
+
+For a better developer experience, open the Playwright UI where you can easily walk through each step of the test and visually see what was happening before, during and after each step.
+
+```
+yarn e2e:playwright:ui
+```
+
+To open the HTML reporter for the last test run session.
+
+```
+yarn e2e:playwright:report
 ```
 
 ## Configure Grafana for development
