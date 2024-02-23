@@ -1,6 +1,8 @@
 import { map, of } from 'rxjs';
 
 import { AnnotationQuery, DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneDataLayers, SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel, dataLayers } from '@grafana/scenes';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -43,6 +45,11 @@ jest.mock('@grafana/runtime', () => ({
     publicDashboardAccessToken: 'ac123',
   },
 }));
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
 
 describe('AnnotationsEditView', () => {
   describe('Dashboard annotations state', () => {

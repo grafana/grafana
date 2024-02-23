@@ -1,3 +1,5 @@
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -7,6 +9,11 @@ import { VERSIONS_FETCH_LIMIT, VersionsEditView } from './VersionsEditView';
 import { historySrv } from './version-history';
 
 jest.mock('./version-history/HistorySrv');
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
 
 describe('VersionsEditView', () => {
   describe('Dashboard versions state', () => {
