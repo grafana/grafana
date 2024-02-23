@@ -26,7 +26,7 @@ import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
-jest.mock('./getDashboardChangesFromScene', () => ({
+jest.mock('../saving/getDashboardChangesFromScene', () => ({
   // It compares the initial and changed save models and returns the differences
   // By default we assume there are differences to have the dirty state test logic tested
   getDashboardChangesFromScene: jest.fn(() => ({

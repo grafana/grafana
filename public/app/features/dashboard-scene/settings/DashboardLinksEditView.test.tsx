@@ -2,7 +2,9 @@ import { render as RTLRender } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { behaviors, SceneGridLayout, SceneGridItem, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { setPluginImportUtils } from '@grafana/runtime';
+import { SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { DashboardControls } from '../scene/DashboardControls';
@@ -22,6 +24,11 @@ jest.mock('react-router-dom', () => ({
     key: '5nvxpbdafa',
   }),
 }));
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
 
 function render(component: React.ReactNode) {
   return RTLRender(<TestProvider>{component}</TestProvider>);
