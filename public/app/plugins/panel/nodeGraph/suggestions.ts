@@ -17,6 +17,7 @@ export class NodeGraphSuggestionsSupplier {
     const dataFrames = builder.data.series.filter(
       (df) => df.meta && df.meta.preferredVisualisationType === 'nodeGraph'
     );
+    // one frame for nodes, one frame for edges
     if (dataFrames.length !== 2) {
       return;
     }
