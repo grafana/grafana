@@ -12,13 +12,13 @@ describe('makefile script tests', () => {
   const markdownContent = readFileSync(pathToMarkdown, 'utf-8');
 
   it('should execute without error and match the content written to index.md', () => {
-    // Normalize the content of the generated markdown file and the content of the JS template and compare.
+    // Normalize and compare.
     expect(contentDoesMatch(getJavaScriptContent(), getMarkdownContent())).toBe(true);
   });
 
   it('should be able to tell if the content DOES NOT match', () => {
     const wrongContent = getJavaScriptContent().concat('additional content to mismatch');
-    // Normalize the content of the generated markdown file and the content of the JS template and compare.
+    // Normalize and compare.
     expect(contentDoesMatch(wrongContent, getMarkdownContent())).toBe(false);
   });
 });
