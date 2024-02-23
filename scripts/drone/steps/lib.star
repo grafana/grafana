@@ -37,7 +37,7 @@ def yarn_install_step():
         "commands": [
             # Python is needed to build `esfx`, which is needed by `msagl`
             "apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python",
-            "yarn install --immutable",
+            "yarn install --immutable || yarn install --immutable",
         ],
         "depends_on": [],
     }
@@ -360,6 +360,65 @@ def e2e_tests_artifacts():
         ],
     }
 
+def playwright_e2e_report_upload():
+    return {
+        "name": "playwright-e2e-report-upload",
+        "image": images["cloudsdk"],
+        "depends_on": [
+            "playwright-plugin-e2e",
+        ],
+        "failure": "ignore",
+        "when": {
+            "status": [
+                "success",
+                "failure",
+            ],
+        },
+        "environment": {
+            "GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY": from_secret(gcp_upload_artifacts_key),
+        },
+        "commands": [
+            "apt-get update",
+            "apt-get install -yq zip",
+            "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
+            "gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json",
+            "gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report",
+            "export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html",
+            'echo "E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}"',
+        ],
+    }
+
+def playwright_e2e_report_post_link():
+    return {
+        "name": "playwright-e2e-report-post-link",
+        "image": images["curl"],
+        "depends_on": [
+            "playwright-e2e-report-upload",
+        ],
+        "failure": "ignore",
+        "when": {
+            "status": [
+                "success",
+                "failure",
+            ],
+        },
+        "environment": {
+            "GITHUB_TOKEN": from_secret("github_token"),
+        },
+        "commands": [
+            # if the trace doesn't folder exists, it means that there are no failed tests.
+            "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi",
+            # if it exists, we will post a comment on the PR with the link to the report
+            "export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html",
+            "curl -L " +
+            "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
+            '-H "Accept: application/vnd.github+json" ' +
+            '-H "Authorization: Bearer $${GITHUB_TOKEN}" ' +
+            '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
+            '"{\\"body\\":\\"❌ Failed to run Playwright plugin e2e tests. <br /> <br /> Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer. <br /> For information on how to run Playwright tests locally, refer to the [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests). \\"}"',
+        ],
+    }
+
 def upload_cdn_step(ver_mode, trigger = None):
     """Uploads CDN assets using the Grafana build tool.
 
@@ -438,7 +497,7 @@ def update_package_json_version():
         ],
         "commands": [
             "apk add --update jq",
-            "new_version=$(cat package.json | jq .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)",
+            "new_version=$(cat package.json | jq -r .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)",
             "echo \"New version: $new_version\"",
             "yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish -y",
             "yarn install --mode=update-lockfile",
@@ -506,7 +565,7 @@ def test_backend_step():
             # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
             # mime.TypeByExtension function.
             "apk add --update build-base shared-mime-info shared-mime-info-lang",
-            "go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...",
+            "go list -f '{{.Dir}}/...' -m | xargs go test -tags requires_buildifer -short -covermode=atomic -timeout=5m",
         ],
     }
 
@@ -786,6 +845,25 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     step = dict(step, when = when)
     return step
 
+def playwright_e2e_tests_step():
+    return {
+        "environment": {
+            "PORT": "3001",
+            "HOST": "grafana-server",
+            "PROV_DIR": "/grafana/scripts/grafana-server/tmp/conf/provisioning",
+        },
+        "name": "playwright-plugin-e2e",
+        "image": images["playwright"],
+        "failure": "ignore",
+        "depends_on": [
+            "grafana-server",
+        ],
+        "commands": [
+            "sleep 10s",  # it seems sometimes that grafana-server is not actually ready when the step starts, so waiting for a few seconds before running the tests
+            "yarn e2e:playwright",
+        ],
+    }
+
 def build_docs_website_step():
     return {
         "name": "build-docs-website",
@@ -958,7 +1036,7 @@ def mysql_integration_tests_steps(hostname, version):
 def redis_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...",
+        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -983,7 +1061,7 @@ def remote_alertmanager_integration_tests_steps():
 def memcached_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...",
+        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
     ]
 
     environment = {
