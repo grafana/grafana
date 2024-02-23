@@ -4,11 +4,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestRuleGroup(t *testing.T) {
@@ -187,6 +189,109 @@ func TestRules(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, ruleMapped.NoDataState, models.NoData)
 	})
+	t.Run("a rule with notification settings should map it correctly", func(t *testing.T) {
+		rule := validRuleV1(t)
+		rule.NotificationSettings = &NotificationSettingsV1{
+			Receiver: stringToStringValue("test-receiver"),
+		}
+		ruleMapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Len(t, ruleMapped.NotificationSettings, 1)
+		require.Equal(t, models.NotificationSettings{Receiver: "test-receiver"}, ruleMapped.NotificationSettings[0])
+	})
+}
+
+func TestNotificationsSettingsV1MapToModel(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    NotificationSettingsV1
+		expected models.NotificationSettings
+		wantErr  bool
+	}{
+		{
+			name: "Valid Input",
+			input: NotificationSettingsV1{
+				Receiver:          stringToStringValue("test-receiver"),
+				GroupBy:           []values.StringValue{stringToStringValue("test-group_by")},
+				GroupWait:         stringToStringValue("1s"),
+				GroupInterval:     stringToStringValue("2s"),
+				RepeatInterval:    stringToStringValue("3s"),
+				MuteTimeIntervals: []values.StringValue{stringToStringValue("test-mute")},
+			},
+			expected: models.NotificationSettings{
+				Receiver:          "test-receiver",
+				GroupBy:           []string{"test-group_by"},
+				GroupWait:         util.Pointer(model.Duration(1 * time.Second)),
+				GroupInterval:     util.Pointer(model.Duration(2 * time.Second)),
+				RepeatInterval:    util.Pointer(model.Duration(3 * time.Second)),
+				MuteTimeIntervals: []string{"test-mute"},
+			},
+		},
+		{
+			name: "Skips empty elements in group_by",
+			input: NotificationSettingsV1{
+				Receiver: stringToStringValue("test-receiver"),
+				GroupBy:  []values.StringValue{stringToStringValue("test-group_by1"), stringToStringValue(""), stringToStringValue("test-group_by2")},
+			},
+			expected: models.NotificationSettings{
+				Receiver: "test-receiver",
+				GroupBy:  []string{"test-group_by1", "test-group_by2"},
+			},
+		},
+		{
+			name: "Skips empty elements in mute timings",
+			input: NotificationSettingsV1{
+				Receiver:          stringToStringValue("test-receiver"),
+				MuteTimeIntervals: []values.StringValue{stringToStringValue("test-mute1"), stringToStringValue(""), stringToStringValue("test-mute2")},
+			},
+			expected: models.NotificationSettings{
+				Receiver:          "test-receiver",
+				MuteTimeIntervals: []string{"test-mute1", "test-mute2"},
+			},
+		},
+		{
+			name: "Empty Receiver",
+			input: NotificationSettingsV1{
+				Receiver: stringToStringValue(""),
+			},
+			wantErr: true,
+		},
+		{
+			name: "Invalid GroupWait Duration",
+			input: NotificationSettingsV1{
+				Receiver:  stringToStringValue("test-receiver"),
+				GroupWait: stringToStringValue("invalidDuration"),
+			},
+			wantErr: true,
+		},
+		{
+			name: "Invalid GroupInterval Duration",
+			input: NotificationSettingsV1{
+				Receiver:      stringToStringValue("test-receiver"),
+				GroupInterval: stringToStringValue("invalidDuration"),
+			},
+			wantErr: true,
+		},
+		{
+			name: "Invalid RepeatInterval Duration",
+			input: NotificationSettingsV1{
+				Receiver:      stringToStringValue("test-receiver"),
+				GroupInterval: stringToStringValue("invalidDuration"),
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := tc.input.mapToModel()
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.Equal(t, tc.expected, got)
+		})
+	}
 }
 
 func validRuleGroupV1(t *testing.T) AlertRuleGroupV1 {
@@ -237,4 +342,13 @@ func validRuleV1(t *testing.T) AlertRuleV1 {
 		Condition: condition,
 		Data:      []QueryV1{{}},
 	}
+}
+
+func stringToStringValue(s string) values.StringValue {
+	result := values.StringValue{}
+	err := yaml.Unmarshal([]byte(s), &result)
+	if err != nil {
+		panic(err)
+	}
+	return result
 }

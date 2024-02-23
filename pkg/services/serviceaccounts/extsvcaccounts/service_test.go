@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -44,7 +43,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	}
 	logger := log.New("extsvcaccounts.test")
 	env.S = &ExtSvcAccountsService{
-		acSvc:    acimpl.ProvideOSSService(cfg, env.AcStore, localcache.New(0, 0), usertest.NewUserServiceFake(), fmgt),
+		acSvc:    acimpl.ProvideOSSService(cfg, env.AcStore, localcache.New(0, 0), fmgt),
 		features: fmgt,
 		logger:   logger,
 		metrics:  newMetrics(nil, env.SaSvc, logger),

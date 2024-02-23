@@ -21,8 +21,8 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 

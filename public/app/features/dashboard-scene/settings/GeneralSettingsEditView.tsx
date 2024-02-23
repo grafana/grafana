@@ -22,7 +22,6 @@ import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteD
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
@@ -61,7 +60,7 @@ export class GeneralSettingsEditView
   }
 
   public getRefreshPicker() {
-    return dashboardSceneGraph.getRefreshPicker(this._dashboard);
+    return this.getDashboardControls().state.refreshPicker;
   }
 
   public getCursorSync() {
@@ -75,7 +74,7 @@ export class GeneralSettingsEditView
   }
 
   public getDashboardControls() {
-    return dashboardSceneGraph.getDashboardControls(this._dashboard);
+    return this._dashboard.state.controls!;
   }
 
   public onTitleChange = (value: string) => {
@@ -148,11 +147,11 @@ export class GeneralSettingsEditView
 
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const { navModel, pageNav } = useDashboardEditPageNav(model.getDashboard(), model.getUrlKey());
-    const { title, description, tags, meta, editable, overlay } = model.getDashboard().useState();
+    const { title, description, tags, meta, editable } = model.getDashboard().useState();
     const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
     const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
-    const { intervals } = model.getRefreshPicker()?.useState() || {};
-    const { hideTimeControls } = model.getDashboardControls()?.useState() || {};
+    const { intervals } = model.getRefreshPicker().useState();
+    const { hideTimeControls } = model.getDashboardControls().useState();
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
@@ -260,7 +259,6 @@ export class GeneralSettingsEditView
 
           <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton />}</Box>
         </div>
-        {overlay && <overlay.Component model={overlay} />}
       </Page>
     );
   };

@@ -3,12 +3,21 @@ import { lastValueFrom } from 'rxjs';
 
 import { isTruthy, locationUtil } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { DashboardDTO, DescendantCount, DescendantCountDTO, FolderDTO, SaveDashboardResponseDTO } from 'app/types';
+import {
+  DashboardDTO,
+  DescendantCount,
+  DescendantCountDTO,
+  FolderDTO,
+  FolderListItemDTO,
+  ImportDashboardResponseDTO,
+  SaveDashboardResponseDTO,
+} from 'app/types';
 
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
@@ -26,6 +35,20 @@ interface DeleteItemsArgs {
 
 interface MoveItemsArgs extends DeleteItemsArgs {
   destinationUID: string;
+}
+
+export interface ImportInputs {
+  name: string;
+  type: string;
+  value: string;
+  pluginId?: string;
+}
+
+interface ImportOptions {
+  dashboard: Dashboard;
+  overwrite: boolean;
+  inputs: ImportInputs[];
+  folderUid: string;
 }
 
 function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
@@ -47,11 +70,22 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
   return backendSrvBaseQuery;
 }
 
+export interface ListFolderQueryArgs {
+  page: number;
+  parentUid: string | undefined;
+  limit: number;
+}
+
 export const browseDashboardsAPI = createApi({
   tagTypes: ['getFolder'],
   reducerPath: 'browseDashboardsAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
+    listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
+      providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
+      query: ({ page, parentUid, limit }) => ({ url: '/folders', params: { page, parentUid, limit } }),
+    }),
+
     // get folder info (e.g. title, parents) but *not* children
     getFolder: builder.query<FolderDTO, string>({
       providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
@@ -299,6 +333,30 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
+    importDashboard: builder.mutation<ImportDashboardResponseDTO, ImportOptions>({
+      query: ({ dashboard, overwrite, inputs, folderUid }) => ({
+        method: 'POST',
+        url: '/dashboards/import',
+        data: {
+          dashboard,
+          overwrite,
+          inputs,
+          folderUid,
+        },
+      }),
+      onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
+        queryFulfilled.then(async (response) => {
+          dispatch(
+            refetchChildren({
+              parentUID: folderUid,
+              pageSize: PAGE_SIZE,
+            })
+          );
+          const dashboardUrl = locationUtil.stripBaseFromUrl(response.data.importedUrl);
+          locationService.push(dashboardUrl);
+        });
+      },
+    }),
   }),
 });
 
@@ -314,4 +372,5 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
 } = browseDashboardsAPI;
+
 export { skipToken } from '@reduxjs/toolkit/query/react';

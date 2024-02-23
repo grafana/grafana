@@ -26,16 +26,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/query"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func setupTestServer(
 	t *testing.T,
@@ -68,7 +75,9 @@ func setupTestServer(
 	}
 
 	// build api, this will mount the routes at the same time if the feature is enabled
-	ProvideApi(service, rr, ac, features, &Middleware{}, cfg)
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", publicdashboardModels.FeaturePublicDashboardsEmailSharing).Return(false)
+	ProvideApi(service, rr, ac, features, &Middleware{}, cfg, license)
 
 	// connect routes to mux
 	rr.Register(m.Router)

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { DashboardCursorSync, GrafanaTheme2 } from '@grafana/data';
 import {
@@ -26,7 +26,7 @@ import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngin
 import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
 import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
 import { ShareTrailButton } from './ShareTrailButton';
-import { getTrailStore } from './TrailStore/TrailStore';
+import { useBookmarkState } from './TrailStore/useBookmarkState';
 import {
   ActionViewDefinition,
   ActionViewType,
@@ -151,13 +151,8 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     const metricScene = sceneGraph.getAncestor(model, MetricScene);
     const styles = useStyles2(getStyles);
     const trail = getTrailFor(model);
-    const [isBookmarked, setBookmarked] = useState(false);
+    const [isBookmarked, toggleBookmark] = useBookmarkState(trail);
     const { actionView } = metricScene.useState();
-
-    const onBookmarkTrail = () => {
-      getTrailStore().addBookmark(trail);
-      setBookmarked(!isBookmarked);
-    };
 
     return (
       <Box paddingY={1}>
@@ -180,7 +175,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
                 )
               }
               tooltip={'Bookmark'}
-              onClick={onBookmarkTrail}
+              onClick={toggleBookmark}
             />
             {trail.state.embedded && (
               <ToolbarButton variant={'canvas'} onClick={model.onOpenTrail}>

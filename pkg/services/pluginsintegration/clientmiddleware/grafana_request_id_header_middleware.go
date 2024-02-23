@@ -5,7 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"path"
+	"net/url"
 
 	"github.com/google/uuid"
 
@@ -19,6 +19,7 @@ import (
 
 const GrafanaRequestID = "X-Grafana-Request-Id"
 const GrafanaSignedRequestID = "X-Grafana-Signed-Request-Id"
+const XRealIPHeader = "X-Real-Ip"
 const GrafanaInternalRequest = "X-Grafana-Internal-Request"
 
 // NewHostedGrafanaACHeaderMiddleware creates a new plugins.ClientMiddleware that will
@@ -48,17 +49,22 @@ func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(ctx contex
 	}
 
 	// Check if the request is for a datasource that is allowed to have the header
-	target := pCtx.DataSourceInstanceSettings.URL
-
+	dsURL := pCtx.DataSourceInstanceSettings.URL
+	dsBaseURL, err := url.Parse(dsURL)
+	if err != nil {
+		m.log.Debug("Failed to parse data source URL", "error", err)
+		return
+	}
 	foundMatch := false
 	for _, allowedURL := range m.cfg.IPRangeACAllowedURLs {
-		if path.Clean(allowedURL) == path.Clean(target) {
+		// Only look at the scheme and host, ignore the path
+		if allowedURL.Host == dsBaseURL.Host && allowedURL.Scheme == dsBaseURL.Scheme {
 			foundMatch = true
 			break
 		}
 	}
 	if !foundMatch {
-		m.log.Debug("Data source URL not among the allow-listed URLs", "url", target)
+		m.log.Debug("Data source URL not among the allow-listed URLs", "url", dsBaseURL.String())
 		return
 	}
 
@@ -83,6 +89,7 @@ func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(ctx contex
 	if reqCtx != nil && reqCtx.Req != nil {
 		remoteAddress := web.RemoteAddr(reqCtx.Req)
 		if remoteAddress != "" {
+			h.SetHTTPHeader(XRealIPHeader, remoteAddress)
 			return
 		}
 	}

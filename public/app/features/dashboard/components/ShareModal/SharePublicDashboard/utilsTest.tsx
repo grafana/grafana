@@ -1,5 +1,6 @@
+import 'whatwg-fetch';
 import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import React from 'react';
 import { Provider } from 'react-redux';
 
@@ -32,15 +33,14 @@ export const pubdashResponse: sharePublicDashboardUtils.PublicDashboard = {
 };
 
 export const getExistentPublicDashboardResponse = (publicDashboard?: Partial<PublicDashboard>) =>
-  rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        ...pubdashResponse,
-        ...publicDashboard,
-        dashboardUid: req.params.dashboardUid,
-      })
-    );
+  http.get('/api/dashboards/uid/:dashboardUid/public-dashboards', ({ request }) => {
+    const url = new URL(request.url);
+    const dashboardUid = url.searchParams.get('dashboardUid');
+    return HttpResponse.json({
+      ...pubdashResponse,
+      ...publicDashboard,
+      dashboardUid,
+    });
   });
 
 export const renderSharePublicDashboard = async (

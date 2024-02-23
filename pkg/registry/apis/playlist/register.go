@@ -15,9 +15,9 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	grafanarest "github.com/grafana/grafana/pkg/services/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
@@ -113,7 +113,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	storage[resource.StoragePath()] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
-	if optsGetter != nil {
+	if optsGetter != nil && dualWrite {
 		store, err := newStorage(scheme, optsGetter, legacyStore)
 		if err != nil {
 			return nil, err

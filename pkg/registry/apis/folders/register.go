@@ -1,6 +1,7 @@
 package folders
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,10 +15,13 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	grafanarest "github.com/grafana/grafana/pkg/services/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,26 +33,29 @@ var resourceInfo = v0alpha1.FolderResourceInfo
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	gv         schema.GroupVersion
-	features   *featuremgmt.FeatureManager
-	namespacer request.NamespaceMapper
-	folderSvc  folder.Service
+	gv            schema.GroupVersion
+	features      *featuremgmt.FeatureManager
+	namespacer    request.NamespaceMapper
+	folderSvc     folder.Service
+	accessControl accesscontrol.AccessControl
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
+	accessControl accesscontrol.AccessControl,
 ) *FolderAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 
 	builder := &FolderAPIBuilder{
-		gv:         resourceInfo.GroupVersion(),
-		features:   features,
-		namespacer: request.GetNamespaceMapper(cfg),
-		folderSvc:  folderSvc,
+		gv:            resourceInfo.GroupVersion(),
+		features:      features,
+		namespacer:    request.GetNamespaceMapper(cfg),
+		folderSvc:     folderSvc,
+		accessControl: accessControl,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -63,6 +70,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.Folder{},
 		&v0alpha1.FolderList{},
 		&v0alpha1.FolderInfoList{},
+		&v0alpha1.DescendantCounts{},
+		&v0alpha1.FolderAccessInfo{},
 	)
 }
 
@@ -120,7 +129,8 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = legacyStore
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{b.folderSvc}
-	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{b.folderSvc}
+	storage[resourceInfo.StoragePath("count")] = &subCountREST{b.folderSvc}
+	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
 
 	// enable dual writes if a RESTOptionsGetter is provided
 	if dualWrite && optsGetter != nil {
@@ -144,5 +154,39 @@ func (b *FolderAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 }
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return nil // TODO: the FGAC rules encoded in the service can be moved here
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+			if !attr.IsResourceRequest() || attr.GetName() == "" {
+				return authorizer.DecisionNoOpinion, "", nil
+			}
+
+			// require a user
+			user, err := appcontext.User(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "valid user is required", err
+			}
+
+			action := dashboards.ActionFoldersRead
+			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(attr.GetName())
+
+			// "get" is used for sub-resources with GET http (parents, access, count)
+			switch attr.GetVerb() {
+			case "patch":
+				fallthrough
+			case "create":
+				fallthrough
+			case "update":
+				action = dashboards.ActionFoldersWrite
+			case "deletecollection":
+				fallthrough
+			case "delete":
+				action = dashboards.ActionFoldersDelete
+			}
+
+			ok, err := b.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
+			if ok {
+				return authorizer.DecisionAllow, "", nil
+			}
+			return authorizer.DecisionDeny, "folder", err
+		})
 }

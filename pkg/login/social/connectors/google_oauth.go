@@ -11,10 +11,13 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -35,6 +38,7 @@ type googleUserData struct {
 	Email         string `json:"email"`
 	Name          string `json:"name"`
 	EmailVerified bool   `json:"email_verified"`
+	HD            string `json:"hd"`
 	rawJSON       []byte `json:"-"`
 }
 
@@ -54,20 +58,21 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	return provider
 }
 
-func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info)
+	err = validateInfo(info, requester)
 	if err != nil {
 		return err
 	}
 
-	// add specific validation rules for Google
-
-	return nil
+	return validation.Validate(info, requester,
+		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
+		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"))
 }
 
 func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
@@ -110,6 +115,10 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 
 	if !data.EmailVerified {
 		return nil, fmt.Errorf("user email is not verified")
+	}
+
+	if err := s.isHDAllowed(data.HD); err != nil {
+		return nil, err
 	}
 
 	groups, errPage := s.retrieveGroups(ctx, client, data)
@@ -286,4 +295,18 @@ func (s *SocialGoogle) getGroupsPage(ctx context.Context, client *http.Client, u
 	}
 
 	return &data, nil
+}
+
+func (s *SocialGoogle) isHDAllowed(hd string) error {
+	if len(s.info.AllowedDomains) == 0 {
+		return nil
+	}
+
+	for _, allowedDomain := range s.info.AllowedDomains {
+		if hd == allowedDomain {
+			return nil
+		}
+	}
+
+	return errutil.Forbidden("the hd claim found in the ID token is not present in the allowed domains", errutil.WithPublicMessage("Invalid domain"))
 }
