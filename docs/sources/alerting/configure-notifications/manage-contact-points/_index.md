@@ -99,7 +99,6 @@ On the **Notification templates** tab, you can:
 
 - View, edit, copy or delete existing notification templates
 
-
 ## Configure contact point integrations
 
 Each contact point integration has its own configuration options and setup process. In most cases, this involves providing an API key or a Webhook URL.
