@@ -188,7 +188,7 @@ export function updateCredentials(
         },
       };
   }
-  if (instanceOfAzureCredential<AadCurrentUserCredentials>(credentials.authType, credentials)) {
+  if (instanceOfAzureCredential<AadCurrentUserCredentials>('currentuser', credentials)) {
     const serviceCredentials = credentials.serviceCredentials;
     options = {
       ...options,
