@@ -37,7 +37,8 @@ func TestTelegramNotifier(t *testing.T) {
 			json := `
 				{
           "bottoken": "abcdefgh0123456789",
-					"chatid": "-1234567890"
+					"chatid": "-1234567890",
+	 				"threadid": "-1234567809"
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -55,6 +56,7 @@ func TestTelegramNotifier(t *testing.T) {
 			require.Equal(t, "telegram", telegramNotifier.Type)
 			require.Equal(t, "abcdefgh0123456789", telegramNotifier.BotToken)
 			require.Equal(t, "-1234567890", telegramNotifier.ChatID)
+			require.Equal(t, "-1234567809", telegramNotifier.ThreadID)
 		})
 
 		t.Run("generateCaption should generate a message with all pertinent details", func(t *testing.T) {
