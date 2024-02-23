@@ -166,6 +166,10 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
   const mappedQueriesToHeadings = mapQueriesToHeadings(queries, richHistorySearchFilters.sortOrder);
   const sortOrderOptions = getSortOrderOptions();
   const partialResults = queries.length && queries.length !== totalQueries;
+  const timeFilter = [
+    richHistorySearchFilters.from || 0,
+    richHistorySearchFilters.to || richHistorySettings.retentionPeriod,
+  ];
 
   return (
     <div className={styles.container}>
@@ -174,13 +178,13 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
           <div className={styles.labelSlider}>
             <Trans i18nKey="explore.rich-history-queries-tab.filter-history">Filter history</Trans>
           </div>
-          <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(richHistorySearchFilters.from)}</div>
+          <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(timeFilter[0])}</div>
           <div className={styles.slider}>
             <RangeSlider
               tooltipAlwaysVisible={false}
               min={0}
               max={richHistorySettings.retentionPeriod}
-              value={[richHistorySearchFilters.from, richHistorySearchFilters.to]}
+              value={timeFilter}
               orientation="vertical"
               formatTooltipResult={mapNumbertoTimeInSlider}
               reverse={true}
@@ -189,7 +193,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
               }}
             />
           </div>
-          <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(richHistorySearchFilters.to)}</div>
+          <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(timeFilter[1])}</div>
         </div>
       </div>
 
