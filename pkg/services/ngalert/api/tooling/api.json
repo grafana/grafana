@@ -225,6 +225,9 @@
      ],
      "type": "string"
     },
+    "notification_settings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettingsExport"
+    },
     "panelId": {
      "format": "int64",
      "type": "integer"
@@ -294,6 +297,90 @@
    },
    "type": "object"
   },
+  "AlertRuleNotificationSettings": {
+   "properties": {
+    "group_by": {
+     "default": [
+      "alertname",
+      "grafana_folder"
+     ],
+     "description": "Override the labels by which incoming alerts are grouped together. For example, multiple alerts coming in for\ncluster=A and alertname=LatencyHigh would be batched into a single group. To aggregate by all possible labels\nuse the special value '...' as the sole label name.\nThis effectively disables aggregation entirely, passing through all alerts as-is. This is unlikely to be what\nyou want, unless you have a very low alert volume or your upstream notification system performs its own grouping.\nMust include 'alertname' and 'grafana_folder' if not using '...'.",
+     "example": [
+      "alertname",
+      "grafana_folder",
+      "cluster"
+     ],
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "group_interval": {
+     "description": "Override how long to wait before sending a notification about new alerts that are added to a group of alerts for\nwhich an initial notification has already been sent. (Usually ~5m or more.)",
+     "example": "5m",
+     "type": "string"
+    },
+    "group_wait": {
+     "description": "Override how long to initially wait to send a notification for a group of alerts. Allows to wait for an\ninhibiting alert to arrive or collect more initial alerts for the same group. (Usually ~0s to few minutes.)",
+     "example": "30s",
+     "type": "string"
+    },
+    "mute_time_intervals": {
+     "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
+     "example": [
+      "maintenance"
+     ],
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "receiver": {
+     "description": "Name of the receiver to send notifications to.",
+     "example": "grafana-default-email",
+     "type": "string"
+    },
+    "repeat_interval": {
+     "description": "Override how long to wait before sending a notification again if it has already been sent successfully for an\nalert. (Usually ~3h or more).\nNote that this parameter is implicitly bound by Alertmanager's `--data.retention` configuration flag.\nNotifications will be resent after either repeat_interval or the data retention period have passed, whichever\noccurs first. `repeat_interval` should not be less than `group_interval`.",
+     "example": "4h",
+     "type": "string"
+    }
+   },
+   "required": [
+    "receiver"
+   ],
+   "type": "object"
+  },
+  "AlertRuleNotificationSettingsExport": {
+   "properties": {
+    "group_by": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "group_interval": {
+     "type": "string"
+    },
+    "group_wait": {
+     "type": "string"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "receiver": {
+     "type": "string"
+    },
+    "repeat_interval": {
+     "type": "string"
+    }
+   },
+   "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
+   "type": "object"
+  },
   "AlertRuleUpgrade": {
    "properties": {
     "sendsTo": {
@@ -310,6 +397,9 @@
     }
    },
    "type": "object"
+  },
+  "AlertStateType": {
+   "type": "string"
   },
   "AlertingFileExport": {
    "properties": {
@@ -432,6 +522,80 @@
      "type": "string"
     },
     "numExternalAlertmanagers": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "Annotation": {
+   "properties": {
+    "alertId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "alertName": {
+     "type": "string"
+    },
+    "avatarUrl": {
+     "type": "string"
+    },
+    "created": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "dashboardId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "dashboardUID": {
+     "type": "string"
+    },
+    "data": {
+     "$ref": "#/definitions/Json"
+    },
+    "email": {
+     "type": "string"
+    },
+    "id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "login": {
+     "type": "string"
+    },
+    "newState": {
+     "type": "string"
+    },
+    "panelId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "prevState": {
+     "type": "string"
+    },
+    "tags": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "text": {
+     "type": "string"
+    },
+    "time": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "timeEnd": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "updated": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "userId": {
      "format": "int64",
      "type": "integer"
     }
@@ -574,6 +738,7 @@
      "type": "array"
     },
     "mute_time_intervals": {
+     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
      },
@@ -585,6 +750,12 @@
     "templates": {
      "items": {
       "type": "string"
+     },
+     "type": "array"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
      },
      "type": "array"
     }
@@ -645,11 +816,74 @@
    },
    "type": "array"
   },
+  "CookieType": {
+   "type": "string"
+  },
   "CounterResetHint": {
    "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
    "format": "uint8",
    "title": "CounterResetHint contains the known information about a counter reset,",
    "type": "integer"
+  },
+  "CreateLibraryElementCommand": {
+   "description": "CreateLibraryElementCommand is the command for adding a LibraryElement",
+   "properties": {
+    "folderId": {
+     "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
+     "format": "int64",
+     "type": "integer"
+    },
+    "folderUid": {
+     "description": "UID of the folder where the library element is stored.",
+     "type": "string"
+    },
+    "kind": {
+     "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+     "enum": [
+      1,
+      2
+     ],
+     "format": "int64",
+     "type": "integer"
+    },
+    "model": {
+     "description": "The JSON model for the library element.",
+     "type": "object"
+    },
+    "name": {
+     "description": "Name of the library element.",
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "DashboardACLUpdateItem": {
+   "properties": {
+    "permission": {
+     "$ref": "#/definitions/PermissionType"
+    },
+    "role": {
+     "enum": [
+      "None",
+      "Viewer",
+      "Editor",
+      "Admin"
+     ],
+     "type": "string"
+    },
+    "teamId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "userId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
   },
   "DashboardUpgrade": {
    "properties": {
@@ -752,6 +986,9 @@
     },
     "webhook_url": {
      "$ref": "#/definitions/SecretURL"
+    },
+    "webhook_url_file": {
+     "type": "string"
     }
    },
    "title": "DiscordConfig configures notifications via Discord.",
@@ -1327,6 +1564,7 @@
      "type": "object"
     },
     "mute_time_intervals": {
+     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
      },
@@ -1345,6 +1583,12 @@
     "templates": {
      "items": {
       "type": "string"
+     },
+     "type": "array"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
      },
      "type": "array"
     }
@@ -1559,6 +1803,9 @@
       "OK"
      ],
      "type": "string"
+    },
+    "notification_settings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
     },
     "orgId": {
      "format": "int64",
@@ -2028,6 +2275,9 @@
     "send_resolved": {
      "type": "boolean"
     },
+    "summary": {
+     "type": "string"
+    },
     "text": {
      "type": "string"
     },
@@ -2036,6 +2286,9 @@
     },
     "webhook_url": {
      "$ref": "#/definitions/SecretURL"
+    },
+    "webhook_url_file": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2073,6 +2326,48 @@
     "$ref": "#/definitions/Matcher"
    },
    "type": "array"
+  },
+  "MetricRequest": {
+   "properties": {
+    "debug": {
+     "type": "boolean"
+    },
+    "from": {
+     "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
+     "example": "now-1h",
+     "type": "string"
+    },
+    "queries": {
+     "description": "queries.refId – Specifies an identifier of the query. Is optional and default to “A”.\nqueries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.\nqueries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.\nqueries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.",
+     "example": [
+      {
+       "datasource": {
+        "uid": "PD8C576611E62080A"
+       },
+       "format": "table",
+       "intervalMs": 86400000,
+       "maxDataPoints": 1092,
+       "rawSql": "SELECT 1 as valueOne, 2 as valueTwo",
+       "refId": "A"
+      }
+     ],
+     "items": {
+      "$ref": "#/definitions/Json"
+     },
+     "type": "array"
+    },
+    "to": {
+     "description": "To End time in epoch timestamps in milliseconds or relative using Grafana time units.",
+     "example": "now",
+     "type": "string"
+    }
+   },
+   "required": [
+    "from",
+    "to",
+    "queries"
+   ],
+   "type": "object"
   },
   "MultiStatus": {
    "type": "object"
@@ -2122,6 +2417,24 @@
      "$ref": "#/definitions/GettableRuleGroupConfig"
     },
     "type": "array"
+   },
+   "type": "object"
+  },
+  "NewApiKeyResult": {
+   "properties": {
+    "id": {
+     "example": 1,
+     "format": "int64",
+     "type": "integer"
+    },
+    "key": {
+     "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a",
+     "type": "string"
+    },
+    "name": {
+     "example": "grafana",
+     "type": "string"
+    }
    },
    "type": "object"
   },
@@ -2528,26 +2841,75 @@
    },
    "type": "object"
   },
-  "PermissionDenied": {
-   "type": "object"
-  },
-  "Point": {
-   "description": "If H is not nil, then this is a histogram point and only (T, H) is valid.\nIf H is nil, then only (T, V) is valid.",
+  "PatchPrefsCmd": {
    "properties": {
-    "H": {
-     "$ref": "#/definitions/FloatHistogram"
+    "cookies": {
+     "items": {
+      "$ref": "#/definitions/CookieType"
+     },
+     "type": "array"
     },
-    "T": {
+    "homeDashboardId": {
+     "default": 0,
+     "description": "The numerical :id of a favorited dashboard",
      "format": "int64",
      "type": "integer"
     },
-    "V": {
-     "format": "double",
-     "type": "number"
+    "homeDashboardUID": {
+     "type": "string"
+    },
+    "language": {
+     "type": "string"
+    },
+    "queryHistory": {
+     "$ref": "#/definitions/QueryHistoryPreference"
+    },
+    "theme": {
+     "enum": [
+      "light",
+      "dark"
+     ],
+     "type": "string"
+    },
+    "timezone": {
+     "enum": [
+      "utc",
+      "browser"
+     ],
+     "type": "string"
+    },
+    "weekStart": {
+     "type": "string"
     }
    },
-   "title": "Point represents a single data point for a given timestamp.",
    "type": "object"
+  },
+  "Permission": {
+   "properties": {
+    "action": {
+     "type": "string"
+    },
+    "created": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "scope": {
+     "type": "string"
+    },
+    "updated": {
+     "format": "date-time",
+     "type": "string"
+    }
+   },
+   "title": "Permission is the model for access control permissions.",
+   "type": "object"
+  },
+  "PermissionDenied": {
+   "type": "object"
+  },
+  "PermissionType": {
+   "format": "int64",
+   "type": "integer"
   },
   "PostableApiAlertingConfig": {
    "properties": {
@@ -2561,6 +2923,7 @@
      "type": "array"
     },
     "mute_time_intervals": {
+     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
      },
@@ -2579,6 +2942,12 @@
     "templates": {
      "items": {
       "type": "string"
+     },
+     "type": "array"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
      },
      "type": "array"
     }
@@ -2803,6 +3172,9 @@
      ],
      "type": "string"
     },
+    "notification_settings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
     "title": {
      "type": "string"
     },
@@ -2979,6 +3351,9 @@
      ],
      "type": "string"
     },
+    "notification_settings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
     "orgID": {
      "format": "int64",
      "type": "integer"
@@ -3119,6 +3494,14 @@
      "$ref": "#/definitions/Secret"
     },
     "user_key_file": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "QueryHistoryPreference": {
+   "properties": {
+    "homeTab": {
      "type": "string"
     }
    },
@@ -3356,6 +3739,53 @@
    },
    "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
    "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses.",
+   "type": "object"
+  },
+  "RoleDTO": {
+   "properties": {
+    "created": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "delegatable": {
+     "type": "boolean"
+    },
+    "description": {
+     "type": "string"
+    },
+    "displayName": {
+     "type": "string"
+    },
+    "global": {
+     "type": "boolean"
+    },
+    "group": {
+     "type": "string"
+    },
+    "hidden": {
+     "type": "boolean"
+    },
+    "name": {
+     "type": "string"
+    },
+    "permissions": {
+     "items": {
+      "$ref": "#/definitions/Permission"
+     },
+     "type": "array"
+    },
+    "uid": {
+     "type": "string"
+    },
+    "updated": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "version": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
    "type": "object"
   },
   "Route": {
@@ -3659,7 +4089,12 @@
    "type": "object"
   },
   "Sample": {
+   "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
    "properties": {
+    "F": {
+     "format": "double",
+     "type": "number"
+    },
     "H": {
      "$ref": "#/definitions/FloatHistogram"
     },
@@ -3669,13 +4104,8 @@
     "T": {
      "format": "int64",
      "type": "integer"
-    },
-    "V": {
-     "format": "double",
-     "type": "number"
     }
    },
-   "title": "Sample is a single sample belonging to a metric.",
    "type": "object"
   },
   "Secret": {
@@ -4168,42 +4598,18 @@
    "type": "string"
   },
   "TimeInterval": {
-   "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
    "properties": {
-    "days_of_month": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "location": {
+    "name": {
      "type": "string"
     },
-    "months": {
+    "time_intervals": {
      "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "times": {
-     "items": {
-      "$ref": "#/definitions/TimeRange"
-     },
-     "type": "array"
-    },
-    "weekdays": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "years": {
-     "items": {
-      "type": "string"
+      "$ref": "#/definitions/TimeInterval"
      },
      "type": "array"
     }
    },
+   "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
    "type": "object"
   },
   "TimeIntervalItem": {
@@ -4308,6 +4714,61 @@
    "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
+  "UpdateDashboardACLCommand": {
+   "properties": {
+    "items": {
+     "items": {
+      "$ref": "#/definitions/DashboardACLUpdateItem"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "UpdatePrefsCmd": {
+   "properties": {
+    "cookies": {
+     "items": {
+      "$ref": "#/definitions/CookieType"
+     },
+     "type": "array"
+    },
+    "homeDashboardId": {
+     "default": 0,
+     "description": "The numerical :id of a favorited dashboard",
+     "format": "int64",
+     "type": "integer"
+    },
+    "homeDashboardUID": {
+     "type": "string"
+    },
+    "language": {
+     "type": "string"
+    },
+    "queryHistory": {
+     "$ref": "#/definitions/QueryHistoryPreference"
+    },
+    "theme": {
+     "enum": [
+      "light",
+      "dark",
+      "system"
+     ],
+     "type": "string"
+    },
+    "timezone": {
+     "enum": [
+      "utc",
+      "browser"
+     ],
+     "type": "string"
+    },
+    "weekStart": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "UpdateRuleGroupResponse": {
    "properties": {
     "created": {
@@ -4358,7 +4819,7 @@
    "type": "array"
   },
   "Vector": {
-   "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
+   "description": "Vector is basically only an alias for []Sample, but the contract is that\nin a Vector, all Samples have the same timestamp.",
    "items": {
     "$ref": "#/definitions/Sample"
    },
@@ -4748,14 +5209,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4936,6 +5395,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
