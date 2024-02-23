@@ -3,11 +3,11 @@ import React from 'react';
 import { Box } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { InfoItem } from './InfoItem';
+import { InfoItem } from '../../shared/InfoItem';
 
 export const InfoPaneLeft = () => {
   return (
-    <Box display="flex" padding={2} gap={2} direction="column" backgroundColor="secondary">
+    <Box alignItems="flex-start" display="flex" padding={2} gap={2} direction="column" backgroundColor="secondary">
       <InfoItem
         title={t('migrate-to-cloud.what-is-cloud.title', 'What is Grafana Cloud?')}
         linkTitle={t('migrate-to-cloud.what-is-cloud.link-title', 'Learn about cloud features')}
