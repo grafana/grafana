@@ -403,6 +403,7 @@ export class Scene {
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges && !this.editModeEnabled.getValue(),
       resizable: allowChanges,
+      rotatable: allowChanges,
 
       // Setup snappable
       snappable: allowChanges,
@@ -419,6 +420,15 @@ export class Scene {
       origin: false,
       className: this.styles.selected,
     })
+      .on('rotate', (event) => {
+        console.log('rotate', event);
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement) {
+          targetedElement.applyRotate(event);
+          this.moved.next(Date.now()); // TODO only on end
+        }
+      })
       .on('click', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         let elementSupportsEditing = false;
