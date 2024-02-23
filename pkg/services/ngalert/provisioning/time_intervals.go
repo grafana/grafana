@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/infra/log"

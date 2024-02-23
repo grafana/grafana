@@ -77,10 +77,10 @@ type TimeInterval struct {
 	Provenance          Provenance `json:"provenance,omitempty"`
 }
 
-func (mt *TimeInterval) ResourceType() string {
+func (ti *TimeInterval) ResourceType() string {
 	return "timeInterval"
 }
 
-func (mt *TimeInterval) ResourceID() string {
-	return mt.TimeInterval.Name
+func (ti *TimeInterval) ResourceID() string {
+	return ti.TimeInterval.Name
 }
