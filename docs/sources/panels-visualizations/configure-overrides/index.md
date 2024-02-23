@@ -29,7 +29,7 @@ For example, you can override the default unit measurement for all fields that i
 
 After you've set them, your overrides appear in both the **All** and **Overrides** tabs of the panel editor pane:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-all-overrides-tabs-v11.png" alt="All and Overrides tabs of panel editor pane" >}}
+![All and Overrides tabs of panel editor pane](/media/docs/grafana/panels-visualizations/screenshot-all-overrides-tabs-v11.png)
 
 ## Supported visualizations
 
