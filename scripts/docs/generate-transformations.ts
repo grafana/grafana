@@ -9,7 +9,7 @@ import {
 
 const WRITE_PATH = 'docs/sources/panels-visualizations/query-transform-data/transform-data/index.md';
 
-const readMeContent = `
+export const readMeContent = `
   To update this Markdown, navigate to the following Typescript files and edit them based on what you need to update:
 
   scripts/docs/generate-transformations.ts - Includes all content not specific to a transformation.
