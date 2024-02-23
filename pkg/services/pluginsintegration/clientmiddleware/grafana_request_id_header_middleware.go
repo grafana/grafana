@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"net/url"
-	"path"
 
 	"github.com/google/uuid"
 
@@ -51,16 +50,15 @@ func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(ctx contex
 
 	// Check if the request is for a datasource that is allowed to have the header
 	dsURL := pCtx.DataSourceInstanceSettings.URL
-	// Only look at the scheme and host, ignore the path
 	dsBaseURL, err := url.Parse(dsURL)
 	if err != nil {
 		m.log.Debug("Failed to parse data source URL", "error", err)
 		return
 	}
-	dsBaseURL.Path = ""
 	foundMatch := false
 	for _, allowedURL := range m.cfg.IPRangeACAllowedURLs {
-		if path.Clean(allowedURL) == path.Clean(dsBaseURL.String()) {
+		// Only look at the scheme and host, ignore the path
+		if allowedURL.Host == dsBaseURL.Host && allowedURL.Scheme == dsBaseURL.Scheme {
 			foundMatch = true
 			break
 		}
