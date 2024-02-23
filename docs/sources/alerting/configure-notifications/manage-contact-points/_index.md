@@ -29,6 +29,8 @@ weight: 410
 
 Use contact points to define how your contacts are notified when an alert rule fires. You can add, edit, delete, and test a contact point.
 
+Configure contact point integrations in Grafana to select your preferred communication channel for receiving notifications when your alert rules are firing.
+
 ## Add a contact point
 
 Complete the following steps to add a contact point.
@@ -76,3 +78,34 @@ Complete the following steps to test a contact point.
 1. Click **Test** to open the contact point testing modal.
 1. Choose whether to send a predefined test notification or choose custom to add your own custom annotations and labels to include in the notification.
 1. Click **Send test notification** to fire the alert.
+
+## Configure contact point integrations
+
+Each contact point integration has its own configuration options and setup process. In most cases, this involves providing an API key or a Webhook URL.
+
+Once configured, you can use integrations as part of your contact points to receive notifications whenever your alert changes its state. In this section, we'll cover the basic steps to configure your integrations, so you can start receiving real-time alerts and stay on top of your monitoring data.
+
+## List of supported integrations
+
+| Name                    | Type                      |
+| ----------------------- | ------------------------- |
+| DingDing                | `dingding`                |
+| Discord                 | `discord`                 |
+| Email                   | `email`                   |
+| Google Chat             | `googlechat`              |
+| Hipchat                 | `hipchat`                 |
+| Kafka                   | `kafka`                   |
+| Line                    | `line`                    |
+| Microsoft Teams         | `teams`                   |
+| Opsgenie                | `opsgenie`                |
+| Pagerduty               | `pagerduty`               |
+| Prometheus Alertmanager | `prometheus-alertmanager` |
+| Pushover                | `pushover`                |
+| Sensu                   | `sensu`                   |
+| Sensu Go                | `sensugo`                 |
+| Slack                   | `slack`                   |
+| Telegram                | `telegram`                |
+| Threema                 | `threema`                 |
+| VictorOps               | `victorops`               |
+| Webhook                 | `webhook`                 |
+
