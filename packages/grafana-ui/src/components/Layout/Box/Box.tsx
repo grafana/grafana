@@ -4,7 +4,7 @@ import React, { ElementType, forwardRef, PropsWithChildren } from 'react';
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { AlignItems, FlexProps, JustifyContent } from '../types';
+import { AlignItems, Direction, FlexProps, JustifyContent } from '../types';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 
 type Display = 'flex' | 'block' | 'inline' | 'inline-block' | 'none';
@@ -54,6 +54,7 @@ interface BoxProps extends FlexProps, Omit<React.HTMLAttributes<HTMLElement>, 'c
 
   // Flex Props
   alignItems?: ResponsiveProp<AlignItems>;
+  direction?: ResponsiveProp<Direction>;
   justifyContent?: ResponsiveProp<JustifyContent>;
   gap?: ResponsiveProp<ThemeSpacingTokens>;
 
@@ -91,6 +92,7 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     borderColor,
     borderStyle,
     borderRadius,
+    direction,
     justifyContent,
     alignItems,
     boxShadow,
@@ -123,6 +125,7 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     borderColor,
     borderStyle,
     borderRadius,
+    direction,
     justifyContent,
     alignItems,
     boxShadow,
@@ -188,6 +191,7 @@ const getStyles = (
   borderColor: BoxProps['borderColor'],
   borderStyle: BoxProps['borderStyle'],
   borderRadius: BoxProps['borderRadius'],
+  direction: BoxProps['direction'],
   justifyContent: BoxProps['justifyContent'],
   alignItems: BoxProps['alignItems'],
   boxShadow: BoxProps['boxShadow'],
@@ -246,6 +250,9 @@ const getStyles = (
       })),
       getResponsiveStyle(theme, backgroundColor, (val) => ({
         backgroundColor: customBackgroundColor(val, theme),
+      })),
+      getResponsiveStyle(theme, direction, (val) => ({
+        flexDirection: val,
       })),
       getResponsiveStyle(theme, grow, (val) => ({
         flexGrow: val,

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { AdHocVariableFilter, GrafanaTheme2 } from '@grafana/data';
+import { AdHocVariableFilter, GrafanaTheme2, VariableHide } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -86,6 +86,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const newStepWasAppended = newNumberOfSteps > oldNumberOfSteps;
 
       if (newStepWasAppended) {
+        // In order for the `useBookmarkState` to re-evaluate after a new step was made:
+        this.forceRender();
         // Do nothing because the state is already up to date -- it created a new step!
         return;
       }
@@ -211,6 +213,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
       new AdHocFiltersVariable({
         name: VAR_FILTERS,
         datasource: trailDS,
+        hide: VariableHide.hideLabel,
         layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
@@ -232,13 +235,17 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
     }),
     controls: css({
       display: 'flex',
       gap: theme.spacing(1),
+      padding: theme.spacing(1, 0),
       alignItems: 'flex-end',
       flexWrap: 'wrap',
+      position: 'sticky',
+      background: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
+      zIndex: theme.zIndex.activePanel + 1,
+      top: 0,
     }),
   };
 }

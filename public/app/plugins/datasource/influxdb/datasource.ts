@@ -257,7 +257,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         return {
           ...tag,
           key: this.templateSrv.replace(tag.key, scopedVars),
-          value: this.templateSrv.replace(tag.value, scopedVars, 'pipe'),
+          value: this.templateSrv.replace(
+            tag.value ?? '',
+            scopedVars,
+            (value: string | string[] = [], variable: QueryVariableModel) =>
+              this.interpolateQueryExpr(value, variable, tag.value)
+          ),
         };
       });
     }
@@ -286,7 +291,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     };
   }
 
-  // this should only be used for rawQueries.
   interpolateQueryExpr(value: string | string[] = [], variable: QueryVariableModel, query?: string) {
     // If there is no query just return the value directly
     if (!query) {
@@ -297,7 +301,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // we always want to deal with special chars.
     if (variable.multi) {
       if (typeof value === 'string') {
-        return escapeRegex(value);
+        // Check the value is a number. If not run to escape special characters
+        if (isNaN(parseFloat(value))) {
+          return escapeRegex(value);
+        }
+        return value;
       }
 
       // If the value is a string array first escape them then join them with pipe

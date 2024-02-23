@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -118,7 +119,7 @@ func createNotChannel(t *testing.T, uid string, id int64, name string, isDefault
 		Type:         "email",
 		SendReminder: frequency > 0,
 		Frequency:    frequency,
-		Settings:     simplejson.New(),
+		Settings:     simplejson.NewFromAny(map[string]any{"addresses": "example"}),
 		IsDefault:    isDefault,
 		Created:      now,
 		Updated:      now,
@@ -130,6 +131,20 @@ func createBasicNotChannel(t *testing.T, notType string) *legacymodels.AlertNoti
 	a := createNotChannel(t, "uid1", int64(1), "name1", false, 0)
 	a.Type = notType
 	return a
+}
+
+func createBrokenNotChannel(t *testing.T) *legacymodels.AlertNotification {
+	t.Helper()
+	return &legacymodels.AlertNotification{
+		UID:  "uid",
+		ID:   1,
+		Name: "broken email",
+		Type: "email",
+		Settings: simplejson.NewFromAny(map[string]any{
+			"something": "some value", // Missing required field addresses.
+		}),
+		SecureSettings: map[string][]byte{},
+	}
 }
 
 func TestCreateReceivers(t *testing.T) {
@@ -153,6 +168,11 @@ func TestCreateReceivers(t *testing.T) {
 			name:    "when given sensu return discontinued error",
 			channel: createBasicNotChannel(t, "sensu"),
 			expErr:  fmt.Errorf("'sensu': %w", ErrDiscontinued),
+		},
+		{
+			name:    "when channel is misconfigured return error",
+			channel: createBrokenNotChannel(t),
+			expErr:  errors.New(`failed to validate integration "broken email" (UID uid) of type "email": could not find addresses in settings`),
 		},
 	}
 
@@ -266,13 +286,15 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			service := NewTestMigrationService(t, sqlStore, nil)
 			m := service.newOrgMigration(1)
-			recv, err := m.createReceiver(tt.channel)
+			settings, secureSettings, err := m.migrateSettingsToSecureSettings(tt.channel.Type, tt.channel.Settings, tt.channel.SecureSettings)
 			if tt.expErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expErr.Error())
 				return
 			}
 			require.NoError(t, err)
+
+			recv := createReceiverNoValidation(t, tt.channel, settings, secureSettings)
 
 			if len(tt.expRecv.SecureSettings) > 0 {
 				require.NotEqual(t, tt.expRecv, recv) // Make sure they were actually encrypted at first.
@@ -300,8 +322,9 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 							channel.SecureSettings[key] = []byte(legacyEncryptFn("secure " + key))
 						}
 					})
-					recv, err := m.createReceiver(channel)
+					settings, secure, err := m.migrateSettingsToSecureSettings(channel.Type, channel.Settings, channel.SecureSettings)
 					require.NoError(t, err)
+					recv := createReceiverNoValidation(t, channel, settings, secure)
 
 					require.Equal(t, nType, recv.Type)
 					if len(secureSettings) > 0 {
@@ -335,8 +358,9 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 							channel.Settings.Set(key, "secure "+key)
 						}
 					})
-					recv, err := m.createReceiver(channel)
+					settings, secure, err := m.migrateSettingsToSecureSettings(channel.Type, channel.Settings, channel.SecureSettings)
 					require.NoError(t, err)
+					recv := createReceiverNoValidation(t, channel, settings, secure)
 
 					require.Equal(t, nType, recv.Type)
 					if len(secureSettings) > 0 {
@@ -417,7 +441,7 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 
 			service := NewTestMigrationService(t, sqlStore, nil)
 			m := service.newOrgMigration(1)
-			pairs, err := m.migrateChannels(tt.channels)
+			pairs, err := m.migrateChannels(tt.channels, m.log)
 			if tt.expErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expErr.Error())
@@ -439,12 +463,26 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 	}
 }
 
+func createReceiverNoValidation(t *testing.T, c *legacymodels.AlertNotification, settings *simplejson.Json, secureSettings map[string]string) *apimodels.PostableGrafanaReceiver {
+	data, err := settings.MarshalJSON()
+	require.NoError(t, err)
+
+	return &apimodels.PostableGrafanaReceiver{
+		UID:                   c.UID,
+		Name:                  c.Name,
+		Type:                  c.Type,
+		DisableResolveMessage: c.DisableResolveMessage,
+		Settings:              data,
+		SecureSettings:        secureSettings,
+	}
+}
+
 func createPostableGrafanaReceiver(uid string, name string) *apimodels.PostableGrafanaReceiver {
 	return &apimodels.PostableGrafanaReceiver{
 		UID:            uid,
 		Type:           "email",
 		Name:           name,
-		Settings:       apimodels.RawMessage("{}"),
+		Settings:       apimodels.RawMessage(`{"addresses":"example"}`),
 		SecureSettings: map[string]string{},
 	}
 }
