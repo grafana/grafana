@@ -15,11 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -40,7 +40,6 @@ func setupTestEnv(t testing.TB) *Service {
 		registrations: accesscontrol.RegistrationList{},
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
 		store:         database.ProvideService(db.InitTestDB(t)),
-		userSvc:       usertest.NewUserServiceFake(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
@@ -65,7 +64,6 @@ func TestUsageMetrics(t *testing.T) {
 				cfg,
 				database.ProvideService(db.InitTestDB(t)),
 				localcache.ProvideService(),
-				usertest.NewUserServiceFake(),
 				featuremgmt.WithFeatures(),
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
@@ -537,9 +535,9 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 		{
 			// This test is not exactly representative as normally the store would return
 			// only the user's basic roles and the user's stored permissions
-			name:           "check userID filter works correctly",
+			name:           "check namespacedId filter works correctly",
 			siuPermissions: listAllPerms,
-			searchOption:   accesscontrol.SearchOptions{UserID: 1},
+			searchOption:   accesscontrol.SearchOptions{NamespacedID: identity.NamespaceServiceAccount + ":1"},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -564,46 +562,10 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}, {Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"}},
 			},
 		},
-		{
-			// This test is not exactly representative as normally the store would return
-			// only the user's basic roles and the user's stored permissions
-			name:           "check userLogin filter works correctly",
-			siuPermissions: listAllPerms,
-			searchOption:   accesscontrol.SearchOptions{UserLogin: "testUser"},
-			ramRoles: map[string]*accesscontrol.RoleDTO{
-				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
-					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
-				}},
-				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
-					{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:*"},
-				}},
-				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
-				}},
-			},
-			storedPerms: map[int64][]accesscontrol.Permission{
-				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
-				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
-			},
-			storedRoles: map[int64][]string{
-				1: {string(roletype.RoleEditor)},
-				2: {string(roletype.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
-			},
-			want: map[int64][]accesscontrol.Permission{
-				2: {{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:*"},
-					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ac := setupTestEnv(t)
-
-			// Resolve user login to id 2
-			ac.userSvc = &usertest.FakeUserService{ExpectedUser: &user.User{ID: 2}}
 
 			ac.roles = tt.ramRoles
 			ac.store = actest.FakeStore{
@@ -645,7 +607,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "ram only",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				UserID:       2,
+				NamespacedID: identity.NamespaceUser + ":2",
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -670,7 +632,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "stored only",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				UserID:       2,
+				NamespacedID: identity.NamespaceUser + ":2",
 			},
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
@@ -690,7 +652,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "ram and stored",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				UserID:       2,
+				NamespacedID: identity.NamespaceUser + ":2",
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
@@ -720,7 +682,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action prefix filter works correctly",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				UserID:       1,
+				NamespacedID: identity.NamespaceUser + ":1",
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -741,8 +703,8 @@ func TestService_SearchUserPermissions(t *testing.T) {
 		{
 			name: "check action filter works correctly",
 			searchOption: accesscontrol.SearchOptions{
-				Action: accesscontrol.ActionTeamsRead,
-				UserID: 1,
+				Action:       accesscontrol.ActionTeamsRead,
+				NamespacedID: identity.NamespaceUser + ":1",
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{

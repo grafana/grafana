@@ -1,6 +1,6 @@
-import 'whatwg-fetch'; // fetch polyfill
+import 'whatwg-fetch';
 import { render as rtlRender, screen } from '@testing-library/react';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -47,25 +47,19 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
 
   beforeAll(() => {
     server = setupServer(
-      rest.get('/api/folders/:uid', (_, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({
-            title: mockFolderName,
-            uid: mockFolderUid,
-          })
-        );
+      http.get('/api/folders/:uid', () => {
+        return HttpResponse.json({
+          title: mockFolderName,
+          uid: mockFolderUid,
+        });
       }),
-      rest.get('/api/library-elements', (_, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({
-            result: mockLibraryElementsResponse,
-          })
-        );
+      http.get('/api/library-elements', () => {
+        return HttpResponse.json({
+          result: mockLibraryElementsResponse,
+        });
       }),
-      rest.get('/api/search/sorting', (_, res, ctx) => {
-        return res(ctx.status(200), ctx.json({}));
+      http.get('/api/search/sorting', () => {
+        return HttpResponse.json({});
       })
     );
     server.listen();

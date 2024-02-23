@@ -57,6 +57,11 @@ export interface JoinOptions {
   keepOriginIndices?: boolean;
 
   /**
+   * @internal -- keep any pre-cached state.displayName
+   */
+  keepDisplayNames?: boolean;
+
+  /**
    * @internal -- Optionally specify a join mode (outer or inner)
    */
   mode?: JoinMode;
@@ -223,8 +228,10 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     for (const field of fields) {
       a.push(field.values);
       originalFields.push(field);
-      // clear field displayName state
-      delete field.state?.displayName;
+      if (!options.keepDisplayNames) {
+        // clear field displayName state
+        delete field.state?.displayName;
+      }
       // store frame field order for tabular data join
       frameFieldsOrder.push(fieldsOrder);
       fieldsOrder++;

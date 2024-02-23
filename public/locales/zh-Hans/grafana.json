@@ -870,6 +870,10 @@
     "manage-folder": {
       "subtitle": "管理文件夹仪表板和权限"
     },
+    "migrate-to-cloud": {
+      "subtitle": "",
+      "title": ""
+    },
     "monitoring": {
       "subtitle": "监控和基础设施应用",
       "title": "可观测性"

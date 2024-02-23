@@ -182,6 +182,15 @@ export const Pages = {
             stepCountIntervalSelect: 'data-testid interval variable step count input',
             minIntervalInput: 'data-testid interval variable mininum interval input',
           },
+          GroupByVariable: {
+            dataSourceSelect: Components.DataSourcePicker.inputV2,
+            infoText: 'data-testid group by variable info text',
+            modeToggle: 'data-testid group by variable mode toggle',
+          },
+          AdHocFiltersVariable: {
+            datasourceSelect: Components.DataSourcePicker.inputV2,
+            infoText: 'data-testid ad-hoc filters variable info text',
+          },
         },
       },
     },
