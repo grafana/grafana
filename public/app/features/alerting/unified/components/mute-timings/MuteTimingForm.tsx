@@ -60,7 +60,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
   const { currentData: result } = useAlertmanagerConfig(selectedAlertmanager);
   const config = result?.alertmanager_config;
 
-  const time_intervals = config?.mute_time_intervals ?? config?.time_intervals;
+  const time_intervals = [...(config?.mute_time_intervals ?? []), ...(config?.time_intervals ?? [])];
 
   const defaultValues = useDefaultValues(muteTiming);
   const formApi = useForm({ defaultValues });

@@ -693,8 +693,11 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
       alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
     ).unwrap();
 
-    const time_intervals =
-      config?.alertmanager_config?.mute_time_intervals ?? config?.alertmanager_config?.time_intervals;
+    // merge both fields mute_time_intervals and time_intervals to support both old and new config
+    const time_intervals = [
+      ...(config?.alertmanager_config?.mute_time_intervals ?? []),
+      ...(config?.alertmanager_config?.time_intervals ?? []),
+    ];
 
     const muteIntervals = time_intervals?.filter(({ name }) => name !== muteTimingName) ?? [];
 

@@ -72,9 +72,9 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
   const config = currentData?.alertmanager_config;
 
   const [muteTimingName, setMuteTimingName] = useState<string>('');
-
-  const time_intervals = config?.mute_time_intervals ?? config?.time_intervals;
   const items = useMemo((): Array<DynamicTableItemProps<MuteTimeInterval>> => {
+    // merge both fields mute_time_intervals and time_intervals to support both old and new config
+    const time_intervals = [...(config?.mute_time_intervals ?? []), ...(config?.time_intervals ?? [])];
     const muteTimings = time_intervals ?? [];
     const muteTimingsProvenances = config?.muteTimeProvenances ?? {};
 
@@ -89,7 +89,7 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
           },
         };
       });
-  }, [time_intervals, config?.muteTimeProvenances, muteTimingNames]);
+  }, [config?.muteTimeProvenances, muteTimingNames, config?.mute_time_intervals, config?.time_intervals]);
 
   const [_, allowedToCreateMuteTiming] = useAlertmanagerAbility(AlertmanagerAction.CreateMuteTiming);
 

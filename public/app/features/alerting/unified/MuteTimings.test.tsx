@@ -71,6 +71,21 @@ const muteTimeInterval: MuteTimeInterval = {
     },
   ],
 };
+const muteTimeInterval2: MuteTimeInterval = {
+  name: 'default-mute2',
+  time_intervals: [
+    {
+      times: [
+        {
+          start_time: '12:00',
+          end_time: '24:00',
+        },
+      ],
+      days_of_month: ['15', '-1'],
+      months: ['august:december', 'march'],
+    },
+  ],
+};
 
 const defaultConfig: AlertManagerCortexConfig = {
   alertmanager_config: {
@@ -108,6 +123,27 @@ const defaultConfigWithNewTimeIntervalsField: AlertManagerCortexConfig = {
   },
   template_files: {},
 };
+
+const defaultConfigWithBothTimeIntervalsField: AlertManagerCortexConfig = {
+  alertmanager_config: {
+    receivers: [{ name: 'default' }, { name: 'critical' }],
+    route: {
+      receiver: 'default',
+      group_by: ['alertname'],
+      routes: [
+        {
+          matchers: ['env=prod', 'region!=EU'],
+          mute_time_intervals: [muteTimeInterval.name],
+        },
+      ],
+    },
+    templates: [],
+    time_intervals: [muteTimeInterval],
+    mute_time_intervals: [muteTimeInterval2],
+  },
+  template_files: {},
+};
+
 const resetMocks = () => {
   jest.resetAllMocks();
 
@@ -197,6 +233,54 @@ describe('Mute timings', () => {
       alertmanager_config: {
         ...configWithoutMuteTimings,
         time_intervals: [
+          muteTimeInterval,
+          {
+            name: 'maintenance period',
+            time_intervals: [
+              {
+                days_of_month: ['-1'],
+                months: ['january', 'july'],
+                times: [
+                  {
+                    start_time: '22:00',
+                    end_time: '24:00',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+  it('creates a new mute timing, with time_intervals and mute_time_intervals in config', async () => {
+    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
+      return Promise.resolve({
+        ...defaultConfigWithBothTimeIntervalsField,
+      });
+    });
+    renderMuteTimings();
+
+    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
+    expect(ui.nameField.get()).toBeInTheDocument();
+
+    await userEvent.type(ui.nameField.get(), 'maintenance period');
+    await userEvent.type(ui.startsAt.get(), '22:00');
+    await userEvent.type(ui.endsAt.get(), '24:00');
+    await userEvent.type(ui.days.get(), '-1');
+    await userEvent.type(ui.months.get(), 'january, july');
+
+    fireEvent.submit(ui.form.get());
+
+    await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
+
+    const { mute_time_intervals, time_intervals, ...configWithoutMuteTimings } = defaultConfig.alertmanager_config;
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith('grafana', {
+      ...defaultConfig,
+      alertmanager_config: {
+        ...configWithoutMuteTimings,
+        time_intervals: [
+          muteTimeInterval2,
           muteTimeInterval,
           {
             name: 'maintenance period',

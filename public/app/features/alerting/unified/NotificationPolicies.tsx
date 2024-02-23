@@ -191,8 +191,10 @@ const AmRoutes = () => {
   if (!selectedAlertmanager) {
     return null;
   }
-  const time_intervals =
-    result?.alertmanager_config?.mute_time_intervals ?? result?.alertmanager_config?.time_intervals;
+  const time_intervals = [
+    ...(result?.alertmanager_config?.mute_time_intervals ?? []),
+    ...(result?.alertmanager_config?.time_intervals ?? []),
+  ];
   const numberOfMuteTimings = time_intervals?.length ?? 0;
   const haveData = result && !resultError && !resultLoading;
   const isFetching = !result && resultLoading;

@@ -13,7 +13,8 @@ export function useMuteTimingOptions(): Array<SelectableValue<string>> {
   const config = currentData?.alertmanager_config;
 
   return useMemo(() => {
-    const time_intervals = config?.mute_time_intervals ?? config?.time_intervals;
+    // merge both fields mute_time_intervals and time_intervals to support both old and new config
+    const time_intervals = [...(config?.mute_time_intervals ?? []), ...(config?.time_intervals ?? [])];
     const muteTimingsOptions: Array<SelectableValue<string>> =
       time_intervals?.map((value) => ({
         value: value.name,
