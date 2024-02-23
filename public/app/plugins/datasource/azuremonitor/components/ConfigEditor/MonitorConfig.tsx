@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 
-import {} from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
