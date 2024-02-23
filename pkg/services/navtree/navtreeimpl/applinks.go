@@ -292,6 +292,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 1, Text: "Kubernetes"},
 		"grafana-aws-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 2},
+		"grafana-collector-app":            {SectionID: navtree.NavIDConnections, SortWeight: 1, Text: "Collector"},
 		"grafana-app-observability-app":    {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApplication, Text: "Application", Icon: "graph-bar"},
 		"grafana-pyroscope-app":            {SectionID: navtree.NavIDExplore, SortWeight: 1, Text: "Profiles"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightFrontend, Text: "Frontend", Icon: "frontend-observability"},
