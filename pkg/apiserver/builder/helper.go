@@ -20,14 +20,16 @@ import (
 	"k8s.io/apiserver/pkg/util/openapi"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/kube-openapi/pkg/common"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func SetupConfig(
 	scheme *runtime.Scheme,
 	serverConfig *genericapiserver.RecommendedConfig,
 	builders []APIGroupBuilder,
+	buildTimestamp int64,
+	buildVersion string,
+	buildCommit string,
+	buildBranch string,
 ) error {
 	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
@@ -39,7 +41,7 @@ func SetupConfig(
 		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(builders)
+	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders)
 	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
 		tags := []string{}
 		prop, ok := r.Metadata()["x-kubernetes-group-version-kind"]
@@ -53,8 +55,8 @@ func SetupConfig(
 	}
 
 	// Set the swagger build versions
-	serverConfig.OpenAPIConfig.Info.Version = setting.BuildVersion
-	serverConfig.OpenAPIV3Config.Info.Version = setting.BuildVersion
+	serverConfig.OpenAPIConfig.Info.Version = buildVersion
+	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
@@ -75,16 +77,16 @@ func SetupConfig(
 	if err != nil {
 		return err
 	}
-	before, after, _ := strings.Cut(setting.BuildVersion, ".")
+	before, after, _ := strings.Cut(buildVersion, ".")
 	serverConfig.Version = &version.Info{
 		Major:        before,
 		Minor:        after,
 		GoVersion:    goruntime.Version(),
 		Platform:     fmt.Sprintf("%s/%s", goruntime.GOOS, goruntime.GOARCH),
 		Compiler:     goruntime.Compiler,
-		GitTreeState: setting.BuildBranch,
-		GitCommit:    setting.BuildCommit,
-		BuildDate:    time.Unix(setting.BuildStamp, 0).UTC().Format(time.DateTime),
+		GitTreeState: buildBranch,
+		GitCommit:    buildCommit,
+		BuildDate:    time.Unix(buildTimestamp, 0).UTC().Format(time.DateTime),
 		GitVersion:   k8sVersion,
 	}
 	return nil
