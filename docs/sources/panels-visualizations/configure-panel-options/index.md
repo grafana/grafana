@@ -46,22 +46,6 @@ You can use generative AI to create panel titles and descriptions with the [Graf
 - **Panel links** -
 - **Repeat options** -
 
-## Edit a panel
-
-After you add a panel to a dashboard, you can open it at any time to change or update queries, add data transformation, and change visualization settings.
-
-1. Open the dashboard that contains the panel you want to edit.
-
-1. Hover over any part of the panel to display the actions menu on the top right corner.
-
-1. Click the menu and select **Edit**.
-
-   ![Panel with menu displayed](/media/docs/grafana/screenshot-panel-menu.png)
-
-   To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
-
-   The panel opens in edit mode.
-
 ## Configure repeating panels
 
 You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard. For more information about repeating rows, refer to [Configure repeating rows][].
