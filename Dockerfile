@@ -20,7 +20,9 @@ COPY packages packages
 COPY plugins-bundled plugins-bundled
 COPY public public
 
-RUN yarn install --immutable
+RUN apk add --no-cache make build-base python3
+
+RUN yarn install --immutable --inline-builds
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY public public
