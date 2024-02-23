@@ -547,11 +547,11 @@ export function trackIfIsEmpty(parent: DashboardScene) {
   });
 }
 
-const updateIsEmpty = (body: SceneObject, parent: DashboardScene) => {
+function updateIsEmpty(body: SceneObject, parent: DashboardScene) {
   if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
     parent.setState({ isEmpty: body.state.children.length === 0 });
   }
-};
+}
 
 const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
   return snapshotData.map((data) => {
