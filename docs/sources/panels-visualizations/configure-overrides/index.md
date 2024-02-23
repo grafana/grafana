@@ -223,6 +223,6 @@ The changes you make take effect immediately.
 [trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
 [trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
 
-[Rename by regex transformation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides"
-[Rename by regex transformation]: "/docs/grafana-cloud -> /docs/grafana-cloud/visualizations/panels-visualizationsconfigure-overrides"
+[Rename by regex transformation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data#rename-by-regex"
+[Rename by regex transformation]: "/docs/grafana-cloud -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data#rename-by-regex"
 {{% /docs/reference %}}
