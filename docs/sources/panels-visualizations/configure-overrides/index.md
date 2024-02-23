@@ -25,11 +25,11 @@ Overrides allow you to customize visualization settings for specific fields or s
 
 For example, you can override the default unit measurement for all fields that include the text "bytes" by adding an override using the **Fields with name matching regex** matcher and then the **Standard options > Unit** setting to the override rule:
 
-![Field with unit override](screenshot-unit-override-v10.3.png)
+![Field with unit override](/media/docs/grafana/panels-visualizations/screenshot-unit-override-v10.3.png)
 
 After you've set them, your overrides appear in both the **All** and **Overrides** tabs of the panel editor pane:
 
-{{< figure src="screenshot-all-overrides-tabs-v11.png" alt="All and Overrides tabs of panel editor pane" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-all-overrides-tabs-v11.png" alt="All and Overrides tabs of panel editor pane" >}}
 
 ## Supported visualizations
 
