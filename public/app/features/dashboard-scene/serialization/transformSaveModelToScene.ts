@@ -540,7 +540,7 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
 export function trackIfIsEmpty(parent: DashboardScene) {
   const { body } = parent.state;
 
-  parent.state.body.subscribeToState(() => {
+  body.subscribeToState(() => {
     if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
       parent.setState({ isEmpty: body.state.children.length === 0 });
     }
