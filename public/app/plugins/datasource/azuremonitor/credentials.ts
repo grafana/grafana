@@ -190,6 +190,12 @@ export function updateCredentials(
   }
   if (instanceOfAzureCredential<AadCurrentUserCredentials>('currentuser', credentials)) {
     const serviceCredentials = credentials.serviceCredentials;
+    let clientSecret: string | symbol | undefined;
+    if (instanceOfAzureCredential<AzureClientSecretCredentials>('clientsecret', serviceCredentials)) {
+      clientSecret = serviceCredentials.clientSecret;
+      // Do this to not expose the secret in unencrypted JSON data
+      delete serviceCredentials.clientSecret;
+    }
     options = {
       ...options,
       jsonData: {
@@ -203,17 +209,11 @@ export function updateCredentials(
       },
       secureJsonData: {
         ...options.secureJsonData,
-        clientSecret:
-          instanceOfAzureCredential<AzureClientSecretCredentials>('clientsecret', credentials.serviceCredentials) &&
-          typeof credentials.serviceCredentials.clientSecret === 'string'
-            ? credentials.serviceCredentials.clientSecret
-            : undefined,
+        clientSecret: typeof clientSecret === 'string' ? clientSecret : undefined,
       },
       secureJsonFields: {
         ...options.secureJsonFields,
-        clientSecret:
-          instanceOfAzureCredential<AzureClientSecretCredentials>('clientsecret', credentials.serviceCredentials) &&
-          typeof credentials.serviceCredentials.clientSecret === 'symbol',
+        clientSecret: typeof clientSecret === 'symbol',
       },
     };
   }
