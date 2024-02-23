@@ -5,8 +5,12 @@ import { PluginExtensionTypes } from '@grafana/data';
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 
 describe('createPluginExtensionsRegistry', () => {
-  const consoleWarn = jest.spyOn(console, 'warn').mockImplementation();
-  beforeEach(() => consoleWarn.mockReset());
+  const consoleWarn = jest.fn();
+
+  beforeEach(() => {
+    global.console.warn = consoleWarn;
+    consoleWarn.mockReset();
+  });
 
   it('should return empty registry when no extensions registered', async () => {
     const reactiveRegistry = new ReactivePluginExtensionsRegistry();
