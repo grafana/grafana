@@ -61,9 +61,8 @@ describe('ReturnToPrevious button', () => {
     cy.get('[data-testid="data-testid dismiss"]').should('be.visible');
 
     cy.get('[data-testid="data-testid back"]').click();
-    // // TODO: check this again
-    // cy.get('[data-testid="group-collapse-toggle"]').click();
-    // cy.get('[data-testid="collapse-toggle"]').click();
+    cy.get('[data-testid="group-collapse-toggle"]').click();
+    cy.get('[data-testid="collapse-toggle"]').click();
     // cy.get('[data-testid="expanded-content"]'); // TODO: check for exact alert rule name
   });
   // TODO: check whether the data on the session storage are deleted
