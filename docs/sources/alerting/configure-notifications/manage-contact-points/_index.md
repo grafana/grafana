@@ -8,10 +8,11 @@ aliases:
   - ../manage-notifications/manage-contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/manage-contact-points/
   - create-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-contact-point/
   - ./alerting-rules/
+  - ./alerting-rules/configure-notifications/manage-contact-points/
   - alerting/manage-notifications/manage-contact-points/configure-integrations/
   - ./alerting-rules/manage-contact-points/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/
-description: Create contact points to define how your contacts are notified when an alert rule fires
+description: Configure contact points to define how your contacts are notified when an alert rule fires
 keywords:
   - grafana
   - alerting
@@ -23,11 +24,11 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Create contact points
+title: Configure contact points
 weight: 410
 ---
 
-# Create contact points
+# Configure contact points
 
 Use contact points to define how your contacts are notified when an alert rule fires. You can add, edit, delete, and test a contact point.
 
@@ -80,6 +81,24 @@ Complete the following steps to test a contact point.
 1. Click **Test** to open the contact point testing modal.
 1. Choose whether to send a predefined test notification or choose custom to add your own custom annotations and labels to include in the notification.
 1. Click **Send test notification** to fire the alert.
+
+## Manage contact points
+
+The Contact points list view lists all existing contact points and notification templates.
+
+On the **Contact Points** tab, you can:
+
+- Search for name and type of contact points and integrations
+- View all existing contact points and integrations
+- View how many notification policies each contact point is being used for and navigate directly to the linked notification policies
+- View the status of notification deliveries
+- Export individual contact points or all contact points in JSON, YAML, or Terraform format
+- Delete contact points that are not in use by a notification policy
+
+On the **Notification templates** tab, you can:
+
+- View, edit, copy or delete existing notification templates
+
 
 ## Configure contact point integrations
 
