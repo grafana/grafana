@@ -10,7 +10,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Manage
+menuTitle: Detect and respond
 title: Detect and respond
 weight: 130
 ---

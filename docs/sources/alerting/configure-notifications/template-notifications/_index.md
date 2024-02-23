@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Customize notifications
-weight: 430
+weight: 420
 ---
 
 # Customize notifications

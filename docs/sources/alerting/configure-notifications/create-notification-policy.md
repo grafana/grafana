@@ -18,7 +18,7 @@ labels:
     - enterprise
     - oss
 title: Configure notification policies
-weight: 420
+weight: 430
 ---
 
 # Configure notification policies
