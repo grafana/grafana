@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -25,29 +23,23 @@ import (
 var _ envvars.Provider = (*PluginEnvVarsProvider)(nil)
 
 type PluginEnvVarsProvider struct {
-	cfg             *setting.Cfg
-	settingProvider setting.Provider
-	tracingCfg      config.Tracing
-	features        featuremgmt.FeatureToggles
-	license         plugins.Licensing
-	log             log.Logger
+	cfg     *PluginInstanceCfg
+	license plugins.Licensing
+	log     log.Logger
 }
 
-func NewPluginEnvVarsProvider(cfg *setting.Cfg, settingProvider setting.Provider, pCfg *config.Cfg, features featuremgmt.FeatureToggles,
+func NewPluginEnvVarsProvider(cfg *PluginInstanceCfg, settingProvider setting.Provider, pCfg *config.Cfg, features featuremgmt.FeatureToggles,
 	license plugins.Licensing) *PluginEnvVarsProvider {
 	return &PluginEnvVarsProvider{
-		cfg:             cfg,
-		settingProvider: settingProvider,
-		features:        features,
-		license:         license,
-		tracingCfg:      pCfg.Tracing,
-		log:             log.New("plugin.envvars"),
+		cfg:     cfg,
+		license: license,
+		log:     log.New("plugin.envvars"),
 	}
 }
 
 func (p *PluginEnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plugin) []string {
 	hostEnv := []string{
-		envVar("GF_VERSION", p.cfg.BuildVersion),
+		envVar("GF_VERSION", p.cfg.GrafanaVersion),
 	}
 
 	if p.license != nil {
@@ -63,7 +55,7 @@ func (p *PluginEnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugi
 	if plugin.ExternalService != nil {
 		hostEnv = append(
 			hostEnv,
-			envVar("GF_APP_URL", p.cfg.AppURL),
+			envVar("GF_APP_URL", p.cfg.GrafanaAppURL),
 			envVar("GF_PLUGIN_APP_CLIENT_ID", plugin.ExternalService.ClientID),
 			envVar("GF_PLUGIN_APP_CLIENT_SECRET", plugin.ExternalService.ClientSecret),
 		)
@@ -92,11 +84,11 @@ func (p *PluginEnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugi
 func (p *PluginEnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string {
 	var variables []string // an array is used for consistency and keep the logic simpler for no features case
 
-	if p.features == nil {
+	if p.cfg.Features == nil {
 		return variables
 	}
 
-	enabledFeatures := p.features.GetEnabled(ctx)
+	enabledFeatures := p.cfg.Features.GetEnabled(ctx)
 	if len(enabledFeatures) > 0 {
 		features := make([]string, 0, len(enabledFeatures))
 		for feat := range enabledFeatures {
@@ -109,75 +101,61 @@ func (p *PluginEnvVarsProvider) featureToggleEnableVars(ctx context.Context) []s
 }
 
 func (p *PluginEnvVarsProvider) awsEnvVars(pluginID string) []string {
-	// Get aws settings from settingProvider instead of grafanaCfg
-	aws := p.settingProvider.Section("aws")
-
-	// TODO confirm if we want to change behaviour by gating with the below config
-	awsForwardSettingsPlugins := p.cfg.AWSForwardSettingsPlugins
-	if len(aws.KeyValue("forward_settings_to_plugins").Value()) > 0 {
-		awsForwardSettingsPlugins = util.SplitString(aws.KeyValue("forward_settings_to_plugins").Value())
-	}
-
-	if !slices.Contains[[]string, string](awsForwardSettingsPlugins, pluginID) {
+	if !slices.Contains[[]string, string](p.cfg.AWSForwardSettingsPlugins, pluginID) {
 		return []string{}
 	}
 
 	var variables []string
-	assumeRole := aws.KeyValue("assume_role_enabled").MustBool(p.cfg.AWSAssumeRoleEnabled)
-	if !assumeRole {
+	if !p.cfg.AWSAssumeRoleEnabled {
 		variables = append(variables, envVar(awsds.AssumeRoleEnabledEnvVarKeyName, "false"))
 	}
-	allowedAuth := aws.KeyValue("allowed_auth_providers").MustString(strings.Join(p.cfg.AWSAllowedAuthProviders, ","))
-	if len(allowedAuth) > 0 {
-		variables = append(variables, envVar(awsds.AllowedAuthProvidersEnvVarKeyName, allowedAuth))
+	if len(p.cfg.AWSAllowedAuthProviders) > 0 {
+		variables = append(variables, envVar(awsds.AllowedAuthProvidersEnvVarKeyName, strings.Join(p.cfg.AWSAllowedAuthProviders, ",")))
 	}
-	externalID := aws.KeyValue("external_id").MustString(p.cfg.AWSExternalId)
-	if externalID != "" {
-		variables = append(variables, envVar(awsds.GrafanaAssumeRoleExternalIdKeyName, externalID))
+	if p.cfg.AWSExternalId != "" {
+		variables = append(variables, envVar(awsds.GrafanaAssumeRoleExternalIdKeyName, p.cfg.AWSExternalId))
 	}
-	sessionDuration := aws.KeyValue("session_duration").MustString(p.cfg.AWSSessionDuration)
-	if sessionDuration != "" {
-		variables = append(variables, envVar(awsds.SessionDurationEnvVarKeyName, sessionDuration))
+	if p.cfg.AWSSessionDuration != "" {
+		variables = append(variables, envVar(awsds.SessionDurationEnvVarKeyName, p.cfg.AWSSessionDuration))
 	}
-	listMetricsPageLimit := aws.KeyValue("list_metrics_page_limit").MustString(strconv.Itoa(p.cfg.AWSListMetricsPageLimit))
-	if listMetricsPageLimit != "" {
-		variables = append(variables, envVar(awsds.ListMetricsPageLimitKeyName, listMetricsPageLimit))
+	if p.cfg.AWSListMetricsPageLimit != "" {
+		variables = append(variables, envVar(awsds.ListMetricsPageLimitKeyName, p.cfg.AWSListMetricsPageLimit))
 	}
 
 	return variables
 }
 
 func (p *PluginEnvVarsProvider) secureSocksProxyEnvVars() []string {
-	if p.cfg.SecureSocksDSProxy.Enabled {
+	if p.cfg.ProxySettings.Enabled {
 		return []string{
-			envVar(proxy.PluginSecureSocksProxyClientCert, p.cfg.SecureSocksDSProxy.ClientCert),
-			envVar(proxy.PluginSecureSocksProxyClientKey, p.cfg.SecureSocksDSProxy.ClientKey),
-			envVar(proxy.PluginSecureSocksProxyRootCACert, p.cfg.SecureSocksDSProxy.RootCA),
-			envVar(proxy.PluginSecureSocksProxyProxyAddress, p.cfg.SecureSocksDSProxy.ProxyAddress),
-			envVar(proxy.PluginSecureSocksProxyServerName, p.cfg.SecureSocksDSProxy.ServerName),
-			envVar(proxy.PluginSecureSocksProxyEnabled, strconv.FormatBool(p.cfg.SecureSocksDSProxy.Enabled)),
-			envVar(proxy.PluginSecureSocksProxyAllowInsecure, strconv.FormatBool(p.cfg.SecureSocksDSProxy.AllowInsecure)),
+			envVar(proxy.PluginSecureSocksProxyClientCert, p.cfg.ProxySettings.ClientCert),
+			envVar(proxy.PluginSecureSocksProxyClientKey, p.cfg.ProxySettings.ClientKey),
+			envVar(proxy.PluginSecureSocksProxyRootCACert, p.cfg.ProxySettings.RootCA),
+			envVar(proxy.PluginSecureSocksProxyProxyAddress, p.cfg.ProxySettings.ProxyAddress),
+			envVar(proxy.PluginSecureSocksProxyServerName, p.cfg.ProxySettings.ServerName),
+			envVar(proxy.PluginSecureSocksProxyEnabled, strconv.FormatBool(p.cfg.ProxySettings.Enabled)),
+			envVar(proxy.PluginSecureSocksProxyAllowInsecure, strconv.FormatBool(p.cfg.ProxySettings.AllowInsecure)),
 		}
 	}
 	return nil
 }
 
 func (p *PluginEnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
-	pluginTracingEnabled := p.features.IsEnabledGlobally(featuremgmt.FlagEnablePluginsTracingByDefault)
+	pluginTracingEnabled := p.cfg.Features.IsEnabledGlobally(featuremgmt.FlagEnablePluginsTracingByDefault)
 	if v, exists := p.cfg.PluginSettings[plugin.ID]["tracing"]; exists && !pluginTracingEnabled {
 		pluginTracingEnabled = v == "true"
 	}
 
-	if !p.tracingCfg.IsEnabled() || !pluginTracingEnabled {
+	if !p.cfg.Tracing.IsEnabled() || !pluginTracingEnabled {
 		return nil
 	}
 
 	vars := []string{
-		envVar("GF_INSTANCE_OTLP_ADDRESS", p.tracingCfg.OpenTelemetry.Address),
-		envVar("GF_INSTANCE_OTLP_PROPAGATION", p.tracingCfg.OpenTelemetry.Propagation),
-		envVar("GF_INSTANCE_OTLP_SAMPLER_TYPE", p.tracingCfg.OpenTelemetry.Sampler),
-		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_PARAM=%.6f", p.tracingCfg.OpenTelemetry.SamplerParam),
-		envVar("GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL", p.tracingCfg.OpenTelemetry.SamplerRemoteURL),
+		envVar("GF_INSTANCE_OTLP_ADDRESS", p.cfg.Tracing.OpenTelemetry.Address),
+		envVar("GF_INSTANCE_OTLP_PROPAGATION", p.cfg.Tracing.OpenTelemetry.Propagation),
+		envVar("GF_INSTANCE_OTLP_SAMPLER_TYPE", p.cfg.Tracing.OpenTelemetry.Sampler),
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_PARAM=%.6f", p.cfg.Tracing.OpenTelemetry.SamplerParam),
+		envVar("GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL", p.cfg.Tracing.OpenTelemetry.SamplerRemoteURL),
 	}
 	if plugin.Info.Version != "" {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))

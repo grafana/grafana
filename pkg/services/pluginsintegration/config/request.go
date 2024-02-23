@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ PluginRequestConfigProvider = (*RequestConfigProvider)(nil)
@@ -24,17 +22,12 @@ type PluginRequestConfigProvider interface {
 }
 
 type RequestConfigProvider struct {
-	cfg             *setting.Cfg
-	settingProvider setting.Provider
-	features        featuremgmt.FeatureToggles
+	cfg *PluginInstanceCfg
 }
 
-func NewRequestConfigProvider(cfg *setting.Cfg, settingProvider setting.Provider,
-	features featuremgmt.FeatureToggles) *RequestConfigProvider {
+func NewRequestConfigProvider(cfg *PluginInstanceCfg) *RequestConfigProvider {
 	return &RequestConfigProvider{
-		cfg:             cfg,
-		settingProvider: settingProvider,
-		features:        features,
+		cfg: cfg,
 	}
 }
 
@@ -43,14 +36,14 @@ func NewRequestConfigProvider(cfg *setting.Cfg, settingProvider setting.Provider
 func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginID string) map[string]string {
 	m := make(map[string]string)
 
-	if s.cfg.AppURL != "" {
-		m[backend.AppURL] = s.cfg.AppURL
+	if s.cfg.GrafanaAppURL != "" {
+		m[backend.AppURL] = s.cfg.GrafanaAppURL
 	}
 	if s.cfg.ConcurrentQueryCount != 0 {
 		m[backend.ConcurrentQueryCount] = strconv.Itoa(s.cfg.ConcurrentQueryCount)
 	}
 
-	enabledFeatures := s.features.GetEnabled(ctx)
+	enabledFeatures := s.cfg.Features.GetEnabled(ctx)
 	if len(enabledFeatures) > 0 {
 		features := make([]string, 0, len(enabledFeatures))
 		for feat := range enabledFeatures {
@@ -61,38 +54,31 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	}
 
 	if slices.Contains[[]string, string](s.cfg.AWSForwardSettingsPlugins, pluginID) {
-		aws := s.settingProvider.Section("aws")
-
-		assumeRole := aws.KeyValue("assume_role_enabled").MustBool(s.cfg.AWSAssumeRoleEnabled)
-		if !assumeRole {
-			m[awsds.AssumeRoleEnabledEnvVarKeyName] = strconv.FormatBool(assumeRole)
+		if !s.cfg.AWSAssumeRoleEnabled {
+			m[awsds.AssumeRoleEnabledEnvVarKeyName] = "false"
 		}
-		allowedAuth := aws.KeyValue("allowed_auth_providers").MustString(strings.Join(s.cfg.AWSAllowedAuthProviders, ","))
-		if len(allowedAuth) > 0 {
-			m[awsds.AllowedAuthProvidersEnvVarKeyName] = allowedAuth
+		if len(s.cfg.AWSAllowedAuthProviders) > 0 {
+			m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
 		}
-		externalID := aws.KeyValue("external_id").MustString(s.cfg.AWSExternalId)
-		if externalID != "" {
-			m[awsds.GrafanaAssumeRoleExternalIdKeyName] = externalID
+		if s.cfg.AWSExternalId != "" {
+			m[awsds.GrafanaAssumeRoleExternalIdKeyName] = s.cfg.AWSExternalId
 		}
-		sessionDuration := aws.KeyValue("session_duration").MustString(s.cfg.AWSSessionDuration)
-		if sessionDuration != "" {
-			m[awsds.SessionDurationEnvVarKeyName] = sessionDuration
+		if s.cfg.AWSSessionDuration != "" {
+			m[awsds.SessionDurationEnvVarKeyName] = s.cfg.AWSSessionDuration
 		}
-		listMetricsPageLimit := aws.KeyValue("list_metrics_page_limit").MustString(strconv.Itoa(s.cfg.AWSListMetricsPageLimit))
-		if listMetricsPageLimit != "" {
-			m[awsds.ListMetricsPageLimitKeyName] = listMetricsPageLimit
+		if s.cfg.AWSListMetricsPageLimit != "" {
+			m[awsds.ListMetricsPageLimitKeyName] = s.cfg.AWSListMetricsPageLimit
 		}
 	}
 
-	if s.cfg.SecureSocksDSProxy.Enabled {
+	if s.cfg.ProxySettings.Enabled {
 		m[proxy.PluginSecureSocksProxyEnabled] = "true"
-		m[proxy.PluginSecureSocksProxyClientCert] = s.cfg.SecureSocksDSProxy.ClientCert
-		m[proxy.PluginSecureSocksProxyClientKey] = s.cfg.SecureSocksDSProxy.ClientKey
-		m[proxy.PluginSecureSocksProxyRootCACert] = s.cfg.SecureSocksDSProxy.RootCA
-		m[proxy.PluginSecureSocksProxyProxyAddress] = s.cfg.SecureSocksDSProxy.ProxyAddress
-		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.SecureSocksDSProxy.ServerName
-		m[proxy.PluginSecureSocksProxyAllowInsecure] = strconv.FormatBool(s.cfg.SecureSocksDSProxy.AllowInsecure)
+		m[proxy.PluginSecureSocksProxyClientCert] = s.cfg.ProxySettings.ClientCert
+		m[proxy.PluginSecureSocksProxyClientKey] = s.cfg.ProxySettings.ClientKey
+		m[proxy.PluginSecureSocksProxyRootCACert] = s.cfg.ProxySettings.RootCA
+		m[proxy.PluginSecureSocksProxyProxyAddress] = s.cfg.ProxySettings.ProxyAddress
+		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
+		m[proxy.PluginSecureSocksProxyAllowInsecure] = strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure)
 	}
 
 	// Settings here will be extracted by grafana-azure-sdk-go from the plugin context
@@ -157,9 +143,9 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		m[backend.SQLRowLimit] = strconv.FormatInt(s.cfg.DataProxyRowLimit, 10)
 	}
 
-	m[backend.SQLMaxOpenConnsDefault] = strconv.Itoa(s.cfg.SqlDatasourceMaxOpenConnsDefault)
-	m[backend.SQLMaxIdleConnsDefault] = strconv.Itoa(s.cfg.SqlDatasourceMaxIdleConnsDefault)
-	m[backend.SQLMaxConnLifetimeSecondsDefault] = strconv.Itoa(s.cfg.SqlDatasourceMaxConnLifetimeDefault)
+	m[backend.SQLMaxOpenConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxOpenConnsDefault)
+	m[backend.SQLMaxIdleConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxIdleConnsDefault)
+	m[backend.SQLMaxConnLifetimeSecondsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxConnLifetimeDefault)
 
 	return m
 }

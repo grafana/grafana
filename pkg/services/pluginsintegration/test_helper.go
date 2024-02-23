@@ -42,7 +42,7 @@ type IntegrationTestCtx struct {
 }
 
 func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *coreplugin.Registry) *IntegrationTestCtx {
-	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
+	pCfg, err := config.ProvidePluginManagementConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	cdn := pluginscdn.ProvideService(pCfg)

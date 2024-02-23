@@ -5,6 +5,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// Cfg is the configuration for the plugin management system.
+// It includes settings which are used to configure different components of plugin management.
 type Cfg struct {
 	DevMode bool
 
@@ -30,10 +32,11 @@ type Cfg struct {
 	HideAngularDeprecation []string
 }
 
+// NewCfg returns a new Cfg.
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
-	pluginsCDNURLTemplate string, appURL string, appSubURL string, tracing Tracing,
-	features featuremgmt.FeatureToggles, angularSupportEnabled bool, grafanaComURL string, disablePlugins []string,
-	hideAngularDeprecation []string, forwardHostEnvVars []string) *Cfg {
+	pluginsCDNURLTemplate string, appURL string, appSubURL string, tracing Tracing, features featuremgmt.FeatureToggles,
+	angularSupportEnabled bool, grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string,
+	forwardHostEnvVars []string) *Cfg {
 	return &Cfg{
 		PluginsPath:            pluginsPath,
 		DevMode:                devMode,
