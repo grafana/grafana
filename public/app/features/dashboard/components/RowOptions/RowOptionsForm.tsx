@@ -9,15 +9,15 @@ export type OnRowOptionsUpdate = (title: string, repeat?: string | null) => void
 
 export interface Props {
   title: string;
-  repeat?: string | null;
+  repeat?: string;
   onUpdate: OnRowOptionsUpdate;
   onCancel: () => void;
   warning?: React.ReactNode;
 }
 
 export const RowOptionsForm = ({ repeat, title, warning, onUpdate, onCancel }: Props) => {
-  const [newRepeat, setNewRepeat] = useState<string | null | undefined>(repeat);
-  const onChangeRepeat = useCallback((name?: string | null) => setNewRepeat(name), [setNewRepeat]);
+  const [newRepeat, setNewRepeat] = useState<string | undefined>(repeat);
+  const onChangeRepeat = useCallback((name?: string) => setNewRepeat(name), [setNewRepeat]);
 
   return (
     <Form

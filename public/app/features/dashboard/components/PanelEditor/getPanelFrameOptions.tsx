@@ -1,7 +1,10 @@
 import React from 'react';
 
 import { config } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
+import { VizPanelLinks } from 'app/features/dashboard-scene/scene/PanelLinks';
+import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
@@ -125,7 +128,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
                 <RepeatRowSelect
                   id="repeat-by-variable-select"
                   repeat={panel.repeat}
-                  onChange={(value?: string | null) => {
+                  onChange={(value?: string) => {
                     onPanelConfigChange('repeat', value);
                   }}
                 />
@@ -170,4 +173,163 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           })
         )
     );
+}
+
+export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDescriptor {
+  const descriptor = new OptionsPaneCategoryDescriptor({
+    title: 'Panel options',
+    id: 'Panel options',
+    isOpenDefault: true,
+  });
+
+  const panelLinksObject = dashboardSceneGraph.getPanelLinks(panel);
+  const links = panelLinksObject.state.rawLinks;
+
+  return descriptor
+    .addItem(
+      new OptionsPaneItemDescriptor({
+        title: 'Title',
+        value: panel.state.title,
+        popularRank: 1,
+        render: function renderTitle() {
+          return (
+            <Input
+              id="PanelFrameTitle"
+              defaultValue={panel.state.title}
+              onBlur={(e) => panel.setState({ title: e.currentTarget.value })}
+            />
+          );
+        },
+        // addon: config.featureToggles.dashgpt && <GenAIPanelTitleButton onGenerate={setPanelTitle} panel={panel} />,
+      })
+    )
+    .addItem(
+      new OptionsPaneItemDescriptor({
+        title: 'Description',
+        description: panel.state.description,
+        value: panel.state.description,
+        render: function renderDescription() {
+          return (
+            <TextArea
+              id="description-text-area"
+              defaultValue={panel.state.description}
+              onBlur={(e) => panel.setState({ description: e.currentTarget.value })}
+            />
+          );
+        },
+        // addon: config.featureToggles.dashgpt && (
+        //   <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel} />
+        // ),
+      })
+    )
+    .addItem(
+      new OptionsPaneItemDescriptor({
+        title: 'Transparent background',
+        render: function renderTransparent() {
+          return (
+            <Switch
+              value={panel.state.displayMode === 'transparent'}
+              id="transparent-background"
+              onChange={() => {
+                panel.setState({
+                  displayMode: panel.state.displayMode === 'transparent' ? 'default' : 'transparent',
+                });
+              }}
+            />
+          );
+        },
+      })
+    )
+    .addCategory(
+      new OptionsPaneCategoryDescriptor({
+        title: 'Panel links',
+        id: 'Panel links',
+        isOpenDefault: false,
+        itemsCount: links?.length,
+      }).addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Panel links',
+          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject} />,
+        })
+      )
+    );
+  //
+  // .addCategory(
+  //   new OptionsPaneCategoryDescriptor({
+  //     title: 'Repeat options',
+  //     id: 'Repeat options',
+  //     isOpenDefault: false,
+  //   })
+  //     .addItem(
+  //       new OptionsPaneItemDescriptor({
+  //         title: 'Repeat by variable',
+  //         description:
+  //           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
+  //         render: function renderRepeatOptions() {
+  //           return (
+  //             <RepeatRowSelect
+  //               id="repeat-by-variable-select"
+  //               repeat={panel.repeat}
+  //               onChange={(value?: string) => {
+  //                 onPanelConfigChange('repeat', value);
+  //               }}
+  //             />
+  //           );
+  //         },
+  //       })
+  //     )
+  //     .addItem(
+  //       new OptionsPaneItemDescriptor({
+  //         title: 'Repeat direction',
+  //         showIf: () => !!panel.repeat,
+  //         render: function renderRepeatOptions() {
+  //           const directionOptions = [
+  //             { label: 'Horizontal', value: 'h' },
+  //             { label: 'Vertical', value: 'v' },
+  //           ];
+
+  //           return (
+  //             <RadioButtonGroup
+  //               options={directionOptions}
+  //               value={panel.repeatDirection || 'h'}
+  //               onChange={(value) => onPanelConfigChange('repeatDirection', value)}
+  //             />
+  //           );
+  //         },
+  //       })
+  //     )
+  //     .addItem(
+  //       new OptionsPaneItemDescriptor({
+  //         title: 'Max per row',
+  //         showIf: () => Boolean(panel.repeat && panel.repeatDirection === 'h'),
+  //         render: function renderOption() {
+  //           const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
+  //           return (
+  //             <Select
+  //               options={maxPerRowOptions}
+  //               value={panel.maxPerRow}
+  //               onChange={(value) => onPanelConfigChange('maxPerRow', value.value)}
+  //             />
+  //           );
+  //         },
+  //       })
+  //     )
+  // );
+}
+
+interface ScenePanelLinksEditorProps {
+  panelLinks: VizPanelLinks;
+}
+
+function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
+  const { rawLinks: links } = panelLinks.useState();
+
+  return (
+    <DataLinksInlineEditor
+      links={links}
+      onChange={(links) => panelLinks.setState({ rawLinks: links })}
+      getSuggestions={getPanelLinksVariableSuggestions}
+      data={[]}
+    />
+  );
 }

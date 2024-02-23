@@ -8,8 +8,8 @@ Make sure you have the following dependencies installed before setting up your d
 
 - [Git](https://git-scm.com/)
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
-- [Node.js (Long Term Support)](https://nodejs.org)
-- [Yarn](https://yarnpkg.com)
+- [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature)
+- GCC (required for Cgo dependencies)
 
 ### macOS
 
@@ -19,7 +19,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 brew install git
 brew install go
 brew install node@20
-npm install -g yarn
+corepack enable
 ```
 
 ### Windows
@@ -36,14 +36,6 @@ We recommend using the Git command-line interface to download the source code fo
 For alternative ways of cloning the Grafana repository, please refer to [GitHub's cloning a repository](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) documentation.
 
 **Warning:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
-
-### Configure Editors
-
-For some IDEs, additional configuration may be needed for Typescript to work with [Yarn plug'n'play](https://yarnpkg.com/features/pnp).
-For [VSCode](https://yarnpkg.com/getting-started/editor-sdks#vscode) and [Vim](https://yarnpkg.com/getting-started/editor-sdks#vim),
-it's as easy as running `yarn dlx @yarnpkg/sdks vscode` or `yarn dlx @yarnpkg/sdks vim`, respectively.
-
-More information can be found [here](https://yarnpkg.com/getting-started/editor-sdks).
 
 ### Configure precommit hooks
 
@@ -258,6 +250,12 @@ The resulting image will be tagged as grafana/grafana:dev.
 ## Troubleshooting
 
 Are you having issues with setting up your environment? Here are some tips that might help.
+
+### IDE configuration
+
+Configure your IDE to use the Typescript version from the Grafana repository. The version should match the Typescript version in the package.json file, and is typically at the path `node_modules/.bin/tsc`.
+
+Previously Grafana used Yarn PnP to install frontend dependencies, which required additional special IDE configuration. This is no longer the case. If you have custom paths in your IDE for ESLint, Prettier, or Typescript, you can now remove them and use the defaults from node_modules.
 
 ### Too many open files when running `make run`
 

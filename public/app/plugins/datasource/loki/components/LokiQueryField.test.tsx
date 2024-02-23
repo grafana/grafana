@@ -3,7 +3,7 @@ import React, { ComponentProps } from 'react';
 
 import { dateTime } from '@grafana/data';
 
-import { createLokiDatasource } from '../mocks';
+import { createLokiDatasource } from '../__mocks__/datasource';
 
 import { LokiQueryField } from './LokiQueryField';
 

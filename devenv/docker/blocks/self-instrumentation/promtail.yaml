@@ -9,10 +9,10 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-- job_name: hosted-grafana/grafana
+- job_name: grafana
   static_configs:
   - targets:
       - localhost
     labels:
-      job: hosted-grafana/grafana
+      job: grafana
       __path__: /var/log/grafana/*log

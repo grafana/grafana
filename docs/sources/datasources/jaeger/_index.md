@@ -123,11 +123,6 @@ The following table describes the ways in which you can configure your trace to 
 
 ### Trace to metrics
 
-{{% admonition type="note" %}}
-This feature is behind the `traceToMetrics` [feature toggle][configure-grafana-feature-toggles].
-If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
-{{% /admonition %}}
-
 The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Jaeger.
 
 To configure trace to metrics:
@@ -369,3 +364,8 @@ To configure this feature, see the [introduction to exemplars][exemplars] docume
 [variable-syntax]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
 [variable-syntax]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
 {{% /docs/reference %}}
+
+## Visualizing the dependency graph
+
+If service dependency information is available in Jaeger, it can be visualized in Grafana.
+Use the Jaeger data source with the "Dependency Graph" query type on a Node Graph panel for this.

@@ -29,6 +29,8 @@ type FrontendSettingsAuthDTO struct {
 	GitLabSkipOrgRoleSync bool `json:"GitLabSkipOrgRoleSync"`
 	// Deprecated: this is no longer used and will be removed in Grafana 11
 	OktaSkipOrgRoleSync bool `json:"OktaSkipOrgRoleSync"`
+
+	DisableLogin bool `json:"disableLogin"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {
@@ -233,6 +235,7 @@ type FrontendSettingsDTO struct {
 	SamlName                string                             `json:"samlName"`
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
 	SharedWithMeFolderUID   string                             `json:"sharedWithMeFolderUID"`
+	RootFolderUID           string                             `json:"rootFolderUID"`
 
 	GeomapDefaultBaseLayerConfig *map[string]any `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`

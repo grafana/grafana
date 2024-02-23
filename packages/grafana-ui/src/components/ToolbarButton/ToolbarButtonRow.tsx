@@ -117,7 +117,7 @@ const getStyles = (theme: GrafanaTheme2, overflowButtonOrder: number, alignment:
     alignItems: 'center',
     backgroundColor: theme.colors.background.primary,
     borderRadius: theme.shape.radius.default,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.shadows.z2,
     display: 'flex',
     flexWrap: 'wrap',
     gap: theme.spacing(1),
@@ -128,7 +128,7 @@ const getStyles = (theme: GrafanaTheme2, overflowButtonOrder: number, alignment:
     right: 0,
     top: '100%',
     width: 'max-content',
-    zIndex: theme.zIndex.sidemenu,
+    zIndex: theme.zIndex.dropdown,
   }),
   container: css({
     alignItems: 'center',

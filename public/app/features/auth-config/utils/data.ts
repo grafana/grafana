@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 
-import { fieldMap } from '../fields';
+import { fieldMap, fields } from '../fields';
 import { FieldData, SSOProvider, SSOProviderDTO } from '../types';
 
 import { isSelectableValue } from './guards';
@@ -40,7 +40,7 @@ export const emptySettings: SSOProviderDTO = {
   tlsSkipVerify: false,
   tokenUrl: '',
   type: '',
-  usePKCE: false,
+  usePkce: false,
   useRefreshToken: false,
 };
 
@@ -58,7 +58,7 @@ export function dataToDTO(data?: SSOProvider): SSOProviderDTO {
   if (!data) {
     return emptySettings;
   }
-  const arrayFields = getArrayFields(fieldMap);
+  const arrayFields = getArrayFields(fieldMap(data.provider));
   const settings = { ...data.settings };
   for (const field of arrayFields) {
     //@ts-expect-error
@@ -72,16 +72,41 @@ const valuesToString = (values: Array<SelectableValue<string>>) => {
   return values.map(({ value }) => value).join(',');
 };
 
+const includeRequiredKeysOnly = (
+  obj: SSOProviderDTO,
+  requiredKeys: Array<keyof SSOProvider['settings']>
+): Partial<SSOProviderDTO> => {
+  if (!requiredKeys) {
+    return obj;
+  }
+  let result: Partial<SSOProviderDTO> = {};
+  for (const key of requiredKeys) {
+    //@ts-expect-error
+    result[key] = obj[key];
+  }
+  return result;
+};
+
 // Convert the DTO to the data format used by the API
-export function dtoToData(dto: SSOProviderDTO) {
-  const arrayFields = getArrayFields(fieldMap);
-  const settings = { ...dto };
+export function dtoToData(dto: SSOProviderDTO, provider: string) {
+  const arrayFields = getArrayFields(fieldMap(provider));
+  let current: Partial<SSOProviderDTO> = dto;
+
+  if (fields[provider]) {
+    current = includeRequiredKeysOnly(dto, [...fields[provider], 'enabled']);
+  }
+  const settings = { ...current };
 
   for (const field of arrayFields) {
-    const value = dto[field];
-    if (value && isSelectableValue(value)) {
-      //@ts-expect-error
-      settings[field] = valuesToString(value);
+    const value = current[field];
+    if (value) {
+      if (isSelectableValue(value)) {
+        //@ts-expect-error
+        settings[field] = valuesToString(value);
+      } else if (isSelectableValue([value])) {
+        //@ts-expect-error
+        settings[field] = value.value;
+      }
     }
   }
   return settings;
@@ -89,6 +114,6 @@ export function dtoToData(dto: SSOProviderDTO) {
 
 export function getArrayFields(obj: Record<string, FieldData>): Array<keyof SSOProviderDTO> {
   return Object.entries(obj)
-    .filter(([_, value]) => value.type === 'select' && value.multi === true)
+    .filter(([_, value]) => value.type === 'select')
     .map(([key]) => key as keyof SSOProviderDTO);
 }

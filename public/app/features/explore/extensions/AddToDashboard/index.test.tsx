@@ -24,6 +24,11 @@ const setup = (children: ReactNode, queries: DataQuery[] = [{ refId: 'A' }]) => 
     explore: {
       panes: {
         left: {
+          range: {
+            from: 'now-6h',
+            to: 'now',
+            raw: { from: 'now-6h', to: 'now' },
+          },
           queries,
           queryResponse: createEmptyQueryResponse(),
         },

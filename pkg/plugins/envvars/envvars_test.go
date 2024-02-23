@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -39,6 +40,7 @@ func TestInitializer_envVars(t *testing.T) {
 					"custom_env_var": "customVal",
 				},
 			},
+			AWSAssumeRoleEnabled: true,
 		}, licensing)
 
 		envVars := envVarsProvider.Get(context.Background(), p)
@@ -202,7 +204,8 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "otel not configured",
 			cfg: &config.Cfg{
-				Tracing: config.Tracing{},
+				Tracing:              config.Tracing{},
+				AWSAssumeRoleEnabled: false,
 			},
 			plugin: defaultPlugin,
 			exp:    expNoTracing,
@@ -256,6 +259,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 				PluginSettings: map[string]map[string]string{
 					pluginID: {"tracing": "true"},
 				},
+				AWSAssumeRoleEnabled: true,
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
@@ -287,6 +291,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 				PluginSettings: map[string]map[string]string{
 					pluginID: {"tracing": "true"},
 				},
+				AWSAssumeRoleEnabled: true,
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
@@ -336,6 +341,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 				PluginSettings: map[string]map[string]string{
 					pluginID: {"some_other_option": "true"},
 				},
+				AWSAssumeRoleEnabled: true,
 			},
 			plugin: defaultPlugin,
 			exp:    expNoTracing,
@@ -349,6 +355,30 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 				PluginSettings: map[string]map[string]string{
 					pluginID: {"some_other_option": "true", "tracing": "true"},
 				},
+			},
+			plugin: defaultPlugin,
+			exp:    expDefaultOtlp,
+		},
+		{
+			name: `enabled on plugin with no "tracing" plugin setting but with enablePluginsTracingByDefault feature flag`,
+			cfg: &config.Cfg{
+				Tracing: config.Tracing{
+					OpenTelemetry: defaultOTelCfg,
+				},
+				PluginSettings: map[string]map[string]string{pluginID: {}},
+				Features:       featuremgmt.WithFeatures(featuremgmt.FlagEnablePluginsTracingByDefault),
+			},
+			plugin: defaultPlugin,
+			exp:    expDefaultOtlp,
+		},
+		{
+			name: `enabled on plugin with plugin setting "tracing=false" but with enablePluginsTracingByDefault feature flag`,
+			cfg: &config.Cfg{
+				Tracing: config.Tracing{
+					OpenTelemetry: defaultOTelCfg,
+				},
+				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "false"}},
+				Features:       featuremgmt.WithFeatures(featuremgmt.FlagEnablePluginsTracingByDefault),
 			},
 			plugin: defaultPlugin,
 			exp:    expDefaultOtlp,
@@ -556,12 +586,14 @@ func TestInitalizer_awsEnvVars(t *testing.T) {
 	t.Run("backend datasource with aws settings", func(t *testing.T) {
 		p := &plugins.Plugin{}
 		envVarsProvider := NewProvider(&config.Cfg{
-			AWSAssumeRoleEnabled:    true,
+			AWSAssumeRoleEnabled:    false,
 			AWSAllowedAuthProviders: []string{"grafana_assume_role", "keys"},
 			AWSExternalId:           "mock_external_id",
+			AWSSessionDuration:      "10m",
+			AWSListMetricsPageLimit: "100",
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
-		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id"}, envVars)
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100"}, envVars)
 	})
 }
 
@@ -579,7 +611,7 @@ func TestInitializer_featureToggleEnvVar(t *testing.T) {
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 
-		assert.Equal(t, 2, len(envVars))
+		assert.Equal(t, 3, len(envVars))
 
 		toggleExpression := strings.Split(envVars[1], "=")
 		assert.Equal(t, 2, len(toggleExpression))
@@ -603,6 +635,7 @@ func TestInitalizer_azureEnvVars(t *testing.T) {
 	t.Run("backend datasource with azure settings", func(t *testing.T) {
 		p := &plugins.Plugin{}
 		envVarsProvider := NewProvider(&config.Cfg{
+			AWSAssumeRoleEnabled: true,
 			Azure: &azsettings.AzureSettings{
 				Cloud:                   azsettings.AzurePublic,
 				ManagedIdentityEnabled:  true,
@@ -636,6 +669,18 @@ func TestInitalizer_azureEnvVars(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_ASSERTION=username",
 		}, envVars)
 	})
+}
+
+func TestService_GetConfigMap_Defaults(t *testing.T) {
+	s := &Service{
+		cfg: &config.Cfg{},
+	}
+
+	require.Equal(t, map[string]string{
+		"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
+		"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
+		"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
+	}, s.GetConfigMap(context.Background(), "", nil))
 }
 
 func TestService_GetConfigMap(t *testing.T) {
@@ -718,7 +763,7 @@ func TestService_GetConfigMap(t *testing.T) {
 			s := &Service{
 				cfg: tc.cfg,
 			}
-			require.Equal(t, tc.expected, s.GetConfigMap(context.Background(), "", nil))
+			require.Subset(t, s.GetConfigMap(context.Background(), "", nil), tc.expected)
 		})
 	}
 }
@@ -726,38 +771,38 @@ func TestService_GetConfigMap(t *testing.T) {
 func TestService_GetConfigMap_featureToggles(t *testing.T) {
 	t.Run("Feature toggles list is deterministic", func(t *testing.T) {
 		tcs := []struct {
-			enabledFeatures []string
-			expectedConfig  map[string]string
+			features       featuremgmt.FeatureToggles
+			expectedConfig map[string]string
 		}{
 			{
-				enabledFeatures: nil,
-				expectedConfig:  map[string]string{},
+				features:       nil,
+				expectedConfig: map[string]string{},
 			},
 			{
-				enabledFeatures: []string{},
-				expectedConfig:  map[string]string{},
+				features:       featuremgmt.WithFeatures(),
+				expectedConfig: map[string]string{},
 			},
 			{
-				enabledFeatures: []string{"A", "B", "C"},
-				expectedConfig:  map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
+				features:       featuremgmt.WithFeatures("A", "B", "C"),
+				expectedConfig: map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
 			},
 			{
-				enabledFeatures: []string{"C", "B", "A"},
-				expectedConfig:  map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
+				features:       featuremgmt.WithFeatures("C", "B", "A"),
+				expectedConfig: map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
 			},
 			{
-				enabledFeatures: []string{"b", "a", "c", "d"},
-				expectedConfig:  map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "a,b,c,d"},
+				features:       featuremgmt.WithFeatures("b", "a", "c", "d"),
+				expectedConfig: map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "a,b,c,d"},
 			},
 		}
 
 		for _, tc := range tcs {
 			s := &Service{
 				cfg: &config.Cfg{
-					Features: fakes.NewFakeFeatureToggles(tc.enabledFeatures...),
+					Features: tc.features,
 				},
 			}
-			require.Equal(t, tc.expectedConfig, s.GetConfigMap(context.Background(), "", nil))
+			require.Subset(t, s.GetConfigMap(context.Background(), "", nil), tc.expectedConfig)
 		}
 	})
 }
@@ -769,7 +814,97 @@ func TestService_GetConfigMap_appURL(t *testing.T) {
 				GrafanaAppURL: "https://myorg.com/",
 			},
 		}
-		require.Equal(t, map[string]string{"GF_APP_URL": "https://myorg.com/"}, s.GetConfigMap(context.Background(), "", nil))
+		require.Subset(t, s.GetConfigMap(context.Background(), "", nil), map[string]string{"GF_APP_URL": "https://myorg.com/"})
+	})
+}
+
+func TestService_GetConfigMap_SQL(t *testing.T) {
+	t.Run("Uses the configured values", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				DataProxyRowLimit:                   23,
+				SQLDatasourceMaxOpenConnsDefault:    24,
+				SQLDatasourceMaxIdleConnsDefault:    25,
+				SQLDatasourceMaxConnLifetimeDefault: 26,
+			},
+		}
+
+		require.Subset(t, s.GetConfigMap(context.Background(), "", nil), map[string]string{
+			"GF_SQL_ROW_LIMIT":                         "23",
+			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "24",
+			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "25",
+			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "26",
+		})
+	})
+
+	t.Run("Uses the configured max-default-values, even when they are zero", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				SQLDatasourceMaxOpenConnsDefault:    0,
+				SQLDatasourceMaxIdleConnsDefault:    0,
+				SQLDatasourceMaxConnLifetimeDefault: 0,
+			},
+		}
+
+		require.Equal(t, map[string]string{
+			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
+			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
+			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
+		}, s.GetConfigMap(context.Background(), "", nil))
+	})
+}
+
+func TestService_GetConfigMap_concurrentQueryCount(t *testing.T) {
+	t.Run("Uses the configured concurrent query count", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				ConcurrentQueryCount: 42,
+			},
+		}
+		require.Subset(t, s.GetConfigMap(context.Background(), "", nil), map[string]string{"GF_CONCURRENT_QUERY_COUNT": "42"})
+	})
+
+	t.Run("Doesn't set the concurrent query count if it is not in the config", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{},
+		}
+		require.NotContains(t, s.GetConfigMap(context.Background(), "", nil), "GF_CONCURRENT_QUERY_COUNT")
+	})
+
+	t.Run("Doesn't set the concurrent query count if it is zero", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				ConcurrentQueryCount: 0,
+			},
+		}
+		require.NotContains(t, s.GetConfigMap(context.Background(), "", nil), "GF_CONCURRENT_QUERY_COUNT")
+	})
+}
+
+func TestService_GetConfigMap_azureAuthEnabled(t *testing.T) {
+	t.Run("Uses the configured azureAuthEnabled", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				AzureAuthEnabled: true,
+			},
+		}
+		require.Subset(t, s.GetConfigMap(context.Background(), "", nil), map[string]string{"GFAZPL_AZURE_AUTH_ENABLED": "true"})
+	})
+
+	t.Run("Doesn't set the azureAuthEnabled if it is not in the config", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{},
+		}
+		require.NotContains(t, s.GetConfigMap(context.Background(), "", nil), "GFAZPL_AZURE_AUTH_ENABLED")
+	})
+
+	t.Run("Doesn't set the azureAuthEnabled if it is false", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				AzureAuthEnabled: false,
+			},
+		}
+		require.NotContains(t, s.GetConfigMap(context.Background(), "", nil), "GFAZPL_AZURE_AUTH_ENABLED")
 	})
 }
 
@@ -800,7 +935,7 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 				Azure: azSettings,
 			},
 		}
-		require.Equal(t, map[string]string{
+		require.Subset(t, s.GetConfigMap(context.Background(), "grafana-azure-monitor-datasource", nil), map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":   "mock_managed_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":    "true",
@@ -812,7 +947,7 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_CLIENT_ID":      "mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":  "mock_user_identity_client_secret",
 			"GFAZPL_USER_IDENTITY_ASSERTION":      "username",
-		}, s.GetConfigMap(context.Background(), "grafana-azure-monitor-datasource", nil))
+		})
 	})
 
 	t.Run("does not use the azure settings for a non-Azure plugin", func(t *testing.T) {
@@ -821,7 +956,20 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 				Azure: azSettings,
 			},
 		}
-		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+
+		m := s.GetConfigMap(context.Background(), "", nil)
+		require.NotContains(t, m, "GFAZPL_AZURE_CLOUD")
+		require.NotContains(t, m, "GFAZPL_MANAGED_IDENTITY_ENABLED")
+		require.NotContains(t, m, "GFAZPL_MANAGED_IDENTITY_CLIENT_ID")
+		require.NotContains(t, m, "GFAZPL_WORKLOAD_IDENTITY_ENABLED")
+		require.NotContains(t, m, "GFAZPL_WORKLOAD_IDENTITY_TENANT_ID")
+		require.NotContains(t, m, "GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID")
+		require.NotContains(t, m, "GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_ENABLED")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_TOKEN_URL")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_CLIENT_ID")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_CLIENT_SECRET")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_ASSERTION")
 	})
 
 	t.Run("uses the azure settings for a non-Azure user-specified plugin", func(t *testing.T) {
@@ -831,7 +979,7 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 				Azure: azSettings,
 			},
 		}
-		require.Equal(t, map[string]string{
+		require.Subset(t, s.GetConfigMap(context.Background(), "test-datasource", nil), map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":   "mock_managed_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":    "true",
@@ -843,6 +991,56 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_CLIENT_ID":      "mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":  "mock_user_identity_client_secret",
 			"GFAZPL_USER_IDENTITY_ASSERTION":      "username",
-		}, s.GetConfigMap(context.Background(), "test-datasource", nil))
+		})
+	})
+}
+
+func TestService_GetConfigMap_aws(t *testing.T) {
+	cfg := &config.Cfg{
+		AWSAssumeRoleEnabled:      false,
+		AWSAllowedAuthProviders:   []string{"grafana_assume_role", "keys"},
+		AWSExternalId:             "mock_external_id",
+		AWSSessionDuration:        "10m",
+		AWSListMetricsPageLimit:   "100",
+		AWSForwardSettingsPlugins: []string{"cloudwatch", "prometheus", "elasticsearch"},
+	}
+
+	t.Run("uses the aws settings for an AWS plugin", func(t *testing.T) {
+		s := &Service{
+			cfg: cfg,
+		}
+		require.Subset(t, s.GetConfigMap(context.Background(), "cloudwatch", nil), map[string]string{
+			"AWS_AUTH_AssumeRoleEnabled":     "false",
+			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
+			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
+			"AWS_AUTH_SESSION_DURATION":      "10m",
+			"AWS_CW_LIST_METRICS_PAGE_LIMIT": "100",
+		})
+	})
+
+	t.Run("does not use the aws settings for a non-aws plugin", func(t *testing.T) {
+		s := &Service{
+			cfg: cfg,
+		}
+		m := s.GetConfigMap(context.Background(), "", nil)
+		require.NotContains(t, m, "AWS_AUTH_AssumeRoleEnabled")
+		require.NotContains(t, m, "AWS_AUTH_AllowedAuthProviders")
+		require.NotContains(t, m, "AWS_AUTH_EXTERNAL_ID")
+		require.NotContains(t, m, "AWS_AUTH_SESSION_DURATION")
+		require.NotContains(t, m, "AWS_CW_LIST_METRICS_PAGE_LIMIT")
+	})
+
+	t.Run("uses the aws settings for a non-aws user-specified plugin", func(t *testing.T) {
+		cfg.AWSForwardSettingsPlugins = append(cfg.AWSForwardSettingsPlugins, "test-datasource")
+		s := &Service{
+			cfg: cfg,
+		}
+		require.Subset(t, s.GetConfigMap(context.Background(), "test-datasource", nil), map[string]string{
+			"AWS_AUTH_AssumeRoleEnabled":     "false",
+			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
+			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
+			"AWS_AUTH_SESSION_DURATION":      "10m",
+			"AWS_CW_LIST_METRICS_PAGE_LIMIT": "100",
+		})
 	})
 }

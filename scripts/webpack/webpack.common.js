@@ -1,4 +1,3 @@
-const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const webpack = require('webpack');
 
@@ -33,7 +32,16 @@ module.exports = {
         '@locker/near-membrane-dom/custom-devtools-formatter.js'
       ),
     },
-    modules: ['node_modules', path.resolve('public')],
+    modules: [
+      // default value
+      'node_modules',
+
+      // required for grafana enterprise resolution
+      path.resolve('node_modules'),
+
+      // required to for 'bare' imports (like 'app/core/utils' etc)
+      path.resolve('public'),
+    ],
     fallback: {
       buffer: false,
       fs: false,
@@ -42,9 +50,14 @@ module.exports = {
       https: false,
       string_decoder: false,
     },
-    symlinks: false,
   },
-  ignoreWarnings: [/export .* was not found in/],
+  ignoreWarnings: [
+    /export .* was not found in/,
+    {
+      module: /@kusto\/language-service\/bridge\.min\.js$/,
+      message: /^Critical dependency: the request of a dependency is an expression$/,
+    },
+  ],
   stats: {
     children: false,
     source: false,
@@ -56,25 +69,6 @@ module.exports = {
     new CorsWorkerPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
-    }),
-    new CopyWebpackPlugin({
-      patterns: [
-        {
-          context: path.join(require.resolve('monaco-editor/package.json'), '../min/vs/'),
-          from: '**/*',
-          to: '../lib/monaco/min/vs/', // inside the public/build folder
-          globOptions: {
-            ignore: [
-              '**/*.map', // debug files
-            ],
-          },
-        },
-        {
-          context: path.join(require.resolve('@kusto/monaco-kusto/package.json'), '../release/min'),
-          from: '**/*',
-          to: '../lib/monaco/min/vs/language/kusto/',
-        },
-      ],
     }),
   ],
   module: {
@@ -118,6 +112,13 @@ module.exports = {
       {
         test: /(unicons|mono|custom)[\\/].*\.svg$/,
         type: 'asset/source',
+      },
+      {
+        // Required for msagl library (used in Nodegraph panel) to work
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
       },
     ],
   },

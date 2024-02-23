@@ -58,7 +58,7 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 	}
 
 	if len(cmd.Password) < 4 {
-		return response.Error(400, "Password is missing or too short", nil)
+		return response.Error(http.StatusBadRequest, "Password is missing or too short", nil)
 	}
 
 	usr, err := hs.userService.Create(c.Req.Context(), &cmd)
@@ -100,6 +100,11 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) response.Response {
+	if hs.Cfg.DisableLoginForm || hs.Cfg.DisableLogin {
+		return response.Error(http.StatusForbidden,
+			"Not allowed to reset password when login form is disabled", nil)
+	}
+
 	form := dtos.AdminUpdateUserPasswordForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -110,29 +115,48 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if len(form.Password) < 4 {
-		return response.Error(400, "New password too short", nil)
+	if err := form.Password.Validate(hs.Cfg); err != nil {
+		return response.Err(err)
 	}
 
 	userQuery := user.GetUserByIDQuery{ID: userID}
 
 	usr, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
-		return response.Error(500, "Could not read user from database", err)
+		return response.Error(http.StatusInternalServerError, "Could not read user from database", err)
 	}
 
-	passwordHashed, err := util.EncodePassword(form.Password, usr.Salt)
+	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
+		if login.IsProviderEnabled(hs.Cfg, authInfo.AuthModule, oauthInfo) {
+			return response.Error(http.StatusBadRequest, "Cannot update external user password", err)
+		}
+	}
+
+	passwordHashed, err := util.EncodePassword(string(form.Password), usr.Salt)
 	if err != nil {
-		return response.Error(500, "Could not encode password", err)
+		return response.Error(http.StatusInternalServerError, "Could not encode password", err)
 	}
 
 	cmd := user.ChangeUserPasswordCommand{
 		UserID:      userID,
-		NewPassword: passwordHashed,
+		NewPassword: user.Password(passwordHashed),
 	}
 
 	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to update user password", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update user password", err)
+	}
+
+	if err := hs.loginAttemptService.Reset(c.Req.Context(),
+		usr.Login); err != nil {
+		c.Logger.Warn("could not reset login attempts", "err", err, "username", usr.Login)
+	}
+
+	if err := hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(),
+		userID); err != nil {
+		return response.Error(http.StatusExpectationFailed,
+			"User password updated but unable to revoke user sessions", err)
 	}
 
 	return response.Success("User password updated")

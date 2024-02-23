@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -132,7 +131,7 @@ func writeCertFile(logger log.Logger, fileContent string, generatedFilePath stri
 	}
 
 	logger.Debug("Deleting cert file since no content is provided", "path", generatedFilePath)
-	exists, err := fs.Exists(generatedFilePath)
+	exists, err := fileExists(generatedFilePath)
 	if err != nil {
 		return err
 	}
@@ -181,7 +180,7 @@ func (m *tlsManager) writeCertFiles(dsInfo sqleng.DataSourceInfo, tlsconfig *tls
 	}
 
 	// Write certification directory and files
-	exists, err := fs.Exists(workDir)
+	exists, err := fileExists(workDir)
 	if err != nil {
 		return err
 	}
@@ -201,6 +200,19 @@ func (m *tlsManager) writeCertFiles(dsInfo sqleng.DataSourceInfo, tlsconfig *tls
 		return err
 	}
 
+	// we do not want to point to cert-files that do not exist
+	if tlsRootCert == "" {
+		tlsconfig.RootCertFile = ""
+	}
+
+	if tlsClientCert == "" {
+		tlsconfig.CertFile = ""
+	}
+
+	if tlsClientKey == "" {
+		tlsconfig.CertKeyFile = ""
+	}
+
 	// Update datasource cache
 	m.dsCacheInstance.cache.Store(cacheKey, dsInfo.Updated)
 	return nil
@@ -212,7 +224,7 @@ func validateCertFilePaths(rootCert, clientCert, clientKey string) error {
 		if fpath == "" {
 			continue
 		}
-		exists, err := fs.Exists(fpath)
+		exists, err := fileExists(fpath)
 		if err != nil {
 			return err
 		}
@@ -221,4 +233,17 @@ func validateCertFilePaths(rootCert, clientCert, clientKey string) error {
 		}
 	}
 	return nil
+}
+
+// Exists determines whether a file/directory exists or not.
+func fileExists(fpath string) (bool, error) {
+	_, err := os.Stat(fpath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return false, err
+		}
+		return false, nil
+	}
+
+	return true, nil
 }

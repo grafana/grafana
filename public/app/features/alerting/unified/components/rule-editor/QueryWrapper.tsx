@@ -13,7 +13,7 @@ import {
   ThresholdsConfig,
 } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import { GraphTresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { GraphThresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -45,7 +45,7 @@ interface Props {
   onRunQueries: () => void;
   index: number;
   thresholds: ThresholdsConfig;
-  thresholdsType?: GraphTresholdsStyleMode;
+  thresholdsType?: GraphThresholdsStyleMode;
   onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
@@ -130,16 +130,15 @@ export const QueryWrapper = ({
           onChangeQueryOptions={onChangeQueryOptions}
           index={index}
         />
-        <ExpressionStatusIndicator
-          error={error}
-          onSetCondition={() => onSetCondition(query.refId)}
-          isCondition={isAlertCondition}
-        />
+        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={isAlertCondition} />
       </Stack>
     );
   }
 
   const showVizualisation = data.state !== LoadingState.NotStarted;
+  // ⚠️ the query editors want the entire array of queries passed as "DataQuery" NOT "AlertQuery"
+  // TypeScript isn't complaining here because the interfaces just happen to be compatible
+  const editorQueries = cloneDeep(queries.map((query) => query.model));
 
   return (
     <Stack direction="column" gap={0.5}>
@@ -159,7 +158,7 @@ export const QueryWrapper = ({
           onRemoveQuery={onRemoveQuery}
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
           onRunQuery={onRunQueries}
-          queries={queries}
+          queries={editorQueries}
           renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
           app={CoreApp.UnifiedAlerting}
           hideDisableQuery={true}
@@ -243,12 +242,12 @@ export function MinIntervalOption({
 
   return (
     <InlineField
-      label="Min interval"
+      label="Interval"
       labelWidth={24}
       tooltip={
         <>
-          A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code> if your
-          data is written every minute.
+          Interval sent to the data source. Recommended to be set to write frequency, for example <code>1m</code> if
+          your data is written every minute.
         </>
       }
     >

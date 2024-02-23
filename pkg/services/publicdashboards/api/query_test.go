@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -276,7 +277,6 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	// Create Dashboard
 	saveDashboardCmd := dashboards.SaveDashboardCommand{
 		OrgID:     1,
-		FolderID:  1, // nolint:staticcheck
 		FolderUID: "1",
 		IsFolder:  false,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -332,7 +332,9 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	)
 	require.NoError(t, err)
 
-	pds := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws, dashService)
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", FeaturePublicDashboardsEmailSharing).Return(false)
+	pds := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws, dashService, license)
 	pubdash, err := pds.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 

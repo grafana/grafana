@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.3.0-pre";
+export const pluginVersion = "11.0.0-pre";
 
 export interface Options extends common.SingleStatBaseOptions {
   displayMode: common.BarGaugeDisplayMode;
@@ -27,8 +27,8 @@ export interface Options extends common.SingleStatBaseOptions {
 export const defaultOptions: Partial<Options> = {
   displayMode: common.BarGaugeDisplayMode.Gradient,
   maxVizHeight: 300,
-  minVizHeight: 75,
-  minVizWidth: 75,
+  minVizHeight: 16,
+  minVizWidth: 8,
   namePlacement: common.BarGaugeNamePlacement.Auto,
   showUnfilled: true,
   sizing: common.BarGaugeSizing.Auto,

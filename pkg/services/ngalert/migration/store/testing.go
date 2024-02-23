@@ -54,15 +54,17 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 	quotaService := &quotatest.FakeQuotaService{}
 	ac := acimpl.ProvideAccessControl(cfg)
 	routeRegister := routing.ProvideRegister()
-	acSvc, err := acimpl.ProvideService(cfg, sqlStore, routing.ProvideRegister(), cache, ac, features)
-	require.NoError(t, err)
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-	teamSvc := teamimpl.ProvideService(sqlStore, cfg)
+	teamSvc, err := teamimpl.ProvideService(sqlStore, cfg)
+	require.NoError(t, err)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamSvc, cache, quotaService, bundleregistry.ProvideService())
+	require.NoError(t, err)
+
+	acSvc, err := acimpl.ProvideService(cfg, sqlStore, routing.ProvideRegister(), cache, ac, features)
 	require.NoError(t, err)
 
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
@@ -73,10 +75,10 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 	require.NoError(t, err)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
+		cfg, features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
 	require.NoError(t, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
+		cfg, features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
 	require.NoError(t, err)
 
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
@@ -103,6 +105,6 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 		folderPermissions:              folderPermissions,
 		dashboardPermissions:           dashboardPermissions,
 		orgService:                     orgService,
-		legacyAlertNotificationService: legacyalerting.ProvideService(sqlStore, encryptionservice.SetupTestService(t), nil),
+		legacyAlertNotificationService: legacyalerting.ProvideService(cfg, sqlStore, encryptionservice.SetupTestService(t), nil),
 	}
 }

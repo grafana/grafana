@@ -19,3 +19,7 @@ func (s *FakeAnonStore) CreateOrUpdateDevice(ctx context.Context, device *Device
 func (s *FakeAnonStore) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {
 	return 0, nil
 }
+
+func (s *FakeAnonStore) SearchDevices(ctx context.Context, query SearchDeviceQuery) (*SearchDeviceQueryResult, error) {
+	return nil, nil
+}

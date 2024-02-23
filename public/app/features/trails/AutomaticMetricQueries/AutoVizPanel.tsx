@@ -1,57 +1,58 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, SceneObjectBase, SceneComponentProps, VizPanel, SceneQueryRunner } from '@grafana/scenes';
 import { Field, RadioButtonGroup, useStyles2, Stack } from '@grafana/ui';
 
 import { trailDS } from '../shared';
-import { getTrailSettings } from '../utils';
+import { getMetricSceneFor, getTrailSettings } from '../utils';
 
-import { AutoQueryDef, AutoQueryInfo } from './AutoQueryEngine';
+import { AutoQueryDef } from './types';
 
 export interface AutoVizPanelState extends SceneObjectState {
   panel?: VizPanel;
-  autoQuery: AutoQueryInfo;
-  queryDef?: AutoQueryDef;
 }
 
 export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
   constructor(state: AutoVizPanelState) {
     super(state);
 
-    if (!state.panel) {
-      this.setState({
-        panel: this.getVizPanelFor(state.autoQuery.main),
-        queryDef: state.autoQuery.main,
-      });
-    }
+    this.addActivationHandler(this.onActivate.bind(this));
+  }
+
+  public onActivate() {
+    const { autoQuery } = getMetricSceneFor(this).state;
+    this.setState({
+      panel: this.getVizPanelFor(autoQuery.main),
+    });
   }
 
   private getQuerySelector(def: AutoQueryDef) {
-    const variants = this.state.autoQuery.variants;
+    const { autoQuery } = getMetricSceneFor(this).state;
 
-    if (variants.length === 0) {
+    if (autoQuery.variants.length === 0) {
       return;
     }
 
-    const options = variants.map((q) => ({ label: q.variant, value: q.variant }));
+    const options = autoQuery.variants.map((q) => ({ label: q.variant, value: q.variant }));
 
     return <RadioButtonGroup size="sm" options={options} value={def.variant} onChange={this.onChangeQuery} />;
   }
 
   public onChangeQuery = (variant: string) => {
-    const def = this.state.autoQuery.variants.find((q) => q.variant === variant)!;
+    const metricScene = getMetricSceneFor(this);
+
+    const def = metricScene.state.autoQuery.variants.find((q) => q.variant === variant)!;
 
     this.setState({
       panel: this.getVizPanelFor(def),
-      queryDef: def,
     });
+    metricScene.setState({ queryDef: def });
   };
 
   private getVizPanelFor(def: AutoQueryDef) {
     return def
-      .vizBuilder(def)
+      .vizBuilder()
       .setData(
         new SceneQueryRunner({
           datasource: trailDS,
@@ -64,7 +65,8 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
   }
 
   public static Component = ({ model }: SceneComponentProps<AutoVizPanel>) => {
-    const { panel, queryDef } = model.useState();
+    const { panel } = model.useState();
+    const { queryDef } = getMetricSceneFor(model).state;
     const { showQuery } = getTrailSettings(model).useState();
     const styles = useStyles2(getStyles);
 
@@ -91,7 +93,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
   };
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles() {
   return {
     wrapper: css({
       display: 'flex',

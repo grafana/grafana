@@ -194,7 +194,7 @@ describe('given dashboard with panel repeat in horizontal direction', () => {
 });
 
 describe('given dashboard with panel repeat in vertical direction', () => {
-  let dashboard: any;
+  let dashboard: DashboardModel;
 
   beforeEach(() => {
     const dashboardJSON = {
@@ -238,7 +238,7 @@ describe('given dashboard with panel repeat in vertical direction', () => {
 });
 
 describe('given dashboard with row repeat and panel repeat in horizontal direction', () => {
-  let dashboard: any, dashboardJSON: any;
+  let dashboard: DashboardModel, dashboardJSON: any;
 
   beforeEach(() => {
     dashboardJSON = {
@@ -280,7 +280,7 @@ describe('given dashboard with row repeat and panel repeat in horizontal directi
       },
     };
     dashboard = getDashboardModel(dashboardJSON);
-    dashboard.processRepeats(false);
+    dashboard.processRepeats();
   });
 
   it('should panels in self row', () => {
@@ -325,7 +325,7 @@ describe('given dashboard with row repeat and panel repeat in horizontal directi
 });
 
 describe('given dashboard with row repeat', () => {
-  let dashboard: any, dashboardJSON: any;
+  let dashboard: DashboardModel, dashboardJSON: any;
 
   beforeEach(() => {
     dashboardJSON = {
@@ -382,7 +382,7 @@ describe('given dashboard with row repeat', () => {
 
     const scopedVars = compact(
       map(dashboard.panels, (panel) => {
-        return panel.scopedVars ? panel.scopedVars.apps.value : null;
+        return panel.scopedVars ? panel.scopedVars.apps?.value : null;
       })
     );
 
@@ -474,14 +474,14 @@ describe('given dashboard with row repeat', () => {
       'graph',
     ]);
 
-    expect(dashboard.panels[0].scopedVars['apps'].value).toBe('se1');
-    expect(dashboard.panels[1].scopedVars['apps'].value).toBe('se1');
-    expect(dashboard.panels[3].scopedVars['apps'].value).toBe('se2');
-    expect(dashboard.panels[4].scopedVars['apps'].value).toBe('se2');
-    expect(dashboard.panels[8].scopedVars['hosts'].value).toBe('backend01');
-    expect(dashboard.panels[9].scopedVars['hosts'].value).toBe('backend01');
-    expect(dashboard.panels[11].scopedVars['hosts'].value).toBe('backend02');
-    expect(dashboard.panels[12].scopedVars['hosts'].value).toBe('backend02');
+    expect(dashboard.panels[0].scopedVars?.['apps']?.value).toBe('se1');
+    expect(dashboard.panels[1].scopedVars?.['apps']?.value).toBe('se1');
+    expect(dashboard.panels[3].scopedVars?.['apps']?.value).toBe('se2');
+    expect(dashboard.panels[4].scopedVars?.['apps']?.value).toBe('se2');
+    expect(dashboard.panels[8].scopedVars?.['hosts']?.value).toBe('backend01');
+    expect(dashboard.panels[9].scopedVars?.['hosts']?.value).toBe('backend01');
+    expect(dashboard.panels[11].scopedVars?.['hosts']?.value).toBe('backend02');
+    expect(dashboard.panels[12].scopedVars?.['hosts']?.value).toBe('backend02');
   });
 
   it('should assign unique ids for repeated panels', () => {
@@ -505,7 +505,7 @@ describe('given dashboard with row repeat', () => {
 
     const panelIds = flattenDeep(
       map(dashboard.panels, (panel) => {
-        let ids = [];
+        let ids: number[] = [];
         if (panel.panels && panel.panels.length) {
           ids = map(panel.panels, 'id');
         }

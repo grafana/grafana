@@ -197,7 +197,7 @@ export class ElementState implements LayerElement {
     }
   }
 
-  setPlacementFromConstraint(elementContainer?: DOMRect, parentContainer?: DOMRect) {
+  setPlacementFromConstraint(elementContainer?: DOMRect, parentContainer?: DOMRect, transformScale = 1) {
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
 
@@ -214,25 +214,25 @@ export class ElementState implements LayerElement {
 
     const relativeTop =
       elementContainer && parentContainer
-        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth)
+        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth) / transformScale
         : 0;
     const relativeBottom =
       elementContainer && parentContainer
-        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom)
+        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom) / transformScale
         : 0;
     const relativeLeft =
       elementContainer && parentContainer
-        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth)
+        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth) / transformScale
         : 0;
     const relativeRight =
       elementContainer && parentContainer
-        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right)
+        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right) / transformScale
         : 0;
 
     const placement: Placement = {};
 
-    const width = elementContainer?.width ?? 100;
-    const height = elementContainer?.height ?? 100;
+    const width = (elementContainer?.width ?? 100) / transformScale;
+    const height = (elementContainer?.height ?? 100) / transformScale;
 
     switch (vertical) {
       case VerticalConstraint.Top:
@@ -427,12 +427,12 @@ export class ElementState implements LayerElement {
 
   // kinda like:
   // https://github.com/grafana/grafana-edge-app/blob/main/src/panels/draw/WrapItem.tsx#L44
-  applyResize = (event: OnResize) => {
+  applyResize = (event: OnResize, transformScale = 1) => {
     const placement = this.options.placement!;
 
     const style = event.target.style;
-    const deltaX = event.delta[0];
-    const deltaY = event.delta[1];
+    const deltaX = event.delta[0] / transformScale;
+    const deltaY = event.delta[1] / transformScale;
     const dirLR = event.direction[0];
     const dirTB = event.direction[1];
 
@@ -459,7 +459,7 @@ export class ElementState implements LayerElement {
 
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
-    if (!scene?.isEditingEnabled) {
+    if (!scene?.isEditingEnabled && !scene?.tooltip?.isOpen) {
       this.handleTooltip(event);
     } else if (!isSelected) {
       scene?.connections.handleMouseEnter(event);
