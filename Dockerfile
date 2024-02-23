@@ -3,14 +3,18 @@
 ARG BASE_IMAGE=alpine:3.18.5
 ARG JS_IMAGE=node:20-alpine3.18
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.21.6-alpine3.18
+ARG GO_ARCH=amd64
+ARG GO_VERSION=1.21.6
+ARG GO_IMAGE=golang:${GO_VERSION}-alpine
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} as js-builder
 
-ENV NODE_OPTIONS=--max_old_space_size=8000
+# build-base needed to build package @esfx/equatable@npm:1.0.2
+RUN apk add --update --no-cache build-base python3
+
 
 WORKDIR /tmp/grafana
 
@@ -20,6 +24,9 @@ COPY packages packages
 COPY plugins-bundled plugins-bundled
 COPY public public
 
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+ENV NODE_OPTIONS=--max_old_space_size=8000
 RUN yarn install --immutable
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
@@ -27,8 +34,8 @@ COPY public public
 COPY scripts scripts
 COPY emails emails
 
-ENV NODE_ENV production
-RUN yarn build
+ARG PACKAGE_BUILD_SCRIPT=build
+RUN yarn ${PACKAGE_BUILD_SCRIPT}
 
 FROM ${GO_IMAGE} as go-builder
 
@@ -40,7 +47,7 @@ ARG BINGO="true"
 
 # Install build dependencies
 RUN if grep -i -q alpine /etc/issue; then \
-      apk add --no-cache gcc g++ make git; \
+      apk add --no-cache gcc g++ make git binutils-gold; \
     fi
 
 WORKDIR /tmp/grafana
@@ -52,7 +59,7 @@ COPY .bingo .bingo
 COPY pkg/util/xorm/go.* pkg/util/xorm/
 
 RUN go mod download
-RUN if [[ "$BINGO" = "true" ]]; then \
+RUN if [ "$BINGO" = "true" ]; then \
       go install github.com/bwplotka/bingo@latest && \
       bingo get -v; \
     fi
@@ -79,7 +86,7 @@ FROM ${BASE_IMAGE} as tgz-builder
 
 WORKDIR /tmp/grafana
 
-ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
+ARG GRAFANA_TGZ=grafana-latest.linux-${GO_ARCH}-musl.tar.gz
 
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
@@ -95,6 +102,8 @@ FROM ${BASE_IMAGE}
 
 LABEL maintainer="Grafana Labs <hello@grafana.com>"
 
+ARG GO_VERSION
+ARG GO_ARCH
 ARG GF_UID="472"
 ARG GF_GID="0"
 
@@ -108,14 +117,16 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 
 WORKDIR $GF_PATHS_HOME
 
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TZ=Etc/UTC
+
 # Install dependencies
 RUN if grep -i -q alpine /etc/issue; then \
-      apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
+      apk add --no-cache ca-certificates bash curl tzdata musl-utils git && \
       apk info -vv | sort; \
     elif grep -i -q ubuntu /etc/issue; then \
-      DEBIAN_FRONTEND=noninteractive && \
       apt-get update && \
-      apt-get install -y ca-certificates curl tzdata musl && \
+      apt-get install -y ca-certificates curl tzdata musl git && \
       apt-get autoremove -y && \
       rm -rf /var/lib/apt/lists/*; \
     else \

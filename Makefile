@@ -230,34 +230,51 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 ##@ Docker
 
 TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
-PLATFORM=linux/amd64
+ARCH=amd64
+OS=linux
+PLATFORM=$(OS)/$(ARCH)
+GO_VERSION=1.26.1
+BASE_IMAGE_ALPINE=alpine:3.18.5
+BASE_IMAGE_UBUNTU=ubuntu:22.04
+NODE_ENV=production
+PACKAGE_BUILD_SCRIPT=build
 
-build-docker-full: ## Build Docker image for development.
+build-docker-full-alpine: ## Build Docker image for development.
 	@echo "build docker container"
-	tar -ch . | \
+	tar --no-xattrs -ch . | \
 	docker buildx build - \
 	--platform $(PLATFORM) \
+	--build-arg BASE_IMAGE=$(BASE_IMAGE_ALPINE) \
 	--build-arg BINGO=false \
+	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
-	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
-	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
-	--tag grafana/grafana$(TAG_SUFFIX):dev \
+	--build-arg GO_ARCH=$(ARCH) \
+	--build-arg GO_VERSION=$(GO_VERSION) \
+	--build-arg JS_PLATFORM=$(PLATFORM) \
+	--build-arg NODE_ENV=$(NODE_ENV) \
+	--build-arg PACKAGE_BUILD_SCRIPT=$(PACKAGE_BUILD_SCRIPT) \
+	--tag grafana/grafana$(TAG_SUFFIX)-$(ARCH):$(NODE_ENV)-alpine \
 	$(DOCKER_BUILD_ARGS)
 
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container"
-	tar -ch . | \
+	tar --no-xattrs -ch . | \
 	docker buildx build - \
 	--platform $(PLATFORM) \
+	--build-arg BASE_IMAGE=$(BASE_IMAGE_UBUNTU) \
 	--build-arg BINGO=false \
+	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
-	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
-	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
-	--build-arg BASE_IMAGE=ubuntu:22.04 \
-	--build-arg GO_IMAGE=golang:1.21.6 \
-	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
+	--build-arg GO_ARCH=$(ARCH) \
+	--build-arg GO_VERSION=$(GO_VERSION) \
+	--build-arg JS_PLATFORM=$(PLATFORM) \
+	--build-arg NODE_ENV=$(NODE_ENV) \
+	--build-arg PACKAGE_BUILD_SCRIPT=$(PACKAGE_BUILD_SCRIPT) \
+	--tag grafana/grafana$(TAG_SUFFIX)-$(ARCH):$(NODE_ENV)-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 
 ##@ Services
