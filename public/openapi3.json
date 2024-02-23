@@ -11219,6 +11219,12 @@
         },
         "type": "object"
       },
+      "TimeIntervals": {
+        "items": {
+          "$ref": "#/components/schemas/TimeInterval"
+        },
+        "type": "array"
+      },
       "TimeRange": {
         "description": "Redefining this to avoid an import cycle",
         "properties": {
@@ -12514,13 +12520,13 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12569,12 +12575,14 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12718,6 +12726,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -25390,6 +25399,200 @@
           }
         },
         "summary": "Updates an existing notification template.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/time-intervals": {
+      "get": {
+        "operationId": "RouteGetTimeIntervals",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeIntervals"
+                }
+              }
+            },
+            "description": "TimeIntervals"
+          }
+        },
+        "summary": "Get all the time intervals.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "post": {
+        "operationId": "RoutePostTimeInterval",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimeInterval"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeInterval"
+                }
+              }
+            },
+            "description": "TimeInterval"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            },
+            "description": "ValidationError"
+          }
+        },
+        "summary": "Create a new time interval.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/time-intervals/{name}": {
+      "delete": {
+        "operationId": "RouteDeleteTimeInterval",
+        "parameters": [
+          {
+            "description": "Mute timing name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The time interval was deleted successfully."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
+          }
+        },
+        "summary": "Delete a time interval.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "get": {
+        "operationId": "RouteGetTimeInterval",
+        "parameters": [
+          {
+            "description": "Mute timing name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeInterval"
+                }
+              }
+            },
+            "description": "TimeInterval"
+          },
+          "404": {
+            "description": " Not found."
+          }
+        },
+        "summary": "Get a time interval.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "put": {
+        "operationId": "RoutePutTimeInterval",
+        "parameters": [
+          {
+            "description": "Mute timing name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimeInterval"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeInterval"
+                }
+              }
+            },
+            "description": "TimeInterval"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            },
+            "description": "ValidationError"
+          }
+        },
+        "summary": "Replace an existing time interval.",
         "tags": [
           "provisioning"
         ]

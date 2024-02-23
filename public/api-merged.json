@@ -11412,6 +11412,162 @@
         }
       }
     },
+    "/v1/provisioning/time-intervals": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Get all the time intervals.",
+        "operationId": "RouteGetTimeIntervals",
+        "responses": {
+          "200": {
+            "description": "TimeIntervals",
+            "schema": {
+              "$ref": "#/definitions/TimeIntervals"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Create a new time interval.",
+        "operationId": "RoutePostTimeInterval",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/TimeInterval"
+            }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "TimeInterval",
+            "schema": {
+              "$ref": "#/definitions/TimeInterval"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/v1/provisioning/time-intervals/{name}": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Get a time interval.",
+        "operationId": "RouteGetTimeInterval",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TimeInterval",
+            "schema": {
+              "$ref": "#/definitions/TimeInterval"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Replace an existing time interval.",
+        "operationId": "RoutePutTimeInterval",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/TimeInterval"
+            }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "TimeInterval",
+            "schema": {
+              "$ref": "#/definitions/TimeInterval"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Delete a time interval.",
+        "operationId": "RouteDeleteTimeInterval",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The time interval was deleted successfully."
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
+          }
+        }
+      }
+    },
     "/v1/sso-settings": {
       "get": {
         "description": "You need to have a permission with action `settings:read` with scope `settings:auth.\u003cprovider\u003e:*`.",
@@ -20672,6 +20828,12 @@
         }
       }
     },
+    "TimeIntervals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/TimeInterval"
+      }
+    },
     "TimeRange": {
       "description": "Redefining this to avoid an import cycle",
       "type": "object",
@@ -21967,13 +22129,13 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       }
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -22022,12 +22184,14 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
       }
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -22171,6 +22335,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
