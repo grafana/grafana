@@ -650,16 +650,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:              "splitScopes",
-			Description:       "Support faster dashboard and folder search by splitting permission scopes into parts",
-			Stage:             FeatureStageDeprecated,
-			FrontendOnly:      false,
-			Expression:        "true", // enabled by default
-			Owner:             identityAccessTeam,
-			RequiresRestart:   true,
-			HideFromAdminPage: true, // This is internal work to speed up dashboard search, and is not ready for wider use
-		},
-		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
