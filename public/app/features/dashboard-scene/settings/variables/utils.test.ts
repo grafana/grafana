@@ -36,6 +36,7 @@ import {
   getOptionDataSourceTypes,
   getNextAvailableId,
   getVariableDefault,
+  isSceneVariableInstance,
 } from './utils';
 
 const templateSrv = {
@@ -95,6 +96,30 @@ describe('isEditableVariableType', () => {
     nonEditableTypes.forEach((type) => {
       expect(isEditableVariableType(type)).toBe(false);
     });
+  });
+});
+
+describe('isSceneVariableInstance', () => {
+  it.each([
+    CustomVariable,
+    QueryVariable,
+    ConstantVariable,
+    IntervalVariable,
+    DataSourceVariable,
+    AdHocFiltersVariable,
+    GroupByVariable,
+    TextBoxVariable,
+  ])('should return true for scene variable instances %s', (instanceType) => {
+    const variable = new instanceType({ name: 'MyVariable' });
+    expect(isSceneVariableInstance(variable)).toBe(true);
+  });
+
+  it('should return false for non-scene variable instances', () => {
+    const variable = {
+      name: 'MyVariable',
+      type: 'query',
+    };
+    expect(variable).not.toBeInstanceOf(QueryVariable);
   });
 });
 

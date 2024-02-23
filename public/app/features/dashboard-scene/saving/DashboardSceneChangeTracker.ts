@@ -38,11 +38,6 @@ export class DashboardSceneChangeTracker {
     if (payload.changedObject instanceof SceneDataLayers) {
       this.detectChanges();
     }
-    if (payload.changedObject instanceof dataLayers.AnnotationsDataLayer) {
-      if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
-        this.detectChanges();
-      }
-    }
     if (payload.changedObject instanceof SceneGridItem) {
       this.detectChanges();
     }
@@ -63,7 +58,9 @@ export class DashboardSceneChangeTracker {
       this.detectChanges();
     }
     if (payload.changedObject instanceof DashboardAnnotationsDataLayer) {
-      this.detectChanges();
+      if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
+        this.detectChanges();
+      }
     }
     if (isSceneVariableInstance(payload.changedObject)) {
       this.detectChanges();

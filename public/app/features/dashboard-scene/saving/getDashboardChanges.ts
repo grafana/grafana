@@ -16,7 +16,6 @@ export function getDashboardChanges(
   const changedSaveModel = changed;
   const hasTimeChanged = getHasTimeChanged(changedSaveModel, initialSaveModel);
   const hasVariableValueChanges = applyVariableChanges(changedSaveModel, initialSaveModel, saveVariables);
-  //   return { a: hasTimeChanged, b: hasVariableValueChanges };
 
   if (!saveTimeRange) {
     changedSaveModel.time = initialSaveModel.time;

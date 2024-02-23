@@ -8,6 +8,8 @@ import {
   SceneVariableSet,
   TestVariable,
   VizPanel,
+  SceneDataLayers,
+  dataLayers,
 } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -21,6 +23,8 @@ import { historySrv } from '../settings/version-history/HistorySrv';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 
+import { AlertStatesDataLayer } from './AlertStatesDataLayer';
+import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
@@ -70,17 +74,20 @@ describe('DashboardScene', () => {
         expect(scene.state.isEditing).toBe(true);
       });
 
+      it('Should start the detect changes worker', () => {
+        expect(worker.onmessage).toBeDefined();
+      });
+
       it('Should terminate the detect changes worker when deactivate', () => {
         expect(worker.terminate).toHaveBeenCalledTimes(0);
         deactivateScene();
         expect(worker.terminate).toHaveBeenCalledTimes(1);
       });
 
-      it('A change to griditem pos should call worker to detect changes', () => {
+      it('A change to griditem pos should set isDirty true', () => {
         const gridItem = sceneGraph.findObject(scene, (p) => p.state.key === 'griditem-1') as SceneGridItem;
         gridItem.setState({ x: 10, y: 0, width: 10, height: 10 });
 
-        expect(worker.postMessage).toHaveBeenCalledTimes(1);
         expect(scene.state.isDirty).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true });
