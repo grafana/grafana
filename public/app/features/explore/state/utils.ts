@@ -164,7 +164,7 @@ export async function loadAndInitDatasource(
     }
   }
 
-  // finally, add any legacy local storage history that might exist. To be removed in Grafana 11
+  // finally, add any legacy local storage history that might exist. To be removed in Grafana 12 #83309
   if (history.length < MAX_HISTORY_AUTOCOMPLETE_ITEMS) {
     const historyKey = `grafana.explore.history.${instance.meta?.id}`;
     history = [...history, ...store.getObject<HistoryItem[]>(historyKey, [])];
