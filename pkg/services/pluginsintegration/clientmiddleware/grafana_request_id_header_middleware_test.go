@@ -90,7 +90,7 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 
 	t.Run("Should set Grafana request ID headers if URL scheme and host match a URL from the allow list", func(t *testing.T) {
 		cfg := setting.NewCfg()
-		allowedURL := &url.URL{Scheme: "https", Host: "logs.GRAFANA.net"}
+		allowedURL := &url.URL{Scheme: "https", Host: "logs.grafana.net"}
 		cfg.IPRangeACAllowedURLs = []*url.URL{allowedURL}
 		cfg.IPRangeACSecretKey = "secret"
 		cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
@@ -109,8 +109,8 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 		}, nopCallResourceSender)
 		require.NoError(t, err)
 
-		require.Len(t, cdt.CallResourceReq.Headers[GrafanaRequestID], 0)
-		require.Len(t, cdt.CallResourceReq.Headers[GrafanaSignedRequestID], 0)
+		require.Len(t, cdt.CallResourceReq.Headers[GrafanaRequestID], 1)
+		require.Len(t, cdt.CallResourceReq.Headers[GrafanaSignedRequestID], 1)
 	})
 
 	t.Run("Should set Grafana internal request header if the request is internal (doesn't have X-Real-IP header set)", func(t *testing.T) {
