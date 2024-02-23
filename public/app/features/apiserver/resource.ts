@@ -4,6 +4,8 @@
  * This is very much a work in progress aiming to simplify common access patterns for k8s resource
  * Please update and improve types/utilities while we find a good pattern here!
  *
+ * Once this is more stable and represents a more general pattern, it should be moved to @grafana/data
+ *
  */
 
 export interface TypeMeta {
