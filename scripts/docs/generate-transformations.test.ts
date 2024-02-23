@@ -4,13 +4,6 @@ import { resolve } from 'path';
 import { getMarkdownContent, getJavaScriptContent } from './generate-transformations.ts';
 
 describe('makefile script tests', () => {
-  const rootDir = resolve(__dirname, '../../');
-  const pathToMarkdown = resolve(
-    rootDir,
-    'docs/sources/panels-visualizations/query-transform-data/transform-data/index.md'
-  );
-  const markdownContent = readFileSync(pathToMarkdown, 'utf-8');
-
   it('should execute without error and match the content written to index.md', () => {
     // Normalize and compare.
     expect(contentDoesMatch(getJavaScriptContent(), getMarkdownContent())).toBe(true);
