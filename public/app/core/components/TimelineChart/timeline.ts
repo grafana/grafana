@@ -392,11 +392,17 @@ export function getConfig(opts: TimelineCoreOptions) {
       return;
     }
 
+    // gets all items in all quads intersected by a 1px wide by 10k high rect at the x cursor position and 0 y position.
+    // (we use 10k instead of plot area height for simplicity and not having to pass around the uPlot instance)
     qt.get(cx, 0, uPlot.pxRatio, 1e4, (o) => {
+      // filter only rects that intersect along x dir
       if (cx >= o.x && cx <= o.x + o.w) {
+        // if also intersect along y, set both "direct hovered" and "one of" hovered
         if (cy >= o.y && cy <= o.y + o.h) {
           hovered[o.sidx] = hoveredAtCursor = o;
-        } else if (hoverMulti || viaSync) {
+        }
+        // else only set "one of" hovered (no "direct hovered") in multi mode or when synced
+        else if (hoverMulti || viaSync) {
           hovered[o.sidx] = o;
         }
       }
