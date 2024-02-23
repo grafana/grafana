@@ -163,6 +163,7 @@ type googleAPIData struct {
 	Name          string `json:"name"`
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"verified_email"`
+	HD            string `json:"hd"`
 }
 
 func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) (*googleUserData, error) {
@@ -184,6 +185,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 			Name:          data.Name,
 			Email:         data.Email,
 			EmailVerified: data.EmailVerified,
+			HD:            data.HD,
 			rawJSON:       response.Body,
 		}, nil
 	}
@@ -300,7 +302,11 @@ func (s *SocialGoogle) getGroupsPage(ctx context.Context, client *http.Client, u
 func (s *SocialGoogle) isHDAllowed(hd string) error {
 	info := s.GetOAuthInfo()
 
-	if len(s.info.AllowedDomains) == 0 {
+	if info.DisableHDValidation {
+		return nil
+	}
+
+	if len(info.AllowedDomains) == 0 {
 		return nil
 	}
 
