@@ -1,6 +1,3 @@
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
-
 import { getMarkdownContent, getJavaScriptContent } from './generate-transformations.ts';
 
 describe('makefile script tests', () => {
