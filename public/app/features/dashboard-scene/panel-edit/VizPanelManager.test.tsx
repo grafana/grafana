@@ -2,7 +2,7 @@ import { map, of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
@@ -140,7 +140,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('VizPanelManager', () => {
-  describe('changePluginType', () => {
+  describe('When changing plugin', () => {
     it('Should successfully change from one viz type to another', () => {
       const { vizPanelManager } = setupTest('panel-1');
       expect(vizPanelManager.state.panel.state.pluginId).toBe('timeseries');
@@ -169,7 +169,7 @@ describe('VizPanelManager', () => {
         },
       });
 
-      const vizPanelManager = new VizPanelManager(vizPanel);
+      const vizPanelManager = VizPanelManager.createFor(vizPanel);
 
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
       expect(vizPanelManager.state.panel.state.fieldConfig.overrides).toBe(overrides);
@@ -193,7 +193,7 @@ describe('VizPanelManager', () => {
         fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
       });
 
-      const vizPanelManager = new VizPanelManager(vizPanel);
+      const vizPanelManager = VizPanelManager.createFor(vizPanel);
 
       vizPanelManager.changePluginType('timeseries');
       //@ts-ignore
@@ -599,7 +599,6 @@ describe('VizPanelManager', () => {
           },
         ]);
 
-        expect(vizPanelManager.panelData).toBeInstanceOf(SceneDataTransformer);
         expect(vizPanelManager.queryRunner.state.queries[0].panelId).toEqual(panelWithTransformations.id);
 
         // Changing dashboard query to a panel with queries only
@@ -613,7 +612,6 @@ describe('VizPanelManager', () => {
           },
         ]);
 
-        expect(vizPanelManager.panelData).toBeInstanceOf(SceneDataTransformer);
         expect(vizPanelManager.queryRunner.state.queries[0].panelId).toBe(panelWithQueriesOnly.id);
       });
     });
@@ -624,8 +622,7 @@ const setupTest = (panelId: string) => {
   const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
-  const vizPanelManager = new VizPanelManager(panel.clone());
-
+  const vizPanelManager = VizPanelManager.createFor(panel);
   // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
   // @ts-expect-error
   getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));
