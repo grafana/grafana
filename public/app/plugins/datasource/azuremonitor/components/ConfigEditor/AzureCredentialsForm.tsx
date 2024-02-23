@@ -16,6 +16,7 @@ export interface Props {
   userIdentityEnabled: boolean;
   credentials: AzureCredentials;
   azureCloudOptions?: SelectableValue[];
+  legacyAzureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
   disabled?: boolean;
   children?: JSX.Element;
@@ -25,6 +26,7 @@ export const AzureCredentialsForm = (props: Props) => {
   const {
     credentials,
     azureCloudOptions,
+    legacyAzureCloudOptions,
     onCredentialsChange,
     disabled,
     managedIdentityEnabled,
@@ -100,7 +102,7 @@ export const AzureCredentialsForm = (props: Props) => {
       {credentials.authType === 'clientsecret' && (
         <AppRegistrationCredentials
           credentials={credentials}
-          azureCloudOptions={azureCloudOptions}
+          azureCloudOptions={legacyAzureCloudOptions}
           onCredentialsChange={onCredentialsChange}
           disabled={disabled}
         />
