@@ -381,6 +381,22 @@ export class Scene {
     return targetElements;
   };
 
+  disableCustomables = () => {
+    this.moveable!.props = {
+      dimensionViewable: false,
+      constraintViewable: false,
+      settingsViewable: false,
+    };
+  };
+
+  enableCustomables = () => {
+    this.moveable!.props = {
+      dimensionViewable: true,
+      constraintViewable: true,
+      settingsViewable: true,
+    };
+  };
+
   initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements = this.generateTargetElements(this.root.elements);
 
@@ -420,6 +436,9 @@ export class Scene {
       origin: false,
       className: this.styles.selected,
     })
+      .on('rotateStart', (event) => {
+        this.disableCustomables();
+      })
       .on('rotate', (event) => {
         console.log('rotate', event);
         const targetedElement = this.findElementByTarget(event.target);
@@ -428,6 +447,9 @@ export class Scene {
           targetedElement.applyRotate(event);
           this.moved.next(Date.now()); // TODO only on end
         }
+      })
+      .on('rotateEnd', (event) => {
+        this.enableCustomables();
       })
       .on('click', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
