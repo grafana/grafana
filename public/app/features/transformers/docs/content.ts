@@ -1385,9 +1385,9 @@ There are two different models:
 
 - **Linear regression** - Fits a linear function to the data.
 ${buildImageContent(
-'/static/img/docs/transformations/linear-regression.png',
-imageRenderType,
-'A time series visualization with a straight line representing the linear function'
+  '/static/img/docs/transformations/linear-regression.png',
+  imageRenderType,
+  'A time series visualization with a straight line representing the linear function'
 )}
 - **Polynomial regression** - Fits a polynomial function to the data.
 ${buildImageContent(
