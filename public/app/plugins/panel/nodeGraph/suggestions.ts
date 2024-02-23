@@ -14,8 +14,10 @@ export class NodeGraphSuggestionsSupplier {
       return;
     }
 
-    const dataFrame = builder.data.series[0];
-    if (!dataFrame) {
+    const dataFrames = builder.data.series.filter(
+      (df) => df.meta && df.meta.preferredVisualisationType === 'nodeGraph'
+    );
+    if (dataFrames.length !== 2) {
       return;
     }
 
