@@ -16,6 +16,7 @@ import {
   getDisplayProcessor,
   FieldColorModeId,
   DecimalCount,
+  getZone,
 } from '@grafana/data';
 // eslint-disable-next-line import/order
 import {
@@ -30,6 +31,7 @@ import {
   GraphTransform,
   AxisColorMode,
   GraphGradientMode,
+  VizOrientation,
 } from '@grafana/schema';
 
 // unit lookup needed to determine if we want power-of-2 or power-of-10 axis ticks
@@ -90,9 +92,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   tweakAxis = (opts) => opts,
   eventsScope = '__global_',
   hoverProximity,
+  orientation,
 }) => {
-  // For testing purpose, vertical = false is a new tested feature
-  const isVertical = false;
+  // Vertical is default and we want to only show horizontal if explicitly set
+  const isVertical = orientation !== VizOrientation.Horizontal;
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
   let alignedFrame: DataFrame;
@@ -139,7 +142,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     const filterTicks: uPlot.Axis.Filter | undefined =
       timeZones.length > 1
         ? (u, splits) => {
-            return splits.map((v, i) => (i < 2 ? null : v));
+            return isVertical
+              ? splits.map((v, i) => (i < 2 ? null : v))
+              : splits.map((v, i) => (i > splits.length - 2 ? null : v));
           }
         : undefined;
 
@@ -163,17 +168,30 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       builder.addHook('drawAxes', (u: uPlot) => {
         u.ctx.save();
 
-        // TODO: if Vertical then time zone labels are hiding the timestamps
-        u.ctx.fillStyle = theme.colors.text.primary;
-        u.ctx.textAlign = 'left';
-        u.ctx.textBaseline = 'bottom';
-
         let i = 0;
         u.axes.forEach((a) => {
-          if (a.side === 2) {
+          if (isVertical && a.side === 2) {
+            u.ctx.fillStyle = theme.colors.text.primary;
+            u.ctx.textAlign = 'left';
+            u.ctx.textBaseline = 'bottom';
             //@ts-ignore
             let cssBaseline: number = a._pos + a._size;
             u.ctx.fillText(timeZones[i], u.bbox.left, cssBaseline * uPlot.pxRatio);
+            i++;
+            // In a case we have horizontal orientation, we want to render timezone
+            //  labels on top and want to have them short
+          } else if (!isVertical && a.side === 3) {
+            u.ctx.fillStyle = theme.colors.text.primary;
+            u.ctx.textAlign = 'start';
+            u.ctx.textBaseline = 'top';
+            //@ts-ignore
+            let cssBaseline: number = a._pos - a._size;
+            let timeZone = getZone(timeZones[i])?.abbrs[0] ?? timeZones[i];
+            if (timeZone === 'browser') {
+              const offset = new Date().getTimezoneOffset();
+              timeZone = `UTC${offset < 0 ? '+' : '-'}${Math.abs(offset / 60)}`;
+            }
+            u.ctx.fillText(timeZone, cssBaseline * uPlot.pxRatio, u.bbox.top);
             i++;
           }
         });

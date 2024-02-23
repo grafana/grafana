@@ -189,11 +189,12 @@ TODO docs
 
 It extends [OptionsWithTimezones](#optionswithtimezones).
 
-| Property   | Type                                    | Required | Default | Description                                                      |
-|------------|-----------------------------------------|----------|---------|------------------------------------------------------------------|
-| `legend`   | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | TODO docs                                                        |
-| `tooltip`  | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | TODO docs                                                        |
-| `timezone` | string[]                                | No       |         | *(Inherited from [OptionsWithTimezones](#optionswithtimezones))* |
+| Property      | Type                                    | Required | Default | Description                                                          |
+|---------------|-----------------------------------------|----------|---------|----------------------------------------------------------------------|
+| `legend`      | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | TODO docs                                                            |
+| `orientation` | string                                  | **Yes**  |         | TODO docs<br/>Possible values are: `auto`, `vertical`, `horizontal`. |
+| `tooltip`     | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | TODO docs                                                            |
+| `timezone`    | string[]                                | No       |         | *(Inherited from [OptionsWithTimezones](#optionswithtimezones))*     |
 
 ### OptionsWithTimezones
 

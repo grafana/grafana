@@ -9,11 +9,14 @@
   background: rgba(120, 120, 130, 0.2);
 }
 
-.u-cursor-x {
+.u-hz .u-cursor-x,
+.u-vt .u-cursor-y {
+  height: 100%;
   border-right: 1px dashed rgba(120, 120, 130, 0.5);
 }
 
-.u-cursor-y {
+.u-hz .u-cursor-y,
+.u-vt .u-cursor-x {
   width: 100%;
   border-bottom: 1px dashed rgba(120, 120, 130, 0.5);
 }
