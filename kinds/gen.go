@@ -1,182 +1,140 @@
 //go:build ignore
 // +build ignore
 
-//go:generate go run gen.go
-
 package main
 
 import (
 	"context"
+	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	"fmt"
+	"github.com/grafana/codejen"
+	"github.com/grafana/cog/cog"
+	"github.com/grafana/grafana/pkg/codegen"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
-	"sort"
-	"strings"
-
-	"cuelang.org/go/cue/errors"
-	"github.com/grafana/codejen"
-	"github.com/grafana/cuetsy"
-	"github.com/grafana/kindsys"
-
-	"github.com/grafana/grafana/pkg/codegen"
-	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 var CoreDefParentPath = "kinds"
+var CoreCommonPackage = filepath.Join("packages", "grafana-schema", "src", "common")
 
-// TSCoreKindParentPath is the path, relative to the repository root, to the directory that
-// contains one directory per kind, full of generated TS kind output: types and default consts.
-var TSCoreKindParentPath = filepath.Join("packages", "grafana-schema", "src", "raw")
+//go:generate go run cog_gen.go
 
 func main() {
-	if len(os.Args) > 1 {
-		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
-		os.Exit(1)
-	}
-
-	// Core kinds composite code generator. Produces all generated code in
-	// grafana/grafana that derives from core kinds.
-	coreKindsGen := codejen.JennyListWithNamer(func(def kindsys.Kind) string {
-		return def.Props().Common().MachineName
-	})
-
-	// All the jennies that comprise the core kinds generator pipeline
-	coreKindsGen.Append(
-		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
-		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
-	)
-
-	header := codegen.SlashHeaderMapper("kinds/gen.go")
-	coreKindsGen.AddPostprocessors(header)
-
 	cwd, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
 		os.Exit(1)
 	}
+
 	groot := filepath.Dir(cwd)
+	dir := filepath.Join(groot, CoreDefParentPath)
 
-	rt := cuectx.GrafanaThemaRuntime()
-	var all []kindsys.Kind
-
-	f := os.DirFS(filepath.Join(groot, CoreDefParentPath))
-	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
-	for _, kinddir := range kinddirs {
-		if !kinddir.IsDir() {
-			continue
-		}
-		rel := filepath.Join(CoreDefParentPath, kinddir.Name())
-		def, err := cuectx.LoadCoreKindDef(rel, rt.Context(), nil)
-		if err != nil {
-			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
-		}
-		if def.Properties.MachineName != kinddir.Name() {
-			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, def.Properties.Name, kinddir.Name()))
+	var kindDirs []string
+	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() && d.Name() != CoreDefParentPath {
+			rel := filepath.Join("../", CoreDefParentPath, d.Name())
+			kindDirs = append(kindDirs, rel)
 		}
 
-		all = append(all, elsedie(kindsys.BindCore(rt, def))(rel))
-	}
-
-	sort.Slice(all, func(i, j int) bool {
-		return nameFor(all[i].Props()) < nameFor(all[j].Props())
+		return nil
 	})
 
-	jfs, err := coreKindsGen.GenerateFS(all...)
 	if err != nil {
-		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
+		fmt.Fprintf(os.Stderr, "cannot load schema files: %s", err)
+		os.Exit(1)
 	}
 
-	commfsys := elsedie(genCommon(filepath.Join(groot, "pkg", "kindsys")))("common schemas failed")
-	commfsys = elsedie(commfsys.Map(header))("failed gen header on common fsys")
-	if err = jfs.Merge(commfsys); err != nil {
-		die(err)
+	input := codegen.DataForGen{
+		Kind:     "core",
+		Files:    kindDirs,
+		CueFiles: loadCueFiles(kindDirs),
+	}
+
+	jennies := codejen.JennyListWithNamer(func(t codegen.DataForGen) string {
+		return "CoreKindGen"
+	})
+
+	jennies.Append(
+		&codegen.K8ResourcesJenny{},
+		&codegen.GoTypesJenny{},
+		&codegen.TSResources{},
+	)
+
+	header := codegen.SlashHeaderMapper("kinds/cog_gen.go")
+	jennies.AddPostprocessors(header)
+
+	fs, err := jennies.GenerateFS(input)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error generating files: %s", err)
+		os.Exit(1)
+	}
+
+	common, err := genCommon()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error generating common files: %s", err)
+		os.Exit(1)
+	}
+
+	if err := fs.Add(common...); err != nil {
+		fmt.Fprintf(os.Stderr, "error merging common files: %s", err)
+		os.Exit(1)
 	}
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
-		if err = jfs.Verify(context.Background(), groot); err != nil {
-			die(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
+		if err = fs.Verify(context.Background(), groot); err != nil {
+			fmt.Fprintf(os.Stderr, "generated code is out of sync: %s", err)
+			os.Exit(1)
 		}
-	} else if err = jfs.Write(context.Background(), groot); err != nil {
-		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
+	} else if err = fs.Write(context.Background(), groot); err != nil {
+		fmt.Fprintf(os.Stderr, "error while writing files: %s", err)
+		os.Exit(1)
 	}
 }
 
-func nameFor(m kindsys.SomeKindProperties) string {
-	switch x := m.(type) {
-	case kindsys.CoreProperties:
-		return x.Name
-	case kindsys.CustomProperties:
-		return x.Name
-	case kindsys.ComposableProperties:
-		return x.Name
-	default:
-		// unreachable so long as all the possibilities in KindProperties have switch branches
-		panic("unreachable")
+func genCommon() (codejen.Files, error) {
+	cfg := cog.Config{
+		FileDirs:  []string{filepath.Join("../", CoreCommonPackage)},
+		OutputDir: CoreCommonPackage,
+		Languages: cog.Languages{cog.TSLanguage},
+		RenameOutputFunc: func(pkg string) string {
+			return "common.gen.ts"
+		},
+		TSConfig: cog.TSConfig{
+			GenTSIndex: false,
+			GenRuntime: false,
+		},
 	}
-}
 
-type dummyCommonJenny struct{}
-
-func genCommon(kp string) (*codejen.FS, error) {
-	fsys := codejen.NewFS()
-
-	// kp := filepath.Join("pkg", "kindsys")
-	path := filepath.Join("packages", "grafana-schema", "src", "common")
-	// Grab all the common_* files from kindsys and load them in
-	dfsys := os.DirFS(kp)
-	matches := elsedie(fs.Glob(dfsys, "common_*.cue"))("could not glob kindsys cue files")
-	for _, fname := range matches {
-		fpath := filepath.Join(path, strings.TrimPrefix(fname, "common_"))
-		fpath = fpath[:len(fpath)-4] + "_gen.cue"
-		data := elsedie(fs.ReadFile(dfsys, fname))("error reading " + fname)
-		_ = fsys.Add(*codejen.NewFile(fpath, data, dummyCommonJenny{}))
-	}
-	fsys = elsedie(fsys.Map(packageMapper))("failed remapping fs")
-
-	v, err := cuectx.BuildGrafanaInstance(nil, path, "", nil)
+	c, err := cog.NewGen(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	b := elsedie(cuetsy.Generate(v, cuetsy.Config{
-		Export: true,
-	}))("failed to generate common schema TS")
-
-	_ = fsys.Add(*codejen.NewFile(filepath.Join(path, "common.gen.ts"), b, dummyCommonJenny{}))
-	return fsys, nil
+	return c.Generate()
 }
 
-func (j dummyCommonJenny) JennyName() string {
-	return "CommonSchemaJenny"
-}
-
-func (j dummyCommonJenny) Generate(dummy any) ([]codejen.File, error) {
-	return nil, nil
-}
-
-var pkgReplace = regexp.MustCompile("^package kindsys")
-
-func packageMapper(f codejen.File) (codejen.File, error) {
-	f.Data = pkgReplace.ReplaceAllLiteral(f.Data, []byte("package common"))
-	return f, nil
-}
-
-func elsedie[T any](t T, err error) func(msg string) T {
-	if err != nil {
-		return func(msg string) T {
-			fmt.Fprintf(os.Stderr, "%s: %s\n", msg, err)
+func loadCueFiles(dirs []string) []cue.Value {
+	ctx := cuecontext.New()
+	values := make([]cue.Value, len(dirs))
+	for i, dir := range dirs {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error opening %s directory: %s", dir, err)
 			os.Exit(1)
-			return t
 		}
-	}
-	return func(msg string) T {
-		return t
-	}
-}
 
-func die(err error) {
-	fmt.Fprint(os.Stderr, err, "\n")
-	os.Exit(1)
+		// It's assuming that we only have one file in each folder
+		entry := filepath.Join(dir, entries[0].Name())
+		cueFile, err := os.ReadFile(entry)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "unable to open %s/%s file: %s", dir, entries[0].Name(), err)
+			os.Exit(1)
+		}
+
+		values[i] = ctx.CompileBytes(cueFile)
+	}
+
+	return values
 }
