@@ -39,14 +39,6 @@ func parseMultiSelectValue(input string) []string {
 	return []string{trimmedInput}
 }
 
-func mergeEC2RegionsAndConstantRegions(regions map[string]struct{}, ec2Regions []*ec2.Region) {
-	for _, region := range ec2Regions {
-		if _, ok := regions[*region.RegionName]; !ok {
-			regions[*region.RegionName] = struct{}{}
-		}
-	}
-}
-
 func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	instanceId := parameters.Get("instanceId")
