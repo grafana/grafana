@@ -508,13 +508,6 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143
 // No harm to Thema because it's only a dependency in its main package.
 replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 
-// This is a patched v0.8.2 intended to fix session.Find (and others) silently ignoring SQLITE_BUSY errors. This could
-// happen, for example, during a read when the sqlite db is under heavy write load.
-// This patch cherry picks compatible fixes from upstream xorm PR#1998 and can be reverted on upgrade to xorm v1.2.0+.
-// This has also been patched to support the azuresql driver that is a thin wrapper for the mssql driver with azure authentication support.
-//replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20230627081928-d04aa38aa209
-replace xorm.io/xorm => ./pkg/util/xorm
-
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240208102907-e82436ce63e6
