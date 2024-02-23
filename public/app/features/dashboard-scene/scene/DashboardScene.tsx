@@ -141,8 +141,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private _activationHandler() {
-    this.runIsEmptyCheck();
-
     let prevSceneContext = window.__grafanaSceneContext;
 
     window.__grafanaSceneContext = this;
@@ -523,17 +521,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onOpenSettings = () => {
     locationService.partial({ editview: 'settings' });
-  };
-
-  public runIsEmptyCheck = () => {
-    const { body } = this.state;
-
-    if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
-      this.setState({ isEmpty: body.state.children.length === 0 });
-      return;
-    }
-
-    throw new Error('Invalid body type');
   };
 
   /**

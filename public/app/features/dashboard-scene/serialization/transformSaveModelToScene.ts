@@ -540,12 +540,19 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
 export function trackIfIsEmpty(parent: DashboardScene) {
   const { body } = parent.state;
 
+  updateIsEmpty(body, parent);
+
   body.subscribeToState(() => {
-    if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
-      parent.setState({ isEmpty: body.state.children.length === 0 });
-    }
+    updateIsEmpty(body, parent);
   });
 }
+
+const updateIsEmpty = (body: SceneObject, parent: DashboardScene) => {
+  if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
+    parent.setState({ isEmpty: body.state.children.length === 0 });
+  }
+};
+
 const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
   return snapshotData.map((data) => {
     return {
