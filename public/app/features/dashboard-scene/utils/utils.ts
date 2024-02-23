@@ -198,7 +198,7 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
-export function getNextPanelId(dashboard: DashboardScene) {
+export function getNextPanelId(dashboard: DashboardScene): number {
   let max = 0;
   const body = dashboard.state.body;
 
@@ -207,7 +207,7 @@ export function getNextPanelId(dashboard: DashboardScene) {
       if (child instanceof SceneGridItem) {
         const vizPanel = child.state.body;
 
-        if (vizPanel instanceof VizPanel) {
+        if (vizPanel) {
           const panelId = getPanelIdForVizPanel(vizPanel);
 
           if (panelId > max) {
@@ -228,7 +228,7 @@ export function getNextPanelId(dashboard: DashboardScene) {
           if (rowChild instanceof SceneGridItem) {
             const vizPanel = rowChild.state.body;
 
-            if (vizPanel instanceof VizPanel) {
+            if (vizPanel) {
               const panelId = getPanelIdForVizPanel(vizPanel);
 
               if (panelId > max) {
