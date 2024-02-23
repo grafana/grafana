@@ -48,24 +48,3 @@ How do you want to route your alert? What kind of additional labels could you ad
 **Annotations**
 
 Do you want to add more context on the alert in your notification messages, for example, what caused the alert to fire? Which server did it happen on?
-
-[Create Grafana-managed alert rules][create-grafana-managed-rule].
-
-[Create data source-managed alert rules][create-mimir-loki-managed-rule]
-
-[Create recording rules][create-mimir-loki-managed-recording-rule]
-
-{{< admonition type="note" >}}
-Recording rules are only available external Grafana Mimir or Loki data sources.
-{{< /admonition >}}
-
-{{% docs/reference %}}
-[create-mimir-loki-managed-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-rule"
-[create-mimir-loki-managed-rule]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-mimir-loki-managed-rule"
-
-[create-mimir-loki-managed-recording-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-recording-rule"
-[create-mimir-loki-managed-recording-rule]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-mimir-loki-managed-recording-rule"
-
-[create-grafana-managed-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule"
-[create-grafana-managed-rule]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule"
-{{% /docs/reference %}}
