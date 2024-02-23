@@ -10,7 +10,6 @@ import {
   DataSourceApi,
   DataSourceRef,
   DefaultTimeZone,
-  HistoryItem,
   IntervalValues,
   LogsDedupStrategy,
   LogsSortOrder,
@@ -36,8 +35,6 @@ export const DEFAULT_UI_STATE = {
 
 export const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
 const nanoid = customAlphabet(ID_ALPHABET, 3);
-
-const MAX_HISTORY_ITEMS = 100;
 
 const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
 const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
@@ -101,6 +98,10 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
   return urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 });
 }
 
+export function requestIdGenerator(exploreId: string) {
+  return `explore_${exploreId}`;
+}
+
 export function buildQueryTransaction(
   exploreId: string,
   queries: DataQuery[],
@@ -123,7 +124,7 @@ export function buildQueryTransaction(
     panelId,
     targets: queries, // Datasources rely on DataQueries being passed under the targets key.
     range,
-    requestId: 'explore_' + exploreId,
+    requestId: requestIdGenerator(exploreId),
     rangeRaw: range.raw,
     scopedVars: {
       __interval: { text: interval, value: interval },
@@ -270,35 +271,6 @@ export function hasNonEmptyQuery<TQuery extends DataQuery>(queries: TQuery[]): b
       return entries.length > 0;
     })
   );
-}
-
-/**
- * Update the query history. Side-effect: store history in local storage
- */
-export function updateHistory<T extends DataQuery>(
-  history: Array<HistoryItem<T>>,
-  datasourceId: string,
-  queries: T[]
-): Array<HistoryItem<T>> {
-  const ts = Date.now();
-  let updatedHistory = history;
-  queries.forEach((query) => {
-    updatedHistory = [{ query, ts }, ...updatedHistory];
-  });
-
-  if (updatedHistory.length > MAX_HISTORY_ITEMS) {
-    updatedHistory = updatedHistory.slice(0, MAX_HISTORY_ITEMS);
-  }
-
-  // Combine all queries of a datasource type into one history
-  const historyKey = `grafana.explore.history.${datasourceId}`;
-  try {
-    store.setObject(historyKey, updatedHistory);
-    return updatedHistory;
-  } catch (error) {
-    console.error(error);
-    return history;
-  }
 }
 
 export const getQueryKeys = (queries: DataQuery[]): string[] => {

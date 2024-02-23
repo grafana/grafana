@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -191,6 +192,10 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 			status = "cancelled"
 		}
 		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", StageDatabaseRequest}
+		sourceErr := exp.Error{}
+		if errors.As(err, &sourceErr) {
+			lp = append(lp, "statusSource", sourceErr.Source())
+		}
 		if clientRes != nil {
 			lp = append(lp, "statusCode", clientRes.StatusCode)
 		}

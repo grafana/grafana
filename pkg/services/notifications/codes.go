@@ -70,7 +70,7 @@ func validateUserEmailCode(cfg *setting.Cfg, user *user.User, code string) (bool
 	}
 
 	// right active code
-	payload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + user.Password + user.Rands
+	payload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + string(user.Password) + user.Rands
 	expectedCode, err := createTimeLimitCode(cfg.SecretKey, payload, minutes, startStr)
 	if err != nil {
 		return false, err
@@ -103,7 +103,7 @@ func getLoginForEmailCode(code string) string {
 
 func createUserEmailCode(cfg *setting.Cfg, user *user.User, startStr string) (string, error) {
 	minutes := cfg.EmailCodeValidMinutes
-	payload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + user.Password + user.Rands
+	payload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + string(user.Password) + user.Rands
 	code, err := createTimeLimitCode(cfg.SecretKey, payload, minutes, startStr)
 	if err != nil {
 		return "", err
