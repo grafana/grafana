@@ -52,9 +52,7 @@ Refer to our [upgrade instructions][migrating-alerts].
 - [Angular support deprecation][angular_deprecation]
 
 {{% docs/reference %}}
-[angular_deprecation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/angular_deprecation"
-[angular_deprecation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/angular_deprecation"
+[angular_deprecation]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation"
 
-[migrating-alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/migrating-alerts"
-[migrating-alerts]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/migrating-alerts"
+[migrating-alerts]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/migrating-alerts"
 {{% /docs/reference %}}

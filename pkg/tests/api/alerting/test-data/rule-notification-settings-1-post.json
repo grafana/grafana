@@ -1,0 +1,58 @@
+{
+  "ruleGroup" : {
+    "name": "Group1",
+    "interval": "1m",
+    "rules": [
+      {
+        "for": "0",
+        "labels": {
+          "label1": "test-label"
+        },
+        "annotations": {
+          "annotation": "test-annotation"
+        },
+        "grafana_alert": {
+          "title": "Rule1",
+          "condition": "A",
+          "data": [
+            {
+              "refId": "A",
+              "datasourceUid": "__expr__",
+              "model": {
+                "expression": "0 > 0",
+                "type": "math"
+              }
+            }
+          ],
+          "no_data_state": "NoData",
+          "exec_err_state": "Alerting",
+          "notification_settings": {
+            "receiver": "rule-receiver",
+            "group_by": [
+              "alertname",
+              "grafana_folder",
+              "label1"
+            ],
+            "group_wait": "100ms",
+            "group_interval": "5s",
+            "repeat_interval": "1d",
+            "mute_time_intervals": [
+              "rule-time-interval"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "receiver": {
+    "name": "rule-receiver",
+    "type": "webhook",
+    "settings": {
+      "url": "http://localhost:3000/_callback"
+    }
+  },
+  "timeInterval": {
+    "name": "rule-time-interval",
+    "time_intervals":[{"times":[{"start_time":"10:00","end_time":"12:00"}]}]
+  }
+}

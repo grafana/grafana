@@ -97,17 +97,18 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "Passwords do not match", nil)
 	}
 
-	password := user.Password(form.NewPassword)
-	if password.IsWeak() {
-		return response.Error(http.StatusBadRequest, "New password is too short", nil)
+	if err := form.NewPassword.Validate(hs.Cfg); err != nil {
+		c.Logger.Warn("the new password doesn't meet the password policy criteria", "err", err)
+		return response.Err(err)
 	}
 
 	cmd := user.ChangeUserPasswordCommand{}
 	cmd.UserID = userResult.ID
-	cmd.NewPassword, err = util.EncodePassword(form.NewPassword, userResult.Salt)
+	encodedPassword, err := util.EncodePassword(string(form.NewPassword), userResult.Salt)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to encode password", err)
 	}
+	cmd.NewPassword = user.Password(encodedPassword)
 
 	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to change user password", err)
