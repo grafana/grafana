@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -293,12 +294,17 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 		return nil, err
 	}
 
-	canView, err := g.CanView()
+	guardianFunc := g.CanView
+	if q.Permission == dashboardaccess.PERMISSION_EDIT {
+		guardianFunc = g.CanSave
+	}
+
+	hasAccess, err := guardianFunc()
 	if err != nil {
 		return nil, err
 	}
 
-	if !canView {
+	if !hasAccess {
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
@@ -336,8 +342,19 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 
 func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
 	permissions := q.SignedInUser.GetPermissions()
-	folderPermissions := permissions[dashboards.ActionFoldersRead]
-	folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsRead]...)
+	var folderPermissions []string
+	if q.Permission == dashboardaccess.PERMISSION_EDIT {
+		folderPermissions = permissions[dashboards.ActionFoldersWrite]
+		folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsWrite]...)
+	} else {
+		folderPermissions = permissions[dashboards.ActionFoldersRead]
+		folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsRead]...)
+	}
+
+	if len(folderPermissions) == 0 && !q.SignedInUser.GetIsGrafanaAdmin() {
+		return nil, nil
+	}
+
 	q.FolderUIDs = make([]string, 0, len(folderPermissions))
 	for _, p := range folderPermissions {
 		if p == dashboards.ScopeFoldersAll {

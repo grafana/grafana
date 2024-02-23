@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -184,6 +185,9 @@ type GetChildrenQuery struct {
 	// Pagination options
 	Limit int64
 	Page  int64
+
+	// Permission to filter by
+	Permission dashboardaccess.PermissionType
 
 	SignedInUser identity.Requester `json:"-"`
 
