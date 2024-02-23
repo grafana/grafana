@@ -8,8 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	"github.com/grafana/grafana/pkg/infra/log"
+	"k8s.io/klog/v2"
 )
 
 var (
@@ -64,7 +63,6 @@ type LegacyStorage interface {
 type DualWriter struct {
 	Storage
 	legacy LegacyStorage
-	log    log.Logger
 }
 
 // NewDualWriter returns a new DualWriter.
@@ -72,7 +70,6 @@ func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
 	return &DualWriter{
 		Storage: storage,
 		legacy:  legacy,
-		log:     log.New("grafana-apiserver.dualwriter"),
 	}
 }
 
@@ -93,7 +90,7 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 
 		rsp, err := d.Storage.Create(ctx, created, createValidation, options)
 		if err != nil {
-			d.log.Error("unable to create object in duplicate storage", "error", err)
+			klog.Error("unable to create object in duplicate storage", "error", err)
 		}
 		return rsp, err
 	}

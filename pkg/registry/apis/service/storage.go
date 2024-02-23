@@ -10,8 +10,8 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
 	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/services/apiserver/rest"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 

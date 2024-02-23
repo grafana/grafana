@@ -8,8 +8,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana/pkg/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // This should eventually live in grafana-app-sdk
@@ -30,7 +29,7 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefiniti
 // Modify the the OpenAPI spec to include the additional routes.
 // Currently this requires: https://github.com/kubernetes/kube-openapi/pull/420
 // In future k8s release, the hook will use Config3 rather than the same hook for both v2 and v3
-func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	return func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 		if s.Paths == nil {
 			return s, nil
@@ -45,7 +44,7 @@ func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 					Info: &spec.Info{
 						InfoProps: spec.InfoProps{
 							Title:   gv.String(),
-							Version: setting.BuildVersion,
+							Version: version,
 						},
 					},
 					Components:   s.Components,

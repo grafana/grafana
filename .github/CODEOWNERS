@@ -99,6 +99,8 @@
 /pkg/mocks/ @grafana/backend-platform
 /pkg/models/ @grafana/backend-platform
 /pkg/server/ @grafana/backend-platform
+/pkg/apiserver @grafana/grafana-app-platform-squad
+/pkg/apimachinery @grafana/grafana-app-platform-squad
 /pkg/services/annotations/ @grafana/backend-platform
 /pkg/services/apikey/ @grafana/identity-access-team
 /pkg/services/cleanup/ @grafana/backend-platform

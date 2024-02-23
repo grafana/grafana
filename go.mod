@@ -275,14 +275,14 @@ require (
 require (
 	github.com/spf13/cobra v1.8.0 // @grafana/grafana-app-platform-squad
 	go.opentelemetry.io/otel v1.22.0 // @grafana/backend-platform
-	k8s.io/api v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/klog/v2 v2.110.1 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.29.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.29.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.29.2 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.29.2 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.29.2 // @grafana/grafana-app-platform-squad
+	k8s.io/klog/v2 v2.120.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-aggregator v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-openapi v0.0.0-20231214164306-ab13479f8bf8 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-openapi v0.0.0-20240220201932-37d671a357a5 // @grafana/grafana-app-platform-squad
 )
 
 require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
@@ -347,7 +347,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.7 // @grafana/alerting-squad-backend
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -409,7 +409,7 @@ require (
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	k8s.io/kms v0.29.0 // indirect
+	k8s.io/kms v0.29.2 // indirect
 	lukechampine.com/uint128 v1.3.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
 	modernc.org/ccgo/v3 v3.16.13 // indirect
