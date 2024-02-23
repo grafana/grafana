@@ -31,7 +31,6 @@ export interface FeatureToggles {
   correlations?: boolean;
   exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
-  traceToMetrics?: boolean;
   autoMigrateOldPanels?: boolean;
   autoMigrateGraphPanel?: boolean;
   autoMigrateTablePanel?: boolean;
@@ -139,7 +138,6 @@ export interface FeatureToggles {
   awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
-  pluginsInstrumentationStatusSource?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
@@ -180,5 +178,7 @@ export interface FeatureToggles {
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;
   kubernetesAggregator?: boolean;
+  expressionParser?: boolean;
   groupByVariable?: boolean;
+  alertingUpgradeDryrunOnStart?: boolean;
 }
