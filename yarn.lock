@@ -18698,7 +18698,7 @@ __metadata:
     style-loader: "npm:3.3.4"
     stylelint: "npm:15.11.0"
     stylelint-config-prettier: "npm:9.0.5"
-    stylelint-config-sass-guidelines: "npm:10.0.0"
+    stylelint-config-sass-guidelines: "npm:11.0.0"
     symbol-observable: "npm:4.0.0"
     terser-webpack-plugin: "npm:5.3.10"
     testing-library-selector: "npm:0.3.1"
@@ -25154,7 +25154,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-scss@npm:4.0.9, postcss-scss@npm:^4.0.6":
+"postcss-scss@npm:4.0.9, postcss-scss@npm:^4.0.9":
   version: 4.0.9
   resolution: "postcss-scss@npm:4.0.9"
   peerDependencies:
@@ -29331,30 +29331,31 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint-config-sass-guidelines@npm:10.0.0":
-  version: 10.0.0
-  resolution: "stylelint-config-sass-guidelines@npm:10.0.0"
+"stylelint-config-sass-guidelines@npm:11.0.0":
+  version: 11.0.0
+  resolution: "stylelint-config-sass-guidelines@npm:11.0.0"
   dependencies:
-    postcss-scss: "npm:^4.0.6"
-    stylelint-scss: "npm:^4.4.0"
+    postcss-scss: "npm:^4.0.9"
+    stylelint-scss: "npm:^6.0.0"
   peerDependencies:
     postcss: ^8.4.21
-    stylelint: ^15.2.0
-  checksum: 10/164ba5e519c35c8615193bddab61d50c72c2bb5d8ccbe706ced69403e3e14540a7379e5dad48353c1690caff783fb8559d375d6842d48f8b7385341e0e69eb3e
+    stylelint: ^16.1.0
+  checksum: 10/0d55287e1a427ab3f598cfa29c27b07b803a7ad1d88239fc58a137cb50eac77616b48bf5b4ec408225c6442c912e83e63f706d8902fd17e6148d6392af0cb0cf
   languageName: node
   linkType: hard
 
-"stylelint-scss@npm:^4.4.0":
-  version: 4.7.0
-  resolution: "stylelint-scss@npm:4.7.0"
+"stylelint-scss@npm:^6.0.0":
+  version: 6.1.0
+  resolution: "stylelint-scss@npm:6.1.0"
   dependencies:
+    known-css-properties: "npm:^0.29.0"
     postcss-media-query-parser: "npm:^0.2.3"
     postcss-resolve-nested-selector: "npm:^0.1.1"
-    postcss-selector-parser: "npm:^6.0.11"
+    postcss-selector-parser: "npm:^6.0.15"
     postcss-value-parser: "npm:^4.2.0"
   peerDependencies:
-    stylelint: ^14.5.1 || ^15.0.0
-  checksum: 10/6a49f1f19339c812adc1fc89bb30d0a79ab1a88082f8d18b9403893f06e4f646131d9d4f2788a2fe2847fe38ff6cf505de8a3f6358665e022f91903c7453f4c4
+    stylelint: ^16.0.2
+  checksum: 10/d1a37af38e6793f60ad3d836741ed624a7a07a56bea094750e72ed6e549243f966efcbe247940c6f1337328db700b1004f49e2119ff421235c979b2574995426
   languageName: node
   linkType: hard
 
