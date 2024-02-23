@@ -23,7 +23,7 @@ weight: 300
 # Create recording rules
 
 You can create and manage recording rules for an external Grafana Mimir or Loki instance.
- Recording rules calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh.
+Recording rules calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh.
 
 **Note:**
 
