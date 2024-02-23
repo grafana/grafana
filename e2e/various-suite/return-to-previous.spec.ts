@@ -7,7 +7,7 @@ describe('ReturnToPrevious button', () => {
       win.localStorage.setItem('grafana.featureToggles', 'returnToPrevious=1');
     });
 
-    // TODO: move to after() when I'm done with the tests
+    // TODO: move to after() when I'm done with the tests or delete it when alert rule can be provisioned
     // Delete alert rule
     // cy.visit('/alerting/list?search=');
     // cy.get('[data-testid="group-collapse-toggle"]').click();
