@@ -1,4 +1,4 @@
-import { SceneGridItem, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
+import { SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -44,7 +44,11 @@ async function buildTestScene() {
           y: 0,
           width: 10,
           height: 12,
-          body: undefined,
+          body: new VizPanel({
+            title: 'Panel A',
+            key: 'panel-1',
+            pluginId: 'table',
+          }),
         }),
       ],
     }),
