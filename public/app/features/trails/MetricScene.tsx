@@ -120,12 +120,10 @@ export interface MetricActionBarState extends SceneObjectState {}
 
 export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   public onOpenTrail = () => {
-    console.log('ON OPEN TRAIL');
     this.publishEvent(new OpenEmbeddedTrailEvent(), true);
   };
 
   public getLinkToExplore = async () => {
-    console.log('GET LINK TO EXPLORE');
     const metricScene = sceneGraph.getAncestor(this, MetricScene);
     const trail = getTrailFor(this);
     const dsValue = getDataSource(trail);
