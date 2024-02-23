@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ./alerting-rules/manage-notifications/manage-contact-points/template-notifications/create-notification-templates/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/create-notification-templates/
 description: Create notification templates to sent to your contact points
 keywords:
