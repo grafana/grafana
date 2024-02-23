@@ -1,5 +1,5 @@
 import { writeFileSync, readFileSync, read } from 'fs';
-import * as path from 'path';
+import { resolve } from 'path';
 
 import {
   transformationDocsContent,
@@ -190,15 +190,15 @@ ${transformationDocsContent[transformationName].getHelperDocs(ImageRenderType.Sh
 
 export function buildMarkdownContent(): void {
   // Build the path to the Markdown file.
-  const indexPath = path.join(__dirname, '../../' + WRITE_PATH);
+  const indexPath = resolve(__dirname, '../../' + WRITE_PATH);
 
   // Write content to the Markdown file.
   writeFileSync(indexPath, completeTemplate, 'utf-8');
 }
 
 export function getMarkdownContent(): string {
-  const rootDir = path.resolve(__dirname, '../../');
-  const pathToMarkdown = path.resolve(rootDir, WRITE_PATH);
+  const rootDir = resolve(__dirname, '../../');
+  const pathToMarkdown = resolve(rootDir, WRITE_PATH);
   return readFileSync(pathToMarkdown, 'utf-8');
 }
 
