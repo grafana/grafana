@@ -12261,6 +12261,9 @@
             "OK"
           ]
         },
+        "notification_settings": {
+          "$ref": "#/definitions/AlertRuleNotificationSettingsExport"
+        },
         "panelId": {
           "type": "integer",
           "format": "int64"
@@ -12325,6 +12328,90 @@
         "interval": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "AlertRuleNotificationSettings": {
+      "type": "object",
+      "required": [
+        "receiver"
+      ],
+      "properties": {
+        "group_by": {
+          "description": "Override the labels by which incoming alerts are grouped together. For example, multiple alerts coming in for\ncluster=A and alertname=LatencyHigh would be batched into a single group. To aggregate by all possible labels\nuse the special value '...' as the sole label name.\nThis effectively disables aggregation entirely, passing through all alerts as-is. This is unlikely to be what\nyou want, unless you have a very low alert volume or your upstream notification system performs its own grouping.\nMust include 'alertname' and 'grafana_folder' if not using '...'.",
+          "type": "array",
+          "default": [
+            "alertname",
+            "grafana_folder"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "alertname",
+            "grafana_folder",
+            "cluster"
+          ]
+        },
+        "group_interval": {
+          "description": "Override how long to wait before sending a notification about new alerts that are added to a group of alerts for\nwhich an initial notification has already been sent. (Usually ~5m or more.)",
+          "type": "string",
+          "example": "5m"
+        },
+        "group_wait": {
+          "description": "Override how long to initially wait to send a notification for a group of alerts. Allows to wait for an\ninhibiting alert to arrive or collect more initial alerts for the same group. (Usually ~0s to few minutes.)",
+          "type": "string",
+          "example": "30s"
+        },
+        "mute_time_intervals": {
+          "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "maintenance"
+          ]
+        },
+        "receiver": {
+          "description": "Name of the receiver to send notifications to.",
+          "type": "string",
+          "example": "grafana-default-email"
+        },
+        "repeat_interval": {
+          "description": "Override how long to wait before sending a notification again if it has already been sent successfully for an\nalert. (Usually ~3h or more).\nNote that this parameter is implicitly bound by Alertmanager's `--data.retention` configuration flag.\nNotifications will be resent after either repeat_interval or the data retention period have passed, whichever\noccurs first. `repeat_interval` should not be less than `group_interval`.",
+          "type": "string",
+          "example": "4h"
+        }
+      }
+    },
+    "AlertRuleNotificationSettingsExport": {
+      "type": "object",
+      "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
+      "properties": {
+        "group_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "group_interval": {
+          "type": "string"
+        },
+        "group_wait": {
+          "type": "string"
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "receiver": {
+          "type": "string"
+        },
+        "repeat_interval": {
+          "type": "string"
         }
       }
     },
@@ -13243,6 +13330,7 @@
           }
         },
         "mute_time_intervals": {
+          "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/MuteTimeInterval"
@@ -13255,6 +13343,12 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
           }
         }
       }
@@ -14442,6 +14536,9 @@
         },
         "webhook_url": {
           "$ref": "#/definitions/SecretURL"
+        },
+        "webhook_url_file": {
+          "type": "string"
         }
       }
     },
@@ -15242,6 +15339,7 @@
           }
         },
         "mute_time_intervals": {
+          "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/MuteTimeInterval"
@@ -15261,6 +15359,12 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
           }
         }
       }
@@ -15474,6 +15578,9 @@
             "NoData",
             "OK"
           ]
+        },
+        "notification_settings": {
+          "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
         "orgId": {
           "type": "integer",
@@ -16440,6 +16547,9 @@
         "send_resolved": {
           "type": "boolean"
         },
+        "summary": {
+          "type": "string"
+        },
         "text": {
           "type": "string"
         },
@@ -16448,6 +16558,9 @@
         },
         "webhook_url": {
           "$ref": "#/definitions/SecretURL"
+        },
+        "webhook_url_file": {
+          "type": "string"
         }
       }
     },
@@ -17492,24 +17605,6 @@
         "$ref": "#/definitions/Playlist"
       }
     },
-    "Point": {
-      "description": "If H is not nil, then this is a histogram point and only (T, H) is valid.\nIf H is nil, then only (T, V) is valid.",
-      "type": "object",
-      "title": "Point represents a single data point for a given timestamp.",
-      "properties": {
-        "H": {
-          "$ref": "#/definitions/FloatHistogram"
-        },
-        "T": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "V": {
-          "type": "number",
-          "format": "double"
-        }
-      }
-    },
     "PostAnnotationsCmd": {
       "type": "object",
       "required": [
@@ -17578,6 +17673,7 @@
           }
         },
         "mute_time_intervals": {
+          "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/MuteTimeInterval"
@@ -17597,6 +17693,12 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
           }
         }
       }
@@ -17819,6 +17921,9 @@
             "NoData",
             "OK"
           ]
+        },
+        "notification_settings": {
+          "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
         "title": {
           "type": "string"
@@ -18052,6 +18157,9 @@
             "NoData",
             "OK"
           ]
+        },
+        "notification_settings": {
+          "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
         "orgID": {
           "type": "integer",
@@ -19372,9 +19480,13 @@
       }
     },
     "Sample": {
+      "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
       "type": "object",
-      "title": "Sample is a single sample belonging to a metric.",
       "properties": {
+        "F": {
+          "type": "number",
+          "format": "double"
+        },
         "H": {
           "$ref": "#/definitions/FloatHistogram"
         },
@@ -19384,10 +19496,6 @@
         "T": {
           "type": "integer",
           "format": "int64"
-        },
-        "V": {
-          "type": "number",
-          "format": "double"
         }
       }
     },
@@ -20501,40 +20609,16 @@
       "type": "string"
     },
     "TimeInterval": {
-      "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
       "type": "object",
+      "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
       "properties": {
-        "days_of_month": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "location": {
+        "name": {
           "type": "string"
         },
-        "months": {
+        "time_intervals": {
           "type": "array",
           "items": {
-            "type": "string"
-          }
-        },
-        "times": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TimeRange"
-          }
-        },
-        "weekdays": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "years": {
-          "type": "array",
-          "items": {
-            "type": "string"
+            "$ref": "#/definitions/TimeInterval"
           }
         }
       }
@@ -21520,7 +21604,7 @@
       }
     },
     "Vector": {
-      "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
+      "description": "Vector is basically only an alias for []Sample, but the contract is that\nin a Vector, all Samples have the same timestamp.",
       "type": "array",
       "items": {
         "$ref": "#/definitions/Sample"
@@ -21938,14 +22022,12 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
       }
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -22154,6 +22236,7 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
