@@ -124,7 +124,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -226,7 +226,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -538,7 +538,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -1110,7 +1110,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -1470,7 +1470,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -1547,7 +1547,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -1606,7 +1606,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -1869,7 +1869,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -2847,7 +2847,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -3121,7 +3121,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -3545,7 +3545,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -4914,6 +4914,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: bce7b2ac72349019ec0c2ffbdca13c0591110ee53a3bfc72261df0ed05ca025a
+hmac: 0d5e600881f5a8f4294cafd07f450f92f4088e1cda7254d111a635bf01f07465
 
 ...
