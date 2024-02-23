@@ -99,6 +99,7 @@ export interface Props {
   enableSharedCrosshair?: boolean;
   // The index of the field value that the table will initialize scrolled to
   initialRowIndex?: number;
+  expandedRows?: Map<number, React.ReactElement>;
 }
 
 /**
