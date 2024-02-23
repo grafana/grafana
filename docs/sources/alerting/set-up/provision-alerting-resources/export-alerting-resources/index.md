@@ -121,13 +121,13 @@ You can also use the **Alerting provisioning HTTP API** to export alerting resou
 
 Note that most Alerting endpoints return a JSON format that is not compatible for provisioning via configuration files, except the ones listed below.
 
-| Method | URI                                                              | Summary                                                                                  |
-| ------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| GET    | /api/v1/provisioning/alert-rules/:uid/export                     | [Export an alert rule in provisioning file format.][export_rule]                         |
-| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [Export an alert rule group in provisioning file format.][export_rule_group]             |
-| GET    | /api/v1/provisioning/alert-rules/export                          | [Export all alert rules in provisioning file format.][export_rules]                      |
-| GET    | /api/v1/provisioning/contact-points/export                       | [Export all contact points in provisioning file format.][export_contacts]                |
-| GET    | /api/v1/provisioning/policies/export                             | [Export the notification policy tree in provisioning file format.][export_notifications] |
+| Resource                 | Method / URI                                                         | Summary                                                                                  |
+| ------------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Alert rules              | GET /api/v1/provisioning/alert-rules/export                          | [Export all alert rules in provisioning file format.][export_rules]                      |
+| Alert rules              | GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [Export an alert rule group in provisioning file format.][export_rule_group]             |
+| Alert rules              | GET /api/v1/provisioning/alert-rules/:uid/export                     | [Export an alert rule in provisioning file format.][export_rule]                         |
+| Contact points           | GET /api/v1/provisioning/contact-points/export                       | [Export all contact points in provisioning file format.][export_contacts]                |
+| Notification policy tree | GET /api/v1/provisioning/policies/export                             | [Export the notification policy tree in provisioning file format.][export_notifications] |
 
 These endpoints accept a `download` parameter to download a file containing the exported resources.
 
