@@ -73,11 +73,9 @@ Select all fields returned by your defined reducer condition, such as **Min**, *
 
 The following examples demonstrate how you can use override rules to alter the display of fields in visualizations.
 
-<!--point out the specific UI paths to use these overrides and consider adding screenshots-->
-
 ### Example 1: Format temperature
 
-A result set is a data frame that consists of two fields: time and temperature.
+The following result set is a data frame that consists of two fields: time and temperature.
 
 |        time         | temperature |
 | :-----------------: | :---------: |
@@ -85,7 +83,14 @@ A result set is a data frame that consists of two fields: time and temperature.
 | 2020-01-02 03:05:00 |    47.0     |
 | 2020-01-02 03:06:00 |    48.0     |
 
-Each field (column) of this structure can have field options applied that alter the way its values are displayed. This means that you can, for example, select the **Unit to Temperature > Celsius** option, resulting in the following table:
+You can apply field options to each field (column) of this structure to alter the way its values are displayed. For example, you can set a **Fields with type** override with the following properties:
+
+- Rule: **Fields with type**
+- Field: temperature
+- Override property: **Standard options > Unit**
+  - Selection: **Temperature > Celsius**
+
+This results in the following table:
 
 |        time         | temperature |
 | :-----------------: | :---------: |
@@ -93,7 +98,7 @@ Each field (column) of this structure can have field options applied that alter 
 | 2020-01-02 03:05:00 |   47.0 °C   |
 | 2020-01-02 03:06:00 |   48.0 °C   |
 
-In addition, the decimal place isn't required, so you can remove it. You can change the **Standard options > Decimals** setting from **\*auto** to `0`, resulting in the following table:
+In addition, the decimal place isn't required, so you can remove it by adding another override property that changes the **Standard options > Decimals** setting from **auto** to `0`. That results in the following table:
 
 |        time         | temperature |
 | :-----------------: | :---------: |
@@ -103,7 +108,7 @@ In addition, the decimal place isn't required, so you can remove it. You can cha
 
 ### Example 2: Format temperature and humidity
 
-A result set is a data frame that consists of four fields: time, high temp, low temp, and humidity.
+The following result set is a data frame that consists of four fields: time, high temp, low temp, and humidity.
 
 | time                | high temp | low temp | humidity |
 | ------------------- | --------- | -------- | -------- |
@@ -111,7 +116,16 @@ A result set is a data frame that consists of four fields: time, high temp, low 
 | 2020-01-02 03:05:00 | 47.0      | 34.0     | 68       |
 | 2020-01-02 03:06:00 | 48.0      | 31.0     | 68       |
 
-Add the **Celsius** unit option and remove the decimal place. This results in the following table:
+Use the following override rule and properties to add the **Celsius** unit option and remove the decimal place.
+
+- Rule: **Fields with type**
+- Field: temperature
+- Override property: **Standard options > Unit**
+  - Selection: **Temperature > Celsius**
+- Override property: **Standard options > Decimals**
+  -Change setting from **auto** to `0`
+
+This results in the following table:
 
 | time                | high temp | low temp | humidity |
 | ------------------- | --------- | -------- | -------- |
@@ -119,7 +133,7 @@ Add the **Celsius** unit option and remove the decimal place. This results in th
 | 2020-01-02 03:05:00 | 47 °C     | 34 °C    | 68 °C    |
 | 2020-01-02 03:06:00 | 48 °C     | 31 °C    | 68 °C    |
 
-The temperature fields are displaying correctly, but the humidity has incorrect units. You can fix this by applying a field option override to the humidity field to change the unit to **Misc > Percent (0-100)**.
+The temperature fields are displaying correctly, but the humidity has incorrect units. You can fix this by applying a **Misc > Percent (0-100)** override to the humidity field. This results in the following table:
 
 | time                | high temp | low temp | humidity |
 | ------------------- | --------- | -------- | -------- |
