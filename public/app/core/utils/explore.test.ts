@@ -2,7 +2,6 @@ import { DataSourceApi, dateTime, ExploreUrlState, LogsSortOrder } from '@grafan
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
-import store from 'app/core/store';
 import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
 import { DatasourceSrvMock, MockDataSourceApi } from '../../../test/mocks/datasource_srv';
@@ -11,7 +10,6 @@ import {
   buildQueryTransaction,
   hasNonEmptyQuery,
   refreshIntervalToSortOrder,
-  updateHistory,
   getExploreUrl,
   GetExploreUrlArguments,
   getTimeRange,
@@ -148,27 +146,6 @@ describe('getExploreUrl', () => {
     expect(url).toMatch(/replaced%20testDs2%20prom/g);
     expect(interpolateMockLoki).toBeCalled();
     expect(interpolateMockProm).toBeCalled();
-  });
-});
-
-describe('updateHistory()', () => {
-  const datasourceId = 'myDatasource';
-  const key = `grafana.explore.history.${datasourceId}`;
-
-  beforeEach(() => {
-    store.delete(key);
-    expect(store.exists(key)).toBeFalsy();
-  });
-
-  test('should save history item to localStorage', () => {
-    const expected = [
-      {
-        query: { refId: '1', expr: 'metric' },
-      },
-    ];
-    expect(updateHistory([], datasourceId, [{ refId: '1', expr: 'metric' }])).toMatchObject(expected);
-    expect(store.exists(key)).toBeTruthy();
-    expect(store.getObject(key)).toMatchObject(expected);
   });
 });
 

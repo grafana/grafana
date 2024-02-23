@@ -10,8 +10,14 @@ import RichHistoryStorage from './RichHistoryStorage';
 const richHistoryLocalStorage = new RichHistoryLocalStorage();
 const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
 
+// for query history operations
 export const getRichHistoryStorage = (): RichHistoryStorage => {
   return config.queryHistoryEnabled ? richHistoryRemoteStorage : richHistoryLocalStorage;
+};
+
+// for autocomplete read and write operations
+export const getLocalRichHistoryStorage = (): RichHistoryStorage => {
+  return richHistoryLocalStorage;
 };
 
 interface RichHistorySupportedFeatures {

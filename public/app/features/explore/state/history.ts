@@ -1,6 +1,3 @@
-import { AnyAction, createAction } from '@reduxjs/toolkit';
-
-import { HistoryItem } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import {
   addToRichHistory,
@@ -25,16 +22,6 @@ import {
   richHistoryUpdatedAction,
 } from './main';
 import { selectPanesEntries } from './selectors';
-
-//
-// Actions and Payloads
-//
-
-export interface HistoryUpdatedPayload {
-  exploreId: string;
-  history: HistoryItem[];
-}
-export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');
 
 //
 // Action creators
@@ -74,25 +61,33 @@ const forEachExplorePane = (state: ExploreState, callback: (item: ExploreItemSta
 };
 
 export const addHistoryItem = (
+  localOverride: boolean,
   datasourceUid: string,
   datasourceName: string,
-  queries: DataQuery[]
+  queries: DataQuery[],
+  hideAllErrorsAndWarnings: boolean
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { richHistoryStorageFull, limitExceeded } = await addToRichHistory(
-      datasourceUid,
-      datasourceName,
+    const showNotif = hideAllErrorsAndWarnings
+      ? { quotaExceededError: false, limitExceededWarning: false, otherErrors: false }
+      : {
+          quotaExceededError: !getState().explore.richHistoryStorageFull,
+          limitExceededWarning: !getState().explore.richHistoryLimitExceededWarningShown,
+        };
+    const { richHistoryStorageFull, limitExceeded } = await addToRichHistory({
+      localOverride,
+      datasource: { uid: datasourceUid, name: datasourceName },
       queries,
-      false,
-      '',
-      !getState().explore.richHistoryStorageFull,
-      !getState().explore.richHistoryLimitExceededWarningShown
-    );
-    if (richHistoryStorageFull) {
-      dispatch(richHistoryStorageFullAction());
-    }
-    if (limitExceeded) {
-      dispatch(richHistoryLimitExceededAction());
+      starred: false,
+      showNotif,
+    });
+    if (!hideAllErrorsAndWarnings) {
+      if (richHistoryStorageFull) {
+        dispatch(richHistoryStorageFullAction());
+      }
+      if (limitExceeded) {
+        dispatch(richHistoryLimitExceededAction());
+      }
     }
   };
 };
@@ -198,14 +193,4 @@ export const updateHistorySearchFilters = (exploreId: string, filters: RichHisto
       );
     }
   };
-};
-
-export const historyReducer = (state: ExploreItemState, action: AnyAction): ExploreItemState => {
-  if (historyUpdatedAction.match(action)) {
-    return {
-      ...state,
-      history: action.payload.history,
-    };
-  }
-  return state;
 };

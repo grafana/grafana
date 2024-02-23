@@ -37,10 +37,16 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     const allQueries = getRichHistoryDTOs().map(fromDTO);
     const queries = filters.starred ? allQueries.filter((q) => q.starred === true) : allQueries;
 
-    const richHistory = filterAndSortQueries(queries, filters.sortOrder, filters.datasourceFilters, filters.search, [
-      filters.from,
-      filters.to,
-    ]);
+    const timeFilter: [number, number] | undefined =
+      filters.from && filters.to ? [filters.from, filters.to] : undefined;
+
+    const richHistory = filterAndSortQueries(
+      queries,
+      filters.sortOrder,
+      filters.datasourceFilters,
+      filters.search,
+      timeFilter
+    );
     return { richHistory, total: richHistory.length };
   }
 
