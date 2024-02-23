@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ./alerting-rules/manage-notifications/manage-contact-points/template-notifications/images-in-notifications/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/images-in-notifications/
 description: Use images in notifications to help users better understand why alerts are firing or have been resolved
 keywords:
@@ -14,7 +12,7 @@ labels:
     - enterprise
     - oss
 title: Use images in notifications
-weight: 500
+weight: 405
 ---
 
 # Use images in notifications
@@ -35,7 +33,7 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 ## Requirements
 
-1. To use images in notifications, Grafana must be set up to use image rendering. You can either install the image rendering plugin or run it as a remote rendering service.
+1. To use images in notifications, Grafana must be set up to use [image rendering][image-rendering]. You can either install the image rendering plugin or run it as a remote rendering service.
 
 2. When a screenshot is taken it is saved to the [data][paths] folder, even if Grafana is configured to upload screenshots to a cloud storage service. Grafana must have write-access to this folder otherwise screenshots cannot be saved to disk and an error will be logged for each failed screenshot attempt.
 
@@ -70,6 +68,8 @@ If screenshots should be uploaded to cloud storage then `upload_external_image_s
     # see [external_image_storage] for further configuration options. If this option is false, screenshots
     # will be persisted to disk for up to temp_data_lifetime.
     upload_external_image_storage = false
+
+For more information on image rendering, refer to [image rendering][image-rendering].
 
 Restart Grafana for the changes to take effect.
 
@@ -137,3 +137,9 @@ For example, if a screenshot could not be taken within the expected time (10 sec
 - `grafana_screenshot_successes_total`
 - `grafana_screenshot_upload_failures_total`
 - `grafana_screenshot_upload_successes_total`
+
+{{% docs/reference %}}
+[image-rendering]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering"
+
+[paths]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#paths"
+{{% /docs/reference %}}

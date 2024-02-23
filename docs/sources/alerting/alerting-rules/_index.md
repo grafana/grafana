@@ -5,46 +5,54 @@ aliases:
   - unified-alerting/alerting-rules/
   - ./create-alerts/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/
-description: Create and manage alert rules
+description: Configure the features and integrations you need to create and manage your alerts
 labels:
   products:
     - cloud
     - enterprise
     - oss
-menuTitle: Create and manage alert rules
-title: Create and manage alert rules
+menuTitle: Configure
+title: Configure Alerting
 weight: 120
 ---
 
-# Create and manage alert rules
+# Configure Alerting
 
-An alert rule consists of one or more queries and expressions that select the data you want to measure. It also contains a condition, which is the threshold that an alert rule must meet or exceed in order to fire.
+Configure the features and integrations that you need to create and manage your alerts.
 
-Create, manage, view, and adjust alert rules to alert on your metrics data or log entries from multiple data sources — no matter where your data is stored.
+**Configure alert rules**
 
-The main parts of alert rule creation are:
+[Configure Grafana-managed alert rules][create-grafana-managed-rule].
 
-1. Select your data source
-1. Query your data
-1. Normalize your data
-1. Set your threshold
+[Configure data source-managed alert rules][create-mimir-loki-managed-rule]
 
-**Query, expressions, and alert condition**
+**Configure recording rules**
 
-What are you monitoring? How are you measuring it?
+_Recording rules are only available for compatible Prometheus or Loki data sources._
 
-{{< admonition type="note" >}}
-Expressions can only be used for Grafana-managed alert rules.
-{{< /admonition >}}
+For more information, see [Configure recording rules][create-mimir-loki-managed-recording-rule].
 
-**Evaluation**
+**Configure contact points**
 
-How do you want your alert to be evaluated?
+For information on how to configure contact points, see [Configure contact points][manage-contact-points].
 
-**Labels and notifications**
+**Configure notification policies**
 
-How do you want to route your alert? What kind of additional labels could you add to annotate your alert rules and ease searching?
+For information on how to configure notification policies, see [Configure notification policies][create-notification-policy].
 
-**Annotations**
+{{% docs/reference %}}
+[create-mimir-loki-managed-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-rule"
+[create-mimir-loki-managed-rule]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-mimir-loki-managed-rule"
 
-Do you want to add more context on the alert in your notification messages, for example, what caused the alert to fire? Which server did it happen on?
+[create-mimir-loki-managed-recording-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-recording-rule"
+[create-mimir-loki-managed-recording-rule]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-mimir-loki-managed-recording-rule"
+
+[create-grafana-managed-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule"
+[create-grafana-managed-rule]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule"
+
+[manage-contact-points]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/manage-contact-points"
+[manage-contact-points]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/manage-contact-points"
+
+[create-notification-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-notification-policy"
+[create-notification-policy]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-notification-policy"
+{{% /docs/reference %}}

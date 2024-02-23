@@ -6,7 +6,6 @@ aliases:
   - ../silences/remove-silence/
   - ../unified-alerting/silences/
   - ../silences/
-  - ./alerting/manage-notifications/create-silence/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/create-silence/
 description: Create silences to stop notifications from getting created for a specified window of time
 keywords:
@@ -20,7 +19,7 @@ labels:
     - enterprise
     - oss
 title: Manage silences
-weight: 440
+weight: 410
 ---
 
 # Manage silences

@@ -3,7 +3,7 @@ aliases:
   - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
   - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
-description: Create recording rules for an external Grafana Mimir or Loki instance
+description: Configure recording rules for an external Grafana Mimir or Loki instance
 keywords:
   - grafana
   - alerting
@@ -16,14 +16,13 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Create recording rules
+title: Configure recording rules
 weight: 300
 ---
 
-# Create recording rules
+# Configure recording rules
 
-You can create and manage recording rules for an external Grafana Mimir or Loki instance.
-Recording rules calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh.
+You can create and manage recording rules for an external Grafana Mimir or Loki instance. Recording rules calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh.
 
 **Note:**
 
@@ -49,14 +48,13 @@ To create recording rules, follow these steps.
 
 1. Click **Alerts & IRM** -> **Alerting** ->
    **Alert rules**.
-1. Select **Rule type** -> **Recording**.
-1. Click **+New recording rule**.
+1. Click **New recording rule**.
 
-1. Enter recording rule name.
+1. Set rule name.
 
    The recording rule name must be a Prometheus metric name and contain no whitespace.
 
-1. Define recording rule.
+1. Define query.
    - Select your Loki or Prometheus data source.
    - Enter a query.
 1. Add namespace and group.
