@@ -592,7 +592,10 @@ templates:
     # <string, required> name of the template, must be unique
     name: my_first_template
     # <string, required> content of the the template
-    template: Alerting with a custom text template
+    template: |
+      {{ define "my_first_template" }}
+        Custom notification message
+      {{ end }}
 ```
 
 Here is an example of a configuration file for deleting templates.
