@@ -8,6 +8,8 @@ aliases:
   - ../manage-notifications/manage-contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/manage-contact-points/
   - create-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-contact-point/
   - ./alerting-rules/
+  - alerting/manage-notifications/manage-contact-points/configure-integrations/
+  - ./alerting-rules/manage-contact-points/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/
 description: Create contact points to define how your contacts are notified when an alert rule fires
 keywords:
@@ -108,4 +110,3 @@ Once configured, you can use integrations as part of your contact points to rece
 | Threema                 | `threema`                 |
 | VictorOps               | `victorops`               |
 | Webhook                 | `webhook`                 |
-
