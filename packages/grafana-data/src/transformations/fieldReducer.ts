@@ -41,6 +41,7 @@ export interface FieldReducerInfo extends RegistryItem {
   // Internal details
   emptyInputResult?: unknown; // typically null, but some things like 'count' & 'sum' should be zero
   standard: boolean; // The most common stats can all be calculated in a single pass
+  preservesUnits: boolean; // Whether this reducer preserves units, certain ones don't e.g. count, distinct count, etc,
   reduce?: FieldReducer;
 }
 
@@ -141,6 +142,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     standard: true,
     aliasIds: ['current'],
     reduce: calculateLastNotNull,
+    preservesUnits: true,
   },
   {
     id: ReducerID.last,
@@ -148,6 +150,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Last value',
     standard: true,
     reduce: calculateLast,
+    preservesUnits: true,
   },
   {
     id: ReducerID.firstNotNull,
@@ -155,17 +158,33 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'First non-null value (also excludes NaNs)',
     standard: true,
     reduce: calculateFirstNotNull,
+    preservesUnits: true,
   },
-  { id: ReducerID.first, name: 'First', description: 'First Value', standard: true, reduce: calculateFirst },
-  { id: ReducerID.min, name: 'Min', description: 'Minimum Value', standard: true },
-  { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true },
-  { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, aliasIds: ['avg'] },
+  {
+    id: ReducerID.first,
+    name: 'First',
+    description: 'First Value',
+    standard: true,
+    reduce: calculateFirst,
+    preservesUnits: true,
+  },
+  { id: ReducerID.min, name: 'Min', description: 'Minimum Value', standard: true, preservesUnits: true },
+  { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true, preservesUnits: true },
+  {
+    id: ReducerID.mean,
+    name: 'Mean',
+    description: 'Average Value',
+    standard: true,
+    aliasIds: ['avg'],
+    preservesUnits: true,
+  },
   {
     id: ReducerID.variance,
     name: 'Variance',
     description: 'Variance of all values in a field',
     standard: false,
     reduce: calculateStdDev,
+    preservesUnits: true,
   },
   {
     id: ReducerID.stdDev,
@@ -173,6 +192,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Standard deviation of all values in a field',
     standard: false,
     reduce: calculateStdDev,
+    preservesUnits: true,
   },
   {
     id: ReducerID.sum,
@@ -181,6 +201,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     emptyInputResult: 0,
     standard: true,
     aliasIds: ['total'],
+    preservesUnits: true,
   },
   {
     id: ReducerID.count,
@@ -188,36 +209,42 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Number of values in response',
     emptyInputResult: 0,
     standard: true,
+    preservesUnits: false,
   },
   {
     id: ReducerID.range,
     name: 'Range',
     description: 'Difference between minimum and maximum values',
     standard: true,
+    preservesUnits: true,
   },
   {
     id: ReducerID.delta,
     name: 'Delta',
     description: 'Cumulative change in value',
     standard: true,
+    preservesUnits: true,
   },
   {
     id: ReducerID.step,
     name: 'Step',
     description: 'Minimum interval between values',
     standard: true,
+    preservesUnits: true,
   },
   {
     id: ReducerID.diff,
     name: 'Difference',
     description: 'Difference between first and last values',
     standard: true,
+    preservesUnits: true,
   },
   {
     id: ReducerID.logmin,
     name: 'Min (above zero)',
     description: 'Used for log min scale',
     standard: true,
+    preservesUnits: true,
   },
   {
     id: ReducerID.allIsZero,
@@ -225,6 +252,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'All values are zero',
     emptyInputResult: false,
     standard: true,
+    preservesUnits: true,
   },
   {
     id: ReducerID.allIsNull,
@@ -232,6 +260,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'All values are null',
     emptyInputResult: true,
     standard: true,
+    preservesUnits: false,
   },
   {
     id: ReducerID.changeCount,
@@ -239,6 +268,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Number of times the value changes',
     standard: false,
     reduce: calculateChangeCount,
+    preservesUnits: false,
   },
   {
     id: ReducerID.distinctCount,
@@ -246,12 +276,14 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Number of distinct values',
     standard: false,
     reduce: calculateDistinctCount,
+    preservesUnits: false,
   },
   {
     id: ReducerID.diffperc,
     name: 'Difference percent',
     description: 'Percentage difference between first and last values',
     standard: true,
+    preservesUnits: false,
   },
   {
     id: ReducerID.allValues,
@@ -259,6 +291,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Returns an array with all values',
     standard: false,
     reduce: (field: Field) => ({ allValues: [...field.values] }),
+    preservesUnits: false,
   },
   {
     id: ReducerID.uniqueValues,
@@ -268,6 +301,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     reduce: (field: Field) => ({
       uniqueValues: [...new Set(field.values)],
     }),
+    preservesUnits: false,
   },
 ]);
 
