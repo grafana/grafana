@@ -7,6 +7,14 @@ import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } f
 import { Table } from './Table';
 import { Props } from './types';
 
+// mock transition styles to ensure consistent behaviour in unit tests
+jest.mock('@floating-ui/react', () => ({
+  ...jest.requireActual('@floating-ui/react'),
+  useTransitionStyles: () => ({
+    styles: {},
+  }),
+}));
+
 function getDefaultDataFrame(): DataFrame {
   const dataFrame = toDataFrame({
     name: 'A',

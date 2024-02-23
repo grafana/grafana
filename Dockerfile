@@ -20,6 +20,8 @@ COPY packages packages
 COPY plugins-bundled plugins-bundled
 COPY public public
 
+RUN apk add --no-cache make build-base python3
+
 RUN yarn install --immutable
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
@@ -37,6 +39,9 @@ ARG BUILD_BRANCH=""
 ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
 ARG BINGO="true"
+
+# This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
+RUN apk add --no-cache binutils-gold
 
 # Install build dependencies
 RUN if grep -i -q alpine /etc/issue; then \

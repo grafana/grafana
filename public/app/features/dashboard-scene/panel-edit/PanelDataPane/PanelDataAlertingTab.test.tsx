@@ -159,6 +159,7 @@ const dashboard = {
     folderId: 1,
     folderTitle: 'super folder',
   },
+  isSnapshot: () => false,
 } as unknown as DashboardModel;
 
 const panel = new PanelModel({
@@ -349,8 +350,8 @@ async function clickNewButton() {
 
 function createModel(dashboard: DashboardModel) {
   const scene = createDashboardSceneFromDashboardModel(dashboard);
-  const vizPanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(34));
-  const model = new PanelDataAlertingTab(new VizPanelManager(vizPanel!.clone()));
+  const vizPanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(34))!;
+  const model = new PanelDataAlertingTab(VizPanelManager.createFor(vizPanel));
   jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(scene);
   return model;
 }

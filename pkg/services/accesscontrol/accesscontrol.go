@@ -46,6 +46,16 @@ type Service interface {
 	SyncUserRoles(ctx context.Context, orgID int64, cmd SyncUserRolesCommand) error
 }
 
+//go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/
+type Store interface {
+	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
+	SearchUsersPermissions(ctx context.Context, orgID int64, options SearchOptions) (map[int64][]Permission, error)
+	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
+	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
+	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
+}
+
 type RoleRegistry interface {
 	// RegisterFixedRoles registers all roles declared to AccessControl
 	RegisterFixedRoles(ctx context.Context) error
