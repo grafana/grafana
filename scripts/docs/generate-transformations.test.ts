@@ -30,15 +30,23 @@ describe('makefile script tests', () => {
 
   In JavaScript, the following string table
 
-  | Temp  | Uptime    |
-  | ----- | --------- |
-  | 15.4  | 1230233   |
+  | A | B | C |
+  | - | - | - |
+  | 1 | 3 | 5 |
+  | 2 | 4 | 6 |
+  | 3 | 5 | 7 |
+  | 4 | 6 | 8 |
+  | 5 | 7 | 9 |
 
   parses to Markdown as
 
-  | Temp | Uptime  |
-  | ---- | ------- | <--------- notice that there are fewer hyphens
-  | 15.4 | 1230233 |
+  | A   | B   | C   |
+  | --- | --- | --- | <--------- notice the extra hyphens
+  | 1   | 3   | 5   | <--------- notice the extra spaces
+  | 2   | 4   | 6   |
+  | 3   | 5   | 7   |
+  | 4   | 6   | 8   |
+  | 5   | 7   | 9   |
 
   This is one of many arbitrary formatting anomalies that we can ignore by normalizing the content.
 */
