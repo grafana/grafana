@@ -406,7 +406,7 @@ const (
 	ErrorErrState    ExecutionErrorState = "Error"
 )
 
-// swagger: model
+// swagger:model
 type AlertRuleNotificationSettings struct {
 	// Name of the receiver to send notifications to.
 	// required: true
