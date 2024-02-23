@@ -74,22 +74,6 @@ Add a title and description to a panel to share with users any important informa
 
    ![Panel editor pane with Panel options section expanded](/static/img/docs/panels/panel-options-8-0.png)
 
-## View a panel JSON model
-
-Explore and export panel, panel data, and data frame JSON models.
-
-1. Open the dashboard that contains the panel.
-
-1. Hover over any part of the panel to display the actions menu on the top right corner.
-1. Click the menu and select **Inspect > Panel JSON**.
-1. In the **Select source** field, select one of the following options:
-
-   - **Panel JSON:** Displays a JSON object representing the panel.
-   - **Panel data:** Displays a JSON object representing the data that was passed to the panel.
-   - **DataFrame structure:** Displays the data structure of the panel, including any transformations, field configurations, and override configurations that have been applied.
-
-1. To explore the JSON, click `>` to expand or collapse portions of the JSON model.
-
 ## Configure repeating panels
 
 You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard. For more information about repeating rows, refer to [Configure repeating rows][].

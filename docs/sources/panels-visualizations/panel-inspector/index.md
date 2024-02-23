@@ -34,6 +34,23 @@ The panel inspector consists of the following options:
 
 6. **Error tab -** Shows the error. Only visible when query returns error.
 
+<!--
+## View a panel JSON model
+
+Explore and export panel, panel data, and data frame JSON models.
+
+1. Open the dashboard that contains the panel.
+
+1. Hover over any part of the panel to display the actions menu on the top right corner.
+1. Click the menu and select **Inspect > Panel JSON**.
+1. In the **Select source** field, select one of the following options:
+
+   - **Panel JSON:** Displays a JSON object representing the panel.
+   - **Panel data:** Displays a JSON object representing the data that was passed to the panel.
+   - **DataFrame structure:** Displays the data structure of the panel, including any transformations, field configurations, and override configurations that have been applied.
+
+1. To explore the JSON, click `>` to expand or collapse portions of the JSON model. -->
+
 ## Download raw query results
 
 Grafana generates a CSV file that contains your data, including any transformations to that data. You can choose to view the data before or after the panel applies field options or field option overrides.
