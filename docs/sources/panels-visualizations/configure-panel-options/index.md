@@ -36,6 +36,16 @@ This topic describes how to:
 - View a panel JSON model
 - Configure repeating rows and panels
 
+## Panel options
+
+You can use generative AI to create panel titles and descriptions with the [Grafana LLM plugin][], which is currently in public preview. To enable this, refer to the [Set up generative AI features for dashboards documentation][]. Alternatively, you can take the following steps to create them yourself.
+
+- **Title** - Text entered in this field appears at the top of your panel in the panel editor and in the dashboard. Add a title and description to a panel to share with users any important information about the visualization. For example, use the description to document the purpose of the visualization. You can use [variables you have defined][] in the **Title** and **Description** field, but not [global variables][].
+- **Description** - Text entered in this field appears in a tooltip in the upper-left corner of the panel. Add a title and description to a panel to share with users any important information about the visualization. For example, use the description to document the purpose of the visualization. You can use [variables you have defined][] in the **Title** and **Description** field, but not [global variables][].
+- **Transparent background** -
+- **Panel links** -
+- **Repeat options** -
+
 ## Edit a panel
 
 After you add a panel to a dashboard, you can open it at any time to change or update queries, add data transformation, and change visualization settings.
@@ -51,28 +61,6 @@ After you add a panel to a dashboard, you can open it at any time to change or u
    To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
 
    The panel opens in edit mode.
-
-## Add a title and description to a panel
-
-You can use generative AI to create panel titles and descriptions with the [Grafana LLM plugin][], which is currently in public preview. To enable this, refer to the [Set up generative AI features for dashboards documentation][]. Alternatively, you can take the following steps to create them yourself.
-
-Add a title and description to a panel to share with users any important information about the visualization. For example, use the description to document the purpose of the visualization.
-
-1. [Edit a panel](#edit-a-panel).
-
-1. In the panel display options pane, locate the **Panel options** section.
-
-1. Enter a **Title**.
-
-   Text entered in this field appears at the top of your panel in the panel editor and in the dashboard.
-
-1. Write a description of the panel and the data you are displaying.
-
-   Text entered in this field appears in a tooltip in the upper-left corner of the panel.
-
-   You can use [variables you have defined][] in the **Title** and **Description** field, but not [global variables][].
-
-   ![Panel editor pane with Panel options section expanded](/static/img/docs/panels/panel-options-8-0.png)
 
 ## Configure repeating panels
 
