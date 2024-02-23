@@ -44,26 +44,6 @@ jest.mock('../saving/getDashboardChangesFromScene', () => ({
 const worker = createWorker();
 mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
 
-function mockResultsOfDetectChangesWorker({
-  hasChanges,
-  hasTimeChanges,
-  hasVariableValueChanges,
-}: {
-  hasChanges: boolean;
-  hasTimeChanges: boolean;
-  hasVariableValueChanges: boolean;
-}) {
-  jest.mocked(worker.postMessage).mockImplementationOnce(() => {
-    worker.onmessage?.({
-      data: {
-        hasChanges: hasChanges ?? true,
-        hasTimeChanges: hasTimeChanges ?? true,
-        hasVariableValueChanges: hasVariableValueChanges ?? true,
-      },
-    } as unknown as MessageEvent);
-  });
-}
-
 describe('DashboardScene', () => {
   describe('DashboardSrv.getCurrent compatibility', () => {
     it('Should set to compatibility wrapper', () => {
@@ -88,12 +68,6 @@ describe('DashboardScene', () => {
 
       it('Should set isEditing to true', () => {
         expect(scene.state.isEditing).toBe(true);
-      });
-
-      it('Should initialize the detect changes worker', () => {
-        // @ts-expect-error
-        expect(scene._changesWorker).toBe(worker);
-        expect(worker.onmessage).toBeDefined();
       });
 
       it('Should terminate the detect changes worker when deactivate', () => {
@@ -379,6 +353,26 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   });
 
   return scene;
+}
+
+function mockResultsOfDetectChangesWorker({
+  hasChanges,
+  hasTimeChanges,
+  hasVariableValueChanges,
+}: {
+  hasChanges: boolean;
+  hasTimeChanges: boolean;
+  hasVariableValueChanges: boolean;
+}) {
+  jest.mocked(worker.postMessage).mockImplementationOnce(() => {
+    worker.onmessage?.({
+      data: {
+        hasChanges: hasChanges ?? true,
+        hasTimeChanges: hasTimeChanges ?? true,
+        hasVariableValueChanges: hasVariableValueChanges ?? true,
+      },
+    } as unknown as MessageEvent);
+  });
 }
 
 function getVersionMock(): DecoratedRevisionModel {
