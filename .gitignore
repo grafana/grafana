@@ -171,6 +171,11 @@ compilation-stats.json
 /e2e/build_results.zip
 /e2e/extensions
 /e2e/extensions-suite
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
 
 # grafana server
 /scripts/grafana-server/server.log
@@ -209,3 +214,4 @@ public/app/plugins/**/dist/
 # Ignore transpiled JavaScript resulting from the generate-transformations.ts script.
 /public/app/features/transformers/docs/*.js
 /scripts/docs/generate-transformations.js
+
