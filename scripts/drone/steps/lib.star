@@ -861,6 +861,7 @@ def playwright_e2e_tests_step():
         "commands": [
             "sleep 10s",  # it seems sometimes that grafana-server is not actually ready when the step starts, so waiting for a few seconds before running the tests
             "yarn e2e:playwright",
+            "echo $?",
         ],
     }
 

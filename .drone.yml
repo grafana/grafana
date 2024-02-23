@@ -657,6 +657,7 @@ steps:
 - commands:
   - sleep 10s
   - yarn e2e:playwright
+  - echo $?
   depends_on:
   - grafana-server
   environment:
@@ -1990,6 +1991,7 @@ steps:
 - commands:
   - sleep 10s
   - yarn e2e:playwright
+  - echo $?
   depends_on:
   - grafana-server
   environment:
@@ -4924,6 +4926,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0d5e600881f5a8f4294cafd07f450f92f4088e1cda7254d111a635bf01f07465
+hmac: 31540d81e7d9ea4c63a0d17926ec675c9c5d1e5a901cebbcb613cf3ae7e064ba
 
 ...
