@@ -1,23 +1,31 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
-import { completeTemplate } from './generate-transformations.ts';
+import { getMarkdownContent, getJavaScriptContent } from './generate-transformations.ts';
 
 describe('makefile script tests', () => {
+  const rootDir = resolve(__dirname, '../../');
+  const pathToMarkdown = resolve(
+    rootDir,
+    'docs/sources/panels-visualizations/query-transform-data/transform-data/index.md'
+  );
+  const markdownContent = readFileSync(pathToMarkdown, 'utf-8');
+
   it('should execute without error and match the content written to index.md', () => {
-    // Build root directory path.
-    const rootDir = resolve(__dirname, '../../');
-
-    // Build path to the generated markdown file.
-    const path = resolve(rootDir, 'docs/sources/panels-visualizations/query-transform-data/transform-data/index.md');
-
-    // Read the content of the generated markdown file.
-    const markdownContent = readFileSync(path, 'utf-8');
-
     // Normalize the content of the generated markdown file and the content of the JS template and compare.
-    expect(normalizeContent(markdownContent)).toEqual(normalizeContent(completeTemplate));
+    expect(contentDoesMatch(getJavaScriptContent(), getMarkdownContent())).toBe(true);
+  });
+
+  it('should be able to tell if the content DOES NOT match', () => {
+    const wrongContent = getJavaScriptContent().concat('additional content to mismatch');
+    // Normalize the content of the generated markdown file and the content of the JS template and compare.
+    expect(contentDoesMatch(wrongContent, getMarkdownContent())).toBe(false);
   });
 });
+
+export function contentDoesMatch(jsContent: string, mdContent: string): Boolean {
+  return normalizeContent(jsContent) === normalizeContent(mdContent);
+}
 
 /* 
   Normalize content by removing all whitespace (spaces, tabs, newlines, carriage returns, 
