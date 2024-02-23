@@ -33,4 +33,5 @@ images = {
     "cypress": "cypress/included:13.1.0",
     "dockerize": "jwilder/dockerize:0.6.1",
     "shellcheck": "koalaman/shellcheck:stable",
+    "playwright": "mcr.microsoft.com/playwright:v1.41.2-jammy",
 }

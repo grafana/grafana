@@ -14,7 +14,7 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel } = model.useState();
+  const { controls, overlay, editview, editPanel, isEmpty } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
@@ -34,12 +34,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const emptyState = <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />;
 
   const withPanels = (
-    <>
-      {controls && <controls.Component model={controls} />}
-      <div className={cx(styles.body)}>
-        <bodyToRender.Component model={bodyToRender} />
-      </div>
-    </>
+    <div className={cx(styles.body)}>
+      <bodyToRender.Component model={bodyToRender} />
+    </div>
   );
 
   return (
@@ -49,7 +46,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         <CustomScrollbar autoHeightMin={'100%'}>
           <div className={styles.canvasContent}>
             <NavToolbarActions dashboard={model} />
-            {model.isEmpty() ? emptyState : withPanels}
+            {controls && <controls.Component model={controls} />}
+            {isEmpty ? emptyState : withPanels}
           </div>
         </CustomScrollbar>
       )}

@@ -89,6 +89,7 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
+  isEmpty?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -471,20 +472,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onOpenSettings = () => {
     locationService.partial({ editview: 'settings' });
-  };
-
-  public isEmpty = (): boolean => {
-    const { body, viewPanelScene } = this.state;
-
-    if (!!viewPanelScene) {
-      return !!viewPanelScene.state.body;
-    }
-
-    if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
-      return body.state.children.length === 0;
-    }
-
-    throw new Error('Invalid body type');
   };
 
   /**

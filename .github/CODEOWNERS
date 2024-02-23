@@ -57,6 +57,8 @@
 # Backend code
 /go.mod @grafana/backend-platform
 /go.sum @grafana/backend-platform
+/go.work @grafana/grafana-app-platform-squad
+/go.work.sum @grafana/grafana-app-platform-squad
 /.bingo/ @grafana/backend-platform
 /pkg/README.md @grafana/backend-platform
 /pkg/ruleguard.rules.go @grafana/backend-platform
@@ -97,6 +99,8 @@
 /pkg/mocks/ @grafana/backend-platform
 /pkg/models/ @grafana/backend-platform
 /pkg/server/ @grafana/backend-platform
+/pkg/apiserver @grafana/grafana-app-platform-squad
+/pkg/apimachinery @grafana/grafana-app-platform-squad
 /pkg/services/annotations/ @grafana/backend-platform
 /pkg/services/apikey/ @grafana/identity-access-team
 /pkg/services/cleanup/ @grafana/backend-platform
@@ -269,7 +273,6 @@
 /pkg/services/store/ @grafana/grafana-app-platform-squad
 /pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad
-/pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
 /pkg/generated @grafana/grafana-app-platform-squad
 
@@ -306,6 +309,7 @@
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
+/e2e/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
 /packages/grafana-e2e/ @grafana/grafana-frontend-platform
@@ -365,6 +369,7 @@
 /.husky/pre-commit @grafana/frontend-ops
 /cypress.config.js @grafana/grafana-frontend-platform
 /.levignore.js @grafana/plugins-platform-frontend
+playwright.config.ts @grafana/plugins-platform-frontend
 
 
 # public folder

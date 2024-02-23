@@ -339,7 +339,7 @@ type Cfg struct {
 
 	// IP range access control
 	IPRangeACEnabled     bool
-	IPRangeACAllowedURLs []string
+	IPRangeACAllowedURLs []*url.URL
 	IPRangeACSecretKey   string
 
 	// SQL Data sources
@@ -1949,7 +1949,15 @@ func (cfg *Cfg) readDataSourceSecuritySettings() {
 	cfg.IPRangeACEnabled = datasources.Key("enabled").MustBool(false)
 	cfg.IPRangeACSecretKey = datasources.Key("secret_key").MustString("")
 	allowedURLString := datasources.Key("allow_list").MustString("")
-	cfg.IPRangeACAllowedURLs = util.SplitString(allowedURLString)
+	for _, urlString := range util.SplitString(allowedURLString) {
+		allowedURL, err := url.Parse(urlString)
+		if err != nil {
+			cfg.Logger.Error("Error parsing allowed URL for IP range access control", "error", err)
+			continue
+		} else {
+			cfg.IPRangeACAllowedURLs = append(cfg.IPRangeACAllowedURLs, allowedURL)
+		}
+	}
 }
 
 func (cfg *Cfg) readSqlDataSourceSettings() {

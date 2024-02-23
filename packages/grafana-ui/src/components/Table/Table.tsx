@@ -29,6 +29,7 @@ import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFoot
 
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
+const NO_DATA_TEXT = 'No data';
 
 export const Table = memo((props: Props) => {
   const {
@@ -49,6 +50,7 @@ export const Table = memo((props: Props) => {
     timeRange,
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
+    fieldConfig,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -58,6 +60,7 @@ export const Table = memo((props: Props) => {
   const tableStyles = useTableStyles(theme, cellHeight);
   const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
+  const noValuesDisplayText = fieldConfig?.defaults?.noValue ?? NO_DATA_TEXT;
 
   const footerHeight = useMemo(() => {
     const EXTENDED_ROW_HEIGHT = FOOTER_ROW_HEIGHT;
@@ -324,7 +327,7 @@ export const Table = memo((props: Props) => {
             </div>
           ) : (
             <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
-              No data
+              {noValuesDisplayText}
             </div>
           )}
           {footerItems && (
