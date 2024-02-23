@@ -342,7 +342,7 @@ export class ElementState implements LayerElement {
 
     if (border && border.color && border.width !== undefined) {
       const color = ctx.getColor(border.color);
-      css.borderWidth = `${border.width} px`;
+      css.borderWidth = `${border.width}px`;
       css.borderStyle = 'solid';
       css.borderColor = color.value();
 
@@ -449,22 +449,22 @@ export class ElementState implements LayerElement {
 
     if (dirLR === 1) {
       placement.width = event.width;
-      style.width = `${placement.width} px`;
+      style.width = `${placement.width}px`;
     } else if (dirLR === -1) {
       placement.left! -= deltaX;
       placement.width = event.width;
-      style.left = `${placement.left} px`;
-      style.width = `${placement.width} px`;
+      style.left = `${placement.left}px`;
+      style.width = `${placement.width}px`;
     }
 
     if (dirTB === -1) {
       placement.top! -= deltaY;
       placement.height = event.height;
-      style.top = `${placement.top} px`;
-      style.height = `${placement.height} px`;
+      style.top = `${placement.top}px`;
+      style.height = `${placement.height}px`;
     } else if (dirTB === 1) {
       placement.height = event.height;
-      style.height = `${placement.height} px`;
+      style.height = `${placement.height}px`;
     }
   };
 
@@ -539,7 +539,7 @@ export class ElementState implements LayerElement {
         tabIndex={0}
       >
         <item.display
-          key={`${this.UID} /${this.revId}`}
+          key={`${this.UID}/${this.revId}`}
           config={this.options.config}
           data={this.data}
           isSelected={isSelected}
