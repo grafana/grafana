@@ -583,10 +583,6 @@ const (
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
 
-	// FlagDisplayAnonymousStats
-	// Enables anonymous stats to be shown in the UI for Grafana
-	FlagDisplayAnonymousStats = "displayAnonymousStats"
-
 	// FlagLokiQueryHints
 	// Enables query hints for Loki
 	FlagLokiQueryHints = "lokiQueryHints"

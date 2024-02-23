@@ -162,7 +162,6 @@ export interface FeatureToggles {
   pluginsSkipHostEnvVars?: boolean;
   tableSharedCrosshair?: boolean;
   regressionTransformation?: boolean;
-  displayAnonymousStats?: boolean;
   lokiQueryHints?: boolean;
   kubernetesFeatureToggles?: boolean;
   alertingPreviewUpgrade?: boolean;

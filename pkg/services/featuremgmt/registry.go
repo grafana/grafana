@@ -1069,15 +1069,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:           "displayAnonymousStats",
-			Description:    "Enables anonymous stats to be shown in the UI for Grafana",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Owner:          identityAccessTeam,
-			AllowSelfServe: false,
-			Expression:     "true", // enabled by default
-		},
-		{
 			// this is mainly used a a way to quickly disable query hints as a safe guard for our infrastructure
 			Name:           "lokiQueryHints",
 			Description:    "Enables query hints for Loki",
