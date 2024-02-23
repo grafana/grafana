@@ -92,6 +92,7 @@ conf/custom.ini
 
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
+!/conf/provisioning/**/alert-rule-linked-to-dashboard.yaml
 
 /conf/ldap_dev.toml
 /conf/ldap_freeipa.toml
