@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
-	grafanaresponsewriter "github.com/grafana/grafana/pkg/services/apiserver/endpoints/responsewriter"
 	"github.com/stretchr/testify/require"
+
+	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 )
 
 func TestResponseAdapter(t *testing.T) {
