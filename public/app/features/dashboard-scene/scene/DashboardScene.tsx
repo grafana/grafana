@@ -433,7 +433,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public addRow(row: SceneGridRow) {
     if (!(this.state.body instanceof SceneGridLayout)) {
-      console.error('Trying to add a row in a layout that is not SceneGridLayout ');
+      console.error('Trying to add a row in a layout that is not SceneGridLayout');
       return;
     }
 
@@ -459,7 +459,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public addPanel(vizPanel: VizPanel): void {
     if (!(this.state.body instanceof SceneGridLayout)) {
-      console.error('Trying to add a panel in a layout that is not SceneGridLayout ');
+      console.error('Trying to add a panel in a layout that is not SceneGridLayout');
       return;
     }
 
@@ -623,7 +623,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onCreateLibPanelWidget() {
     if (!(this.state.body instanceof SceneGridLayout)) {
-      console.error('Trying to add a panel in a layout that is not SceneGridLayout ');
+      console.error('Trying to add a panel in a layout that is not SceneGridLayout');
       return;
     }
 
