@@ -691,6 +691,42 @@
       "new-to-question": "New to Grafana?"
     }
   },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "Once you connect this installation to a cloud stack, you'll be able to upload data sources and dashboards.",
+      "link-title": "Learn about migrating other settings",
+      "title": "Can I move this installation to Grafana Cloud?"
+    },
+    "cta": {
+      "button": "Migrate this instance to Cloud",
+      "header": "Let us manage your Grafana stack"
+    },
+    "is-it-secure": {
+      "body": "Grafana Labs is committed to maintaining the highest standards of data privacy and security. By implementing industry-standard security technologies and procedures, we help protect our customers' data from unauthorized access, use, or disclosure.",
+      "link-title": "Grafana Labs Trust Center",
+      "title": "Is it secure?"
+    },
+    "pdc": {
+      "body": "Exposing your data sources to the internet can raise security concerns. Private data source connect (PDC) allows Grafana Cloud to access your existing data sources over a secure network tunnel.",
+      "link-title": "Learn about PDC",
+      "title": "Not all my data sources are on the public internet"
+    },
+    "pricing": {
+      "body": "Grafana Cloud has a generous free plan and a 14 day unlimited usage trial. After your trial expires, you'll be billed based on usage over the free plan limits.",
+      "link-title": "Grafana Cloud pricing",
+      "title": "How much does it cost?"
+    },
+    "what-is-cloud": {
+      "body": "Grafana cloud is a fully managed cloud-hosted observability platform ideal for cloud native environments. It's everything you love about Grafana without the overhead of maintaining, upgrading, and supporting an installation.",
+      "link-title": "Learn about cloud features",
+      "title": "What is Grafana Cloud?"
+    },
+    "why-host": {
+      "body": "In addition to the convenience of managed hosting, Grafana Cloud includes many cloud-exclusive features like SLOs, incident management, machine learning, and powerful observability integrations.",
+      "link-title": "More questions? Talk to an expert",
+      "title": "Why host with Grafana?"
+    }
+  },
   "nav": {
     "add-new-connections": {
       "title": "Add new connection"
@@ -877,7 +913,7 @@
       "subtitle": "Manage folder dashboards and permissions"
     },
     "migrate-to-cloud": {
-      "subtitle": "Copy data sources, dashboards, and alerts from this installation to a cloud stack",
+      "subtitle": "Copy configuration from your self-managed installation to a cloud stack",
       "title": "Migrate to Grafana Cloud"
     },
     "monitoring": {
