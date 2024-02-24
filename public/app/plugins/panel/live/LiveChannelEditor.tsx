@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import {
   LiveChannelScope,
@@ -7,9 +7,11 @@ import {
   SelectableValue,
   StandardEditorProps,
   GrafanaTheme2,
+  parseLiveChannelAddress,
 } from '@grafana/data';
 import { Select, Alert, Label, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { getManagedChannelInfo } from 'app/features/live/info';
 
 import { LivePanelOptions } from './types';
 
@@ -23,25 +25,46 @@ const scopes: Array<SelectableValue<LiveChannelScope>> = [
 ];
 
 export function LiveChannelEditor(props: Props) {
-  const namespaces = useMemo(() => {
-    let opts: Array<SelectableValue<string>> = [];
-    switch (
-      props.value.scope
-      // case 'x':
-    ) {
+  const [channels, setChannels] = useState<Array<SelectableValue<string>>>([]);
+  const [namespaces, paths] = useMemo(() => {
+    const namespaces: Array<SelectableValue<string>> = [];
+    const paths: Array<SelectableValue<string>> = [];
+    const scope = props.value.scope;
+    const namespace = props.value.namespace;
+    if (!scope?.length) {
+      return [namespaces, paths];
     }
-    return opts;
-  }, [props.value.scope]);
+    const used: Record<string, boolean> = {};
 
-  const paths = useMemo(() => {
-    let opts: Array<SelectableValue<string>> = [];
-    switch (
-      props.value?.namespace
-      // case 'x':
-    ) {
+    for (let channel of channels) {
+      const addr = parseLiveChannelAddress(channel.value);
+      if (!addr || addr.scope !== scope) {
+        continue;
+      }
+
+      if (!used[addr.namespace]) {
+        namespaces.push({
+          value: addr.namespace,
+          label: addr.namespace,
+        });
+        used[addr.namespace] = true;
+      }
+
+      if (namespace?.length && namespace === addr.namespace) {
+        paths.push({
+          ...channel,
+          value: addr.path,
+        });
+      }
     }
-    return opts;
-  }, [props.value.namespace]);
+    return [namespaces, paths];
+  }, [channels, props.value.scope, props.value.namespace]);
+
+  useEffect(() => {
+    getManagedChannelInfo().then((v) => {
+      setChannels(v.channels);
+    });
+  }, [props.value.scope]);
 
   const onScopeChanged = (v: SelectableValue<LiveChannelScope>) => {
     if (v.value) {
@@ -56,7 +79,7 @@ export function LiveChannelEditor(props: Props) {
   const onNamespaceChanged = (v: SelectableValue<string>) => {
     props.onChange({
       scope: props.value?.scope,
-      namespace: v.value,
+      namespace: v?.value,
       path: undefined,
     });
   };
@@ -66,7 +89,7 @@ export function LiveChannelEditor(props: Props) {
     onChange({
       scope: value.scope,
       namespace: value.namespace,
-      path: v.value,
+      path: v?.value,
     });
   };
 
