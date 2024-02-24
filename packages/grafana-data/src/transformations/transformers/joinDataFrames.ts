@@ -62,12 +62,12 @@ export interface JoinOptions {
   keepDisplayNames?: boolean;
 
   /**
-   * @internal -- Optionally specify a join mode (outer or inner)
+   * @internal -- Optionally specify how to treat null values
    */
   nullMode?: (field: Field) => JoinNullMode;
 
   /**
-   * @internal -- Optionally specify how to treat null values
+   * @internal -- Optionally specify a join mode (outer or inner)
    */
   mode?: JoinMode;
 }
