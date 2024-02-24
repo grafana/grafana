@@ -52,7 +52,7 @@ grafana::codegen:run() {
           echo "Deleting ${violations_file} since it is empty"
           rm ${violations_file}
       fi
-      
+
       echo ""
     done
   done
@@ -78,7 +78,7 @@ grafana::codegen:run() {
 }
 
 grafana:codegen:lsdirs() {
-  find ${1}/* -maxdepth 0 -type d | xargs basename -a
+  ls -d $1/*/ | xargs basename -a
 }
 
 grafana::codegen:run pkg
