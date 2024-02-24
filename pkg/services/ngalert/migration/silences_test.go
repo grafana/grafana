@@ -1,10 +1,11 @@
 package migration
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
-	"strings"
 	"testing"
 	"time"
 
@@ -13,10 +14,11 @@ import (
 	"github.com/matttproud/golang_protobuf_extensions/pbutil"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/stretchr/testify/require"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
 func TestSilences(t *testing.T) {
@@ -79,32 +81,13 @@ func TestSilences(t *testing.T) {
 				_, err = x.Insert(test.alerts)
 				require.NoError(t, err)
 
-				cfg := setting.NewCfg()
-				cfg.DataPath = "/a/b/c"
-				service := NewTestMigrationService(t, sqlStore, cfg)
-
-				sb := stringsBuilderCloser{
-					Builder: &strings.Builder{},
-				}
-				silenceFileAsString := func(filename string) (io.WriteCloser, error) {
-					_, err := sb.WriteString(filename)
-					require.NoError(t, err)
-					return sb, nil
-				}
-				service.silences.createSilenceFile = silenceFileAsString
+				service := NewTestMigrationService(t, sqlStore, nil)
 
 				require.NoError(t, service.migrateAllOrgs(context.Background()))
 
-				expectedFilename := ""
-				if len(test.expectedSilences) > 0 {
-					expectedFilename = cfg.DataPath + "/alerting/1/silences"
-					filename := sb.String()[:len(expectedFilename)]
-					require.Equal(t, expectedFilename, filename)
-				}
+				// Get silences from kvstore.
+				st := getSilenceState(t, x, o.ID)
 
-				contents := sb.String()[len(expectedFilename):]
-				st, err := decodeState(strings.NewReader(contents))
-				require.NoError(t, err)
 				require.Len(t, st, len(test.expectedSilences))
 
 				silences := make([]*pb.MeshSilence, 0, len(st))
@@ -125,12 +108,19 @@ func TestSilences(t *testing.T) {
 	})
 }
 
-type stringsBuilderCloser struct {
-	*strings.Builder
-}
+// getSilenceState returns the silences state from the kvstore.
+func getSilenceState(t *testing.T, x *xorm.Engine, orgId int64) state {
+	content := ""
+	_, err := x.Table("kv_store").Where("org_id = ? AND namespace = ? AND key = ?", orgId, notifier.KVNamespace, notifier.SilencesFilename).Cols("value").Get(&content)
+	require.NoError(t, err)
 
-func (s stringsBuilderCloser) Close() error {
-	return nil
+	b, err := base64.StdEncoding.DecodeString(content)
+	require.NoError(t, err)
+
+	st, err := decodeState(bytes.NewReader(b))
+	require.NoError(t, err)
+
+	return st
 }
 
 // state copied from prometheus-alertmanager/silence/silence.go.

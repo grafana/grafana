@@ -22,7 +22,7 @@ import {
   AxisPlacement,
   GraphDrawStyle,
   GraphFieldConfig,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
@@ -89,6 +89,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
   eventsScope = '__global_',
+  hoverProximity,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -520,8 +521,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     // Render thresholds in graph
     if (customConfig.thresholdsStyle && config.thresholds) {
-      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphTresholdsStyleMode.Off;
-      if (thresholdDisplay !== GraphTresholdsStyleMode.Off) {
+      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphThresholdsStyleMode.Off;
+      if (thresholdDisplay !== GraphThresholdsStyleMode.Off) {
         builder.addThresholds({
           config: customConfig.thresholdsStyle,
           thresholds: config.thresholds,
@@ -558,19 +559,31 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   builder.scaleKeys = [xScaleKey, yScaleKey];
 
   // if hovered value is null, how far we may scan left/right to hover nearest non-null
-  const hoverProximityPx = 15;
+  const DEFAULT_HOVER_NULL_PROXIMITY = 15;
+  const DEFAULT_FOCUS_PROXIMITY = 30;
 
   let cursor: Partial<uPlot.Cursor> = {
+    // horizontal proximity / point hover behavior
     hover: {
       prox: (self, seriesIdx, hoveredIdx) => {
-        const yVal = self.data[seriesIdx][hoveredIdx];
-        if (yVal === null) {
-          return hoverProximityPx;
+        if (hoverProximity != null) {
+          return hoverProximity;
         }
 
+        // when hovering null values, scan data left/right up to 15px
+        const yVal = self.data[seriesIdx][hoveredIdx];
+        if (yVal === null) {
+          return DEFAULT_HOVER_NULL_PROXIMITY;
+        }
+
+        // no proximity limit
         return null;
       },
       skip: [null],
+    },
+    // vertical proximity / series focus behavior
+    focus: {
+      prox: hoverProximity ?? DEFAULT_FOCUS_PROXIMITY,
     },
   };
 
@@ -583,7 +596,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       data: frame,
     };
 
-    const hoverEvent = new DataHoverEvent(payload);
+    const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
+    const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
+
     cursor.sync = {
       key: eventsScope,
       filters: {
@@ -594,9 +609,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
           payload.rowIndex = dataIdx;
           if (x < 0 && y < 0) {
-            payload.point[xScaleUnit] = null;
-            payload.point[yScaleKey] = null;
-            eventBus.publish(new DataHoverClearEvent());
+            eventBus.publish(clearEvent);
           } else {
             // convert the points
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);

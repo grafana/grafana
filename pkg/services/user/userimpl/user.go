@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -60,6 +61,10 @@ func ProvideService(
 		return s, err
 	}
 
+	if err := s.uidMigration(db); err != nil {
+		return nil, err
+	}
+
 	bundleRegistry.RegisterSupportItemCollector(s.supportBundleCollector())
 	return s, nil
 }
@@ -67,11 +72,16 @@ func ProvideService(
 func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
 	stats := map[string]any{}
 	caseInsensitiveLoginVal := 0
+	basicAuthStrongPasswordPolicyVal := 0
 	if s.cfg.CaseInsensitiveLogin {
 		caseInsensitiveLoginVal = 1
 	}
+	if s.cfg.BasicAuthStrongPasswordPolicy {
+		basicAuthStrongPasswordPolicyVal = 1
+	}
 
 	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
+	stats["stats.password_policy.count"] = basicAuthStrongPasswordPolicyVal
 
 	count, err := s.store.CountUserAccountsWithEmptyRole(ctx)
 	if err != nil {
@@ -156,11 +166,11 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	usr.Rands = rands
 
 	if len(cmd.Password) > 0 {
-		encodedPassword, err := util.EncodePassword(cmd.Password, usr.Salt)
+		encodedPassword, err := util.EncodePassword(string(cmd.Password), usr.Salt)
 		if err != nil {
 			return nil, err
 		}
-		usr.Password = encodedPassword
+		usr.Password = user.Password(encodedPassword)
 	}
 
 	_, err = s.store.Insert(ctx, usr)
@@ -484,4 +494,26 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 		Default:           false,
 		Fn:                collectorFn,
 	}
+}
+
+// This is just to ensure that all users have a valid uid.
+// To protect against upgrade / downgrade we need to run this for a couple of releases.
+// FIXME: Remove this migration and make uid field required https://github.com/grafana/identity-access-team/issues/552
+func (s *Service) uidMigration(store db.DB) error {
+	return store.WithDbSession(context.Background(), func(sess *db.Session) error {
+		switch store.GetDBType() {
+		case migrator.SQLite:
+			_, err := sess.Exec("UPDATE user SET uid=printf('u%09d',id) WHERE uid IS NULL;")
+			return err
+		case migrator.Postgres:
+			_, err := sess.Exec("UPDATE `user` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;")
+			return err
+		case migrator.MySQL:
+			_, err := sess.Exec("UPDATE user SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;")
+			return err
+		default:
+			// this branch should be unreachable
+			return nil
+		}
+	})
 }

@@ -3,7 +3,6 @@ package contexthandler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -115,11 +113,6 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 
 		identity, err := h.authnService.Authenticate(reqContext.Req.Context(), &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 		if err != nil {
-			if errors.Is(err, auth.ErrInvalidSessionToken) || errors.Is(err, authn.ErrExpiredAccessToken) {
-				// Burn the cookie in case of invalid, expired or missing token
-				reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
-			}
-
 			// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 			reqContext.LookupTokenErr = err
 		} else {
@@ -170,22 +163,6 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 	}
 }
 
-func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
-	return func(w web.ResponseWriter) {
-		if h.features.IsEnabled(reqContext.Req.Context(), featuremgmt.FlagClientTokenRotation) {
-			return
-		}
-
-		if w.Written() {
-			reqContext.Logger.Debug("Response written, skipping invalid cookie delete")
-			return
-		}
-
-		reqContext.Logger.Debug("Expiring invalid cookie")
-		authn.DeleteSessionCookie(reqContext.Resp, h.Cfg)
-	}
-}
-
 type authHTTPHeaderListContextKey struct{}
 
 var authHTTPHeaderListKey = authHTTPHeaderListContextKey{}
@@ -209,9 +186,12 @@ func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context 
 	// used by basic auth, api keys and potentially jwt auth
 	list.Items = append(list.Items, "Authorization")
 
+	// remove X-Grafana-Device-Id as it is only used for auth in authn clients.
+	list.Items = append(list.Items, "X-Grafana-Device-Id")
+
 	// if jwt is enabled we add it to the list. We can ignore in case it is set to Authorization
-	if cfg.JWTAuthEnabled && cfg.JWTAuthHeaderName != "" && cfg.JWTAuthHeaderName != "Authorization" {
-		list.Items = append(list.Items, cfg.JWTAuthHeaderName)
+	if cfg.JWTAuth.Enabled && cfg.JWTAuth.HeaderName != "" && cfg.JWTAuth.HeaderName != "Authorization" {
+		list.Items = append(list.Items, cfg.JWTAuth.HeaderName)
 	}
 
 	// if auth proxy is enabled add the main proxy header and all configured headers

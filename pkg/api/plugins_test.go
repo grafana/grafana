@@ -49,6 +49,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 	canInstall := []ac.Permission{{Action: pluginaccesscontrol.ActionInstall}}
 	cannotInstall := []ac.Permission{{Action: "plugins:cannotinstall"}}
 
+	pluginID := "grafana-test-datasource"
 	localOrg := int64(1)
 	globalOrg := int64(ac.GlobalOrgID)
 
@@ -88,11 +89,17 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 			hs.pluginInstaller = NewFakePluginInstaller()
 			hs.pluginFileStore = &fakes.FakePluginFileStore{}
+			hs.pluginStore = pluginstore.NewFakePluginStore(pluginstore.Plugin{
+				JSONData: plugins.JSONData{
+					ID: pluginID,
+				},
+			})
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			input := strings.NewReader(`{"version": "1.0.2"}`)
-			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/install", input), userWithPermissions(tc.permissionOrg, tc.permissions))
+			endpoint := fmt.Sprintf("/api/plugins/%s/install", pluginID)
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest(endpoint, input), userWithPermissions(tc.permissionOrg, tc.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedCode, res.StatusCode)
@@ -101,7 +108,8 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Uninstall", tc), func(t *testing.T) {
 			input := strings.NewReader("{ }")
-			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/uninstall", input), userWithPermissions(tc.permissionOrg, tc.permissions))
+			endpoint := fmt.Sprintf("/api/plugins/%s/uninstall", pluginID)
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest(endpoint, input), userWithPermissions(tc.permissionOrg, tc.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedCode, res.StatusCode)
@@ -401,14 +409,14 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 func TestPluginMarkdown(t *testing.T) {
 	t.Run("Plugin not installed returns error", func(t *testing.T) {
 		pluginFileStore := &fakes.FakePluginFileStore{
-			FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+			FileFunc: func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 				return nil, plugins.ErrPluginNotInstalled
 			},
 		}
 		hs := HTTPServer{pluginFileStore: pluginFileStore}
 
 		pluginID := "test-datasource"
-		md, err := hs.pluginMarkdown(context.Background(), pluginID, "test")
+		md, err := hs.pluginMarkdown(context.Background(), pluginID, "", "test")
 		require.ErrorAs(t, err, &plugins.NotFoundError{PluginID: pluginID})
 		require.Equal(t, []byte{}, md)
 	})
@@ -416,7 +424,7 @@ func TestPluginMarkdown(t *testing.T) {
 	t.Run("File fetch will be retried using different casing if error occurs", func(t *testing.T) {
 		var requestedFiles []string
 		pluginFileStore := &fakes.FakePluginFileStore{
-			FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+			FileFunc: func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 				requestedFiles = append(requestedFiles, filename)
 				return nil, errors.New("some error")
 			},
@@ -424,7 +432,7 @@ func TestPluginMarkdown(t *testing.T) {
 
 		hs := HTTPServer{pluginFileStore: pluginFileStore}
 
-		md, err := hs.pluginMarkdown(context.Background(), "", "reAdMe")
+		md, err := hs.pluginMarkdown(context.Background(), "", "", "reAdMe")
 		require.NoError(t, err)
 		require.Equal(t, []byte{}, md)
 		require.Equal(t, []string{"README.md", "readme.md"}, requestedFiles)
@@ -453,7 +461,7 @@ func TestPluginMarkdown(t *testing.T) {
 			data := []byte{123}
 			var requestedFiles []string
 			pluginFileStore := &fakes.FakePluginFileStore{
-				FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+				FileFunc: func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 					requestedFiles = append(requestedFiles, filename)
 					return &plugins.File{Content: data}, nil
 				},
@@ -461,7 +469,7 @@ func TestPluginMarkdown(t *testing.T) {
 
 			hs := HTTPServer{pluginFileStore: pluginFileStore}
 
-			md, err := hs.pluginMarkdown(context.Background(), "test-datasource", tc.filePath)
+			md, err := hs.pluginMarkdown(context.Background(), "test-datasource", "", tc.filePath)
 			require.NoError(t, err)
 			require.Equal(t, data, md)
 			require.Equal(t, tc.expected, requestedFiles)
@@ -471,7 +479,7 @@ func TestPluginMarkdown(t *testing.T) {
 	t.Run("Non markdown file request returns an error", func(t *testing.T) {
 		hs := HTTPServer{pluginFileStore: &fakes.FakePluginFileStore{}}
 
-		md, err := hs.pluginMarkdown(context.Background(), "", "test.json")
+		md, err := hs.pluginMarkdown(context.Background(), "", "", "test.json")
 		require.ErrorIs(t, err, ErrUnexpectedFileExtension)
 		require.Equal(t, []byte{}, md)
 	})
@@ -480,14 +488,14 @@ func TestPluginMarkdown(t *testing.T) {
 		data := []byte{1, 2, 3}
 
 		pluginFileStore := &fakes.FakePluginFileStore{
-			FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+			FileFunc: func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 				return &plugins.File{Content: data}, nil
 			},
 		}
 
 		hs := HTTPServer{pluginFileStore: pluginFileStore}
 
-		md, err := hs.pluginMarkdown(context.Background(), "", "someFile")
+		md, err := hs.pluginMarkdown(context.Background(), "", "", "someFile")
 		require.NoError(t, err)
 		require.Equal(t, data, md)
 	})

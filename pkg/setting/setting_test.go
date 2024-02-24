@@ -9,9 +9,12 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/osutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -951,4 +954,47 @@ func TestNewCfgFromINIFile(t *testing.T) {
 	require.NotNil(t, cfg)
 	require.Equal(t, Prod, cfg.Env)
 	require.Equal(t, "test.com", cfg.Domain)
+}
+
+func TestDynamicSection(t *testing.T) {
+	t.Parallel()
+
+	t.Run("repro #44509 - panic on concurrent map write", func(t *testing.T) {
+		t.Parallel()
+
+		const (
+			goroutines = 10
+			attempts   = 1000
+			section    = "DEFAULT"
+			key        = "TestDynamicSection_repro_44509"
+			value      = "theval"
+		)
+
+		cfg, err := NewCfgFromBytes([]byte(``))
+		require.NoError(t, err)
+
+		ds := &DynamicSection{
+			section: cfg.Raw.Section(section),
+			Logger:  log.NewNopLogger(),
+			env:     osutil.MapEnv{},
+		}
+		osVar := EnvKey(section, key)
+		err = ds.env.Setenv(osVar, value)
+		require.NoError(t, err)
+
+		var wg sync.WaitGroup
+		for i := 0; i < goroutines; i++ {
+			wg.Add(1)
+			go require.NotPanics(t, func() {
+				for i := 0; i < attempts; i++ {
+					ds.section.Key(key).SetValue("")
+					ds.Key(key)
+				}
+				wg.Done()
+			})
+		}
+		wg.Wait()
+
+		assert.Equal(t, value, ds.section.Key(key).String())
+	})
 }

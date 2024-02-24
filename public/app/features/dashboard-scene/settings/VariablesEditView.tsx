@@ -1,14 +1,7 @@
 import React from 'react';
 
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
-import {
-  SceneComponentProps,
-  SceneObjectBase,
-  SceneVariable,
-  SceneVariables,
-  sceneGraph,
-  AdHocFilterSet,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -19,7 +12,13 @@ import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
-import { EditableVariableType, getVariableDefault, getVariableScene } from './variables/utils';
+import {
+  EditableVariableType,
+  RESERVED_GLOBAL_VARIABLE_NAME_REGEX,
+  WORD_CHARACTERS_REGEX,
+  getVariableDefault,
+  getVariableScene,
+} from './variables/utils';
 export interface VariablesEditViewState extends DashboardEditViewState {
   editIndex?: number | undefined;
 }
@@ -46,7 +45,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     return variables.findIndex((variable) => variable.state.name === identifier);
   };
 
-  private replaceEditVariable = (newVariable: SceneVariable | AdHocFilterSet) => {
+  private replaceEditVariable = (newVariable: SceneVariable) => {
     // Find the index of the variable to be deleted
     const variableIndex = this.state.editIndex ?? -1;
     const { variables } = this.getVariableSet().state;
@@ -58,18 +57,10 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       return;
     }
 
-    if (newVariable instanceof AdHocFilterSet) {
-      // TODO: Update controls in adding this fiter set to the dashboard
-    } else {
-      const updatedVariables = [
-        ...variables.slice(0, variableIndex),
-        newVariable,
-        ...variables.slice(variableIndex + 1),
-      ];
+    const updatedVariables = [...variables.slice(0, variableIndex), newVariable, ...variables.slice(variableIndex + 1)];
 
-      // Update the state or the variables array
-      this.getVariableSet().setState({ variables: updatedVariables });
-    }
+    // Update the state or the variables array
+    this.getVariableSet().setState({ variables: updatedVariables });
   };
 
   public onDelete = (identifier: string) => {
@@ -158,12 +149,9 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     const variableIndex = variables.length;
     //add the new variable to the end of the array
     const defaultNewVariable = getVariableDefault(variables);
-    if (defaultNewVariable instanceof AdHocFilterSet) {
-      // TODO: Update controls in adding this fiter set to the dashboard
-    } else {
-      this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
-      this.setState({ editIndex: variableIndex });
-    }
+
+    this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
+    this.setState({ editIndex: variableIndex });
   };
 
   public onTypeChange = (type: EditableVariableType) => {
@@ -186,6 +174,29 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   public onGoBack = () => {
     this.setState({ editIndex: undefined });
   };
+
+  public onValidateVariableName = (name: string, key: string | undefined): [true, string] | [false, null] => {
+    let errorText = null;
+    if (!RESERVED_GLOBAL_VARIABLE_NAME_REGEX.test(name)) {
+      errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
+    }
+
+    if (!WORD_CHARACTERS_REGEX.test(name)) {
+      errorText = 'Only word characters are allowed in variable names';
+    }
+
+    const variable = this.getVariableSet().getByName(name)?.state;
+
+    if (variable && variable.key !== key) {
+      errorText = 'Variable with the same name already exists';
+    }
+
+    if (errorText) {
+      return [true, errorText];
+    }
+
+    return [false, null];
+  };
 }
 
 function VariableEditorSettingsListView({ model }: SceneComponentProps<VariablesEditView>) {
@@ -207,6 +218,8 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
           pageNav={pageNav}
           navModel={navModel}
           dashboard={dashboard}
+          onDelete={onDelete}
+          onValidateVariableName={model.onValidateVariableName}
         />
       );
     }
@@ -234,6 +247,8 @@ interface VariableEditorSettingsEditViewProps {
   dashboard: DashboardScene;
   onTypeChange: (variableType: EditableVariableType) => void;
   onGoBack: () => void;
+  onDelete: (variableName: string) => void;
+  onValidateVariableName: (name: string, key: string | undefined) => [true, string] | [false, null];
 }
 
 function VariableEditorSettingsView({
@@ -243,6 +258,8 @@ function VariableEditorSettingsView({
   dashboard,
   onTypeChange,
   onGoBack,
+  onDelete,
+  onValidateVariableName,
 }: VariableEditorSettingsEditViewProps) {
   const parentTab = pageNav.children!.find((p) => p.active)!;
   parentTab.parentItem = pageNav;
@@ -255,7 +272,13 @@ function VariableEditorSettingsView({
   return (
     <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      <VariableEditorForm variable={variable} onTypeChange={onTypeChange} onGoBack={onGoBack} />
+      <VariableEditorForm
+        variable={variable}
+        onTypeChange={onTypeChange}
+        onGoBack={onGoBack}
+        onDelete={onDelete}
+        onValidateVariableName={onValidateVariableName}
+      />
     </Page>
   );
 }

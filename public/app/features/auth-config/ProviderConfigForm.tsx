@@ -82,7 +82,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
         payload: [message],
       });
       setSubmitError(true);
-    } finally {
       setIsSaving(false);
     }
   };
@@ -182,7 +181,9 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
           )}
           <Box display={'flex'} gap={2} marginTop={6}>
             <Field>
-              <Button type={'submit'}>{isSaving ? 'Saving...' : 'Save'}</Button>
+              <Button type={'submit'} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save'}
+              </Button>
             </Field>
             <Field>
               <LinkButton href={'/admin/authentication'} variant={'secondary'}>
@@ -192,6 +193,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             <Field>
               <Button
                 variant={'secondary'}
+                hidden={config?.source === 'system'}
                 onClick={(event) => {
                   setResetConfig(true);
                 }}

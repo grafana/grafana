@@ -18,7 +18,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	filestorage "github.com/grafana/grafana/pkg/services/apiserver/storage/file"
+	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
@@ -96,6 +96,9 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 		return err
 	}
 	genericConfig.MergedResourceConfig = mergedResourceConfig
+
+	aggregatorConfig.ExtraConfig.ProxyClientCertFile = o.ProxyClientCertFile
+	aggregatorConfig.ExtraConfig.ProxyClientKeyFile = o.ProxyClientKeyFile
 
 	namer := openapinamer.NewDefinitionNamer(aggregatorscheme.Scheme)
 	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(o.getMergedOpenAPIDefinitions, namer)

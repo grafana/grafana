@@ -12,7 +12,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -26,6 +26,10 @@ func NewServiceAPIBuilder() *ServiceAPIBuilder {
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *ServiceAPIBuilder {
+	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+		return nil // skip registration unless opting into aggregator mode
+	}
+
 	builder := NewServiceAPIBuilder()
 	apiregistration.RegisterAPI(NewServiceAPIBuilder())
 	return builder

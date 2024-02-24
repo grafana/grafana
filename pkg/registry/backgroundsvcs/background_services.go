@@ -26,6 +26,7 @@ import (
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
@@ -60,6 +61,7 @@ func ProvideBackgroundServiceRegistry(
 	grafanaAPIServer grafanaapiserver.Service,
 	anon *anonimpl.AnonDeviceService,
 	ssoSettings *ssosettingsimpl.Service,
+	pluginExternal *pluginexternal.Service,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -101,6 +103,7 @@ func ProvideBackgroundServiceRegistry(
 		grafanaAPIServer,
 		anon,
 		ssoSettings,
+		pluginExternal,
 	)
 }
 

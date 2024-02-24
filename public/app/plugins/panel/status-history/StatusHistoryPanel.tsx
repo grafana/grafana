@@ -22,13 +22,13 @@ import {
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
 
+import { StateTimelineTooltip2 } from '../state-timeline/StateTimelineTooltip2';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StatusHistoryTooltip } from './StatusHistoryTooltip';
-import { StatusHistoryTooltip2 } from './StatusHistoryTooltip2';
 import { Options } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
@@ -48,6 +48,13 @@ export const StatusHistoryPanel = ({
   onChangeTimeRange,
 }: TimelinePanelProps) => {
   const theme = useTheme2();
+
+  // TODO: we should just re-init when this changes, and have this be a static setting
+  const syncTooltip = useCallback(
+    () => sync?.() === DashboardCursorSync.Tooltip,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
   const isToolTipOpen = useRef<boolean>(false);
@@ -192,8 +199,7 @@ export const StatusHistoryPanel = ({
     );
   }
 
-  const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
 
   return (
     <TimelineChart
@@ -230,13 +236,12 @@ export const StatusHistoryPanel = ({
                 {options.tooltip.mode !== TooltipDisplayMode.None && (
                   <TooltipPlugin2
                     config={builder}
-                    hoverMode={TooltipHoverMode.xyOne}
+                    hoverMode={
+                      options.tooltip.mode === TooltipDisplayMode.Multi ? TooltipHoverMode.xAll : TooltipHoverMode.xOne
+                    }
                     queryZoom={onChangeTimeRange}
+                    syncTooltip={syncTooltip}
                     render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
-                      if (viaSync) {
-                        return null;
-                      }
-
                       if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
@@ -251,16 +256,17 @@ export const StatusHistoryPanel = ({
                       };
 
                       return (
-                        <StatusHistoryTooltip2
-                          data={frames ?? []}
+                        <StateTimelineTooltip2
+                          frames={frames ?? []}
+                          seriesFrame={alignedFrame}
                           dataIdxs={dataIdxs}
-                          alignedData={alignedFrame}
                           seriesIdx={seriesIdx}
-                          timeZone={timeZone}
-                          mode={options.tooltip.mode}
+                          mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
+                          timeRange={timeRange}
                           annotate={enableAnnotationCreation ? annotate : undefined}
+                          withDuration={false}
                         />
                       );
                     }}

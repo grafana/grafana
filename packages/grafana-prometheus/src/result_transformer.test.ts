@@ -909,7 +909,7 @@ describe('Prometheus Result Transformer', () => {
           },
         ],
       } as unknown as DataQueryRequest<PromQuery>;
-      const testOptions: any = {
+      const testOptions = {
         exemplarTraceIdDestinations: [
           {
             name: 'traceID',

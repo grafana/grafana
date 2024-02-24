@@ -5,16 +5,16 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 
-import PromQueryField from '../../components/PromQueryField';
+import { PromQueryField } from '../../components/PromQueryField';
 import { PromQueryEditorProps } from '../../components/types';
 
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
 
-type Props = PromQueryEditorProps & {
+type PromQueryCodeEditorProps = PromQueryEditorProps & {
   showExplain: boolean;
 };
 
-export function PromQueryCodeEditor(props: Props) {
+export function PromQueryCodeEditor(props: PromQueryCodeEditorProps) {
   const { query, datasource, range, onRunQuery, onChange, data, app, showExplain } = props;
   const styles = useStyles2(getStyles);
 

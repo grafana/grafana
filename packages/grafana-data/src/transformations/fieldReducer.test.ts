@@ -1,7 +1,7 @@
 import { difference } from 'lodash';
 
 import { createDataFrame, guessFieldTypeFromValue } from '../dataframe/processDataFrame';
-import { Field, FieldType, NullValueMode } from '../types/index';
+import { Field, FieldType, NullValueMode, Vector } from '../types/index';
 
 import { fieldReducers, ReducerID, reduceField, defaultCalcs } from './fieldReducer';
 
@@ -64,9 +64,8 @@ describe('Stats Calculators', () => {
   });
 
   it('should handle undefined field data without crashing', () => {
-    // eslint-ignore @typescript-eslint/no-explicit-any
     const stats = reduceField({
-      field: { name: 'a', values: undefined as any, config: {}, type: FieldType.number },
+      field: { name: 'a', values: undefined as unknown as Vector, config: {}, type: FieldType.number },
       reducers: [ReducerID.first, ReducerID.last, ReducerID.mean, ReducerID.count],
     });
 

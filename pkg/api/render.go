@@ -59,7 +59,9 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		hs.log.Error("Failed to parse user id", "err", errID)
 	}
 
-	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
+	encoding := queryReader.Get("encoding", "")
+
+	result, err := hs.RenderService.Render(c.Req.Context(), rendering.RenderPNG, rendering.Opts{
 		TimeoutOpts: rendering.TimeoutOpts{
 			Timeout: time.Duration(timeout) * time.Second,
 		},
@@ -72,7 +74,7 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		Height:            height,
 		Path:              web.Params(c.Req)["*"] + queryParams,
 		Timezone:          queryReader.Get("tz", ""),
-		Encoding:          queryReader.Get("encoding", ""),
+		Encoding:          encoding,
 		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,
 		DeviceScaleFactor: scale,
 		Headers:           headers,
@@ -88,7 +90,12 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		return
 	}
 
-	c.Resp.Header().Set("Content-Type", "image/png")
+	if encoding == "pdf" {
+		c.Resp.Header().Set("Content-Type", "application/pdf")
+	} else {
+		c.Resp.Header().Set("Content-Type", "image/png")
+	}
+
 	c.Resp.Header().Set("Cache-Control", "private")
 	http.ServeFile(c.Resp, c.Req, result.FilePath)
 }

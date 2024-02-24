@@ -14,8 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type heuristicsSuccessRoundTripper struct {
@@ -52,7 +50,7 @@ func Test_GetHeuristics(t *testing.T) {
 		//httpProvider := getHeuristicsMockProvider(&rt)
 		httpProvider := newHeuristicsSDKProvider(rt)
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, backend.NewLoggerWith("logger", "test"))),
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"))),
 		}
 
 		req := HeuristicsRequest{
@@ -72,7 +70,7 @@ func Test_GetHeuristics(t *testing.T) {
 		}
 		httpProvider := newHeuristicsSDKProvider(rt)
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, backend.NewLoggerWith("logger", "test"))),
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"))),
 		}
 
 		req := HeuristicsRequest{

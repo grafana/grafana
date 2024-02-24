@@ -31,7 +31,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 	if testing.Short() {
@@ -75,12 +80,12 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			desc:       "Should be able to view a subset of dashboards with dashboard scopes",
 			permission: dashboardaccess.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:110"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:40"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:22"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:13"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:55"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:99"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:110", Kind: "dashboards", Identifier: "110"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:40", Kind: "dashboards", Identifier: "40"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:22", Kind: "dashboards", Identifier: "22"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:13", Kind: "dashboards", Identifier: "13"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:55", Kind: "dashboards", Identifier: "55"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:99", Kind: "dashboards", Identifier: "99"},
 			},
 			expectedResult: 6,
 		},
@@ -96,9 +101,9 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			desc:       "Should be able to view a subset folders",
 			permission: dashboardaccess.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:6"},
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:9"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:6", Kind: "folders", Identifier: "6"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:9", Kind: "folders", Identifier: "9"},
 			},
 			expectedResult: 3,
 		},
@@ -106,10 +111,10 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			desc:       "Should return folders and dashboard with 'edit' permission",
 			permission: dashboardaccess.PERMISSION_EDIT,
 			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
-				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33", Kind: "dashboards", Identifier: "33"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33", Kind: "dashboards", Identifier: "33"},
 			},
 			expectedResult: 2,
 		},
@@ -117,11 +122,11 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			desc:       "Should return the dashboards that the User has dashboards:write permission on in case of 'edit' permission",
 			permission: dashboardaccess.PERMISSION_EDIT,
 			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:31"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
-				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:31", Kind: "dashboards", Identifier: "31"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32", Kind: "dashboards", Identifier: "32"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33", Kind: "dashboards", Identifier: "33"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33", Kind: "dashboards", Identifier: "33"},
 			},
 			expectedResult: 1,
 		},
@@ -129,11 +134,11 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			desc:       "Should return the folders that the User has dashboards:create permission on in case of 'edit' permission",
 			permission: dashboardaccess.PERMISSION_EDIT,
 			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:4"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:4", Kind: "folders", Identifier: "4"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32", Kind: "dashboards", Identifier: "32"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33", Kind: "dashboards", Identifier: "33"},
 			},
 			expectedResult: 1,
 		},
@@ -142,10 +147,10 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			permission: dashboardaccess.PERMISSION_VIEW,
 			queryType:  searchstore.TypeAlertFolder,
 			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
-				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:8"},
-				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:8", Kind: "folders", Identifier: "8"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8", Kind: "folders", Identifier: "8"},
 			},
 			expectedResult: 2,
 		},
@@ -155,8 +160,8 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			queryType:  searchstore.TypeAlertFolder,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "*"},
-				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3"},
-				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8", Kind: "folders", Identifier: "8"},
 			},
 			expectedResult: 2,
 		},
@@ -418,7 +423,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			queryType:  searchstore.TypeFolder,
 			permission: dashboardaccess.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent", Kind: "folders", Identifier: "parent"},
 			},
 			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"parent", "subfolder"},
@@ -428,7 +433,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			queryType:  searchstore.TypeFolder,
 			permission: dashboardaccess.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent", Kind: "folders", Identifier: "parent"},
 			},
 			features:       []any{},
 			expectedResult: []string{"parent"},
@@ -673,6 +678,7 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 			permissions[i].RoleID = role.ID
 			permissions[i].Created = time.Now()
 			permissions[i].Updated = time.Now()
+			permissions[i].Kind, permissions[i].Attribute, permissions[i].Identifier = permissions[i].SplitScope()
 		}
 		if len(permissions) > 0 {
 			_, err = sess.InsertMulti(&permissions)
@@ -764,6 +770,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 			perms[i].RoleID = role.ID
 			perms[i].Created = time.Now()
 			perms[i].Updated = time.Now()
+			perms[i].Kind, perms[i].Attribute, perms[i].Identifier = perms[i].SplitScope()
 		}
 		if len(perms) > 0 {
 			_, err = sess.InsertMulti(&perms)

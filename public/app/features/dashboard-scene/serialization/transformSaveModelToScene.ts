@@ -1,4 +1,4 @@
-import { AdHocVariableModel, TypedVariableModel, VariableModel } from '@grafana/data';
+import { DataFrameDTO, DataFrameJSON, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -24,9 +24,11 @@ import {
   SceneDataLayers,
   SceneDataLayerProvider,
   SceneDataLayerControls,
-  AdHocFilterSet,
   TextBoxVariable,
   UserActionEvent,
+  GroupByVariable,
+  AdHocFiltersVariable,
+  SceneFlexLayout,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
@@ -35,7 +37,6 @@ import { DashboardDTO } from 'app/types';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -55,6 +56,7 @@ import {
 } from '../utils/utils';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
+import { GRAFANA_DATASOURCE_REF } from './const';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -114,6 +116,11 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
         panels.push(gridItem);
       }
     } else {
+      // when rendering a snapshot created with the legacy Dashboards convert data to new snapshot format to be compatible with Scenes
+      if (panel.snapshotData) {
+        convertOldSnapshotToScenesSnapshot(panel);
+      }
+
       const panelObject = buildGridItemForPanel(panel);
 
       // when processing an expanded row, collect its panels
@@ -173,24 +180,11 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
   let layers: SceneDataLayerProvider[] = [];
-  let filtersSets: AdHocFilterSet[] = [];
 
   if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
       .map((v) => {
         try {
-          if (isAdhocVariable(v)) {
-            filtersSets.push(
-              new AdHocFilterSet({
-                name: v.name,
-                datasource: v.datasource,
-                filters: v.filters ?? [],
-                baseFilters: v.baseFilters ?? [],
-              })
-            );
-            return null;
-          }
-
           return createSceneVariableFromVariableModel(v);
         } catch (err) {
           console.error(err);
@@ -211,7 +205,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
-  if (oldModel.annotations?.list?.length) {
+  if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
@@ -266,12 +260,14 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     }),
     $variables: variables,
     $behaviors: [
-      registerDashboardMacro,
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
+      new behaviors.SceneQueryController(),
+      registerDashboardMacro,
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
+      trackIfIsEmpty,
     ],
     $data:
       layers.length > 0
@@ -279,20 +275,16 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
             layers,
           })
         : undefined,
-    controls: [
-      new DashboardControls({
-        variableControls: [new VariableValueSelectors({}), ...filtersSets, new SceneDataLayerControls()],
-        timeControls: [
-          new SceneTimePicker({}),
-          new SceneRefreshPicker({
-            refresh: oldModel.refresh,
-            intervals: oldModel.timepicker.refresh_intervals,
-          }),
-        ],
-        linkControls: new DashboardLinksControls({}),
-        hideTimeControls: oldModel.timepicker.hidden,
+    controls: new DashboardControls({
+      variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
+      timePicker: new SceneTimePicker({}),
+      refreshPicker: new SceneRefreshPicker({
+        refresh: oldModel.refresh,
+        intervals: oldModel.timepicker.refresh_intervals,
+        withText: true,
       }),
-    ],
+      hideTimeControls: oldModel.timepicker.hidden,
+    }),
   });
 
   return dashboardScene;
@@ -302,13 +294,26 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   const commonProperties = {
     name: variable.name,
     label: variable.label,
+    description: variable.description,
   };
+  if (variable.type === 'adhoc') {
+    return new AdHocFiltersVariable({
+      ...commonProperties,
+      description: variable.description,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      datasource: variable.datasource,
+      applyMode: 'auto',
+      filters: variable.filters ?? [],
+      baseFilters: variable.baseFilters ?? [],
+    });
+  }
   if (variable.type === 'custom') {
     return new CustomVariable({
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-      description: variable.description,
+
       query: variable.query,
       isMulti: variable.multi,
       allValue: variable.allValue || undefined,
@@ -322,7 +327,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-      description: variable.description,
+
       query: variable.query,
       datasource: variable.datasource,
       sort: variable.sort,
@@ -341,7 +346,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-      description: variable.description,
       regex: variable.regex,
       pluginId: variable.query,
       allValue: variable.allValue || undefined,
@@ -357,7 +361,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     return new IntervalVariable({
       ...commonProperties,
       value: currentInterval,
-      description: variable.description,
       intervals: intervals,
       autoEnabled: variable.auto,
       autoStepCount: variable.auto_count,
@@ -369,7 +372,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'constant') {
     return new ConstantVariable({
       ...commonProperties,
-      description: variable.description,
       value: variable.query,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
@@ -377,10 +379,20 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'textbox') {
     return new TextBoxVariable({
       ...commonProperties,
-      description: variable.description,
-      value: variable.query,
+      value: variable?.current?.value?.[0] ?? variable.query,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
+    });
+  } else if (config.featureToggles.groupByVariable && variable.type === 'groupby') {
+    return new GroupByVariable({
+      ...commonProperties,
+      datasource: variable.datasource,
+      value: variable.current?.value || [],
+      text: variable.current?.text || [],
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      // @ts-expect-error
+      defaultOptions: variable.options,
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
@@ -478,8 +490,6 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   });
 }
 
-const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
-
 const getLimitedDescriptionReporter = () => {
   const reportedPanels: string[] = [];
 
@@ -526,3 +536,53 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
     }
   });
 }
+
+export function trackIfIsEmpty(parent: DashboardScene) {
+  updateIsEmpty(parent);
+
+  parent.state.body.subscribeToState(() => {
+    updateIsEmpty(parent);
+  });
+}
+
+function updateIsEmpty(parent: DashboardScene) {
+  const { body } = parent.state;
+  if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
+    parent.setState({ isEmpty: body.state.children.length === 0 });
+  }
+}
+
+const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
+  return snapshotData.map((data) => {
+    return {
+      data: {
+        values: data.fields.map((field) => field.values).filter((values): values is unknown[] => values !== undefined),
+      },
+      schema: {
+        fields: data.fields.map((field) => ({
+          name: field.name,
+          type: field.type,
+          config: field.config,
+        })),
+      },
+    };
+  });
+};
+
+// override panel datasource and targets with snapshot data using the Grafana datasource
+export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
+  // only old snapshots created with old dashboards contains snapshotData
+  if (panel.snapshotData) {
+    panel.datasource = GRAFANA_DATASOURCE_REF;
+    panel.targets = [
+      {
+        refId: panel.snapshotData[0]?.refId ?? '',
+        datasource: panel.datasource,
+        queryType: 'snapshot',
+        // @ts-ignore
+        snapshot: convertSnapshotData(panel.snapshotData),
+      },
+    ];
+    panel.snapshotData = [];
+  }
+};

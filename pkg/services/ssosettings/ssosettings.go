@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 )
 
@@ -28,7 +29,7 @@ type Service interface {
 	// GetForProviderWithRedactedSecrets returns the SSO settings for a given provider (DB or config file) with secret values redacted
 	GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error)
 	// Upsert creates or updates the SSO settings for a given provider
-	Upsert(ctx context.Context, settings *models.SSOSettings) error
+	Upsert(ctx context.Context, settings *models.SSOSettings, requester identity.Requester) error
 	// Delete deletes the SSO settings for a given provider (soft delete)
 	Delete(ctx context.Context, provider string) error
 	// Patch updates the specified SSO settings (key-value pairs) for a given provider
@@ -44,7 +45,7 @@ type Service interface {
 //go:generate mockery --name Reloadable --structname MockReloadable --outpkg ssosettingstests --filename reloadable_mock.go --output ./ssosettingstests/
 type Reloadable interface {
 	Reload(ctx context.Context, settings models.SSOSettings) error
-	Validate(ctx context.Context, settings models.SSOSettings) error
+	Validate(ctx context.Context, settings models.SSOSettings, requester identity.Requester) error
 }
 
 // FallbackStrategy is an interface that can be implemented to allow a provider to load settings from a different source
@@ -65,3 +66,5 @@ type Store interface {
 	Upsert(ctx context.Context, settings *models.SSOSettings) error
 	Delete(ctx context.Context, provider string) error
 }
+
+type ValidateFunc[T any] func(input *T, requester identity.Requester) error

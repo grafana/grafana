@@ -15,6 +15,11 @@ export function getSaveDashboardChange(
   saveVariables?: boolean
 ): DashboardChangeInfo {
   const initialSaveModel = dashboard.getInitialSaveModel()!;
+
+  if (dashboard.state.editPanel) {
+    dashboard.state.editPanel.commitChanges();
+  }
+
   const changedSaveModel = transformSceneToSaveModel(dashboard);
   const hasTimeChanged = getHasTimeChanged(changedSaveModel, initialSaveModel);
 
