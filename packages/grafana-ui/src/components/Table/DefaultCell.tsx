@@ -125,10 +125,12 @@ function getCellStyle(
     }
   }
 
+  const isLongString = isStringValue && displayValue.text.length > 100 && Number.isNaN(displayValue.numeric);
+
   // If we have definied colors return those styles
   // Otherwise we return default styles
   if (textColor !== undefined || bgColor !== undefined) {
-    return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover, isStringValue);
+    return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover, isStringValue, isLongString);
   }
 
   if (isStringValue) {

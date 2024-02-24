@@ -15,7 +15,8 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     color?: string,
     background?: string,
     overflowOnHover?: boolean,
-    asCellText?: boolean
+    asCellText?: boolean,
+    isLongString?: boolean,
   ) => {
     return css({
       label: overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow',
@@ -51,7 +52,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         width: overflowOnHover ? 'auto' : undefined,
         height: overflowOnHover ? 'auto' : `${rowHeight - 1}px`,
         minHeight: `${rowHeight - 1}px`,
-        wordBreak: overflowOnHover ? 'break-word' : undefined,
+        wordBreak: overflowOnHover && asCellText ? 'break-word' : undefined,
         whiteSpace: overflowOnHover ? 'normal' : 'nowrap',
         boxShadow: overflowOnHover ? `0 0 2px ${theme.colors.primary.main}` : undefined,
         background: overflowOnHover ? background ?? theme.components.table.rowHoverBackground : undefined,
