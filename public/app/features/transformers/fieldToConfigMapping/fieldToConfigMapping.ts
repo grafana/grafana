@@ -286,7 +286,7 @@ export interface EvaluatedMappingResult {
   valueField?: Field;
 }
 
-export function evaluteFieldMappings(
+export function evaluateFieldMappings(
   frame: DataFrame,
   mappings: FieldToConfigMapping[],
   withNameAndValue?: boolean

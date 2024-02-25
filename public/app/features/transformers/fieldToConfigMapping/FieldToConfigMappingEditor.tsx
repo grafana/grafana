@@ -7,7 +7,7 @@ import { Select, StatsPicker, useStyles2 } from '@grafana/ui';
 
 import {
   configMapHandlers,
-  evaluteFieldMappings,
+  evaluateFieldMappings,
   FieldToConfigMapHandler,
   FieldToConfigMapping,
   lookUpConfigHandler as findConfigHandlerFor,
@@ -113,7 +113,7 @@ function getViewModelRows(
   withNameAndValue?: boolean
 ): FieldToConfigRowViewModel[] {
   const rows: FieldToConfigRowViewModel[] = [];
-  const mappingResult = evaluteFieldMappings(frame, mappings ?? [], withNameAndValue);
+  const mappingResult = evaluateFieldMappings(frame, mappings ?? [], withNameAndValue);
 
   for (const field of frame.fields) {
     const fieldName = getFieldDisplayName(field, frame);
