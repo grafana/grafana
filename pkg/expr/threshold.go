@@ -18,23 +18,32 @@ import (
 type ThresholdCommand struct {
 	ReferenceVar  string
 	RefID         string
-	ThresholdFunc string
+	ThresholdFunc ThresholdFunc
 	Conditions    []float64
 	Invert        bool
 }
 
+// The reducer function
+// +enum
+type ThresholdFunc string
+
 const (
-	ThresholdIsAbove        = "gt"
-	ThresholdIsBelow        = "lt"
-	ThresholdIsWithinRange  = "within_range"
-	ThresholdIsOutsideRange = "outside_range"
+	ThresholdIsAbove        ThresholdFunc = "gt"
+	ThresholdIsBelow        ThresholdFunc = "lt"
+	ThresholdIsWithinRange  ThresholdFunc = "within_range"
+	ThresholdIsOutsideRange ThresholdFunc = "outside_range"
 )
 
 var (
-	supportedThresholdFuncs = []string{ThresholdIsAbove, ThresholdIsBelow, ThresholdIsWithinRange, ThresholdIsOutsideRange}
+	supportedThresholdFuncs = []string{
+		string(ThresholdIsAbove),
+		string(ThresholdIsBelow),
+		string(ThresholdIsWithinRange),
+		string(ThresholdIsOutsideRange),
+	}
 )
 
-func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions []float64) (*ThresholdCommand, error) {
+func NewThresholdCommand(refID, referenceVar string, thresholdFunc ThresholdFunc, conditions []float64) (*ThresholdCommand, error) {
 	switch thresholdFunc {
 	case ThresholdIsOutsideRange, ThresholdIsWithinRange:
 		if len(conditions) < 2 {
@@ -57,8 +66,8 @@ func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions [
 }
 
 type ConditionEvalJSON struct {
-	Params []float64 `json:"params"`
-	Type   string    `json:"type"` // e.g. "gt"
+	Params []float64     `json:"params"`
+	Type   ThresholdFunc `json:"type"` // e.g. "gt"
 }
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
@@ -121,7 +130,7 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mat
 }
 
 // createMathExpression converts all the info we have about a "threshold" expression in to a Math expression
-func createMathExpression(referenceVar string, thresholdFunc string, args []float64, invert bool) (string, error) {
+func createMathExpression(referenceVar string, thresholdFunc ThresholdFunc, args []float64, invert bool) (string, error) {
 	var exp string
 	switch thresholdFunc {
 	case ThresholdIsAbove:

@@ -14,7 +14,7 @@ import (
 
 func TestNewThresholdCommand(t *testing.T) {
 	type testCase struct {
-		fn            string
+		fn            ThresholdFunc
 		args          []float64
 		shouldError   bool
 		expectedError string
@@ -233,7 +233,7 @@ func TestCreateMathExpression(t *testing.T) {
 		expected    string
 
 		ref      string
-		function string
+		function ThresholdFunc
 		params   []float64
 	}
 
@@ -297,7 +297,7 @@ func TestCreateMathExpression(t *testing.T) {
 
 func TestIsSupportedThresholdFunc(t *testing.T) {
 	type testCase struct {
-		function  string
+		function  ThresholdFunc
 		supported bool
 	}
 
@@ -325,8 +325,8 @@ func TestIsSupportedThresholdFunc(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.function, func(t *testing.T) {
-			supported := IsSupportedThresholdFunc(tc.function)
+		t.Run(string(tc.function), func(t *testing.T) {
+			supported := IsSupportedThresholdFunc(string(tc.function))
 			require.Equal(t, supported, tc.supported)
 		})
 	}

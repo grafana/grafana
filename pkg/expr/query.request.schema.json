@@ -1,547 +1,808 @@
 {
-  "$schema": "https://json-schema.org/draft-04/schema",
-  "definitions": {
-    "datasource": {
-      "properties": {
-        "type": {
-          "type": "string",
-          "description": "The datasource plugin type"
-        },
-        "uid": {
-          "type": "string",
-          "description": "Datasource UID"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "type",
-        "uid"
-      ],
-      "description": "The datasource"
-    },
-    "hide": {
-      "type": "boolean",
-      "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)"
-    },
-    "intervalMs": {
-      "type": "number",
-      "description": "Interval is the suggested duration between time points in a time series query.\nNOTE: the values for intervalMs is not saved in the query model.  It is typically calculated\nfrom the interval required to fill a pixels in the visualization"
-    },
-    "maxDataPoints": {
-      "type": "integer",
-      "description": "MaxDataPoints is the maximum number of data points that should be returned from a time series query.\nNOTE: the values for maxDataPoints is not saved in the query model.  It is typically calculated\nfrom the number of pixels visible in a visualization"
-    },
-    "query": {
-      "oneOf": [
-        {
-          "properties": {
-            "expression": {
-              "type": "string",
-              "minLength": 1,
-              "description": "General math expression",
-              "examples": [
-                "$A + 1",
-                "$A/$B"
-              ]
-            },
-            "queryType": {
-              "type": "string",
-              "pattern": "^math$"
-            },
-            "timeRange": {
-              "$ref": "#/definitions/timeRange"
-            },
-            "datasource": {
-              "$ref": "#/definitions/datasource"
-            },
-            "maxDataPoints": {
-              "$ref": "#/definitions/maxDataPoints"
-            },
-            "intervalMs": {
-              "$ref": "#/definitions/intervalMs"
-            },
-            "hide": {
-              "$ref": "#/definitions/hide"
-            },
-            "refId": {
-              "$ref": "#/definitions/refId"
-            },
-            "resultAssertions": {
-              "$ref": "#/definitions/resultAssertions"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "required": [
-            "expression",
-            "queryType",
-            "refId"
-          ]
-        },
-        {
-          "properties": {
-            "expression": {
-              "type": "string",
-              "minLength": 1,
-              "description": "Reference to single query result",
-              "examples": [
-                "$A"
-              ]
-            },
-            "reducer": {
-              "type": "string",
-              "enum": [
-                "sum",
-                "mean",
-                "min",
-                "max",
-                "count",
-                "last"
-              ],
-              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` "
-            },
-            "settings": {
-              "properties": {
-                "mode": {
-                  "type": "string",
-                  "enum": [
-                    "dropNN",
-                    "replaceNN"
-                  ],
-                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers"
-                },
-                "replaceWithValue": {
-                  "type": "number",
-                  "description": "Only valid when mode is replace"
-                }
-              },
-              "additionalProperties": false,
-              "type": "object",
-              "required": [
-                "mode"
-              ],
-              "description": "Reducer Options"
-            },
-            "queryType": {
-              "type": "string",
-              "pattern": "^reduce$"
-            },
-            "maxDataPoints": {
-              "$ref": "#/definitions/maxDataPoints"
-            },
-            "intervalMs": {
-              "$ref": "#/definitions/intervalMs"
-            },
-            "hide": {
-              "$ref": "#/definitions/hide"
-            },
-            "refId": {
-              "$ref": "#/definitions/refId"
-            },
-            "resultAssertions": {
-              "$ref": "#/definitions/resultAssertions"
-            },
-            "timeRange": {
-              "$ref": "#/definitions/timeRange"
-            },
-            "datasource": {
-              "$ref": "#/definitions/datasource"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "required": [
-            "expression",
-            "reducer",
-            "queryType",
-            "refId"
-          ]
-        },
-        {
-          "properties": {
-            "downsampler": {
-              "type": "string",
-              "enum": [
-                "sum",
-                "mean",
-                "min",
-                "max",
-                "count",
-                "last"
-              ],
-              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` "
-            },
-            "expression": {
-              "type": "string",
-              "minLength": 1,
-              "description": "The math expression",
-              "examples": [
-                "$A + 1",
-                "$A"
-              ]
-            },
-            "upsampler": {
-              "type": "string",
-              "enum": [
-                "pad",
-                "backfilling",
-                "fillna"
-              ],
-              "description": "The upsample function\n\n\nPossible enum values:\n - `\"pad\"` Use the last seen value\n - `\"backfilling\"` backfill\n - `\"fillna\"` Do not fill values (nill)"
-            },
-            "window": {
-              "type": "string",
-              "minLength": 1,
-              "description": "The time duration",
-              "examples": [
-                "1d",
-                "10m"
-              ]
-            },
-            "queryType": {
-              "type": "string",
-              "pattern": "^resample$"
-            },
-            "maxDataPoints": {
-              "$ref": "#/definitions/maxDataPoints"
-            },
-            "intervalMs": {
-              "$ref": "#/definitions/intervalMs"
-            },
-            "hide": {
-              "$ref": "#/definitions/hide"
-            },
-            "refId": {
-              "$ref": "#/definitions/refId"
-            },
-            "resultAssertions": {
-              "$ref": "#/definitions/resultAssertions"
-            },
-            "timeRange": {
-              "$ref": "#/definitions/timeRange"
-            },
-            "datasource": {
-              "$ref": "#/definitions/datasource"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "required": [
-            "expression",
-            "window",
-            "downsampler",
-            "upsampler",
-            "queryType",
-            "refId"
-          ],
-          "description": "QueryType = resample"
-        },
-        {
-          "properties": {
-            "conditions": {
-              "items": {
-                "properties": {
-                  "evaluator": {
-                    "properties": {
-                      "params": {
-                        "items": {
-                          "type": "number"
-                        },
-                        "type": "array"
-                      },
-                      "type": {
-                        "type": "string",
-                        "description": "e.g. \"gt\""
-                      }
-                    },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "required": [
-                      "params",
-                      "type"
-                    ]
-                  },
-                  "operator": {
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "required": [
-                      "type"
-                    ]
-                  },
-                  "query": {
-                    "properties": {
-                      "params": {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "required": [
-                      "params"
-                    ]
-                  },
-                  "reducer": {
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "required": [
-                      "type"
-                    ]
-                  }
-                },
-                "additionalProperties": false,
-                "type": "object",
-                "required": [
-                  "evaluator",
-                  "operator",
-                  "query",
-                  "reducer"
-                ],
-                "description": "ConditionJSON is the JSON model for a single condition in ConditionsCmd."
-              },
-              "type": "array"
-            },
-            "queryType": {
-              "type": "string",
-              "pattern": "^classic_conditions$"
-            },
-            "hide": {
-              "$ref": "#/definitions/hide"
-            },
-            "refId": {
-              "$ref": "#/definitions/refId"
-            },
-            "resultAssertions": {
-              "$ref": "#/definitions/resultAssertions"
-            },
-            "timeRange": {
-              "$ref": "#/definitions/timeRange"
-            },
-            "datasource": {
-              "$ref": "#/definitions/datasource"
-            },
-            "maxDataPoints": {
-              "$ref": "#/definitions/maxDataPoints"
-            },
-            "intervalMs": {
-              "$ref": "#/definitions/intervalMs"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "required": [
-            "conditions",
-            "queryType",
-            "refId"
-          ]
-        },
-        {
-          "properties": {
-            "conditions": {
-              "items": {
-                "properties": {
-                  "evaluator": {
-                    "properties": {
-                      "params": {
-                        "items": {
-                          "type": "number"
-                        },
-                        "type": "array"
-                      },
-                      "type": {
-                        "type": "string",
-                        "description": "e.g. \"gt\""
-                      }
-                    },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "required": [
-                      "params",
-                      "type"
-                    ]
-                  },
-                  "loadedDimensions": {
-                    "additionalProperties": true,
-                    "type": "object"
-                  },
-                  "unloadEvaluator": {
-                    "properties": {
-                      "params": {
-                        "items": {
-                          "type": "number"
-                        },
-                        "type": "array"
-                      },
-                      "type": {
-                        "type": "string",
-                        "description": "e.g. \"gt\""
-                      }
-                    },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "required": [
-                      "params",
-                      "type"
-                    ]
-                  }
-                },
-                "additionalProperties": false,
-                "type": "object",
-                "required": [
-                  "evaluator",
-                  "unloadEvaluator",
-                  "loadedDimensions"
-                ]
-              },
-              "type": "array",
-              "description": "Threshold Conditions"
-            },
-            "expression": {
-              "type": "string",
-              "minLength": 1,
-              "description": "Reference to single query result",
-              "examples": [
-                "$A"
-              ]
-            },
-            "queryType": {
-              "type": "string",
-              "pattern": "^threshold$"
-            },
-            "refId": {
-              "$ref": "#/definitions/refId"
-            },
-            "resultAssertions": {
-              "$ref": "#/definitions/resultAssertions"
-            },
-            "timeRange": {
-              "$ref": "#/definitions/timeRange"
-            },
-            "datasource": {
-              "$ref": "#/definitions/datasource"
-            },
-            "maxDataPoints": {
-              "$ref": "#/definitions/maxDataPoints"
-            },
-            "intervalMs": {
-              "$ref": "#/definitions/intervalMs"
-            },
-            "hide": {
-              "$ref": "#/definitions/hide"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "required": [
-            "expression",
-            "conditions",
-            "queryType",
-            "refId"
-          ]
-        }
-      ],
-      "properties": {},
-      "type": "object"
-    },
-    "queryType": {
-      "type": "string",
-      "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries."
-    },
-    "refId": {
-      "type": "string",
-      "description": "RefID is the unique identifier of the query, set by the frontend call."
-    },
-    "resultAssertions": {
-      "properties": {
-        "type": {
-          "type": "string",
-          "description": "Type asserts that the frame matches a known type structure."
-        },
-        "typeVersion": {
-          "items": {
-            "type": "integer"
-          },
-          "type": "array",
-          "maxItems": 2,
-          "minItems": 2,
-          "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/."
-        },
-        "maxBytes": {
-          "type": "integer",
-          "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast"
-        },
-        "maxFrames": {
-          "type": "integer",
-          "description": "Maximum frame count"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "typeVersion"
-      ],
-      "description": "Optionally define expected query result behavior"
-    },
-    "timeRange": {
-      "properties": {
-        "from": {
-          "type": "string",
-          "description": "From is the start time of the query."
-        },
-        "to": {
-          "type": "string",
-          "description": "To is the end time of the query."
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "from",
-        "to"
-      ],
-      "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly"
-    }
-  },
-  "properties": {
-    "from": {
-      "type": "string",
-      "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units."
-    },
-    "to": {
-      "type": "string",
-      "description": "To end time in epoch timestamps in milliseconds or relative using Grafana time units."
-    },
-    "queries": {
-      "items": {
-        "$ref": "#/definitions/query"
-      },
-      "type": "array"
-    },
-    "debug": {
-      "type": "boolean"
-    },
-    "$schema": {
-      "type": "string",
-      "description": "Optional schema URL -- this is not really used in production, but helpful for vscode debugging"
-    }
-  },
-  "additionalProperties": false,
   "type": "object",
   "required": [
     "queries"
   ],
-  "description": "Datasource request model"
+  "properties": {
+    "$schema": {
+      "description": "helper",
+      "type": "string"
+    },
+    "debug": {
+      "type": "boolean"
+    },
+    "from": {
+      "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
+      "type": "string"
+    },
+    "queries": {
+      "type": "array",
+      "items": {
+        "description": "Datasource request model",
+        "type": "object",
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "expression",
+              "queryType",
+              "refId"
+            ],
+            "properties": {
+              "datasource": {
+                "description": "The datasource",
+                "type": "object",
+                "required": [
+                  "type",
+                  "uid"
+                ],
+                "properties": {
+                  "type": {
+                    "description": "The datasource plugin type",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "Datasource UID",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "expression": {
+                "description": "General math expression",
+                "type": "string",
+                "minLength": 1,
+                "examples": [
+                  "$A + 1",
+                  "$A/$B"
+                ]
+              },
+              "hide": {
+                "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
+                "type": "boolean"
+              },
+              "intervalMs": {
+                "description": "Interval is the suggested duration between time points in a time series query.\nNOTE: the values for intervalMs is not saved in the query model.  It is typically calculated\nfrom the interval required to fill a pixels in the visualization",
+                "type": "number"
+              },
+              "maxDataPoints": {
+                "description": "MaxDataPoints is the maximum number of data points that should be returned from a time series query.\nNOTE: the values for maxDataPoints is not saved in the query model.  It is typically calculated\nfrom the number of pixels visible in a visualization",
+                "type": "integer"
+              },
+              "queryType": {
+                "type": "string",
+                "pattern": "^math$"
+              },
+              "refId": {
+                "description": "RefID is the unique identifier of the query, set by the frontend call.",
+                "type": "string"
+              },
+              "resultAssertions": {
+                "description": "Optionally define expected query result behavior",
+                "type": "object",
+                "required": [
+                  "typeVersion"
+                ],
+                "properties": {
+                  "maxBytes": {
+                    "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast",
+                    "type": "integer"
+                  },
+                  "maxFrames": {
+                    "description": "Maximum frame count",
+                    "type": "integer"
+                  },
+                  "type": {
+                    "description": "Type asserts that the frame matches a known type structure.",
+                    "type": "string"
+                  },
+                  "typeVersion": {
+                    "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
+                    "type": "array",
+                    "maxItems": 2,
+                    "minItems": 2,
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "timeRange": {
+                "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly",
+                "type": "object",
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "from": {
+                    "description": "From is the start time of the query.",
+                    "type": "string"
+                  },
+                  "to": {
+                    "description": "To is the end time of the query.",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "https://json-schema.org/draft-04/schema"
+          },
+          {
+            "type": "object",
+            "required": [
+              "expression",
+              "reducer",
+              "queryType",
+              "refId"
+            ],
+            "properties": {
+              "datasource": {
+                "description": "The datasource",
+                "type": "object",
+                "required": [
+                  "type",
+                  "uid"
+                ],
+                "properties": {
+                  "type": {
+                    "description": "The datasource plugin type",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "Datasource UID",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "expression": {
+                "description": "Reference to single query result",
+                "type": "string",
+                "minLength": 1,
+                "examples": [
+                  "$A"
+                ]
+              },
+              "hide": {
+                "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
+                "type": "boolean"
+              },
+              "intervalMs": {
+                "description": "Interval is the suggested duration between time points in a time series query.\nNOTE: the values for intervalMs is not saved in the query model.  It is typically calculated\nfrom the interval required to fill a pixels in the visualization",
+                "type": "number"
+              },
+              "maxDataPoints": {
+                "description": "MaxDataPoints is the maximum number of data points that should be returned from a time series query.\nNOTE: the values for maxDataPoints is not saved in the query model.  It is typically calculated\nfrom the number of pixels visible in a visualization",
+                "type": "integer"
+              },
+              "queryType": {
+                "type": "string",
+                "pattern": "^reduce$"
+              },
+              "reducer": {
+                "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+                "type": "string",
+                "enum": [
+                  "sum",
+                  "mean",
+                  "min",
+                  "max",
+                  "count",
+                  "last"
+                ],
+                "x-enum-description": {}
+              },
+              "refId": {
+                "description": "RefID is the unique identifier of the query, set by the frontend call.",
+                "type": "string"
+              },
+              "resultAssertions": {
+                "description": "Optionally define expected query result behavior",
+                "type": "object",
+                "required": [
+                  "typeVersion"
+                ],
+                "properties": {
+                  "maxBytes": {
+                    "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast",
+                    "type": "integer"
+                  },
+                  "maxFrames": {
+                    "description": "Maximum frame count",
+                    "type": "integer"
+                  },
+                  "type": {
+                    "description": "Type asserts that the frame matches a known type structure.",
+                    "type": "string"
+                  },
+                  "typeVersion": {
+                    "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
+                    "type": "array",
+                    "maxItems": 2,
+                    "minItems": 2,
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "settings": {
+                "description": "Reducer Options",
+                "type": "object",
+                "required": [
+                  "mode"
+                ],
+                "properties": {
+                  "mode": {
+                    "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
+                    "type": "string",
+                    "enum": [
+                      "dropNN",
+                      "replaceNN"
+                    ],
+                    "x-enum-description": {
+                      "dropNN": "Drop non-numbers",
+                      "replaceNN": "Replace non-numbers"
+                    }
+                  },
+                  "replaceWithValue": {
+                    "description": "Only valid when mode is replace",
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "timeRange": {
+                "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly",
+                "type": "object",
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "from": {
+                    "description": "From is the start time of the query.",
+                    "type": "string"
+                  },
+                  "to": {
+                    "description": "To is the end time of the query.",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "https://json-schema.org/draft-04/schema"
+          },
+          {
+            "description": "QueryType = resample",
+            "type": "object",
+            "required": [
+              "expression",
+              "window",
+              "downsampler",
+              "upsampler",
+              "queryType",
+              "refId"
+            ],
+            "properties": {
+              "datasource": {
+                "description": "The datasource",
+                "type": "object",
+                "required": [
+                  "type",
+                  "uid"
+                ],
+                "properties": {
+                  "type": {
+                    "description": "The datasource plugin type",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "Datasource UID",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "downsampler": {
+                "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+                "type": "string",
+                "enum": [
+                  "sum",
+                  "mean",
+                  "min",
+                  "max",
+                  "count",
+                  "last"
+                ],
+                "x-enum-description": {}
+              },
+              "expression": {
+                "description": "The math expression",
+                "type": "string",
+                "minLength": 1,
+                "examples": [
+                  "$A + 1",
+                  "$A"
+                ]
+              },
+              "hide": {
+                "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
+                "type": "boolean"
+              },
+              "intervalMs": {
+                "description": "Interval is the suggested duration between time points in a time series query.\nNOTE: the values for intervalMs is not saved in the query model.  It is typically calculated\nfrom the interval required to fill a pixels in the visualization",
+                "type": "number"
+              },
+              "maxDataPoints": {
+                "description": "MaxDataPoints is the maximum number of data points that should be returned from a time series query.\nNOTE: the values for maxDataPoints is not saved in the query model.  It is typically calculated\nfrom the number of pixels visible in a visualization",
+                "type": "integer"
+              },
+              "queryType": {
+                "type": "string",
+                "pattern": "^resample$"
+              },
+              "refId": {
+                "description": "RefID is the unique identifier of the query, set by the frontend call.",
+                "type": "string"
+              },
+              "resultAssertions": {
+                "description": "Optionally define expected query result behavior",
+                "type": "object",
+                "required": [
+                  "typeVersion"
+                ],
+                "properties": {
+                  "maxBytes": {
+                    "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast",
+                    "type": "integer"
+                  },
+                  "maxFrames": {
+                    "description": "Maximum frame count",
+                    "type": "integer"
+                  },
+                  "type": {
+                    "description": "Type asserts that the frame matches a known type structure.",
+                    "type": "string"
+                  },
+                  "typeVersion": {
+                    "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
+                    "type": "array",
+                    "maxItems": 2,
+                    "minItems": 2,
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "timeRange": {
+                "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly",
+                "type": "object",
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "from": {
+                    "description": "From is the start time of the query.",
+                    "type": "string"
+                  },
+                  "to": {
+                    "description": "To is the end time of the query.",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "upsampler": {
+                "description": "The upsample function\n\n\nPossible enum values:\n - `\"pad\"` Use the last seen value\n - `\"backfilling\"` backfill\n - `\"fillna\"` Do not fill values (nill)",
+                "type": "string",
+                "enum": [
+                  "pad",
+                  "backfilling",
+                  "fillna"
+                ],
+                "x-enum-description": {
+                  "backfilling": "backfill",
+                  "fillna": "Do not fill values (nill)",
+                  "pad": "Use the last seen value"
+                }
+              },
+              "window": {
+                "description": "The time duration",
+                "type": "string",
+                "minLength": 1,
+                "examples": [
+                  "1d",
+                  "10m"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "https://json-schema.org/draft-04/schema"
+          },
+          {
+            "type": "object",
+            "required": [
+              "conditions",
+              "queryType",
+              "refId"
+            ],
+            "properties": {
+              "conditions": {
+                "type": "array",
+                "items": {
+                  "description": "ConditionJSON is the JSON model for a single condition in ConditionsCmd.",
+                  "type": "object",
+                  "required": [
+                    "evaluator",
+                    "operator",
+                    "query",
+                    "reducer"
+                  ],
+                  "properties": {
+                    "evaluator": {
+                      "type": "object",
+                      "required": [
+                        "params",
+                        "type"
+                      ],
+                      "properties": {
+                        "params": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          }
+                        },
+                        "type": {
+                          "description": "e.g. \"gt\"",
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "operator": {
+                      "type": "object",
+                      "required": [
+                        "type"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "and",
+                            "or"
+                          ],
+                          "x-enum-description": {}
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "query": {
+                      "type": "object",
+                      "required": [
+                        "params"
+                      ],
+                      "properties": {
+                        "params": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "reducer": {
+                      "type": "object",
+                      "required": [
+                        "type"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "datasource": {
+                "description": "The datasource",
+                "type": "object",
+                "required": [
+                  "type",
+                  "uid"
+                ],
+                "properties": {
+                  "type": {
+                    "description": "The datasource plugin type",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "Datasource UID",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "hide": {
+                "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
+                "type": "boolean"
+              },
+              "intervalMs": {
+                "description": "Interval is the suggested duration between time points in a time series query.\nNOTE: the values for intervalMs is not saved in the query model.  It is typically calculated\nfrom the interval required to fill a pixels in the visualization",
+                "type": "number"
+              },
+              "maxDataPoints": {
+                "description": "MaxDataPoints is the maximum number of data points that should be returned from a time series query.\nNOTE: the values for maxDataPoints is not saved in the query model.  It is typically calculated\nfrom the number of pixels visible in a visualization",
+                "type": "integer"
+              },
+              "queryType": {
+                "type": "string",
+                "pattern": "^classic_conditions$"
+              },
+              "refId": {
+                "description": "RefID is the unique identifier of the query, set by the frontend call.",
+                "type": "string"
+              },
+              "resultAssertions": {
+                "description": "Optionally define expected query result behavior",
+                "type": "object",
+                "required": [
+                  "typeVersion"
+                ],
+                "properties": {
+                  "maxBytes": {
+                    "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast",
+                    "type": "integer"
+                  },
+                  "maxFrames": {
+                    "description": "Maximum frame count",
+                    "type": "integer"
+                  },
+                  "type": {
+                    "description": "Type asserts that the frame matches a known type structure.",
+                    "type": "string"
+                  },
+                  "typeVersion": {
+                    "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
+                    "type": "array",
+                    "maxItems": 2,
+                    "minItems": 2,
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "timeRange": {
+                "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly",
+                "type": "object",
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "from": {
+                    "description": "From is the start time of the query.",
+                    "type": "string"
+                  },
+                  "to": {
+                    "description": "To is the end time of the query.",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "https://json-schema.org/draft-04/schema"
+          },
+          {
+            "type": "object",
+            "required": [
+              "expression",
+              "conditions",
+              "queryType",
+              "refId"
+            ],
+            "properties": {
+              "conditions": {
+                "description": "Threshold Conditions",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "evaluator",
+                    "unloadEvaluator",
+                    "loadedDimensions"
+                  ],
+                  "properties": {
+                    "evaluator": {
+                      "type": "object",
+                      "required": [
+                        "params",
+                        "type"
+                      ],
+                      "properties": {
+                        "params": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          }
+                        },
+                        "type": {
+                          "description": "e.g. \"gt\"",
+                          "type": "string",
+                          "enum": [
+                            "gt",
+                            "lt",
+                            "within_range",
+                            "outside_range"
+                          ],
+                          "x-enum-description": {}
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "loadedDimensions": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "x-grafana-type": "data.DataFrame"
+                    },
+                    "unloadEvaluator": {
+                      "type": "object",
+                      "required": [
+                        "params",
+                        "type"
+                      ],
+                      "properties": {
+                        "params": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          }
+                        },
+                        "type": {
+                          "description": "e.g. \"gt\"",
+                          "type": "string",
+                          "enum": [
+                            "gt",
+                            "lt",
+                            "within_range",
+                            "outside_range"
+                          ],
+                          "x-enum-description": {}
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "datasource": {
+                "description": "The datasource",
+                "type": "object",
+                "required": [
+                  "type",
+                  "uid"
+                ],
+                "properties": {
+                  "type": {
+                    "description": "The datasource plugin type",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "Datasource UID",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "expression": {
+                "description": "Reference to single query result",
+                "type": "string",
+                "minLength": 1,
+                "examples": [
+                  "$A"
+                ]
+              },
+              "hide": {
+                "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
+                "type": "boolean"
+              },
+              "intervalMs": {
+                "description": "Interval is the suggested duration between time points in a time series query.\nNOTE: the values for intervalMs is not saved in the query model.  It is typically calculated\nfrom the interval required to fill a pixels in the visualization",
+                "type": "number"
+              },
+              "maxDataPoints": {
+                "description": "MaxDataPoints is the maximum number of data points that should be returned from a time series query.\nNOTE: the values for maxDataPoints is not saved in the query model.  It is typically calculated\nfrom the number of pixels visible in a visualization",
+                "type": "integer"
+              },
+              "queryType": {
+                "type": "string",
+                "pattern": "^threshold$"
+              },
+              "refId": {
+                "description": "RefID is the unique identifier of the query, set by the frontend call.",
+                "type": "string"
+              },
+              "resultAssertions": {
+                "description": "Optionally define expected query result behavior",
+                "type": "object",
+                "required": [
+                  "typeVersion"
+                ],
+                "properties": {
+                  "maxBytes": {
+                    "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast",
+                    "type": "integer"
+                  },
+                  "maxFrames": {
+                    "description": "Maximum frame count",
+                    "type": "integer"
+                  },
+                  "type": {
+                    "description": "Type asserts that the frame matches a known type structure.",
+                    "type": "string"
+                  },
+                  "typeVersion": {
+                    "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
+                    "type": "array",
+                    "maxItems": 2,
+                    "minItems": 2,
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "timeRange": {
+                "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly",
+                "type": "object",
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "from": {
+                    "description": "From is the start time of the query.",
+                    "type": "string"
+                  },
+                  "to": {
+                    "description": "To is the end time of the query.",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "https://json-schema.org/draft-04/schema"
+          }
+        ],
+        "$schema": "https://json-schema.org/draft-04/schema"
+      }
+    },
+    "to": {
+      "description": "To end time in epoch timestamps in milliseconds or relative using Grafana time units.",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
 }

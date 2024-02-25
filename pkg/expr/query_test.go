@@ -1,8 +1,6 @@
 package expr
 
 import (
-	"encoding/json"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -24,6 +22,8 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				reflect.TypeOf(mathexp.ReducerSum),   // pick an example value (not the root)
 				reflect.TypeOf(mathexp.UpsamplerPad), // pick an example value (not the root)
 				reflect.TypeOf(ReduceModeDrop),       // pick an example value (not the root)
+				reflect.TypeOf(ThresholdIsAbove),
+				reflect.TypeOf(classic.ConditionOperatorAnd),
 			},
 		})
 	require.NoError(t, err)
@@ -69,8 +69,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				{
 					Name: "resample at a every day",
 					SaveModel: ResampleQuery{
-						Expression: "$A",
-						Window:     "1d",
+						Expression:  "$A",
+						Window:      "1d",
+						Downsampler: mathexp.ReducerLast,
+						Upsampler:   mathexp.UpsamplerPad,
 					},
 				},
 			},
@@ -103,16 +105,5 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	defs := builder.UpdateQueryDefinition(t, "./")
-
-	req, err := spec.GetExampleQueries(defs)
-	require.NoError(t, err)
-
-	out, err := json.MarshalIndent(req, "", "  ")
-	require.NoError(t, err)
-	fmt.Printf("%s", out)
-
-	// err = os.WriteFile("spec.jsonschema", out, 0644)
-	// require.NoError(t, err, "error writing file")
-
+	_ = builder.UpdateQueryDefinition(t, "./")
 }

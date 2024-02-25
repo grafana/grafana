@@ -20,22 +20,22 @@
         ],
         "querySchema": {
           "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
           "properties": {
             "expression": {
-              "type": "string",
-              "minLength": 1,
               "description": "General math expression",
               "examples": [
                 "$A + 1",
                 "$A/$B"
-              ]
+              ],
+              "minLength": 1,
+              "type": "string"
             }
           },
-          "additionalProperties": false,
-          "type": "object",
           "required": [
             "expression"
-          ]
+          ],
+          "type": "object"
         },
         "examples": [
           {
@@ -56,7 +56,7 @@
     {
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1708842365132",
+        "resourceVersion": "1708877992357",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -68,17 +68,18 @@
         ],
         "querySchema": {
           "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
           "properties": {
             "expression": {
-              "type": "string",
-              "minLength": 1,
               "description": "Reference to single query result",
               "examples": [
                 "$A"
-              ]
+              ],
+              "minLength": 1,
+              "type": "string"
             },
             "reducer": {
-              "type": "string",
+              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
               "enum": [
                 "sum",
                 "mean",
@@ -87,42 +88,41 @@
                 "count",
                 "last"
               ],
-              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
-              "x-enum-dictionary": {}
+              "type": "string",
+              "x-enum-description": {}
             },
             "settings": {
+              "additionalProperties": false,
+              "description": "Reducer Options",
               "properties": {
                 "mode": {
-                  "type": "string",
+                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
                   "enum": [
                     "dropNN",
                     "replaceNN"
                   ],
-                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
-                  "x-enum-dictionary": {
+                  "type": "string",
+                  "x-enum-description": {
                     "dropNN": "Drop non-numbers",
                     "replaceNN": "Replace non-numbers"
                   }
                 },
                 "replaceWithValue": {
-                  "type": "number",
-                  "description": "Only valid when mode is replace"
+                  "description": "Only valid when mode is replace",
+                  "type": "number"
                 }
               },
-              "additionalProperties": false,
-              "type": "object",
               "required": [
                 "mode"
               ],
-              "description": "Reducer Options"
+              "type": "object"
             }
           },
-          "additionalProperties": false,
-          "type": "object",
           "required": [
             "expression",
             "reducer"
-          ]
+          ],
+          "type": "object"
         },
         "examples": [
           {
@@ -141,7 +141,7 @@
     {
       "metadata": {
         "name": "resample",
-        "resourceVersion": "1708842365132",
+        "resourceVersion": "1708877050427",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -153,27 +153,11 @@
         ],
         "querySchema": {
           "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
+          "description": "QueryType = resample",
           "properties": {
-            "expression": {
-              "type": "string",
-              "minLength": 1,
-              "description": "The math expression",
-              "examples": [
-                "$A + 1",
-                "$A"
-              ]
-            },
-            "window": {
-              "type": "string",
-              "minLength": 1,
-              "description": "The time duration",
-              "examples": [
-                "1d",
-                "10m"
-              ]
-            },
             "downsampler": {
-              "type": "string",
+              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
               "enum": [
                 "sum",
                 "mean",
@@ -182,42 +166,58 @@
                 "count",
                 "last"
               ],
-              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
-              "x-enum-dictionary": {}
+              "type": "string",
+              "x-enum-description": {}
+            },
+            "expression": {
+              "description": "The math expression",
+              "examples": [
+                "$A + 1",
+                "$A"
+              ],
+              "minLength": 1,
+              "type": "string"
             },
             "upsampler": {
-              "type": "string",
+              "description": "The upsample function\n\n\nPossible enum values:\n - `\"pad\"` Use the last seen value\n - `\"backfilling\"` backfill\n - `\"fillna\"` Do not fill values (nill)",
               "enum": [
                 "pad",
                 "backfilling",
                 "fillna"
               ],
-              "description": "The upsample function\n\n\nPossible enum values:\n - `\"pad\"` Use the last seen value\n - `\"backfilling\"` backfill\n - `\"fillna\"` Do not fill values (nill)",
-              "x-enum-dictionary": {
+              "type": "string",
+              "x-enum-description": {
                 "backfilling": "backfill",
                 "fillna": "Do not fill values (nill)",
                 "pad": "Use the last seen value"
               }
+            },
+            "window": {
+              "description": "The time duration",
+              "examples": [
+                "1d",
+                "10m"
+              ],
+              "minLength": 1,
+              "type": "string"
             }
           },
-          "additionalProperties": false,
-          "type": "object",
           "required": [
             "expression",
             "window",
             "downsampler",
             "upsampler"
           ],
-          "description": "QueryType = resample"
+          "type": "object"
         },
         "examples": [
           {
             "name": "resample at a every day",
             "saveModel": {
+              "downsampler": "last",
               "expression": "$A",
-              "window": "1d",
-              "downsampler": "",
-              "upsampler": ""
+              "upsampler": "pad",
+              "window": "1d"
             }
           }
         ]
@@ -226,7 +226,7 @@
     {
       "metadata": {
         "name": "classic_conditions",
-        "resourceVersion": "1708842365132",
+        "resourceVersion": "1708878057467",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -265,7 +265,12 @@
                   "operator": {
                     "properties": {
                       "type": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": [
+                          "and",
+                          "or"
+                        ],
+                        "x-enum-description": {}
                       }
                     },
                     "additionalProperties": false,
@@ -334,7 +339,7 @@
     {
       "metadata": {
         "name": "threshold",
-        "resourceVersion": "1708842365132",
+        "resourceVersion": "1708878057467",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -368,7 +373,14 @@
                       },
                       "type": {
                         "type": "string",
-                        "description": "e.g. \"gt\""
+                        "enum": [
+                          "gt",
+                          "lt",
+                          "within_range",
+                          "outside_range"
+                        ],
+                        "description": "e.g. \"gt\"",
+                        "x-enum-description": {}
                       }
                     },
                     "additionalProperties": false,
@@ -388,7 +400,14 @@
                       },
                       "type": {
                         "type": "string",
-                        "description": "e.g. \"gt\""
+                        "enum": [
+                          "gt",
+                          "lt",
+                          "within_range",
+                          "outside_range"
+                        ],
+                        "description": "e.g. \"gt\"",
+                        "x-enum-description": {}
                       }
                     },
                     "additionalProperties": false,
