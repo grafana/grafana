@@ -13,11 +13,14 @@ import {
   ValueMap,
   Field,
   FieldType,
-  Threshold,
 } from '@grafana/data';
 
+export interface ThresholdArguments {
+  color: string;
+}
+
 export interface HandlerArguments {
-  threshold?: Threshold;
+  threshold?: ThresholdArguments;
 }
 
 export interface FieldToConfigMapping {
