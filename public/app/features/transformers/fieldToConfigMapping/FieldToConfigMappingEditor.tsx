@@ -10,8 +10,11 @@ import {
   evaluateFieldMappings,
   FieldToConfigMapHandler,
   FieldToConfigMapping,
+  HandlerArguments,
   lookUpConfigHandler as findConfigHandlerFor,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
+
+import { FieldConfigMappingHandlerArgumentsEditor } from './FieldConfigMappingHandlerArgumentsEditor';
 
 export interface Props {
   frame: DataFrame;
@@ -60,6 +63,18 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
     }
   };
 
+  const onChangeHandlerArguments = (row: FieldToConfigRowViewModel, handlerArguments: HandlerArguments) => {
+    const existingIdx = mappings.findIndex((x) => x.fieldName === row.fieldName);
+
+    if (existingIdx !== -1) {
+      const update = [...mappings];
+      update.splice(existingIdx, 1, { ...mappings[existingIdx], handlerArguments });
+      onChange(update);
+    } else {
+      onChange([...mappings, { fieldName: row.fieldName, handlerKey: row.handlerKey, handlerArguments }]);
+    }
+  };
+
   return (
     <table className={styles.table}>
       <thead>
@@ -91,6 +106,13 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
                 />
               </td>
             )}
+            <td>
+              <FieldConfigMappingHandlerArgumentsEditor
+                handlerKey={row.handlerKey}
+                handlerArguments={row.handlerArguments}
+                onChange={(args) => onChangeHandlerArguments(row, args)}
+              />
+            </td>
           </tr>
         ))}
       </tbody>
@@ -105,6 +127,7 @@ interface FieldToConfigRowViewModel {
   placeholder?: string;
   missingInFrame?: boolean;
   reducerId: string;
+  handlerArguments: HandlerArguments;
 }
 
 function getViewModelRows(
@@ -126,6 +149,7 @@ function getViewModelRows(
       placeholder: mapping.automatic ? option?.label : 'Choose',
       handlerKey: mapping.handler?.key ?? null,
       reducerId: mapping.reducerId,
+      handlerArguments: mapping.handlerArguments,
     });
   }
 
@@ -140,6 +164,7 @@ function getViewModelRows(
         configOption: configHandlerToSelectOption(handler, false),
         missingInFrame: true,
         reducerId: mapping.reducerId ?? ReducerID.lastNotNull,
+        handlerArguments: {},
       });
     }
   }

@@ -157,6 +157,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'threshold1',
+    name: 'Threshold',
     targetProperty: 'thresholds',
     processor: (value, config, _, handlerArguments) => {
       const numeric = anyToNumber(value);

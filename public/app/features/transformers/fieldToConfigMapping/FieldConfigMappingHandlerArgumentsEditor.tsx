@@ -28,7 +28,7 @@ export function FieldConfigMappingHandlerArgumentsEditor({ handlerArguments, han
   return (
     <>
       {handlerKey === 'threshold1' && (
-        <ColorPicker color={handlerArguments.threshold?.color ?? 'green'} onChange={onChangeThreshold} />
+        <ColorPicker color={handlerArguments.threshold?.color ?? 'red'} onChange={onChangeThreshold} />
       )}
     </>
   );
