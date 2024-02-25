@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1708553284743",
+        "resourceVersion": "1708842634204",
         "creationTimestamp": "2024-02-21T22:08:04Z"
       },
       "spec": {
@@ -71,14 +71,14 @@
         "examples": [
           {
             "name": "example timeseries",
-            "queryPayload": {
+            "saveModel": {
               "format": "time_series",
               "expr": "???"
             }
           },
           {
             "name": "example table",
-            "queryPayload": {
+            "saveModel": {
               "format": "table",
               "expr": "???"
             }

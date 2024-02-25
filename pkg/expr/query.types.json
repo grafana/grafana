@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "math",
-        "resourceVersion": "1708553693855",
+        "resourceVersion": "1708842365132",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -40,13 +40,13 @@
         "examples": [
           {
             "name": "constant addition",
-            "queryPayload": {
+            "saveModel": {
               "expression": "$A + 10"
             }
           },
           {
             "name": "math with two queries",
-            "queryPayload": {
+            "saveModel": {
               "expression": "$A - $B"
             }
           }
@@ -56,7 +56,7 @@
     {
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1708553693855",
+        "resourceVersion": "1708842365132",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -87,8 +87,8 @@
                 "count",
                 "last"
               ],
-              "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
-              "x-enum-description": {}
+              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+              "x-enum-dictionary": {}
             },
             "settings": {
               "properties": {
@@ -99,7 +99,7 @@
                     "replaceNN"
                   ],
                   "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
-                  "x-enum-description": {
+                  "x-enum-dictionary": {
                     "dropNN": "Drop non-numbers",
                     "replaceNN": "Replace non-numbers"
                   }
@@ -127,7 +127,7 @@
         "examples": [
           {
             "name": "get max value",
-            "queryPayload": {
+            "saveModel": {
               "expression": "$A",
               "reducer": "max",
               "settings": {
@@ -141,7 +141,7 @@
     {
       "metadata": {
         "name": "resample",
-        "resourceVersion": "1708553693855",
+        "resourceVersion": "1708842365132",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -166,19 +166,38 @@
             "window": {
               "type": "string",
               "minLength": 1,
-              "description": "The time durration",
+              "description": "The time duration",
               "examples": [
-                "1w",
+                "1d",
                 "10m"
               ]
             },
             "downsampler": {
               "type": "string",
-              "description": "The downsample function"
+              "enum": [
+                "sum",
+                "mean",
+                "min",
+                "max",
+                "count",
+                "last"
+              ],
+              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+              "x-enum-dictionary": {}
             },
             "upsampler": {
               "type": "string",
-              "description": "The upsample function"
+              "enum": [
+                "pad",
+                "backfilling",
+                "fillna"
+              ],
+              "description": "The upsample function\n\n\nPossible enum values:\n - `\"pad\"` Use the last seen value\n - `\"backfilling\"` backfill\n - `\"fillna\"` Do not fill values (nill)",
+              "x-enum-dictionary": {
+                "backfilling": "backfill",
+                "fillna": "Do not fill values (nill)",
+                "pad": "Use the last seen value"
+              }
             }
           },
           "additionalProperties": false,
@@ -194,7 +213,7 @@
         "examples": [
           {
             "name": "resample at a every day",
-            "queryPayload": {
+            "saveModel": {
               "expression": "$A",
               "window": "1d",
               "downsampler": "",
@@ -207,7 +226,7 @@
     {
       "metadata": {
         "name": "classic_conditions",
-        "resourceVersion": "1708553693855",
+        "resourceVersion": "1708842365132",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -305,7 +324,7 @@
         "examples": [
           {
             "name": "do classic query (TODO)",
-            "queryPayload": {
+            "saveModel": {
               "conditions": []
             }
           }
@@ -315,7 +334,7 @@
     {
       "metadata": {
         "name": "threshold",
-        "resourceVersion": "1708553693855",
+        "resourceVersion": "1708842365132",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -407,7 +426,7 @@
         "examples": [
           {
             "name": "TODO... a threshold query",
-            "queryPayload": {
+            "saveModel": {
               "expression": "$A",
               "conditions": null
             }
