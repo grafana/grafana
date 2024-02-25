@@ -1,0 +1,56 @@
+{
+"from": "now-1h",
+"to": "now",
+"queries": [
+    {
+    "refId": "A",
+    "queryType": "math",
+    "maxDataPoints": 1000,
+    "intervalMs": 5,
+    "expression": "$A + 10"
+    },
+    {
+    "refId": "B",
+    "queryType": "math",
+    "maxDataPoints": 1000,
+    "intervalMs": 5,
+    "expression": "$A - $B"
+    },
+    {
+    "refId": "C",
+    "queryType": "reduce",
+    "maxDataPoints": 1000,
+    "intervalMs": 5,
+    "expression": "$A",
+    "reducer": "max",
+    "settings": {
+        "mode": "dropNN"
+    }
+    },
+    {
+    "refId": "D",
+    "queryType": "resample",
+    "maxDataPoints": 1000,
+    "intervalMs": 5,
+    "window": "1d",
+    "downsampler": "",
+    "expression": "$A",
+    "upsampler": ""
+    },
+    {
+    "refId": "E",
+    "queryType": "classic_conditions",
+    "maxDataPoints": 1000,
+    "intervalMs": 5,
+    "conditions": []
+    },
+    {
+    "refId": "F",
+    "queryType": "threshold",
+    "maxDataPoints": 1000,
+    "intervalMs": 5,
+    "conditions": null,
+    "expression": "$A"
+    }
+]
+}

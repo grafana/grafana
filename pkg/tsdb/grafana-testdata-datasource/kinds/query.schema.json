@@ -1,0 +1,299 @@
+{
+  "$schema": "https://json-schema.org/draft-04/schema",
+  "properties": {
+    "alias": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string"
+    },
+    "csvContent": {
+      "type": "string"
+    },
+    "csvFileName": {
+      "type": "string"
+    },
+    "csvWave": {
+      "items": {
+        "properties": {
+          "labels": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "timeStep": {
+            "type": "integer"
+          },
+          "valuesCSV": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "description": "CSVWave defines model for CSVWave."
+      },
+      "type": "array"
+    },
+    "dropPercent": {
+      "type": "number",
+      "description": "Drop percentage (the chance we will lose a point 0-100)"
+    },
+    "errorType": {
+      "type": "string"
+    },
+    "flamegraphDiff": {
+      "type": "boolean"
+    },
+    "labels": {
+      "type": "string"
+    },
+    "levelColumn": {
+      "type": "boolean"
+    },
+    "lines": {
+      "type": "integer"
+    },
+    "nodes": {
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "points": {
+      "items": {
+        "items": true,
+        "type": "array"
+      },
+      "type": "array"
+    },
+    "pulseWave": {
+      "properties": {
+        "offCount": {
+          "type": "integer"
+        },
+        "offValue": {
+          "type": "number"
+        },
+        "onCount": {
+          "type": "integer"
+        },
+        "onValue": {
+          "type": "number"
+        },
+        "timeStep": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "rawFrameContent": {
+      "type": "string"
+    },
+    "scenarioId": {
+      "type": "string"
+    },
+    "seriesCount": {
+      "type": "integer"
+    },
+    "sim": {
+      "properties": {
+        "config": {
+          "type": "object"
+        },
+        "key": {
+          "properties": {
+            "tick": {
+              "type": "number"
+            },
+            "type": {
+              "type": "string"
+            },
+            "uid": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "tick",
+            "type"
+          ]
+        },
+        "last": {
+          "type": "boolean"
+        },
+        "stream": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "key"
+      ]
+    },
+    "spanCount": {
+      "type": "integer"
+    },
+    "stream": {
+      "properties": {
+        "bands": {
+          "type": "integer"
+        },
+        "noise": {
+          "type": "integer"
+        },
+        "speed": {
+          "type": "integer"
+        },
+        "spread": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "noise",
+        "speed",
+        "spread",
+        "type"
+      ]
+    },
+    "stringInput": {
+      "type": "string"
+    },
+    "usa": {
+      "properties": {
+        "fields": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "period": {
+          "type": "string"
+        },
+        "states": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "refId": {
+      "type": "string",
+      "description": "RefID is the unique identifier of the query, set by the frontend call."
+    },
+    "resultAssertions": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Type asserts that the frame matches a known type structure."
+        },
+        "typeVersion": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array",
+          "maxItems": 2,
+          "minItems": 2,
+          "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/."
+        },
+        "maxBytes": {
+          "type": "integer",
+          "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast"
+        },
+        "maxFrames": {
+          "type": "integer",
+          "description": "Maximum frame count"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "typeVersion"
+      ],
+      "description": "Optionally define expected query result behavior"
+    },
+    "timeRange": {
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "From is the start time of the query."
+        },
+        "to": {
+          "type": "string",
+          "description": "To is the end time of the query."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly"
+    },
+    "datasource": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The datasource plugin type"
+        },
+        "uid": {
+          "type": "string",
+          "description": "Datasource UID"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "type",
+        "uid"
+      ],
+      "description": "The datasource"
+    },
+    "queryType": {
+      "type": "string",
+      "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries."
+    },
+    "maxDataPoints": {
+      "type": "integer",
+      "description": "MaxDataPoints is the maximum number of data points that should be returned from a time series query.\nNOTE: the values for maxDataPoints is not saved in the query model.  It is typically calculated\nfrom the number of pixels visible in a visualization"
+    },
+    "intervalMs": {
+      "type": "number",
+      "description": "Interval is the suggested duration between time points in a time series query.\nNOTE: the values for intervalMs is not saved in the query model.  It is typically calculated\nfrom the interval required to fill a pixels in the visualization"
+    },
+    "hide": {
+      "type": "boolean",
+      "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "description": "object saved in dashboard/alert"
+}
