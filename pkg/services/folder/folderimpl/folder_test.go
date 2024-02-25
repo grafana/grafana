@@ -299,6 +299,17 @@ func TestIntegrationFolderService(t *testing.T) {
 				require.NoError(t, err)
 			})
 
+			t.Run("When get folder by uid and uid is general should return the root folder object", func(t *testing.T) {
+				uid := accesscontrol.GeneralFolderUID
+				query := &folder.GetFolderQuery{
+					UID:          &uid,
+					SignedInUser: usr,
+				}
+				actual, err := service.Get(context.Background(), query)
+				require.Equal(t, folder.RootFolder, actual)
+				require.NoError(t, err)
+			})
+
 			t.Run("When get folder by title should return folder", func(t *testing.T) {
 				expected := folder.NewFolder("TEST-"+util.GenerateShortUID(), "")
 

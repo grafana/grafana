@@ -83,7 +83,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		cache:         localcache.New(cacheExpirationTime, cacheCleanupInterval),
 		cfg:           cfg,
 		accessControl: acimpl.ProvideAccessControl(cfg),
-		acService:     acimpl.ProvideOSSService(cfg, env.AcStore, localcache.New(0, 0), env.UserService, fmgt),
+		acService:     acimpl.ProvideOSSService(cfg, env.AcStore, localcache.New(0, 0), fmgt),
 		memstore:      storage.NewMemoryStore(),
 		sqlstore:      env.OAuthStore,
 		logger:        log.New("oauthserver.test"),

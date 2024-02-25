@@ -38,7 +38,7 @@ require (
 	github.com/aws/aws-sdk-go v1.50.8 // @grafana/aws-datasources
 	github.com/beevik/etree v1.2.0 // @grafana/backend-platform
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-squad-backend
-	github.com/blang/semver/v4 v4.0.0 // @grafana/grafana-delivery
+	github.com/blang/semver/v4 v4.0.0 // @grafana/grafana-release-guild
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b // @grafana/backend-platform
 	github.com/centrifugal/centrifuge v0.30.2 // @grafana/grafana-app-platform-squad
 	github.com/crewjam/saml v0.4.13 // @grafana/grafana-authnz-team
@@ -59,11 +59,11 @@ require (
 	github.com/google/uuid v1.6.0 // @grafana/backend-platform
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20240213130827-92f64f0f2a12 // @grafana/alerting-squad-backend
+	github.com/grafana/alerting v0.0.0-20240222104113-abfafef9a7d2 // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.23.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.12.0 // @grafana/partner-datasources
-	github.com/grafana/grafana-plugin-sdk-go v0.211.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.212.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
@@ -76,7 +76,7 @@ require (
 	github.com/lib/pq v1.10.9 // @grafana/backend-platform
 	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/backend-platform
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
-	github.com/magefile/mage v1.15.0 // @grafana/grafana-delivery
+	github.com/magefile/mage v1.15.0 // @grafana/grafana-release-guild
 	github.com/mattn/go-isatty v0.0.19 // @grafana/backend-platform
 	github.com/mattn/go-sqlite3 v1.14.19 // @grafana/backend-platform
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-squad-backend
@@ -232,11 +232,11 @@ require (
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/backend-platform
 	github.com/bufbuild/connect-go v1.10.0 // @grafana/observability-traces-and-profiling
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/backend-platform
-	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-delivery
+	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-release-guild
 	github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-operator-experience-squad
 	github.com/golang-migrate/migrate/v4 v4.7.0 // @grafana/backend-platform
-	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-delivery
-	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-delivery
+	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-release-guild
+	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-release-guild
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
 	github.com/grafana/dskit v0.0.0-20240104111617-ea101a3b86eb // @grafana/backend-platform
 	github.com/huandu/xstrings v1.3.2 // @grafana/partner-datasources
@@ -253,7 +253,7 @@ require (
 require (
 	buf.build/gen/go/parca-dev/parca/bufbuild/connect-go v1.4.1-20221222094228-8b1d3d0f62e6.1 // @grafana/observability-traces-and-profiling
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.28.1-20221222094228-8b1d3d0f62e6.4 // @grafana/observability-traces-and-profiling
-	github.com/Masterminds/semver/v3 v3.1.1 // @grafana/grafana-delivery
+	github.com/Masterminds/semver/v3 v3.1.1 // @grafana/grafana-release-guild
 	github.com/alicebob/miniredis/v2 v2.30.1 // @grafana/alerting-squad-backend
 	github.com/dave/dst v0.27.2 // @grafana/grafana-as-code
 	github.com/go-jose/go-jose/v3 v3.0.1 // @grafana/grafana-authnz-team
@@ -262,7 +262,7 @@ require (
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 //  @grafana/grafana-as-code
 	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b // @grafana/observability-traces-and-profiling
 	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed // @grafana/grafana-as-code
-	github.com/microsoft/go-mssqldb v1.5.0 // @grafana/grafana-bi-squad
+	github.com/microsoft/go-mssqldb v1.6.1-0.20240214161942-b65008136246 // @grafana/grafana-bi-squad
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f // @grafana/grafana-authnz-team
 	github.com/redis/go-redis/v9 v9.0.2 // @grafana/alerting-squad-backend
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // @grafana/grafana-as-code
@@ -275,14 +275,14 @@ require (
 require (
 	github.com/spf13/cobra v1.8.0 // @grafana/grafana-app-platform-squad
 	go.opentelemetry.io/otel v1.22.0 // @grafana/backend-platform
-	k8s.io/api v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/klog/v2 v2.110.1 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.29.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.29.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.29.2 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.29.2 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.29.2 // @grafana/grafana-app-platform-squad
+	k8s.io/klog/v2 v2.120.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-aggregator v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-openapi v0.0.0-20231214164306-ab13479f8bf8 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-openapi v0.0.0-20240220201932-37d671a357a5 // @grafana/grafana-app-platform-squad
 )
 
 require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
@@ -347,7 +347,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.7 // @grafana/alerting-squad-backend
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -409,7 +409,7 @@ require (
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	k8s.io/kms v0.29.0 // indirect
+	k8s.io/kms v0.29.2 // indirect
 	lukechampine.com/uint128 v1.3.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
 	modernc.org/ccgo/v3 v3.16.13 // indirect
@@ -449,7 +449,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20230802225258-3cf4e6d46a89 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
-	github.com/docker/docker v24.0.7+incompatible // @grafana/grafana-delivery
+	github.com/docker/docker v24.0.7+incompatible // @grafana/grafana-release-guild
 	github.com/elazarl/goproxy v0.0.0-20230731152917-f99041a5c027 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/go-logr/logr v1.4.1 // @grafana/grafana-app-platform-squad
@@ -507,13 +507,6 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143
 // Upgrading affects backend plugins: https://github.com/grafana/grafana/pull/47653#discussion_r850508593
 // No harm to Thema because it's only a dependency in its main package.
 replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
-
-// This is a patched v0.8.2 intended to fix session.Find (and others) silently ignoring SQLITE_BUSY errors. This could
-// happen, for example, during a read when the sqlite db is under heavy write load.
-// This patch cherry picks compatible fixes from upstream xorm PR#1998 and can be reverted on upgrade to xorm v1.2.0+.
-// This has also been patched to support the azuresql driver that is a thin wrapper for the mssql driver with azure authentication support.
-//replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20230627081928-d04aa38aa209
-replace xorm.io/xorm => ./pkg/util/xorm
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.

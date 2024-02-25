@@ -40,6 +40,7 @@ import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryRe
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
+import { DESCRIPTIONS } from './descriptions';
 import {
   addExpressions,
   addNewDataQuery,
@@ -243,6 +244,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         queryType: '',
         relativeTimeRange: getDefaultRelativeTimeRange(),
         expr,
+        instant: true,
         model: {
           refId: 'A',
           hide: false,
@@ -370,23 +372,22 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     condition,
   ]);
 
+  const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
+
   return (
     <RuleEditorSection
       stepNo={2}
-      title={type !== RuleFormType.cloudRecording ? 'Define query and alert condition' : 'Define query'}
+      title={sectionTitle}
       description={
-        <Stack direction="row" gap={0.5} alignItems="baseline">
+        <Stack direction="row" gap={0.5} alignItems="center">
           <Text variant="bodySmall" color="secondary">
-            Define queries and/or expressions and then choose one of them as the alert rule condition. This is the
-            threshold that an alert rule must meet or exceed in order to fire.
+            {helpLabel}
           </Text>
           <NeedHelpInfo
-            contentText={`An alert rule consists of one or more queries and expressions that select the data you want to measure.
-          Define queries and/or expressions and then choose one of them as the alert rule condition. This is the threshold that an alert rule must meet or exceed in order to fire.
-          For more information on queries and expressions, see Query and transform data.`}
-            externalLink={`https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/`}
-            linkText={`Read about query and condition`}
-            title="Define query and alert condition"
+            contentText={helpContent}
+            externalLink={helpLink}
+            linkText={'Read more on our documentation website'}
+            title={helpLabel}
           />
         </Stack>
       }

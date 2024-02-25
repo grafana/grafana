@@ -151,6 +151,8 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
               hideScope={true}
               hideTag={true}
               query={traceQlQuery}
+              isMulti={false}
+              allowCustomValue={false}
             />
           </InlineSearchField>
           <InlineSearchField

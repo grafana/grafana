@@ -23,10 +23,10 @@ export function mergeLocalsAndRemotes({
   const catalogPlugins: CatalogPlugin[] = [];
   const errorByPluginId = groupErrorsByPluginId(errors);
 
-  const instancesSet = instance.reduce((set, instancePlugin) => {
-    set.add(instancePlugin.pluginSlug);
-    return set;
-  }, new Set<string>());
+  const instancesMap = instance.reduce((map, instancePlugin) => {
+    map.set(instancePlugin.pluginSlug, instancePlugin);
+    return map;
+  }, new Map<string, InstancePlugin>());
 
   // add locals
   local.forEach((localPlugin) => {
@@ -51,8 +51,17 @@ export function mergeLocalsAndRemotes({
       if (configCore.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled) {
         catalogPlugin.isFullyInstalled = catalogPlugin.isCore
           ? true
-          : instancesSet.has(remotePlugin.slug) && catalogPlugin.isInstalled;
-        catalogPlugin.isInstalled = instancesSet.has(remotePlugin.slug) || catalogPlugin.isInstalled;
+          : instancesMap.has(remotePlugin.slug) && catalogPlugin.isInstalled;
+
+        catalogPlugin.isInstalled = instancesMap.has(remotePlugin.slug) || catalogPlugin.isInstalled;
+
+        const instancePlugin = instancesMap.get(remotePlugin.slug);
+        catalogPlugin.isUpdatingFromInstance =
+          instancesMap.has(remotePlugin.slug) &&
+          catalogPlugin.hasUpdate &&
+          catalogPlugin.installedVersion !== instancePlugin?.version;
+
+        catalogPlugin.isUninstallingFromInstance = Boolean(localCounterpart) && !instancesMap.has(remotePlugin.slug);
       }
 
       catalogPlugins.push(catalogPlugin);

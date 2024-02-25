@@ -12,7 +12,6 @@ import {
   SceneDataTransformer,
   SceneVariableSet,
   LocalValueVariable,
-  SceneRefreshPicker,
 } from '@grafana/scenes';
 import {
   AnnotationQuery,
@@ -22,6 +21,7 @@ import {
   defaultDashboard,
   defaultTimePickerConfig,
   FieldConfigSource,
+  GridPos,
   Panel,
   RowPanel,
   TimePickerConfig,
@@ -33,7 +33,6 @@ import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
@@ -52,9 +51,6 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const data = state.$data;
   const variablesSet = state.$variables;
   const body = state.body;
-
-  let refreshIntervals: string[] | undefined;
-  let hideTimePicker: boolean | undefined;
 
   let panels: Panel[] = [];
   let graphTooltip = defaultDashboard.graphTooltip;
@@ -91,16 +87,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     variables = sceneVariablesSetToVariables(variablesSet);
   }
 
-  if (state.controls && state.controls[0] instanceof DashboardControls) {
-    hideTimePicker = state.controls[0].state.hideTimeControls;
-
-    const timeControls = state.controls[0].state.timeControls;
-    for (const control of timeControls) {
-      if (control instanceof SceneRefreshPicker && control.state.intervals) {
-        refreshIntervals = control.state.intervals;
-      }
-    }
-  }
+  const controlsState = state.controls?.state;
 
   if (state.$behaviors) {
     for (const behavior of state.$behaviors!) {
@@ -112,8 +99,8 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
 
   const timePickerWithoutDefaults = removeDefaults<TimePickerConfig>(
     {
-      refresh_intervals: refreshIntervals,
-      hidden: hideTimePicker,
+      refresh_intervals: controlsState?.refreshPicker.state.intervals,
+      hidden: controlsState?.hideTimeControls,
       nowDelay: timeRange.UNSAFE_nowDelay,
     },
     defaultTimePickerConfig
@@ -200,11 +187,22 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
     throw new Error('Unsupported grid item type');
   }
 
+  const panel: Panel = vizPanelToPanel(vizPanel, { x, y, h, w }, isSnapshot, gridItem);
+
+  return panel;
+}
+
+export function vizPanelToPanel(
+  vizPanel: VizPanel,
+  gridPos?: GridPos,
+  isSnapshot = false,
+  gridItem?: SceneGridItemLike
+) {
   const panel: Panel = {
     id: getPanelIdForVizPanel(vizPanel),
     type: vizPanel.state.pluginId,
     title: vizPanel.state.title,
-    gridPos: { x, y, w, h },
+    gridPos,
     options: vizPanel.state.options,
     fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
     transformations: [],
@@ -241,7 +239,6 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
   if (!panel.transparent) {
     delete panel.transparent;
   }
-
   return panel;
 }
 

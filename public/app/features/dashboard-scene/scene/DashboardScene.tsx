@@ -75,7 +75,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** NavToolbar actions */
   actions?: SceneObject[];
   /** Fixed row at the top of the canvas with for example variables and time range controls */
-  controls?: SceneObject[];
+  controls?: DashboardControls;
   /** True when editing */
   isEditing?: boolean;
   /** True when user made a change */
@@ -94,6 +94,7 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
+  isEmpty?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -414,6 +415,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
+  public addPanel(vizPanel: VizPanel): void {
+    // TODO: need logic for adding a panel when other panels exist
+    // This is the logic when dashboard is empty
+    this.setState({
+      body: new SceneGridLayout({
+        children: [
+          new SceneGridItem({
+            height: 10,
+            width: 10,
+            x: 0.2,
+            y: 0,
+            body: vizPanel,
+          }),
+        ],
+      }),
+    });
+  }
+
   public duplicatePanel(vizPanel: VizPanel) {
     if (!vizPanel.parent) {
       return;
@@ -523,7 +542,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       app: CoreApp.Dashboard,
       dashboardUID: this.state.uid,
       panelId,
-      panelPluginType: panel?.state.pluginId,
+      panelPluginId: panel?.state.pluginId,
     };
   }
 

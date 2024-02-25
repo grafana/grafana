@@ -59,10 +59,6 @@ const (
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
 
-	// FlagTraceToMetrics
-	// Enable trace to metrics links
-	FlagTraceToMetrics = "traceToMetrics"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -206,10 +202,6 @@ const (
 	// FlagInfluxdbRunQueriesInParallel
 	// Enables running InfluxDB Influxql queries in parallel
 	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
-
-	// FlagClientTokenRotation
-	// Replaces the current in-request token rotation so that the client initiates the rotation
-	FlagClientTokenRotation = "clientTokenRotation"
 
 	// FlagPrometheusDataplane
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from &#39;Value&#39; to the value of the `__name__` label.
@@ -363,10 +355,6 @@ const (
 	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
 
-	// FlagSplitScopes
-	// Support faster dashboard and folder search by splitting permission scopes into parts
-	FlagSplitScopes = "splitScopes"
-
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
@@ -388,7 +376,7 @@ const (
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
 
 	// FlagAngularDeprecationUI
-	// Display new Angular deprecation-related UI features
+	// Display Angular warnings in dashboards and panels
 	FlagAngularDeprecationUI = "angularDeprecationUI"
 
 	// FlagDashgpt
@@ -495,10 +483,6 @@ const (
 	// Enable searching for dashboards using panel title in search v1
 	FlagPanelTitleSearchInV1 = "panelTitleSearchInV1"
 
-	// FlagPluginsInstrumentationStatusSource
-	// Include a status source label for plugin request metrics and logs
-	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
-
 	// FlagManagedPluginsInstall
 	// Install managed plugins directly from plugins catalog
 	FlagManagedPluginsInstall = "managedPluginsInstall"
@@ -552,7 +536,7 @@ const (
 	FlagPdfTables = "pdfTables"
 
 	// FlagSsoSettingsApi
-	// Enables the SSO settings API
+	// Enables the SSO settings API and the OAuth configuration UIs in Grafana
 	FlagSsoSettingsApi = "ssoSettingsApi"
 
 	// FlagCanvasPanelPanZoom
@@ -576,7 +560,7 @@ const (
 	FlagDatatrails = "datatrails"
 
 	// FlagAlertingSimplifiedRouting
-	// Enables the simplified routing for alerting
+	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
 
 	// FlagLogRowsPopoverMenu
@@ -594,10 +578,6 @@ const (
 	// FlagRegressionTransformation
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
-
-	// FlagDisplayAnonymousStats
-	// Enables anonymous stats to be shown in the UI for Grafana
-	FlagDisplayAnonymousStats = "displayAnonymousStats"
 
 	// FlagLokiQueryHints
 	// Enables query hints for Loki
@@ -659,7 +639,15 @@ const (
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
+	// FlagExpressionParser
+	// Enable new expression parser
+	FlagExpressionParser = "expressionParser"
+
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
+
+	// FlagAlertingUpgradeDryrunOnStart
+	// When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.
+	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
 )

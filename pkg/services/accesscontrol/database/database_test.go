@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -468,7 +469,7 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 			options: accesscontrol.SearchOptions{
 				ActionPrefix: "teams:",
-				UserID:       1,
+				NamespacedID: identity.NamespaceUser + ":1",
 			},
 			wantPerm: map[int64][]accesscontrol.Permission{
 				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
