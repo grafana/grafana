@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Select, Field, RadioButtonGroup, Alert, VerticalGroup } from '@grafana/ui';
+import { Select, Field, RadioButtonGroup, Alert, Stack } from '@grafana/ui';
 
 import { instanceOfAzureCredential } from '../../credentials';
 import { selectors } from '../../e2e/selectors';
@@ -104,7 +104,7 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
   return (
     <ConfigSection title="Fallback Service Credentials" isCollapsible={true}>
       <Alert severity="info" title="Service Credentials">
-        <VerticalGroup>
+        <Stack direction={'column'}>
           <div>
             User-based authentication does not inherently support Grafana features that make requests to the data source
             without a users details available to the request. An example of this is alerting. If you wish to ensure that
@@ -117,7 +117,7 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
               than the user. This may present confusion for users and should be clarified.
             </b>
           </div>
-        </VerticalGroup>
+        </Stack>
       </Alert>
       <Field
         label="Service Credentials"
