@@ -74,7 +74,7 @@ func getFromLegacy(data map[string]interface{}, secureData map[string]string) (a
 		clientSecret := secureData["clientSecret"]
 
 		credentials := &azcredentials.AadCurrentUserCredentials{
-			ServicePrincipal: azcredentials.AzureClientSecretCredentials{
+			ServiceCredentials: &azcredentials.AzureClientSecretCredentials{
 				AzureCloud:   cloud,
 				TenantId:     tenantId,
 				ClientId:     clientId,

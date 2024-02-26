@@ -62,6 +62,7 @@ func (cfg *Cfg) readAzureSettings() {
 		}
 
 		azureSettings.UserIdentityTokenEndpoint = tokenEndpointSettings
+		azureSettings.UserIdentityFallbackCredentialsEnabled = azureSection.Key("user_identity_fallback_credentials_enabled").MustBool(true)
 	}
 
 	azureSettings.ForwardSettingsPlugins = util.SplitString(azureSection.Key("forward_settings_to_plugins").String())

@@ -192,6 +192,7 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 
 		if azureSettings.UserIdentityEnabled {
 			m[azsettings.UserIdentityEnabled] = "true"
+			m[azsettings.UserIdentityFallbackCredentialsEnabled] = strconv.FormatBool(azureSettings.UserIdentityFallbackCredentialsEnabled)
 
 			if azureSettings.UserIdentityTokenEndpoint != nil {
 				if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {

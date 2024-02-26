@@ -67,10 +67,10 @@ export const AzureCredentialsForm = (props: Props) => {
     const defaultAuthType = managedIdentityEnabled
       ? 'msi'
       : workloadIdentityEnabled
-      ? 'workloadidentity'
-      : userIdentityEnabled
-      ? 'currentuser'
-      : 'clientsecret';
+        ? 'workloadidentity'
+        : userIdentityEnabled
+          ? 'currentuser'
+          : 'clientsecret';
     const updated: AzureCredentials = {
       ...credentials,
       authType: selected.value || defaultAuthType,
