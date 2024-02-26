@@ -182,7 +182,7 @@ This section describes the steps you must complete to access Grafana via web bro
 
 1. For the password paste it which you have saved to a file after decoding it earlier.
 
-## Customize Grafana default configuraiton
+## Customize Grafana default configuration
 
 Helm is a popular package manager for Kubernetes. It bundles Kubernetes resource manifests to be re-used across different environments. These manifests are written in a templating language, allowing you to provide configuration values via `values.yaml` file, or in-line using Helm, to replace the placeholders in the manifest where these configurations should reside.
 
@@ -358,7 +358,7 @@ By default the login credentials for the super admin account are generated via `
 
    This command will now make your super admin login credentials as `admin` for both username and password.
 
-1. To verify it, sign in to Grafana, enter `admin` for both username and password. You sould be able to login as super admin.
+1. To verify it, sign in to Grafana, enter `admin` for both username and password. You should be able to login as super admin.
 
 ## Uninstall the Grafana deployment
 
