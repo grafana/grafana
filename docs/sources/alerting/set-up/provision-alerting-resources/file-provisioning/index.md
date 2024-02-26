@@ -148,7 +148,7 @@ Create or delete contact points using provisioning files in your Grafana instanc
 
    Example configuration files can be found below.
 
-1. Restart your Grafana instance (or reload the provisioned files via the Admin API).
+1. Restart your Grafana instance (or reload the provisioned files using the Admin API).
 
 Here is an example of a configuration file for creating contact points.
 
