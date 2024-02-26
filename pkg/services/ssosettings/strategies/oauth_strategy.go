@@ -48,7 +48,7 @@ func (s *OAuthStrategy) GetProviderConfig(_ context.Context, provider string) (m
 }
 
 func (s *OAuthStrategy) loadAllSettings() {
-	allProviders := append([]string{social.GrafanaNetProviderName}, ssosettings.AllOAuthProviders...)
+	allProviders := append(ssosettings.AllOAuthProviders, social.GrafanaNetProviderName)
 	for _, provider := range allProviders {
 		settings := s.loadSettingsForProvider(provider)
 		if provider == social.GrafanaNetProviderName {
