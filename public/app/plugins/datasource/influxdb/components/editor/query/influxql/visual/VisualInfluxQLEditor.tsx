@@ -134,7 +134,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
           getTagKeyOptions={getMemoizedTagKeys}
           getTagValueOptions={(key) =>
             withTemplateVariableOptions(
-              allTagKeys.then((keys) => getTagValues(datasource, filterTags(query.tags ?? [], keys), key)),
+              allTagKeys.then((keys) => getTagValues(datasource, filterTags(query.tags ?? [], keys), key, measurement)),
               wrapRegex
             )
           }
