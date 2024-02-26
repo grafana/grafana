@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
 import { llms } from '@grafana/experimental';
-import { logError } from '@grafana/runtime';
+import { createMonitoringLogger } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { isLLMPluginEnabled, DEFAULT_OAI_MODEL } from './utils';
@@ -11,6 +11,8 @@ import { isLLMPluginEnabled, DEFAULT_OAI_MODEL } from './utils';
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
 type Message = llms.openai.Message;
+
+const genAILogger = createMonitoringLogger('features.dashboards.genai');
 
 export enum StreamStatus {
   IDLE = 'idle',
@@ -62,7 +64,7 @@ export function useOpenAIStream(
         `Please try again or if the problem persists, contact your organization admin.`
       );
       console.error(e);
-      logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
+      genAILogger.logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
     },
     [messages, model, temperature, notifyError]
   );

@@ -9,7 +9,7 @@ import { Scope } from '../types';
 export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
   return `{${filters
     .filter((f) => f.tag && f.operator && f.value?.length)
-    .map((f) => `${scopeHelper(f)}${f.tag}${f.operator}${valueHelper(f)}`)
+    .map((f) => `${scopeHelper(f)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`)
     .join(' && ')}}`;
 };
 
@@ -30,6 +30,16 @@ const scopeHelper = (f: TraceqlFilter) => {
   return (
     (f.scope === TraceqlSearchScope.Resource || f.scope === TraceqlSearchScope.Span ? f.scope?.toLowerCase() : '') + '.'
   );
+};
+const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
+  if (f.tag === 'duration') {
+    const durationType = filters.find((f) => f.id === 'duration-type');
+    if (durationType) {
+      return durationType.value === 'trace' ? 'traceDuration' : 'duration';
+    }
+    return f.tag;
+  }
+  return f.tag;
 };
 
 export const filterScopedTag = (f: TraceqlFilter) => {

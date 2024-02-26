@@ -10,9 +10,9 @@ import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { findFieldIndex } from 'app/features/dimensions';
 
-import { prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
+import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
+import { isTooltipScrollable, prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
 
-import { TrendTooltip } from './TrendTooltip';
 import { Options } from './panelcfg.gen';
 
 export const TrendPanel = ({
@@ -26,7 +26,9 @@ export const TrendPanel = ({
   replaceVariables,
   id,
 }: PanelProps<Options>) => {
-  const { sync, dataLinkPostProcessor } = usePanelContext();
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
+
+  const { dataLinkPostProcessor } = usePanelContext();
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
     options.xField ?? data.series[0].fields.find((field) => field.type === FieldType.number)?.name;
@@ -124,7 +126,7 @@ export const TrendPanel = ({
             <KeyboardPlugin config={uPlotConfig} />
             {options.tooltip.mode !== TooltipDisplayMode.None && (
               <>
-                {config.featureToggles.newVizTooltips ? (
+                {showNewVizTooltips ? (
                   <TooltipPlugin2
                     config={uPlotConfig}
                     hoverMode={
@@ -132,18 +134,20 @@ export const TrendPanel = ({
                     }
                     render={(u, dataIdxs, seriesIdx, isPinned = false) => {
                       return (
-                        <TrendTooltip
+                        <TimeSeriesTooltip
                           frames={info.frames!}
-                          data={alignedDataFrame}
-                          mode={options.tooltip.mode}
-                          sortOrder={options.tooltip.sort}
-                          sync={sync}
+                          seriesFrame={alignedDataFrame}
                           dataIdxs={dataIdxs}
                           seriesIdx={seriesIdx}
+                          mode={options.tooltip.mode}
+                          sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
+                          scrollable={isTooltipScrollable(options.tooltip)}
                         />
                       );
                     }}
+                    maxWidth={options.tooltip.maxWidth}
+                    maxHeight={options.tooltip.maxHeight}
                   />
                 ) : (
                   <TooltipPlugin
@@ -152,7 +156,6 @@ export const TrendPanel = ({
                     config={uPlotConfig}
                     mode={options.tooltip.mode}
                     sortOrder={options.tooltip.sort}
-                    sync={sync}
                     timeZone={timeZone}
                   />
                 )}

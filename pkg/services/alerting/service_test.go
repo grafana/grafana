@@ -18,7 +18,12 @@ import (
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestService(t *testing.T) {
 	sqlStore := &sqlStore{
@@ -33,16 +38,17 @@ func TestService(t *testing.T) {
 	usMock := &usagestats.UsageStatsMock{T: t}
 
 	encProvider := encryptionprovider.ProvideEncryptionProvider()
-	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, setting.NewCfg())
+	cfg := setting.NewCfg()
+	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, cfg)
 	require.NoError(t, err)
 
-	s := ProvideService(sqlStore.db, encService, nil)
+	s := ProvideService(cfg, sqlStore.db, encService, nil)
 
-	origSecret := setting.SecretKey
-	setting.SecretKey = "alert_notification_service_test"
+	origSecret := cfg.SecretKey
+	cfg.SecretKey = "alert_notification_service_test"
 
 	t.Cleanup(func() {
-		setting.SecretKey = origSecret
+		cfg.SecretKey = origSecret
 	})
 
 	t.Run("create alert notification should reject an invalid command", func(t *testing.T) {
@@ -64,7 +70,7 @@ func TestService(t *testing.T) {
 		an, err := s.CreateAlertNotificationCommand(ctx, &cmd)
 		require.NoError(t, err)
 
-		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, an.SecureSettings, setting.SecretKey)
+		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, an.SecureSettings, cfg.SecretKey)
 		require.NoError(t, err)
 		require.Equal(t, ss, decrypted)
 
@@ -116,7 +122,7 @@ func TestService(t *testing.T) {
 		n2, err := s.UpdateAlertNotification(ctx, &updateCmd)
 		require.NoError(t, err)
 
-		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, n2.SecureSettings, setting.SecretKey)
+		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, n2.SecureSettings, cfg.SecretKey)
 		require.NoError(t, err)
 		require.Equal(t, ss, decrypted)
 
@@ -153,7 +159,7 @@ func TestService(t *testing.T) {
 func registerTestNotifier(notifierType string) {
 	RegisterNotifier(&NotifierPlugin{
 		Type: notifierType,
-		Factory: func(*models.AlertNotification, GetDecryptedValueFn, notifications.Service) (Notifier, error) {
+		Factory: func(*setting.Cfg, *models.AlertNotification, GetDecryptedValueFn, notifications.Service) (Notifier, error) {
 			return nil, nil
 		},
 	})

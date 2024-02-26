@@ -305,7 +305,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 		if dtos.IsHiddenUser(user.Login, c.SignedInUser, hs.Cfg) {
 			continue
 		}
-		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
+		user.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, user.Email)
 
 		userIDs[fmt.Sprint(user.UserID)] = true
 		authLabelsUserIDs = append(authLabelsUserIDs, user.UserID)

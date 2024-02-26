@@ -46,9 +46,9 @@ export function prepScatter(
   options: Options,
   getData: () => DataFrame[],
   theme: GrafanaTheme2,
-  ttip: ScatterHoverCallback,
+  ttip: null | ScatterHoverCallback,
   onUPlotClick: null | ((evt?: Object) => void),
-  isToolTipOpen: MutableRefObject<boolean>
+  isToolTipOpen: null | MutableRefObject<boolean>
 ): ScatterPanelInfo {
   let series: ScatterSeries[];
   let builder: UPlotConfigBuilder;
@@ -224,6 +224,10 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
       }
 
       for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+        // When a frame filter is applied, only include matching frame index
+        if (series.frame !== undefined && series.frame !== frameIndex) {
+          continue;
+        }
         const frame = frames[frameIndex];
         const xIndex = findFieldIndex(series.x, frame, frames);
 
@@ -294,14 +298,13 @@ interface DrawBubblesOpts {
   };
 }
 
-//const prepConfig: UPlotConfigPrepFnXY<Options> = ({ frames, series, theme }) => {
 const prepConfig = (
   getData: () => DataFrame[],
   scatterSeries: ScatterSeries[],
   theme: GrafanaTheme2,
-  ttip: ScatterHoverCallback,
+  ttip: null | ScatterHoverCallback,
   onUPlotClick: null | ((evt?: Object) => void),
-  isToolTipOpen: MutableRefObject<boolean>
+  isToolTipOpen: null | MutableRefObject<boolean>
 ) => {
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -522,8 +525,10 @@ const prepConfig = (
   });
 
   const clearPopupIfOpened = () => {
-    if (isToolTipOpen.current) {
-      ttip(undefined);
+    if (isToolTipOpen?.current) {
+      if (ttip) {
+        ttip(undefined);
+      }
       if (onUPlotClick) {
         onUPlotClick();
       }
@@ -534,7 +539,11 @@ const prepConfig = (
 
   // clip hover points/bubbles to plotting area
   builder.addHook('init', (u, r) => {
-    u.over.style.overflow = 'hidden';
+    const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
+
+    if (!showNewVizTooltips) {
+      u.over.style.overflow = 'hidden';
+    }
     ref_parent = u.root.parentElement;
 
     if (onUPlotClick) {
@@ -556,26 +565,28 @@ const prepConfig = (
     rect = r;
   });
 
-  builder.addHook('setLegend', (u) => {
-    if (u.cursor.idxs != null) {
-      for (let i = 0; i < u.cursor.idxs.length; i++) {
-        const sel = u.cursor.idxs[i];
-        if (sel != null && !isToolTipOpen.current) {
-          ttip({
-            scatterIndex: i - 1,
-            xIndex: sel,
-            pageX: rect.left + u.cursor.left!,
-            pageY: rect.top + u.cursor.top!,
-          });
-          return; // only show the first one
+  if (ttip) {
+    builder.addHook('setLegend', (u) => {
+      if (u.cursor.idxs != null) {
+        for (let i = 0; i < u.cursor.idxs.length; i++) {
+          const sel = u.cursor.idxs[i];
+          if (sel != null && !isToolTipOpen?.current) {
+            ttip({
+              scatterIndex: i - 1,
+              xIndex: sel,
+              pageX: rect.left + u.cursor.left!,
+              pageY: rect.top + u.cursor.top!,
+            });
+            return; // only show the first one
+          }
         }
       }
-    }
 
-    if (!isToolTipOpen.current) {
-      ttip(undefined);
-    }
-  });
+      if (!isToolTipOpen?.current) {
+        ttip(undefined);
+      }
+    });
+  }
 
   builder.addHook('drawClear', (u) => {
     clearPopupIfOpened();
@@ -598,8 +609,8 @@ const prepConfig = (
   const frames = getData();
   let xField = scatterSeries[0].x(scatterSeries[0].frame(frames));
 
-  let config = xField.config;
-  let customConfig = config.custom;
+  let fieldConfig = xField.config;
+  let customConfig = fieldConfig.custom;
   let scaleDistr = customConfig?.scaleDistribution;
 
   builder.addScale({
@@ -610,12 +621,12 @@ const prepConfig = (
     distribution: scaleDistr?.type,
     log: scaleDistr?.log,
     linearThreshold: scaleDistr?.linearThreshold,
-    min: config.min,
-    max: config.max,
+    min: fieldConfig.min,
+    max: fieldConfig.max,
     softMin: customConfig?.axisSoftMin,
     softMax: customConfig?.axisSoftMax,
     centeredZero: customConfig?.axisCenteredZero,
-    decimals: config.decimals,
+    decimals: fieldConfig.decimals,
   });
 
   // why does this fall back to '' instead of null or undef?

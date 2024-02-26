@@ -52,7 +52,11 @@ export interface Props extends Themeable2 {
   onUnpinLine?: (row: LogRowModel) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
-  getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
+  getRowContextQuery?: (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    cacheFilters?: boolean
+  ) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;

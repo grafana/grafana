@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -18,21 +19,26 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/patrickmn/go-cache"
 )
 
-const tagValueCacheExpiration = time.Hour * 24
+const (
+	tagValueCacheExpiration = time.Hour * 24
+
+	// headerFromExpression is used by datasources to identify expression queries
+	headerFromExpression = "X-Grafana-From-Expr"
+
+	// headerFromAlert is used by datasources to identify alert queries
+	headerFromAlert = "FromAlert"
+)
 
 type DataQueryJson struct {
 	dataquery.CloudWatchAnnotationQuery
@@ -43,6 +49,7 @@ type DataSource struct {
 	Settings      models.CloudWatchSettings
 	HTTPClient    *http.Client
 	tagValueCache *cache.Cache
+	ProxyOpts     *proxy.Options
 }
 
 const (
@@ -54,21 +61,22 @@ const (
 	timeSeriesQuery = "timeSeriesQuery"
 )
 
-var logger = log.New("tsdb.cloudwatch")
-
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
+func ProvideService(httpClientProvider *httpclient.Provider) *CloudWatchService {
+	logger := backend.NewLoggerWith("logger", "tsdb.cloudwatch")
 	logger.Debug("Initializing")
 
-	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache(), features)
+	executor := newExecutor(
+		datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)),
+		awsds.NewSessionCache(),
+		logger,
+	)
 
 	return &CloudWatchService{
-		Cfg:      cfg,
 		Executor: executor,
 	}
 }
 
 type CloudWatchService struct {
-	Cfg      *setting.Cfg
 	Executor *cloudWatchExecutor
 }
 
@@ -76,21 +84,20 @@ type SessionCache interface {
 	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
-func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles) *cloudWatchExecutor {
+func newExecutor(im instancemgmt.InstanceManager, sessions SessionCache, logger log.Logger) *cloudWatchExecutor {
 	e := &cloudWatchExecutor{
 		im:       im,
-		cfg:      cfg,
 		sessions: sessions,
-		features: features,
+		logger:   logger,
 	}
 
 	e.resourceHandler = httpadapter.New(e.newResourceMux())
 	return e
 }
 
-func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		instanceSettings, err := models.LoadCloudWatchSettings(settings)
+		instanceSettings, err := models.LoadCloudWatchSettings(ctx, settings)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
@@ -109,19 +116,35 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			Settings:      instanceSettings,
 			HTTPClient:    httpClient,
 			tagValueCache: cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+			// this is used to build a custom dialer when secure socks proxy is enabled
+			ProxyOpts: opts.ProxyOptions,
 		}, nil
 	}
 }
 
-// cloudWatchExecutor executes CloudWatch requests.
+// cloudWatchExecutor executes CloudWatch requests
 type cloudWatchExecutor struct {
 	im          instancemgmt.InstanceManager
-	cfg         *setting.Cfg
 	sessions    SessionCache
-	features    featuremgmt.FeatureToggles
 	regionCache sync.Map
+	logger      log.Logger
 
 	resourceHandler backend.CallResourceHandler
+}
+
+// instrumentContext adds plugin key-values to the context; later, logger.FromContext(ctx) will provide a logger
+// that adds these values to its output.
+// TODO: move this into the sdk (see https://github.com/grafana/grafana/issues/82033)
+func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
+	p := []any{"endpoint", endpoint, "pluginId", pCtx.PluginID}
+	if pCtx.DataSourceInstanceSettings != nil {
+		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
+		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
+	}
+	if pCtx.User != nil {
+		p = append(p, "uname", pCtx.User.Login)
+	}
+	return log.WithContextualAttributes(ctx, p)
 }
 
 func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx backend.PluginContext, region string) (models.RequestContext, error) {
@@ -146,21 +169,21 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 
 	return models.RequestContext{
 		OAMAPIProvider:        NewOAMAPI(sess),
-		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),
+		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), instance.Settings.GrafanaSettings.ListMetricsPageLimit),
 		LogsAPIProvider:       NewLogsAPI(sess),
 		EC2APIProvider:        ec2Client,
 		Settings:              instance.Settings,
-		Features:              e.features,
-		Logger:                logger,
+		Logger:                e.logger.FromContext(ctx),
 	}, nil
 }
 
 func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctx = instrumentContext(ctx, "callResource", req.PluginContext)
 	return e.resourceHandler.CallResource(ctx, req, sender)
 }
 
 func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger := logger.FromContext(ctx)
+	ctx = instrumentContext(ctx, "queryData", req.PluginContext)
 	q := req.Queries[0]
 	var model DataQueryJson
 	err := json.Unmarshal(q.JSON, &model)
@@ -168,8 +191,8 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 		return nil, err
 	}
 
-	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	fromExpression := req.GetHTTPHeader(query.HeaderFromExpression) != ""
+	_, fromAlert := req.Headers[headerFromAlert]
+	fromExpression := req.GetHTTPHeader(headerFromExpression) != ""
 	// Public dashboard queries execute like alert queries, i.e. they execute on the backend, therefore, we need to handle them synchronously.
 	// Since `model.Type` is set during execution on the frontend by the query runner and isn't saved with the query, we are checking here is
 	// missing the `model.Type` property and if it is a log query in order to determine if it is a public dashboard query.
@@ -184,17 +207,18 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	case annotationQuery:
 		result, err = e.executeAnnotationQuery(ctx, req.PluginContext, model, q)
 	case logAction:
-		result, err = e.executeLogActions(ctx, logger, req)
+		result, err = e.executeLogActions(ctx, req)
 	case timeSeriesQuery:
 		fallthrough
 	default:
-		result, err = e.executeTimeSeriesQuery(ctx, logger, req)
+		result, err = e.executeTimeSeriesQuery(ctx, req)
 	}
 
 	return result, err
 }
 
 func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	ctx = instrumentContext(ctx, "checkHealth", req.PluginContext)
 	status := backend.HealthStatusOk
 	metricsTest := "Successfully queried the CloudWatch metrics API."
 	logsTest := "Successfully queried the CloudWatch logs API."
@@ -229,7 +253,13 @@ func (e *cloudWatchExecutor) checkHealthMetrics(ctx context.Context, pluginCtx b
 	if err != nil {
 		return err
 	}
-	metricClient := clients.NewMetricsClient(NewMetricsAPI(session), e.cfg)
+
+	instance, err := e.getInstance(ctx, pluginCtx)
+	if err != nil {
+		return err
+	}
+
+	metricClient := clients.NewMetricsClient(NewMetricsAPI(session), instance.Settings.GrafanaSettings.ListMetricsPageLimit)
 	_, err = metricClient.ListMetricsWithPageLimit(ctx, params)
 	return err
 }
@@ -272,17 +302,31 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 			SecretKey:     instance.Settings.SecretKey,
 		},
 		UserAgentName: aws.String("Cloudwatch"),
+		AuthSettings:  &instance.Settings.GrafanaSettings,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
-	if e.cfg.SecureSocksDSProxy.Enabled && instance.Settings.SecureSocksProxyEnabled {
+	if instance.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && instance.Settings.SecureSocksProxyEnabled {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
-		sess.Config.HTTPClient.Transport = instance.HTTPClient.Transport
+		// also, 'sess' is cached and reused, so the first time it might have the transport not set, the following uses it will
+		if sess.Config.HTTPClient.Transport == nil {
+			// following go standard library logic (https://pkg.go.dev/net/http#Client), if no Transport is provided,
+			// then we use http.DefaultTransport
+			defTransport, ok := http.DefaultTransport.(*http.Transport)
+			if !ok {
+				// this should not happen but validating just in case
+				return nil, errors.New("default http client transport is not of type http.Transport")
+			}
+			sess.Config.HTTPClient.Transport = defTransport.Clone()
+		}
+		err = proxy.New(instance.ProxyOpts).ConfigureSecureSocksHTTPProxy(sess.Config.HTTPClient.Transport.(*http.Transport))
+		if err != nil {
+			return nil, fmt.Errorf("error configuring Secure Socks proxy for Transport: %w", err)
+		}
 	}
-
 	return sess, nil
 }
 

@@ -106,7 +106,6 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./pkg/plugins/plugindef
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
-	go generate ./pkg/kindsysreport/codegen/report.go
 
 gen-go: $(WIRE)
 	@echo "generate go files"
@@ -140,11 +139,6 @@ build-js: ## Build frontend assets.
 	@echo "build frontend"
 	yarn run build
 	yarn run plugins:build-bundled
-
-build-plugins-go: ## Build decoupled plugins
-	@echo "build plugins"
-	@cd pkg/tsdb; \
-	mage -v
 
 PLUGIN_ID ?=
 
@@ -261,7 +255,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg BASE_IMAGE=ubuntu:22.04 \
-	--build-arg GO_IMAGE=golang:1.21.5 \
+	--build-arg GO_IMAGE=golang:1.21.6 \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 
@@ -324,6 +318,7 @@ gen-ts:
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
 drone: $(DRONE)
+	bash scripts/drone/env-var-check.sh
 	$(DRONE) starlark --format
 	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana

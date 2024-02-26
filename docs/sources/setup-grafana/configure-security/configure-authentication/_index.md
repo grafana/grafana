@@ -76,6 +76,12 @@ In scenarios where you have multiple identity providers of the same type, there 
 - Check if the identity provider supports account federation. In such cases, you can configure it once and let your identity provider federate the accounts from different providers.
 - If SAML is supported by the identity provider, you can configure one [Generic OAuth]({{< relref "./generic-oauth" >}}) and one [SAML]({{< relref "./saml" >}}) (Enterprise only).
 
+## Using the same email address to login with different identity providers
+
+If users want to use the same email address with multiple identity providers (for example, Grafana.Com OAuth and Google OAuth), you can configure Grafana to use the email address as the unique identifier for the user. This is done by enabling the `oauth_allow_insecure_email_lookup` option, which is disabled by default. Please note that enabling this option can lower the security of your Grafana instance. If you enable this option, you should also ensure that the `Allowed organization`, `Allowed groups` and `Allowed domains` settings are configured correctly to prevent unauthorized access.
+
+To enable this option, refer to the [Enable email lookup](#enable-email-lookup) section.
+
 ## Grafana Auth
 
 Grafana of course has a built in user authentication system with password authentication enabled by default. You can
@@ -176,6 +182,20 @@ We strongly recommend against enabling email lookups, however it is possible to 
 ```bash
 [auth]
 oauth_allow_insecure_email_lookup = true
+```
+
+You can also enable email lookup using the API:
+
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "../../../introduction/grafana-cloud" >}}) since Grafana v10.4.
+{{% /admonition %}}
+
+```
+curl --request PUT \
+  --url http://{slug}.grafana.com/api/admin/settings \
+  --header 'Authorization: Bearer glsa_yourserviceaccounttoken' \
+  --header 'Content-Type: application/json' \
+  --data '{ "updates": { "auth": { "oauth_allow_insecure_email_lookup": "true" }}}'
 ```
 
 ### Automatic OAuth login

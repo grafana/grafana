@@ -1,5 +1,8 @@
-import { Settings } from 'app/types';
+import { ReactElement } from 'react';
+import { Validate } from 'react-hook-form';
 
+import { IconName, SelectableValue } from '@grafana/data';
+import { Settings } from 'app/types';
 export interface AuthProviderInfo {
   id: string;
   type: string;
@@ -10,16 +13,69 @@ export interface AuthProviderInfo {
 
 export type GetStatusHook = () => Promise<AuthProviderStatus>;
 
-export type SSOProvider = {
-  provider: string;
-  settings: {
-    enabled: boolean;
-    name: string;
-    type: string;
+// Settings types common to the provider settings data when working with the API and forms
+export type SSOProviderSettingsBase = {
+  allowAssignGrafanaAdmin?: boolean;
+  allowSignUp?: boolean;
+  apiUrl?: string;
+  authStyle?: string;
+  authUrl?: string;
+  autoLogin?: boolean;
+  clientId: string;
+  clientSecret: string;
+  emailAttributeName?: string;
+  emailAttributePath?: string;
+  emptyScopes?: boolean;
+  enabled: boolean;
+  extra?: Record<string, string>;
+  groupsAttributePath?: string;
+  hostedDomain?: string;
+  icon?: IconName;
+  name?: string;
+  roleAttributePath?: string;
+  roleAttributeStrict?: boolean;
+  signoutRedirectUrl?: string;
+  skipOrgRoleSync?: boolean;
+  teamIdsAttributePath?: string;
+  teamsUrl?: string;
+  tlsClientCa?: string;
+  tlsClientCert?: string;
+  tlsClientKey?: string;
+  tlsSkipVerify?: boolean;
+  tokenUrl?: string;
+  type: string;
+  usePkce?: boolean;
+  useRefreshToken?: boolean;
+  nameAttributePath?: string;
+  loginAttributePath?: string;
+  idTokenAttributeName?: string;
+  defineAllowedGroups?: boolean;
+  defineAllowedTeamsIds?: boolean;
+  configureTLS?: boolean;
+  tlsSkipVerifyInsecure?: boolean;
+};
 
-    // Legacy fields
-    configPath?: string;
+// SSO data received from the API and sent to it
+export type SSOProvider = {
+  id: string;
+  provider: string;
+  source: string;
+  settings: SSOProviderSettingsBase & {
+    teamIds: string;
+    allowedOrganizations: string;
+    allowedDomains?: string;
+    allowedGroups?: string;
+    scopes?: string;
   };
+};
+
+// SSO data format for storing in the forms
+export type SSOProviderDTO = Partial<SSOProviderSettingsBase> & {
+  teamIds: Array<SelectableValue<string>>;
+  allowedOrganizations: Array<SelectableValue<string>>;
+  allowedDomains?: Array<SelectableValue<string>>;
+  allowedGroups?: Array<SelectableValue<string>>;
+  scopes?: Array<SelectableValue<string>>;
 };
 
 export interface AuthConfigState {
@@ -43,3 +99,25 @@ export interface SettingsError {
   message: string;
   errors: string[];
 }
+
+// Data structure used to render form fields
+export type FieldData = {
+  label: string;
+  type: string;
+  description?: string | ReactElement;
+  validation?: {
+    required?: boolean;
+    message?: string;
+    validate?: Validate<SSOProviderDTO[keyof SSOProviderDTO], SSOProviderDTO>;
+  };
+  multi?: boolean;
+  allowCustomValue?: boolean;
+  options?: Array<SelectableValue<string>>;
+  placeholder?: string;
+  defaultValue?: SelectableValue<string>;
+  hidden?: boolean;
+};
+
+export type SSOSettingsField =
+  | keyof SSOProvider['settings']
+  | { name: keyof SSOProvider['settings']; dependsOn: keyof SSOProvider['settings']; hidden?: boolean };

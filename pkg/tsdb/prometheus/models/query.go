@@ -2,14 +2,18 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/promql/parser"
 
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 )
 
@@ -75,16 +79,21 @@ type Query struct {
 	RangeQuery    bool
 	ExemplarQuery bool
 	UtcOffsetSec  int64
+	Scope         Scope
 }
 
-func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
+type Scope struct {
+	Matchers []*labels.Matcher
+}
+
+func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool, enableScope bool) (*Query, error) {
 	model := &QueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
 		return nil, err
 	}
 
 	// Final step value for prometheus
-	calculatedMinStep, err := calculatePrometheusInterval(model.Interval, dsScrapeInterval, model.IntervalMs, model.IntervalFactor, query, intervalCalculator)
+	calculatedStep, err := calculatePrometheusInterval(model.Interval, dsScrapeInterval, model.IntervalMs, model.IntervalFactor, query, intervalCalculator)
 	if err != nil {
 		return nil, err
 	}
@@ -94,11 +103,22 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 	expr := interpolateVariables(
 		model.Expr,
 		query.Interval,
-		calculatedMinStep,
+		calculatedStep,
 		model.Interval,
 		dsScrapeInterval,
 		timeRange,
 	)
+	var matchers []*labels.Matcher
+	if enableScope && model.Scope != nil && model.Scope.Matchers != "" {
+		matchers, err = parser.ParseMetricSelector(model.Scope.Matchers)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse metric selector %v in scope", model.Scope.Matchers)
+		}
+		expr, err = ApplyQueryScope(expr, matchers)
+		if err != nil {
+			return nil, err
+		}
+	}
 	var rangeQuery, instantQuery bool
 	if model.Instant == nil {
 		instantQuery = false
@@ -126,7 +146,7 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 
 	return &Query{
 		Expr:          expr,
-		Step:          calculatedMinStep,
+		Step:          calculatedStep,
 		LegendFormat:  model.LegendFormat,
 		Start:         query.TimeRange.From,
 		End:           query.TimeRange.To,
@@ -175,7 +195,7 @@ func calculatePrometheusInterval(
 		queryInterval = ""
 	}
 
-	minInterval, err := intervalv2.GetIntervalFrom(dsScrapeInterval, queryInterval, intervalMs, 15*time.Second)
+	minInterval, err := gtime.GetIntervalFrom(dsScrapeInterval, queryInterval, intervalMs, 15*time.Second)
 	if err != nil {
 		return time.Duration(0), err
 	}
@@ -214,7 +234,7 @@ func calculateRateInterval(
 		scrape = "15s"
 	}
 
-	scrapeIntervalDuration, err := intervalv2.ParseIntervalStringToTimeDuration(scrape)
+	scrapeIntervalDuration, err := gtime.ParseIntervalStringToTimeDuration(scrape)
 	if err != nil {
 		return time.Duration(0)
 	}
@@ -226,14 +246,14 @@ func calculateRateInterval(
 // interpolateVariables interpolates built-in variables
 // expr                         PromQL query
 // queryInterval                Requested interval in milliseconds. This value may be overridden by MinStep in query options
-// calculatedMinStep            Calculated final step value. It was calculated in calculatePrometheusInterval
+// calculatedStep               Calculated final step value. It was calculated in calculatePrometheusInterval
 // requestedMinStep             Requested minimum step value. QueryModel.interval
 // dsScrapeInterval             Data source scrape interval in the config
 // timeRange                    Requested time range for query
 func interpolateVariables(
 	expr string,
 	queryInterval time.Duration,
-	calculatedMinStep time.Duration,
+	calculatedStep time.Duration,
 	requestedMinStep string,
 	dsScrapeInterval string,
 	timeRange time.Duration,
@@ -243,10 +263,10 @@ func interpolateVariables(
 
 	var rateInterval time.Duration
 	if requestedMinStep == varRateInterval || requestedMinStep == varRateIntervalAlt {
-		rateInterval = calculatedMinStep
+		rateInterval = calculatedStep
 	} else {
 		if requestedMinStep == varInterval || requestedMinStep == varIntervalAlt {
-			requestedMinStep = calculatedMinStep.String()
+			requestedMinStep = calculatedStep.String()
 		}
 		if requestedMinStep == "" {
 			requestedMinStep = dsScrapeInterval
@@ -254,8 +274,8 @@ func interpolateVariables(
 		rateInterval = calculateRateInterval(queryInterval, requestedMinStep)
 	}
 
-	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(queryInterval/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(queryInterval))
+	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
+	expr = strings.ReplaceAll(expr, varInterval, gtime.FormatInterval(calculatedStep))
 	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
@@ -263,8 +283,8 @@ func interpolateVariables(
 	expr = strings.ReplaceAll(expr, varRateInterval, rateInterval.String())
 
 	// Repetitive code, we should have functionality to unify these
-	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(queryInterval/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varIntervalAlt, intervalv2.FormatDuration(queryInterval))
+	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
+	expr = strings.ReplaceAll(expr, varIntervalAlt, gtime.FormatInterval(calculatedStep))
 	expr = strings.ReplaceAll(expr, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
@@ -284,6 +304,11 @@ func isVariableInterval(interval string) bool {
 	return false
 }
 
+// AlignTimeRange aligns query range to step and handles the time offset.
+// It rounds start and end down to a multiple of step.
+// Prometheus caching is dependent on the range being aligned with the step.
+// Rounding to the step can significantly change the start and end of the range for larger steps, i.e. a week.
+// In rounding the range to a 1w step the range will always start on a Thursday.
 func AlignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
 	offsetNano := float64(offset * 1e9)
 	stepNano := float64(step.Nanoseconds())

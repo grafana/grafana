@@ -2,7 +2,7 @@ import { isNearMembraneProxy, ProxyTarget } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
 import Prism from 'prismjs';
 
-import { DataSourceApi } from '@grafana/data';
+import { CustomVariableSupport, DataSourceApi } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { forbiddenElements } from './constants';
@@ -87,6 +87,32 @@ export function markDomElementStyleAsALiveTarget(el: Element) {
   }
 }
 
+export function recursivePatchObjectAsLiveTarget(obj: unknown) {
+  if (!obj) {
+    return;
+  }
+  if (Array.isArray(obj)) {
+    obj.forEach(recursivePatchObjectAsLiveTarget);
+    unconditionallyPatchObjectAsLiveTarget(obj);
+  } else if (typeof obj === 'object') {
+    Object.values(obj).forEach(recursivePatchObjectAsLiveTarget);
+    unconditionallyPatchObjectAsLiveTarget(obj);
+  }
+}
+
+function unconditionallyPatchObjectAsLiveTarget(obj: unknown) {
+  if (!obj) {
+    return;
+  }
+  // do not patch it twice
+  if (Object.hasOwn(obj, SANDBOX_LIVE_VALUE)) {
+    return obj;
+  }
+
+  Reflect.defineProperty(obj, SANDBOX_LIVE_VALUE, {});
+  return obj;
+}
+
 /**
  * Some specific near membrane proxies interfere with plugins
  * an example of this is React class components state and their fast life cycles
@@ -112,7 +138,7 @@ export function patchObjectAsLiveTarget(obj: unknown) {
     !(obj instanceof Function) &&
     // conditions for allowed objects
     // react class components
-    (isReactClassComponent(obj) || obj instanceof DataSourceApi)
+    (isReactClassComponent(obj) || obj instanceof DataSourceApi || obj instanceof CustomVariableSupport)
   ) {
     Reflect.defineProperty(obj, SANDBOX_LIVE_VALUE, {});
   } else {

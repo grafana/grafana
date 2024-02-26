@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=alpine:3.18.3
+ARG BASE_IMAGE=alpine:3.18.5
 ARG JS_IMAGE=node:20-alpine3.18
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.21.5-alpine3.18
+ARG GO_IMAGE=golang:1.21.6-alpine3.18
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -20,9 +20,11 @@ COPY packages packages
 COPY plugins-bundled plugins-bundled
 COPY public public
 
+RUN apk add --no-cache make build-base python3
+
 RUN yarn install --immutable
 
-COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY public public
 COPY scripts scripts
 COPY emails emails
@@ -37,6 +39,9 @@ ARG BUILD_BRANCH=""
 ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
 ARG BINGO="true"
+
+# This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
+RUN apk add --no-cache binutils-gold
 
 # Install build dependencies
 RUN if grep -i -q alpine /etc/issue; then \

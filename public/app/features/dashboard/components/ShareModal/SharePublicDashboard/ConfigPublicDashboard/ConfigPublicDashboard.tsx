@@ -17,6 +17,7 @@ import {
   useStyles2,
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Trans, t } from 'app/core/internationalization';
 import {
   useDeletePublicDashboardMutation,
   useUpdatePublicDashboardMutation,
@@ -125,7 +126,10 @@ export function ConfigPublicDashboardBase({
 
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
 
-      <Field label="Dashboard URL" className={styles.fieldSpace}>
+      <Field
+        label={t('public-dashboard.config.dashboard-url-field-label', 'Dashboard URL')}
+        className={styles.fieldSpace}
+      >
         <Input
           value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
           readOnly
@@ -139,7 +143,7 @@ export function ConfigPublicDashboardBase({
               getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
               onClipboardCopy={onCopyURL}
             >
-              Copy
+              <Trans i18nKey="public-dashboard.config.copy-button">Copy</Trans>
             </ClipboardButton>
           }
         />
@@ -163,14 +167,14 @@ export function ConfigPublicDashboardBase({
               margin-bottom: 0;
             `}
           >
-            Pause sharing dashboard
+            <Trans i18nKey="public-dashboard.config.pause-sharing-dashboard-label">Pause sharing dashboard</Trans>
           </Label>
         </Layout>
       </Field>
 
       <Field className={styles.fieldSpace}>
         <SettingsBar
-          title="Settings"
+          title={t('public-dashboard.config.settings-title', 'Settings')}
           headerElement={({ className }) => (
             <SettingsSummary
               className={className}
@@ -193,8 +197,7 @@ export function ConfigPublicDashboardBase({
       >
         <HorizontalGroup justify="flex-end">
           <Button
-            aria-label="Revoke public URL"
-            title="Revoke public URL"
+            title={t('public-dashboard.config.revoke-public-URL-button-title', 'Revoke public URL')}
             onClick={onRevoke}
             type="button"
             disabled={disableInputs}
@@ -202,7 +205,7 @@ export function ConfigPublicDashboardBase({
             variant="destructive"
             fill="outline"
           >
-            Revoke public URL
+            <Trans i18nKey="public-dashboard.config.revoke-public-URL-button">Revoke public URL</Trans>
           </Button>
         </HorizontalGroup>
       </Layout>

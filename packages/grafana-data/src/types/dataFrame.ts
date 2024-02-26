@@ -13,13 +13,17 @@ export enum FieldType {
   number = 'number',
   string = 'string',
   boolean = 'boolean',
+
   // Used to detect that the value is some kind of trace data to help with the visualisation and processing.
   trace = 'trace',
   geo = 'geo',
   enum = 'enum',
   other = 'other', // Object, Array, etc
   frame = 'frame', // DataFrame
-  nestedFrames = 'nestedFrames', // @alpha Nested DataFrames
+
+  // @alpha Nested DataFrames. This is for example used with tables where expanding a row will show a nested table.
+  // The value should be DataFrame[] even if it is a single frame.
+  nestedFrames = 'nestedFrames',
 }
 
 /**

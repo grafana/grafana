@@ -20,7 +20,7 @@ An alert rule is a set of evaluation criteria for when an alert rule should fire
 
 While queries and expressions select the data set to evaluate, a condition sets the threshold that an alert must meet or exceed to create an alert.
 
-An interval specifies how frequently an alerting rule is evaluated. Duration, when configured, indicates how long a condition must be met. The alert rules can also define alerting behavior in the absence of data.
+An interval specifies how frequently an alert rule is evaluated. Duration, when configured, indicates how long a condition must be met. The alert rules can also define alerting behavior in the absence of data.
 
 - [Alert rule types][alert-rule-types]
 - [Alert instances][alert-instances]
@@ -28,15 +28,15 @@ An interval specifies how frequently an alerting rule is evaluated. Duration, wh
 - [Annotation and labels][annotation-label]
 
 {{% docs/reference %}}
-[alert-instances]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alert-rules/alert-instances"
+[alert-instances]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/alert-instances"
 [alert-instances]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/alert-instances"
 
-[alert-rule-types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alert-rules/alert-rule-types"
+[alert-rule-types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/alert-rule-types"
 [alert-rule-types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/alert-rule-types"
 
-[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label"
 [annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
 
-[organising-alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alert-rules/organising-alerts"
+[organising-alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/organising-alerts"
 [organising-alerts]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/organising-alerts"
 {{% /docs/reference %}}

@@ -24,16 +24,14 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 
 	queryParams := fmt.Sprintf("?%s", c.Req.URL.RawQuery)
 
-	width, err := strconv.Atoi(queryReader.Get("width", "800"))
-	if err != nil {
-		c.Handle(hs.Cfg, 400, "Render parameters error", fmt.Errorf("cannot parse width as int: %s", err))
-		return
+	width := c.QueryInt("width")
+	if width == 0 {
+		width = hs.Cfg.RendererDefaultImageWidth
 	}
 
-	height, err := strconv.Atoi(queryReader.Get("height", "400"))
-	if err != nil {
-		c.Handle(hs.Cfg, 400, "Render parameters error", fmt.Errorf("cannot parse height as int: %s", err))
-		return
+	height := c.QueryInt("height")
+	if height == 0 {
+		height = hs.Cfg.RendererDefaultImageHeight
 	}
 
 	timeout, err := strconv.Atoi(queryReader.Get("timeout", "60"))
@@ -42,10 +40,9 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		return
 	}
 
-	scale, err := strconv.ParseFloat(queryReader.Get("scale", "1"), 64)
-	if err != nil {
-		c.Handle(hs.Cfg, 400, "Render parameters error", fmt.Errorf("cannot parse scale as float: %s", err))
-		return
+	scale := c.QueryFloat64("scale")
+	if scale == 0 {
+		scale = hs.Cfg.RendererDefaultImageScale
 	}
 
 	headers := http.Header{}
@@ -59,7 +56,9 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		hs.log.Error("Failed to parse user id", "err", errID)
 	}
 
-	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
+	encoding := queryReader.Get("encoding", "")
+
+	result, err := hs.RenderService.Render(c.Req.Context(), rendering.RenderPNG, rendering.Opts{
 		TimeoutOpts: rendering.TimeoutOpts{
 			Timeout: time.Duration(timeout) * time.Second,
 		},
@@ -72,7 +71,7 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		Height:            height,
 		Path:              web.Params(c.Req)["*"] + queryParams,
 		Timezone:          queryReader.Get("tz", ""),
-		Encoding:          queryReader.Get("encoding", ""),
+		Encoding:          encoding,
 		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,
 		DeviceScaleFactor: scale,
 		Headers:           headers,
@@ -88,7 +87,12 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		return
 	}
 
-	c.Resp.Header().Set("Content-Type", "image/png")
+	if encoding == "pdf" {
+		c.Resp.Header().Set("Content-Type", "application/pdf")
+	} else {
+		c.Resp.Header().Set("Content-Type", "image/png")
+	}
+
 	c.Resp.Header().Set("Cache-Control", "private")
 	http.ServeFile(c.Resp, c.Req, result.FilePath)
 }

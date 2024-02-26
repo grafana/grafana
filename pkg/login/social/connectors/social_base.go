@@ -9,6 +9,7 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"sync"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
@@ -16,32 +17,36 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type SocialBase struct {
 	*oauth2.Config
-	info              *social.OAuthInfo
-	log               log.Logger
-	autoAssignOrgRole string
-	features          featuremgmt.FeatureManager
+	info        *social.OAuthInfo
+	cfg         *setting.Cfg
+	reloadMutex sync.RWMutex
+	log         log.Logger
+	features    featuremgmt.FeatureToggles
 }
 
 func newSocialBase(name string,
-	config *oauth2.Config,
 	info *social.OAuthInfo,
-	autoAssignOrgRole string,
-	features featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
 ) *SocialBase {
 	logger := log.New("oauth." + name)
 
 	return &SocialBase{
-		Config:            config,
-		info:              info,
-		log:               logger,
-		autoAssignOrgRole: autoAssignOrgRole,
-		features:          features,
+		Config:   createOAuthConfig(info, cfg, name),
+		info:     info,
+		log:      logger,
+		features: features,
+		cfg:      cfg,
 	}
 }
 
@@ -55,7 +60,7 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.info.AllowAssignGrafanaAdmin))
 	bf.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.info.AllowSignup))
 	bf.WriteString(fmt.Sprintf("allowed_domains = %v\n", s.info.AllowedDomains))
-	bf.WriteString(fmt.Sprintf("auto_assign_org_role = %v\n", s.autoAssignOrgRole))
+	bf.WriteString(fmt.Sprintf("auto_assign_org_role = %v\n", s.cfg.AutoAssignOrgRole))
 	bf.WriteString(fmt.Sprintf("role_attribute_path = %v\n", s.info.RoleAttributePath))
 	bf.WriteString(fmt.Sprintf("role_attribute_strict = %v\n", s.info.RoleAttributeStrict))
 	bf.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.info.SkipOrgRoleSync))
@@ -68,6 +73,13 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("scopes = %v\n", s.Config.Scopes))
 	bf.WriteString("```\n\n")
 	return nil
+}
+
+func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.info
 }
 
 func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
@@ -101,13 +113,13 @@ func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.R
 }
 
 func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, bool) {
-	role, err := s.searchJSONForStringAttr(s.info.RoleAttributePath, rawJSON)
+	role, err := util.SearchJSONForStringAttr(s.info.RoleAttributePath, rawJSON)
 	if err == nil && role != "" {
 		return getRoleFromSearch(role)
 	}
 
 	if groupBytes, err := json.Marshal(groupStruct{groups}); err == nil {
-		role, err := s.searchJSONForStringAttr(s.info.RoleAttributePath, groupBytes)
+		role, err := util.SearchJSONForStringAttr(s.info.RoleAttributePath, groupBytes)
 		if err == nil && role != "" {
 			return getRoleFromSearch(role)
 		}
@@ -119,9 +131,9 @@ func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, 
 // defaultRole returns the default role for the user based on the autoAssignOrgRole setting
 // if legacy is enabled "" is returned indicating the previous role assignment is used.
 func (s *SocialBase) defaultRole() org.RoleType {
-	if s.autoAssignOrgRole != "" {
+	if s.cfg.AutoAssignOrgRole != "" {
 		s.log.Debug("No role found, returning default.")
-		return org.RoleType(s.autoAssignOrgRole)
+		return org.RoleType(s.cfg.AutoAssignOrgRole)
 	}
 
 	// should never happen
@@ -208,4 +220,11 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 	}
 
 	return org.RoleType(cases.Title(language.Und).String(role)), false
+}
+
+func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
+	return validation.Validate(info, requester,
+		validation.RequiredValidator(info.ClientId, "Client Id"),
+		validation.AllowAssignGrafanaAdminValidator,
+		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator)
 }

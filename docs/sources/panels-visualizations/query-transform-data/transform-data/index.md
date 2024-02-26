@@ -101,7 +101,9 @@ You can disable or hide one or more transformations by clicking on the eye icon 
 
 If your panel uses more than one query, you can filter these and apply the selected transformation to only one of the queries. To do this, click the filter icon on the top right of the transformation row. This opens a drop-down with a list of queries used on the panel. From here, you can select the query you want to transform.
 
-Note that the filter icon is always displayed if your panel has more than one query, but it may not work if previous transformations for merging the queries' outputs are applied. This is because one transformation takes the output of the previous one.
+You can also filter by annotations (which includes exemplars) to apply transformations to them. When you do so, the list of fields changes to reflect those in the annotation or exemplar tooltip.
+
+The filter icon is always displayed if your panel has more than one query or source of data (that is, panel or annotation data) but it may not work if previous transformations for merging the queries’ outputs are applied. This is because one transformation takes the output of the previous one.
 
 ## Delete a transformation
 
@@ -154,7 +156,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
-> **Note:** **Cumulative functions** and **Window functions** modes are currently in private preview. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
+> **Note:** **Cumulative functions** and **Window functions** modes are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `addFieldFromCalculationStatFunctions` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
 In the example below, we added two fields together and named them Sum.
 
@@ -519,7 +521,7 @@ Use this transformation to customize the output of a string field. This transfor
 
 This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
 
-> **Note:** This transformation is currently in private preview. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
+> **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `formatString` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
 ### Format time
 
@@ -1278,7 +1280,7 @@ There are two different models:
 - **Polynomial regression** - Fits a polynomial function to the data.
   {{< figure src="/static/img/docs/transformations/polynomial-regression.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series visualization with a curved line representing the polynomial function" >}}
 
-> **Note:** This transformation is currently in private preview. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
+> **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `regressionTransformation` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
 {{% docs/reference %}}
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"

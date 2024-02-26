@@ -1,16 +1,25 @@
-import { IntervalVariableModel } from '@grafana/data';
+import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
+  SceneGridItem,
+  SceneGridLayout,
+  SceneGridRow,
   SceneObject,
   SceneQueryRunner,
   VizPanel,
+  VizPanelMenu,
 } from '@grafana/scenes';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
-import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+
+export const NEW_PANEL_HEIGHT = 8;
+export const NEW_PANEL_WIDTH = 12;
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
@@ -95,10 +104,10 @@ export function getMultiVariableValues(variable: MultiValueVariable) {
   };
 }
 
-// Transform old interval model to new interval model from scenes
-export function getIntervalsFromOldIntervalModel(variable: IntervalVariableModel): string[] {
+// used to transform old interval model to new interval model from scenes
+export function getIntervalsFromQueryString(query: string): string[] {
   // separate intervals by quotes either single or double
-  const matchIntervals = variable.query.match(/(["'])(.*?)\1|\w+/g);
+  const matchIntervals = query.match(/(["'])(.*?)\1|\w+/g);
 
   // If no intervals are found in query, return the initial state of the interval reducer.
   if (!matchIntervals) {
@@ -152,12 +161,14 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
     return undefined;
   }
 
-  if (sceneObject.state.$data instanceof SceneQueryRunner) {
-    return sceneObject.state.$data;
+  const dataProvider = sceneObject.state.$data ?? sceneObject.parent?.state.$data;
+
+  if (dataProvider instanceof SceneQueryRunner) {
+    return dataProvider;
   }
 
-  if (sceneObject.state.$data instanceof SceneDataTransformer) {
-    return getQueryRunnerFor(sceneObject.state.$data);
+  if (dataProvider instanceof SceneDataTransformer) {
+    return getQueryRunnerFor(dataProvider);
   }
 
   return undefined;
@@ -165,10 +176,6 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
 
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
-
-  if (root instanceof PanelEditor) {
-    return root.state.dashboardRef.resolve();
-  }
 
   if (root instanceof DashboardScene) {
     return root;
@@ -191,4 +198,64 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 
 export function isPanelClone(key: string) {
   return key.includes('clone');
+}
+
+export function getNextPanelId(dashboard: DashboardScene) {
+  let max = 0;
+  const body = dashboard.state.body;
+
+  if (body instanceof SceneGridLayout) {
+    for (const child of body.state.children) {
+      if (child instanceof SceneGridItem) {
+        const vizPanel = child.state.body;
+
+        if (vizPanel instanceof VizPanel) {
+          const panelId = getPanelIdForVizPanel(vizPanel);
+
+          if (panelId > max) {
+            max = panelId;
+          }
+        }
+      }
+
+      if (child instanceof SceneGridRow) {
+        for (const rowChild of child.state.children) {
+          if (rowChild instanceof SceneGridItem) {
+            const vizPanel = rowChild.state.body;
+
+            if (vizPanel instanceof VizPanel) {
+              const panelId = getPanelIdForVizPanel(vizPanel);
+
+              if (panelId > max) {
+                max = panelId;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return max + 1;
+}
+
+export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
+  const panelId = getNextPanelId(dashboard);
+
+  return new VizPanel({
+    title: 'Panel Title',
+    key: getVizPanelKeyForPanelId(panelId),
+    pluginId: 'timeseries',
+    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    menu: new VizPanelMenu({
+      $behaviors: [panelMenuBehavior],
+    }),
+    $data: new SceneDataTransformer({
+      $data: new SceneQueryRunner({
+        queries: [{ refId: 'A' }],
+        datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
+      }),
+      transformations: [],
+    }),
+  });
 }

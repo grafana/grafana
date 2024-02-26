@@ -21,8 +21,7 @@ import {
   getDataSourceSrv,
   setDataSourceSrv,
 } from '@grafana/runtime';
-import { QueryFormat, SQLQuery } from 'app/features/plugins/sql/types';
-import { makeVariable } from 'app/features/plugins/sql/utils/testHelpers';
+import { QueryFormat, SQLQuery, makeVariable } from '@grafana/sql';
 
 import { PostgresDatasource } from './datasource';
 import { PostgresOptions } from './types';

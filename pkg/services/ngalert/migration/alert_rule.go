@@ -9,19 +9,20 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardUID string, channels []*legacymodels.AlertNotification) (data.Labels, data.Labels) {
+func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardUID string) (data.Labels, data.Labels) {
 	tags := alert.GetTagsFromSettings()
-	lbls := make(data.Labels, len(tags)+len(channels)+1)
+	lbls := make(data.Labels, len(tags)+1)
 
 	for _, t := range tags {
 		lbls[t.Key] = t.Value
@@ -29,9 +30,6 @@ func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardU
 
 	// Add a label for routing
 	lbls[ngmodels.MigratedUseLegacyChannelsLabel] = "true"
-	for _, c := range channels {
-		lbls[contactLabel(c.Name)] = "true"
-	}
 
 	annotations := make(data.Labels, 4)
 	annotations[ngmodels.DashboardUIDAnnotation] = dashboardUID
@@ -45,7 +43,7 @@ func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardU
 }
 
 // migrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
-func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *legacymodels.Alert, info migmodels.DashboardUpgradeInfo) (*ngmodels.AlertRule, error) {
+func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *legacymodels.Alert, dashboard *dashboards.Dashboard) (*ngmodels.AlertRule, error) {
 	l.Debug("Migrating alert rule to Unified Alerting")
 	rawSettings, err := json.Marshal(alert.Settings)
 	if err != nil {
@@ -61,9 +59,7 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 		return nil, fmt.Errorf("transform conditions: %w", err)
 	}
 
-	channels := om.extractChannels(l, parsedSettings)
-
-	lbls, annotations := addLabelsAndAnnotations(l, alert, info.DashboardUID, channels)
+	lbls, annotations := addLabelsAndAnnotations(l, alert, dashboard.UID)
 
 	data, err := migrateAlertRuleQueries(l, cond.Data)
 	if err != nil {
@@ -75,29 +71,19 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 		isPaused = true
 	}
 
-	// Here we ensure that the alert rule title is unique within the folder.
-	titleDeduplicator := om.titleDeduplicatorForFolder(info.NewFolderUID)
-	name, err := titleDeduplicator.Deduplicate(alert.Name)
-	if err != nil {
-		return nil, err
-	}
-	if name != alert.Name {
-		l.Info(fmt.Sprintf("Alert rule title modified to be unique within the folder and fit within the maximum length of %d", store.AlertDefinitionMaxTitleLength), "old", alert.Name, "new", name)
-	}
-
-	dashUID := info.DashboardUID
+	dashUID := dashboard.UID
 	ar := &ngmodels.AlertRule{
 		OrgID:           alert.OrgID,
-		Title:           name,
+		Title:           alert.Name, // Title will be deduplicated on persist.
 		UID:             util.GenerateShortUID(),
 		Condition:       cond.Condition,
 		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(alert.Frequency),
 		Version:         1,
-		NamespaceUID:    info.NewFolderUID,
+		NamespaceUID:    "", // The folder for this alert is determined later.
 		DashboardUID:    &dashUID,
 		PanelID:         &alert.PanelID,
-		RuleGroup:       groupName(ruleAdjustInterval(alert.Frequency), info.DashboardName),
+		RuleGroup:       groupName(ruleAdjustInterval(alert.Frequency), dashboard.Title),
 		For:             alert.For,
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
@@ -108,20 +94,14 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 		ExecErrState:    transExecErr(l, parsedSettings.ExecutionErrorState),
 	}
 
-	// Label for routing and silences.
-	n, v := getLabelForSilenceMatching(ar.UID)
-	ar.Labels[n] = v
+	om.silences.handleSilenceLabels(ar, parsedSettings)
 
-	if parsedSettings.ExecutionErrorState == string(legacymodels.ExecutionErrorKeepState) {
-		if err := om.addErrorSilence(ar); err != nil {
-			om.log.Error("Alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
-		}
+	// We do some validation and pre-save operations early in order to track these errors as part of the migration state.
+	if err := ar.ValidateAlertRule(om.cfg.UnifiedAlerting); err != nil {
+		return nil, err
 	}
-
-	if parsedSettings.NoDataState == string(legacymodels.NoDataKeepState) {
-		if err := om.addNoDataSilence(ar); err != nil {
-			om.log.Error("Alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
-		}
+	if err := ar.PreSave(time.Now); err != nil {
+		return nil, err
 	}
 
 	return ar, nil
@@ -284,31 +264,6 @@ func truncate(daName string, length int) string {
 		return daName[:length]
 	}
 	return daName
-}
-
-// extractChannels extracts notification channels from the given legacy dashboard alert parsed settings.
-func (om *OrgMigration) extractChannels(l log.Logger, parsedSettings dashAlertSettings) []*legacymodels.AlertNotification {
-	// Extracting channels.
-	channels := make([]*legacymodels.AlertNotification, 0, len(parsedSettings.Notifications))
-	for _, key := range parsedSettings.Notifications {
-		// Either id or uid can be defined in the dashboard alert notification settings. See alerting.NewRuleFromDBAlert.
-		if key.ID > 0 {
-			if c, ok := om.channelCache.GetChannelByID(key.ID); ok {
-				channels = append(channels, c)
-				continue
-			}
-		}
-
-		if key.UID != "" {
-			if c, ok := om.channelCache.GetChannelByUID(key.UID); ok {
-				channels = append(channels, c)
-				continue
-			}
-		}
-
-		l.Warn("Failed to get alert notification, skipping", "notificationKey", key)
-	}
-	return channels
 }
 
 // groupName constructs a group name from the dashboard title and the interval. It truncates the dashboard title

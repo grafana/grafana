@@ -8,7 +8,7 @@ import {
 // Mock the store module
 jest.mock('app/core/store', () => ({
   exists: jest.fn(),
-  getObject: jest.fn(),
+  getObject: jest.fn((_a, b) => b),
   setObject: jest.fn(),
   get: jest.fn(),
 }));

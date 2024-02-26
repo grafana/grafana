@@ -374,7 +374,7 @@ describe('RichHistoryCard', () => {
 
       await waitFor(() => {
         expect(setQueries).toHaveBeenCalledWith(expect.any(String), queries);
-        expect(changeDatasource).toHaveBeenCalledWith(expect.any(String), 'mixed');
+        expect(changeDatasource).toHaveBeenCalledWith({ datasource: 'mixed', exploreId: 'left' });
       });
     });
   });

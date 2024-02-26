@@ -67,7 +67,13 @@ export const FilterPopup = ({ column: { preFilteredRows, filterValue, setFilter 
               />
             </HorizontalGroup>
             <div className={cx(styles.listDivider)} />
-            <FilterList onChange={setValues} values={values} options={options} caseSensitive={matchCase} />
+            <FilterList
+              onChange={setValues}
+              values={values}
+              options={options}
+              caseSensitive={matchCase}
+              showOperators={true}
+            />
           </VerticalGroup>
           <HorizontalGroup spacing="lg">
             <HorizontalGroup>
@@ -102,7 +108,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(2),
-    margin: theme.spacing(1, 0),
     boxShadow: theme.shadows.z3,
     borderRadius: theme.shape.radius.default,
   }),

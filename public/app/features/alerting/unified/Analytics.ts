@@ -1,6 +1,5 @@
 import { dateTime } from '@grafana/data';
-import { faro, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
-import { getBackendSrv, logError } from '@grafana/runtime';
+import { createMonitoringLogger, getBackendSrv } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
 import { contextSrv } from 'app/core/core';
 
@@ -22,18 +21,14 @@ export const LogMessages = {
   unknownMessageFromError: 'unknown messageFromError',
 };
 
-// logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent correctly
-export function logInfo(message: string, context: Record<string, string | number> = {}) {
-  if (config.grafanaJavascriptAgent.enabled) {
-    faro.api.pushLog([message], {
-      level: GrafanaLogLevel.INFO,
-      context: { ...context, module: 'Alerting' },
-    });
-  }
+const alertingLogger = createMonitoringLogger('features.alerting', { module: 'Alerting' });
+
+export function logInfo(message: string, context?: Record<string, string>) {
+  alertingLogger.logInfo(message, context);
 }
 
-export function logAlertingError(error: Error, context: Record<string, string | number> = {}) {
-  logError(error, { ...context, module: 'Alerting' });
+export function logError(error: Error, context?: Record<string, string>) {
+  alertingLogger.logError(error, context);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

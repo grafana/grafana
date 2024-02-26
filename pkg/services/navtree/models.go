@@ -22,6 +22,7 @@ const (
 	WeightInfrastructure
 	WeightApplication
 	WeightFrontend
+	WeightAsserts
 	WeightDataConnections
 	WeightApps
 	WeightPlugin
@@ -67,6 +68,7 @@ type NavLink struct {
 	EmptyMessageId string     `json:"emptyMessageId,omitempty"`
 	PluginID       string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
 	IsCreateAction bool       `json:"isCreateAction,omitempty"`
+	Keywords       []string   `json:"keywords,omitempty"`
 }
 
 func (node *NavLink) Sort() {
@@ -140,6 +142,7 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("global-orgs"))
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("feature-toggles"))
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("storage"))
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("migrate-to-cloud"))
 
 		generalNode := &NavLink{
 			Text:     "General",

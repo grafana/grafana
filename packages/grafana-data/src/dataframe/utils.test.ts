@@ -1,7 +1,7 @@
 import { FieldType } from '../types';
 
-import { toDataFrame } from './processDataFrame';
-import { anySeriesWithTimeField } from './utils';
+import { createDataFrame, toDataFrame } from './processDataFrame';
+import { anySeriesWithTimeField, addRow } from './utils';
 
 describe('anySeriesWithTimeField', () => {
   describe('single frame', () => {
@@ -75,5 +75,32 @@ describe('anySeriesWithTimeField', () => {
       });
       expect(anySeriesWithTimeField([frameA, frameB])).toBeTruthy();
     });
+  });
+});
+
+describe('addRow', () => {
+  const frame = createDataFrame({
+    fields: [
+      { name: 'name', type: FieldType.string },
+      { name: 'date', type: FieldType.time },
+      { name: 'number', type: FieldType.number },
+    ],
+  });
+  const date = Date.now();
+
+  it('adds row to data frame as object', () => {
+    addRow(frame, { name: 'A', date, number: 1 });
+    expect(frame.fields[0].values[0]).toBe('A');
+    expect(frame.fields[1].values[0]).toBe(date);
+    expect(frame.fields[2].values[0]).toBe(1);
+    expect(frame.length).toBe(1);
+  });
+
+  it('adds row to data frame as array', () => {
+    addRow(frame, ['B', date, 42]);
+    expect(frame.fields[0].values[1]).toBe('B');
+    expect(frame.fields[1].values[1]).toBe(date);
+    expect(frame.fields[2].values[1]).toBe(42);
+    expect(frame.length).toBe(2);
   });
 });

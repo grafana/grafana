@@ -50,9 +50,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
 	apiServerOpts := api.ServerOptions{Listener: listener}
 
-	env, err := server.InitializeForTest(cfg, serverOpts, apiServerOpts)
+	env, err := server.InitializeForTest(t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
-	require.NoError(t, env.SQLStore.Sync())
 
 	require.NotNil(t, env.SQLStore.Cfg)
 	dbSec, err := env.SQLStore.Cfg.Raw.GetSection("database")
@@ -97,21 +96,6 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	t.Logf("Grafana is listening on %s", addr)
 
 	return addr, env
-}
-
-// SetUpDatabase sets up the Grafana database.
-func SetUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
-	t.Helper()
-
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{
-		EnsureDefaultOrgAndUser: true,
-	})
-
-	// Make sure changes are synced with other goroutines
-	err := sqlStore.Sync()
-	require.NoError(t, err)
-
-	return sqlStore
 }
 
 // CreateGrafDir creates the Grafana directory.
@@ -394,6 +378,15 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 		_, err = logSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 		require.NoError(t, err)
+
+		if o.NGAlertSchedulerBaseInterval > 0 {
+			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = unifiedAlertingSection.NewKey("scheduler_tick_interval", o.NGAlertSchedulerBaseInterval.String())
+			require.NoError(t, err)
+			_, err = unifiedAlertingSection.NewKey("min_interval", o.NGAlertSchedulerBaseInterval.String())
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -419,6 +412,7 @@ type GrafanaOpts struct {
 	EnableFeatureToggles                  []string
 	NGAlertAdminConfigPollInterval        time.Duration
 	NGAlertAlertmanagerConfigPollInterval time.Duration
+	NGAlertSchedulerBaseInterval          time.Duration
 	AnonymousUserRole                     org.RoleType
 	EnableQuota                           bool
 	DashboardOrgQuota                     *int64

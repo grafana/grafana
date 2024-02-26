@@ -32,7 +32,6 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
             label={disabled ? 'Data source' : 'Select data source'}
             error={errors.dataSourceName?.message}
             invalid={!!errors.dataSourceName?.message}
-            data-testid="datasource-picker"
           >
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (

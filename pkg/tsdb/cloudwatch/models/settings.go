@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -17,9 +18,12 @@ type CloudWatchSettings struct {
 	Namespace               string   `json:"customMetricsNamespaces"`
 	SecureSocksProxyEnabled bool     `json:"enableSecureSocksProxy"` // this can be removed when https://github.com/grafana/grafana/issues/39089 is implemented
 	LogsTimeout             Duration `json:"logsTimeout"`
+
+	// GrafanaSettings are fetched from the GrafanaCfg in the context
+	GrafanaSettings awsds.AuthSettings `json:"-"`
 }
 
-func LoadCloudWatchSettings(config backend.DataSourceInstanceSettings) (CloudWatchSettings, error) {
+func LoadCloudWatchSettings(ctx context.Context, config backend.DataSourceInstanceSettings) (CloudWatchSettings, error) {
 	instance := CloudWatchSettings{}
 	if config.JSONData != nil && len(config.JSONData) > 1 {
 		if err := json.Unmarshal(config.JSONData, &instance); err != nil {
@@ -43,6 +47,7 @@ func LoadCloudWatchSettings(config backend.DataSourceInstanceSettings) (CloudWat
 
 	instance.AccessKey = config.DecryptedSecureJSONData["accessKey"]
 	instance.SecretKey = config.DecryptedSecureJSONData["secretKey"]
+	instance.GrafanaSettings = *awsds.ReadAuthSettings(ctx)
 
 	return instance, nil
 }
