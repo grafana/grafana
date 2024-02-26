@@ -41,7 +41,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "25.0.7",
     "@rollup/plugin-node-resolve": "15.2.3",
-    "@types/node": "20.11.19",
+    "@types/node": "20.11.20",
     "esbuild": "0.18.12",
     "rimraf": "5.0.5",
     "rollup": "2.79.1",
