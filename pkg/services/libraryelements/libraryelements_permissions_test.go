@@ -96,6 +96,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
 				result.Result.Meta.FolderUID = ""
+				result.Result.FolderUID = "general"
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
