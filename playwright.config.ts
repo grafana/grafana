@@ -8,17 +8,13 @@ const testDirRoot = 'e2e/plugin-e2e/plugin-e2e-api-tests/';
 export default defineConfig<PluginOptions>({
   fullyParallel: true,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 3 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
     baseURL: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
     trace: 'retain-on-failure',
-    httpCredentials: {
-      username: 'admin',
-      password: 'admin',
-    },
     provisioningRootDir: path.join(process.cwd(), process.env.PROV_DIR ?? 'conf/provisioning'),
   },
   projects: [
