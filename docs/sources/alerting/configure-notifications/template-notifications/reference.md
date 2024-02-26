@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ./alerting-rules/manage-notifications/manage-contact-points/template-notifications/reference/
+ - ../../manage-notifications/template-notifications/reference/ # /docs/grafana/latest/alerting/manage-notifications/template-notifications/reference/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/reference/
 description: Learn about templating notifications options
 keywords:

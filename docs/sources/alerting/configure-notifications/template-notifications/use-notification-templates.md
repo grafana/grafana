@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ./alerting-rules/manage-notifications/manage-contact-points/template-notifications/use-notification-templates/
+ - ../../manage-notifications/template-notifications/use-notification-templates/ # /docs/grafana/latest/alerting/manage-notifications/template-notifications/use-notification-templates/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/use-notification-templates/
 description: Use notification templates in contact points to customize your notifications
 keywords:

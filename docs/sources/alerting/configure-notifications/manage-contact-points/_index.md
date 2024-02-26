@@ -10,7 +10,10 @@ aliases:
   - ./alerting-rules/
   - ./alerting-rules/manage-notifications/manage-contact-points/
   - alerting/manage-notifications/manage-contact-points/configure-integrations/
-  - ./alerting-rules/manage-contact-points/
+  - ./alerting-rules/manage-contact-points/ # /docs/grafana/latest/alerting/alerting-rules/manage-contact-points/
+  - ./alerting-rules/create-notification-policy/ # /docs/grafana/latest/alerting/alerting-rules/create-notification-policy/
+  - ../alerting-rules/manage-contact-points/integrations/ # /docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/
+  - ../manage-notifications/manage-contact-points/ # /docs/grafana/latest/alerting/manage-notifications/manage-contact-points/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/
 description: Configure contact points to define how your contacts are notified when an alert rule fires
 keywords:
