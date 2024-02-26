@@ -94,6 +94,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   hoverProximity,
   orientation = VizOrientation.Vertical,
 }) => {
+  // we want the Auto and Vertical orientation to default to Vertical
   const isVertical = orientation !== VizOrientation.Horizontal;
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
