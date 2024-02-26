@@ -113,3 +113,33 @@ Grafana Alerting previously evaluated rules at the start of the evaluation inter
 _Generally available in all editions of Grafana_
 
 Grafana can now be used to manage both Prometheus and Mimir Alertmanagers with UTF-8 configurations. For more information, please see the release notes for Alertmanager 0.27.0.
+
+### Simplified Alert Notification Routing
+
+<!--#alerting -->
+
+_Generally available in all editions of Grafana_
+
+This feature simplifies your options for configuring where your notifications are sent when an alert rule fires. Choose an existing contact point directly from within the alert rule creation form without the need to label match notification policies.  You can also set optional muting, grouping, and timing settings directly in the alert rule.
+
+Simplified routing inherits the alert rule RBAC, increasing control over notification routing while preventing accidental notification policy updates, ensuring critical notifications make it to their intended contact point destination.
+
+To try out Simplified Alert Notification Routing enable the `alertingSimplifiedRouting` feature toggle.
+
+## Authentication and authorization
+
+### SSO Settings UI and Terraform resource for configuring OAuth providers
+
+<!-- #proj-grafana-sso-config, #identity-access or Mihaly Gyongyosi (@Misi) -->
+
+_Available in public preview in all editions of Grafana_
+
+Configuring OAuth providers was a bit cumbersome in Grafana: Grafana Cloud users had to reach out to Grafana Support, self-hosted users had to manually edit the configuration file, set up environment variables, and then they had to restart Grafana. On Cloud, the Advanced Auth page is there to configure some of the providers, but configuring Generic OAuth hasn’t been available until now and there was no way to manage the settings through the Grafana UI, nor was there a way to manage the settings through Terraform or the Grafana API.
+
+Our goal is to make setting up SSO for your Grafana instance simple and fast.
+
+To get there, we are introducing easier self-serve configuration options for OAuth in Grafana. All of the currently supported OAuth providers are now available for configuration through the Grafana UI, Terraform and via the API. From the UI, you can also now manage all of the settings for the Generic OAuth provider.
+
+We are working on adding complete support for configuring all other supported OAuth providers as well, such as GitHub, GitLab, Google, Microsoft Azure AD and Okta. You can already manage some of these settings via the new self-serve configuration options, and we’re working on adding more at the moment.
+
+![Screenshot of the Authentication provider list page](/media/docs/grafana-cloud/screenshot-sso-settings-ui-public-prev-v10.4.png)
