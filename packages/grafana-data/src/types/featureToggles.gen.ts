@@ -178,5 +178,5 @@ export interface FeatureToggles {
   expressionParser?: boolean;
   groupByVariable?: boolean;
   alertingUpgradeDryrunOnStart?: boolean;
-  scopes?: boolean;
+  scopeFilters?: boolean;
 }

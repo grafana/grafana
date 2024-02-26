@@ -32,15 +32,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     );
   }
 
-  const emptyState = (
-    <>
-      <div className={styles.controlsWrapper}>
-        {scopeSelector && !isScopesExpanded && <scopeSelector.Component model={scopeSelector} />}
-        <div className={styles.controls}>{showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}</div>
-      </div>
-      <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />
-    </>
-  );
+  const emptyState = <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />;
 
   const withPanels = (
     <div className={cx(styles.body)}>
@@ -53,10 +45,18 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
         <CustomScrollbar autoHeightMin={'100%'}>
-          <div className={styles.canvasContent}>
-            <NavToolbarActions dashboard={model} />
-            {controls && <controls.Component model={controls} />}
-            {isEmpty ? emptyState : withPanels}
+          <div className={styles.innerScrollbarContainer}>
+            {scopeSelector && isScopesExpanded && <scopeSelector.Component model={scopeSelector} />}
+            <div className={styles.canvasContent}>
+              <NavToolbarActions dashboard={model} />
+              {(controls || (scopeSelector && !isScopesExpanded)) && (
+                <div className={styles.controlsWrapper}>
+                  {scopeSelector && !isScopesExpanded && <scopeSelector.Component model={scopeSelector} />}
+                  {controls && <controls.Component model={controls} />}
+                </div>
+              )}
+              {isEmpty ? emptyState : withPanels}
+            </div>
           </div>
         </CustomScrollbar>
       )}
@@ -87,7 +87,6 @@ function getStyles(theme: GrafanaTheme2) {
       gap: '8px',
       marginBottom: theme.spacing(2),
     }),
-
     controlsWrapper: css({
       display: 'flex',
       flexDirection: 'row',
@@ -99,16 +98,11 @@ function getStyles(theme: GrafanaTheme2) {
       zIndex: theme.zIndex.activePanel,
       padding: theme.spacing(2, 0),
       marginLeft: 'auto',
+      [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column-reverse',
+        alignItems: 'stretch',
+      },
       width: '100%',
-    }),
-
-    controls: css({
-      display: 'flex',
-      flex: '100%',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      gap: theme.spacing(1),
     }),
   };
 }

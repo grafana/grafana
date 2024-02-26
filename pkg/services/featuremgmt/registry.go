@@ -1192,10 +1192,15 @@ var (
 			Expression:      "true", // enabled by default
 		},
 		{
-			Name:        "scopes",
-			Description: "Enables the use of scopes in Grafana",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDashboardsSquad,
+			Name:              "scopeFilters",
+			Description:       "Enables the use of scope filters in Grafana",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 	}
 )

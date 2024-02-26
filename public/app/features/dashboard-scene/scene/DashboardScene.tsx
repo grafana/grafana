@@ -141,7 +141,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       links: state.links ?? [],
-      scopeSelector: config.featureToggles.scopes ? new ScopeSelectorScene() : undefined,
+      scopeSelector: config.featureToggles.scopeFilters ? new ScopeSelectorScene() : undefined,
       ...state,
     });
 

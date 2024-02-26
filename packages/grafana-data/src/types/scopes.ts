@@ -10,7 +10,8 @@ export interface ScopeFilter {
 }
 
 export interface Scope {
-  name: string;
+  uid: string;
+  title: string;
   type: string;
   description: string;
   category: string;

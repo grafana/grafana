@@ -70,18 +70,8 @@ function getStyles(theme: GrafanaTheme2) {
     controls: css({
       display: 'flex',
       alignItems: 'flex-start',
+      flex: '100%',
       gap: theme.spacing(1),
-      position: 'sticky',
-      top: 0,
-      background: theme.colors.background.canvas,
-      zIndex: theme.zIndex.activePanel,
-      padding: theme.spacing(2, 0),
-      width: '100%',
-      marginLeft: 'auto',
-      [theme.breakpoints.down('sm')]: {
-        flexDirection: 'column-reverse',
-        alignItems: 'stretch',
-      },
     }),
     embedded: css({
       background: 'unset',
