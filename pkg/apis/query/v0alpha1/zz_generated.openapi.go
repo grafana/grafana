@@ -536,7 +536,7 @@ func schema_apis_query_v0alpha1_template_TemplateVariable(ref common.ReferenceCa
 					"valueListDefinition": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ValueListDefinition is the object definition used by the FE to get a list of possible values to select for render.",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 				},
@@ -544,7 +544,7 @@ func schema_apis_query_v0alpha1_template_TemplateVariable(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
 	}
 }
 

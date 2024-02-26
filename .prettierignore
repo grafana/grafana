@@ -32,11 +32,5 @@ public/api-merged.json
 public/api-enterprise-spec.json
 public/openapi3.json
 
-# Generated Kinds report
-kinds/report.json
-
-# Generated schema docs
-docs/sources/developers/kinds/
-
 # Crowdin files
 public/locales/**/*.json
