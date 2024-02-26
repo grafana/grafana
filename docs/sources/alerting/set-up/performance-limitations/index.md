@@ -54,7 +54,7 @@ Grafana cannot be used to receive external alerts. You can only send alerts to t
 
 You have the option to send Grafana managed alerts to an external Alertmanager, you can find this option in the admin tab on the Alerting page.
 
-For more information, refer to [this GitHub discussion](https://github.com/grafana/grafana/discussions/45773).
+For more information, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/73447).
 
 ## High load on database caused by a high number of alert instances
 
