@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
@@ -99,10 +100,11 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'playlist-actions',
-    condition: isPlaying,
+    condition: isPlaying && !editview && !isEditingPanel && !isEditing,
     render: () => (
       <ToolbarButton
         key="play-list-prev"
+        data-testid={selectors.pages.Dashboard.DashNav.playlistControls.prev}
         tooltip={t('dashboard.toolbar.playlist-previous', 'Go to previous dashboard')}
         icon="backward"
         onClick={() => playlist?.prev()}
@@ -112,9 +114,13 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'playlist-actions',
-    condition: isPlaying,
+    condition: isPlaying && !editview && !isEditingPanel && !isEditing,
     render: () => (
-      <ToolbarButton onClick={() => playlist?.stop()}>
+      <ToolbarButton
+        key="play-list-stop"
+        onClick={() => playlist?.stop()}
+        data-testid={selectors.pages.Dashboard.DashNav.playlistControls.stop}
+      >
         <Trans i18nKey="dashboard.toolbar.playlist-stop">Stop playlist</Trans>
       </ToolbarButton>
     ),
@@ -122,9 +128,11 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'playlist-actions',
-    condition: isPlaying,
+    condition: isPlaying && !editview && !isEditingPanel && !isEditing,
     render: () => (
       <ToolbarButton
+        key="play-list-next"
+        data-testid={selectors.pages.Dashboard.DashNav.playlistControls.next}
         tooltip={t('dashboard.toolbar.playlist-next', 'Go to next dashboard')}
         icon="forward"
         onClick={() => playlist?.next()}
