@@ -494,3 +494,6 @@ replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240208102907-e82436ce63e6
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
+
+// Use our fork xorm. go.work currently overrides this and points to the local ./pkg/util/xorm directory.
+replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
