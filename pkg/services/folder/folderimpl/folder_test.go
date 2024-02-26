@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -1796,6 +1798,216 @@ func TestFolderServiceGetFolders(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestGetChildrenFilterByPermission(t *testing.T) {
+	db := sqlstore.InitTestDB(t)
+
+	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
+		orgID: {
+			dashboards.ActionFoldersCreate: {},
+			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll},
+			dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
+		},
+	}}
+
+	viewer := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
+		orgID: {
+			dashboards.ActionFoldersRead:  {},
+			dashboards.ActionFoldersWrite: {},
+		},
+	}}
+
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanViewValue: true,
+	})
+
+	getSvc := func(features featuremgmt.FeatureToggles) Service {
+		quotaService := quotatest.New(false, nil)
+		folderStore := ProvideDashboardFolderStore(db)
+
+		cfg := setting.NewCfg()
+
+		featuresFlagOff := featuremgmt.WithFeatures()
+		dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
+		require.NoError(t, err)
+		nestedFolderStore := ProvideStore(db, db.Cfg)
+
+		b := bus.ProvideBus(tracing.InitializeTracerForTest())
+		ac := acimpl.ProvideAccessControl(cfg)
+
+		return Service{
+			cfg:                  cfg,
+			log:                  log.New("test-folder-service"),
+			dashboardStore:       dashStore,
+			dashboardFolderStore: folderStore,
+			store:                nestedFolderStore,
+			features:             features,
+			bus:                  b,
+			db:                   db,
+			accessControl:        ac,
+			registry:             make(map[string]folder.RegistryService),
+			metrics:              newFoldersMetrics(nil),
+		}
+	}
+
+	folderSvcOn := getSvc(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+
+	// no view permission
+	// 	|_ with view permission
+	// 	|_ with view permissionn & with edit permission
+	// with edit permission
+	//	|_ subfolder under with edit permission
+	// no edit permission
+	// 	|_ subfolder under no edit permission
+	// 	|_ subfolder under no edit permission with edit permission
+	noViewPermission, err := folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    "",
+		Title:        "no view permission",
+		SignedInUser: &signedInAdminUser,
+	})
+
+	require.NoError(t, err)
+	f, err := folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    noViewPermission.UID,
+		Title:        "with view permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+
+	require.NoError(t, err)
+	f, err = folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    noViewPermission.UID,
+		Title:        "with view permission and with edit permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	viewer.Permissions[orgID][dashboards.ActionFoldersWrite] = append(viewer.Permissions[orgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+
+	withEditPermission, err := folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    "",
+		Title:        "with edit permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(withEditPermission.UID))
+	viewer.Permissions[orgID][dashboards.ActionFoldersWrite] = append(viewer.Permissions[orgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(withEditPermission.UID))
+
+	_, err = folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    withEditPermission.UID,
+		Title:        "subfolder under with edit permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+
+	noEditPermission, err := folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    "",
+		Title:        "no edit permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(noEditPermission.UID))
+
+	_, err = folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    noEditPermission.UID,
+		Title:        "subfolder under no edit permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+
+	f, err = folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    noEditPermission.UID,
+		Title:        "subfolder under no edit permission with edit permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+	viewer.Permissions[orgID][dashboards.ActionFoldersWrite] = append(viewer.Permissions[orgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+
+	testCases := []struct {
+		name            string
+		q               folder.GetChildrenQuery
+		expectedFolders []string
+	}{
+		{
+			name: "should return root folders with view permission",
+			q: folder.GetChildrenQuery{
+				OrgID:        orgID,
+				SignedInUser: &viewer,
+			},
+			expectedFolders: []string{"Shared with me", "no edit permission", "with edit permission"},
+		},
+		{
+			name: "should return subfolders with view permission",
+			q: folder.GetChildrenQuery{
+				OrgID:        orgID,
+				SignedInUser: &viewer,
+				UID:          noEditPermission.UID,
+			},
+			expectedFolders: []string{"subfolder under no edit permission", "subfolder under no edit permission with edit permission"},
+		},
+		{
+			name: "should return shared with me folders with view permission",
+			q: folder.GetChildrenQuery{
+				OrgID:        orgID,
+				SignedInUser: &viewer,
+				UID:          folder.SharedWithMeFolderUID,
+			},
+			expectedFolders: []string{"with view permission", "with view permission and with edit permission"},
+		},
+		{
+			name: "should return root folders with edit permission",
+			q: folder.GetChildrenQuery{
+				OrgID:        orgID,
+				SignedInUser: &viewer,
+				Permission:   dashboardaccess.PERMISSION_EDIT,
+			},
+			expectedFolders: []string{"Shared with me", "with edit permission"},
+		},
+		{
+			name: "should return subfolders with edit permission",
+			q: folder.GetChildrenQuery{
+				OrgID:        orgID,
+				SignedInUser: &viewer,
+				Permission:   dashboardaccess.PERMISSION_EDIT,
+				UID:          noEditPermission.UID,
+			},
+			expectedFolders: []string{"subfolder under no edit permission with edit permission"},
+		},
+		{
+			name: "should return shared with me folders with edit permission",
+			q: folder.GetChildrenQuery{
+				OrgID:        orgID,
+				SignedInUser: &viewer,
+				Permission:   dashboardaccess.PERMISSION_EDIT,
+				UID:          folder.SharedWithMeFolderUID,
+			},
+			expectedFolders: []string{"with view permission", "with view permission and with edit permission"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			folders, err := folderSvcOn.GetChildren(context.Background(), &tc.q)
+			require.NoError(t, err)
+			actual := make([]string, 0, len(folders))
+			for _, f := range folders {
+				actual = append(actual, f.Title)
+			}
+			if cmp.Diff(tc.expectedFolders, actual) != "" {
+				t.Fatalf("unexpected folders: %s", cmp.Diff(tc.expectedFolders, actual))
+			}
+		})
+	}
 }
 
 func CreateSubtreeInStore(t *testing.T, store store, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []*folder.Folder {
