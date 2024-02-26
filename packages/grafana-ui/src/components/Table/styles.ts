@@ -49,7 +49,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
 
       '&:hover': {
         overflow: overflowOnHover ? 'visible' : undefined,
-        width: overflowOnHover && isShortString ? 'auto !important' : 'auto',
+        width: overflowOnHover && isShortString ? 'auto' : 'auto !important',
         height: overflowOnHover ? 'auto' : `${rowHeight - 1}px`,
         minHeight: `${rowHeight - 1}px`,
         wordBreak: overflowOnHover && asCellText && isShortString ? 'break-word' : undefined,
