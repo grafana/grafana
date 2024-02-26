@@ -4218,7 +4218,7 @@ __metadata:
     "@types/react": "npm:18.2.59"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-calendar": "npm:3.9.0"
-    "@types/react-color": "npm:3.0.11"
+    "@types/react-color": "npm:3.0.12"
     "@types/react-dom": "npm:18.2.19"
     "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-router-dom": "npm:5.3.3"
@@ -9776,13 +9776,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-color@npm:3.0.11":
-  version: 3.0.11
-  resolution: "@types/react-color@npm:3.0.11"
+"@types/react-color@npm:3.0.12":
+  version: 3.0.12
+  resolution: "@types/react-color@npm:3.0.12"
   dependencies:
     "@types/react": "npm:*"
     "@types/reactcss": "npm:*"
-  checksum: 10/c683e7222da449fc68953710bd8e95c9748d12c223f89d78891878f813a4560bca18663ee431658e47aa41cfd7f36b2ab1e61f04007e9e8acd4878b75236b653
+  checksum: 10/d8ed71d297d026faded787588720ee5e158edfa45ee23c5e517d8bb1441ccaa25f8a0c88069fd63829f7263bbbdc78a7ae2df5957061847a2d2c6351c46c13dd
   languageName: node
   linkType: hard
 
