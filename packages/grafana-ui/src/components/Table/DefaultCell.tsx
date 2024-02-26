@@ -125,16 +125,18 @@ function getCellStyle(
     }
   }
 
-  const isLongString = isStringValue && displayValue.text.length > 100 && Number.isNaN(displayValue.numeric);
+  // const isLongString = isStringValue && displayValue.text.length > 100 && Number.isNaN(displayValue.numeric);
+  const isShortString = displayValue.text.length < 100 && displayValue.text.search(/\s/) >= 0;
+  console.log({text: displayValue.text, isShortString})
 
   // If we have definied colors return those styles
   // Otherwise we return default styles
   if (textColor !== undefined || bgColor !== undefined) {
-    return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover, isStringValue, isLongString);
+    return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover, isStringValue, isShortString);
   }
 
   if (isStringValue) {
-    return disableOverflowOnHover ? tableStyles.cellContainerTextNoOverflow : tableStyles.cellContainerText;
+    return disableOverflowOnHover ? tableStyles.buildCellContainerStyle(undefined, undefined, true, true, isShortString) : tableStyles.cellContainerText;
   } else {
     return disableOverflowOnHover ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer;
   }
