@@ -167,7 +167,7 @@ describe('TrailStore', () => {
     });
   });
   describe('Initialize store with one bookmark trail', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       localStorage.clear();
       localStorage.setItem(
         BOOKMARKED_TRAILS_KEY,
@@ -223,6 +223,35 @@ describe('TrailStore', () => {
       const trail = store.bookmarks[0].resolve();
       store.setRecentTrail(trail);
       expect(store.recent.length).toBe(1);
+    });
+
+    it('should be able to obtain index of bookmark', () => {
+      const trail = store.bookmarks[0].resolve();
+      const index = store.getBookmarkIndex(trail);
+      expect(index).toBe(0);
+    });
+
+    it('index should be undefined for removed bookmarks', () => {
+      const trail = store.bookmarks[0].resolve();
+      store.removeBookmark(0);
+      const index = store.getBookmarkIndex(trail);
+      expect(index).toBe(undefined);
+    });
+
+    it('index should be undefined for a trail that has changed since it was bookmarked', () => {
+      const trail = store.bookmarks[0].resolve();
+      trail.setState({ metric: 'something_completely_different' });
+      const index = store.getBookmarkIndex(trail);
+      expect(index).toBe(undefined);
+    });
+
+    it('should be able to obtain index of a bookmark for a trail that changed back to bookmarked state', () => {
+      const trail = store.bookmarks[0].resolve();
+      const bookmarkedMetric = trail.state.metric;
+      trail.setState({ metric: 'something_completely_different' });
+      trail.setState({ metric: bookmarkedMetric });
+      const index = store.getBookmarkIndex(trail);
+      expect(index).toBe(0);
     });
 
     it('should remove a bookmark', () => {

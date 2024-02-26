@@ -671,6 +671,18 @@ func TestInitalizer_azureEnvVars(t *testing.T) {
 	})
 }
 
+func TestService_GetConfigMap_Defaults(t *testing.T) {
+	s := &Service{
+		cfg: &config.Cfg{},
+	}
+
+	require.Equal(t, map[string]string{
+		"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
+		"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
+		"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
+	}, s.GetConfigMap(context.Background(), "", nil))
+}
+
 func TestService_GetConfigMap(t *testing.T) {
 	tcs := []struct {
 		name     string
@@ -803,6 +815,42 @@ func TestService_GetConfigMap_appURL(t *testing.T) {
 			},
 		}
 		require.Subset(t, s.GetConfigMap(context.Background(), "", nil), map[string]string{"GF_APP_URL": "https://myorg.com/"})
+	})
+}
+
+func TestService_GetConfigMap_SQL(t *testing.T) {
+	t.Run("Uses the configured values", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				DataProxyRowLimit:                   23,
+				SQLDatasourceMaxOpenConnsDefault:    24,
+				SQLDatasourceMaxIdleConnsDefault:    25,
+				SQLDatasourceMaxConnLifetimeDefault: 26,
+			},
+		}
+
+		require.Subset(t, s.GetConfigMap(context.Background(), "", nil), map[string]string{
+			"GF_SQL_ROW_LIMIT":                         "23",
+			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "24",
+			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "25",
+			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "26",
+		})
+	})
+
+	t.Run("Uses the configured max-default-values, even when they are zero", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				SQLDatasourceMaxOpenConnsDefault:    0,
+				SQLDatasourceMaxIdleConnsDefault:    0,
+				SQLDatasourceMaxConnLifetimeDefault: 0,
+			},
+		}
+
+		require.Equal(t, map[string]string{
+			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
+			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
+			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
+		}, s.GetConfigMap(context.Background(), "", nil))
 	})
 }
 

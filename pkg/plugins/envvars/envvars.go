@@ -100,6 +100,8 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 }
 
 // GetConfigMap returns a map of configuration that should be passed in a plugin request.
+//
+//nolint:gocyclo
 func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.ExternalService) map[string]string {
 	m := make(map[string]string)
 
@@ -109,6 +111,18 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 	if s.cfg.ConcurrentQueryCount != 0 {
 		m[backend.ConcurrentQueryCount] = strconv.Itoa(s.cfg.ConcurrentQueryCount)
 	}
+
+	if s.cfg.UserFacingDefaultError != "" {
+		m[backend.UserFacingDefaultError] = s.cfg.UserFacingDefaultError
+	}
+
+	if s.cfg.DataProxyRowLimit != 0 {
+		m[backend.SQLRowLimit] = strconv.FormatInt(s.cfg.DataProxyRowLimit, 10)
+	}
+
+	m[backend.SQLMaxOpenConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxOpenConnsDefault)
+	m[backend.SQLMaxIdleConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxIdleConnsDefault)
+	m[backend.SQLMaxConnLifetimeSecondsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxConnLifetimeDefault)
 
 	// TODO add support via plugin SDK
 	// if externalService != nil {
