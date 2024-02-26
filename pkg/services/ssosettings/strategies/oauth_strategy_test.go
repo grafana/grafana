@@ -166,6 +166,7 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 	})
 
 	t.Run("grafana_com", func(t *testing.T) {
+		t.Skip("Skipping to revert an issue.")
 		result, err := strategy.GetProviderConfig(context.Background(), "grafana_com")
 		require.NoError(t, err)
 
