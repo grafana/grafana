@@ -50,6 +50,7 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 	if err != nil {
 		return nil, err
 	}
+	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		body, err := io.ReadAll(req.Body)
