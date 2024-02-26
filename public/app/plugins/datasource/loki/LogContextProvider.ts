@@ -29,7 +29,7 @@ import {
   isQueryWithParser,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
-import { ContextFilter, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { ContextFilter, LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
 export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'lokiLogContextShouldIncludePipelineOperations';
@@ -223,7 +223,7 @@ export class LogContextProvider {
   processContextFiltersToExpr = (contextFilters: ContextFilter[], query: LokiQuery | undefined): string => {
     const labelFilters = contextFilters
       .map((filter) => {
-        if (!filter.fromParser && filter.enabled) {
+        if (!filter.nonIndexed && filter.enabled) {
           // escape backslashes in label as users can't escape them by themselves
           return `${filter.label}="${escapeLabelValueInExactSelector(filter.value)}"`;
         }
@@ -237,15 +237,26 @@ export class LogContextProvider {
 
     // We need to have original query to get parser and include parsed labels
     // We only add parser and parsed labels if there is only one parser in query
-    if (query && isQueryWithParser(query.expr).parserCount === 1) {
-      const parser = getParserFromQuery(query.expr);
-      if (parser) {
-        expr = addParserToQuery(expr, parser);
-        const parsedLabels = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
-        for (const parsedLabel of parsedLabels) {
-          if (parsedLabel.enabled) {
-            expr = addLabelToQuery(expr, parsedLabel.label, '=', parsedLabel.value);
-          }
+    if (query) {
+      let hasParser = false;
+      if (isQueryWithParser(query.expr).parserCount === 1) {
+        hasParser = true;
+        const parser = getParserFromQuery(query.expr);
+        if (parser) {
+          expr = addParserToQuery(expr, parser);
+        }
+      }
+
+      const nonIndexedLabels = contextFilters.filter((filter) => filter.nonIndexed && filter.enabled);
+      for (const parsedLabel of nonIndexedLabels) {
+        if (parsedLabel.enabled) {
+          expr = addLabelToQuery(
+            expr,
+            parsedLabel.label,
+            '=',
+            parsedLabel.value,
+            hasParser ? LabelType.Parsed : LabelType.StructuredMetadata
+          );
         }
       }
     }
@@ -332,7 +343,7 @@ export class LogContextProvider {
         label,
         value: value,
         enabled: allLabels.includes(label),
-        fromParser: !allLabels.includes(label),
+        nonIndexed: !allLabels.includes(label),
       };
 
       contextFilters.push(filter);
@@ -368,7 +379,7 @@ export class LogContextProvider {
         return { ...contextFilter };
       });
 
-      const isAtLeastOneRealLabelEnabled = newContextFilters.some(({ enabled, fromParser }) => enabled && !fromParser);
+      const isAtLeastOneRealLabelEnabled = newContextFilters.some(({ enabled, nonIndexed }) => enabled && !nonIndexed);
       if (!isAtLeastOneRealLabelEnabled) {
         // If we end up with no real labels enabled, we need to reset the init filters
         return { contextFilters, preservedFiltersApplied };

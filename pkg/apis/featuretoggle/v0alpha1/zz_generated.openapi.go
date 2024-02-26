@@ -391,6 +391,14 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
+					"stage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The feature toggle stage",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"enabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Is the flag enabled",
@@ -410,7 +418,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 					"source": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Where was the value configured eg: startup | tenant|org | user | browser missing means default",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.ObjectReference"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.ObjectReference"),
 						},
 					},
 					"warning": {
@@ -421,10 +429,10 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"name", "enabled", "writeable"},
+				Required: []string{"name", "stage", "enabled", "writeable"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.ObjectReference"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.ObjectReference"},
 	}
 }

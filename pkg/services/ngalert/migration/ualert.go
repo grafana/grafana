@@ -45,11 +45,11 @@ func (om *OrgMigration) migrateDashboard(ctx context.Context, dashID int64, aler
 		du.AddAlertErrors(err, alerts...)
 		return du
 	}
-	l := om.log.New(
+	l := om.log.FromContext(ctx).New(
 		"dashboardTitle", dashboard.Title,
 		"dashboardUid", dashboard.UID,
 	)
-	l.Info("Migrating alerts for dashboard", "alertCount", len(alerts))
+	l.Debug("Migrating alerts for dashboard", "alertCount", len(alerts))
 
 	du := migmodels.NewDashboardUpgrade(dashID)
 	du.UID = dashboard.UID
@@ -70,7 +70,7 @@ func (om *OrgMigration) migrateOrgAlerts(ctx context.Context) ([]*migmodels.Dash
 	if err != nil {
 		return nil, fmt.Errorf("load alerts: %w", err)
 	}
-	om.log.Info("Alerts found to migrate", "alerts", cnt)
+	om.log.FromContext(ctx).Info("Alerts found to migrate", "alerts", cnt)
 
 	dashboardUpgrades := make([]*migmodels.DashboardUpgrade, 0, len(mappedAlerts))
 	for dashID, alerts := range mappedAlerts {
@@ -86,7 +86,7 @@ func (om *OrgMigration) migrateOrgChannels(ctx context.Context) ([]*migmodels.Co
 		return nil, fmt.Errorf("load notification channels: %w", err)
 	}
 
-	pairs, err := om.migrateChannels(channels)
+	pairs, err := om.migrateChannels(channels, om.log.FromContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (om *OrgMigration) migrateOrgChannels(ctx context.Context) ([]*migmodels.Co
 }
 
 func (om *OrgMigration) migrateOrg(ctx context.Context) ([]*migmodels.DashboardUpgrade, []*migmodels.ContactPair, error) {
-	om.log.Info("Migrating alerts for organisation")
+	om.log.FromContext(ctx).Info("Migrating alerts for organisation")
 	pairs, err := om.migrateOrgChannels(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("migrate channels: %w", err)

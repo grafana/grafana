@@ -21,6 +21,7 @@ import {
   getFieldConfigWithMinMax,
   ThresholdsMode,
   TimeRange,
+  cacheFieldDisplayNames,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
@@ -63,6 +64,7 @@ interface UPlotConfigOptions {
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   // Identifies the shared key for uPlot cursor sync
   eventsScope?: string;
+  hoverMulti: boolean;
 }
 
 /**
@@ -105,6 +107,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   mergeValues,
   getValueColor,
   eventsScope = '__global_',
+  hoverMulti,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -165,6 +168,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
       hoveredDataIdx = null;
       shouldChangeHover = true;
     },
+    hoverMulti,
   };
 
   let shouldChangeHover = false;
@@ -434,6 +438,9 @@ export function prepareTimelineFields(
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
+
+  cacheFieldDisplayNames(series);
+
   let hasTimeseries = false;
   const frames: DataFrame[] = [];
 

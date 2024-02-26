@@ -18,7 +18,10 @@ const meta: Meta = {
     controls: { exclude: ['href', 'external'] },
   },
   argTypes: {
-    variant: { control: 'select', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'bodySmall', undefined] },
+    variant: {
+      control: 'select',
+      options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'bodySmall', undefined],
+    },
     weight: {
       control: 'select',
       options: ['bold', 'medium', 'light', 'regular', undefined],

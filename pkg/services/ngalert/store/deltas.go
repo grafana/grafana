@@ -31,6 +31,27 @@ func (c *GroupDelta) IsEmpty() bool {
 	return len(c.Update)+len(c.New)+len(c.Delete) == 0
 }
 
+// NewOrUpdatedNotificationSettings returns a list of notification settings that are either new or updated in the group.
+func (c *GroupDelta) NewOrUpdatedNotificationSettings() []models.NotificationSettings {
+	var settings []models.NotificationSettings
+	for _, rule := range c.New {
+		if len(rule.NotificationSettings) > 0 {
+			settings = append(settings, rule.NotificationSettings...)
+		}
+	}
+	for _, delta := range c.Update {
+		if len(delta.New.NotificationSettings) == 0 {
+			continue
+		}
+		d := delta.Diff.GetDiffsForField("NotificationSettings")
+		if len(d) == 0 {
+			continue
+		}
+		settings = append(settings, delta.New.NotificationSettings...)
+	}
+	return settings
+}
+
 type RuleReader interface {
 	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error)

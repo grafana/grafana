@@ -6,6 +6,7 @@ import { contextSrv } from 'app/core/core';
 
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
+import { isUrlValid } from './utils/url';
 
 /** Map providers to their settings */
 export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['settings']>> = {
@@ -139,7 +140,11 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'text',
       description: 'The authorization endpoint of your OAuth2 provider.',
       validation: {
-        required: false,
+        required: true,
+        validate: (value) => {
+          return isUrlValid(value);
+        },
+        message: 'This field is required and must be a valid URL.',
       },
     },
     authStyle: {
@@ -159,7 +164,11 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'text',
       description: 'The token endpoint of your OAuth2 provider.',
       validation: {
-        required: false,
+        required: true,
+        validate: (value) => {
+          return isUrlValid(value);
+        },
+        message: 'This field is required and must be a valid URL.',
       },
     },
     scopes: {
@@ -214,6 +223,18 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       validation: {
         required: false,
+        validate: (value) => {
+          if (typeof value !== 'string') {
+            return false;
+          }
+
+          if (value.length) {
+            return isUrlValid(value);
+          }
+
+          return true;
+        },
+        message: 'This field must be a valid URL if set.',
       },
     },
     roleAttributePath: {
@@ -360,12 +381,17 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'text',
       validation: {
         validate: (value, formValues) => {
+          let result = true;
           if (formValues.teamIds.length) {
-            return !!value;
+            result = !!value;
           }
-          return true;
+
+          if (typeof value === 'string' && value.length) {
+            result = isUrlValid(value);
+          }
+          return result;
         },
-        message: 'This field must be set if Team Ids are configured.',
+        message: 'This field must be set if Team Ids are configured and must be a valid URL.',
       },
     },
     teamIdsAttributePath: {
