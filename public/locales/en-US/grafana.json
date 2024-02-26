@@ -701,10 +701,32 @@
       "button": "Migrate this instance to Cloud",
       "header": "Let us manage your Grafana stack"
     },
+    "get-started": {
+      "body": "The migration process must be started from your self-managed Grafana instance.",
+      "configure-pdc-link": "Configure PDC for this stack",
+      "link-title": "Learn more about Private Data Source Connect",
+      "step-1": "Log in to your self-managed instance and navigate to Administration, General, Migrate to Grafana Cloud.",
+      "step-2": "Select \"Migrate this instance to Cloud\".",
+      "step-3": "You'll be prompted for a migration token. Generate one from this screen.",
+      "step-4": "In your self-managed instance, select \"Upload everything\" to upload data sources and dashboards to this cloud stack.",
+      "step-5": "If some of your data sources will not work over the public internet, you’ll need to install Private Data Source Connect in your self-managed environment.",
+      "title": "How to get started"
+    },
     "is-it-secure": {
       "body": "Grafana Labs is committed to maintaining the highest standards of data privacy and security. By implementing industry-standard security technologies and procedures, we help protect our customers' data from unauthorized access, use, or disclosure.",
       "link-title": "Grafana Labs Trust Center",
       "title": "Is it secure?"
+    },
+    "migrate-to-this-stack": {
+      "body": "Some configuration from your self-managed Grafana instance can be automatically copied to this cloud stack.",
+      "link-title": "View the full migration guide",
+      "title": "Migrate configuration to this stack"
+    },
+    "migration-token": {
+      "body": "Your self-managed Grafana instance will require a special authentication token to securely connect to this cloud stack.",
+      "generate-button": "Generate a migration token",
+      "status": "Current status: {{tokenStatus}}",
+      "title": "Migration token"
     },
     "pdc": {
       "body": "Exposing your data sources to the internet can raise security concerns. Private data source connect (PDC) allows Grafana Cloud to access your existing data sources over a secure network tunnel.",

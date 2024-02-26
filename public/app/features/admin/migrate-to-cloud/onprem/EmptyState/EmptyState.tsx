@@ -16,6 +16,7 @@ export const EmptyState = () => {
       <Stack direction="column">
         <CallToAction />
         <Grid
+          alignItems="flex-start"
           gap={1}
           columns={{
             xs: 1,
