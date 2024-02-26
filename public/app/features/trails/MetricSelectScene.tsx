@@ -15,7 +15,6 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
-  SceneQueryRunner,
   SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
@@ -23,14 +22,13 @@ import {
 import { VariableHide } from '@grafana/schema';
 import { Input, useStyles2, InlineSwitch, Field, Alert, Icon, LoadingPlaceholder } from '@grafana/ui';
 
-import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
+import { getPreviewPanelFor } from './AutomaticMetricQueries/previewPanel';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
 import { MetricScene } from './MetricScene';
 import { SelectMetricAction } from './SelectMetricAction';
-import { hideEmptyPreviews } from './hideEmptyPreviews';
 import { sortRelatedMetrics } from './relatedMetrics';
 import { getVariablesWithMetricConstant, trailDS, VAR_DATASOURCE, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
-import { getColorByIndex, getTrailFor } from './utils';
+import { getFilters, getTrailFor } from './utils';
 
 interface MetricPanel {
   name: string;
@@ -74,8 +72,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     this.addActivationHandler(this._onActivate.bind(this));
   }
-
-  // private justChangedTimeRange = false;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_METRIC_NAMES, VAR_DATASOURCE],
@@ -248,7 +244,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const children: SceneFlexItem[] = [];
 
-    const metricsList = this.sortedPreviewMetrics(); //!this.justChangedTimeRange ? this.sortedPreviewMetrics() : Object.values(this.previewCache);
+    const metricsList = this.sortedPreviewMetrics();
+
+    // Get the current filters to determine the count of them
+    // Which is required for `getPreviewPanelFor`
+    const filters = getFilters(this);
+    const currentFilterCount = filters?.length || 0;
+
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
 
@@ -257,7 +259,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           children.push(metric.itemRef.resolve());
           continue;
         }
-        const panel = getPreviewPanelFor(metric.name, index);
+        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount);
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
         children.push(panel);
@@ -397,29 +399,6 @@ function getMetricNamesVariableSet() {
         query: { query: `label_values(${VAR_FILTERS_EXPR},__name__)`, refId: 'A' },
       }),
     ],
-  });
-}
-
-function getPreviewPanelFor(metric: string, index: number) {
-  const autoQuery = getAutoQueriesForMetric(metric);
-
-  const vizPanel = autoQuery.preview
-    .vizBuilder()
-    .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
-    .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
-    .build();
-
-  return new SceneCSSGridItem({
-    $variables: new SceneVariableSet({
-      variables: getVariablesWithMetricConstant(metric),
-    }),
-    $behaviors: [hideEmptyPreviews(metric)],
-    $data: new SceneQueryRunner({
-      datasource: trailDS,
-      maxDataPoints: 200,
-      queries: autoQuery.preview.queries,
-    }),
-    body: vizPanel,
   });
 }
 
