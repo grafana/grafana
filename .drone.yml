@@ -124,7 +124,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -226,7 +226,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -343,7 +343,8 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  - go list -f '{{.Dir}}/...' -m | xargs go test -tags requires_buildifer -short -covermode=atomic
+    -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.21.6-alpine
@@ -538,7 +539,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -1018,7 +1019,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
+  - go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationRedis -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -1033,7 +1035,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
+  - go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationMemcached -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -1110,7 +1113,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -1470,7 +1473,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -1547,7 +1550,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -1606,7 +1609,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -1701,7 +1704,8 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  - go list -f '{{.Dir}}/...' -m | xargs go test -tags requires_buildifer -short -covermode=atomic
+    -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.21.6-alpine
@@ -1869,7 +1873,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -2446,7 +2450,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
+  - go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationRedis -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -2461,7 +2466,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
+  - go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationMemcached -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -2847,7 +2853,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -3121,7 +3127,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -3204,7 +3210,8 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  - go list -f '{{.Dir}}/...' -m | xargs go test -tags requires_buildifer -short -covermode=atomic
+    -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.21.6-alpine
@@ -3545,7 +3552,7 @@ steps:
   name: identify-runner
 - commands:
   - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
-  - yarn install --immutable
+  - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
@@ -3626,7 +3633,8 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  - go list -f '{{.Dir}}/...' -m | xargs go test -tags requires_buildifer -short -covermode=atomic
+    -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.21.6-alpine
@@ -4233,7 +4241,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
+  - go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationRedis -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -4248,7 +4257,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
+  - go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationMemcached -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -4914,6 +4924,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: bce7b2ac72349019ec0c2ffbdca13c0591110ee53a3bfc72261df0ed05ca025a
+hmac: b588ab1704559f537b65d7fe2cb45c4308274943a2be023805eb491cc9dc7302
 
 ...
