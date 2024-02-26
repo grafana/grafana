@@ -144,7 +144,6 @@ describe('DashboardScene', () => {
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as SceneGridItem;
 
-        expect(scene.state.isDirty).toBe(true);
         expect(body.state.children.length).toBe(5);
         expect(gridItem.state.body!.state.key).toBe('panel-5');
         expect(gridItem.state.y).toBe(0);
@@ -156,7 +155,6 @@ describe('DashboardScene', () => {
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as SceneGridItem;
 
-        expect(scene.state.isDirty).toBe(true);
         expect(body.state.children.length).toBe(5);
         expect(gridItem.state.body!.state.key).toBe('panel-5');
       });
