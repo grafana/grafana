@@ -618,7 +618,7 @@ deleteTemplates:
 
 ## Import notification policies
 
-Create or reset the notification policy tree via provisioning files in your Grafana instance(s).
+Create or reset the notification policy tree using provisioning files in your Grafana instance(s).
 
 In Grafana, the entire notification policy tree is considered a single, large resource. Add new specific policies as sub-policies under the root policy. Since specific policies may depend on each other, you cannot provision subsets of the policy tree; the entire tree must be defined in a single place.
 
