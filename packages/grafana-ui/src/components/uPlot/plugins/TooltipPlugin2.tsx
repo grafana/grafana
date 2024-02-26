@@ -249,7 +249,6 @@ export const TooltipPlugin2 = ({
 
     config.addHook('init', (u) => {
       setState({ plot: (_plot = u) });
-      const isHorizontal = u.scales.x.ori === 0;
 
       // detect shiftKey and mutate drag mode from x-only to y-only
       if (clientZoom) {
@@ -284,7 +283,9 @@ export const TooltipPlugin2 = ({
         if (e.target === u.over) {
           if (e.ctrlKey || e.metaKey) {
             let xVal;
-            if (isHorizontal) {
+
+            const isXAxisHorizontal = u.scales.x.ori === 0;
+            if (isXAxisHorizontal) {
               xVal = u.posToVal(u.cursor.left!, 'x');
             } else {
               xVal = u.posToVal(u.select.top + u.select.height, 'x');
@@ -307,17 +308,17 @@ export const TooltipPlugin2 = ({
     });
 
     config.addHook('setSelect', (u) => {
-      const isHorizontal = u.scales.x.ori === 0;
+      const isXAxisHorizontal = u.scales.x.ori === 0;
       if (!viaSync && (clientZoom || queryZoom != null)) {
         if (maybeZoomAction(u.cursor!.event)) {
           if (clientZoom && yDrag) {
             if (u.select.height >= MIN_ZOOM_DIST) {
               for (let key in u.scales!) {
                 if (key !== 'x') {
-                  const maxY = isHorizontal
+                  const maxY = isXAxisHorizontal
                     ? u.posToVal(u.select.top, key)
                     : u.posToVal(u.select.left + u.select.width, key);
-                  const minY = isHorizontal
+                  const minY = isXAxisHorizontal
                     ? u.posToVal(u.select.top + u.select.height, key)
                     : u.posToVal(u.select.left, key);
 
@@ -331,10 +332,10 @@ export const TooltipPlugin2 = ({
             yDrag = false;
           } else if (queryZoom != null) {
             if (u.select.width >= MIN_ZOOM_DIST) {
-              const minX = isHorizontal
+              const minX = isXAxisHorizontal
                 ? u.posToVal(u.select.left, 'x')
                 : u.posToVal(u.select.top + u.select.height, 'x');
-              const maxX = isHorizontal
+              const maxX = isXAxisHorizontal
                 ? u.posToVal(u.select.left + u.select.width, 'x')
                 : u.posToVal(u.select.top, 'x');
 
@@ -345,8 +346,8 @@ export const TooltipPlugin2 = ({
           }
         } else {
           selectedRange = {
-            from: isHorizontal ? u.posToVal(u.select.left!, 'x') : u.posToVal(u.select.top + u.select.height, 'x'),
-            to: isHorizontal ? u.posToVal(u.select.left! + u.select.width, 'x') : u.posToVal(u.select.top, 'x'),
+            from: isXAxisHorizontal ? u.posToVal(u.select.left!, 'x') : u.posToVal(u.select.top + u.select.height, 'x'),
+            to: isXAxisHorizontal ? u.posToVal(u.select.left! + u.select.width, 'x') : u.posToVal(u.select.top, 'x'),
           };
 
           scheduleRender(true);
