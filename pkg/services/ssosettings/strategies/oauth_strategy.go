@@ -5,6 +5,7 @@ import (
 	"maps"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -12,6 +13,14 @@ import (
 type OAuthStrategy struct {
 	cfg                *setting.Cfg
 	settingsByProvider map[string]map[string]any
+}
+
+var extraKeysByProvider = map[string][]string{
+	social.AzureADProviderName:      connectors.ExtraAzureADSettingKeys,
+	social.GenericOAuthProviderName: connectors.ExtraGenericOAuthSettingKeys,
+	social.GitHubProviderName:       connectors.ExtraGithubSettingKeys,
+	social.GrafanaComProviderName:   connectors.ExtraGrafanaComSettingKeys,
+	social.GrafanaNetProviderName:   connectors.ExtraGrafanaComSettingKeys,
 }
 
 var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)
@@ -39,7 +48,7 @@ func (s *OAuthStrategy) GetProviderConfig(_ context.Context, provider string) (m
 }
 
 func (s *OAuthStrategy) loadAllSettings() {
-	allProviders := append(ssosettings.AllOAuthProviders, social.GrafanaNetProviderName)
+	allProviders := append([]string{social.GrafanaNetProviderName}, ssosettings.AllOAuthProviders...)
 	for _, provider := range allProviders {
 		settings := s.loadSettingsForProvider(provider)
 		if provider == social.GrafanaNetProviderName {
@@ -52,7 +61,7 @@ func (s *OAuthStrategy) loadAllSettings() {
 func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any {
 	section := s.cfg.Raw.Section("auth." + provider)
 
-	return map[string]any{
+	result := map[string]any{
 		"client_id":                  section.Key("client_id").Value(),
 		"client_secret":              section.Key("client_secret").Value(),
 		"scopes":                     section.Key("scopes").Value(),
@@ -85,10 +94,12 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"auto_login":                 section.Key("auto_login").MustBool(false),
 		"allowed_groups":             section.Key("allowed_groups").Value(),
 		"signout_redirect_url":       section.Key("signout_redirect_url").Value(),
-		"allowed_organizations":      section.Key("allowed_organizations").Value(),
-		"id_token_attribute_name":    section.Key("id_token_attribute_name").Value(),
-		"login_attribute_path":       section.Key("login_attribute_path").Value(),
-		"name_attribute_path":        section.Key("name_attribute_path").Value(),
-		"team_ids":                   section.Key("team_ids").Value(),
 	}
+
+	extraFields := extraKeysByProvider[provider]
+	for _, key := range extraFields {
+		result[key] = section.Key(key).Value()
+	}
+
+	return result
 }
