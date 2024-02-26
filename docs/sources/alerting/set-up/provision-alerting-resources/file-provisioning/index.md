@@ -573,7 +573,7 @@ settings:
 
 ## Import templates
 
-Create or delete templates via provisioning files in your Grafana instance(s).
+Create or delete templates using provisioning files in your Grafana instance(s).
 
 1. Find the notification template in Grafana.
 1. [Export][alerting_export] a template by copying the template content and title.
