@@ -4,8 +4,6 @@ import {
   MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
-  SceneGridItem,
-  SceneGridLayout,
   SceneGridRow,
   SceneObject,
   SceneQueryRunner,
@@ -17,6 +15,8 @@ import { initialIntervalVariableModelState } from 'app/features/variables/interv
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+
+import { dashboardSceneGraph } from './dashboardSceneGraph';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -200,56 +200,8 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
-export function getNextPanelId(dashboard: DashboardScene): number {
-  let max = 0;
-  const body = dashboard.state.body;
-
-  if (!(body instanceof SceneGridLayout)) {
-    throw new Error('Dashboard body is not a SceneGridLayout');
-  }
-
-  for (const child of body.state.children) {
-    if (child instanceof SceneGridItem) {
-      const vizPanel = child.state.body;
-
-      if (vizPanel) {
-        const panelId = getPanelIdForVizPanel(vizPanel);
-
-        if (panelId > max) {
-          max = panelId;
-        }
-      }
-    }
-
-    if (child instanceof SceneGridRow) {
-      //rows follow the same key pattern --- e.g.: `panel-6`
-      const panelId = getPanelIdForVizPanel(child);
-
-      if (panelId > max) {
-        max = panelId;
-      }
-
-      for (const rowChild of child.state.children) {
-        if (rowChild instanceof SceneGridItem) {
-          const vizPanel = rowChild.state.body;
-
-          if (vizPanel) {
-            const panelId = getPanelIdForVizPanel(vizPanel);
-
-            if (panelId > max) {
-              max = panelId;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return max + 1;
-}
-
 export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
-  const panelId = getNextPanelId(dashboard);
+  const panelId = dashboardSceneGraph.getNextPanelId(dashboard);
 
   return new VizPanel({
     title: 'Panel Title',
@@ -270,7 +222,7 @@ export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
 }
 
 export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
-  const id = getNextPanelId(dashboard);
+  const id = dashboardSceneGraph.getNextPanelId(dashboard);
 
   return new SceneGridRow({
     key: getVizPanelKeyForPanelId(id),

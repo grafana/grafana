@@ -1,7 +1,9 @@
-import { VizPanel, SceneGridItem, SceneGridRow, SceneDataLayers, sceneGraph } from '@grafana/scenes';
+import { VizPanel, SceneGridItem, SceneGridRow, SceneDataLayers, sceneGraph, SceneGridLayout } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
+
+import { getPanelIdForVizPanel } from './utils';
 
 function getTimePicker(scene: DashboardScene) {
   return scene.state.controls?.state.timePicker;
@@ -55,10 +57,59 @@ function getDataLayers(scene: DashboardScene): SceneDataLayers {
   return data;
 }
 
+export function getNextPanelId(dashboard: DashboardScene): number {
+  let max = 0;
+  const body = dashboard.state.body;
+
+  if (!(body instanceof SceneGridLayout)) {
+    throw new Error('Dashboard body is not a SceneGridLayout');
+  }
+
+  for (const child of body.state.children) {
+    if (child instanceof SceneGridItem) {
+      const vizPanel = child.state.body;
+
+      if (vizPanel) {
+        const panelId = getPanelIdForVizPanel(vizPanel);
+
+        if (panelId > max) {
+          max = panelId;
+        }
+      }
+    }
+
+    if (child instanceof SceneGridRow) {
+      //rows follow the same key pattern --- e.g.: `panel-6`
+      const panelId = getPanelIdForVizPanel(child);
+
+      if (panelId > max) {
+        max = panelId;
+      }
+
+      for (const rowChild of child.state.children) {
+        if (rowChild instanceof SceneGridItem) {
+          const vizPanel = rowChild.state.body;
+
+          if (vizPanel) {
+            const panelId = getPanelIdForVizPanel(vizPanel);
+
+            if (panelId > max) {
+              max = panelId;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return max + 1;
+}
+
 export const dashboardSceneGraph = {
   getTimePicker,
   getRefreshPicker,
   getPanelLinks,
   getVizPanels,
   getDataLayers,
+  getNextPanelId,
 };

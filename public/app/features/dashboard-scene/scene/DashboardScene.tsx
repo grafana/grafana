@@ -44,6 +44,7 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import {
@@ -53,7 +54,6 @@ import {
   getClosestVizPanel,
   getDefaultRow,
   getDefaultVizPanel,
-  getNextPanelId,
   getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
   isPanelClone,
@@ -554,7 +554,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       throw new Error('Cannot paste invalid grid item');
     }
 
-    const panelId = getNextPanelId(this);
+    const panelId = dashboardSceneGraph.getNextPanelId(this);
 
     if (gridItem instanceof SceneGridItem && gridItem.state.body) {
       gridItem.state.body.setState({
@@ -620,7 +620,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     const sceneGridLayout = this.state.body;
 
-    const panelId = getNextPanelId(this);
+    const panelId = dashboardSceneGraph.getNextPanelId(this);
 
     const newGridItem = new SceneGridItem({
       height: NEW_PANEL_HEIGHT,
