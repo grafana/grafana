@@ -320,24 +320,15 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu
 // It is not safe to call concurrently.
 func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, error) {
 	// First, let's make sure this config is not already loaded
-	var amConfigChanged bool
-	rawConfig, err := json.Marshal(cfg.AlertmanagerConfig)
+	rawConfig, err := json.Marshal(cfg)
 	if err != nil {
 		// In theory, this should never happen.
 		return false, err
 	}
 
-	if am.Base.ConfigHash() != md5.Sum(rawConfig) {
-		amConfigChanged = true
-	}
-
-	templateDefinitions := ToTemplateDefinitions(cfg)
-	templatesChanged := true
-	// TODO: How to tell if the templates have changed?
-
-	// If neither the configuration nor templates have changed, we've got nothing to do.
-	if !amConfigChanged && !templatesChanged {
-		am.logger.Debug("Neither config nor template have changed, skipping configuration sync.")
+	// If configuration hasn't changed, we've got nothing to do.
+	if am.Base.ConfigHash() == md5.Sum(rawConfig) {
+		am.logger.Debug("Config hasn't changed, skipping configuration sync.")
 		return false, nil
 	}
 
@@ -347,7 +338,7 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 		inhibitRules:             cfg.AlertmanagerConfig.InhibitRules,
 		muteTimeIntervals:        cfg.AlertmanagerConfig.MuteTimeIntervals,
 		timeIntervals:            cfg.AlertmanagerConfig.TimeIntervals,
-		templates:                templateDefinitions,
+		templates:                ToTemplateDefinitions(cfg),
 		receivers:                PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
 		receiverIntegrationsFunc: am.buildReceiverIntegrations,
 	})
