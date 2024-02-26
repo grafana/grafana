@@ -2168,6 +2168,18 @@ If the remote HTTP image renderer service runs on a different server than the Gr
 Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
 which this setting can help protect against by only allowing a certain number of concurrent requests. Default is `30`.
 
+### default_image_width
+
+Configures the width of the rendered image. The default width is `1000`.
+
+### default_image_height
+
+Configures the height of the rendered image. The default height is `500`.
+
+### default_image_scale
+
+Configures the scale of the rendered image. The default scale is `1`.
+
 ## [panels]
 
 ### enable_alpha
