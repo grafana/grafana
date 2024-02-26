@@ -76,7 +76,7 @@ To export contact points from the Grafana UI, complete the following steps.
 
 Grafana currently doesn't offer an Export UI for notification templates, unlike other Alerting resources presented in this documentation.
 
-But you can export it by manually copying the content template and title directly from the Grafana UI.
+However, you can export it by manually copying the content template and title directly from the Grafana UI.
 
 1. Click **Alerts & IRM** -> **Contact points** -> **Notification templates** tab.
 1. Find the template you want to export.
