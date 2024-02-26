@@ -46,7 +46,7 @@ To export alert rules from the Grafana UI, complete the following steps.
 
 {{% admonition type="note" %}} This feature is for Grafana-managed alert rules only. It is available to Admin, Viewer, and Editor roles. {{% /admonition %}}
 
-Use the **Modify export** mode to edit and export an alert rule without updating it. The exported data includes all the rules within the same alert group.
+Use the **Modify export** mode to edit and export an alert rule without updating it. The exported data includes all alert rules within the same alert group.
 
 To export a modified alert rule without saving the modifications, complete the following steps from the Grafana UI.
 
