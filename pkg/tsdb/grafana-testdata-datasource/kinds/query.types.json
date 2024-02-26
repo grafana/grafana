@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1708842139486",
+        "resourceVersion": "1708922811303",
         "creationTimestamp": "2024-02-21T22:06:55Z"
       },
       "spec": {
@@ -54,7 +54,14 @@
               "description": "Drop percentage (the chance we will lose a point 0-100)"
             },
             "errorType": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "frontend_exception",
+                "frontend_observable",
+                "server_panic"
+              ],
+              "description": "Possible enum values:\n - `\"frontend_exception\"` \n - `\"frontend_observable\"` \n - `\"server_panic\"` ",
+              "x-enum-description": {}
             },
             "flamegraphDiff": {
               "type": "boolean"
@@ -77,7 +84,15 @@
                   "type": "integer"
                 },
                 "type": {
-                  "type": "string"
+                  "type": "string",
+                  "enum": [
+                    "random",
+                    "random edges",
+                    "response_medium",
+                    "response_small"
+                  ],
+                  "description": "Possible enum values:\n - `\"random\"` \n - `\"random edges\"` \n - `\"response_medium\"` \n - `\"response_small\"` ",
+                  "x-enum-description": {}
                 }
               },
               "additionalProperties": false,
@@ -115,7 +130,40 @@
               "type": "string"
             },
             "scenarioId": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "annotations",
+                "arrow",
+                "csv_content",
+                "csv_file",
+                "csv_metric_values",
+                "datapoints_outside_range",
+                "exponential_heatmap_bucket_data",
+                "flame_graph",
+                "grafana_api",
+                "linear_heatmap_bucket_data",
+                "live",
+                "logs",
+                "manual_entry",
+                "no_data_points",
+                "node_graph",
+                "predictable_csv_wave",
+                "predictable_pulse",
+                "random_walk",
+                "random_walk_table",
+                "random_walk_with_error",
+                "raw_frame",
+                "server_error_500",
+                "simulation",
+                "slow_query",
+                "streaming_client",
+                "table_static",
+                "trace",
+                "usa",
+                "variables-query"
+              ],
+              "description": "Possible enum values:\n - `\"annotations\"` \n - `\"arrow\"` \n - `\"csv_content\"` \n - `\"csv_file\"` \n - `\"csv_metric_values\"` \n - `\"datapoints_outside_range\"` \n - `\"exponential_heatmap_bucket_data\"` \n - `\"flame_graph\"` \n - `\"grafana_api\"` \n - `\"linear_heatmap_bucket_data\"` \n - `\"live\"` \n - `\"logs\"` \n - `\"manual_entry\"` \n - `\"no_data_points\"` \n - `\"node_graph\"` \n - `\"predictable_csv_wave\"` \n - `\"predictable_pulse\"` \n - `\"random_walk\"` \n - `\"random_walk_table\"` \n - `\"random_walk_with_error\"` \n - `\"raw_frame\"` \n - `\"server_error_500\"` \n - `\"simulation\"` \n - `\"slow_query\"` \n - `\"streaming_client\"` \n - `\"table_static\"` \n - `\"trace\"` \n - `\"usa\"` \n - `\"variables-query\"` ",
+              "x-enum-description": {}
             },
             "seriesCount": {
               "type": "integer"
@@ -175,7 +223,15 @@
                   "type": "integer"
                 },
                 "type": {
-                  "type": "string"
+                  "type": "string",
+                  "enum": [
+                    "fetch",
+                    "logs",
+                    "signal",
+                    "traces"
+                  ],
+                  "description": "Possible enum values:\n - `\"fetch\"` \n - `\"logs\"` \n - `\"signal\"` \n - `\"traces\"` ",
+                  "x-enum-description": {}
                 },
                 "url": {
                   "type": "string"

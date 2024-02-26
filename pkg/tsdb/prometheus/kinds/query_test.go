@@ -12,11 +12,11 @@ import (
 func TestQueryTypeDefinitions(t *testing.T) {
 	builder, err := schemabuilder.NewSchemaBuilder(
 		schemabuilder.BuilderOptions{
-			PluginID:    []string{"prometheus"},
-			BasePackage: "github.com/grafana/grafana/pkg/tsdb/prometheus/kinds",
-			CodePath:    "./",
-			// We need to identify the enum fields explicitly :(
-			// *AND* have the +enum common for this to work
+			PluginID: []string{"prometheus"},
+			ScanCode: []schemabuilder.CodePaths{{
+				BasePackage: "github.com/grafana/grafana/pkg/tsdb/prometheus/kinds",
+				CodePath:    "./",
+			}},
 			Enums: []reflect.Type{
 				reflect.TypeOf(PromQueryFormatTimeSeries), // pick an example value (not the root)
 				reflect.TypeOf(QueryEditorModeCode),       // pick an example value (not the root)

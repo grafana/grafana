@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1708842634204",
+        "resourceVersion": "1708922901483",
         "creationTimestamp": "2024-02-21T22:08:04Z"
       },
       "spec": {
@@ -17,7 +17,13 @@
           "properties": {
             "format": {
               "type": "string",
-              "description": "The response format"
+              "enum": [
+                "time_series",
+                "table",
+                "heatmap"
+              ],
+              "description": "The response format\n\n\nPossible enum values:\n - `\"time_series\"` \n - `\"table\"` \n - `\"heatmap\"` ",
+              "x-enum-description": {}
             },
             "expr": {
               "type": "string",
@@ -37,7 +43,12 @@
             },
             "editorMode": {
               "type": "string",
-              "description": "what we should show in the editor"
+              "enum": [
+                "builder",
+                "code"
+              ],
+              "description": "what we should show in the editor\n\n\nPossible enum values:\n - `\"builder\"` \n - `\"code\"` ",
+              "x-enum-description": {}
             },
             "intervalFactor": {
               "type": "number",

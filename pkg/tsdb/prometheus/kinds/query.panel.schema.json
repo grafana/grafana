@@ -34,8 +34,13 @@
             "additionalProperties": false
           },
           "editorMode": {
-            "description": "what we should show in the editor",
-            "type": "string"
+            "description": "what we should show in the editor\n\n\nPossible enum values:\n - `\"builder\"` \n - `\"code\"` ",
+            "type": "string",
+            "enum": [
+              "builder",
+              "code"
+            ],
+            "x-enum-description": {}
           },
           "exemplar": {
             "description": "Execute an additional query to identify interesting raw samples relevant for the given expr",
@@ -46,8 +51,14 @@
             "type": "string"
           },
           "format": {
-            "description": "The response format",
-            "type": "string"
+            "description": "The response format\n\n\nPossible enum values:\n - `\"time_series\"` \n - `\"table\"` \n - `\"heatmap\"` ",
+            "type": "string",
+            "enum": [
+              "time_series",
+              "table",
+              "heatmap"
+            ],
+            "x-enum-description": {}
           },
           "hide": {
             "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
@@ -101,12 +112,22 @@
                 "type": "integer"
               },
               "type": {
-                "description": "Type asserts that the frame matches a known type structure.",
+                "description": "Type asserts that the frame matches a known type structure.\n\n\nPossible enum values:\n - `\"\"` \n - `\"timeseries-wide\"` \n - `\"timeseries-long\"` \n - `\"timeseries-many\"` \n - `\"timeseries-multi\"` \n - `\"directory-listing\"` \n - `\"table\"` \n - `\"numeric-wide\"` \n - `\"numeric-multi\"` \n - `\"numeric-long\"` \n - `\"log-lines\"` ",
                 "type": "string",
-                "examples": [
+                "enum": [
+                  "",
                   "timeseries-wide",
-                  "timeseries-long"
-                ]
+                  "timeseries-long",
+                  "timeseries-many",
+                  "timeseries-multi",
+                  "directory-listing",
+                  "table",
+                  "numeric-wide",
+                  "numeric-multi",
+                  "numeric-long",
+                  "log-lines"
+                ],
+                "x-enum-description": {}
               },
               "typeVersion": {
                 "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",

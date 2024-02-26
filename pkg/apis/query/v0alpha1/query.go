@@ -45,7 +45,7 @@ type GenericDataQuery struct {
 
 // Produce an API definition that represents map[string]any
 func (g GenericDataQuery) OpenAPIDefinition() openapi.OpenAPIDefinition {
-	s, _ := resource.CommonQueryPropertiesSchema()
+	s, _ := resource.GenericQuerySchema()
 	if s == nil {
 		s = &spec.Schema{}
 	}

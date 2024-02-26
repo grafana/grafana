@@ -56,7 +56,7 @@
     {
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1708906302234",
+        "resourceVersion": "1708922654872",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -68,18 +68,17 @@
         ],
         "querySchema": {
           "$schema": "https://json-schema.org/draft-04/schema",
-          "additionalProperties": false,
           "properties": {
             "expression": {
+              "type": "string",
+              "minLength": 1,
               "description": "Reference to single query result",
               "examples": [
                 "$A"
-              ],
-              "minLength": 1,
-              "type": "string"
+              ]
             },
             "reducer": {
-              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+              "type": "string",
               "enum": [
                 "sum",
                 "mean",
@@ -88,41 +87,42 @@
                 "count",
                 "last"
               ],
-              "type": "string",
+              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
               "x-enum-description": {}
             },
             "settings": {
-              "additionalProperties": false,
-              "description": "Reducer Options",
               "properties": {
                 "mode": {
-                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
+                  "type": "string",
                   "enum": [
                     "dropNN",
                     "replaceNN"
                   ],
-                  "type": "string",
+                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
                   "x-enum-description": {
                     "dropNN": "Drop non-numbers",
                     "replaceNN": "Replace non-numbers"
                   }
                 },
                 "replaceWithValue": {
-                  "description": "Only valid when mode is replace",
-                  "type": "number"
+                  "type": "number",
+                  "description": "Only valid when mode is replace"
                 }
               },
+              "additionalProperties": false,
+              "type": "object",
               "required": [
                 "mode"
               ],
-              "type": "object"
+              "description": "Reducer Options"
             }
           },
+          "additionalProperties": false,
+          "type": "object",
           "required": [
             "expression",
             "reducer"
-          ],
-          "type": "object"
+          ]
         },
         "examples": [
           {
@@ -238,11 +238,15 @@
         ],
         "querySchema": {
           "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
           "properties": {
             "conditions": {
               "items": {
+                "additionalProperties": false,
+                "description": "ConditionJSON is the JSON model for a single condition in ConditionsCmd.",
                 "properties": {
                   "evaluator": {
+                    "additionalProperties": false,
                     "properties": {
                       "params": {
                         "items": {
@@ -251,35 +255,35 @@
                         "type": "array"
                       },
                       "type": {
-                        "type": "string",
-                        "description": "e.g. \"gt\""
+                        "description": "e.g. \"gt\"",
+                        "type": "string"
                       }
                     },
-                    "additionalProperties": false,
-                    "type": "object",
                     "required": [
                       "params",
                       "type"
-                    ]
+                    ],
+                    "type": "object"
                   },
                   "operator": {
+                    "additionalProperties": false,
                     "properties": {
                       "type": {
-                        "type": "string",
                         "enum": [
                           "and",
                           "or"
                         ],
+                        "type": "string",
                         "x-enum-description": {}
                       }
                     },
-                    "additionalProperties": false,
-                    "type": "object",
                     "required": [
                       "type"
-                    ]
+                    ],
+                    "type": "object"
                   },
                   "query": {
+                    "additionalProperties": false,
                     "properties": {
                       "params": {
                         "items": {
@@ -288,43 +292,39 @@
                         "type": "array"
                       }
                     },
-                    "additionalProperties": false,
-                    "type": "object",
                     "required": [
                       "params"
-                    ]
+                    ],
+                    "type": "object"
                   },
                   "reducer": {
+                    "additionalProperties": false,
                     "properties": {
                       "type": {
                         "type": "string"
                       }
                     },
-                    "additionalProperties": false,
-                    "type": "object",
                     "required": [
                       "type"
-                    ]
+                    ],
+                    "type": "object"
                   }
                 },
-                "additionalProperties": false,
-                "type": "object",
                 "required": [
                   "evaluator",
                   "operator",
                   "query",
                   "reducer"
                 ],
-                "description": "ConditionJSON is the JSON model for a single condition in ConditionsCmd."
+                "type": "object"
               },
               "type": "array"
             }
           },
-          "additionalProperties": false,
-          "type": "object",
           "required": [
             "conditions"
-          ]
+          ],
+          "type": "object"
         }
       }
     },
@@ -343,19 +343,15 @@
         ],
         "querySchema": {
           "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
           "properties": {
-            "expression": {
-              "type": "string",
-              "minLength": 1,
-              "description": "Reference to single query result",
-              "examples": [
-                "$A"
-              ]
-            },
             "conditions": {
+              "description": "Threshold Conditions",
               "items": {
+                "additionalProperties": false,
                 "properties": {
                   "evaluator": {
+                    "additionalProperties": false,
                     "properties": {
                       "params": {
                         "items": {
@@ -364,75 +360,79 @@
                         "type": "array"
                       },
                       "type": {
-                        "type": "string",
+                        "description": "e.g. \"gt\"",
                         "enum": [
                           "gt",
                           "lt",
                           "within_range",
                           "outside_range"
                         ],
-                        "description": "e.g. \"gt\"",
-                        "x-enum-description": {}
-                      }
-                    },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "required": [
-                      "params",
-                      "type"
-                    ]
-                  },
-                  "unloadEvaluator": {
-                    "properties": {
-                      "params": {
-                        "items": {
-                          "type": "number"
-                        },
-                        "type": "array"
-                      },
-                      "type": {
                         "type": "string",
-                        "enum": [
-                          "gt",
-                          "lt",
-                          "within_range",
-                          "outside_range"
-                        ],
-                        "description": "e.g. \"gt\"",
                         "x-enum-description": {}
                       }
                     },
-                    "additionalProperties": false,
-                    "type": "object",
                     "required": [
                       "params",
                       "type"
-                    ]
+                    ],
+                    "type": "object"
                   },
                   "loadedDimensions": {
                     "additionalProperties": true,
                     "type": "object",
                     "x-grafana-type": "data.DataFrame"
+                  },
+                  "unloadEvaluator": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "params": {
+                        "items": {
+                          "type": "number"
+                        },
+                        "type": "array"
+                      },
+                      "type": {
+                        "description": "e.g. \"gt\"",
+                        "enum": [
+                          "gt",
+                          "lt",
+                          "within_range",
+                          "outside_range"
+                        ],
+                        "type": "string",
+                        "x-enum-description": {}
+                      }
+                    },
+                    "required": [
+                      "params",
+                      "type"
+                    ],
+                    "type": "object"
                   }
                 },
-                "additionalProperties": false,
-                "type": "object",
                 "required": [
                   "evaluator",
                   "unloadEvaluator",
                   "loadedDimensions"
-                ]
+                ],
+                "type": "object"
               },
-              "type": "array",
-              "description": "Threshold Conditions"
+              "type": "array"
+            },
+            "expression": {
+              "description": "Reference to single query result",
+              "examples": [
+                "$A"
+              ],
+              "minLength": 1,
+              "type": "string"
             }
           },
-          "additionalProperties": false,
-          "type": "object",
           "required": [
             "expression",
             "conditions"
-          ]
+          ],
+          "type": "object"
         }
       }
     }

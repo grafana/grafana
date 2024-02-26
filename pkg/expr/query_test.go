@@ -15,11 +15,11 @@ import (
 func TestQueryTypeDefinitions(t *testing.T) {
 	builder, err := schemabuilder.NewSchemaBuilder(
 		schemabuilder.BuilderOptions{
-			PluginID:    []string{DatasourceType},
-			BasePackage: "github.com/grafana/grafana/pkg/expr",
-			CodePath:    "./",
-			// We need to identify the enum fields explicitly :(
-			// *AND* have the +enum common for this to work
+			PluginID: []string{DatasourceType},
+			ScanCode: []schemabuilder.CodePaths{{
+				BasePackage: "github.com/grafana/grafana/pkg/expr",
+				CodePath:    "./",
+			}},
 			Enums: []reflect.Type{
 				reflect.TypeOf(mathexp.ReducerSum),   // pick an example value (not the root)
 				reflect.TypeOf(mathexp.UpsamplerPad), // pick an example value (not the root)

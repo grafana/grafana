@@ -74,12 +74,22 @@
                     "type": "integer"
                   },
                   "type": {
-                    "description": "Type asserts that the frame matches a known type structure.",
+                    "description": "Type asserts that the frame matches a known type structure.\n\n\nPossible enum values:\n - `\"\"` \n - `\"timeseries-wide\"` \n - `\"timeseries-long\"` \n - `\"timeseries-many\"` \n - `\"timeseries-multi\"` \n - `\"directory-listing\"` \n - `\"table\"` \n - `\"numeric-wide\"` \n - `\"numeric-multi\"` \n - `\"numeric-long\"` \n - `\"log-lines\"` ",
                     "type": "string",
-                    "examples": [
+                    "enum": [
+                      "",
                       "timeseries-wide",
-                      "timeseries-long"
-                    ]
+                      "timeseries-long",
+                      "timeseries-many",
+                      "timeseries-multi",
+                      "directory-listing",
+                      "table",
+                      "numeric-wide",
+                      "numeric-multi",
+                      "numeric-long",
+                      "log-lines"
+                    ],
+                    "x-enum-description": {}
                   },
                   "typeVersion": {
                     "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
@@ -199,12 +209,22 @@
                     "type": "integer"
                   },
                   "type": {
-                    "description": "Type asserts that the frame matches a known type structure.",
+                    "description": "Type asserts that the frame matches a known type structure.\n\n\nPossible enum values:\n - `\"\"` \n - `\"timeseries-wide\"` \n - `\"timeseries-long\"` \n - `\"timeseries-many\"` \n - `\"timeseries-multi\"` \n - `\"directory-listing\"` \n - `\"table\"` \n - `\"numeric-wide\"` \n - `\"numeric-multi\"` \n - `\"numeric-long\"` \n - `\"log-lines\"` ",
                     "type": "string",
-                    "examples": [
+                    "enum": [
+                      "",
                       "timeseries-wide",
-                      "timeseries-long"
-                    ]
+                      "timeseries-long",
+                      "timeseries-many",
+                      "timeseries-multi",
+                      "directory-listing",
+                      "table",
+                      "numeric-wide",
+                      "numeric-multi",
+                      "numeric-long",
+                      "log-lines"
+                    ],
+                    "x-enum-description": {}
                   },
                   "typeVersion": {
                     "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
@@ -354,12 +374,22 @@
                     "type": "integer"
                   },
                   "type": {
-                    "description": "Type asserts that the frame matches a known type structure.",
+                    "description": "Type asserts that the frame matches a known type structure.\n\n\nPossible enum values:\n - `\"\"` \n - `\"timeseries-wide\"` \n - `\"timeseries-long\"` \n - `\"timeseries-many\"` \n - `\"timeseries-multi\"` \n - `\"directory-listing\"` \n - `\"table\"` \n - `\"numeric-wide\"` \n - `\"numeric-multi\"` \n - `\"numeric-long\"` \n - `\"log-lines\"` ",
                     "type": "string",
-                    "examples": [
+                    "enum": [
+                      "",
                       "timeseries-wide",
-                      "timeseries-long"
-                    ]
+                      "timeseries-long",
+                      "timeseries-many",
+                      "timeseries-multi",
+                      "directory-listing",
+                      "table",
+                      "numeric-wide",
+                      "numeric-multi",
+                      "numeric-long",
+                      "log-lines"
+                    ],
+                    "x-enum-description": {}
                   },
                   "typeVersion": {
                     "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
@@ -560,12 +590,22 @@
                     "type": "integer"
                   },
                   "type": {
-                    "description": "Type asserts that the frame matches a known type structure.",
+                    "description": "Type asserts that the frame matches a known type structure.\n\n\nPossible enum values:\n - `\"\"` \n - `\"timeseries-wide\"` \n - `\"timeseries-long\"` \n - `\"timeseries-many\"` \n - `\"timeseries-multi\"` \n - `\"directory-listing\"` \n - `\"table\"` \n - `\"numeric-wide\"` \n - `\"numeric-multi\"` \n - `\"numeric-long\"` \n - `\"log-lines\"` ",
                     "type": "string",
-                    "examples": [
+                    "enum": [
+                      "",
                       "timeseries-wide",
-                      "timeseries-long"
-                    ]
+                      "timeseries-long",
+                      "timeseries-many",
+                      "timeseries-multi",
+                      "directory-listing",
+                      "table",
+                      "numeric-wide",
+                      "numeric-multi",
+                      "numeric-long",
+                      "log-lines"
+                    ],
+                    "x-enum-description": {}
                   },
                   "typeVersion": {
                     "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
@@ -746,12 +786,22 @@
                     "type": "integer"
                   },
                   "type": {
-                    "description": "Type asserts that the frame matches a known type structure.",
+                    "description": "Type asserts that the frame matches a known type structure.\n\n\nPossible enum values:\n - `\"\"` \n - `\"timeseries-wide\"` \n - `\"timeseries-long\"` \n - `\"timeseries-many\"` \n - `\"timeseries-multi\"` \n - `\"directory-listing\"` \n - `\"table\"` \n - `\"numeric-wide\"` \n - `\"numeric-multi\"` \n - `\"numeric-long\"` \n - `\"log-lines\"` ",
                     "type": "string",
-                    "examples": [
+                    "enum": [
+                      "",
                       "timeseries-wide",
-                      "timeseries-long"
-                    ]
+                      "timeseries-long",
+                      "timeseries-many",
+                      "timeseries-multi",
+                      "directory-listing",
+                      "table",
+                      "numeric-wide",
+                      "numeric-multi",
+                      "numeric-long",
+                      "log-lines"
+                    ],
+                    "x-enum-description": {}
                   },
                   "typeVersion": {
                     "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",

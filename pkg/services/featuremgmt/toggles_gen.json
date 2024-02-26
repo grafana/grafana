@@ -83,7 +83,7 @@
         "name": "pluginsInstrumentationStatusSource",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-23T13:23:30Z"
+        "deletionTimestamp": "2024-02-26T04:58:13Z"
       },
       "spec": {
         "description": "Include a status source label for plugin request metrics and logs",
@@ -511,7 +511,7 @@
         "name": "displayAnonymousStats",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-23T13:23:30Z"
+        "deletionTimestamp": "2024-02-26T04:58:13Z"
       },
       "spec": {
         "description": "Enables anonymous stats to be shown in the UI for Grafana",
@@ -1400,7 +1400,7 @@
         "name": "traceToMetrics",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-23T13:23:30Z"
+        "deletionTimestamp": "2024-02-26T04:58:13Z"
       },
       "spec": {
         "description": "Enable trace to metrics links",
@@ -1529,7 +1529,7 @@
         "name": "splitScopes",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-23T13:23:30Z"
+        "deletionTimestamp": "2024-02-26T04:58:13Z"
       },
       "spec": {
         "description": "Support faster dashboard and folder search by splitting permission scopes into parts",

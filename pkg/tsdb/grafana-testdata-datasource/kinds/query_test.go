@@ -12,11 +12,11 @@ import (
 func TestQueryTypeDefinitions(t *testing.T) {
 	builder, err := schemabuilder.NewSchemaBuilder(
 		schemabuilder.BuilderOptions{
-			PluginID:    []string{"grafana-testdata-datasource", "testdata"},
-			BasePackage: "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds",
-			CodePath:    "./",
-			// We need to identify the enum fields explicitly :(
-			// *AND* have the +enum common for this to work
+			PluginID: []string{"grafana-testdata-datasource", "testdata"},
+			ScanCode: []schemabuilder.CodePaths{{
+				BasePackage: "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds",
+				CodePath:    "./",
+			}},
 			Enums: []reflect.Type{
 				reflect.TypeOf(NodesQueryTypeRandom),         // pick an example value (not the root)
 				reflect.TypeOf(StreamingQueryTypeFetch),      // pick an example value (not the root)

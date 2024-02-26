@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 
-	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -50,19 +49,19 @@ func TestSimpleQuery(t *testing.T) {
 			Version: "v0alpha1",
 		})
 
-		q := v0alpha1.GenericDataQuery{
+		q := resource.GenericDataQuery{
 			CommonQueryProperties: resource.CommonQueryProperties{
 				Datasource: &resource.DataSourceRef{
 					Type: "grafana-testdata-datasource",
 					UID:  ds.UID,
 				},
 			},
-			Additional: map[string]any{
-				"csvContent": `a,b,c\n1,hello,true`,
-				"scenarioId": `csv_content`,
-			},
 		}
-		body, err := json.Marshal(&v0alpha1.GenericQueryRequest{Queries: []v0alpha1.GenericDataQuery{q}})
+		q.Set("csvContent", `a,b,c\n1,hello,true`)
+		q.Set("scenarioId", `csv_content`)
+		body, err := json.Marshal(&resource.GenericQueryRequest{
+			Queries: []resource.GenericDataQuery{q},
+		})
 		require.NoError(t, err)
 
 		fmt.Printf("%s\n", string(body))

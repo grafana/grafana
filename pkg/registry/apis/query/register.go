@@ -186,7 +186,7 @@ func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return &builder.APIRoutes{
 		Root: []builder.APIRouteHandler{
 			{
-				Path: "expressions.jsonschema",
+				Path: "expressions.schema.json",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
