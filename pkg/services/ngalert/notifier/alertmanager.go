@@ -123,7 +123,6 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}
 
 	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
-		WorkingDirectory:   filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID))),
 		ExternalURL:        cfg.AppURL,
 		AlertStoreCallback: nil,
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
@@ -332,17 +331,9 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 		amConfigChanged = true
 	}
 
-	if cfg.TemplateFiles == nil {
-		cfg.TemplateFiles = map[string]string{}
-	}
-	cfg.TemplateFiles["__default__.tmpl"] = alertingTemplates.DefaultTemplateString
-
-	// next, we need to make sure we persist the templates to disk.
-	paths, templatesChanged, err := PersistTemplates(am.logger, cfg, am.Base.WorkingDirectory())
-	if err != nil {
-		return false, err
-	}
-	cfg.AlertmanagerConfig.Templates = paths
+	templateDefinitions := ToTemplateDefinitions(cfg)
+	templatesChanged := true
+	// TODO: How to tell if the templates have changed?
 
 	// If neither the configuration nor templates have changed, we've got nothing to do.
 	if !amConfigChanged && !templatesChanged {
@@ -352,7 +343,11 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 
 	err = am.Base.ApplyConfig(AlertingConfiguration{
 		rawAlertmanagerConfig:    rawConfig,
-		alertmanagerConfig:       cfg.AlertmanagerConfig,
+		route:                    cfg.AlertmanagerConfig.Route.AsAMRoute(),
+		inhibitRules:             cfg.AlertmanagerConfig.InhibitRules,
+		muteTimeIntervals:        cfg.AlertmanagerConfig.MuteTimeIntervals,
+		timeIntervals:            cfg.AlertmanagerConfig.TimeIntervals,
+		templates:                templateDefinitions,
 		receivers:                PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
 		receiverIntegrationsFunc: am.buildReceiverIntegrations,
 	})

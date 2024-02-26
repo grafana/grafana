@@ -403,7 +403,6 @@ func (s *GettableStatus) UnmarshalJSON(b []byte) error {
 		Global:       c.Global,
 		Route:        AsGrafanaRoute(c.Route),
 		InhibitRules: c.InhibitRules,
-		Templates:    c.Templates,
 	}}
 	s.Uptime = amStatus.Uptime
 	s.VersionInfo = amStatus.VersionInfo
@@ -808,7 +807,6 @@ type Config struct {
 	// MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.
 	MuteTimeIntervals []config.MuteTimeInterval `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
 	TimeIntervals     []config.TimeInterval     `yaml:"time_intervals,omitempty" json:"time_intervals,omitempty"`
-	Templates         []string                  `yaml:"templates" json:"templates"`
 }
 
 // A Route is a node that contains definitions of how to handle alerts. This is modified
