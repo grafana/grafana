@@ -992,6 +992,7 @@ alertmanager_config: |
 				TemplateFiles: map[string]string{"foo": "bar"},
 				AlertmanagerConfig: GettableApiAlertingConfig{
 					Config: Config{
+						Templates: []string{},
 						Route: &Route{
 							Receiver: "am",
 							Routes: []*Route{
