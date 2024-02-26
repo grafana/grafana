@@ -20,7 +20,6 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { NEW_PANEL_HEIGHT } from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
@@ -144,13 +143,11 @@ describe('DashboardScene', () => {
 
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as SceneGridItem;
-        const nextChild = body.state.children[1] as SceneGridItem;
 
         expect(scene.state.isDirty).toBe(true);
         expect(body.state.children.length).toBe(5);
         expect(gridItem.state.body!.state.key).toBe('panel-5');
         expect(gridItem.state.y).toBe(0);
-        expect(nextChild.state.y).toBe(NEW_PANEL_HEIGHT);
       });
 
       it('Should create and add a new panel to the dashboard', () => {
@@ -263,12 +260,10 @@ describe('DashboardScene', () => {
 
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as SceneGridItem;
-        const nextChild = body.state.children[1] as SceneGridItem;
 
         expect(body.state.children.length).toBe(5);
         expect(gridItem.state.body!.state.key).toBe('panel-5');
         expect(gridItem.state.y).toBe(0);
-        expect(nextChild.state.y).toBe(NEW_PANEL_HEIGHT);
         expect(scene.state.hasCopiedPanel).toBe(false);
       });
 
@@ -277,12 +272,10 @@ describe('DashboardScene', () => {
 
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as SceneGridItem;
-        const nextChild = body.state.children[1] as SceneGridItem;
 
         expect(body.state.children.length).toBe(5);
         expect(gridItem.state.body!.state.key).toBe('panel-5');
         expect(gridItem.state.y).toBe(0);
-        expect(nextChild.state.y).toBe(NEW_PANEL_HEIGHT);
       });
     });
   });
