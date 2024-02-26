@@ -5,7 +5,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/anonservice"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/oauthserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/signingkeys"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ssosettings"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
@@ -95,9 +94,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
 	addFolderMigrations(mg)
-	if oss.features != nil && oss.features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) {
-		oauthserver.AddMigration(mg)
-	}
 
 	anonservice.AddMigration(mg)
 	signingkeys.AddMigration(mg)
