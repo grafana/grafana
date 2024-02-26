@@ -246,3 +246,48 @@ func (s NoData) New() NoData {
 func NewNoData() NoData {
 	return NoData{data.NewFrame("no data")}
 }
+
+// RowData is an untyped no data response.
+type RowData struct{ Frame *data.Frame }
+
+// Type returns the Value type and allows it to fulfill the Value interface.
+func (s RowData) Type() parse.ReturnType { return parse.TypeRowData }
+
+// Value returns the actual value allows it to fulfill the Value interface.
+func (s RowData) Value() any { return s }
+
+func (s RowData) GetLabels() data.Labels { return nil }
+
+func (s RowData) SetLabels(ls data.Labels) {}
+
+func (s RowData) GetMeta() any {
+	return s.Frame.Meta.Custom
+}
+
+func (s RowData) SetMeta(v any) {
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Custom = v
+}
+
+func (s RowData) AddNotice(notice data.Notice) {
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Notices = append(m.Notices, notice)
+}
+
+func (s RowData) AsDataFrame() *data.Frame { return s.Frame }
+
+func (s RowData) New() RowData {
+	return NewRowData()
+}
+
+func NewRowData() RowData {
+	return RowData{data.NewFrame("")}
+}

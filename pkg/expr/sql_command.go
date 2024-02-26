@@ -84,8 +84,16 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	}
 
 	frame.RefID = gr.refID
-	rsp.Values = mathexp.Values{
-		mathexp.Scalar{Frame: frame},
+
+	if frame.Rows() == 0 {
+		rsp.Values = mathexp.Values{
+			mathexp.NoData{Frame: frame},
+		}
 	}
+
+	rsp.Values = mathexp.Values{
+		mathexp.RowData{Frame: frame},
+	}
+
 	return rsp, nil
 }
