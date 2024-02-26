@@ -1,6 +1,7 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { Scope, ScopeDashboard, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, Scope, ScopeDashboard, SelectableValue } from '@grafana/data';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -8,9 +9,7 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
 } from '@grafana/scenes';
-
-import { ExpandedScopeSelector } from './ExpandedScopeSelector';
-import { MinimizedScopeSelector } from './MinimizedScopeSelector';
+import { IconButton, Select, useStyles2 } from '@grafana/ui';
 
 export interface ScopeSelectorSceneState extends SceneObjectState {
   isExpanded: boolean;
@@ -156,13 +155,26 @@ export class ScopeSelectorScene extends SceneObjectBase<ScopeSelectorSceneState>
     this.setState({ isDashboardsLoading: true });
 
     setTimeout(() => {
-      this.setState({ dashboards: [], isDashboardsLoading: false });
+      this.setState({
+        dashboards: [
+          {
+            uid: '20a5aec7-8381-4c91-94b7-4e8d17c75672',
+            title: 'My Dashboard 1',
+          },
+          {
+            uid: 'c677f72a-ab93-4442-b50f-367f4a2849c7',
+            title: 'My Dashboard 2',
+          },
+        ],
+        isDashboardsLoading: false,
+      });
     }, 500);
   }
 }
 
 export function ScopeSelectorSceneRenderer({ model }: SceneComponentProps<ScopeSelectorScene>) {
-  const { isExpanded, scopes, isScopesLoading, value, dashboards } = model.useState();
+  const { isExpanded, scopes, isScopesLoading, value } = model.useState();
+  const styles = useStyles2(getStyles);
 
   if (isScopesLoading) {
     return null;
@@ -174,15 +186,50 @@ export function ScopeSelectorSceneRenderer({ model }: SceneComponentProps<ScopeS
     description: category,
   }));
 
-  const ScopeSelector = isExpanded ? ExpandedScopeSelector : MinimizedScopeSelector;
-
   return (
-    <ScopeSelector
-      dashboards={dashboards}
-      options={options}
-      value={value}
-      onChange={(value) => model.setScope(value)}
-      onToggle={() => model.toggle()}
-    />
+    <div className={cx(styles.container, isExpanded && styles.containerExpanded)}>
+      <div className={cx(styles.topContainer, isExpanded && styles.topContainerExpanded)}>
+        <IconButton
+          name="arrow-to-right"
+          aria-label={isExpanded ? 'Collapse scope filters' : 'Expand scope filters'}
+          className={cx(!isExpanded && styles.iconNotExpanded)}
+          onClick={() => model.toggle()}
+        />
+        <Select
+          isClearable
+          options={options}
+          value={value}
+          onChange={(selectableValue) => model.setScope(selectableValue?.value ?? undefined)}
+        />
+      </div>
+      {isExpanded && <div className={styles.bottomContainer}></div>}
+    </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    container: css({
+      alignItems: 'baseline',
+      flex: theme.spacing(40),
+      gap: theme.spacing(1),
+    }),
+    containerExpanded: css({
+      backgroundColor: theme.colors.background.primary,
+    }),
+    topContainer: css({
+      display: 'flex',
+      flexDirection: 'row',
+    }),
+    topContainerExpanded: css({
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      padding: theme.spacing(2),
+    }),
+    bottomContainer: css({
+      padding: theme.spacing(2),
+    }),
+    iconNotExpanded: css({
+      transform: 'scaleX(-1)',
+    }),
+  };
+};
