@@ -16,7 +16,6 @@ import {
   getDisplayProcessor,
   FieldColorModeId,
   DecimalCount,
-  getZone,
 } from '@grafana/data';
 // eslint-disable-next-line import/order
 import {
@@ -92,10 +91,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   tweakAxis = (opts) => opts,
   eventsScope = '__global_',
   hoverProximity,
-  orientation = VizOrientation.Vertical,
+  orientation = VizOrientation.Horizontal,
 }) => {
-  // we want the Auto and Vertical orientation to default to Vertical
-  const isVertical = orientation !== VizOrientation.Horizontal;
+  // we want the Auto and Horizontal orientation to default to Horizontal
+  const isHorizontal = orientation !== VizOrientation.Vertical;
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
   let alignedFrame: DataFrame;
@@ -120,7 +119,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   const xFieldAxisPlacement =
     xField.config.custom?.axisPlacement === AxisPlacement.Hidden
       ? AxisPlacement.Hidden
-      : isVertical
+      : isHorizontal
         ? AxisPlacement.Bottom
         : AxisPlacement.Left;
   const xFieldAxisShow = xField.config.custom?.axisPlacement !== AxisPlacement.Hidden;
@@ -129,8 +128,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     xScaleUnit = 'time';
     builder.addScale({
       scaleKey: xScaleKey,
-      orientation: isVertical ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
-      direction: isVertical ? ScaleDirection.Right : ScaleDirection.Up,
+      orientation: isHorizontal ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
+      direction: isHorizontal ? ScaleDirection.Right : ScaleDirection.Up,
       isTime: true,
       range: () => {
         const r = getTimeRange();
@@ -142,9 +141,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     const filterTicks: uPlot.Axis.Filter | undefined =
       timeZones.length > 1
         ? (u, splits) => {
-            return isVertical
-              ? splits.map((v, i) => (i < 2 ? null : v))
-              : splits.map((v, i) => (i > splits.length - 2 ? null : v));
+            if (isHorizontal) {
+              return splits.map((v, i) => (i < 2 ? null : v));
+            }
+            return splits;
           }
         : undefined;
 
@@ -170,28 +170,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
         let i = 0;
         u.axes.forEach((a) => {
-          if (isVertical && a.side === 2) {
+          if (isHorizontal && a.side === 2) {
             u.ctx.fillStyle = theme.colors.text.primary;
             u.ctx.textAlign = 'left';
             u.ctx.textBaseline = 'bottom';
             //@ts-ignore
             let cssBaseline: number = a._pos + a._size;
             u.ctx.fillText(timeZones[i], u.bbox.left, cssBaseline * uPlot.pxRatio);
-            i++;
-            // In a case we have horizontal orientation, we want to render timezone
-            //  labels on top and want to have them short
-          } else if (!isVertical && a.side === 3) {
-            u.ctx.fillStyle = theme.colors.text.primary;
-            u.ctx.textAlign = 'start';
-            u.ctx.textBaseline = 'top';
-            //@ts-ignore
-            let cssBaseline: number = a._pos - a._size;
-            let timeZone = getZone(timeZones[i])?.abbrs[0] ?? timeZones[i];
-            if (timeZone === 'browser') {
-              const offset = new Date().getTimezoneOffset();
-              timeZone = `UTC${offset < 0 ? '+' : '-'}${Math.abs(offset / 60)}`;
-            }
-            u.ctx.fillText(timeZone, cssBaseline * uPlot.pxRatio, u.bbox.top);
             i++;
           }
         });
@@ -207,8 +192,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     builder.addScale({
       scaleKey: xScaleKey,
-      orientation: isVertical ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
-      direction: isVertical ? ScaleDirection.Right : ScaleDirection.Up,
+      orientation: isHorizontal ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
+      direction: isHorizontal ? ScaleDirection.Right : ScaleDirection.Up,
       range: (u, dataMin, dataMax) => [xField.config.min ?? dataMin, xField.config.max ?? dataMax],
     });
 
@@ -268,8 +253,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       tweakScale(
         {
           scaleKey,
-          orientation: isVertical ? ScaleOrientation.Vertical : ScaleOrientation.Horizontal,
-          direction: isVertical ? ScaleDirection.Up : ScaleDirection.Right,
+          orientation: isHorizontal ? ScaleOrientation.Vertical : ScaleOrientation.Horizontal,
+          direction: isHorizontal ? ScaleDirection.Up : ScaleDirection.Right,
           distribution: customConfig.scaleDistribution?.type,
           log: customConfig.scaleDistribution?.log,
           linearThreshold: customConfig.scaleDistribution?.linearThreshold,
@@ -354,7 +339,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             scaleKey,
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
-            placement: isVertical ? customConfig.axisPlacement ?? AxisPlacement.Auto : AxisPlacement.Bottom,
+            placement: isHorizontal ? customConfig.axisPlacement ?? AxisPlacement.Auto : AxisPlacement.Bottom,
             formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
