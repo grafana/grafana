@@ -70,7 +70,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	for _, ref := range gr.varsToQuery {
 		results := vars[ref]
 		frames := results.Values.AsDataFrames(ref)
-		allFrames = append(frames, frames...)
+		allFrames = append(allFrames, frames...)
 	}
 
 	rsp := mathexp.Results{}
