@@ -5,11 +5,12 @@ import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Badge, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Badge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
 const PrometheusQueryPreview = React.lazy(() => import('./components/rule-viewer/tabs/Query/PrometheusQueryPreview'));
 const LokiQueryPreview = React.lazy(() => import('./components/rule-viewer/tabs/Query/LokiQueryPreview'));
 
+import { mapRelativeTimeRangeToOption } from '@grafana/ui/src/components/DateTimePickers/RelativeTimeRangePicker/utils';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { AlertDataQuery, AlertQuery } from '../../../types/unified-alerting-dto';
@@ -104,15 +105,35 @@ interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRang
   thresholds?: ThresholdDefinition;
 }
 
-export function QueryPreview({ refId, rule, thresholds, model, dataSource, queryData }: QueryPreviewProps) {
+export function QueryPreview({
+  refId,
+  rule,
+  thresholds,
+  model,
+  dataSource,
+  queryData,
+  relativeTimeRange,
+}: QueryPreviewProps) {
   const styles = useStyles2(getQueryPreviewStyles);
   const isExpression = isExpressionQuery(model);
   const [exploreSupported, exploreAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Explore);
   const canExplore = exploreSupported && exploreAllowed;
 
+  const dataSourceName = dataSource?.name ?? '[[Data source not found]]';
+  const dataSourceImgUrl = dataSource?.meta.info.logos.small;
+
   // relativeTimeRange is what is defined for a query
   // evalTimeRange is temporary value which the user can change
-  const headerItems = [dataSource?.name ?? '[[Data source not found]]'];
+  const headerItems: React.ReactNode[] = [
+    <DataSourceBadge name={dataSourceName} imgUrl={dataSourceImgUrl} key="datasource" />,
+  ];
+  if (relativeTimeRange) {
+    headerItems.push(
+      <Text color="secondary" key="timerange">
+        {mapRelativeTimeRangeToOption(relativeTimeRange).display}
+      </Text>
+    );
+  }
 
   let queryPreview: JSX.Element = (
     <pre>
@@ -162,6 +183,22 @@ function createExploreLink(settings: DataSourceRef, model: AlertDataQuery): stri
   });
 }
 
+interface DataSourceBadgeProps {
+  name: string;
+  imgUrl: string;
+}
+
+function DataSourceBadge({ name, imgUrl }: DataSourceBadgeProps) {
+  const styles = useStyles2(getQueryPreviewStyles);
+
+  return (
+    <div className={styles.dataSource} key="datasource">
+      <img src={imgUrl} width={16} alt={name} />
+      {name}
+    </div>
+  );
+}
+
 const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
   queryPreviewWrapper: css`
     margin: ${theme.spacing(1)};
@@ -172,6 +209,14 @@ const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
   visualization: css`
     padding: ${theme.spacing(1)};
   `,
+  dataSource: css({
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    padding: theme.spacing(0.5, 1),
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
 });
 
 interface ExpressionPreviewProps extends Pick<AlertQuery, 'refId'> {
@@ -205,7 +250,15 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
   }
 
   return (
-    <QueryBox refId={refId} headerItems={[startCase(model.type)]} isAlertCondition={isAlertCondition}>
+    <QueryBox
+      refId={refId}
+      headerItems={[
+        <Text color="secondary" key="expression-type">
+          {startCase(model.type)}
+        </Text>,
+      ]}
+      isAlertCondition={isAlertCondition}
+    >
       {renderPreview()}
       <Spacer />
       {evalData && <ExpressionResult series={evalData.series} isAlertCondition={isAlertCondition} />}
@@ -215,7 +268,7 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
 
 interface QueryBoxProps extends React.PropsWithChildren<unknown> {
   refId: string;
-  headerItems?: string[];
+  headerItems?: React.ReactNode;
   isAlertCondition?: boolean;
   exploreLink?: string;
 }
@@ -227,11 +280,7 @@ function QueryBox({ refId, headerItems = [], children, isAlertCondition, explore
     <div className={cx(styles.container)}>
       <header className={styles.header}>
         <span className={styles.refId}>{refId}</span>
-        {headerItems.map((item, index) => (
-          <span key={index} className={styles.textBlock}>
-            {item}
-          </span>
-        ))}
+        {headerItems}
         <Spacer />
         {isAlertCondition && <Badge color="green" icon="check" text="Alert condition" />}
         {exploreLink && (
