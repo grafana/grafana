@@ -15,13 +15,14 @@ weight: 100
 # Team LBAC
 
 {{% admonition type="note" %}}
-Creating Team LBAC rules is available for preview preview for logs with Loki in Grafana Cloud. Report any unexpected behavior to the Grafana Support team.
+Creating Team LBAC rules is available for preview for logs with Loki in Grafana Cloud. Report any unexpected behavior to the Grafana Support team.
 {{% /admonition %}}
 
 **Current Limitation:**
 
 - Any user with `query` permissions for a Loki data source can query all logs if there are no Team LBAC rules configured for any of the users team.
 - An admin that is part of a team, would have it's Team LBAC rules applied to the request.
+- Team LBAC rules will not be applied if the linked Cloud Access Policy has label selectors.
 
 Grafana's new **Team LBAC** (Label Based Access Control) feature for Loki is a significant enhancement that simplifies and streamlines data source access management based on team memberships.
 
@@ -38,7 +39,14 @@ For setting up Team LBAC for a Loki data source, refer to [Configure Team LBAC](
 
 Datasource permissions allow the users access to query the datasource. The permissions are set at the datasource level and are inherited by all the teams and users that are part of the datasource.
 
-We recommend to create a new loki datasource for Team LBAC rules with only teams having `query` permission. This will allow you to have a clear separation of datasources for Team LBAC and the datasources that are not using Team LBAC.
+#### Recommended setup
+
+We recommend to create a loki datasource dedicated for Team LBAC rules with only teams having `query` permission. This will allow you to have a clear separation of datasources for Team LBAC and the datasources that are not using Team LBAC. Another loki datasource would be setup for full access to the logs.
+
+Ex:
+
+1. Datasource `loki-full-access`, same setup for the loki tenant, the users querying this datasource would not have team lbac rules and have `query` permissions.
+2. Datasource `loki-lbac`, same setup, the users querying the data source would have to be part of a team and a LBAC rule.
 
 ## Team LBAC rules
 
@@ -52,6 +60,12 @@ Only users with data source Admin permissions can edit LBAC rules at the data so
 For setting up Team LBAC Rules for the data source, refer to [Create Team LBAC rules]({{< relref "./create-teamlbac-rules/" >}}).
 
 ### FAQ
+
+> #### "If I want a user to have full access to the logs, but they are part of a team with LBAC rules?"
+>
+> The user should use another loki datasource that is specifically used to have full access to the logs. See best practices.
+
+**Note:** A user who is part of a team within Grafana with a rule will only be able to query logs with that rule.
 
 > #### "If a team does not have a rule, what happens?"
 
@@ -67,4 +81,4 @@ Cloud access policies are the access controls from Grafana Cloud, the CAP config
 
 The teams that does not have a rule applied to it, would be able to query all logs if `query` permissions are setup for their role within Grafana.
 
-**Note:** A user who is part of a team within Grafana without a rule will be able to query all logs if there are role based queriying setup.
+**Note:** A user who is part of a team within Grafana without a rule will be able to query all logs if the user has a role with `query` permissions.
