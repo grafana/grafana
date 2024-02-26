@@ -9536,9 +9536,9 @@ __metadata:
   linkType: hard
 
 "@types/lucene@npm:^2":
-  version: 2.1.4
-  resolution: "@types/lucene@npm:2.1.4"
-  checksum: 10/418057a390752b36745428887ef527121740d54137a2b2da9f10388d2e9d1fe13d1d04b9b2605101bdd99a38ae357d1d5b08f6302f2eca7cead4e28f30ec964d
+  version: 2.1.7
+  resolution: "@types/lucene@npm:2.1.7"
+  checksum: 10/38bf8521a071697612f3629839f5d55558ae40ebba1486300f35b862d1b403758a0c5e9a8370bc1baae11d1779e6b1dae28c82f528ec8064dcee33dca008c910
   languageName: node
   linkType: hard
 
