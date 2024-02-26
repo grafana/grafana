@@ -14,7 +14,7 @@ on:
           - parca
           - stackdriver
           - tempo
-          # - zipkin
+          - zipkin
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-${{ inputs.plugin_id }}
