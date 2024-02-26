@@ -31,5 +31,4 @@ describe('ReturnToPrevious button', () => {
     // cy.get('[data-testid="expanded-content"]').find('[data-testid="data-testid go to dashboard"]').click();
   });
   // TODO: check whether the data on the session storage are deleted
-  it('should remove the DismissableButton when clicking close', () => {});
 });
