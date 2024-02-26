@@ -82,8 +82,8 @@ func RegisterAPIService(
 	return builder, nil // only used for wire
 }
 
-// PluginClient is a subset of the plugins.Client interface with the only method
-// used supported (yet) by the datasource API
+// PluginClient is a subset of the plugins.Client interface with only the
+// functions supported (yet) by the datasource API
 type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
