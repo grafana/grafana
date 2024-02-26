@@ -2,6 +2,7 @@ import React, { useCallback, useContext } from 'react';
 
 import { GrafanaConfig } from '@grafana/data';
 import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
+import { ReactivePluginExtensionsRegistry } from 'app/features/plugins/extensions/reactivePluginExtensionRegistry';
 
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
@@ -14,6 +15,7 @@ export interface GrafanaContextType {
   chrome: AppChromeService;
   keybindings: KeybindingSrv;
   newAssetsChecker: NewFrontendAssetsChecker;
+  extensionsRegistry: ReactivePluginExtensionsRegistry;
 }
 
 export const GrafanaContext = React.createContext<GrafanaContextType | undefined>(undefined);

@@ -5,6 +5,7 @@ import { GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { NewFrontendAssetsChecker } from 'app/core/services/NewFrontendAssetsChecker';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
+import { ReactivePluginExtensionsRegistry } from 'app/features/plugins/extensions/reactivePluginExtensionRegistry';
 
 /** Not sure what this should evolve into, just a starting point */
 export function getGrafanaContextMock(overrides: Partial<GrafanaContextType> = {}): GrafanaContextType {
@@ -25,6 +26,7 @@ export function getGrafanaContextMock(overrides: Partial<GrafanaContextType> = {
       start: jest.fn(),
       reloadIfUpdateDetected: jest.fn(),
     } as unknown as NewFrontendAssetsChecker,
+    extensionsRegistry: jest.fn() as unknown as ReactivePluginExtensionsRegistry,
     ...overrides,
   };
 }
