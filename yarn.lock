@@ -4073,7 +4073,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^3.5.0":
+"@grafana/scenes@npm:^3.8.0":
   version: 3.8.0
   resolution: "@grafana/scenes@npm:3.8.0"
   dependencies:
@@ -18341,7 +18341,7 @@ __metadata:
     "@grafana/plugin-e2e": "npm:0.18.0"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^3.5.0"
+    "@grafana/scenes": "npm:^3.8.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
