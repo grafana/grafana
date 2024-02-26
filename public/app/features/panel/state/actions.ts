@@ -1,5 +1,6 @@
 import { DataTransformerConfig, FieldConfigSource, getPanelOptionsWithDefaults } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { setHasAngularPanels } from 'app/features/dashboard/state/reducers';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
@@ -31,6 +32,12 @@ export function initPanelState(panel: PanelModel): ThunkResult<Promise<void>> {
 
     if (!panel.plugin) {
       await panel.pluginLoaded(plugin);
+    }
+
+    if (panel.isAngularPlugin() && !panel.plugin?.meta.angular?.hideDeprecation) {
+      console.log('we have an angular panel');
+      dispatch(setHasAngularPanels(true));
+      // TODO: set to false in cleanUpPanelState below?
     }
 
     dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));

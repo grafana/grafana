@@ -13,6 +13,7 @@ export const initialState: DashboardState = {
   getModel: () => null,
   initError: null,
   initialDatasource: undefined,
+  hasAngularPanels: false,
 };
 
 const dashboardSlice = createSlice({
@@ -50,6 +51,9 @@ const dashboardSlice = createSlice({
     setInitialDatasource: (state, action: PayloadAction<string | undefined>) => {
       state.initialDatasource = action.payload;
     },
+    setHasAngularPanels: (state, action: PayloadAction<boolean>) => {
+      state.hasAngularPanels = action.payload;
+    },
   },
 });
 
@@ -76,6 +80,7 @@ export const {
   cleanUpDashboard,
   addPanel,
   setInitialDatasource,
+  setHasAngularPanels,
 } = dashboardSlice.actions;
 
 export const dashboardReducer = dashboardSlice.reducer;

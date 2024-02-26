@@ -128,4 +128,5 @@ export interface DashboardState {
   initPhase: DashboardInitPhase;
   initialDatasource?: DataSourceRef['uid'];
   initError: DashboardInitError | null;
+  hasAngularPanels?: boolean;
 }
