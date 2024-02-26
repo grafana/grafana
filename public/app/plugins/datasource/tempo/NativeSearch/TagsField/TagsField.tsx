@@ -1,12 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
-import { notifyApp } from '../../_importedDependencies/actions/appNotification';
-import { createErrorNotification } from '../../_importedDependencies/core/appNotification';
-import { dispatch } from '../../_importedDependencies/store';
 import { TempoDatasource } from '../../datasource';
 
 import { CompletionProvider } from './autocomplete';
@@ -21,40 +19,44 @@ interface Props {
 }
 
 export function TagsField(props: Props) {
+  const [alertText, setAlertText] = useState<string>();
   const { onChange, onBlur, placeholder } = props;
-  const setupAutocompleteFn = useAutocomplete(props.datasource);
+  const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
 
   return (
-    <CodeEditor
-      value={props.value}
-      language={langId}
-      onBlur={onBlur}
-      onChange={onChange}
-      containerStyles={styles.queryField}
-      monacoOptions={{
-        folding: false,
-        fontSize: 14,
-        lineNumbers: 'off',
-        overviewRulerLanes: 0,
-        renderLineHighlight: 'none',
-        scrollbar: {
-          vertical: 'hidden',
-          verticalScrollbarSize: 8, // used as "padding-right"
-          horizontal: 'hidden',
-          horizontalScrollbarSize: 0,
-        },
-        scrollBeyondLastLine: false,
-        wordWrap: 'on',
-      }}
-      onBeforeEditorMount={ensureTraceQL}
-      onEditorDidMount={(editor, monaco) => {
-        setupAutocompleteFn(editor, monaco);
-        setupPlaceholder(editor, monaco, styles);
-        setupAutoSize(editor);
-      }}
-    />
+    <>
+      <CodeEditor
+        value={props.value}
+        language={langId}
+        onBlur={onBlur}
+        onChange={onChange}
+        containerStyles={styles.queryField}
+        monacoOptions={{
+          folding: false,
+          fontSize: 14,
+          lineNumbers: 'off',
+          overviewRulerLanes: 0,
+          renderLineHighlight: 'none',
+          scrollbar: {
+            vertical: 'hidden',
+            verticalScrollbarSize: 8, // used as "padding-right"
+            horizontal: 'hidden',
+            horizontalScrollbarSize: 0,
+          },
+          scrollBeyondLastLine: false,
+          wordWrap: 'on',
+        }}
+        onBeforeEditorMount={ensureTraceQL}
+        onEditorDidMount={(editor, monaco) => {
+          setupAutocompleteFn(editor, monaco);
+          setupPlaceholder(editor, monaco, styles);
+          setupAutoSize(editor);
+        }}
+      />
+      {alertText && <TemporaryAlert severity="error" text={alertText} />}
+    </>
   );
 }
 
@@ -103,9 +105,10 @@ function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
 
 /**
  * Hook that returns function that will set up monaco autocomplete for the label selector
- * @param datasource
+ * @param datasource the Tempo datasource instance
+ * @param setAlertText setter for the alert text
  */
-function useAutocomplete(datasource: TempoDatasource) {
+function useAutocomplete(datasource: TempoDatasource, setAlertText: (text?: string) => void) {
   // We need the provider ref so we can pass it the label/values data later. This is because we run the call for the
   // values here but there is additional setup needed for the provider later on. We could run the getSeries() in the
   // returned function but that is run after the monaco is mounted so would delay the request a bit when it does not
@@ -118,14 +121,15 @@ function useAutocomplete(datasource: TempoDatasource) {
     const fetchTags = async () => {
       try {
         await datasource.languageProvider.start();
+        setAlertText(undefined);
       } catch (error) {
         if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
+          setAlertText(`Error: ${error.message}`);
         }
       }
     };
     fetchTags();
-  }, [datasource]);
+  }, [datasource, setAlertText]);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {
