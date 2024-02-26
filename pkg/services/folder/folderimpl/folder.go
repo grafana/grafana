@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -51,6 +52,7 @@ type Service struct {
 
 func ProvideService(
 	ac accesscontrol.AccessControl,
+	bundleRegistry supportbundles.Service, // Bundle registry
 	bus bus.Bus,
 	cfg *setting.Cfg,
 	dashboardStore dashboards.Store,
@@ -74,6 +76,7 @@ func ProvideService(
 		metrics:              newFoldersMetrics(r),
 	}
 	srv.DBMigration(db)
+	bundleRegistry.RegisterSupportItemCollector(srv.supportBundleCollector())
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
