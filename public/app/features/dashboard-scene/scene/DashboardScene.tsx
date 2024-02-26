@@ -57,7 +57,6 @@ import {
   getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
   isPanelClone,
-  shiftAllPanelHeights,
 } from '../utils/utils';
 
 import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
@@ -464,9 +463,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     const sceneGridLayout = this.state.body;
 
-    // move all gridItems below the new one
-    shiftAllPanelHeights(sceneGridLayout);
-
     const panelId = getPanelIdForVizPanel(vizPanel);
     const newGridItem = new SceneGridItem({
       height: NEW_PANEL_HEIGHT,
@@ -558,7 +554,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       throw new Error('Cannot paste invalid grid item');
     }
 
-    shiftAllPanelHeights(sceneGridLayout);
     const panelId = getNextPanelId(this);
 
     if (gridItem instanceof SceneGridItem && gridItem.state.body) {
@@ -624,9 +619,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     const sceneGridLayout = this.state.body;
-
-    // move all gridItems below the new one
-    shiftAllPanelHeights(sceneGridLayout);
 
     const panelId = getNextPanelId(this);
 

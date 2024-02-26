@@ -204,38 +204,40 @@ export function getNextPanelId(dashboard: DashboardScene): number {
   let max = 0;
   const body = dashboard.state.body;
 
-  if (body instanceof SceneGridLayout) {
-    for (const child of body.state.children) {
-      if (child instanceof SceneGridItem) {
-        const vizPanel = child.state.body;
+  if (!(body instanceof SceneGridLayout)) {
+    throw new Error('Dashboard body is not a SceneGridLayout');
+  }
 
-        if (vizPanel) {
-          const panelId = getPanelIdForVizPanel(vizPanel);
+  for (const child of body.state.children) {
+    if (child instanceof SceneGridItem) {
+      const vizPanel = child.state.body;
 
-          if (panelId > max) {
-            max = panelId;
-          }
-        }
-      }
-
-      if (child instanceof SceneGridRow) {
-        //rows follow the same key pattern --- e.g.: `panel-6`
-        const panelId = getPanelIdForVizPanel(child);
+      if (vizPanel) {
+        const panelId = getPanelIdForVizPanel(vizPanel);
 
         if (panelId > max) {
           max = panelId;
         }
+      }
+    }
 
-        for (const rowChild of child.state.children) {
-          if (rowChild instanceof SceneGridItem) {
-            const vizPanel = rowChild.state.body;
+    if (child instanceof SceneGridRow) {
+      //rows follow the same key pattern --- e.g.: `panel-6`
+      const panelId = getPanelIdForVizPanel(child);
 
-            if (vizPanel) {
-              const panelId = getPanelIdForVizPanel(vizPanel);
+      if (panelId > max) {
+        max = panelId;
+      }
 
-              if (panelId > max) {
-                max = panelId;
-              }
+      for (const rowChild of child.state.children) {
+        if (rowChild instanceof SceneGridItem) {
+          const vizPanel = rowChild.state.body;
+
+          if (vizPanel) {
+            const panelId = getPanelIdForVizPanel(vizPanel);
+
+            if (panelId > max) {
+              max = panelId;
             }
           }
         }
@@ -244,22 +246,6 @@ export function getNextPanelId(dashboard: DashboardScene): number {
   }
 
   return max + 1;
-}
-
-export function shiftAllPanelHeights(layout: SceneGridLayout) {
-  for (const child of layout.state.children) {
-    child.setState({
-      y: NEW_PANEL_HEIGHT + (child.state.y ?? 0),
-    });
-
-    if (child instanceof SceneGridRow) {
-      for (const rowChild of child.state.children) {
-        rowChild.setState({
-          y: NEW_PANEL_HEIGHT + (rowChild.state.y ?? 0),
-        });
-      }
-    }
-  }
 }
 
 export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
