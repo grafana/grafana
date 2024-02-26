@@ -184,10 +184,10 @@ function inBounds(value: number, min: number | undefined, max: number | undefine
 }
 
 // The issue here is that TouchEvent is undefined while using instanceof in Firefox and Safari
-// which will throw an exception but if it's (event as TouchEvent).changedTouches it will be undefined
+// which will throw an exception but if it's event.changedTouches it will be undefined
 // and the if check will fail so it will go to the else but will not throw an exception
 function getEventXY(event: Event): { x: number; y: number } {
-  if ((event as TouchEvent).changedTouches && event instanceof TouchEvent) {
+  if ('changedTouches' in event && event instanceof TouchEvent) {
     return { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY };
   } else if (event instanceof MouseEvent) {
     return { x: event.clientX, y: event.clientY };

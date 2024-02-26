@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -23,11 +22,11 @@ type mySQLMacroEngine struct {
 	userError string
 }
 
-func newMysqlMacroEngine(logger log.Logger, cfg *setting.Cfg) sqleng.SQLMacroEngine {
+func newMysqlMacroEngine(logger log.Logger, userFacingDefaultError string) sqleng.SQLMacroEngine {
 	return &mySQLMacroEngine{
 		SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase(),
 		logger:             logger,
-		userError:          cfg.UserFacingDefaultError,
+		userError:          userFacingDefaultError,
 	}
 }
 

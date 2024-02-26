@@ -1,160 +1,101 @@
 import * as H from 'history';
 
 import { NavIndex } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-import {
-  getUrlSyncManager,
-  SceneFlexItem,
-  SceneFlexLayout,
-  SceneObject,
-  SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  sceneUtils,
-  SplitLayout,
-  VizPanel,
-} from '@grafana/scenes';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { config, locationService } from '@grafana/runtime';
+import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
-import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import { getDashboardUrl } from '../utils/urlBuilders';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
-import { PanelEditorUrlSync } from './PanelEditorUrlSync';
 import { PanelOptionsPane } from './PanelOptionsPane';
-import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
-  body: SceneObject;
-  controls?: SceneObject[];
   isDirty?: boolean;
-  /** Panel to inspect */
-  inspectPanelKey?: string;
-  /** Scene object that handles the current drawer */
-  overlay?: SceneObject;
-
-  dashboardRef: SceneObjectRef<DashboardScene>;
-  sourcePanelRef: SceneObjectRef<VizPanel>;
-  panelRef: SceneObjectRef<VizPanelManager>;
+  panelId: number;
+  optionsPane: PanelOptionsPane;
+  dataPane?: PanelDataPane;
+  vizManager: VizPanelManager;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = PanelEditorRenderer;
 
-  /**
-   * Handles url sync
-   */
-  protected _urlSync = new PanelEditorUrlSync(this);
+  private _discardChanges = false;
 
   public constructor(state: PanelEditorState) {
     super(state);
-
-    this.addActivationHandler(() => this._activationHandler());
+    this.addActivationHandler(this._activationHandler.bind(this));
   }
 
   private _activationHandler() {
-    const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this.state.dashboardRef.resolve());
-    // @ts-expect-error
-    getDashboardSrv().setCurrent(oldDashboardWrapper);
+    const panelManager = this.state.vizManager;
+    const panel = panelManager.state.panel;
 
-    // Deactivation logic
+    this._subs.add(
+      panelManager.subscribeToState((n, p) => {
+        if (n.panel.state.pluginId !== p.panel.state.pluginId) {
+          this._initDataPane(n.panel.state.pluginId);
+        }
+      })
+    );
+
+    this._initDataPane(panel.state.pluginId);
+
     return () => {
-      getUrlSyncManager().cleanUp(this);
+      if (!this._discardChanges) {
+        this.commitChanges();
+      }
     };
   }
 
-  public startUrlSync() {
-    getUrlSyncManager().initSync(this);
+  private _initDataPane(pluginId: string) {
+    const skipDataQuery = config.panels[pluginId].skipDataQuery;
+
+    if (skipDataQuery && this.state.dataPane) {
+      locationService.partial({ tab: null }, true);
+      this.setState({ dataPane: undefined });
+    }
+
+    if (!skipDataQuery && !this.state.dataPane) {
+      this.setState({ dataPane: new PanelDataPane(this.state.vizManager) });
+    }
+  }
+
+  public getUrlKey() {
+    return this.state.panelId.toString();
   }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
+    const dashboard = getDashboardSceneFor(this);
+
     return {
       text: 'Edit panel',
-      parentItem: this.state.dashboardRef.resolve().getPageNav(location, navIndex),
+      parentItem: dashboard.getPageNav(location, navIndex),
     };
   }
 
   public onDiscard = () => {
-    // Open question on what to preserve when going back
-    // Preserve time range, and variables state (that might have been changed while in panel edit)
-    // Preserve current panel data? (say if you just changed the time range and have new data)
-    this._navigateBackToDashboard();
+    this._discardChanges = true;
+    locationService.partial({ editPanel: null });
   };
 
-  public onApply = () => {
-    this._commitChanges();
-    this._navigateBackToDashboard();
-  };
-
-  public onSave = () => {
-    this._commitChanges();
-    // Open dashboard save drawer
-  };
-
-  private _commitChanges() {
-    const dashboard = this.state.dashboardRef.resolve();
-    const sourcePanel = this.state.sourcePanelRef.resolve();
-
-    const panelMngr = this.state.panelRef.resolve();
+  public commitChanges() {
+    const dashboard = getDashboardSceneFor(this);
 
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
-    const newState = sceneUtils.cloneSceneObjectState(panelMngr.state.panel.state);
-
-    sourcePanel.setState(newState);
-
-    // preserve time range and variables state
-    dashboard.setState({
-      $timeRange: this.state.$timeRange?.clone(),
-      $variables: this.state.$variables?.clone(),
-      isDirty: true,
-    });
-  }
-
-  private _navigateBackToDashboard() {
-    locationService.push(
-      getDashboardUrl({
-        uid: this.state.dashboardRef.resolve().state.uid,
-        currentQueryParams: locationService.getLocation().search,
-      })
-    );
+    this.state.vizManager.commitChanges();
   }
 }
 
-export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelEditor {
-  const panelClone = panel.clone();
-
-  const vizPanelMgr = new VizPanelManager(panelClone, dashboard.getRef());
-  const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
-
+export function buildPanelEditScene(panel: VizPanel): PanelEditor {
   return new PanelEditor({
-    dashboardRef: dashboard.getRef(),
-    sourcePanelRef: panel.getRef(),
-    panelRef: vizPanelMgr.getRef(),
-    controls: dashboardStateCloned.controls,
-    $variables: dashboardStateCloned.$variables,
-    $timeRange: dashboardStateCloned.$timeRange,
-    body: new SplitLayout({
-      direction: 'row',
-      primary: new SplitLayout({
-        direction: 'column',
-        primary: new SceneFlexLayout({
-          direction: 'column',
-          children: [vizPanelMgr],
-        }),
-        secondary: new SceneFlexItem({
-          body: new PanelDataPane(vizPanelMgr),
-        }),
-      }),
-      secondary: new SceneFlexLayout({
-        direction: 'column',
-        children: [new PanelOptionsPane(vizPanelMgr), new PanelVizTypePicker(vizPanelMgr)],
-      }),
-    }),
+    panelId: getPanelIdForVizPanel(panel),
+    optionsPane: new PanelOptionsPane({}),
+    vizManager: VizPanelManager.createFor(panel),
   });
 }

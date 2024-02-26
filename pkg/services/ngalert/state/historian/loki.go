@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -54,7 +55,7 @@ type RemoteLokiBackend struct {
 	log            log.Logger
 }
 
-func NewRemoteLokiBackend(cfg LokiConfig, req Requester, metrics *metrics.Historian) *RemoteLokiBackend {
+func NewRemoteLokiBackend(cfg LokiConfig, req client.Requester, metrics *metrics.Historian) *RemoteLokiBackend {
 	logger := log.New("ngalert.state.historian", "backend", "loki")
 	return &RemoteLokiBackend{
 		client:         NewLokiClient(cfg, req, metrics, logger),
@@ -72,7 +73,7 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
 // Record writes a number of state transitions for a given rule to an external Loki instance.
 func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
-	logStream := statesToStream(rule, states, h.externalLabels, logger)
+	logStream := StatesToStream(rule, states, h.externalLabels, logger)
 
 	errCh := make(chan error, 1)
 	if len(logStream.Values) == 0 {
@@ -111,7 +112,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 
 // Query retrieves state history entries from an external Loki instance and formats the results into a dataframe.
 func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
-	logQL, err := buildLogQuery(query)
+	logQL, err := BuildLogQuery(query)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +200,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 		if minElStreamIdx == -1 {
 			break
 		}
-		var entry lokiEntry
+		var entry LokiEntry
 		err := json.Unmarshal([]byte(minEl.V), &entry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal entry: %w", err)
@@ -230,7 +231,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 	return frame, nil
 }
 
-func statesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) Stream {
+func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) Stream {
 	labels := mergeLabels(make(map[string]string), externalLabels)
 	// System-defined labels take precedence over user-defined external labels.
 	labels[StateHistoryLabelKey] = StateHistoryLabelValue
@@ -245,7 +246,7 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		}
 
 		sanitizedLabels := removePrivateLabels(state.Labels)
-		entry := lokiEntry{
+		entry := LokiEntry{
 			SchemaVersion:  1,
 			Previous:       state.PreviousFormatted(),
 			Current:        state.Formatted(),
@@ -291,7 +292,7 @@ func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []Stream,
 	return nil
 }
 
-type lokiEntry struct {
+type LokiEntry struct {
 	SchemaVersion int              `json:"schemaVersion"`
 	Previous      string           `json:"previous"`
 	Current       string           `json:"current"`
@@ -321,7 +322,7 @@ func jsonifyRow(line string) (json.RawMessage, error) {
 	// Ser/deser to validate the contents of the log line before shipping it forward.
 	// TODO: We may want to remove this in the future, as we already have the value in the form of a []byte, and json.RawMessage is also a []byte.
 	// TODO: Though, if the log line does not contain valid JSON, this can cause problems later on when rendering the dataframe.
-	var entry lokiEntry
+	var entry LokiEntry
 	if err := json.Unmarshal([]byte(line), &entry); err != nil {
 		return nil, err
 	}
@@ -365,7 +366,7 @@ func isValidOperator(op string) bool {
 	return false
 }
 
-func buildLogQuery(query models.HistoryQuery) (string, error) {
+func BuildLogQuery(query models.HistoryQuery) (string, error) {
 	selectors, err := buildSelectors(query)
 	if err != nil {
 		return "", fmt.Errorf("failed to build the provided selectors: %w", err)

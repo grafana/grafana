@@ -60,9 +60,9 @@ func SetupRBACPermission(t *testing.T, db *sqlstore.SQLStore, role *accesscontro
 		var acPermission []accesscontrol.Permission
 		for action, scopes := range user.Permissions[user.OrgID] {
 			for _, scope := range scopes {
-				acPermission = append(acPermission, accesscontrol.Permission{
-					RoleID: role.ID, Action: action, Scope: scope, Created: time.Now(), Updated: time.Now(),
-				})
+				p := accesscontrol.Permission{RoleID: role.ID, Action: action, Scope: scope, Created: time.Now(), Updated: time.Now()}
+				p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+				acPermission = append(acPermission, p)
 			}
 		}
 
@@ -90,6 +90,7 @@ func CreateDashboard(t *testing.T, sql *sqlstore.SQLStore, features featuremgmt.
 
 	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
+	require.NotNil(t, dash)
 
 	return dash
 }

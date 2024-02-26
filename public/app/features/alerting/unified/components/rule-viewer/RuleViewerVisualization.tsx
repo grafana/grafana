@@ -18,6 +18,7 @@ import { contextSrv } from 'app/core/core';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { WithReturnButton } from '../WithReturnButton';
 import { VizWrapper } from '../rule-editor/VizWrapper';
 import { ThresholdDefinition } from '../rule-editor/util';
 
@@ -74,15 +75,13 @@ export function RuleViewerVisualization({
           ) : null}
 
           {allowedToExploreDataSources && !isExpression && (
-            <LinkButton
-              size="md"
-              variant="secondary"
-              icon="compass"
-              target="_blank"
-              href={createExploreLink(dsSettings, model)}
-            >
-              View in Explore
-            </LinkButton>
+            <WithReturnButton
+              component={
+                <LinkButton size="md" variant="secondary" icon="compass" href={createExploreLink(dsSettings, model)}>
+                  View in Explore
+                </LinkButton>
+              }
+            />
           )}
         </div>
       </div>

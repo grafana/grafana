@@ -3,7 +3,6 @@ import React, { useCallback } from 'react';
 import { DataSourcePluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import configCore from 'app/core/config';
 import { useDataSourcesRoutes, addDataSource } from 'app/features/datasources/state';
 import { useDispatch } from 'app/types';
 
@@ -31,9 +30,7 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
   }
 
   const disabledButton =
-    configCore.featureToggles.managedPluginsInstall &&
-    config.pluginAdminExternalManageEnabled &&
-    !plugin.isFullyInstalled;
+    config.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled && !plugin.isFullyInstalled;
 
   return (
     <Button

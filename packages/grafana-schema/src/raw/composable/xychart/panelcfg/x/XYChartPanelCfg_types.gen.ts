@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.3.0-pre";
+export const pluginVersion = "11.0.0-pre";
 
 /**
  * Auto is "table" in the UI
@@ -57,6 +57,7 @@ export const defaultFieldConfig: Partial<FieldConfig> = {
 };
 
 export interface ScatterSeriesConfig extends FieldConfig {
+  frame?: number;
   name?: string;
   x?: string;
   y?: string;

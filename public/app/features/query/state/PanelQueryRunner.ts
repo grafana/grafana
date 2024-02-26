@@ -50,6 +50,7 @@ export interface QueryRunnerOptions<
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
+  panelPluginId?: string;
   dashboardUID?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
@@ -139,9 +140,14 @@ export class PanelQueryRunner {
 
             if (withFieldConfig && data.series?.length) {
               if (lastConfigRev === this.dataConfigSource.configRev) {
-                const streamingDataFrame = data.series.find((data) => isStreamingDataFrame(data)) as
-                  | StreamingDataFrame
-                  | undefined;
+                let streamingDataFrame: StreamingDataFrame | undefined;
+
+                for (const frame of data.series) {
+                  if (isStreamingDataFrame(frame)) {
+                    streamingDataFrame = frame;
+                    break;
+                  }
+                }
 
                 if (
                   streamingDataFrame &&
@@ -214,7 +220,8 @@ export class PanelQueryRunner {
   private applyTransformations(data: PanelData): Observable<PanelData> {
     const transformations = this.dataConfigSource.getTransformations();
 
-    if (!transformations || transformations.length === 0) {
+    const allTransformationsDisabled = transformations && transformations.every((t) => t.disabled);
+    if (allTransformationsDisabled || !transformations || transformations.length === 0) {
       return of(data);
     }
 
@@ -251,6 +258,7 @@ export class PanelQueryRunner {
       timezone,
       datasource,
       panelId,
+      panelPluginId,
       dashboardUID,
       timeRange,
       timeInfo,
@@ -272,6 +280,7 @@ export class PanelQueryRunner {
       requestId: getNextRequestId(),
       timezone,
       panelId,
+      panelPluginId,
       dashboardUID,
       range: timeRange,
       timeInfo,

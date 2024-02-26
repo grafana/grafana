@@ -94,19 +94,7 @@ var (
 	}
 )
 
-func TestGetProviderConfig_EnvVarsOnly(t *testing.T) {
-	setupEnvVars(t)
-
-	cfg := setting.NewCfg()
-	strategy := NewOAuthStrategy(cfg)
-
-	result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
-	require.NoError(t, err)
-
-	require.Equal(t, expectedOAuthInfo, result)
-}
-
-func TestGetProviderConfig_IniFileOnly(t *testing.T) {
+func TestGetProviderConfig(t *testing.T) {
 	iniFile, err := ini.Load([]byte(iniContent))
 	require.NoError(t, err)
 
@@ -121,11 +109,28 @@ func TestGetProviderConfig_IniFileOnly(t *testing.T) {
 	require.Equal(t, expectedOAuthInfo, result)
 }
 
-func TestGetProviderConfig_EnvVarsOverrideIniFileSettings(t *testing.T) {
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_ENABLED", "false")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC", "false")
+func TestGetProviderConfig_ExtraFields(t *testing.T) {
+	iniWithExtraFields := `
+	[auth.azuread]
+	force_use_graph_api = true
+	allowed_organizations = org1, org2
 
-	iniFile, err := ini.Load([]byte(iniContent))
+	[auth.github]
+	team_ids = first, second
+	allowed_organizations = org1, org2
+
+	[auth.generic_oauth]
+	name_attribute_path = name
+	login_attribute_path = login
+	id_token_attribute_name = id_token
+	team_ids = first, second
+	allowed_organizations = org1, org2
+
+	[auth.grafana_com]
+	allowed_organizations = org1, org2
+	`
+
+	iniFile, err := ini.Load([]byte(iniWithExtraFields))
 	require.NoError(t, err)
 
 	cfg := setting.NewCfg()
@@ -133,52 +138,37 @@ func TestGetProviderConfig_EnvVarsOverrideIniFileSettings(t *testing.T) {
 
 	strategy := NewOAuthStrategy(cfg)
 
-	result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
-	require.NoError(t, err)
+	t.Run("azuread", func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), "azuread")
+		require.NoError(t, err)
 
-	expectedOAuthInfoWithOverrides := expectedOAuthInfo
-	expectedOAuthInfoWithOverrides["enabled"] = false
-	expectedOAuthInfoWithOverrides["skip_org_role_sync"] = false
+		require.Equal(t, "true", result["force_use_graph_api"])
+		require.Equal(t, "org1, org2", result["allowed_organizations"])
+	})
 
-	require.Equal(t, expectedOAuthInfoWithOverrides, result)
-}
+	t.Run("github", func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), "github")
+		require.NoError(t, err)
 
-func setupEnvVars(t *testing.T) {
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_NAME", "OAuth")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_ICON", "signin")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_ENABLED", "true")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP", "false")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_AUTO_LOGIN", "true")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_CLIENT_ID", "test_client_id")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET", "test_client_secret")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_SCOPES", "openid, profile, email")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_EMPTY_SCOPES", "")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_EMAIL_ATTRIBUTE_NAME", "email:primary")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_EMAIL_ATTRIBUTE_PATH", "email")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH", "role")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_STRICT", "true")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_GROUPS_ATTRIBUTE_PATH", "groups")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_TEAM_IDS_ATTRIBUTE_PATH", "team_ids")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_AUTH_URL", "test_auth_url")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_TOKEN_URL", "test_token_url")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_API_URL", "test_api_url")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_TEAMS_URL", "test_teams_url")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_ALLOWED_DOMAINS", "domain1.com")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_ALLOWED_GROUPS", "")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_TLS_SKIP_VERIFY_INSECURE", "true")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_TLS_CLIENT_CERT", "")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_TLS_CLIENT_KEY", "")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_TLS_CLIENT_CA", "")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_USE_PKCE", "false")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_AUTH_STYLE", "inheader")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_ALLOW_ASSIGN_GRAFANA_ADMIN", "true")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC", "true")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_USE_REFRESH_TOKEN", "true")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_HOSTED_DOMAIN", "test_hosted_domain")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_ALLOWED_ORGANIZATIONS", "org1, org2")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_ID_TOKEN_ATTRIBUTE_NAME", "id_token")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_LOGIN_ATTRIBUTE_PATH", "login")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_NAME_ATTRIBUTE_PATH", "name")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_TEAM_IDS", "first, second")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_SIGNOUT_REDIRECT_URL", "test_signout_redirect_url")
+		require.Equal(t, "first, second", result["team_ids"])
+		require.Equal(t, "org1, org2", result["allowed_organizations"])
+	})
+
+	t.Run("generic_oauth", func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
+		require.NoError(t, err)
+
+		require.Equal(t, "first, second", result["team_ids"])
+		require.Equal(t, "org1, org2", result["allowed_organizations"])
+		require.Equal(t, "name", result["name_attribute_path"])
+		require.Equal(t, "login", result["login_attribute_path"])
+		require.Equal(t, "id_token", result["id_token_attribute_name"])
+	})
+
+	t.Run("grafana_com", func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), "grafana_com")
+		require.NoError(t, err)
+
+		require.Equal(t, "org1, org2", result["allowed_organizations"])
+	})
 }

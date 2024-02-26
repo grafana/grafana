@@ -41,10 +41,16 @@ idForwarding = true
 storage_type = unified
 ```
 
-With this configuration, you can run everything in-process with:
+With this configuration, you can run everything in-process. Run the Grafana backend with:
 
 ```sh
 bra run
+```
+
+or 
+
+```sh
+make run
 ```
 
 The default kubeconfig sends requests directly to the apiserver, to authenticate as a grafana user, create `grafana.kubeconfig`:
@@ -70,11 +76,20 @@ users:
     username: <username>
     password: <password>
 ```
-Where `<username>` and `<password>` are credentials for basic auth against Grafana.
+Where `<username>` and `<password>` are credentials for basic auth against Grafana. For example, with the [default credentials](https://github.com/grafana/grafana/blob/HEAD/contribute/developer-guide.md#backend):
+```yaml
+    username: admin
+    password: admin
+```
 
-In this mode, you can interact with the k8s api via:
+In this mode, you can interact with the k8s api. Make sure you are in the directory where you created `grafana.kubeconfig`. Then run:
 ```sh
 kubectl --kubeconfig=./grafana.kubeconfig get playlist
+```
+
+If this is your first time running the command, a successful response would be:
+```sh
+No resources found in default namespace.
 ```
 
 To create a playlist, create a file `playlist-generate.yaml`:
@@ -99,20 +114,51 @@ then run:
 kubectl --kubeconfig=./grafana.kubeconfig create -f playlist-generate.yaml
 ```
 
+For example, a successful response would be:
+```sh
+playlist.playlist.grafana.app/u394j4d3-s63j-2d74-g8hf-958773jtybf2 created
+```
+
+When running 
+```sh
+kubectl --kubeconfig=./grafana.kubeconfig get playlist
+```
+you should now see something like:
+```sh
+NAME                                   TITLE                              INTERVAL   CREATED AT
+u394j4d3-s63j-2d74-g8hf-958773jtybf2   Playlist with auto generated UID   5m         2023-12-14T13:53:35Z 
+```
+
 ### Use a separate database
 
-To run against a separate database, update custom.ini:
+By default Unified Storage uses the Grafana database. To run against a separate database, update `custom.ini` by adding the following section to it:
 
 ```
 [entity_api]
 db_type = mysql
 db_host = localhost:3306
 db_name = grafana
-db_user = grafanauser
-db_pass = grafanapass
+db_user = <username>
+db_pass = <password>
 ```
 
-MySQL and Postgres are both supported.
+MySQL and Postgres are both supported. The `<username>` and `<password>` values can be found in the following devenv docker compose files: [MySQL](https://github.com/grafana/grafana/blob/main/devenv/docker/blocks/mysql/docker-compose.yaml#L6-L7) and [Postgres](https://github.com/grafana/grafana/blob/main/devenv/docker/blocks/postgres/docker-compose.yaml#L4-L5).
+
+Then, run
+```sh
+make devenv sources=<source>
+```
+where source is either `mysql` or `postgres`.
+
+Finally, run the Grafana backend with
+
+```sh
+bra run
+```
+or
+```sh
+make run
+```
 
 ### Run as a GRPC service
 

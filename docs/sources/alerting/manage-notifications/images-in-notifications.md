@@ -39,13 +39,13 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 3. You should use a cloud storage service unless sending alerts to Discord, Email, Pushover, Slack or Telegram. These integrations support either embedding screenshots in the email or attaching screenshots to the notification, while other integrations must link screenshots uploaded to a cloud storage bucket. If a cloud storage service has been configured then integrations that support both will link screenshots from the cloud storage bucket instead of embedding or attaching screenshots to the notification.
 
-4. If uploading screenshots to a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage; and accessing screenshots in the bucket requires authentication, logging into a VPN or corporate network; then image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN. If this happens we recommend using [integrations which support uploading images]({{< relref "#supported-contact-points" >}}) or [disabling images in notifications]({{< relref "#configuration" >}}) altogether.
+4. If uploading screenshots to a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage; and accessing screenshots in the bucket requires authentication, logging into a VPN or corporate network; then image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN. If this happens we recommend using [integrations which support uploading images](#supported-contact-points) or [disabling images in notifications](#configuration) altogether.
 
 5. When uploading screenshots to a cloud storage service Grafana uses a random 20 character (30 characters for Azure Blob Storage) filename for each image. This makes URLs hard to guess but not impossible.
 
 6. Grafana does not delete screenshots from cloud storage. We recommend configuring a retention policy with your cloud storage service to delete screenshots older than 1 month.
 
-7. If Grafana is configured to upload screenshots to its internal web server, and accessing Grafana requires logging into a VPN or corporate network; image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN. If this happens we recommend using [integrations which support uploading images]({{< relref "#supported-contact-points" >}}) or [disabling images in notifications]({{< relref "#configuration" >}}) altogether.
+7. If Grafana is configured to upload screenshots to its internal web server, and accessing Grafana requires logging into a VPN or corporate network; image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN. If this happens we recommend using [integrations which support uploading images](#supported-contact-points) or [disabling images in notifications](#configuration) altogether.
 
 8. Grafana does not delete screenshots uploaded to its internal web server. To delete screenshots from `static_root_path/images/attachments` after a certain amount of time we recommend setting up a CRON job.
 
@@ -139,9 +139,7 @@ For example, if a screenshot could not be taken within the expected time (10 sec
 - `grafana_screenshot_upload_successes_total`
 
 {{% docs/reference %}}
-[image-rendering]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
-[image-rendering]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
+[image-rendering]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering"
 
-[paths]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#paths"
-[paths]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#paths"
+[paths]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#paths"
 {{% /docs/reference %}}

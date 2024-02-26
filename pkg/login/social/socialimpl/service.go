@@ -37,7 +37,7 @@ type SocialService struct {
 }
 
 func ProvideService(cfg *setting.Cfg,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	usageStats usagestats.Service,
 	bundleRegistry supportbundles.Service,
 	cache remotecache.CacheStorage,
@@ -83,11 +83,6 @@ func ProvideService(cfg *setting.Cfg,
 				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", name)
 				continue
 			}
-
-			// Workaround for moving the SkipOrgRoleSync setting to the OAuthInfo struct
-			withOverrides := cfg.SectionWithEnvOverrides("auth." + name)
-			info.Enabled = withOverrides.Key("enabled").MustBool(false)
-			info.SkipOrgRoleSync = withOverrides.Key("skip_org_role_sync").MustBool(false)
 
 			if !info.Enabled {
 				continue
@@ -228,7 +223,7 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, err
 	return m, nil
 }
 
-func createOAuthConnector(name string, info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (social.SocialConnector, error) {
+func createOAuthConnector(name string, info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) (social.SocialConnector, error) {
 	switch name {
 	case social.AzureADProviderName:
 		return connectors.NewAzureADProvider(info, cfg, ssoSettings, features, cache), nil

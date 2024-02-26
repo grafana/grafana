@@ -28,6 +28,7 @@ import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
+import { decodeGrafanaNamespace } from '../expressions/util';
 import { RuleViewerLayout } from '../rule-viewer/RuleViewerLayout';
 import { RuleDetailsActionButtons } from '../rules/RuleDetailsActionButtons';
 import { RuleDetailsAnnotations } from '../rules/RuleDetailsAnnotations';
@@ -153,7 +154,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             <RuleDetailsDataSources rule={rule} rulesSource={rulesSource} />
             {isFederatedRule && <RuleDetailsFederatedSources group={rule.group} />}
             <DetailsField label="Namespace / Group" className={styles.rightSideDetails}>
-              {rule.namespace.name} / {rule.group.name}
+              {decodeGrafanaNamespace(rule.namespace).name} / {rule.group.name}
             </DetailsField>
             {isGrafanaRulerRule(rule.rulerRule) && <GrafanaRuleUID rule={rule.rulerRule.grafana_alert} />}
           </div>

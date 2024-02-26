@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -293,4 +294,98 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		require.Equal(t, instance2.Labels, alerts[0].Labels)
 		require.Equal(t, instance2.CurrentState, alerts[0].CurrentState)
 	})
+}
+
+func TestIntegrationFullSync(t *testing.T) {
+	ctx := context.Background()
+	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+	orgID := int64(1)
+
+	ruleUIDs := []string{"a", "b", "c", "d"}
+
+	instances := make([]models.AlertInstance, len(ruleUIDs))
+	for i, ruleUID := range ruleUIDs {
+		instances[i] = generateTestAlertInstance(orgID, ruleUID)
+	}
+
+	t.Run("Should do a proper full sync", func(t *testing.T) {
+		err := dbstore.FullSync(ctx, instances)
+		require.NoError(t, err)
+
+		res, err := dbstore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, len(instances))
+		for _, ruleUID := range ruleUIDs {
+			found := false
+			for _, instance := range res {
+				if instance.RuleUID == ruleUID {
+					found = true
+					continue
+				}
+			}
+			if !found {
+				t.Errorf("Instance with RuleUID '%s' not found", ruleUID)
+			}
+		}
+	})
+	t.Run("Should remove non existing entries on sync", func(t *testing.T) {
+		err := dbstore.FullSync(ctx, instances[1:])
+		require.NoError(t, err)
+
+		res, err := dbstore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, len(instances)-1)
+		for _, instance := range res {
+			if instance.RuleUID == "a" {
+				t.Error("Instance with RuleUID 'a' should not be exist anymore")
+			}
+		}
+	})
+	t.Run("Should add new entries on sync", func(t *testing.T) {
+		newRuleUID := "y"
+		err := dbstore.FullSync(ctx, append(instances, generateTestAlertInstance(orgID, newRuleUID)))
+		require.NoError(t, err)
+
+		res, err := dbstore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, len(instances)+1)
+		for _, ruleUID := range append(ruleUIDs, newRuleUID) {
+			found := false
+			for _, instance := range res {
+				if instance.RuleUID == ruleUID {
+					found = true
+					continue
+				}
+			}
+			if !found {
+				t.Errorf("Instance with RuleUID '%s' not found", ruleUID)
+			}
+		}
+	})
+}
+
+func generateTestAlertInstance(orgID int64, ruleID string) models.AlertInstance {
+	return models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  orgID,
+			RuleUID:    ruleID,
+			LabelsHash: "abc",
+		},
+		CurrentState: models.InstanceStateFiring,
+		Labels: map[string]string{
+			"hello": "world",
+		},
+		ResultFingerprint: "abc",
+		CurrentStateEnd:   time.Now(),
+		CurrentStateSince: time.Now(),
+		LastEvalTime:      time.Now(),
+		CurrentReason:     "abc",
+	}
 }

@@ -1347,13 +1347,6 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
             "name": "dashboardID",
             "in": "path",
             "required": true
@@ -2154,7 +2147,7 @@
           "format": "int64"
         },
         "password": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -2275,7 +2268,7 @@
       "type": "object",
       "properties": {
         "password": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -3027,10 +3020,10 @@
       "type": "object",
       "properties": {
         "newPassword": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         },
         "oldPassword": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -3258,8 +3251,12 @@
         "dashboard"
       ],
       "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string"
+        },
         "dashboard": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/Unstructured"
         },
         "deleteKey": {
           "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
@@ -3278,6 +3275,10 @@
         },
         "key": {
           "description": "Define the unique key. Required if `external` is `true`.",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string"
         },
         "name": {
@@ -3615,6 +3616,41 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "DashboardCreateCommand": {
+      "description": "These are the values expected to be sent from an end user\n+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object",
+      "type": "object",
+      "required": [
+        "dashboard"
+      ],
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string"
+        },
+        "dashboard": {
+          "$ref": "#/definitions/Unstructured"
+        },
+        "expires": {
+          "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
+          "type": "integer",
+          "format": "int64",
+          "default": 0
+        },
+        "external": {
+          "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
+          "type": "boolean",
+          "default": false
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string"
+        },
+        "name": {
+          "description": "Snapshot name",
+          "type": "string"
         }
       }
     },
@@ -4031,6 +4067,32 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "DeviceSearchHitDTO": {
+      "type": "object",
+      "properties": {
+        "clientIp": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userAgent": {
+          "type": "string"
         }
       }
     },
@@ -4463,6 +4525,15 @@
         },
         "typeVersion": {
           "$ref": "#/definitions/FrameTypeVersion"
+        },
+        "uniqueRowIdFields": {
+          "description": "Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID\nbut that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially\nwith streaming data with frequent updates.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "example": "TraceID in Tempo, table name + primary key in SQL"
         }
       }
     },
@@ -5368,6 +5439,9 @@
           "format": "int64"
         }
       }
+    },
+    "Password": {
+      "type": "string"
     },
     "PatchAnnotationsCmd": {
       "type": "object",
@@ -6502,24 +6576,6 @@
         }
       }
     },
-    "SSOSettings": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "provider": {
-          "type": "string"
-        },
-        "settings": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "source": {
-          "$ref": "#/definitions/SettingsSource"
-        }
-      }
-    },
     "SaveDashboardCommand": {
       "type": "object",
       "properties": {
@@ -6548,6 +6604,29 @@
           "type": "boolean"
         },
         "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "SearchDeviceQueryResult": {
+      "type": "object",
+      "properties": {
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DeviceSearchHitDTO"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalCount": {
           "type": "integer",
           "format": "int64"
         }
@@ -6886,10 +6965,6 @@
           "type": "string"
         }
       }
-    },
-    "SettingsSource": {
-      "type": "integer",
-      "format": "int64"
     },
     "ShareType": {
       "type": "string"
@@ -7344,6 +7419,21 @@
     "Type": {
       "type": "string"
     },
+    "TypeMeta": {
+      "description": "+k8s:deepcopy-gen=false",
+      "type": "object",
+      "title": "TypeMeta describes an individual object in an API response or request\nwith strings representing the type of the object and its API schema version.\nStructures that are versioned or persisted should inline TypeMeta.",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string"
+        }
+      }
+    },
     "URL": {
       "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
@@ -7381,6 +7471,17 @@
         },
         "User": {
           "$ref": "#/definitions/Userinfo"
+        }
+      }
+    },
+    "Unstructured": {
+      "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
+      "type": "object",
+      "properties": {
+        "Object": {
+          "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
+          "type": "object",
+          "additionalProperties": {}
         }
       }
     },
@@ -7915,6 +8016,9 @@
         "theme": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "updatedAt": {
           "type": "string",
           "format": "date-time"
@@ -7957,6 +8061,9 @@
           "type": "string"
         },
         "name": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
@@ -8523,6 +8630,12 @@
         }
       }
     },
+    "devicesSearchResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SearchDeviceQueryResult"
+      }
+    },
     "folderResponse": {
       "description": "",
       "schema": {
@@ -8939,6 +9052,27 @@
         "$ref": "#/definitions/RoleDTO"
       }
     },
+    "getSSOSettingsResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "getSharingOptionsResponse": {
       "description": "",
       "schema": {
@@ -9114,6 +9248,30 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/RoleDTO"
+        }
+      }
+    },
+    "listSSOSettingsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "provider": {
+              "type": "string"
+            },
+            "settings": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "source": {
+              "type": "string"
+            }
+          }
         }
       }
     },

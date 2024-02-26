@@ -7,7 +7,7 @@ import { Field, Input, useTheme2 } from '@grafana/ui/src';
 function getStyles(theme: GrafanaTheme2) {
   return {
     searchWrap: css({
-      padding: theme.spacing(0.4),
+      padding: `${theme.spacing(0.4)} 0 ${theme.spacing(0.4)} ${theme.spacing(0.4)}`,
     }),
   };
 }

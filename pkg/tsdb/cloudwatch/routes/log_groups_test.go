@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
@@ -24,9 +23,8 @@ func TestLogGroupsRoute(t *testing.T) {
 		newLogGroupsService = origLogGroupsService
 	})
 
-	mockFeatures := featuremgmt.WithFeatures()
 	reqCtxFunc := func(_ context.Context, pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
-		return models.RequestContext{Features: mockFeatures}, err
+		return models.RequestContext{}, err
 	}
 
 	t.Run("successfully returns 1 log group with account id", func(t *testing.T) {

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 type setUserResourcePermissionTest struct {
@@ -32,6 +33,10 @@ type setUserResourcePermissionTest struct {
 	resourceID        string
 	resourceAttribute string
 	seeds             []SetResourcePermissionCommand
+}
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
 }
 
 func TestIntegrationStore_SetUserResourcePermission(t *testing.T) {

@@ -237,6 +237,45 @@ func TestGetTLSSettings(t *testing.T) {
 				CertKeyFile:         filepath.Join(cfg.DataPath, "tls", "xxxgeneratedTLSCerts", "client.key"),
 			},
 		},
+		{
+			desc:    "Custom TLS mode verify-ca with no client certificates with certificate files content",
+			updated: updatedTime.Add(3 * time.Minute),
+			uid:     "xxx",
+			jsonData: sqleng.JsonData{
+				Mode:                "verify-ca",
+				ConfigurationMethod: "file-content",
+			},
+			secureJSONData: map[string]string{
+				"tlsCACert": "I am CA certification",
+			},
+			tlsSettings: tlsSettings{
+				Mode:                "verify-ca",
+				ConfigurationMethod: "file-content",
+				RootCertFile:        filepath.Join(cfg.DataPath, "tls", "xxxgeneratedTLSCerts", "root.crt"),
+				CertFile:            "",
+				CertKeyFile:         "",
+			},
+		},
+		{
+			desc:    "Custom TLS mode require with client certificates and no root certificate with certificate files content",
+			updated: updatedTime.Add(4 * time.Minute),
+			uid:     "xxx",
+			jsonData: sqleng.JsonData{
+				Mode:                "require",
+				ConfigurationMethod: "file-content",
+			},
+			secureJSONData: map[string]string{
+				"tlsClientCert": "I am client certification",
+				"tlsClientKey":  "I am client key",
+			},
+			tlsSettings: tlsSettings{
+				Mode:                "require",
+				ConfigurationMethod: "file-content",
+				RootCertFile:        "",
+				CertFile:            filepath.Join(cfg.DataPath, "tls", "xxxgeneratedTLSCerts", "client.crt"),
+				CertKeyFile:         filepath.Join(cfg.DataPath, "tls", "xxxgeneratedTLSCerts", "client.key"),
+			},
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {

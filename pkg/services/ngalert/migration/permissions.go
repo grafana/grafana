@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -65,8 +66,9 @@ type migrationFolder struct {
 func (sync *sync) migratedFolder(ctx context.Context, l log.Logger, dashboardUID string, folderID int64) (*migrationFolder, error) {
 	dashFolder, err := sync.getFolder(ctx, folderID)
 	if err != nil {
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
 		// nolint:staticcheck
-		l.Warn("Failed to find folder for dashboard", "missing_folder_id", folderID, "error", err)
+		l.Warn("Failed to find folder for dashboard", "missingFolderId", folderID, "error", err)
 	}
 	if dashFolder != nil {
 		l = l.New("folderUid", dashFolder.UID, "folderName", dashFolder.Title)
@@ -86,6 +88,7 @@ func (sync *sync) migratedFolder(ctx context.Context, l log.Logger, dashboardUID
 	} else if folderID <= 0 && strings.HasPrefix(migratedFolder.Title, generalAlertingFolderTitle) {
 		du.warning = "dashboard alerts moved to general alerting folder during upgrade: general folder not supported"
 	} else if migratedFolder.ID != folderID { // nolint:staticcheck
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
 		du.warning = "dashboard alerts moved to new folder during upgrade: folder permission changes were needed"
 	}
 
@@ -110,10 +113,12 @@ func (sync *sync) getOrCreateMigratedFolder(ctx context.Context, l log.Logger, d
 
 	// Check if the dashboard has custom permissions. If it does, we need to create a new folder for it.
 	// This folder will be cached for re-use for each dashboard in the folder with the same permissions.
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
 	// nolint:staticcheck
 	permissionsToFolder, ok := sync.permissionsMap[parentFolder.ID]
 	if !ok {
 		permissionsToFolder = make(map[permissionHash]*folder.Folder)
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
 		// nolint:staticcheck
 		sync.permissionsMap[parentFolder.ID] = permissionsToFolder
 
@@ -403,7 +408,7 @@ func (sync *sync) createFolder(ctx context.Context, orgID int64, title string, n
 			// but the only folders we should be creating here are ones with permission
 			// hash suffix or general alerting. Neither of which is likely to spuriously
 			// conflict with an existing folder.
-			sync.log.Warn("Folder already exists, using existing folder", "title", title)
+			sync.log.FromContext(ctx).Warn("Folder already exists, using existing folder", "title", title)
 			f, err := sync.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &title, SignedInUser: getMigrationUser(orgID)})
 			if err != nil {
 				return nil, err

@@ -14,7 +14,7 @@ describe('Public dashboards', () => {
     cy.wait('@query');
 
     // Open sharing modal
-    e2e.pages.ShareDashboardModal.shareButton().click();
+    e2e.pages.Dashboard.DashNav.shareButton().click();
 
     // Select public dashboards tab
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
@@ -74,7 +74,7 @@ describe('Public dashboards', () => {
     e2e.pages.Dashboard.DashNav.publicDashboardTag().should('exist');
 
     // Open sharing modal
-    e2e.pages.ShareDashboardModal.shareButton().click();
+    e2e.pages.Dashboard.DashNav.shareButton().click();
 
     // Select public dashboards tab
     cy.intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
@@ -114,7 +114,7 @@ describe('Public dashboards', () => {
     cy.wait('@query');
 
     // Open sharing modal
-    e2e.pages.ShareDashboardModal.shareButton().click();
+    e2e.pages.Dashboard.DashNav.shareButton().click();
 
     // Select public dashboards tab
     cy.intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');

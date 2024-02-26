@@ -63,12 +63,12 @@ To set up the Grafana OnCall integration using the Grafana Alerting application,
    This redirects you to the Grafana OnCall integration page in the Grafana OnCall application. From there, you can add [routes and escalation chains][escalation-chain].
 
 {{% docs/reference %}}
-[create-notification-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-notification-policy"
+[create-notification-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-notification-policy"
 [create-notification-policy]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-notification-policy"
 
 [oncall-integration]: "/docs/grafana/ -> /docs/oncall/latest/integrations/grafana-alerting"
 [oncall-integration]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/oncall/integrations/grafana-alerting"
 
-[escalation-chain]: "/docs/grafana/ -> /docs/oncall/latest/escalation-chains-and-routes"
-[escalation-chain]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/oncall/escalation-chains-and-routes"
+[escalation-chain]: "/docs/grafana/ -> /docs/oncall/latest/configure/escalation-chains-and-routes"
+[escalation-chain]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/oncall/configure/escalation-chains-and-routes"
 {{% /docs/reference %}}

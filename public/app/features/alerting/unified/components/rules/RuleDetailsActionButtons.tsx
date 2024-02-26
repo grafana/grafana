@@ -4,7 +4,7 @@ import React, { Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, useReturnToPrevious } from '@grafana/runtime';
 import {
   Button,
   ClipboardButton,
@@ -54,6 +54,8 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   const dispatch = useDispatch();
   const location = useLocation();
   const notifyApp = useAppNotification();
+
+  const setReturnToPrevious = useReturnToPrevious();
 
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
   const [redirectToClone, setRedirectToClone] = useState<
@@ -133,6 +135,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   }
   if (rule.annotations[Annotation.dashboardUID]) {
     const dashboardUID = rule.annotations[Annotation.dashboardUID];
+    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
     if (dashboardUID) {
       buttons.push(
         <LinkButton
@@ -140,8 +143,11 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
           key="dashboard"
           variant="primary"
           icon="apps"
-          target="_blank"
+          target={isReturnToPreviousEnabled ? undefined : '_blank'}
           href={`d/${encodeURIComponent(dashboardUID)}`}
+          onClick={() => {
+            setReturnToPrevious(rule.name);
+          }}
         >
           Go to dashboard
         </LinkButton>

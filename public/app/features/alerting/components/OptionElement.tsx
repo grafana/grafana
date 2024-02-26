@@ -1,10 +1,11 @@
 import React from 'react';
+import { Controller, UseFormReturn } from 'react-hook-form';
 
-import { FormAPI, Input, InputControl, Select, TextArea } from '@grafana/ui';
+import { Input, Select, TextArea } from '@grafana/ui';
 
 import { NotificationChannelOption } from '../../../types';
 
-interface Props extends Pick<FormAPI<any>, 'register' | 'control'> {
+interface Props extends Pick<UseFormReturn<any>, 'register' | 'control'> {
   option: NotificationChannelOption;
   invalid?: boolean;
 }
@@ -27,7 +28,7 @@ export const OptionElement = ({ control, option, register, invalid }: Props) => 
 
     case 'select':
       return (
-        <InputControl
+        <Controller
           control={control}
           name={`${modelValue}`}
           render={({ field: { ref, ...field } }) => (

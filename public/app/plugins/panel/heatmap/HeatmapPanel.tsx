@@ -18,6 +18,7 @@ import {
   Portal,
   ScaleDistribution,
   TooltipPlugin2,
+  TooltipDisplayMode,
   ZoomPlugin,
   UPlotChart,
   usePanelContext,
@@ -26,11 +27,11 @@ import {
   VizLayout,
   VizTooltipContainer,
 } from '@grafana/ui';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 
 import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
@@ -59,7 +60,15 @@ export const HeatmapPanel = ({
   const styles = useStyles2(getStyles);
   const { sync, canAddAnnotations } = usePanelContext();
 
-  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  // TODO: we should just re-init when this changes, and have this be a static setting
+  const syncTooltip = useCallback(
+    () => sync?.() === DashboardCursorSync.Tooltip,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
+  const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
 
   //  necessary for enabling datalinks in hover view
   let scopedVarsFromRawData: ScopedVars[] = [];
@@ -157,7 +166,7 @@ export const HeatmapPanel = ({
   // ugh
   const dataRef = useRef(info);
   dataRef.current = info;
-  const showNewVizTooltips = config.featureToggles.newVizTooltips && sync && sync() === DashboardCursorSync.Off;
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
 
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
@@ -167,7 +176,7 @@ export const HeatmapPanel = ({
       theme,
       eventBus,
       onhover: !showNewVizTooltips ? onhover : null,
-      onclick: !showNewVizTooltips && options.tooltip.show ? onclick : null,
+      onclick: !showNewVizTooltips && options.tooltip.mode !== TooltipDisplayMode.None ? onclick : null,
       isToolTipOpen,
       timeZone,
       getTimeRange: () => timeRangeRef.current,
@@ -225,68 +234,92 @@ export const HeatmapPanel = ({
     );
   }
 
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+
   return (
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
-            {/*children ? children(config, alignedFrame) : null*/}
             {!showNewVizTooltips && <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />}
-            {showNewVizTooltips && options.tooltip.show && (
-              <TooltipPlugin2
-                config={builder}
-                hoverMode={TooltipHoverMode.xyOne}
-                queryZoom={onChangeTimeRange}
-                render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
-                  return (
-                    <HeatmapHoverView
-                      dataIdxs={dataIdxs}
-                      seriesIdx={seriesIdx}
-                      dataRef={dataRef}
-                      isPinned={isPinned}
-                      dismiss={dismiss}
-                      showHistogram={options.tooltip.yHistogram}
-                      showColorScale={options.tooltip.showColorScale}
-                      canAnnotate={enableAnnotationCreation}
-                      panelData={data}
-                      replaceVars={replaceVariables}
-                      scopedVars={scopedVarsFromRawData}
-                    />
-                  );
-                }}
-              />
-            )}
-            {data.annotations && (
-              <AnnotationsPlugin
-                annotations={data.annotations}
-                config={builder}
-                timeZone={timeZone}
-                disableCanvasRendering={true}
-              />
+            {showNewVizTooltips && (
+              <>
+                {options.tooltip.mode !== TooltipDisplayMode.None && (
+                  <TooltipPlugin2
+                    config={builder}
+                    hoverMode={TooltipHoverMode.xyOne}
+                    queryZoom={onChangeTimeRange}
+                    syncTooltip={syncTooltip}
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
+                      if (enableAnnotationCreation && timeRange2 != null) {
+                        setNewAnnotationRange(timeRange2);
+                        dismiss();
+                        return;
+                      }
+
+                      const annotate = () => {
+                        let xVal = u.posToVal(u.cursor.left!, 'x');
+
+                        setNewAnnotationRange({ from: xVal, to: xVal });
+                        dismiss();
+                      };
+
+                      return (
+                        <HeatmapHoverView
+                          mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
+                          dataIdxs={dataIdxs}
+                          seriesIdx={seriesIdx}
+                          dataRef={dataRef}
+                          isPinned={isPinned}
+                          dismiss={dismiss}
+                          showHistogram={options.tooltip.yHistogram}
+                          showColorScale={options.tooltip.showColorScale}
+                          panelData={data}
+                          replaceVars={replaceVariables}
+                          scopedVars={scopedVarsFromRawData}
+                          annotate={enableAnnotationCreation ? annotate : undefined}
+                        />
+                      );
+                    }}
+                    maxWidth={options.tooltip.maxWidth}
+                    maxHeight={options.tooltip.maxHeight}
+                  />
+                )}
+                <AnnotationsPlugin2
+                  annotations={data.annotations ?? []}
+                  config={builder}
+                  timeZone={timeZone}
+                  newRange={newAnnotationRange}
+                  setNewRange={setNewAnnotationRange}
+                  canvasRegionRendering={false}
+                />
+              </>
             )}
           </UPlotChart>
         )}
       </VizLayout>
       {!showNewVizTooltips && (
-        <Portal>
-          {hover && options.tooltip.show && (
-            <VizTooltipContainer
-              position={{ x: hover.pageX, y: hover.pageY }}
-              offset={{ x: 10, y: 10 }}
-              allowPointerEvents={isToolTipOpen.current}
-            >
-              {shouldDisplayCloseButton && <ExemplarModalHeader onClick={onCloseToolTip} />}
-              <HeatmapHoverViewOld
-                timeRange={timeRange}
-                data={info}
-                hover={hover}
-                showHistogram={options.tooltip.yHistogram}
-                replaceVars={replaceVariables}
-                scopedVars={scopedVarsFromRawData}
-              />
-            </VizTooltipContainer>
-          )}
-        </Portal>
+        <>
+          <Portal>
+            {hover && options.tooltip.mode !== TooltipDisplayMode.None && (
+              <VizTooltipContainer
+                position={{ x: hover.pageX, y: hover.pageY }}
+                offset={{ x: 10, y: 10 }}
+                allowPointerEvents={isToolTipOpen.current}
+              >
+                {shouldDisplayCloseButton && <ExemplarModalHeader onClick={onCloseToolTip} />}
+                <HeatmapHoverViewOld
+                  timeRange={timeRange}
+                  data={info}
+                  hover={hover}
+                  showHistogram={options.tooltip.yHistogram}
+                  replaceVars={replaceVariables}
+                  scopedVars={scopedVarsFromRawData}
+                />
+              </VizTooltipContainer>
+            )}
+          </Portal>
+        </>
       )}
     </>
   );
