@@ -9,6 +9,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceJsonData,
   dateMath,
+  dateTime,
   DateTime,
   FieldType,
   getDefaultTimeRange,
@@ -226,12 +227,13 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
   }
 
   getTimeRange(): { start: number; end: number } {
-    const endNanoSeconds = Date.now() * 1000;
-    const startNanoSeconds = endNanoSeconds - 3600 * 6 * 1000 * 1000; // 6 hours before
+    const dt = dateTime();
+    const end = getTime(dt, true)
+    const start =  getTime(dt.subtract(6, "hour"), false)
 
     return {
-      start: startNanoSeconds,
-      end: endNanoSeconds,
+      start,
+      end,
     };
   }
 
