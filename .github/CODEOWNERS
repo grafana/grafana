@@ -605,7 +605,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
 /pkg/services/featuremgmt/ @grafana/grafana-operator-experience-squad
-/pkg/services/cloudmigrations/ @grafana/grafana-operator-experience-squad
+/pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
