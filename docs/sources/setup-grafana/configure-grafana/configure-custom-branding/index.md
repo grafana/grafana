@@ -132,4 +132,4 @@ To customize the footer of a public dashboard, add the following section to the 
 ;header_logo_hide =
 ```
 
-`footer_hide` is no longer available. Please set either a `footer_text` or a `footer_logo`; else it will default to the Grafana footer.
+`footer_hide` is no longer available. Set either a `footer_text` or `footer_logo`. Otherwise, the default Grafana footer is displayed.
