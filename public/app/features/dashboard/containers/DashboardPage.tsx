@@ -73,7 +73,6 @@ export interface State {
   scrollElement?: HTMLDivElement;
   pageNav?: NavModelItem;
   sectionNav?: NavModel;
-  hasAngularPlugins: boolean;
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
@@ -90,7 +89,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       showLoadingState: false,
       panelNotFound: false,
       editPanelAccessDenied: false,
-      hasAngularPlugins: false,
     };
   }
 
@@ -137,14 +135,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     if (!dashboard) {
       return;
-    }
-
-    if (dashboard && !prevProps.dashboard) {
-      // If we have a dashboard, await dashboard.hasAngularPlugins and set hasAngularPlugins in the state.
-      // The angular state takes some times to populate as "plugin" props are populated asynchronously.
-      dashboard.hasAngularPlugins().then((hasAngularPlugins) => {
-        this.setState({ hasAngularPlugins });
-      });
     }
 
     if (
@@ -358,7 +348,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}
-          {config.featureToggles.angularDeprecationUI && this.state.hasAngularPlugins && dashboard.uid !== null && (
+          {config.featureToggles.angularDeprecationUI && dashboard.hasAngularPlugins() && dashboard.uid !== null && (
             <AngularDeprecationNotice dashboardUid={dashboard.uid} />
           )}
           <DashboardGrid

@@ -23,7 +23,6 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
-import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
@@ -1340,9 +1339,9 @@ export class DashboardModel implements TimeModel {
     return this.originalDashboard;
   }
 
-  async hasAngularPlugins(): Promise<boolean> {
+  hasAngularPlugins(): boolean {
     // Ensure all panel plugins are loaded before checking if they are Angular plugins
-    await Promise.all(
+    /* await Promise.all(
       this.panels.map(async (panel) => {
         if (panel.plugin) {
           return;
@@ -1355,11 +1354,13 @@ export class DashboardModel implements TimeModel {
           return;
         }
       })
-    );
+    ); */
 
     return this.panels.some((panel) => {
       // Return false for plugins that are angular but have angular.hideDeprecation = false
-      const isAngularPanel = panel.isAngularPlugin() && !panel.plugin?.meta.angular?.hideDeprecation;
+      // We cannot use panel.plugin.isAngularPlugin() because panel.plugin may not be initialized at this stage.
+      const isAngularPanel =
+        config.panels[panel.type].angular?.detected && !panel.plugin?.meta.angular?.hideDeprecation;
       let isAngularDs = false;
       if (panel.datasource?.uid) {
         isAngularDs = isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid);
