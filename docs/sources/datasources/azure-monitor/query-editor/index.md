@@ -94,7 +94,7 @@ For example:
 | `{{ namespace }}`             | Replaced with the resource type or namespace, such as `Microsoft.Compute/virtualMachines`.             |
 | `{{ resourcename }}`          | Replaced with the resource name.                                                                       |
 | `{{ metric }}`                | Replaced with the metric name, such as "Percentage CPU".                                               |
-| _`{{ arbitaryDimensionID }}`_ | Replaced with the value of the specified dimension. For example, `{{ blobtype }}` becomes `BlockBlob`. |
+| _`{{ arbitraryDimensionID }}`_ | Replaced with the value of the specified dimension. For example, `{{ blobtype }}` becomes `BlockBlob`. |
 | `{{ dimensionname }}`         | _(Legacy for backward compatibility)_ Replaced with the name of the first dimension.                   |
 | `{{ dimensionvalue }}`        | _(Legacy for backward compatibility)_ Replaced with the value of the first dimension.                  |
 
