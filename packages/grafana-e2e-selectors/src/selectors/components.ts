@@ -531,4 +531,9 @@ export const Components = {
   Tooltip: {
     container: 'data-testid tooltip',
   },
+  SQLQueryEditor: {
+    selectColumn: 'data-testid select-column',
+    selectAggregation: 'data-testid select-aggregation',
+    selectAlias: 'data-testid select-alias',
+  }
 };
