@@ -327,11 +327,13 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 	}
 
 	// If configuration hasn't changed, we've got nothing to do.
-	if am.Base.ConfigHash() == md5.Sum(rawConfig) {
+	configHash := md5.Sum(rawConfig)
+	if am.Base.ConfigHash() == configHash {
 		am.logger.Debug("Config hasn't changed, skipping configuration sync.")
 		return false, nil
 	}
 
+	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%x", configHash))
 	err = am.Base.ApplyConfig(AlertingConfiguration{
 		rawAlertmanagerConfig:    rawConfig,
 		route:                    cfg.AlertmanagerConfig.Route.AsAMRoute(),
