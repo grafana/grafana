@@ -81,4 +81,4 @@ Cloud access policies are the access controls from Grafana Cloud, the CAP config
 
 The teams that does not have a rule applied to it, would be able to query all logs if `query` permissions are setup for their role within Grafana.
 
-**Note:** A user who is part of a team within Grafana without a rule will be able to query all logs if the user as a role with `query` permissions.
+**Note:** A user who is part of a team within Grafana without a rule will be able to query all logs if the user has a role with `query` permissions.
