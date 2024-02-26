@@ -577,7 +577,7 @@ Create or delete templates using provisioning files in your Grafana instance(s).
 
 1. Find the notification template in Grafana.
 1. [Export][alerting_export] a template by copying the template content and title.
-1. Copy the contents into a YAML or JSON configuration file and place it in the `provisioning/alerting` directory of the Grafana instance you wish to import the alerting resources.
+1. Copy the contents into a YAML or JSON configuration file and add it to the `provisioning/alerting` directory of the Grafana instance you want to import the alerting resources to.
 
    Example configuration files can be found below.
 
