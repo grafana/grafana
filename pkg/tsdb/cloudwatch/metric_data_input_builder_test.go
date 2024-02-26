@@ -27,7 +27,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := getBaseQuery()
 			query.TimezoneUTCOffset = tc.timezoneUTCOffset
 
