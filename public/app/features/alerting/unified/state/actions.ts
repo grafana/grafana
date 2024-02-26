@@ -693,13 +693,21 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
       alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
     ).unwrap();
 
-    // merge both fields mute_time_intervals and time_intervals to support both old and new config
-    const time_intervals = [
-      ...(config?.alertmanager_config?.mute_time_intervals ?? []),
-      ...(config?.alertmanager_config?.time_intervals ?? []),
-    ];
+    const isGrafanaDatasource = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
-    const muteIntervals = time_intervals?.filter(({ name }) => name !== muteTimingName) ?? [];
+    const muteIntervalsFiltered =
+      config?.alertmanager_config?.mute_time_intervals ?? []?.filter(({ name }) => name !== muteTimingName) ?? [];
+    const time_intervalsFiltered =
+      config?.alertmanager_config?.time_intervals ?? []?.filter(({ name }) => name !== muteTimingName) ?? [];
+
+    const time_intervals_without_mute_to_save = isGrafanaDatasource
+      ? {
+          mute_time_intervals: [...muteIntervalsFiltered, ...time_intervalsFiltered],
+        }
+      : {
+          time_intervals: time_intervalsFiltered,
+          mute_time_intervals: muteIntervalsFiltered,
+        };
 
     if (config) {
       const { mute_time_intervals: _, ...configWithoutMuteTimings } = config?.alertmanager_config ?? {};
@@ -715,7 +723,7 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
                 route: config.alertmanager_config.route
                   ? removeMuteTimingFromRoute(muteTimingName, config.alertmanager_config?.route)
                   : undefined,
-                time_intervals: muteIntervals,
+                ...time_intervals_without_mute_to_save,
               },
             },
           })
