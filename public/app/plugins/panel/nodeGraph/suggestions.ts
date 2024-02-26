@@ -13,15 +13,15 @@ export class NodeGraphSuggestionsSupplier {
     let hasNodesFrame = false;
     let hasEdgesFrame = false;
 
-    const nodeFields: Array<[string, FieldType[]]> = [
-      ['id', [FieldType.string]],
-      ['title', [FieldType.string]],
-      ['mainstat', [FieldType.number]],
+    const nodeFields: Array<[string, FieldType]> = [
+      ['id', FieldType.string],
+      ['title', FieldType.string],
+      ['mainstat', FieldType.number],
     ];
-    const edgeFields: Array<[string, FieldType[]]> = [
-      ['id', [FieldType.string]],
-      ['source', [FieldType.string]],
-      ['target', [FieldType.string]],
+    const edgeFields: Array<[string, FieldType]> = [
+      ['id', FieldType.string],
+      ['source', FieldType.string],
+      ['target', FieldType.string],
     ];
 
     for (const frame of frames) {
@@ -36,13 +36,13 @@ export class NodeGraphSuggestionsSupplier {
     return hasNodesFrame && hasEdgesFrame;
   }
 
-  checkFields(fields: Array<[string, FieldType[]]>, frame: DataFrame): boolean {
+  checkFields(fields: Array<[string, FieldType]>, frame: DataFrame): boolean {
     let hasCorrectFields = true;
 
     for (const field of fields) {
-      const [name, types] = field;
+      const [name, type] = field;
       const frameField = frame.fields.find((f) => f.name === name);
-      if (!frameField || !types.includes(frameField.type)) {
+      if (!frameField || type !== frameField.type) {
         hasCorrectFields = false;
         break;
       }
