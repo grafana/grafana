@@ -86,17 +86,17 @@ For example:
 - `Blob Type: {{ blobtype }}` becomes `Blob Type: PageBlob`, `Blob Type: BlockBlob`
 - `{{ resourcegroup }} - {{ resourcename }}` becomes `production - web_server`
 
-| Alias pattern                 | Description                                                                                            |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `{{ subscriptionid }}`        | Replaced with the subscription ID.                                                                     |
-| `{{ subscription }}`          | Replaced with the subscription name.                                                                   |
-| `{{ resourcegroup }}`         | Replaced with the the resource group.                                                                  |
-| `{{ namespace }}`             | Replaced with the resource type or namespace, such as `Microsoft.Compute/virtualMachines`.             |
-| `{{ resourcename }}`          | Replaced with the resource name.                                                                       |
-| `{{ metric }}`                | Replaced with the metric name, such as "Percentage CPU".                                               |
+| Alias pattern                  | Description                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `{{ subscriptionid }}`         | Replaced with the subscription ID.                                                                     |
+| `{{ subscription }}`           | Replaced with the subscription name.                                                                   |
+| `{{ resourcegroup }}`          | Replaced with the the resource group.                                                                  |
+| `{{ namespace }}`              | Replaced with the resource type or namespace, such as `Microsoft.Compute/virtualMachines`.             |
+| `{{ resourcename }}`           | Replaced with the resource name.                                                                       |
+| `{{ metric }}`                 | Replaced with the metric name, such as "Percentage CPU".                                               |
 | _`{{ arbitraryDimensionID }}`_ | Replaced with the value of the specified dimension. For example, `{{ blobtype }}` becomes `BlockBlob`. |
-| `{{ dimensionname }}`         | _(Legacy for backward compatibility)_ Replaced with the name of the first dimension.                   |
-| `{{ dimensionvalue }}`        | _(Legacy for backward compatibility)_ Replaced with the value of the first dimension.                  |
+| `{{ dimensionname }}`          | _(Legacy for backward compatibility)_ Replaced with the name of the first dimension.                   |
+| `{{ dimensionvalue }}`         | _(Legacy for backward compatibility)_ Replaced with the value of the first dimension.                  |
 
 ### Filter using dimensions
 
