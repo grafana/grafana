@@ -1569,7 +1569,8 @@
       "metadata": {
         "name": "externalServiceAuth",
         "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
+        "creationTimestamp": "2024-02-16T18:36:28Z",
+        "deletionTimestamp": "2024-02-21T10:10:41Z"
       },
       "spec": {
         "description": "Starts an OAuth2 authentication provider for external services",

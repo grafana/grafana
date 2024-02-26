@@ -85,12 +85,6 @@ func TestBasic_Test(t *testing.T) {
 				HTTPRequest: &http.Request{Header: map[string][]string{authorizationHeaderName: {"something"}}},
 			},
 		},
-		{
-			desc: "should fail when the URL ends with /oauth2/introspect",
-			req: &authn.Request{
-				HTTPRequest: &http.Request{Header: map[string][]string{authorizationHeaderName: {encodeBasicAuth("user", "password")}}, RequestURI: "/oauth2/introspect"},
-			},
-		},
 	}
 
 	for _, tt := range tests {

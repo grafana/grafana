@@ -77,7 +77,6 @@ export interface FeatureToggles {
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
-  externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   faroDatasourceSelector?: boolean;

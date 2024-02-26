@@ -62,7 +62,7 @@ const availableFilters = [
   { label: 'Disabled', value: ServiceAccountStateFilter.Disabled },
 ];
 
-if (config.featureToggles.externalServiceAccounts || config.featureToggles.externalServiceAuth) {
+if (config.featureToggles.externalServiceAccounts) {
   availableFilters.push({ label: 'Managed', value: ServiceAccountStateFilter.External });
 }
 

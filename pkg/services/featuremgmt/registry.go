@@ -444,13 +444,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "externalServiceAuth",
-			Description:     "Starts an OAuth2 authentication provider for external services",
-			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
-			Owner:           identityAccessTeam,
-		},
-		{
 			Name:              "refactorVariablesTimeRange",
 			Description:       "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
 			Stage:             FeatureStagePublicPreview,

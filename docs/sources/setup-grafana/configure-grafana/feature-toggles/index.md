@@ -185,7 +185,6 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | Feature toggle name                    | Description                                                    |
 | -------------------------------------- | -------------------------------------------------------------- |
 | `unifiedStorage`                       | SQL-based k8s storage                                          |
-| `externalServiceAuth`                  | Starts an OAuth2 authentication provider for external services |
 | `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server             |
 | `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options    |
 | `kubernetesQueryServiceRewrite`        | Rewrite requests targeting /ds/query to the query service      |

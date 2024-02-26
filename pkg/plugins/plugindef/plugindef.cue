@@ -422,20 +422,6 @@ schemas: [{
 		#IAM: {
 			// Permissions are the permissions that the external service needs its associated service account to have.
 			permissions?: [...#Permission]
-
-			// Impersonation describes the permissions that the external service will have on behalf of the user
-			// This is only available with the OAuth2 Server
-			impersonation?: #Impersonation
-		}
-
-		#Impersonation: {
-			// Groups allows the service to list the impersonated user's teams.
-			// Defaults to true.
-			groups?: bool
-			// Permissions are the permissions that the external service needs when impersonating a user.
-			// The intersection of this set with the impersonated user's permission guarantees that the client will not
-			// gain more privileges than the impersonated user has.
-			permissions?: [...#Permission]
 		}
 	}
 }]
