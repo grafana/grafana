@@ -24,7 +24,7 @@ export function contentDoesMatch(jsContent: string, mdContent: string): Boolean 
   Normalize content by removing all whitespace (spaces, tabs, newlines, carriage returns, 
   form feeds, and vertical tabs) and special characters.
 
-  NOTE: There are numerous unpredictable formatting oddities when pasring javascript to markdown;
+  NOTE: There are numerous unpredictable formatting oddities when transforming JavaScript to Markdown;
   almost all of them are irrelevant to the actual content of the file, which is why we strip them out here.
 
   For example:
