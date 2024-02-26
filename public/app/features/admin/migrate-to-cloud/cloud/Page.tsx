@@ -7,7 +7,7 @@ import { Grid, useStyles2 } from '@grafana/ui';
 import { InfoPane } from './InfoPane';
 import { MigrationTokenPane } from './MigrationTokenPane';
 
-export const EmptyState = () => {
+export const Page = () => {
   const styles = useStyles2(getStyles);
 
   return (
