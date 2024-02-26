@@ -61,7 +61,7 @@ To set up the Grafana Helm repository so that you download the correct Grafana H
    After you add the repository, you should see an output similar to the following:
 
    ```bash
-   NAME    URL                                  
+   NAME    URL
    grafana https://grafana.github.io/helm-charts
    ```
 
@@ -108,6 +108,7 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
    ```
 
    Where:
+
    - `helm install`: Installs the chart by deploying it on the Kubernetes cluster
    - `my-grafana`: The logical chart name that you provided
    - `grafana/grafana`: The repository and package name to install
@@ -123,14 +124,14 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
 
    ```bash
    NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART          APP VERSION
-   my-grafana      monitoring      1               2024-01-13 23:06:42.737989554 +0000 UTC deployed        grafana-6.59.0 10.1.0   
+   my-grafana      monitoring      1               2024-01-13 23:06:42.737989554 +0000 UTC deployed        grafana-6.59.0 10.1.0
    ```
 
 1. To check the overall status of all the objects in the namespace, run the following command:
 
-      ```bash
-      kubectl get all -n monitoring
-      ```
+   ```bash
+   kubectl get all -n monitoring
+   ```
 
    If you encounter errors or warnings in the **STATUS** column, check the logs and refer to the Troubleshooting section of this documentation.
 
@@ -145,6 +146,7 @@ This section describes the steps you must complete to access Grafana via web bro
    ```
 
    This command will print out the chart notes. You will the output `NOTES` that provide the complete instructions about:
+
    - How to decode the login password for the Grafana admin account
    - Access Grafana service to the web browser
 
@@ -340,7 +342,7 @@ To increase log level to `debug` mode, use the following steps:
 
 ### Reset Grafana admin secrets (login credentials)
 
-By default the login credentials for the super admin account are generated via `secrets`.  However, this can be changed easily. To achieve this, use the following steps:
+By default the login credentials for the super admin account are generated via `secrets`. However, this can be changed easily. To achieve this, use the following steps:
 
 1. Edit the `values.yaml` file and search for the string `adminPassword`. There you can define a new password:
 
@@ -364,16 +366,16 @@ By default the login credentials for the super admin account are generated via `
 
 To uninstall the Grafana deployment, run the command:
 
-   `helm uninstall <RELEASE-NAME> <NAMESPACE-NAME>`
+`helm uninstall <RELEASE-NAME> <NAMESPACE-NAME>`
 
-   ```bash
-   helm uninstall my-grafana -n monitoring
-   ```
+```bash
+helm uninstall my-grafana -n monitoring
+```
 
-   This deletes all of the objects from the given namespace monitoring.
+This deletes all of the objects from the given namespace monitoring.
 
 If you want to delete the namespace `monitoring`, then run the command:
 
-   ```bash
-   kubectl delete namespace monitoring
-   ```
+```bash
+kubectl delete namespace monitoring
+```
