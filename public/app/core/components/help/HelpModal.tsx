@@ -230,16 +230,9 @@ function replaceCustomKeyNames(key: string) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    keysAndDescriptions: css({
-      display: 'grid',
-      gridTemplateColumns: 'minmax(75px, max-content) 1fr',
-      gap: theme.spacing(2),
-      alignItems: 'center',
-      alignSelf: 'baseline',
-    }),
     table: css({
       borderCollapse: 'separate',
-      borderSpacing: theme.spacing(1),
+      borderSpacing: theme.spacing(2),
       '& caption': {
         captionSide: 'top',
       },
