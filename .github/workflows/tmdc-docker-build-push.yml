@@ -28,15 +28,8 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-    - name: Build and Push Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        file: ./Dockerfile
-        platforms: linux/amd64
-        push: true
-        # cache-from: type=gha
-        # cache-to: type=gha,mode=max
-        build-args: BINGO=false
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/grafana:${{ github.ref_name }}
-    
+    - name: build docker
+      run: make build-tmdc-docker GITHUB_TAGS=${{github.ref_name}}
+
+    - name: push docker
+      run: make push-tmdc-docker GITHUB_TAGS=${{github.ref_name}}
