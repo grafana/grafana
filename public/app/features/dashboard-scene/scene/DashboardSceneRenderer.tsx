@@ -14,7 +14,7 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, scopeSelector } = model.useState();
+  const { controls, overlay, editview, editPanel, isEmpty, scopeSelector } = model.useState();
   const { isExpanded: isScopesExpanded } = scopeSelector?.useState() ?? {};
   const styles = useStyles2(getStyles);
   const location = useLocation();
@@ -43,16 +43,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   );
 
   const withPanels = (
-    <>
-      <div className={styles.controlsWrapper}>
-        {scopeSelector && !isScopesExpanded && <scopeSelector.Component model={scopeSelector} />}
-
-        {controls && <controls.Component model={controls} />}
-      </div>
-      <div className={cx(styles.body)}>
-        <bodyToRender.Component model={bodyToRender} />
-      </div>
-    </>
+    <div className={cx(styles.body)}>
+      <bodyToRender.Component model={bodyToRender} />
+    </div>
   );
 
   return (
@@ -60,12 +53,10 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
         <CustomScrollbar autoHeightMin={'100%'}>
-          <div className={styles.innerScrollbarContainer}>
-            {scopeSelector && isScopesExpanded && <scopeSelector.Component model={scopeSelector} />}
-            <div className={styles.canvasContent}>
-              <NavToolbarActions dashboard={model} />
-              {model.isEmpty() ? emptyState : withPanels}
-            </div>
+          <div className={styles.canvasContent}>
+            <NavToolbarActions dashboard={model} />
+            {controls && <controls.Component model={controls} />}
+            {isEmpty ? emptyState : withPanels}
           </div>
         </CustomScrollbar>
       )}
