@@ -16,7 +16,7 @@ export const MinimizedScopeSelector = ({ options, value, onChange, onToggle }: M
 
   return (
     <div className={styles.container}>
-      <IconButton name="arrow-to-right" aria-label="Collapse scope selector" onClick={onToggle} />
+      <IconButton name="arrow-to-right" aria-label="Expand scope selector" onClick={onToggle} />
       <Select options={options} value={value} onChange={({ value }) => onChange(value)} />
     </div>
   );
@@ -25,6 +25,7 @@ export const MinimizedScopeSelector = ({ options, value, onChange, onToggle }: M
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
+      alignItems: 'baseline',
       display: 'flex',
       flex: theme.spacing(40),
       flexDirection: 'row',
