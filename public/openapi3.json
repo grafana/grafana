@@ -6422,7 +6422,6 @@
       "Hit": {
         "properties": {
           "folderId": {
-            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -6441,6 +6440,9 @@
           },
           "isStarred": {
             "type": "boolean"
+          },
+          "remainingTrashAtAge": {
+            "type": "string"
           },
           "slug": {
             "type": "string"
@@ -9421,6 +9423,9 @@
           },
           "templateVars": {
             "type": "object"
+          },
+          "uid": {
+            "type": "string"
           },
           "updated": {
             "format": "date-time",
@@ -22009,6 +22014,14 @@
                 "alpha-desc"
               ],
               "type": "string"
+            }
+          },
+          {
+            "description": "Flag indicating if only soft deleted Dashboards should be returned",
+            "in": "query",
+            "name": "deleted",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],

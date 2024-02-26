@@ -4594,7 +4594,6 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -4613,6 +4612,9 @@
         },
         "isStarred": {
           "type": "boolean"
+        },
+        "remainingTrashAtAge": {
+          "type": "string"
         },
         "slug": {
           "type": "string"
@@ -6279,6 +6281,9 @@
         },
         "templateVars": {
           "type": "object"
+        },
+        "uid": {
+          "type": "string"
         },
         "updated": {
           "type": "string",
