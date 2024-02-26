@@ -354,7 +354,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
           );
         }
 
-        if (oldConfig.current !== config) {
+        if (!showNewVizTooltips && oldConfig.current !== config) {
           oldConfig.current = addTooltipSupport({
             config,
             onUPlotClick,
