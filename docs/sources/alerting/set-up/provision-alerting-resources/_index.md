@@ -33,7 +33,7 @@ Choose from the options below to import (or provision) your Grafana Alerting res
 1. [Use configuration files to provision your alerting resources][alerting_file_provisioning], such as alert rules and contact points, through files on disk.
 
    {{< admonition type="note" >}}
-   File provisioning is not available in Grafana Cloud instances.
+   Provisioning with configuration files is not available in Grafana Cloud.
    {{< /admonition >}}
 
 1. Use [Terraform to provision alerting resources][alerting_tf_provisioning].
@@ -61,10 +61,6 @@ To view your provisioned resources in Grafana, complete the following steps.
 1. Click an alerting resource folder, for example, Alert rules.
 
 Provisioned resources are labeled **Provisioned**, so that it is clear that they were not created manually.
-
-**Useful Links:**
-
-[Grafana provisioning][provisioning]
 
 {{% docs/reference %}}
 [alerting_tf_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"

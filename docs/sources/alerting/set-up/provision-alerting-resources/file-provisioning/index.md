@@ -30,6 +30,8 @@ For a complete guide about how Grafana provisions resources, refer to the [Provi
 
 {{< admonition type="note" >}}
 
+- Provisioning with configuration files is not available in Grafana Cloud.
+
 - You cannot edit provisioned resources from files in Grafana. You can only change the resource properties by changing the provisioning file and restarting Grafana or carrying out a hot reload. This prevents changes being made to the resource that would be overwritten if a file is provisioned again or a hot reload is carried out.
 
 - Provisioning via configuration files takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin#reload-provisioning-configurations).
@@ -816,9 +818,10 @@ This eliminates the need for a persistent database to use Grafana Alerting in Ku
 
 ## More examples
 
-- [Grafana provisioning][provisioning]
+- [Provision Grafana][provisioning]
 
 {{% docs/reference %}}
+
 [alerting_export]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
 [alerting_export]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources"
 
