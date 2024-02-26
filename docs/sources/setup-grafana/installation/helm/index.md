@@ -134,7 +134,7 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
 
    If you encounter errors or warnings in the **STATUS** column, check the logs and refer to the Troubleshooting section of this documentation.
 
-### Accessing Grafana
+### Access Grafana
 
 This section describes the steps you must complete to access Grafana via web browser.
 
@@ -279,7 +279,7 @@ To install plugins in the Grafana Helm Charts, complete the following steps:
 
 This section includes troubleshooting tips you might find helpful when deploying Grafana on Kubernetes via Helm.
 
-### Collecting logs
+### Collect logs
 
 It is important to view the Grafana server logs while troubleshooting any issues.
 
@@ -301,7 +301,7 @@ kubectl logs --namespace=monitoring deploy/grafana -c my-grafana
 
 For more information about accessing Kubernetes application logs, refer to [Pods](https://kubernetes.io/docs/reference/kubectl/cheatsheet/#interacting-with-running-pods) and [Deployments](https://kubernetes.io/docs/reference/kubectl/cheatsheet/#interacting-with-deployments-and-services).
 
-### Increasing log levels
+### Increase log levels
 
 By default, the Grafana log level is set to `info`, but you can increase it to `debug` mode to fetch information needed to diagnose and troubleshoot a problem. For more information about Grafana log levels, refer to [Configuring logs](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana#log).
 
@@ -360,7 +360,7 @@ By default the login credentials for the super admin account are generated via `
 
 1. To verify it, sign in to Grafana, enter `admin` for both username and password. You sould be able to login as super admin.
 
-## Uninstalling the Grafana Deployment
+## Uninstall the Grafana deployment
 
 To uninstall the Grafana deployment, run the command:
 
