@@ -93,17 +93,9 @@ function getLoadingPanel(title: string, panelKey: string) {
   return new VizPanel({
     key: panelKey,
     title,
-    $data: new SceneDataTransformer({ transformations: [], $data: new SceneQueryRunner({ queries: [] }) }),
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
-    titleItems: [
-      new VizPanelLinks({
-        rawLinks: [],
-        menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
-      }),
-      new PanelNotices(),
-    ],
   });
 }
 
