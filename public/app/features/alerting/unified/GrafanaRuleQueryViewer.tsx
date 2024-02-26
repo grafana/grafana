@@ -6,10 +6,6 @@ import React from 'react';
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Badge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-
-const PrometheusQueryPreview = React.lazy(() => import('./components/rule-viewer/tabs/Query/PrometheusQueryPreview'));
-const LokiQueryPreview = React.lazy(() => import('./components/rule-viewer/tabs/Query/LokiQueryPreview'));
-
 import { mapRelativeTimeRangeToOption } from '@grafana/ui/src/components/DateTimePickers/RelativeTimeRangePicker/utils';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -34,6 +30,9 @@ import { getThresholdsForQueries, ThresholdDefinition } from './components/rule-
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { AlertRuleAction, useAlertRuleAbility } from './hooks/useAbilities';
 import { isPromOrLokiQuery } from './utils/rule-form';
+
+const PrometheusQueryPreview = React.lazy(() => import('./components/rule-viewer/tabs/Query/PrometheusQueryPreview'));
+const LokiQueryPreview = React.lazy(() => import('./components/rule-viewer/tabs/Query/LokiQueryPreview'));
 
 interface GrafanaRuleViewerProps {
   rule: CombinedRule;
