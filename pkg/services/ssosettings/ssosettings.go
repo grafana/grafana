@@ -66,3 +66,5 @@ type Store interface {
 	Upsert(ctx context.Context, settings *models.SSOSettings) error
 	Delete(ctx context.Context, provider string) error
 }
+
+type ValidateFunc[T any] func(input *T, requester identity.Requester) error

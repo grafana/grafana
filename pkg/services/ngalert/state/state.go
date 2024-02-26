@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -504,7 +505,7 @@ func ParseFormattedState(stateStr string) (eval.State, string, error) {
 }
 
 // GetRuleExtraLabels returns a map of built-in labels that should be added to an alert before it is sent to the Alertmanager or its state is cached.
-func GetRuleExtraLabels(rule *models.AlertRule, folderTitle string, includeFolder bool) map[string]string {
+func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string, includeFolder bool) map[string]string {
 	extraLabels := make(map[string]string, 4)
 
 	extraLabels[alertingModels.NamespaceUIDLabel] = rule.NamespaceUID
@@ -513,6 +514,16 @@ func GetRuleExtraLabels(rule *models.AlertRule, folderTitle string, includeFolde
 
 	if includeFolder {
 		extraLabels[models.FolderTitleLabel] = folderTitle
+	}
+
+	if len(rule.NotificationSettings) > 0 {
+		// Notification settings are defined as a slice to workaround xorm behavior.
+		// Any items past the first should not exist so we ignore them.
+		if len(rule.NotificationSettings) > 1 {
+			ignored, _ := json.Marshal(rule.NotificationSettings[1:])
+			l.Error("Detected multiple notification settings, which is not supported. Only the first will be applied", "ignored_settings", string(ignored))
+		}
+		return mergeLabels(extraLabels, rule.NotificationSettings[0].ToLabels())
 	}
 	return extraLabels
 }

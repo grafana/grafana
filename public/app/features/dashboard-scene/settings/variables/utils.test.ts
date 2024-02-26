@@ -1,5 +1,5 @@
 import { DataSourceApi } from '@grafana/data';
-import { setTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { config, setTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import {
   CustomVariable,
   ConstantVariable,
@@ -99,26 +99,61 @@ describe('isEditableVariableType', () => {
 });
 
 describe('getVariableTypeSelectOptions', () => {
-  it('should contain all editable variable types', () => {
-    const options = getVariableTypeSelectOptions();
-    expect(options).toHaveLength(Object.keys(EDITABLE_VARIABLES).length);
+  describe('when groupByVariable is enabled', () => {
+    beforeAll(() => {
+      config.featureToggles.groupByVariable = true;
+    });
 
-    EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
-      expect(EDITABLE_VARIABLES).toHaveProperty(type);
+    afterAll(() => {
+      config.featureToggles.groupByVariable = false;
+    });
+
+    it('should contain all editable variable types', () => {
+      const options = getVariableTypeSelectOptions();
+      expect(options).toHaveLength(Object.keys(EDITABLE_VARIABLES).length);
+
+      EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
+        expect(EDITABLE_VARIABLES).toHaveProperty(type);
+      });
+    });
+
+    it('should return an array of selectable values for editable variable types', () => {
+      const options = getVariableTypeSelectOptions();
+      expect(options).toHaveLength(8);
+
+      options.forEach((option, index) => {
+        const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
+        const variableTypeConfig = EDITABLE_VARIABLES[editableType];
+
+        expect(option.value).toBe(editableType);
+        expect(option.label).toBe(variableTypeConfig.name);
+        expect(option.description).toBe(variableTypeConfig.description);
+      });
     });
   });
 
-  it('should return an array of selectable values for editable variable types', () => {
-    const options = getVariableTypeSelectOptions();
-    expect(options).toHaveLength(8);
+  describe('when groupByVariable is disabled', () => {
+    it('should contain all editable variable types except groupby', () => {
+      const options = getVariableTypeSelectOptions();
+      expect(options).toHaveLength(Object.keys(EDITABLE_VARIABLES).length - 1);
 
-    options.forEach((option, index) => {
-      const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
-      const variableTypeConfig = EDITABLE_VARIABLES[editableType];
+      EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
+        expect(EDITABLE_VARIABLES).toHaveProperty(type);
+      });
+    });
 
-      expect(option.value).toBe(editableType);
-      expect(option.label).toBe(variableTypeConfig.name);
-      expect(option.description).toBe(variableTypeConfig.description);
+    it('should return an array of selectable values for editable variable types', () => {
+      const options = getVariableTypeSelectOptions();
+      expect(options).toHaveLength(7);
+
+      options.forEach((option, index) => {
+        const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
+        const variableTypeConfig = EDITABLE_VARIABLES[editableType];
+
+        expect(option.value).toBe(editableType);
+        expect(option.label).toBe(variableTypeConfig.name);
+        expect(option.description).toBe(variableTypeConfig.description);
+      });
     });
   });
 });
@@ -172,10 +207,10 @@ describe('getVariableScene', () => {
     ['adhoc', AdHocFiltersVariable],
     ['groupby', GroupByVariable],
     ['textbox', TextBoxVariable],
-  ])('should return the scene variable instance for the given editable variable type', () => {
+  ])('should return the scene variable instance for the given editable variable type', (type, instanceType) => {
     const initialState = { name: 'MyVariable' };
-    const sceneVariable = getVariableScene('custom', initialState);
-    expect(sceneVariable).toBeInstanceOf(CustomVariable);
+    const sceneVariable = getVariableScene(type as EditableVariableType, initialState);
+    expect(sceneVariable).toBeInstanceOf(instanceType);
     expect(sceneVariable.state.name).toBe(initialState.name);
   });
 });

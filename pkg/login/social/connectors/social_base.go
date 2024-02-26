@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -223,17 +223,8 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 }
 
 func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
-	if info.ClientId == "" {
-		return ssosettings.ErrInvalidOAuthConfig("Client Id is empty.")
-	}
-
-	if info.AllowAssignGrafanaAdmin && !requester.GetIsGrafanaAdmin() {
-		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin can only be updated by Grafana Server Admins.")
-	}
-
-	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
-		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin and Skip org role sync are both set thus Grafana Admin role will not be synced. Consider setting one or the other.")
-	}
-
-	return nil
+	return validation.Validate(info, requester,
+		validation.RequiredValidator(info.ClientId, "Client Id"),
+		validation.AllowAssignGrafanaAdminValidator,
+		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator)
 }

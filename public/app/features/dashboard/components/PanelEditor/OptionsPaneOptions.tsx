@@ -54,14 +54,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
     : [panelFrameOptions, ...vizOptions];
 
   if (isSearching) {
-    mainBoxElements.push(
-      <RenderSearchHits
-        key="render-search-hits"
-        allOptions={allOptions}
-        overrides={justOverrides}
-        searchQuery={searchQuery}
-      />
-    );
+    mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
 
     // If searching for angular panel, then we need to add notice that results are limited
     if (props.plugin.angularPanelCtrl) {
@@ -76,10 +69,10 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
       case OptionFilter.All:
         if (isPanelModelLibraryPanel(panel)) {
           // Library Panel options first
-          mainBoxElements.push(<libraryPanelOptions.Render key="library-panel-options" />);
+          mainBoxElements.push(libraryPanelOptions.render());
         }
         // Panel frame options second
-        mainBoxElements.push(<panelFrameOptions.Render key="panel-frame-options" />);
+        mainBoxElements.push(panelFrameOptions.render());
         // If angular add those options next
         if (props.plugin.angularPanelCtrl) {
           mainBoxElements.push(
@@ -88,16 +81,16 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
         }
         // Then add all panel and field defaults
         for (const item of vizOptions) {
-          mainBoxElements.push(<item.Render key={item.props.id} />);
+          mainBoxElements.push(item.render());
         }
 
         for (const item of justOverrides) {
-          mainBoxElements.push(<item.Render key={item.props.id} />);
+          mainBoxElements.push(item.render());
         }
         break;
       case OptionFilter.Overrides:
         for (const override of justOverrides) {
-          mainBoxElements.push(<override.Render key={override.props.id} />);
+          mainBoxElements.push(override.render());
         }
         break;
       case OptionFilter.Recent:
@@ -157,13 +150,11 @@ export enum OptionFilter {
   Recent = 'Recent',
 }
 
-interface RenderSearchHitsProps {
-  allOptions: OptionsPaneCategoryDescriptor[];
-  overrides: OptionsPaneCategoryDescriptor[];
-  searchQuery: string;
-}
-
-export function RenderSearchHits({ allOptions, overrides, searchQuery }: RenderSearchHitsProps) {
+export function renderSearchHits(
+  allOptions: OptionsPaneCategoryDescriptor[],
+  overrides: OptionsPaneCategoryDescriptor[],
+  searchQuery: string
+) {
   const engine = new OptionSearchEngine(allOptions, overrides);
   const { optionHits, totalCount, overrideHits } = engine.search(searchQuery);
 
@@ -177,9 +168,7 @@ export function RenderSearchHits({ allOptions, overrides, searchQuery }: RenderS
       >
         {optionHits.map((hit) => hit.render(searchQuery))}
       </OptionsPaneCategory>
-      {overrideHits.map((override) => (
-        <override.Render key={override.props.id} searchQuery={searchQuery} />
-      ))}
+      {overrideHits.map((override) => override.render(searchQuery))}
     </div>
   );
 }

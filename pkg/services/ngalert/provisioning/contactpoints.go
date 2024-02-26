@@ -22,13 +22,19 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type AlertRuleNotificationSettingsStore interface {
+	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
+	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+}
+
 type ContactPointService struct {
-	configStore       *alertmanagerConfigStoreImpl
-	encryptionService secrets.Service
-	provenanceStore   ProvisioningStore
-	xact              TransactionManager
-	receiverService   receiverService
-	log               log.Logger
+	configStore               *alertmanagerConfigStoreImpl
+	encryptionService         secrets.Service
+	provenanceStore           ProvisioningStore
+	notificationSettingsStore AlertRuleNotificationSettingsStore
+	xact                      TransactionManager
+	receiverService           receiverService
+	log                       log.Logger
 }
 
 type receiverService interface {
@@ -36,16 +42,18 @@ type receiverService interface {
 }
 
 func NewContactPointService(store AMConfigStore, encryptionService secrets.Service,
-	provenanceStore ProvisioningStore, xact TransactionManager, receiverService receiverService, log log.Logger) *ContactPointService {
+	provenanceStore ProvisioningStore, xact TransactionManager, receiverService receiverService, log log.Logger,
+	nsStore AlertRuleNotificationSettingsStore) *ContactPointService {
 	return &ContactPointService{
 		configStore: &alertmanagerConfigStoreImpl{
 			store: store,
 		},
-		receiverService:   receiverService,
-		encryptionService: encryptionService,
-		provenanceStore:   provenanceStore,
-		xact:              xact,
-		log:               log,
+		receiverService:           receiverService,
+		encryptionService:         encryptionService,
+		provenanceStore:           provenanceStore,
+		xact:                      xact,
+		log:                       log,
+		notificationSettingsStore: nsStore,
 	}
 }
 
@@ -72,7 +80,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 		return nil, convertRecSvcErr(err)
 	}
 	grafanaReceivers := []*apimodels.GettableGrafanaReceiver{}
-	if q.Name != "" {
+	if q.Name != "" && len(res) > 0 {
 		grafanaReceivers = res[0].GettableGrafanaReceivers.GrafanaManagedReceivers // we only expect one receiver group
 	} else {
 		for _, r := range res {
@@ -277,7 +285,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 
-	configModified := stitchReceiver(revision.cfg, mergedReceiver)
+	configModified, renamedReceiver := stitchReceiver(revision.cfg, mergedReceiver)
 	if !configModified {
 		return fmt.Errorf("contact point with uid '%s' not found", mergedReceiver.UID)
 	}
@@ -285,6 +293,15 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := ecp.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
+		}
+		if renamedReceiver != "" && renamedReceiver != mergedReceiver.Name {
+			affected, err := ecp.notificationSettingsStore.RenameReceiverInNotificationSettings(ctx, orgID, renamedReceiver, mergedReceiver.Name)
+			if err != nil {
+				return err
+			}
+			if affected > 0 {
+				ecp.log.Info("Renamed receiver in notification settings", "oldName", renamedReceiver, "newName", mergedReceiver.Name, "affectedSettings", affected)
+			}
 		}
 		return ecp.provenanceStore.SetProvenance(ctx, &contactPoint, orgID, provenance)
 	})
@@ -325,6 +342,21 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	}
 
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
+		if fullRemoval {
+			used, err := ecp.notificationSettingsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, ReceiverName: name})
+			if err != nil {
+				return fmt.Errorf("failed to query alert rules for reference to the contact point '%s': %w", name, err)
+			}
+			if len(used) > 0 {
+				uids := make([]string, 0, len(used))
+				for key := range used {
+					uids = append(uids, key.UID)
+				}
+				ecp.log.Error("Cannot delete contact point because it is used in rule's notification settings", "receiverName", name, "rulesUid", strings.Join(uids, ","))
+				return fmt.Errorf("contact point '%s' is currently used in notification settings by one or many alert rules", name)
+			}
+		}
+
 		if err := ecp.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
@@ -383,10 +415,12 @@ func (ecp *ContactPointService) encryptValue(value string) (string, error) {
 
 // stitchReceiver modifies a receiver, target, in an alertmanager configStore. It modifies the given configStore in-place.
 // Returns true if the configStore was altered in any way, and false otherwise.
-func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.PostableGrafanaReceiver) bool {
+// If integration was moved to another group and it was the last in the previous group, the second parameter contains the name of the old group that is gone
+func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.PostableGrafanaReceiver) (bool, string) {
 	// Algorithm to fix up receivers. Receivers are very complex and depend heavily on internal consistency.
 	// All receivers in a given receiver group have the same name. We must maintain this across renames.
 	configModified := false
+	renamedReceiver := ""
 groupLoop:
 	for groupIdx, receiverGroup := range cfg.AlertmanagerConfig.Receivers {
 		// Does the current group contain the grafana receiver we're interested in?
@@ -411,6 +445,7 @@ groupLoop:
 					replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
 					receiverGroup.Name = target.Name
 					receiverGroup.GrafanaManagedReceivers[i] = target
+					renamedReceiver = receiverGroup.Name
 				}
 
 				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.
@@ -452,7 +487,7 @@ groupLoop:
 		}
 	}
 
-	return configModified
+	return configModified, renamedReceiver
 }
 
 func replaceReferences(oldName, newName string, routes ...*apimodels.Route) {

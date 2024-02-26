@@ -154,7 +154,8 @@ func TestLoader_Load(t *testing.T) {
 					Class:         plugins.ClassBundled,
 				},
 			},
-		}, {
+		},
+		{
 			name:        "Load plugin with symbolic links",
 			class:       plugins.ClassExternal,
 			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
@@ -183,8 +184,9 @@ func TestLoader_Load(t *testing.T) {
 								{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
 								{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
 							},
-							Version: "1.0.0",
-							Updated: "2015-02-10",
+							Version:  "1.0.0",
+							Updated:  "2015-02-10",
+							Keywords: []string{"test"},
 						},
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "3.x.x",
@@ -212,7 +214,8 @@ func TestLoader_Load(t *testing.T) {
 								Name: "Nginx Panel",
 								Type: string(plugins.TypePanel),
 								Role: org.RoleViewer,
-								Slug: "nginx-panel"},
+								Slug: "nginx-panel",
+							},
 							{
 								Name: "Nginx Datasource",
 								Type: string(plugins.TypeDataSource),
@@ -230,7 +233,8 @@ func TestLoader_Load(t *testing.T) {
 					SignatureOrg:  "Grafana Labs",
 				},
 			},
-		}, {
+		},
+		{
 			name:  "Load an unsigned plugin (development)",
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
@@ -269,7 +273,8 @@ func TestLoader_Load(t *testing.T) {
 					Signature: "unsigned",
 				},
 			},
-		}, {
+		},
+		{
 			name:        "Load an unsigned plugin (production)",
 			class:       plugins.ClassExternal,
 			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
@@ -392,38 +397,40 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "test-app-with-includes")},
 			want: []*plugins.Plugin{
-				{JSONData: plugins.JSONData{
-					ID:   "test-app",
-					Type: plugins.TypeApp,
-					Name: "Test App",
-					Info: plugins.Info{
-						Author: plugins.InfoLink{
-							Name: "Test Inc.",
-							URL:  "http://test.com",
+				{
+					JSONData: plugins.JSONData{
+						ID:   "test-app",
+						Type: plugins.TypeApp,
+						Name: "Test App",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Test Inc.",
+								URL:  "http://test.com",
+							},
+							Description: "Official Grafana Test App & Dashboard bundle",
+							Version:     "1.0.0",
+							Links: []plugins.InfoLink{
+								{Name: "Project site", URL: "http://project.com"},
+								{Name: "License & Terms", URL: "http://license.com"},
+							},
+							Logos: plugins.Logos{
+								Small: "public/img/icn-app.svg",
+								Large: "public/img/icn-app.svg",
+							},
+							Updated:  "2015-02-10",
+							Keywords: []string{"test"},
 						},
-						Description: "Official Grafana Test App & Dashboard bundle",
-						Version:     "1.0.0",
-						Links: []plugins.InfoLink{
-							{Name: "Project site", URL: "http://project.com"},
-							{Name: "License & Terms", URL: "http://license.com"},
+						Dependencies: plugins.Dependencies{
+							GrafanaDependency: ">=8.0.0",
+							GrafanaVersion:    "*",
+							Plugins:           []plugins.Dependency{},
 						},
-						Logos: plugins.Logos{
-							Small: "public/img/icn-app.svg",
-							Large: "public/img/icn-app.svg",
+						Includes: []*plugins.Includes{
+							{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-memory"},
+							{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 						},
-						Updated: "2015-02-10",
+						Backend: false,
 					},
-					Dependencies: plugins.Dependencies{
-						GrafanaDependency: ">=8.0.0",
-						GrafanaVersion:    "*",
-						Plugins:           []plugins.Dependency{},
-					},
-					Includes: []*plugins.Includes{
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-memory"},
-						{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
-					},
-					Backend: false,
-				},
 					DefaultNavURL: "/plugins/test-app/page/root-page-react",
 					FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app-with-includes")),
 					Class:         plugins.ClassExternal,
@@ -501,43 +508,41 @@ func TestLoader_Load(t *testing.T) {
 }
 
 func TestLoader_Load_ExternalRegistration(t *testing.T) {
-	boolPtr := func(b bool) *bool { return &b }
 	stringPtr := func(s string) *string { return &s }
 
-	t.Run("Load a plugin with oauth client registration", func(t *testing.T) {
+	t.Run("Load a plugin with service account registration", func(t *testing.T) {
 		cfg := &config.Cfg{
-			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
+			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts),
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
 			AWSAssumeRoleEnabled: true,
 		}
-		pluginPaths := []string{filepath.Join(testDataDir(t), "oauth-external-registration")}
+		pluginPaths := []string{filepath.Join(testDataDir(t), "external-registration")}
 		expected := []*plugins.Plugin{
-			{JSONData: plugins.JSONData{
-				ID:         "grafana-test-datasource",
-				Type:       plugins.TypeDataSource,
-				Name:       "Test",
-				Backend:    true,
-				Executable: "gpx_test_datasource",
-				Info: plugins.Info{
-					Author: plugins.InfoLink{
-						Name: "Grafana Labs",
-						URL:  "https://grafana.com",
+			{
+				JSONData: plugins.JSONData{
+					ID:         "grafana-test-datasource",
+					Type:       plugins.TypeDataSource,
+					Name:       "Test",
+					Backend:    true,
+					Executable: "gpx_test_datasource",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Grafana Labs",
+							URL:  "https://grafana.com",
+						},
+						Version: "1.0.0",
+						Logos: plugins.Logos{
+							Small: "public/plugins/grafana-test-datasource/img/ds.svg",
+							Large: "public/plugins/grafana-test-datasource/img/ds.svg",
+						},
+						Updated:     "2023-08-03",
+						Screenshots: []plugins.Screenshots{},
 					},
-					Version: "1.0.0",
-					Logos: plugins.Logos{
-						Small: "public/plugins/grafana-test-datasource/img/ds.svg",
-						Large: "public/plugins/grafana-test-datasource/img/ds.svg",
+					Dependencies: plugins.Dependencies{
+						GrafanaVersion: "*",
+						Plugins:        []plugins.Dependency{},
 					},
-					Updated:     "2023-08-03",
-					Screenshots: []plugins.Screenshots{},
-				},
-				Dependencies: plugins.Dependencies{
-					GrafanaVersion: "*",
-					Plugins:        []plugins.Dependency{},
-				},
-				IAM: &plugindef.IAM{
-					Impersonation: &plugindef.Impersonation{
-						Groups: boolPtr(true),
+					IAM: &plugindef.IAM{
 						Permissions: []plugindef.Permission{
 							{
 								Action: "read",
@@ -545,107 +550,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 							},
 						},
 					},
-					Permissions: []plugindef.Permission{
-						{
-							Action: "read",
-							Scope:  stringPtr("datasource"),
-						},
-					},
 				},
-			},
-				FS:        mustNewStaticFSForTests(t, pluginPaths[0]),
-				Class:     plugins.ClassExternal,
-				Signature: plugins.SignatureStatusUnsigned,
-				Module:    "public/plugins/grafana-test-datasource/module.js",
-				BaseURL:   "public/plugins/grafana-test-datasource",
-				ExternalService: &auth.ExternalService{
-					ClientID:     "client-id",
-					ClientSecret: "secretz",
-					PrivateKey:   "priv@t3",
-				},
-			},
-		}
-
-		backendFactoryProvider := fakes.NewFakeBackendProcessProvider()
-		backendFactoryProvider.BackendFactoryFunc = func(ctx context.Context, plugin *plugins.Plugin) backendplugin.PluginFactoryFunc {
-			return func(pluginID string, logger log.Logger, env func() []string) (backendplugin.Plugin, error) {
-				require.Equal(t, "grafana-test-datasource", pluginID)
-				require.Equal(t, []string{"GF_VERSION=", "GF_EDITION=", "GF_ENTERPRISE_LICENSE_PATH=",
-					"GF_ENTERPRISE_APP_URL=", "GF_ENTERPRISE_LICENSE_TEXT=", "GF_APP_URL=",
-					"GF_PLUGIN_APP_CLIENT_ID=client-id", "GF_PLUGIN_APP_CLIENT_SECRET=secretz",
-					"GF_PLUGIN_APP_PRIVATE_KEY=priv@t3", "GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAuth"}, env())
-				return &fakes.FakeBackendPlugin{}, nil
-			}
-		}
-
-		l := newLoaderWithOpts(t, cfg, loaderDepOpts{
-			authServiceRegistry: &fakes.FakeAuthService{
-				Result: &auth.ExternalService{
-					ClientID:     "client-id",
-					ClientSecret: "secretz",
-					PrivateKey:   "priv@t3",
-				},
-			},
-			backendFactoryProvider: backendFactoryProvider,
-		})
-		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
-			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.ClassExternal
-			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return pluginPaths
-			},
-			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
-				return plugins.Signature{}, false
-			},
-		})
-
-		require.NoError(t, err)
-		if !cmp.Equal(got, expected, compareOpts...) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
-		}
-	})
-
-	t.Run("Load a plugin with service account registration", func(t *testing.T) {
-		cfg := &config.Cfg{
-			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
-			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
-			AWSAssumeRoleEnabled: true,
-		}
-		pluginPaths := []string{filepath.Join(testDataDir(t), "external-registration")}
-		expected := []*plugins.Plugin{
-			{JSONData: plugins.JSONData{
-				ID:         "grafana-test-datasource",
-				Type:       plugins.TypeDataSource,
-				Name:       "Test",
-				Backend:    true,
-				Executable: "gpx_test_datasource",
-				Info: plugins.Info{
-					Author: plugins.InfoLink{
-						Name: "Grafana Labs",
-						URL:  "https://grafana.com",
-					},
-					Version: "1.0.0",
-					Logos: plugins.Logos{
-						Small: "public/plugins/grafana-test-datasource/img/ds.svg",
-						Large: "public/plugins/grafana-test-datasource/img/ds.svg",
-					},
-					Updated:     "2023-08-03",
-					Screenshots: []plugins.Screenshots{},
-				},
-				Dependencies: plugins.Dependencies{
-					GrafanaVersion: "*",
-					Plugins:        []plugins.Dependency{},
-				},
-				IAM: &plugindef.IAM{
-					Permissions: []plugindef.Permission{
-						{
-							Action: "read",
-							Scope:  stringPtr("datasource"),
-						},
-					},
-				},
-			},
 				FS:        mustNewStaticFSForTests(t, pluginPaths[0]),
 				Class:     plugins.ClassExternal,
 				Signature: plugins.SignatureStatusUnsigned,
@@ -662,10 +567,12 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 		backendFactoryProvider.BackendFactoryFunc = func(ctx context.Context, plugin *plugins.Plugin) backendplugin.PluginFactoryFunc {
 			return func(pluginID string, logger log.Logger, env func() []string) (backendplugin.Plugin, error) {
 				require.Equal(t, "grafana-test-datasource", pluginID)
-				require.Equal(t, []string{"GF_VERSION=", "GF_EDITION=", "GF_ENTERPRISE_LICENSE_PATH=",
+				require.Equal(t, []string{
+					"GF_VERSION=", "GF_EDITION=", "GF_ENTERPRISE_LICENSE_PATH=",
 					"GF_ENTERPRISE_APP_URL=", "GF_ENTERPRISE_LICENSE_TEXT=", "GF_APP_URL=",
 					"GF_PLUGIN_APP_CLIENT_ID=client-id", "GF_PLUGIN_APP_CLIENT_SECRET=secretz",
-					"GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAuth"}, env())
+					"GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAccounts",
+				}, env())
 				return &fakes.FakeBackendPlugin{}, nil
 			}
 		}
@@ -906,7 +813,8 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 								Small: "public/img/icn-app.svg",
 								Large: "public/img/icn-app.svg",
 							},
-							Updated: "2015-02-10",
+							Updated:  "2015-02-10",
+							Keywords: []string{"test"},
 						},
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion:    "*",
@@ -1049,7 +957,8 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 							{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
 							{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
 						},
-						Updated: "2015-02-10",
+						Updated:  "2015-02-10",
+						Keywords: []string{"test"},
 					},
 					Dependencies: plugins.Dependencies{
 						GrafanaVersion: "3.x.x",
@@ -1129,7 +1038,8 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 							{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
 							{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
 						},
-						Updated: "2015-02-10",
+						Updated:  "2015-02-10",
+						Keywords: []string{"test"},
 					},
 					Dependencies: plugins.Dependencies{
 						GrafanaVersion: "3.x.x",
@@ -1476,6 +1386,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					Description: "Grafana App Plugin Template",
 					Version:     "",
 					Updated:     "",
+					Keywords:    []string{"panel", "template"},
 				},
 				Dependencies: plugins.Dependencies{
 					GrafanaVersion:    "7.0.0",
@@ -1556,6 +1467,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					Description: "Grafana Panel Plugin Template",
 					Version:     "",
 					Updated:     "",
+					Keywords:    []string{"panel", "template"},
 				},
 				Dependencies: plugins.Dependencies{
 					GrafanaDependency: ">=7.0.0",
@@ -1612,7 +1524,8 @@ type loaderDepOpts struct {
 }
 
 func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process.Manager,
-	backendFactory plugins.BackendFactoryProvider, sigErrTracker pluginerrs.SignatureErrorTracker) *Loader {
+	backendFactory plugins.BackendFactoryProvider, sigErrTracker pluginerrs.SignatureErrorTracker,
+) *Loader {
 	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg))
 	lic := fakes.NewFakeLicensingService()
 	angularInspector := angularinspector.NewStaticInspector()
@@ -1662,7 +1575,8 @@ func newLoaderWithOpts(t *testing.T, cfg *config.Cfg, opts loaderDepOpts) *Loade
 }
 
 func verifyState(t *testing.T, ps []*plugins.Plugin, reg registry.Service,
-	procPrvdr *fakes.FakeBackendProcessProvider, procMngr *fakes.FakeProcessManager) {
+	procPrvdr *fakes.FakeBackendProcessProvider, procMngr *fakes.FakeProcessManager,
+) {
 	t.Helper()
 
 	for _, p := range ps {

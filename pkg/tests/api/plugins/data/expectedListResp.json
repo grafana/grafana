@@ -19,7 +19,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -61,7 +62,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -98,7 +100,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -157,7 +160,14 @@
         }
       ],
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "azure",
+        "monitor",
+        "Application Insights",
+        "Log Analytics",
+        "App Insights"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "\u003e=10.3.0",
@@ -194,7 +204,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -231,7 +242,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -268,7 +280,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -305,7 +318,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -342,7 +356,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -379,7 +394,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -416,7 +432,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -458,7 +475,10 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "elasticsearch"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -495,7 +515,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -532,7 +553,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -569,7 +591,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -606,7 +629,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -643,7 +667,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -685,7 +710,16 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "grafana",
+        "datasource",
+        "phlare",
+        "flamegraph",
+        "profiling",
+        "continuous profiling",
+        "pyroscope"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "\u003e=10.3.0-0",
@@ -722,7 +756,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -768,7 +803,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -805,7 +841,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -842,7 +879,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -879,7 +917,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -925,7 +964,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -962,7 +1002,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1008,7 +1049,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1045,7 +1087,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1082,7 +1125,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1119,7 +1163,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1156,7 +1201,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1193,7 +1239,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1235,7 +1282,13 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "grafana",
+        "datasource",
+        "parca",
+        "profiling"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "\u003e=10.3.0-0",
@@ -1272,7 +1325,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1309,7 +1363,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1351,7 +1406,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1388,7 +1444,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1425,7 +1482,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1462,7 +1520,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1499,7 +1558,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1536,7 +1596,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1578,7 +1639,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "\u003e=10.3.0-0",
@@ -1615,7 +1677,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "\u003e=10.3.0-0",
@@ -1652,7 +1715,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1689,7 +1753,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1726,7 +1791,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1763,7 +1829,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1800,7 +1867,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1837,7 +1905,8 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1879,10 +1948,11 @@
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },

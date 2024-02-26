@@ -123,6 +123,9 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             <FileDropzone
               options={{ multiple: false }}
               onLoad={(result) => {
+                if (typeof result !== 'string' && result !== null) {
+                  throw Error(`Unexpected result type: ${typeof result}`);
+                }
                 this.props.datasource.uploadedJson = result;
                 onChange({
                   ...query,

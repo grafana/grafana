@@ -3,7 +3,7 @@ import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
-import { Badge, Card, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Card, IconButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
 import { VAR_FILTERS } from './shared';
@@ -23,16 +23,18 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
     return null;
   }
 
-  const filters = filtersVariable.state.set.state.filters;
+  const filters = filtersVariable.state.filters;
   const dsValue = getDataSource(trail);
 
+  const onClick = () => onSelect(trail);
+
   return (
-    <Card onClick={() => onSelect(trail)} className={styles.card}>
+    <Card onClick={onClick} className={styles.card}>
       <Card.Heading>{getMetricName(trail.state.metric)}</Card.Heading>
       <div className={styles.description}>
         <Stack gap={1.5}>
           {filters.map((f) => (
-            <Badge key={f.key} text={`${f.key}: ${f.value}`} color={'blue'} className={styles.tag} />
+            <Tag key={f.key} name={`${f.key}: ${f.value}`} colorIndex={12} />
           ))}
         </Stack>
       </div>

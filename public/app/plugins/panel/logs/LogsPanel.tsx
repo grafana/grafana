@@ -15,6 +15,7 @@ import {
   Field,
   GrafanaTheme2,
   hasLogsContextSupport,
+  hasLogsContextUiSupport,
   Labels,
   LogRowContextOptions,
   LogRowModel,
@@ -78,7 +79,7 @@ export const LogsPanel = ({
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
-  const [closeCallback, setCloseCallback] = useState<(() => void) | null>(null);
+  const closeCallback = useRef<() => void>();
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | undefined>(undefined);
   // Loading state to be passed as a prop to the <InfiniteScroll> component
@@ -107,15 +108,18 @@ export const LogsPanel = ({
 
   const onCloseContext = useCallback(() => {
     setContextRow(null);
-    if (closeCallback) {
-      closeCallback();
+    if (closeCallback.current) {
+      closeCallback.current();
     }
   }, [closeCallback]);
 
-  const onOpenContext = useCallback((row: LogRowModel, onClose: () => void) => {
-    setContextRow(row);
-    setCloseCallback(onClose);
-  }, []);
+  const onOpenContext = useCallback(
+    (row: LogRowModel, onClose: () => void) => {
+      setContextRow(row);
+      closeCallback.current = onClose;
+    },
+    [closeCallback]
+  );
 
   const showContextToggle = useCallback(
     (row: LogRowModel): boolean => {
@@ -161,6 +165,31 @@ export const LogsPanel = ({
       }
 
       return dataSource.getLogRowContext(row, options, query);
+    },
+    [data.request?.targets, dataSourcesMap]
+  );
+
+  const getLogRowContextUi = useCallback(
+    (origRow: LogRowModel, runContextQuery?: () => void): React.ReactNode => {
+      if (!origRow.dataFrame.refId || !dataSourcesMap) {
+        return <></>;
+      }
+
+      const query = data.request?.targets[0];
+      if (!query) {
+        return <></>;
+      }
+
+      const dataSource = dataSourcesMap.get(origRow.dataFrame.refId);
+      if (!hasLogsContextUiSupport(dataSource)) {
+        return <></>;
+      }
+
+      if (!dataSource.getLogRowContextUi) {
+        return <></>;
+      }
+
+      return dataSource.getLogRowContextUi(origRow, runContextQuery, query);
     },
     [data.request?.targets, dataSourcesMap]
   );
@@ -272,6 +301,7 @@ export const LogsPanel = ({
           getRowContext={(row, options) => getLogRowContext(row, contextRow, options)}
           logsSortOrder={sortOrder}
           timeZone={timeZone}
+          getLogRowContextUi={getLogRowContextUi}
         />
       )}
       <CustomScrollbar

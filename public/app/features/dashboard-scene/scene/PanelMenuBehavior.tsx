@@ -11,7 +11,6 @@ import { config, getPluginLinkExtensions, locationService } from '@grafana/runti
 import {
   LocalValueVariable,
   SceneFlexLayout,
-  SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
   SceneObject,
@@ -22,16 +21,14 @@ import {
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
-import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegration';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { gridItemToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
@@ -56,11 +53,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const panelId = getPanelIdForVizPanel(panel);
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
-    const panelJson = gridItemToPanel(panel.parent as SceneGridItem);
-    const panelModel = new PanelModel(panelJson);
-    const dashboardJson = transformSceneToSaveModel(dashboard);
-    const dashboardModel = new DashboardModel(dashboardJson);
-
     const exploreMenuItem = await getExploreMenuItem(panel);
 
     // For embedded dashboards we only have explore action for now
@@ -138,7 +130,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     moreSubMenu.push({
       text: t('panel.header-menu.new-alert-rule', `New alert rule`),
-      onClick: (e) => onCreateAlert(e, panelModel, dashboardModel),
+      onClick: (e) => onCreateAlert(panel),
     });
 
     if (hasLegendOptions(panel.state.options)) {
@@ -425,27 +417,22 @@ export function removePanel(dashboard: DashboardScene, panel: VizPanel, ask: boo
   const layout = dashboard.state.body;
 
   if (layout instanceof SceneGridLayout || SceneFlexLayout) {
-    layout.setState({
-      children: panels,
-    });
+    layout.setState({ children: panels });
   }
 }
 
-const onCreateAlert = (event: React.MouseEvent, panel: PanelModel, dashboard: DashboardModel) => {
-  event.preventDefault();
-  createAlert(panel, dashboard);
+const onCreateAlert = async (panel: VizPanel) => {
   DashboardInteractions.panelMenuItemClicked('create-alert');
-};
 
-const createAlert = async (panel: PanelModel, dashboard: DashboardModel) => {
-  const formValues = await panelToRuleFormValues(panel, dashboard);
-
+  const formValues = await scenesPanelToRuleFormValues(panel);
   const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
     defaults: JSON.stringify(formValues),
     returnTo: location.pathname + location.search,
   });
 
   locationService.push(ruleFormUrl);
+
+  DashboardInteractions.panelMenuItemClicked('create-alert');
 };
 
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {

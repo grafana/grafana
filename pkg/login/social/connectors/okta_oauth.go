@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -72,9 +73,10 @@ func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSetting
 		return err
 	}
 
-	// add specific validation rules for Okta
-
-	return nil
+	return validation.Validate(info, requester,
+		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
+		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"),
+		validation.RequiredUrlValidator(info.ApiUrl, "API URL"))
 }
 
 func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {

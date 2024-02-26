@@ -1,7 +1,7 @@
 import { chain } from 'lodash';
 
 import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -9,10 +9,10 @@ import {
   IntervalVariable,
   TextBoxVariable,
   QueryVariable,
-  AdHocFilterSet,
   GroupByVariable,
   SceneVariable,
   MultiValueVariable,
+  AdHocFiltersVariable,
   SceneVariableState,
 } from '@grafana/scenes';
 import { VariableType } from '@grafana/schema';
@@ -95,11 +95,18 @@ export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
 ];
 
 export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {
-  return EDITABLE_VARIABLES_SELECT_ORDER.map((variableType) => ({
+  const results = EDITABLE_VARIABLES_SELECT_ORDER.map((variableType) => ({
     label: EDITABLE_VARIABLES[variableType].name,
     value: variableType,
     description: EDITABLE_VARIABLES[variableType].description,
   }));
+
+  if (!config.featureToggles.groupByVariable) {
+    // Remove group by variable type if feature toggle is off
+    return results.filter((option) => option.value !== 'groupby');
+  }
+
+  return results;
 }
 
 export function getVariableEditor(type: EditableVariableType) {
@@ -124,8 +131,7 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'datasource':
       return new DataSourceVariable(initialState);
     case 'adhoc':
-      // TODO: Initialize properly AdHocFilterSet with initialState
-      return new AdHocFilterSet({ name: initialState.name });
+      return new AdHocFiltersVariable(initialState);
     case 'groupby':
       return new GroupByVariable(initialState);
     case 'textbox':
@@ -189,3 +195,6 @@ export function getOptionDataSourceTypes() {
 
   return optionTypes;
 }
+
+export const RESERVED_GLOBAL_VARIABLE_NAME_REGEX = /^(?!__).*$/;
+export const WORD_CHARACTERS_REGEX = /^\w+$/;

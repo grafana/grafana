@@ -13,7 +13,6 @@ import {
   EventBus,
   ExploreLogsPanelState,
   ExplorePanelsState,
-  FeatureState,
   Field,
   GrafanaTheme2,
   LinkModel,
@@ -36,7 +35,6 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import {
   Button,
-  FeatureBadge,
   InlineField,
   InlineFieldRow,
   InlineSwitch,
@@ -628,21 +626,13 @@ class UnthemedLogs extends PureComponent<Props, State> {
         </PanelChrome>
         <PanelChrome
           titleItems={[
-            config.featureToggles.logsExploreTableVisualisation
-              ? this.state.visualisationType === 'logs'
-                ? null
-                : [
-                    <PanelChrome.TitleItem title="Experimental" key="A">
-                      <FeatureBadge
-                        featureState={FeatureState.beta}
-                        tooltip="Table view is experimental and may change in future versions"
-                      />
-                    </PanelChrome.TitleItem>,
-                    <PanelChrome.TitleItem title="Feedback" key="B">
-                      <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
-                    </PanelChrome.TitleItem>,
-                  ]
-              : null,
+            config.featureToggles.logsExploreTableVisualisation ? (
+              this.state.visualisationType === 'logs' ? null : (
+                <PanelChrome.TitleItem title="Feedback" key="A">
+                  <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
+                </PanelChrome.TitleItem>
+              )
+            ) : null,
           ]}
           title={'Logs'}
           actions={
