@@ -265,16 +265,18 @@ const getQueryBoxStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(1)};
     background-color: ${theme.colors.background.secondary};
   `,
-  textBlock: css`
-    border: 1px solid ${theme.colors.border.weak};
-    padding: ${theme.spacing(0.5, 1)};
-    background-color: ${theme.colors.background.primary};
-  `,
-  refId: css`
-    color: ${theme.colors.text.link};
-    padding: ${theme.spacing(0.5, 1)};
-    border: 1px solid ${theme.colors.border.weak};
-  `,
+  textBlock: css({
+    border: `1px solid ${theme.colors.border.weak}`,
+    padding: theme.spacing(0.5, 1),
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.shape.radius.default,
+  }),
+  refId: css({
+    color: theme.colors.text.link,
+    padding: theme.spacing(0.5, 1),
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+  }),
 });
 
 function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
@@ -494,10 +496,12 @@ const getCommonQueryStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.bodySmall.fontSize};
     line-height: ${theme.typography.bodySmall.lineHeight};
     font-weight: ${theme.typography.fontWeightBold};
+    border-radius: ${theme.shape.radius.default};
   `,
   value: css`
     padding: ${theme.spacing(0.5, 1)};
     border: 1px solid ${theme.colors.border.weak};
+    border-radius: ${theme.shape.radius.default};
   `,
 });
 
