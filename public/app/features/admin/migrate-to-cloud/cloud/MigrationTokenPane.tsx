@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Button, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { InfoItem } from '../../shared/InfoItem';
+import { InfoItem } from '../shared/InfoItem';
 
 export const MigrationTokenPane = () => {
   const onGenerateToken = () => {

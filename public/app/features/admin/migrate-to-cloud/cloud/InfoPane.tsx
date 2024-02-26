@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Box, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { InfoItem } from '../../shared/InfoItem';
+import { InfoItem } from '../shared/InfoItem';
 
 export const InfoPane = () => {
   const styles = useStyles2(getStyles);
