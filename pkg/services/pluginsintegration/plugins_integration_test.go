@@ -86,7 +86,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService()
 	pg := postgres.ProvideService(cfg)
-	my := mysql.ProvideService(cfg, hcp)
+	my := mysql.ProvideService()
 	ms := mssql.ProvideService(cfg)
 	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)

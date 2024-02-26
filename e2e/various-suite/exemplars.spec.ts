@@ -1,4 +1,5 @@
 import { e2e } from '../utils';
+import { waitForMonacoToLoad } from '../utils/support/monaco';
 
 const dataSourceName = 'PromExemplar';
 const addDataSource = () => {
@@ -57,12 +58,8 @@ describe('Exemplars', () => {
     // Switch to code editor
     e2e.components.RadioButton.container().filter(':contains("Code")').click();
 
-    // we need to wait for the query-field being lazy-loaded, in two steps:
-    // 1. first we wait for the text 'Loading...' to appear
-    // 1. then we wait for the text 'Loading...' to disappear
-    const monacoLoadingText = 'Loading...';
-    e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
-    e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
+    // Wait for lazy loading Monaco
+    waitForMonacoToLoad();
 
     e2e.components.TimePicker.openButton().click();
     e2e.components.TimePicker.fromField().clear().type('2021-07-10 17:10:00');
