@@ -50,7 +50,7 @@ import { DashboardControls } from './DashboardControls';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
-import { ScopeSelectorScene } from './ScopeSelectorScene/ScopeSelectorScene';
+import { ScopeSelectorScene } from './ScopeSelectorScene';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
@@ -421,6 +421,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         if (event.payload.changedObject instanceof ScopeSelectorScene) {
           if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'isExpanded')) {
             this.forceRender();
+          } else if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'value')) {
+            sceneGraph.getTimeRange(this).onRefresh();
           }
         }
       }
