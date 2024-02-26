@@ -206,6 +206,8 @@ export function updateCredentials(
           serviceCredentialsEnabled: credentials.serviceCredentialsEnabled,
           serviceCredentials,
         },
+        oauthPassThru: true,
+        disableGrafanaCache: true,
       },
       secureJsonData: {
         ...options.secureJsonData,
