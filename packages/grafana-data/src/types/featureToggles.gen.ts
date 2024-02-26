@@ -31,7 +31,6 @@ export interface FeatureToggles {
   correlations?: boolean;
   exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
-  traceToMetrics?: boolean;
   autoMigrateOldPanels?: boolean;
   autoMigrateGraphPanel?: boolean;
   autoMigrateTablePanel?: boolean;
@@ -78,7 +77,6 @@ export interface FeatureToggles {
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
-  externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   faroDatasourceSelector?: boolean;
@@ -105,7 +103,6 @@ export interface FeatureToggles {
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
-  splitScopes?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
@@ -162,7 +159,6 @@ export interface FeatureToggles {
   pluginsSkipHostEnvVars?: boolean;
   tableSharedCrosshair?: boolean;
   regressionTransformation?: boolean;
-  displayAnonymousStats?: boolean;
   lokiQueryHints?: boolean;
   kubernetesFeatureToggles?: boolean;
   alertingPreviewUpgrade?: boolean;
