@@ -30,4 +30,14 @@ type (
 			NoAlias    bool
 		}
 	}
+
+	tmpl_vars_plugin_registry struct {
+		Schemas []Schema
+	}
+
+	Schema struct {
+		Name     string
+		Maturity string
+		FilePath string
+	}
 )

@@ -1,0 +1,31 @@
+package schemas
+
+import (
+    "cuelang.org/go/cue"
+    "cuelang.org/go/cue/cuecontext"
+)
+
+type ComposableKind struct {
+    Name string
+    Maturity string
+    CueFile cue.Value
+}
+
+func GetComposableKinds() ([]ComposableKind, error) {
+    ctx := cuecontext.New()
+    kinds := make([]ComposableKind, 0)
+    {{- range .Schemas }}
+    
+    {{ .Name }}Cue, err := loadCueFile(ctx, "{{ .FilePath }}")
+    if err != nil {
+        return nil, err
+    }
+    kinds = append(kinds, ComposableKind{
+        Name: "{{ .Name }}",
+        Maturity: "{{ .Maturity }}",
+        CueFile: {{ .Name }}Cue,
+    })
+    {{- end }}
+    
+    return kinds, nil
+}

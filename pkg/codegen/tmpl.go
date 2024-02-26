@@ -51,4 +51,14 @@ type (
 	tvars_status struct {
 		PackageName string
 	}
+
+	tvars_registry struct {
+		Schemas []Schema
+	}
+
+	Schema struct {
+		Name     string
+		Maturity string
+		FilePath string
+	}
 )

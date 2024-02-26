@@ -7,7 +7,9 @@ package main
 
 import (
 	"context"
+	"cuelang.org/go/cue/cuecontext"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -72,6 +74,15 @@ func main() {
 		log.Fatalln(fmt.Errorf("error writing files to disk: %s", err))
 	}
 
+	rawResources, err := genRawResources()
+	if err != nil {
+		log.Fatalln(fmt.Errorf("error generating raw plugin resources: %s", err))
+	}
+
+	if err := jfs.Merge(rawResources); err != nil {
+		log.Fatalln(fmt.Errorf("Unable to merge raw resources: %s", err))
+	}
+
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		if err = jfs.Verify(context.Background(), groot); err != nil {
 			log.Fatal(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
@@ -116,4 +127,38 @@ func splitSchiffer(names []string) codejen.FileMapper {
 		}
 		return f, nil
 	}
+}
+
+func genRawResources() (*codejen.FS, error) {
+	jennies := codejen.JennyListWithNamer(func(d []corecodegen.CueSchema) string {
+		return "PluginsRawResources"
+	})
+	jennies.Append(&codegen.PluginRegistryJenny{})
+
+	ctx := cuecontext.New()
+
+	schemas := make([]corecodegen.CueSchema, 0)
+	filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+
+		if !strings.HasSuffix(d.Name(), ".cue") {
+			return nil
+		}
+
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		schemas = append(schemas, corecodegen.CueSchema{
+			CueFile:  ctx.CompileBytes(b),
+			FilePath: "./" + filepath.Join("public", "plugins", path),
+		})
+
+		return nil
+	})
+
+	return jennies.GenerateFS(schemas)
 }
