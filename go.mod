@@ -463,8 +463,8 @@ require github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
 require github.com/fullstorydev/grpchan v1.1.1 // @grafana/backend-platform
 
 require (
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4 // @grafana/grafana-app-platform-squad
 )
 
 require (
