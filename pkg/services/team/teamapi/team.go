@@ -127,6 +127,13 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to delete Team", err)
 	}
+
+	// Clear team assignment and permissions
+	ctx := c.Req.Context()
+	if err := tapi.ac.DeleteTeamPermissions(ctx, orgID, teamID); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete Team permissions", err)
+	}
+
 	return response.Success("Team deleted")
 }
 
