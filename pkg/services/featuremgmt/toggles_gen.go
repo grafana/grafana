@@ -291,10 +291,6 @@ const (
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
 
-	// FlagExploreScrollableLogsContainer
-	// Improves the scrolling behavior of logs in Explore
-	FlagExploreScrollableLogsContainer = "exploreScrollableLogsContainer"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
