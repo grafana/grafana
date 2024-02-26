@@ -1,0 +1,20 @@
+{
+  "from": "now-1h",
+  "to": "now",
+  "queries": [
+    {
+      "refId": "A",
+      "maxDataPoints": 1000,
+      "intervalMs": 5,
+      "expr": "???",
+      "format": "time_series"
+    },
+    {
+      "refId": "B",
+      "maxDataPoints": 1000,
+      "intervalMs": 5,
+      "expr": "???",
+      "format": "table"
+    }
+  ]
+}
