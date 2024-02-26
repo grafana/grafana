@@ -120,8 +120,13 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		return nil, err
 	}
 
+	orgID := user.GetOrgID()
+	if options.OrgID != nil {
+		orgID = *options.OrgID
+	}
+
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:        user.GetOrgID(),
+		OrgID:        orgID,
 		UserID:       userID,
 		Roles:        accesscontrol.GetOrgRoles(user),
 		TeamIDs:      user.GetTeams(),

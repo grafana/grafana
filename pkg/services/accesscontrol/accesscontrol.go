@@ -63,6 +63,7 @@ type RoleRegistry interface {
 
 type Options struct {
 	ReloadCache bool
+	OrgID       *int64
 }
 
 type SearchOptions struct {
