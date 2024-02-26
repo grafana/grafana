@@ -16,6 +16,11 @@ weight: 100
 
 Team Label Based Access Control (LBAC) simplifies and streamlines data source access management based on team memberships.
 
+{{< admonition type="note" >}}
+Creating Team LBAC rules is available for preview for logs with Loki in Grafana Cloud.
+Report any unexpected behavior to the Grafana Support team.
+{{< /admonition >}}
+
 You can configure user access based upon team memberships using LogQL.
 Team LBAC controls access to logs depending on the rules set for each team.
 
@@ -27,11 +32,6 @@ This feature addresses two common challenges faced by Grafana users:
    Team LBAC lets Grafana Teams use the same dashboard with different access control rules.
 
 To set up Team LBAC for a Loki data source, refer to [Configure Team LBAC](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
-
-{{< admonition type="note" >}}
-Creating Team LBAC rules is available for preview for logs with Loki in Grafana Cloud.
-Report any unexpected behavior to the Grafana Support team.
-{{< /admonition >}}
 
 ## Limitations
 
