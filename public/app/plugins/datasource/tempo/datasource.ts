@@ -11,6 +11,7 @@ import {
   DataQueryResponse,
   DataQueryResponseData,
   DataSourceApi,
+  DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
@@ -209,6 +210,23 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return options.flatMap((option: SelectableValue<string>) =>
       option.value !== undefined ? [{ text: option.value }] : []
     );
+  }
+
+  // Allows to retrieve the list of tags for ad-hoc filters
+  async getTagKeys(): Promise<Array<{ text: string }>> {
+    await this.languageProvider.fetchTags();
+    const tags = this.languageProvider.tagsV2 || [];
+    return tags
+      .map(({ name, tags }) =>
+        tags.filter((tag) => tag !== undefined).map((t) => (name !== 'intrinsic' ? `${name}.${t}` : `${t}`))
+      )
+      .flat()
+      .map((tag) => ({ text: tag }));
+  }
+
+  // Allows to retrieve the list of tag values for ad-hoc filters
+  getTagValues(options: DataSourceGetTagValuesOptions): Promise<Array<{ text: string }>> {
+    return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''));
   }
 
   init = async () => {

@@ -34,7 +34,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
 NavToolbarActions.displayName = 'NavToolbarActions';
 
 /**
- * This part is split into a separate componet to help test this
+ * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
   const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel } = dashboard.useState();
@@ -46,7 +46,24 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && !editview && Boolean(meta.canStar) && !isEditingPanel,
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="add-visualization"
+        tooltip={'Add visualization'}
+        icon="graph-bar"
+        onClick={() => {
+          const id = dashboard.onCreateNewPanel();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+          locationService.partial({ editPanel: id });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: uid && !editview && Boolean(meta.canStar) && !isEditingPanel && !isEditing,
     render: () => {
       let desc = meta.isStarred
         ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')

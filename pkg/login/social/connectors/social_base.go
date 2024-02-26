@@ -50,6 +50,11 @@ func newSocialBase(name string,
 	}
 }
 
+func (s *SocialBase) updateInfo(name string, info *social.OAuthInfo) {
+	s.Config = createOAuthConfig(info, s.cfg, name)
+	s.info = info
+}
+
 type groupStruct struct {
 	Groups []string `json:"groups"`
 }
