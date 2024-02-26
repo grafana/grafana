@@ -35,6 +35,33 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
     });
 
+    it('Should call the playlist srv when using playlist controls', async () => {
+      setup();
+
+      // Previous dashboard
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
+      await userEvent.click(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev));
+      expect(playlistSrv.prev).toHaveBeenCalledTimes(1);
+
+      // Next dashboard
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
+      await userEvent.click(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next));
+      expect(playlistSrv.next).toHaveBeenCalledTimes(1);
+
+      // Stop playlist
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+      await userEvent.click(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop));
+      expect(playlistSrv.stop).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).not.toBeInTheDocument();
+    });
+
+    it('Should hide the playlist controls when it is not playing', async () => {
+      setup();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.stop)).not.toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
+    });
+
     it('Should show correct buttons when editing', async () => {
       setup();
 
