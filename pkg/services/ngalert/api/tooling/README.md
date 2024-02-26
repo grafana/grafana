@@ -19,7 +19,7 @@ Instead, we use a hybrid approach - we define the types in Golang, with comments
 
 ### Stability
 
-We have some endpoints that we document publically as being stable, and others that we consider unstable. The stable endpoints are documented in `api.json`, where all endpoints are available in `post.json`.
+We have some endpoints that we document publicly as being stable, and others that we consider unstable. The stable endpoints are documented in `api.json`, where all endpoints are available in `post.json`.
 
 To stabilize an endpoint, add the `stable` tag to its route comment:
 

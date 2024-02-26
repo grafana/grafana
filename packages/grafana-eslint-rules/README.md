@@ -1,6 +1,6 @@
 # Grafana ESLint Rules
 
-This package contains custom eslint rules for use within the Grafana codebase only. They're extremley specific to our codebase, and are of little use to anyone else. They're not published to NPM, and are consumed through the Yarn workspace.
+This package contains custom eslint rules for use within the Grafana codebase only. They're extremely specific to our codebase, and are of little use to anyone else. They're not published to NPM, and are consumed through the Yarn workspace.
 
 ## Rules
 

@@ -44,7 +44,7 @@ Once a PR is approved as per above, any team member MAY merge the PR.
 ## Backporting a PR
 
 Critical bug fixes needed for a previous minor release should be backported to the respective release branches after coordinating with the delivery team.
-Please see the [contibution guide](./contribute/merge-pull-request.md#should-the-pull-request-be-backported) for further details.
+Please see the [contribution guide](./contribute/merge-pull-request.md#should-the-pull-request-be-backported) for further details.
 
 # Release workflow
 
