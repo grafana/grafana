@@ -78,7 +78,7 @@
     "@types/marked": "5.0.2",
     "@types/node": "20.11.20",
     "@types/papaparse": "5.3.14",
-    "@types/react": "18.2.55",
+    "@types/react": "18.2.59",
     "@types/react-dom": "18.2.19",
     "@types/testing-library__jest-dom": "5.14.9",
     "@types/tinycolor2": "1.4.6",
