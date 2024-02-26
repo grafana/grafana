@@ -184,7 +184,7 @@ describe('Mute timings', () => {
       ...defaultConfig,
       alertmanager_config: {
         ...configWithoutMuteTimings,
-        time_intervals: [
+        mute_time_intervals: [
           muteTimeInterval,
           {
             name: 'maintenance period',
@@ -232,7 +232,7 @@ describe('Mute timings', () => {
       ...defaultConfig,
       alertmanager_config: {
         ...configWithoutMuteTimings,
-        time_intervals: [
+        mute_time_intervals: [
           muteTimeInterval,
           {
             name: 'maintenance period',
@@ -279,9 +279,9 @@ describe('Mute timings', () => {
       ...defaultConfig,
       alertmanager_config: {
         ...configWithoutMuteTimings,
-        time_intervals: [
-          muteTimeInterval2,
+        mute_time_intervals: [
           muteTimeInterval,
+          muteTimeInterval2,
           {
             name: 'maintenance period',
             time_intervals: [
@@ -346,7 +346,7 @@ describe('Mute timings', () => {
           ],
         },
         templates: [],
-        time_intervals: [
+        mute_time_intervals: [
           {
             name: 'default-mute',
             time_intervals: [
@@ -415,7 +415,7 @@ describe('Mute timings', () => {
           ],
         },
         templates: [],
-        time_intervals: [
+        mute_time_intervals: [
           {
             name: 'Lunch breaks',
             time_intervals: [

@@ -21,9 +21,9 @@ const MuteTimings = () => {
   const config = currentData?.alertmanager_config;
 
   const getMuteTimingByName = useCallback(
-    (id: string): MuteTimeInterval | undefined => {
+    (id: string, fromTimeIntervals: boolean): MuteTimeInterval | undefined => {
       // merge both fields mute_time_intervals and time_intervals to support both old and new config
-      const time_intervals = [...(config?.mute_time_intervals ?? []), ...(config?.time_intervals ?? [])];
+      const time_intervals = fromTimeIntervals ? config?.time_intervals ?? [] : config?.mute_time_intervals ?? [];
       const timing = time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
 
       if (timing) {
@@ -55,13 +55,17 @@ const MuteTimings = () => {
           <Route exact path="/alerting/routes/mute-timing/edit">
             {() => {
               if (queryParams['muteName']) {
-                const muteTiming = getMuteTimingByName(String(queryParams['muteName']));
+                const muteTimingInMuteTimings = getMuteTimingByName(String(queryParams['muteName']), false);
+                const muteTimingInTimeIntervals = getMuteTimingByName(String(queryParams['muteName']), true);
+                const inTimeIntervals = Boolean(muteTimingInTimeIntervals);
+                const muteTiming = inTimeIntervals ? muteTimingInTimeIntervals : muteTimingInMuteTimings;
                 const provenance = muteTiming?.provenance;
 
                 return (
                   <MuteTimingForm
                     loading={isLoading}
-                    muteTiming={muteTiming}
+                    fromMuteTimings={muteTimingInMuteTimings}
+                    fromTimeIntervals={muteTimingInTimeIntervals}
                     showError={!muteTiming && !isLoading}
                     provenance={provenance}
                   />
