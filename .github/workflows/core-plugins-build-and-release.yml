@@ -11,7 +11,7 @@ on:
           - grafana-azure-monitor-datasource
           - grafana-pyroscope-datasource
           - grafana-testdata-datasource
-          # - jaeger
+          - jaeger
           - parca
           - stackdriver
           - tempo
