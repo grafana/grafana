@@ -46,7 +46,7 @@
     "@types/lodash": "4.14.202",
     "@types/node": "20.11.20",
     "@types/prismjs": "1.26.3",
-    "@types/react": "18.2.55",
+    "@types/react": "18.2.59",
     "@types/react-dom": "18.2.19",
     "@types/semver": "7.5.7",
     "@types/uuid": "9.0.8",
