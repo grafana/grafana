@@ -21,7 +21,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef":                schema_pkg_apis_query_v0alpha1_DataSourceRef(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":             schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest":          schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":            QueryDataResponse{}.OpenAPIDefinition(),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange":                    schema_pkg_apis_query_v0alpha1_TimeRange(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Position":            schema_apis_query_v0alpha1_template_Position(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.QueryTemplate":       schema_apis_query_v0alpha1_template_QueryTemplate(ref),

@@ -16,6 +16,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -92,7 +94,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&v0alpha1.DataSourceApiServer{},
 		&v0alpha1.DataSourceApiServerList{},
-		&v0alpha1.QueryDataResponse{},
+		&backend.QueryDataResponse{},
 	)
 }
 

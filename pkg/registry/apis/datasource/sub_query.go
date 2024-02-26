@@ -21,10 +21,26 @@ type subQueryREST struct {
 	builder *DataSourceAPIBuilder
 }
 
-var _ = rest.Connecter(&subQueryREST{})
+var (
+	_ rest.Connecter       = (*subQueryREST)(nil)
+	_ rest.Storage         = (*subQueryREST)(nil)
+	_ rest.StorageMetadata = (*subQueryREST)(nil)
+)
 
 func (r *subQueryREST) New() runtime.Object {
-	return &v0alpha1.QueryDataResponse{}
+	return &backend.QueryDataResponse{}
+}
+
+// ProducesMIMETypes returns a list of the MIME types the specified HTTP verb (GET, POST, DELETE,
+// PATCH) can respond with.
+func (r *subQueryREST) ProducesMIMETypes(verb string) []string {
+	return nil
+}
+
+// ProducesObject returns an object the specified HTTP verb respond with. It will overwrite storage object if
+// it is not nil. Only the type of the return object matters, the value will be ignored.
+func (r *subQueryREST) ProducesObject(verb string) interface{} {
+	return backend.QueryDataResponse{}
 }
 
 func (r *subQueryREST) Destroy() {}

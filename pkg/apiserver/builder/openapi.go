@@ -4,17 +4,20 @@ import (
 	"maps"
 	"strings"
 
-	common "k8s.io/kube-openapi/pkg/common"
+	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	sdk "github.com/grafana/grafana-plugin-sdk-go/experimental/api/v0alpha1"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // This should eventually live in grafana-app-sdk
-func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefinitions {
-	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-		defs := v0alpha1.GetOpenAPIDefinitions(ref) // common grafana apis
+func GetOpenAPIDefinitions(builders []APIGroupBuilder) openapi.GetOpenAPIDefinitions {
+	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
+		defs := common.GetOpenAPIDefinitions(ref) // common grafana apis
+		maps.Copy(defs, sdk.GetOpenAPIDefinitions(ref))
 		for _, b := range builders {
 			g := b.GetOpenAPIDefinitions()
 			if g != nil {
