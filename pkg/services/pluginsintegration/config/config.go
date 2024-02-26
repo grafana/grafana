@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// ProvidePluginManagementConfig returns a new pCfg.Cfg.
+// ProvidePluginManagementConfig returns a new pCfg.PluginsCfg.
 // It is used to provide configuration to Grafana's implementation of the plugin management system.
-func ProvidePluginManagementConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, features featuremgmt.FeatureToggles) (*pCfg.Cfg, error) {
+func ProvidePluginManagementConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, features featuremgmt.FeatureToggles) (*pCfg.PluginsCfg, error) {
 	plugins := settingProvider.Section("plugins")
 	allowedUnsigned := grafanaCfg.PluginsAllowUnsigned
 	if len(plugins.KeyValue("allow_loading_unsigned_plugins").Value()) > 0 {
@@ -27,7 +27,7 @@ func ProvidePluginManagementConfig(settingProvider setting.Provider, grafanaCfg 
 		return nil, fmt.Errorf("new opentelemetry cfg: %w", err)
 	}
 
-	return pCfg.NewCfg(
+	return pCfg.NewPluginsCfg(
 		settingProvider.KeyValue("", "app_mode").MustBool(grafanaCfg.Env == setting.Dev),
 		grafanaCfg.PluginsPath,
 		extractPluginSettings(settingProvider),

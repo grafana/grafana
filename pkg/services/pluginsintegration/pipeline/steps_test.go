@@ -14,7 +14,7 @@ import (
 )
 
 func TestSkipPlugins(t *testing.T) {
-	cfg := &config.Cfg{
+	cfg := &config.PluginsCfg{
 		DisablePlugins: []string{"plugin1", "plugin2"},
 	}
 	s := NewDisablePluginsStep(cfg)
@@ -68,7 +68,7 @@ func TestAsExternal(t *testing.T) {
 	}
 
 	t.Run("should skip a core plugin", func(t *testing.T) {
-		cfg := &config.Cfg{
+		cfg := &config.PluginsCfg{
 			Features: featuremgmt.WithFeatures(featuremgmt.FlagExternalCorePlugins),
 			PluginSettings: setting.PluginSettings{
 				"plugin1": map[string]string{

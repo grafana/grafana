@@ -28,7 +28,7 @@ type PluginEnvVarsProvider struct {
 	log     log.Logger
 }
 
-func NewPluginEnvVarsProvider(cfg *PluginInstanceCfg, settingProvider setting.Provider, pCfg *config.Cfg, features featuremgmt.FeatureToggles,
+func NewPluginEnvVarsProvider(cfg *PluginInstanceCfg, settingProvider setting.Provider, pCfg *config.PluginsCfg, features featuremgmt.FeatureToggles,
 	license plugins.Licensing) *PluginEnvVarsProvider {
 	return &PluginEnvVarsProvider{
 		cfg:     cfg,

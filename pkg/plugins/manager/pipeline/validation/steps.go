@@ -14,7 +14,7 @@ import (
 )
 
 // DefaultValidateFuncs are the default ValidateFunc used for the Validate step of the Validation stage.
-func DefaultValidateFuncs(cfg *config.Cfg) []ValidateFunc {
+func DefaultValidateFuncs(cfg *config.PluginsCfg) []ValidateFunc {
 	return []ValidateFunc{
 		SignatureValidationStep(signature.NewValidator(signature.NewUnsignedAuthorizer(cfg))),
 		ModuleJSValidationStep(),
@@ -74,16 +74,16 @@ func (v *ModuleJSValidator) Validate(_ context.Context, p *plugins.Plugin) error
 }
 
 type AngularDetector struct {
-	cfg              *config.Cfg
+	cfg              *config.PluginsCfg
 	angularInspector angularinspector.Inspector
 	log              log.Logger
 }
 
-func AngularDetectionStep(cfg *config.Cfg, angularInspector angularinspector.Inspector) ValidateFunc {
+func AngularDetectionStep(cfg *config.PluginsCfg, angularInspector angularinspector.Inspector) ValidateFunc {
 	return newAngularDetector(cfg, angularInspector).Validate
 }
 
-func newAngularDetector(cfg *config.Cfg, angularInspector angularinspector.Inspector) *AngularDetector {
+func newAngularDetector(cfg *config.PluginsCfg, angularInspector angularinspector.Inspector) *AngularDetector {
 	return &AngularDetector{
 		cfg:              cfg,
 		angularInspector: angularInspector,

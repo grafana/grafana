@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, pCfg *pluginscfg.Cfg, pluginEnvProvider envvars.Provider, registry registry.Service,
+func ProvideService(cfg *setting.Cfg, pCfg *pluginscfg.PluginsCfg, pluginEnvProvider envvars.Provider, registry registry.Service,
 	licensing plugins.Licensing) (*Manager, error) {
 	l, err := createLoader(cfg, pCfg, pluginEnvProvider, registry, licensing)
 	if err != nil {
@@ -104,7 +104,7 @@ func (m *Manager) Renderer(ctx context.Context) (rendering.Plugin, bool) {
 	return nil, false
 }
 
-func createLoader(cfg *setting.Cfg, pCfg *pluginscfg.Cfg, pluginEnvProvider envvars.Provider,
+func createLoader(cfg *setting.Cfg, pCfg *pluginscfg.PluginsCfg, pluginEnvProvider envvars.Provider,
 	pr registry.Service, l plugins.Licensing) (loader.Service, error) {
 	d := discovery.New(pCfg, discovery.Opts{
 		FindFilterFuncs: []discovery.FindFilterFunc{

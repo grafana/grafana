@@ -29,10 +29,10 @@ var (
 
 type Service struct {
 	pluginRegistry registry.Service
-	cfg            *config.Cfg
+	cfg            *config.PluginsCfg
 }
 
-func ProvideService(pluginRegistry registry.Service, cfg *config.Cfg) *Service {
+func ProvideService(pluginRegistry registry.Service, cfg *config.PluginsCfg) *Service {
 	return &Service{
 		pluginRegistry: pluginRegistry,
 		cfg:            cfg,
