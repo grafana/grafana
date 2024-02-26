@@ -37,7 +37,8 @@ import { GraphNG, GraphNGProps, PropDiffFn } from 'app/core/components/GraphNG/G
 import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
-import { BarChartTooltip } from './BarChartTooltip';
+import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
+
 import { Options } from './panelcfg.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
@@ -305,10 +306,11 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       fillOpacity,
       allFrames: info.viz,
       fullHighlight,
+      hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
     });
   };
 
-  const showNewVizTooltips = config.featureToggles.newVizTooltips;
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
 
   return (
     <GraphNG
@@ -335,9 +337,9 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
               }
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
                 return (
-                  <BarChartTooltip
+                  <TimeSeriesTooltip
                     frames={info.viz}
-                    seriesFrame={info.viz[0]}
+                    seriesFrame={info.aligned}
                     dataIdxs={dataIdxs}
                     seriesIdx={seriesIdx}
                     mode={options.tooltip.mode}

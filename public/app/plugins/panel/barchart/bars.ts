@@ -15,7 +15,7 @@ import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBui
 import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
+import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -56,6 +56,7 @@ export interface BarsOptions {
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
+  hoverMulti?: boolean;
   legend?: VizLegendOptions;
   xSpacing?: number;
   xTimeAuto?: boolean;
@@ -128,6 +129,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     fillOpacity = 1,
     showValue,
     xSpacing = 0,
+    hoverMulti = false,
   } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
@@ -141,6 +143,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   }
 
   let qt: Quadtree;
+  const numSeries = 30; // !!
+  const hovered: Array<Rect | null> = Array(numSeries).fill(null);
   let hRect: Rect | null;
 
   // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
@@ -460,7 +464,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       y: false,
     },
     dataIdx: (u, seriesIdx) => {
-      if (seriesIdx === 1) {
+      if (seriesIdx === 0) {
+        hovered.fill(null);
         hRect = null;
 
         let cx = u.cursor.left! * uPlot.pxRatio;
@@ -468,23 +473,29 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-            hRect = o;
+            hRect = hovered[0] = o;
+            hovered[hRect.sidx] = hRect;
+
+            hoverMulti && findRects(qt, undefined, hRect.didx).forEach(r => {
+              hovered[r.sidx] = r;
+            });
           }
         });
       }
 
-      return hRect && seriesIdx === hRect.sidx ? hRect.didx : null;
+      return hovered[seriesIdx]?.didx;
     },
     points: {
       fill: 'rgba(255,255,255,0.4)',
       bbox: (u, seriesIdx) => {
-        let isHovered = hRect && seriesIdx === hRect.sidx;
+        let hRect2 = hovered[seriesIdx];
+        let isHovered = hRect2 != null;
 
         return {
-          left: isHovered ? hRect!.x / uPlot.pxRatio : -10,
-          top: isHovered ? hRect!.y / uPlot.pxRatio : -10,
-          width: isHovered ? hRect!.w / uPlot.pxRatio : 0,
-          height: isHovered ? hRect!.h / uPlot.pxRatio : 0,
+          left: isHovered ? hRect2!.x / uPlot.pxRatio : -10,
+          top: isHovered ? hRect2!.y / uPlot.pxRatio : -10,
+          width: isHovered ? hRect2!.w / uPlot.pxRatio : 0,
+          height: isHovered ? hRect2!.h / uPlot.pxRatio : 0,
         };
       },
     },
