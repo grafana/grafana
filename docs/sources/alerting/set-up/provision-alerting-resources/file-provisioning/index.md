@@ -712,7 +712,7 @@ resetPolicies:
 
 ## Import mute timings
 
-Create or delete mute timings via provisioning files via provisioning files in your Grafana instance(s).
+Create or delete mute timings via provisioning files using provisioning files in your Grafana instance(s).
 
 1. Find the mute timing in Grafana.
 1. [Export][alerting_export] and download a provisioning file for your mute timing.
