@@ -4,6 +4,9 @@ import {
   MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
+  SceneGridItem,
+  SceneGridLayout,
+  SceneGridRow,
   SceneObject,
   SceneQueryRunner,
   VizPanel,
@@ -14,6 +17,9 @@ import { initialIntervalVariableModelState } from 'app/features/variables/interv
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+
+export const NEW_PANEL_HEIGHT = 8;
+export const NEW_PANEL_WIDTH = 12;
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
@@ -194,10 +200,51 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
-export function onCreateNewPanel(dashboard: DashboardScene): number {
-  const vizPanel = new VizPanel({
+export function getNextPanelId(dashboard: DashboardScene) {
+  let max = 0;
+  const body = dashboard.state.body;
+
+  if (body instanceof SceneGridLayout) {
+    for (const child of body.state.children) {
+      if (child instanceof SceneGridItem) {
+        const vizPanel = child.state.body;
+
+        if (vizPanel instanceof VizPanel) {
+          const panelId = getPanelIdForVizPanel(vizPanel);
+
+          if (panelId > max) {
+            max = panelId;
+          }
+        }
+      }
+
+      if (child instanceof SceneGridRow) {
+        for (const rowChild of child.state.children) {
+          if (rowChild instanceof SceneGridItem) {
+            const vizPanel = rowChild.state.body;
+
+            if (vizPanel instanceof VizPanel) {
+              const panelId = getPanelIdForVizPanel(vizPanel);
+
+              if (panelId > max) {
+                max = panelId;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return max + 1;
+}
+
+export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
+  const panelId = getNextPanelId(dashboard);
+
+  return new VizPanel({
     title: 'Panel Title',
-    key: 'panel-1', // the first panel should always be panel-1
+    key: getVizPanelKeyForPanelId(panelId),
     pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     menu: new VizPanelMenu({
@@ -211,8 +258,4 @@ export function onCreateNewPanel(dashboard: DashboardScene): number {
       transformations: [],
     }),
   });
-  dashboard.addPanel(vizPanel);
-  const id = getPanelIdForVizPanel(vizPanel);
-
-  return id;
 }
