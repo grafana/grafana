@@ -41,7 +41,7 @@ For a complete guide about how Grafana provisions resources, refer to the [Provi
 
 ## Import alert rules
 
-Create or delete alert rules via provisioning files in your Grafana instance(s).
+Create or delete alert rules using provisioning files in your Grafana instance(s).
 
 1. Find the alert rule group in Grafana.
 1. [Export][alerting_export] and download a provisioning file for your alert rules.
