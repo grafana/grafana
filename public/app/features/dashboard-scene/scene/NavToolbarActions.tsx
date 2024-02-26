@@ -46,7 +46,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: isEditing && !editview && !meta.isNew && !isViewingPanel && !isEditingPanel,
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
     render: () => (
       <ToolbarButton
         key="add-visualization"
@@ -86,7 +86,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && !editview && !isEditingPanel && !isEditing,
+    condition: uid && !editview && !isEditingPanel,
     render: () => (
       <ToolbarButton
         key="view-in-old-dashboard-button"

@@ -122,6 +122,14 @@ describe('DashboardScene', () => {
         expect(sceneGraph.getTimeRange(scene)!.state.timeZone).toBe(prevState);
       });
 
+      it('Should throw an error when adding a panel to a layout that is not SceneGridLayout', () => {
+        const scene = buildTestScene({ body: undefined });
+
+        expect(() => {
+          scene.addPanel(new VizPanel({ title: 'Panel Title', key: 'panel-4', pluginId: 'timeseries' }));
+        }).toThrow('Trying to add a panel in a layout that is not SceneGridLayout');
+      });
+
       it('Should add a new panel to the dashboard', () => {
         const vizPanel = new VizPanel({
           title: 'Panel Title',
