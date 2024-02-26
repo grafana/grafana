@@ -328,7 +328,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
 
-      if (opts.fullHighlight) {
+      if (!isStacked && opts.fullHighlight) {
         if (opts.xOri === ScaleOrientation.Horizontal) {
           barRect.y = 0;
           barRect.h = u.bbox.height;
