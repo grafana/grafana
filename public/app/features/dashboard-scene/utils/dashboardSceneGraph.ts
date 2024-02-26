@@ -1,4 +1,4 @@
-import { VizPanel, SceneGridItem, SceneGridRow, SceneDataLayers, sceneGraph, behaviors } from '@grafana/scenes';
+import { VizPanel, SceneGridItem, SceneGridRow, SceneDataLayers, sceneGraph } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
