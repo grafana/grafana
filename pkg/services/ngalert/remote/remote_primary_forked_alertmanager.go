@@ -19,6 +19,8 @@ type RemotePrimaryForkedAlertmanager struct {
 
 	internal notifier.Alertmanager
 	remote   remoteAlertmanager
+
+	currentConfig string
 }
 
 type RemotePrimaryConfig struct {
@@ -48,16 +50,29 @@ func NewRemotePrimaryForkedAlertmanager(cfg RemotePrimaryConfig, internal notifi
 	}, nil
 }
 
-// ApplyConfig calls ApplyConfig on the remote Alertmanager in case it hasn't been marked as "ready" yet.
-// This is how we make sure we send the configuration on startup.
+// ApplyConfig calls ApplyConfig on the remote Alertmanager in case the config has changed.
+// This way we send the configuration on startup and config change.
 // It then calls ApplyConfig on the internal Alertmanager.
 func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+	// ApplyConfig will perform a readiness check and sync the Alertmanagers.
+	// Note: we don't really need this check, the remote AM struct checks the readiness on every call.
 	if !fam.remote.Ready() {
-		// ApplyConfig will perform a readiness check and sync the Alertmanagers.
 		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
 			// In remote primary mode we care about errors in the remote Alertmanager.
-			return fmt.Errorf("failed to apply config to the remote Alertmanager: %w", err)
+			return fmt.Errorf("failed to call ApplyConfig on the remote Alertmanager: %w", err)
 		}
+		fam.currentConfig = config.ConfigurationHash
+	}
+
+	// If the configuration has changed, we need to send it to the remote Alertmanager.
+	if config.ConfigurationHash != fam.currentConfig {
+		fam.log.Info("Configuration has changed, sending it to the remote Alertmanager")
+		if err := fam.remote.SendConfiguration(ctx, config); err != nil {
+			return fmt.Errorf("failed to send config to the remote Alertmanager: %w", err)
+		}
+		fam.currentConfig = config.ConfigurationHash
+	} else {
+		fam.log.Debug("Configuration has not changed, skipping sending it to the remote Alertmanager")
 	}
 
 	return fam.internal.ApplyConfig(ctx, config)
@@ -88,6 +103,7 @@ func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Conte
 	if err := fam.remote.SendConfiguration(ctx, dbCfg); err != nil {
 		return fmt.Errorf("failed to send config to the remote Alertmanager: %w", err)
 	}
+	fam.currentConfig = dbCfg.ConfigurationHash
 	return nil
 }
 
