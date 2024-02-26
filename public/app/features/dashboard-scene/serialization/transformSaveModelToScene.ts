@@ -28,6 +28,7 @@ import {
   UserActionEvent,
   GroupByVariable,
   AdHocFiltersVariable,
+  SceneFlexLayout,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
@@ -266,6 +267,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardMacro,
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
+      trackIfIsEmpty,
     ],
     $data:
       layers.length > 0
@@ -460,7 +462,8 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   }
 
   if (panel.repeat) {
-    const repeatDirection = panel.repeatDirection ?? 'h';
+    const repeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
+
     return new PanelRepeaterGridItem({
       key: `grid-item-${panel.id}`,
       x: panel.gridPos.x,
@@ -471,7 +474,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
       source: new VizPanel(vizPanelState),
       variableName: panel.repeat,
       repeatedPanels: [],
-      repeatDirection: panel.repeatDirection,
+      repeatDirection: repeatDirection,
       maxPerRow: panel.maxPerRow,
     });
   }
@@ -533,6 +536,21 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
         break;
     }
   });
+}
+
+export function trackIfIsEmpty(parent: DashboardScene) {
+  updateIsEmpty(parent);
+
+  parent.state.body.subscribeToState(() => {
+    updateIsEmpty(parent);
+  });
+}
+
+function updateIsEmpty(parent: DashboardScene) {
+  const { body } = parent.state;
+  if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
+    parent.setState({ isEmpty: body.state.children.length === 0 });
+  }
 }
 
 const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {

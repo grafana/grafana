@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -712,7 +713,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 
 	ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features, nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -829,7 +830,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 
 	ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features, nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	user := &user.SignedInUser{
 		OrgID: 1,

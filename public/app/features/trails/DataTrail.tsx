@@ -29,7 +29,7 @@ import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { LOGS_METRIC, MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
+import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
@@ -193,7 +193,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   };
 }
 
-function getTopSceneFor(metric?: string) {
+export function getTopSceneFor(metric?: string) {
   if (metric) {
     return new MetricScene({ metric: metric });
   } else {
@@ -206,9 +206,9 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
     variables: [
       new DataSourceVariable({
         name: VAR_DATASOURCE,
-        label: 'Data source',
+        label: 'Prometheus data source',
         value: initialDS,
-        pluginId: metric === LOGS_METRIC ? 'loki' : 'prometheus',
+        pluginId: 'prometheus',
       }),
       new AdHocFiltersVariable({
         name: VAR_FILTERS,
@@ -235,13 +235,17 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
     }),
     controls: css({
       display: 'flex',
       gap: theme.spacing(1),
+      padding: theme.spacing(1, 0),
       alignItems: 'flex-end',
       flexWrap: 'wrap',
+      position: 'sticky',
+      background: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
+      zIndex: theme.zIndex.activePanel + 1,
+      top: 0,
     }),
   };
 }
