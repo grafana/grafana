@@ -48,7 +48,7 @@ Choose from the options below to import (or provision) your Grafana Alerting res
 
 ## Export alerting resources
 
-You can export both manually created and provisioned alerting resources. Additionally, it's possible to edit and export an alert rule without applying the changes.
+You can export both manually created and provisioned alerting resources. You can also edit and export an alert rule without applying the changes.
 
 For detailed instructions on the various export options, refer to [Export alerting resources][alerting_export].
 
