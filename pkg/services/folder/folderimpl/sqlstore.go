@@ -464,8 +464,11 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 				s.WriteString(getFullpathJoinsSQL())
 			}
 			// covered by UQE_folder_org_id_uid
-			s.WriteString(` WHERE f0.org_id=?`)
-			args := []any{q.OrgID}
+			args := []any{}
+			if q.OrgID > 0 {
+				s.WriteString(` WHERE f0.org_id=?`)
+				args = []any{q.OrgID}
+			}
 			if len(partialUIDs) > 0 {
 				s.WriteString(` AND f0.uid IN (?` + strings.Repeat(", ?", len(partialUIDs)-1) + `)`)
 				for _, uid := range partialUIDs {

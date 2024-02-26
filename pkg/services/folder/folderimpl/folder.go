@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"runtime"
@@ -27,6 +28,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -40,7 +43,6 @@ type Service struct {
 	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
-
 	// bus is currently used to publish event in case of title change
 	bus bus.Bus
 
@@ -57,6 +59,7 @@ func ProvideService(
 	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
+	supportBundles supportbundles.Service,
 	r prometheus.Registerer,
 ) folder.Service {
 	store := ProvideStore(db, cfg)
@@ -74,6 +77,8 @@ func ProvideService(
 		metrics:              newFoldersMetrics(r),
 	}
 	srv.DBMigration(db)
+
+	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
@@ -1180,4 +1185,67 @@ func (s *Service) RegisterService(r folder.RegistryService) error {
 	s.registry[r.Kind()] = r
 
 	return nil
+}
+
+func (s *Service) supportBundleCollector() supportbundles.Collector {
+	collector := supportbundles.Collector{
+		UID:               "folder-stats",
+		DisplayName:       "Folder information",
+		Description:       "Folder information for the Grafana instance",
+		IncludedByDefault: false,
+		Default:           true,
+		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
+			s.log.Info("Generating folder support bundle")
+			folders, err := s.GetFolders(ctx, folder.GetFoldersQuery{
+				OrgID: 0,
+				SignedInUser: &user.SignedInUser{
+					Login:            "sa-supportbundle",
+					OrgRole:          "Admin",
+					IsGrafanaAdmin:   true,
+					IsServiceAccount: true,
+					Permissions:      map[int64]map[string][]string{accesscontrol.GlobalOrgID: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}}},
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
+			return s.supportItemFromFolders(folders)
+		},
+	}
+	return collector
+}
+
+func (s *Service) supportItemFromFolders(folders []*folder.Folder) (*supportbundles.SupportItem, error) {
+	stats := struct {
+		Total    int              `json:"total"`    // how many folders?
+		Depths   map[int]int      `json:"depths"`   // how deep they are?
+		Children map[int]int      `json:"children"` // how many child folders they have?
+		Folders  []*folder.Folder `json:"folders"`  // what are they?
+	}{Total: len(folders), Folders: folders, Children: map[int]int{}, Depths: map[int]int{}}
+
+	// Build parent-child mapping
+	parents := map[string]string{}
+	children := map[string][]string{}
+	for _, f := range folders {
+		parents[f.UID] = f.ParentUID
+		children[f.ParentUID] = append(children[f.ParentUID], f.UID)
+	}
+	// Find depths of each folder
+	for _, f := range folders {
+		depth := 0
+		for uid := f.UID; uid != ""; uid = parents[uid] {
+			depth++
+		}
+		stats.Depths[depth] += 1
+		stats.Children[len(children[f.UID])] += 1
+	}
+
+	b, err := json.MarshalIndent(stats, "", " ")
+	if err != nil {
+		return nil, err
+	}
+	return &supportbundles.SupportItem{
+		Filename:  "folders.json",
+		FileBytes: b,
+	}, nil
 }
