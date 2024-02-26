@@ -3,6 +3,7 @@ aliases:
   - ../notifications/
   - ../old-alerting/notifications/
   - ../unified-alerting/notifications/
+  - ./alerting-rules/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-notification-policy/
 description: Configure notification policies to determine how alerts are routed to contact points
 keywords:
@@ -17,7 +18,7 @@ labels:
     - enterprise
     - oss
 title: Configure notification policies
-weight: 420
+weight: 430
 ---
 
 # Configure notification policies
