@@ -132,6 +132,14 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
       };
   }
   if (instanceOfAzureCredential<AadCurrentUserCredentials>(authType, credentials)) {
+    if (instanceOfAzureCredential<AzureClientSecretCredentials>('clientsecret', credentials.serviceCredentials)) {
+      const serviceCredentials = { ...credentials.serviceCredentials, clientSecret: getSecret(options) };
+      return {
+        authType,
+        serviceCredentialsEnabled: credentials.serviceCredentialsEnabled,
+        serviceCredentials,
+      };
+    }
     return {
       authType,
       serviceCredentialsEnabled: credentials.serviceCredentialsEnabled,
