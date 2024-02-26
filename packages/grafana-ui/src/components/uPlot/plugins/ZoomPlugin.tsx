@@ -51,16 +51,16 @@ export const ZoomPlugin = ({ onZoom, config, withZoomY = false }: ZoomPluginProp
     }
 
     config.addHook('setSelect', (u) => {
+      const isXAxisHorizontal = u.scales.x.ori === 0;
       if (maybeZoomAction(u.cursor!.event)) {
         if (withZoomY && yDrag) {
           if (u.select.height >= MIN_ZOOM_DIST) {
             for (let key in u.scales!) {
               if (key !== 'x') {
-                const isVertical = u.scales.x.ori === 0;
-                const maxY = isVertical
+                const maxY = isXAxisHorizontal
                   ? u.posToVal(u.select.top, key)
                   : u.posToVal(u.select.left + u.select.width, key);
-                const minY = isVertical
+                const minY = isXAxisHorizontal
                   ? u.posToVal(u.select.top + u.select.height, key)
                   : u.posToVal(u.select.left, key);
                 u.setScale(key, { min: minY, max: maxY });
@@ -73,9 +73,12 @@ export const ZoomPlugin = ({ onZoom, config, withZoomY = false }: ZoomPluginProp
           yDrag = false;
         } else {
           if (u.select.width >= MIN_ZOOM_DIST) {
-            const isVertical = u.scales.x.ori === 0;
-            const minX = isVertical ? u.posToVal(u.select.left, 'x') : u.posToVal(u.select.top + u.select.height, 'x');
-            const maxX = isVertical ? u.posToVal(u.select.left + u.select.width, 'x') : u.posToVal(u.select.top, 'x');
+            const minX = isXAxisHorizontal
+              ? u.posToVal(u.select.left, 'x')
+              : u.posToVal(u.select.top + u.select.height, 'x');
+            const maxX = isXAxisHorizontal
+              ? u.posToVal(u.select.left + u.select.width, 'x')
+              : u.posToVal(u.select.top, 'x');
 
             onZoom({ from: minX, to: maxX });
 
