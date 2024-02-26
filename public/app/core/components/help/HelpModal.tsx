@@ -157,27 +157,35 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
       <Grid columns={{ xs: 1, sm: 2 }} gap={3}>
         {Object.values(shortcuts).map(({ category, shortcuts }) => (
           <section key={category}>
-            <div className={styles.categoryHeader}>
-              <Text element="h3" variant="h5" id={category}>
-                {category}
-              </Text>
-            </div>
-            <dl aria-labelledby={category} className={styles.keysAndDescriptions}>
-              {shortcuts.map(({ keys, description }) => (
-                <React.Fragment key={keys.join()}>
-                  <dt className={styles.keys}>
-                    {keys.map((key) => (
-                      <Key key={key}>{key}</Key>
-                    ))}
-                  </dt>
-                  <dd>
-                    <Text variant="bodySmall" element="p">
-                      {description}
-                    </Text>
-                  </dd>
-                </React.Fragment>
-              ))}
-            </dl>
+            <table className={styles.table}>
+              <caption>
+                <Text element="p" variant="h5">
+                  {category}
+                </Text>
+              </caption>
+              <thead className="sr-only">
+                <tr>
+                  <th>Keys</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shortcuts.map(({ keys, description }) => (
+                  <tr key={keys.join()}>
+                    <td className={styles.keys}>
+                      {keys.map((key) => (
+                        <Key key={key}>{key}</Key>
+                      ))}
+                    </td>
+                    <td>
+                      <Text variant="bodySmall" element="p">
+                        {description}
+                      </Text>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </section>
         ))}
       </Grid>
@@ -222,9 +230,6 @@ function replaceCustomKeyNames(key: string) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    categoryHeader: css({
-      marginBottom: theme.spacing(2),
-    }),
     keysAndDescriptions: css({
       display: 'grid',
       gridTemplateColumns: 'minmax(75px, max-content) 1fr',
@@ -232,8 +237,17 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       alignSelf: 'baseline',
     }),
+    table: css({
+      borderCollapse: 'separate',
+      borderSpacing: theme.spacing(1),
+      '& caption': {
+        captionSide: 'top',
+      },
+    }),
     keys: css({
-      justifySelf: 'end',
+      textAlign: 'end',
+      whiteSpace: 'nowrap',
+      minWidth: 83, // To match column widths with the widest
     }),
     shortcutTableKey: css({
       display: 'inline-block',
