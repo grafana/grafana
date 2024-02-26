@@ -402,8 +402,6 @@ export function prepareBarChartDisplayValues(
     return { warn: 'Unable to join data' };
   }
 
-  setClassicPaletteIdxs([frame], theme, 0);
-
   // Color by a field different than the input
   let colorByField: Field | undefined = undefined;
   if (options.colorByField) {
@@ -487,6 +485,13 @@ export function prepareBarChartDisplayValues(
       warn: 'Bar charts requires a string or time field',
     };
   }
+
+  // if both string and time fields exist, remove unused leftover time field
+  if (frame.fields[0].type === FieldType.time && frame.fields[0] !== firstField) {
+    frame.fields.shift();
+  }
+
+  setClassicPaletteIdxs([frame], theme, 0);
 
   if (!fields.length) {
     return {
