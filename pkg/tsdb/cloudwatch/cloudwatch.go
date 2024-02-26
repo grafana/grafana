@@ -123,8 +123,8 @@ func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 
 // cloudWatchExecutor executes CloudWatch requests
 type cloudWatchExecutor struct {
-	im       instancemgmt.InstanceManager
-	logger   log.Logger
+	im     instancemgmt.InstanceManager
+	logger log.Logger
 
 	resourceHandler backend.CallResourceHandler
 }
