@@ -57,6 +57,7 @@ import (
 // WireSet provides a wire.ProviderSet of plugin providers.
 var WireSet = wire.NewSet(
 	config.ProvidePluginManagementConfig,
+	config.ProvidePluginInstanceCfg,
 	config.NewPluginEnvVarsProvider,
 	wire.Bind(new(envvars.Provider), new(*config.PluginEnvVarsProvider)),
 	config.NewRequestConfigProvider,
