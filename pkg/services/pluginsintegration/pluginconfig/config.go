@@ -1,4 +1,4 @@
-package config
+package pluginconfig
 
 import (
 	"fmt"
@@ -82,8 +82,8 @@ type PluginInstanceCfg struct {
 	SQLDatasourceMaxConnLifetimeDefault int
 }
 
-// ProvidePluginInstanceCfg returns a new PluginInstanceCfg.
-func ProvidePluginInstanceCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg, features featuremgmt.FeatureToggles) (*PluginInstanceCfg, error) {
+// ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
+func ProvidePluginInstanceConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, features featuremgmt.FeatureToggles) (*PluginInstanceCfg, error) {
 	aws := settingProvider.Section("aws")
 	allowedAuth := grafanaCfg.AWSAllowedAuthProviders
 	if len(aws.KeyValue("allowed_auth_providers").Value()) > 0 {

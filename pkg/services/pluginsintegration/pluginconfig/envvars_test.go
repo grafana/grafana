@@ -1,4 +1,4 @@
-package config
+package pluginconfig
 
 import (
 	"context"
@@ -47,7 +47,7 @@ func TestPluginEnvVarsProvider_envVars(t *testing.T) {
 			AWSAssumeRoleEnabled: true,
 		}
 
-		envVarsProvider := NewPluginEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{}, featuremgmt.WithFeatures(), licensing)
+		envVarsProvider := NewEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{}, featuremgmt.WithFeatures(), licensing)
 		envVars := envVarsProvider.PluginEnvVars(context.Background(), p)
 		assert.Len(t, envVars, 6)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
@@ -75,7 +75,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 
 	t.Run("without FlagPluginsSkipHostEnvVars should not populate host env vars", func(t *testing.T) {
 		cfg := setting.NewCfg()
-		envVarsProvider := NewPluginEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{}, featuremgmt.WithFeatures(), nil)
+		envVarsProvider := NewEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{}, featuremgmt.WithFeatures(), nil)
 		envVars := envVarsProvider.PluginEnvVars(context.Background(), p)
 
 		// We want to test that the envvars.Provider does not add any of the host env vars.
@@ -92,7 +92,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 		}
 		cfg := setting.NewCfg()
 
-		envVarsProvider := NewPluginEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{}, featuremgmt.WithFeatures(), nil)
+		envVarsProvider := NewEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{}, featuremgmt.WithFeatures(), nil)
 
 		t.Run("should populate allowed host env vars", func(t *testing.T) {
 			// Set all allowed variables
@@ -603,7 +603,7 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			envVarsProvider := NewPluginEnvVarsProvider(tc.cfg, setting.ProvideProvider(tc.cfg), tc.pluginsCfg, tc.features, nil)
+			envVarsProvider := NewEnvVarsProvider(tc.cfg, setting.ProvideProvider(tc.cfg), tc.pluginsCfg, tc.features, nil)
 			envVars := envVarsProvider.PluginEnvVars(context.Background(), tc.plugin)
 			tc.exp(t, envVars)
 		})
@@ -655,7 +655,7 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 			AppURL: "https://myorg.com/",
 		}
 
-		envVarsProvider := NewPluginEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{}, featuremgmt.WithFeatures(), nil)
+		envVarsProvider := NewEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{}, featuremgmt.WithFeatures(), nil)
 		envVars := envVarsProvider.PluginEnvVars(context.Background(), p)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
 		assert.Equal(t, "GF_APP_URL=https://myorg.com/", envVars[1])
@@ -702,7 +702,7 @@ func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
 				AWSListMetricsPageLimit:   100,
 				AWSForwardSettingsPlugins: tc.forwardToPlugins,
 			}
-			envVarsProvider := NewPluginEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{}, featuremgmt.WithFeatures(), nil)
+			envVarsProvider := NewEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{}, featuremgmt.WithFeatures(), nil)
 			envVars := envVarsProvider.PluginEnvVars(context.Background(), p)
 			assert.ElementsMatch(t, tc.expected, envVars)
 		}
@@ -719,7 +719,7 @@ func TestPluginEnvVarsProvider_featureToggleEnvVar(t *testing.T) {
 
 		p := &plugins.Plugin{}
 		cfg := setting.NewCfg()
-		envVarsProvider := NewPluginEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{},
+		envVarsProvider := NewEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{},
 			featuremgmt.WithFeatures(expectedFeatures[0], true, expectedFeatures[1], true), nil)
 		envVars := envVarsProvider.PluginEnvVars(context.Background(), p)
 
@@ -770,7 +770,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 			},
 		}
 
-		envVarsProvider := NewPluginEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{}, featuremgmt.WithFeatures(), nil)
+		envVarsProvider := NewEnvVarsProvider(cfg, setting.ProvideProvider(cfg), &config.PluginsCfg{}, featuremgmt.WithFeatures(), nil)
 		envVars := envVarsProvider.PluginEnvVars(context.Background(), p)
 		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED=true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID=mock_managed_identity_client_id",

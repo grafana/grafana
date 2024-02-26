@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,7 +31,7 @@ const (
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, pluginStore pluginstore.Store,
 	dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService,
-	pluginSettingsService pluginsettings.Service, pluginRequestConfigProvider config.PluginRequestConfigProvider) *Provider {
+	pluginSettingsService pluginsettings.Service, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *Provider {
 	return &Provider{
 		cfg:                         cfg,
 		cacheService:                cacheService,
@@ -46,7 +46,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, plu
 
 type Provider struct {
 	cfg                         *setting.Cfg
-	pluginRequestConfigProvider config.PluginRequestConfigProvider
+	pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider
 	cacheService                *localcache.CacheService
 	pluginStore                 pluginstore.Store
 	dataSourceCache             datasources.CacheService

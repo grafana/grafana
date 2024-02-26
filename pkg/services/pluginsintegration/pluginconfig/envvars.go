@@ -1,4 +1,4 @@
-package config
+package pluginconfig
 
 import (
 	"context"
@@ -14,30 +14,27 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ envvars.Provider = (*PluginEnvVarsProvider)(nil)
+var _ envvars.Provider = (*EnvVarsProvider)(nil)
 
-type PluginEnvVarsProvider struct {
+type EnvVarsProvider struct {
 	cfg     *PluginInstanceCfg
 	license plugins.Licensing
 	log     log.Logger
 }
 
-func NewPluginEnvVarsProvider(cfg *PluginInstanceCfg, settingProvider setting.Provider, pCfg *config.PluginsCfg, features featuremgmt.FeatureToggles,
-	license plugins.Licensing) *PluginEnvVarsProvider {
-	return &PluginEnvVarsProvider{
+func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing) *EnvVarsProvider {
+	return &EnvVarsProvider{
 		cfg:     cfg,
 		license: license,
 		log:     log.New("plugin.envvars"),
 	}
 }
 
-func (p *PluginEnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plugin) []string {
+func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plugin) []string {
 	hostEnv := []string{
 		envVar("GF_VERSION", p.cfg.GrafanaVersion),
 	}
@@ -81,7 +78,7 @@ func (p *PluginEnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugi
 	return hostEnv
 }
 
-func (p *PluginEnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string {
+func (p *EnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string {
 	var variables []string // an array is used for consistency and keep the logic simpler for no features case
 
 	if p.cfg.Features == nil {
@@ -100,7 +97,7 @@ func (p *PluginEnvVarsProvider) featureToggleEnableVars(ctx context.Context) []s
 	return variables
 }
 
-func (p *PluginEnvVarsProvider) awsEnvVars(pluginID string) []string {
+func (p *EnvVarsProvider) awsEnvVars(pluginID string) []string {
 	if !slices.Contains[[]string, string](p.cfg.AWSForwardSettingsPlugins, pluginID) {
 		return []string{}
 	}
@@ -125,7 +122,7 @@ func (p *PluginEnvVarsProvider) awsEnvVars(pluginID string) []string {
 	return variables
 }
 
-func (p *PluginEnvVarsProvider) secureSocksProxyEnvVars() []string {
+func (p *EnvVarsProvider) secureSocksProxyEnvVars() []string {
 	if p.cfg.ProxySettings.Enabled {
 		return []string{
 			envVar(proxy.PluginSecureSocksProxyClientCert, p.cfg.ProxySettings.ClientCert),
@@ -140,7 +137,7 @@ func (p *PluginEnvVarsProvider) secureSocksProxyEnvVars() []string {
 	return nil
 }
 
-func (p *PluginEnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
+func (p *EnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
 	pluginTracingEnabled := p.cfg.Features.IsEnabledGlobally(featuremgmt.FlagEnablePluginsTracingByDefault)
 	if v, exists := p.cfg.PluginSettings[plugin.ID]["tracing"]; exists && !pluginTracingEnabled {
 		pluginTracingEnabled = v == "true"
@@ -163,7 +160,7 @@ func (p *PluginEnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string 
 	return vars
 }
 
-func (p *PluginEnvVarsProvider) pluginSettingsEnvVars(pluginID string) []string {
+func (p *EnvVarsProvider) pluginSettingsEnvVars(pluginID string) []string {
 	const customConfigPrefix = "GF_PLUGIN"
 	var env []string
 	for k, v := range p.cfg.PluginSettings[pluginID] {

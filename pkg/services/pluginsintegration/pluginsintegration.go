@@ -36,13 +36,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -56,12 +56,12 @@ import (
 
 // WireSet provides a wire.ProviderSet of plugin providers.
 var WireSet = wire.NewSet(
-	config.ProvidePluginManagementConfig,
-	config.ProvidePluginInstanceCfg,
-	config.NewPluginEnvVarsProvider,
-	wire.Bind(new(envvars.Provider), new(*config.PluginEnvVarsProvider)),
-	config.NewRequestConfigProvider,
-	wire.Bind(new(config.PluginRequestConfigProvider), new(*config.RequestConfigProvider)),
+	pluginconfig.ProvidePluginManagementConfig,
+	pluginconfig.ProvidePluginInstanceConfig,
+	pluginconfig.NewEnvVarsProvider,
+	wire.Bind(new(envvars.Provider), new(*pluginconfig.EnvVarsProvider)),
+	pluginconfig.NewRequestConfigProvider,
+	wire.Bind(new(pluginconfig.PluginRequestConfigProvider), new(*pluginconfig.RequestConfigProvider)),
 	pluginstore.ProvideService,
 	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginstore.Service)),
