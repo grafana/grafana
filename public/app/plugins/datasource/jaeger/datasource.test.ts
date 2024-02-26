@@ -11,9 +11,9 @@ import {
 } from '@grafana/data';
 import { BackendSrv } from '@grafana/runtime';
 
-import { createFetchResponse } from './helpers/createFetchResponse';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { JaegerDatasource, JaegerJsonData } from './datasource';
+import { createFetchResponse } from './helpers/createFetchResponse';
 import mockJson from './mockJsonResponse.json';
 import {
   testResponse,
