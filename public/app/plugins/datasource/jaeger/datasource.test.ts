@@ -340,7 +340,7 @@ describe("Test behavior with unmocked time", () => {
     const mock = setupFetchMock({ data: [testResponse] });
     const ds = new JaegerDatasource(defaultSettings);
 
-    ds.query({targets: [{queryType: "dependencyGraph"}]} as any)
+    ds.query({...defaultQuery, targets: [{queryType: "dependencyGraph", refId: '1',}]})
     const now = Date.now();
 
     const url = mock.mock.calls[0][0].url;
