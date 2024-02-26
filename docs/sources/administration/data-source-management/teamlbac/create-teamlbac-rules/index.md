@@ -33,7 +33,7 @@ Team LBAC is available on Cloud for data sources created with basic authenticati
 
 ### LBAC rule
 
-A LBAC rule is a `logql` query that runs as a query to the loki instance for your logs. Each rule is it's own filtering operating independantly from the other rules within a team. For example, you can create a label policy that includes all log lines with the label.
+A LBAC rule is a `logql` query that runs as a query to the loki instance for your logs. Each rule is it's own filtering operating independently from the other rules within a team. For example, you can create a label policy that includes all log lines with the label.
 
 One rule `{namespace="dev", cluster="us-west-0"}` created with multiple namespaces will be seen as `namespace="dev"` **AND** `cluster="us-west-0"`.
 Two rules `{namespace="dev"}`, `{cluster="us-west-0"}` created for a team will be seen as `namespace="dev"` **OR** `cluster="us-west-0"`.
