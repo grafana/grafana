@@ -46,21 +46,21 @@ export class AddLibraryPanelWidget extends SceneObjectBase<AddLibraryPanelWidget
     evt.preventDefault();
 
     if (!(this._dashboard.state.body instanceof SceneGridLayout)) {
-      console.error('Trying to remove the library panel widget in a layout that is not SceneGridLayout');
-      return;
+      throw new Error('Trying to remove the library panel widget in a layout that is not SceneGridLayout');
     }
 
     const sceneGridLayout = this._dashboard.state.body;
 
     sceneGridLayout.setState({
-      children: sceneGridLayout.state.children.splice(1),
+      children: sceneGridLayout.state.children.filter(
+        (child) => !(child instanceof SceneGridItem && child.state.body?.state.key === this.state.key)
+      ),
     });
   };
 
   public onAddLibraryPanel = (panelInfo: LibraryPanel) => {
     if (!(this._dashboard.state.body instanceof SceneGridLayout)) {
-      console.error('Trying to add a library panel in a layout that is not SceneGridLayout');
-      return;
+      throw new Error('Trying to add a library panel in a layout that is not SceneGridLayout');
     }
 
     const sceneGridLayout = this._dashboard.state.body;

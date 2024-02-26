@@ -32,6 +32,31 @@ describe('AddLibraryPanelWidget', () => {
     expect(body.state.children.length).toBe(0);
   });
 
+  it('should remove lib panel at index', () => {
+    const anotherLibPanelWidget = new AddLibraryPanelWidget({ key: 'panel-2' });
+    const body = dashboard.state.body as SceneGridLayout;
+    body.setState({
+      children: [
+        ...body.state.children,
+        new SceneGridItem({
+          key: 'griditem-2',
+          x: 0,
+          y: 0,
+          width: 10,
+          height: 12,
+          body: anotherLibPanelWidget,
+        }),
+      ],
+    });
+
+    anotherLibPanelWidget.onCancelAddPanel(mockEvent);
+
+    const gridItem = body.state.children[0] as SceneGridItem;
+
+    expect(body.state.children.length).toBe(1);
+    expect(gridItem.state.body!.state.key).toBe(addLibPanelWidget.state.key);
+  });
+
   it('should add library panel from menu', () => {
     const panelInfo: LibraryPanel = {
       uid: 'uid',
@@ -53,6 +78,26 @@ describe('AddLibraryPanelWidget', () => {
     expect(body.state.children.length).toBe(1);
     expect(gridItem.state.body!.state.key).toBe(addLibPanelWidget.state.key);
     expect(gridItem.state.body!).toBeInstanceOf(LibraryVizPanel);
+  });
+
+  it('should throw error if adding lib panel in a layout that is not SceneGridLayout', () => {
+    dashboard.setState({
+      body: undefined,
+    });
+
+    expect(() => addLibPanelWidget.onAddLibraryPanel({} as LibraryPanel)).toThrow(
+      'Trying to add a library panel in a layout that is not SceneGridLayout'
+    );
+  });
+
+  it('should throw error if removing the library panel widget in a layout that is not SceneGridLayout', () => {
+    dashboard.setState({
+      body: undefined,
+    });
+
+    expect(() => addLibPanelWidget.onCancelAddPanel(mockEvent)).toThrow(
+      'Trying to remove the library panel widget in a layout that is not SceneGridLayout'
+    );
   });
 });
 
