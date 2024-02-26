@@ -163,6 +163,7 @@ export function updateCredentials(
         jsonData: {
           ...options.jsonData,
           azureAuthType: credentials.authType,
+          azureCredentials: undefined,
         },
       };
 
@@ -177,6 +178,7 @@ export function updateCredentials(
           cloudName: credentials.azureCloud || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
+          azureCredentials: undefined,
         },
         secureJsonData: {
           ...options.secureJsonData,
