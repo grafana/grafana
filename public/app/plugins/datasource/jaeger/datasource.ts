@@ -227,13 +227,10 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
   }
 
   getTimeRange(): { start: number; end: number } {
-    const dt = dateTime();
-    const end = getTime(dt, true);
-    const start = getTime(dt.subtract(6, 'hour'), false);
-
+    const range = getDefaultTimeRange();
     return {
-      start,
-      end,
+      start: getTime(range.from, false),
+      end: getTime(range.to, true),
     };
   }
 
