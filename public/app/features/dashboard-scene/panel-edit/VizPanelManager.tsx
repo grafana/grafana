@@ -35,16 +35,20 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
+import { PanelRepeaterGridItem, RepeatDirection } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
-interface VizPanelManagerState extends SceneObjectState {
+export interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
   sourcePanel: SceneObjectRef<VizPanel>;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
   tableView?: VizPanel;
+  repeat?: string;
+  repeatDirection?: RepeatDirection;
+  maxPerRow?: number;
 }
 
 export enum DisplayMode {
@@ -70,10 +74,17 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
    * live on the VizPanelManager level instead of the VizPanel level
    */
   public static createFor(sourcePanel: VizPanel) {
+    let repeatOptions: Pick<VizPanelManagerState, 'repeat' | 'repeatDirection' | 'maxPerRow'> = {};
+    if (sourcePanel.parent instanceof PanelRepeaterGridItem) {
+      const { variableName: repeat, repeatDirection, maxPerRow } = sourcePanel.parent.state;
+      repeatOptions = { repeat, repeatDirection, maxPerRow };
+    }
+
     return new VizPanelManager({
       panel: sourcePanel.clone({ $data: undefined }),
       $data: sourcePanel.state.$data?.clone(),
       sourcePanel: sourcePanel.getRef(),
+      ...repeatOptions,
     });
   }
 
