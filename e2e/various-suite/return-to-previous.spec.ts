@@ -8,27 +8,24 @@ describe('ReturnToPrevious button', () => {
     });
   });
 
-  // after(() => {
-  //   // TODO: check whether I need to clean up something
-  // });
-
   it('expected behaviour: appear when changing context, go back to alert rule when clicking "Back", remove when clicking "Dismiss"', () => {
     cy.visit('/alerting/list?search=');
     cy.get('[data-testid="group-collapse-toggle"]').click();
     cy.get('[data-testid="collapse-toggle"]').click();
     cy.get('[data-testid="expanded-content"]').find('[data-testid="data-testid go to dashboard"]').click();
 
-    // check whether all elements of RTP are available and go back to alert rule
+    // make sure the dashboard finished loading
+    cy.get('button[aria-label*="BarChart - Label Rotation & Skipping"]').should('be.visible');
+
+    // check whether all elements of RTP are available
     cy.get('[data-testid="data-testid dismissable button group"]').should('be.visible');
-    cy.get('[data-testid="data-testid back"]').should('be.visible');
     cy.get('[data-testid="data-testid dismiss"]').should('be.visible');
-    cy.get('[data-testid="data-testid back"]').click();
-    // cy.wait(6000) // TODO: replace this
-    //
-    // // check
-    // cy.get('[data-testid="group-collapse-toggle"]').click();
-    // cy.get('[data-testid="collapse-toggle"]').click();
-    // cy.get('[data-testid="expanded-content"]').find('[data-testid="data-testid go to dashboard"]').click();
+    cy.get('[data-testid="data-testid back"]').should('be.visible').click();
+
+    // go back to alert rule
+    cy.get('[data-testid="group-collapse-toggle"]').should('be.visible').click();
+    cy.get('[data-testid="collapse-toggle"]').should('be.visible').click();
+    cy.get('[data-testid="expanded-content"]').find('[data-testid="data-testid go to dashboard"]').click();
   });
   // TODO: check whether the data on the session storage are deleted
 });
