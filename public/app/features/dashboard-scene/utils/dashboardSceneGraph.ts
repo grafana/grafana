@@ -1,7 +1,8 @@
-import { VizPanel, SceneGridItem, SceneGridRow, SceneDataLayers, sceneGraph } from '@grafana/scenes';
+import { VizPanel, SceneGridItem, SceneGridRow, SceneDataLayers, sceneGraph, behaviors } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
+import { PlaylistBehavior } from '../scene/PlaylistBehavior';
 
 function getTimePicker(scene: DashboardScene) {
   return scene.state.controls?.state.timePicker;
@@ -55,10 +56,21 @@ function getDataLayers(scene: DashboardScene): SceneDataLayers {
   return data;
 }
 
+function getPlayListBehavior(scene: DashboardScene): PlaylistBehavior | undefined {
+  const controller = scene.state.$behaviors?.find((behavior) => behavior instanceof PlaylistBehavior);
+
+  if (controller instanceof PlaylistBehavior) {
+    return controller;
+  }
+
+  return;
+}
+
 export const dashboardSceneGraph = {
   getTimePicker,
   getRefreshPicker,
   getPanelLinks,
   getVizPanels,
   getDataLayers,
+  getPlayListBehavior,
 };

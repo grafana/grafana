@@ -45,6 +45,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { PlaylistBehavior } from '../scene/PlaylistBehavior';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -264,6 +265,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
         sync: oldModel.graphTooltip,
       }),
       new behaviors.SceneQueryController(),
+      new PlaylistBehavior({}),
       registerDashboardMacro,
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,

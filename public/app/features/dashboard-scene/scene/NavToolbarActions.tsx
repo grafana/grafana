@@ -7,10 +7,11 @@ import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButton
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { ShareModal } from '../sharing/ShareModal';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
@@ -38,6 +39,8 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  */
 export function ToolbarActions({ dashboard }: Props) {
   const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel } = dashboard.useState();
+  const playlist = dashboardSceneGraph.getPlayListBehavior(dashboard);
+  const { isPlaying } = playlist?.useState() ?? { isPlaying: false };
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
   const buttonWithExtraMargin = useStyles2(getStyles);
@@ -91,6 +94,42 @@ export function ToolbarActions({ dashboard }: Props) {
     condition: meta.isSnapshot && !isEditing,
     render: () => (
       <GoToSnapshotOriginButton originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''} />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'playlist-actions',
+    condition: isPlaying,
+    render: () => (
+      <ToolbarButton
+        key="play-list-prev"
+        tooltip={t('dashboard.toolbar.playlist-previous', 'Go to previous dashboard')}
+        icon="backward"
+        onClick={() => playlist?.prev()}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'playlist-actions',
+    condition: isPlaying,
+    render: () => (
+      <ToolbarButton onClick={() => playlist?.stop()}>
+        <Trans i18nKey="dashboard.toolbar.playlist-stop">Stop playlist</Trans>
+      </ToolbarButton>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'playlist-actions',
+    condition: isPlaying,
+    render: () => (
+      <ToolbarButton
+        tooltip={t('dashboard.toolbar.playlist-next', 'Go to next dashboard')}
+        icon="forward"
+        onClick={() => playlist?.next()}
+        narrow
+      />
     ),
   });
 
