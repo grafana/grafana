@@ -3838,12 +3838,6 @@
         "count": 1
       }
     ],
-    "/public/app/features/explore/TraceView/components/TracePageHeader/Actions/TracePageActions.tsx": [
-      {
-        "message": "Styles should be written using objects.",
-        "count": 2
-      }
-    ],
     "/public/app/features/explore/TraceView/components/TracePageHeader/SearchBar/NextPrevResult.tsx": [
       {
         "message": "Styles should be written using objects.",
@@ -3895,7 +3889,7 @@
     "/public/app/features/explore/TraceView/components/TracePageHeader/TracePageHeader.tsx": [
       {
         "message": "Styles should be written using objects.",
-        "count": 13
+        "count": 9
       }
     ],
     "/public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanBarRow.tsx": [

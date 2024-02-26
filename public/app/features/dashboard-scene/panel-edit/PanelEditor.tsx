@@ -2,22 +2,10 @@ import * as H from 'history';
 
 import { NavIndex } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import {
-  SceneGridItem,
-  SceneGridLayout,
-  SceneObject,
-  SceneObjectBase,
-  SceneObjectState,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneGridItem, SceneGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
-import {
-  findVizPanelByKey,
-  getDashboardSceneFor,
-  getPanelIdForVizPanel,
-  getVizPanelKeyForPanelId,
-} from '../utils/utils';
+import { getPanelIdForVizPanel, getDashboardSceneFor } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
@@ -25,12 +13,9 @@ import { PanelOptionsPane } from './PanelOptionsPane';
 import { VizPanelManager, VizPanelManagerState } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
-  controls?: SceneObject[];
   isDirty?: boolean;
   panelId: number;
   optionsPane: PanelOptionsPane;
-  optionsCollapsed?: boolean;
-  optionsPaneSize: number;
   dataPane?: PanelDataPane;
   vizManager: VizPanelManager;
 }
@@ -108,14 +93,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public commitChanges() {
     const dashboard = getDashboardSceneFor(this);
-    const sourcePanel = findVizPanelByKey(dashboard.state.body, getVizPanelKeyForPanelId(this.state.panelId));
 
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
     const panelManager = this.state.vizManager;
-
+    const sourcePanel = panelManager.state.sourcePanel.resolve();
     const sourcePanelParent = sourcePanel!.parent;
 
     const normalToRepeat = !this._initialRepeatOptions.repeat && panelManager.state.repeat;
@@ -125,7 +109,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       if (normalToRepeat) {
         this.replaceSceneGridItemWithPanelRepeater(sourcePanelParent);
       } else {
-        sourcePanelParent.setState({ body: panelManager.state.panel.clone() });
+        panelManager.commitChanges();
       }
     } else if (sourcePanelParent instanceof PanelRepeaterGridItem) {
       if (repeatToNormal) {
@@ -213,73 +197,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       height,
     });
   }
-
-  public toggleOptionsPane() {
-    this.setState({ optionsCollapsed: !this.state.optionsCollapsed, optionsPaneSize: OPTIONS_PANE_FLEX_DEFAULT });
-  }
-
-  public onOptionsPaneResizing = (flexSize: number, pixelSize: number) => {
-    if (flexSize <= 0 && pixelSize <= 0) {
-      return;
-    }
-
-    const optionsPixelSize = (pixelSize / flexSize) * (1 - flexSize);
-
-    if (this.state.optionsCollapsed && optionsPixelSize > OPTIONS_PANE_PIXELS_MIN) {
-      this.setState({ optionsCollapsed: false });
-    }
-
-    if (!this.state.optionsCollapsed && optionsPixelSize < OPTIONS_PANE_PIXELS_MIN) {
-      this.setState({ optionsCollapsed: true });
-    }
-  };
-
-  public onOptionsPaneSizeChanged = (flexSize: number, pixelSize: number) => {
-    if (flexSize <= 0 && pixelSize <= 0) {
-      return;
-    }
-
-    const optionsPaneSize = 1 - flexSize;
-    const isSnappedClosed = this.state.optionsPaneSize === 0;
-    const fullWidth = pixelSize / flexSize;
-    const snapWidth = OPTIONS_PANE_PIXELS_SNAP / fullWidth;
-
-    if (this.state.optionsCollapsed) {
-      if (isSnappedClosed) {
-        this.setState({
-          optionsPaneSize: Math.max(optionsPaneSize, snapWidth),
-          optionsCollapsed: false,
-        });
-      } else {
-        this.setState({ optionsPaneSize: 0 });
-      }
-    } else if (isSnappedClosed) {
-      this.setState({ optionsPaneSize: optionsPaneSize });
-    }
-  };
 }
 
-export const OPTIONS_PANE_PIXELS_MIN = 300;
-export const OPTIONS_PANE_PIXELS_SNAP = 400;
-export const OPTIONS_PANE_FLEX_DEFAULT = 0.25;
-
 export function buildPanelEditScene(panel: VizPanel): PanelEditor {
-  const panelClone = panel.clone();
-  const vizPanelMgr = new VizPanelManager(panelClone);
-  if (panel.parent instanceof PanelRepeaterGridItem) {
-    const { variableName: repeat, repeatDirection, maxPerRow } = panel.parent.state;
-
-    vizPanelMgr.setState({
-      repeat,
-      repeatDirection,
-      maxPerRow,
-    });
-  }
-
   return new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),
     optionsPane: new PanelOptionsPane({}),
-    vizManager: vizPanelMgr,
-    optionsPaneSize: OPTIONS_PANE_FLEX_DEFAULT,
+    vizManager: VizPanelManager.createFor(panel),
   });
 }

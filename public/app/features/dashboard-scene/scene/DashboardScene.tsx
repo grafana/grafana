@@ -94,6 +94,7 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
+  isEmpty?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -522,20 +523,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.partial({ editview: 'settings' });
   };
 
-  public isEmpty = (): boolean => {
-    const { body, viewPanelScene } = this.state;
-
-    if (!!viewPanelScene) {
-      return !!viewPanelScene.state.body;
-    }
-
-    if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
-      return body.state.children.length === 0;
-    }
-
-    throw new Error('Invalid body type');
-  };
-
   /**
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
    */
@@ -555,7 +542,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       app: CoreApp.Dashboard,
       dashboardUID: this.state.uid,
       panelId,
-      panelPluginType: panel?.state.pluginId,
+      panelPluginId: panel?.state.pluginId,
     };
   }
 

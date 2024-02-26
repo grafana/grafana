@@ -12,7 +12,6 @@ storage,experimental,@grafana/grafana-app-platform-squad,false,false,false
 correlations,GA,@grafana/explore-squad,false,false,false
 exploreContentOutline,GA,@grafana/explore-squad,false,false,true
 datasourceQueryMultiStatus,experimental,@grafana/plugins-platform-backend,false,false,false
-traceToMetrics,experimental,@grafana/observability-traces-and-profiling,false,false,true
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateGraphPanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateTablePanel,preview,@grafana/dataviz-squad,false,false,true
@@ -87,7 +86,6 @@ grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
-splitScopes,deprecated,@grafana/identity-access-team,false,true,false
 permissionsFilterRemoveSubquery,experimental,@grafana/backend-platform,false,false,false
 prometheusConfigOverhaulAuth,GA,@grafana/observability-metrics,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
@@ -120,7 +118,6 @@ teamHttpHeaders,experimental,@grafana/identity-access-team,false,false,false
 awsDatasourcesNewFormStyling,preview,@grafana/aws-datasources,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 panelTitleSearchInV1,experimental,@grafana/backend-platform,true,false,false
-pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,false,false,false
 managedPluginsInstall,preview,@grafana/plugins-platform-backend,false,false,false
 prometheusPromQAIL,experimental,@grafana/observability-metrics,false,false,true
 addFieldFromCalculationStatFunctions,preview,@grafana/dataviz-squad,false,false,true
@@ -145,7 +142,6 @@ logRowsPopoverMenu,GA,@grafana/observability-logs,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false
 tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
 regressionTransformation,preview,@grafana/dataviz-squad,false,false,true
-displayAnonymousStats,GA,@grafana/identity-access-team,false,false,true
 lokiQueryHints,GA,@grafana/observability-logs,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 alertingPreviewUpgrade,GA,@grafana/alerting-squad,false,true,false

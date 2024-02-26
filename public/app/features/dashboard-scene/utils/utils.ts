@@ -155,12 +155,14 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
     return undefined;
   }
 
-  if (sceneObject.state.$data instanceof SceneQueryRunner) {
-    return sceneObject.state.$data;
+  const dataProvider = sceneObject.state.$data ?? sceneObject.parent?.state.$data;
+
+  if (dataProvider instanceof SceneQueryRunner) {
+    return dataProvider;
   }
 
-  if (sceneObject.state.$data instanceof SceneDataTransformer) {
-    return getQueryRunnerFor(sceneObject.state.$data);
+  if (dataProvider instanceof SceneDataTransformer) {
+    return getQueryRunnerFor(dataProvider);
   }
 
   return undefined;
