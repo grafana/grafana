@@ -779,7 +779,7 @@ If you are a Kubernetes user, you can leverage file provisioning using Kubernete
          template: the content for my template
    ```
 
-1. Restart your Grafana instance (or reload the provisioned files via the Admin API).
+1. Restart your Grafana instance (or reload the provisioned files using the Admin API).
 
    ```yaml
    apiVersion: apps/v1
