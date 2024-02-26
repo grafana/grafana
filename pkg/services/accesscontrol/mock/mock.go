@@ -201,11 +201,11 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 	return nil
 }
 
-func (m *Mock) DeleteTeamPermissions(ctx context.Context, orgID, userID int64) error {
-	m.Calls.DeleteTeamPermissions = append(m.Calls.DeleteTeamPermissions, []interface{}{ctx, orgID, userID})
+func (m *Mock) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error {
+	m.Calls.DeleteTeamPermissions = append(m.Calls.DeleteTeamPermissions, []interface{}{ctx, orgID, teamID})
 	// Use override if provided
 	if m.DeleteTeamPermissionsFunc != nil {
-		return m.DeleteTeamPermissionsFunc(ctx, userID)
+		return m.DeleteTeamPermissionsFunc(ctx, teamID)
 	}
 	return nil
 }
