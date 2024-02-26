@@ -26,7 +26,7 @@ interface PanelRepeaterGridItemState extends SceneGridItemStateLike {
   repeatedPanels?: VizPanel[];
   variableName: string;
   itemHeight?: number;
-  repeatDirection?: RepeatDirection | string;
+  repeatDirection?: RepeatDirection;
   maxPerRow?: number;
 }
 
