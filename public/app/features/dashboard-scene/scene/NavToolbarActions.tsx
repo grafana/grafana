@@ -37,7 +37,16 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, copiedPanel } = dashboard.useState();
+  const {
+    isEditing,
+    viewPanelScene,
+    isDirty,
+    uid,
+    meta,
+    editview,
+    editPanel,
+    hasCopiedPanel: copiedPanel,
+  } = dashboard.useState();
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
   const buttonWithExtraMargin = useStyles2(getStyles);
@@ -136,7 +145,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && !editview && !isEditingPanel && !isEditing,
+    condition: uid && !editview && !isEditingPanel,
     render: () => (
       <ToolbarButton
         key="view-in-old-dashboard-button"

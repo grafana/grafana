@@ -124,6 +124,14 @@ describe('DashboardScene', () => {
         expect(sceneGraph.getTimeRange(scene)!.state.timeZone).toBe(prevState);
       });
 
+      it('Should throw an error when adding a panel to a layout that is not SceneGridLayout', () => {
+        const scene = buildTestScene({ body: undefined });
+
+        expect(() => {
+          scene.addPanel(new VizPanel({ title: 'Panel Title', key: 'panel-4', pluginId: 'timeseries' }));
+        }).toThrow('Trying to add a panel in a layout that is not SceneGridLayout');
+      });
+
       it('Should add a new panel to the dashboard', () => {
         const vizPanel = new VizPanel({
           title: 'Panel Title',
@@ -234,11 +242,11 @@ describe('DashboardScene', () => {
         const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as SceneGridItem).state.body;
         scene.copyPanel(vizPanel as VizPanel);
 
-        expect(scene.state.copiedPanel).toBe(true);
+        expect(scene.state.hasCopiedPanel).toBe(true);
       });
 
       it('Should paste a panel', () => {
-        scene.setState({ copiedPanel: true });
+        scene.setState({ hasCopiedPanel: true });
         jest.spyOn(JSON, 'parse').mockReturnThis();
         jest.mocked(buildGridItemForPanel).mockReturnValue(
           new SceneGridItem({
@@ -261,7 +269,7 @@ describe('DashboardScene', () => {
         expect(gridItem.state.body!.state.key).toBe('panel-5');
         expect(gridItem.state.y).toBe(0);
         expect(nextChild.state.y).toBe(NEW_PANEL_HEIGHT);
-        expect(scene.state.copiedPanel).toBe(false);
+        expect(scene.state.hasCopiedPanel).toBe(false);
       });
 
       it('Should create a new add library panel widget', () => {

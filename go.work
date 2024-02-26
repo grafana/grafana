@@ -2,6 +2,8 @@ go 1.21.0
 
 use (
 	.
+	./pkg/apimachinery
+	./pkg/apiserver
 	./pkg/util/xorm
 )
 

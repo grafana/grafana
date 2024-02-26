@@ -109,7 +109,8 @@ export interface DashboardSceneState extends SceneObjectState {
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
   /** True when a user copies a panel in the dashboard */
-  copiedPanel?: boolean;
+  hasCopiedPanel?: boolean;
+  isEmpty?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -149,7 +150,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       links: state.links ?? [],
-      copiedPanel: store.exists(LS_PANEL_COPY_KEY),
+      hasCopiedPanel: store.exists(LS_PANEL_COPY_KEY),
       ...state,
     });
 
@@ -433,8 +434,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public addRow(row: SceneGridRow) {
     if (!(this.state.body instanceof SceneGridLayout)) {
-      console.error('Trying to add a row in a layout that is not SceneGridLayout');
-      return;
+      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
     }
 
     const sceneGridLayout = this.state.body;
@@ -459,8 +459,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public addPanel(vizPanel: VizPanel): void {
     if (!(this.state.body instanceof SceneGridLayout)) {
-      console.error('Trying to add a panel in a layout that is not SceneGridLayout');
-      return;
+      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
     }
 
     const sceneGridLayout = this.state.body;
@@ -540,13 +539,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     store.set(LS_PANEL_COPY_KEY, JSON.stringify(jsonData));
     appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Use **Paste panel** toolbar action to paste.']);
-    this.setState({ copiedPanel: true });
+    this.setState({ hasCopiedPanel: true });
   }
 
   public pastePanel() {
     if (!(this.state.body instanceof SceneGridLayout)) {
-      console.error('Trying to paste a panel in a layout that is not SceneGridLayout');
-      return;
+      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
     }
 
     const jsonData = store.get(LS_PANEL_COPY_KEY);
@@ -557,8 +555,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const sceneGridLayout = this.state.body;
 
     if (!(gridItem instanceof SceneGridItem) && !(gridItem instanceof PanelRepeaterGridItem)) {
-      console.error('Cannot paste invalid grid item');
-      return;
+      throw new Error('Cannot paste invalid grid item');
     }
 
     shiftAllPanelHeights(sceneGridLayout);
@@ -586,7 +583,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       children: [gridItem, ...sceneGridLayout.state.children],
     });
 
-    this.setState({ copiedPanel: false });
+    this.setState({ hasCopiedPanel: false });
     store.delete(LS_PANEL_COPY_KEY);
   }
 
@@ -623,8 +620,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onCreateLibPanelWidget() {
     if (!(this.state.body instanceof SceneGridLayout)) {
-      console.error('Trying to add a panel in a layout that is not SceneGridLayout');
-      return;
+      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
     }
 
     const sceneGridLayout = this.state.body;
@@ -663,20 +659,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     return getPanelIdForVizPanel(vizPanel);
   }
-
-  public isEmpty = (): boolean => {
-    const { body, viewPanelScene } = this.state;
-
-    if (!!viewPanelScene) {
-      return !!viewPanelScene.state.body;
-    }
-
-    if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
-      return body.state.children.length === 0;
-    }
-
-    throw new Error('Invalid body type');
-  };
 
   /**
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
