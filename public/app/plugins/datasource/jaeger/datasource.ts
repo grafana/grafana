@@ -228,8 +228,8 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
 
   getTimeRange(): { start: number; end: number } {
     const dt = dateTime();
-    const end = getTime(dt, true)
-    const start =  getTime(dt.subtract(6, "hour"), false)
+    const end = getTime(dt, true);
+    const start = getTime(dt.subtract(6, 'hour'), false);
 
     return {
       start,

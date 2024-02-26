@@ -41,12 +41,12 @@ jest.mock('@grafana/runtime', () => ({
 describe('JaegerDatasource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    Date.now = jest.fn(() => 1704106800000)  // milliseconds for 2024-01-01 at 11:00am UTC
+    Date.now = jest.fn(() => 1704106800000); // milliseconds for 2024-01-01 at 11:00am UTC
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
-  })
+  });
 
   it('returns trace and graph when queried', async () => {
     setupFetchMock({ data: [testResponse] });
