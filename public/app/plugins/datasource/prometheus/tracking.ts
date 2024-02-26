@@ -32,6 +32,7 @@ export function trackQuery(
       intervalFactor: query.intervalFactor,
       utcOffsetSec: query.utcOffsetSec,
       legend: query.legendFormat,
+      legendUrl: query.legendUrlFormat,
       valueWithRefId: query.valueWithRefId,
       requestId: request.requestId,
       showingGraph: query.showingGraph,
