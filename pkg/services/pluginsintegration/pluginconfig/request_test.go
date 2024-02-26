@@ -14,26 +14,27 @@ import (
 
 func TestRequestConfigProvider_PluginRequestConfig_Defaults(t *testing.T) {
 	cfg := setting.NewCfg()
-	s := NewRequestConfigProvider(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+	pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+	require.NoError(t, err)
 
+	p := NewRequestConfigProvider(pCfg)
 	require.Equal(t, map[string]string{
 		"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
 		"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
 		"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
-	}, s.PluginRequestConfig(context.Background(), ""))
+	}, p.PluginRequestConfig(context.Background(), ""))
 }
 
 func TestRequestConfigProvider_PluginRequestConfig(t *testing.T) {
 	tcs := []struct {
 		name     string
-		cfg      *setting.Cfg
-		features featuremgmt.FeatureToggles
+		cfg      *PluginInstanceCfg
 		expected map[string]string
 	}{
 		{
 			name: "Both features and proxy settings enabled",
-			cfg: &setting.Cfg{
-				SecureSocksDSProxy: setting.SecureSocksDSProxySettings{
+			cfg: &PluginInstanceCfg{
+				ProxySettings: setting.SecureSocksDSProxySettings{
 					Enabled:       true,
 					ShowUI:        true,
 					ClientCert:    "c3rt",
@@ -43,8 +44,8 @@ func TestRequestConfigProvider_PluginRequestConfig(t *testing.T) {
 					ServerName:    "secureProxy",
 					AllowInsecure: true,
 				},
+				Features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
 			},
-			features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
 			expected: map[string]string{
 				"GF_INSTANCE_FEATURE_TOGGLES_ENABLE":              "feat-1,feat-2,feat-500",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_SERVER_ENABLED": "true",
@@ -58,8 +59,8 @@ func TestRequestConfigProvider_PluginRequestConfig(t *testing.T) {
 		},
 		{
 			name: "Features enabled but proxy settings disabled",
-			cfg: &setting.Cfg{
-				SecureSocksDSProxy: setting.SecureSocksDSProxySettings{
+			cfg: &PluginInstanceCfg{
+				ProxySettings: setting.SecureSocksDSProxySettings{
 					Enabled:      false,
 					ShowUI:       true,
 					ClientCert:   "c3rt",
@@ -68,16 +69,16 @@ func TestRequestConfigProvider_PluginRequestConfig(t *testing.T) {
 					ProxyAddress: "https://proxy.grafana.com",
 					ServerName:   "secureProxy",
 				},
+				Features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
 			},
-			features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
 			expected: map[string]string{
 				"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "feat-1,feat-2,feat-500",
 			},
 		},
 		{
 			name: "Both features and proxy settings disabled",
-			cfg: &setting.Cfg{
-				SecureSocksDSProxy: setting.SecureSocksDSProxySettings{
+			cfg: &PluginInstanceCfg{
+				ProxySettings: setting.SecureSocksDSProxySettings{
 					Enabled:      false,
 					ShowUI:       true,
 					ClientCert:   "c3rt",
@@ -86,25 +87,23 @@ func TestRequestConfigProvider_PluginRequestConfig(t *testing.T) {
 					ProxyAddress: "https://proxy.grafana.com",
 					ServerName:   "secureProxy",
 				},
+				Features: featuremgmt.WithFeatures("feat-2", false),
 			},
-			features: featuremgmt.WithFeatures("feat-2", false),
 			expected: map[string]string{},
 		},
 		{
-			name:     "Both features and proxy settings empty",
-			features: featuremgmt.WithFeatures(),
-			cfg: &setting.Cfg{
-				SecureSocksDSProxy: setting.SecureSocksDSProxySettings{},
+			name: "Both features and proxy settings empty",
+			cfg: &PluginInstanceCfg{
+				ProxySettings: setting.SecureSocksDSProxySettings{},
+				Features:      featuremgmt.WithFeatures(),
 			},
 			expected: map[string]string{},
 		},
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewRequestConfigProvider(
-				tc.cfg, setting.ProvideProvider(tc.cfg), tc.features,
-			)
-			require.Subset(t, s.PluginRequestConfig(context.Background(), ""), tc.expected)
+			p := NewRequestConfigProvider(tc.cfg)
+			require.Subset(t, p.PluginRequestConfig(context.Background(), ""), tc.expected)
 		})
 	}
 }
@@ -135,10 +134,11 @@ func TestRequestConfigProvider_PluginRequestConfig_featureToggles(t *testing.T) 
 
 		for _, tc := range tcs {
 			cfg := setting.NewCfg()
-			s := NewRequestConfigProvider(
-				cfg, setting.ProvideProvider(cfg), tc.features,
-			)
-			require.Subset(t, s.PluginRequestConfig(context.Background(), ""), tc.expectedConfig)
+			pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), tc.features)
+			require.NoError(t, err)
+
+			p := NewRequestConfigProvider(pCfg)
+			require.Subset(t, p.PluginRequestConfig(context.Background(), ""), tc.expectedConfig)
 		}
 	})
 }
@@ -148,10 +148,11 @@ func TestRequestConfigProvider_PluginRequestConfig_appURL(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.AppURL = "https://myorg.com/"
 
-		s := NewRequestConfigProvider(
-			cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(),
-		)
-		require.Subset(t, s.PluginRequestConfig(context.Background(), ""), map[string]string{"GF_APP_URL": "https://myorg.com/"})
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg)
+		require.Subset(t, p.PluginRequestConfig(context.Background(), ""), map[string]string{"GF_APP_URL": "https://myorg.com/"})
 	})
 }
 
@@ -163,11 +164,11 @@ func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 		cfg.SqlDatasourceMaxIdleConnsDefault = 25
 		cfg.SqlDatasourceMaxConnLifetimeDefault = 26
 
-		s := NewRequestConfigProvider(
-			cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(),
-		)
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
-		require.Subset(t, s.PluginRequestConfig(context.Background(), ""), map[string]string{
+		p := NewRequestConfigProvider(pCfg)
+		require.Subset(t, p.PluginRequestConfig(context.Background(), ""), map[string]string{
 			"GF_SQL_ROW_LIMIT":                         "23",
 			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "24",
 			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "25",
@@ -181,15 +182,15 @@ func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 		cfg.SqlDatasourceMaxIdleConnsDefault = 0
 		cfg.SqlDatasourceMaxConnLifetimeDefault = 0
 
-		s := NewRequestConfigProvider(
-			cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(),
-		)
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
+		p := NewRequestConfigProvider(pCfg)
 		require.Equal(t, map[string]string{
 			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
 			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
 			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
-		}, s.PluginRequestConfig(context.Background(), ""))
+		}, p.PluginRequestConfig(context.Background(), ""))
 	})
 }
 
@@ -198,54 +199,62 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 		cfg := setting.NewCfg()
 		cfg.ConcurrentQueryCount = 42
 
-		s := NewRequestConfigProvider(
-			cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(),
-		)
-		require.Subset(t, s.PluginRequestConfig(context.Background(), ""), map[string]string{"GF_CONCURRENT_QUERY_COUNT": "42"})
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg)
+		require.Subset(t, p.PluginRequestConfig(context.Background(), ""), map[string]string{"GF_CONCURRENT_QUERY_COUNT": "42"})
 	})
 
 	t.Run("Doesn't set the concurrent query count if it is not in the config", func(t *testing.T) {
 		cfg := setting.NewCfg()
-		s := NewRequestConfigProvider(
-			cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(),
-		)
-		require.NotContains(t, s.PluginRequestConfig(context.Background(), ""), "GF_CONCURRENT_QUERY_COUNT")
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg)
+		require.NotContains(t, p.PluginRequestConfig(context.Background(), ""), "GF_CONCURRENT_QUERY_COUNT")
 	})
 
 	t.Run("Doesn't set the concurrent query count if it is zero", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.ConcurrentQueryCount = 0
 
-		s := NewRequestConfigProvider(
-			cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(),
-		)
-		require.NotContains(t, s.PluginRequestConfig(context.Background(), ""), "GF_CONCURRENT_QUERY_COUNT")
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg)
+		require.NotContains(t, p.PluginRequestConfig(context.Background(), ""), "GF_CONCURRENT_QUERY_COUNT")
 	})
 }
 
 func TestRequestConfigProvider_PluginRequestConfig_azureAuthEnabled(t *testing.T) {
 	t.Run("Uses the configured azureAuthEnabled", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.AzureAuthEnabled = true
+		cfg := &PluginInstanceCfg{
+			AzureAuthEnabled: true,
+			Features:         featuremgmt.WithFeatures(),
+		}
 
-		s := NewRequestConfigProvider(
-			cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(),
-		)
-		require.Subset(t, s.PluginRequestConfig(context.Background(), ""), map[string]string{"GFAZPL_AZURE_AUTH_ENABLED": "true"})
+		p := NewRequestConfigProvider(cfg)
+		require.Subset(t, p.PluginRequestConfig(context.Background(), ""), map[string]string{"GFAZPL_AZURE_AUTH_ENABLED": "true"})
 	})
 
 	t.Run("Doesn't set the azureAuthEnabled if it is not in the config", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		s := NewRequestConfigProvider(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
-		require.NotContains(t, s.PluginRequestConfig(context.Background(), ""), "GFAZPL_AZURE_AUTH_ENABLED")
+		cfg := &PluginInstanceCfg{
+			Features: featuremgmt.WithFeatures(),
+		}
+
+		p := NewRequestConfigProvider(cfg)
+		require.NotContains(t, p.PluginRequestConfig(context.Background(), ""), "GFAZPL_AZURE_AUTH_ENABLED")
 	})
 
 	t.Run("Doesn't set the azureAuthEnabled if it is false", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.AzureAuthEnabled = false
+		cfg := &PluginInstanceCfg{
+			AzureAuthEnabled: false,
+			Features:         featuremgmt.WithFeatures(),
+		}
 
-		s := NewRequestConfigProvider(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
-		require.NotContains(t, s.PluginRequestConfig(context.Background(), ""), "GFAZPL_AZURE_AUTH_ENABLED")
+		p := NewRequestConfigProvider(cfg)
+		require.NotContains(t, p.PluginRequestConfig(context.Background(), ""), "GFAZPL_AZURE_AUTH_ENABLED")
 	})
 }
 
@@ -274,8 +283,11 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Azure = azSettings
 
-		s := NewRequestConfigProvider(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
-		require.Subset(t, s.PluginRequestConfig(context.Background(), "grafana-azure-monitor-datasource"), map[string]string{
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg)
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "grafana-azure-monitor-datasource"), map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":   "mock_managed_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":    "true",
@@ -294,8 +306,11 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Azure = azSettings
 
-		s := NewRequestConfigProvider(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
-		m := s.PluginRequestConfig(context.Background(), "")
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg)
+		m := p.PluginRequestConfig(context.Background(), "")
 		require.NotContains(t, m, "GFAZPL_AZURE_CLOUD")
 		require.NotContains(t, m, "GFAZPL_MANAGED_IDENTITY_ENABLED")
 		require.NotContains(t, m, "GFAZPL_MANAGED_IDENTITY_CLIENT_ID")
@@ -315,8 +330,11 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Azure = azSettings
 
-		s := NewRequestConfigProvider(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
-		require.Subset(t, s.PluginRequestConfig(context.Background(), "test-datasource"), map[string]string{
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg)
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "test-datasource"), map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":   "mock_managed_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":    "true",
@@ -333,19 +351,21 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 }
 
 func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
-	cfg := setting.NewCfg()
+	cfg := &PluginInstanceCfg{
+		Features: featuremgmt.WithFeatures(),
+	}
 
 	cfg.AWSAssumeRoleEnabled = false
 	cfg.AWSAllowedAuthProviders = []string{"grafana_assume_role", "keys"}
 	cfg.AWSExternalId = "mock_external_id"
 	cfg.AWSSessionDuration = "10m"
-	cfg.AWSListMetricsPageLimit = 100
+	cfg.AWSListMetricsPageLimit = "100"
 	cfg.AWSForwardSettingsPlugins = []string{"cloudwatch", "prometheus", "elasticsearch"}
 
-	t.Run("uses the aws settings for an AWS plugin", func(t *testing.T) {
-		s := NewRequestConfigProvider(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+	p := NewRequestConfigProvider(cfg)
 
-		require.Subset(t, s.PluginRequestConfig(context.Background(), "cloudwatch"), map[string]string{
+	t.Run("uses the aws settings for an AWS plugin", func(t *testing.T) {
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "cloudwatch"), map[string]string{
 			"AWS_AUTH_AssumeRoleEnabled":     "false",
 			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
 			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
@@ -355,8 +375,7 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 	})
 
 	t.Run("does not use the aws settings for a non-aws plugin", func(t *testing.T) {
-		s := NewRequestConfigProvider(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
-		m := s.PluginRequestConfig(context.Background(), "")
+		m := p.PluginRequestConfig(context.Background(), "")
 		require.NotContains(t, m, "AWS_AUTH_AssumeRoleEnabled")
 		require.NotContains(t, m, "AWS_AUTH_AllowedAuthProviders")
 		require.NotContains(t, m, "AWS_AUTH_EXTERNAL_ID")
@@ -366,8 +385,9 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 
 	t.Run("uses the aws settings for a non-aws user-specified plugin", func(t *testing.T) {
 		cfg.AWSForwardSettingsPlugins = append(cfg.AWSForwardSettingsPlugins, "test-datasource")
-		s := NewRequestConfigProvider(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
-		require.Subset(t, s.PluginRequestConfig(context.Background(), "test-datasource"), map[string]string{
+
+		p = NewRequestConfigProvider(cfg)
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "test-datasource"), map[string]string{
 			"AWS_AUTH_AssumeRoleEnabled":     "false",
 			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
 			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
