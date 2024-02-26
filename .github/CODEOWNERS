@@ -13,13 +13,11 @@
 
 # Documentation
 /.changelog-archive @grafana/grafana-release-guild
-/.codespellignore @grafana/docs-tooling
 /CHANGELOG.md @grafana/grafana-release-guild
 /CODE_OF_CONDUCT.md @grafana/grafana-community-support
 /CONTRIBUTING.md @grafana/grafana-community-support
 /GOVERNANCE.md @RichiH
 /HALL_OF_FAME.md @grafana/grafana-community-support
-/ISSUE_TRIAGE.md @grafana/grafana-community-support
 /LICENSE @torkelo
 /LICENSING.md @torkelo
 /MAINTAINERS.md @RichiH
@@ -28,15 +26,16 @@
 /ROADMAP.md @torkelo
 /SECURITY.md @grafana/security-team
 /SUPPORT.md @torkelo
-/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 /WORKFLOW.md @torkelo
 /contribute/ @grafana/grafana-community-support
+/contribute/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 /devenv/README.md @grafana/docs-grafana
 
 # Technical documentation
 # `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
 # Documentation sources might have different owners.
 /docs/                                                                       @grafana/docs-tooling
+/docs/.codespellignore @grafana/docs-tooling
 /docs/sources/                                                               @Eve832
 /docs/sources/administration/                                                @jdbaldry
 /docs/sources/alerting/                                                      @brendamuir
@@ -58,6 +57,8 @@
 # Backend code
 /go.mod @grafana/backend-platform
 /go.sum @grafana/backend-platform
+/go.work @grafana/grafana-app-platform-squad
+/go.work.sum @grafana/grafana-app-platform-squad
 /.bingo/ @grafana/backend-platform
 /pkg/README.md @grafana/backend-platform
 /pkg/ruleguard.rules.go @grafana/backend-platform
@@ -98,6 +99,8 @@
 /pkg/mocks/ @grafana/backend-platform
 /pkg/models/ @grafana/backend-platform
 /pkg/server/ @grafana/backend-platform
+/pkg/apiserver @grafana/grafana-app-platform-squad
+/pkg/apimachinery @grafana/grafana-app-platform-squad
 /pkg/services/annotations/ @grafana/backend-platform
 /pkg/services/apikey/ @grafana/identity-access-team
 /pkg/services/cleanup/ @grafana/backend-platform
@@ -270,7 +273,6 @@
 /pkg/services/store/ @grafana/grafana-app-platform-squad
 /pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad
-/pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
 /pkg/generated @grafana/grafana-app-platform-squad
 
@@ -307,6 +309,7 @@
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
+/e2e/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
 /packages/grafana-e2e/ @grafana/grafana-frontend-platform
@@ -359,7 +362,6 @@
 /.vim @zoltanbedi
 /jest.config.js @grafana/frontend-ops
 /latest.json @grafana/frontend-ops
-/metadata.md @grafana/plugins-platform
 /stylelint.config.js @grafana/frontend-ops
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
@@ -367,6 +369,7 @@
 /.husky/pre-commit @grafana/frontend-ops
 /cypress.config.js @grafana/grafana-frontend-platform
 /.levignore.js @grafana/plugins-platform-frontend
+playwright.config.ts @grafana/plugins-platform-frontend
 
 
 # public folder
@@ -602,7 +605,7 @@
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
 /pkg/services/featuremgmt/ @grafana/grafana-operator-experience-squad
-/pkg/services/cloudmigrations/ @grafana/grafana-operator-experience-squad
+/pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad

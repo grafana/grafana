@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -225,6 +226,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 			status = "cancelled"
 		}
 		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", es.StageDatabaseRequest, "resourcePath", req.Path}
+		sourceErr := exp.Error{}
+		if errors.As(err, &sourceErr) {
+			lp = append(lp, "statusSource", sourceErr.Source())
+		}
 		if response != nil {
 			lp = append(lp, "statusCode", response.StatusCode)
 		}

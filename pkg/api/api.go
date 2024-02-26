@@ -189,6 +189,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/api/user/signup", quota(user.QuotaTargetSrv), quota(org.QuotaTargetSrv), routing.Wrap(hs.SignUp))
 	r.Post("/api/user/signup/step2", routing.Wrap(hs.SignUpStep2))
 
+	// update user email
+	if hs.Cfg.Smtp.Enabled && hs.Cfg.VerifyEmailEnabled {
+		r.Get("/user/email/update", reqSignedInNoAnonymous, routing.Wrap(hs.UpdateUserEmail))
+	}
+
 	// invited
 	r.Get("/api/user/invite/:code", routing.Wrap(hs.GetInviteInfoByCode))
 	r.Post("/api/user/invite/complete", routing.Wrap(hs.CompleteInvite))
@@ -213,10 +218,8 @@ func (hs *HTTPServer) registerRoutes() {
 	// add swagger support
 	registerSwaggerUI(r)
 
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagClientTokenRotation) {
-		r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))
-		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
-	}
+	r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))
+	r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
 
 	adminAuthPageEvaluator := func() ac.Evaluator {
 		authnSettingsEval := ssoutils.EvalAuthenticationSettings(hs.Cfg)

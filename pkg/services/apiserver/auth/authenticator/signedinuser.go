@@ -25,15 +25,18 @@ func signedInUserAuthenticator(req *http.Request) (*authenticator.Response, bool
 		Name:   signedInUser.Login,
 		UID:    signedInUser.UserUID,
 		Groups: []string{},
-		Extra:  map[string][]string{},
+		// In order to faithfully round-trip through an impersonation flow, Extra keys MUST be lowercase.
+		// see: https://pkg.go.dev/k8s.io/apiserver@v0.27.1/pkg/authentication/user#Info
+		Extra: map[string][]string{},
 	}
 
 	for _, v := range signedInUser.Teams {
 		userInfo.Groups = append(userInfo.Groups, strconv.FormatInt(v, 10))
 	}
 
+	//
 	if signedInUser.IDToken != "" {
-		userInfo.Extra["ID-Token"] = []string{signedInUser.IDToken}
+		userInfo.Extra["id-token"] = []string{signedInUser.IDToken}
 	}
 
 	return &authenticator.Response{

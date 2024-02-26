@@ -35,12 +35,17 @@ func sortedUIDs(alertRules []*models.AlertRule) []string {
 func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	rulesPerOrg := make(map[int64]int64)                // orgID -> count
 	orgsPaused := make(map[int64]int64)                 // orgID -> count
+	orgsNfSettings := make(map[int64]int64)             // orgID -> count
 	groupsPerOrg := make(map[int64]map[string]struct{}) // orgID -> set of groups
 	for _, rule := range alertRules {
 		rulesPerOrg[rule.OrgID]++
 
 		if rule.IsPaused {
 			orgsPaused[rule.OrgID]++
+		}
+
+		if len(rule.NotificationSettings) > 0 {
+			orgsNfSettings[rule.OrgID]++
 		}
 
 		orgGroups, ok := groupsPerOrg[rule.OrgID]
@@ -53,8 +58,10 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 
 	for orgID, numRules := range rulesPerOrg {
 		numRulesPaused := orgsPaused[orgID]
+		numRulesNfSettings := orgsNfSettings[orgID]
 		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRuleActiveLabelValue).Set(float64(numRules - numRulesPaused))
 		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRulePausedLabelValue).Set(float64(numRulesPaused))
+		sch.metrics.SimpleNotificationRules.WithLabelValues(fmt.Sprint(orgID)).Set(float64(numRulesNfSettings))
 	}
 
 	for orgID, groups := range groupsPerOrg {

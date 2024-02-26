@@ -671,6 +671,18 @@ func TestInitalizer_azureEnvVars(t *testing.T) {
 	})
 }
 
+func TestService_GetConfigMap_Defaults(t *testing.T) {
+	s := &Service{
+		cfg: &config.Cfg{},
+	}
+
+	require.Equal(t, map[string]string{
+		"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
+		"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
+		"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
+	}, s.GetConfigMap(context.Background(), "", nil))
+}
+
 func TestService_GetConfigMap(t *testing.T) {
 	tcs := []struct {
 		name     string
@@ -751,7 +763,7 @@ func TestService_GetConfigMap(t *testing.T) {
 			s := &Service{
 				cfg: tc.cfg,
 			}
-			require.Equal(t, tc.expected, s.GetConfigMap(context.Background(), "", nil))
+			require.Subset(t, s.GetConfigMap(context.Background(), "", nil), tc.expected)
 		})
 	}
 }
@@ -790,7 +802,7 @@ func TestService_GetConfigMap_featureToggles(t *testing.T) {
 					Features: tc.features,
 				},
 			}
-			require.Equal(t, tc.expectedConfig, s.GetConfigMap(context.Background(), "", nil))
+			require.Subset(t, s.GetConfigMap(context.Background(), "", nil), tc.expectedConfig)
 		}
 	})
 }
@@ -802,7 +814,43 @@ func TestService_GetConfigMap_appURL(t *testing.T) {
 				GrafanaAppURL: "https://myorg.com/",
 			},
 		}
-		require.Equal(t, map[string]string{"GF_APP_URL": "https://myorg.com/"}, s.GetConfigMap(context.Background(), "", nil))
+		require.Subset(t, s.GetConfigMap(context.Background(), "", nil), map[string]string{"GF_APP_URL": "https://myorg.com/"})
+	})
+}
+
+func TestService_GetConfigMap_SQL(t *testing.T) {
+	t.Run("Uses the configured values", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				DataProxyRowLimit:                   23,
+				SQLDatasourceMaxOpenConnsDefault:    24,
+				SQLDatasourceMaxIdleConnsDefault:    25,
+				SQLDatasourceMaxConnLifetimeDefault: 26,
+			},
+		}
+
+		require.Subset(t, s.GetConfigMap(context.Background(), "", nil), map[string]string{
+			"GF_SQL_ROW_LIMIT":                         "23",
+			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "24",
+			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "25",
+			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "26",
+		})
+	})
+
+	t.Run("Uses the configured max-default-values, even when they are zero", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				SQLDatasourceMaxOpenConnsDefault:    0,
+				SQLDatasourceMaxIdleConnsDefault:    0,
+				SQLDatasourceMaxConnLifetimeDefault: 0,
+			},
+		}
+
+		require.Equal(t, map[string]string{
+			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
+			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
+			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
+		}, s.GetConfigMap(context.Background(), "", nil))
 	})
 }
 
@@ -813,14 +861,14 @@ func TestService_GetConfigMap_concurrentQueryCount(t *testing.T) {
 				ConcurrentQueryCount: 42,
 			},
 		}
-		require.Equal(t, map[string]string{"GF_CONCURRENT_QUERY_COUNT": "42"}, s.GetConfigMap(context.Background(), "", nil))
+		require.Subset(t, s.GetConfigMap(context.Background(), "", nil), map[string]string{"GF_CONCURRENT_QUERY_COUNT": "42"})
 	})
 
 	t.Run("Doesn't set the concurrent query count if it is not in the config", func(t *testing.T) {
 		s := &Service{
 			cfg: &config.Cfg{},
 		}
-		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+		require.NotContains(t, s.GetConfigMap(context.Background(), "", nil), "GF_CONCURRENT_QUERY_COUNT")
 	})
 
 	t.Run("Doesn't set the concurrent query count if it is zero", func(t *testing.T) {
@@ -829,7 +877,7 @@ func TestService_GetConfigMap_concurrentQueryCount(t *testing.T) {
 				ConcurrentQueryCount: 0,
 			},
 		}
-		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+		require.NotContains(t, s.GetConfigMap(context.Background(), "", nil), "GF_CONCURRENT_QUERY_COUNT")
 	})
 }
 
@@ -840,14 +888,14 @@ func TestService_GetConfigMap_azureAuthEnabled(t *testing.T) {
 				AzureAuthEnabled: true,
 			},
 		}
-		require.Equal(t, map[string]string{"GFAZPL_AZURE_AUTH_ENABLED": "true"}, s.GetConfigMap(context.Background(), "", nil))
+		require.Subset(t, s.GetConfigMap(context.Background(), "", nil), map[string]string{"GFAZPL_AZURE_AUTH_ENABLED": "true"})
 	})
 
 	t.Run("Doesn't set the azureAuthEnabled if it is not in the config", func(t *testing.T) {
 		s := &Service{
 			cfg: &config.Cfg{},
 		}
-		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+		require.NotContains(t, s.GetConfigMap(context.Background(), "", nil), "GFAZPL_AZURE_AUTH_ENABLED")
 	})
 
 	t.Run("Doesn't set the azureAuthEnabled if it is false", func(t *testing.T) {
@@ -856,7 +904,7 @@ func TestService_GetConfigMap_azureAuthEnabled(t *testing.T) {
 				AzureAuthEnabled: false,
 			},
 		}
-		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+		require.NotContains(t, s.GetConfigMap(context.Background(), "", nil), "GFAZPL_AZURE_AUTH_ENABLED")
 	})
 }
 
@@ -887,7 +935,7 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 				Azure: azSettings,
 			},
 		}
-		require.Equal(t, map[string]string{
+		require.Subset(t, s.GetConfigMap(context.Background(), "grafana-azure-monitor-datasource", nil), map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":   "mock_managed_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":    "true",
@@ -899,7 +947,7 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_CLIENT_ID":      "mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":  "mock_user_identity_client_secret",
 			"GFAZPL_USER_IDENTITY_ASSERTION":      "username",
-		}, s.GetConfigMap(context.Background(), "grafana-azure-monitor-datasource", nil))
+		})
 	})
 
 	t.Run("does not use the azure settings for a non-Azure plugin", func(t *testing.T) {
@@ -908,7 +956,20 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 				Azure: azSettings,
 			},
 		}
-		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+
+		m := s.GetConfigMap(context.Background(), "", nil)
+		require.NotContains(t, m, "GFAZPL_AZURE_CLOUD")
+		require.NotContains(t, m, "GFAZPL_MANAGED_IDENTITY_ENABLED")
+		require.NotContains(t, m, "GFAZPL_MANAGED_IDENTITY_CLIENT_ID")
+		require.NotContains(t, m, "GFAZPL_WORKLOAD_IDENTITY_ENABLED")
+		require.NotContains(t, m, "GFAZPL_WORKLOAD_IDENTITY_TENANT_ID")
+		require.NotContains(t, m, "GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID")
+		require.NotContains(t, m, "GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_ENABLED")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_TOKEN_URL")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_CLIENT_ID")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_CLIENT_SECRET")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_ASSERTION")
 	})
 
 	t.Run("uses the azure settings for a non-Azure user-specified plugin", func(t *testing.T) {
@@ -918,7 +979,7 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 				Azure: azSettings,
 			},
 		}
-		require.Equal(t, map[string]string{
+		require.Subset(t, s.GetConfigMap(context.Background(), "test-datasource", nil), map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":   "mock_managed_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":    "true",
@@ -930,7 +991,7 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_CLIENT_ID":      "mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":  "mock_user_identity_client_secret",
 			"GFAZPL_USER_IDENTITY_ASSERTION":      "username",
-		}, s.GetConfigMap(context.Background(), "test-datasource", nil))
+		})
 	})
 }
 
@@ -948,20 +1009,25 @@ func TestService_GetConfigMap_aws(t *testing.T) {
 		s := &Service{
 			cfg: cfg,
 		}
-		require.Equal(t, map[string]string{
+		require.Subset(t, s.GetConfigMap(context.Background(), "cloudwatch", nil), map[string]string{
 			"AWS_AUTH_AssumeRoleEnabled":     "false",
 			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
 			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
 			"AWS_AUTH_SESSION_DURATION":      "10m",
 			"AWS_CW_LIST_METRICS_PAGE_LIMIT": "100",
-		}, s.GetConfigMap(context.Background(), "cloudwatch", nil))
+		})
 	})
 
 	t.Run("does not use the aws settings for a non-aws plugin", func(t *testing.T) {
 		s := &Service{
 			cfg: cfg,
 		}
-		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+		m := s.GetConfigMap(context.Background(), "", nil)
+		require.NotContains(t, m, "AWS_AUTH_AssumeRoleEnabled")
+		require.NotContains(t, m, "AWS_AUTH_AllowedAuthProviders")
+		require.NotContains(t, m, "AWS_AUTH_EXTERNAL_ID")
+		require.NotContains(t, m, "AWS_AUTH_SESSION_DURATION")
+		require.NotContains(t, m, "AWS_CW_LIST_METRICS_PAGE_LIMIT")
 	})
 
 	t.Run("uses the aws settings for a non-aws user-specified plugin", func(t *testing.T) {
@@ -969,12 +1035,12 @@ func TestService_GetConfigMap_aws(t *testing.T) {
 		s := &Service{
 			cfg: cfg,
 		}
-		require.Equal(t, map[string]string{
+		require.Subset(t, s.GetConfigMap(context.Background(), "test-datasource", nil), map[string]string{
 			"AWS_AUTH_AssumeRoleEnabled":     "false",
 			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
 			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
 			"AWS_AUTH_SESSION_DURATION":      "10m",
 			"AWS_CW_LIST_METRICS_PAGE_LIMIT": "100",
-		}, s.GetConfigMap(context.Background(), "test-datasource", nil))
+		})
 	})
 }

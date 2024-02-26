@@ -63,6 +63,11 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.ForwardHostEnvVars,
 		grafanaCfg.ConcurrentQueryCount,
 		grafanaCfg.AzureAuthEnabled,
+		grafanaCfg.UserFacingDefaultError,
+		grafanaCfg.DataProxyRowLimit,
+		grafanaCfg.SqlDatasourceMaxOpenConnsDefault,
+		grafanaCfg.SqlDatasourceMaxIdleConnsDefault,
+		grafanaCfg.SqlDatasourceMaxConnLifetimeDefault,
 	), nil
 }
 

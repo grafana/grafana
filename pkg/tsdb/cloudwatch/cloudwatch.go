@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -122,12 +121,11 @@ func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 	}
 }
 
-// cloudWatchExecutor executes CloudWatch requests.
+// cloudWatchExecutor executes CloudWatch requests
 type cloudWatchExecutor struct {
-	im          instancemgmt.InstanceManager
-	sessions    SessionCache
-	regionCache sync.Map
-	logger      log.Logger
+	im       instancemgmt.InstanceManager
+	sessions SessionCache
+	logger   log.Logger
 
 	resourceHandler backend.CallResourceHandler
 }

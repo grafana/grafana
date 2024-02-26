@@ -730,14 +730,22 @@ func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg 
 
 	for roleId, mappedPermissions := range mapped {
 		for scope, roleActions := range mappedPermissions {
+			// Create a temporary permission to split the scope into kind, attribute and identifier
+			tempPerm := ac.Permission{
+				Scope: scope,
+			}
+			kind, attribute, identifier := tempPerm.SplitScope()
 			if roleActions[dashboards.ActionDashboardsRead] {
 				if !roleActions[ac.ActionAnnotationsRead] {
 					toAdd = append(toAdd, ac.Permission{
-						RoleID:  roleId,
-						Updated: now,
-						Created: now,
-						Scope:   scope,
-						Action:  ac.ActionAnnotationsRead,
+						RoleID:     roleId,
+						Updated:    now,
+						Created:    now,
+						Scope:      scope,
+						Action:     ac.ActionAnnotationsRead,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
 					})
 				}
 			}
@@ -745,29 +753,38 @@ func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg 
 			if roleActions[dashboards.ActionDashboardsWrite] {
 				if !roleActions[ac.ActionAnnotationsCreate] {
 					toAdd = append(toAdd, ac.Permission{
-						RoleID:  roleId,
-						Updated: now,
-						Created: now,
-						Scope:   scope,
-						Action:  ac.ActionAnnotationsCreate,
+						RoleID:     roleId,
+						Updated:    now,
+						Created:    now,
+						Scope:      scope,
+						Action:     ac.ActionAnnotationsCreate,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
 					})
 				}
 				if !roleActions[ac.ActionAnnotationsDelete] {
 					toAdd = append(toAdd, ac.Permission{
-						RoleID:  roleId,
-						Updated: now,
-						Created: now,
-						Scope:   scope,
-						Action:  ac.ActionAnnotationsDelete,
+						RoleID:     roleId,
+						Updated:    now,
+						Created:    now,
+						Scope:      scope,
+						Action:     ac.ActionAnnotationsDelete,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
 					})
 				}
 				if !roleActions[ac.ActionAnnotationsWrite] {
 					toAdd = append(toAdd, ac.Permission{
-						RoleID:  roleId,
-						Updated: now,
-						Created: now,
-						Scope:   scope,
-						Action:  ac.ActionAnnotationsWrite,
+						RoleID:     roleId,
+						Updated:    now,
+						Created:    now,
+						Scope:      scope,
+						Action:     ac.ActionAnnotationsWrite,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
 					})
 				}
 			}
