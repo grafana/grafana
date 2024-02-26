@@ -61,7 +61,7 @@ The following image and descriptions highlight all dashboard features.
 
 ## Keyboard shortcuts
 
-Grafana has a number of keyboard shortcuts available. Press `?` or `h` on your keyboard to display all keyboard shortcuts available in your version of Grafana.
+Grafana has a number of keyboard shortcuts available. Press `?` or `Ctrl+h` on your keyboard to display all keyboard shortcuts available in your version of Grafana.
 
 - `Ctrl+S`: Saves the current dashboard.
 - `f`: Opens the dashboard finder / search.
