@@ -119,14 +119,15 @@ export function QueryPreview({
   const [exploreSupported, exploreAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Explore);
   const canExplore = exploreSupported && exploreAllowed;
 
-  const dataSourceName = dataSource?.name ?? '[[Data source not found]]';
-  const dataSourceImgUrl = dataSource?.meta.info.logos.small;
+  const headerItems: React.ReactNode[] = [];
 
-  // relativeTimeRange is what is defined for a query
-  // evalTimeRange is temporary value which the user can change
-  const headerItems: React.ReactNode[] = [
-    <DataSourceBadge name={dataSourceName} imgUrl={dataSourceImgUrl} key="datasource" />,
-  ];
+  if (dataSource) {
+    const dataSourceName = dataSource.name ?? '[[Data source not found]]';
+    const dataSourceImgUrl = dataSource.meta.info.logos.small;
+
+    headerItems.push(<DataSourceBadge name={dataSourceName} imgUrl={dataSourceImgUrl} key="datasource" />);
+  }
+
   if (relativeTimeRange) {
     headerItems.push(
       <Text color="secondary" key="timerange">
