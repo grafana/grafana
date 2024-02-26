@@ -13,7 +13,7 @@ type Scope struct {
 }
 
 type ScopeSpec struct {
-	Name        string        `json:"name"`
+	Title       string        `json:"title"`
 	Type        string        `json:"type"`
 	Description string        `json:"description"`
 	Category    string        `json:"category"`

@@ -195,3 +195,6 @@ export function getOptionDataSourceTypes() {
 
   return optionTypes;
 }
+
+export const RESERVED_GLOBAL_VARIABLE_NAME_REGEX = /^(?!__).*$/;
+export const WORD_CHARACTERS_REGEX = /^\w+$/;
