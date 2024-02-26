@@ -37,7 +37,7 @@ def yarn_install_step():
         "commands": [
             # Python is needed to build `esfx`, which is needed by `msagl`
             "apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python",
-            "yarn install --immutable",
+            "yarn install --immutable || yarn install --immutable",
         ],
         "depends_on": [],
     }
