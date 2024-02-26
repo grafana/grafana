@@ -49,7 +49,8 @@ export function contentDoesMatch(jsContent: string, mdContent: string): Boolean 
   | 4   | 6   | 8   |
   | 5   | 7   | 9   |
 
-  This is one of many arbitrary formatting anomalies that we can ignore by normalizing the content.
+  This is one of many arbitrary formatting anomalies that we can ignore by normalizing the 
+  content before comparing the JavaScript template literals and the final Markdown.
 */
 function normalizeContent(content: string): string {
   return content.replace(/\s+|[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/g, '').trim();
