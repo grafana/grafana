@@ -48,7 +48,7 @@
       "alerts",
       "alerting",
       "prometheus",
-      "alertmanager"
+      "alertmanager",
       "mimir",
       "cortex"
     ], 
