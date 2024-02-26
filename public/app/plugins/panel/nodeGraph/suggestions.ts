@@ -57,7 +57,11 @@ export class NodeGraphSuggestionsSupplier {
     }
 
     const hasCorrectFields = this.hasCorrectFields(builder.data.series);
-    if (hasCorrectFields) {
+    const nodeGraphFrames = builder.data.series.filter(
+      (df) => df.meta && df.meta.preferredVisualisationType === 'nodeGraph'
+    );
+
+    if (hasCorrectFields || nodeGraphFrames.length === 2) {
       this.getListWithDefaults(builder).append({
         name: SuggestionName.NodeGraph,
         score: VisualizationSuggestionScore.Best,
