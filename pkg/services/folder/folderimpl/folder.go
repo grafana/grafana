@@ -78,7 +78,7 @@ func ProvideService(
 	}
 	srv.DBMigration(db)
 
-	supportBundles.RegisterSupportItemCollector(srv.SupportBundleCollector())
+	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
@@ -1187,7 +1187,7 @@ func (s *Service) RegisterService(r folder.RegistryService) error {
 	return nil
 }
 
-func (s *Service) SupportBundleCollector() supportbundles.Collector {
+func (s *Service) supportBundleCollector() supportbundles.Collector {
 	collector := supportbundles.Collector{
 		UID:               "folder-stats",
 		DisplayName:       "Folder information",
@@ -1209,41 +1209,43 @@ func (s *Service) SupportBundleCollector() supportbundles.Collector {
 			if err != nil {
 				return nil, err
 			}
-
-			stats := struct {
-				Total    int              `json:"total"`    // how many folders?
-				Depths   map[int]int      `json:"depths"`   // how deep they are?
-				Children map[int]int      `json:"children"` // how many child folders they have?
-				Folders  []*folder.Folder `json:"folders"`  // what are they?
-			}{Total: len(folders), Folders: folders, Children: map[int]int{}, Depths: map[int]int{}}
-
-			// Build parent-child mapping
-			parents := map[string]string{}
-			children := map[string][]string{}
-			for _, f := range folders {
-				parents[f.UID] = f.ParentUID
-				children[f.ParentUID] = append(children[f.ParentUID], f.UID)
-			}
-			// Find depths of each folder
-			for _, f := range folders {
-				depth := 0
-				for uid := f.UID; uid != ""; uid = parents[uid] {
-					depth++
-				}
-				stats.Depths[depth] += 1
-				stats.Children[len(children[f.UID])] += 1
-			}
-
-			b, err := json.MarshalIndent(stats, "", " ")
-			if err != nil {
-				return nil, err
-			}
-			fmt.Println(string(b))
-			return &supportbundles.SupportItem{
-				Filename:  "folders.json",
-				FileBytes: b,
-			}, nil
+			return s.supportItemFromFolders(folders)
 		},
 	}
 	return collector
+}
+
+func (s *Service) supportItemFromFolders(folders []*folder.Folder) (*supportbundles.SupportItem, error) {
+	stats := struct {
+		Total    int              `json:"total"`    // how many folders?
+		Depths   map[int]int      `json:"depths"`   // how deep they are?
+		Children map[int]int      `json:"children"` // how many child folders they have?
+		Folders  []*folder.Folder `json:"folders"`  // what are they?
+	}{Total: len(folders), Folders: folders, Children: map[int]int{}, Depths: map[int]int{}}
+
+	// Build parent-child mapping
+	parents := map[string]string{}
+	children := map[string][]string{}
+	for _, f := range folders {
+		parents[f.UID] = f.ParentUID
+		children[f.ParentUID] = append(children[f.ParentUID], f.UID)
+	}
+	// Find depths of each folder
+	for _, f := range folders {
+		depth := 0
+		for uid := f.UID; uid != ""; uid = parents[uid] {
+			depth++
+		}
+		stats.Depths[depth] += 1
+		stats.Children[len(children[f.UID])] += 1
+	}
+
+	b, err := json.MarshalIndent(stats, "", " ")
+	if err != nil {
+		return nil, err
+	}
+	return &supportbundles.SupportItem{
+		Filename:  "folders.json",
+		FileBytes: b,
+	}, nil
 }
