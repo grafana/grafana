@@ -8,7 +8,7 @@ describe('ReturnToPrevious button', () => {
     });
 
     cy.visit('/alerting/list?search=');
-    cy.get('[data-testid="group-collapse-toggle"]').click();
+    cy.get('[data-testid="group-collapse-toggle"]').first().click();
     cy.get('[data-testid="collapse-toggle"]').click();
     cy.get('[data-testid="expanded-content"]').find('[data-testid="data-testid go to dashboard"]').click();
   });
@@ -23,8 +23,8 @@ describe('ReturnToPrevious button', () => {
     cy.get('[data-testid="data-testid back"]').should('be.visible').click();
 
     // go back to alert rule
-    cy.get('[data-testid="group-collapse-toggle"]').should('be.visible').click();
-    cy.get('[data-testid="collapse-toggle"]').should('be.visible').click();
+    cy.get('[data-testid="group-collapse-toggle"]').first().click();
+    cy.get('[data-testid="collapse-toggle"]').click();
     cy.get('[data-testid="expanded-content"]').find('[data-testid="data-testid go to dashboard"]').should('be.visible');
   });
 
@@ -46,5 +46,17 @@ describe('ReturnToPrevious button', () => {
     // TODO: the following doesn't work
     // cy.get('[data-testid="data-testid dismissable button group"]').should('not.exist');
     // cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('not.exist');
+  });
+
+  it('should override the information in session storage when user changes alert rules', () => {
+    cy.getAllSessionStorage()
+      .debug()
+      .then((result) => {
+        expect(result).to.eql({
+          'http://localhost:3001': {
+            returnToPrevious: '{"title":"e2e-ReturnToPrevious-test","href":"/alerting/list?search="}',
+          },
+        });
+      });
   });
 });
