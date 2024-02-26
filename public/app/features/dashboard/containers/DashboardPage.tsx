@@ -14,7 +14,7 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
@@ -349,7 +349,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             </section>
           )}
           {config.featureToggles.angularDeprecationUI && dashboard.hasAngularPlugins() && dashboard.uid !== null && (
-            <AngularDeprecationNotice dashboardUid={dashboard.uid} />
+            <AngularDeprecationNotice
+              dashboardUid={dashboard.uid}
+              showAutoMigrateLink={dashboard.panels.some((x) => DashboardModel.autoMigratePluginIDs.includes(x.type))}
+            />
           )}
           <DashboardGrid
             dashboard={dashboard}

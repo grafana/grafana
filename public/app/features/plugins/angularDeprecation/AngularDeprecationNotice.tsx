@@ -12,9 +12,19 @@ function localStorageKey(dashboardUid: string): string {
 
 export interface Props {
   dashboardUid: string;
+  showAutoMigrateLink?: boolean;
 }
 
-export function AngularDeprecationNotice({ dashboardUid }: Props) {
+function autoMigrateHref(): string {
+  const autoMigrateParam = '__feature.autoMigrateOldPanels';
+  const url = new URL(window.location.toString());
+  if (!url.searchParams.has(autoMigrateParam)) {
+    url.searchParams.append(autoMigrateParam, 'true');
+  }
+  return url.toString();
+}
+
+export function AngularDeprecationNotice({ dashboardUid, showAutoMigrateLink }: Props) {
   return (
     <LocalStorageValueProvider<boolean> storageKey={localStorageKey(dashboardUid)} defaultValue={false}>
       {(isDismissed, onDismiss) => {
@@ -43,6 +53,13 @@ export function AngularDeprecationNotice({ dashboardUid }: Props) {
                       Read our deprecation notice and migration advice.
                     </a>
                   </li>
+                  {showAutoMigrateLink && (
+                    <li>
+                      <a href={autoMigrateHref()} className="external-link" target="_blank" rel="noreferrer">
+                        Auto-migrate compatible panels.
+                      </a>
+                    </li>
+                  )}
                 </ul>
               </div>
             </Alert>

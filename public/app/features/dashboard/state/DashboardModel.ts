@@ -121,6 +121,15 @@ export class DashboardModel implements TimeModel {
     originalDashboard: true,
   };
 
+  static autoMigratePluginIDs = [
+    'graph',
+    'table-old',
+    'grafana-piechart-panel',
+    'grafana-worldmap-panel',
+    'singlestat',
+    'grafana-singlestat-panel',
+  ];
+
   constructor(
     data: Dashboard,
     meta?: DashboardMeta,
@@ -183,6 +192,10 @@ export class DashboardModel implements TimeModel {
     // Handles both granular and all angular panel migration
     if (shouldMigrateAllAngularPanels || shouldMigrateExplicitAngularPanels) {
       for (const panel of this.panelIterator()) {
+        if (!DashboardModel.autoMigratePluginIDs.includes(panel.type)) {
+          continue;
+        }
+
         if (
           !panel.autoMigrateFrom &&
           panel.type === 'graph' &&
