@@ -34,7 +34,7 @@ interface Props {
   deleteFilter: (f: TraceqlFilter) => void;
   filters: TraceqlFilter[];
   datasource: TempoDatasource;
-  setError: (error: FetchError) => void;
+  setError: (error: FetchError | null) => void;
   staticTags: Array<string | undefined>;
   isTagsLoading: boolean;
   hideValues?: boolean;
