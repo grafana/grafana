@@ -48,7 +48,7 @@
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.59",
     "@types/react-dom": "18.2.19",
-    "@types/semver": "7.5.7",
+    "@types/semver": "7.5.8",
     "@types/uuid": "9.0.8",
     "glob": "10.3.10",
     "react-select-event": "5.5.1",
