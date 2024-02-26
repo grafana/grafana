@@ -535,5 +535,5 @@ export const Components = {
     selectColumn: 'data-testid select-column',
     selectAggregation: 'data-testid select-aggregation',
     selectAlias: 'data-testid select-alias',
-  }
+  },
 };
