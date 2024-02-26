@@ -310,13 +310,14 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	// call heimdallAuthorizer for dataos
-	user, err := heimdall.AuthorizeUser(token.AccessToken, (*heimdall.BasicUserInfo)(userInfo))
+	_ ,err := heimdall.AuthorizeUser(token.AccessToken, (*heimdall.BasicUserInfo)(userInfo))
 	if err != nil {
-		s.log.Debug("heimdall authorization failed: ", err)
+		log.Debug("heimdall authorization failed: ", err)
 		return nil, errors.New("heimdall authorization failed: " + err.Error())
 	}
-	s.log.Debug("User info result", "result", user)
-	return user, nil
+
+	s.log.Debug("User info result", "result", userInfo)
+	return userInfo, nil
 }
 
 func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson {
