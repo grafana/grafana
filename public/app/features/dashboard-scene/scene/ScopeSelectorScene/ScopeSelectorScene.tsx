@@ -58,7 +58,7 @@ export class ScopeSelectorScene extends SceneObjectBase<ScopeSelectorSceneState>
   }
 
   public getSelectedScope(): Scope | undefined {
-    return this.state.scopes.find((scope) => scope.type === this.state.value);
+    return this.state.scopes.find((scope) => scope.uid === this.state.value);
   }
 
   public toggle() {
@@ -70,7 +70,7 @@ export class ScopeSelectorScene extends SceneObjectBase<ScopeSelectorSceneState>
       return this.setState({ pendingValue: newScope });
     }
 
-    if (!this.state.scopes.find((scope) => scope.type === newScope)) {
+    if (!this.state.scopes.find((scope) => scope.uid === newScope)) {
       newScope = undefined;
     }
 
@@ -82,18 +82,54 @@ export class ScopeSelectorScene extends SceneObjectBase<ScopeSelectorSceneState>
 
     setTimeout(() => {
       this.setScopesAfterFetch([
-        { name: 'Scope 1', type: 'scope1', description: '', category: 'Category 1', filters: [] },
-        { name: 'Scope 2', type: 'scope2', description: '', category: 'Category 2', filters: [] },
         {
-          name: 'Scope 3',
+          uid: '9842607e-d7aa-4338-8a23-25610e266db8',
+          title: 'Scope 1',
+          type: 'scope1',
+          description: '',
+          category: 'Category 1',
+          filters: [],
+        },
+        {
+          uid: '27973258-11b8-4ffa-9b4a-c864bf53555f',
+          title: 'Scope 2',
+          type: 'scope2',
+          description: '',
+          category: 'Category 2',
+          filters: [],
+        },
+        {
+          uid: 'cd69e0a7-166e-414a-a85d-cb91a03ad282',
+          title: 'Scope 3',
           type: 'scope3',
           description: '',
           category: 'Category 1',
           filters: [],
         },
-        { name: 'Scope 4', type: 'scope4', description: '', category: 'Category 3', filters: [] },
-        { name: 'Scope 5', type: 'scope5', description: '', category: 'Category 2', filters: [] },
-        { name: 'Scope 6', type: 'scope6', description: '', category: 'Category 1', filters: [] },
+        {
+          uid: '79216d99-22c8-488c-9f85-227099acf5ae',
+          title: 'Scope 4',
+          type: 'scope4',
+          description: '',
+          category: 'Category 3',
+          filters: [],
+        },
+        {
+          uid: '11f25259-8234-496e-94ad-d51600787acb',
+          title: 'Scope 5',
+          type: 'scope5',
+          description: '',
+          category: 'Category 2',
+          filters: [],
+        },
+        {
+          uid: '4afb3b52-5b6b-4c74-b58a-e29095847063',
+          title: 'Scope 6',
+          type: 'scope6',
+          description: '',
+          category: 'Category 1',
+          filters: [],
+        },
       ]);
 
       this.setState({ isScopesLoading: false });
@@ -103,7 +139,7 @@ export class ScopeSelectorScene extends SceneObjectBase<ScopeSelectorSceneState>
   private setScopesAfterFetch(scopes: Scope[]) {
     let value = this.state.pendingValue ?? this.state.value;
 
-    if (!scopes.find((scope) => scope.type === value)) {
+    if (!scopes.find((scope) => scope.uid === value)) {
       value = undefined;
     }
 
@@ -132,9 +168,9 @@ export function ScopeSelectorSceneRenderer({ model }: SceneComponentProps<ScopeS
     return null;
   }
 
-  const options: Array<SelectableValue<string>> = scopes.map(({ name, type, category }) => ({
-    label: name,
-    value: type,
+  const options: Array<SelectableValue<string>> = scopes.map(({ uid, title, category }) => ({
+    label: title,
+    value: uid,
     description: category,
   }));
 
