@@ -45,7 +45,7 @@ Create or delete alert rules using provisioning files in your Grafana instance(s
 
 1. Find the alert rule group in Grafana.
 1. [Export][alerting_export] and download a provisioning file for your alert rules.
-1. Copy the contents into a YAML or JSON configuration file and place it in the `provisioning/alerting` directory of the Grafana instance you wish to import the alerting resources.
+1. Copy the contents into a YAML or JSON configuration file and add it to the `provisioning/alerting` directory of the Grafana instance you want to import the alerting resources to.
 
    Example configuration files can be found below.
 
