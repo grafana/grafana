@@ -716,15 +716,16 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	}
 
 	alertingAnnotations := cfg.Raw.Section("unified_alerting.state_history.annotations")
-	cleanup := newAnnotationCleanupSettings(alertingAnnotations, "max_age")
-	if cleanup.MaxCount == 0 && cleanup.MaxAge == 0 {
+	if alertingAnnotations.Key("max_age").Value() == "" && section.Key("max_annotations_to_keep").Value() == "" {
 		alertingSection := cfg.Raw.Section("alerting")
-		cleanup = newAnnotationCleanupSettings(alertingSection, "max_annotation_age")
+		cleanup := newAnnotationCleanupSettings(alertingSection, "max_annotation_age")
 		if cleanup.MaxCount > 0 || cleanup.MaxAge > 0 {
 			cfg.Logger.Warn("settings 'max_annotations_to_keep' and 'max_annotation_age' in section [alerting] are deprecated. Please use settings 'max_annotations_to_keep' and 'max_age' in section [unified_alerting.state_history.annotations]")
 		}
+		cfg.AlertingAnnotationCleanupSetting = cleanup
+	} else {
+		cfg.AlertingAnnotationCleanupSetting = newAnnotationCleanupSettings(alertingAnnotations, "max_age")
 	}
-	cfg.AlertingAnnotationCleanupSetting = cleanup
 
 	cfg.DashboardAnnotationCleanupSettings = newAnnotationCleanupSettings(dashboardAnnotation, "max_age")
 	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(apiIAnnotation, "max_age")
