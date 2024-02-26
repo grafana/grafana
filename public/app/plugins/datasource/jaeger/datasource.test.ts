@@ -319,6 +319,16 @@ describe('when performing testDataSource', () => {
   });
 });
 
+describe("Test unmocked behavior", () => {
+  it("getTimeRange()", async () => {
+    const ds = new JaegerDatasource(defaultSettings);
+    const timeRange = ds.getTimeRange();
+    const now = Date.now();
+    expect(timeRange.end).toBeCloseTo(now * 1000, -4)
+    expect(timeRange.start).toBeCloseTo((now - 6 * 3600 * 1000) * 1000, -4)
+  })
+})
+
 function setupFetchMock(response: unknown, mock?: ReturnType<typeof backendSrv.fetch>) {
   const defaultMock = () => mock ?? of(createFetchResponse(response));
 
