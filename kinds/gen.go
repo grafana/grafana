@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 
+	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
@@ -38,8 +39,6 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		&codegen.ResourceGoTypesJenny{},
-		&codegen.SubresourceGoTypesJenny{},
 		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
 		codegen.LatestMajorsOrXJenny(
@@ -92,6 +91,16 @@ func main() {
 	commfsys := elsedie(genCommon(filepath.Join(groot, "pkg", "kindsys")))("common schemas failed")
 	commfsys = elsedie(commfsys.Map(header))("failed gen header on common fsys")
 	if err = jfs.Merge(commfsys); err != nil {
+		die(err)
+	}
+
+	// Merging k8 resources
+	k8Resources, err := genK8Resources(kinddirs)
+	if err != nil {
+		die(err)
+	}
+
+	if err = jfs.Merge(k8Resources); err != nil {
 		die(err)
 	}
 
@@ -180,4 +189,45 @@ func elsedie[T any](t T, err error) func(msg string) T {
 func die(err error) {
 	fmt.Fprint(os.Stderr, err, "\n")
 	os.Exit(1)
+}
+
+func genK8Resources(dirs []os.DirEntry) (*codejen.FS, error) {
+	jenny := codejen.JennyListWithNamer[[]cue.Value](func(_ []cue.Value) string {
+		return "K8Resources"
+	})
+
+	jenny.Append(&codegen.K8ResourcesJenny{})
+
+	header := codegen.SlashHeaderMapper("kinds/gen.go")
+	jenny.AddPostprocessors(header)
+
+	return jenny.GenerateFS(loadCueFiles(dirs))
+}
+
+func loadCueFiles(dirs []os.DirEntry) []cue.Value {
+	ctx := cuectx.GrafanaCUEContext()
+	values := make([]cue.Value, 0)
+	for _, dir := range dirs {
+		if !dir.IsDir() {
+			continue
+		}
+
+		entries, err := os.ReadDir(dir.Name())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error opening %s directory: %s", dir, err)
+			os.Exit(1)
+		}
+
+		// It's assuming that we only have one file in each folder
+		entry := filepath.Join(dir.Name(), entries[0].Name())
+		cueFile, err := os.ReadFile(entry)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "unable to open %s/%s file: %s", dir, entries[0].Name(), err)
+			os.Exit(1)
+		}
+
+		values = append(values, ctx.CompileBytes(cueFile))
+	}
+
+	return values
 }

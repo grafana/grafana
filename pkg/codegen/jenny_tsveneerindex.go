@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/thema/encoding/typescript"
 )
 
+var schPath = cue.MakePath(cue.Hid("_#schema", "github.com/grafana/thema"))
+
 // TSVeneerIndexJenny generates an index.gen.ts file with references to all
 // generated TS types. Elements with the attribute @grafana(TSVeneer="type") are
 // exported from a handwritten file, rather than the raw generated types.

@@ -39,9 +39,16 @@ type (
 		Kinds             []kindsys.Core
 	}
 	tvars_resource struct {
-		PackageName      string
-		KindName         string
-		Version          string
-		SubresourceNames []string
+		PackageName string
+		KindName    string
+		Version     string
+	}
+
+	tvars_metadata struct {
+		PackageName string
+	}
+
+	tvars_status struct {
+		PackageName string
 	}
 )
