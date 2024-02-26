@@ -3,7 +3,7 @@ package query
 import (
 	"fmt"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/spec"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
@@ -47,7 +47,7 @@ func parseQueryRequest(raw v0alpha1.GenericQueryRequest) (parsedQueryRequest, er
 		q := original
 
 		if q.TimeRange == nil && raw.From != "" {
-			q.TimeRange = &spec.TimeRange{
+			q.TimeRange = &resource.TimeRange{
 				From: raw.From,
 				To:   raw.To,
 			}

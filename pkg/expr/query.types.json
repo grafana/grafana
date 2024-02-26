@@ -56,7 +56,7 @@
     {
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1708877992357",
+        "resourceVersion": "1708906302234",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -226,7 +226,7 @@
     {
       "metadata": {
         "name": "classic_conditions",
-        "resourceVersion": "1708878057467",
+        "resourceVersion": "1708906386845",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -325,21 +325,13 @@
           "required": [
             "conditions"
           ]
-        },
-        "examples": [
-          {
-            "name": "do classic query (TODO)",
-            "saveModel": {
-              "conditions": []
-            }
-          }
-        ]
+        }
       }
     },
     {
       "metadata": {
         "name": "threshold",
-        "resourceVersion": "1708878057467",
+        "resourceVersion": "1708906386845",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -441,16 +433,7 @@
             "expression",
             "conditions"
           ]
-        },
-        "examples": [
-          {
-            "name": "TODO... a threshold query",
-            "saveModel": {
-              "expression": "$A",
-              "conditions": null
-            }
-          }
-        ]
+        }
       }
     }
   ]

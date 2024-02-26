@@ -18,7 +18,6 @@
     "queries": {
       "type": "array",
       "items": {
-        "description": "Datasource request model",
         "type": "object",
         "oneOf": [
           {
@@ -33,13 +32,13 @@
                 "description": "The datasource",
                 "type": "object",
                 "required": [
-                  "type",
-                  "uid"
+                  "type"
                 ],
                 "properties": {
                   "type": {
                     "description": "The datasource plugin type",
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^__expr__$"
                   },
                   "uid": {
                     "description": "Datasource UID",
@@ -94,7 +93,11 @@
                   },
                   "type": {
                     "description": "Type asserts that the frame matches a known type structure.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "timeseries-wide",
+                      "timeseries-long"
+                    ]
                   },
                   "typeVersion": {
                     "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
@@ -118,11 +121,17 @@
                 "properties": {
                   "from": {
                     "description": "From is the start time of the query.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "now-1h"
+                    ]
                   },
                   "to": {
                     "description": "To is the end time of the query.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "now"
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -144,13 +153,13 @@
                 "description": "The datasource",
                 "type": "object",
                 "required": [
-                  "type",
-                  "uid"
+                  "type"
                 ],
                 "properties": {
                   "type": {
                     "description": "The datasource plugin type",
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^__expr__$"
                   },
                   "uid": {
                     "description": "Datasource UID",
@@ -217,7 +226,11 @@
                   },
                   "type": {
                     "description": "Type asserts that the frame matches a known type structure.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "timeseries-wide",
+                      "timeseries-long"
+                    ]
                   },
                   "typeVersion": {
                     "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
@@ -267,11 +280,17 @@
                 "properties": {
                   "from": {
                     "description": "From is the start time of the query.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "now-1h"
+                    ]
                   },
                   "to": {
                     "description": "To is the end time of the query.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "now"
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -296,13 +315,13 @@
                 "description": "The datasource",
                 "type": "object",
                 "required": [
-                  "type",
-                  "uid"
+                  "type"
                 ],
                 "properties": {
                   "type": {
                     "description": "The datasource plugin type",
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^__expr__$"
                   },
                   "uid": {
                     "description": "Datasource UID",
@@ -370,7 +389,11 @@
                   },
                   "type": {
                     "description": "Type asserts that the frame matches a known type structure.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "timeseries-wide",
+                      "timeseries-long"
+                    ]
                   },
                   "typeVersion": {
                     "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
@@ -394,11 +417,17 @@
                 "properties": {
                   "from": {
                     "description": "From is the start time of the query.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "now-1h"
+                    ]
                   },
                   "to": {
                     "description": "To is the end time of the query.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "now"
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -522,13 +551,13 @@
                 "description": "The datasource",
                 "type": "object",
                 "required": [
-                  "type",
-                  "uid"
+                  "type"
                 ],
                 "properties": {
                   "type": {
                     "description": "The datasource plugin type",
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^__expr__$"
                   },
                   "uid": {
                     "description": "Datasource UID",
@@ -574,7 +603,11 @@
                   },
                   "type": {
                     "description": "Type asserts that the frame matches a known type structure.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "timeseries-wide",
+                      "timeseries-long"
+                    ]
                   },
                   "typeVersion": {
                     "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
@@ -598,11 +631,17 @@
                 "properties": {
                   "from": {
                     "description": "From is the start time of the query.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "now-1h"
+                    ]
                   },
                   "to": {
                     "description": "To is the end time of the query.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "now"
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -698,13 +737,13 @@
                 "description": "The datasource",
                 "type": "object",
                 "required": [
-                  "type",
-                  "uid"
+                  "type"
                 ],
                 "properties": {
                   "type": {
                     "description": "The datasource plugin type",
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^__expr__$"
                   },
                   "uid": {
                     "description": "Datasource UID",
@@ -758,7 +797,11 @@
                   },
                   "type": {
                     "description": "Type asserts that the frame matches a known type structure.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "timeseries-wide",
+                      "timeseries-long"
+                    ]
                   },
                   "typeVersion": {
                     "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
@@ -782,11 +825,17 @@
                 "properties": {
                   "from": {
                     "description": "From is the start time of the query.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "now-1h"
+                    ]
                   },
                   "to": {
                     "description": "To is the end time of the query.",
-                    "type": "string"
+                    "type": "string",
+                    "examples": [
+                      "now"
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -804,5 +853,6 @@
       "type": "string"
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft-04/schema"
 }

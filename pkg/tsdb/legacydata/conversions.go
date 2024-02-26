@@ -6,15 +6,15 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/spec"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
 // ToDataSourceQueries returns queries that should be sent to a single datasource
 // This will throw an error if the queries reference multiple instances
-func ToDataSourceQueries(req v0alpha1.GenericQueryRequest) ([]backend.DataQuery, *spec.DataSourceRef, error) {
-	var dsRef *spec.DataSourceRef
+func ToDataSourceQueries(req v0alpha1.GenericQueryRequest) ([]backend.DataQuery, *resource.DataSourceRef, error) {
+	var dsRef *resource.DataSourceRef
 	var tr *backend.TimeRange
 	if req.From != "" {
 		val := NewDataTimeRange(req.From, req.To)

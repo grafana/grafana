@@ -6,12 +6,12 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/spec"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
-var _ spec.TypedQueryParser[TestDataDataQuery] = (*TestdataQueryHandler)(nil)
+var _ resource.TypedQueryParser[TestDataDataQuery] = (*TestdataQueryHandler)(nil)
 
 type TestdataQueryHandler struct {
 	k8s   *v0alpha1.QueryTypeDefinitionList
@@ -61,7 +61,7 @@ func (h *TestdataQueryHandler) QueryTypeDefinitionList() *v0alpha1.QueryTypeDefi
 // ReadQuery implements query.TypedQueryHandler.
 func (*TestdataQueryHandler) ParseQuery(
 	// Properties that have been parsed off the same node
-	common spec.CommonQueryProperties,
+	common resource.CommonQueryProperties,
 	// An iterator with context for the full node (include common values)
 	iter *jsoniter.Iterator,
 ) (TestDataDataQuery, error) {

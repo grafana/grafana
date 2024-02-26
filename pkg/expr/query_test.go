@@ -4,7 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/spec"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource/schemabuilder"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
@@ -12,8 +13,9 @@ import (
 )
 
 func TestQueryTypeDefinitions(t *testing.T) {
-	builder, err := spec.NewSchemaBuilder(
-		spec.BuilderOptions{
+	builder, err := schemabuilder.NewSchemaBuilder(
+		schemabuilder.BuilderOptions{
+			PluginID:    []string{DatasourceType},
 			BasePackage: "github.com/grafana/grafana/pkg/expr",
 			CodePath:    "./",
 			// We need to identify the enum fields explicitly :(
@@ -28,10 +30,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		})
 	require.NoError(t, err)
 	err = builder.AddQueries(
-		spec.QueryTypeInfo{
-			Discriminators: spec.NewDiscriminators("queryType", QueryTypeMath),
+		schemabuilder.QueryTypeInfo{
+			Discriminators: resource.NewDiscriminators("queryType", QueryTypeMath),
 			GoType:         reflect.TypeOf(&MathQuery{}),
-			Examples: []spec.QueryExample{
+			Examples: []resource.QueryExample{
 				{
 					Name: "constant addition",
 					SaveModel: MathQuery{
@@ -46,10 +48,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				},
 			},
 		},
-		spec.QueryTypeInfo{
-			Discriminators: spec.NewDiscriminators("queryType", QueryTypeReduce),
+		schemabuilder.QueryTypeInfo{
+			Discriminators: resource.NewDiscriminators("queryType", QueryTypeReduce),
 			GoType:         reflect.TypeOf(&ReduceQuery{}),
-			Examples: []spec.QueryExample{
+			Examples: []resource.QueryExample{
 				{
 					Name: "get max value",
 					SaveModel: ReduceQuery{
@@ -62,10 +64,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				},
 			},
 		},
-		spec.QueryTypeInfo{
-			Discriminators: spec.NewDiscriminators("queryType", QueryTypeResample),
+		schemabuilder.QueryTypeInfo{
+			Discriminators: resource.NewDiscriminators("queryType", QueryTypeResample),
 			GoType:         reflect.TypeOf(&ResampleQuery{}),
-			Examples: []spec.QueryExample{
+			Examples: []resource.QueryExample{
 				{
 					Name: "resample at a every day",
 					SaveModel: ResampleQuery{
@@ -77,29 +79,29 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				},
 			},
 		},
-		spec.QueryTypeInfo{
-			Discriminators: spec.NewDiscriminators("queryType", QueryTypeClassic),
+		schemabuilder.QueryTypeInfo{
+			Discriminators: resource.NewDiscriminators("queryType", QueryTypeClassic),
 			GoType:         reflect.TypeOf(&ClassicQuery{}),
-			Examples: []spec.QueryExample{
-				{
-					Name: "do classic query (TODO)",
-					SaveModel: ClassicQuery{
-						// ????
-						Conditions: []classic.ConditionJSON{},
-					},
-				},
+			Examples:       []resource.QueryExample{
+				// {
+				// 	Name: "do classic query (TODO)",
+				// 	SaveModel: ClassicQuery{
+				// 		// ????
+				// 		Conditions: []classic.ConditionJSON{},
+				// 	},
+				// },
 			},
 		},
-		spec.QueryTypeInfo{
-			Discriminators: spec.NewDiscriminators("queryType", QueryTypeThreshold),
+		schemabuilder.QueryTypeInfo{
+			Discriminators: resource.NewDiscriminators("queryType", QueryTypeThreshold),
 			GoType:         reflect.TypeOf(&ThresholdQuery{}),
-			Examples: []spec.QueryExample{
-				{
-					Name: "TODO... a threshold query",
-					SaveModel: ThresholdQuery{
-						Expression: "$A",
-					},
-				},
+			Examples:       []resource.QueryExample{
+				// {
+				// 	Name: "TODO... a threshold query",
+				// 	SaveModel: ThresholdQuery{
+				// 		Expression: "$A",
+				// 	},
+				// },
 			},
 		},
 	)

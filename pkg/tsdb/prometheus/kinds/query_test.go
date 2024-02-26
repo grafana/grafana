@@ -4,13 +4,15 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/spec"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource/schemabuilder"
 	"github.com/stretchr/testify/require"
 )
 
 func TestQueryTypeDefinitions(t *testing.T) {
-	builder, err := spec.NewSchemaBuilder(
-		spec.BuilderOptions{
+	builder, err := schemabuilder.NewSchemaBuilder(
+		schemabuilder.BuilderOptions{
+			PluginID:    []string{"prometheus"},
 			BasePackage: "github.com/grafana/grafana/pkg/tsdb/prometheus/kinds",
 			CodePath:    "./",
 			// We need to identify the enum fields explicitly :(
@@ -22,10 +24,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		})
 	require.NoError(t, err)
 	err = builder.AddQueries(
-		spec.QueryTypeInfo{
+		schemabuilder.QueryTypeInfo{
 			Name:   "default",
 			GoType: reflect.TypeOf(&PrometheusDataQuery{}),
-			Examples: []spec.QueryExample{
+			Examples: []resource.QueryExample{
 				{
 					Name: "example timeseries",
 					SaveModel: PrometheusDataQuery{
