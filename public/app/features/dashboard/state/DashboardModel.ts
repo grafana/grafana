@@ -1340,22 +1340,6 @@ export class DashboardModel implements TimeModel {
   }
 
   hasAngularPlugins(): boolean {
-    // Ensure all panel plugins are loaded before checking if they are Angular plugins
-    /* await Promise.all(
-      this.panels.map(async (panel) => {
-        if (panel.plugin) {
-          return;
-        }
-        try {
-          const plugin = await dispatch(loadPanelPlugin(panel.type));
-          return panel.pluginLoaded(plugin);
-        } catch (e) {
-          // Plugin not found
-          return;
-        }
-      })
-    ); */
-
     return this.panels.some((panel) => {
       // Return false for plugins that are angular but have angular.hideDeprecation = false
       // We cannot use panel.plugin.isAngularPlugin() because panel.plugin may not be initialized at this stage.
