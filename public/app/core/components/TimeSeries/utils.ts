@@ -92,9 +92,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   tweakAxis = (opts) => opts,
   eventsScope = '__global_',
   hoverProximity,
-  orientation,
+  orientation = VizOrientation.Vertical,
 }) => {
-  // Vertical is default and we want to only show horizontal if explicitly set
   const isVertical = orientation !== VizOrientation.Horizontal;
   const builder = new UPlotConfigBuilder(timeZones[0]);
 

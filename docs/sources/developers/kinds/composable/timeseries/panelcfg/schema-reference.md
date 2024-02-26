@@ -192,8 +192,8 @@ It extends [OptionsWithTimezones](#optionswithtimezones).
 | Property      | Type                                    | Required | Default | Description                                                          |
 |---------------|-----------------------------------------|----------|---------|----------------------------------------------------------------------|
 | `legend`      | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | TODO docs                                                            |
-| `orientation` | string                                  | **Yes**  |         | TODO docs<br/>Possible values are: `auto`, `vertical`, `horizontal`. |
 | `tooltip`     | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | TODO docs                                                            |
+| `orientation` | string                                  | No       |         | TODO docs<br/>Possible values are: `auto`, `vertical`, `horizontal`. |
 | `timezone`    | string[]                                | No       |         | *(Inherited from [OptionsWithTimezones](#optionswithtimezones))*     |
 
 ### OptionsWithTimezones
