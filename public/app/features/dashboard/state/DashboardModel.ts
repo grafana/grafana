@@ -1344,7 +1344,7 @@ export class DashboardModel implements TimeModel {
       // Return false for plugins that are angular but have angular.hideDeprecation = false
       // We cannot use panel.plugin.isAngularPlugin() because panel.plugin may not be initialized at this stage.
       const isAngularPanel =
-        config.panels[panel.type]?.angular?.detected && !panel.plugin?.meta.angular?.hideDeprecation;
+        config.panels[panel.type]?.angular?.detected && !config.panels[panel.type]?.angular?.hideDeprecation;
       let isAngularDs = false;
       if (panel.datasource?.uid) {
         isAngularDs = isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid);
