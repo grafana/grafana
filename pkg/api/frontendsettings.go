@@ -218,6 +218,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:             hs.Cfg.PublicDashboardsEnabled,
+		CloudMigrationIsTarget:              hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigrationIsTarget,
 		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
 		RootFolderUID:                       accesscontrol.GeneralFolderUID,
 		LocalFileSystemAvailable:            hs.Cfg.LocalFileSystemAvailable,
