@@ -476,9 +476,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             hRect = hovered[0] = o;
             hovered[hRect.sidx] = hRect;
 
-            hoverMulti && findRects(qt, undefined, hRect.didx).forEach(r => {
-              hovered[r.sidx] = r;
-            });
+            hoverMulti &&
+              findRects(qt, undefined, hRect.didx).forEach((r) => {
+                hovered[r.sidx] = r;
+              });
           }
         });
       }
