@@ -139,7 +139,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		migrateToCloud := &navtree.NavLink{
 			Text:     "Migrate to Grafana Cloud",
 			Id:       "migrate-to-cloud",
-			SubTitle: "Copy data sources, dashboards, and alerts from this installation to a cloud stack",
+			SubTitle: "Copy configuration from your self-managed installation to a cloud stack",
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		}
 		configNodes = append(configNodes, migrateToCloud)
