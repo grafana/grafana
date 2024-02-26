@@ -31,7 +31,7 @@
     "@types/lodash": "4.14.202",
     "@types/node": "20.11.20",
     "@types/prismjs": "1.26.3",
-    "@types/react": "18.2.55",
+    "@types/react": "18.2.59",
     "@types/testing-library__jest-dom": "5.14.9",
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
