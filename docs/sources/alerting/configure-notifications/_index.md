@@ -1,6 +1,4 @@
 ---
-aliases:
-- ./alerting-rules/manage-contact-points/ # /docs/grafana/latest/alerting/alerting-rules/manage-contact-points/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications
 description: Configure how, when, and where to send your alert notifications
 keywords:
