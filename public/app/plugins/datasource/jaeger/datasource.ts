@@ -9,7 +9,6 @@ import {
   DataSourceInstanceSettings,
   DataSourceJsonData,
   dateMath,
-  dateTime,
   DateTime,
   FieldType,
   getDefaultTimeRange,
