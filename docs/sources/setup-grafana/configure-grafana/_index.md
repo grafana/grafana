@@ -1656,7 +1656,7 @@ For example: `disabled_labels=grafana_folder`
 
 ## [unified_alerting.state_history.annotations]
 
-This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be annotations (a setting [unified_alerting.state_history].backend
+This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be annotations (see setting [unified_alerting.state_history].backend)
 
 ### max_age
 
