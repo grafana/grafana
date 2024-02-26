@@ -108,3 +108,67 @@ func TestGetProviderConfig(t *testing.T) {
 
 	require.Equal(t, expectedOAuthInfo, result)
 }
+
+func TestGetProviderConfig_ExtraFields(t *testing.T) {
+	iniWithExtraFields := `
+	[auth.azuread]
+	force_use_graph_api = true
+	allowed_organizations = org1, org2
+
+	[auth.github]
+	team_ids = first, second
+	allowed_organizations = org1, org2
+
+	[auth.generic_oauth]
+	name_attribute_path = name
+	login_attribute_path = login
+	id_token_attribute_name = id_token
+	team_ids = first, second
+	allowed_organizations = org1, org2
+
+	[auth.grafana_com]
+	allowed_organizations = org1, org2
+	`
+
+	iniFile, err := ini.Load([]byte(iniWithExtraFields))
+	require.NoError(t, err)
+
+	cfg := setting.NewCfg()
+	cfg.Raw = iniFile
+
+	strategy := NewOAuthStrategy(cfg)
+
+	t.Run("azuread", func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), "azuread")
+		require.NoError(t, err)
+
+		require.Equal(t, "true", result["force_use_graph_api"])
+		require.Equal(t, "org1, org2", result["allowed_organizations"])
+	})
+
+	t.Run("github", func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), "github")
+		require.NoError(t, err)
+
+		require.Equal(t, "first, second", result["team_ids"])
+		require.Equal(t, "org1, org2", result["allowed_organizations"])
+	})
+
+	t.Run("generic_oauth", func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
+		require.NoError(t, err)
+
+		require.Equal(t, "first, second", result["team_ids"])
+		require.Equal(t, "org1, org2", result["allowed_organizations"])
+		require.Equal(t, "name", result["name_attribute_path"])
+		require.Equal(t, "login", result["login_attribute_path"])
+		require.Equal(t, "id_token", result["id_token_attribute_name"])
+	})
+
+	t.Run("grafana_com", func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), "grafana_com")
+		require.NoError(t, err)
+
+		require.Equal(t, "org1, org2", result["allowed_organizations"])
+	})
+}
