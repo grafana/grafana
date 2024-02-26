@@ -10,6 +10,7 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   DataQueryResponse,
+  DataSourceApi,
   dateTimeForTimeZone,
   Field,
   GrafanaTheme2,
@@ -27,7 +28,7 @@ import {
 } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
 import { combineResponses } from '@grafana/o11y-ds-frontend';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { CustomScrollbar, usePanelContext, useStyles2 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -234,7 +235,7 @@ export const LogsPanel = ({
 
       let newSeries: DataFrame[] = [];
       try {
-        newSeries = await requestMoreLogs(panelData, scrollRange, timeZone);
+        newSeries = await requestMoreLogs(dataSourcesMap, panelData, scrollRange, timeZone);
       } catch (e) {
         console.error(e);
       } finally {
@@ -247,7 +248,7 @@ export const LogsPanel = ({
         series: newSeries,
       });
     },
-    [data.request, panelData, timeZone]
+    [data.request, dataSourcesMap, panelData, timeZone]
   );
 
   if (!data || logRows.length === 0) {
@@ -388,7 +389,12 @@ async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange
   return Promise.resolve();
 }
 
-async function requestMoreLogs(panelData: PanelData, timeRange: AbsoluteTimeRange, timeZone: TimeZone) {
+async function requestMoreLogs(
+  dataSourcesMap: Map<string, DataSourceApi>,
+  panelData: PanelData,
+  timeRange: AbsoluteTimeRange,
+  timeZone: TimeZone
+) {
   if (!panelData.request) {
     return [];
   }
@@ -402,8 +408,9 @@ async function requestMoreLogs(panelData: PanelData, timeRange: AbsoluteTimeRang
   const dataRequests = [];
 
   for (const uid in targetGroups) {
-    const dataSource = await getDataSourceSrv().get(uid);
+    const dataSource = dataSourcesMap.get(panelData.request.targets[0].refId);
     if (!dataSource) {
+      console.log('no ds');
       continue;
     }
     dataRequests.push(
