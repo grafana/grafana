@@ -316,7 +316,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		return nil, errors.New("heimdall authorization failed: " + err.Error())
 	}
 	s.log.Debug("User info result", "result", user)
-	return (*BasicUserInfo)(user), nil
+	return user, nil
 }
 
 func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson {
