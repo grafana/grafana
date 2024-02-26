@@ -139,7 +139,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   builder.addHook('draw', config.draw);
 
   const showNewVizTooltips = Boolean(runtimeConfig.featureToggles.newVizTooltips);
-  showNewVizTooltips && builder.setTooltipInterpolator(config.interpolateTooltip);
+  !showNewVizTooltips && builder.setTooltipInterpolator(config.interpolateTooltip);
 
   if (xTickLabelRotation !== 0) {
     // these are the amount of space we already have available between plot edge and first label
