@@ -25,14 +25,7 @@ weight: 50
 
 # Configure panel options
 
-A Grafana panel is a visual representation of data that you can customize by defining a data source query, transforming and formatting data, and configuring visualization settings.
-
-A panel editor includes a query builder and a series of options that you can use to transform data and add information to your panels.
-
-This topic describes how to:
-
-- Add a panel title and description
-- Configure repeating rows and panels
+There are basic options common to all visualizations, such as a title and description, and they are described in the following sections. In some cases you can also configure repeating rows and panels.
 
 ## Panel options
 
