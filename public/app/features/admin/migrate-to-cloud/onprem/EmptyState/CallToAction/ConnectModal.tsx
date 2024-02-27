@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useId, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
-import { Modal, Button, Stack, TextLink, Field, Input, Text } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { ConnectStackDTO } from '../../../api';
@@ -15,6 +17,7 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const cloudStackId = useId();
   const tokenId = useId();
+  const styles = useStyles2(getStyles);
 
   const {
     handleSubmit,
@@ -43,7 +46,7 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
     <Modal isOpen title={t('migrate-to-cloud.connect-modal.title', 'Connect to a cloud stack')} onDismiss={hideModal}>
       <form onSubmit={handleSubmit(onConfirmConnect)}>
         <Text color="secondary">
-          <Stack direction="column" gap={2}>
+          <Stack direction="column" gap={2} alignItems="flex-start">
             <Trans i18nKey="migrate-to-cloud.connect-modal.body-get-started">
               To get started, you&apos;ll need a Grafana.com account.
             </Trans>
@@ -61,6 +64,7 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
               Once you&apos;ve decided on a stack, paste the URL below.
             </Trans>
             <Field
+              className={styles.field}
               invalid={!!errors.stackURL}
               error={errors.stackURL?.message}
               label={t('migrate-to-cloud.connect-modal.body-url-field', 'Cloud stack URL')}
@@ -86,6 +90,7 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
               </Trans>
             </span>
             <Field
+              className={styles.field}
               invalid={!!errors.token}
               error={errors.token?.message}
               label={t('migrate-to-cloud.connect-modal.body-token-field', 'Migration token')}
@@ -114,3 +119,9 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
     </Modal>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  field: css({
+    alignSelf: 'stretch',
+  }),
+});
