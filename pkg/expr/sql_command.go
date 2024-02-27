@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/scottlepp/go-duck/duck"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/scottlepp/go-duck/duck"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // SQLCommand is an expression to run SQL over results
@@ -23,11 +25,17 @@ type SQLCommand struct {
 
 // NewSQLCommand creates a new SQLCommand.
 func NewSQLCommand(refID, rawSQL string, tr TimeRange) (*SQLCommand, error) {
+	if rawSQL == "" {
+		return nil, errutil.BadRequest("sql-missing-query",
+			errutil.WithPublicMessage("missing SQL query"))
+	}
 	tables, err := sql.TablesList(rawSQL)
 	if err != nil {
-		return nil, err
+		logger.Warn("invalid sql query", "sql", rawSQL, "error", err)
+		return nil, errutil.BadRequest("sql-invalid-sql",
+			errutil.WithPublicMessage("error reading SQL command"),
+		)
 	}
-
 	return &SQLCommand{
 		query:       rawSQL,
 		varsToQuery: tables,

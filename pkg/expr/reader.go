@@ -102,6 +102,13 @@ func (h *ExpressionQueryReader) ReadQuery(
 			eq.Command, err = classic.NewConditionCmd(common.RefID, q.Conditions)
 		}
 
+	case QueryTypeSQL:
+		q := &SQLExpression{}
+		err = iter.ReadVal(q)
+		if err == nil {
+			eq.Command, err = NewSQLCommand(common.RefID, q.Expression, common.TimeRange)
+		}
+
 	case QueryTypeThreshold:
 		q := &ThresholdQuery{}
 		err = iter.ReadVal(q)
