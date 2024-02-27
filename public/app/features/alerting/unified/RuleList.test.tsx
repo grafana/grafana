@@ -113,11 +113,11 @@ const dataSources = {
 const ui = {
   ruleGroup: byTestId('rule-group'),
   cloudRulesSourceErrors: byTestId('cloud-rulessource-errors'),
-  groupCollapseToggle: byTestId('group-collapse-toggle'),
-  ruleCollapseToggle: byTestId('collapse-toggle'),
+  groupCollapseToggle: byTestId('data-testid group-collapse-toggle'),
+  ruleCollapseToggle: byTestId('data-testid collapse-toggle'),
   rulesTable: byTestId('rules-table'),
   ruleRow: byTestId('row'),
-  expandedContent: byTestId('expanded-content'),
+  expandedContent: byTestId('data-testid expanded-content'),
   rulesFilterInput: byTestId('search-query-input'),
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
@@ -399,13 +399,13 @@ describe('RuleList', () => {
     // expand details of an instance
     await userEvent.click(ui.ruleCollapseToggle.get(instanceRows![0]));
 
-    const alertDetails = byTestId('expanded-content').get(instanceRows[0]);
+    const alertDetails = byTestId('data-testid expanded-content').get(instanceRows[0]);
     expect(alertDetails).toHaveTextContent('Value2e+10');
     expect(alertDetails).toHaveTextContent('messagefirst alert message');
 
     // collapse everything again
     await userEvent.click(ui.ruleCollapseToggle.get(instanceRows![0]));
-    expect(byTestId('expanded-content').query(instanceRows[0])).not.toBeInTheDocument();
+    expect(byTestId('data-testid expanded-content').query(instanceRows[0])).not.toBeInTheDocument();
     await userEvent.click(ui.ruleCollapseToggle.getAll(ruleRows[1])[0]);
     await userEvent.click(ui.groupCollapseToggle.get(groups[1]));
     expect(ui.rulesTable.query()).not.toBeInTheDocument();

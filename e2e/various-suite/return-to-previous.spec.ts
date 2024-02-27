@@ -58,7 +58,8 @@ describe('ReturnToPrevious button', () => {
 
     cy.getAllSessionStorage().then((result) => {
       expect(result).to.eql({
-        'http://localhost:3001': {
+        // TODO: some alternative may be required here
+        'http://grafana-server:3001': {
           returnToPrevious: alertRule1,
         },
       });
@@ -78,12 +79,14 @@ describe('ReturnToPrevious button', () => {
 
     cy.getAllSessionStorage().then((result) => {
       expect(result).to.not.eql({
-        'http://localhost:3001': {
+        // TODO: some alternative may be required here
+        'http://grafana-server:3001': {
           returnToPrevious: alertRule1,
         },
       });
       expect(result).to.eql({
-        'http://localhost:3001': {
+        // TODO: some alternative may be required here
+        'http://grafana-server:3001': {
           returnToPrevious: alertRule2,
         },
       });

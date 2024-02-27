@@ -48,7 +48,7 @@ const ui = {
   groupCollapseToggle: byTestId('alert-group-collapse-toggle'),
   groupTable: byTestId('alert-group-table'),
   row: byTestId('row'),
-  collapseToggle: byTestId('collapse-toggle'),
+  collapseToggle: byTestId('data-testid collapse-toggle'),
   silenceButton: byText('Silence'),
   sourceButton: byText('See source'),
   matcherInput: byTestId('search-query-input'),
