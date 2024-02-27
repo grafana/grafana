@@ -296,7 +296,7 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 
 	guardianFunc := g.CanView
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
-		guardianFunc = g.CanSave
+		guardianFunc = g.CanEdit
 	}
 
 	parentHasAccess, err := guardianFunc()
@@ -335,14 +335,14 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 
 		hasAccess := parentHasAccess
 		if !hasAccess {
-			g, err := guardian.NewByUID(ctx, q.UID, q.OrgID, q.SignedInUser)
+			g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, q.SignedInUser)
 			if err != nil {
 				return nil, err
 			}
 
 			guardianFunc := g.CanView
 			if q.Permission == dashboardaccess.PERMISSION_EDIT {
-				guardianFunc = g.CanSave
+				guardianFunc = g.CanEdit
 			}
 
 			hasAccess, err = guardianFunc()
