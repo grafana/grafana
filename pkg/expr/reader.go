@@ -30,6 +30,7 @@ func NewExpressionQueryReader(features featuremgmt.FeatureToggles) (*ExpressionQ
 }
 
 // ReadQuery implements query.TypedQueryHandler.
+// nolint:gocyclo
 func (h *ExpressionQueryReader) ReadQuery(
 	// Properties that have been parsed off the same node
 	common *rawNode, // common query.CommonQueryProperties
