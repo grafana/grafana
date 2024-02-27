@@ -711,7 +711,9 @@
       "cancel": "Cancel",
       "connect": "Connect to this stack",
       "connecting": "Connecting to this stack...",
-      "title": "Connect to a cloud stack"
+      "stack-required-error": "Stack URL is required",
+      "title": "Connect to a cloud stack",
+      "token-required-error": "Migration token is required"
     },
     "cta": {
       "button": "Migrate this instance to Cloud",

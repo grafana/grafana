@@ -36,7 +36,7 @@ interface CreateMigrationTokenResponseDTO {
   token: string;
 }
 
-interface ConnectStackProps {
+export interface ConnectStackDTO {
   stackURL: string;
   token: string;
 }
@@ -68,7 +68,7 @@ export const migrateToCloudAPI = createApi({
         });
       },
     }),
-    connectStack: builder.mutation<void, ConnectStackProps>({
+    connectStack: builder.mutation<void, ConnectStackDTO>({
       invalidatesTags: ['stack'],
       queryFn: async ({ stackURL }) => {
         return new Promise((resolve) => {
