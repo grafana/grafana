@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../manage-notifications/template-notifications/create-notification-templates/ # /docs/grafana/latest/alerting/manage-notifications/template-notifications/create-notification-templates/
-canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/create-notification-templates/
+canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/
 description: Create notification templates to sent to your contact points
 keywords:
   - grafana
