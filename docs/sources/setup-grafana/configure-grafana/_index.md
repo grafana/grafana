@@ -288,7 +288,7 @@ Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
 ### certs_watch_interval
 
-Periodicity at which `cert_key` and `cert_file` would be watched for changes.
+Controls whether `cert_key` and `cert_file` are periodically watched for changes.
 Disabled, by default. When enabled, `cert_key` and `cert_file`
 are watched for changes, if there is change seen then those are certs are loaded automatically.
 
