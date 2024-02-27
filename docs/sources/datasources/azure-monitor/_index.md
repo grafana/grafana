@@ -232,7 +232,7 @@ This method of authentication does not inherently support backend functionality 
 
 **Note: To configure fallback service credentials the [feature toggle][configure-grafana-feature-toggles] `idForwarding` must be set to `true` and `user_identity_fallback_credentials_enabled` must be enabled in the [Azure configuration section][configure-grafana-azure] (enabled by default when `user_identity_enabled` is set to `true`).**
 
-Permissions for fallback credentials may need to be broad in order to appropriately support backend functionality. For example, an alerting query created by a user will be dependant on their permissions. If a user creates an alert for a resource that the fallback credentials cannot access, the alert will fail.
+Permissions for fallback credentials may need to be broad in order to appropriately support backend functionality. For example, an alerting query created by a user will be dependent on their permissions. If a user creates an alert for a resource that the fallback credentials cannot access, the alert will fail.
 
 **To enable current user authentication for Grafana:**
 
