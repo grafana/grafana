@@ -95,5 +95,5 @@ func parseTables(rawSQL string) ([]string, error) {
 		}
 		return tables, nil
 	}
-	return nil, errors.New("Not a select statement")
+	return nil, errors.New("not a select statement")
 }
