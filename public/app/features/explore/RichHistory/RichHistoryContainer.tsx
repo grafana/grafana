@@ -1,6 +1,6 @@
 // Libraries
 import { flatten } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { config, reportInteraction } from '@grafana/runtime';
@@ -12,7 +12,6 @@ import { dataSource } from 'app/features/expressions/ExpressionDatasource';
 import { StoreState } from 'app/types';
 
 // Components, enums
-import { ExploreDrawer } from '../ExploreDrawer';
 import {
   deleteRichHistory,
   initRichHistory,
@@ -64,7 +63,6 @@ export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export function RichHistoryContainer(props: Props) {
   const theme = useTheme2();
-  const [height, setHeight] = useState(theme.components.horizontalDrawer.defaultHeight);
 
   const {
     richHistory,
@@ -99,28 +97,22 @@ export function RichHistoryContainer(props: Props) {
   }
 
   return (
-    <ExploreDrawer
-      onResize={(_e, _dir, ref) => {
-        setHeight(Number(ref.style.height.slice(0, -2)));
-      }}
-    >
-      <RichHistory
-        richHistory={richHistory}
-        richHistoryTotal={richHistoryTotal}
-        firstTab={firstTab}
-        datasourceInstances={datasourceInstances}
-        onClose={onClose}
-        height={height}
-        deleteRichHistory={deleteRichHistory}
-        richHistorySettings={richHistorySettings}
-        richHistorySearchFilters={richHistorySearchFilters}
-        updateHistorySettings={updateHistorySettings}
-        updateHistorySearchFilters={updateHistorySearchFilters}
-        loadRichHistory={loadRichHistory}
-        loadMoreRichHistory={loadMoreRichHistory}
-        clearRichHistoryResults={clearRichHistoryResults}
-      />
-    </ExploreDrawer>
+    <RichHistory
+      richHistory={richHistory}
+      richHistoryTotal={richHistoryTotal}
+      firstTab={firstTab}
+      datasourceInstances={datasourceInstances}
+      onClose={onClose}
+      height={theme.components.horizontalDrawer.defaultHeight}
+      deleteRichHistory={deleteRichHistory}
+      richHistorySettings={richHistorySettings}
+      richHistorySearchFilters={richHistorySearchFilters}
+      updateHistorySettings={updateHistorySettings}
+      updateHistorySearchFilters={updateHistorySearchFilters}
+      loadRichHistory={loadRichHistory}
+      loadMoreRichHistory={loadMoreRichHistory}
+      clearRichHistoryResults={clearRichHistoryResults}
+    />
   );
 }
 

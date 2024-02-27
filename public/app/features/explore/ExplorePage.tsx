@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -14,7 +14,7 @@ import { ExploreQueryParams } from 'app/types/explore';
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { RichHistoryContainer } from './RichHistory/RichHistoryContainer';
+import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
@@ -39,6 +39,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   const { chrome } = useGrafana();
   const navModel = useNavModel('explore');
   const { updateSplitSize, widthCalc } = useSplitSizeUpdater(MIN_PANE_WIDTH);
+  const [drawerHeight, setDrawerHeight] = useState<number | undefined>(undefined);
 
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
@@ -63,31 +64,38 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
       <ExploreActions />
       {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
       <SplitPaneWrapper
-        splitOrientation="vertical"
-        paneSize={widthCalc}
-        minSize={MIN_PANE_WIDTH}
-        maxSize={MIN_PANE_WIDTH * -1}
-        primary="second"
-        splitVisible={hasSplit}
-        parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)}` } : {}} // button = 4, padding = 1 x 2
-        paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
-        onDragFinished={(size) => size && updateSplitSize(size)}
+        splitOrientation="horizontal"
+        paneSize={drawerHeight || theme.components.horizontalDrawer.defaultHeight}
+        splitVisible={showQueryHistory}
+        onDragFinished={(size) => size && setDrawerHeight(size)}
       >
-        {panes.map(([exploreId]) => {
-          return (
-            <ErrorBoundaryAlert key={exploreId} style="page">
-              <ExplorePaneContainer exploreId={exploreId} />
-            </ErrorBoundaryAlert>
-          );
-        })}
+        <SplitPaneWrapper
+          splitOrientation="vertical"
+          paneSize={widthCalc}
+          minSize={MIN_PANE_WIDTH}
+          maxSize={MIN_PANE_WIDTH * -1}
+          primary="second"
+          splitVisible={hasSplit}
+          parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)}` } : {}} // button = 4, padding = 1 x 2
+          paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
+          onDragFinished={(size) => size && updateSplitSize(size)}
+        >
+          {panes.map(([exploreId]) => {
+            return (
+              <ErrorBoundaryAlert key={exploreId} style="page">
+                <ExplorePaneContainer exploreId={exploreId} />
+              </ErrorBoundaryAlert>
+            );
+          })}
+        </SplitPaneWrapper>
+        {showQueryHistory && (
+          <RichHistoryContainer
+            onClose={() => {
+              changeShowQueryHistory(false);
+            }}
+          />
+        )}
       </SplitPaneWrapper>
-      {showQueryHistory && (
-        <RichHistoryContainer
-          onClose={() => {
-            changeShowQueryHistory(false);
-          }}
-        />
-      )}
     </div>
   );
 }
