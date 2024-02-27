@@ -3797,7 +3797,7 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     react-use: "npm:17.5.0"
-    react-virtualized-auto-sizer: "npm:1.0.22"
+    react-virtualized-auto-sizer: "npm:1.0.23"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
@@ -4138,7 +4138,7 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     react-use: "npm:17.5.0"
-    react-virtualized-auto-sizer: "npm:1.0.22"
+    react-virtualized-auto-sizer: "npm:1.0.23"
     rxjs: "npm:7.8.1"
     sql-formatter-plus: "npm:^1.3.6"
     ts-jest: "npm:29.1.2"
@@ -18601,7 +18601,7 @@ __metadata:
     react-transition-group: "npm:4.4.5"
     react-use: "npm:17.5.0"
     react-virtual: "npm:2.10.4"
-    react-virtualized-auto-sizer: "npm:1.0.22"
+    react-virtualized-auto-sizer: "npm:1.0.23"
     react-window: "npm:1.8.10"
     react-window-infinite-loader: "npm:1.0.9"
     react-zoom-pan-pinch: "npm:^3.3.0"
@@ -26833,13 +26833,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtualized-auto-sizer@npm:1.0.22":
-  version: 1.0.22
-  resolution: "react-virtualized-auto-sizer@npm:1.0.22"
+"react-virtualized-auto-sizer@npm:1.0.23":
+  version: 1.0.23
+  resolution: "react-virtualized-auto-sizer@npm:1.0.23"
   peerDependencies:
     react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
     react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
-  checksum: 10/87c808dea49fae6361d01a411f7cdcc87681551578e733594916c745a725303b5b3c88283117cf2fd569627df0758bbac62a59bd7629ba85e59aed01d5c421d6
+  checksum: 10/a9b4ca0b64aaf27f9f3d214770a4a8fcaeb3d17383508d690420149e889088e1334a9dd54e69d6cb4ab891071ce0344d5605f028b941b39a331d491861eddfc6
   languageName: node
   linkType: hard
 
