@@ -62,7 +62,7 @@ export abstract class FunctionalVector<T = unknown> {
     return this.toArray().join(separator);
   }
 
-  toJSON(): T[] {
+  toJSON(): any {
     return this.toArray();
   }
 

@@ -20,7 +20,7 @@ export const MISSING_VALUE = undefined; // Treated as connected in new graph pan
  *
  * @deprecated use standard DataFrame, or create one with PartialDataFrame
  */
-export class MutableDataFrame<T = unknown> extends FunctionalVector<T> implements DataFrame {
+export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame {
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
@@ -263,7 +263,7 @@ export class MutableDataFrame<T = unknown> extends FunctionalVector<T> implement
   /**
    * The simplified JSON values used in JSON.stringify()
    */
-  toJSON() {
+  toJSON(): any {
     return toDataFrameDTO(this);
   }
 }

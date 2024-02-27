@@ -43,3 +43,6 @@ export {
 export { usePluginContext } from './context/plugins/usePluginContext';
 export { isDataSourcePluginContext } from './context/plugins/guards';
 export { getLinksSupplier } from './field/fieldOverrides';
+
+// deprecated
+export { CircularVector } from './vector/CircularVector';
