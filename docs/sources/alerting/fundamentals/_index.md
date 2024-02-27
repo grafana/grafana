@@ -35,17 +35,25 @@ The following concepts are key to your understanding of how Grafana Alerting wor
 
 ### Alert rules
 
-An alert rule is a set of criteria that determine when an alert should fire. It consists of one or more queries and expressions, a condition which needs to be met, an interval which determines how often the alert rule is evaluated, and a duration over which the condition must be met for an alert to fire.
+An alert rule consists of one or more queries and expressions that select the data you want to measure. It also contains a condition, which is the threshold that an alert rule must meet or exceed in order to fire.
 
-Alert rules are evaluated over their interval, and each alert rule can have zero, one, or any number of alerts firing at a time. The state of the alert rule is determined by its most "severe" alert, which can be one of Normal, Pending, or Firing. For example, if at least one of an alert rule's alerts are firing then the alert rule is also firing. The health of an alert rule is determined by the status of its most recent evaluation. These can be OK, Error, and NoData.
+Add annotations to your alert rule to provide additional information about the alert rule and add labels to uniquely identify your alert rule and configure alert routing. Labels link alert rules to notification policies, so you can easily manage which policy should handle which alerts and who gets notified.
 
-A very important feature of alert rules is that they support custom annotations and labels. These allow you to instrument alerts with additional metadata such as summaries and descriptions, and add additional labels to route alerts to specific notification policies.
+Once alert rules are created, they go through various states and transitions. An alert rule can produce multiple alert instances - one alert instance for each time series.
+
+The alert rule state is determined by the “worst case” state of the alert instances produced and the states can be Normal, Pending, or Firing. For example, if one alert instance is firing, the alert rule state will also be firing.
+
+The alert rule health is determined by the status of the evaluation of the alert rule, which can be Ok, Error, and NoData.
 
 ### Labels and states
 
 Alert rules are uniquely identified by sets of key/value pairs called labels. Each key is a label name and each value is a label value. For example, one alert might have the labels `foo=bar` and another alert rule might have the labels `foo=baz`. An alert rule can have many labels such as `foo=bar,bar=baz`, but it cannot have the same label twice such as `foo=bar,foo=baz`. Two alert rules cannot have the same labels either, and if two alert rules have the same labels such as `foo=bar,bar=baz` and `foo=bar,bar=baz` then one of the alerts will be discarded. Firing alerts are resolved when the condition in the alert rule is no longer met, or the alert rule is deleted.
 
 In Grafana-managed alert rules, alert rules can be in Normal, Pending, Alerting, No Data or Error states. In datasource-managed alert rules, such as Mimir and Loki, alert rules can be in Normal, Pending and Alerting, but not NoData or Error.
+
+### Alert instances
+
+For Grafana-managed alert rules, multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting) and they can be in Normal, Pending, Alerting, No Data, Error states. For Mimir or Loki-managed alert rules, alert instances are only created when the threshold condition defined in an alert rule is breached.
 
 ### Contact points
 
