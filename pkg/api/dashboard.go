@@ -298,7 +298,7 @@ func (hs *HTTPServer) RestoreDeletedDashboard(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s restored", dash.Title),
-		"id":      dash.UID,
+		"uid":      dash.UID,
 	})
 }
 
