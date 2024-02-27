@@ -15,6 +15,7 @@ import { useGetContactPointsState } from './api/receiversApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
+import { mergeTimeIntervals } from './components/mute-timings/util';
 import {
   NotificationPoliciesFilter,
   findRoutesByMatchers,
@@ -191,10 +192,8 @@ const AmRoutes = () => {
   if (!selectedAlertmanager) {
     return null;
   }
-  const time_intervals = [
-    ...(result?.alertmanager_config?.mute_time_intervals ?? []),
-    ...(result?.alertmanager_config?.time_intervals ?? []),
-  ];
+  const time_intervals = result?.alertmanager_config ? mergeTimeIntervals(result?.alertmanager_config) : [];
+
   const numberOfMuteTimings = time_intervals.length;
   const haveData = result && !resultError && !resultLoading;
   const isFetching = !result && resultLoading;

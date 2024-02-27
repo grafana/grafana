@@ -20,7 +20,7 @@ import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
 
 interface Props {
-  fromMuteTimings?: MuteTimeInterval; // mute time interval when comes from the old config , mute_time_intervals
+  fromLegacyTimeInterval?: MuteTimeInterval; // mute time interval when comes from the old config , mute_time_intervals
   fromTimeIntervals?: MuteTimeInterval; // mute time interval when comes from the new config , time_intervals. These two fields are mutually exclusive
   showError?: boolean;
   provenance?: string;
@@ -65,7 +65,13 @@ const replaceMuteTiming = (
   return addNew ? [...originalTimingsWithoutNew, newTiming] : [...originalTimingsWithoutNew];
 };
 
-const MuteTimingForm = ({ fromMuteTimings, fromTimeIntervals, showError, loading, provenance }: Props) => {
+const MuteTimingForm = ({
+  fromLegacyTimeInterval: fromMuteTimings,
+  fromTimeIntervals,
+  showError,
+  loading,
+  provenance,
+}: Props) => {
   const dispatch = useDispatch();
   const { selectedAlertmanager } = useAlertmanager();
   const styles = useStyles2(getStyles);
@@ -169,18 +175,8 @@ const MuteTimingForm = ({ fromMuteTimings, fromTimeIntervals, showError, loading
                 <Input
                   {...formApi.register('name', {
                     required: true,
-                    validate: (value) => {
-                      if (!muteTiming) {
-                        const existingMuteTimingInMuteTimings = originalMuteTimings?.find(({ name }) => value === name);
-                        const existingMuteTimingInTimeIntervals = originalTimeIntervals?.find(
-                          ({ name }) => value === name
-                        );
-                        return existingMuteTimingInMuteTimings || existingMuteTimingInTimeIntervals
-                          ? `Mute timing already exists for "${value}"`
-                          : true;
-                      }
-                      return;
-                    },
+                    validate: (value) =>
+                      validateMuteTiming(value, muteTiming, originalMuteTimings, originalTimeIntervals),
                   })}
                   className={styles.input}
                   data-testid={'mute-timing-name'}
@@ -206,6 +202,22 @@ const MuteTimingForm = ({ fromMuteTimings, fromTimeIntervals, showError, loading
     </>
   );
 };
+
+function validateMuteTiming(
+  value: string,
+  muteTiming: MuteTimeInterval | undefined,
+  originalMuteTimings: MuteTimeInterval[],
+  originalTimeIntervals: MuteTimeInterval[]
+) {
+  if (!muteTiming) {
+    const existingMuteTimingInMuteTimings = originalMuteTimings?.find(({ name }) => value === name);
+    const existingMuteTimingInTimeIntervals = originalTimeIntervals?.find(({ name }) => value === name);
+    return existingMuteTimingInMuteTimings || existingMuteTimingInTimeIntervals
+      ? `Mute timing already exists for "${value}"`
+      : true;
+  }
+  return;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   input: css`

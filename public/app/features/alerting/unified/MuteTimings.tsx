@@ -22,9 +22,8 @@ const MuteTimings = () => {
 
   const getMuteTimingByName = useCallback(
     (id: string, fromTimeIntervals: boolean): MuteTimeInterval | undefined => {
-      // merge both fields mute_time_intervals and time_intervals to support both old and new config
       const time_intervals = fromTimeIntervals ? config?.time_intervals ?? [] : config?.mute_time_intervals ?? [];
-      const timing = time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
+      const timing = time_intervals.find(({ name }: MuteTimeInterval) => name === id);
 
       if (timing) {
         const provenance = config?.muteTimeProvenances?.[timing.name];
@@ -64,7 +63,7 @@ const MuteTimings = () => {
                 return (
                   <MuteTimingForm
                     loading={isLoading}
-                    fromMuteTimings={muteTimingInMuteTimings}
+                    fromLegacyTimeInterval={muteTimingInMuteTimings}
                     fromTimeIntervals={muteTimingInTimeIntervals}
                     showError={!muteTiming && !isLoading}
                     provenance={provenance}
