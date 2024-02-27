@@ -98,6 +98,9 @@ func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
 }
 
 func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
@@ -125,6 +128,9 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	}
 
 	info := s.GetOAuthInfo()
+
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
 
 	response, err := s.httpGet(ctx, client, s.url+"/api/oauth2/user")
 

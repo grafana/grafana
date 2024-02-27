@@ -130,6 +130,9 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 }
 
 func (s *SocialGithub) IsTeamMember(ctx context.Context, client *http.Client) bool {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if len(s.teamIds) == 0 {
 		return true
 	}
@@ -152,6 +155,9 @@ func (s *SocialGithub) IsTeamMember(ctx context.Context, client *http.Client) bo
 
 func (s *SocialGithub) IsOrganizationMember(ctx context.Context,
 	client *http.Client, organizationsUrl string) bool {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
@@ -289,6 +295,9 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 	}
 
 	info := s.GetOAuthInfo()
+
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
 
 	response, err := s.httpGet(ctx, client, info.ApiUrl)
 	if err != nil {

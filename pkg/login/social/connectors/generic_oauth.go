@@ -152,6 +152,9 @@ func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
 }
 
 func (s *SocialGenericOAuth) IsTeamMember(ctx context.Context, client *http.Client) bool {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if len(s.teamIds) == 0 {
 		return true
 	}
@@ -173,6 +176,9 @@ func (s *SocialGenericOAuth) IsTeamMember(ctx context.Context, client *http.Clie
 }
 
 func (s *SocialGenericOAuth) IsOrganizationMember(ctx context.Context, client *http.Client) bool {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
@@ -315,6 +321,9 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson {
 	s.log.Debug("Extracting user info from OAuth token")
 
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	idTokenAttribute := "id_token"
 	if s.idTokenAttributeName != "" {
 		idTokenAttribute = s.idTokenAttributeName
@@ -379,6 +388,9 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 		return data.Email
 	}
 
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if s.emailAttributePath != "" {
 		email, err := util.SearchJSONForStringAttr(s.emailAttributePath, data.rawJSON)
 		if err != nil {
@@ -410,6 +422,9 @@ func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
 		return data.Login
 	}
 
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if s.loginAttributePath != "" {
 		s.log.Debug("Searching for login among JSON", "loginAttributePath", s.loginAttributePath)
 		login, err := util.SearchJSONForStringAttr(s.loginAttributePath, data.rawJSON)
@@ -431,6 +446,9 @@ func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
 }
 
 func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if s.nameAttributePath != "" {
 		name, err := util.SearchJSONForStringAttr(s.nameAttributePath, data.rawJSON)
 		if err != nil {
@@ -456,6 +474,9 @@ func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
 }
 
 func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson) ([]string, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if s.groupsAttributePath == "" {
 		return []string{}, nil
 	}
@@ -516,6 +537,9 @@ func (s *SocialGenericOAuth) FetchTeamMemberships(ctx context.Context, client *h
 	var err error
 	var ids []string
 
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if s.teamsUrl == "" {
 		ids, err = s.fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx, client)
 	} else {
@@ -561,6 +585,9 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx cont
 }
 
 func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(ctx context.Context, client *http.Client) ([]string, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if s.teamIdsAttributePath == "" {
 		return []string{}, nil
 	}
@@ -606,6 +633,9 @@ func (s *SocialGenericOAuth) FetchOrganizations(ctx context.Context, client *htt
 }
 
 func (s *SocialGenericOAuth) SupportBundleContent(bf *bytes.Buffer) error {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	bf.WriteString("## GenericOAuth specific configuration\n\n")
 	bf.WriteString("```ini\n")
 	bf.WriteString(fmt.Sprintf("name_attribute_path = %s\n", s.nameAttributePath))

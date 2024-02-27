@@ -298,11 +298,13 @@ func (s *SocialGoogle) getGroupsPage(ctx context.Context, client *http.Client, u
 }
 
 func (s *SocialGoogle) isHDAllowed(hd string) error {
-	if len(s.info.AllowedDomains) == 0 {
+	info := s.GetOAuthInfo()
+
+	if len(info.AllowedDomains) == 0 {
 		return nil
 	}
 
-	for _, allowedDomain := range s.info.AllowedDomains {
+	for _, allowedDomain := range info.AllowedDomains {
 		if hd == allowedDomain {
 			return nil
 		}

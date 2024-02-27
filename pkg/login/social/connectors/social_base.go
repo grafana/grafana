@@ -60,6 +60,9 @@ type groupStruct struct {
 }
 
 func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	bf.WriteString("## Client configuration\n\n")
 	bf.WriteString("```ini\n")
 	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.info.AllowAssignGrafanaAdmin))
@@ -88,6 +91,9 @@ func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
 }
 
 func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if s.info.RoleAttributePath == "" {
 		if s.info.RoleAttributeStrict {
 			return "", false, errRoleAttributePathNotSet.Errorf("role_attribute_path not set and role_attribute_strict is set")
@@ -118,6 +124,9 @@ func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.R
 }
 
 func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, bool) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	role, err := util.SearchJSONForStringAttr(s.info.RoleAttributePath, rawJSON)
 	if err == nil && role != "" {
 		return getRoleFromSearch(role)
@@ -146,6 +155,9 @@ func (s *SocialBase) defaultRole() org.RoleType {
 }
 
 func (s *SocialBase) isGroupMember(groups []string) bool {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if len(s.info.AllowedGroups) == 0 {
 		return true
 	}

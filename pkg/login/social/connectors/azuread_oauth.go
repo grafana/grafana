@@ -224,6 +224,9 @@ func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client,
 		return nil, &SocialError{"AzureAD OAuth: version 1.0 is not supported. Please ensure the auth_url and token_url are set to the v2.0 endpoints."}
 	}
 
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	s.log.Debug("Validating audience", "audience", claims.Audience, "client_id", s.ClientID)
 	if claims.Audience != s.ClientID {
 		return nil, &SocialError{"AzureAD OAuth: audience mismatch"}
@@ -337,6 +340,9 @@ type getAzureGroupResponse struct {
 //
 // See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
 func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, claims *azureClaims, token *oauth2.Token) ([]string, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if !s.forceUseGraphAPI {
 		s.log.Debug("Checking the claim for groups")
 		if len(claims.Groups) > 0 {
@@ -432,6 +438,9 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
 	info := s.GetOAuthInfo()
 
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	bf.WriteString("## AzureAD specific configuration\n\n")
 	bf.WriteString("```ini\n")
 	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", info.AllowedGroups))
@@ -442,6 +451,9 @@ func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
 }
 
 func (s *SocialAzureAD) isAllowedTenant(tenantID string) bool {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	if len(s.allowedOrganizations) == 0 {
 		s.log.Warn("No allowed organizations specified, all tenants are allowed. Configure allowed_organizations to restrict access")
 		return true
