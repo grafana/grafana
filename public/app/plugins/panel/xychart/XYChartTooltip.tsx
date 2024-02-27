@@ -6,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { ColorIndicator, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+import { ColorIndicator, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { getTitleFromHref } from 'app/features/explore/utils/links';
 
 import { getStyles } from '../timeseries/TimeSeriesTooltip';
@@ -53,7 +53,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     colorThing = colorThing[rowIndex];
   }
 
-  const headerItem: LabelValue = {
+  const headerItem: VizTooltipItem = {
     label,
     value: '',
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -61,7 +61,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     colorIndicator: ColorIndicator.marker_md,
   };
 
-  const contentItems: LabelValue[] = [
+  const contentItems: VizTooltipItem[] = [
     {
       label: getFieldDisplayName(xField, frame),
       value: fmt(xField, xField.values[rowIndex]),
@@ -101,8 +101,8 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader headerLabel={headerItem} isPinned={isPinned} />
-      <VizTooltipContent contentLabelValue={contentItems} isPinned={isPinned} />
+      <VizTooltipHeader item={headerItem} isPinned={isPinned} />
+      <VizTooltipContent items={contentItems} isPinned={isPinned} />
       {isPinned && <VizTooltipFooter dataLinks={getLinks()} />}
     </div>
   );

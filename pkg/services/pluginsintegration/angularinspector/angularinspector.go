@@ -12,7 +12,7 @@ type Service struct {
 	angularinspector.Inspector
 }
 
-func ProvideService(cfg *config.Cfg, dynamic *angulardetectorsprovider.Dynamic) (*Service, error) {
+func ProvideService(cfg *config.PluginManagementCfg, dynamic *angulardetectorsprovider.Dynamic) (*Service, error) {
 	var detectorsProvider angulardetector.DetectorsProvider
 	var err error
 	static := angularinspector.NewDefaultStaticDetectorsProvider()

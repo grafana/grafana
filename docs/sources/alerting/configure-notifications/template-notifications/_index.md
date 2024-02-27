@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/
+aliases:
+  - ../manage-notifications/template-notifications/ # /docs/grafana/latest/alerting/manage-notifications/template-notifications/
+canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/
 description: Customize your notifications using notification templates
 keywords:
   - grafana
@@ -12,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Customize notifications
-weight: 400
+weight: 420
 ---
 
 # Customize notifications
@@ -52,12 +54,12 @@ Use notification templates to send notifications to your contact points.
 Data that is available when writing templates.
 
 {{% docs/reference %}}
-[reference]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/reference"
-[reference]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/reference"
+[reference]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference"
+[reference]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference"
 
-[use-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/use-notification-templates"
-[use-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/use-notification-templates"
+[use-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/use-notification-templates"
+[use-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/use-notification-templates"
 
-[using-go-templating-language]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/using-go-templating-language"
-[using-go-templating-language]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/using-go-templating-language"
+[using-go-templating-language]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/using-go-templating-language"
+[using-go-templating-language]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/using-go-templating-language"
 {{% /docs/reference %}}
