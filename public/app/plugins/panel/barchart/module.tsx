@@ -225,6 +225,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         path: 'fullHighlight',
         name: 'Highlight full area on hover',
         defaultValue: defaultOptions.fullHighlight,
+        showIf: (c) => c.stacking === StackingMode.None,
       });
 
     builder.addFieldNamePicker({
