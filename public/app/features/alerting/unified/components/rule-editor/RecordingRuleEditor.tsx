@@ -71,6 +71,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
         instant: Boolean(changedQuery.instant),
         range: Boolean(changedQuery.range),
         legendFormat: changedQuery.legendFormat,
+        legendUrlFormat: changedQuery.legendUrlFormat,
       },
     };
     onChangeQuery([merged]);

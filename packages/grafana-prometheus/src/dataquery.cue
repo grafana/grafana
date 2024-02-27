@@ -41,6 +41,8 @@ composableKinds: DataQuery: {
 				format?: #PromQueryFormat
 				// Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname
 				legendFormat?: string
+				// Drilldown URL similar to Series name. Ex. {{hostname}} will be replaced with label value for hostname
+				legendUrlFormat?: string
 				// @deprecated Used to specify how many times to divide max data points by. We use max data points under query options
 				// See https://github.com/grafana/grafana/issues/48081
 				intervalFactor?: number

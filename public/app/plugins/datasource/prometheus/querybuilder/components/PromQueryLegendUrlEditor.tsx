@@ -5,17 +5,18 @@ import { EditorField } from '@grafana/experimental';
 import { AutoSizeInput } from '@grafana/ui';
 
 export interface Props {
-  legendFormat: string | undefined;
-  onChange: (legendFormat: string) => void;
+  legendUrlFormat: string | undefined;
+  onChange: (legendUrlFormat: string) => void;
   onRunQuery: () => void;
 }
 
 /**
  * Tests for this component are on the parent level (PromQueryBuilderOptions).
  */
-export const PromQueryLegendUrlEditor = React.memo<Props>(({ legendFormat, onChange, onRunQuery }) => {
+export const PromQueryLegendUrlEditor = React.memo<Props>(({ legendUrlFormat, onChange, onRunQuery }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const onLegendFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
+  const onLegendUrlFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
+      onChange(evt.currentTarget.value);
       onRunQuery();
     }
   
@@ -26,11 +27,11 @@ export const PromQueryLegendUrlEditor = React.memo<Props>(({ legendFormat, onCha
       data-testid={selectors.components.DataSource.Prometheus.queryEditor.legendUrl}
     >
           <AutoSizeInput
-            id="legendFormat"
+            id="legendUrlFormat"
             minWidth={22}
             placeholder="{{example}}"
-            defaultValue={legendFormat}
-            onCommitChange={onLegendFormatChanged}
+            defaultValue={legendUrlFormat}
+            onCommitChange={onLegendUrlFormatChanged}
             ref={inputRef}
           />
     </EditorField>
