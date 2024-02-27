@@ -10,6 +10,7 @@ import {
   VizPanel,
   SceneDataLayers,
   dataLayers,
+  SceneGridRow,
 } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -47,6 +48,15 @@ jest.mock('../saving/getDashboardChangesFromScene', () => ({
 
 const worker = createWorker();
 mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+    };
+  },
+}));
 
 describe('DashboardScene', () => {
   describe('DashboardSrv.getCurrent compatibility', () => {
@@ -167,6 +177,43 @@ describe('DashboardScene', () => {
         mockResultsOfDetectChangesWorker(diffResults);
         scene.setState({ title: 'hello' });
         expect(scene.state.isDirty).toBeFalsy();
+      });
+
+      it('Should throw an error when adding a panel to a layout that is not SceneGridLayout', () => {
+        const scene = buildTestScene({ body: undefined });
+
+        expect(() => {
+          scene.addPanel(new VizPanel({ title: 'Panel Title', key: 'panel-4', pluginId: 'timeseries' }));
+        }).toThrow('Trying to add a panel in a layout that is not SceneGridLayout');
+      });
+
+      it('Should add a new panel to the dashboard', () => {
+        const vizPanel = new VizPanel({
+          title: 'Panel Title',
+          key: 'panel-4',
+          pluginId: 'timeseries',
+          $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+        });
+
+        scene.addPanel(vizPanel);
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridItem = body.state.children[0] as SceneGridItem;
+
+        expect(scene.state.isDirty).toBe(true);
+        expect(body.state.children.length).toBe(5);
+        expect(gridItem.state.body!.state.key).toBe('panel-4');
+      });
+
+      it('Should create and add a new panel to the dashboard', () => {
+        scene.onCreateNewPanel();
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridItem = body.state.children[0] as SceneGridItem;
+
+        expect(scene.state.isDirty).toBe(true);
+        expect(body.state.children.length).toBe(5);
+        expect(gridItem.state.body!.state.key).toBe('panel-4');
       });
     });
   });
@@ -345,6 +392,18 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             key: 'panel-2',
             pluginId: 'table',
           }),
+        }),
+        new SceneGridRow({
+          key: 'gridrow-1',
+          children: [
+            new SceneGridItem({
+              body: new VizPanel({
+                title: 'Panel C',
+                key: 'panel-3',
+                pluginId: 'table',
+              }),
+            }),
+          ],
         }),
         new SceneGridItem({
           body: new VizPanel({
