@@ -19,6 +19,13 @@ const (
 	HelpFlagDashboardHelp1
 )
 
+type UpdateEmailActionType string
+
+const (
+	EmailUpdateAction UpdateEmailActionType = "email-update"
+	LoginUpdateAction UpdateEmailActionType = "login-update"
+)
+
 // Typed errors
 var (
 	ErrCaseInsensitive   = errors.New("case insensitive conflict")
