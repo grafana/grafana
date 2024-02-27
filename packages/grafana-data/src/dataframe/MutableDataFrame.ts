@@ -11,7 +11,7 @@ import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from 
 export type MutableField<T = any> = Field<T>;
 
 /** @deprecated */
-type MutableVectorCreator = (buffer?: any[]) => any[];
+type MutableVectorCreator = (buffer?: unknown[]) => unknown[];
 
 export const MISSING_VALUE = undefined; // Treated as connected in new graph panel
 
@@ -20,7 +20,7 @@ export const MISSING_VALUE = undefined; // Treated as connected in new graph pan
  *
  * @deprecated use standard DataFrame, or create one with PartialDataFrame
  */
-export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame {
+export class MutableDataFrame<T = unknown> extends FunctionalVector<T> implements DataFrame {
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
