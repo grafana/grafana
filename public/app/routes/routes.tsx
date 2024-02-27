@@ -295,6 +295,18 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: LdapPage,
     },
     {
+      path: '/admin/authentication/teamsync',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionTeamsWrite]),
+      component: true // TODO: config.featureToggles.teamSyncUnified
+        ? SafeDynamicImport(
+            () =>
+              import(
+                /* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/teamsync/TeamsyncConfigPage'
+              )
+          )
+        : () => <Redirect to="/admin" />,
+    },
+    {
       path: '/admin/authentication/:provider',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
       component: config.featureToggles.ssoSettingsApi

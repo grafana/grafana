@@ -56,6 +56,20 @@ export const AuthConfigPageUnconnected = ({
         ...providers,
       ]
     : providers;
+
+  let teamSyncProvider = {
+    provider: 'teamsync',
+    settings: {
+      enabled: true,
+      name: 'Team Sync',
+      configured: true,
+      configPath: 'teamsync',
+      type: 'Sync',
+    },
+  };
+
+  providerList.push(teamSyncProvider);
+
   return (
     <Page
       navId="authentication"

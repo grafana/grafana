@@ -230,6 +230,7 @@ func (hs *HTTPServer) registerRoutes() {
 	}
 
 	r.Get("/admin/authentication", authorize(adminAuthPageEvaluator()), hs.Index)
+	r.Get("/admin/authentication/teamsync", authorize(ac.EvalPermission(ac.ActionTeamsWrite)), hs.Index)
 	r.Get("/admin/authentication/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
 		providerParam := ac.Parameter(":provider")
