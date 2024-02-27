@@ -369,10 +369,12 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		f2 := ruleWithFolder{rule: rule, folderTitle: uuid.NewString()}.Fingerprint()
 		require.NotEqual(t, f, f2)
 	})
-	t.Run("Version and Updated should be excluded from fingerprint", func(t *testing.T) {
+	t.Run("some fields should be excluded from fingerprint", func(t *testing.T) {
 		cp := models.CopyRule(rule)
 		cp.Version++
 		cp.Updated = cp.Updated.Add(1 * time.Second)
+		cp.Annotations = map[string]string{"key-annotation": "value-annotation"}
+		cp.Labels = map[string]string{"key-label": "value-label"}
 
 		f2 := ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint()
 		require.Equal(t, f, f2)
@@ -459,8 +461,10 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		}
 
 		excludedFields := map[string]struct{}{
-			"Version": {},
-			"Updated": {},
+			"Version":     {},
+			"Updated":     {},
+			"Labels":      {},
+			"Annotations": {},
 		}
 
 		tp := reflect.TypeOf(rule).Elem()
