@@ -43,7 +43,7 @@ type sqlEntityServer struct {
 	sess        *session.SessionDB
 	dialect     migrator.Dialect
 	snowflake   *snowflake.Node
-	broadcaster *Broadcaster[*entity.Entity]
+	broadcaster Broadcaster[*entity.Entity]
 }
 
 func (s *sqlEntityServer) Init() error {
@@ -80,8 +80,7 @@ func (s *sqlEntityServer) Init() error {
 	}
 
 	// set up the broadcaster
-	s.broadcaster = &Broadcaster[*entity.Entity]{}
-	err = s.broadcaster.Start(func() (chan *entity.Entity, error) {
+	s.broadcaster, err = NewBroadcaster(context.Background(), func() (chan *entity.Entity, error) {
 		stream := make(chan *entity.Entity)
 
 		// start the poller
