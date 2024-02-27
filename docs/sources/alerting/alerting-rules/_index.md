@@ -5,18 +5,17 @@ aliases:
   - unified-alerting/alerting-rules/
   - ./create-alerts/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/
-description: Create and manage alert rules
+description: Configure alert rules
 labels:
   products:
     - cloud
     - enterprise
     - oss
-menuTitle: Create and manage alert rules
-title: Create and manage alert rules
+title: Configure alert rules
 weight: 120
 ---
 
-# Create and manage alert rules
+# Configure alert rules
 
 An alert rule consists of one or more queries and expressions that select the data you want to measure. It also contains a condition, which is the threshold that an alert rule must meet or exceed in order to fire.
 
