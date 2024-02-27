@@ -11,7 +11,6 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Configure alert rules
 title: Configure alert rules
 weight: 120
 ---
