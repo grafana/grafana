@@ -92,5 +92,5 @@ export function sortDataFrameByTime(frame: DataFrame, dir: SortDirection): DataF
 }
 
 function sorted<T>(vals: T[], index: number[]): T[] {
-  return vals.map((v, idx) => vals[index[idx]]);
+  return vals.map((_, idx) => vals[index[idx]]);
 }
