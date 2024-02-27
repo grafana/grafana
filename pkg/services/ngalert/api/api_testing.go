@@ -66,7 +66,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		body.RuleGroup,
 		srv.cfg.BaseInterval,
 		c.SignedInUser.GetOrgID(),
-		folder,
+		folder.UID,
 		srv.cfg,
 	)
 	if err != nil {

@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -20,7 +19,7 @@ func validateRuleNode(
 	groupName string,
 	interval time.Duration,
 	orgId int64,
-	namespace *folder.Folder,
+	namespaceUID string,
 	cfg *setting.UnifiedAlertingSettings) (*ngmodels.AlertRule, error) {
 	intervalSeconds, err := validateInterval(interval, cfg.BaseInterval)
 	if err != nil {
@@ -91,7 +90,7 @@ func validateRuleNode(
 		Data:            queries,
 		UID:             ruleNode.GrafanaManagedAlert.UID,
 		IntervalSeconds: intervalSeconds,
-		NamespaceUID:    namespace.UID,
+		NamespaceUID:    namespaceUID,
 		RuleGroup:       groupName,
 		NoDataState:     noDataState,
 		ExecErrState:    errorState,
@@ -199,7 +198,7 @@ func validateForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Dur
 func validateRuleGroup(
 	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
 	orgId int64,
-	namespace *folder.Folder,
+	namespaceUID string,
 	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRuleWithOptionals, error) {
 	if ruleGroupConfig.Name == "" {
 		return nil, errors.New("rule group name cannot be empty")
@@ -224,7 +223,7 @@ func validateRuleGroup(
 	result := make([]*ngmodels.AlertRuleWithOptionals, 0, len(ruleGroupConfig.Rules))
 	uids := make(map[string]int, cap(result))
 	for idx := range ruleGroupConfig.Rules {
-		rule, err := validateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, interval, orgId, namespace, cfg)
+		rule, err := validateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, interval, orgId, namespaceUID, cfg)
 		// TODO do not stop on the first failure but return all failures
 		if err != nil {
 			return nil, fmt.Errorf("invalid rule specification at index [%d]: %w", idx, err)
