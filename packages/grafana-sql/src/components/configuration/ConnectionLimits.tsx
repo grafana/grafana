@@ -98,7 +98,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         label={
           <Label>
             <Stack gap={0.5}>
-              <span>Max open</span>
+              <span>Max open connections</span>
               <Tooltip
                 content={
                   <span>
