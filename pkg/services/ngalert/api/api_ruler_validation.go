@@ -22,7 +22,7 @@ func validateRuleNode(
 	orgId int64,
 	namespace *folder.Folder,
 	cfg *setting.UnifiedAlertingSettings) (*ngmodels.AlertRule, error) {
-	intervalSeconds, err := validateInterval(cfg, interval)
+	intervalSeconds, err := validateInterval(interval, cfg.BaseInterval)
 	if err != nil {
 		return nil, err
 	}
@@ -162,10 +162,10 @@ func validateCondition(condition string, queries []apimodels.AlertQuery) error {
 	return nil
 }
 
-func validateInterval(cfg *setting.UnifiedAlertingSettings, interval time.Duration) (int64, error) {
+func validateInterval(interval, baseInterval time.Duration) (int64, error) {
 	intervalSeconds := int64(interval.Seconds())
 
-	baseIntervalSeconds := int64(cfg.BaseInterval.Seconds())
+	baseIntervalSeconds := int64(baseInterval.Seconds())
 
 	if interval <= 0 {
 		return 0, fmt.Errorf("rule evaluation interval must be positive duration that is multiple of the base interval %d seconds", baseIntervalSeconds)
