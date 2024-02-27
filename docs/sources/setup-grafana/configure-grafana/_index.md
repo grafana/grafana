@@ -1654,6 +1654,20 @@ For example: `disabled_labels=grafana_folder`
 
 <hr>
 
+## [unified_alerting.state_history.annotations]
+
+This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be annotations (see setting [unified_alerting.state_history].backend)
+
+### max_age
+
+Configures for how long alert annotations are stored. Default is 0, which keeps them forever. This setting should be expressed as an duration. Ex 6h (hours), 10d (days), 2w (weeks), 1M (month).
+
+### max_annotations_to_keep
+
+Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
+
+<hr>
+
 ## [unified_alerting.upgrade]
 
 For more information about upgrading to Grafana Alerting, refer to [Upgrade Alerting](/docs/grafana/next/alerting/set-up/migrating-alerts/).
@@ -1713,12 +1727,20 @@ Sets the minimum interval between rule evaluations. Default value is `1`.
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
-### max_annotation_age =
+### max_annotation_age
+
+{{% admonition type="note" %}}
+This option is deprecated - See `max_age` option in [unified_alerting.state_history.annotations]({{< relref "#unified_alertingstate_historyannotations" >}}) instead.
+{{% /admonition %}}
 
 Configures for how long alert annotations are stored. Default is 0, which keeps them forever.
 This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
-### max_annotations_to_keep =
+### max_annotations_to_keep
+
+{{% admonition type="note" %}}
+This option is deprecated - See `max_annotations_to_keep` option in [unified_alerting.state_history.annotations]({{< relref "#unified_alertingstate_historyannotations" >}}) instead.
+{{% /admonition %}}
 
 Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
 
@@ -2167,6 +2189,18 @@ If the remote HTTP image renderer service runs on a different server than the Gr
 
 Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
 which this setting can help protect against by only allowing a certain number of concurrent requests. Default is `30`.
+
+### default_image_width
+
+Configures the width of the rendered image. The default width is `1000`.
+
+### default_image_height
+
+Configures the height of the rendered image. The default height is `500`.
+
+### default_image_scale
+
+Configures the scale of the rendered image. The default scale is `1`.
 
 ## [panels]
 
