@@ -24,8 +24,8 @@ const isLikeValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
 
 const isNotLikeValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
     id: ValueMatcherID.notSubstring,
-    name: 'Is not like',
-    description: 'Match where value for given field is not similar to options value.',
+    name: 'Is not substring',
+    description: 'Match where value for given field is not a substring to options value.',
     get: (options) => {
         return (valueIndex: number, field: Field) => {
         const value = field.values[valueIndex];

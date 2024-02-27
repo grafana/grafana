@@ -89,4 +89,18 @@ describe('value not substring matcher', () => {
 
     expect(matcher(valueIndex, field, frame, data)).toBeTruthy();
   });
+
+  it('it should not match if the option value is empty string', () => {
+    const frame = data[0];
+    const field = frame.fields[0];
+    const valueIndex = 0;
+    const emptyMatcher = getValueMatcher({
+      id: ValueMatcherID.notSubstring,
+      options: {
+        value: '',
+      },
+    });
+
+    expect(emptyMatcher(valueIndex, field, frame, data)).toBeFalsy();
+  });
 });
