@@ -132,6 +132,14 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
       };
   }
   if (instanceOfAzureCredential<AadCurrentUserCredentials>(authType, credentials)) {
+    if (instanceOfAzureCredential<AzureClientSecretCredentials>('clientsecret', credentials.serviceCredentials)) {
+      const serviceCredentials = { ...credentials.serviceCredentials, clientSecret: getSecret(options) };
+      return {
+        authType,
+        serviceCredentialsEnabled: credentials.serviceCredentialsEnabled,
+        serviceCredentials,
+      };
+    }
     return {
       authType,
       serviceCredentialsEnabled: credentials.serviceCredentialsEnabled,
@@ -163,6 +171,7 @@ export function updateCredentials(
         jsonData: {
           ...options.jsonData,
           azureAuthType: credentials.authType,
+          azureCredentials: undefined,
         },
       };
 
@@ -177,6 +186,7 @@ export function updateCredentials(
           cloudName: credentials.azureCloud || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
+          azureCredentials: undefined,
         },
         secureJsonData: {
           ...options.secureJsonData,
@@ -206,6 +216,8 @@ export function updateCredentials(
           serviceCredentialsEnabled: credentials.serviceCredentialsEnabled,
           serviceCredentials,
         },
+        oauthPassThru: true,
+        disableGrafanaCache: true,
       },
       secureJsonData: {
         ...options.secureJsonData,
