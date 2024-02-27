@@ -10,7 +10,6 @@ import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/Na
 import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
