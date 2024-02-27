@@ -1,9 +1,9 @@
 import { difference } from 'lodash';
 
 import { createDataFrame, guessFieldTypeFromValue } from '../dataframe/processDataFrame';
-import { Field, FieldType, NullValueMode } from '../types/index';
+import { Field, FieldType, NullValueMode, Vector } from '../types/index';
 
-import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
+import { fieldReducers, ReducerID, reduceField, defaultCalcs } from './fieldReducer';
 
 /**
  * Run a reducer and get back the value
@@ -61,6 +61,15 @@ describe('Stats Calculators', () => {
     expect(stats.last).toEqual(20);
     expect(stats.mean).toEqual(15);
     expect(stats.count).toEqual(2);
+  });
+
+  it('should handle undefined field data without crashing', () => {
+    const stats = reduceField({
+      field: { name: 'a', values: undefined as unknown as Vector, config: {}, type: FieldType.number },
+      reducers: [ReducerID.first, ReducerID.last, ReducerID.mean, ReducerID.count],
+    });
+
+    expect(stats).toEqual(defaultCalcs);
   });
 
   it('should support a single stat also', () => {

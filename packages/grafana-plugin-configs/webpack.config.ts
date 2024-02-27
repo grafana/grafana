@@ -17,6 +17,10 @@ function skipFiles(f: string): boolean {
     // avoid copying tsconfig.json
     return false;
   }
+  if (f.includes('/package.json')) {
+    // avoid copying package.json
+    return false;
+  }
   return true;
 }
 
@@ -86,7 +90,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
             loader: require.resolve('swc-loader'),
             options: {
               jsc: {
-                baseUrl: '.',
+                baseUrl: path.resolve(__dirname),
                 target: 'es2015',
                 loose: false,
                 parser: {
@@ -176,18 +180,6 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
             {
               search: /\%PLUGIN_ID\%/g,
               replace: pluginJson.id,
-            },
-          ],
-        },
-        {
-          dir: path.resolve(DIST_DIR),
-          files: ['package.json'],
-          rules: [
-            {
-              search: `"version": "${getPackageJson().version}"`,
-              replace: env.commit
-                ? `"version": "${getPackageJson().version}-${env.commit}"`
-                : `"version": "${getPackageJson().version}"`,
             },
           ],
         },

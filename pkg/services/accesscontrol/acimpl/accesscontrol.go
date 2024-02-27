@@ -39,13 +39,19 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 	}
 
 	namespace, identifier := user.GetNamespacedID()
-	if len(user.GetPermissions()) == 0 {
+
+	// If the user is in no organization, then the evaluation must happen based on the user's global permissions
+	permissions := user.GetPermissions()
+	if user.GetOrgID() == accesscontrol.NoOrgID {
+		permissions = user.GetGlobalPermissions()
+	}
+	if len(permissions) == 0 {
 		a.log.Debug("No permissions set for entity", "namespace", namespace, "id", identifier, "orgID", user.GetOrgID(), "login", user.GetLogin())
 		return false, nil
 	}
 
 	// Test evaluation without scope resolver first, this will prevent 403 for wildcard scopes when resource does not exist
-	if evaluator.Evaluate(user.GetPermissions()) {
+	if evaluator.Evaluate(permissions) {
 		return true, nil
 	}
 
@@ -57,7 +63,7 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 		return false, err
 	}
 
-	return resolvedEvaluator.Evaluate(user.GetPermissions()), nil
+	return resolvedEvaluator.Evaluate(permissions), nil
 }
 
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {

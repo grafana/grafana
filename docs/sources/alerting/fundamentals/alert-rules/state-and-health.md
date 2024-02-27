@@ -13,13 +13,13 @@ labels:
     - cloud
     - enterprise
     - oss
-title: State and health of alerting rules
+title: State and health of alert rules
 weight: 405
 ---
 
-# State and health of alerting rules
+# State and health of alert rules
 
-The state and health of alerting rules help you understand several key status indicators about your alerts.
+The state and health of alert rules help you understand several key status indicators about your alerts.
 
 There are three key components: [alert rule state](#alert-rule-state), [alert instance state](#alert-instance-state), and [alert rule health](#alert-rule-health). Although related, each component conveys subtly different information.
 
@@ -47,7 +47,7 @@ An alert instance can be in either of the following states:
 | **Pending**  | The state of an alert that has been active for less than the configured threshold duration.   |
 | **Alerting** | The state of an alert that has been active for longer than the configured threshold duration. |
 | **NoData**   | No data has been received for the configured time window.                                     |
-| **Error**    | The error that occurred when attempting to evaluate an alerting rule.                         |
+| **Error**    | The error that occurred when attempting to evaluate an alert rule.                            |
 
 ## Alert rule health
 
@@ -55,13 +55,13 @@ An alert rule can have one the following health statuses:
 
 | State      | Description                                                                        |
 | ---------- | ---------------------------------------------------------------------------------- |
-| **Ok**     | No error when evaluating an alerting rule.                                         |
-| **Error**  | An error occurred when evaluating an alerting rule.                                |
+| **Ok**     | No error when evaluating an alert rule.                                            |
+| **Error**  | An error occurred when evaluating an alert rule.                                   |
 | **NoData** | The absence of data in at least one time series returned during a rule evaluation. |
 
 ## Special alerts for `NoData` and `Error`
 
-When evaluation of an alerting rule produces state `NoData` or `Error`, Grafana Alerting will generate alert instances that have the following additional labels:
+When evaluation of an alert rule produces state `NoData` or `Error`, Grafana Alerting will generate alert instances that have the following additional labels:
 
 | Label              | Description                                                            |
 | ------------------ | ---------------------------------------------------------------------- |

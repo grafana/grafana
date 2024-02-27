@@ -20,7 +20,9 @@ type Scheduler struct {
 	EvalDuration                        *prometheus.HistogramVec
 	ProcessDuration                     *prometheus.HistogramVec
 	SendDuration                        *prometheus.HistogramVec
+	SimpleNotificationRules             *prometheus.GaugeVec
 	GroupRules                          *prometheus.GaugeVec
+	Groups                              *prometheus.GaugeVec
 	SchedulePeriodicDuration            prometheus.Histogram
 	SchedulableAlertRules               prometheus.Gauge
 	SchedulableAlertRulesHash           prometheus.Gauge
@@ -90,6 +92,15 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org"},
 		),
+		SimpleNotificationRules: promauto.With(r).NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "simple_routing_rules",
+				Help:      "The number of alert rules using simplified routing.",
+			},
+			[]string{"org"},
+		),
 		// TODO: partition on rule group as well as tenant, similar to loki|cortex.
 		GroupRules: promauto.With(r).NewGaugeVec(
 			prometheus.GaugeOpts{
@@ -99,6 +110,15 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Help:      "The number of alert rules that are scheduled, both active and paused.",
 			},
 			[]string{"org", "state"},
+		),
+		Groups: promauto.With(r).NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "rule_groups",
+				Help:      "The number of alert rule groups",
+			},
+			[]string{"org"},
 		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{

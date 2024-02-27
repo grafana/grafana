@@ -115,8 +115,8 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if len(form.Password) < 4 {
-		return response.Error(http.StatusBadRequest, "New password too short", nil)
+	if err := form.Password.Validate(hs.Cfg); err != nil {
+		return response.Err(err)
 	}
 
 	userQuery := user.GetUserByIDQuery{ID: userID}
@@ -134,14 +134,14 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) respon
 		}
 	}
 
-	passwordHashed, err := util.EncodePassword(form.Password, usr.Salt)
+	passwordHashed, err := util.EncodePassword(string(form.Password), usr.Salt)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Could not encode password", err)
 	}
 
 	cmd := user.ChangeUserPasswordCommand{
 		UserID:      userID,
-		NewPassword: passwordHashed,
+		NewPassword: user.Password(passwordHashed),
 	}
 
 	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {

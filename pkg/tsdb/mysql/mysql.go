@@ -18,15 +18,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 )
 
 const (
@@ -36,7 +32,6 @@ const (
 )
 
 type Service struct {
-	Cfg    *setting.Cfg
 	im     instancemgmt.InstanceManager
 	logger log.Logger
 }
@@ -45,25 +40,30 @@ func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *Service {
+func ProvideService() *Service {
 	logger := backend.NewLoggerWith("logger", "tsdb.mysql")
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(cfg, logger)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(logger)),
 		logger: logger,
 	}
 }
 
-func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.InstanceFactoryFunc {
+func newInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		cfg := backend.GrafanaConfigFromContext(ctx)
+		sqlCfg, err := cfg.SQL()
+		if err != nil {
+			return nil, err
+		}
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:            cfg.SqlDatasourceMaxOpenConnsDefault,
-			MaxIdleConns:            cfg.SqlDatasourceMaxIdleConnsDefault,
-			ConnMaxLifetime:         cfg.SqlDatasourceMaxConnLifetimeDefault,
+			MaxOpenConns:            sqlCfg.DefaultMaxOpenConns,
+			MaxIdleConns:            sqlCfg.DefaultMaxIdleConns,
+			ConnMaxLifetime:         sqlCfg.DefaultMaxConnLifetimeSeconds,
 			SecureDSProxy:           false,
 			AllowCleartextPasswords: false,
 		}
 
-		err := json.Unmarshal(settings.JSONData, &jsonData)
+		err = json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
@@ -89,12 +89,20 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			protocol = "unix"
 		}
 
+		proxyClient, err := settings.ProxyClient(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		// register the secure socks proxy dialer context, if enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
-		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
+		if proxyClient.SecureSocksProxyEnabled() {
+			dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
+			if err != nil {
+				return nil, err
+			}
 			// UID is only unique per org, the only way to ensure uniqueness is to do it by connection information
 			uniqueIdentifier := dsInfo.User + dsInfo.DecryptedSecureJSONData["password"] + dsInfo.URL + dsInfo.Database
-			protocol, err = registerProxyDialerContext(protocol, uniqueIdentifier, proxyOpts)
+			protocol, err = registerProxyDialerContext(protocol, uniqueIdentifier, dialer)
 			if err != nil {
 				return nil, err
 			}
@@ -134,19 +142,20 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(dsInfo.JsonData.Timezone))
 		}
 
-		if cfg.Env == setting.Dev {
-			logger.Debug("GetEngine", "connection", cnnstr)
-		}
-
 		config := sqleng.DataPluginConfiguration{
 			DSInfo:            dsInfo,
 			TimeColumnNames:   []string{"time", "time_sec"},
 			MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
-			RowLimit:          cfg.DataProxyRowLimit,
+			RowLimit:          sqlCfg.RowLimit,
+		}
+
+		userFacingDefaultError, err := cfg.UserFacingDefaultError()
+		if err != nil {
+			return nil, err
 		}
 
 		rowTransformer := mysqlQueryResultTransformer{
-			userError: cfg.UserFacingDefaultError,
+			userError: userFacingDefaultError,
 		}
 
 		db, err := sql.Open("mysql", cnnstr)
@@ -158,7 +167,7 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
 		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
-		return sqleng.NewQueryDataHandler(cfg, db, config, &rowTransformer, newMysqlMacroEngine(logger, cfg), logger)
+		return sqleng.NewQueryDataHandler(userFacingDefaultError, db, config, &rowTransformer, newMysqlMacroEngine(logger, userFacingDefaultError), logger)
 	}
 }
 

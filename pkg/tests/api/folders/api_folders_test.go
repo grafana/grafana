@@ -1,13 +1,11 @@
 package folders
 
 import (
-	"context"
 	"fmt"
 	"net/http"
-	"runtime"
 	"testing"
+	"time"
 
-	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -17,9 +15,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/retryer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestGetFolders(t *testing.T) {
 	// Setup Grafana and its Database
@@ -64,22 +68,36 @@ func TestGetFolders(t *testing.T) {
 
 	numberOfFolders := 5
 	indexWithoutPermission := 3
-	err := concurrency.ForEachJob(context.Background(), numberOfFolders, runtime.NumCPU(), func(_ context.Context, job int) error {
-		resp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
-			Title: fmt.Sprintf("Folder %d", job),
-			UID:   fmt.Sprintf("folder-%d", job),
-		})
-		if err != nil {
-			return err
+
+	for i := 0; i < numberOfFolders; i++ {
+		respCode := 0
+		folderUID := ""
+		retries := 0
+		maxRetries := 3
+		err := retryer.Retry(func() (retryer.RetrySignal, error) {
+			resp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
+				Title: fmt.Sprintf("Folder %d", i),
+				UID:   fmt.Sprintf("folder-%d", i),
+			})
+			if err != nil {
+				if retries == maxRetries {
+					return retryer.FuncError, err
+				}
+				retries++
+				return retryer.FuncFailure, nil
+			}
+			respCode = resp.Code()
+			folderUID = resp.Payload.UID
+			return retryer.FuncComplete, nil
+		}, maxRetries, time.Millisecond*time.Duration(10), time.Second)
+		require.NoError(t, err)
+
+		require.Equal(t, http.StatusOK, respCode)
+		if i == indexWithoutPermission {
+			tests.RemoveFolderPermission(t, permissionsStore, orgID, org.RoleViewer, folderUID)
+			t.Log("Removed viewer permission from folder", folderUID)
 		}
-		require.Equal(t, http.StatusOK, resp.Code())
-		if job == indexWithoutPermission {
-			tests.RemoveFolderPermission(t, permissionsStore, orgID, org.RoleViewer, resp.Payload.UID)
-			t.Log("Removed viewer permission from folder", resp.Payload.UID)
-		}
-		return nil
-	})
-	require.NoError(t, err)
+	}
 
 	t.Run("Admin can get all folders", func(t *testing.T) {
 		res, err := adminClient.Folders.GetFolders(folders.NewGetFoldersParams())

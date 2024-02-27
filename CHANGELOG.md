@@ -1,3 +1,141 @@
+<!-- 10.3.3 START -->
+
+# 10.3.3 (2024-02-02)
+
+### Bug fixes
+
+- **Elasticsearch:** Fix creating of legend so it is backward compatible with frontend produced frames. [#81786](https://github.com/grafana/grafana/issues/81786), [@ivanahuckova](https://github.com/ivanahuckova)
+- **ShareModal:** Fixes url sync issue that caused issue with save drawer. [#81721](https://github.com/grafana/grafana/issues/81721), [@ivanortegaalba](https://github.com/ivanortegaalba)
+
+<!-- 10.3.3 END -->
+<!-- 10.3.1 START -->
+
+# 10.3.1 (2024-01-22)
+
+To resolve a technical issue within the Grafana release package management process, we are releasing both Grafana 10.3.0 and Grafana 10.3.1 simultaneously. The 10.3.1 release contains no breaking or functional changes from 10.3.0. Please refer to the [What’s New](https://grafana.com/docs/grafana/latest/whatsnew/whats-new-in-v10-3/) post for Grafana 10.3.0 for details on new features and changes in this release.
+
+<!-- 10.3.1 END -->
+<!-- 10.3.0 START -->
+
+# 10.3.0 (2024-01-22)
+
+To resolve a technical issue within the Grafana release package management process, we are releasing both Grafana 10.3.0 and Grafana 10.3.1 simultaneously. The 10.3.1 release contains no breaking or functional changes from 10.3.0. Please refer to the [What’s New](https://grafana.com/docs/grafana/latest/whatsnew/whats-new-in-v10-3/) post for Grafana 10.3.0 for details on new features and changes in this release.
+
+### Features and enhancements
+
+- **Alerting:** Guided legacy alerting upgrade dry-run. [#80071](https://github.com/grafana/grafana/issues/80071), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Explore:** Preserve time range when creating a dashboard panel from Explore. [#80070](https://github.com/grafana/grafana/issues/80070), [@Elfo404](https://github.com/Elfo404)
+- **Explore:** Init with mixed DS if there's no root DS in the URL and queries have multiple datasources. [#80068](https://github.com/grafana/grafana/issues/80068), [@Elfo404](https://github.com/Elfo404)
+- **QueryEditor:** Display error even if error field is empty. [#79943](https://github.com/grafana/grafana/issues/79943), [@idastambuk](https://github.com/idastambuk)
+- **K8s:** Enable api-server by default. [#79942](https://github.com/grafana/grafana/issues/79942), [@ryantxu](https://github.com/ryantxu)
+- **Parca:** Add standalone building configuration. [#79896](https://github.com/grafana/grafana/issues/79896), [@fabrizio-grafana](https://github.com/fabrizio-grafana)
+- **Auth:** Hide forgot password if grafana auth is disabled. [#79895](https://github.com/grafana/grafana/issues/79895), [@Jguer](https://github.com/Jguer)
+- **Plugins:** Add uninstall requested message for cloud plugins. [#79748](https://github.com/grafana/grafana/issues/79748), [@oshirohugo](https://github.com/oshirohugo)
+- **Loki:** Open log context in new tab. [#79723](https://github.com/grafana/grafana/issues/79723), [@svennergr](https://github.com/svennergr)
+- **Alerting:** Allow linking to library panels. [#79693](https://github.com/grafana/grafana/issues/79693), [@gillesdemey](https://github.com/gillesdemey)
+- **Loki:** Drop all errors in volume requests. [#79686](https://github.com/grafana/grafana/issues/79686), [@svennergr](https://github.com/svennergr)
+- **Loki Logs volume:** Added a query splitting loading indicator to the Logs Volume graph. [#79681](https://github.com/grafana/grafana/issues/79681), [@matyax](https://github.com/matyax)
+- **Plugins:** Disable add new data source for incomplete install. [#79658](https://github.com/grafana/grafana/issues/79658), [@oshirohugo](https://github.com/oshirohugo)
+- **RBAC:** Render team, service account and user list when a user can see entities but not roles attached to them. [#79642](https://github.com/grafana/grafana/issues/79642), [@kalleep](https://github.com/kalleep)
+- **InfluxDB:** Use database input for SQL configuration instead of metadata. [#79579](https://github.com/grafana/grafana/issues/79579), [@itsmylife](https://github.com/itsmylife)
+- **Tempo:** Support special characters in identifiers. [#79565](https://github.com/grafana/grafana/issues/79565), [@fabrizio-grafana](https://github.com/fabrizio-grafana)
+- **Alerting:** Display "Show all" button for cloud rules. [#79512](https://github.com/grafana/grafana/issues/79512), [@VikaCep](https://github.com/VikaCep)
+- **React Hook Form:** Update to v 7.49.2. [#79493](https://github.com/grafana/grafana/issues/79493), [@Clarity-89](https://github.com/Clarity-89)
+- **Loki:** Add timeRange to labels requests in LogContext to reduce loading times. [#79478](https://github.com/grafana/grafana/issues/79478), [@svennergr](https://github.com/svennergr)
+- **InfluxDB:** Enable SQL support by default. [#79474](https://github.com/grafana/grafana/issues/79474), [@itsmylife](https://github.com/itsmylife)
+- **OAuth:** Remove accessTokenExpirationCheck feature toggle. [#79455](https://github.com/grafana/grafana/issues/79455), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Units:** Add scalable unit option. [#79411](https://github.com/grafana/grafana/issues/79411), [@Develer](https://github.com/Develer)
+- **Alerting:** Add export mute timings feature to the UI. [#79395](https://github.com/grafana/grafana/issues/79395), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Config:** Can add static headers to email messages. [#79365](https://github.com/grafana/grafana/issues/79365), [@owensmallwood](https://github.com/owensmallwood)
+- **Alerting:** Drop NamespaceID from responses on unstable ngalert API endpoints in favor of NamespaceUID. [#79359](https://github.com/grafana/grafana/issues/79359), [@alexweav](https://github.com/alexweav)
+- **Cloudwatch:** Update cloudwatchNewRegionsHandler to General Availability. [#79348](https://github.com/grafana/grafana/issues/79348), [@sarahzinger](https://github.com/sarahzinger)
+- **Plugins:** Include Azure settings as a part of Grafana config sent in plugin requests. [#79342](https://github.com/grafana/grafana/issues/79342), [@aangelisc](https://github.com/aangelisc)
+- **Plugins:** Add hide_angular_deprecation setting. [#79296](https://github.com/grafana/grafana/issues/79296), [@xnyo](https://github.com/xnyo)
+- **Table:** Add select/unselect all column values to table filter. [#79290](https://github.com/grafana/grafana/issues/79290), [@ahuarte47](https://github.com/ahuarte47)
+- **Anonymous:** Add configurable device limit. [#79265](https://github.com/grafana/grafana/issues/79265), [@Jguer](https://github.com/Jguer)
+- **Frontend:** Detect new assets / versions / config changes. [#79258](https://github.com/grafana/grafana/issues/79258), [@ryantxu](https://github.com/ryantxu)
+- **Plugins:** Add option to disable TLS in the socks proxy. [#79246](https://github.com/grafana/grafana/issues/79246), [@PoorlyDefinedBehaviour](https://github.com/PoorlyDefinedBehaviour)
+- **Frontend:** Reload the browser when backend configuration/assets change. [#79057](https://github.com/grafana/grafana/issues/79057), [@torkelo](https://github.com/torkelo)
+- **Chore:** Refactor dataviz aria-label e2e selectors to data-testid. [#78938](https://github.com/grafana/grafana/issues/78938), [@khushijain21](https://github.com/khushijain21)
+- **SSO:** Add GitHub auth configuration page. [#78933](https://github.com/grafana/grafana/issues/78933), [@Clarity-89](https://github.com/Clarity-89)
+- **PublicDashboards:** Add setting to disable the feature. [#78894](https://github.com/grafana/grafana/issues/78894), [@AgnesToulet](https://github.com/AgnesToulet)
+- **Variables:** Interpolate variables used in custom variable definition. [#78800](https://github.com/grafana/grafana/issues/78800), [@torkelo](https://github.com/torkelo)
+- **Table:** Highlight row on shared crosshair. [#78392](https://github.com/grafana/grafana/issues/78392), [@mdvictor](https://github.com/mdvictor)
+- **Stat:** Add Percent Change Option. [#78250](https://github.com/grafana/grafana/issues/78250), [@drew08t](https://github.com/drew08t)
+- **Plugins:** Add Command Palette extension point. [#78098](https://github.com/grafana/grafana/issues/78098), [@sd2k](https://github.com/sd2k)
+- **Transformations:** Add frame source picker to allow transforming annotations. [#77842](https://github.com/grafana/grafana/issues/77842), [@leeoniya](https://github.com/leeoniya)
+- **Pyroscope:** Send start/end with profile types query. [#77523](https://github.com/grafana/grafana/issues/77523), [@bryanhuhta](https://github.com/bryanhuhta)
+- **Explore:** Create menu for short link button. [#77336](https://github.com/grafana/grafana/issues/77336), [@gelicia](https://github.com/gelicia)
+- **Alerting:** Don't record annotations for mapped NoData transitions, when NoData is mapped to OK. [#77164](https://github.com/grafana/grafana/issues/77164), [@alexweav](https://github.com/alexweav)
+- **Canvas:** Add Pan and Zoom. [#76705](https://github.com/grafana/grafana/issues/76705), [@drew08t](https://github.com/drew08t)
+- **Alerting:** In migration, create one label per channel. [#76527](https://github.com/grafana/grafana/issues/76527), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Alerting:** Separate overlapping legacy and UA alerting routes. [#76517](https://github.com/grafana/grafana/issues/76517), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Tooltip:** Improved Timeseries and Candlestick tooltips. [#75841](https://github.com/grafana/grafana/issues/75841), [@adela-almasan](https://github.com/adela-almasan)
+- **Alerting:** Support hysteresis command expression. [#75189](https://github.com/grafana/grafana/issues/75189), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Plugins:** Add update for instance plugins. (Enterprise)
+- **React Hook Form:** Update to v 7.49.2. (Enterprise)
+- **Plugins:** Improve cloud plugins install error treatment. (Enterprise)
+
+### Bug fixes
+
+- **Transformations:** Fix bug where having NaN in the input to regression analysis transformation causes all predictions to be NaN. [#80079](https://github.com/grafana/grafana/issues/80079), [@oscarkilhed](https://github.com/oscarkilhed)
+- **Alerting:** Fix URL timestamp conversion in historian API in annotation mode. [#80026](https://github.com/grafana/grafana/issues/80026), [@alexweav](https://github.com/alexweav)
+- **Fix:** Switch component not being styled as disabled when is checked. [#80012](https://github.com/grafana/grafana/issues/80012), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Tempo:** Fix Spans table format. [#79938](https://github.com/grafana/grafana/issues/79938), [@fabrizio-grafana](https://github.com/fabrizio-grafana)
+- **Gauges:** Fixing broken auto sizing. [#79926](https://github.com/grafana/grafana/issues/79926), [@torkelo](https://github.com/torkelo)
+- **Barchart:** Fix percent stacking regression. [#79903](https://github.com/grafana/grafana/issues/79903), [@nmarrs](https://github.com/nmarrs)
+- **Alerting:** Fix reusing last url in tab when reopening a new tab in rule detail a…. [#79801](https://github.com/grafana/grafana/issues/79801), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Azure Monitor:** Fix multi-resource bug "Missing required region params, requested QueryParams: api-version:2017-12-01-preview...". [#79669](https://github.com/grafana/grafana/issues/79669), [@bossinc](https://github.com/bossinc)
+- **Explore:** Fix URL sync with async queries import . [#79584](https://github.com/grafana/grafana/issues/79584), [@Elfo404](https://github.com/Elfo404)
+- **Dashboards:** Skip inherited object variable names. [#79567](https://github.com/grafana/grafana/issues/79567), [@jarben](https://github.com/jarben)
+- **Alerting:** Fix queries and expressions in rule view details. [#79497](https://github.com/grafana/grafana/issues/79497), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Tempo:** Fix cache in TraceQL editor. [#79468](https://github.com/grafana/grafana/issues/79468), [@adrapereira](https://github.com/adrapereira)
+- **Nested Folders:** Fix /api/folders pagination. [#79447](https://github.com/grafana/grafana/issues/79447), [@papagian](https://github.com/papagian)
+- **Elasticsearch:** Fix modify query with backslashes. [#79430](https://github.com/grafana/grafana/issues/79430), [@svennergr](https://github.com/svennergr)
+- **Cloudwatch:** Fix errors while loading queries/datasource on Safari. [#79417](https://github.com/grafana/grafana/issues/79417), [@kevinwcyu](https://github.com/kevinwcyu)
+- **Stat:** Fix inconsistent center padding. [#79389](https://github.com/grafana/grafana/issues/79389), [@torkelo](https://github.com/torkelo)
+- **Tempo:** Fix autocompletion with strings. [#79370](https://github.com/grafana/grafana/issues/79370), [@fabrizio-grafana](https://github.com/fabrizio-grafana)
+- **Alerting:** Fix for data source filter on cloud rules. [#79327](https://github.com/grafana/grafana/issues/79327), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Fix UI inheriting mute timings from parent when calculating the polic…. [#79295](https://github.com/grafana/grafana/issues/79295), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Auth:** Fix a panic during logout when OAuth provider is not set. [#79271](https://github.com/grafana/grafana/issues/79271), [@dmihai](https://github.com/dmihai)
+- **Tempo:** Fix read-only assignment. [#79183](https://github.com/grafana/grafana/issues/79183), [@fabrizio-grafana](https://github.com/fabrizio-grafana)
+- **Templating:** Json interpolation of single-value default selection does not create valid json. [#79137](https://github.com/grafana/grafana/issues/79137), [@kaydelaney](https://github.com/kaydelaney)
+- **Heatmap:** Fix null options migration. [#79083](https://github.com/grafana/grafana/issues/79083), [@overvenus](https://github.com/overvenus)
+- **Dashboards:** Run shared queries even when source panel is in collapsed row. [#77792](https://github.com/grafana/grafana/issues/77792), [@kaydelaney](https://github.com/kaydelaney)
+- **PDF:** Fix support for large panels. (Enterprise)
+- **Reporting:** Fix daylight saving time support for custom schedules. (Enterprise)
+- **RBAC:** Fix role assignment removal . (Enterprise)
+
+### Breaking changes
+
+Users who have InfluxDB datasource configured with SQL querying language must update their database information. They have to enter their `bucket name` into the database field. Issue [#79579](https://github.com/grafana/grafana/issues/79579)
+
+Removes `NamespaceID` from responses of all GET routes underneath the path `/api/ruler/grafana/api/v1/rules` - 3 affected endpoints. All affected routes are not in the publicly documented or `stable` marked portion of the ngalert API. This only breaks clients who are directly using the unstable portion of the API. Such clients should use `NamespaceUID` rather than `NamespaceID` to identify namespaces. Issue [#79359](https://github.com/grafana/grafana/issues/79359)
+
+<!-- 10.3.0 END -->
+<!-- 10.2.4 START -->
+
+# 10.2.4 (2024-01-29)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.21.5. [#79560](https://github.com/grafana/grafana/issues/79560), [@tolzhabayev](https://github.com/tolzhabayev)
+
+### Bug fixes
+
+- **Field:** Fix perf regression in getUniqueFieldName(). [#81417](https://github.com/grafana/grafana/issues/81417), [@leeoniya](https://github.com/leeoniya)
+- **Alerting:** Fix Graphite subqueries. [#80816](https://github.com/grafana/grafana/issues/80816), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fix Graphite subqueries. [#80744](https://github.com/grafana/grafana/issues/80744), [@gillesdemey](https://github.com/gillesdemey)
+- **Annotations:** Split cleanup into separate queries and deletes to avoid deadlocks on MySQL. [#80485](https://github.com/grafana/grafana/issues/80485), [@alexweav](https://github.com/alexweav)
+- **Loki:** Fix bug duplicating parsed labels across multiple log lines. [#80368](https://github.com/grafana/grafana/issues/80368), [@svennergr](https://github.com/svennergr)
+- **Alerting:** Fix NoData & Error alerts not resolving when rule is reset. [#80241](https://github.com/grafana/grafana/issues/80241), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Auth:** Fix a panic during logout when OAuth provider is not set. [#80221](https://github.com/grafana/grafana/issues/80221), [@dmihai](https://github.com/dmihai)
+- **Gauges:** Fixing broken auto sizing. [#79940](https://github.com/grafana/grafana/issues/79940), [@torkelo](https://github.com/torkelo)
+- **Templating:** Json interpolation of single-value default selection does not create valid json. [#79503](https://github.com/grafana/grafana/issues/79503), [@kaydelaney](https://github.com/kaydelaney)
+- **Tempo:** Fix cache in TraceQL editor. [#79471](https://github.com/grafana/grafana/issues/79471), [@adrapereira](https://github.com/adrapereira)
+- **Alerting:** Fix for data source filter on cloud rules. (#79327). [#79350](https://github.com/grafana/grafana/issues/79350), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+
+<!-- 10.2.4 END -->
 <!-- 10.2.3 START -->
 
 # 10.2.3 (2023-12-18)
@@ -100,7 +238,7 @@
 - **Alerting:** Show receiver in groups view to avoid duplication in the list. [#77109](https://github.com/grafana/grafana/issues/77109), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
 - **Alerting:** Allow more time before Alertmanager expire-resolves alerts. [#77094](https://github.com/grafana/grafana/issues/77094), [@alexweav](https://github.com/alexweav)
 - **Tempo:** Add new structural operators. [#77056](https://github.com/grafana/grafana/issues/77056), [@fabrizio-grafana](https://github.com/fabrizio-grafana)
-- **ServiceAccount:** Add pagination to service accout table. [#77044](https://github.com/grafana/grafana/issues/77044), [@kalleep](https://github.com/kalleep)
+- **ServiceAccount:** Add pagination to service account table. [#77044](https://github.com/grafana/grafana/issues/77044), [@kalleep](https://github.com/kalleep)
 - **Transformations:** Cumulative and window modes for `Add field from calculation`. [#77029](https://github.com/grafana/grafana/issues/77029), [@mdvictor](https://github.com/mdvictor)
 - **Plugins:** Allow disabling angular deprecation UI for specific plugins. [#77026](https://github.com/grafana/grafana/issues/77026), [@xnyo](https://github.com/xnyo)
 - **Stat:** Add panel option to control wide layout. [#77018](https://github.com/grafana/grafana/issues/77018), [@nmarrs](https://github.com/nmarrs)
@@ -208,7 +346,7 @@
 - **Organize fields transformation:** Fix re-ordering of fields using drag and drop. [#77172](https://github.com/grafana/grafana/issues/77172), [@adela-almasan](https://github.com/adela-almasan)
 - **Bug fix:** Correctly set permissions on provisioned dashboards. [#77155](https://github.com/grafana/grafana/issues/77155), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 - **InfluxDB:** Fix adhoc filter calls by properly checking optional parameter in metricFindQuery. [#77113](https://github.com/grafana/grafana/issues/77113), [@itsmylife](https://github.com/itsmylife)
-- **Alerting:** Fix NoRulesSplash being rendered for some seconds, fater creating a rule. [#77048](https://github.com/grafana/grafana/issues/77048), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Fix NoRulesSplash being rendered for some seconds, faster creating a rule. [#77048](https://github.com/grafana/grafana/issues/77048), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
 - **RBAC:** Allow scoping access to root level dashboards. [#76987](https://github.com/grafana/grafana/issues/76987), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 - **Alerting:** Dont show 1 firing series when no data in Expressions PreviewSummary. [#76981](https://github.com/grafana/grafana/issues/76981), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
 - **InfluxDB:** Fix aliasing with $measurement or $m on backend mode. [#76917](https://github.com/grafana/grafana/issues/76917), [@itsmylife](https://github.com/itsmylife)
@@ -581,7 +719,7 @@ For the existing backend mode users who have table visualization might see some 
 - **Pyroscope:** Fix error when no profile types are returned. [#75143](https://github.com/grafana/grafana/issues/75143), [@aocenas](https://github.com/aocenas)
 - **BarChart:** Axes centered zero, borders, and colors. [#75136](https://github.com/grafana/grafana/issues/75136), [@leeoniya](https://github.com/leeoniya)
 - **Plugins:** Refresh plugin info after installation. [#75074](https://github.com/grafana/grafana/issues/75074), [@oshirohugo](https://github.com/oshirohugo)
-- **LDAP:** FIX Enable users on successfull login . [#75073](https://github.com/grafana/grafana/issues/75073), [@gamab](https://github.com/gamab)
+- **LDAP:** FIX Enable users on successful login . [#75073](https://github.com/grafana/grafana/issues/75073), [@gamab](https://github.com/gamab)
 - **XYChart:** Fix numerous axis options. [#75044](https://github.com/grafana/grafana/issues/75044), [@leeoniya](https://github.com/leeoniya)
 - **Trace View:** Remove "deployment.environment" default traces 2 logs tag. [#74986](https://github.com/grafana/grafana/issues/74986), [@domasx2](https://github.com/domasx2)
 - **Snapshots:** Use appUrl on snapshot list page. [#74944](https://github.com/grafana/grafana/issues/74944), [@evictorero](https://github.com/evictorero)
@@ -651,6 +789,15 @@ Starting with 10.2, `parentRowIndex` is deprecated. It will be removed in a futu
 - **Drawer:** Make content scroll by default. [#75287](https://github.com/grafana/grafana/issues/75287), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 10.2.0 END -->
+<!-- 10.1.7 START -->
+
+# 10.1.7 (2024-01-29)
+
+### Bug fixes
+
+- **Annotations:** Split cleanup into separate queries and deletes to avoid deadlocks on MySQL. [#80678](https://github.com/grafana/grafana/issues/80678), [@alexweav](https://github.com/alexweav)
+
+<!-- 10.1.7 END -->
 <!-- 10.1.6 START -->
 
 # 10.1.6 (2023-12-18)
@@ -669,7 +816,7 @@ Starting with 10.2, `parentRowIndex` is deprecated. It will be removed in a futu
 - **Loki:** Cache extracted labels. [#75905](https://github.com/grafana/grafana/issues/75905), [@gtk-grafana](https://github.com/gtk-grafana)
 - **DataSourcePicker:** Disable autocomplete for the search input . [#75900](https://github.com/grafana/grafana/issues/75900), [@ivanortegaalba](https://github.com/ivanortegaalba)
 - **Plugins:** Refresh plugin info after installation. [#75225](https://github.com/grafana/grafana/issues/75225), [@oshirohugo](https://github.com/oshirohugo)
-- **LDAP:** FIX Enable users on successfull login . [#75176](https://github.com/grafana/grafana/issues/75176), [@gamab](https://github.com/gamab)
+- **LDAP:** FIX Enable users on successful login . [#75176](https://github.com/grafana/grafana/issues/75176), [@gamab](https://github.com/gamab)
 - **Loki:** Fix filters not being added with multiple expressions and parsers. [#75172](https://github.com/grafana/grafana/issues/75172), [@svennergr](https://github.com/svennergr)
 - **Recorded Queries:** Add org isolation (remote write target per org), and fix cross org Delete/List. (Enterprise)
 - **Auditing and UsageInsights:** FIX Loki configuration to use proxy env variables. (Enterprise)
@@ -777,7 +924,7 @@ Starting with 10.2, `parentRowIndex` is deprecated. It will be removed in a futu
 - **Geomap:** Promote route + photos layer to beta, promote geojson layer to stable. [#72233](https://github.com/grafana/grafana/issues/72233), [@nmarrs](https://github.com/nmarrs)
 - **Dashboards:** Add Angular deprecation alert in data source query editor. [#72211](https://github.com/grafana/grafana/issues/72211), [@xnyo](https://github.com/xnyo)
 - **Auth:** Lock organization roles for users who are managed through an external auth provider. [#72204](https://github.com/grafana/grafana/issues/72204), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
-- **Tranformations:** True OUTER JOIN in the join by field transformation used for tabular data . [#72176](https://github.com/grafana/grafana/issues/72176), [@bohandley](https://github.com/bohandley)
+- **Transformations:** True OUTER JOIN in the join by field transformation used for tabular data . [#72176](https://github.com/grafana/grafana/issues/72176), [@bohandley](https://github.com/bohandley)
 - **NestedFolders:** Enable new nested folder picker by default for nested folders. [#72129](https://github.com/grafana/grafana/issues/72129), [@joshhunt](https://github.com/joshhunt)
 - **Alerting:** Add dashboardUID and panelID query parameters for loki state history. [#72119](https://github.com/grafana/grafana/issues/72119), [@alexweav](https://github.com/alexweav)
 - **Feature toggles management:** Define get feature toggles api. [#72106](https://github.com/grafana/grafana/issues/72106), [@jcalisto](https://github.com/jcalisto)
@@ -844,7 +991,7 @@ Starting with 10.2, `parentRowIndex` is deprecated. It will be removed in a futu
 - **Login:** Adjust error message when user exceed login attempts. [#70736](https://github.com/grafana/grafana/issues/70736), [@RoxanaAnamariaTurc](https://github.com/RoxanaAnamariaTurc)
 - **Nested folders:** Paginate child folder items. [#70730](https://github.com/grafana/grafana/issues/70730), [@ashharrison90](https://github.com/ashharrison90)
 - **Units:** Add events/messages/records/rows throughput units. [#70726](https://github.com/grafana/grafana/issues/70726), [@hhromic](https://github.com/hhromic)
-- **Plugins:** Enable feature toggles for long running queries by deafult. [#70678](https://github.com/grafana/grafana/issues/70678), [@idastambuk](https://github.com/idastambuk)
+- **Plugins:** Enable feature toggles for long running queries by default. [#70678](https://github.com/grafana/grafana/issues/70678), [@idastambuk](https://github.com/idastambuk)
 - **I18n:** Translate phrases for new Browse Dashboards. [#70654](https://github.com/grafana/grafana/issues/70654), [@Bohdanator](https://github.com/Bohdanator)
 - **Flamegraph:** Prevent cropping of tooltip by bottom of the viewport. [#70633](https://github.com/grafana/grafana/issues/70633), [@aocenas](https://github.com/aocenas)
 - **Pyroscope:** Preselect default profile type or app in the query editor dropdown. [#70624](https://github.com/grafana/grafana/issues/70624), [@aocenas](https://github.com/aocenas)
@@ -870,7 +1017,7 @@ Starting with 10.2, `parentRowIndex` is deprecated. It will be removed in a futu
 - **Geomap:** Add network layer. [#70192](https://github.com/grafana/grafana/issues/70192), [@drew08t](https://github.com/drew08t)
 - **Alerting:** Bump grafana/alerting and refactor the ImageStore/Provider to provide image URL/bytes. [#70182](https://github.com/grafana/grafana/issues/70182), [@santihernandezc](https://github.com/santihernandezc)
 - **Auth:** Support google OIDC and group fetching. [#70140](https://github.com/grafana/grafana/issues/70140), [@Jguer](https://github.com/Jguer)
-- **Alerting:** Make QueryEditor not collapsable. [#70112](https://github.com/grafana/grafana/issues/70112), [@VikaCep](https://github.com/VikaCep)
+- **Alerting:** Make QueryEditor not collapsible. [#70112](https://github.com/grafana/grafana/issues/70112), [@VikaCep](https://github.com/VikaCep)
 - **TimeSeries:** Add option to disconnect values. [#70097](https://github.com/grafana/grafana/issues/70097), [@drew08t](https://github.com/drew08t)
 - **Logs:** Add toggle behavior support for "filter for" and "filter out" label within Logs Details. [#70091](https://github.com/grafana/grafana/issues/70091), [@matyax](https://github.com/matyax)
 - **Plugins:** Periodically update public signing key. [#70080](https://github.com/grafana/grafana/issues/70080), [@andresmgot](https://github.com/andresmgot)
@@ -1152,6 +1299,15 @@ Starting with 10.0, changing the folder UID is deprecated. It will be removed in
 - **Grafana/ui:** Fix margin in RadioButtonGroup option when only icon is present. [#68899](https://github.com/grafana/grafana/issues/68899), [@aocenas](https://github.com/aocenas)
 
 <!-- 10.1.0 END -->
+<!-- 10.0.11 START -->
+
+# 10.0.11 (2024-01-29)
+
+### Bug fixes
+
+- **Annotations:** Split cleanup into separate queries and deletes to avoid deadlocks on MySQL. [#80681](https://github.com/grafana/grafana/issues/80681), [@alexweav](https://github.com/alexweav)
+
+<!-- 10.0.11 END -->
 <!-- 10.0.10 START -->
 
 # 10.0.10 (2023-12-18)
@@ -1684,6 +1840,15 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.16 START -->
+
+# 9.5.16 (2024-01-29)
+
+### Bug fixes
+
+- **Annotations:** Split cleanup into separate queries and deletes to avoid deadlocks on MySQL. [#80682](https://github.com/grafana/grafana/issues/80682), [@alexweav](https://github.com/alexweav)
+
+<!-- 9.5.16 END -->
 <!-- 9.5.15 START -->
 
 # 9.5.15 (2023-12-18)
@@ -1706,7 +1871,7 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 
 - **Alerting:** Fix state manager to not keep datasource_uid and ref_id labels in state after Error. [#77391](https://github.com/grafana/grafana/issues/77391), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **Transformations:** Config overrides being lost when config from query transform is applied. [#75347](https://github.com/grafana/grafana/issues/75347), [@IbrahimCSAE](https://github.com/IbrahimCSAE)
-- **LDAP:** FIX Enable users on successfull login . [#75192](https://github.com/grafana/grafana/issues/75192), [@gamab](https://github.com/gamab)
+- **LDAP:** FIX Enable users on successful login . [#75192](https://github.com/grafana/grafana/issues/75192), [@gamab](https://github.com/gamab)
 - **Auditing and UsageInsights:** FIX Loki configuration to use proxy env variables. (Enterprise)
 
 <!-- 9.5.14 END -->

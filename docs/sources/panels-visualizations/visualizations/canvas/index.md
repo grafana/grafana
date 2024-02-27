@@ -93,9 +93,7 @@ You can enable panning and zooming in a canvas. This allows you to both create a
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-3-canvas-pan-zoom-setting.png" max-width="300px" alt="Canvas pan zoom control" >}}
 
-<!-- TODO: Update this video to be canvas pan zoom enablement video -->
-
-{{< video-embed src="/media/docs/grafana/screen-recording-grafana-10-3-canvas-pan-zoom-placeholder-video.mp4" max-width="750px" alt="Pan and zoom demo" >}}
+{{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" caption="Canvas pan and zoom enablement video" >}}
 
 ### Context menu
 
@@ -108,6 +106,16 @@ The context menu is triggered by a right click action over the panel / over a gi
 When right clicking an element, you are able to edit, delete, duplicate, and modify the element's layer positioning.
 
 {{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="750px" caption="Canvas element context menu" >}}
+
+### Element snapping and alignment
+
+When you're moving elements around the canvas, snapping and alignment guides help you create more precise layouts.
+
+{{% admonition type="note" %}}
+Currently, element snapping and alignment only works when the canvas is not zoomed in.
+{{% /admonition %}}
+
+<!-- TODO: Add gif showcasing feature (when creating what's new entry for 10.4) -->
 
 ## Canvas options
 

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import React, { CSSProperties, ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -11,14 +11,22 @@ import { LabelValue } from './types';
 interface Props {
   contentLabelValue: LabelValue[];
   customContent?: ReactElement[];
+  scrollable?: boolean;
   isPinned: boolean;
 }
 
-export const VizTooltipContent = ({ contentLabelValue, customContent, isPinned }: Props) => {
+export const VizTooltipContent = ({ contentLabelValue, customContent, isPinned, scrollable = false }: Props) => {
   const styles = useStyles2(getStyles);
 
+  const scrollableStyle: CSSProperties = scrollable
+    ? {
+        maxHeight: 400,
+        overflowY: 'auto',
+      }
+    : {};
+
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} style={scrollableStyle}>
       <div>
         {contentLabelValue.map((labelValue, i) => {
           const { label, value, color, colorIndicator, colorPlacement, isActive } = labelValue;

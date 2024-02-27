@@ -24,7 +24,7 @@ func TestKafkaNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewKafkaNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := NewKafkaNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -42,7 +42,7 @@ func TestKafkaNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewKafkaNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewKafkaNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			kafkaNotifier := not.(*KafkaNotifier)
 
 			require.Nil(t, err)

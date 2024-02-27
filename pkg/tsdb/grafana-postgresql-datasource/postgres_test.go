@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"math/rand"
 	"os"
@@ -188,12 +187,9 @@ func TestIntegrationPostgres(t *testing.T) {
 	t.Cleanup(func() {
 		sqleng.Interpolate = origInterpolate
 	})
-	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-		return sql, nil
+	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+		return sql
 	}
-
-	cfg := setting.NewCfg()
-	cfg.DataPath = t.TempDir()
 
 	jsonData := sqleng.JsonData{
 		MaxOpenConns:        0,
@@ -208,20 +204,11 @@ func TestIntegrationPostgres(t *testing.T) {
 		DecryptedSecureJSONData: map[string]string{},
 	}
 
-	config := sqleng.DataPluginConfiguration{
-		DSInfo:            dsInfo,
-		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-		RowLimit:          1000000,
-	}
-
-	queryResultTransformer := postgresQueryResultTransformer{}
-
 	logger := backend.NewLoggerWith("logger", "postgres.test")
 
-	db := InitPostgresTestDB(t, jsonData)
+	cnnstr := postgresTestDBConnString()
 
-	exe, err := sqleng.NewQueryDataHandler(cfg, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
-		logger)
+	db, exe, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 	require.NoError(t, err)
 
@@ -420,7 +407,8 @@ func TestIntegrationPostgres(t *testing.T) {
 							"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series"
 						}`),
-						RefID: "A",
+						RefID:    "A",
+						Interval: time.Second * 60,
 						TimeRange: backend.TimeRange{
 							From: fromStart,
 							To:   fromStart.Add(30 * time.Minute),
@@ -1274,15 +1262,8 @@ func TestIntegrationPostgres(t *testing.T) {
 
 		t.Run("When row limit set to 1", func(t *testing.T) {
 			dsInfo := sqleng.DataSourceInfo{}
-			config := sqleng.DataPluginConfiguration{
-				DSInfo:            dsInfo,
-				MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-				RowLimit:          1,
-			}
+			_, handler, err := newPostgres(context.Background(), "error", 1, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
-			queryResultTransformer := postgresQueryResultTransformer{}
-
-			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), db, config, &queryResultTransformer, newPostgresMacroEngine(false), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
@@ -1381,17 +1362,6 @@ func TestIntegrationPostgres(t *testing.T) {
 			require.Empty(t, frames[0].Fields)
 		})
 	})
-}
-
-func InitPostgresTestDB(t *testing.T, jsonData sqleng.JsonData) *sql.DB {
-	connStr := postgresTestDBConnString()
-	db, err := sql.Open("postgres", connStr)
-	require.NoError(t, err, "Failed to init postgres DB")
-
-	db.SetMaxOpenConns(jsonData.MaxOpenConns)
-	db.SetMaxIdleConns(jsonData.MaxIdleConns)
-	db.SetConnMaxLifetime(time.Duration(jsonData.ConnMaxLifetime) * time.Second)
-	return db
 }
 
 func genTimeRangeByInterval(from time.Time, duration time.Duration, interval time.Duration) []time.Time {

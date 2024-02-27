@@ -1,9 +1,11 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { SelectableValue } from '@grafana/data';
 import { Field, InputControl, MultiSelect, useStyles2 } from '@grafana/ui';
-import { useMuteTimingOptions } from 'app/features/alerting/unified/hooks/useMuteTimingOptions';
+import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
+import { timeIntervalToString } from 'app/features/alerting/unified/utils/alertmanager';
 import { mapMultiSelectValueToStrings } from 'app/features/alerting/unified/utils/amroutes';
 
 import { getFormStyles } from '../../../../notification-policies/formStyles';
@@ -19,12 +21,12 @@ export function MuteTimingFields({ alertManager }: MuteTimingFieldsProps) {
     formState: { errors },
   } = useFormContext<RuleFormValues>();
 
-  const muteTimingOptions = useMuteTimingOptions();
+  const muteTimingOptions = useSelectableMuteTimings();
   return (
     <Field
       label="Mute timings"
       data-testid="am-mute-timing-select"
-      description="Add mute timing to policy"
+      description="Select a mute timing to define when not to send notifications for this alert rule"
       invalid={!!errors.contactPoints?.[alertManager]?.muteTimeIntervals}
     >
       <InputControl
@@ -35,6 +37,7 @@ export function MuteTimingFields({ alertManager }: MuteTimingFieldsProps) {
             className={styles.input}
             onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
             options={muteTimingOptions}
+            placeholder="Select mute timings..."
           />
         )}
         control={control}
@@ -42,4 +45,22 @@ export function MuteTimingFields({ alertManager }: MuteTimingFieldsProps) {
       />
     </Field>
   );
+}
+
+function useSelectableMuteTimings(): Array<SelectableValue<string>> {
+  const fetchGrafanaMuteTimings = alertmanagerApi.endpoints.getMuteTimingList.useQuery(undefined, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    selectFromResult: (result) => ({
+      ...result,
+      mutetimings: result.data
+        ? result.data.map((value) => ({
+            value: value.name,
+            label: value.name,
+            description: value.time_intervals.map((interval) => timeIntervalToString(interval)).join(', AND '),
+          }))
+        : [],
+    }),
+  });
+  return fetchGrafanaMuteTimings.mutetimings;
 }

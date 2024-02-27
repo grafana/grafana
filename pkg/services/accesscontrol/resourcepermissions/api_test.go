@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"path"
 	"strconv"
 	"strings"
 	"testing"
@@ -25,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -432,7 +430,7 @@ func TestApi_setUserPermission(t *testing.T) {
 
 func setupTestServer(t *testing.T, user *user.SignedInUser, service *Service) *web.Mux {
 	server := web.New()
-	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
+	server.UseMiddleware(web.Renderer("views", "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
 	service.api.router.Register(server)
 	return server
@@ -510,7 +508,8 @@ func checkSeededPermissions(t *testing.T, permissions []resourcePermissionDTO) {
 func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, service *Service) {
 	t.Helper()
 	// seed team 1 with "Edit" permission on dashboard 1
-	teamSvc := teamimpl.ProvideService(sql, sql.Cfg)
+	teamSvc, err := teamimpl.ProvideService(sql, sql.Cfg)
+	require.NoError(t, err)
 	team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
 	require.NoError(t, err)
 	_, err = service.SetTeamPermission(context.Background(), team.OrgID, team.ID, resourceID, "Edit")

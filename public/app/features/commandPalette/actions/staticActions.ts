@@ -22,11 +22,23 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
       navItem = enrichHelpItem({ ...navItem });
       delete navItem.url;
     }
-    const { url, target, text, isCreateAction, children, onClick } = navItem;
+    const { url, target, text, isCreateAction, children, onClick, keywords } = navItem;
     const hasChildren = Boolean(children?.length);
 
     if (!(url || onClick || hasChildren)) {
       continue;
+    }
+
+    let urlOrCallback: CommandPaletteAction['url'] = url;
+    if (
+      url &&
+      (navItem.id === 'connections-add-new-connection' ||
+        navItem.id === 'standalone-plugin-page-/connections/add-new-connection')
+    ) {
+      urlOrCallback = (searchQuery: string) => {
+        const matchingKeyword = keywords?.find((keyword) => keyword.toLowerCase().includes(searchQuery.toLowerCase()));
+        return matchingKeyword ? `${url}?search=${matchingKeyword}` : url;
+      };
     }
 
     const section = isCreateAction
@@ -39,12 +51,13 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
     const action: CommandPaletteAction = {
       id: idForNavItem(navItem),
       name: text,
-      section: section,
-      url,
+      section,
+      url: urlOrCallback,
       target,
       parent: parents.length > 0 && !isCreateAction ? idForNavItem(parents[parents.length - 1]) : undefined,
       perform: onClick,
-      priority: priority,
+      keywords: keywords?.join(' '),
+      priority,
       subtitle: isCreateAction ? undefined : subtitle,
     };
 

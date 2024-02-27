@@ -1,0 +1,22 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Space } from './Space';
+
+<Meta title="MDX|Space" component={Space} />
+
+# Space
+
+The `Space` component is a component used to add space between elements. Horizontal space is added using the `h` prop, while vertical space is added using the `v` prop. When adding horizontal space between inline or inline-block elements, the `layout` props should be set to `inline`, otherwise the `block` value of the prop can be used.
+
+### Usage
+
+#### When to use
+
+Use the `Space` component to add space between elements that cannot be spaced using flex or grid layout.
+
+#### When not to use
+
+Do not use the `Space` component to add space between elements inside the `Stack` component. Instead, use the `gap` prop on the `Stack` component.
+
+### Props
+
+<ArgTypes of={Space} />

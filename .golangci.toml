@@ -55,12 +55,20 @@ deny = [
   { pkg = "github.com/grafana/grafana/pkg/tsdb/intervalv2", desc = "Core plugins are not allowed to depend on Grafana core packages" },
 ]
 files = [
+  "**/pkg/tsdb/grafana-pyroscope-datasource/*",
+  "**/pkg/tsdb/grafana-pyroscope-datasource/**/*",
   "**/pkg/tsdb/grafana-testdata-datasource/*",
   "**/pkg/tsdb/grafana-testdata-datasource/**/*",
   "**/pkg/tsdb/azuremonitor/*",
   "**/pkg/tsdb/azuremonitor/**/*",
+  "**/pkg/tsdb/cloud-monitoring/*",
+  "**/pkg/tsdb/cloud-monitoring/**/*",
   "**/pkg/tsdb/parca/*",
   "**/pkg/tsdb/parca/**/*",
+  "**/pkg/tsdb/tempo/*",
+  "**/pkg/tsdb/tempo/**/*",
+  "**/pkg/tsdb/cloudwatch/*",
+  "**/pkg/tsdb/cloudwatch/**/*",
 ]
 
 [linters-settings.gocritic]

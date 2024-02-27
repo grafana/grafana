@@ -224,6 +224,10 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
       }
 
       for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+        // When a frame filter is applied, only include matching frame index
+        if (series.frame !== undefined && series.frame !== frameIndex) {
+          continue;
+        }
         const frame = frames[frameIndex];
         const xIndex = findFieldIndex(series.x, frame, frames);
 
@@ -535,7 +539,9 @@ const prepConfig = (
 
   // clip hover points/bubbles to plotting area
   builder.addHook('init', (u, r) => {
-    if (!config.featureToggles.newVizTooltips) {
+    const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
+
+    if (!showNewVizTooltips) {
       u.over.style.overflow = 'hidden';
     }
     ref_parent = u.root.parentElement;

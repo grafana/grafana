@@ -25,17 +25,27 @@ func NewTemplateService(config AMConfigStore, prov ProvisioningStore, xact Trans
 	}
 }
 
-func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) (map[string]string, error) {
+func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error) {
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	if revision.cfg.TemplateFiles == nil {
-		return map[string]string{}, nil
+	var templates []definitions.NotificationTemplate
+	for name, tmpl := range revision.cfg.TemplateFiles {
+		tmpl := definitions.NotificationTemplate{
+			Name:     name,
+			Template: tmpl,
+		}
+		provenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
+		if err != nil {
+			return nil, err
+		}
+		tmpl.Provenance = definitions.Provenance(provenance)
+		templates = append(templates, tmpl)
 	}
 
-	return revision.cfg.TemplateFiles, nil
+	return templates, nil
 }
 
 func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {

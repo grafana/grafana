@@ -77,14 +77,14 @@ func (gm *MathCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Va
 
 // ReduceCommand is an expression command for reduction of a timeseries such as a min, mean, or max.
 type ReduceCommand struct {
-	Reducer      string
+	Reducer      mathexp.ReducerID
 	VarToReduce  string
 	refID        string
 	seriesMapper mathexp.ReduceMapper
 }
 
 // NewReduceCommand creates a new ReduceCMD.
-func NewReduceCommand(refID, reducer, varToReduce string, mapper mathexp.ReduceMapper) (*ReduceCommand, error) {
+func NewReduceCommand(refID string, reducer mathexp.ReducerID, varToReduce string, mapper mathexp.ReduceMapper) (*ReduceCommand, error) {
 	_, err := mathexp.GetReduceFunc(reducer)
 	if err != nil {
 		return nil, err
@@ -114,10 +114,11 @@ func UnmarshalReduceCommand(rn *rawNode) (*ReduceCommand, error) {
 	if !ok {
 		return nil, errors.New("no reducer specified")
 	}
-	redFunc, ok := rawReducer.(string)
+	redString, ok := rawReducer.(string)
 	if !ok {
 		return nil, fmt.Errorf("expected reducer to be a string, got %T", rawReducer)
 	}
+	redFunc := mathexp.ReducerID(strings.ToLower(redString))
 
 	var mapper mathexp.ReduceMapper = nil
 	settings, ok := rn.Query["settings"]
@@ -163,7 +164,7 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 	_, span := tracer.Start(ctx, "SSE.ExecuteReduce")
 	defer span.End()
 
-	span.SetAttributes(attribute.String("reducer", gr.Reducer))
+	span.SetAttributes(attribute.String("reducer", string(gr.Reducer)))
 
 	newRes := mathexp.Results{}
 	for i, val := range vars[gr.VarToReduce].Values {
