@@ -263,7 +263,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   /**
    * The simplified JSON values used in JSON.stringify()
    */
-  toJSON(): unknown {
+  toJSON() {
     return toDataFrameDTO(this);
   }
 }
