@@ -336,7 +336,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   let bucketOffset = options?.bucketOffset ?? 0;
 
   // replace or filter nulls from numeric fields
-  frames = frames.map(frame => {
+  frames = frames.map((frame) => {
     return {
       ...frame,
       fields: frame.fields.map((field) => {
