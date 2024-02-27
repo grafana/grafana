@@ -69,6 +69,10 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 	}
 }
 
+func (r *LokiHistorianStore) Type() string {
+	return "loki"
+}
+
 func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
 	if query.Type == "annotation" {
 		return make([]*annotations.ItemDTO, 0), nil
