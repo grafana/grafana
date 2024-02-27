@@ -7,7 +7,6 @@ import {
   SceneRefreshPicker,
   SceneTimeRange,
   SceneVariableSet,
-  dataLayers,
 } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 

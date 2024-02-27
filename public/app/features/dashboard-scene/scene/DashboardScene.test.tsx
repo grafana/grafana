@@ -8,8 +8,6 @@ import {
   SceneVariableSet,
   TestVariable,
   VizPanel,
-  SceneDataLayers,
-  dataLayers,
   SceneGridRow,
 } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
@@ -24,8 +22,6 @@ import { historySrv } from '../settings/version-history/HistorySrv';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 
-import { AlertStatesDataLayer } from './AlertStatesDataLayer';
-import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
