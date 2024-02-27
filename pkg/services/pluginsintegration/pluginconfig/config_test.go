@@ -1,4 +1,4 @@
-package config
+package pluginconfig
 
 import (
 	"testing"
@@ -18,7 +18,7 @@ func TestPluginSettings(t *testing.T) {
 		[plugin.test-datasource]
 		foo = 5m
 		bar = something
-		
+
 		[plugin.secret-plugin]
 		secret_key = secret
 		normal_key = not a secret`))
