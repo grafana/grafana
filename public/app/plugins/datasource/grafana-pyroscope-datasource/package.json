@@ -27,7 +27,7 @@
     "@types/jest": "29.5.12",
     "@types/lodash": "4.14.202",
     "@types/prismjs": "1.26.3",
-    "@types/react": "18.2.59",
+    "@types/react": "18.2.60",
     "@types/react-dom": "18.2.19",
     "@types/testing-library__jest-dom": "5.14.9",
     "css-loader": "6.10.0",
