@@ -48,7 +48,7 @@ func UnmarshalSQLCommand(rn *rawNode) (*SQLCommand, error) {
 	}
 	expression, ok := expressionRaw.(string)
 	if !ok {
-		return nil, fmt.Errorf("expected prql expression to be type string, but got type %T", expressionRaw)
+		return nil, fmt.Errorf("expected sql expression to be type string, but got type %T", expressionRaw)
 	}
 
 	return NewSQLCommand(rn.RefID, expression, rn.TimeRange)
