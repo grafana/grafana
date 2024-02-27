@@ -189,4 +189,4 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options    |
 | `kubernetesQueryServiceRewrite`        | Rewrite requests targeting /ds/query to the query service      |
 | `panelTitleSearchInV1`                 | Enable searching for dashboards using panel title in search v1 |
-| `sqlExpressions`                       | Enables using SQL and DuckDB functions as Expressions.         |
+| `sqlExpressions`                       | Enables using SQL and DuckDB functions as Expressions. Requires installation of the [duckdb cli](https://duckdb.org/docs/api/cli/overview.html#installation).         |
