@@ -167,7 +167,7 @@ type AsExternal struct {
 	cfg *config.PluginManagementCfg
 }
 
-// NewDisablePluginsStep returns a new DisablePlugins.
+// NewAsExternalStep returns a new DisablePlugins.
 func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 	return &AsExternal{
 		cfg: cfg,
