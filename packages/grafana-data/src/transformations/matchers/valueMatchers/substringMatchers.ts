@@ -1,13 +1,13 @@
-import { Field } from '../../../types/dataFrame';
+import { Field, FieldType } from '../../../types/dataFrame';
 import { ValueMatcherInfo } from '../../../types/transformations';
 import { ValueMatcherID } from '../ids';
 
 import { BasicValueMatcherOptions } from './types';
 
 const isLikeValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
-  id: ValueMatcherID.like,
-  name: 'Is like',
-  description: 'Match where value for given field is similar to options value.',
+  id: ValueMatcherID.substring,
+  name: 'Is Substring',
+  description: 'Match where value for given field is a substring to options value.',
   get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
@@ -18,12 +18,12 @@ const isLikeValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   getOptionsDisplayText: () => {
     return `Matches all rows where field is similar to the value.`;
   },
-  isApplicable: () => true,
+  isApplicable: (field) => field.type === FieldType.string,
   getDefaultOptions: () => ({ value: '' }),
 };
 
 const isNotLikeValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
-    id: ValueMatcherID.notLike,
+    id: ValueMatcherID.notSubstring,
     name: 'Is not like',
     description: 'Match where value for given field is not similar to options value.',
     get: (options) => {
@@ -38,8 +38,8 @@ const isNotLikeValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
     getOptionsDisplayText: () => {
         return `Matches all rows where field is not similar to the value.`;
     },
-    isApplicable: () => true,
+    isApplicable: (field) => field.type === FieldType.string,
     getDefaultOptions: () => ({ value: '' }),
     };
 
-export const getLikeValueMatchers = (): ValueMatcherInfo[] => [isLikeValueMatcher, isNotLikeValueMatcher];
+export const getSubstringValueMatchers = (): ValueMatcherInfo[] => [isLikeValueMatcher, isNotLikeValueMatcher];

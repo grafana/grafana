@@ -17,11 +17,11 @@ import { getFieldPredicateMatchers, getFramePredicateMatchers } from './matchers
 import { getRefIdMatchers } from './matchers/refIdMatcher';
 import { getSimpleFieldMatchers } from './matchers/simpleFieldMatcher';
 import { getEqualValueMatchers } from './matchers/valueMatchers/equalMatchers';
-import { getLikeValueMatchers } from './matchers/valueMatchers/likeMatchers';
 import { getNullValueMatchers } from './matchers/valueMatchers/nullMatchers';
 import { getNumericValueMatchers } from './matchers/valueMatchers/numericMatchers';
 import { getRangeValueMatchers } from './matchers/valueMatchers/rangeMatchers';
 import { getRegexValueMatcher } from './matchers/valueMatchers/regexMatchers';
+import { getSubstringValueMatchers } from './matchers/valueMatchers/substringMatchers';
 
 export { type FieldValueMatcherConfig } from './matchers/fieldValueMatcher';
 
@@ -60,7 +60,7 @@ export const valueMatchers = new Registry<ValueMatcherInfo>(() => {
     ...getNullValueMatchers(),
     ...getNumericValueMatchers(),
     ...getEqualValueMatchers(),
-    ...getLikeValueMatchers(),
+    ...getSubstringValueMatchers(),
     ...getRangeValueMatchers(),
     ...getRegexValueMatcher(),
   ];

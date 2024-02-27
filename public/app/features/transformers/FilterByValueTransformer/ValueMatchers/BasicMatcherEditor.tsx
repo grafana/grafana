@@ -128,15 +128,15 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
       }),
     },
     {
-      name: 'Is like',
-      id: ValueMatcherID.like,
+      name: 'Is Substring',
+      id: ValueMatcherID.substring,
       component: basicMatcherEditor<string | number | boolean>({
         validator: () => true,
       }),
     },
     {
-      name: 'Is not like',
-      id: ValueMatcherID.notLike,
+      name: 'Is not substring',
+      id: ValueMatcherID.notSubstring,
       component: basicMatcherEditor<string | number | boolean>({
         validator: () => true,
       }),
