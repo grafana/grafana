@@ -929,9 +929,9 @@ func TestIsHDAllowed(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			info := &social.OAuthInfo{}
 			info.AllowedDomains = tc.allowedDomains
-			info.DisableHDValidation = tc.disableHDValidation
 			s := NewGoogleProvider(info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-			err := s.isHDAllowed(tc.email)
+			s.disableHDValidation = tc.disableHDValidation
+			err := s.isHDAllowed(tc.email, info)
 
 			if tc.expectedErrorMessage != "" {
 				require.Error(t, err)
