@@ -70,6 +70,7 @@ func TestIntegrationFolderService(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	t.Run("Folder service tests", func(t *testing.T) {
+
 		dashStore := &dashboards.FakeDashboardStore{}
 		db := sqlstore.InitTestDB(t)
 		nestedFolderStore := ProvideStore(db, db.Cfg)
