@@ -7,6 +7,7 @@ import {
   SceneComponentProps,
   SceneGridItem,
   SceneGridLayout,
+  SceneGridRow,
   SceneObjectBase,
   SceneObjectState,
 } from '@grafana/scenes';
@@ -50,12 +51,27 @@ export class AddLibraryPanelWidget extends SceneObjectBase<AddLibraryPanelWidget
     }
 
     const sceneGridLayout = this._dashboard.state.body;
+    const children = [];
 
-    sceneGridLayout.setState({
-      children: sceneGridLayout.state.children.filter(
-        (child) => !(child instanceof SceneGridItem && child.state.body?.state.key === this.state.key)
-      ),
-    });
+    for (const child of sceneGridLayout.state.children) {
+      if (child.state.key !== this.parent?.state.key) {
+        children.push(child);
+      }
+
+      if (child instanceof SceneGridRow) {
+        const rowChildren = [];
+
+        for (const rowChild of child.state.children) {
+          if (rowChild instanceof SceneGridItem && rowChild.state.key !== this.parent?.state.key) {
+            rowChildren.push(rowChild);
+          }
+        }
+
+        child.setState({ children: rowChildren });
+      }
+    }
+
+    sceneGridLayout.setState({ children });
   };
 
   public onAddLibraryPanel = (panelInfo: LibraryPanel) => {
@@ -69,18 +85,24 @@ export class AddLibraryPanelWidget extends SceneObjectBase<AddLibraryPanelWidget
       title: 'Panel Title',
       uid: panelInfo.uid,
       name: panelInfo.name,
+      //TODO modify this to be panelKey after https://github.com/grafana/grafana/pull/83420 gets merged
       key: this.state.key,
     });
 
-    const widgetChild = sceneGridLayout.state.children.find(
-      (child) =>
-        child instanceof SceneGridItem &&
-        child.state.body instanceof AddLibraryPanelWidget &&
-        child.state.body.state.key === this.state.key
-    );
+    for (const child of sceneGridLayout.state.children) {
+      if (child instanceof SceneGridItem && child.state.key === this.parent?.state.key) {
+        child.setState({ body });
+        return;
+      }
 
-    if (widgetChild instanceof SceneGridItem) {
-      widgetChild.setState({ body });
+      if (child instanceof SceneGridRow) {
+        for (const rowChild of child.state.children) {
+          if (rowChild instanceof SceneGridItem && rowChild.state.key === this.parent?.state.key) {
+            rowChild.setState({ body });
+            return;
+          }
+        }
+      }
     }
   };
 
