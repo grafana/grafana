@@ -20,11 +20,11 @@ weight: 300
 
 # Export alerting resources
 
-Export your alerting resources, such as alert rules, contact points, and notification policies for provisioning, automatically importing single folders and single groups.
-
-The export options listed below enable you to download resources in YAML, JSON, or Terraform format, facilitating their provisioning through [configuration files][alerting_file_provisioning] or [Terraform][alerting_tf_provisioning].
+Export your alerting resources, such as alert rules, contact points, and notification policies for provisioning, automatically importing single folders and single groups. Use the [Grafana UI](#export-from-the-grafana-ui) or the [HTTP Alerting API](#http-alerting-api) for exporting these resources.
 
 ## Export from the Grafana UI
+
+The export options listed below enable you to download resources in YAML, JSON, or Terraform format, facilitating their provisioning through [configuration files][alerting_file_provisioning] or [Terraform][alerting_tf_provisioning].
 
 ### Export alert rules
 
@@ -115,11 +115,20 @@ To export mute timings from the Grafana UI, complete the following steps.
 
 1. Click **Copy Code** or **Download**.
 
-## Export API endpoints
+## HTTP Alerting API
 
-You can also use the **Alerting provisioning HTTP API** to export alerting resources in YAML or JSON formats for provisioning.
+You can use the [Alerting HTTP API][alerting_http_provisioning] to return existing alerting resources in JSON and import them to another Grafana instance using the same API. For instance:
 
-Note that most Alerting endpoints return a JSON format that is not compatible for provisioning via configuration files, except the ones listed below.
+| Resource    | Method / URI                          | Summary                  |
+| ----------- | ------------------------------------- | ------------------------ |
+| Alert rules | GET /api/v1/provisioning/alert-rules  | Get all alert rules.     |
+| Alert rules | POST /api/v1/provisioning/alert-rules | Create a new alert rule. |
+
+However, note these Alerting endpoints return a JSON format that is not compatible for provisioning through configuration files or Terraform, except the endpoints listed below.
+
+### Export API endpoints
+
+The **Alerting HTTP API** provides specific endpoints for exporting alerting resources in YAML or JSON formats, facilitating [provisioning via configuration files][alerting_file_provisioning]. Currently, Terraform format is not supported.
 
 | Resource                 | Method / URI                                                         | Summary                                                                                  |
 | ------------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
