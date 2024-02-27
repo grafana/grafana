@@ -26,7 +26,7 @@ export interface SyncTimesPayload {
 }
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
-export const richHistoryUpdatedAction = createAction<{ richHistoryResults: RichHistoryResults; exploreId: string }>(
+export const richHistoryUpdatedAction = createAction<{ richHistoryResults: RichHistoryResults }>(
   'explore/richHistoryUpdated'
 );
 export const richHistoryStorageFullAction = createAction('explore/richHistoryStorageFullAction');
@@ -34,7 +34,6 @@ export const richHistoryLimitExceededAction = createAction('explore/richHistoryL
 
 export const richHistorySettingsUpdatedAction = createAction<RichHistorySettings>('explore/richHistorySettingsUpdated');
 export const richHistorySearchFiltersUpdatedAction = createAction<{
-  exploreId: string;
   filters?: RichHistorySearchFilters;
 }>('explore/richHistorySearchFiltersUpdatedAction');
 
@@ -124,6 +123,8 @@ export const changeCorrelationEditorDetails = createAction<CorrelationEditorDeta
   'explore/changeCorrelationEditorDetails'
 );
 
+export const changeShowQueryHistory = createAction<boolean>('explore/changeShowQueryHistory');
+
 export interface NavigateToExploreDependencies {
   timeRange: TimeRange;
   getExploreUrl: (args: GetExploreUrlArguments) => Promise<string | undefined>;
@@ -167,6 +168,8 @@ export const initialExploreState: ExploreState = {
   largerExploreId: undefined,
   maxedExploreId: undefined,
   evenSplitPanes: true,
+  showQueryHistory: false,
+  richHistory: [],
 };
 
 /**
@@ -299,6 +302,13 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
         isExiting: Boolean(isExiting ?? state.correlationEditorDetails?.isExiting),
         postConfirmAction,
       },
+    };
+  }
+
+  if (changeShowQueryHistory.match(action)) {
+    return {
+      ...state,
+      showQueryHistory: action.payload,
     };
   }
 

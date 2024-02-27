@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction, getAppEvents } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -17,18 +17,8 @@ import { changeDatasource } from 'app/features/explore/state/datasource';
 import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from 'app/features/explore/state/history';
 import { setQueries } from 'app/features/explore/state/query';
 import { dispatch } from 'app/store/store';
-import { StoreState } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 import { RichHistoryQuery } from 'app/types/explore';
-
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
-  const explore = state.explore;
-  const { datasourceInstance } = explore.panes[exploreId]!;
-  return {
-    exploreId,
-    datasourceInstance,
-  };
-}
 
 const mapDispatchToProps = {
   changeDatasource,
@@ -38,9 +28,10 @@ const mapDispatchToProps = {
   setQueries,
 };
 
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(undefined, mapDispatchToProps);
 
 interface OwnProps<T extends DataQuery = DataQuery> {
+  datasourceInstances: DataSourceRef[];
   queryHistoryItem: RichHistoryQuery<T>;
 }
 
@@ -141,16 +132,8 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export function RichHistoryCard(props: Props) {
-  const {
-    queryHistoryItem,
-    commentHistoryItem,
-    starHistoryItem,
-    deleteHistoryItem,
-    changeDatasource,
-    exploreId,
-    datasourceInstance,
-    setQueries,
-  } = props;
+  const { queryHistoryItem, commentHistoryItem, starHistoryItem, deleteHistoryItem, changeDatasource, setQueries } =
+    props;
 
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(queryHistoryItem.comment);
@@ -184,13 +167,15 @@ export function RichHistoryCard(props: Props) {
 
   const styles = useStyles2(getStyles);
 
+  const isDifferentDatasource = (uid: string) => props.datasourceInstances.find((di) => di.uid === uid) === undefined;
+
   const onRunQuery = async () => {
     const queriesToRun = queryHistoryItem.queries;
-    const differentDataSource = queryHistoryItem.datasourceUid !== datasourceInstance?.uid;
+    const differentDataSource = isDifferentDatasource(queryHistoryItem.datasourceUid);
     if (differentDataSource) {
-      await changeDatasource({ exploreId, datasource: queryHistoryItem.datasourceUid });
+      await changeDatasource({ exploreId: 'exploreId', datasource: queryHistoryItem.datasourceUid });
     }
-    setQueries(exploreId, queriesToRun);
+    setQueries('exploreId', queriesToRun);
 
     reportInteraction('grafana_explore_query_history_run', {
       queryHistoryEnabled: config.queryHistoryEnabled,
@@ -258,7 +243,7 @@ export function RichHistoryCard(props: Props) {
     }
   };
 
-  const onStarrQuery = () => {
+  const onStarQuery = () => {
     starHistoryItem(queryHistoryItem.id, !queryHistoryItem.starred);
     reportInteraction('grafana_explore_query_history_starred', {
       queryHistoryEnabled: config.queryHistoryEnabled,
@@ -358,7 +343,7 @@ export function RichHistoryCard(props: Props) {
       <IconButton
         name={queryHistoryItem.starred ? 'favorite' : 'star'}
         iconType={queryHistoryItem.starred ? 'mono' : 'default'}
-        onClick={onStarrQuery}
+        onClick={onStarQuery}
         tooltip={
           queryHistoryItem.starred
             ? t('explore.rich-history-card.unstar-query-tooltip', 'Unstar query')
@@ -399,7 +384,7 @@ export function RichHistoryCard(props: Props) {
                 !historyCardData?.datasourceInstance || historyCardData.queries.some((query) => !query.datasource)
               }
             >
-              {datasourceInstance?.uid === queryHistoryItem.datasourceUid ? (
+              {isDifferentDatasource(queryHistoryItem.datasourceUid) ? (
                 <Trans i18nKey="explore.rich-history-card.run-query-button">Run query</Trans>
               ) : (
                 <Trans i18nKey="explore.rich-history-card.switch-datasource-button">

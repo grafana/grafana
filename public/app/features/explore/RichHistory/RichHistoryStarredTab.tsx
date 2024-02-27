@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { DataSourceRef, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
@@ -20,13 +20,12 @@ export interface RichHistoryStarredTabProps {
   queries: RichHistoryQuery[];
   totalQueries: number;
   loading: boolean;
-  activeDatasourceInstance: string;
+  datasourceInstances: DataSourceRef[];
   updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
   loadMoreRichHistory: () => void;
   richHistorySearchFilters?: RichHistorySearchFilters;
   richHistorySettings: RichHistorySettings;
-  exploreId: string;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -72,13 +71,12 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
     updateFilters,
     clearRichHistoryResults,
     loadMoreRichHistory,
-    activeDatasourceInstance,
+    datasourceInstances,
     richHistorySettings,
     queries,
     totalQueries,
     loading,
     richHistorySearchFilters,
-    exploreId,
   } = props;
 
   const styles = useStyles2(getStyles);
@@ -89,7 +87,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
     const datasourceFilters =
       richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters
         ? richHistorySettings.lastUsedDatasourceFilters
-        : [activeDatasourceInstance];
+        : datasourceInstances.map((di) => di.uid).filter((s): s is string => !!s);
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,
@@ -166,7 +164,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
         )}
         {!loading &&
           queries.map((q) => {
-            return <RichHistoryCard queryHistoryItem={q} key={q.id} exploreId={exploreId} />;
+            return <RichHistoryCard queryHistoryItem={q} key={q.id} datasourceInstances={datasourceInstances} />;
           })}
         {queries.length && queries.length !== totalQueries ? (
           <div>

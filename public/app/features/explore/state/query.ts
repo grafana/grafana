@@ -491,13 +491,7 @@ async function handleHistory(
   dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
 
   dispatch(addHistoryItem(datasource.uid, datasource.name, queries));
-
-  // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
-  // used filters. Instead, we refresh the query history list.
-  // TODO: run only if Query History list is opened (#47252)
-  for (const exploreId in state.panes) {
-    await dispatch(loadRichHistory(exploreId));
-  }
+  await dispatch(loadRichHistory());
 }
 
 interface RunQueriesOptions {

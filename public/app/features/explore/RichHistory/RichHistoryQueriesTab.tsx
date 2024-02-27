@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { DataSourceRef, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
@@ -22,13 +22,12 @@ export interface RichHistoryQueriesTabProps {
   queries: RichHistoryQuery[];
   totalQueries: number;
   loading: boolean;
-  activeDatasourceInstance: string;
+  datasourceInstances: DataSourceRef[];
   updateFilters: (filtersToUpdate?: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
   loadMoreRichHistory: () => void;
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
-  exploreId: string;
   height: number;
 }
 
@@ -122,9 +121,8 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     clearRichHistoryResults,
     loadMoreRichHistory,
     richHistorySettings,
-    exploreId,
     height,
-    activeDatasourceInstance,
+    datasourceInstances,
   } = props;
 
   const styles = useStyles2(getStyles, height);
@@ -135,7 +133,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     const datasourceFilters =
       !richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters
         ? richHistorySettings.lastUsedDatasourceFilters
-        : [activeDatasourceInstance];
+        : datasourceInstances.map((di) => di.uid).filter((s): s is string => !!s);
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,
@@ -262,7 +260,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
                   </span>
                 </div>
                 {mappedQueriesToHeadings[heading].map((q) => {
-                  return <RichHistoryCard queryHistoryItem={q} key={q.id} exploreId={exploreId} />;
+                  return <RichHistoryCard datasourceInstances={datasourceInstances} queryHistoryItem={q} key={q.id} />;
                 })}
               </div>
             );

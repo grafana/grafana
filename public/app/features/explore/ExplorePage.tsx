@@ -14,12 +14,14 @@ import { ExploreQueryParams } from 'app/types/explore';
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
+import { RichHistoryContainer } from './RichHistory/RichHistoryContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
-import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
+import { changeShowQueryHistory } from './state/main';
+import { isSplit, selectCorrelationDetails, selectPanesEntries, selectShowQueryHistory } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
 
@@ -41,6 +43,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
   const correlationDetails = useSelector(selectCorrelationDetails);
+  const showQueryHistory = useSelector(selectShowQueryHistory);
   const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
 
   useEffect(() => {
@@ -78,6 +81,13 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
           );
         })}
       </SplitPaneWrapper>
+      {showQueryHistory && (
+        <RichHistoryContainer
+          onClose={() => {
+            changeShowQueryHistory(false);
+          }}
+        />
+      )}
     </div>
   );
 }

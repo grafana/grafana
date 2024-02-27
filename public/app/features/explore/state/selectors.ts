@@ -23,3 +23,5 @@ export const isLeftPaneSelector = (exploreId: string) =>
 export const getExploreItemSelector = (exploreId: string) => createSelector(selectPanes, (panes) => panes[exploreId]);
 
 export const selectCorrelationDetails = createSelector(selectExploreRoot, (state) => state.correlationEditorDetails);
+
+export const selectShowQueryHistory = createSelector(selectExploreRoot, (state) => state.showQueryHistory);

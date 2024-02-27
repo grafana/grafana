@@ -8,7 +8,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 
 export interface Props {
-  width: number;
+  width?: number;
   children: React.ReactNode;
   onResize?: ResizeCallback;
 }
@@ -18,7 +18,7 @@ export function ExploreDrawer(props: Props) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const dragStyles = getDragStyles(theme);
-  const drawerWidth = `${width + 31.5}px`;
+  const drawerWidth = width ? `${width + 31.5}px` : '100%';
 
   return (
     <Resizable

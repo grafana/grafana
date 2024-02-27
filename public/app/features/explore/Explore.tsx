@@ -53,12 +53,11 @@ import { NodeGraphContainer } from './NodeGraph/NodeGraphContainer';
 import { QueryRows } from './QueryRows';
 import RawPrometheusContainer from './RawPrometheus/RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
-import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeSize } from './state/explorePane';
-import { splitOpen } from './state/main';
+import { changeShowQueryHistory, splitOpen } from './state/main';
 import {
   addQueryRow,
   modifyQueries,
@@ -314,20 +313,16 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
-  toggleShowRichHistory = () => {
-    this.setState((state) => {
-      return {
-        openDrawer: state.openDrawer === ExploreDrawer.RichHistory ? undefined : ExploreDrawer.RichHistory,
-      };
-    });
-  };
-
   toggleShowQueryInspector = () => {
     this.setState((state) => {
       return {
         openDrawer: state.openDrawer === ExploreDrawer.QueryInspector ? undefined : ExploreDrawer.QueryInspector,
       };
     });
+  };
+
+  toggleShowQueryHistory = () => {
+    this.props.changeShowQueryHistory(!this.props.showQueryHistory);
   };
 
   onSplitOpen = (panelType: string) => {
@@ -558,11 +553,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogsSample,
       correlationEditorDetails,
       correlationEditorHelperData,
+      showQueryHistory,
     } = this.props;
     const { openDrawer, contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
-    const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
     const showNoData =
@@ -627,10 +622,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           //TODO:unification
                           addQueryRowButtonHidden={false}
                           richHistoryRowButtonHidden={richHistoryRowButtonHidden}
-                          richHistoryButtonActive={showRichHistory}
+                          richHistoryButtonActive={showQueryHistory}
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                          onClickRichHistoryButton={this.toggleShowRichHistory}
+                          onClickRichHistoryButton={this.toggleShowQueryHistory}
                           onClickQueryInspectorButton={this.toggleShowQueryInspector}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
@@ -668,13 +663,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                                   {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
                                   {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
                                 </>
-                              )}
-                              {showRichHistory && (
-                                <RichHistoryContainer
-                                  width={width}
-                                  exploreId={exploreId}
-                                  onClose={this.toggleShowRichHistory}
-                                />
                               )}
                               {showQueryInspector && (
                                 <ExploreQueryInspector
@@ -761,6 +749,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showLogsSample,
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
+    showQueryHistory: explore.showQueryHistory,
   };
 }
 
@@ -774,6 +763,7 @@ const mapDispatchToProps = {
   addQueryRow,
   splitOpen,
   setSupplementaryQueryEnabled,
+  changeShowQueryHistory,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
