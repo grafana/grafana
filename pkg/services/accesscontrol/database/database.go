@@ -241,3 +241,58 @@ func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, u
 	})
 	return err
 }
+
+func (s *AccessControlStore) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error {
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		roleDeleteQuery := "DELETE FROM team_role WHERE team_id = ? AND org_id = ?"
+		roleDeleteParams := []any{roleDeleteQuery, teamID, orgID}
+
+		// Delete team role assignments
+		if _, err := sess.Exec(roleDeleteParams...); err != nil {
+			return err
+		}
+
+		// Delete permissions that are scoped to the team
+		if _, err := sess.Exec("DELETE FROM permission WHERE scope = ?", accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))); err != nil {
+			return err
+		}
+
+		// Delete the team managed role
+		roleQuery := "SELECT id FROM role WHERE name = ? AND org_id = ?"
+		roleParams := []any{accesscontrol.ManagedTeamRoleName(teamID), orgID}
+
+		var roleIDs []int64
+		if err := sess.SQL(roleQuery, roleParams...).Find(&roleIDs); err != nil {
+			return err
+		}
+
+		if len(roleIDs) == 0 {
+			return nil
+		}
+
+		permissionDeleteQuery := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
+		permissionDeleteParams := make([]any, 0, len(roleIDs)+1)
+		permissionDeleteParams = append(permissionDeleteParams, permissionDeleteQuery)
+		for _, id := range roleIDs {
+			permissionDeleteParams = append(permissionDeleteParams, id)
+		}
+
+		// Delete managed team permissions
+		if _, err := sess.Exec(permissionDeleteParams...); err != nil {
+			return err
+		}
+
+		managedRoleDeleteQuery := "DELETE FROM role WHERE id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
+		managedRoleDeleteParams := []any{managedRoleDeleteQuery}
+		for _, id := range roleIDs {
+			managedRoleDeleteParams = append(managedRoleDeleteParams, id)
+		}
+		// Delete managed team role
+		if _, err := sess.Exec(managedRoleDeleteParams...); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	return err
+}

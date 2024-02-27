@@ -28,6 +28,7 @@ type Calls struct {
 	RegisterFixedRoles             []interface{}
 	RegisterAttributeScopeResolver []interface{}
 	DeleteUserPermissions          []interface{}
+	DeleteTeamPermissions          []interface{}
 	SearchUsersPermissions         []interface{}
 	SearchUserPermissions          []interface{}
 	SaveExternalServiceRole        []interface{}
@@ -53,6 +54,7 @@ type Mock struct {
 	RegisterFixedRolesFunc             func() error
 	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
 	DeleteUserPermissionsFunc          func(context.Context, int64) error
+	DeleteTeamPermissionsFunc          func(context.Context, int64) error
 	SearchUsersPermissionsFunc         func(context.Context, identity.Requester, int64, accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
 	SearchUserPermissionsFunc          func(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error)
 	SaveExternalServiceRoleFunc        func(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error
@@ -195,6 +197,15 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 	// Use override if provided
 	if m.DeleteUserPermissionsFunc != nil {
 		return m.DeleteUserPermissionsFunc(ctx, userID)
+	}
+	return nil
+}
+
+func (m *Mock) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error {
+	m.Calls.DeleteTeamPermissions = append(m.Calls.DeleteTeamPermissions, []interface{}{ctx, orgID, teamID})
+	// Use override if provided
+	if m.DeleteTeamPermissionsFunc != nil {
+		return m.DeleteTeamPermissionsFunc(ctx, teamID)
 	}
 	return nil
 }

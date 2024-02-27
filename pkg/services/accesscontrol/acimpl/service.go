@@ -166,6 +166,10 @@ func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID
 	return s.store.DeleteUserPermissions(ctx, orgID, userID)
 }
 
+func (s *Service) DeleteTeamPermissions(ctx context.Context, orgID int64, teamID int64) error {
+	return s.store.DeleteTeamPermissions(ctx, orgID, teamID)
+}
+
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {

@@ -243,6 +243,77 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 }
 
+func TestAccessControlStore_DeleteTeamPermissions(t *testing.T) {
+	t.Run("expect permissions related to team to be deleted", func(t *testing.T) {
+		store, permissionsStore, sql, teamSvc, _ := setupTestEnv(t)
+		user, team := createUserAndTeam(t, sql, teamSvc, 1)
+
+		// grant permission to the team
+		_, err := permissionsStore.SetTeamResourcePermission(context.Background(), 1, team.ID, rs.SetResourcePermissionCommand{
+			Actions:           []string{"dashboards:write"},
+			Resource:          "dashboards",
+			ResourceAttribute: "uid",
+			ResourceID:        "xxYYzz",
+		}, nil)
+		require.NoError(t, err)
+
+		// generate permissions scoped to the team
+		_, err = permissionsStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
+			Actions:           []string{"team:read"},
+			Resource:          "teams",
+			ResourceAttribute: "id",
+			ResourceID:        fmt.Sprintf("%d", team.ID),
+		}, nil)
+		require.NoError(t, err)
+
+		err = store.DeleteTeamPermissions(context.Background(), 1, team.ID)
+		require.NoError(t, err)
+
+		permissions, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
+			OrgID:   1,
+			UserID:  user.ID,
+			Roles:   []string{"Admin"},
+			TeamIDs: []int64{team.ID},
+		})
+		require.NoError(t, err)
+		assert.Len(t, permissions, 0)
+	})
+	t.Run("expect permissions not related to team to be kept", func(t *testing.T) {
+		store, permissionsStore, sql, teamSvc, _ := setupTestEnv(t)
+		user, team := createUserAndTeam(t, sql, teamSvc, 1)
+
+		// grant permission to the team
+		_, err := permissionsStore.SetTeamResourcePermission(context.Background(), 1, team.ID, rs.SetResourcePermissionCommand{
+			Actions:           []string{"dashboards:write"},
+			Resource:          "dashboards",
+			ResourceAttribute: "uid",
+			ResourceID:        "xxYYzz",
+		}, nil)
+		require.NoError(t, err)
+
+		// generate permissions scoped to another team
+		_, err = permissionsStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
+			Actions:           []string{"team:read"},
+			Resource:          "teams",
+			ResourceAttribute: "id",
+			ResourceID:        fmt.Sprintf("%d", team.ID+1),
+		}, nil)
+		require.NoError(t, err)
+
+		err = store.DeleteTeamPermissions(context.Background(), 1, team.ID)
+		require.NoError(t, err)
+
+		permissions, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
+			OrgID:   1,
+			UserID:  user.ID,
+			Roles:   []string{"Admin"},
+			TeamIDs: []int64{team.ID},
+		})
+		require.NoError(t, err)
+		assert.Len(t, permissions, 1)
+	})
+}
+
 func createUserAndTeam(t *testing.T, userSrv user.Service, teamSvc team.Service, orgID int64) (*user.User, team.Team) {
 	t.Helper()
 
