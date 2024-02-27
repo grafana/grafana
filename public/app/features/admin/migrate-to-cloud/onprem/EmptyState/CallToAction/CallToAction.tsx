@@ -3,11 +3,18 @@ import React from 'react';
 import { Box, Button, ModalsController, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
+import { useConnectStackMutation, useGetStatusQuery } from '../../../api';
+
 import { ConnectModal } from './ConnectModal';
 
 export const CallToAction = () => {
-  const onClickMigrate = () => {
-    console.log('TODO migration!');
+  const [connectStack, connectResponse] = useConnectStackMutation();
+  const { isFetching } = useGetStatusQuery();
+  const onClickMigrate = async (stackURL: string, token: string) => {
+    return connectStack({
+      stackURL,
+      token,
+    });
   };
 
   return (
@@ -18,6 +25,7 @@ export const CallToAction = () => {
             <Trans i18nKey="migrate-to-cloud.cta.header">Let us manage your Grafana stack</Trans>
           </Text>
           <Button
+            disabled={isFetching || connectResponse.isLoading}
             onClick={() =>
               showModal(ConnectModal, {
                 hideModal,

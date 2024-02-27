@@ -29,9 +29,15 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
 
 interface MigrateToCloudStatusDTO {
   enabled: boolean;
+  stackURL?: string;
 }
 
 interface CreateMigrationTokenResponseDTO {
+  token: string;
+}
+
+interface ConnectStackProps {
+  stackURL: string;
   token: string;
 }
 
@@ -39,15 +45,52 @@ interface CreateMigrationTokenResponseDTO {
 const MOCK_DELAY_MS = 1000;
 const MOCK_TOKEN = 'TODO_thisWillBeABigLongToken';
 let HAS_MIGRATION_TOKEN = false;
+let HAS_STACK_DETAILS = false;
+let STACK_URL: string | undefined;
 
 export const migrateToCloudAPI = createApi({
-  tagTypes: ['migrationToken'],
+  tagTypes: ['migrationToken', 'stack'],
   reducerPath: 'migrateToCloudAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     // TODO :)
     getStatus: builder.query<MigrateToCloudStatusDTO, void>({
-      queryFn: () => ({ data: { enabled: false } }),
+      providesTags: ['stack'],
+      queryFn: () => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const responseData: MigrateToCloudStatusDTO = { enabled: HAS_STACK_DETAILS };
+            if (STACK_URL) {
+              responseData.stackURL = STACK_URL;
+            }
+            resolve({ data: responseData });
+          }, MOCK_DELAY_MS);
+        });
+      },
+    }),
+    connectStack: builder.mutation<void, ConnectStackProps>({
+      invalidatesTags: ['stack'],
+      queryFn: async ({ stackURL }) => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            HAS_STACK_DETAILS = true;
+            STACK_URL = stackURL;
+            resolve({ data: undefined });
+          }, MOCK_DELAY_MS);
+        });
+      },
+    }),
+    disconnectStack: builder.mutation<void, void>({
+      invalidatesTags: ['stack'],
+      queryFn: async () => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            HAS_STACK_DETAILS = false;
+            STACK_URL = undefined;
+            resolve({ data: undefined });
+          }, MOCK_DELAY_MS);
+        });
+      },
     }),
     createMigrationToken: builder.mutation<CreateMigrationTokenResponseDTO, void>({
       invalidatesTags: ['migrationToken'],
@@ -86,6 +129,8 @@ export const migrateToCloudAPI = createApi({
 
 export const {
   useGetStatusQuery,
+  useConnectStackMutation,
+  useDisconnectStackMutation,
   useCreateMigrationTokenMutation,
   useDeleteMigrationTokenMutation,
   useHasMigrationTokenQuery,

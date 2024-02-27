@@ -5,17 +5,19 @@ import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   hideModal: () => void;
-  onConfirm: () => Promise<{ data: void } | { error: unknown }>;
+  onConfirm: (stackURL: string, token: string) => Promise<{ data: void } | { error: unknown }>;
 }
 
 export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
   const [isConnecting, setIsConnecting] = useState(false);
+  const [stackURL, setStackURL] = useState('');
+  const [token, setToken] = useState('');
   const cloudStackId = useId();
   const tokenId = useId();
 
   const onConfirmConnect = async () => {
     setIsConnecting(true);
-    await onConfirm();
+    await onConfirm(stackURL, token);
     setIsConnecting(false);
     hideModal();
   };
@@ -41,7 +43,12 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
             Once you&apos;ve decided on a stack, paste the URL below.
           </Trans>
           <Field label={t('migrate-to-cloud.connect-modal.body-url-field', 'Cloud stack URL')}>
-            <Input id={cloudStackId} placeholder="https://example.grafana.net/" />
+            <Input
+              id={cloudStackId}
+              value={stackURL}
+              onChange={(event) => setStackURL(event.currentTarget.value)}
+              placeholder="https://example.grafana.net/"
+            />
           </Field>
           <span>
             <Trans i18nKey="migrate-to-cloud.connect-modal.body-token">
@@ -58,6 +65,8 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
           <Field label={t('migrate-to-cloud.connect-modal.body-token-field', 'Migration token')}>
             <Input
               id={tokenId}
+              value={token}
+              onChange={(event) => setToken(event.currentTarget.value)}
               placeholder={t('migrate-to-cloud.connect-modal.body-token-field-placeholder', 'Paste token here')}
             />
           </Field>
@@ -67,7 +76,7 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
         <Button variant="secondary" onClick={hideModal}>
           <Trans i18nKey="migrate-to-cloud.connect-modal.cancel">Cancel</Trans>
         </Button>
-        <Button disabled={isConnecting} onClick={onConfirmConnect}>
+        <Button disabled={isConnecting || !(stackURL && token)} onClick={onConfirmConnect}>
           {isConnecting
             ? t('migrate-to-cloud.connect-modal.connecting', 'Connecting to this stack...')
             : t('migrate-to-cloud.connect-modal.connect', 'Connect to this stack')}
