@@ -121,6 +121,10 @@ With the `password_policy` option enabled, new and updated passwords must meet t
 password_policy = true
 ```
 
+{{% admonition type="note" %}}
+Existing passwords that don't comply with the new password policy will not be impacted until the user updates their password.
+{{% /admonition %}}
+
 ### Disable login form
 
 You can hide the Grafana login form using the below configuration settings.
