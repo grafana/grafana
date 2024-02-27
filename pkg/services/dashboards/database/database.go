@@ -649,6 +649,10 @@ func (d *dashboardStore) GetDashboardsByPluginID(ctx context.Context, query *das
 	return dashboards, nil
 }
 func (d *dashboardStore) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
+	if orgID == 0 || uid == "" {
+		return nil, dashboards.ErrDashboardIdentifierNotSet
+	}
+
 	var queryResult *dashboards.Dashboard
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		dashboard := dashboards.Dashboard{OrgID: orgID, UID: uid}
@@ -682,6 +686,10 @@ func (d *dashboardStore) SoftDeleteDashboard(ctx context.Context, orgID int64, d
 }
 
 func (d *dashboardStore) SoftDeleteDashboardsInFolders(ctx context.Context, orgID int64, folderUids []string) error {
+	if len(folderUids) == 0 {
+		return nil
+	}
+
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		s := strings.Builder{}
 		s.WriteString("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE ")

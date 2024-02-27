@@ -273,6 +273,16 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 	return queryResult, nil
 }
 
+// swagger:route PATCH /dashboards/uid/{uid}/trash dashboards restoreDeletedDashboardByUID
+//
+// Restore a dashboard to a given dashboard version using UID.
+//
+// Responses:
+// 200: postDashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) RestoreDeletedDashboard(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 
@@ -298,10 +308,22 @@ func (hs *HTTPServer) RestoreDeletedDashboard(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s restored", dash.Title),
-		"uid":      dash.UID,
+		"uid":     dash.UID,
 	})
 }
 
+// SoftDeleteDashboard swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
+//
+// Delete dashboard by uid.
+//
+// Will delete the dashboard given the specified unique identifier (uid).
+//
+// Responses:
+// 200: deleteDashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) SoftDeleteDashboard(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, uid)
@@ -332,7 +354,7 @@ func (hs *HTTPServer) SoftDeleteDashboard(c *contextmodel.ReqContext) response.R
 	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s moved to trash", dash.Title),
-		"uid":      dash.UID,
+		"uid":     dash.UID,
 	})
 }
 
@@ -349,6 +371,22 @@ func (hs *HTTPServer) SoftDeleteDashboard(c *contextmodel.ReqContext) response.R
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteDashboardByUID(c *contextmodel.ReqContext) response.Response {
+	return hs.deleteDashboard(c)
+}
+
+// HardDeleteDashboardByUID swagger:route DELETE /dashboards/uid/{uid}/trash dashboards hardDeleteDashboardByUID
+//
+// Hard delete dashboard by uid.
+//
+// Will delete the dashboard given the specified unique identifier (uid).
+//
+// Responses:
+// 200: deleteDashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) HardDeleteDashboardByUID(c *contextmodel.ReqContext) response.Response {
 	return hs.deleteDashboard(c)
 }
 
@@ -427,7 +465,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
-		"id":      dash.ID,
+		"uid":     dash.UID,
 	})
 }
 
@@ -1184,6 +1222,13 @@ type DeleteDashboardByUIDParams struct {
 	UID string `json:"uid"`
 }
 
+// swagger:parameters hardDeleteDashboardByUID
+type HardDeleteDashboardByUIDParams struct {
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
 // swagger:parameters postDashboard
 type PostDashboardParams struct {
 	// in:body
@@ -1219,10 +1264,10 @@ type DeleteDashboardResponse struct {
 	// The response message
 	// in: body
 	Body struct {
-		// ID Identifier of the deleted dashboard.
+		// UID Identifier of the deleted dashboard.
 		// required: true
 		// example: 65
-		ID int64 `json:"id"`
+		UID string `json:"uid"`
 
 		// Title Title of the deleted dashboard.
 		// required: true
@@ -1316,4 +1361,11 @@ type DashboardVersionsResponse struct {
 type DashboardVersionResponse struct {
 	// in: body
 	Body *dashver.DashboardVersionMeta `json:"body"`
+}
+
+// swagger:parameters restoreDeletedDashboardByUID
+type RestoreDeletedDashboardByUID struct {
+	// in:path
+	// required:true
+	UID string `json:"uid"`
 }
