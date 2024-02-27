@@ -32,7 +32,7 @@
     "@types/testing-library__jest-dom": "5.14.9",
     "@types/uuid": "9.0.8",
     "ts-node": "10.9.2",
-    "webpack": "5.90.2"
+    "webpack": "5.90.3"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
