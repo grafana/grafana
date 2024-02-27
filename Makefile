@@ -10,7 +10,6 @@ include .bingo/Variables.mk
 .PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
 
 GO = go
-GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
@@ -167,7 +166,8 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	$(GO) test -short -covermode=atomic -timeout=30m ./pkg/...
+	go list -f '{{.Dir}}/...' -m | xargs \
+	$(GO) test -short -covermode=atomic -timeout=30m 
 
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
@@ -215,11 +215,11 @@ test: test-go test-js ## Run all tests.
 ##@ Linting
 golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
+	go list -f '{{.Dir}}/...' -m | xargs \
 	$(GOLANGCI_LINT) run \
-		--config .golangci.toml \
-		$(GO_FILES)
+		--config .golangci.toml
 
-lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
+lint-go: golangci-lint ## Run all code checks for backend.
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.
