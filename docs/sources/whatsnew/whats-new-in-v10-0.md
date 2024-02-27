@@ -418,3 +418,10 @@ Some data sources, like MySQL databases, Prometheus instances or Elasticsearch c
 To query these data sources from Grafana Cloud, you've had to open your private network to a range of IP addresses, a non-starter for many IT Security teams. The challenge is, how do you connect to your private data from Grafana Cloud, without exposing your network?
 
 The answer is Private Data Source Connect (PDC), available now in public preview in Grafana Cloud Pro and Advanced. PDC uses SOCKS over SSH to establish a secure connection between a lightweight PDC agent you deploy on your network and your Grafana Cloud stack. PDC keeps the network connection totally under your control. It’s easy to set up and manage, uses industry-standard security protocols, and works across public cloud vendors and a wide variety of secure networks. Learn more in our [Private data source connect documentation](/docs/grafana-cloud/data-configuration/configure-private-datasource-connect).
+
+
+## Plugins
+
+### App plugins can start using react-router v6
+
+While we keep supporting plugins that use react-router v5, we also added support for using react-router v6 in your app plugin. Please check out our [react-router migration guide](https://grafana.com/developers/plugin-tools/migration-guides/update-from-grafana-versions/migrate-9_x-to-10_x#update-to-react-router-v6) for more information.
