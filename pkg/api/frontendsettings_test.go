@@ -71,7 +71,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		grafanaUpdateChecker: &updatechecker.GrafanaService{},
 		AccessControl:        accesscontrolmock.New(),
 		PluginSettings:       pluginsSettings,
-		pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
+		pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
 			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
 			PluginSettings:        cfg.PluginSettings,
 		}),

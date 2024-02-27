@@ -196,10 +196,10 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) res
 	err = hs.userService.UpdatePermissions(c.Req.Context(), userID, form.IsGrafanaAdmin)
 	if err != nil {
 		if errors.Is(err, user.ErrLastGrafanaAdmin) {
-			return response.Error(400, user.ErrLastGrafanaAdmin.Error(), nil)
+			return response.Error(http.StatusBadRequest, user.ErrLastGrafanaAdmin.Error(), nil)
 		}
 
-		return response.Error(500, "Failed to update user permissions", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update user permissions", err)
 	}
 
 	return response.Success("User permissions updated")
@@ -230,9 +230,9 @@ func (hs *HTTPServer) AdminDeleteUser(c *contextmodel.ReqContext) response.Respo
 
 	if err := hs.userService.Delete(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, user.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
-		return response.Error(500, "Failed to delete user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete user", err)
 	}
 
 	g, ctx := errgroup.WithContext(c.Req.Context())
@@ -285,7 +285,7 @@ func (hs *HTTPServer) AdminDeleteUser(c *contextmodel.ReqContext) response.Respo
 		return nil
 	})
 	if err := g.Wait(); err != nil {
-		return response.Error(500, "Failed to delete user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete user", err)
 	}
 
 	return response.Success("User deleted")
@@ -315,20 +315,20 @@ func (hs *HTTPServer) AdminDisableUser(c *contextmodel.ReqContext) response.Resp
 	// External users shouldn't be disabled from API
 	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
 	if _, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
-		return response.Error(500, "Could not disable external user", nil)
+		return response.Error(http.StatusInternalServerError, "Could not disable external user", nil)
 	}
 
 	disableCmd := user.DisableUserCommand{UserID: userID, IsDisabled: true}
 	if err := hs.userService.Disable(c.Req.Context(), &disableCmd); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, user.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
-		return response.Error(500, "Failed to disable user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to disable user", err)
 	}
 
 	err = hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
 	if err != nil {
-		return response.Error(500, "Failed to disable user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to disable user", err)
 	}
 
 	return response.Success("User disabled")
@@ -358,15 +358,15 @@ func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Respo
 	// External users shouldn't be disabled from API
 	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
 	if _, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
-		return response.Error(500, "Could not enable external user", nil)
+		return response.Error(http.StatusInternalServerError, "Could not enable external user", nil)
 	}
 
 	disableCmd := user.DisableUserCommand{UserID: userID, IsDisabled: false}
 	if err := hs.userService.Disable(c.Req.Context(), &disableCmd); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, user.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
-		return response.Error(500, "Failed to enable user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to enable user", err)
 	}
 
 	return response.Success("User enabled")
