@@ -21,7 +21,7 @@ export const SendToSupportModal: FC<ModalProps> = ({ onClose, dumpIds }) => {
   const { isLoading } = useSelector(getDumps);
   const defaultValues: SendToSupportForm = {
     user: '',
-    address: '',
+    address: 'sftp.percona.com:2222',
     password: '',
     dumpIds: [] as string[],
     directory: '',
