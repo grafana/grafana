@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/reference/
+aliases:
+  - ../../manage-notifications/template-notifications/reference/ # /docs/grafana/latest/alerting/manage-notifications/template-notifications/reference/
+canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/reference/
 description: Learn about templating notifications options
 keywords:
   - grafana

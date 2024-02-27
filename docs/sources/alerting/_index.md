@@ -10,11 +10,12 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Alerting
+menuTitle: Alerting
+title: Grafana Alerting
 weight: 114
 ---
 
-# Alerting
+# Grafana Alerting
 
 Grafana Alerting allows you to learn about problems in your systems moments after they occur.
 

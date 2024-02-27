@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/pager-duty/
+aliases:
+  - ../../../alerting-rules/manage-contact-points/integrations/pager-duty/ # /docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/pager-duty/
+canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/
 description: Configure the PagerDuty integration for Alerting
 keywords:
   - grafana

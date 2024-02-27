@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/using-go-templating-language/
+aliases:
+  - ../../manage-notifications/template-notifications/using-go-templating-language/ # /docs/grafana/latest/alerting/manage-notifications/template-notifications/using-go-templating-language/
+canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/using-go-templating-language/
 description: Use Go's templating language to create your own notification templates
 keywords:
   - grafana
@@ -280,12 +282,12 @@ grafana_folder = "Test alerts"
 ```
 
 {{% docs/reference %}}
-[create-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/create-notification-templates"
-[create-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/create-notification-templates"
+[create-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/create-notification-templates"
+[create-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/create-notification-templates"
 
-[extendeddata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/reference#extendeddata"
-[extendeddata]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/reference#extendeddata"
+[extendeddata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference#extendeddata"
+[extendeddata]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference#extendeddata"
 
-[reference]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/reference"
-[reference]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/reference"
+[reference]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference"
+[reference]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference"
 {{% /docs/reference %}}
