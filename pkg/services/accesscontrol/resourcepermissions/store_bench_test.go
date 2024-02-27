@@ -170,7 +170,7 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 			globalUserId++
 			userIds = append(userIds, userId)
 
-			err = teamSvc.AddTeamMember(userId, 1, teamId, false, 1)
+			err = teamSvc.AddTeamMember(context.Background(), userId, 1, teamId, false, 1)
 			require.NoError(b, err)
 		}
 	}

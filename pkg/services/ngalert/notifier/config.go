@@ -115,6 +115,10 @@ func (a AlertingConfiguration) MuteTimeIntervals() []alertingNotify.MuteTimeInte
 	return a.alertmanagerConfig.MuteTimeIntervals
 }
 
+func (a AlertingConfiguration) TimeIntervals() []alertingNotify.TimeInterval {
+	return a.alertmanagerConfig.TimeIntervals
+}
+
 func (a AlertingConfiguration) Receivers() []*alertingNotify.APIReceiver {
 	return a.receivers
 }

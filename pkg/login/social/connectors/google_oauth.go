@@ -91,7 +91,7 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.SocialBase = newSocialBase(social.GoogleProviderName, newInfo, s.features, s.cfg)
+	s.updateInfo(social.GoogleProviderName, newInfo)
 	s.disableHDValidation = MustBool(newInfo.Extra[disableHDValidationFlag], false)
 
 	return nil
