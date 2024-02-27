@@ -20,7 +20,7 @@ weight: 300
 
 # Export alerting resources
 
-Export your alerting resources, such as alert rules, contact points, and notification policies for provisioning, automatically importing single folders and single groups. Use the [Grafana UI](#export-from-the-grafana-ui) or the [HTTP Alerting API](#http-alerting-api) for exporting these resources.
+Export your alerting resources, such as alert rules, contact points, and notification policies for provisioning, automatically importing single folders and single groups. Use the [Grafana UI](#export-from-the-grafana-ui) or the [HTTP Alerting API](#http-alerting-api) to export these resources.
 
 ## Export from the Grafana UI
 
