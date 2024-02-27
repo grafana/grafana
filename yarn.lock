@@ -3594,14 +3594,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@npm:10.0.2":
-  version: 10.0.2
-  resolution: "@grafana/e2e-selectors@npm:10.0.2"
+"@grafana/e2e-selectors@npm:10.3.3":
+  version: 10.3.3
+  resolution: "@grafana/e2e-selectors@npm:10.3.3"
   dependencies:
     "@grafana/tsconfig": "npm:^1.2.0-rc1"
-    tslib: "npm:2.5.0"
-    typescript: "npm:4.8.4"
-  checksum: 10/8f2ea80ed8408801243b0ea10d504af39f361b6daab98fdc1f1461fc41593e5a026cb055e65a2437bf2f8e8e71150884c5f1173c302c01854e82b8ee17918500
+    tslib: "npm:2.6.0"
+    typescript: "npm:5.2.2"
+  checksum: 10/11fcbf80d61d30a1ab5a99a6c24c5044c187bf6bb52c5d0a1c99b46ed6b28ea5865ff0b9fdfc66c22a744ba5fe9ea2f5030256d952f3b76302cc8cb8ffc01a73
   languageName: node
   linkType: hard
 
@@ -4074,20 +4074,22 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^3.5.0":
-  version: 3.5.0
-  resolution: "@grafana/scenes@npm:3.5.0"
+  version: 3.8.0
+  resolution: "@grafana/scenes@npm:3.8.0"
   dependencies:
-    "@grafana/e2e-selectors": "npm:10.0.2"
+    "@grafana/e2e-selectors": "npm:10.3.3"
     react-grid-layout: "npm:1.3.4"
     react-use: "npm:17.4.0"
     react-virtualized-auto-sizer: "npm:1.0.7"
     uuid: "npm:^9.0.0"
   peerDependencies:
-    "@grafana/data": 10.0.3
-    "@grafana/runtime": 10.0.3
-    "@grafana/schema": 10.0.3
-    "@grafana/ui": 10.0.3
-  checksum: 10/eac51e8bc4327fea39242e1580e4bc174aff984268dcf7b022dfeab5cd53eed63b72d92048e42e24c467ddf55130dbe555f4d4b0bb0a743ace5294ec90978ca5
+    "@grafana/data": ^10.0.3
+    "@grafana/runtime": ^10.0.3
+    "@grafana/schema": ^10.0.3
+    "@grafana/ui": ^10.0.3
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 10/711ab47e6689fb378bc6a49e5acd2fca7948001961dfb783b676b2f4ad9ece7f2e85a2c3a47aae1e9f105d647864bd568e2bcd1f6e29bd53028e4983cd36d4b1
   languageName: node
   linkType: hard
 
@@ -30370,16 +30372,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.8.4":
-  version: 4.8.4
-  resolution: "typescript@npm:4.8.4"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10/f985d8dd6ae815753d61cb81e434f3a4a5796ac52e423370fca6ad11bcd188df4013d82e3ba3b88c9746745b9341390ba68f862dc9d30bac6465e0699f2a795b
-  languageName: node
-  linkType: hard
-
 "typescript@npm:5.2.2":
   version: 5.2.2
   resolution: "typescript@npm:5.2.2"
@@ -30397,16 +30389,6 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10/6e4e6a14a50c222b3d14d4ea2f729e79f972fa536ac1522b91202a9a65af3605c2928c4a790a4a50aa13694d461c479ba92cedaeb1e7b190aadaa4e4b96b8e18
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@npm%3A4.8.4#optional!builtin<compat/typescript>":
-  version: 4.8.4
-  resolution: "typescript@patch:typescript@npm%3A4.8.4#optional!builtin<compat/typescript>::version=4.8.4&hash=1a91c8"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10/5d81fd8cf5152091a0c0b84ebc868de8433583072a340c4899e0fc7ad6a80314b880a1466868c9a6a1f640c3d1f2fe7f41f8c541b99d78c8b414263dfa27eba3
   languageName: node
   linkType: hard
 
