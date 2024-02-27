@@ -293,6 +293,9 @@ export const Components = {
     content: 'data-testid Alert editor tab content',
   },
   AlertRules: {
+    groupToggle: 'data-testid group-collapse-toggle',
+    toggle: 'data-testid collapse-toggle',
+    expandedContent: 'data-testid expanded-content',
     toDashboard: 'data-testid go to dashboard',
   },
   AlertRuleCreation: {
