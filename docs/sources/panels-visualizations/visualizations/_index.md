@@ -33,7 +33,7 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Heatmap][] visualizes data in two dimensions, used typically for the magnitude of a phenomenon.
   - [Pie chart][] is typically used where proportionality is important.
   - [Candlestick][] is typically for financial data where the focus is price/data movement.
-  - [Gauge][] The traditional rounded gauge showing how far is a single metric from a threshold.
+  - [Gauge][] is the traditional rounded visual showing how far a single metric is from a threshold.
 - Stats & numbers
   - [Stat][] for big stats and optional sparkline.
   - [Bar gauge][] is a horizontal or vertical bar gauge.
