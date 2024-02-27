@@ -13,7 +13,6 @@
   &:hover {
     .react-resizable-handle {
       visibility: visible;
-      z-index: $zindex-active-panel;
     }
   }
 }
@@ -91,7 +90,8 @@
   &:hover,
   &:active,
   &:focus {
-    z-index: $zindex-active-panel !important;
+    // above other panels, but below lowest pre-defined index in zIndex.ts
+    z-index: 999 !important;
   }
 }
 
