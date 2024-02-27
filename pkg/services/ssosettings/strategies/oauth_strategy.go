@@ -79,7 +79,6 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"groups_attribute_path":      section.Key("groups_attribute_path").Value(),
 		"team_ids_attribute_path":    section.Key("team_ids_attribute_path").Value(),
 		"allowed_domains":            section.Key("allowed_domains").Value(),
-		"disable_hd_validation":      section.Key("disable_hd_validation").MustBool(false),
 		"hosted_domain":              section.Key("hosted_domain").Value(),
 		"allow_sign_up":              section.Key("allow_sign_up").MustBool(false),
 		"name":                       section.Key("name").Value(),
