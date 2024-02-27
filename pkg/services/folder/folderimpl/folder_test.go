@@ -1800,6 +1800,8 @@ func TestFolderServiceGetFolders(t *testing.T) {
 	})
 }
 
+// TODO replace it with an API test under /pkg/tests/api/folders
+// whenever the golang client with get updated to allow filtering child folders by permission
 func TestGetChildrenFilterByPermission(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 
@@ -1811,48 +1813,52 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 		},
 	}}
 
+	quotaService := quotatest.New(false, nil)
+	folderStore := ProvideDashboardFolderStore(db)
+
+	cfg := setting.NewCfg()
+
+	featuresFlagOff := featuremgmt.WithFeatures()
+	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
+	require.NoError(t, err)
+	nestedFolderStore := ProvideStore(db, db.Cfg)
+
+	b := bus.ProvideBus(tracing.InitializeTracerForTest())
+	ac := acimpl.ProvideAccessControl(cfg)
+
+	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+
+	folderSvcOn := &Service{
+		cfg:                  cfg,
+		log:                  log.New("test-folder-service"),
+		dashboardStore:       dashStore,
+		dashboardFolderStore: folderStore,
+		store:                nestedFolderStore,
+		features:             features,
+		bus:                  b,
+		db:                   db,
+		accessControl:        ac,
+		registry:             make(map[string]folder.RegistryService),
+		metrics:              newFoldersMetrics(nil),
+	}
+
+	origGuardian := guardian.New
+	fakeGuardian := &guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanEditUIDs:  []string{},
+		CanViewUIDs:  []string{},
+	}
+	guardian.MockDashboardGuardian(fakeGuardian)
+	t.Cleanup(func() {
+		guardian.New = origGuardian
+	})
+
 	viewer := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {
 			dashboards.ActionFoldersRead:  {},
 			dashboards.ActionFoldersWrite: {},
 		},
 	}}
-
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-		CanSaveValue: true,
-		CanViewValue: true,
-	})
-
-	getSvc := func(features featuremgmt.FeatureToggles) Service {
-		quotaService := quotatest.New(false, nil)
-		folderStore := ProvideDashboardFolderStore(db)
-
-		cfg := setting.NewCfg()
-
-		featuresFlagOff := featuremgmt.WithFeatures()
-		dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
-		require.NoError(t, err)
-		nestedFolderStore := ProvideStore(db, db.Cfg)
-
-		b := bus.ProvideBus(tracing.InitializeTracerForTest())
-		ac := acimpl.ProvideAccessControl(cfg)
-
-		return Service{
-			cfg:                  cfg,
-			log:                  log.New("test-folder-service"),
-			dashboardStore:       dashStore,
-			dashboardFolderStore: folderStore,
-			store:                nestedFolderStore,
-			features:             features,
-			bus:                  b,
-			db:                   db,
-			accessControl:        ac,
-			registry:             make(map[string]folder.RegistryService),
-			metrics:              newFoldersMetrics(nil),
-		}
-	}
-
-	folderSvcOn := getSvc(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 
 	// no view permission
 	// 	|_ with view permission
@@ -1868,8 +1874,8 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 		Title:        "no view permission",
 		SignedInUser: &signedInAdminUser,
 	})
-
 	require.NoError(t, err)
+
 	f, err := folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
 		OrgID:        orgID,
 		ParentUID:    noViewPermission.UID,
@@ -1877,6 +1883,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 		SignedInUser: &signedInAdminUser,
 	})
 	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	fakeGuardian.CanViewUIDs = append(fakeGuardian.CanViewUIDs, f.UID)
 
 	require.NoError(t, err)
 	f, err = folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
@@ -1887,7 +1894,9 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	})
 	require.NoError(t, err)
 	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	fakeGuardian.CanViewUIDs = append(fakeGuardian.CanViewUIDs, f.UID)
 	viewer.Permissions[orgID][dashboards.ActionFoldersWrite] = append(viewer.Permissions[orgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	fakeGuardian.CanEditUIDs = append(fakeGuardian.CanEditUIDs, f.UID)
 
 	withEditPermission, err := folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
 		OrgID:        orgID,
@@ -1897,7 +1906,9 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	})
 	require.NoError(t, err)
 	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(withEditPermission.UID))
+	fakeGuardian.CanViewUIDs = append(fakeGuardian.CanViewUIDs, withEditPermission.UID)
 	viewer.Permissions[orgID][dashboards.ActionFoldersWrite] = append(viewer.Permissions[orgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(withEditPermission.UID))
+	fakeGuardian.CanEditUIDs = append(fakeGuardian.CanEditUIDs, withEditPermission.UID)
 
 	_, err = folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
 		OrgID:        orgID,
@@ -1915,6 +1926,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	})
 	require.NoError(t, err)
 	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(noEditPermission.UID))
+	fakeGuardian.CanViewUIDs = append(fakeGuardian.CanViewUIDs, noEditPermission.UID)
 
 	_, err = folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
 		OrgID:        orgID,
@@ -1932,6 +1944,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	})
 	require.NoError(t, err)
 	viewer.Permissions[orgID][dashboards.ActionFoldersWrite] = append(viewer.Permissions[orgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	fakeGuardian.CanEditUIDs = append(fakeGuardian.CanEditUIDs, f.UID)
 
 	testCases := []struct {
 		name            string
