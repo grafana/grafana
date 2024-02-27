@@ -48,7 +48,7 @@ export class NodeGraphSuggestionsSupplier {
       }
     }
 
-    return hasCorrectFields ? true : false;
+    return hasCorrectFields;
   }
 
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
