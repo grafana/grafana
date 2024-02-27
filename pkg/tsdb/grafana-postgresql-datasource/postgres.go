@@ -22,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
+// test comment
+
 func ProvideService(cfg *setting.Cfg) *Service {
 	logger := backend.NewLoggerWith("logger", "tsdb.postgres")
 	s := &Service{
