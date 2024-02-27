@@ -52,5 +52,7 @@ export enum ValueMatcherID {
   lowerOrEqual = 'lowerOrEqual',
   equal = 'equal',
   notEqual = 'notEqual',
+  like = 'like',
+  notLike = 'notLike',
   between = 'between',
 }
