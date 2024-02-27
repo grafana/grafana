@@ -216,7 +216,7 @@ async function buildTestSceneWithLibraryPanel() {
     name: 'LibraryPanel A',
     title: 'LibraryPanel A title',
     uid: '111',
-    key: 'panel-22',
+    panelKey: 'panel-22',
     model: panel,
     version: 1,
   };

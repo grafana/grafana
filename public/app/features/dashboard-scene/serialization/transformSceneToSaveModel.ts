@@ -153,8 +153,11 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
       w = gridItem.state.width ?? 0;
       h = gridItem.state.height ?? 0;
 
+      if (!gridItem.state.body.state.panel) {
+        throw new Error('Library panel has no panel');
+      }
       return {
-        id: getPanelIdForVizPanel(gridItem.state.body),
+        id: getPanelIdForVizPanel(gridItem.state.body.state.panel),
         title: gridItem.state.body.state.title,
         gridPos: { x, y, w, h },
         libraryPanel: {
