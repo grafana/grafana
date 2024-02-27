@@ -697,15 +697,15 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
 
     const muteIntervalsFiltered =
       (config?.alertmanager_config?.mute_time_intervals ?? [])?.filter(({ name }) => name !== muteTimingName) ?? [];
-    const time_intervalsFiltered =
+    const timeIntervalsFiltered =
       (config?.alertmanager_config?.time_intervals ?? [])?.filter(({ name }) => name !== muteTimingName) ?? [];
 
     const time_intervals_without_mute_to_save = isGrafanaDatasource
       ? {
-          mute_time_intervals: [...muteIntervalsFiltered, ...time_intervalsFiltered],
+          mute_time_intervals: [...muteIntervalsFiltered, ...timeIntervalsFiltered],
         }
       : {
-          time_intervals: time_intervalsFiltered,
+          time_intervals: timeIntervalsFiltered,
           mute_time_intervals: muteIntervalsFiltered,
         };
 

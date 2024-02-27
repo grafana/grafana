@@ -52,6 +52,19 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
   };
 };
 
+const replaceMuteTiming = (
+  originalTimings: MuteTimeInterval[],
+  existingTiming: MuteTimeInterval | undefined,
+  newTiming: MuteTimeInterval,
+  addNew: boolean
+) => {
+  // we only add new timing if addNew is true. Otherwise, we just remove the existing timing
+  const originalTimingsWithoutNew = existingTiming
+    ? originalTimings?.filter(({ name }) => name !== existingTiming.name)
+    : originalTimings;
+  return addNew ? [...originalTimingsWithoutNew, newTiming] : [...originalTimingsWithoutNew];
+};
+
 const MuteTimingForm = ({ fromMuteTimings, fromTimeIntervals, showError, loading, provenance }: Props) => {
   const dispatch = useDispatch();
   const { selectedAlertmanager } = useAlertmanager();
@@ -78,13 +91,6 @@ const MuteTimingForm = ({ fromMuteTimings, fromTimeIntervals, showError, loading
 
     const newMuteTiming = createMuteTiming(values);
 
-    const originalMuteTimingsWithoutNew = fromMuteTimings
-      ? originalMuteTimings?.filter(({ name }) => name !== fromMuteTimings.name)
-      : originalMuteTimings;
-    const originalTimeIntervalsWithoutNew = fromTimeIntervals
-      ? originalTimeIntervals?.filter(({ name }) => name !== fromTimeIntervals.name)
-      : originalTimeIntervals;
-
     const isGrafanaDataSource = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
     const isNewMuteTiming = fromTimeIntervals === undefined && fromMuteTimings === undefined;
 
@@ -95,22 +101,22 @@ const MuteTimingForm = ({ fromMuteTimings, fromTimeIntervals, showError, loading
       ? {
           // for Grafana data source, we will save mute timings in the alertmanager_config.mute_time_intervals
           mute_time_intervals: [
-            ...(originalTimeIntervalsWithoutNew || []),
-            ...(originalMuteTimingsWithoutNew || []),
-            newMuteTiming,
+            ...replaceMuteTiming(originalTimeIntervals, fromTimeIntervals, newMuteTiming, false),
+            ...replaceMuteTiming(originalMuteTimings, fromMuteTimings, newMuteTiming, true),
           ],
         }
       : {
           // for non-Grafana data source, we will save mute timings in the alertmanager_config.time_intervals or alertmanager_config.mute_time_intervals depending on the original config
-          time_intervals:
-            fromTimeIntervals || isNewMuteTiming
-              ? // if fromTimeIntervals and fromMuteTimings are both undefined, meaning it's a new mute timing. Then we will save it in the alertmanager_config.time_intervals
-                [...originalTimeIntervalsWithoutNew, newMuteTiming]
-              : [...originalTimeIntervalsWithoutNew],
+          time_intervals: replaceMuteTiming(
+            originalTimeIntervals,
+            fromTimeIntervals,
+            newMuteTiming,
+            Boolean(fromTimeIntervals) || isNewMuteTiming
+          ),
           mute_time_intervals:
-            !isNewMuteTiming && fromMuteTimings
-              ? [...originalMuteTimingsWithoutNew, newMuteTiming]
-              : [...originalMuteTimingsWithoutNew],
+            Boolean(fromMuteTimings) && !isNewMuteTiming
+              ? replaceMuteTiming(originalMuteTimings, fromMuteTimings, newMuteTiming, true)
+              : undefined,
         };
 
     const { mute_time_intervals: _, time_intervals: __, ...configWithoutMuteTimings } = config ?? {};
