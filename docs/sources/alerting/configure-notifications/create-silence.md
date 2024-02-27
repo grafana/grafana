@@ -1,11 +1,11 @@
 ---
 aliases:
-  - ../silences/create-silence/
-  - ../silences/edit-silence/
-  - ../silences/linking-to-silence-form/
-  - ../silences/remove-silence/
-  - ../unified-alerting/silences/
-  - ../silences/
+  - ../silences/create-silence/ # /docs/grafana/latest/alerting/silences/create-silence/
+  - ../silences/edit-silence/ # /docs/grafana/latest/alerting/silences/edit-silence/
+  - ../silences/linking-to-silence-form/ # /docs/grafana/latest/alerting/silences/linking-to-silence-form/
+  - ../silences/remove-silence/ # /docs/grafana/latest/alerting/silences/remove-silence/
+  - ../unified-alerting/silences/ # /docs/grafana/latest/alerting/unified-alerting/silences/
+  - ../silences/ # /docs/grafana/latest/alerting/silences/
   - ../manage-notifications/create-silence/ # /docs/grafana/latest/alerting/manage-notifications/create-silence/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/create-silence/
 description: Create silences to stop notifications from getting created for a specified window of time
