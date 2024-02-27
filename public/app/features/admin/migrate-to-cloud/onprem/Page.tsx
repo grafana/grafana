@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, ModalsController } from '@grafana/ui';
+import { Button, ModalsController, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { useDisconnectStackMutation, useGetStatusQuery } from '../api';
@@ -18,18 +18,21 @@ export const Page = () => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => (
-        <Button
-          disabled={isFetching || disconnectResponse.isLoading}
-          variant="secondary"
-          onClick={() =>
-            showModal(DisconnectModal, {
-              hideModal,
-              onConfirm: disconnectStack,
-            })
-          }
-        >
-          <Trans i18nKey="migrate-to-cloud.resources.disconnect">Disconnect</Trans>
-        </Button>
+        <Stack alignItems="center">
+          {data.stackURL && <Text variant="h4">{data.stackURL}</Text>}
+          <Button
+            disabled={isFetching || disconnectResponse.isLoading}
+            variant="secondary"
+            onClick={() =>
+              showModal(DisconnectModal, {
+                hideModal,
+                onConfirm: disconnectStack,
+              })
+            }
+          >
+            <Trans i18nKey="migrate-to-cloud.resources.disconnect">Disconnect</Trans>
+          </Button>
+        </Stack>
       )}
     </ModalsController>
   );
