@@ -724,8 +724,21 @@
     },
     "migration-token": {
       "body": "Your self-managed Grafana instance will require a special authentication token to securely connect to this cloud stack.",
+      "delete-button": "Delete this migration token",
+      "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
+      "delete-modal-cancel": "Cancel",
+      "delete-modal-confirm": "Delete",
+      "delete-modal-deleting": "Deleting...",
+      "delete-modal-title": "Delete migration token",
       "generate-button": "Generate a migration token",
-      "status": "Current status: {{tokenStatus}}",
+      "generate-button-loading": "Generating a migration token...",
+      "modal-close": "Close",
+      "modal-copy-and-close": "Copy to clipboard and close",
+      "modal-copy-button": "Copy to clipboard",
+      "modal-field-description": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.",
+      "modal-field-label": "Token",
+      "modal-title": "Migration token created",
+      "status": "Current status: <2></2>",
       "title": "Migration token"
     },
     "pdc": {
@@ -737,6 +750,10 @@
       "body": "Grafana Cloud has a generous free plan and a 14 day unlimited usage trial. After your trial expires, you'll be billed based on usage over the free plan limits.",
       "link-title": "Grafana Cloud pricing",
       "title": "How much does it cost?"
+    },
+    "token-status": {
+      "active": "Token created and active",
+      "no-active": "No active token"
     },
     "what-is-cloud": {
       "body": "Grafana cloud is a fully managed cloud-hosted observability platform ideal for cloud native environments. It's everything you love about Grafana without the overhead of maintaining, upgrading, and supporting an installation.",
