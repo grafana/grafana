@@ -1,14 +1,6 @@
 import React from 'react';
 
-import {
-  SceneComponentProps,
-  SceneDataTransformer,
-  SceneObjectBase,
-  SceneObjectState,
-  SceneQueryRunner,
-  VizPanel,
-  VizPanelMenu,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
