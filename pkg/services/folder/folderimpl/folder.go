@@ -470,6 +470,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 		UIDs:             folderUids,
 		OrgID:            orgID,
 		SignedInUser:     user,
+		OrderByTitle:     true,
 		WithFullpathUIDs: true,
 	})
 	if err != nil {

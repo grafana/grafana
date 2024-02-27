@@ -602,6 +602,7 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 	userDashFolders, err := dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:         folderUIDs,
 		OrgID:        user.GetOrgID(),
+		OrderByTitle: true,
 		SignedInUser: user,
 	})
 	if err != nil {

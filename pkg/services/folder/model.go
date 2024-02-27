@@ -164,6 +164,10 @@ type GetFoldersQuery struct {
 	WithFullpathUIDs bool
 	BatchSize        uint64
 
+	// OrderByTitle is used to sort the folders by title
+	// Set to true when ordering is meaningful (used for listing folders)
+	// otherwise better to keep it false since ordering can have a performance impact
+	OrderByTitle bool
 	SignedInUser identity.Requester `json:"-"`
 }
 
