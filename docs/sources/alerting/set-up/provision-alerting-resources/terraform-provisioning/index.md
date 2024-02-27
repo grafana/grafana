@@ -389,6 +389,7 @@ For more examples on the concept of this guide:
 - Review the [tutorial to manage a Grafana Cloud stack using Terraform][provision-cloud-with-terraform].
 
 {{% docs/reference %}}
+
 [alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules"
 [alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
 
