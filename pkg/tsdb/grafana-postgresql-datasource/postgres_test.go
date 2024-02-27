@@ -20,6 +20,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
+func TestIntegrationNewTest(t *testing.T) {
+	require.True(t, true)
+}
+
 // Test generateConnectionString.
 func TestIntegrationGenerateConnectionString(t *testing.T) {
 	if testing.Short() {
