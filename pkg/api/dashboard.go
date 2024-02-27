@@ -332,7 +332,7 @@ func (hs *HTTPServer) SoftDeleteDashboard(c *contextmodel.ReqContext) response.R
 	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s moved to trash", dash.Title),
-		"id":      dash.ID,
+		"uid":      dash.UID,
 	})
 }
 
