@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 
-import { type PluginExtensionConfig, PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionTypes } from '@grafana/data';
 
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 import { createPluginExtensionsHook } from './usePluginExtensions';
