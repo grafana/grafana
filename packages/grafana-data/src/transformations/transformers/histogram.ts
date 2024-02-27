@@ -8,6 +8,7 @@ import { roundDecimals } from '../../utils';
 
 import { DataTransformerID } from './ids';
 import { AlignedData, join } from './joinDataFrames';
+import { nullToValueField } from './nulls/nullToValue';
 import { transformationsVariableSupport } from './utils';
 
 /**
@@ -334,6 +335,26 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   let bucketCount = options?.bucketCount ?? DEFAULT_BUCKET_COUNT;
   let bucketOffset = options?.bucketOffset ?? 0;
 
+  // replace or filter nulls from numeric fields
+  frames = frames.map((frame) => {
+    return {
+      ...frame,
+      fields: frame.fields.map((field) => {
+        if (field.type === FieldType.number) {
+          const noValue = Number(field.config.noValue);
+
+          if (!Number.isNaN(noValue)) {
+            field = nullToValueField(field, noValue);
+          } else {
+            field = { ...field, values: field.values.filter((v) => v != null) };
+          }
+        }
+
+        return field;
+      }),
+    };
+  });
+
   // if bucket size is auto, try to calc from all numeric fields
   if (!bucketSize || bucketSize < 0) {
     let allValues: number[] = [];
@@ -346,8 +367,6 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
         }
       }
     }
-
-    allValues = allValues.filter((v) => v != null);
 
     allValues.sort((a, b) => a - b);
 
