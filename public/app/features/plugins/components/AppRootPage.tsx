@@ -12,6 +12,7 @@ import {
   OrgRole,
   PluginType,
   PluginContextProvider,
+  PluginExtensionConfig,
 } from '@grafana/data';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
@@ -55,7 +56,13 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const navModel = buildPluginSectionNav(pluginNavSection, pluginNav, currentUrl);
   const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
   const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
-  const grafanaContext = useGrafana();
+  const { chrome, extensionsRegistry } = useGrafana();
+  const registerExtensions = useCallback(
+    (configs: PluginExtensionConfig[]) => {
+      extensionsRegistry.register({ pluginId, extensionConfigs: configs });
+    },
+    [extensionsRegistry, pluginId]
+  );
 
   useEffect(() => {
     loadAppPlugin(pluginId, dispatch);
@@ -68,7 +75,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
 
   if (!plugin || pluginId !== plugin.meta.id) {
     // Use current layout while loading to reduce flickering
-    const currentLayout = grafanaContext.chrome.state.getValue().layout;
+    const currentLayout = chrome.state.getValue().layout;
     return (
       <Page navModel={navModel} pageNav={{ text: '' }} layout={currentLayout}>
         {loading && <PageLoader />}
@@ -93,6 +100,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
         onNavChanged={onNavChanged}
         query={queryParams}
         path={location.pathname}
+        registerExtensions={registerExtensions}
       />
     </PluginContextProvider>
   );
