@@ -30,6 +30,7 @@ import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -102,7 +103,10 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
+  /** The dashboard doesn't have panels */
   isEmpty?: boolean;
+  /** The dashboard is part of a playlist that is playing */
+  isPlaying: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -142,6 +146,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       links: state.links ?? [],
+      isPlaying: state.isPlaying ?? playlistSrv.isPlaying ?? false,
       ...state,
     });
 
@@ -167,6 +172,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
+    if (playlistSrv.isPlaying !== this.state.isPlaying) {
+      this.setState({ isPlaying: playlistSrv.isPlaying });
+    }
+
     // Deactivation logic
     return () => {
       window.__grafanaSceneContext = prevSceneContext;
@@ -186,6 +195,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public stopUrlSync() {
     getUrlSyncManager().cleanUp(this);
+  }
+
+  public nextDashboardInPlaylist() {
+    playlistSrv.next();
+  }
+
+  public prevDashboardInPlaylist() {
+    playlistSrv.prev();
+  }
+
+  public stopPlaylist() {
+    playlistSrv.stop();
+    this.setState({ isPlaying: false });
   }
 
   public onEnterEditMode = () => {

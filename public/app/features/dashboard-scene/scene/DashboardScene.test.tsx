@@ -13,6 +13,7 @@ import {
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -32,6 +33,16 @@ jest.mock('@grafana/runtime', () => ({
     return {
       getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
     };
+  },
+}));
+
+jest.mock('app/features/playlist/PlaylistSrv', () => ({
+  ...jest.requireActual('app/features/playlist/PlaylistSrv'),
+  playlistSrv: {
+    isPlaying: false,
+    next: jest.fn(),
+    prev: jest.fn(),
+    stop: jest.fn(),
   },
 }));
 
@@ -247,6 +258,55 @@ describe('DashboardScene', () => {
           expect(res).toBe(false);
         });
       }
+    });
+  });
+
+  describe('Playing a playlist', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      playlistSrv.isPlaying = true;
+    });
+
+    afterAll(() => {
+      playlistSrv.isPlaying = false;
+    });
+
+    it.each([true, false])('should initialize the state flag to know if it is playing', (isPlaying) => {
+      playlistSrv.isPlaying = isPlaying;
+
+      const scene = buildTestScene();
+
+      expect(scene.state.isPlaying).toBe(isPlaying);
+    });
+
+    it.each([true, false])('should initialize the state flag to know if it is playing', (isPlaying) => {
+      playlistSrv.isPlaying = !isPlaying;
+      // When creating the scene, it initialize the state but it might change until the scene is activated
+      const scene = buildTestScene();
+      playlistSrv.isPlaying = isPlaying;
+      // Once activated, it will update the value of the flag
+      scene.activate();
+
+      expect(scene.state.isPlaying).toBe(isPlaying);
+    });
+
+    it('should call the service next when moving to the next dashboard', () => {
+      const scene = buildTestScene();
+      scene.nextDashboardInPlaylist();
+      expect(playlistSrv.next).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call the service prev when moving to the previous dashboard', () => {
+      const scene = buildTestScene();
+      scene.prevDashboardInPlaylist();
+      expect(playlistSrv.prev).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call the service stop when stoping to the playlist', () => {
+      const scene = buildTestScene();
+      scene.stopPlaylist();
+      expect(playlistSrv.stop).toHaveBeenCalledTimes(1);
+      expect(scene.state.isPlaying).toBe(false);
     });
   });
 });
