@@ -92,7 +92,7 @@ func (hs *HTTPServer) SearchPlaylists(c *contextmodel.ReqContext) response.Respo
 
 	playlists, err := hs.playlistService.Search(c.Req.Context(), &searchQuery)
 	if err != nil {
-		return response.Error(500, "Search failed", err)
+		return response.Error(http.StatusInternalServerError, "Search failed", err)
 	}
 
 	return response.JSON(http.StatusOK, playlists)
@@ -114,7 +114,7 @@ func (hs *HTTPServer) GetPlaylist(c *contextmodel.ReqContext) response.Response 
 
 	dto, err := hs.playlistService.Get(c.Req.Context(), &cmd)
 	if err != nil {
-		return response.Error(500, "Playlist not found", err)
+		return response.Error(http.StatusInternalServerError, "Playlist not found", err)
 	}
 
 	return response.JSON(http.StatusOK, dto)
@@ -136,7 +136,7 @@ func (hs *HTTPServer) GetPlaylistItems(c *contextmodel.ReqContext) response.Resp
 
 	dto, err := hs.playlistService.Get(c.Req.Context(), &cmd)
 	if err != nil {
-		return response.Error(500, "Playlist not found", err)
+		return response.Error(http.StatusInternalServerError, "Playlist not found", err)
 	}
 
 	return response.JSON(http.StatusOK, dto.Items)
@@ -157,7 +157,7 @@ func (hs *HTTPServer) DeletePlaylist(c *contextmodel.ReqContext) response.Respon
 
 	cmd := playlist.DeletePlaylistCommand{UID: uid, OrgId: c.SignedInUser.GetOrgID()}
 	if err := hs.playlistService.Delete(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to delete playlist", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete playlist", err)
 	}
 
 	return response.JSON(http.StatusOK, "")
@@ -182,7 +182,7 @@ func (hs *HTTPServer) CreatePlaylist(c *contextmodel.ReqContext) response.Respon
 
 	p, err := hs.playlistService.Create(c.Req.Context(), &cmd)
 	if err != nil {
-		return response.Error(500, "Failed to create playlist", err)
+		return response.Error(http.StatusInternalServerError, "Failed to create playlist", err)
 	}
 
 	return response.JSON(http.StatusOK, p)
@@ -208,7 +208,7 @@ func (hs *HTTPServer) UpdatePlaylist(c *contextmodel.ReqContext) response.Respon
 
 	_, err := hs.playlistService.Update(c.Req.Context(), &cmd)
 	if err != nil {
-		return response.Error(500, "Failed to save playlist", err)
+		return response.Error(http.StatusInternalServerError, "Failed to save playlist", err)
 	}
 
 	dto, err := hs.playlistService.Get(c.Req.Context(), &playlist.GetPlaylistByUidQuery{
@@ -216,7 +216,7 @@ func (hs *HTTPServer) UpdatePlaylist(c *contextmodel.ReqContext) response.Respon
 		OrgId: c.SignedInUser.GetOrgID(),
 	})
 	if err != nil {
-		return response.Error(500, "Failed to load playlist", err)
+		return response.Error(http.StatusInternalServerError, "Failed to load playlist", err)
 	}
 	return response.JSON(http.StatusOK, dto)
 }
