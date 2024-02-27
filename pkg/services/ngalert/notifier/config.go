@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
 
@@ -30,6 +29,7 @@ type AlertingConfiguration struct {
 	timeIntervals         []alertingNotify.TimeInterval
 	templates             []alertingTemplates.TemplateDefinition
 	rawAlertmanagerConfig []byte
+	configHash            [16]byte
 
 	receivers                []*alertingNotify.APIReceiver
 	receiverIntegrationsFunc func(r *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error)
@@ -70,7 +70,7 @@ func (a AlertingConfiguration) Templates() []alertingTemplates.TemplateDefinitio
 }
 
 func (a AlertingConfiguration) Hash() [16]byte {
-	return md5.Sum(a.rawAlertmanagerConfig)
+	return a.configHash
 }
 
 func (a AlertingConfiguration) Raw() []byte {
