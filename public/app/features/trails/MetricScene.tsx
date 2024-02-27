@@ -155,7 +155,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     const { actionView } = metricScene.useState();
 
     return (
-      <Box paddingY={1}>
+      <div className={styles.container}>
         <div className={styles.actions}>
           <Stack gap={1}>
             <ToolbarButton
@@ -197,7 +197,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
             );
           })}
         </TabsBar>
-      </Box>
+      </div>
     );
   };
 }
@@ -208,8 +208,16 @@ function getStyles(theme: GrafanaTheme2) {
       [theme.breakpoints.up(theme.breakpoints.values.md)]: {
         position: 'absolute',
         right: 0,
+        top: 16,
         zIndex: 2,
       },
+    }),
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      paddingTop: theme.spacing(1),
+      paddingBottom: theme.spacing(1),
+      position: 'relative',
     }),
   };
 }
@@ -246,6 +254,11 @@ function buildGraphScene() {
         minHeight: MAIN_PANEL_MIN_HEIGHT,
         maxHeight: MAIN_PANEL_MAX_HEIGHT,
         body: bodyAutoVizPanel,
+        overrides: {
+          position: 'sticky',
+          top: 70,
+          zIndex: 1000,
+        },
       }),
       new SceneFlexItem({
         ySizing: 'content',
