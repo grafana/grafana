@@ -243,7 +243,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       throw new Error('Unable to set value beyond current length');
     }
 
-    const obj = (value as any) || {};
+    const obj = (value as Record<string, unknown>) || {};
     for (const field of this.fields) {
       field.values[index] = obj[field.name];
     }
@@ -253,7 +253,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
    * Get an object with a property for each field in the DataFrame
    */
   get(idx: number): T {
-    const v: any = {};
+    const v: Record<string, unknown> = {};
     for (const field of this.fields) {
       v[field.name] = field.values[idx];
     }
@@ -263,7 +263,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   /**
    * The simplified JSON values used in JSON.stringify()
    */
-  toJSON(): any {
+  toJSON(): unknown {
     return toDataFrameDTO(this);
   }
 }
