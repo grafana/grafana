@@ -37,10 +37,10 @@
 /docs/                                                                       @grafana/docs-tooling
 /docs/.codespellignore @grafana/docs-tooling
 /docs/sources/                                                               @Eve832
-/docs/sources/administration/                                                @jdbaldry
+/docs/sources/administration/                                                @jdbaldry @lwandz13
 /docs/sources/alerting/                                                      @brendamuir
 /docs/sources/dashboards/                                                    @imatwawana
-/docs/sources/datasources/                                                   @lwandz13
+/docs/sources/datasources/                                                   @Eve832 @jdbaldry
 /docs/sources/explore/                                                       @grafana/explore-squad
 /docs/sources/fundamentals                                                   @chri2547
 /docs/sources/getting-started/                                               @chri2547
