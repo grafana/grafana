@@ -61,7 +61,7 @@ export const InfoPane = () => {
           </ol>
         </Stack>
       </InfoItem>
-      <TextLink href="/TODO">
+      <TextLink href="/connections/private-data-source-connections">
         {t('migrate-to-cloud.get-started.configure-pdc-link', 'Configure PDC for this stack')}
       </TextLink>
     </Box>
