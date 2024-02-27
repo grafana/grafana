@@ -2,7 +2,7 @@ import { FALLBACK_COLOR, Field, FieldType, formattedValueToString } from '@grafa
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { ColorIndicatorStyles } from './VizTooltipColorIndicator';
-import { ColorIndicator, ColorPlacement, LabelValue } from './types';
+import { ColorIndicator, ColorPlacement, VizTooltipItem } from './types';
 
 export const calculateTooltipPosition = (
   xPos = 0,
@@ -70,9 +70,9 @@ export const getColorIndicatorClass = (colorIndicator: string, styles: ColorIndi
   }
 };
 
-const numberCmp = (a: LabelValue, b: LabelValue) => a.numeric! - b.numeric!;
+const numberCmp = (a: VizTooltipItem, b: VizTooltipItem) => a.numeric! - b.numeric!;
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
-const stringCmp = (a: LabelValue, b: LabelValue) => collator.compare(`${a.value}`, `${b.value}`);
+const stringCmp = (a: VizTooltipItem, b: VizTooltipItem) => collator.compare(`${a.value}`, `${b.value}`);
 
 export const getContentItems = (
   fields: Field[],
@@ -82,8 +82,8 @@ export const getContentItems = (
   mode: TooltipDisplayMode,
   sortOrder: SortOrder,
   fieldFilter = (field: Field) => true
-): LabelValue[] => {
-  let rows: LabelValue[] = [];
+): VizTooltipItem[] => {
+  let rows: VizTooltipItem[] = [];
 
   let allNumeric = false;
 
