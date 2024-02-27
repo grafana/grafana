@@ -26,7 +26,7 @@ type store interface {
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
 	GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error)
 	RemoveUsersMemberships(ctx context.Context, userID int64) error
-	AddMember(userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error
+	AddMember(ctx context.Context, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error
 	UpdateMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error
 	IsMember(orgId int64, teamId int64, userId int64) (bool, error)
 	RemoveMember(ctx context.Context, cmd *team.RemoveTeamMemberCommand) error
@@ -355,8 +355,8 @@ WHERE tm.user_id=? AND tm.org_id=?;`, query.UserID, query.OrgID).Find(&queryResu
 }
 
 // AddTeamMember adds a user to a team
-func (ss *xormStore) AddMember(userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
-	return ss.db.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+func (ss *xormStore) AddMember(ctx context.Context, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if isMember, err := isTeamMember(sess, orgID, teamID, userID); err != nil {
 			return err
 		} else if isMember {

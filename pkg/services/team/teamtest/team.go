@@ -45,7 +45,7 @@ func (s *FakeService) GetTeamsByUser(ctx context.Context, query *team.GetTeamsBy
 	return s.ExpectedTeamsByUser, s.ExpectedError
 }
 
-func (s *FakeService) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
+func (s *FakeService) AddTeamMember(ctx context.Context, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
 	return s.ExpectedError
 }
 
