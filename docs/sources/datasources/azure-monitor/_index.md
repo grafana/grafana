@@ -135,6 +135,8 @@ datasources:
 
 **Current User:**
 
+**Note: The `oauthPassThru` property is required for current user authentication to function. Additionally, `disableGrafanaCache` is necessary to ensure cached responses to resources users do not have access to in Azure are not returned.`**
+
 ```yaml
 apiVersion: 1 # config file version
 
@@ -144,6 +146,8 @@ datasources:
     access: proxy
     jsonData:
       azureAuthType: currentuser
+      oauthPassThru: true
+      disableGrafanaCache: true
       subscriptionId: <subscription-id> # Optional, default subscription
     version: 1
 ```
@@ -220,13 +224,15 @@ For details on workload identity, refer to the [Azure workload identity document
 
 ### Configure Current User Authentication
 
-**Note: This feature is experimental and subject to change. Aspects of Grafana may not work as expected when using this authentication method.**
+**Note: This feature is experimental and subject to change or removal. Aspects of Grafana may not work as expected when using this authentication method.**
 
-If your Grafana instance is configured with Azure Entra (formerly Active Directory) authentication for login, this authentication method can be used to forward the currently logged in users credentials to the data source. The users credentials will then be used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra refer to the [documentation][configure-grafana-azure-auth].
+If your Grafana instance is configured with Azure Entra (formerly Active Directory) authentication for login, this authentication method can be used to forward the currently logged in user's credentials to the data source. The users credentials will then be used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra refer to the [documentation][configure-grafana-azure-auth].
 
-This method of authentication does not inherently support backend functionality as a users credentials will not be in scope e.g. alerting. In order to support backend queries when using a data source configured with current user authentication, it is possible to configure service credentials. Also, note that query and resource caching will be disabled by default for data sources using current user authentication.
+This method of authentication does not inherently support backend functionality as a user's credentials will not be in scope e.g. alerting, reporting, recorded queries. In order to support backend queries when using a data source configured with current user authentication, it is possible to configure service credentials. Also, note that query and resource caching will be disabled by default for data sources using current user authentication.
 
 **Note: To configure fallback service credentials the [feature toggle][configure-grafana-feature-toggles] `idForwarding` must be set to `true` and `user_identity_fallback_credentials_enabled` must be enabled in the [Azure configuration section][configure-grafana-azure] (enabled by default when `user_identity_enabled` is set to `true`).**
+
+Permissions for fallback credentials may need to be broad in order to appropriately support backend functionality. For example, an alerting query created by a user will be dependant on their permissions. If a user creates an alert for a resource that the fallback credentials cannot access, the alert will fail.
 
 **To enable current user authentication for Grafana:**
 
