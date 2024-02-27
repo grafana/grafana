@@ -17,7 +17,7 @@ export enum ColorPlacement {
   trailing = 'trailing',
 }
 
-export interface LabelValue {
+export interface VizTooltipItem {
   label: string;
   value: string;
   color?: string;

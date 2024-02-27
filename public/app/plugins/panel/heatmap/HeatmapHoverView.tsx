@@ -14,11 +14,11 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { TooltipDisplayMode, useStyles2 } from '@grafana/ui';
+import { TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { ColorIndicator, ColorPlacement, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+import { ColorIndicator, ColorPlacement, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
@@ -112,7 +112,7 @@ const HeatmapHoverCell = ({
 
   let nonNumericOrdinalDisplay: string | undefined = undefined;
 
-  let contentItems: LabelValue[] = [];
+  let contentItems: VizTooltipItem[] = [];
 
   const getYValueIndex = (idx: number) => {
     return idx % data.yBucketCount! ?? 0;
@@ -204,7 +204,7 @@ const HeatmapHoverCell = ({
     return vals;
   };
 
-  const getContentLabels = (): LabelValue[] => {
+  const getContentLabels = (): VizTooltipItem[] => {
     const isMulti = mode === TooltipDisplayMode.Multi && !isPinned;
 
     if (nonNumericOrdinalDisplay) {
@@ -242,7 +242,7 @@ const HeatmapHoverCell = ({
   let count = getCountValue(index);
 
   if (mode === TooltipDisplayMode.Single || isPinned) {
-    const fromToInt: LabelValue[] = interval ? [{ label: 'Duration', value: formatMilliseconds(interval) }] : [];
+    const fromToInt: VizTooltipItem[] = interval ? [{ label: 'Duration', value: formatMilliseconds(interval) }] : [];
 
     contentItems = [
       {
@@ -270,7 +270,7 @@ const HeatmapHoverCell = ({
       toIdx++;
     }
 
-    const vals: LabelValue[] = getDisplayData(fromIdx, toIdx);
+    const vals: VizTooltipItem[] = getDisplayData(fromIdx, toIdx);
     vals.forEach((val) => {
       contentItems.push({
         label: val.label,
@@ -330,7 +330,7 @@ const HeatmapHoverCell = ({
     [index]
   );
 
-  const headerLabel: LabelValue = {
+  const headerItem: VizTooltipItem = {
     label: '',
     value: xDisp(xBucketMax!)!,
   };
@@ -365,11 +365,18 @@ const HeatmapHoverCell = ({
   }
 
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader headerLabel={headerLabel} isPinned={isPinned} />
-      <VizTooltipContent contentLabelValue={contentItems} customContent={customContent} isPinned={isPinned} />
+      <VizTooltipHeader item={headerItem} isPinned={isPinned} />
+      <VizTooltipContent items={contentItems} isPinned={isPinned}>
+        {customContent?.map((content, i) => (
+          <div key={i} style={{ padding: `${theme.spacing(1)} 0` }}>
+            {content}
+          </div>
+        ))}
+      </VizTooltipContent>
       {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
     </div>
   );
