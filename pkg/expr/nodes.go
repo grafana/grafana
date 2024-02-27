@@ -504,7 +504,7 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 				vals = append(vals, ser)
 			}
 		} else {
-			v := mathexp.RowData{Frame: frame}
+			v := mathexp.TableData{Frame: frame}
 			vals = append(vals, v)
 			dataType = "single frame"
 		}

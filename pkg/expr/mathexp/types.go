@@ -247,24 +247,24 @@ func NewNoData() NoData {
 	return NoData{data.NewFrame("no data")}
 }
 
-// RowData is an untyped no data response.
-type RowData struct{ Frame *data.Frame }
+// TableData is an untyped no data response.
+type TableData struct{ Frame *data.Frame }
 
 // Type returns the Value type and allows it to fulfill the Value interface.
-func (s RowData) Type() parse.ReturnType { return parse.TypeTableData }
+func (s TableData) Type() parse.ReturnType { return parse.TypeTableData }
 
 // Value returns the actual value allows it to fulfill the Value interface.
-func (s RowData) Value() any { return s }
+func (s TableData) Value() any { return s }
 
-func (s RowData) GetLabels() data.Labels { return nil }
+func (s TableData) GetLabels() data.Labels { return nil }
 
-func (s RowData) SetLabels(ls data.Labels) {}
+func (s TableData) SetLabels(ls data.Labels) {}
 
-func (s RowData) GetMeta() any {
+func (s TableData) GetMeta() any {
 	return s.Frame.Meta.Custom
 }
 
-func (s RowData) SetMeta(v any) {
+func (s TableData) SetMeta(v any) {
 	m := s.Frame.Meta
 	if m == nil {
 		m = &data.FrameMeta{}
@@ -273,7 +273,7 @@ func (s RowData) SetMeta(v any) {
 	m.Custom = v
 }
 
-func (s RowData) AddNotice(notice data.Notice) {
+func (s TableData) AddNotice(notice data.Notice) {
 	m := s.Frame.Meta
 	if m == nil {
 		m = &data.FrameMeta{}
@@ -282,12 +282,12 @@ func (s RowData) AddNotice(notice data.Notice) {
 	m.Notices = append(m.Notices, notice)
 }
 
-func (s RowData) AsDataFrame() *data.Frame { return s.Frame }
+func (s TableData) AsDataFrame() *data.Frame { return s.Frame }
 
-func (s RowData) New() RowData {
-	return NewRowData()
+func (s TableData) New() TableData {
+	return NewTableData()
 }
 
-func NewRowData() RowData {
-	return RowData{data.NewFrame("")}
+func NewTableData() TableData {
+	return TableData{data.NewFrame("")}
 }

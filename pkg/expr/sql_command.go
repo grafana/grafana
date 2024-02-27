@@ -100,7 +100,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	}
 
 	rsp.Values = mathexp.Values{
-		mathexp.RowData{Frame: frame},
+		mathexp.TableData{Frame: frame},
 	}
 
 	return rsp, nil
