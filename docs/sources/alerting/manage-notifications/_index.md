@@ -4,7 +4,7 @@ description: Detect and respond for day-to-day triage and analysis of what’s g
 keywords:
   - grafana
   - detect
-  - respont
+  - respond
 labels:
   products:
     - cloud
