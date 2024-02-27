@@ -1611,8 +1611,6 @@ github.com/dchest/uniuri v0.0.0-20160212164326-8902c56451e9/go.mod h1:GgB8SF9nRG
 github.com/deepmap/oapi-codegen v1.12.4 h1:pPmn6qI9MuOtCz82WY2Xaw46EQjgvxednXXrP7g5Q2s=
 github.com/deepmap/oapi-codegen v1.12.4/go.mod h1:3lgHGMu6myQ2vqbbTXH2H1o4eXFTGnFiDaOaKKl5yas=
 github.com/denisenkom/go-mssqldb v0.0.0-20190515213511-eb9f6a1743f3/go.mod h1:zAg7JM8CkOJ43xKXIj7eRO9kmWm/TW578qo+oDO6tuM=
-github.com/denisenkom/go-mssqldb v0.0.0-20190707035753-2be1aa521ff4/go.mod h1:zAg7JM8CkOJ43xKXIj7eRO9kmWm/TW578qo+oDO6tuM=
-github.com/denisenkom/go-mssqldb v0.12.0 h1:VtrkII767ttSPNRfFekePK3sctr+joXgO58stqQbtUA=
 github.com/denisenkom/go-mssqldb v0.12.0/go.mod h1:iiK0YP1ZeepvmBQk/QpLEhhTNJgfzrpArPY/aFvc9yU=
 github.com/dennwc/varint v1.0.0 h1:kGNFFSSw8ToIy3obO/kKr8U9GZYUAxQEVuix4zfDWzE=
 github.com/dennwc/varint v1.0.0/go.mod h1:hnItb35rvZvJrbTALZtY/iQfDs48JKRG1RPpgziApxA=
@@ -2186,6 +2184,8 @@ github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4 h
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4/go.mod h1:vrRQJuNprTWqwm6JPxHf3BoTJhvO15QMEjQ7Q/YUOnI=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4 h1:tIbI5zgos92vwJ8lV3zwHwuxkV03GR3FGLkFW9V5LxY=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4/go.mod h1:vpYI6DHvFO595rpQGooUjcyicjt9rOevldDdW79peV0=
+github.com/grafana/grafana/pkg/util/xorm v0.0.1 h1:72QZjxWIWpSeOF8ob4aMV058kfgZyeetkAB8dmeti2o=
+github.com/grafana/grafana/pkg/util/xorm v0.0.1/go.mod h1:eNfbB9f2jM8o9RfwqwjY8SYm5tvowJ8Ly+iE4P9rXII=
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 h1:1YNoeIhii4UIIQpCPU+EXidnqf449d0C3ZntAEt4KSo=
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20240208102907-e82436ce63e6 h1:CBm0rwLCPDyarg9/bHJ50rBLYmyMDoyCWpgRMITZhdA=
@@ -3111,8 +3111,6 @@ github.com/zeebo/assert v1.3.0/go.mod h1:Pq9JiuJQpG8JLJdtkwrJESF0Foym2/D9XMU5ciN
 github.com/zeebo/xxh3 v1.0.2 h1:xZmwmqxHZA8AI603jOQ0tMqmBr9lPeFwGg6d+xy9DC0=
 github.com/zeebo/xxh3 v1.0.2/go.mod h1:5NWz9Sef7zIDm2JHfFlcQvNekmcEl9ekUZQQKCYaDcA=
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=
-github.com/ziutek/mymysql v1.5.4 h1:GB0qdRGsTwQSBVYuVShFBKaXSnSnYYC2d9knnE1LHFs=
-github.com/ziutek/mymysql v1.5.4/go.mod h1:LMSpPZ6DbqWFxNCHW77HeMg9I646SAhApZ/wKdgO/C0=
 gitlab.com/nyarla/go-crypt v0.0.0-20160106005555-d9a5dc2b789b/go.mod h1:T3BPAOm2cqquPa0MKWeNkmOM5RQsRhkrwMWonFMN7fE=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.8 h1:xs88BrvEv273UsB79e0hcVrlUWmS0a8upikMFhSyAtA=
@@ -4431,8 +4429,5 @@ sigs.k8s.io/yaml v1.3.0/go.mod h1:GeOyir5tyXNByN85N/dRIT9es5UQNerPYEKK56eTBm8=
 sourcegraph.com/sourcegraph/appdash v0.0.0-20190731080439-ebfcffb1b5c0/go.mod h1:hI742Nqp5OhwiqlzhgfbWU4mW4yO10fP+LoT9WOswdU=
 xorm.io/builder v0.3.6 h1:ha28mQ2M+TFx96Hxo+iq6tQgnkC9IZkM6D8w9sKHHF8=
 xorm.io/builder v0.3.6/go.mod h1:LEFAPISnRzG+zxaxj2vPicRwz67BdhFreKg8yv8/TgU=
-xorm.io/core v0.7.2/go.mod h1:jJfd0UAEzZ4t87nbQYtVjmqpIODugN6PD2D9E+dJvdM=
 xorm.io/core v0.7.3 h1:W8ws1PlrnkS1CZU1YWaYLMQcQilwAmQXU0BJDJon+H0=
 xorm.io/core v0.7.3/go.mod h1:jJfd0UAEzZ4t87nbQYtVjmqpIODugN6PD2D9E+dJvdM=
-xorm.io/xorm v0.8.2 h1:nbg1AyWn7iLrwp0Dqg8IrYOBkBYYJ85ry9bvZLVl4Ok=
-xorm.io/xorm v0.8.2/go.mod h1:ZkJLEYLoVyg7amJK/5r779bHyzs2AU8f8VMiP6BM7uY=
