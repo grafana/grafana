@@ -19,6 +19,13 @@ const (
 	HelpFlagDashboardHelp1
 )
 
+type UpdateEmailActionType string
+
+const (
+	EmailUpdateAction UpdateEmailActionType = "email-update"
+	LoginUpdateAction UpdateEmailActionType = "login-update"
+)
+
 type User struct {
 	ID            int64 `xorm:"pk autoincr 'id'"`
 	Version       int
