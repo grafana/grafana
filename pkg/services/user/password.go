@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	ErrPasswordTooShort       = errutil.NewBase(errutil.StatusBadRequest, "password-policy-too-short", errutil.WithPublicMessage("New password is too short"))
-	ErrPasswordPolicyInfringe = errutil.NewBase(errutil.StatusBadRequest, "password-policy-infringe", errutil.WithPublicMessage("New password doesn't comply with the password policy"))
+	ErrPasswordTooShort       = errutil.BadRequest("password.password-policy-too-short", errutil.WithPublicMessage("New password is too short"))
+	ErrPasswordPolicyInfringe = errutil.BadRequest("password.password-policy-infringe", errutil.WithPublicMessage("New password doesn't comply with the password policy"))
 	MinPasswordLength         = 12
 )
 
@@ -33,12 +33,12 @@ func (p Password) Validate(config *setting.Cfg) error {
 func ValidatePassword(newPassword string, config *setting.Cfg) error {
 	if !config.BasicAuthStrongPasswordPolicy {
 		if len(newPassword) <= 4 {
-			return ErrPasswordTooShort
+			return ErrPasswordTooShort.Errorf("new password is too short")
 		}
 		return nil
 	}
 	if len(newPassword) < MinPasswordLength {
-		return ErrPasswordTooShort
+		return ErrPasswordPolicyInfringe.Errorf("new password is too short for the strong password policy")
 	}
 
 	hasUpperCase := false
@@ -67,5 +67,5 @@ func ValidatePassword(newPassword string, config *setting.Cfg) error {
 			return nil
 		}
 	}
-	return ErrPasswordPolicyInfringe
+	return ErrPasswordPolicyInfringe.Errorf("new password doesn't comply with the password policy")
 }
