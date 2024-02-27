@@ -143,7 +143,6 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 			"DELETE FROM team_member WHERE org_id=? and team_id = ?",
 			"DELETE FROM team WHERE org_id=? and id = ?",
 			"DELETE FROM dashboard_acl WHERE org_id=? and team_id = ?",
-			"DELETE FROM team_role WHERE org_id=? and team_id = ?",
 		}
 
 		deletes = append(deletes, ss.deletes...)
@@ -154,10 +153,7 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 				return err
 			}
 		}
-
-		_, err := sess.Exec("DELETE FROM permission WHERE scope=?", ac.Scope("teams", "id", fmt.Sprint(cmd.ID)))
-
-		return err
+		return nil
 	})
 }
 
