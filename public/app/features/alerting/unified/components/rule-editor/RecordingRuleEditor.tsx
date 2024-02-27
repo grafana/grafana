@@ -74,6 +74,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
         // Query type is used by Loki queries
         queryType: changedQuery.queryType,
         legendFormat: changedQuery.legendFormat,
+        legendUrlFormat: changedQuery.legendUrlFormat,
       },
     };
     onChangeQuery([merged]);
