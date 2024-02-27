@@ -34,6 +34,18 @@ export abstract class FunctionalVector<T = unknown> {
     return this.iterator();
   }
 
+  forEach(iterator: (row: T, index: number, array: T[]) => void): void {
+    return vectorator(this).forEach(iterator);
+  }
+
+  map<V>(transform: (item: T, index: number, array: T[]) => V): V[] {
+    return vectorator(this).map(transform);
+  }
+
+  filter(predicate: (item: T, index: number, array: T[]) => boolean): T[] {
+    return vectorator(this).filter(predicate);
+  }
+
   at(index: number): T | undefined {
     return this.get(index);
   }
@@ -44,18 +56,6 @@ export abstract class FunctionalVector<T = unknown> {
       arr[i] = this.get(i);
     }
     return arr;
-  }
-
-  forEach(iterator: (row: T, index: number, array: T[]) => void): void {
-    return this.toArray().forEach(iterator);
-  }
-
-  map<V>(transform: (item: T, index: number, array: T[]) => V): V[] {
-    return this.toArray().map(transform);
-  }
-
-  filter(predicate: (item: T, index: number, array: T[]) => boolean): T[] {
-    return this.toArray().filter(predicate);
   }
 
   join(separator?: string | undefined): string {
@@ -174,4 +174,47 @@ export abstract class FunctionalVector<T = unknown> {
   flat<A, D extends number = 1>(this: A, depth?: D | undefined): Array<FlatArray<A, D>> {
     throw new Error('Method not implemented.');
   }
+}
+
+const emptyarray: any[] = [];
+
+/**
+ * Use functional programming with your vector
+ *
+ * @deprecated use a simple Arrays
+ */
+function vectorator<T>(vector: FunctionalVector<T>) {
+  return {
+    *[Symbol.iterator]() {
+      for (let i = 0; i < vector.length; i++) {
+        yield vector.get(i);
+      }
+    },
+
+    forEach(iterator: (row: T, index: number, array: T[]) => void): void {
+      for (let i = 0; i < vector.length; i++) {
+        iterator(vector.get(i), i, emptyarray);
+      }
+    },
+
+    map<V>(transform: (item: T, index: number, array: T[]) => V): V[] {
+      const result: V[] = [];
+      for (let i = 0; i < vector.length; i++) {
+        result.push(transform(vector.get(i), i, emptyarray));
+      }
+      return result;
+    },
+
+    /** Add a predicate where you return true if it should *keep* the value */
+    filter(predicate: (item: T, index: number, array: T[]) => boolean): T[] {
+      const result: T[] = [];
+      let count = 0;
+      for (const val of this) {
+        if (predicate(val, count++, emptyarray)) {
+          result.push(val);
+        }
+      }
+      return result;
+    },
+  };
 }
