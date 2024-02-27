@@ -207,6 +207,10 @@ type number interface {
 
 // numericMap converts a simplejson map[string]any to a map[string]N, where N is numeric (int or float).
 func numericMap[N number](j *simplejson.Json) (map[string]N, error) {
+	if j == nil {
+		return nil, fmt.Errorf("unexpected nil value")
+	}
+
 	m, err := j.Map()
 	if err != nil {
 		return nil, err
