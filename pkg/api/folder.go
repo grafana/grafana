@@ -298,7 +298,7 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		if errors.Is(err, model.ErrFolderHasConnectedLibraryElements) {
-			return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
+			return response.Error(http.StatusForbidden, "Folder could not be deleted because it contains library elements in use", err)
 		}
 		return apierrors.ToFolderErrorResponse(err)
 	}

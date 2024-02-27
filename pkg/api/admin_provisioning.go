@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -26,7 +27,7 @@ import (
 func (hs *HTTPServer) AdminProvisioningReloadDashboards(c *contextmodel.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionDashboards(c.Req.Context())
 	if err != nil && !errors.Is(err, context.Canceled) {
-		return response.Error(500, "", err)
+		return response.Error(http.StatusInternalServerError, "", err)
 	}
 	return response.Success("Dashboards config reloaded")
 }
@@ -49,7 +50,7 @@ func (hs *HTTPServer) AdminProvisioningReloadDashboards(c *contextmodel.ReqConte
 func (hs *HTTPServer) AdminProvisioningReloadDatasources(c *contextmodel.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionDatasources(c.Req.Context())
 	if err != nil {
-		return response.Error(500, "", err)
+		return response.Error(http.StatusInternalServerError, "", err)
 	}
 	return response.Success("Datasources config reloaded")
 }
@@ -72,7 +73,7 @@ func (hs *HTTPServer) AdminProvisioningReloadDatasources(c *contextmodel.ReqCont
 func (hs *HTTPServer) AdminProvisioningReloadPlugins(c *contextmodel.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionPlugins(c.Req.Context())
 	if err != nil {
-		return response.Error(500, "Failed to reload plugins config", err)
+		return response.Error(http.StatusInternalServerError, "Failed to reload plugins config", err)
 	}
 	return response.Success("Plugins config reloaded")
 }
@@ -95,7 +96,7 @@ func (hs *HTTPServer) AdminProvisioningReloadPlugins(c *contextmodel.ReqContext)
 func (hs *HTTPServer) AdminProvisioningReloadNotifications(c *contextmodel.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionNotifications(c.Req.Context())
 	if err != nil {
-		return response.Error(500, "", err)
+		return response.Error(http.StatusInternalServerError, "", err)
 	}
 	return response.Success("Notifications config reloaded")
 }
@@ -103,7 +104,7 @@ func (hs *HTTPServer) AdminProvisioningReloadNotifications(c *contextmodel.ReqCo
 func (hs *HTTPServer) AdminProvisioningReloadAlerting(c *contextmodel.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionAlerting(c.Req.Context())
 	if err != nil {
-		return response.Error(500, "", err)
+		return response.Error(http.StatusInternalServerError, "", err)
 	}
 	return response.Success("Alerting config reloaded")
 }

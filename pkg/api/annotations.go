@@ -62,7 +62,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 
 	items, err := hs.annotationsRepo.Find(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(500, "Failed to get annotations", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get annotations", err)
 	}
 
 	// since there are several annotations per dashboard, we can cache dashboard uid
@@ -138,7 +138,7 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 
 	if cmd.Text == "" {
 		err := &AnnotationError{"text field should not be empty"}
-		return response.Error(400, "Failed to save annotation", err)
+		return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
 	}
 
 	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
@@ -160,9 +160,9 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 
 	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
 		if errors.Is(err, annotations.ErrTimerangeMissing) {
-			return response.Error(400, "Failed to save annotation", err)
+			return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
 		}
-		return response.ErrOrFallback(500, "Failed to save annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save annotation", err)
 	}
 
 	startID := item.ID
@@ -200,7 +200,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 	}
 	if cmd.What == "" {
 		err := &AnnotationError{"what field should not be empty"}
-		return response.Error(400, "Failed to save Graphite annotation", err)
+		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 	}
 
 	text := formatGraphiteAnnotation(cmd.What, cmd.Data)
@@ -220,12 +220,12 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 				tagsArray = append(tagsArray, tagStr)
 			} else {
 				err := &AnnotationError{"tag should be a string"}
-				return response.Error(400, "Failed to save Graphite annotation", err)
+				return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 			}
 		}
 	default:
 		err := &AnnotationError{"unsupported tags format"}
-		return response.Error(400, "Failed to save Graphite annotation", err)
+		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 	}
 
 	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
@@ -242,7 +242,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 	}
 
 	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
-		return response.ErrOrFallback(500, "Failed to save Graphite annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -307,7 +307,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 	}
 
 	if err := hs.annotationsRepo.Update(c.Req.Context(), &item); err != nil {
-		return response.ErrOrFallback(500, "Failed to update annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update annotation", err)
 	}
 
 	return response.Success("Annotation updated")
@@ -386,7 +386,7 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 	}
 
 	if err := hs.annotationsRepo.Update(c.Req.Context(), &existing); err != nil {
-		return response.ErrOrFallback(500, "Failed to update annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update annotation", err)
 	}
 
 	return response.Success("Annotation patched")
@@ -459,7 +459,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 	err = hs.annotationsRepo.Delete(c.Req.Context(), deleteParams)
 
 	if err != nil {
-		return response.Error(500, "Failed to delete annotations", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete annotations", err)
 	}
 
 	return response.Success("Annotations deleted")
@@ -488,7 +488,7 @@ func (hs *HTTPServer) GetAnnotationByID(c *contextmodel.ReqContext) response.Res
 		annotation.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, annotation.Email)
 	}
 
-	return response.JSON(200, annotation)
+	return response.JSON(http.StatusOK, annotation)
 }
 
 // swagger:route DELETE /annotations/{annotation_id} annotations deleteAnnotationByID
@@ -524,7 +524,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 		ID:    annotationID,
 	})
 	if err != nil {
-		return response.Error(500, "Failed to delete annotation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete annotation", err)
 	}
 
 	return response.Success("Annotation deleted")
@@ -560,11 +560,11 @@ func findAnnotationByID(ctx context.Context, repo annotations.Repository, annota
 	items, err := repo.Find(ctx, query)
 
 	if err != nil {
-		return nil, response.Error(500, "Failed to find annotation", err)
+		return nil, response.Error(http.StatusInternalServerError, "Failed to find annotation", err)
 	}
 
 	if len(items) == 0 {
-		return nil, response.Error(404, "Annotation not found", nil)
+		return nil, response.Error(http.StatusNotFound, "Annotation not found", nil)
 	}
 
 	return items[0], nil
@@ -589,7 +589,7 @@ func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Res
 
 	result, err := hs.annotationsRepo.FindTags(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(500, "Failed to find annotation tags", err)
+		return response.Error(http.StatusInternalServerError, "Failed to find annotation tags", err)
 	}
 
 	return response.JSON(http.StatusOK, annotations.GetAnnotationTagsResponse{Result: result})

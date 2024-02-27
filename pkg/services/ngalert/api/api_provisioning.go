@@ -604,11 +604,11 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 		return nil
 	}
 	if err := convertToResources(); err != nil {
-		return response.Error(500, "failed to convert to HCL resources", err)
+		return response.Error(http.StatusInternalServerError, "failed to convert to HCL resources", err)
 	}
 	hclBody, err := hcl.Encode(resources...)
 	if err != nil {
-		return response.Error(500, "body hcl encode", err)
+		return response.Error(http.StatusInternalServerError, "body hcl encode", err)
 	}
 	resp := response.Respond(http.StatusOK, hclBody)
 	if download {

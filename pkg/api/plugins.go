@@ -247,7 +247,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	if _, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID); !exists {
-		return response.Error(404, "Plugin not installed", nil)
+		return response.Error(http.StatusNotFound, "Plugin not installed", nil)
 	}
 
 	cmd.OrgId = c.SignedInUser.GetOrgID()
@@ -262,7 +262,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 		OrgID:                   cmd.OrgId,
 		EncryptedSecureJSONData: cmd.EncryptedSecureJsonData,
 	}); err != nil {
-		return response.Error(500, "Failed to update plugin setting", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update plugin setting", err)
 	}
 
 	hs.pluginContextProvider.InvalidateSettingsCache(c.Req.Context(), pluginID)

@@ -124,7 +124,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 	})
 
 	if err != nil {
-		return response.Error(500, "Failed to get users for current organization", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
 	}
 
 	return response.JSON(http.StatusOK, result.OrgUsers)
@@ -154,7 +154,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext)
 	})
 
 	if err != nil {
-		return response.Error(500, "Failed to get users for current organization", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
 	}
 
 	result := make([]*dtos.UserLookupDTO, 0)
@@ -199,7 +199,7 @@ func (hs *HTTPServer) GetOrgUsers(c *contextmodel.ReqContext) response.Response 
 	})
 
 	if err != nil {
-		return response.Error(500, "Failed to get users for organization", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get users for organization", err)
 	}
 
 	return response.JSON(http.StatusOK, result.OrgUsers)
@@ -251,7 +251,7 @@ func (hs *HTTPServer) SearchOrgUsers(c *contextmodel.ReqContext) response.Respon
 	})
 
 	if err != nil {
-		return response.Error(500, "Failed to get users for organization", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get users for organization", err)
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -286,7 +286,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 
 	result, err := hs.searchOrgUsersHelper(c, query)
 	if err != nil {
-		return response.Error(500, "Failed to get users for current organization", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -501,9 +501,9 @@ func (hs *HTTPServer) RemoveOrgUser(c *contextmodel.ReqContext) response.Respons
 func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *org.RemoveOrgUserCommand) response.Response {
 	if err := hs.orgService.RemoveOrgUser(ctx, cmd); err != nil {
 		if errors.Is(err, org.ErrLastOrgAdmin) {
-			return response.Error(400, "Cannot remove last organization admin", nil)
+			return response.Error(http.StatusBadRequest, "Cannot remove last organization admin", nil)
 		}
-		return response.Error(500, "Failed to remove user from organization", err)
+		return response.Error(http.StatusInternalServerError, "Failed to remove user from organization", err)
 	}
 
 	if cmd.UserWasDeleted {
