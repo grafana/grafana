@@ -191,10 +191,6 @@ func TestIntegrationPostgres(t *testing.T) {
 		return sql
 	}
 
-	cfg := setting.NewCfg()
-	cfg.DataPath = t.TempDir()
-	cfg.DataProxyRowLimit = 10000
-
 	jsonData := sqleng.JsonData{
 		MaxOpenConns:        0,
 		MaxIdleConns:        2,
@@ -212,7 +208,7 @@ func TestIntegrationPostgres(t *testing.T) {
 
 	cnnstr := postgresTestDBConnString()
 
-	db, exe, err := newPostgres(context.Background(), cfg, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+	db, exe, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 	require.NoError(t, err)
 
@@ -1266,9 +1262,7 @@ func TestIntegrationPostgres(t *testing.T) {
 
 		t.Run("When row limit set to 1", func(t *testing.T) {
 			dsInfo := sqleng.DataSourceInfo{}
-			conf := setting.NewCfg()
-			conf.DataProxyRowLimit = 1
-			_, handler, err := newPostgres(context.Background(), conf, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+			_, handler, err := newPostgres(context.Background(), "error", 1, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 			require.NoError(t, err)
 

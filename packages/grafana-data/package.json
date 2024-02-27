@@ -62,7 +62,7 @@
     "xss": "^1.0.14"
   },
   "devDependencies": {
-    "@grafana/tsconfig": "^1.2.0-rc1",
+    "@grafana/tsconfig": "^1.3.0-rc1",
     "@rollup/plugin-commonjs": "25.0.7",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "15.2.3",
@@ -76,9 +76,9 @@
     "@types/jquery": "3.5.29",
     "@types/lodash": "4.14.202",
     "@types/marked": "5.0.2",
-    "@types/node": "20.11.19",
+    "@types/node": "20.11.20",
     "@types/papaparse": "5.3.14",
-    "@types/react": "18.2.55",
+    "@types/react": "18.2.59",
     "@types/react-dom": "18.2.19",
     "@types/testing-library__jest-dom": "5.14.9",
     "@types/tinycolor2": "1.4.6",
