@@ -136,6 +136,14 @@ func newInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 				return nil, err
 			}
 			cnnstr += "&tls=" + tlsConfigString
+		} else {
+			if dsInfo.JsonData.MySQLRequireTLS {
+				if dsInfo.JsonData.TlsSkipVerify {
+					cnnstr += "&tls=skip-verify"
+				} else {
+					cnnstr += "&tls=true"
+				}
+			}
 		}
 
 		if dsInfo.JsonData.Timezone != "" {

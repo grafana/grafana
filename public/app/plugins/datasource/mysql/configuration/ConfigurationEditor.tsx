@@ -116,6 +116,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           />
         </Field>
 
+        <Field label="use TLS" description="use a TLS connection">
+          <Switch onChange={onSwitchChanged('mySQLRequireTLS')} value={jsonData.mySQLRequireTLS ?? false} />
+        </Field>
+
         <Field
           label="Use TLS Client Auth"
           description="Enables TLS authentication using client cert configured in secure json data."
