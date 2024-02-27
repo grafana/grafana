@@ -443,6 +443,19 @@ describe('InfluxDataSource Frontend Mode', () => {
         expect(result).toBe(expectation);
       });
 
+      it('should return the escaped value if the value wrapped in regex 3', () => {
+        const value = ['env', 'env2', 'env3'];
+        const variableMock = queryBuilder()
+          .withId('tempVar')
+          .withName('tempVar')
+          .withMulti(false)
+          .withIncludeAll(true)
+          .build();
+        const result = ds.interpolateQueryExpr(value, variableMock, 'select from /^($tempVar)$/');
+        const expectation = `env|env2|env3`;
+        expect(result).toBe(expectation);
+      });
+
       it('should **not** return the escaped value if the value **is not** wrapped in regex', () => {
         const value = '/special/path';
         const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
