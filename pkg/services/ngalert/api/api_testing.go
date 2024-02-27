@@ -67,7 +67,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		srv.cfg.BaseInterval,
 		c.SignedInUser.GetOrgID(),
 		folder.UID,
-		srv.cfg,
+		RuleLimitsFromConfig(srv.cfg),
 	)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
