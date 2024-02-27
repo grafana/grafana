@@ -43,8 +43,8 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Node graph][] for directed graphs or networks.
   - [Traces][] is the main visualization for traces.
   - [Flame graph][] is the main visualization for profiling.
-  - [Canvas][] free visualization panel allowing you to create your own visualization.
-  - [Geomap][] is a visual representation helping you to visualize or track assets in a map.
+  - [Canvas][] allows you to explicitly place elements within static and dynamic layouts. 
+  - [Geomap][] helps you visualize geospatial data.
 - Widgets
   - [Dashboard list][] can list dashboards.
   - [Alert list][] can list alerts.
