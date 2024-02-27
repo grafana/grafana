@@ -77,7 +77,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	duckDB := duck.NewInMemoryDB()
 	var frame = &data.Frame{}
-	_, err := duckDB.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
+	err := duckDB.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
 	if err != nil {
 		rsp.Error = err
 		return rsp, nil
