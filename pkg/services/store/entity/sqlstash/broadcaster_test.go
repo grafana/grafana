@@ -1,14 +1,14 @@
 package sqlstash
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestCache(t *testing.T) {
-	c := Cache[int]{}
-	c.Init(10)
+	c := NewCache[int](context.Background(), 10)
 
 	e := []int{}
 	err := c.Range(func(i int) error {

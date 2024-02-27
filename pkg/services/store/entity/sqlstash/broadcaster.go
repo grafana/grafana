@@ -3,34 +3,44 @@ package sqlstash
 import (
 	"context"
 	"fmt"
-	"sync"
 )
 
 type ConnectFunc[T any] func() (chan T, error)
 
-type Broadcaster[T any] struct {
-	sync.Mutex
-	running bool
-	subs    map[chan T]struct{}
-	cache   Cache[T]
+type Broadcaster[T any] interface {
+	Subscribe(context.Context) (<-chan T, error)
+	Unsubscribe(chan T)
 }
 
-func (b *Broadcaster[T]) Subscribe(ctx context.Context) (<-chan T, error) {
-	b.Lock()
-	defer b.Unlock()
+func NewBroadcaster[T any](ctx context.Context, connect ConnectFunc[T]) (Broadcaster[T], error) {
+	b := &broadcaster[T]{}
+	err := b.start(ctx, connect)
+	if err != nil {
+		return nil, err
+	}
 
+	return b, nil
+}
+
+type broadcaster[T any] struct {
+	running     bool
+	ctx         context.Context
+	subs        map[chan T]struct{}
+	cache       Cache[T]
+	subscribe   chan chan T
+	unsubscribe chan chan T
+}
+
+func (b *broadcaster[T]) Subscribe(ctx context.Context) (<-chan T, error) {
 	if !b.running {
 		return nil, fmt.Errorf("broadcaster not running")
 	}
 
 	sub := make(chan T, 100)
-	if b.subs == nil {
-		b.subs = map[chan T]struct{}{}
-	}
-	b.subs[sub] = struct{}{}
+	b.subscribe <- sub
 	go func() {
 		<-ctx.Done()
-		b.unsub(sub, true)
+		b.unsubscribe <- sub
 	}()
 
 	// send initial batch of cached items
@@ -45,117 +55,159 @@ func (b *Broadcaster[T]) Subscribe(ctx context.Context) (<-chan T, error) {
 	return sub, nil
 }
 
-func (b *Broadcaster[T]) unsub(sub chan T, lock bool) {
-	if lock {
-		b.Lock()
-	}
-	if _, ok := b.subs[sub]; ok {
-		close(sub)
-		delete(b.subs, sub)
-	}
-	if lock {
-		b.Unlock()
-	}
+func (b *broadcaster[T]) Unsubscribe(sub chan T) {
+	b.unsubscribe <- sub
 }
 
-func (b *Broadcaster[T]) Start(connect ConnectFunc[T]) error {
+func (b *broadcaster[T]) start(ctx context.Context, connect ConnectFunc[T]) error {
+	if b.running {
+		return fmt.Errorf("broadcaster already running")
+	}
+
 	c, err := connect()
 	if err != nil {
 		return err
 	}
 
-	b.cache.Init(100)
+	b.ctx = ctx
+
+	b.cache = NewCache[T](ctx, 100)
+	b.subscribe = make(chan chan T, 100)
+	b.unsubscribe = make(chan chan T, 100)
+	b.subs = make(map[chan T]struct{})
 
 	go b.stream(c)
+
 	b.running = true
 	return nil
 }
 
-func (b *Broadcaster[T]) stream(input chan T) {
-	for item := range input {
-		// add item to cache
-		b.cache.Add(item)
+func (b *broadcaster[T]) stream(input chan T) {
+	for {
+		select {
+		// context cancelled
+		case <-b.ctx.Done():
+			close(input)
+			for sub := range b.subs {
+				close(sub)
+				delete(b.subs, sub)
+			}
+			b.running = false
+			return
+		// new subscriber
+		case sub := <-b.subscribe:
+			b.subs[sub] = struct{}{}
+		// unsubscribe
+		case sub := <-b.unsubscribe:
+			if _, ok := b.subs[sub]; ok {
+				close(sub)
+				delete(b.subs, sub)
+			}
+		// read item from input
+		case item, ok := <-input:
+			// input closed, drain subscribers and exit
+			if !ok {
+				for sub := range b.subs {
+					close(sub)
+					delete(b.subs, sub)
+				}
+				b.running = false
+				return
+			}
 
-		b.Lock()
-		for sub := range b.subs {
-			select {
-			case sub <- item:
-			default:
-				// Slow consumer, drop
-				go b.unsub(sub, true)
+			b.cache.Add(item)
+
+			for sub := range b.subs {
+				select {
+				case sub <- item:
+				default:
+					// Slow consumer, drop
+					b.unsubscribe <- sub
+				}
 			}
 		}
-		b.Unlock()
 	}
-
-	b.Lock()
-	for sub := range b.subs {
-		b.unsub(sub, false)
-	}
-	b.running = false
-	b.Unlock()
 }
 
 const DefaultCacheSize = 100
 
-type Cache[T any] struct {
-	sync.Mutex
+type Cache[T any] interface {
+	Len() int
+	Add(item T)
+	Get(i int) T
+	Range(f func(T) error) error
+	Slice() []T
+}
+
+type cache[T any] struct {
 	cache     []T
 	cacheZero int
 	cacheLen  int
+	add       chan T
+	read      chan chan []T
+	ctx       context.Context
 }
 
-func (c *Cache[T]) Init(size int) {
-	c.Lock()
-	defer c.Unlock()
+func NewCache[T any](ctx context.Context, size int) Cache[T] {
+	c := &cache[T]{}
+
+	c.ctx = ctx
 	if size <= 0 {
 		size = DefaultCacheSize
 	}
 	c.cache = make([]T, size)
-	c.cacheZero = 0
-	c.cacheLen = 0
+
+	c.add = make(chan T, 100)
+	c.read = make(chan chan []T, 100)
+
+	go c.run()
+
+	return c
 }
 
-func (c *Cache[T]) Len() int {
-	c.Lock()
-	defer c.Unlock()
+func (c *cache[T]) Len() int {
 	return c.cacheLen
 }
 
-func (c *Cache[T]) Add(item T) {
-	c.Lock()
-	defer c.Unlock()
-	if c.cache == nil {
-		c.cache = make([]T, DefaultCacheSize)
-		c.cacheZero = 0
-		c.cacheLen = 0
-	}
+func (c *cache[T]) Add(item T) {
+	c.add <- item
+}
 
-	i := (c.cacheZero + c.cacheLen) % len(c.cache)
-	c.cache[i] = item
-	if c.cacheLen < len(c.cache) {
-		c.cacheLen++
-	} else {
-		c.cacheZero = (c.cacheZero + 1) % len(c.cache)
+func (c *cache[T]) run() {
+	for {
+		select {
+		case <-c.ctx.Done():
+			return
+		case item := <-c.add:
+			i := (c.cacheZero + c.cacheLen) % len(c.cache)
+			c.cache[i] = item
+			if c.cacheLen < len(c.cache) {
+				c.cacheLen++
+			} else {
+				c.cacheZero = (c.cacheZero + 1) % len(c.cache)
+			}
+		case r := <-c.read:
+			s := make([]T, c.cacheLen)
+			for i := 0; i < c.cacheLen; i++ {
+				s[i] = c.cache[(c.cacheZero+i)%len(c.cache)]
+			}
+			r <- s
+		}
 	}
 }
 
-func (c *Cache[T]) Get(i int) T {
-	c.Lock()
-	defer c.Unlock()
-	if i < 0 || i >= c.cacheLen {
+func (c *cache[T]) Get(i int) T {
+	s := c.Slice()
+	if i < 0 || i >= len(s) {
 		var zero T
 		return zero
 	}
-	return c.cache[(c.cacheZero+i)%len(c.cache)]
+	return s[i]
 }
 
-func (c *Cache[T]) Range(f func(T) error) error {
-	c.Lock()
-	defer c.Unlock()
-	var err error
-	for i := 0; i < c.cacheLen; i++ {
-		err = f(c.cache[(c.cacheZero+i)%len(c.cache)])
+func (c *cache[T]) Range(f func(T) error) error {
+	for _, i := range c.Slice() {
+		err := f(i)
 		if err != nil {
 			return err
 		}
@@ -163,12 +215,9 @@ func (c *Cache[T]) Range(f func(T) error) error {
 	return nil
 }
 
-func (c *Cache[T]) Slice() []T {
-	c.Lock()
-	defer c.Unlock()
-	s := make([]T, c.cacheLen)
-	for i := 0; i < c.cacheLen; i++ {
-		s[i] = c.cache[(c.cacheZero+i)%len(c.cache)]
-	}
+func (c *cache[T]) Slice() []T {
+	r := make(chan []T)
+	c.read <- r
+	s := <-r
 	return s
 }
