@@ -79,8 +79,8 @@ You can stop a panel from repeating by selecting **Disable repeating** in the **
 [Configure repeating rows]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
 [Configure repeating rows]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
 
-[Grafana LLM plugin]: "/docs/grafana/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
-[Grafana LLM plugin]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
+[Grafana LLM plugin]: "/docs/grafana/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin"
+[Grafana LLM plugin]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin"
 
 [Set up generative AI features for dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
 [Set up generative AI features for dashboards]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
