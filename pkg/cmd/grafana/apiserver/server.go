@@ -13,10 +13,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
+	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -151,7 +152,15 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
 
 	// Add OpenAPI specs for each group+version
-	err := builder.SetupConfig(grafanaAPIServer.Scheme, serverConfig, o.builders)
+	err := builder.SetupConfig(
+		grafanaAPIServer.Scheme,
+		serverConfig,
+		o.builders,
+		setting.BuildStamp,
+		setting.BuildVersion,
+		setting.BuildCommit,
+		setting.BuildBranch,
+	)
 	return serverConfig, err
 }
 
