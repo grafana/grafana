@@ -126,6 +126,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       maxWidth: '600px',
       textOverflow: 'ellipsis',
       overflow: 'hidden',
+      userSelect: 'text',
     }),
     labelDisabled: css({
       label: 'LegendLabelDisabled',
