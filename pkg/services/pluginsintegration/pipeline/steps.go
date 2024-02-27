@@ -21,17 +21,17 @@ import (
 
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
 type ExternalServiceRegistration struct {
-	cfg                     *config.Cfg
+	cfg                     *config.PluginManagementCfg
 	externalServiceRegistry auth.ExternalServiceRegistry
 	log                     log.Logger
 }
 
 // ExternalServiceRegistrationStep returns an InitializeFunc for registering external services.
-func ExternalServiceRegistrationStep(cfg *config.Cfg, externalServiceRegistry auth.ExternalServiceRegistry) initialization.InitializeFunc {
+func ExternalServiceRegistrationStep(cfg *config.PluginManagementCfg, externalServiceRegistry auth.ExternalServiceRegistry) initialization.InitializeFunc {
 	return newExternalServiceRegistration(cfg, externalServiceRegistry).Register
 }
 
-func newExternalServiceRegistration(cfg *config.Cfg, serviceRegistry auth.ExternalServiceRegistry) *ExternalServiceRegistration {
+func newExternalServiceRegistration(cfg *config.PluginManagementCfg, serviceRegistry auth.ExternalServiceRegistry) *ExternalServiceRegistration {
 	return &ExternalServiceRegistration{
 		cfg:                     cfg,
 		externalServiceRegistry: serviceRegistry,
@@ -128,11 +128,11 @@ func (v *SignatureValidation) Validate(ctx context.Context, p *plugins.Plugin) e
 // DisablePlugins is a filter step that will filter out any configured plugins
 type DisablePlugins struct {
 	log log.Logger
-	cfg *config.Cfg
+	cfg *config.PluginManagementCfg
 }
 
 // NewDisablePluginsStep returns a new DisablePlugins.
-func NewDisablePluginsStep(cfg *config.Cfg) *DisablePlugins {
+func NewDisablePluginsStep(cfg *config.PluginManagementCfg) *DisablePlugins {
 	return &DisablePlugins{
 		cfg: cfg,
 		log: log.New("plugins.disable"),
@@ -164,11 +164,11 @@ func (c *DisablePlugins) Filter(bundles []*plugins.FoundBundle) ([]*plugins.Foun
 // AsExternal is a filter step that will skip loading a core plugin to use an external one.
 type AsExternal struct {
 	log log.Logger
-	cfg *config.Cfg
+	cfg *config.PluginManagementCfg
 }
 
 // NewDisablePluginsStep returns a new DisablePlugins.
-func NewAsExternalStep(cfg *config.Cfg) *AsExternal {
+func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 	return &AsExternal{
 		cfg: cfg,
 		log: log.New("plugins.asExternal"),

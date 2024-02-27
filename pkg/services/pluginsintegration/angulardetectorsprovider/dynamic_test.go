@@ -574,7 +574,7 @@ func provideDynamic(t *testing.T, gcomURL string, opts ...provideDynamicOpts) *D
 		opt.store = angularpatternsstore.ProvideService(kvstore.NewFakeKVStore())
 	}
 	d, err := ProvideDynamic(
-		&config.Cfg{GrafanaComURL: gcomURL},
+		&config.PluginManagementCfg{GrafanaComURL: gcomURL},
 		opt.store,
 		featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
 	)

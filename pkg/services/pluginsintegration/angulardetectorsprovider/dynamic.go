@@ -47,7 +47,7 @@ type Dynamic struct {
 	mux sync.RWMutex
 }
 
-func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, features featuremgmt.FeatureToggles) (*Dynamic, error) {
+func ProvideDynamic(cfg *config.PluginManagementCfg, store angularpatternsstore.Service, features featuremgmt.FeatureToggles) (*Dynamic, error) {
 	d := &Dynamic{
 		log:        log.New("plugin.angulardetectorsprovider.dynamic"),
 		features:   features,

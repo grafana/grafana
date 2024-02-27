@@ -21,7 +21,7 @@ type Service struct {
 	settingsSvc    pluginsettings.Service
 }
 
-func ProvideService(cfg *config.Cfg, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
+func ProvideService(cfg *config.PluginManagementCfg, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
 	s := &Service{
 		featureEnabled: cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 		log:            log.New("plugins.external.registration"),

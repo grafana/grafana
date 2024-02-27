@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestRenderer(t *testing.T) {
@@ -33,7 +33,7 @@ func TestRenderer(t *testing.T) {
 				return nil, nil
 			},
 		}
-		cfg := &config.Cfg{
+		cfg := &setting.Cfg{
 			PluginsPath: filepath.Join(testdataDir),
 		}
 
@@ -67,7 +67,7 @@ func TestRenderer(t *testing.T) {
 				return nil, nil
 			},
 		}
-		cfg := &config.Cfg{
+		cfg := &setting.Cfg{
 			PluginsPath: filepath.Join(testdataDir),
 		}
 

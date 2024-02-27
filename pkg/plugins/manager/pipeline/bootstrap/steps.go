@@ -29,7 +29,7 @@ func DefaultConstructFunc(signatureCalculator plugins.SignatureCalculator, asset
 }
 
 // DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
-func DefaultDecorateFuncs(cfg *config.Cfg) []DecorateFunc {
+func DefaultDecorateFuncs(cfg *config.PluginManagementCfg) []DecorateFunc {
 	return []DecorateFunc{
 		AppDefaultNavURLDecorateFunc,
 		TemplateDecorateFunc,
@@ -161,7 +161,7 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 // SkipHostEnvVarsDecorateFunc returns a DecorateFunc that configures the SkipHostEnvVars field of the plugin.
 // It will be set to true if the FlagPluginsSkipHostEnvVars feature flag is set, and the plugin is not present in the
 // ForwardHostEnvVars plugin ids list.
-func SkipHostEnvVarsDecorateFunc(cfg *config.Cfg) DecorateFunc {
+func SkipHostEnvVarsDecorateFunc(cfg *config.PluginManagementCfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 		p.SkipHostEnvVars = cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) &&
 			!slices.Contains(cfg.ForwardHostEnvVars, p.ID)

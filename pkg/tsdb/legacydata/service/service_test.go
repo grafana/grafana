@@ -12,13 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
-	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -54,7 +53,7 @@ func TestHandleRequest(t *testing.T) {
 
 		pCtxProvider := plugincontext.ProvideService(sqlStore.Cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test"}}},
-		}, dsCache, dsService, pluginSettings.ProvideService(sqlStore, secretsService), pluginFakes.NewFakeLicensingService(), &config.Cfg{})
+		}, dsCache, dsService, pluginSettings.ProvideService(sqlStore, secretsService), pluginconfig.NewFakePluginRequestConfigProvider())
 		s := ProvideService(client, nil, dsService, pCtxProvider)
 
 		ds := &datasources.DataSource{ID: 12, Type: "test", JsonData: simplejson.New()}

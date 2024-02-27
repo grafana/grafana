@@ -36,7 +36,7 @@ func TestService(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := &config.Cfg{
+			cfg := &config.PluginManagementCfg{
 				PluginsCDNURLTemplate: tc.cdnBaseURL,
 				PluginSettings: map[string]map[string]string{
 					"one": {"cdn": "true"},
@@ -142,7 +142,7 @@ func TestService(t *testing.T) {
 				appSubURL: "/grafana/",
 			},
 		} {
-			cfg := &config.Cfg{GrafanaAppSubURL: tc.appSubURL}
+			cfg := &config.PluginManagementCfg{GrafanaAppSubURL: tc.appSubURL}
 			svc := ProvideService(cfg, pluginscdn.ProvideService(cfg))
 
 			dir := "/plugins/test-datasource"

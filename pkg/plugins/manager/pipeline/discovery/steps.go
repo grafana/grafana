@@ -11,7 +11,7 @@ import (
 
 // DefaultFindFunc is the default function used for the Find step of the Discovery stage. It will scan the local
 // filesystem for plugins.
-func DefaultFindFunc(cfg *config.Cfg) FindFunc {
+func DefaultFindFunc(cfg *config.PluginManagementCfg) FindFunc {
 	return finder.NewLocalFinder(cfg.DevMode, cfg.Features).Find
 }
 

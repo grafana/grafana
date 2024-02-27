@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
-	"github.com/grafana/grafana/pkg/plugins/config"
+	pluginscfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
@@ -21,10 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *config.Cfg, registry registry.Service, licensing plugins.Licensing) (*Manager, error) {
-	l, err := createLoader(cfg, registry, licensing)
+func ProvideService(cfg *setting.Cfg, pCfg *pluginscfg.PluginManagementCfg, pluginEnvProvider envvars.Provider, registry registry.Service,
+	licensing plugins.Licensing) (*Manager, error) {
+	l, err := createLoader(cfg, pCfg, pluginEnvProvider, registry, licensing)
 	if err != nil {
 		return nil, err
 	}
@@ -33,14 +35,14 @@ func ProvideService(cfg *config.Cfg, registry registry.Service, licensing plugin
 }
 
 type Manager struct {
-	cfg    *config.Cfg
+	cfg    *setting.Cfg
 	loader loader.Service
 	log    log.Logger
 
 	renderer *Plugin
 }
 
-func NewManager(cfg *config.Cfg, loader loader.Service) *Manager {
+func NewManager(cfg *setting.Cfg, loader loader.Service) *Manager {
 	return &Manager{
 		cfg:    cfg,
 		loader: loader,
@@ -102,8 +104,9 @@ func (m *Manager) Renderer(ctx context.Context) (rendering.Plugin, bool) {
 	return nil, false
 }
 
-func createLoader(cfg *config.Cfg, pr registry.Service, l plugins.Licensing) (loader.Service, error) {
-	d := discovery.New(cfg, discovery.Opts{
+func createLoader(cfg *setting.Cfg, pCfg *pluginscfg.PluginManagementCfg, pluginEnvProvider envvars.Provider,
+	pr registry.Service, l plugins.Licensing) (loader.Service, error) {
+	d := discovery.New(pCfg, discovery.Opts{
 		FindFilterFuncs: []discovery.FindFilterFunc{
 			discovery.NewPermittedPluginTypesFilterStep([]plugins.Type{plugins.TypeRenderer}),
 			func(ctx context.Context, class plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
@@ -111,21 +114,21 @@ func createLoader(cfg *config.Cfg, pr registry.Service, l plugins.Licensing) (lo
 			},
 		},
 	})
-	b := bootstrap.New(cfg, bootstrap.Opts{
+	b := bootstrap.New(pCfg, bootstrap.Opts{
 		DecorateFuncs: []bootstrap.DecorateFunc{}, // no decoration required
 	})
-	v := validation.New(cfg, validation.Opts{
+	v := validation.New(pCfg, validation.Opts{
 		ValidateFuncs: []validation.ValidateFunc{
-			validation.SignatureValidationStep(signature.NewValidator(signature.NewUnsignedAuthorizer(cfg))),
+			validation.SignatureValidationStep(signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg))),
 		},
 	})
-	i := initialization.New(cfg, initialization.Opts{
+	i := initialization.New(pCfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
-			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), provider.New(provider.RendererProvider)),
+			initialization.BackendClientInitStep(pluginEnvProvider, provider.New(provider.RendererProvider)),
 			initialization.PluginRegistrationStep(pr),
 		},
 	})
-	t, err := termination.New(cfg, termination.Opts{
+	t, err := termination.New(pCfg, termination.Opts{
 		TerminateFuncs: []termination.TerminateFunc{
 			termination.DeregisterStep(pr),
 		},

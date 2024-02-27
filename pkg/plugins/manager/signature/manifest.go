@@ -59,17 +59,17 @@ func (m *PluginManifest) isV2() bool {
 
 type Signature struct {
 	kr  plugins.KeyRetriever
-	cfg *config.Cfg
+	cfg *config.PluginManagementCfg
 	log log.Logger
 }
 
 var _ plugins.SignatureCalculator = &Signature{}
 
-func ProvideService(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
+func ProvideService(cfg *config.PluginManagementCfg, kr plugins.KeyRetriever) *Signature {
 	return NewCalculator(cfg, kr)
 }
 
-func NewCalculator(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
+func NewCalculator(cfg *config.PluginManagementCfg, kr plugins.KeyRetriever) *Signature {
 	return &Signature{
 		kr:  kr,
 		cfg: cfg,
@@ -77,7 +77,7 @@ func NewCalculator(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
 	}
 }
 
-func DefaultCalculator(cfg *config.Cfg) *Signature {
+func DefaultCalculator(cfg *config.PluginManagementCfg) *Signature {
 	return &Signature{
 		kr:  statickey.New(),
 		cfg: cfg,

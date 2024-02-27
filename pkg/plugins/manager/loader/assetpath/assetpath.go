@@ -18,10 +18,10 @@ import (
 // on the plugins CDN, and it will switch to the correct implementation depending on the plugin and the config.
 type Service struct {
 	cdn *pluginscdn.Service
-	cfg *config.Cfg
+	cfg *config.PluginManagementCfg
 }
 
-func ProvideService(cfg *config.Cfg, cdn *pluginscdn.Service) *Service {
+func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) *Service {
 	return &Service{cfg: cfg, cdn: cdn}
 }
 
@@ -39,7 +39,7 @@ func NewPluginInfo(pluginJSON plugins.JSONData, class plugins.Class, fs plugins.
 	}
 }
 
-func DefaultService(cfg *config.Cfg) *Service {
+func DefaultService(cfg *config.PluginManagementCfg) *Service {
 	return &Service{cfg: cfg, cdn: pluginscdn.ProvideService(cfg)}
 }
 

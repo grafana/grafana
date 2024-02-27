@@ -17,7 +17,7 @@ type Terminator interface {
 type TerminateFunc func(ctx context.Context, p *plugins.Plugin) error
 
 type Terminate struct {
-	cfg            *config.Cfg
+	cfg            *config.PluginManagementCfg
 	terminateSteps []TerminateFunc
 	log            log.Logger
 }
@@ -27,7 +27,7 @@ type Opts struct {
 }
 
 // New returns a new Termination stage.
-func New(cfg *config.Cfg, opts Opts) (*Terminate, error) {
+func New(cfg *config.PluginManagementCfg, opts Opts) (*Terminate, error) {
 	if opts.TerminateFuncs == nil {
 		opts.TerminateFuncs = []TerminateFunc{}
 	}
