@@ -51,11 +51,18 @@ func (s *OAuthStrategy) loadAllSettings() {
 	allProviders := append(ssosettings.AllOAuthProviders, social.GrafanaNetProviderName)
 	for _, provider := range allProviders {
 		settings := s.loadSettingsForProvider(provider)
-		if provider == social.GrafanaNetProviderName {
+		// This is required to support the legacy settings for the provider (auth.grafananet section)
+		// It will use the settings (and overwrite the current grafana_com settings) from auth.grafananet if
+		// the auth.grafananet section is enabled and the auth.grafana_com section is disabled.
+		if provider == social.GrafanaNetProviderName && s.shouldUseGrafanaNetSettings(settings) {
 			provider = social.GrafanaComProviderName
 		}
 		s.settingsByProvider[provider] = settings
 	}
+}
+
+func (s *OAuthStrategy) shouldUseGrafanaNetSettings(settings map[string]any) bool {
+	return s.settingsByProvider[social.GrafanaComProviderName]["enabled"] == false && settings["enabled"] == true
 }
 
 func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any {
