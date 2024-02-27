@@ -97,12 +97,12 @@
     "@types/node": "20.11.20",
     "@types/pluralize": "^0.0.33",
     "@types/prismjs": "1.26.3",
-    "@types/react": "18.2.59",
+    "@types/react": "18.2.60",
     "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-dom": "18.2.19",
     "@types/react-highlight-words": "0.16.7",
     "@types/react-window": "1.8.8",
-    "@types/semver": "7.5.7",
+    "@types/semver": "7.5.8",
     "@types/testing-library__jest-dom": "5.14.9",
     "@types/uuid": "9.0.8",
     "@typescript-eslint/eslint-plugin": "6.21.0",
@@ -140,7 +140,7 @@
     "testing-library-selector": "0.3.1",
     "ts-node": "10.9.2",
     "typescript": "5.3.3",
-    "webpack": "5.90.2",
+    "webpack": "5.90.3",
     "webpack-cli": "5.1.4"
   },
   "peerDependencies": {
