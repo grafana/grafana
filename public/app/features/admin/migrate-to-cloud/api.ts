@@ -48,80 +48,66 @@ let HAS_MIGRATION_TOKEN = false;
 let HAS_STACK_DETAILS = false;
 let STACK_URL: string | undefined;
 
+function dataWithMockDelay<T>(data: T): Promise<{ data: T }> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data });
+    }, MOCK_DELAY_MS);
+  });
+}
+
 export const migrateToCloudAPI = createApi({
-  tagTypes: ['migrationToken', 'stack'],
+  tagTypes: ['migrationToken', 'stackDetails'],
   reducerPath: 'migrateToCloudAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     // TODO :)
     getStatus: builder.query<MigrateToCloudStatusDTO, void>({
-      providesTags: ['stack'],
+      providesTags: ['stackDetails'],
       queryFn: () => {
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            const responseData: MigrateToCloudStatusDTO = { enabled: HAS_STACK_DETAILS };
-            if (STACK_URL) {
-              responseData.stackURL = STACK_URL;
-            }
-            resolve({ data: responseData });
-          }, MOCK_DELAY_MS);
-        });
+        const responseData: MigrateToCloudStatusDTO = { enabled: HAS_STACK_DETAILS };
+        if (STACK_URL) {
+          responseData.stackURL = STACK_URL;
+        }
+        return dataWithMockDelay(responseData);
       },
     }),
     connectStack: builder.mutation<void, ConnectStackDTO>({
-      invalidatesTags: ['stack'],
+      invalidatesTags: ['stackDetails'],
       queryFn: async ({ stackURL }) => {
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            HAS_STACK_DETAILS = true;
-            STACK_URL = stackURL;
-            resolve({ data: undefined });
-          }, MOCK_DELAY_MS);
-        });
+        HAS_STACK_DETAILS = true;
+        STACK_URL = stackURL;
+        return dataWithMockDelay(undefined);
       },
     }),
     disconnectStack: builder.mutation<void, void>({
-      invalidatesTags: ['stack'],
+      invalidatesTags: ['stackDetails'],
       queryFn: async () => {
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            HAS_STACK_DETAILS = false;
-            STACK_URL = undefined;
-            resolve({ data: undefined });
-          }, MOCK_DELAY_MS);
-        });
+        HAS_STACK_DETAILS = false;
+        return dataWithMockDelay(undefined);
       },
     }),
+
     createMigrationToken: builder.mutation<CreateMigrationTokenResponseDTO, void>({
       invalidatesTags: ['migrationToken'],
       queryFn: async () => {
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            HAS_MIGRATION_TOKEN = true;
-            resolve({ data: { token: MOCK_TOKEN } });
-          }, MOCK_DELAY_MS);
-        });
+        HAS_MIGRATION_TOKEN = true;
+        return dataWithMockDelay({ token: MOCK_TOKEN });
       },
     }),
+
     deleteMigrationToken: builder.mutation<void, void>({
       invalidatesTags: ['migrationToken'],
       queryFn: async () => {
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            HAS_MIGRATION_TOKEN = false;
-            resolve({ data: undefined });
-          }, MOCK_DELAY_MS);
-        });
+        HAS_MIGRATION_TOKEN = false;
+        return dataWithMockDelay(undefined);
       },
     }),
+
     hasMigrationToken: builder.query<boolean, void>({
       providesTags: ['migrationToken'],
       queryFn: async () => {
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({ data: HAS_MIGRATION_TOKEN });
-          }, MOCK_DELAY_MS);
-        });
+        return dataWithMockDelay(HAS_MIGRATION_TOKEN);
       },
     }),
   }),

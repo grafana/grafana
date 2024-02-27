@@ -381,6 +381,10 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/identity-access-team
+
+# Temp owners until Enterprise team takes over
+/public/app/features/admin/migrate-to-cloud @grafana/grafana-frontend-platform
+
 /public/app/features/auth-config/ @grafana/identity-access-team
 /public/app/features/annotations/ @grafana/dashboards-squad
 /public/app/features/api-keys/ @grafana/identity-access-team
