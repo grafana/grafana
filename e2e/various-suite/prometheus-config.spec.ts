@@ -16,7 +16,7 @@ describe('Prometheus config', () => {
       .click({ force: true });
   });
 
-  it(`should have the following components: 
+  it(`should have the following components:
         connection settings
         managed alerts
         scrape interval
