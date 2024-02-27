@@ -25,19 +25,21 @@ weight: 50
 
 # Configure panel options
 
-There are panel options common to all visualizations, such as a title and description.
+There are settings common to all visualizations, which you set in the **Panel options** section of the panel editor pane. The following sections describe these options as well as how to set them.
 
 ## Panel options
 
 Set the following options to provide basic information about a panel and define basic display elements.
 
-- **Title** - Text entered in this field appears at the top of your panel in the panel editor and in the dashboard. You can use [variables you have defined][] in the **Title** field, but not [global variables][].
-- **Description** - Text entered in this field appears in a tooltip in the upper-left corner of the panel. Add a description to a panel to share with users any important information about the visualization, such as its purpose. You can use [variables you have defined][] in the **Description** field, but not [global variables][].
-- **Transparent background** - Toggle this switch on and off to control whether or not the panel has as background color different from the dashboard.
-- **Panel links** - Add [links to the panel][] to create shortcuts to other dashboards, panels, and even external websites. Access panel links by clicking the icon next to the panel title.
-- **Repeat options** - Set whether to repeat the panel for each value in the selected variable. For more information, refer to [Configure repeating panels](#configure-repeating-panels).
+| Option                 | Description                                                                                                                                                                                                                                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Title                  | Text entered in this field appears at the top of your panel in the panel editor and in the dashboard. You can use [variables you have defined][] in the **Title** field, but not [global variables][].                                                                                                  |
+| Description            | Text entered in this field appears in a tooltip in the upper-left corner of the panel. Add a description to a panel to share with users any important information about it, such as its purpose. You can use [variables you have defined][] in the **Description** field, but not [global variables][]. |
+| Transparent background | Toggle this switch on and off to control whether or not the panel has the same background color as the dashboard.                                                                                                                                                                                       |
+| Panel links            | Add [links to the panel][] to create shortcuts to other dashboards, panels, and external websites. Access panel links by clicking the icon next to the panel title.                                                                                                                                     |
+| Repeat options         | Set whether to repeat the panel for each value in the selected variable. For more information, refer to [Configure repeating panels](#configure-repeating-panels).                                                                                                                                      |
 
-You can use generative AI to populate the **Title** and **Description** fields with the [Grafana LLM plugin][], which is currently in public preview. To enable this, refer to the [Set up generative AI features for dashboards documentation][]. Alternatively, you can take the following steps to create them yourself.
+You can use generative AI to populate the **Title** and **Description** fields with the [Grafana LLM plugin][], which is currently in public preview. To enable this, refer to [Set up generative AI features for dashboards][]. Alternatively, you can take the following steps to create them yourself.
 
 ## Configure repeating panels
 
@@ -45,24 +47,20 @@ You can configure Grafana to dynamically add panels or rows to a dashboard. A dy
 
 To see an example of repeating panels, refer to [this dashboard with repeating panels](https://play.grafana.org/d/testdata-repeating/testdata-repeating-panels?orgId=1).
 
-Repeating panels require variables to have one or more items selected; you can't repeat a panel zero times to hide it.
+**Before you begin:**
 
-<!-- what does this note mean exactly-->
-
-{{% admonition type="note" %}}
-Before you begin, ensure that the query includes a multi-value variable.
-{{% /admonition %}}
+- Ensure that the query includes a multi-value variable.
 
 To configure repeating panels, follow these steps:
 
 1. Navigate to the panel you want to update.
-1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
+1. Hover over any part of the panel to display the menu on the top right corner.
 1. Click the menu and select **Edit**.
 1. Open the **Panel options** section of the panel editor pane.
 1. Under **Repeat options**, select a variable in the **Repeat by variable** drop-down list.
 1. Under **Repeat direction**, choose one of the following:
 
-   - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. Currently, you can't mix other panels on a row with a repeated panel.
+   - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. You can't mix other panels on a row with a repeated panel.
    - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
 
 1. If you selected **Horizontal** in the previous step, select a value in the **Max per row** drop-down list to control the maximum number of panels that can be in a row.
@@ -84,8 +82,8 @@ You can stop a panel from repeating by selecting **Disable repeating** in the **
 [Grafana LLM plugin]: "/docs/grafana/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
 [Grafana LLM plugin]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
 
-[Set up generative AI features for dashboards documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
-[Set up generative AI features for dashboards documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
+[Set up generative AI features for dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
+[Set up generative AI features for dashboards]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
 
 [links to the panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links#panel-links"
 [links to the panel]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links#panel-links"
