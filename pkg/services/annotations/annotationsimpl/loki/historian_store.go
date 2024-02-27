@@ -128,6 +128,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 		err := json.Unmarshal([]byte(sample.V), &entry)
 		if err != nil {
 			// bad data, skip
+			r.log.Debug("failed to unmarshal loki entry", "error", err, "entry", sample.V)
 			continue
 		}
 
@@ -139,6 +140,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 		transition, err := buildTransition(entry)
 		if err != nil {
 			// bad data, skip
+			r.log.Debug("failed to build transition", "error", err, "entry", entry)
 			continue
 		}
 
