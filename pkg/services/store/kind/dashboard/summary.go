@@ -60,6 +60,7 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) en
 		summary.Fields["schemaVersion"] = fmt.Sprint(dash.SchemaVersion)
 
 		for _, panel := range dash.Panels {
+
 			panelRefs := NewReferenceAccumulator()
 			p := &entity.EntitySummary{
 				UID:  uid + "#" + strconv.FormatInt(panel.ID, 10),
