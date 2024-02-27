@@ -12,8 +12,8 @@ export function makeTableFrames(instantMetricFrames: DataFrame[]): DataFrame[] {
   return Object.entries(framesByRefId).map(([refId, frames]) => makeTableFrame(frames, refId));
 }
 
-type NumberField = Field<number, number[]>;
-type StringField = Field<string, string[]>;
+type NumberField = Field<number>;
+type StringField = Field<string>;
 
 function makeTableFrame(instantMetricFrames: DataFrame[], refId: string): DataFrame {
   const tableTimeField: NumberField = { name: 'Time', config: {}, values: [], type: FieldType.time };
