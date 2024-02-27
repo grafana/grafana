@@ -206,10 +206,10 @@ func validateForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Dur
 	return duration, nil
 }
 
-// validateRuleGroup validates API model (definitions.PostableRuleGroupConfig) and converts it to a collection of models.AlertRule.
+// ValidateRuleGroup validates API model (definitions.PostableRuleGroupConfig) and converts it to a collection of models.AlertRule.
 // Returns a slice that contains all rules described by API model or error if either group specification or an alert definition is not valid.
 // It also returns a map containing current existing alerts that don't contain the is_paused field in the body of the call.
-func validateRuleGroup(
+func ValidateRuleGroup(
 	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
 	orgId int64,
 	namespaceUID string,

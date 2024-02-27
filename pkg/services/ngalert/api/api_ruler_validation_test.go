@@ -197,7 +197,7 @@ func TestValidateRuleGroup(t *testing.T) {
 
 	t.Run("should validate struct and rules", func(t *testing.T) {
 		g := validGroup(cfg, rules...)
-		alerts, err := validateRuleGroup(&g, orgId, folder.UID, RuleLimitsFromConfig(cfg))
+		alerts, err := ValidateRuleGroup(&g, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 		require.NoError(t, err)
 		require.Len(t, alerts, len(rules))
 	})
@@ -205,7 +205,7 @@ func TestValidateRuleGroup(t *testing.T) {
 	t.Run("should default to default interval from config if group interval is 0", func(t *testing.T) {
 		g := validGroup(cfg, rules...)
 		g.Interval = 0
-		alerts, err := validateRuleGroup(&g, orgId, folder.UID, RuleLimitsFromConfig(cfg))
+		alerts, err := ValidateRuleGroup(&g, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 		require.NoError(t, err)
 		for _, alert := range alerts {
 			require.Equal(t, int64(cfg.DefaultRuleEvaluationInterval.Seconds()), alert.IntervalSeconds)
@@ -220,7 +220,7 @@ func TestValidateRuleGroup(t *testing.T) {
 			isPaused = !(isPaused)
 		}
 		g := validGroup(cfg, rules...)
-		alerts, err := validateRuleGroup(&g, orgId, folder.UID, RuleLimitsFromConfig(cfg))
+		alerts, err := ValidateRuleGroup(&g, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 		require.NoError(t, err)
 		for _, alert := range alerts {
 			require.True(t, alert.HasPause)
@@ -292,7 +292,7 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			g := testCase.group()
-			_, err := validateRuleGroup(g, orgId, folder.UID, RuleLimitsFromConfig(cfg))
+			_, err := ValidateRuleGroup(g, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 			require.Error(t, err)
 			if testCase.assert != nil {
 				testCase.assert(t, g, err)
