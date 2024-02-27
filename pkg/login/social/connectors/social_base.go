@@ -60,7 +60,6 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.info.AllowAssignGrafanaAdmin))
 	bf.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.info.AllowSignup))
 	bf.WriteString(fmt.Sprintf("allowed_domains = %v\n", s.info.AllowedDomains))
-	bf.WriteString(fmt.Sprintf("disable_hd_validation = %v\n", s.info.DisableHDValidation))
 	bf.WriteString(fmt.Sprintf("auto_assign_org_role = %v\n", s.cfg.AutoAssignOrgRole))
 	bf.WriteString(fmt.Sprintf("role_attribute_path = %v\n", s.info.RoleAttributePath))
 	bf.WriteString(fmt.Sprintf("role_attribute_strict = %v\n", s.info.RoleAttributeStrict))

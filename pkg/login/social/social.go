@@ -63,7 +63,6 @@ type OAuthInfo struct {
 	AutoLogin               bool              `mapstructure:"auto_login" toml:"auto_login"`
 	ClientId                string            `mapstructure:"client_id" toml:"client_id"`
 	ClientSecret            string            `mapstructure:"client_secret" toml:"-"`
-	DisableHDValidation     bool              `mapstructure:"disable_hd_validation" toml:"disable_hd_validation"`
 	EmailAttributeName      string            `mapstructure:"email_attribute_name" toml:"email_attribute_name"`
 	EmailAttributePath      string            `mapstructure:"email_attribute_path" toml:"email_attribute_path"`
 	EmptyScopes             bool              `mapstructure:"empty_scopes" toml:"empty_scopes"`
