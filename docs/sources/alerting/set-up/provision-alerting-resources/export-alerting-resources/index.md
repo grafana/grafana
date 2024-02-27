@@ -117,7 +117,7 @@ To export mute timings from the Grafana UI, complete the following steps.
 
 ## HTTP Alerting API
 
-You can use the [Alerting HTTP API][alerting_http_provisioning] to return existing alerting resources in JSON and import them to another Grafana instance using the same API. For instance:
+You can use the [Alerting HTTP API][alerting_http_provisioning] to return existing alerting resources in JSON and import them to another Grafana instance using the same endpoint. For instance:
 
 | Resource    | Method / URI                          | Summary                  |
 | ----------- | ------------------------------------- | ------------------------ |
