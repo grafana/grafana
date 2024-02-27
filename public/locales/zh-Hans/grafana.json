@@ -685,6 +685,81 @@
       "new-to-question": ""
     }
   },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "cta": {
+      "button": "",
+      "header": ""
+    },
+    "get-started": {
+      "body": "",
+      "configure-pdc-link": "",
+      "link-title": "",
+      "step-1": "",
+      "step-2": "",
+      "step-3": "",
+      "step-4": "",
+      "step-5": "",
+      "title": ""
+    },
+    "is-it-secure": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "migrate-to-this-stack": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "migration-token": {
+      "body": "",
+      "delete-button": "",
+      "delete-modal-body": "",
+      "delete-modal-cancel": "",
+      "delete-modal-confirm": "",
+      "delete-modal-deleting": "",
+      "delete-modal-title": "",
+      "generate-button": "",
+      "generate-button-loading": "",
+      "modal-close": "",
+      "modal-copy-and-close": "",
+      "modal-copy-button": "",
+      "modal-field-description": "",
+      "modal-field-label": "",
+      "modal-title": "",
+      "status": "",
+      "title": ""
+    },
+    "pdc": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "pricing": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "token-status": {
+      "active": "",
+      "no-active": ""
+    },
+    "what-is-cloud": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "why-host": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    }
+  },
   "nav": {
     "add-new-connections": {
       "title": "添加新连接"
