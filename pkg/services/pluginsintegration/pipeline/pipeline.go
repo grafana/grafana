@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
-func ProvideDiscoveryStage(cfg *config.PluginsCfg, pf finder.Finder, pr registry.Service) *discovery.Discovery {
+func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pf finder.Finder, pr registry.Service) *discovery.Discovery {
 	return discovery.New(cfg, discovery.Opts{
 		FindFunc: pf.Find,
 		FindFilterFuncs: []discovery.FindFilterFunc{
@@ -41,14 +41,14 @@ func ProvideDiscoveryStage(cfg *config.PluginsCfg, pf finder.Finder, pr registry
 	})
 }
 
-func ProvideBootstrapStage(cfg *config.PluginsCfg, sc plugins.SignatureCalculator, a *assetpath.Service) *bootstrap.Bootstrap {
+func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.SignatureCalculator, a *assetpath.Service) *bootstrap.Bootstrap {
 	return bootstrap.New(cfg, bootstrap.Opts{
 		ConstructFunc: bootstrap.DefaultConstructFunc(sc, a),
 		DecorateFuncs: bootstrap.DefaultDecorateFuncs(cfg),
 	})
 }
 
-func ProvideValidationStage(cfg *config.PluginsCfg, sv signature.Validator, ai angularinspector.Inspector,
+func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Validator, ai angularinspector.Inspector,
 	et pluginerrs.SignatureErrorTracker) *validation.Validate {
 	return validation.New(cfg, validation.Opts{
 		ValidateFuncs: []validation.ValidateFunc{
@@ -59,7 +59,7 @@ func ProvideValidationStage(cfg *config.PluginsCfg, sv signature.Validator, ai a
 	})
 }
 
-func ProvideInitializationStage(cfg *config.PluginsCfg, pr registry.Service, bp plugins.BackendFactoryProvider,
+func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Service, bp plugins.BackendFactoryProvider,
 	pm process.Manager, externalServiceRegistry auth.ExternalServiceRegistry,
 	roleRegistry plugins.RoleRegistry, pluginEnvProvider envvars.Provider) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
@@ -74,7 +74,7 @@ func ProvideInitializationStage(cfg *config.PluginsCfg, pr registry.Service, bp 
 	})
 }
 
-func ProvideTerminationStage(cfg *config.PluginsCfg, pr registry.Service, pm process.Manager) (*termination.Terminate, error) {
+func ProvideTerminationStage(cfg *config.PluginManagementCfg, pr registry.Service, pm process.Manager) (*termination.Terminate, error) {
 	return termination.New(cfg, termination.Opts{
 		TerminateFuncs: []termination.TerminateFunc{
 			termination.BackendProcessTerminatorStep(pm),

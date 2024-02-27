@@ -297,7 +297,7 @@ func TestDataSourceQueryError(t *testing.T) {
 					&fakeDatasources.FakeCacheService{},
 					nil,
 					&fakePluginRequestValidator{},
-					pluginClient.ProvideService(r, &config.PluginsCfg{}),
+					pluginClient.ProvideService(r, &config.PluginManagementCfg{}),
 					plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
 						PluginList: []pluginstore.Plugin{pluginstore.ToGrafanaDTO(p)},
 					},

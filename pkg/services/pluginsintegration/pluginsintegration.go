@@ -136,7 +136,7 @@ var WireExtensionSet = wire.NewSet(
 )
 
 func ProvideClientDecorator(
-	cfg *setting.Cfg, pCfg *pCfg.PluginsCfg,
+	cfg *setting.Cfg, pCfg *pCfg.PluginManagementCfg,
 	pluginRegistry registry.Service,
 	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer,
@@ -148,7 +148,7 @@ func ProvideClientDecorator(
 }
 
 func NewClientDecorator(
-	cfg *setting.Cfg, pCfg *pCfg.PluginsCfg,
+	cfg *setting.Cfg, pCfg *pCfg.PluginManagementCfg,
 	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager,
 	promRegisterer prometheus.Registerer, registry registry.Service,

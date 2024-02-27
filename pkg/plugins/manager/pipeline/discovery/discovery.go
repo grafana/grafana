@@ -40,7 +40,7 @@ type Opts struct {
 }
 
 // New returns a new Discovery stage.
-func New(cfg *config.PluginsCfg, opts Opts) *Discovery {
+func New(cfg *config.PluginManagementCfg, opts Opts) *Discovery {
 	if opts.FindFunc == nil {
 		opts.FindFunc = DefaultFindFunc(cfg)
 	}

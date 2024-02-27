@@ -84,7 +84,7 @@ type LoaderOpts struct {
 	Initializer  initialization.Initializer
 }
 
-func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginsCfg, opts LoaderOpts) *loader.Loader {
+func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts LoaderOpts) *loader.Loader {
 	if opts.Discoverer == nil {
 		opts.Discoverer = pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(cfg.DevMode, cfg.Features), registry.ProvideService())
 	}

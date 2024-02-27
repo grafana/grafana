@@ -5,9 +5,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// PluginsCfg is the configuration for the plugin management system.
+// PluginManagementCfg is the configuration for the plugin management system.
 // It includes settings which are used to configure different components of plugin management.
-type PluginsCfg struct {
+type PluginManagementCfg struct {
 	DevMode bool
 
 	PluginsPath string
@@ -32,12 +32,12 @@ type PluginsCfg struct {
 	HideAngularDeprecation []string
 }
 
-// NewPluginsCfg returns a new PluginsCfg.
-func NewPluginsCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
+// NewPluginManagementCfg returns a new PluginManagementCfg.
+func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	pluginsCDNURLTemplate string, appURL string, appSubURL string, tracing Tracing, features featuremgmt.FeatureToggles,
 	angularSupportEnabled bool, grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string,
-	forwardHostEnvVars []string) *PluginsCfg {
-	return &PluginsCfg{
+	forwardHostEnvVars []string) *PluginManagementCfg {
+	return &PluginManagementCfg{
 		PluginsPath:            pluginsPath,
 		DevMode:                devMode,
 		PluginSettings:         pluginSettings,

@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -23,14 +22,12 @@ var _ envvars.Provider = (*EnvVarsProvider)(nil)
 type EnvVarsProvider struct {
 	cfg     *PluginInstanceCfg
 	license plugins.Licensing
-	log     log.Logger
 }
 
 func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing) *EnvVarsProvider {
 	return &EnvVarsProvider{
 		cfg:     cfg,
 		license: license,
-		log:     log.New("plugin.envvars"),
 	}
 }
 
