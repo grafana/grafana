@@ -293,7 +293,7 @@ By default it is disabled. If enabled, then periodically `cert_key` and `cert_fi
 are watched for changes, if there is change seen then those are certs are loaded automatically.
 
 {{% admonition type="warning" %}}
-After the new certificates are loaded, connections which are established with old certificates
+After the new certificates are loaded, connections with old certificates
 will not work and those connections needs to be reloaded. 
 {{% /admonition %}}
 
