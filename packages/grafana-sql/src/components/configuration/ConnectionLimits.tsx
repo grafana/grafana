@@ -6,7 +6,8 @@ import { config } from '@grafana/runtime';
 import { Field, Icon, InlineLabel, Label, Switch, Tooltip } from '@grafana/ui';
 
 import { SQLConnectionLimits, SQLOptions } from '../../types';
-import { NumberInput } from '../NumberInput';
+
+import { NumberInput } from './NumberInput';
 
 interface Props<T> {
   onOptionsChange: Function;
@@ -108,8 +109,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
       >
         <NumberInput
           value={jsonData.maxOpenConns}
-          defaultValue={0}
-          placeholder="unlimited"
+          defaultValue={config.sqlConnectionLimits.maxOpenConns}
           onChange={(value) => {
             onMaxConnectionsChanged(value);
           }}
@@ -166,7 +166,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         ) : (
           <NumberInput
             value={jsonData.maxIdleConns}
-            defaultValue={2}
+            defaultValue={config.sqlConnectionLimits.maxIdleConns}
             onChange={(value) => {
               onJSONDataNumberChanged('maxIdleConns')(value);
             }}
@@ -197,7 +197,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
       >
         <NumberInput
           value={jsonData.connMaxLifetime}
-          defaultValue={14400}
+          defaultValue={config.sqlConnectionLimits.connMaxLifetime}
           onChange={(value) => {
             onJSONDataNumberChanged('connMaxLifetime')(value);
           }}

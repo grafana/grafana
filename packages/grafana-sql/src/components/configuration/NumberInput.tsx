@@ -7,16 +7,15 @@ type NumberInputProps = {
   defaultValue: number;
   onChange: (value: number) => void;
   width: number;
-  placeholder?: string;
   disabled?: boolean;
 };
 
-export function NumberInput({ value, defaultValue, onChange, width, placeholder, disabled }: NumberInputProps) {
+export function NumberInput({ value, defaultValue, onChange, width, disabled }: NumberInputProps) {
   const [isEmpty, setIsEmpty] = React.useState(false);
   return (
     <Input
       type="number"
-      placeholder={placeholder ?? String(defaultValue)}
+      placeholder={String(defaultValue)}
       value={isEmpty ? '' : value}
       onChange={(e) => {
         if (e.currentTarget.value?.trim() === '') {
