@@ -247,7 +247,6 @@ func TestGetProviderConfig_GrafanaComGrafanaNet(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-
 			iniFile, err := ini.Load([]byte(tc.rawIniContent))
 			require.NoError(t, err)
 
