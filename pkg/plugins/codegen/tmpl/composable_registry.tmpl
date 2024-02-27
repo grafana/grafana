@@ -7,7 +7,6 @@ import (
 
 type ComposableKind struct {
     Name string
-    Maturity string
     Filename string
     CueFile cue.Value
 }
@@ -23,7 +22,6 @@ func GetComposableKinds() ([]ComposableKind, error) {
     }
     kinds = append(kinds, ComposableKind{
         Name: "{{ .Name }}",
-        Maturity: "{{ .Maturity }}",
         Filename: "{{ .Filename }}",
         CueFile: {{ .Name }}Cue,
     })

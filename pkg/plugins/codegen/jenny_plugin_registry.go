@@ -2,7 +2,6 @@ package codegen
 
 import (
 	"bytes"
-	"cuelang.org/go/cue"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -36,14 +35,8 @@ func (jenny *PluginRegistryJenny) Generate(cueFiles []corecodegen.CueSchema) (*c
 			return nil, fmt.Errorf("unable to find schema name: %s", err)
 		}
 
-		maturity, err := getMaturity(v.CueFile)
-		if err != nil {
-			return nil, fmt.Errorf("unable to find maturity: %s", err)
-		}
-
 		schemas[i] = Schema{
 			Name:     name,
-			Maturity: maturity,
 			Filename: filepath.Base(v.FilePath),
 			FilePath: v.FilePath,
 		}
@@ -70,19 +63,4 @@ func getSchemaName(path string) (string, error) {
 	}
 	folderName = strings.ReplaceAll(folderName, "-", "")
 	return strings.ToLower(folderName), nil
-}
-
-func getMaturity(v cue.Value) (string, error) {
-	maturity := v.LookupPath(cue.ParsePath("composableKinds.DataQuery.maturity"))
-	if !maturity.Exists() {
-		maturity = v.LookupPath(cue.ParsePath("composableKinds.PanelCfg.maturity"))
-	}
-
-	m, err := maturity.String()
-	if err != nil {
-		// Some dataquery/panelcfg doesn't have maturity set, and it fails when we try to read this information.
-		m = "merged"
-	}
-
-	return m, nil
 }

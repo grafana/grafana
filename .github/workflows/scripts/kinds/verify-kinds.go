@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/cuecontext"
 	cueformat "cuelang.org/go/cue/format"
 	"github.com/google/go-github/github"
 	"github.com/grafana/codejen"
@@ -34,54 +33,12 @@ const (
 // If kind names are given as parameters, the script will make the above actions only for the
 // given kinds.
 func main() {
-	var corek []schemas.CoreKind
-	var compok []schemas.ComposableKind
 
 	kindRegistry, err := NewKindRegistry()
 	defer kindRegistry.cleanUp()
 	if err != nil {
 		die(err)
 	}
-
-	// Search for the latest version directory present in the kind-registry repo
-	latestRegistryDir, err := kindRegistry.findLatestDir()
-	if err != nil {
-		die(fmt.Errorf("failed to get latest directory for published kinds: %s", err))
-	}
-
-	errs := make([]error, 0)
-
-	// Kind verification
-	corekinds, err := schemas.GetCoreKinds()
-	if err != nil {
-		die(err)
-	}
-	for _, kind := range corekinds {
-		err := verifyKind(kindRegistry, kind.Maturity, kind.Name, "core", latestRegistryDir)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-
-		corek = append(corek, kind)
-	}
-
-	composableKinds, err := schemas.GetComposableKinds()
-	if err != nil {
-		die(err)
-	}
-	for _, kind := range composableKinds {
-		name := strings.ToLower(fmt.Sprintf("%s/%s", kind.Name, kind.Filename))
-		err = verifyKind(kindRegistry, kind.Maturity, name, "composable", latestRegistryDir)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-
-		compok = append(compok, kind)
-	}
-
-	die(errs...)
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		os.Exit(0)
@@ -91,19 +48,29 @@ func main() {
 	jfs := codejen.NewFS()
 	outputPath := filepath.Join(".github", "workflows", "scripts", "kinds")
 
+	corekinds, err := schemas.GetCoreKinds()
+	if err != nil {
+		die(err)
+	}
+
 	coreJennies := codejen.JennyList[schemas.CoreKind]{}
 	coreJennies.Append(
 		KindRegistryJenny(outputPath),
 	)
-	corefs, err := coreJennies.GenerateFS(corek...)
+	corefs, err := coreJennies.GenerateFS(corekinds...)
 	die(err)
 	die(jfs.Merge(corefs))
+
+	composableKinds, err := schemas.GetComposableKinds()
+	if err != nil {
+		die(err)
+	}
 
 	composableJennies := codejen.JennyList[schemas.ComposableKind]{}
 	composableJennies.Append(
 		ComposableKindRegistryJenny(outputPath),
 	)
-	composablefs, err := composableJennies.GenerateFS(compok...)
+	composablefs, err := composableJennies.GenerateFS(composableKinds...)
 	die(err)
 	die(jfs.Merge(composablefs))
 
@@ -171,37 +138,6 @@ func die(errs ...error) {
 		}
 		os.Exit(1)
 	}
-}
-
-// verifyKind verifies that stable kinds are not updated once published (new schemas
-// can be added but existing ones cannot be updated)
-func verifyKind(registry *kindRegistry, maturity string, name string, category string, latestRegistryDir string) error {
-	oldKindString, err := registry.getPublishedKind(name, category, latestRegistryDir)
-	if err != nil {
-		return err
-	}
-
-	ctx := cuecontext.New()
-	oldKind := ctx.CompileBytes(oldKindString)
-
-	// Kind is new - no need to compare it
-	if oldKind.Validate() != nil {
-		return nil
-	}
-
-	// Do we still need this??
-	maturityPath := oldKind.LookupPath(cue.ParsePath("maturity"))
-	oldMaturity, err := maturityPath.String()
-	if err != nil {
-		// Some schemas don't have maturity set
-		oldMaturity = "merged"
-	}
-	// Check that maturity isn't downgraded
-	if isLessMaturity(oldMaturity, maturity) {
-		return fmt.Errorf("kind maturity can't be downgraded once a kind is published")
-	}
-
-	return nil
 }
 
 func isLess(v1 []uint64, v2 []uint64) bool {

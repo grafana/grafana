@@ -9,7 +9,6 @@ import (
 
 type CoreKind struct {
     Name string
-    Maturity string
     CueFile cue.Value
 }
 
@@ -24,7 +23,6 @@ func GetCoreKinds() ([]CoreKind, error) {
     }
     kinds = append(kinds, CoreKind{
         Name: "{{ .Name }}",
-        Maturity: "{{ .Maturity }}",
         CueFile: {{ .Name }}Cue,
     })
     {{- end }}

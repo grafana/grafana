@@ -18,7 +18,6 @@ import (
 
 type CoreKind struct {
     Name string
-    Maturity string
     CueFile cue.Value
 }
 
@@ -32,7 +31,6 @@ func GetCoreKinds() ([]CoreKind, error) {
     }
     kinds = append(kinds, CoreKind{
         Name: "accesspolicy",
-        Maturity: "merged",
         CueFile: accesspolicyCue,
     })
     
@@ -42,7 +40,6 @@ func GetCoreKinds() ([]CoreKind, error) {
     }
     kinds = append(kinds, CoreKind{
         Name: "dashboard",
-        Maturity: "experimental",
         CueFile: dashboardCue,
     })
     
@@ -52,7 +49,6 @@ func GetCoreKinds() ([]CoreKind, error) {
     }
     kinds = append(kinds, CoreKind{
         Name: "librarypanel",
-        Maturity: "experimental",
         CueFile: librarypanelCue,
     })
     
@@ -62,7 +58,6 @@ func GetCoreKinds() ([]CoreKind, error) {
     }
     kinds = append(kinds, CoreKind{
         Name: "preferences",
-        Maturity: "merged",
         CueFile: preferencesCue,
     })
     
@@ -72,7 +67,6 @@ func GetCoreKinds() ([]CoreKind, error) {
     }
     kinds = append(kinds, CoreKind{
         Name: "publicdashboard",
-        Maturity: "merged",
         CueFile: publicdashboardCue,
     })
     
@@ -82,7 +76,6 @@ func GetCoreKinds() ([]CoreKind, error) {
     }
     kinds = append(kinds, CoreKind{
         Name: "role",
-        Maturity: "merged",
         CueFile: roleCue,
     })
     
@@ -92,7 +85,6 @@ func GetCoreKinds() ([]CoreKind, error) {
     }
     kinds = append(kinds, CoreKind{
         Name: "rolebinding",
-        Maturity: "merged",
         CueFile: rolebindingCue,
     })
     
@@ -102,7 +94,6 @@ func GetCoreKinds() ([]CoreKind, error) {
     }
     kinds = append(kinds, CoreKind{
         Name: "team",
-        Maturity: "merged",
         CueFile: teamCue,
     })
     

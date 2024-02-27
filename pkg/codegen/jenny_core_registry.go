@@ -28,14 +28,8 @@ func (jenny *CoreRegistryJenny) Generate(cueFiles []CueSchema) (codejen.Files, e
 			return nil, err
 		}
 
-		maturity, err := getMaturity(v.CueFile)
-		if err != nil {
-			return nil, err
-		}
-
 		schemas[i] = Schema{
 			Name:     name,
-			Maturity: maturity,
 			FilePath: v.FilePath,
 		}
 	}
@@ -59,14 +53,4 @@ func getSchemaName(v cue.Value) (string, error) {
 
 	name = strings.Replace(name, "-", "_", -1)
 	return strings.ToLower(name), nil
-}
-
-func getMaturity(v cue.Value) (string, error) {
-	maturity := v.LookupPath(cue.ParsePath("maturity"))
-	m, err := maturity.String()
-	if err != nil {
-		return "", fmt.Errorf("cannot extract maturity from schema: %s", err)
-	}
-
-	return m, nil
 }
