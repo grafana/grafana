@@ -39,7 +39,15 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     variable.setState({ datasource });
   };
   const onQueryChange = (query: VariableQueryType) => {
-    variable.setState({ query });
+    let definition: string;
+    if (typeof query === 'string') {
+      definition = query;
+    } else if (query.hasOwnProperty('query') && typeof query.query === 'string') {
+      definition = query.query;
+    } else {
+      definition = '';
+    }
+    variable.setState({ query, definition });
     onRunQuery();
   };
 
