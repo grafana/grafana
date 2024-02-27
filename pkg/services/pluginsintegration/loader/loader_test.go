@@ -508,116 +508,11 @@ func TestLoader_Load(t *testing.T) {
 }
 
 func TestLoader_Load_ExternalRegistration(t *testing.T) {
-	boolPtr := func(b bool) *bool { return &b }
 	stringPtr := func(s string) *string { return &s }
-
-	t.Run("Load a plugin with oauth client registration", func(t *testing.T) {
-		cfg := &config.Cfg{
-			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
-			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
-			AWSAssumeRoleEnabled: true,
-		}
-		pluginPaths := []string{filepath.Join(testDataDir(t), "oauth-external-registration")}
-		expected := []*plugins.Plugin{
-			{JSONData: plugins.JSONData{
-				ID:         "grafana-test-datasource",
-				Type:       plugins.TypeDataSource,
-				Name:       "Test",
-				Backend:    true,
-				Executable: "gpx_test_datasource",
-				Info: plugins.Info{
-					Author: plugins.InfoLink{
-						Name: "Grafana Labs",
-						URL:  "https://grafana.com",
-					},
-					Version: "1.0.0",
-					Logos: plugins.Logos{
-						Small: "public/plugins/grafana-test-datasource/img/ds.svg",
-						Large: "public/plugins/grafana-test-datasource/img/ds.svg",
-					},
-					Updated:     "2023-08-03",
-					Screenshots: []plugins.Screenshots{},
-				},
-				Dependencies: plugins.Dependencies{
-					GrafanaVersion: "*",
-					Plugins:        []plugins.Dependency{},
-				},
-				IAM: &plugindef.IAM{
-					Impersonation: &plugindef.Impersonation{
-						Groups: boolPtr(true),
-						Permissions: []plugindef.Permission{
-							{
-								Action: "read",
-								Scope:  stringPtr("datasource"),
-							},
-						},
-					},
-					Permissions: []plugindef.Permission{
-						{
-							Action: "read",
-							Scope:  stringPtr("datasource"),
-						},
-					},
-				},
-			},
-				FS:        mustNewStaticFSForTests(t, pluginPaths[0]),
-				Class:     plugins.ClassExternal,
-				Signature: plugins.SignatureStatusUnsigned,
-				Module:    "public/plugins/grafana-test-datasource/module.js",
-				BaseURL:   "public/plugins/grafana-test-datasource",
-				ExternalService: &auth.ExternalService{
-					ClientID:     "client-id",
-					ClientSecret: "secretz",
-					PrivateKey:   "priv@t3",
-				},
-			},
-		}
-
-		backendFactoryProvider := fakes.NewFakeBackendProcessProvider()
-		backendFactoryProvider.BackendFactoryFunc = func(ctx context.Context, plugin *plugins.Plugin) backendplugin.PluginFactoryFunc {
-			return func(pluginID string, logger log.Logger, env func() []string) (backendplugin.Plugin, error) {
-				require.Equal(t, "grafana-test-datasource", pluginID)
-				require.Equal(t, []string{
-					"GF_VERSION=", "GF_EDITION=", "GF_ENTERPRISE_LICENSE_PATH=",
-					"GF_ENTERPRISE_APP_URL=", "GF_ENTERPRISE_LICENSE_TEXT=", "GF_APP_URL=",
-					"GF_PLUGIN_APP_CLIENT_ID=client-id", "GF_PLUGIN_APP_CLIENT_SECRET=secretz",
-					"GF_PLUGIN_APP_PRIVATE_KEY=priv@t3", "GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAuth",
-				}, env())
-				return &fakes.FakeBackendPlugin{}, nil
-			}
-		}
-
-		l := newLoaderWithOpts(t, cfg, loaderDepOpts{
-			authServiceRegistry: &fakes.FakeAuthService{
-				Result: &auth.ExternalService{
-					ClientID:     "client-id",
-					ClientSecret: "secretz",
-					PrivateKey:   "priv@t3",
-				},
-			},
-			backendFactoryProvider: backendFactoryProvider,
-		})
-		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
-			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.ClassExternal
-			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return pluginPaths
-			},
-			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
-				return plugins.Signature{}, false
-			},
-		})
-
-		require.NoError(t, err)
-		if !cmp.Equal(got, expected, compareOpts...) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
-		}
-	})
 
 	t.Run("Load a plugin with service account registration", func(t *testing.T) {
 		cfg := &config.Cfg{
-			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
+			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts),
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
 			AWSAssumeRoleEnabled: true,
 		}
@@ -676,7 +571,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					"GF_VERSION=", "GF_EDITION=", "GF_ENTERPRISE_LICENSE_PATH=",
 					"GF_ENTERPRISE_APP_URL=", "GF_ENTERPRISE_LICENSE_TEXT=", "GF_APP_URL=",
 					"GF_PLUGIN_APP_CLIENT_ID=client-id", "GF_PLUGIN_APP_CLIENT_SECRET=secretz",
-					"GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAuth",
+					"GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAccounts",
 				}, env())
 				return &fakes.FakeBackendPlugin{}, nil
 			}

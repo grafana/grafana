@@ -149,6 +149,9 @@ type Cfg struct {
 	RendererAuthToken              string
 	RendererConcurrentRequestLimit int
 	RendererRenderKeyLifeTime      time.Duration
+	RendererDefaultImageWidth      int
+	RendererDefaultImageHeight     int
+	RendererDefaultImageScale      float64
 
 	// Security
 	DisableInitAdminCreation          bool
@@ -339,7 +342,7 @@ type Cfg struct {
 
 	// IP range access control
 	IPRangeACEnabled     bool
-	IPRangeACAllowedURLs []string
+	IPRangeACAllowedURLs []*url.URL
 	IPRangeACSecretKey   string
 
 	// SQL Data sources
@@ -1739,6 +1742,9 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
+	cfg.RendererDefaultImageWidth = renderSec.Key("default_image_width").MustInt(1000)
+	cfg.RendererDefaultImageHeight = renderSec.Key("default_image_height").MustInt(500)
+	cfg.RendererDefaultImageScale = renderSec.Key("default_image_scale").MustFloat64(1)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 	cfg.PDFsDir = filepath.Join(cfg.DataPath, "pdf")
@@ -1949,7 +1955,15 @@ func (cfg *Cfg) readDataSourceSecuritySettings() {
 	cfg.IPRangeACEnabled = datasources.Key("enabled").MustBool(false)
 	cfg.IPRangeACSecretKey = datasources.Key("secret_key").MustString("")
 	allowedURLString := datasources.Key("allow_list").MustString("")
-	cfg.IPRangeACAllowedURLs = util.SplitString(allowedURLString)
+	for _, urlString := range util.SplitString(allowedURLString) {
+		allowedURL, err := url.Parse(urlString)
+		if err != nil {
+			cfg.Logger.Error("Error parsing allowed URL for IP range access control", "error", err)
+			continue
+		} else {
+			cfg.IPRangeACAllowedURLs = append(cfg.IPRangeACAllowedURLs, allowedURL)
+		}
+	}
 }
 
 func (cfg *Cfg) readSqlDataSourceSettings() {

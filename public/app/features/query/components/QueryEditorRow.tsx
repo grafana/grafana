@@ -405,6 +405,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     return (
       <Badge
+        key="query-warning"
         color="orange"
         icon="exclamation-triangle"
         text={
