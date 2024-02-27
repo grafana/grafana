@@ -735,6 +735,8 @@
       "modal-close": "Close",
       "modal-copy-and-close": "Copy to clipboard and close",
       "modal-copy-button": "Copy to clipboard",
+      "modal-field-description": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.",
+      "modal-field-label": "Token",
       "modal-title": "Migration token created",
       "status": "Current status: <2></2>",
       "title": "Migration token"

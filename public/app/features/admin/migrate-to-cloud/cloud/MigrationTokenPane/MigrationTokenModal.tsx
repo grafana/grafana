@@ -18,9 +18,12 @@ export const MigrationTokenModal = ({ hideModal, migrationToken }: Props) => {
       onDismiss={hideModal}
     >
       <Field
-        description="Copy the token now as you will not be able to see it again. Losing a token requires creating a new one."
+        description={t(
+          'migrate-to-cloud.migration-token.modal-field-description',
+          'Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.'
+        )}
         htmlFor={inputId}
-        label="Token"
+        label={t('migrate-to-cloud.migration-token.modal-field-label', 'Token')}
       >
         <Stack>
           <Input id={inputId} value={migrationToken} readOnly />
