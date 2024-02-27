@@ -127,5 +127,19 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
         validator: () => true,
       }),
     },
+    {
+      name: 'Is like',
+      id: ValueMatcherID.like,
+      component: basicMatcherEditor<string | number | boolean>({
+        validator: () => true,
+      }),
+    },
+    {
+      name: 'Is not like',
+      id: ValueMatcherID.notLike,
+      component: basicMatcherEditor<string | number | boolean>({
+        validator: () => true,
+      }),
+    },
   ];
 };
