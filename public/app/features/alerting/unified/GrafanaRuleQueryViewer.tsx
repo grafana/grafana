@@ -5,6 +5,7 @@ import React from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, RelativeTimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
 import { Badge, Stack, useStyles2 } from '@grafana/ui';
 import { mapRelativeTimeRangeToOption } from '@grafana/ui/src/components/DateTimePickers/RelativeTimeRangePicker/utils';
 
@@ -181,6 +182,9 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
 
       case ExpressionQueryType.threshold:
         return <ThresholdExpressionViewer model={model} />;
+
+      case ExpressionQueryType.sql:
+        return <Preview rawSql={model.expression || ''} datasourceType={model.datasource?.type} />;
 
       default:
         return <>Expression not supported: {model.type}</>;
