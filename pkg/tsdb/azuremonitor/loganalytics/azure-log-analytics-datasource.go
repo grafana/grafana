@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -254,9 +255,17 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, logger 
 		"query":    query.Query,
 		"timespan": timespan,
 	}
+
 	if len(query.Resources) > 1 {
-		body["workspaces"] = query.Resources
+		str := strings.ToLower(query.Resources[0])
+
+		if strings.Contains(str, "microsoft.operationalinsights/workspaces") {
+			body["workspaces"] = query.Resources
+		} else {
+			body["resources"] = query.Resources
+		}
 	}
+
 	jsonValue, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
@@ -267,6 +276,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, logger 
 		logger.Debug("Failed to create request", "error", err)
 		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
 	}
+
 	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
