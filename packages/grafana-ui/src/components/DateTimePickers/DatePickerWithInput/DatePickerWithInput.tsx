@@ -51,7 +51,7 @@ export const DatePickerWithInput = ({
   ];
 
   const { context, refs, floatingStyles } = useFloating({
-    open: open,
+    open,
     placement: 'bottom-start',
     onOpenChange: setOpen,
     middleware,
@@ -81,7 +81,7 @@ export const DatePickerWithInput = ({
         {...rest}
         {...getReferenceProps()}
       />
-      <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
+      <div className={styles.popover} ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
         <DatePicker
           isOpen={open}
           value={value && typeof value !== 'string' ? value : dateTime().toDate()}
@@ -111,6 +111,9 @@ const getStyles = () => {
         display: 'none',
         WebkitAppearance: 'none',
       },
+    }),
+    popover: css({
+      zIndex: 1,
     }),
   };
 };
