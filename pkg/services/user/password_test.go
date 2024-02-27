@@ -21,7 +21,7 @@ func TestPasswowrdService_ValidatePasswordHardcodePolicy(t *testing.T) {
 		{
 			name:                        "should return error when the password has less than 4 characters and strong password policy is disabled",
 			passwordTest:                NUMBER,
-			expectedError:               ErrPasswordTooShort,
+			expectedError:               ErrPasswordTooShort.Errorf("new password is too short"),
 			strongPasswordPolicyEnabled: false,
 		},
 		{name: "should not return error when the password has 4 characters and strong password policy is disabled",
@@ -32,31 +32,31 @@ func TestPasswowrdService_ValidatePasswordHardcodePolicy(t *testing.T) {
 		{
 			name:                        "should return error when the password has less than 12 characters and strong password policy is enabled",
 			passwordTest:                NUMBER,
-			expectedError:               ErrPasswordTooShort,
+			expectedError:               ErrPasswordPolicyInfringe.Errorf("new password is too short for the strong password policy"),
 			strongPasswordPolicyEnabled: true,
 		},
 		{
 			name:                        "should return error when the password is missing an uppercase character and strong password policy is enabled",
 			passwordTest:                LOWERCASE + NUMBER + SYMBOLS,
-			expectedError:               ErrPasswordPolicyInfringe,
+			expectedError:               ErrPasswordPolicyInfringe.Errorf("new password doesn't comply with the password policy"),
 			strongPasswordPolicyEnabled: true,
 		},
 		{
 			name:                        "should return error when the password is missing a lowercase character and strong password policy is enabled",
 			passwordTest:                UPPERCASE + NUMBER + SYMBOLS,
-			expectedError:               ErrPasswordPolicyInfringe,
+			expectedError:               ErrPasswordPolicyInfringe.Errorf("new password doesn't comply with the password policy"),
 			strongPasswordPolicyEnabled: true,
 		},
 		{
 			name:                        "should return error when the password is missing a number character and strong password policy is enabled",
 			passwordTest:                LOWERCASE + UPPERCASE + SYMBOLS,
-			expectedError:               ErrPasswordPolicyInfringe,
+			expectedError:               ErrPasswordPolicyInfringe.Errorf("new password doesn't comply with the password policy"),
 			strongPasswordPolicyEnabled: true,
 		},
 		{
 			name:                        "should return error when the password is missing a symbol characters and strong password policy is enabled",
 			passwordTest:                LOWERCASE + UPPERCASE + NUMBER,
-			expectedError:               ErrPasswordPolicyInfringe,
+			expectedError:               ErrPasswordPolicyInfringe.Errorf("new password doesn't comply with the password policy"),
 			strongPasswordPolicyEnabled: true,
 		},
 		{
