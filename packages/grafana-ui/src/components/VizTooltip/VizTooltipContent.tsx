@@ -15,12 +15,7 @@ interface VizTooltipContentProps {
   isPinned: boolean;
 }
 
-export const VizTooltipContent = ({
-  items,
-  children,
-  isPinned,
-  scrollable = false,
-}: VizTooltipContentProps) => {
+export const VizTooltipContent = ({ items, children, isPinned, scrollable = false }: VizTooltipContentProps) => {
   const styles = useStyles2(getStyles);
 
   const scrollableStyle: CSSProperties = scrollable
