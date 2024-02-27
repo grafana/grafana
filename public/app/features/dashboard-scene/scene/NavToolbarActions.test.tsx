@@ -28,6 +28,7 @@ describe('NavToolbarActions', () => {
       setup();
 
       expect(screen.queryByText('Save dashboard')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Add visualization')).not.toBeInTheDocument();
       expect(await screen.findByText('Edit')).toBeInTheDocument();
       expect(await screen.findByText('Share')).toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
@@ -69,6 +70,7 @@ describe('NavToolbarActions', () => {
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(await screen.findByText('Exit edit')).toBeInTheDocument();
+      expect(await screen.findByLabelText('Add visualization')).toBeInTheDocument();
       expect(screen.queryByText('Edit')).not.toBeInTheDocument();
       expect(screen.queryByText('Share')).not.toBeInTheDocument();
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
