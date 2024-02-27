@@ -268,6 +268,10 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]
 			if !ok {
+				_, ok := cmdNode.Command.(*SQLCommand)
+				if ok {
+					continue
+				}
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
 			}
 
@@ -327,3 +331,24 @@ func hasSqlExpression(dp DataPipeline) bool {
 	}
 	return false
 }
+
+// func graphHasSqlExpresssion(dp *simple.DirectedGraph) bool {
+// 	node := dp.Nodes()
+// 	for node.Next() {
+// 		if cmdNode, ok := node.Node().(*CMDNode); ok {
+// 			// res[dpNode.RefID()] = dpNode
+// 			_, ok := cmdNode.Command.(*SQLCommand)
+// 			if ok {
+// 				return true
+// 			}
+// 		}
+// 		// if node.NodeType() == TypeCMDNode {
+// 		// 	cmdNode := node.(*CMDNode)
+// 		// 	_, ok := cmdNode.Command.(*SQLCommand)
+// 		// 	if ok {
+// 		// 		return true
+// 		// 	}
+// 		// }
+// 	}
+// 	return false
+// }

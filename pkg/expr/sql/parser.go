@@ -3,6 +3,7 @@ package sql
 import (
 	"errors"
 
+	parser "github.com/krasun/gosqlparser"
 	"github.com/xwb1989/sqlparser"
 )
 
@@ -10,7 +11,7 @@ import (
 func TablesList(rawSQL string) ([]string, error) {
 	stmt, err := sqlparser.Parse(rawSQL)
 	if err != nil {
-		return nil, err
+		return parse(rawSQL)
 	}
 
 	tables := []string{}
@@ -25,4 +26,19 @@ func TablesList(rawSQL string) ([]string, error) {
 		return nil, errors.New("not a select statement")
 	}
 	return tables, nil
+}
+
+// uses a simple tokenizer
+func parse(rawSQL string) ([]string, error) {
+	query, err := parser.Parse(rawSQL)
+	if err != nil {
+		return nil, err
+	}
+	if query.GetType() == parser.StatementSelect {
+		sel, ok := query.(*parser.Select)
+		if ok {
+			return []string{sel.Table}, nil
+		}
+	}
+	return nil, err
 }
