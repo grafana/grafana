@@ -43,7 +43,7 @@ A very important feature of alert rules is that they support custom annotations 
 
 ### Labels and states
 
-Alert rules are uniquely identified by sets of key/value pairs called labels. Each key is a label name and each value is a label value. For example, one alert might have the labels `foo=bar` and another alert rulle might have the labels `foo=baz`. An alert rule can have many labels such as `foo=bar,bar=baz`, but it cannot have the same label twice such as `foo=bar,foo=baz`. Two alert rules cannot have the same labels either, and if two alert rules have the same labels such as `foo=bar,bar=baz` and `foo=bar,bar=baz` then one of the alerts will be discarded. Firing alerts are resolved when the condition in the alert rule is no longer met, or the alert rule is deleted.
+Alert rules are uniquely identified by sets of key/value pairs called labels. Each key is a label name and each value is a label value. For example, one alert might have the labels `foo=bar` and another alert rule might have the labels `foo=baz`. An alert rule can have many labels such as `foo=bar,bar=baz`, but it cannot have the same label twice such as `foo=bar,foo=baz`. Two alert rules cannot have the same labels either, and if two alert rules have the same labels such as `foo=bar,bar=baz` and `foo=bar,bar=baz` then one of the alerts will be discarded. Firing alerts are resolved when the condition in the alert rule is no longer met, or the alert rule is deleted.
 
 In Grafana-managed alert rules, alert rules can be in Normal, Pending, Alerting, No Data or Error states. In datasource-managed alert rules, such as Mimir and Loki, alert rules can be in Normal, Pending and Alerting, but not NoData or Error.
 
