@@ -12,19 +12,13 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"testing/fstest"
 
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	cueformat "cuelang.org/go/cue/format"
 	"github.com/google/go-github/github"
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/codegen"
-	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
-	"github.com/grafana/grafana/pkg/plugins/pfs/corelist"
-	"github.com/grafana/grafana/pkg/registry/corekind"
-	"github.com/grafana/kindsys"
-	"github.com/grafana/thema"
+	"github.com/grafana/grafana/pkg/registry/schemas"
 	"golang.org/x/oauth2"
 )
 
@@ -40,8 +34,8 @@ const (
 // If kind names are given as parameters, the script will make the above actions only for the
 // given kinds.
 func main() {
-	var corek []kindsys.Kind
-	var compok []kindsys.Composable
+	var corek []schemas.CoreKind
+	var compok []schemas.ComposableKind
 
 	kindRegistry, err := NewKindRegistry()
 	defer kindRegistry.cleanUp()
@@ -58,9 +52,12 @@ func main() {
 	errs := make([]error, 0)
 
 	// Kind verification
-	for _, kind := range corekind.NewBase(nil).All() {
-		name := kind.Props().Common().MachineName
-		err := verifyKind(kindRegistry, kind, name, "core", latestRegistryDir)
+	corekinds, err := schemas.GetCoreKinds()
+	if err != nil {
+		die(err)
+	}
+	for _, kind := range corekinds {
+		err := verifyKind(kindRegistry, kind.Maturity, kind.Name, "core", latestRegistryDir)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -69,23 +66,19 @@ func main() {
 		corek = append(corek, kind)
 	}
 
-	for _, pp := range corelist.New(nil) {
-		for _, kind := range pp.ComposableKinds {
-			si, err := kindsys.FindSchemaInterface(kind.Def().Properties.SchemaInterface)
-			if err != nil {
-				errs = append(errs, err)
-				continue
-			}
-
-			name := strings.ToLower(fmt.Sprintf("%s/%s", strings.TrimSuffix(kind.Lineage().Name(), si.Name()), si.Name()))
-			err = verifyKind(kindRegistry, kind, name, "composable", latestRegistryDir)
-			if err != nil {
-				errs = append(errs, err)
-				continue
-			}
-
-			compok = append(compok, kind)
+	composableKinds, err := schemas.GetComposableKinds()
+	if err != nil {
+		die(err)
+	}
+	for _, kind := range composableKinds {
+		name := strings.ToLower(fmt.Sprintf("%s/%s", kind.Name, kind.Filename))
+		err = verifyKind(kindRegistry, kind.Maturity, name, "composable", latestRegistryDir)
+		if err != nil {
+			errs = append(errs, err)
+			continue
 		}
+
+		compok = append(compok, kind)
 	}
 
 	die(errs...)
@@ -98,7 +91,7 @@ func main() {
 	jfs := codejen.NewFS()
 	outputPath := filepath.Join(".github", "workflows", "scripts", "kinds")
 
-	coreJennies := codejen.JennyList[kindsys.Kind]{}
+	coreJennies := codejen.JennyList[schemas.CoreKind]{}
 	coreJennies.Append(
 		KindRegistryJenny(outputPath),
 	)
@@ -106,7 +99,7 @@ func main() {
 	die(err)
 	die(jfs.Merge(corefs))
 
-	composableJennies := codejen.JennyList[kindsys.Composable]{}
+	composableJennies := codejen.JennyList[schemas.ComposableKind]{}
 	composableJennies.Append(
 		ComposableKindRegistryJenny(outputPath),
 	)
@@ -182,45 +175,30 @@ func die(errs ...error) {
 
 // verifyKind verifies that stable kinds are not updated once published (new schemas
 // can be added but existing ones cannot be updated)
-func verifyKind(registry *kindRegistry, kind kindsys.Kind, name string, category string, latestRegistryDir string) error {
+func verifyKind(registry *kindRegistry, maturity string, name string, category string, latestRegistryDir string) error {
 	oldKindString, err := registry.getPublishedKind(name, category, latestRegistryDir)
 	if err != nil {
 		return err
 	}
 
-	var oldKind kindsys.Kind
-	if oldKindString != "" {
-		switch category {
-		case "core":
-			oldKind, err = loadCoreKind(name, oldKindString)
-		case "composable":
-			oldKind, err = loadComposableKind(name, oldKindString)
-		default:
-			return fmt.Errorf("kind can only be core or composable")
-		}
-	}
-	if err != nil {
-		return err
-	}
+	ctx := cuecontext.New()
+	oldKind := ctx.CompileBytes(oldKindString)
 
 	// Kind is new - no need to compare it
-	if oldKind == nil {
+	if oldKind.Validate() != nil {
 		return nil
 	}
 
-	// Check that maturity isn't downgraded
-	if kind.Maturity().Less(oldKind.Maturity()) {
-		return fmt.Errorf("kind maturity can't be downgraded once a kind is published")
-	}
-
-	if oldKind.Maturity().Less(kindsys.MaturityStable) {
-		return nil
-	}
-
-	// Check that old schemas do not contain updates
-	err = thema.IsAppendOnly(oldKind.Lineage(), kind.Lineage())
+	// Do we still need this??
+	maturityPath := oldKind.LookupPath(cue.ParsePath("maturity"))
+	oldMaturity, err := maturityPath.String()
 	if err != nil {
-		return fmt.Errorf("existing schemas in lineage %s cannot be modified: %w", name, err)
+		// Some schemas don't have maturity set
+		oldMaturity = "merged"
+	}
+	// Check that maturity isn't downgraded
+	if isLessMaturity(oldMaturity, maturity) {
+		return fmt.Errorf("kind maturity can't be downgraded once a kind is published")
 	}
 
 	return nil
@@ -234,47 +212,8 @@ func isLess(v1 []uint64, v2 []uint64) bool {
 	return v1[0] < v2[0] || (v1[0] == v2[0] && isLess(v1[2:], v2[2:]))
 }
 
-func loadCoreKind(name string, kind string) (kindsys.Kind, error) {
-	fs := fstest.MapFS{
-		fmt.Sprintf("%s.cue", name): &fstest.MapFile{
-			Data: []byte(kind),
-		},
-	}
-
-	rt := cuectx.GrafanaThemaRuntime()
-
-	def, err := cuectx.LoadCoreKindDef(fmt.Sprintf("%s.cue", name), rt.Context(), fs)
-	if err != nil {
-		return nil, fmt.Errorf("%s is not a valid kind: %w", name, err)
-	}
-
-	return kindsys.BindCore(rt, def)
-}
-
-func loadComposableKind(name string, kind string) (kindsys.Kind, error) {
-	parts := strings.Split(name, "/")
-	if len(parts) > 1 {
-		name = parts[1]
-	}
-
-	fs := fstest.MapFS{
-		fmt.Sprintf("%s.cue", name): &fstest.MapFile{
-			Data: []byte(kind),
-		},
-	}
-
-	rt := cuectx.GrafanaThemaRuntime()
-
-	def, err := pfs.LoadComposableKindDef(fs, rt, fmt.Sprintf("%s.cue", name))
-	if err != nil {
-		return nil, fmt.Errorf("%s is not a valid kind: %w", name, err)
-	}
-
-	return kindsys.BindComposable(rt, def)
-}
-
 // KindRegistryJenny generates kind files into the "next" folder of the local kind registry.
-func KindRegistryJenny(path string) codegen.OneToOne {
+func KindRegistryJenny(path string) codejen.OneToOne[schemas.CoreKind] {
 	return &kindregjenny{
 		path: path,
 	}
@@ -288,19 +227,13 @@ func (j *kindregjenny) JennyName() string {
 	return "KindRegistryJenny"
 }
 
-func (j *kindregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
-	name := kind.Props().Common().MachineName
-	core, ok := kind.(kindsys.Core)
-	if !ok {
-		return nil, fmt.Errorf("kind sent to KindRegistryJenny must be a core kind")
-	}
-
-	newKindBytes, err := kindToBytes(core.Def().V)
+func (j *kindregjenny) Generate(kind schemas.CoreKind) (*codejen.File, error) {
+	newKindBytes, err := kindToBytes(kind.CueFile)
 	if err != nil {
 		return nil, err
 	}
 
-	path := filepath.Join(j.path, "next", "core", name, name+".cue")
+	path := filepath.Join(j.path, "next", "core", kind.Name, kind.Name+".cue")
 	return codejen.NewFile(path, newKindBytes, j), nil
 }
 
@@ -316,7 +249,7 @@ func kindToBytes(kind cue.Value) ([]byte, error) {
 }
 
 // ComposableKindRegistryJenny generates kind files into the "next" folder of the local kind registry.
-func ComposableKindRegistryJenny(path string) codejen.OneToOne[kindsys.Composable] {
+func ComposableKindRegistryJenny(path string) codejen.OneToOne[schemas.ComposableKind] {
 	return &ckrJenny{
 		path: path,
 	}
@@ -330,15 +263,11 @@ func (j *ckrJenny) JennyName() string {
 	return "ComposableKindRegistryJenny"
 }
 
-func (j *ckrJenny) Generate(k kindsys.Composable) (*codejen.File, error) {
-	si, err := kindsys.FindSchemaInterface(k.Def().Properties.SchemaInterface)
-	if err != nil {
-		panic(err)
-	}
+func (j *ckrJenny) Generate(k schemas.ComposableKind) (*codejen.File, error) {
 
-	name := strings.ToLower(fmt.Sprintf("%s/%s", strings.TrimSuffix(k.Lineage().Name(), si.Name()), si.Name()))
+	name := strings.ToLower(fmt.Sprintf("%s/%s", k.Name, k.Filename))
 
-	newKindBytes, err := kindToBytes(k.Def().V)
+	newKindBytes, err := kindToBytes(k.CueFile)
 	if err != nil {
 		return nil, err
 	}
@@ -447,9 +376,9 @@ func (registry *kindRegistry) findLatestDir() (string, error) {
 }
 
 // getPublishedKind retrieves the latest published kind from the kind registry
-func (registry *kindRegistry) getPublishedKind(name string, category string, latestRegistryDir string) (string, error) {
+func (registry *kindRegistry) getPublishedKind(name string, category string, latestRegistryDir string) ([]byte, error) {
 	if latestRegistryDir == "" {
-		return "", nil
+		return nil, nil
 	}
 
 	var cueFilePath string
@@ -459,20 +388,45 @@ func (registry *kindRegistry) getPublishedKind(name string, category string, lat
 	case "composable":
 		cueFilePath = fmt.Sprintf("%s.cue", name)
 	default:
-		return "", fmt.Errorf("kind can only be core or composable")
+		return nil, fmt.Errorf("kind can only be core or composable")
 	}
 
 	kindPath := filepath.Join(latestRegistryDir, category, cueFilePath)
 	file, err := registry.zipFile.Open(kindPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to open file: %w", err)
+		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return "", fmt.Errorf("failed to read file: %w", err)
+		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	return string(data), nil
+	return data, nil
+}
+
+func isLessMaturity(old, new string) bool {
+	var order = []string{
+		"merged",
+		"experimental",
+		"stable",
+		"mature",
+	}
+
+	oldOrder := 0
+	for i, oldMaturity := range order {
+		if oldMaturity == old {
+			oldOrder = i
+		}
+	}
+
+	newOrder := 0
+	for i, newMaturity := range order {
+		if newMaturity == new {
+			newOrder = i
+		}
+	}
+
+	return newOrder < oldOrder
 }

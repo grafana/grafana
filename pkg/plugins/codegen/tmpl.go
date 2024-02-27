@@ -38,6 +38,7 @@ type (
 	Schema struct {
 		Name     string
 		Maturity string
+		Filename string
 		FilePath string
 	}
 )

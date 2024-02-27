@@ -44,6 +44,7 @@ func (jenny *PluginRegistryJenny) Generate(cueFiles []corecodegen.CueSchema) (*c
 		schemas[i] = Schema{
 			Name:     name,
 			Maturity: maturity,
+			Filename: filepath.Base(v.FilePath),
 			FilePath: v.FilePath,
 		}
 	}
@@ -80,7 +81,7 @@ func getMaturity(v cue.Value) (string, error) {
 	m, err := maturity.String()
 	if err != nil {
 		// Some dataquery/panelcfg doesn't have maturity set, and it fails when we try to read this information.
-		m = "experimental"
+		m = "merged"
 	}
 
 	return m, nil
