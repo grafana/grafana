@@ -70,19 +70,19 @@ To configure repeating panels, follow these steps:
 You can stop a panel from repeating by selecting **Disable repeating** in the **Repeat by variable** drop-down list.
 
 {{% docs/reference %}}
-[variables you have defined]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[variables you have defined]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables you have defined]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/variables"
+[variables you have defined]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables"
 
-[global variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#global-variables"
-[global variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#global-variables"
+[global variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables#global-variables"
+[global variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables#global-variables"
 
-[Configure repeating rows]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
-[Configure repeating rows]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
+[Configure repeating rows]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
+[Configure repeating rows]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
 
 [Grafana LLM plugin]: "/docs/grafana/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
 [Grafana LLM plugin]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
 
-[Set up generative AI features for dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
+[Set up generative AI features for dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
 [Set up generative AI features for dashboards]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
 
 [links to the panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links#panel-links"
