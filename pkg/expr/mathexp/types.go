@@ -251,7 +251,7 @@ func NewNoData() NoData {
 type RowData struct{ Frame *data.Frame }
 
 // Type returns the Value type and allows it to fulfill the Value interface.
-func (s RowData) Type() parse.ReturnType { return parse.TypeRowData }
+func (s RowData) Type() parse.ReturnType { return parse.TypeTableData }
 
 // Value returns the actual value allows it to fulfill the Value interface.
 func (s RowData) Value() any { return s }

@@ -405,8 +405,8 @@ const (
 	TypeVariantSet
 	// TypeNoData is a no data response without a known data type.
 	TypeNoData
-	// TypeRowData is a data response from SQL Expression.
-	TypeRowData
+	// TypeTableData is a tabular data response.
+	TypeTableData
 )
 
 // String returns a string representation of the ReturnType.
@@ -424,8 +424,8 @@ func (f ReturnType) String() string {
 		return "variant"
 	case TypeNoData:
 		return "noData"
-	case TypeRowData:
-		return "rowData"
+	case TypeTableData:
+		return "tableData"
 	default:
 		return "unknown"
 	}
