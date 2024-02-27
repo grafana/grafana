@@ -99,6 +99,8 @@
 /pkg/mocks/ @grafana/backend-platform
 /pkg/models/ @grafana/backend-platform
 /pkg/server/ @grafana/backend-platform
+/pkg/apiserver @grafana/grafana-app-platform-squad
+/pkg/apimachinery @grafana/grafana-app-platform-squad
 /pkg/services/annotations/ @grafana/backend-platform
 /pkg/services/apikey/ @grafana/identity-access-team
 /pkg/services/cleanup/ @grafana/backend-platform
@@ -271,7 +273,6 @@
 /pkg/services/store/ @grafana/grafana-app-platform-squad
 /pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad
-/pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
 /pkg/generated @grafana/grafana-app-platform-squad
 
@@ -380,6 +381,10 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/identity-access-team
+
+# Temp owners until Enterprise team takes over
+/public/app/features/admin/migrate-to-cloud @grafana/grafana-frontend-platform
+
 /public/app/features/auth-config/ @grafana/identity-access-team
 /public/app/features/annotations/ @grafana/dashboards-squad
 /public/app/features/api-keys/ @grafana/identity-access-team
@@ -604,7 +609,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
 /pkg/services/featuremgmt/ @grafana/grafana-operator-experience-squad
-/pkg/services/cloudmigrations/ @grafana/grafana-operator-experience-squad
+/pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad

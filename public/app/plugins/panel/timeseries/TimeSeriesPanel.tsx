@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 
 import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -51,10 +51,16 @@ export const TimeSeriesPanel = ({
   }, [frames, id]);
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-  const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
+
+  // TODO: we should just re-init when this changes, and have this be a static setting
+  const syncTooltip = useCallback(
+    () => sync?.() === DashboardCursorSync.Tooltip,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   if (!frames || suggestions) {
     return (
@@ -102,7 +108,7 @@ export const TimeSeriesPanel = ({
 
         return (
           <>
-            {!showNewVizTooltips && <KeyboardPlugin config={uplotConfig} />}
+            <KeyboardPlugin config={uplotConfig} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <>
                 {showNewVizTooltips ? (
@@ -113,11 +119,8 @@ export const TimeSeriesPanel = ({
                     }
                     queryZoom={onChangeTimeRange}
                     clientZoom={true}
+                    syncTooltip={syncTooltip}
                     render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
-                      if (viaSync) {
-                        return null;
-                      }
-
                       if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
@@ -138,7 +141,7 @@ export const TimeSeriesPanel = ({
                           seriesFrame={alignedDataFrame}
                           dataIdxs={dataIdxs}
                           seriesIdx={seriesIdx}
-                          mode={options.tooltip.mode}
+                          mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
                           annotate={enableAnnotationCreation ? annotate : undefined}
