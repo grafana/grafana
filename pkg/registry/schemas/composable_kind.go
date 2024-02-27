@@ -22,7 +22,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
     }
     kinds = append(kinds, ComposableKind{
         Name: "azuremonitor",
-        Maturity: "experimental",
+        Maturity: "merged",
         Filename: "dataquery.cue",
         CueFile: azuremonitorCue,
     })
@@ -33,7 +33,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
     }
     kinds = append(kinds, ComposableKind{
         Name: "googlecloudmonitoring",
-        Maturity: "experimental",
+        Maturity: "merged",
         Filename: "dataquery.cue",
         CueFile: googlecloudmonitoringCue,
     })
@@ -132,7 +132,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
     }
     kinds = append(kinds, ComposableKind{
         Name: "alertgroups",
-        Maturity: "experimental",
+        Maturity: "merged",
         Filename: "panelcfg.cue",
         CueFile: alertgroupsCue,
     })
@@ -253,7 +253,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
     }
     kinds = append(kinds, ComposableKind{
         Name: "heatmap",
-        Maturity: "experimental",
+        Maturity: "merged",
         Filename: "panelcfg.cue",
         CueFile: heatmapCue,
     })
@@ -374,7 +374,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
     }
     kinds = append(kinds, ComposableKind{
         Name: "timeseries",
-        Maturity: "experimental",
+        Maturity: "merged",
         Filename: "panelcfg.cue",
         CueFile: timeseriesCue,
     })
@@ -385,7 +385,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
     }
     kinds = append(kinds, ComposableKind{
         Name: "trend",
-        Maturity: "experimental",
+        Maturity: "merged",
         Filename: "panelcfg.cue",
         CueFile: trendCue,
     })
