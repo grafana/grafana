@@ -92,7 +92,7 @@ require (
 	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3 // @grafana/alerting-squad-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/backend-platform
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/backend-platform
-	github.com/scottlepp/go-duck v0.0.15 // @grafana/backend-platform
+	github.com/scottlepp/go-duck v0.0.15 // @grafana/grafana-app-platform-squad
 	github.com/stretchr/testify v1.8.4 // @grafana/backend-platform
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/backend-platform
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f // @grafana/backend-platform
@@ -484,7 +484,7 @@ require (
 	github.com/mithrandie/go-file/v2 v2.1.0 // indirect
 	github.com/mithrandie/go-text v1.5.4 // indirect
 	github.com/mithrandie/ternary v1.1.1 // indirect
-	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // @grafana/backend-platform
+	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // @grafana/grafana-app-platform-squad
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
