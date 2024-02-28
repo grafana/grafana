@@ -106,7 +106,7 @@ enabled = false
 
 ### Strong password policy
 
-By default, the password policy for all basic auth users is set to a minimum of 4 characters. You can enable a stronger password policy with the `password_policy` configuration option.
+By default, the password policy for all basic auth users is set to a minimum of four characters. You can enable a stronger password policy with the `password_policy` configuration option.
 
 With the `password_policy` option enabled, new and updated passwords must meet the following criteria:
 
