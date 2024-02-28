@@ -103,7 +103,7 @@ function getCellStyle(
   displayValue: DisplayValue,
   disableOverflowOnHover = false,
   isStringValue = false,
-  shouldWrapText = false,
+  shouldWrapText = false
 ) {
   // How much to darken elements depends upon if we're in dark mode
   const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
@@ -132,13 +132,23 @@ function getCellStyle(
   // If we have definied colors return those styles
   // Otherwise we return default styles
   if (textColor !== undefined || bgColor !== undefined) {
-    return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover, isStringValue, shouldWrapText);
+    return tableStyles.buildCellContainerStyle(
+      textColor,
+      bgColor,
+      !disableOverflowOnHover,
+      isStringValue,
+      shouldWrapText
+    );
   }
 
   if (isStringValue) {
-    return disableOverflowOnHover ? tableStyles.buildCellContainerStyle(undefined, undefined, false, true, shouldWrapText) : tableStyles.buildCellContainerStyle(undefined, undefined, true, true, shouldWrapText);
+    return disableOverflowOnHover
+      ? tableStyles.buildCellContainerStyle(undefined, undefined, false, true, shouldWrapText)
+      : tableStyles.buildCellContainerStyle(undefined, undefined, true, true, shouldWrapText);
   } else {
-    return disableOverflowOnHover ? tableStyles.buildCellContainerStyle(undefined, undefined, false, shouldWrapText) : tableStyles.buildCellContainerStyle(undefined, undefined, true, false, shouldWrapText);
+    return disableOverflowOnHover
+      ? tableStyles.buildCellContainerStyle(undefined, undefined, false, shouldWrapText)
+      : tableStyles.buildCellContainerStyle(undefined, undefined, true, false, shouldWrapText);
   }
 }
 
