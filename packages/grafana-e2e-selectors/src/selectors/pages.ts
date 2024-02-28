@@ -190,6 +190,7 @@ export const Pages = {
           AdHocFiltersVariable: {
             datasourceSelect: Components.DataSourcePicker.inputV2,
             infoText: 'data-testid ad-hoc filters variable info text',
+            modeToggle: 'data-testid ad-hoc filters variable mode toggle',
           },
         },
       },

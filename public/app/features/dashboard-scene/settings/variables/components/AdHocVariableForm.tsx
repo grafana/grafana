@@ -8,7 +8,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 
 import { VariableLegend } from './VariableLegend';
 
-interface AdHocVariableFormProps {
+export interface AdHocVariableFormProps {
   datasource?: DataSourceRef;
   onDataSourceChange: (dsSettings: DataSourceInstanceSettings) => void;
   infoText?: string;
@@ -55,7 +55,7 @@ export function AdHocVariableForm({
         <>
           <Field label="Use static key dimensions" description="Provide dimensions as CSV: dimensionName, dimensionId">
             <Switch
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.modeToggle}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle}
               value={staticKeys !== undefined}
               onChange={(e) => {
                 if (staticKeys === undefined) {
