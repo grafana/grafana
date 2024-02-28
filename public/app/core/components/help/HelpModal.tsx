@@ -34,6 +34,38 @@ const getShortcuts = (modKey: string) => {
       ],
     },
     {
+      category: t('help-modal.shortcuts-category.time-range', 'Time range'),
+      shortcuts: [
+        {
+          keys: ['t', 'z'],
+          description: t('help-modal.shortcuts-description.zoom-out-time-range', 'Zoom out time range'),
+        },
+        {
+          keys: ['t', '←'],
+          description: t('help-modal.shortcuts-description.move-time-range-back', 'Move time range back'),
+        },
+        {
+          keys: ['t', '→'],
+          description: t('help-modal.shortcuts-description.move-time-range-forward', 'Move time range forward'),
+        },
+        {
+          keys: ['t', 'a'],
+          description: t(
+            'help-modal.shortcuts-description.make-time-range-permanent',
+            'Make time range absolute/permanent'
+          ),
+        },
+        {
+          keys: ['t', 'c'],
+          description: t('help-modal.shortcuts-description.copy-time-range', 'Copy time range'),
+        },
+        {
+          keys: ['t', 'v'],
+          description: t('help-modal.shortcuts-description.paste-time-range', 'Paste time range'),
+        },
+      ],
+    },
+    {
       category: t('help-modal.shortcuts-category.dashboard', 'Dashboard'),
       shortcuts: [
         {
@@ -86,7 +118,7 @@ const getShortcuts = (modKey: string) => {
       ],
     },
     {
-      category: t('help-modal.shortcuts-category.focused-panel', 'Focused Panel'),
+      category: t('help-modal.shortcuts-category.focused-panel', 'Focused panel'),
       shortcuts: [
         {
           keys: ['e'],
@@ -105,38 +137,6 @@ const getShortcuts = (modKey: string) => {
         {
           keys: ['p', 'l'],
           description: t('help-modal.shortcuts-description.toggle-panel-legend', 'Toggle panel legend'),
-        },
-      ],
-    },
-    {
-      category: t('help-modal.shortcuts-category.time-range', 'Time Range'),
-      shortcuts: [
-        {
-          keys: ['t', 'z'],
-          description: t('help-modal.shortcuts-description.zoom-out-time-range', 'Zoom out time range'),
-        },
-        {
-          keys: ['t', '←'],
-          description: t('help-modal.shortcuts-description.move-time-range-back', 'Move time range back'),
-        },
-        {
-          keys: ['t', '→'],
-          description: t('help-modal.shortcuts-description.move-time-range-forward', 'Move time range forward'),
-        },
-        {
-          keys: ['t', 'a'],
-          description: t(
-            'help-modal.shortcuts-description.make-time-range-permanent',
-            'Make time range absolute/permanent'
-          ),
-        },
-        {
-          keys: ['t', 'c'],
-          description: t('help-modal.shortcuts-description.copy-time-range', 'Copy time range'),
-        },
-        {
-          keys: ['t', 'v'],
-          description: t('help-modal.shortcuts-description.paste-time-range', 'Paste time range'),
         },
       ],
     },
