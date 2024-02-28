@@ -82,7 +82,7 @@ export function AppChrome({ children }: Props) {
           <LinkButton className={styles.skipLink} href="#pageContent">
             Skip to main content
           </LinkButton>
-          <div className={cx(styles.topNav)}>
+          <header className={cx(styles.topNav)}>
             {!searchBarHidden && <TopSearchBar />}
             <NavToolbar
               searchBarHidden={searchBarHidden}
@@ -93,7 +93,7 @@ export function AppChrome({ children }: Props) {
               onToggleMegaMenu={handleMegaMenu}
               onToggleKioskMode={chrome.onToggleKioskMode}
             />
-          </div>
+          </header>
         </>
       )}
       <div className={contentClass}>
