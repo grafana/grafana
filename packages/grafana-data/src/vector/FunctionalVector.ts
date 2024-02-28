@@ -183,7 +183,7 @@ const emptyarray: any[] = [];
  *
  * @deprecated use a simple Arrays
  */
-function vectorator<T>(vector: FunctionalVector<T>) {
+export function vectorator<T>(vector: FunctionalVector<T>) {
   return {
     *[Symbol.iterator]() {
       for (let i = 0; i < vector.length; i++) {
