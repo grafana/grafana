@@ -19,7 +19,7 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
   const styles = useStyles2(getStyles);
   const useWideLayout = width > 600;
   const newsItem = data.get(index);
-  const titleId = `news-item-title-${index}`;
+  const titleId = encodeURI(newsItem.title);
 
   return (
     <article aria-labelledby={titleId} className={cx(styles.item, useWideLayout && styles.itemWide)}>
