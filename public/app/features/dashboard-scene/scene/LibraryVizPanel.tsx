@@ -1,9 +1,12 @@
 import React from 'react';
 
+import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
+import { LibraryElementDTO, LibraryElementKind } from 'app/features/library-panels/types';
 
+import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
@@ -19,6 +22,7 @@ interface LibraryVizPanelState extends SceneObjectState {
   isLoaded?: boolean;
   panelKey: string;
   _loadedVersion?: number;
+  folderUID?: string;
 }
 
 export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
@@ -72,7 +76,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
         ],
       });
 
-      this.setState({ panel, _loadedVersion: libPanel.version, isLoaded: true });
+      this.setState({ panel, _loadedVersion: libPanel.version, isLoaded: true, folderUID: libPanel.folderUid });
     } catch (err) {
       vizPanel.setState({
         _pluginLoadError: 'Unable to load library panel: ' + this.state.uid,
@@ -99,4 +103,29 @@ function LibraryPanelRenderer({ model }: SceneComponentProps<LibraryVizPanel>) {
   }
 
   return <panel.Component model={panel} />;
+}
+
+function libraryPanelToSaveModel(libraryPanel: LibraryVizPanel) {
+  const { panel, uid, folderUID, name, _loadedVersion: version } = libraryPanel.state;
+  const saveModel = {
+    uid,
+    folderUID,
+    name,
+    version: (version || 0) + 1,
+    model: vizPanelToPanel(panel!),
+    kind: LibraryElementKind.Panel,
+  };
+  return saveModel;
+}
+
+export async function updateLibraryPanel(libraryPanel: LibraryVizPanel): Promise<LibraryElementDTO> {
+  const { uid, folderUID, name, model, version, kind } = libraryPanelToSaveModel(libraryPanel);
+  const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
+    folderUID,
+    name,
+    model,
+    version,
+    kind,
+  });
+  return result;
 }

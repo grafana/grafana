@@ -90,6 +90,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     this.state.vizManager.commitChanges();
   }
+
+  public saveLibraryPanel() {
+    this.state.vizManager.commitChanges();
+    locationService.partial({ editPanel: null });
+  }
 }
 
 export function buildPanelEditScene(panel: VizPanel): PanelEditor {

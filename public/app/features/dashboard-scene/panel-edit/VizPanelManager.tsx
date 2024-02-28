@@ -35,7 +35,7 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryVizPanel, updateLibraryPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, getLibraryPanel } from '../utils/utils';
@@ -337,6 +337,18 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
           $data: this.state.$data?.clone(),
         }),
       });
+    }
+    if (sourcePanel.parent instanceof LibraryVizPanel) {
+      if (sourcePanel.parent.parent instanceof SceneGridItem) {
+        sourcePanel.parent.parent.setState({
+          body: this.state.libraryPanel?.clone({
+            panel: this.state.panel.clone({
+              $data: this.state.$data?.clone(),
+            }),
+          }),
+        });
+      }
+      updateLibraryPanel(sourcePanel.parent);
     }
   }
 
