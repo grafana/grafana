@@ -184,6 +184,12 @@ func WithInterval(interval time.Duration) AlertRuleMutator {
 	}
 }
 
+func WithIntervalBetween(min, max int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.IntervalSeconds = rand.Int63n(max-min) + min
+	}
+}
+
 func WithTitle(title string) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.Title = title

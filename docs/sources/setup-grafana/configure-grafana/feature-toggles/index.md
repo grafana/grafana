@@ -168,6 +168,7 @@ Experimental features might be changed or removed without prior notice.
 | `regressionTransformation`                  | Enables regression analysis transformation                                                                                                                                                                                                                                        |
 | `displayAnonymousStats`                     | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                                                                         |
 | `newFolderPicker`                           | Enables the nested folder picker without having nested folders enabled                                                                                                                                                                                                            |
+| `jitterAlertRules`                          | Distributes alert rule evaluations more evenly over time, by rule group                                                                                                                                                                                                           |
 
 ## Development feature toggles
 

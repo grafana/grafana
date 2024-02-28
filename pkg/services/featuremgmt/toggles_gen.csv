@@ -150,3 +150,5 @@ pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,2023-11-15
 regressionTransformation,experimental,@grafana/grafana-bi-squad,2023-11-24,false,false,false,true
 displayAnonymousStats,experimental,@grafana/identity-access-team,2023-11-29,false,false,false,true
 newFolderPicker,experimental,@grafana/grafana-frontend-platform,2024-01-12,false,false,false,true
+jitterAlertRules,experimental,@grafana/alerting-squad,2024-01-17,false,false,true,false
+jitterAlertRulesWithinGroups,experimental,@grafana/alerting-squad,2024-01-17,false,false,true,false
