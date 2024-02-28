@@ -1,4 +1,5 @@
 import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
+import { config } from 'app/core/config';
 
 import { EvalFunction } from '../alerting/state/alertDef';
 
@@ -13,6 +14,7 @@ export enum ExpressionQueryType {
   resample = 'resample',
   classic = 'classic_conditions',
   threshold = 'threshold',
+  sql = 'sql',
 }
 
 export const getExpressionLabel = (type: ExpressionQueryType) => {
@@ -27,6 +29,8 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
       return 'Classic condition';
     case ExpressionQueryType.threshold:
       return 'Threshold';
+    case ExpressionQueryType.sql:
+      return 'SQL';
   }
 };
 
@@ -59,7 +63,17 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
     description:
       'Takes one or more time series returned from a query or an expression and checks if any of the series match the threshold condition.',
   },
-];
+  {
+    value: ExpressionQueryType.sql,
+    label: 'SQL',
+    description: 'Transform data using SQL. Supports Aggregate/Analytics functions from DuckDB',
+  },
+].filter((expr) => {
+  if (expr.value === ExpressionQueryType.sql) {
+    return config.featureToggles?.sqlExpressions;
+  }
+  return true;
+});
 
 export const reducerTypes: Array<SelectableValue<string>> = [
   { value: ReducerID.min, label: 'Min', description: 'Get the minimum value' },

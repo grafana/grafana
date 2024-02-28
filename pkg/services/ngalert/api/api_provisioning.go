@@ -38,7 +38,7 @@ type ContactPointService interface {
 }
 
 type TemplateService interface {
-	GetTemplates(ctx context.Context, orgID int64) (map[string]string, error)
+	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
 	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
 	DeleteTemplate(ctx context.Context, orgID int64, name string) error
 }
@@ -201,11 +201,7 @@ func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) respon
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	result := make([]definitions.NotificationTemplate, 0, len(templates))
-	for k, v := range templates {
-		result = append(result, definitions.NotificationTemplate{Name: k, Template: v})
-	}
-	return response.JSON(http.StatusOK, result)
+	return response.JSON(http.StatusOK, templates)
 }
 
 func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name string) response.Response {
@@ -213,8 +209,10 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name st
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	if tmpl, ok := templates[name]; ok {
-		return response.JSON(http.StatusOK, definitions.NotificationTemplate{Name: name, Template: tmpl})
+	for _, tmpl := range templates {
+		if tmpl.Name == name {
+			return response.JSON(http.StatusOK, tmpl)
+		}
 	}
 	return response.Empty(http.StatusNotFound)
 }
@@ -606,11 +604,11 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 		return nil
 	}
 	if err := convertToResources(); err != nil {
-		return response.Error(500, "failed to convert to HCL resources", err)
+		return response.Error(http.StatusInternalServerError, "failed to convert to HCL resources", err)
 	}
 	hclBody, err := hcl.Encode(resources...)
 	if err != nil {
-		return response.Error(500, "body hcl encode", err)
+		return response.Error(http.StatusInternalServerError, "body hcl encode", err)
 	}
 	resp := response.Respond(http.StatusOK, hclBody)
 	if download {

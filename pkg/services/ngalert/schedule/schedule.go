@@ -213,41 +213,6 @@ type readyToRunItem struct {
 	evaluation
 }
 
-func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
-	rulesPerOrg := make(map[int64]int64)                // orgID -> count
-	orgsPaused := make(map[int64]int64)                 // orgID -> count
-	groupsPerOrg := make(map[int64]map[string]struct{}) // orgID -> set of groups
-	for _, rule := range alertRules {
-		rulesPerOrg[rule.OrgID]++
-
-		if rule.IsPaused {
-			orgsPaused[rule.OrgID]++
-		}
-
-		orgGroups, ok := groupsPerOrg[rule.OrgID]
-		if !ok {
-			orgGroups = make(map[string]struct{})
-			groupsPerOrg[rule.OrgID] = orgGroups
-		}
-		orgGroups[rule.RuleGroup] = struct{}{}
-	}
-
-	for orgID, numRules := range rulesPerOrg {
-		numRulesPaused := orgsPaused[orgID]
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRuleActiveLabelValue).Set(float64(numRules - numRulesPaused))
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRulePausedLabelValue).Set(float64(numRulesPaused))
-	}
-
-	for orgID, groups := range groupsPerOrg {
-		sch.metrics.Groups.WithLabelValues(fmt.Sprint(orgID)).Set(float64(len(groups)))
-	}
-
-	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
-	// scheduled as rules could be removed before we get a chance to evaluate them.
-	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
-	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
-}
-
 // TODO refactor to accept a callback for tests that will be called with things that are returned currently, and return nothing.
 // Returns a slice of rules that were scheduled for evaluation, map of stopped rules, and a slice of updated rules
 func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}, []ngmodels.AlertRuleKeyWithVersion) {
@@ -485,7 +450,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			e.scheduledAt,
 			e.rule,
 			results,
-			state.GetRuleExtraLabels(e.rule, e.folderTitle, !sch.disableGrafanaFolder),
+			state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !sch.disableGrafanaFolder),
 		)
 		processDuration.Observe(sch.clock.Now().Sub(start).Seconds())
 

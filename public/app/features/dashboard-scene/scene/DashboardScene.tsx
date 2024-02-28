@@ -45,7 +45,15 @@ import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
-import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanelClone } from '../utils/utils';
+import {
+  NEW_PANEL_HEIGHT,
+  NEW_PANEL_WIDTH,
+  forceRenderChildren,
+  getClosestVizPanel,
+  getDefaultVizPanel,
+  getPanelIdForVizPanel,
+  isPanelClone,
+} from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
@@ -75,7 +83,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** NavToolbar actions */
   actions?: SceneObject[];
   /** Fixed row at the top of the canvas with for example variables and time range controls */
-  controls?: SceneObject[];
+  controls?: DashboardControls;
   /** True when editing */
   isEditing?: boolean;
   /** True when user made a change */
@@ -94,6 +102,7 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
+  isEmpty?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -414,6 +423,33 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
+  public addPanel(vizPanel: VizPanel): void {
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    // move all gridItems below the new one
+    for (const child of sceneGridLayout.state.children) {
+      child.setState({
+        y: NEW_PANEL_HEIGHT + (child.state.y ?? 0),
+      });
+    }
+
+    const newGridItem = new SceneGridItem({
+      height: NEW_PANEL_HEIGHT,
+      width: NEW_PANEL_WIDTH,
+      x: 0,
+      y: 0,
+      body: vizPanel,
+    });
+
+    sceneGridLayout.setState({
+      children: [newGridItem, ...sceneGridLayout.state.children],
+    });
+  }
+
   public duplicatePanel(vizPanel: VizPanel) {
     if (!vizPanel.parent) {
       return;
@@ -504,6 +540,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.partial({ editview: 'settings' });
   };
 
+  public onCreateNewPanel(): number {
+    const vizPanel = getDefaultVizPanel(this);
+
+    this.addPanel(vizPanel);
+
+    return getPanelIdForVizPanel(vizPanel);
+  }
+
   /**
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
    */
@@ -523,7 +567,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       app: CoreApp.Dashboard,
       dashboardUID: this.state.uid,
       panelId,
-      panelPluginType: panel?.state.pluginId,
+      panelPluginId: panel?.state.pluginId,
     };
   }
 

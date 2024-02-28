@@ -20,7 +20,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { eventBus, eventsScope, sync } = this.context;
-    const { theme, timeZone, renderers, tweakAxis, tweakScale } = this.props;
+    const { theme, timeZone, options, renderers, tweakAxis, tweakScale } = this.props;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
@@ -34,6 +34,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       tweakScale,
       tweakAxis,
       eventsScope,
+      hoverProximity: options?.tooltip?.hoverProximity,
     });
   };
 

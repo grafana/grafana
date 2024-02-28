@@ -17,7 +17,6 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
 import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
-import { dashboardSceneGraph } from './dashboardSceneGraph';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from './utils';
 
 /**
@@ -68,8 +67,8 @@ export class DashboardModelCompatibilityWrapper {
 
   public get timepicker() {
     return {
-      refresh_intervals: dashboardSceneGraph.getRefreshPicker(this._scene)?.state.intervals,
-      hidden: dashboardSceneGraph.getDashboardControls(this._scene)?.state.hideTimeControls ?? false,
+      refresh_intervals: this._scene.state.controls!.state.refreshPicker.state.intervals,
+      hidden: this._scene.state.controls!.state.hideTimeControls ?? false,
     };
   }
 

@@ -341,9 +341,8 @@ const (
 	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
-	ActionUsersRead        = "users:read"
-	ActionUsersWrite       = "users:write"
-	ActionUsersImpersonate = "users:impersonate"
+	ActionUsersRead  = "users:read"
+	ActionUsersWrite = "users:write"
 
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec

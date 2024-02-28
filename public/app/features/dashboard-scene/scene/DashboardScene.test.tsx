@@ -3,12 +3,12 @@ import {
   sceneGraph,
   SceneGridItem,
   SceneGridLayout,
-  SceneRefreshPicker,
   SceneTimeRange,
   SceneQueryRunner,
   SceneVariableSet,
   TestVariable,
   VizPanel,
+  SceneGridRow,
 } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -22,11 +22,18 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 
 import { DashboardControls } from './DashboardControls';
-import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+    };
+  },
+}));
 
 describe('DashboardScene', () => {
   describe('DashboardSrv.getCurrent compatibility', () => {
@@ -71,7 +78,7 @@ describe('DashboardScene', () => {
         ${'links'}       | ${[]}
       `(
         'A change to $prop should set isDirty true',
-        ({ prop, value }: { prop: keyof DashboardSceneState; value: any }) => {
+        ({ prop, value }: { prop: keyof DashboardSceneState; value: unknown }) => {
           const prevState = scene.state[prop];
           scene.setState({ [prop]: value });
 
@@ -94,14 +101,14 @@ describe('DashboardScene', () => {
       });
 
       it('A change to time picker visibility settings should set isDirty true', () => {
-        const dashboardControls = dashboardSceneGraph.getDashboardControls(scene)!;
+        const dashboardControls = scene.state.controls!;
         const prevState = dashboardControls.state.hideTimeControls;
         dashboardControls.setState({ hideTimeControls: true });
 
         expect(scene.state.isDirty).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true });
-        expect(dashboardSceneGraph.getDashboardControls(scene)!.state.hideTimeControls).toEqual(prevState);
+        expect(scene.state.controls!.state.hideTimeControls).toEqual(prevState);
       });
 
       it('A change to time zone should set isDirty true', () => {
@@ -114,6 +121,43 @@ describe('DashboardScene', () => {
         scene.exitEditMode({ skipConfirm: true });
         expect(sceneGraph.getTimeRange(scene)!.state.timeZone).toBe(prevState);
       });
+
+      it('Should throw an error when adding a panel to a layout that is not SceneGridLayout', () => {
+        const scene = buildTestScene({ body: undefined });
+
+        expect(() => {
+          scene.addPanel(new VizPanel({ title: 'Panel Title', key: 'panel-4', pluginId: 'timeseries' }));
+        }).toThrow('Trying to add a panel in a layout that is not SceneGridLayout');
+      });
+
+      it('Should add a new panel to the dashboard', () => {
+        const vizPanel = new VizPanel({
+          title: 'Panel Title',
+          key: 'panel-4',
+          pluginId: 'timeseries',
+          $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+        });
+
+        scene.addPanel(vizPanel);
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridItem = body.state.children[0] as SceneGridItem;
+
+        expect(scene.state.isDirty).toBe(true);
+        expect(body.state.children.length).toBe(5);
+        expect(gridItem.state.body!.state.key).toBe('panel-4');
+      });
+
+      it('Should create and add a new panel to the dashboard', () => {
+        scene.onCreateNewPanel();
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridItem = body.state.children[0] as SceneGridItem;
+
+        expect(scene.state.isDirty).toBe(true);
+        expect(body.state.children.length).toBe(5);
+        expect(gridItem.state.body!.state.key).toBe('panel-4');
+      });
     });
   });
 
@@ -125,13 +169,13 @@ describe('DashboardScene', () => {
       scene.onEnterEditMode();
     });
 
-    it('Should add app, uid, panelId and panelPluginType', () => {
+    it('Should add app, uid, panelId and panelPluginId', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner')!;
       expect(scene.enrichDataRequest(queryRunner)).toEqual({
         app: CoreApp.Dashboard,
         dashboardUID: 'dash-1',
         panelId: 1,
-        panelPluginType: 'table',
+        panelPluginId: 'table',
       });
     });
 
@@ -217,17 +261,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
     $timeRange: new SceneTimeRange({
       timeZone: 'browser',
     }),
-    controls: [
-      new DashboardControls({
-        variableControls: [],
-        linkControls: new DashboardLinksControls({}),
-        timeControls: [
-          new SceneRefreshPicker({
-            intervals: ['1s'],
-          }),
-        ],
-      }),
-    ],
+    controls: new DashboardControls({}),
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({
@@ -246,6 +280,18 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             key: 'panel-2',
             pluginId: 'table',
           }),
+        }),
+        new SceneGridRow({
+          key: 'gridrow-1',
+          children: [
+            new SceneGridItem({
+              body: new VizPanel({
+                title: 'Panel C',
+                key: 'panel-3',
+                pluginId: 'table',
+              }),
+            }),
+          ],
         }),
         new SceneGridItem({
           body: new VizPanel({

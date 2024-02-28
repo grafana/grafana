@@ -8,8 +8,8 @@ import {
   DataLinkPostProcessor,
   InterpolateFunction,
   isBooleanUnit,
-  SortedVector,
   TimeRange,
+  cacheFieldDisplayNames,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
@@ -81,6 +81,8 @@ export function prepareGraphableFields(
   if (!series?.length) {
     return null;
   }
+
+  cacheFieldDisplayNames(series);
 
   let useNumericX = xNumFieldIdx != null;
 
@@ -239,7 +241,7 @@ const matchEnumColorToSeriesColor = (frames: DataFrame[], theme: GrafanaTheme2) 
   }
 };
 
-const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
+export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
   let seriesIndex = 0;
   frames.forEach((frame) => {
     frame.fields.forEach((field, fieldIdx) => {
@@ -276,20 +278,10 @@ export function regenerateLinksSupplier(
       return;
     }
 
-    /* check if field has sortedVector values
-      if it does, sort all string fields in the original frame by the order array already used for the field
-      otherwise just attach the fields to the temporary frame used to get the links
-    */
     const tempFields: Field[] = [];
     for (const frameField of frames[field.state?.origin?.frameIndex].fields) {
       if (frameField.type === FieldType.string) {
-        if (field.values instanceof SortedVector) {
-          const copiedField = { ...frameField };
-          copiedField.values = new SortedVector(frameField.values, field.values.getOrderArray());
-          tempFields.push(copiedField);
-        } else {
-          tempFields.push(frameField);
-        }
+        tempFields.push(frameField);
       }
     }
 

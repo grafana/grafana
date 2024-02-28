@@ -54,6 +54,7 @@ func ProvideProxy(cfg *setting.Cfg, cache proxyCache, userSrv user.Service, clie
 type proxyCache interface {
 	Get(ctx context.Context, key string) ([]byte, error)
 	Set(ctx context.Context, key string, value []byte, expire time.Duration) error
+	Delete(ctx context.Context, key string) error
 }
 
 type Proxy struct {
@@ -146,13 +147,32 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 		c.log.Warn("Failed to cache proxy user", "error", err, "userId", identifier, "err", err)
 		return nil
 	}
+
+	// User's role would not be updated if the cache hit. If requests arrive in the following order:
+	// 1. Name = x; Role = Admin			# cache missed, new user created and cached with key Name=x;Role=Admin
+	// 2. Name = x; Role = Editor			# cache missed, the user got updated and cached with key Name=x;Role=Editor
+	// 3. Name = x; Role = Admin			# cache hit with key Name=x;Role=Admin, no update, the user stays with Role=Editor
+	// To avoid such a problem we also cache the key used using `prefix:[username]`.
+	// Then whenever we get a cache miss due to changes in any header we use it to invalidate the previous item.
+	username := getProxyHeader(r, c.cfg.AuthProxyHeaderName, c.cfg.AuthProxyHeadersEncoded)
+	userKey := fmt.Sprintf("%s:%s", proxyCachePrefix, username)
+
+	// invalidate previously cached user id
+	if prevCacheKey, err := c.cache.Get(ctx, userKey); err == nil && len(prevCacheKey) > 0 {
+		if err := c.cache.Delete(ctx, string(prevCacheKey)); err != nil {
+			return err
+		}
+	}
+
 	c.log.FromContext(ctx).Debug("Cache proxy user", "userId", id)
 	bytes := []byte(strconv.FormatInt(id, 10))
-	if err := c.cache.Set(ctx, identity.ClientParams.CacheAuthProxyKey, bytes, time.Duration(c.cfg.AuthProxySyncTTL)*time.Minute); err != nil {
+	duration := time.Duration(c.cfg.AuthProxySyncTTL) * time.Minute
+	if err := c.cache.Set(ctx, identity.ClientParams.CacheAuthProxyKey, bytes, duration); err != nil {
 		c.log.Warn("Failed to cache proxy user", "error", err, "userId", id)
 	}
 
-	return nil
+	// store current cacheKey for the user
+	return c.cache.Set(ctx, userKey, []byte(identity.ClientParams.CacheAuthProxyKey), duration)
 }
 
 func (c *Proxy) isAllowedIP(r *authn.Request) bool {
