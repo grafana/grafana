@@ -613,7 +613,7 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(ctx context.Contex
 		return []string{}, nil
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(teamsUrl))
+	response, err := s.httpGet(ctx, client, teamsUrl)
 	if err != nil {
 		s.log.Error("Error getting team memberships", "url", teamsUrl, "error", err)
 		return nil, err
