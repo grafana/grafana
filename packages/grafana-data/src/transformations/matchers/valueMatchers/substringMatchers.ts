@@ -11,7 +11,6 @@ const isLikeValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
-      // eslint-disable-next-line eqeqeq
       return value.includes(options.value);
     };
   },
@@ -29,9 +28,6 @@ const isNotLikeValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
-      // eslint-disable-next-line eqeqeq
-
-      // compare value to options.value, if
       return !value.includes(options.value);
     };
   },
