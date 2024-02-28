@@ -280,6 +280,24 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 		keys = make([]string, maxLen)
 	}
 
+	writeLabels := func(lbls map[string]string) {
+		// maps do not guarantee predictable sequence of keys.
+		// Therefore, to make hash stable, we need to sort keys
+		if len(lbls) == 0 {
+			return
+		}
+		idx := 0
+		for labelName := range lbls {
+			keys[idx] = labelName
+			idx++
+		}
+		sub := keys[:idx]
+		sort.Strings(sub)
+		for _, name := range sub {
+			writeString(name)
+			writeString(lbls[name])
+		}
+	}
 	writeQuery := func() {
 		// The order of queries is not important as they represent an expression tree.
 		// Therefore, the order of elements should not change the hash. Sort by RefID because it is the unique key.
@@ -308,6 +326,7 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	writeString(rule.Title)
 	writeString(rule.NamespaceUID)
 	writeString(r.folderTitle)
+	writeLabels(rule.Labels)
 	writeString(rule.Condition)
 	writeQuery()
 
@@ -328,6 +347,7 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	writeInt(rule.OrgID)
 	writeInt(rule.IntervalSeconds)
 	writeInt(int64(rule.For))
+	writeLabels(rule.Annotations)
 	if rule.DashboardUID != nil {
 		writeString(*rule.DashboardUID)
 	}
