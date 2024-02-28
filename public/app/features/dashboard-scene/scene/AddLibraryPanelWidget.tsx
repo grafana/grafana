@@ -79,30 +79,15 @@ export class AddLibraryPanelWidget extends SceneObjectBase<AddLibraryPanelWidget
       throw new Error('Trying to add a library panel in a layout that is not SceneGridLayout');
     }
 
-    const sceneGridLayout = this._dashboard.state.body;
-
     const body = new LibraryVizPanel({
       title: 'Panel Title',
       uid: panelInfo.uid,
       name: panelInfo.name,
-      //TODO modify this to be panelKey after https://github.com/grafana/grafana/pull/83420 gets merged
-      key: this.state.key,
+      panelKey: this.state.key,
     });
 
-    for (const child of sceneGridLayout.state.children) {
-      if (child instanceof SceneGridItem && child.state.key === this.parent?.state.key) {
-        child.setState({ body });
-        return;
-      }
-
-      if (child instanceof SceneGridRow) {
-        for (const rowChild of child.state.children) {
-          if (rowChild instanceof SceneGridItem && rowChild.state.key === this.parent?.state.key) {
-            rowChild.setState({ body });
-            return;
-          }
-        }
-      }
+    if (this.parent instanceof SceneGridItem) {
+      this.parent.setState({ body });
     }
   };
 
