@@ -114,12 +114,25 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
     } else if (panel.type === 'add-library-panel') {
       const gridItem = buildGridItemForLibraryPanelWidget(panel);
 
-      if (gridItem) {
+      if (!gridItem) {
+        continue;
+      }
+
+      if (currentRow) {
+        currentRowPanels.push(gridItem);
+      } else {
         panels.push(gridItem);
       }
     } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
       const gridItem = buildGridItemForLibPanel(panel);
-      if (gridItem) {
+
+      if (!gridItem) {
+        continue;
+      }
+
+      if (currentRow) {
+        currentRowPanels.push(gridItem);
+      } else {
         panels.push(gridItem);
       }
     } else {
@@ -155,6 +168,25 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
         if (!(saveModel instanceof PanelModel)) {
           saveModel = new PanelModel(saveModel);
         }
+
+        if (saveModel.type === 'add-library-panel') {
+          const gridItem = buildGridItemForLibraryPanelWidget(saveModel);
+
+          if (!gridItem) {
+            throw new Error('Failed to build grid item for library panel widget');
+          }
+
+          return gridItem;
+        } else if (saveModel.libraryPanel?.uid && !('model' in saveModel.libraryPanel)) {
+          const gridItem = buildGridItemForLibPanel(saveModel);
+
+          if (!gridItem) {
+            throw new Error('Failed to build grid item for library panel');
+          }
+
+          return gridItem;
+        }
+
         return buildGridItemForPanel(saveModel);
       });
     }
