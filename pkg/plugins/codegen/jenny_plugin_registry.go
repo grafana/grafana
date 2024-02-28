@@ -15,6 +15,8 @@ var renamedPlugins = map[string]string{
 	"cloud-monitoring":             "googlecloudmonitoring",
 	"grafana-pyroscope-datasource": "grafanapyroscope",
 	"annolist":                     "annotationslist",
+	"grafanatestdatadatasource":    "testdata",
+	"dashlist":                     "dashboardlist",
 }
 
 type PluginRegistryJenny struct {

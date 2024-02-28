@@ -189,14 +189,14 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: canvasCue,
     })
     
-    dashlistCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/dashlist/panelcfg.cue"))
+    dashboardlistCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/dashlist/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
     kinds = append(kinds, ComposableKind{
-        Name: "dashlist",
+        Name: "dashboardlist",
         Filename: "panelcfg.cue",
-        CueFile: dashlistCue,
+        CueFile: dashboardlistCue,
     })
     
     datagridCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/datagrid/panelcfg.cue"))
