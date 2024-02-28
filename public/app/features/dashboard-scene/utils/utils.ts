@@ -16,6 +16,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { RowActions } from '../scene/RowActions';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
 
@@ -232,6 +233,8 @@ export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
   return new SceneGridRow({
     key: getVizPanelKeyForPanelId(id),
     title: 'Row title',
+    actions: new RowActions({}),
+    isDraggable: true,
     y: 0,
   });
 }
