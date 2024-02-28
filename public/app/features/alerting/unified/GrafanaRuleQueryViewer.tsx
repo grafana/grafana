@@ -29,6 +29,7 @@ import { ExpressionResult } from './components/expressions/Expression';
 import { getThresholdsForQueries, ThresholdDefinition } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { AlertRuleAction, useAlertRuleAbility } from './hooks/useAbilities';
+import { DataSourceType } from './utils/datasource';
 import { isPromOrLokiQuery } from './utils/rule-form';
 
 const PrometheusQueryPreview = React.lazy(() => import('./components/rule-viewer/tabs/Query/PrometheusQueryPreview'));
@@ -141,11 +142,11 @@ export function QueryPreview({
     </pre>
   );
 
-  if (dataSource?.type === 'prometheus' && isPromOrLokiQuery(model)) {
+  if (dataSource?.type === DataSourceType.Prometheus && isPromOrLokiQuery(model)) {
     queryPreview = <PrometheusQueryPreview query={model.expr} />;
   }
 
-  if (dataSource?.type === 'loki' && isPromOrLokiQuery(model)) {
+  if (dataSource?.type === DataSourceType.Loki && isPromOrLokiQuery(model)) {
     queryPreview = <LokiQueryPreview query={model.expr ?? ''} />;
   }
 
