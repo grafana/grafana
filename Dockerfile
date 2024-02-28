@@ -1,4 +1,4 @@
-blem# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1
 
 ARG BASE_IMAGE=alpine:3.18.5
 ARG JS_IMAGE=node:20-alpine3.18
