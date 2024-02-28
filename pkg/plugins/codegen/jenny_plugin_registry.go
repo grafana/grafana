@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
-	corecodegen "github.com/grafana/grafana/pkg/codegen"
 )
 
 var registryPath = filepath.Join("pkg", "registry", "schemas")
@@ -15,6 +14,7 @@ var registryPath = filepath.Join("pkg", "registry", "schemas")
 var renamedPlugins = map[string]string{
 	"cloud-monitoring":             "googlecloudmonitoring",
 	"grafana-pyroscope-datasource": "grafanapyroscope",
+	"annolist":                     "annotationslist",
 }
 
 type PluginRegistryJenny struct {
@@ -24,21 +24,21 @@ func (jenny *PluginRegistryJenny) JennyName() string {
 	return "PluginRegistryJenny"
 }
 
-func (jenny *PluginRegistryJenny) Generate(cueFiles []corecodegen.CueSchema) (*codejen.File, error) {
-	if len(cueFiles) == 0 {
+func (jenny *PluginRegistryJenny) Generate(files []string) (*codejen.File, error) {
+	if len(files) == 0 {
 		return nil, nil
 	}
-	schemas := make([]Schema, len(cueFiles))
-	for i, v := range cueFiles {
-		name, err := getSchemaName(v.FilePath)
+	schemas := make([]Schema, len(files))
+	for i, file := range files {
+		name, err := getSchemaName(file)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find schema name: %s", err)
 		}
 
 		schemas[i] = Schema{
 			Name:     name,
-			Filename: filepath.Base(v.FilePath),
-			FilePath: v.FilePath,
+			Filename: filepath.Base(file),
+			FilePath: file,
 		}
 	}
 

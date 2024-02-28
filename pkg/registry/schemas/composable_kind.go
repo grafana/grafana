@@ -1,9 +1,21 @@
 package schemas
 
 import (
+    "fmt"
+    "io"
+    "io/fs"
+    "os"
+    "path/filepath"
+    "runtime"
+    "testing/fstest"
+
     "cuelang.org/go/cue"
     "cuelang.org/go/cue/cuecontext"
+    "cuelang.org/go/cue/load"
 )
+
+var cueImportsPath = filepath.Join("packages", "grafana-schema", "src", "common")
+var importPath = "github.com/grafana/grafana/packages/grafana-schema/src/common"
 
 type ComposableKind struct {
     Name string
@@ -12,10 +24,12 @@ type ComposableKind struct {
 }
 
 func GetComposableKinds() ([]ComposableKind, error) {
-    ctx := cuecontext.New()
     kinds := make([]ComposableKind, 0)
     
-    azuremonitorCue, err := loadCueFile(ctx, "./public/plugins/datasource/azuremonitor/dataquery.cue")
+    _, caller, _, _ := runtime.Caller(0)
+    root := filepath.Join(caller, "../../../..")
+    
+    azuremonitorCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/azuremonitor/dataquery.cue"))
     if err != nil {
         return nil, err
     }
@@ -25,7 +39,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: azuremonitorCue,
     })
     
-    googlecloudmonitoringCue, err := loadCueFile(ctx, "./public/plugins/datasource/cloud-monitoring/dataquery.cue")
+    googlecloudmonitoringCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/cloud-monitoring/dataquery.cue"))
     if err != nil {
         return nil, err
     }
@@ -35,7 +49,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: googlecloudmonitoringCue,
     })
     
-    cloudwatchCue, err := loadCueFile(ctx, "./public/plugins/datasource/cloudwatch/dataquery.cue")
+    cloudwatchCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/cloudwatch/dataquery.cue"))
     if err != nil {
         return nil, err
     }
@@ -45,7 +59,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: cloudwatchCue,
     })
     
-    elasticsearchCue, err := loadCueFile(ctx, "./public/plugins/datasource/elasticsearch/dataquery.cue")
+    elasticsearchCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/elasticsearch/dataquery.cue"))
     if err != nil {
         return nil, err
     }
@@ -55,7 +69,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: elasticsearchCue,
     })
     
-    grafanapyroscopeCue, err := loadCueFile(ctx, "./public/plugins/datasource/grafana-pyroscope-datasource/dataquery.cue")
+    grafanapyroscopeCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/grafana-pyroscope-datasource/dataquery.cue"))
     if err != nil {
         return nil, err
     }
@@ -65,7 +79,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: grafanapyroscopeCue,
     })
     
-    grafanatestdatadatasourceCue, err := loadCueFile(ctx, "./public/plugins/datasource/grafana-testdata-datasource/dataquery.cue")
+    grafanatestdatadatasourceCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/grafana-testdata-datasource/dataquery.cue"))
     if err != nil {
         return nil, err
     }
@@ -75,7 +89,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: grafanatestdatadatasourceCue,
     })
     
-    lokiCue, err := loadCueFile(ctx, "./public/plugins/datasource/loki/dataquery.cue")
+    lokiCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/loki/dataquery.cue"))
     if err != nil {
         return nil, err
     }
@@ -85,7 +99,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: lokiCue,
     })
     
-    parcaCue, err := loadCueFile(ctx, "./public/plugins/datasource/parca/dataquery.cue")
+    parcaCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/parca/dataquery.cue"))
     if err != nil {
         return nil, err
     }
@@ -95,7 +109,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: parcaCue,
     })
     
-    prometheusCue, err := loadCueFile(ctx, "./public/plugins/datasource/prometheus/dataquery.cue")
+    prometheusCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/prometheus/dataquery.cue"))
     if err != nil {
         return nil, err
     }
@@ -105,7 +119,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: prometheusCue,
     })
     
-    tempoCue, err := loadCueFile(ctx, "./public/plugins/datasource/tempo/dataquery.cue")
+    tempoCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/tempo/dataquery.cue"))
     if err != nil {
         return nil, err
     }
@@ -115,7 +129,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: tempoCue,
     })
     
-    alertgroupsCue, err := loadCueFile(ctx, "./public/plugins/panel/alertGroups/panelcfg.cue")
+    alertgroupsCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/alertGroups/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -125,17 +139,17 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: alertgroupsCue,
     })
     
-    annolistCue, err := loadCueFile(ctx, "./public/plugins/panel/annolist/panelcfg.cue")
+    annotationslistCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/annolist/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
     kinds = append(kinds, ComposableKind{
-        Name: "annolist",
+        Name: "annotationslist",
         Filename: "panelcfg.cue",
-        CueFile: annolistCue,
+        CueFile: annotationslistCue,
     })
     
-    barchartCue, err := loadCueFile(ctx, "./public/plugins/panel/barchart/panelcfg.cue")
+    barchartCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/barchart/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -145,7 +159,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: barchartCue,
     })
     
-    bargaugeCue, err := loadCueFile(ctx, "./public/plugins/panel/bargauge/panelcfg.cue")
+    bargaugeCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/bargauge/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -155,7 +169,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: bargaugeCue,
     })
     
-    candlestickCue, err := loadCueFile(ctx, "./public/plugins/panel/candlestick/panelcfg.cue")
+    candlestickCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/candlestick/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -165,7 +179,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: candlestickCue,
     })
     
-    canvasCue, err := loadCueFile(ctx, "./public/plugins/panel/canvas/panelcfg.cue")
+    canvasCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/canvas/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -175,7 +189,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: canvasCue,
     })
     
-    dashlistCue, err := loadCueFile(ctx, "./public/plugins/panel/dashlist/panelcfg.cue")
+    dashlistCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/dashlist/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -185,7 +199,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: dashlistCue,
     })
     
-    datagridCue, err := loadCueFile(ctx, "./public/plugins/panel/datagrid/panelcfg.cue")
+    datagridCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/datagrid/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -195,7 +209,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: datagridCue,
     })
     
-    debugCue, err := loadCueFile(ctx, "./public/plugins/panel/debug/panelcfg.cue")
+    debugCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/debug/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -205,7 +219,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: debugCue,
     })
     
-    gaugeCue, err := loadCueFile(ctx, "./public/plugins/panel/gauge/panelcfg.cue")
+    gaugeCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/gauge/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -215,7 +229,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: gaugeCue,
     })
     
-    geomapCue, err := loadCueFile(ctx, "./public/plugins/panel/geomap/panelcfg.cue")
+    geomapCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/geomap/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -225,7 +239,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: geomapCue,
     })
     
-    heatmapCue, err := loadCueFile(ctx, "./public/plugins/panel/heatmap/panelcfg.cue")
+    heatmapCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/heatmap/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -235,7 +249,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: heatmapCue,
     })
     
-    histogramCue, err := loadCueFile(ctx, "./public/plugins/panel/histogram/panelcfg.cue")
+    histogramCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/histogram/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -245,7 +259,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: histogramCue,
     })
     
-    logsCue, err := loadCueFile(ctx, "./public/plugins/panel/logs/panelcfg.cue")
+    logsCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/logs/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -255,7 +269,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: logsCue,
     })
     
-    newsCue, err := loadCueFile(ctx, "./public/plugins/panel/news/panelcfg.cue")
+    newsCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/news/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -265,7 +279,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: newsCue,
     })
     
-    nodegraphCue, err := loadCueFile(ctx, "./public/plugins/panel/nodeGraph/panelcfg.cue")
+    nodegraphCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/nodeGraph/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -275,7 +289,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: nodegraphCue,
     })
     
-    piechartCue, err := loadCueFile(ctx, "./public/plugins/panel/piechart/panelcfg.cue")
+    piechartCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/piechart/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -285,7 +299,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: piechartCue,
     })
     
-    statCue, err := loadCueFile(ctx, "./public/plugins/panel/stat/panelcfg.cue")
+    statCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/stat/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -295,7 +309,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: statCue,
     })
     
-    statetimelineCue, err := loadCueFile(ctx, "./public/plugins/panel/state-timeline/panelcfg.cue")
+    statetimelineCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/state-timeline/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -305,7 +319,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: statetimelineCue,
     })
     
-    statushistoryCue, err := loadCueFile(ctx, "./public/plugins/panel/status-history/panelcfg.cue")
+    statushistoryCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/status-history/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -315,7 +329,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: statushistoryCue,
     })
     
-    tableCue, err := loadCueFile(ctx, "./public/plugins/panel/table/panelcfg.cue")
+    tableCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/table/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -325,7 +339,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: tableCue,
     })
     
-    textCue, err := loadCueFile(ctx, "./public/plugins/panel/text/panelcfg.cue")
+    textCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/text/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -335,7 +349,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: textCue,
     })
     
-    timeseriesCue, err := loadCueFile(ctx, "./public/plugins/panel/timeseries/panelcfg.cue")
+    timeseriesCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/timeseries/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -345,7 +359,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: timeseriesCue,
     })
     
-    trendCue, err := loadCueFile(ctx, "./public/plugins/panel/trend/panelcfg.cue")
+    trendCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/trend/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -355,7 +369,7 @@ func GetComposableKinds() ([]ComposableKind, error) {
         CueFile: trendCue,
     })
     
-    xychartCue, err := loadCueFile(ctx, "./public/plugins/panel/xychart/panelcfg.cue")
+    xychartCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/xychart/panelcfg.cue"))
     if err != nil {
         return nil, err
     }
@@ -366,4 +380,89 @@ func GetComposableKinds() ([]ComposableKind, error) {
     })
     
     return kinds, nil
+}
+
+func loadCueFileWithCommon(root string, entrypoint string) (cue.Value, error) {
+	commonFS, err := mockCommonFS(root)
+	if err != nil {
+		fmt.Printf("cannot load common cue files: %s\n", err)
+		return cue.Value{}, err
+	}
+
+	overlay, err := buildOverlay(commonFS)
+	if err != nil {
+		fmt.Printf("Cannot build overlay: %s\n", err)
+		return cue.Value{}, err
+	}
+
+	bis := load.Instances([]string{entrypoint}, &load.Config{
+		ModuleRoot: "/",
+		Overlay:    overlay,
+	})
+
+	values, err := cuecontext.New().BuildInstances(bis)
+	if err != nil {
+		fmt.Printf("Cannot build instance: %s\n", err)
+		return cue.Value{}, err
+	}
+
+	return values[0], nil
+}
+
+func mockCommonFS(root string) (fs.FS, error) {
+    path := filepath.Join(root, cueImportsPath)
+	dir, err := os.ReadDir(path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open common cue files directory: %s", err)
+	}
+
+	prefix := "cue.mod/pkg/" + importPath
+
+	commonFS := fstest.MapFS{}
+	for _, d := range dir {
+		if d.IsDir() {
+			continue
+		}
+
+		b, err := os.ReadFile(filepath.Join(path, d.Name()))
+		if err != nil {
+			return nil, err
+		}
+
+		commonFS[filepath.Join(prefix, d.Name())] = &fstest.MapFile{Data: b}
+	}
+
+	return commonFS, nil
+}
+
+// It loads common cue files into the schema to be able to make import works
+func buildOverlay(commonFS fs.FS) (map[string]load.Source, error) {
+	overlay := make(map[string]load.Source)
+
+	err := fs.WalkDir(commonFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		f, err := commonFS.Open(path)
+		if err != nil {
+			return err
+		}
+		defer func() { _ = f.Close() }()
+
+		b, err := io.ReadAll(f)
+		if err != nil {
+			return err
+		}
+
+		overlay[filepath.Join("/", path)] = load.FromBytes(b)
+
+		return nil
+	})
+
+	return overlay, err
 }

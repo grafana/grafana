@@ -8,17 +8,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
-	"io/fs"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
-	"testing/fstest"
-
-	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/cuecontext"
-	"cuelang.org/go/cue/load"
 	"github.com/grafana/codejen"
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -26,6 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
+	"io/fs"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 var skipPlugins = map[string]bool{
@@ -33,9 +27,6 @@ var skipPlugins = map[string]bool{
 	"mixed":    true, // plugin.json fails validation (mixed)
 	"opentsdb": true, // plugin.json fails validation (defaultMatchFormat)
 }
-
-var cueImportsPath = filepath.Join("packages", "grafana-schema", "src", "common")
-var importPath = "github.com/grafana/grafana/packages/grafana-schema/src/common"
 
 const sep = string(filepath.Separator)
 
@@ -135,12 +126,12 @@ func splitSchiffer(names []string) codejen.FileMapper {
 }
 
 func genRawResources() (*codejen.FS, error) {
-	jennies := codejen.JennyListWithNamer(func(d []corecodegen.CueSchema) string {
+	jennies := codejen.JennyListWithNamer(func(d []string) string {
 		return "PluginsRawResources"
 	})
 	jennies.Append(&codegen.PluginRegistryJenny{})
 
-	schemas := make([]corecodegen.CueSchema, 0)
+	schemas := make([]string, 0)
 	filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
@@ -150,103 +141,9 @@ func genRawResources() (*codejen.FS, error) {
 			return nil
 		}
 
-		v, err := cueLoader(path)
-		if err != nil {
-			return err
-		}
-
-		schemas = append(schemas, corecodegen.CueSchema{
-			CueFile:  v,
-			FilePath: "./" + filepath.Join("public", "plugins", path),
-		})
-
+		schemas = append(schemas, "./"+filepath.Join("public", "app", "plugins", path))
 		return nil
 	})
 
 	return jennies.GenerateFS(schemas)
-}
-
-func cueLoader(entrypoint string) (cue.Value, error) {
-	commonFS, err := mockCommonFS()
-	if err != nil {
-		fmt.Printf("cannot load common cue files: %s\n", err)
-		return cue.Value{}, err
-	}
-
-	overlay, err := buildOverlay(commonFS)
-	if err != nil {
-		fmt.Printf("Cannot build overlay: %s\n", err)
-		return cue.Value{}, err
-	}
-
-	bis := load.Instances([]string{entrypoint}, &load.Config{
-		ModuleRoot: "/",
-		Overlay:    overlay,
-	})
-
-	values, err := cuecontext.New().BuildInstances(bis)
-	if err != nil {
-		fmt.Printf("Cannot build instance: %s\n", err)
-		return cue.Value{}, err
-	}
-
-	return values[0], nil
-}
-
-func mockCommonFS() (fs.FS, error) {
-	path := filepath.Join("../../../", cueImportsPath)
-	dir, err := os.ReadDir(path)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open common cue files directory: %s", err)
-	}
-
-	prefix := "cue.mod/pkg/" + importPath
-
-	commonFS := fstest.MapFS{}
-	for _, d := range dir {
-		if d.IsDir() {
-			continue
-		}
-
-		b, err := os.ReadFile(filepath.Join(path, d.Name()))
-		if err != nil {
-			return nil, err
-		}
-
-		commonFS[filepath.Join(prefix, d.Name())] = &fstest.MapFile{Data: b}
-	}
-
-	return commonFS, nil
-}
-
-// It loads common cue files into the schema to be able to make import works
-func buildOverlay(commonFS fs.FS) (map[string]load.Source, error) {
-	overlay := make(map[string]load.Source)
-
-	err := fs.WalkDir(commonFS, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-
-		f, err := commonFS.Open(path)
-		if err != nil {
-			return err
-		}
-		defer func() { _ = f.Close() }()
-
-		b, err := io.ReadAll(f)
-		if err != nil {
-			return err
-		}
-
-		overlay[filepath.Join("/", path)] = load.FromBytes(b)
-
-		return nil
-	})
-
-	return overlay, err
 }

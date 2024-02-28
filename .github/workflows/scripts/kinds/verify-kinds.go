@@ -1,30 +1,28 @@
 package main
 
 import (
-	"archive/zip"
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"cuelang.org/go/cue"
 	cueformat "cuelang.org/go/cue/format"
-	"github.com/google/go-github/github"
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/registry/schemas"
-	"golang.org/x/oauth2"
 )
 
 const (
 	GITHUB_OWNER = "grafana"
 	GITHUB_REPO  = "kind-registry"
 )
+
+var nonAlphaNumRegex = regexp.MustCompile("[^a-zA-Z0-9 ]+")
 
 // main This script verifies that stable kinds are not updated once published (new schemas
 // can be added but existing ones cannot be updated).
@@ -33,12 +31,9 @@ const (
 // If kind names are given as parameters, the script will make the above actions only for the
 // given kinds.
 func main() {
-
 	kindRegistry, err := NewKindRegistry()
 	defer kindRegistry.cleanUp()
-	if err != nil {
-		die(err)
-	}
+	die(err)
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		os.Exit(0)
@@ -49,9 +44,7 @@ func main() {
 	outputPath := filepath.Join(".github", "workflows", "scripts", "kinds")
 
 	corekinds, err := schemas.GetCoreKinds()
-	if err != nil {
-		die(err)
-	}
+	die(err)
 
 	coreJennies := codejen.JennyList[schemas.CoreKind]{}
 	coreJennies.Append(
@@ -62,9 +55,7 @@ func main() {
 	die(jfs.Merge(corefs))
 
 	composableKinds, err := schemas.GetComposableKinds()
-	if err != nil {
-		die(err)
-	}
+	die(err)
 
 	composableJennies := codejen.JennyList[schemas.ComposableKind]{}
 	composableJennies.Append(
@@ -173,17 +164,6 @@ func (j *kindregjenny) Generate(kind schemas.CoreKind) (*codejen.File, error) {
 	return codejen.NewFile(path, newKindBytes, j), nil
 }
 
-// kindToBytes converts a kind cue value to a .cue file content
-func kindToBytes(kind cue.Value) ([]byte, error) {
-	node := kind.Syntax(
-		cue.All(),
-		cue.Schema(),
-		cue.Docs(true),
-	)
-
-	return cueformat.Node(node)
-}
-
 // ComposableKindRegistryJenny generates kind files into the "next" folder of the local kind registry.
 func ComposableKindRegistryJenny(path string) codejen.OneToOne[schemas.ComposableKind] {
 	return &ckrJenny{
@@ -200,10 +180,11 @@ func (j *ckrJenny) JennyName() string {
 }
 
 func (j *ckrJenny) Generate(k schemas.ComposableKind) (*codejen.File, error) {
-
 	name := strings.ToLower(fmt.Sprintf("%s/%s", k.Name, k.Filename))
 
-	newKindBytes, err := kindToBytes(k.CueFile)
+	v := addMissingComposableInformation(k)
+
+	newKindBytes, err := kindToBytes(v)
 	if err != nil {
 		return nil, err
 	}
@@ -213,156 +194,54 @@ func (j *ckrJenny) Generate(k schemas.ComposableKind) (*codejen.File, error) {
 	return codejen.NewFile(filepath.Join(j.path, "next", "composable", name+".cue"), newKindBytes, j), nil
 }
 
-type kindRegistry struct {
-	zipDir  string
-	zipFile *zip.ReadCloser
+// kindToBytes converts a kind cue value to a .cue file content
+func kindToBytes(kind cue.Value) ([]byte, error) {
+	node := kind.Syntax(
+		cue.All(),
+		cue.Schema(),
+		cue.Docs(true),
+	)
+
+	return cueformat.Node(node)
 }
 
-// NewKindRegistry downloads the archive of the kind-registry GH repository and open it
-func NewKindRegistry() (*kindRegistry, error) {
-	ctx := context.Background()
-	tc := oauth2.NewClient(ctx, nil)
-	client := github.NewClient(tc)
-
-	// Create a temporary file to store the downloaded archive
-	file, err := os.CreateTemp("", "*.zip")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temporary file: %w", err)
-	}
-	defer file.Close()
-
-	// Get the repository archive URL
-	archiveURL, _, err := client.Repositories.GetArchiveLink(ctx, GITHUB_OWNER, GITHUB_REPO, github.Zipball, &github.RepositoryContentGetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get archive URL: %w", err)
+func addMissingComposableInformation(schema schemas.ComposableKind) cue.Value {
+	variant := "PanelCfg"
+	if schema.CueFile.LookupPath(cue.ParsePath("composableKinds.DataQuery")).Exists() {
+		variant = "DataQuery"
 	}
 
-	// Download the archive file
-	httpClient := http.DefaultClient
-	resp, err := httpClient.Get(archiveURL.String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to download archive: %w", err)
-	}
-	defer resp.Body.Close()
+	v := schema.CueFile.FillPath(cue.MakePath(cue.Str("schemaInterface")), variant)
+	v = v.FillPath(cue.MakePath(cue.Str("name")), fmt.Sprintf("%s%s", UpperCamelCase(schema.Name), variant))
 
-	// Save the downloaded archive to the temporary file
-	_, err = io.Copy(file, resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to save archive: %w", err)
-	}
-
-	// Open the zip file for reading
-	zipDir := file.Name()
-	zipFile, err := zip.OpenReader(zipDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open zip file %s: %w", zipDir, err)
-	}
-
-	return &kindRegistry{
-		zipDir:  zipDir,
-		zipFile: zipFile,
-	}, nil
+	return v
 }
 
-// cleanUp removes the archive from the temporary files and closes the zip reader
-func (registry *kindRegistry) cleanUp() {
-	if registry.zipDir != "" {
-		err := os.Remove(registry.zipDir)
-		if err != nil {
-			fmt.Fprint(os.Stderr, fmt.Errorf("failed to remove zip archive: %w", err))
-		}
+func UpperCamelCase(s string) string {
+	s = LowerCamelCase(s)
+
+	// Uppercase the first letter
+	if len(s) > 0 {
+		s = strings.ToUpper(s[:1]) + s[1:]
 	}
 
-	if registry.zipFile != nil {
-		err := registry.zipFile.Close()
-		if err != nil {
-			fmt.Fprint(os.Stderr, fmt.Errorf("failed to close zip file reader: %w", err))
-		}
-	}
+	return s
 }
 
-// findLatestDir get the latest version directory published in the kind registry
-func (registry *kindRegistry) findLatestDir() (string, error) {
-	re := regexp.MustCompile(`([0-9]+)\.([0-9]+)\.([0-9]+)`)
-	latestVersion := []uint64{0, 0, 0}
-	latestDir := ""
+func LowerCamelCase(s string) string {
+	// Replace all non-alphanumeric characters by spaces
+	s = nonAlphaNumRegex.ReplaceAllString(s, " ")
 
-	for _, file := range registry.zipFile.File {
-		if !file.FileInfo().IsDir() {
-			continue
-		}
+	// Title case s
+	s = cases.Title(language.AmericanEnglish, cases.NoLower).String(s)
 
-		parts := re.FindStringSubmatch(file.Name)
-		if parts == nil || len(parts) < 4 {
-			continue
-		}
+	// Remove all spaces
+	s = strings.ReplaceAll(s, " ", "")
 
-		version := make([]uint64, len(parts)-1)
-		for i := 1; i < len(parts); i++ {
-			version[i-1], _ = strconv.ParseUint(parts[i], 10, 32)
-		}
-
-		if isLess(latestVersion, version) {
-			latestVersion = version
-			latestDir = file.Name
-		}
+	// Lowercase the first letter
+	if len(s) > 0 {
+		s = strings.ToLower(s[:1]) + s[1:]
 	}
 
-	return latestDir, nil
-}
-
-// getPublishedKind retrieves the latest published kind from the kind registry
-func (registry *kindRegistry) getPublishedKind(name string, category string, latestRegistryDir string) ([]byte, error) {
-	if latestRegistryDir == "" {
-		return nil, nil
-	}
-
-	var cueFilePath string
-	switch category {
-	case "core":
-		cueFilePath = fmt.Sprintf("%s/%s.cue", name, name)
-	case "composable":
-		cueFilePath = fmt.Sprintf("%s.cue", name)
-	default:
-		return nil, fmt.Errorf("kind can only be core or composable")
-	}
-
-	kindPath := filepath.Join(latestRegistryDir, category, cueFilePath)
-	file, err := registry.zipFile.Open(kindPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	data, err := io.ReadAll(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
-	}
-
-	return data, nil
-}
-
-func isLessMaturity(old, new string) bool {
-	var order = []string{
-		"merged",
-		"experimental",
-		"stable",
-		"mature",
-	}
-
-	oldOrder := 0
-	for i, oldMaturity := range order {
-		if oldMaturity == old {
-			oldOrder = i
-		}
-	}
-
-	newOrder := 0
-	for i, newMaturity := range order {
-		if newMaturity == new {
-			newOrder = i
-		}
-	}
-
-	return newOrder < oldOrder
+	return s
 }
