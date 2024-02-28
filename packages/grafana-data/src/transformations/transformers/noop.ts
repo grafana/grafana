@@ -3,7 +3,7 @@ import { SynchronousDataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
-export interface NoopTransformerOptions {}
+interface NoopTransformerOptions {}
 
 export const noopTransformer: SynchronousDataTransformerInfo<NoopTransformerOptions> = {
   id: DataTransformerID.noop,
