@@ -162,6 +162,11 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         color: theme.colors.text.link,
       },
     }),
+    cellContainerText: buildCellContainerStyle(undefined, undefined, true, true),
+    cellContainerTextNoOverflow: buildCellContainerStyle(undefined, undefined, false, true),
+
+    cellContainer: buildCellContainerStyle(undefined, undefined, true, false),
+    cellContainerNoOverflow: buildCellContainerStyle(undefined, undefined, false, false),
     cellText: css({
       overflow: 'hidden',
       textOverflow: 'ellipsis',
