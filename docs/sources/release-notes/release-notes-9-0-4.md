@@ -18,7 +18,7 @@ title: Release notes for Grafana 9.0.4
 - **Browse/Search:** Make browser back work properly when visiting Browse or search. [#52271](https://github.com/grafana/grafana/pull/52271), [@torkelo](https://github.com/torkelo)
 - **Logs:** Improve getLogRowContext API. [#52130](https://github.com/grafana/grafana/pull/52130), [@gabor](https://github.com/gabor)
 - **Loki:** Improve handling of empty responses. [#52397](https://github.com/grafana/grafana/pull/52397), [@gabor](https://github.com/gabor)
-- **Plugins:** Always validate root URL if specified in signature manfiest. [#52332](https://github.com/grafana/grafana/pull/52332), [@wbrowne](https://github.com/wbrowne)
+- **Plugins:** Always validate root URL if specified in signature manifest. [#52332](https://github.com/grafana/grafana/pull/52332), [@wbrowne](https://github.com/wbrowne)
 - **Preferences:** Get home dashboard from teams. [#52225](https://github.com/grafana/grafana/pull/52225), [@sakjur](https://github.com/sakjur)
 - **SQLStore:** Support Upserting multiple rows. [#52228](https://github.com/grafana/grafana/pull/52228), [@joeblubaugh](https://github.com/joeblubaugh)
 - **Traces:** Add more template variables in Tempo & Zipkin. [#52306](https://github.com/grafana/grafana/pull/52306), [@joey-grafana](https://github.com/joey-grafana)

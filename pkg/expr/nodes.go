@@ -155,6 +155,8 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	case TypeThreshold:
 		node.Command, err = UnmarshalThresholdCommand(rn, toggles)
+	case TypeSQL:
+		node.Command, err = UnmarshalSQLCommand(rn)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
@@ -471,7 +473,8 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 			logger.Warn("Ignoring InfluxDB data frame due to missing numeric fields")
 			continue
 		}
-		if schema.Type != data.TimeSeriesTypeWide {
+
+		if schema.Type != data.TimeSeriesTypeWide && !s.allowLongFrames {
 			return "", mathexp.Results{}, fmt.Errorf("input data must be a wide series but got type %s (input refid)", schema.Type)
 		}
 		filtered = append(filtered, frame)
@@ -484,20 +487,29 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 
 	maybeFixerFn := checkIfSeriesNeedToBeFixed(filtered, datasourceType)
 
-	vals := make([]mathexp.Value, 0, totalLen)
-	for _, frame := range filtered {
-		series, err := WideToMany(frame, maybeFixerFn)
-		if err != nil {
-			return "", mathexp.Results{}, err
-		}
-		for _, ser := range series {
-			vals = append(vals, ser)
-		}
-	}
 	dataType := "single frame series"
 	if len(filtered) > 1 {
 		dataType = "multi frame series"
 	}
+
+	vals := make([]mathexp.Value, 0, totalLen)
+	for _, frame := range filtered {
+		schema := frame.TimeSeriesSchema()
+		if schema.Type == data.TimeSeriesTypeWide {
+			series, err := WideToMany(frame, maybeFixerFn)
+			if err != nil {
+				return "", mathexp.Results{}, err
+			}
+			for _, ser := range series {
+				vals = append(vals, ser)
+			}
+		} else {
+			v := mathexp.TableData{Frame: frame}
+			vals = append(vals, v)
+			dataType = "single frame"
+		}
+	}
+
 	return dataType, mathexp.Results{
 		Values: vals,
 	}, nil

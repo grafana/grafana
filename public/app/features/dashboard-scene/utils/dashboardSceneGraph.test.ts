@@ -12,9 +12,10 @@ import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 
-import { dashboardSceneGraph } from './dashboardSceneGraph';
+import { dashboardSceneGraph, getNextPanelId } from './dashboardSceneGraph';
 import { findVizPanelByKey } from './utils';
 
 describe('dashboardSceneGraph', () => {
@@ -82,6 +83,120 @@ describe('dashboardSceneGraph', () => {
       });
 
       expect(() => dashboardSceneGraph.getDataLayers(scene)).toThrow('SceneDataLayers not found');
+    });
+  });
+
+  describe('getNextPanelId', () => {
+    it('should get next panel id in a simple 3 panel layout', () => {
+      const scene = buildTestScene({
+        body: new SceneGridLayout({
+          children: [
+            new SceneGridItem({
+              body: new VizPanel({
+                title: 'Panel A',
+                key: 'panel-1',
+                pluginId: 'table',
+              }),
+            }),
+            new SceneGridItem({
+              body: new VizPanel({
+                title: 'Panel B',
+                key: 'panel-2',
+                pluginId: 'table',
+              }),
+            }),
+            new SceneGridItem({
+              body: new VizPanel({
+                title: 'Panel C',
+                key: 'panel-3',
+                pluginId: 'table',
+              }),
+            }),
+          ],
+        }),
+      });
+
+      const id = getNextPanelId(scene);
+
+      expect(id).toBe(4);
+    });
+
+    it('should take library panels into account', () => {
+      const scene = buildTestScene({
+        body: new SceneGridLayout({
+          children: [
+            new SceneGridItem({
+              key: 'griditem-1',
+              x: 0,
+              body: new VizPanel({
+                title: 'Panel A',
+                key: 'panel-1',
+                pluginId: 'table',
+              }),
+            }),
+            new SceneGridItem({
+              body: new LibraryVizPanel({
+                uid: 'uid',
+                name: 'LibPanel',
+                title: 'Library Panel',
+                panelKey: 'panel-2',
+              }),
+            }),
+            new SceneGridItem({
+              body: new VizPanel({
+                title: 'Panel C',
+                key: 'panel-2-clone-1',
+                pluginId: 'table',
+              }),
+            }),
+            new SceneGridRow({
+              key: 'key',
+              title: 'row',
+              children: [
+                new SceneGridItem({
+                  body: new VizPanel({
+                    title: 'Panel E',
+                    key: 'panel-2-clone-2',
+                    pluginId: 'table',
+                  }),
+                }),
+                new SceneGridItem({
+                  body: new LibraryVizPanel({
+                    uid: 'uid',
+                    name: 'LibPanel',
+                    title: 'Library Panel',
+                    panelKey: 'panel-3',
+                  }),
+                }),
+              ],
+            }),
+          ],
+        }),
+      });
+
+      const id = getNextPanelId(scene);
+
+      expect(id).toBe(4);
+    });
+
+    it('should get next panel id in a layout with rows', () => {
+      const scene = buildTestScene();
+      const id = getNextPanelId(scene);
+
+      expect(id).toBe(3);
+    });
+
+    it('should return 1 if no panels are found', () => {
+      const scene = buildTestScene({ body: new SceneGridLayout({ children: [] }) });
+      const id = getNextPanelId(scene);
+
+      expect(id).toBe(1);
+    });
+
+    it('should throw an error if body is not SceneGridLayout', () => {
+      const scene = buildTestScene({ body: undefined });
+
+      expect(() => getNextPanelId(scene)).toThrow('Dashboard body is not a SceneGridLayout');
     });
   });
 });

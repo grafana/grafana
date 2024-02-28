@@ -28,11 +28,13 @@ import {
   UserActionEvent,
   GroupByVariable,
   AdHocFiltersVariable,
+  SceneFlexLayout,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
+import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -108,6 +110,12 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
           currentRow = panel;
           currentRowPanels = [];
         }
+      }
+    } else if (panel.type === 'add-library-panel') {
+      const gridItem = buildGridItemForLibraryPanelWidget(panel);
+
+      if (gridItem) {
+        panels.push(gridItem);
       }
     } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
       const gridItem = buildGridItemForLibPanel(panel);
@@ -266,6 +274,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardMacro,
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
+      trackIfIsEmpty,
     ],
     $data:
       layers.length > 0
@@ -397,6 +406,24 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   }
 }
 
+export function buildGridItemForLibraryPanelWidget(panel: PanelModel) {
+  if (panel.type !== 'add-library-panel') {
+    return null;
+  }
+
+  const body = new AddLibraryPanelWidget({
+    key: getVizPanelKeyForPanelId(panel.id),
+  });
+
+  return new SceneGridItem({
+    body,
+    y: panel.gridPos.y,
+    x: panel.gridPos.x,
+    width: panel.gridPos.w,
+    height: panel.gridPos.h,
+  });
+}
+
 export function buildGridItemForLibPanel(panel: PanelModel) {
   if (!panel.libraryPanel) {
     return null;
@@ -406,7 +433,7 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     title: panel.title,
     uid: panel.libraryPanel.uid,
     name: panel.libraryPanel.name,
-    key: getVizPanelKeyForPanelId(panel.id),
+    panelKey: getVizPanelKeyForPanelId(panel.id),
   });
 
   return new SceneGridItem({
@@ -460,7 +487,8 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   }
 
   if (panel.repeat) {
-    const repeatDirection = panel.repeatDirection ?? 'h';
+    const repeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
+
     return new PanelRepeaterGridItem({
       key: `grid-item-${panel.id}`,
       x: panel.gridPos.x,
@@ -471,7 +499,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
       source: new VizPanel(vizPanelState),
       variableName: panel.repeat,
       repeatedPanels: [],
-      repeatDirection: panel.repeatDirection,
+      repeatDirection: repeatDirection,
       maxPerRow: panel.maxPerRow,
     });
   }
@@ -533,6 +561,21 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
         break;
     }
   });
+}
+
+export function trackIfIsEmpty(parent: DashboardScene) {
+  updateIsEmpty(parent);
+
+  parent.state.body.subscribeToState(() => {
+    updateIsEmpty(parent);
+  });
+}
+
+function updateIsEmpty(parent: DashboardScene) {
+  const { body } = parent.state;
+  if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
+    parent.setState({ isEmpty: body.state.children.length === 0 });
+  }
 }
 
 const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
