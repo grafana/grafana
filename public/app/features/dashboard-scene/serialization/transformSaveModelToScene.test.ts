@@ -42,11 +42,13 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 import { DashboardDataDTO } from 'app/types';
 
+import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
-import { getQueryRunnerFor } from '../utils/utils';
+import { getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { buildNewDashboardSaveModel } from './buildNewDashboardSaveModel';
 import { GRAFANA_DATASOURCE_REF } from './const';
@@ -58,6 +60,8 @@ import {
   createSceneVariableFromVariableModel,
   transformSaveModelToScene,
   convertOldSnapshotToScenesSnapshot,
+  buildGridItemForLibPanel,
+  buildGridItemForLibraryPanelWidget,
 } from './transformSaveModelToScene';
 
 describe('transformSaveModelToScene', () => {
@@ -452,6 +456,37 @@ describe('transformSaveModelToScene', () => {
       const runner = getQueryRunnerFor(vizPanel)!;
       expect(runner.state.cacheTimeout).toBe('10');
       expect(runner.state.queryCachingTTL).toBe(200000);
+    });
+    it('should convert saved lib widget to AddLibraryPanelWidget', () => {
+      const panel = {
+        id: 10,
+        type: 'add-library-panel',
+      };
+
+      const gridItem = buildGridItemForLibraryPanelWidget(new PanelModel(panel))!;
+      const libPanelWidget = gridItem.state.body as AddLibraryPanelWidget;
+
+      expect(libPanelWidget.state.key).toEqual(getVizPanelKeyForPanelId(panel.id));
+    });
+
+    it('should convert saved lib panel to LibraryVizPanel', () => {
+      const panel = {
+        title: 'Panel',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        transparent: true,
+        libraryPanel: {
+          uid: '123',
+          name: 'My Panel',
+          folderUid: '456',
+        },
+      };
+
+      const gridItem = buildGridItemForLibPanel(new PanelModel(panel))!;
+      const libVizPanel = gridItem.state.body as LibraryVizPanel;
+
+      expect(libVizPanel.state.uid).toEqual(panel.libraryPanel.uid);
+      expect(libVizPanel.state.name).toEqual(panel.libraryPanel.name);
+      expect(libVizPanel.state.title).toEqual(panel.title);
     });
   });
 
