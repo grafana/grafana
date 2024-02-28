@@ -234,6 +234,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     );
   }
 
+  const variableControls: SceneObject[] = [];
+  if (!config.publicDashboardAccessToken) {
+    variableControls.push(new VariableValueSelectors({}));
+  }
+  variableControls.push(new SceneDataLayerControls());
+
   const dashboardScene = new DashboardScene({
     title: oldModel.title,
     tags: oldModel.tags || [],
@@ -276,7 +282,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
           })
         : undefined,
     controls: new DashboardControls({
-      variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
+      variableControls: variableControls,
       timePicker: new SceneTimePicker({}),
       refreshPicker: new SceneRefreshPicker({
         refresh: oldModel.refresh,
