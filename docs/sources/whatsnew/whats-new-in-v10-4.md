@@ -17,7 +17,7 @@ weight: -40
 
 # What’s new in Grafana v10.4
 
-Welcome to Grafana 10.4! Read on to learn about changes to dashboard visualizations and alert rules.
+Welcome to Grafana 10.4! This minor release contains some notable improvements in its own right, as well as early previews of functionality we intend to turn on by default in Grafana v11. Read on to learn about a quicker way to set up alert notifications, an all-new UI for configuring up single sign-on, and improvements to our Canvas, Geomap, and Table panels.
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.4, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v10.4/).
 
@@ -39,16 +39,6 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 <!---->
 
 ## Dashboards and visualizations
-
-### Set library panel permissions with RBAC
-
-<!--#grafana-dashboards -->
-
-_Generally available in Grafana Enterprise and Grafana Cloud_
-
-We've added the option to manage library panel permissions through role-based access control (RBAC). With this feature, you can choose who can create, edit, and read library panels. RBAC provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as dashboards, reports, and administrative settings.
-
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-library-panels/)
 
 ### Data visualization quality of life improvements
 
@@ -86,7 +76,29 @@ You can now create subtables out of your data using the new **Group to nested ta
 
 {{< video-embed src="/media/docs/grafana/screen-recording-10-4-table-group-to-nested-table-transformation.mp4" caption="Group to nested tables transformation" >}}
 
+### Set library panel permissions with RBAC
+
+<!--#grafana-dashboards -->
+
+_Generally available in Grafana Enterprise and Grafana Cloud_
+
+We've added the option to manage library panel permissions through role-based access control (RBAC). With this feature, you can choose who can create, edit, and read library panels. RBAC provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as dashboards, reports, and administrative settings.
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-library-panels/)
+
 ## Alerting
+
+### Simplified Alert Notification Routing
+
+<!--#alerting -->
+
+_Generally available in all editions of Grafana_
+
+This feature simplifies your options for configuring where your notifications are sent when an alert rule fires. Choose an existing contact point directly from within the alert rule creation form without the need to label match notification policies.  You can also set optional muting, grouping, and timing settings directly in the alert rule.
+
+Simplified routing inherits the alert rule RBAC, increasing control over notification routing while preventing accidental notification policy updates, ensuring critical notifications make it to their intended contact point destination.
+
+To try out Simplified Alert Notification Routing enable the `alertingSimplifiedRouting` feature toggle.
 
 ### Grafana Alerting upgrade with rule preview
 
@@ -112,19 +124,7 @@ Grafana Alerting previously evaluated rules at the start of the evaluation inter
 
 _Generally available in all editions of Grafana_
 
-Grafana can now be used to manage both Prometheus and Mimir Alertmanagers with UTF-8 configurations. For more information, please see the release notes for Alertmanager 0.27.0.
-
-### Simplified Alert Notification Routing
-
-<!--#alerting -->
-
-_Generally available in all editions of Grafana_
-
-This feature simplifies your options for configuring where your notifications are sent when an alert rule fires. Choose an existing contact point directly from within the alert rule creation form without the need to label match notification policies.  You can also set optional muting, grouping, and timing settings directly in the alert rule.
-
-Simplified routing inherits the alert rule RBAC, increasing control over notification routing while preventing accidental notification policy updates, ensuring critical notifications make it to their intended contact point destination.
-
-To try out Simplified Alert Notification Routing enable the `alertingSimplifiedRouting` feature toggle.
+Grafana can now be used to manage both Prometheus and Mimir Alertmanagers with UTF-8 configurations. For more information, please see the [release notes for Alertmanager 0.27.0](https://github.com/prometheus/alertmanager/releases).
 
 ## Authentication and authorization
 
