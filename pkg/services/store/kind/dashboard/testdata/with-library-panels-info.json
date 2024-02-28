@@ -45,6 +45,32 @@
           "type": "panel"
         }
       ]
+    },
+    {
+      "UID": "with-library-panels#3",
+      "kind": "panel",
+      "name": "collapsed row",
+      "fields": {
+        "type": "row"
+      }
+    },
+    {
+      "UID": "with-library-panels#42",
+      "kind": "panel",
+      "name": "blue pie",
+      "fields": {
+        "type": ""
+      },
+      "references": [
+        {
+          "family": "librarypanel",
+          "identifier": "l3d2s634-fdgf-75u4-3fg3-67j966ii7jur"
+        },
+        {
+          "family": "plugin",
+          "type": "panel"
+        }
+      ]
     }
   ],
   "references": [
@@ -58,6 +84,10 @@
     {
       "family": "librarypanel",
       "identifier": "e1d5f519-dabd-47c6-9ad7-83d181ce1cee"
+    },
+    {
+      "family": "librarypanel",
+      "identifier": "l3d2s634-fdgf-75u4-3fg3-67j966ii7jur"
     },
     {
       "family": "plugin",
