@@ -19,11 +19,11 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Manage silences
+title: Configure silences
 weight: 440
 ---
 
-# Manage silences
+# Configure silences
 
 Silences stop notifications from getting created and last for only a specified window of time.
 
