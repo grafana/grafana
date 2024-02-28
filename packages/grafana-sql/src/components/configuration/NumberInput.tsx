@@ -7,10 +7,9 @@ type NumberInputProps = {
   defaultValue: number;
   onChange: (value: number) => void;
   width: number;
-  disabled?: boolean;
 };
 
-export function NumberInput({ value, defaultValue, onChange, width, disabled }: NumberInputProps) {
+export function NumberInput({ value, defaultValue, onChange, width }: NumberInputProps) {
   const [isEmpty, setIsEmpty] = React.useState(false);
   return (
     <Input
@@ -30,7 +29,6 @@ export function NumberInput({ value, defaultValue, onChange, width, disabled }: 
         }
       }}
       width={width}
-      disabled={disabled}
     />
   );
 }

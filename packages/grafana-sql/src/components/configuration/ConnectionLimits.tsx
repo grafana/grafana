@@ -121,7 +121,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         label={
           <Label>
             <Stack gap={0.5}>
-              <span>Auto Max Idle</span>
+              <span>Auto max idle</span>
               <Tooltip
                 content={
                   <span>
@@ -171,7 +171,6 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
               onJSONDataNumberChanged('maxIdleConns')(value);
             }}
             width={labelWidth}
-            disabled={autoIdle}
           />
         )}
       </Field>
