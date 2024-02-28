@@ -55,14 +55,12 @@ describe('ReturnToPrevious button', () => {
     const alertRule1 = '{"title":"e2e-ReturnToPrevious-test","href":"/alerting/list?search="}';
     const alertRule2 = '{"title":"e2e-ReturnToPrevious-test-2","href":"/alerting/list"}';
 
-    cy.getAllSessionStorage().then((result) => {
-      expect(result).to.eql({
-        // TODO: some alternative may be required here
-        'http://grafana-server:3001': {
-          returnToPrevious: alertRule1,
-        },
+    cy.window()
+      .its('sessionStorage')
+      .invoke('getItem', 'returnToPrevious')
+      .then((result) => {
+        expect(result).to.eql(alertRule1);
       });
-    });
 
     // make sure the dashboard finished loading
     cy.get('button[aria-label*="BarChart - Label Rotation & Skipping"]').should('be.visible');
@@ -76,19 +74,18 @@ describe('ReturnToPrevious button', () => {
     e2e.components.AlertRules.expandedContent().find('[data-testid="data-testid go to dashboard"]').click();
     // TODO: replace data-testid in find?
 
-    cy.getAllSessionStorage().then((result) => {
-      expect(result).to.not.eql({
-        // TODO: some alternative may be required here
-        'http://grafana-server:3001': {
-          returnToPrevious: alertRule1,
-        },
+    cy.window()
+      .its('sessionStorage')
+      .invoke('getItem', 'returnToPrevious')
+      .then((result) => {
+        expect(result).to.not.eql(alertRule1);
       });
-      expect(result).to.eql({
-        // TODO: some alternative may be required here
-        'http://grafana-server:3001': {
-          returnToPrevious: alertRule2,
-        },
+
+    cy.window()
+      .its('sessionStorage')
+      .invoke('getItem', 'returnToPrevious')
+      .then((result) => {
+        expect(result).to.eql(alertRule2);
       });
-    });
   });
 });
