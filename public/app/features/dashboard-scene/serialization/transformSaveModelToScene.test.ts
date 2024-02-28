@@ -856,6 +856,88 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
+    it('should migrate adhoc variable with static keys', () => {
+      const variable: TypedVariableModel = {
+        id: 'adhoc',
+        global: false,
+        index: 0,
+        state: LoadingState.Done,
+        error: null,
+        name: 'adhoc',
+        label: 'Adhoc Label',
+        description: 'Adhoc Description',
+        type: 'adhoc',
+        rootStateKey: 'N4XLmH5Vz',
+        datasource: {
+          uid: 'gdev-prometheus',
+          type: 'prometheus',
+        },
+        filters: [
+          {
+            key: 'filterTest',
+            operator: '=',
+            value: 'test',
+          },
+        ],
+        baseFilters: [
+          {
+            key: 'baseFilterTest',
+            operator: '=',
+            value: 'test',
+          },
+        ],
+        staticKeys: [
+          {
+            text: 'some',
+            value: '1',
+          },
+          {
+            text: 'static',
+            value: '2',
+          },
+          {
+            text: 'keys',
+            value: '3',
+          },
+        ],
+        hide: 0,
+        skipUrlSync: false,
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable) as AdHocFiltersVariable;
+      const filterVarState = migrated.state;
+
+      expect(migrated).toBeInstanceOf(AdHocFiltersVariable);
+      expect(filterVarState).toEqual({
+        key: expect.any(String),
+        description: 'Adhoc Description',
+        hide: 0,
+        label: 'Adhoc Label',
+        name: 'adhoc',
+        skipUrlSync: false,
+        type: 'adhoc',
+        filterExpression: 'filterTest="test"',
+        filters: [{ key: 'filterTest', operator: '=', value: 'test' }],
+        baseFilters: [{ key: 'baseFilterTest', operator: '=', value: 'test' }],
+        datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+        applyMode: 'auto',
+        staticKeys: [
+          {
+            text: 'some',
+            value: '1',
+          },
+          {
+            text: 'static',
+            value: '2',
+          },
+          {
+            text: 'keys',
+            value: '3',
+          },
+        ],
+      });
+    });
+
     describe('when groupByVariable feature toggle is enabled', () => {
       beforeAll(() => {
         config.featureToggles.groupByVariable = true;
