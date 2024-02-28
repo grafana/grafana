@@ -2,7 +2,6 @@
   "tokenSetOrder": [
     "core",
     "semantic",
-    "component/button",
     "Themes/dark",
     "Themes/light"
   ]
