@@ -6,7 +6,7 @@ import { BasicValueMatcherOptions } from './types';
 
 const isSubstringMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   id: ValueMatcherID.substring,
-  name: 'Is Substring',
+  name: 'Contains Substring',
   description: 'Match where value for given field is a substring to options value.',
   get: (options) => {
     return (valueIndex: number, field: Field) => {
@@ -23,7 +23,7 @@ const isSubstringMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
 
 const isNotSubstringValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   id: ValueMatcherID.notSubstring,
-  name: 'Is not substring',
+  name: 'Does not contain substring',
   description: 'Match where value for given field is not a substring to options value.',
   get: (options) => {
     return (valueIndex: number, field: Field) => {
