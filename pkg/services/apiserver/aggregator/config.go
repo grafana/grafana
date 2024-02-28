@@ -1,5 +1,7 @@
 package aggregator
 
+import serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
+
 type RemoteService struct {
 	Group   string `yaml:"group"`
 	Version string `yaml:"version"`
@@ -9,6 +11,8 @@ type RemoteService struct {
 
 type RemoteServicesConfig struct {
 	ExternalNamesNamespace string
-	CABundle               string
+	InsecureSkipTLSVerify  bool
+	CABundle               []byte
 	Services               []RemoteService
+	serviceClientSet       *serviceclientset.Clientset
 }

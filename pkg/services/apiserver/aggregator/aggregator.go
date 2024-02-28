@@ -12,8 +12,8 @@
 package aggregator
 
 import (
+	"context"
 	"crypto/tls"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,16 +42,21 @@ import (
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 
+	servicev0alpha1applyconfiguration "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
-func readCABundlePEM(path string) (string, error) {
+func readCABundlePEM(path string, devMode bool) ([]byte, error) {
+	if devMode {
+		return nil, nil
+	}
+
 	//nolint:gosec
 	f, err := os.Open(path)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -58,12 +64,7 @@ func readCABundlePEM(path string) (string, error) {
 		}
 	}()
 
-	rawCABundle, err := io.ReadAll(f)
-	if err != nil {
-		return "", err
-	}
-
-	return base64.StdEncoding.EncodeToString(rawCABundle), nil
+	return io.ReadAll(f)
 }
 
 func readRemoteServices(path string) ([]RemoteService, error) {
@@ -131,7 +132,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		return aggregatorConfig, sharedInformerFactory, nil, nil
 	}
 
-	caBundlePEM, err := readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile)
+	caBundlePEM, err := readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -141,9 +142,11 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 	}
 
 	return aggregatorConfig, sharedInformerFactory, &RemoteServicesConfig{
+		InsecureSkipTLSVerify:  commandOptions.ExtraOptions.DevMode,
 		ExternalNamesNamespace: externalNamesNamespace,
 		CABundle:               caBundlePEM,
 		Services:               remoteServices,
+		serviceClientSet:       serviceClient,
 	}, nil
 }
 
@@ -163,10 +166,6 @@ func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, shared
 	autoRegistrationController := autoregister.NewAutoRegisterController(aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(), apiRegistrationClient)
 	apiServices := apiServicesToRegister(delegateAPIServer, autoRegistrationController)
 
-	if remoteServicesConfig != nil {
-		addRemoteAPIServicesToRegister(remoteServicesConfig, autoRegistrationController)
-	}
-
 	// Imbue all builtin group-priorities onto the aggregated discovery
 	if completedConfig.GenericConfig.AggregatedDiscoveryGroupManager != nil {
 		for gv, entry := range APIVersionPriorities {
@@ -180,6 +179,27 @@ func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, shared
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if remoteServicesConfig != nil {
+		addRemoteAPIServicesToRegister(remoteServicesConfig, autoRegistrationController)
+		externalNames := getRemoteExternalNamesToRegister(remoteServicesConfig)
+		err = aggregatorServer.GenericAPIServer.AddPostStartHook("grafana-apiserver-remote-autoregistration", func(_ genericapiserver.PostStartHookContext) error {
+			namespacedClient := remoteServicesConfig.serviceClientSet.ServiceV0alpha1().ExternalNames(remoteServicesConfig.ExternalNamesNamespace)
+			for _, externalName := range externalNames {
+				_, err := namespacedClient.Apply(context.Background(), externalName, metav1.ApplyOptions{
+					FieldManager: "grafana-aggregator",
+					Force:        true,
+				})
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = aggregatorServer.GenericAPIServer.AddBootSequenceHealthChecks(
@@ -311,30 +331,47 @@ var APIVersionPriorities = map[schema.GroupVersion]Priority{
 	// Version can be set to 9 (to have space around) for a new group.
 }
 
-func addRemoteAPIServicesToRegister(config *RemoteServicesConfig, registration autoregister.AutoAPIServiceRegistration) []*v1.APIService {
-	apiServices := make([]*v1.APIService, 0)
+func addRemoteAPIServicesToRegister(config *RemoteServicesConfig, registration autoregister.AutoAPIServiceRegistration) {
 	for i, service := range config.Services {
-		port := service.Port
 		apiService := &v1.APIService{
 			ObjectMeta: metav1.ObjectMeta{Name: service.Version + "." + service.Group},
 			Spec: v1.APIServiceSpec{
-				Group:   service.Group,
-				Version: service.Version,
-				// TODO: Group priority minimum 1000 more than for local services, figure out a better story
+				Group:                 service.Group,
+				Version:               service.Version,
+				InsecureSkipTLSVerify: config.InsecureSkipTLSVerify,
+				CABundle:              config.CABundle,
+				// TODO: Group priority minimum of 1000 more than for local services, figure out a better story
 				// when we have multiple versions, potentially running in heterogeneous ways (local and remote)
 				GroupPriorityMinimum: 16000,
 				VersionPriority:      1 + int32(i),
 				Service: &v1.ServiceReference{
 					Name:      service.Version + "." + service.Group,
 					Namespace: config.ExternalNamesNamespace,
-					Port:      &port,
+					Port:      &service.Port,
 				},
 			},
 		}
-		apiServices = append(apiServices, apiService)
+
 		registration.AddAPIServiceToSyncOnStart(apiService)
 	}
-	return apiServices
+}
+
+func getRemoteExternalNamesToRegister(config *RemoteServicesConfig) []*servicev0alpha1applyconfiguration.ExternalNameApplyConfiguration {
+	externalNames := make([]*servicev0alpha1applyconfiguration.ExternalNameApplyConfiguration, 0)
+
+	for _, service := range config.Services {
+		name := service.Version + "." + service.Group
+		externalName := &servicev0alpha1applyconfiguration.ExternalNameApplyConfiguration{}
+		externalName.WithAPIVersion(servicev0alpha1.SchemeGroupVersion.String())
+		externalName.WithKind("ExternalName")
+		externalName.WithName(name)
+		externalName.WithSpec(&servicev0alpha1applyconfiguration.ExternalNameSpecApplyConfiguration{
+			Host: &service.Host,
+		})
+		externalNames = append(externalNames, externalName)
+	}
+
+	return externalNames
 }
 
 func apiServicesToRegister(delegateAPIServer genericapiserver.DelegationTarget, registration autoregister.AutoAPIServiceRegistration) []*v1.APIService {

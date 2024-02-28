@@ -110,3 +110,16 @@ configuration overwrites on startup.
   ```shell
   kubectl delete -f ./pkg/services/apiserver/aggregator/examples/
   ```
+
+## Testing auto-registration of remote services locally
+
+A sample aggregation config for remote services is provided under [conf](../../../../conf/aggregation/apiservices.yaml). Provided, you have the following setup in your custom.ini, the apiserver will
+register your remotely running services on startup.
+
+```ini
+; in custom.ini
+; the bundle is only used when not in dev mode
+apiservice_ca_bundle_file = ./data/grafana-aggregator/ca.crt
+
+remote_services_file = ./conf/aggregation/apiservices.yaml
+```

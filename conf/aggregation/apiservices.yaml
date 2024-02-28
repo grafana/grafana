@@ -1,7 +1,7 @@
 # NOTE: dev-mode only and governed by presence of non-empty value for cfg["grafana-apiserver"]["remote_services_file"]
 # List of sample multi-tenant services to aggregate on startup
 - group: example.grafana.app
-  version: v1
+  version: v0alpha1
   host: localhost
   port: 7443
 - group: query.grafana.app
