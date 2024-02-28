@@ -700,6 +700,7 @@ embed.go @grafana/grafana-as-code
 /public/emails/ @grafanabot
 
 # Conf
+/conf/aggregation/ @grafana/grafana-app-platform-squad
 /conf/defaults.ini @torkelo
 /conf/sample.ini @torkelo
 /conf/ldap.toml @grafana/identity-access-team

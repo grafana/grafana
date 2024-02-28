@@ -60,7 +60,7 @@ func readCABundlePEM(path string, devMode bool) ([]byte, error) {
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			klog.Errorf("error closing remote services file", err)
+			klog.Errorf("error closing remote services file: %s", err)
 		}
 	}()
 
@@ -75,7 +75,7 @@ func readRemoteServices(path string) ([]RemoteService, error) {
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			klog.Errorf("error closing remote services file", err)
+			klog.Errorf("error closing remote services file: %s", err)
 		}
 	}()
 
