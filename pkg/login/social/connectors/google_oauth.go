@@ -24,16 +24,16 @@ const (
 	legacyAPIURL            = "https://www.googleapis.com/oauth2/v1/userinfo"
 	googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
 	googleIAMScope          = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
-	disableHDValidationKey  = "disable_hd_validation"
+	validateHDKey           = "validate_hd"
 )
 
 var _ social.SocialConnector = (*SocialGoogle)(nil)
 var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
-var ExtraGoogleSettingKeys = []string{disableHDValidationKey}
+var ExtraGoogleSettingKeys = []string{validateHDKey}
 
 type SocialGoogle struct {
 	*SocialBase
-	disableHDValidation bool
+	validateHD bool
 }
 
 type googleUserData struct {
@@ -47,8 +47,8 @@ type googleUserData struct {
 
 func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
 	provider := &SocialGoogle{
-		SocialBase:          newSocialBase(social.GoogleProviderName, info, features, cfg),
-		disableHDValidation: MustBool(info.Extra[disableHDValidationKey], false),
+		SocialBase: newSocialBase(social.GoogleProviderName, info, features, cfg),
+		validateHD: MustBool(info.Extra[validateHDKey], false),
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
@@ -93,7 +93,7 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	defer s.reloadMutex.Unlock()
 
 	s.updateInfo(social.GoogleProviderName, newInfo)
-	s.disableHDValidation = MustBool(newInfo.Extra[disableHDValidationKey], false)
+	s.validateHD = MustBool(newInfo.Extra[validateHDKey], false)
 
 	return nil
 }
@@ -305,7 +305,7 @@ func (s *SocialGoogle) getGroupsPage(ctx context.Context, client *http.Client, u
 }
 
 func (s *SocialGoogle) isHDAllowed(hd string, info *social.OAuthInfo) error {
-	if s.disableHDValidation {
+	if s.validateHD {
 		return nil
 	}
 

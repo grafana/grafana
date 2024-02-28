@@ -132,7 +132,7 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 	allowed_organizations = org1, org2
 
 	[auth.google]
-	disable_hd_validation = true
+	validate_hd = true
 	`
 
 	iniFile, err := ini.Load([]byte(iniWithExtraFields))
@@ -181,7 +181,7 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 		result, err := strategy.GetProviderConfig(context.Background(), social.GoogleProviderName)
 		require.NoError(t, err)
 
-		require.Equal(t, "true", result["disable_hd_validation"])
+		require.Equal(t, "true", result["validate_hd"])
 	})
 }
 

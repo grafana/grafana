@@ -897,7 +897,7 @@ func TestIsHDAllowed(t *testing.T) {
 		email                string
 		allowedDomains       []string
 		expectedErrorMessage string
-		disableHDValidation  bool
+		validateHD           bool
 	}{
 		{
 			name:                 "should not fail if no allowed domains are set",
@@ -918,10 +918,10 @@ func TestIsHDAllowed(t *testing.T) {
 			expectedErrorMessage: "the hd claim found in the ID token is not present in the allowed domains",
 		},
 		{
-			name:                "should not fail if the HD validation is disabled and the email not being from an allowed domain",
-			email:               "mycompany.com",
-			allowedDomains:      []string{"grafana.com", "example.com"},
-			disableHDValidation: true,
+			name:           "should not fail if the HD validation is disabled and the email not being from an allowed domain",
+			email:          "mycompany.com",
+			allowedDomains: []string{"grafana.com", "example.com"},
+			validateHD:     true,
 		},
 	}
 
@@ -930,7 +930,7 @@ func TestIsHDAllowed(t *testing.T) {
 			info := &social.OAuthInfo{}
 			info.AllowedDomains = tc.allowedDomains
 			s := NewGoogleProvider(info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-			s.disableHDValidation = tc.disableHDValidation
+			s.validateHD = tc.validateHD
 			err := s.isHDAllowed(tc.email, info)
 
 			if tc.expectedErrorMessage != "" {
