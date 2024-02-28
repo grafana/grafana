@@ -1734,25 +1734,13 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 }
 
 func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
+	// This check is kept to prevent users that upgrade to Grafana 11 with the legacy alerting enabled. This should prevent them from accidentally upgrading without migration to Unified Alerting.
 	alerting := iniFile.Section("alerting")
 	enabled, err := alerting.Key("enabled").Bool()
-	cfg.AlertingEnabled = nil
-	if err == nil {
-		cfg.AlertingEnabled = &enabled
+	if err == nil && enabled {
+		cfg.Logger.Error("Option [alerting].enabled cannot be true. Legacy alerting is no longer supported. Delete the option and use configuration '[unified_alerting].enabled' to enable Grafana Alerting and start from the scratch. Refer to documentation about migration to the new alerting (https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts)")
+		return fmt.Errorf("invalid setting [alerting].enabled")
 	}
-	cfg.ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
-	cfg.AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
-
-	cfg.AlertingErrorOrTimeout = valueAsString(alerting, "error_or_timeout", "alerting")
-	cfg.AlertingNoDataOrNullValues = valueAsString(alerting, "nodata_or_nullvalues", "no_data")
-
-	evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
-	cfg.AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
-	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
-	cfg.AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
-	cfg.AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
-	cfg.AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
-
 	return nil
 }
 
