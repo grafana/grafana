@@ -630,7 +630,7 @@ Use this transformation to construct a matrix by specifying fields from your que
   },
   groupToNestedTable: {
     name: 'Group to nested table',
-    getHelperDocs: function() {
+    getHelperDocs: function () {
       return `
   Use this transformation to group the data by a specified field (column) value, process calculations on each group, and have records that share the same grouped field value to be displayed in a nested table.
 
