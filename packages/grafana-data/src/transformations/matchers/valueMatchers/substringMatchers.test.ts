@@ -37,9 +37,8 @@ describe('value substring to matcher', () => {
     const valueIndex = 1;
 
     expect(matcher(valueIndex, field, frame, data)).toBeFalsy();
-   
-  })
-  
+  });
+
   it('should not match when option value is different', () => {
     const frame = data[0];
     const field = frame.fields[0];
