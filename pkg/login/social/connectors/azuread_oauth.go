@@ -200,6 +200,7 @@ func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSett
 
 	return validation.Validate(info, requester,
 		validateAllowedGroups,
+		//validation.MustBeEmptyValidator(info.ApiUrl, "API URL"), //uncomment this after the Terraform provider is updated
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
 		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
 }

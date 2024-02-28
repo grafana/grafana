@@ -66,6 +66,8 @@ export type SSOProvider = {
     allowedDomains?: string;
     allowedGroups?: string;
     scopes?: string;
+    // For Azure AD
+    forceUseGraphApi?: boolean;
   };
 };
 
