@@ -433,7 +433,7 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     title: panel.title,
     uid: panel.libraryPanel.uid,
     name: panel.libraryPanel.name,
-    key: getVizPanelKeyForPanelId(panel.id),
+    panelKey: getVizPanelKeyForPanelId(panel.id),
   });
 
   return new SceneGridItem({
@@ -487,7 +487,8 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   }
 
   if (panel.repeat) {
-    const repeatDirection = panel.repeatDirection ?? 'h';
+    const repeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
+
     return new PanelRepeaterGridItem({
       key: `grid-item-${panel.id}`,
       x: panel.gridPos.x,
@@ -498,7 +499,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
       source: new VizPanel(vizPanelState),
       variableName: panel.repeat,
       repeatedPanels: [],
-      repeatDirection: panel.repeatDirection,
+      repeatDirection: repeatDirection,
       maxPerRow: panel.maxPerRow,
     });
   }

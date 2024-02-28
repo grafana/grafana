@@ -381,6 +381,10 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/identity-access-team
+
+# Temp owners until Enterprise team takes over
+/public/app/features/admin/migrate-to-cloud @grafana/grafana-frontend-platform
+
 /public/app/features/auth-config/ @grafana/identity-access-team
 /public/app/features/annotations/ @grafana/dashboards-squad
 /public/app/features/api-keys/ @grafana/identity-access-team
@@ -526,7 +530,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 
-/scripts/docs/generate-transformations.ts @grafana/dataviz-squad
+/scripts/docs/generate-transformations* @grafana/dataviz-squad
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
@@ -605,7 +609,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
 /pkg/services/featuremgmt/ @grafana/grafana-operator-experience-squad
-/pkg/services/cloudmigrations/ @grafana/grafana-operator-experience-squad
+/pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad

@@ -13,6 +13,7 @@ import {
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 
@@ -229,4 +230,8 @@ export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
     title: 'Row title',
     y: 0,
   });
+}
+
+export function isLibraryPanelChild(vizPanel: VizPanel) {
+  return vizPanel.parent instanceof LibraryVizPanel;
 }
