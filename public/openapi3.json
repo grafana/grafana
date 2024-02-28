@@ -24656,6 +24656,56 @@
       }
     },
     "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+      "delete": {
+        "description": "Delete rule group",
+        "operationId": "RouteDeleteAlertRuleGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "FolderUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "Group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The alert rule group was deleted successfully."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "NotFound"
+          }
+        },
+        "tags": [
+          "provisioning"
+        ]
+      },
       "get": {
         "operationId": "RouteGetAlertRuleGroup",
         "parameters": [

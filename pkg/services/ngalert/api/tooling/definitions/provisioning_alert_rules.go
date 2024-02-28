@@ -168,6 +168,15 @@ type ProvisionedAlertRule struct {
 //       200: AlertRuleGroup
 //       404: description: Not found.
 
+// swagger:route DELETE /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteDeleteAlertRuleGroup
+//
+// Delete rule group
+//
+//     Responses:
+//       204: description: The alert rule group was deleted successfully.
+//       403: ForbiddenError
+//       404: NotFound
+
 // swagger:route GET /v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export provisioning stable RouteGetAlertRuleGroupExport
 //
 // Export an alert rule group in provisioning file format.
@@ -192,13 +201,13 @@ type ProvisionedAlertRule struct {
 //       200: AlertRuleGroup
 //       400: ValidationError
 
-// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport RouteDeleteAlertRuleGroup
 type FolderUIDPathParam struct {
 	// in:path
 	FolderUID string `json:"FolderUID"`
 }
 
-// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport RouteDeleteAlertRuleGroup
 type RuleGroupPathParam struct {
 	// in:path
 	Group string `json:"Group"`
