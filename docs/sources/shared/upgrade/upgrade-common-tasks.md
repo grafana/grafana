@@ -119,7 +119,7 @@ To upgrade Grafana installed on Windows, complete the following steps:
 
 To upgrade Grafana installed on Mac, complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to the custom configuration file, `custom.ini` or `grafana.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to the custom configuration file, `custom.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
