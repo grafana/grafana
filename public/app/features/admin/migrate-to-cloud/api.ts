@@ -31,15 +31,61 @@ interface MigrateToCloudStatusDTO {
   enabled: boolean;
 }
 
+interface CreateMigrationTokenResponseDTO {
+  token: string;
+}
+
+// TODO remove these mock properties/functions
+const MOCK_DELAY_MS = 1000;
+const MOCK_TOKEN = 'TODO_thisWillBeABigLongToken';
+let HAS_MIGRATION_TOKEN = false;
+
+function dataWithMockDelay<T>(data: T): Promise<{ data: T }> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data });
+    }, MOCK_DELAY_MS);
+  });
+}
+
 export const migrateToCloudAPI = createApi({
+  tagTypes: ['migrationToken'],
   reducerPath: 'migrateToCloudAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     // TODO :)
     getStatus: builder.query<MigrateToCloudStatusDTO, void>({
-      queryFn: () => ({ data: { enabled: false } }),
+      queryFn: () => dataWithMockDelay({ enabled: true }),
+    }),
+
+    createMigrationToken: builder.mutation<CreateMigrationTokenResponseDTO, void>({
+      invalidatesTags: ['migrationToken'],
+      queryFn: async () => {
+        HAS_MIGRATION_TOKEN = true;
+        return dataWithMockDelay({ token: MOCK_TOKEN });
+      },
+    }),
+
+    deleteMigrationToken: builder.mutation<void, void>({
+      invalidatesTags: ['migrationToken'],
+      queryFn: async () => {
+        HAS_MIGRATION_TOKEN = false;
+        return dataWithMockDelay(undefined);
+      },
+    }),
+
+    hasMigrationToken: builder.query<boolean, void>({
+      providesTags: ['migrationToken'],
+      queryFn: async () => {
+        return dataWithMockDelay(HAS_MIGRATION_TOKEN);
+      },
     }),
   }),
 });
 
-export const { useGetStatusQuery } = migrateToCloudAPI;
+export const {
+  useGetStatusQuery,
+  useCreateMigrationTokenMutation,
+  useDeleteMigrationTokenMutation,
+  useHasMigrationTokenQuery,
+} = migrateToCloudAPI;

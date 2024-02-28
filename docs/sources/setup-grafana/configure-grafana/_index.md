@@ -1626,7 +1626,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ## [unified_alerting.screenshots]
 
-For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/manage-notifications/images-in-notifications" >}}).
+For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/configure-notifications/template-notifications/images-in-notifications" >}}).
 
 ### capture
 
@@ -1651,6 +1651,20 @@ For more information about Grafana Reserved Labels, refer to [Labels in Grafana 
 Comma-separated list of reserved labels added by the Grafana Alerting engine that should be disabled.
 
 For example: `disabled_labels=grafana_folder`
+
+<hr>
+
+## [unified_alerting.state_history.annotations]
+
+This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be annotations (see setting [unified_alerting.state_history].backend)
+
+### max_age
+
+Configures for how long alert annotations are stored. Default is 0, which keeps them forever. This setting should be expressed as an duration. Ex 6h (hours), 10d (days), 2w (weeks), 1M (month).
+
+### max_annotations_to_keep
+
+Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
 
 <hr>
 
@@ -1713,12 +1727,20 @@ Sets the minimum interval between rule evaluations. Default value is `1`.
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
-### max_annotation_age =
+### max_annotation_age
+
+{{% admonition type="note" %}}
+This option is deprecated - See `max_age` option in [unified_alerting.state_history.annotations]({{< relref "#unified_alertingstate_historyannotations" >}}) instead.
+{{% /admonition %}}
 
 Configures for how long alert annotations are stored. Default is 0, which keeps them forever.
 This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
-### max_annotations_to_keep =
+### max_annotations_to_keep
+
+{{% admonition type="note" %}}
+This option is deprecated - See `max_annotations_to_keep` option in [unified_alerting.state_history.annotations]({{< relref "#unified_alertingstate_historyannotations" >}}) instead.
+{{% /admonition %}}
 
 Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
 

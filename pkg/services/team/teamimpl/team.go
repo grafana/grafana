@@ -50,8 +50,8 @@ func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsBy
 	return s.store.GetIDsByUser(ctx, query)
 }
 
-func (s *Service) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
-	return s.store.AddMember(userID, orgID, teamID, isExternal, permission)
+func (s *Service) AddTeamMember(ctx context.Context, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
+	return s.store.AddMember(ctx, userID, orgID, teamID, isExternal, permission)
 }
 
 func (s *Service) UpdateTeamMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error {
