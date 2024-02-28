@@ -39,7 +39,7 @@ describe('ReturnToPrevious button', () => {
     cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('not.exist');
   });
 
-  it('should disappear and clear session storage when going back to alert rules via nav', () => {
+  it('should persist when going back to alert rules via nav', () => {
     e2e.components.ReturnToPrevious.buttonGroup().should('be.visible');
     cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('exist');
 
@@ -47,9 +47,8 @@ describe('ReturnToPrevious button', () => {
     cy.get('button[aria-label*="BarChart - Label Rotation & Skipping"]').should('be.visible');
 
     cy.get('a[href="/alerting/list"]').click();
-    // TODO: the following doesn't work => RTP button doesn't disappear
-    // e2e.components.ReturnToPrevious.buttonGroup().should('not.exist');
-    // cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('not.exist');
+    e2e.components.ReturnToPrevious.buttonGroup().should('exist');
+    cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('exist');
   });
 
   it('should override the information in session storage when user changes alert rules', () => {
