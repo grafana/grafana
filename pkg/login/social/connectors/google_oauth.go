@@ -94,7 +94,9 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 }
 
 func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	data, errToken := s.extractFromToken(ctx, client, token)
 	if errToken != nil {
@@ -166,7 +168,9 @@ type googleAPIData struct {
 }
 
 func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) (*googleUserData, error) {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
 		data := googleAPIData{}
@@ -202,7 +206,9 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 }
 
 func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	if info.UseRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
@@ -251,7 +257,11 @@ type googleGroupResp struct {
 }
 
 func (s *SocialGoogle) retrieveGroups(ctx context.Context, client *http.Client, userData *googleUserData) ([]string, error) {
-	s.log.Debug("Retrieving groups", "scopes", s.Config.Scopes)
+	s.reloadMutex.RLock()
+	config := s.Config
+	s.reloadMutex.RUnlock()
+
+	s.log.Debug("Retrieving groups", "scopes", config.Scopes)
 	if !slices.Contains(s.Scopes, googleIAMScope) {
 		return nil, nil
 	}
@@ -298,7 +308,9 @@ func (s *SocialGoogle) getGroupsPage(ctx context.Context, client *http.Client, u
 }
 
 func (s *SocialGoogle) isHDAllowed(hd string) error {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	if len(info.AllowedDomains) == 0 {
 		return nil

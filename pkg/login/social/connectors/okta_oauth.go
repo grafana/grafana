@@ -105,7 +105,9 @@ func (claims *OktaClaims) extractEmail() string {
 }
 
 func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	idToken := token.Extra("id_token")
 	if idToken == nil {
@@ -167,7 +169,9 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 }
 
 func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, client *http.Client) error {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	rawUserInfoResponse, err := s.httpGet(ctx, client, info.ApiUrl)
 	if err != nil {
@@ -197,7 +201,9 @@ func (s *SocialOkta) GetGroups(data *OktaUserInfoJson) []string {
 
 // TODO: remove this in a separate PR and use the isGroupMember from the social.go
 func (s *SocialOkta) IsGroupMember(groups []string) bool {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	if len(info.AllowedGroups) == 0 {
 		return true

@@ -99,13 +99,15 @@ func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
 
 func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool {
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	allowedOrganizations := make([]string, len(s.allowedOrganizations))
+	copy(allowedOrganizations, s.allowedOrganizations)
+	s.reloadMutex.RUnlock()
 
-	if len(s.allowedOrganizations) == 0 {
+	if len(allowedOrganizations) == 0 {
 		return true
 	}
 
-	for _, allowedOrganization := range s.allowedOrganizations {
+	for _, allowedOrganization := range allowedOrganizations {
 		for _, organization := range organizations {
 			if organization.Login == allowedOrganization {
 				return true
@@ -127,12 +129,14 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 		Orgs  []OrgRecord `json:"orgs"`
 	}
 
-	info := s.GetOAuthInfo()
-
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	url := s.url
+	info := s.info
+	allowedOrganizations := make([]string, len(s.allowedOrganizations))
+	copy(allowedOrganizations, s.allowedOrganizations)
+	s.reloadMutex.RUnlock()
 
-	response, err := s.httpGet(ctx, client, s.url+"/api/oauth2/user")
+	response, err := s.httpGet(ctx, client, url+"/api/oauth2/user")
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
@@ -159,7 +163,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	if !s.IsOrganizationMember(data.Orgs) {
 		return nil, ErrMissingOrganizationMembership.Errorf(
 			"User is not a member of any of the allowed organizations: %v. Returned Organizations: %v",
-			s.allowedOrganizations, data.Orgs)
+			allowedOrganizations, data.Orgs)
 	}
 
 	return userInfo, nil

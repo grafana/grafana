@@ -131,9 +131,11 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 
 func (s *SocialGithub) IsTeamMember(ctx context.Context, client *http.Client) bool {
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	teamIds := make([]int, len(s.teamIds))
+	copy(teamIds, s.teamIds)
+	s.reloadMutex.RUnlock()
 
-	if len(s.teamIds) == 0 {
+	if len(teamIds) == 0 {
 		return true
 	}
 
@@ -142,7 +144,7 @@ func (s *SocialGithub) IsTeamMember(ctx context.Context, client *http.Client) bo
 		return false
 	}
 
-	for _, teamId := range s.teamIds {
+	for _, teamId := range teamIds {
 		for _, membership := range teamMemberships {
 			if teamId == membership.Id {
 				return true
@@ -156,9 +158,11 @@ func (s *SocialGithub) IsTeamMember(ctx context.Context, client *http.Client) bo
 func (s *SocialGithub) IsOrganizationMember(ctx context.Context,
 	client *http.Client, organizationsUrl string) bool {
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	allowedOrganizations := make([]string, len(s.allowedOrganizations))
+	copy(allowedOrganizations, s.allowedOrganizations)
+	s.reloadMutex.RUnlock()
 
-	if len(s.allowedOrganizations) == 0 {
+	if len(allowedOrganizations) == 0 {
 		return true
 	}
 
@@ -167,7 +171,7 @@ func (s *SocialGithub) IsOrganizationMember(ctx context.Context,
 		return false
 	}
 
-	for _, allowedOrganization := range s.allowedOrganizations {
+	for _, allowedOrganization := range allowedOrganizations {
 		for _, organization := range organizations {
 			if strings.EqualFold(organization, allowedOrganization) {
 				return true
@@ -185,7 +189,9 @@ func (s *SocialGithub) FetchPrivateEmail(ctx context.Context, client *http.Clien
 		Verified bool   `json:"verified"`
 	}
 
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	response, err := s.httpGet(ctx, client, fmt.Sprintf(info.ApiUrl+"/emails"))
 	if err != nil {
@@ -210,7 +216,9 @@ func (s *SocialGithub) FetchPrivateEmail(ctx context.Context, client *http.Clien
 }
 
 func (s *SocialGithub) FetchTeamMemberships(ctx context.Context, client *http.Client) ([]GithubTeam, error) {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	url := fmt.Sprintf(info.ApiUrl + "/teams?per_page=100")
 	hasMore := true
@@ -294,10 +302,13 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		Name  string `json:"name"`
 	}
 
-	info := s.GetOAuthInfo()
-
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	info := s.info
+	teamIds := make([]int, len(s.teamIds))
+	copy(teamIds, s.teamIds)
+	allowedOrganizations := make([]string, len(s.allowedOrganizations))
+	copy(allowedOrganizations, s.allowedOrganizations)
+	s.reloadMutex.RUnlock()
 
 	response, err := s.httpGet(ctx, client, info.ApiUrl)
 	if err != nil {
@@ -351,13 +362,13 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 	organizationsUrl := fmt.Sprintf(info.ApiUrl + "/orgs?per_page=100")
 
 	if !s.IsTeamMember(ctx, client) {
-		return nil, ErrMissingTeamMembership.Errorf("User is not a member of any of the allowed teams: %v", s.teamIds)
+		return nil, ErrMissingTeamMembership.Errorf("User is not a member of any of the allowed teams: %v", teamIds)
 	}
 
 	if !s.IsOrganizationMember(ctx, client, organizationsUrl) {
 		return nil, ErrMissingOrganizationMembership.Errorf(
 			"User is not a member of any of the allowed organizations: %v",
-			s.allowedOrganizations)
+			allowedOrganizations)
 	}
 
 	if userInfo.Email == "" {

@@ -116,7 +116,9 @@ func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, n
 		FullPath string `json:"full_path"`
 	}
 
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	groupURL, err := url.JoinPath(info.ApiUrl, "/groups")
 	if err != nil {
@@ -179,7 +181,9 @@ func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, n
 }
 
 func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	data, err := s.extractFromToken(ctx, client, token)
 	if err != nil {
@@ -217,7 +221,9 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 }
 
 func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, token *oauth2.Token) (*userData, error) {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	apiResp := &apiData{}
 	response, err := s.httpGet(ctx, client, info.ApiUrl+"/user")
@@ -270,7 +276,9 @@ func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, 
 func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client, token *oauth2.Token) (*userData, error) {
 	s.log.Debug("Extracting user info from OAuth token")
 
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	idToken := token.Extra("id_token")
 	if idToken == nil {

@@ -134,7 +134,9 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 
 // TODOD: remove this in the next PR and use the isGroupMember from social.go
 func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	if len(info.AllowedGroups) == 0 {
 		return true
@@ -153,9 +155,11 @@ func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
 
 func (s *SocialGenericOAuth) IsTeamMember(ctx context.Context, client *http.Client) bool {
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	teamIds := make([]string, len(s.teamIds))
+	copy(teamIds, s.teamIds)
+	s.reloadMutex.RUnlock()
 
-	if len(s.teamIds) == 0 {
+	if len(teamIds) == 0 {
 		return true
 	}
 
@@ -164,7 +168,7 @@ func (s *SocialGenericOAuth) IsTeamMember(ctx context.Context, client *http.Clie
 		return false
 	}
 
-	for _, teamId := range s.teamIds {
+	for _, teamId := range teamIds {
 		for _, membershipId := range teamMemberships {
 			if teamId == membershipId {
 				return true
@@ -177,9 +181,11 @@ func (s *SocialGenericOAuth) IsTeamMember(ctx context.Context, client *http.Clie
 
 func (s *SocialGenericOAuth) IsOrganizationMember(ctx context.Context, client *http.Client) bool {
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	allowedOrganizations := make([]string, len(s.allowedOrganizations))
+	copy(allowedOrganizations, s.allowedOrganizations)
+	s.reloadMutex.RUnlock()
 
-	if len(s.allowedOrganizations) == 0 {
+	if len(allowedOrganizations) == 0 {
 		return true
 	}
 
@@ -188,7 +194,7 @@ func (s *SocialGenericOAuth) IsOrganizationMember(ctx context.Context, client *h
 		return false
 	}
 
-	for _, allowedOrganization := range s.allowedOrganizations {
+	for _, allowedOrganization := range allowedOrganizations {
 		for _, organization := range organizations {
 			if organization == allowedOrganization {
 				return true
@@ -322,11 +328,12 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 	s.log.Debug("Extracting user info from OAuth token")
 
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	idTokenAttributeName := s.idTokenAttributeName
+	s.reloadMutex.RUnlock()
 
 	idTokenAttribute := "id_token"
-	if s.idTokenAttributeName != "" {
-		idTokenAttribute = s.idTokenAttributeName
+	if idTokenAttributeName != "" {
+		idTokenAttribute = idTokenAttributeName
 		s.log.Debug("Using custom id_token attribute name", "attribute_name", idTokenAttribute)
 	}
 
@@ -355,7 +362,9 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 }
 
 func (s *SocialGenericOAuth) extractFromAPI(ctx context.Context, client *http.Client) *UserInfoJson {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	s.log.Debug("Getting user info from API")
 	if info.ApiUrl == "" {
@@ -384,15 +393,17 @@ func (s *SocialGenericOAuth) extractFromAPI(ctx context.Context, client *http.Cl
 }
 
 func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
+	s.reloadMutex.RLock()
+	emailAttributePath := s.emailAttributePath
+	emailAttributeName := s.emailAttributeName
+	s.reloadMutex.RUnlock()
+
 	if data.Email != "" {
 		return data.Email
 	}
 
-	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
-
-	if s.emailAttributePath != "" {
-		email, err := util.SearchJSONForStringAttr(s.emailAttributePath, data.rawJSON)
+	if emailAttributePath != "" {
+		email, err := util.SearchJSONForStringAttr(emailAttributePath, data.rawJSON)
 		if err != nil {
 			s.log.Error("Failed to search JSON for attribute", "error", err)
 		} else if email != "" {
@@ -400,7 +411,7 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 		}
 	}
 
-	emails, ok := data.Attributes[s.emailAttributeName]
+	emails, ok := data.Attributes[emailAttributeName]
 	if ok && len(emails) != 0 {
 		return emails[0]
 	}
@@ -417,17 +428,18 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 }
 
 func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
+	s.reloadMutex.RLock()
+	loginAttributePath := s.loginAttributePath
+	s.reloadMutex.RUnlock()
+
 	if data.Login != "" {
 		s.log.Debug("Setting user info login from login field", "login", data.Login)
 		return data.Login
 	}
 
-	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
-
-	if s.loginAttributePath != "" {
-		s.log.Debug("Searching for login among JSON", "loginAttributePath", s.loginAttributePath)
-		login, err := util.SearchJSONForStringAttr(s.loginAttributePath, data.rawJSON)
+	if loginAttributePath != "" {
+		s.log.Debug("Searching for login among JSON", "loginAttributePath", loginAttributePath)
+		login, err := util.SearchJSONForStringAttr(loginAttributePath, data.rawJSON)
 		if err != nil {
 			s.log.Error("Failed to search JSON for login attribute", "error", err)
 		}
@@ -447,14 +459,15 @@ func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
 
 func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	nameAttributePath := s.nameAttributePath
+	s.reloadMutex.RUnlock()
 
-	if s.nameAttributePath != "" {
-		name, err := util.SearchJSONForStringAttr(s.nameAttributePath, data.rawJSON)
+	if nameAttributePath != "" {
+		name, err := util.SearchJSONForStringAttr(nameAttributePath, data.rawJSON)
 		if err != nil {
 			s.log.Error("Failed to search JSON for attribute", "error", err)
 		} else if name != "" {
-			s.log.Debug("Setting user info name from nameAttributePath", "nameAttributePath", s.nameAttributePath)
+			s.log.Debug("Setting user info name from nameAttributePath", "nameAttributePath", nameAttributePath)
 			return name
 		}
 	}
@@ -475,13 +488,14 @@ func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
 
 func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson) ([]string, error) {
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	groupsAttributePath := s.groupsAttributePath
+	s.reloadMutex.RUnlock()
 
-	if s.groupsAttributePath == "" {
+	if groupsAttributePath == "" {
 		return []string{}, nil
 	}
 
-	return util.SearchJSONForStringSliceAttr(s.groupsAttributePath, data.rawJSON)
+	return util.SearchJSONForStringSliceAttr(groupsAttributePath, data.rawJSON)
 }
 
 func (s *SocialGenericOAuth) FetchPrivateEmail(ctx context.Context, client *http.Client) (string, error) {
@@ -493,7 +507,9 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(ctx context.Context, client *http
 		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	response, err := s.httpGet(ctx, client, fmt.Sprintf(info.ApiUrl+"/emails"))
 	if err != nil {
@@ -538,9 +554,10 @@ func (s *SocialGenericOAuth) FetchTeamMemberships(ctx context.Context, client *h
 	var ids []string
 
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	teamsUrl := s.teamsUrl
+	s.reloadMutex.RUnlock()
 
-	if s.teamsUrl == "" {
+	if teamsUrl == "" {
 		ids, err = s.fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx, client)
 	} else {
 		ids, err = s.fetchTeamMembershipsFromTeamsUrl(ctx, client)
@@ -560,7 +577,9 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx cont
 		Id int `json:"id"`
 	}
 
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	response, err := s.httpGet(ctx, client, fmt.Sprintf(info.ApiUrl+"/teams"))
 	if err != nil {
@@ -586,19 +605,21 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx cont
 
 func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(ctx context.Context, client *http.Client) ([]string, error) {
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	teamIdsAttributePath := s.teamIdsAttributePath
+	teamsUrl := s.teamsUrl
+	s.reloadMutex.RUnlock()
 
-	if s.teamIdsAttributePath == "" {
+	if teamIdsAttributePath == "" {
 		return []string{}, nil
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.teamsUrl))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(teamsUrl))
 	if err != nil {
-		s.log.Error("Error getting team memberships", "url", s.teamsUrl, "error", err)
+		s.log.Error("Error getting team memberships", "url", teamsUrl, "error", err)
 		return nil, err
 	}
 
-	return util.SearchJSONForStringSliceAttr(s.teamIdsAttributePath, response.Body)
+	return util.SearchJSONForStringSliceAttr(teamIdsAttributePath, response.Body)
 }
 
 func (s *SocialGenericOAuth) FetchOrganizations(ctx context.Context, client *http.Client) ([]string, bool) {
@@ -606,7 +627,9 @@ func (s *SocialGenericOAuth) FetchOrganizations(ctx context.Context, client *htt
 		Login string `json:"login"`
 	}
 
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	response, err := s.httpGet(ctx, client, fmt.Sprintf(info.ApiUrl+"/orgs"))
 	if err != nil {
@@ -634,16 +657,24 @@ func (s *SocialGenericOAuth) FetchOrganizations(ctx context.Context, client *htt
 
 func (s *SocialGenericOAuth) SupportBundleContent(bf *bytes.Buffer) error {
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	nameAttributePath := s.nameAttributePath
+	loginAttributePath := s.loginAttributePath
+	idTokenAttributeName := s.idTokenAttributeName
+	teamIdsAttributePath := s.teamIdsAttributePath
+	teamIds := make([]string, len(s.teamIds))
+	copy(teamIds, s.teamIds)
+	allowedOrganizations := make([]string, len(s.allowedOrganizations))
+	copy(allowedOrganizations, s.allowedOrganizations)
+	s.reloadMutex.RUnlock()
 
 	bf.WriteString("## GenericOAuth specific configuration\n\n")
 	bf.WriteString("```ini\n")
-	bf.WriteString(fmt.Sprintf("name_attribute_path = %s\n", s.nameAttributePath))
-	bf.WriteString(fmt.Sprintf("login_attribute_path = %s\n", s.loginAttributePath))
-	bf.WriteString(fmt.Sprintf("id_token_attribute_name = %s\n", s.idTokenAttributeName))
-	bf.WriteString(fmt.Sprintf("team_ids_attribute_path = %s\n", s.teamIdsAttributePath))
-	bf.WriteString(fmt.Sprintf("team_ids = %v\n", s.teamIds))
-	bf.WriteString(fmt.Sprintf("allowed_organizations = %v\n", s.allowedOrganizations))
+	bf.WriteString(fmt.Sprintf("name_attribute_path = %s\n", nameAttributePath))
+	bf.WriteString(fmt.Sprintf("login_attribute_path = %s\n", loginAttributePath))
+	bf.WriteString(fmt.Sprintf("id_token_attribute_name = %s\n", idTokenAttributeName))
+	bf.WriteString(fmt.Sprintf("team_ids_attribute_path = %s\n", teamIdsAttributePath))
+	bf.WriteString(fmt.Sprintf("team_ids = %v\n", teamIds))
+	bf.WriteString(fmt.Sprintf("allowed_organizations = %v\n", allowedOrganizations))
 	bf.WriteString("```\n\n")
 
 	return s.SocialBase.SupportBundleContent(bf)

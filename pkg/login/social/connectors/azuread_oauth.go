@@ -95,6 +95,10 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ss
 }
 
 func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
+
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, ErrIDTokenNotFound
@@ -114,8 +118,6 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	if email == "" {
 		return nil, ErrEmailNotFound
 	}
-
-	info := s.GetOAuthInfo()
 
 	// setting the role, grafanaAdmin to empty to reflect that we are not syncronizing with the external provider
 	var role roletype.RoleType
@@ -215,6 +217,12 @@ func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester)
 }
 
 func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
+	s.reloadMutex.RLock()
+	config := s.Config
+	allowedOrganizations := make([]string, len(s.allowedOrganizations))
+	copy(allowedOrganizations, s.allowedOrganizations)
+	s.reloadMutex.RUnlock()
+
 	claims, err := s.validateIDTokenSignature(ctx, client, parsedToken)
 	if err != nil {
 		return nil, fmt.Errorf("error getting claims from id token: %w", err)
@@ -224,15 +232,12 @@ func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client,
 		return nil, &SocialError{"AzureAD OAuth: version 1.0 is not supported. Please ensure the auth_url and token_url are set to the v2.0 endpoints."}
 	}
 
-	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
-
-	s.log.Debug("Validating audience", "audience", claims.Audience, "client_id", s.ClientID)
-	if claims.Audience != s.ClientID {
+	s.log.Debug("Validating audience", "audience", claims.Audience, "client_id", config.ClientID)
+	if claims.Audience != config.ClientID {
 		return nil, &SocialError{"AzureAD OAuth: audience mismatch"}
 	}
 
-	s.log.Debug("Validating tenant", "tenant", claims.TenantID, "allowed_tenants", s.allowedOrganizations)
+	s.log.Debug("Validating tenant", "tenant", claims.TenantID, "allowed_tenants", allowedOrganizations)
 	if !s.isAllowedTenant(claims.TenantID) {
 		return nil, &SocialError{"AzureAD OAuth: tenant mismatch"}
 	}
@@ -242,6 +247,10 @@ func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client,
 func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
 	var claims azureClaims
 
+	s.reloadMutex.RLock()
+	config := s.Config
+	s.reloadMutex.RUnlock()
+
 	jwksFuncs := []func(ctx context.Context, client *http.Client, authURL string) (*keySetJWKS, time.Duration, error){
 		s.retrieveJWKSFromCache, s.retrieveSpecificJWKS, s.retrieveGeneralJWKS,
 	}
@@ -249,7 +258,7 @@ func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *ht
 	keyID := parsedToken.Headers[0].KeyID
 
 	for _, jwksFunc := range jwksFuncs {
-		keyset, expiry, err := jwksFunc(ctx, client, s.Endpoint.AuthURL)
+		keyset, expiry, err := jwksFunc(ctx, client, config.Endpoint.AuthURL)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving jwks: %w", err)
 		}
@@ -288,7 +297,9 @@ func (claims *azureClaims) extractEmail() string {
 
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
 func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool, error) {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	info := s.info
+	s.reloadMutex.RUnlock()
 
 	if len(claims.Roles) == 0 {
 		if info.RoleAttributeStrict {
@@ -341,9 +352,10 @@ type getAzureGroupResponse struct {
 // See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
 func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, claims *azureClaims, token *oauth2.Token) ([]string, error) {
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	forceUseGraphAPI := s.forceUseGraphAPI
+	s.reloadMutex.RUnlock()
 
-	if !s.forceUseGraphAPI {
+	if !forceUseGraphAPI {
 		s.log.Debug("Checking the claim for groups")
 		if len(claims.Groups) > 0 {
 			return claims.Groups, nil
@@ -436,15 +448,15 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 }
 
 func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
-	info := s.GetOAuthInfo()
-
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	info := s.info
+	forceUseGraphAPI := s.forceUseGraphAPI
+	s.reloadMutex.RUnlock()
 
 	bf.WriteString("## AzureAD specific configuration\n\n")
 	bf.WriteString("```ini\n")
 	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", info.AllowedGroups))
-	bf.WriteString(fmt.Sprintf("forceUseGraphAPI = %v\n", s.forceUseGraphAPI))
+	bf.WriteString(fmt.Sprintf("forceUseGraphAPI = %v\n", forceUseGraphAPI))
 	bf.WriteString("```\n\n")
 
 	return s.SocialBase.SupportBundleContent(bf)
@@ -452,14 +464,16 @@ func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
 
 func (s *SocialAzureAD) isAllowedTenant(tenantID string) bool {
 	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
+	allowedOrganizations := make([]string, len(s.allowedOrganizations))
+	copy(allowedOrganizations, s.allowedOrganizations)
+	s.reloadMutex.RUnlock()
 
-	if len(s.allowedOrganizations) == 0 {
+	if len(allowedOrganizations) == 0 {
 		s.log.Warn("No allowed organizations specified, all tenants are allowed. Configure allowed_organizations to restrict access")
 		return true
 	}
 
-	for _, t := range s.allowedOrganizations {
+	for _, t := range allowedOrganizations {
 		if t == tenantID {
 			return true
 		}
