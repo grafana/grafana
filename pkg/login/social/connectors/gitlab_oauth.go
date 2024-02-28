@@ -33,6 +33,11 @@ type SocialGitlab struct {
 	*SocialBase
 }
 
+type socialGitlabParams struct {
+	info   *social.OAuthInfo
+	config *oauth2.Config
+}
+
 type apiData struct {
 	ID          int64   `json:"id"`
 	Username    string  `json:"username"`
@@ -97,13 +102,23 @@ func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	return nil
 }
 
-func (s *SocialGitlab) getGroups(ctx context.Context, client *http.Client) []string {
+func (s *SocialGitlab) getThreadSafeParams() *socialGitlabParams {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return &socialGitlabParams{
+		info:   s.info,
+		config: s.Config,
+	}
+}
+
+func (s *SocialGitlab) getGroups(ctx context.Context, client *http.Client, params *socialGitlabParams) []string {
 	groups := make([]string, 0)
 	nextPage := new(int)
 
 	for *nextPage = 1; nextPage != nil; {
 		var page []string
-		page, nextPage = s.getGroupsPage(ctx, client, *nextPage)
+		page, nextPage = s.getGroupsPage(ctx, client, *nextPage, params)
 		groups = append(groups, page...)
 	}
 
@@ -111,14 +126,12 @@ func (s *SocialGitlab) getGroups(ctx context.Context, client *http.Client) []str
 }
 
 // getGroupsPage returns groups and link to the next page if response is paginated
-func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, nextPage int) ([]string, *int) {
+func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, nextPage int, params *socialGitlabParams) ([]string, *int) {
 	type Group struct {
 		FullPath string `json:"full_path"`
 	}
 
-	info := s.GetOAuthInfo()
-
-	groupURL, err := url.JoinPath(info.ApiUrl, "/groups")
+	groupURL, err := url.JoinPath(params.info.ApiUrl, "/groups")
 	if err != nil {
 		s.log.Error("Error joining GitLab API URL", "err", err)
 		return nil, nil
@@ -179,9 +192,9 @@ func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, n
 }
 
 func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
-	info := s.GetOAuthInfo()
+	params := s.getThreadSafeParams()
 
-	data, err := s.extractFromToken(ctx, client, token)
+	data, err := s.extractFromToken(ctx, client, token, params)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +202,7 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 	// fallback to API
 	if data == nil {
 		var errAPI error
-		data, errAPI = s.extractFromAPI(ctx, client, token)
+		data, errAPI = s.extractFromAPI(ctx, client, token, params)
 		if errAPI != nil {
 			return nil, errAPI
 		}
@@ -205,22 +218,20 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 		IsGrafanaAdmin: data.IsGrafanaAdmin,
 	}
 
-	if !s.isGroupMember(data.Groups) {
+	if !isGroupMember(data.Groups, params.info.AllowedGroups) {
 		return nil, errMissingGroupMembership
 	}
 
-	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
+	if params.info.AllowAssignGrafanaAdmin && params.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	return userInfo, nil
 }
 
-func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, token *oauth2.Token) (*userData, error) {
-	info := s.GetOAuthInfo()
-
+func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, token *oauth2.Token, params *socialGitlabParams) (*userData, error) {
 	apiResp := &apiData{}
-	response, err := s.httpGet(ctx, client, info.ApiUrl+"/user")
+	response, err := s.httpGet(ctx, client, params.info.ApiUrl+"/user")
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %w", err)
 	}
@@ -243,17 +254,17 @@ func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, 
 		Login:  apiResp.Username,
 		Email:  apiResp.Email,
 		Name:   apiResp.Name,
-		Groups: s.getGroups(ctx, client),
+		Groups: s.getGroups(ctx, client, params),
 	}
 
-	if !info.SkipOrgRoleSync {
+	if !params.info.SkipOrgRoleSync {
 		var grafanaAdmin bool
-		role, grafanaAdmin, err := s.extractRoleAndAdmin(response.Body, idData.Groups)
+		role, grafanaAdmin, err := s.extractRoleAndAdmin(response.Body, idData.Groups, params.info)
 		if err != nil {
 			return nil, err
 		}
 
-		if info.AllowAssignGrafanaAdmin {
+		if params.info.AllowAssignGrafanaAdmin {
 			idData.IsGrafanaAdmin = &grafanaAdmin
 		}
 
@@ -267,10 +278,8 @@ func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, 
 	return idData, nil
 }
 
-func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client, token *oauth2.Token) (*userData, error) {
+func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client, token *oauth2.Token, params *socialGitlabParams) (*userData, error) {
 	s.log.Debug("Extracting user info from OAuth token")
-
-	info := s.GetOAuthInfo()
 
 	idToken := token.Extra("id_token")
 	if idToken == nil {
@@ -296,7 +305,7 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 		return nil, fmt.Errorf("user %s's email is not confirmed", data.Login)
 	}
 
-	userInfo, err := s.retrieveUserInfo(ctx, client)
+	userInfo, err := s.retrieveUserInfo(ctx, client, params)
 	if err != nil {
 		s.log.Warn("Error retrieving groups from userinfo. Using only token provided groups", "error", err)
 	} else {
@@ -305,13 +314,13 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 		data.Groups = userInfo.Groups
 	}
 
-	if !info.SkipOrgRoleSync {
-		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(rawJSON, data.Groups)
+	if !params.info.SkipOrgRoleSync {
+		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(rawJSON, data.Groups, params.info)
 		if errRole != nil {
 			return nil, errRole
 		}
 
-		if info.AllowAssignGrafanaAdmin {
+		if params.info.AllowAssignGrafanaAdmin {
 			data.IsGrafanaAdmin = &grafanaAdmin
 		}
 
@@ -337,8 +346,8 @@ type userInfoResponse struct {
 }
 
 // retrieve and parse /oauth/userinfo
-func (s *SocialGitlab) retrieveUserInfo(ctx context.Context, client *http.Client) (*userInfoResponse, error) {
-	userInfoURL := strings.TrimSuffix(s.Endpoint.AuthURL, "/oauth/authorize") + "/oauth/userinfo"
+func (s *SocialGitlab) retrieveUserInfo(ctx context.Context, client *http.Client, params *socialGitlabParams) (*userInfoResponse, error) {
+	userInfoURL := strings.TrimSuffix(params.config.Endpoint.AuthURL, "/oauth/authorize") + "/oauth/userinfo"
 
 	resp, err := s.httpGet(ctx, client, userInfoURL)
 	if err != nil {

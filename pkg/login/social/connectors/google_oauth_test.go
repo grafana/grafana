@@ -205,7 +205,7 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
-			got, err := s.retrieveGroups(context.Background(), tt.args.client, tt.args.userData)
+			got, err := s.retrieveGroups(context.Background(), tt.args.client, tt.args.userData, s.getThreadSafeParams())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SocialGoogle.retrieveGroups() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -923,7 +923,7 @@ func TestIsHDAllowed(t *testing.T) {
 			info := &social.OAuthInfo{}
 			info.AllowedDomains = tc.allowedDomains
 			s := NewGoogleProvider(info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-			err := s.isHDAllowed(tc.email)
+			err := s.isHDAllowed(tc.email, s.getThreadSafeParams())
 
 			if tc.expectedErrorMessage != "" {
 				require.Error(t, err)

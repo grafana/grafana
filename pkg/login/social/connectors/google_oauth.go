@@ -33,6 +33,11 @@ type SocialGoogle struct {
 	*SocialBase
 }
 
+type socialGoogleParams struct {
+	info   *social.OAuthInfo
+	config *oauth2.Config
+}
+
 type googleUserData struct {
 	ID            string `json:"sub"`
 	Email         string `json:"email"`
@@ -94,7 +99,7 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 }
 
 func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
-	info := s.GetOAuthInfo()
+	params := s.getThreadSafeParams()
 
 	data, errToken := s.extractFromToken(ctx, client, token)
 	if errToken != nil {
@@ -103,7 +108,7 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 
 	if data == nil {
 		var errAPI error
-		data, errAPI = s.extractFromAPI(ctx, client)
+		data, errAPI = s.extractFromAPI(ctx, client, params)
 		if errAPI != nil {
 			return nil, errAPI
 		}
@@ -117,16 +122,16 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		return nil, fmt.Errorf("user email is not verified")
 	}
 
-	if err := s.isHDAllowed(data.HD); err != nil {
+	if err := s.isHDAllowed(data.HD, params); err != nil {
 		return nil, err
 	}
 
-	groups, errPage := s.retrieveGroups(ctx, client, data)
+	groups, errPage := s.retrieveGroups(ctx, client, data, params)
 	if errPage != nil {
 		s.log.Warn("Error retrieving groups", "error", errPage)
 	}
 
-	if !s.isGroupMember(groups) {
+	if !isGroupMember(groups, params.info.AllowedGroups) {
 		return nil, errMissingGroupMembership
 	}
 
@@ -140,13 +145,13 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		Groups:         groups,
 	}
 
-	if !info.SkipOrgRoleSync {
-		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(data.rawJSON, groups)
+	if !params.info.SkipOrgRoleSync {
+		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(data.rawJSON, groups, params.info)
 		if errRole != nil {
 			return nil, errRole
 		}
 
-		if info.AllowAssignGrafanaAdmin {
+		if params.info.AllowAssignGrafanaAdmin {
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
@@ -158,6 +163,16 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
+func (s *SocialGoogle) getThreadSafeParams() *socialGoogleParams {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return &socialGoogleParams{
+		info:   s.info,
+		config: s.Config,
+	}
+}
+
 type googleAPIData struct {
 	ID            string `json:"id"`
 	Name          string `json:"name"`
@@ -165,12 +180,10 @@ type googleAPIData struct {
 	EmailVerified bool   `json:"verified_email"`
 }
 
-func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) (*googleUserData, error) {
-	info := s.GetOAuthInfo()
-
-	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
+func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client, params *socialGoogleParams) (*googleUserData, error) {
+	if strings.HasPrefix(params.info.ApiUrl, legacyAPIURL) {
 		data := googleAPIData{}
-		response, err := s.httpGet(ctx, client, info.ApiUrl)
+		response, err := s.httpGet(ctx, client, params.info.ApiUrl)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving legacy user info: %s", err)
 		}
@@ -189,7 +202,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 	}
 
 	data := googleUserData{}
-	response, err := s.httpGet(ctx, client, info.ApiUrl)
+	response, err := s.httpGet(ctx, client, params.info.ApiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
@@ -202,9 +215,9 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 }
 
 func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	info := s.GetOAuthInfo()
+	params := s.getThreadSafeParams()
 
-	if info.UseRefreshToken {
+	if params.info.UseRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
 	return s.SocialBase.AuthCodeURL(state, opts...)
@@ -250,9 +263,9 @@ type googleGroupResp struct {
 	NextPageToken string `json:"nextPageToken"`
 }
 
-func (s *SocialGoogle) retrieveGroups(ctx context.Context, client *http.Client, userData *googleUserData) ([]string, error) {
-	s.log.Debug("Retrieving groups", "scopes", s.Config.Scopes)
-	if !slices.Contains(s.Scopes, googleIAMScope) {
+func (s *SocialGoogle) retrieveGroups(ctx context.Context, client *http.Client, userData *googleUserData, params *socialGoogleParams) ([]string, error) {
+	s.log.Debug("Retrieving groups", "scopes", params.config.Scopes)
+	if !slices.Contains(params.config.Scopes, googleIAMScope) {
 		return nil, nil
 	}
 
@@ -297,12 +310,12 @@ func (s *SocialGoogle) getGroupsPage(ctx context.Context, client *http.Client, u
 	return &data, nil
 }
 
-func (s *SocialGoogle) isHDAllowed(hd string) error {
-	if len(s.info.AllowedDomains) == 0 {
+func (s *SocialGoogle) isHDAllowed(hd string, params *socialGoogleParams) error {
+	if len(params.info.AllowedDomains) == 0 {
 		return nil
 	}
 
-	for _, allowedDomain := range s.info.AllowedDomains {
+	for _, allowedDomain := range params.info.AllowedDomains {
 		if hd == allowedDomain {
 			return nil
 		}

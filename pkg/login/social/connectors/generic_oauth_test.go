@@ -603,7 +603,7 @@ func TestPayloadCompression(t *testing.T) {
 			}
 
 			token := staticToken.WithExtra(test.OAuth2Extra)
-			userInfo := provider.extractFromToken(token)
+			userInfo := provider.extractFromToken(token, provider.getThreadSafeParams())
 
 			if test.ExpectedEmail == "" {
 				require.Nil(t, userInfo, "Testing case %q", test.Name)

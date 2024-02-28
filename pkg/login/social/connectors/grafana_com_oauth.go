@@ -31,6 +31,13 @@ type SocialGrafanaCom struct {
 	allowedOrganizations []string
 }
 
+type socialGrafanaComParams struct {
+	info                 *social.OAuthInfo
+	config               *oauth2.Config
+	url                  string
+	allowedOrganizations []string
+}
+
 type OrgRecord struct {
 	Login string `json:"login"`
 }
@@ -93,16 +100,32 @@ func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSet
 	return nil
 }
 
+func (s *SocialGrafanaCom) getThreadSafeParams() *socialGrafanaComParams {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	params := socialGrafanaComParams{
+		info:                 s.info,
+		config:               s.Config,
+		url:                  s.url,
+		allowedOrganizations: []string{},
+	}
+
+	copy(params.allowedOrganizations, s.allowedOrganizations)
+
+	return &params
+}
+
 func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
 	return true
 }
 
-func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool {
-	if len(s.allowedOrganizations) == 0 {
+func (s *SocialGrafanaCom) isOrganizationMember(organizations []OrgRecord, params *socialGrafanaComParams) bool {
+	if len(params.allowedOrganizations) == 0 {
 		return true
 	}
 
-	for _, allowedOrganization := range s.allowedOrganizations {
+	for _, allowedOrganization := range params.allowedOrganizations {
 		for _, organization := range organizations {
 			if organization.Login == allowedOrganization {
 				return true
@@ -124,9 +147,9 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 		Orgs  []OrgRecord `json:"orgs"`
 	}
 
-	info := s.GetOAuthInfo()
+	params := s.getThreadSafeParams()
 
-	response, err := s.httpGet(ctx, client, s.url+"/api/oauth2/user")
+	response, err := s.httpGet(ctx, client, params.url+"/api/oauth2/user")
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
@@ -139,7 +162,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 
 	// on login we do not want to display the role from the external provider
 	var role roletype.RoleType
-	if !info.SkipOrgRoleSync {
+	if !params.info.SkipOrgRoleSync {
 		role = org.RoleType(data.Role)
 	}
 	userInfo := &social.BasicUserInfo{
@@ -150,10 +173,10 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 		Role:  role,
 	}
 
-	if !s.IsOrganizationMember(data.Orgs) {
+	if !s.isOrganizationMember(data.Orgs, params) {
 		return nil, ErrMissingOrganizationMembership.Errorf(
 			"User is not a member of any of the allowed organizations: %v. Returned Organizations: %v",
-			s.allowedOrganizations, data.Orgs)
+			params.allowedOrganizations, data.Orgs)
 	}
 
 	return userInfo, nil

@@ -47,6 +47,21 @@ type SocialGenericOAuth struct {
 	teamIds              []string
 }
 
+type socialGenericOAuthParams struct {
+	info                 *social.OAuthInfo
+	config               *oauth2.Config
+	allowedOrganizations []string
+	teamsUrl             string
+	emailAttributeName   string
+	emailAttributePath   string
+	loginAttributePath   string
+	nameAttributePath    string
+	groupsAttributePath  string
+	idTokenAttributeName string
+	teamIdsAttributePath string
+	teamIds              []string
+}
+
 func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGenericOAuth {
 	provider := &SocialGenericOAuth{
 		SocialBase:           newSocialBase(social.GenericOAuthProviderName, info, features, cfg),
@@ -133,14 +148,12 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 }
 
 // TODOD: remove this in the next PR and use the isGroupMember from social.go
-func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
-	info := s.GetOAuthInfo()
-
-	if len(info.AllowedGroups) == 0 {
+func (s *SocialGenericOAuth) isGroupMember(groups []string, params *socialGenericOAuthParams) bool {
+	if len(params.info.AllowedGroups) == 0 {
 		return true
 	}
 
-	for _, allowedGroup := range info.AllowedGroups {
+	for _, allowedGroup := range params.info.AllowedGroups {
 		for _, group := range groups {
 			if group == allowedGroup {
 				return true
@@ -151,17 +164,17 @@ func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
 	return false
 }
 
-func (s *SocialGenericOAuth) IsTeamMember(ctx context.Context, client *http.Client) bool {
-	if len(s.teamIds) == 0 {
+func (s *SocialGenericOAuth) isTeamMember(ctx context.Context, client *http.Client, params *socialGenericOAuthParams) bool {
+	if len(params.teamIds) == 0 {
 		return true
 	}
 
-	teamMemberships, err := s.FetchTeamMemberships(ctx, client)
+	teamMemberships, err := s.fetchTeamMemberships(ctx, client, params)
 	if err != nil {
 		return false
 	}
 
-	for _, teamId := range s.teamIds {
+	for _, teamId := range params.teamIds {
 		for _, membershipId := range teamMemberships {
 			if teamId == membershipId {
 				return true
@@ -172,17 +185,17 @@ func (s *SocialGenericOAuth) IsTeamMember(ctx context.Context, client *http.Clie
 	return false
 }
 
-func (s *SocialGenericOAuth) IsOrganizationMember(ctx context.Context, client *http.Client) bool {
-	if len(s.allowedOrganizations) == 0 {
+func (s *SocialGenericOAuth) isOrganizationMember(ctx context.Context, client *http.Client, params *socialGenericOAuthParams) bool {
+	if len(params.allowedOrganizations) == 0 {
 		return true
 	}
 
-	organizations, ok := s.FetchOrganizations(ctx, client)
+	organizations, ok := s.fetchOrganizations(ctx, client, params)
 	if !ok {
 		return false
 	}
 
-	for _, allowedOrganization := range s.allowedOrganizations {
+	for _, allowedOrganization := range params.allowedOrganizations {
 		for _, organization := range organizations {
 			if organization == allowedOrganization {
 				return true
@@ -213,17 +226,17 @@ func (info *UserInfoJson) String() string {
 }
 
 func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+	params := s.getThreadSafeParams()
+
 	s.log.Debug("Getting user info")
 	toCheck := make([]*UserInfoJson, 0, 2)
 
-	if tokenData := s.extractFromToken(token); tokenData != nil {
+	if tokenData := s.extractFromToken(token, params); tokenData != nil {
 		toCheck = append(toCheck, tokenData)
 	}
-	if apiData := s.extractFromAPI(ctx, client); apiData != nil {
+	if apiData := s.extractFromAPI(ctx, client, params); apiData != nil {
 		toCheck = append(toCheck, apiData)
 	}
-
-	info := s.GetOAuthInfo()
 
 	userInfo := &social.BasicUserInfo{}
 	for _, data := range toCheck {
@@ -234,34 +247,34 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		}
 
 		if userInfo.Name == "" {
-			userInfo.Name = s.extractUserName(data)
+			userInfo.Name = s.extractUserName(data, params)
 		}
 
 		if userInfo.Login == "" {
-			userInfo.Login = s.extractLogin(data)
+			userInfo.Login = s.extractLogin(data, params)
 		}
 
 		if userInfo.Email == "" {
-			userInfo.Email = s.extractEmail(data)
+			userInfo.Email = s.extractEmail(data, params)
 			if userInfo.Email != "" {
 				s.log.Debug("Set user info email from extracted email", "email", userInfo.Email)
 			}
 		}
 
-		if userInfo.Role == "" && !info.SkipOrgRoleSync {
-			role, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, []string{})
+		if userInfo.Role == "" && !params.info.SkipOrgRoleSync {
+			role, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, []string{}, params.info)
 			if err != nil {
 				s.log.Warn("Failed to extract role", "err", err)
 			} else {
 				userInfo.Role = role
-				if info.AllowAssignGrafanaAdmin {
+				if params.info.AllowAssignGrafanaAdmin {
 					userInfo.IsGrafanaAdmin = &grafanaAdmin
 				}
 			}
 		}
 
 		if len(userInfo.Groups) == 0 {
-			groups, err := s.extractGroups(data)
+			groups, err := s.extractGroups(data, params)
 			if err != nil {
 				s.log.Warn("Failed to extract groups", "err", err)
 			} else if len(groups) > 0 {
@@ -271,20 +284,20 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		}
 	}
 
-	if userInfo.Role == "" && !info.SkipOrgRoleSync {
-		if info.RoleAttributeStrict {
+	if userInfo.Role == "" && !params.info.SkipOrgRoleSync {
+		if params.info.RoleAttributeStrict {
 			return nil, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute")
 		}
 		userInfo.Role = s.defaultRole()
 	}
 
-	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
+	if params.info.AllowAssignGrafanaAdmin && params.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	if userInfo.Email == "" {
 		var err error
-		userInfo.Email, err = s.FetchPrivateEmail(ctx, client)
+		userInfo.Email, err = s.fetchPrivateEmail(ctx, client, params)
 		if err != nil {
 			return nil, err
 		}
@@ -296,15 +309,15 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		userInfo.Login = userInfo.Email
 	}
 
-	if !s.IsTeamMember(ctx, client) {
+	if !s.isTeamMember(ctx, client, params) {
 		return nil, errors.New("user not a member of one of the required teams")
 	}
 
-	if !s.IsOrganizationMember(ctx, client) {
+	if !s.isOrganizationMember(ctx, client, params) {
 		return nil, errors.New("user not a member of one of the required organizations")
 	}
 
-	if !s.IsGroupMember(userInfo.Groups) {
+	if !s.isGroupMember(userInfo.Groups, params) {
 		return nil, errMissingGroupMembership
 	}
 
@@ -312,12 +325,37 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	return userInfo, nil
 }
 
-func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson {
+func (s *SocialGenericOAuth) getThreadSafeParams() *socialGenericOAuthParams {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	params := socialGenericOAuthParams{
+		info:                 s.info,
+		config:               s.Config,
+		allowedOrganizations: []string{},
+		teamsUrl:             s.teamsUrl,
+		emailAttributeName:   s.emailAttributeName,
+		emailAttributePath:   s.emailAttributePath,
+		loginAttributePath:   s.loginAttributePath,
+		nameAttributePath:    s.nameAttributePath,
+		groupsAttributePath:  s.groupsAttributePath,
+		idTokenAttributeName: s.idTokenAttributeName,
+		teamIdsAttributePath: s.teamIdsAttributePath,
+		teamIds:              []string{},
+	}
+
+	copy(params.allowedOrganizations, s.allowedOrganizations)
+	copy(params.teamIds, s.teamIds)
+
+	return &params
+}
+
+func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token, params *socialGenericOAuthParams) *UserInfoJson {
 	s.log.Debug("Extracting user info from OAuth token")
 
 	idTokenAttribute := "id_token"
-	if s.idTokenAttributeName != "" {
-		idTokenAttribute = s.idTokenAttributeName
+	if params.idTokenAttributeName != "" {
+		idTokenAttribute = params.idTokenAttributeName
 		s.log.Debug("Using custom id_token attribute name", "attribute_name", idTokenAttribute)
 	}
 
@@ -345,18 +383,16 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 	return &data
 }
 
-func (s *SocialGenericOAuth) extractFromAPI(ctx context.Context, client *http.Client) *UserInfoJson {
-	info := s.GetOAuthInfo()
-
+func (s *SocialGenericOAuth) extractFromAPI(ctx context.Context, client *http.Client, params *socialGenericOAuthParams) *UserInfoJson {
 	s.log.Debug("Getting user info from API")
-	if info.ApiUrl == "" {
+	if params.info.ApiUrl == "" {
 		s.log.Debug("No api url configured")
 		return nil
 	}
 
-	rawUserInfoResponse, err := s.httpGet(ctx, client, info.ApiUrl)
+	rawUserInfoResponse, err := s.httpGet(ctx, client, params.info.ApiUrl)
 	if err != nil {
-		s.log.Debug("Error getting user info from API", "url", info.ApiUrl, "error", err)
+		s.log.Debug("Error getting user info from API", "url", params.info.ApiUrl, "error", err)
 		return nil
 	}
 
@@ -374,13 +410,13 @@ func (s *SocialGenericOAuth) extractFromAPI(ctx context.Context, client *http.Cl
 	return &data
 }
 
-func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
+func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, params *socialGenericOAuthParams) string {
 	if data.Email != "" {
 		return data.Email
 	}
 
-	if s.emailAttributePath != "" {
-		email, err := util.SearchJSONForStringAttr(s.emailAttributePath, data.rawJSON)
+	if params.emailAttributePath != "" {
+		email, err := util.SearchJSONForStringAttr(params.emailAttributePath, data.rawJSON)
 		if err != nil {
 			s.log.Error("Failed to search JSON for attribute", "error", err)
 		} else if email != "" {
@@ -388,7 +424,7 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 		}
 	}
 
-	emails, ok := data.Attributes[s.emailAttributeName]
+	emails, ok := data.Attributes[params.emailAttributeName]
 	if ok && len(emails) != 0 {
 		return emails[0]
 	}
@@ -404,15 +440,15 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 	return ""
 }
 
-func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
+func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson, params *socialGenericOAuthParams) string {
 	if data.Login != "" {
 		s.log.Debug("Setting user info login from login field", "login", data.Login)
 		return data.Login
 	}
 
-	if s.loginAttributePath != "" {
-		s.log.Debug("Searching for login among JSON", "loginAttributePath", s.loginAttributePath)
-		login, err := util.SearchJSONForStringAttr(s.loginAttributePath, data.rawJSON)
+	if params.loginAttributePath != "" {
+		s.log.Debug("Searching for login among JSON", "loginAttributePath", params.loginAttributePath)
+		login, err := util.SearchJSONForStringAttr(params.loginAttributePath, data.rawJSON)
 		if err != nil {
 			s.log.Error("Failed to search JSON for login attribute", "error", err)
 		}
@@ -430,13 +466,13 @@ func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
 	return ""
 }
 
-func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
-	if s.nameAttributePath != "" {
-		name, err := util.SearchJSONForStringAttr(s.nameAttributePath, data.rawJSON)
+func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson, params *socialGenericOAuthParams) string {
+	if params.nameAttributePath != "" {
+		name, err := util.SearchJSONForStringAttr(params.nameAttributePath, data.rawJSON)
 		if err != nil {
 			s.log.Error("Failed to search JSON for attribute", "error", err)
 		} else if name != "" {
-			s.log.Debug("Setting user info name from nameAttributePath", "nameAttributePath", s.nameAttributePath)
+			s.log.Debug("Setting user info name from nameAttributePath", "nameAttributePath", params.nameAttributePath)
 			return name
 		}
 	}
@@ -455,15 +491,15 @@ func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
 	return ""
 }
 
-func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson) ([]string, error) {
-	if s.groupsAttributePath == "" {
+func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson, params *socialGenericOAuthParams) ([]string, error) {
+	if params.groupsAttributePath == "" {
 		return []string{}, nil
 	}
 
-	return util.SearchJSONForStringSliceAttr(s.groupsAttributePath, data.rawJSON)
+	return util.SearchJSONForStringSliceAttr(params.groupsAttributePath, data.rawJSON)
 }
 
-func (s *SocialGenericOAuth) FetchPrivateEmail(ctx context.Context, client *http.Client) (string, error) {
+func (s *SocialGenericOAuth) fetchPrivateEmail(ctx context.Context, client *http.Client, params *socialGenericOAuthParams) (string, error) {
 	type Record struct {
 		Email       string `json:"email"`
 		Primary     bool   `json:"primary"`
@@ -472,11 +508,9 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(ctx context.Context, client *http
 		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	info := s.GetOAuthInfo()
-
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(info.ApiUrl+"/emails"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(params.info.ApiUrl+"/emails"))
 	if err != nil {
-		s.log.Error("Error getting email address", "url", info.ApiUrl+"/emails", "error", err)
+		s.log.Error("Error getting email address", "url", params.info.ApiUrl+"/emails", "error", err)
 		return "", fmt.Errorf("%v: %w", "Error getting email address", err)
 	}
 
@@ -512,14 +546,14 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(ctx context.Context, client *http
 	return email, nil
 }
 
-func (s *SocialGenericOAuth) FetchTeamMemberships(ctx context.Context, client *http.Client) ([]string, error) {
+func (s *SocialGenericOAuth) fetchTeamMemberships(ctx context.Context, client *http.Client, params *socialGenericOAuthParams) ([]string, error) {
 	var err error
 	var ids []string
 
-	if s.teamsUrl == "" {
-		ids, err = s.fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx, client)
+	if params.teamsUrl == "" {
+		ids, err = s.fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx, client, params)
 	} else {
-		ids, err = s.fetchTeamMembershipsFromTeamsUrl(ctx, client)
+		ids, err = s.fetchTeamMembershipsFromTeamsUrl(ctx, client, params)
 	}
 
 	if err == nil {
@@ -529,18 +563,16 @@ func (s *SocialGenericOAuth) FetchTeamMemberships(ctx context.Context, client *h
 	return ids, err
 }
 
-func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx context.Context, client *http.Client) ([]string, error) {
+func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx context.Context, client *http.Client, params *socialGenericOAuthParams) ([]string, error) {
 	var ids []string
 
 	type Record struct {
 		Id int `json:"id"`
 	}
 
-	info := s.GetOAuthInfo()
-
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(info.ApiUrl+"/teams"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(params.info.ApiUrl+"/teams"))
 	if err != nil {
-		s.log.Error("Error getting team memberships", "url", info.ApiUrl+"/teams", "error", err)
+		s.log.Error("Error getting team memberships", "url", params.info.ApiUrl+"/teams", "error", err)
 		return []string{}, err
 	}
 
@@ -560,30 +592,28 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx cont
 	return ids, nil
 }
 
-func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(ctx context.Context, client *http.Client) ([]string, error) {
+func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(ctx context.Context, client *http.Client, params *socialGenericOAuthParams) ([]string, error) {
 	if s.teamIdsAttributePath == "" {
 		return []string{}, nil
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.teamsUrl))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(params.teamsUrl))
 	if err != nil {
-		s.log.Error("Error getting team memberships", "url", s.teamsUrl, "error", err)
+		s.log.Error("Error getting team memberships", "url", params.teamsUrl, "error", err)
 		return nil, err
 	}
 
-	return util.SearchJSONForStringSliceAttr(s.teamIdsAttributePath, response.Body)
+	return util.SearchJSONForStringSliceAttr(params.teamIdsAttributePath, response.Body)
 }
 
-func (s *SocialGenericOAuth) FetchOrganizations(ctx context.Context, client *http.Client) ([]string, bool) {
+func (s *SocialGenericOAuth) fetchOrganizations(ctx context.Context, client *http.Client, params *socialGenericOAuthParams) ([]string, bool) {
 	type Record struct {
 		Login string `json:"login"`
 	}
 
-	info := s.GetOAuthInfo()
-
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(info.ApiUrl+"/orgs"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(params.info.ApiUrl+"/orgs"))
 	if err != nil {
-		s.log.Error("Error getting organizations", "url", info.ApiUrl+"/orgs", "error", err)
+		s.log.Error("Error getting organizations", "url", params.info.ApiUrl+"/orgs", "error", err)
 		return nil, false
 	}
 
@@ -606,14 +636,16 @@ func (s *SocialGenericOAuth) FetchOrganizations(ctx context.Context, client *htt
 }
 
 func (s *SocialGenericOAuth) SupportBundleContent(bf *bytes.Buffer) error {
+	params := s.getThreadSafeParams()
+
 	bf.WriteString("## GenericOAuth specific configuration\n\n")
 	bf.WriteString("```ini\n")
-	bf.WriteString(fmt.Sprintf("name_attribute_path = %s\n", s.nameAttributePath))
-	bf.WriteString(fmt.Sprintf("login_attribute_path = %s\n", s.loginAttributePath))
-	bf.WriteString(fmt.Sprintf("id_token_attribute_name = %s\n", s.idTokenAttributeName))
-	bf.WriteString(fmt.Sprintf("team_ids_attribute_path = %s\n", s.teamIdsAttributePath))
-	bf.WriteString(fmt.Sprintf("team_ids = %v\n", s.teamIds))
-	bf.WriteString(fmt.Sprintf("allowed_organizations = %v\n", s.allowedOrganizations))
+	bf.WriteString(fmt.Sprintf("name_attribute_path = %s\n", params.nameAttributePath))
+	bf.WriteString(fmt.Sprintf("login_attribute_path = %s\n", params.loginAttributePath))
+	bf.WriteString(fmt.Sprintf("id_token_attribute_name = %s\n", params.idTokenAttributeName))
+	bf.WriteString(fmt.Sprintf("team_ids_attribute_path = %s\n", params.teamIdsAttributePath))
+	bf.WriteString(fmt.Sprintf("team_ids = %v\n", params.teamIds))
+	bf.WriteString(fmt.Sprintf("allowed_organizations = %v\n", params.allowedOrganizations))
 	bf.WriteString("```\n\n")
 
 	return s.SocialBase.SupportBundleContent(bf)

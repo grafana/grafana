@@ -60,6 +60,9 @@ type groupStruct struct {
 }
 
 func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	bf.WriteString("## Client configuration\n\n")
 	bf.WriteString("```ini\n")
 	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.info.AllowAssignGrafanaAdmin))
@@ -87,29 +90,29 @@ func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
 	return s.info
 }
 
-func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
-	if s.info.RoleAttributePath == "" {
-		if s.info.RoleAttributeStrict {
+func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string, info *social.OAuthInfo) (org.RoleType, bool, error) {
+	if info.RoleAttributePath == "" {
+		if info.RoleAttributeStrict {
 			return "", false, errRoleAttributePathNotSet.Errorf("role_attribute_path not set and role_attribute_strict is set")
 		}
 		return "", false, nil
 	}
 
-	if role, gAdmin := s.searchRole(rawJSON, groups); role.IsValid() {
+	if role, gAdmin := s.searchRole(rawJSON, groups, info); role.IsValid() {
 		return role, gAdmin, nil
 	} else if role != "" {
 		return "", false, errInvalidRole.Errorf("invalid role: %s", role)
 	}
 
-	if s.info.RoleAttributeStrict {
+	if info.RoleAttributeStrict {
 		return "", false, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute, but role_attribute_strict is set")
 	}
 
 	return "", false, nil
 }
 
-func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
-	role, gAdmin, err := s.extractRoleAndAdminOptional(rawJSON, groups)
+func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, info *social.OAuthInfo) (org.RoleType, bool, error) {
+	role, gAdmin, err := s.extractRoleAndAdminOptional(rawJSON, groups, info)
 	if role == "" {
 		role = s.defaultRole()
 	}
@@ -117,14 +120,14 @@ func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.R
 	return role, gAdmin, err
 }
 
-func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, bool) {
-	role, err := util.SearchJSONForStringAttr(s.info.RoleAttributePath, rawJSON)
+func (s *SocialBase) searchRole(rawJSON []byte, groups []string, info *social.OAuthInfo) (org.RoleType, bool) {
+	role, err := util.SearchJSONForStringAttr(info.RoleAttributePath, rawJSON)
 	if err == nil && role != "" {
 		return getRoleFromSearch(role)
 	}
 
 	if groupBytes, err := json.Marshal(groupStruct{groups}); err == nil {
-		role, err := util.SearchJSONForStringAttr(s.info.RoleAttributePath, groupBytes)
+		role, err := util.SearchJSONForStringAttr(info.RoleAttributePath, groupBytes)
 		if err == nil && role != "" {
 			return getRoleFromSearch(role)
 		}
@@ -145,12 +148,12 @@ func (s *SocialBase) defaultRole() org.RoleType {
 	return org.RoleViewer
 }
 
-func (s *SocialBase) isGroupMember(groups []string) bool {
-	if len(s.info.AllowedGroups) == 0 {
+func isGroupMember(groups []string, allowedGroups []string) bool {
+	if len(allowedGroups) == 0 {
 		return true
 	}
 
-	for _, allowedGroup := range s.info.AllowedGroups {
+	for _, allowedGroup := range allowedGroups {
 		for _, group := range groups {
 			if group == allowedGroup {
 				return true

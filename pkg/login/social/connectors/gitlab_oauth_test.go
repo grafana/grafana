@@ -387,7 +387,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 			idToken := fmt.Sprintf("%s.%s.%s", headerEncoded, payloadEncoded, signatureEncoded)
 
 			token = token.WithExtra(map[string]any{"id_token": idToken})
-			data, err := s.extractFromToken(context.Background(), client, token)
+			data, err := s.extractFromToken(context.Background(), client, token, s.getThreadSafeParams())
 			if tc.wantErrMessage != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.wantErrMessage)
@@ -459,7 +459,7 @@ func TestSocialGitlab_GetGroupsNextPage(t *testing.T) {
 
 	// Call getGroups and verify that it returns all groups
 	expectedGroups := []string{"admins", "editors", "viewers", "serveradmins"}
-	actualGroups := s.getGroups(context.Background(), mockServer.Client())
+	actualGroups := s.getGroups(context.Background(), mockServer.Client(), s.getThreadSafeParams())
 	assert.Equal(t, expectedGroups, actualGroups)
 	assert.Equal(t, 2, calls)
 }

@@ -15,11 +15,11 @@ const (
 	defaultCacheExpiration = 5 * time.Minute
 )
 
-func (s *SocialAzureAD) getJWKSCacheKey() (string, error) {
-	return azureCacheKeyPrefix + s.ClientID, nil
+func (s *SocialAzureAD) getJWKSCacheKey(params *socialAzureADParams) (string, error) {
+	return azureCacheKeyPrefix + params.config.ClientID, nil
 }
-func (s *SocialAzureAD) retrieveJWKSFromCache(ctx context.Context, client *http.Client, authURL string) (*keySetJWKS, time.Duration, error) {
-	cacheKey, err := s.getJWKSCacheKey()
+func (s *SocialAzureAD) retrieveJWKSFromCache(ctx context.Context, client *http.Client, authURL string, params *socialAzureADParams) (*keySetJWKS, time.Duration, error) {
+	cacheKey, err := s.getJWKSCacheKey(params)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -35,8 +35,8 @@ func (s *SocialAzureAD) retrieveJWKSFromCache(ctx context.Context, client *http.
 	return &keySetJWKS{}, 0, nil
 }
 
-func (s *SocialAzureAD) cacheJWKS(ctx context.Context, jwks *keySetJWKS, cacheExpiration time.Duration) error {
-	cacheKey, err := s.getJWKSCacheKey()
+func (s *SocialAzureAD) cacheJWKS(ctx context.Context, jwks *keySetJWKS, cacheExpiration time.Duration, params *socialAzureADParams) error {
+	cacheKey, err := s.getJWKSCacheKey(params)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (s *SocialAzureAD) cacheJWKS(ctx context.Context, jwks *keySetJWKS, cacheEx
 	return nil
 }
 
-func (s *SocialAzureAD) retrieveGeneralJWKS(ctx context.Context, client *http.Client, authURL string) (*keySetJWKS, time.Duration, error) {
+func (s *SocialAzureAD) retrieveGeneralJWKS(ctx context.Context, client *http.Client, authURL string, params *socialAzureADParams) (*keySetJWKS, time.Duration, error) {
 	keysetURL := strings.Replace(authURL, "/oauth2/v2.0/authorize", "/discovery/v2.0/keys", 1)
 
 	resp, err := s.httpGet(ctx, client, keysetURL)
@@ -73,8 +73,8 @@ func (s *SocialAzureAD) retrieveGeneralJWKS(ctx context.Context, client *http.Cl
 	return &jwks, cacheExpiration, nil
 }
 
-func (s *SocialAzureAD) retrieveSpecificJWKS(ctx context.Context, client *http.Client, authURL string) (*keySetJWKS, time.Duration, error) {
-	keysetURL := strings.Replace(authURL, "/oauth2/v2.0/authorize", "/discovery/v2.0/keys", 1) + "?appid=" + s.ClientID
+func (s *SocialAzureAD) retrieveSpecificJWKS(ctx context.Context, client *http.Client, authURL string, params *socialAzureADParams) (*keySetJWKS, time.Duration, error) {
+	keysetURL := strings.Replace(authURL, "/oauth2/v2.0/authorize", "/discovery/v2.0/keys", 1) + "?appid=" + params.config.ClientID
 
 	resp, err := s.httpGet(ctx, client, keysetURL)
 	if err != nil {
