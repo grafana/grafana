@@ -139,7 +139,7 @@ describe('dashboardSceneGraph', () => {
                 uid: 'uid',
                 name: 'LibPanel',
                 title: 'Library Panel',
-                key: 'panel-2',
+                panelKey: 'panel-2',
               }),
             }),
             new SceneGridItem({
@@ -165,7 +165,7 @@ describe('dashboardSceneGraph', () => {
                     uid: 'uid',
                     name: 'LibPanel',
                     title: 'Library Panel',
-                    key: '3',
+                    panelKey: 'panel-3',
                   }),
                 }),
               ],

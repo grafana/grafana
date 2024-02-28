@@ -1,9 +1,10 @@
 import { VizPanel, SceneGridItem, SceneGridRow, SceneDataLayers, sceneGraph, SceneGridLayout } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks } from '../scene/PanelLinks';
 
-import { getPanelIdForVizPanel } from './utils';
+import { getPanelIdForLibraryVizPanel, getPanelIdForVizPanel } from './utils';
 
 function getTimePicker(scene: DashboardScene) {
   return scene.state.controls?.state.timePicker;
@@ -70,7 +71,10 @@ export function getNextPanelId(dashboard: DashboardScene): number {
       const vizPanel = child.state.body;
 
       if (vizPanel) {
-        const panelId = getPanelIdForVizPanel(vizPanel);
+        const panelId =
+          vizPanel instanceof LibraryVizPanel
+            ? getPanelIdForLibraryVizPanel(vizPanel)
+            : getPanelIdForVizPanel(vizPanel);
 
         if (panelId > max) {
           max = panelId;
@@ -91,7 +95,10 @@ export function getNextPanelId(dashboard: DashboardScene): number {
           const vizPanel = rowChild.state.body;
 
           if (vizPanel) {
-            const panelId = getPanelIdForVizPanel(vizPanel);
+            const panelId =
+              vizPanel instanceof LibraryVizPanel
+                ? getPanelIdForLibraryVizPanel(vizPanel)
+                : getPanelIdForVizPanel(vizPanel);
 
             if (panelId > max) {
               max = panelId;
