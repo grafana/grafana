@@ -170,9 +170,9 @@ func Recovery(cfg *setting.Cfg, license licensing.Licensing) web.Middleware {
 							resp["error"] = data.Title
 						}
 
-						ctx.JSON(500, resp)
+						ctx.JSON(http.StatusInternalServerError, resp)
 					} else {
-						ctx.HTML(500, cfg.ErrTemplateName, data)
+						ctx.HTML(http.StatusInternalServerError, cfg.ErrTemplateName, data)
 					}
 				}
 			}()

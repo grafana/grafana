@@ -12,7 +12,7 @@ import {
   TimeRange,
   VizOrientation,
 } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { PanelDataErrorView, config } from '@grafana/runtime';
 import { SortOrder } from '@grafana/schema';
 import {
   GraphGradientMode,
@@ -28,12 +28,16 @@ import {
   VizLayout,
   VizLegend,
   VizTooltipContainer,
+  TooltipPlugin2,
 } from '@grafana/ui';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
+import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { GraphNG, GraphNGProps, PropDiffFn } from 'app/core/components/GraphNG/GraphNG';
 import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
+
+import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { Options } from './panelcfg.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
@@ -302,8 +306,11 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       fillOpacity,
       allFrames: info.viz,
       fullHighlight,
+      hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
     });
   };
+
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
 
   return (
     <GraphNG
@@ -321,7 +328,33 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       height={height}
     >
       {(config) => {
-        if (oldConfig.current !== config) {
+        if (showNewVizTooltips && options.tooltip.mode !== TooltipDisplayMode.None) {
+          return (
+            <TooltipPlugin2
+              config={config}
+              hoverMode={
+                options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+              }
+              render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
+                return (
+                  <TimeSeriesTooltip
+                    frames={info.viz}
+                    seriesFrame={info.aligned}
+                    dataIdxs={dataIdxs}
+                    seriesIdx={seriesIdx}
+                    mode={options.tooltip.mode}
+                    sortOrder={options.tooltip.sort}
+                    isPinned={isPinned}
+                  />
+                );
+              }}
+              maxWidth={options.tooltip.maxWidth}
+              maxHeight={options.tooltip.maxHeight}
+            />
+          );
+        }
+
+        if (!showNewVizTooltips && oldConfig.current !== config) {
           oldConfig.current = addTooltipSupport({
             config,
             onUPlotClick,

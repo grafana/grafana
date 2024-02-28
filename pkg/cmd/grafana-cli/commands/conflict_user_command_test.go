@@ -641,7 +641,7 @@ func TestIntegrationMergeUser(t *testing.T) {
 			userWithUpperCase, err := usrSvc.Create(context.Background(), &dupUserEmailcmd)
 			require.NoError(t, err)
 			// this is the user we want to update to another team
-			err = teamSvc.AddTeamMember(userWithUpperCase.ID, testOrgID, team1.ID, false, 0)
+			err = teamSvc.AddTeamMember(context.Background(), userWithUpperCase.ID, testOrgID, team1.ID, false, 0)
 			require.NoError(t, err)
 
 			// get users

@@ -6,7 +6,7 @@ import { TooltipDisplayMode, useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
@@ -73,7 +73,7 @@ export const StateTimelineTooltip2 = ({
     links = getDataLinks(field, dataIdx);
   }
 
-  const headerItem: LabelValue = {
+  const headerItem: VizTooltipItem = {
     label: xField.type === FieldType.time ? '' : getFieldDisplayName(xField, seriesFrame, frames),
     value: xVal,
   };
@@ -81,8 +81,8 @@ export const StateTimelineTooltip2 = ({
   return (
     <div>
       <div className={styles.wrapper}>
-        <VizTooltipHeader headerLabel={headerItem} isPinned={isPinned} />
-        <VizTooltipContent contentLabelValue={contentItems} isPinned={isPinned} scrollable={scrollable} />
+        <VizTooltipHeader item={headerItem} isPinned={isPinned} />
+        <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} />
         {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
       </div>
     </div>

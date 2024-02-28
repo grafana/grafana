@@ -619,6 +619,10 @@ const (
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
 
+	// FlagSqlExpressions
+	// Enables using SQL and DuckDB functions as Expressions.
+	FlagSqlExpressions = "sqlExpressions"
+
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
 	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
