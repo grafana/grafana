@@ -17,8 +17,8 @@ import (
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 	"k8s.io/kube-openapi/pkg/common"
 
-	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apps/service/apis/service/v0alpha1"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver

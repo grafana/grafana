@@ -37,8 +37,8 @@ import (
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 
-	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
-	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	serviceclientset "github.com/grafana/grafana/pkg/apps/service/generated/clientset/versioned"
+	informersv0alpha1 "github.com/grafana/grafana/pkg/apps/service/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 

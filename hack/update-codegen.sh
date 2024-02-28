@@ -82,6 +82,11 @@ grafana:codegen:lsdirs() {
 }
 
 grafana::codegen:run pkg
+
 grafana::codegen:run pkg/apimachinery
+
+for app in $(grafana:codegen:lsdirs pkg/apps); do
+  grafana::codegen:run pkg/apps/${app}
+done
 
 echo "done."
