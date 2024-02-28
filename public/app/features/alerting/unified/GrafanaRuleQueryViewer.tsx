@@ -4,9 +4,9 @@ import { keyBy, startCase } from 'lodash';
 import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
+import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
 import { config } from '@grafana/runtime';
 import { Badge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { mapRelativeTimeRangeToOption } from '@grafana/ui/src/components/DateTimePickers/RelativeTimeRangePicker/utils';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { AlertDataQuery, AlertQuery } from '../../../types/unified-alerting-dto';
@@ -130,7 +130,7 @@ export function QueryPreview({
   if (relativeTimeRange) {
     headerItems.push(
       <Text color="secondary" key="timerange">
-        {mapRelativeTimeRangeToOption(relativeTimeRange).display}
+        {secondsToHms(relativeTimeRange.from)} to now
       </Text>
     );
   }

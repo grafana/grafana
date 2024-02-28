@@ -3,7 +3,7 @@ import { useObservable } from 'react-use';
 
 import { LoadingState, PanelData } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, Stack } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { GrafanaRuleQueryViewer, QueryPreview } from '../../../GrafanaRuleQueryViewer';
@@ -63,7 +63,7 @@ const QueryResults = ({ rule }: Props) => {
           )}
 
           {!isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && data && Object.keys(data).length > 0 && (
-            <div>
+            <Stack direction="column" gap={1}>
               {queries.map((query) => {
                 return (
                   <QueryPreview
@@ -78,7 +78,7 @@ const QueryResults = ({ rule }: Props) => {
                   />
                 );
               })}
-            </div>
+            </Stack>
           )}
           {!isFederatedRule && !allDataSourcesAvailable && (
             <Alert title="Query not available" severity="warning">
