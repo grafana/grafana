@@ -86,12 +86,11 @@ export const sectionFields: Section = {
         { name: 'teamIdsAttributePath', dependsOn: 'defineAllowedTeamsIds' },
         'usePkce',
         'useRefreshToken',
+        'tlsSkipVerifyInsecure',
+        'tlsClientCert',
+        'tlsClientKey',
+        'tlsClientCa',
       ],
-    },
-    {
-      name: 'TLS',
-      id: 'tls',
-      fields: ['tlsSkipVerifyInsecure', 'tlsClientCert', 'tlsClientKey', 'tlsClientCa'],
     },
   ],
 };
