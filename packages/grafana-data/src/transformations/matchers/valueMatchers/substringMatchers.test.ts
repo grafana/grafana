@@ -30,6 +30,16 @@ describe('value substring to matcher', () => {
     expect(matcher(valueIndex, field, frame, data)).toBeTruthy();
   });
 
+  // Added for https://github.com/grafana/grafana/pull/83548#pullrequestreview-1904931540 where the matcher was not handling null values
+  it('should be a mismatch if the option is null and should not cause errors', () => {
+    const frame = data[0];
+    const field = frame.fields[0];
+    const valueIndex = 1;
+
+    expect(matcher(valueIndex, field, frame, data)).toBeFalsy();
+   
+  })
+  
   it('should not match when option value is different', () => {
     const frame = data[0];
     const field = frame.fields[0];

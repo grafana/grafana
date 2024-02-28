@@ -11,7 +11,7 @@ const isSubstringMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
-      return value.includes(options.value);
+      return (value && value.includes(options.value)) || options.value === '';
     };
   },
   getOptionsDisplayText: () => {
@@ -28,7 +28,7 @@ const isNotSubstringValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
-      return !value.includes(options.value);
+      return options.value !== '' && (!value || !value.includes(options.value));
     };
   },
   getOptionsDisplayText: () => {
