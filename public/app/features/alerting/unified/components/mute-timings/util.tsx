@@ -1,7 +1,7 @@
 import moment from 'moment';
 import React from 'react';
 
-import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import {
   getDaysOfMonthString,
@@ -18,6 +18,12 @@ const isvalidTimeFormat = (timeString: string): boolean => {
   return timeString ? TIME_RANGE_REGEX.test(timeString) : true;
 };
 
+// merge both fields mute_time_intervals and time_intervals to support both old and new config
+export const mergeTimeIntervals = (alertManagerConfig: AlertmanagerConfig) => {
+  return [...(alertManagerConfig.mute_time_intervals ?? []), ...(alertManagerConfig.time_intervals ?? [])];
+};
+
+// Usage
 const isValidStartAndEndTime = (startTime?: string, endTime?: string): boolean => {
   // empty time range is perfactly valid for a mute timing
   if (!startTime && !endTime) {
@@ -67,4 +73,4 @@ function renderTimeIntervals(muteTiming: MuteTimeInterval) {
   });
 }
 
-export { isvalidTimeFormat, isValidStartAndEndTime, renderTimeIntervals };
+export { isValidStartAndEndTime, isvalidTimeFormat, renderTimeIntervals };

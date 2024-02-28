@@ -12,6 +12,7 @@ import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import { renameMuteTimings } from '../../utils/alertmanager';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { createMuteTiming, defaultTimeInterval } from '../../utils/mute-timings';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -19,7 +20,8 @@ import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
 
 interface Props {
-  muteTiming?: MuteTimeInterval;
+  fromLegacyTimeInterval?: MuteTimeInterval; // mute time interval when comes from the old config , mute_time_intervals
+  fromTimeIntervals?: MuteTimeInterval; // mute time interval when comes from the new config , time_intervals. These two fields are mutually exclusive
   showError?: boolean;
   provenance?: string;
   loading?: boolean;
@@ -50,7 +52,26 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
   };
 };
 
-const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) => {
+const replaceMuteTiming = (
+  originalTimings: MuteTimeInterval[],
+  existingTiming: MuteTimeInterval | undefined,
+  newTiming: MuteTimeInterval,
+  addNew: boolean
+) => {
+  // we only add new timing if addNew is true. Otherwise, we just remove the existing timing
+  const originalTimingsWithoutNew = existingTiming
+    ? originalTimings?.filter(({ name }) => name !== existingTiming.name)
+    : originalTimings;
+  return addNew ? [...originalTimingsWithoutNew, newTiming] : [...originalTimingsWithoutNew];
+};
+
+const MuteTimingForm = ({
+  fromLegacyTimeInterval: fromMuteTimings,
+  fromTimeIntervals,
+  showError,
+  loading,
+  provenance,
+}: Props) => {
   const dispatch = useDispatch();
   const { selectedAlertmanager } = useAlertmanager();
   const styles = useStyles2(getStyles);
@@ -59,6 +80,12 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
 
   const { currentData: result } = useAlertmanagerConfig(selectedAlertmanager);
   const config = result?.alertmanager_config;
+
+  const fromIntervals = Boolean(fromTimeIntervals);
+  const muteTiming = fromIntervals ? fromTimeIntervals : fromMuteTimings;
+
+  const originalMuteTimings = config?.mute_time_intervals ?? [];
+  const originalTimeIntervals = config?.time_intervals ?? [];
 
   const defaultValues = useDefaultValues(muteTiming);
   const formApi = useForm({ defaultValues });
@@ -70,19 +97,44 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
 
     const newMuteTiming = createMuteTiming(values);
 
-    const muteTimings = muteTiming
-      ? config?.mute_time_intervals?.filter(({ name }) => name !== muteTiming.name)
-      : config?.mute_time_intervals;
+    const isGrafanaDataSource = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
+    const isNewMuteTiming = fromTimeIntervals === undefined && fromMuteTimings === undefined;
 
+    // If is Grafana data source, we wil save mute timings in the alertmanager_config.mute_time_intervals
+    // Otherwise, we will save it on alertmanager_config.time_intervals or alertmanager_config.mute_time_intervals depending on the original config
+
+    const newMutetimeIntervals = isGrafanaDataSource
+      ? {
+          // for Grafana data source, we will save mute timings in the alertmanager_config.mute_time_intervals
+          mute_time_intervals: [
+            ...replaceMuteTiming(originalTimeIntervals, fromTimeIntervals, newMuteTiming, false),
+            ...replaceMuteTiming(originalMuteTimings, fromMuteTimings, newMuteTiming, true),
+          ],
+        }
+      : {
+          // for non-Grafana data source, we will save mute timings in the alertmanager_config.time_intervals or alertmanager_config.mute_time_intervals depending on the original config
+          time_intervals: replaceMuteTiming(
+            originalTimeIntervals,
+            fromTimeIntervals,
+            newMuteTiming,
+            Boolean(fromTimeIntervals) || isNewMuteTiming
+          ),
+          mute_time_intervals:
+            Boolean(fromMuteTimings) && !isNewMuteTiming
+              ? replaceMuteTiming(originalMuteTimings, fromMuteTimings, newMuteTiming, true)
+              : undefined,
+        };
+
+    const { mute_time_intervals: _, time_intervals: __, ...configWithoutMuteTimings } = config ?? {};
     const newConfig: AlertManagerCortexConfig = {
       ...result,
       alertmanager_config: {
-        ...config,
+        ...configWithoutMuteTimings,
         route:
           muteTiming && newMuteTiming.name !== muteTiming.name
             ? renameMuteTimings(newMuteTiming.name, muteTiming.name, config?.route ?? {})
             : config?.route,
-        mute_time_intervals: [...(muteTimings || []), newMuteTiming],
+        ...newMutetimeIntervals,
       },
     };
 
@@ -123,13 +175,8 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
                 <Input
                   {...formApi.register('name', {
                     required: true,
-                    validate: (value) => {
-                      if (!muteTiming) {
-                        const existingMuteTiming = config?.mute_time_intervals?.find(({ name }) => value === name);
-                        return existingMuteTiming ? `Mute timing already exists for "${value}"` : true;
-                      }
-                      return;
-                    },
+                    validate: (value) =>
+                      validateMuteTiming(value, muteTiming, originalMuteTimings, originalTimeIntervals),
                   })}
                   className={styles.input}
                   data-testid={'mute-timing-name'}
@@ -155,6 +202,22 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
     </>
   );
 };
+
+function validateMuteTiming(
+  value: string,
+  muteTiming: MuteTimeInterval | undefined,
+  originalMuteTimings: MuteTimeInterval[],
+  originalTimeIntervals: MuteTimeInterval[]
+) {
+  if (!muteTiming) {
+    const existingMuteTimingInMuteTimings = originalMuteTimings?.find(({ name }) => value === name);
+    const existingMuteTimingInTimeIntervals = originalTimeIntervals?.find(({ name }) => value === name);
+    return existingMuteTimingInMuteTimings || existingMuteTimingInTimeIntervals
+      ? `Mute timing already exists for "${value}"`
+      : true;
+  }
+  return;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   input: css`
