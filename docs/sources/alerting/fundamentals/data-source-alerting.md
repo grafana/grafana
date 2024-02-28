@@ -7,7 +7,7 @@ labels:
     - enterprise
     - oss
 title: Data sources and Grafana Alerting
-weight: 100
+weight: 140
 ---
 
 # Data sources and Grafana Alerting

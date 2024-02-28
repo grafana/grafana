@@ -17,11 +17,11 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Create mute timings
+title: Configure mute timings
 weight: 450
 ---
 
-# Create mute timings
+# Configure mute timings
 
 A mute timing is a recurring interval of time when no new notifications for a policy are generated or sent. Use them to prevent alerts from firing a specific and reoccurring period, for example, a regular maintenance period.
 
