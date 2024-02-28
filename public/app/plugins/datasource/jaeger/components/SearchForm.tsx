@@ -52,6 +52,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         }));
 
         const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
+        setAlertText('');
         return filteredOptions;
       } catch (error) {
         if (error instanceof Error) {
