@@ -20,12 +20,13 @@ import {
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
-import { Input, useStyles2, InlineSwitch, Field, Alert, Icon, LoadingPlaceholder } from '@grafana/ui';
+import { Input, InlineSwitch, Field, Alert, Icon, useStyles2 } from '@grafana/ui';
 
 import { getPreviewPanelFor } from './AutomaticMetricQueries/previewPanel';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
 import { MetricScene } from './MetricScene';
 import { SelectMetricAction } from './SelectMetricAction';
+import { StatusWrapper } from './StatusWrapper';
 import { sortRelatedMetrics } from './relatedMetrics';
 import { getVariablesWithMetricConstant, trailDS, VAR_DATASOURCE, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
 import { getFilters, getTrailFor } from './utils';
@@ -326,14 +327,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const tooStrict = children.length === 0 && (searchQuery || prefixFilter);
     const noMetrics = !metricNamesStatus.isLoading && model.currentMetricNames.size === 0;
 
-    const status =
-      (metricNamesStatus.isLoading && children.length === 0 && (
-        <LoadingPlaceholder className={styles.statusMessage} text="Loading..." />
-      )) ||
-      (noMetrics && 'There are no results found. Try a different time range or a different data source.') ||
-      (tooStrict && 'There are no results found. Try adjusting your search or filters.');
+    const isLoading = metricNamesStatus.isLoading && children.length === 0;
 
-    const showStatus = status && <div className={styles.statusMessage}>{status}</div>;
+    const blockingMessage = isLoading
+      ? undefined
+      : (noMetrics && 'There are no results found. Try a different time range or a different data source.') ||
+        (tooStrict && 'There are no results found. Try adjusting your search or filters.') ||
+        undefined;
 
     const prefixError =
       prefixFilter && metricsAfterSearch != null && !metricsAfterFilter?.length
@@ -378,8 +378,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
             <div>({metricNamesStatus.error})</div>
           </Alert>
         )}
-        {showStatus}
-        <model.state.body.Component model={model.state.body} />
+        <StatusWrapper {...{ isLoading, blockingMessage }}>
+          <model.state.body.Component model={model.state.body} />
+        </StatusWrapper>
       </div>
     );
   };
@@ -427,11 +428,6 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(1),
       alignItems: 'flex-end',
     }),
-    statusMessage: css({
-      fontStyle: 'italic',
-      marginTop: theme.spacing(7),
-      textAlign: 'center',
-    }),
     searchField: css({
       flexGrow: 1,
       marginBottom: 0,
@@ -463,7 +459,7 @@ function createSearchRegExp(spaceSeparatedMetricNames?: string) {
 }
 
 function useVariableStatus(name: string, sceneObject: SceneObject) {
-  const variable = sceneGraph.lookupVariable(VAR_METRIC_NAMES, sceneObject);
+  const variable = sceneGraph.lookupVariable(name, sceneObject);
 
   const useVariableState = useCallback(() => {
     if (variable) {

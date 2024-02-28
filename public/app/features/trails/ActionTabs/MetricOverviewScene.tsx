@@ -15,6 +15,7 @@ import PrometheusLanguageProvider from '../../../plugins/datasource/prometheus/l
 import { PromMetricsMetadataItem } from '../../../plugins/datasource/prometheus/types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
+import { StatusWrapper } from '../StatusWrapper';
 import { TRAILS_ROUTE, VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
 import { getMetricSceneFor } from '../utils';
 
@@ -22,7 +23,7 @@ import { getLabelOptions } from './utils';
 
 export interface MetricOverviewSceneState extends SceneObjectState {
   metadata?: PromMetricsMetadataItem;
-  loading?: boolean;
+  metadataLoading?: boolean;
 }
 
 export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneState> {
@@ -57,6 +58,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
   }
 
   private async updateMetadata() {
+    this.setState({ metadataLoading: true, metadata: undefined });
     const ds = await getDatasourceSrv().get(VAR_DATASOURCE_EXPR, { __sceneObject: { value: this } });
 
     const languageProvider: PrometheusLanguageProvider = ds.languageProvider;
@@ -69,26 +71,24 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     const metric = metricScene.state.metric;
 
     if (languageProvider.metricsMetadata) {
-      this.setState({ metadata: languageProvider.metricsMetadata[metric] });
+      this.setState({ metadata: languageProvider.metricsMetadata[metric], metadataLoading: false });
       return;
     }
 
     await languageProvider.start();
 
-    this.setState({ metadata: languageProvider.metricsMetadata?.[metric] });
+    this.setState({ metadata: languageProvider.metricsMetadata?.[metric], metadataLoading: false });
   }
 
   public static Component = ({ model }: SceneComponentProps<MetricOverviewScene>) => {
-    const { metadata } = model.useState();
+    const { metadata, metadataLoading } = model.useState();
     const variable = model.getVariable();
-    const { loading } = variable.useState();
+    const { loading: labelsLoading } = variable.useState();
     const labelOptions = getLabelOptions(model, variable).filter((l) => l.value !== ALL_VARIABLE_VALUE);
 
     return (
-      <Stack gap={6}>
-        {loading ? (
-          <div>Loading...</div>
-        ) : (
+      <StatusWrapper isLoading={labelsLoading || metadataLoading}>
+        <Stack gap={6}>
           <>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Description</Text>
@@ -106,6 +106,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Labels</Text>
+              {labelOptions.length === 0 && 'Unable to fetch labels.'}
               {labelOptions.map((l) => (
                 <TextLink
                   key={l.label}
@@ -122,8 +123,8 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
               ))}
             </Stack>
           </>
-        )}
-      </Stack>
+        </Stack>
+      </StatusWrapper>
     );
   };
 }
