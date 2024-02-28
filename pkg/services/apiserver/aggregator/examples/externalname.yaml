@@ -4,4 +4,4 @@ metadata:
   name: example-apiserver
   namespace: grafana
 spec:
-  host: example-grafana-app-instant.grafana-apps.svc.cluster.local
+  host: localhost
