@@ -81,7 +81,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     return new VizPanelManager({
-      panel: sourcePanel.clone(),
+      panel: sourcePanel.clone({ $data: undefined }),
       $data: sourcePanel.state.$data?.clone(),
       sourcePanel: sourcePanel.getRef(),
       ...repeatOptions,
@@ -332,7 +332,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         .setTitle('')
         .setOption('showTypeIcons', true)
         .setOption('showHeader', true)
-        .setData(this.state.$data?.clone())
         .build(),
     });
   }
