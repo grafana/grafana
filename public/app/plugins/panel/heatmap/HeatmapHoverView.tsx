@@ -377,7 +377,9 @@ const HeatmapHoverCell = ({
           </div>
         ))}
       </VizTooltipContent>
-      {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
+      {(links.length > 0 || isPinned) && (
+        <VizTooltipFooter dataLinks={links} annotate={isPinned ? annotate : undefined} />
+      )}
     </div>
   );
 };

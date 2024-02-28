@@ -77,7 +77,9 @@ export const TimeSeriesTooltip = ({
       <div className={styles.wrapper}>
         <VizTooltipHeader item={headerItem} isPinned={isPinned} />
         <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} />
-        {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
+        {(links.length > 0 || isPinned) && (
+          <VizTooltipFooter dataLinks={links} annotate={isPinned ? annotate : undefined} />
+        )}
       </div>
     </div>
   );
