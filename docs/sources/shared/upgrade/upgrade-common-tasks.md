@@ -84,7 +84,7 @@ To upgrade Grafana installed using RPM or YUM complete the following steps:
 
 To upgrade Grafana running in a Docker container, complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to the custom configuration file, `custom.ini` or `grafana.ini`.
+1. Use Grafana [environment variables](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#override-configuration-with-environment-variables) to save your custom configurations; this is the recommended method. Alternatively, you can copy your configuration files manually by accessing the deployed container. 
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
