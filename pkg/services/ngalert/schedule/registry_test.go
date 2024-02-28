@@ -374,6 +374,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		cp.Version++
 		cp.Updated = cp.Updated.Add(1 * time.Second)
 		cp.IntervalSeconds++
+		cp.Annotations = make(map[string]string)
 		cp.Annotations["test"] = "test"
 
 		f2 := ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint()
