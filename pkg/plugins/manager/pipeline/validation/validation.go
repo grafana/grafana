@@ -17,7 +17,7 @@ type Validator interface {
 type ValidateFunc func(ctx context.Context, p *plugins.Plugin) error
 
 type Validate struct {
-	cfg           *config.Cfg
+	cfg           *config.PluginManagementCfg
 	validateSteps []ValidateFunc
 	log           log.Logger
 }
@@ -27,7 +27,7 @@ type Opts struct {
 }
 
 // New returns a new Validation stage.
-func New(cfg *config.Cfg, opts Opts) *Validate {
+func New(cfg *config.PluginManagementCfg, opts Opts) *Validate {
 	if opts.ValidateFuncs == nil {
 		opts.ValidateFuncs = DefaultValidateFuncs(cfg)
 	}

@@ -6,6 +6,7 @@ import React from 'react';
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
 import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
 import { config } from '@grafana/runtime';
+import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
 import { Badge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -244,6 +245,9 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
 
       case ExpressionQueryType.threshold:
         return <ThresholdExpressionViewer model={model} />;
+
+      case ExpressionQueryType.sql:
+        return <Preview rawSql={model.expression || ''} datasourceType={model.datasource?.type} />;
 
       default:
         return <>Expression not supported: {model.type}</>;

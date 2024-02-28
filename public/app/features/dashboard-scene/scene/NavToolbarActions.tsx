@@ -34,19 +34,79 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
 NavToolbarActions.displayName = 'NavToolbarActions';
 
 /**
- * This part is split into a separate componet to help test this
+ * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel } = dashboard.useState();
+  const {
+    isEditing,
+    viewPanelScene,
+    isDirty,
+    uid,
+    meta,
+    editview,
+    editPanel,
+    hasCopiedPanel: copiedPanel,
+  } = dashboard.useState();
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
   const buttonWithExtraMargin = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
+  const hasCopiedPanel = Boolean(copiedPanel);
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && !editview && Boolean(meta.canStar) && !isEditingPanel,
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="add-visualization"
+        tooltip={'Add visualization'}
+        icon="graph-bar"
+        onClick={() => {
+          const id = dashboard.onCreateNewPanel();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+          locationService.partial({ editPanel: id });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="add-row"
+        tooltip={'Add row'}
+        icon="wrap-text"
+        onClick={() => {
+          dashboard.onCreateNewRow();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="paste-panel"
+        disabled={!hasCopiedPanel}
+        tooltip={'Paste panel'}
+        icon="copy"
+        onClick={() => {
+          dashboard.pastePanel();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: uid && !editview && Boolean(meta.canStar) && !isEditingPanel && !isEditing,
     render: () => {
       let desc = meta.isStarred
         ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')

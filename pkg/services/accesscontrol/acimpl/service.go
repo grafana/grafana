@@ -166,6 +166,10 @@ func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID
 	return s.store.DeleteUserPermissions(ctx, orgID, userID)
 }
 
+func (s *Service) DeleteTeamPermissions(ctx context.Context, orgID int64, teamID int64) error {
+	return s.store.DeleteTeamPermissions(ctx, orgID, teamID)
+}
+
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
@@ -427,7 +431,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 }
 
 func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
-	if !(s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts)) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
@@ -440,7 +444,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 }
 
 func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
-	if !(s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts)) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}

@@ -243,10 +243,6 @@ const (
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
 
-	// FlagExternalServiceAuth
-	// Starts an OAuth2 authentication provider for external services
-	FlagExternalServiceAuth = "externalServiceAuth"
-
 	// FlagRefactorVariablesTimeRange
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
@@ -622,6 +618,10 @@ const (
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
+
+	// FlagSqlExpressions
+	// Enables using SQL and DuckDB functions as Expressions.
+	FlagSqlExpressions = "sqlExpressions"
 
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
