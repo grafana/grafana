@@ -309,7 +309,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       }
 
       // If the value is a string array first escape them then join them with pipe
-      return value.map((v) => escapeRegex(v)).join('|');
+      // then put inside parenthesis.
+      return `(${value.map((v) => escapeRegex(v)).join('|')})`;
     }
 
     // If the variable is not a multi-value variable
@@ -324,7 +325,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       }
 
       // If the value is a string array first escape them then join them with pipe
-      return value.map((v) => escapeRegex(v)).join('|');
+      // then put inside parenthesis.
+      return `(${value.map((v) => escapeRegex(v)).join('|')})`;
     }
 
     return value;

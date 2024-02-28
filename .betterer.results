@@ -439,6 +439,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
+    "packages/grafana-data/src/vector/ArrayVector.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
     "packages/grafana-data/src/vector/CircularVector.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -4106,12 +4111,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/search/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/serviceaccounts/components/CreateTokenModal.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
     "public/app/features/serviceaccounts/components/ServiceAccountProfile.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
