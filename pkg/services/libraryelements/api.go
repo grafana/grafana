@@ -318,31 +318,31 @@ func (l *LibraryElementService) filterLibraryPanelsByPermission(c *contextmodel.
 
 func toLibraryElementError(err error, message string) response.Response {
 	if errors.Is(err, model.ErrLibraryElementAlreadyExists) {
-		return response.Error(400, model.ErrLibraryElementAlreadyExists.Error(), err)
+		return response.Error(http.StatusBadRequest, model.ErrLibraryElementAlreadyExists.Error(), err)
 	}
 	if errors.Is(err, model.ErrLibraryElementNotFound) {
-		return response.Error(404, model.ErrLibraryElementNotFound.Error(), err)
+		return response.Error(http.StatusNotFound, model.ErrLibraryElementNotFound.Error(), err)
 	}
 	if errors.Is(err, model.ErrLibraryElementDashboardNotFound) {
-		return response.Error(404, model.ErrLibraryElementDashboardNotFound.Error(), err)
+		return response.Error(http.StatusNotFound, model.ErrLibraryElementDashboardNotFound.Error(), err)
 	}
 	if errors.Is(err, model.ErrLibraryElementVersionMismatch) {
-		return response.Error(412, model.ErrLibraryElementVersionMismatch.Error(), err)
+		return response.Error(http.StatusPreconditionFailed, model.ErrLibraryElementVersionMismatch.Error(), err)
 	}
 	if errors.Is(err, dashboards.ErrFolderNotFound) {
-		return response.Error(404, dashboards.ErrFolderNotFound.Error(), err)
+		return response.Error(http.StatusNotFound, dashboards.ErrFolderNotFound.Error(), err)
 	}
 	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
-		return response.Error(403, dashboards.ErrFolderAccessDenied.Error(), err)
+		return response.Error(http.StatusForbidden, dashboards.ErrFolderAccessDenied.Error(), err)
 	}
 	if errors.Is(err, model.ErrLibraryElementHasConnections) {
-		return response.Error(403, model.ErrLibraryElementHasConnections.Error(), err)
+		return response.Error(http.StatusForbidden, model.ErrLibraryElementHasConnections.Error(), err)
 	}
 	if errors.Is(err, model.ErrLibraryElementInvalidUID) {
-		return response.Error(400, model.ErrLibraryElementInvalidUID.Error(), err)
+		return response.Error(http.StatusBadRequest, model.ErrLibraryElementInvalidUID.Error(), err)
 	}
 	if errors.Is(err, model.ErrLibraryElementUIDTooLong) {
-		return response.Error(400, model.ErrLibraryElementUIDTooLong.Error(), err)
+		return response.Error(http.StatusBadRequest, model.ErrLibraryElementUIDTooLong.Error(), err)
 	}
 	return response.ErrOrFallback(http.StatusInternalServerError, message, err)
 }
