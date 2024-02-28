@@ -30,8 +30,12 @@ export function getPanelIdForVizPanel(panel: SceneObject): number {
   return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 
+export function getPanelIdForLibraryVizPanel(panel: LibraryVizPanel): number {
+  return parseInt(panel.state.panelKey!.replace('panel-', ''), 10);
+}
+
 /**
- * This will also  try lookup based on panelId
+ * This will also try lookup based on panelId
  */
 export function findVizPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
   if (!key) {
