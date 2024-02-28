@@ -36,10 +36,6 @@ composableKinds: DataQuery: {
 				// @deprecated, now use step.
 				resolution?: int64
 				editorMode?: #QueryEditorMode
-				// @deprecated, now use queryType.
-				range?: bool
-				// @deprecated, now use queryType.
-				instant?: bool
 				// Used to set step value for range queries.
 				step?: string
 

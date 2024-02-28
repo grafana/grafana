@@ -40,10 +40,6 @@ export interface Loki extends common.DataQuery {
    */
   expr: string;
   /**
-   * @deprecated, now use queryType.
-   */
-  instant?: boolean;
-  /**
    * Used to override the name of the series.
    */
   legendFormat?: string;
@@ -51,10 +47,6 @@ export interface Loki extends common.DataQuery {
    * Used to limit the number of log rows returned.
    */
   maxLines?: number;
-  /**
-   * @deprecated, now use queryType.
-   */
-  range?: boolean;
   /**
    * @deprecated, now use step.
    */

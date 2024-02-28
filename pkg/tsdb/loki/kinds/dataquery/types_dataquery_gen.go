@@ -83,9 +83,6 @@ type LokiDataQuery struct {
 	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	Hide *bool `json:"hide,omitempty"`
 
-	// @deprecated, now use queryType.
-	Instant *bool `json:"instant,omitempty"`
-
 	// Used to override the name of the series.
 	LegendFormat *string `json:"legendFormat,omitempty"`
 
@@ -95,9 +92,6 @@ type LokiDataQuery struct {
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
-
-	// @deprecated, now use queryType.
-	Range *bool `json:"range,omitempty"`
 
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.

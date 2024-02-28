@@ -967,7 +967,6 @@ export class LokiDatasource
       refId: id,
       expr,
       maxLines,
-      instant,
       queryType: instant ? LokiQueryType.Instant : LokiQueryType.Range,
     };
 
