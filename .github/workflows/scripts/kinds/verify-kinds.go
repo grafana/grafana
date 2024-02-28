@@ -26,18 +26,13 @@ var nonAlphaNumRegex = regexp.MustCompile("[^a-zA-Z0-9 ]+")
 
 // main This script verifies that stable kinds are not updated once published (new schemas
 // can be added but existing ones cannot be updated).
-// If the env variable CODEGEN_VERIFY is not present, this also generates kind files into a
-// local "next" folder, ready to be published in the kind-registry repo.
+// It generates kind files into a local "next" folder, ready to be published in the kind-registry repo.
 // If kind names are given as parameters, the script will make the above actions only for the
 // given kinds.
 func main() {
 	kindRegistry, err := NewKindRegistry()
 	defer kindRegistry.cleanUp()
 	die(err)
-
-	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
-		os.Exit(0)
-	}
 
 	// File generation
 	jfs := codejen.NewFS()
