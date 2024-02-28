@@ -43,7 +43,6 @@ import {
   UPlotConfigPrepFn,
   VizLegendItem,
 } from '@grafana/ui';
-import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
 import { getConfig, TimelineCoreOptions } from './timeline';
@@ -189,28 +188,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
-
-  // in TooltipPlugin, this gets invoked and the result is bound to a setCursor hook
-  // which fires after the above setCursor hook, so can take advantage of hoveringOver
-  // already set by the above onHover/onLeave callbacks that fire from coreConfig.setCursor
-  const interpolateTooltip: PlotTooltipInterpolator = (
-    updateActiveSeriesIdx,
-    updateActiveDatapointIdx,
-    updateTooltipPosition
-  ) => {
-    if (shouldChangeHover) {
-      if (hoveredSeriesIdx != null) {
-        updateActiveSeriesIdx(hoveredSeriesIdx);
-        updateActiveDatapointIdx(hoveredDataIdx);
-      }
-
-      shouldChangeHover = false;
-    }
-
-    updateTooltipPosition(hoveredSeriesIdx == null);
-  };
-
-  builder.setTooltipInterpolator(interpolateTooltip);
 
   builder.setPrepData((frames) => preparePlotData2(frames[0], getStackingGroups(frames[0])));
 

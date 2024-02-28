@@ -3,17 +3,14 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { KeyboardPlugin, TooltipPlugin, TooltipPlugin2, usePanelContext, ZoomPlugin } from '@grafana/ui';
+import { KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
-import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
-import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
-import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
@@ -51,7 +48,7 @@ export const TimeSeriesPanel = ({
   }, [frames, id]);
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
+
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
 
@@ -109,123 +106,57 @@ export const TimeSeriesPanel = ({
         return (
           <>
             <KeyboardPlugin config={uplotConfig} />
-            {options.tooltip.mode === TooltipDisplayMode.None || (
-              <>
-                {showNewVizTooltips ? (
-                  <TooltipPlugin2
-                    config={uplotConfig}
-                    hoverMode={
-                      options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
-                    }
-                    queryZoom={onChangeTimeRange}
-                    clientZoom={true}
-                    syncTooltip={syncTooltip}
-                    render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
-                      if (enableAnnotationCreation && timeRange2 != null) {
-                        setNewAnnotationRange(timeRange2);
-                        dismiss();
-                        return;
-                      }
-
-                      const annotate = () => {
-                        let xVal = u.posToVal(u.cursor.left!, 'x');
-
-                        setNewAnnotationRange({ from: xVal, to: xVal });
-                        dismiss();
-                      };
-
-                      return (
-                        // not sure it header time here works for annotations, since it's taken from nearest datapoint index
-                        <TimeSeriesTooltip
-                          frames={frames}
-                          seriesFrame={alignedDataFrame}
-                          dataIdxs={dataIdxs}
-                          seriesIdx={seriesIdx}
-                          mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
-                          sortOrder={options.tooltip.sort}
-                          isPinned={isPinned}
-                          annotate={enableAnnotationCreation ? annotate : undefined}
-                          scrollable={isTooltipScrollable(options.tooltip)}
-                        />
-                      );
-                    }}
-                    maxWidth={options.tooltip.maxWidth}
-                    maxHeight={options.tooltip.maxHeight}
-                  />
-                ) : (
-                  <>
-                    <ZoomPlugin config={uplotConfig} onZoom={onChangeTimeRange} withZoomY={true} />
-                    <TooltipPlugin
-                      frames={frames}
-                      data={alignedDataFrame}
-                      config={uplotConfig}
-                      mode={options.tooltip.mode}
-                      sortOrder={options.tooltip.sort}
-                      sync={sync}
-                      timeZone={timeZone}
-                    />
-                  </>
-                )}
-              </>
-            )}
-            {/* Renders annotation markers*/}
-            {showNewVizTooltips ? (
-              <AnnotationsPlugin2
-                annotations={data.annotations ?? []}
+            {options.tooltip.mode !== TooltipDisplayMode.None && (
+              <TooltipPlugin2
                 config={uplotConfig}
-                timeZone={timeZone}
-                newRange={newAnnotationRange}
-                setNewRange={setNewAnnotationRange}
+                hoverMode={
+                  options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+                }
+                queryZoom={onChangeTimeRange}
+                clientZoom={true}
+                syncTooltip={syncTooltip}
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
+                  if (enableAnnotationCreation && timeRange2 != null) {
+                    setNewAnnotationRange(timeRange2);
+                    dismiss();
+                    return;
+                  }
+
+                  const annotate = () => {
+                    let xVal = u.posToVal(u.cursor.left!, 'x');
+
+                    setNewAnnotationRange({ from: xVal, to: xVal });
+                    dismiss();
+                  };
+
+                  return (
+                    // not sure it header time here works for annotations, since it's taken from nearest datapoint index
+                    <TimeSeriesTooltip
+                      frames={frames}
+                      seriesFrame={alignedDataFrame}
+                      dataIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
+                      sortOrder={options.tooltip.sort}
+                      isPinned={isPinned}
+                      annotate={enableAnnotationCreation ? annotate : undefined}
+                      scrollable={isTooltipScrollable(options.tooltip)}
+                    />
+                  );
+                }}
+                maxWidth={options.tooltip.maxWidth}
+                maxHeight={options.tooltip.maxHeight}
               />
-            ) : (
-              data.annotations && (
-                <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
-              )
             )}
 
-            {/*Enables annotations creation*/}
-            {!showNewVizTooltips ? (
-              enableAnnotationCreation ? (
-                <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={uplotConfig}>
-                  {({ startAnnotating }) => {
-                    return (
-                      <ContextMenuPlugin
-                        data={alignedDataFrame}
-                        config={uplotConfig}
-                        timeZone={timeZone}
-                        replaceVariables={replaceVariables}
-                        defaultItems={[
-                          {
-                            items: [
-                              {
-                                label: 'Add annotation',
-                                ariaLabel: 'Add annotation',
-                                icon: 'comment-alt',
-                                onClick: (e, p) => {
-                                  if (!p) {
-                                    return;
-                                  }
-                                  startAnnotating({ coords: p.coords });
-                                },
-                              },
-                            ],
-                          },
-                        ]}
-                      />
-                    );
-                  }}
-                </AnnotationEditorPlugin>
-              ) : (
-                <ContextMenuPlugin
-                  data={alignedDataFrame}
-                  frames={frames}
-                  config={uplotConfig}
-                  timeZone={timeZone}
-                  replaceVariables={replaceVariables}
-                  defaultItems={[]}
-                />
-              )
-            ) : undefined}
+            <AnnotationsPlugin2
+              annotations={data.annotations ?? []}
+              config={uplotConfig}
+              timeZone={timeZone}
+              newRange={newAnnotationRange}
+              setNewRange={setNewAnnotationRange}
+            />
+
             {data.annotations && (
               <ExemplarsPlugin
                 visibleSeries={getVisibleLabels(uplotConfig, frames)}

@@ -291,7 +291,7 @@ export { UPlotChart } from './uPlot/Plot';
 export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
-export { type PlotTooltipInterpolator, type PlotSelection, FIXED_UNIT } from './uPlot/types';
+export { type PlotSelection, FIXED_UNIT } from './uPlot/types';
 export { type UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
 export * from './PanelChrome/types';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
