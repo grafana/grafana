@@ -136,7 +136,7 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
       </Field>
       {credentials.serviceCredentialsEnabled ? (
         <>
-          {authTypeOptions.length > 1 && (
+          {authTypeOptions.length > 0 && (
             <Field
               label="Authentication"
               description="Choose the type of authentication to Azure services"
