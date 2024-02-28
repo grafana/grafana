@@ -217,6 +217,14 @@ type HTTPServer struct {
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
 	namespacer           request.NamespaceMapper
 	anonService          anonymous.Service
+	tlsCerts             TLSCerts
+}
+
+type TLSCerts struct {
+	certLock        sync.Mutex
+	cert_file_mtime time.Time
+	key_file_mtime  time.Time
+	certs           *tls.Certificate
 }
 
 type ServerOptions struct {
@@ -397,12 +405,8 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
 	switch hs.Cfg.Protocol {
-	case setting.HTTP2Scheme:
-		if err := hs.configureHttp2(); err != nil {
-			return err
-		}
-	case setting.HTTPSScheme:
-		if err := hs.configureHttps(); err != nil {
+	case setting.HTTP2Scheme, setting.HTTPSScheme:
+		if err := hs.configureTLS(); err != nil {
 			return err
 		}
 	default:
@@ -551,87 +555,17 @@ func (hs *HTTPServer) tlsCertificates() ([]tls.Certificate, error) {
 		return hs.selfSignedCert()
 	}
 
-	if hs.Cfg.CertFile == "" {
-		return nil, errors.New("cert_file cannot be empty when using HTTPS")
+	if err := hs.updateMtimeOfServerCerts(); err != nil {
+		return nil, err
 	}
 
-	if hs.Cfg.KeyFile == "" {
-		return nil, errors.New("cert_key cannot be empty when using HTTPS")
-	}
-
-	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
-		return nil, fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
-	}
-
-	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
-		return nil, fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
-	}
-
-	tlsCert, err := tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
+	tlsCert, err := hs.readCertificates()
 	if err != nil {
-		return nil, fmt.Errorf("could not load SSL certificate: %w", err)
+		return nil, err
 	}
+	hs.tlsCerts.certs = tlsCert
 
-	return []tls.Certificate{tlsCert}, nil
-}
-
-func (hs *HTTPServer) configureHttps() error {
-	tlsCerts, err := hs.tlsCertificates()
-	if err != nil {
-		return err
-	}
-
-	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
-	if err != nil {
-		return err
-	}
-
-	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(setting.HTTPSScheme))
-	if err != nil {
-		return err
-	}
-
-	hs.log.Info("HTTP Server TLS settings", "Min TLS Version", hs.Cfg.MinTLSVersion,
-		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
-
-	tlsCfg := &tls.Config{
-		Certificates: tlsCerts,
-		MinVersion:   minTlsVersion,
-		CipherSuites: tlsCiphers,
-	}
-
-	hs.httpSrv.TLSConfig = tlsCfg
-	hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
-
-	return nil
-}
-
-func (hs *HTTPServer) configureHttp2() error {
-	tlsCerts, err := hs.tlsCertificates()
-	if err != nil {
-		return err
-	}
-
-	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
-	if err != nil {
-		return err
-	}
-
-	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(setting.HTTP2Scheme))
-
-	hs.log.Info("HTTP Server TLS settings", "Min TLS Version", hs.Cfg.MinTLSVersion,
-		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
-
-	tlsCfg := &tls.Config{
-		Certificates: tlsCerts,
-		MinVersion:   minTlsVersion,
-		CipherSuites: tlsCiphers,
-		NextProtos:   []string{"h2", "http/1.1"},
-	}
-
-	hs.httpSrv.TLSConfig = tlsCfg
-
-	return nil
+	return []tls.Certificate{*tlsCert}, nil
 }
 
 func (hs *HTTPServer) applyRoutes() {
@@ -842,5 +776,148 @@ func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []ui
 			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
 		}
 	}
+	return nil
+}
+
+func (hs *HTTPServer) readCertificates() (*tls.Certificate, error) {
+	if hs.Cfg.CertFile == "" {
+		return nil, errors.New("cert_file cannot be empty when using HTTPS")
+	}
+
+	if hs.Cfg.KeyFile == "" {
+		return nil, errors.New("cert_key cannot be empty when using HTTPS")
+	}
+
+	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
+		return nil, fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
+	}
+
+	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
+		return nil, fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
+	}
+
+	tlsCert, err := tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not load SSL certificate: %w", err)
+	}
+	return &tlsCert, nil
+}
+
+func (hs *HTTPServer) configureTLS() error {
+	tlsCerts, err := hs.tlsCertificates()
+	if err != nil {
+		return err
+	}
+
+	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
+	if err != nil {
+		return err
+	}
+
+	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(hs.Cfg.Protocol))
+
+	hs.log.Info("HTTP Server TLS settings", "scheme", hs.Cfg.Protocol, "Min TLS Version", hs.Cfg.MinTLSVersion,
+		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
+
+	tlsCfg := &tls.Config{
+		Certificates: tlsCerts,
+		MinVersion:   minTlsVersion,
+		CipherSuites: tlsCiphers,
+	}
+
+	hs.httpSrv.TLSConfig = tlsCfg
+
+	if hs.Cfg.Protocol == setting.HTTP2Scheme {
+		hs.httpSrv.TLSConfig.NextProtos = []string{"h2", "http/1.1"}
+	}
+
+	if hs.Cfg.Protocol == setting.HTTPSScheme {
+		hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
+	}
+
+	if hs.Cfg.CertFile != "" && hs.Cfg.KeyFile != "" {
+		if hs.Cfg.CertWatchInterval != 0 {
+			hs.httpSrv.TLSConfig.GetCertificate = hs.GetCertificate
+			go hs.WatchAndUpdateCerts()
+			hs.log.Info("HTTP Server certificates reload feature is enabled")
+		} else {
+			hs.log.Info("HTTP Server certificates reload feature is NOT enabled")
+		}
+	}
+
+	return nil
+}
+
+func (hs *HTTPServer) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+	hs.tlsCerts.certLock.Lock()
+	tlsCerts := hs.tlsCerts.certs
+	hs.tlsCerts.certLock.Unlock()
+
+	return tlsCerts, nil
+}
+
+// fsnotify module can be used to detect file changes and based on the event certs can be reloaded
+// since it adds a direct dependency for the optional feature. So that is the reason periodic watching
+// of cert files is chosen. If fsnotify is added as direct dependency in future, then the implementation
+// can be revisited to align to fsnotify.
+func (hs *HTTPServer) WatchAndUpdateCerts() {
+	ticker := time.NewTicker(hs.Cfg.CertWatchInterval)
+	defer ticker.Stop()
+
+	for {
+		<-ticker.C
+		if err := hs.updateCerts(); err != nil {
+			hs.log.Error("Not able to reload certificates", "error", err)
+		}
+	}
+}
+
+func (hs *HTTPServer) updateCerts() error {
+	tlsInfo := &hs.tlsCerts
+	cMtime, err := getMtime(hs.Cfg.CertFile)
+	if err != nil {
+		return err
+	}
+	kMtime, err := getMtime(hs.Cfg.KeyFile)
+	if err != nil {
+		return err
+	}
+
+	if cMtime.Compare(tlsInfo.cert_file_mtime) != 0 || kMtime.Compare(tlsInfo.key_file_mtime) != 0 {
+		certs, err := hs.readCertificates()
+		if err != nil {
+			return err
+		}
+		tlsInfo.certLock.Lock()
+		tlsInfo.certs = certs
+		tlsInfo.cert_file_mtime = cMtime
+		tlsInfo.key_file_mtime = kMtime
+		hs.log.Info("Server certificates got reloaded", "cMtime", tlsInfo.cert_file_mtime, "kMtime", tlsInfo.key_file_mtime)
+		tlsInfo.certLock.Unlock()
+	}
+
+	return nil
+}
+
+func getMtime(name string) (time.Time, error) {
+	fInfo, err := os.Stat(name)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return fInfo.ModTime(), nil
+}
+
+func (hs *HTTPServer) updateMtimeOfServerCerts() error {
+	var err error
+	hs.tlsCerts.cert_file_mtime, err = getMtime(hs.Cfg.CertFile)
+	if err != nil {
+		return err
+	}
+
+	hs.tlsCerts.key_file_mtime, err = getMtime(hs.Cfg.KeyFile)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
