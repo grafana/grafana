@@ -15,7 +15,8 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     color?: string,
     background?: string,
     overflowOnHover?: boolean,
-    asCellText?: boolean
+    asCellText?: boolean,
+    textShouldWrap?: boolean,
   ) => {
     return css({
       label: overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow',
@@ -48,10 +49,10 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
 
       '&:hover': {
         overflow: overflowOnHover ? 'visible' : undefined,
-        width: overflowOnHover ? 'auto' : undefined,
-        height: overflowOnHover ? 'auto' : `${rowHeight - 1}px`,
+        width: textShouldWrap ? 'auto' : 'auto !important',
+        height: textShouldWrap ? 'auto !important' : `${rowHeight - 1}px`,
         minHeight: `${rowHeight - 1}px`,
-        wordBreak: overflowOnHover ? 'break-word' : undefined,
+        wordBreak: textShouldWrap ? 'break-word' : undefined,
         whiteSpace: overflowOnHover ? 'normal' : 'nowrap',
         boxShadow: overflowOnHover ? `0 0 2px ${theme.colors.primary.main}` : undefined,
         background: overflowOnHover ? background ?? theme.components.table.rowHoverBackground : undefined,
@@ -161,11 +162,6 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         color: theme.colors.text.link,
       },
     }),
-    cellContainerText: buildCellContainerStyle(undefined, undefined, true, true),
-    cellContainerTextNoOverflow: buildCellContainerStyle(undefined, undefined, false, true),
-
-    cellContainer: buildCellContainerStyle(undefined, undefined, true, false),
-    cellContainerNoOverflow: buildCellContainerStyle(undefined, undefined, false, false),
     cellText: css({
       overflow: 'hidden',
       textOverflow: 'ellipsis',
