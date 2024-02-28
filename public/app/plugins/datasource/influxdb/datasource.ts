@@ -316,8 +316,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // we want to see how it's been used. If it is used in a regex expression
     // we escape it. Otherwise, we return it directly.
     // regex below checks if the variable inside /^...$/ (^ and $ is optional)
-    // i.e. /^$myVar$/ or /$myVar/
-    const regex = new RegExp(`\\/(?:\\^)?\\$${variable.name}(?:\\$)?\\/`, 'gm');
+    // i.e. /^$myVar$/ or /$myVar/ or /^($myVar)$/
+    const regex = new RegExp(`\\/(?:\\^)?(.*)(\\$${variable.name})(.*)(?:\\$)?\\/`, 'gm');
     if (regex.test(query)) {
       if (typeof value === 'string') {
         return escapeRegex(value);

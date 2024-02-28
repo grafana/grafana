@@ -513,7 +513,7 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 			pluginStore:     pluginstore.New(pluginRegistry, &fakes.FakeLoader{}),
 			pluginFileStore: filestore.ProvideService(pluginRegistry),
 			log:             log.NewNopLogger(),
-			pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
+			pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
 				PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
 				PluginSettings:        cfg.PluginSettings,
 			}),
