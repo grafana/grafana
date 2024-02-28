@@ -86,6 +86,10 @@ Alternatively, to add an annotation, press Ctrl/Cmd and click the panel, and the
 
 In the dashboard settings, under **Annotations**, you can add new queries to fetch annotations using any data source, including the built-in data annotation data source. Annotation queries return events that can be visualized as event markers in graphs across the dashboard.
 
+Check out the video below for a quick tutorial.
+
+{{< youtube id="2istdJpPj2Y" >}}
+
 ### Add new annotation queries
 
 To add a new annotation query to a dashboard, take the following steps:
