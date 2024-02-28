@@ -1,4 +1,5 @@
 import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
+import { shuffle } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
@@ -41,6 +42,41 @@ export interface ConnectStackDTO {
   token: string;
 }
 
+export interface MigrationResourceDTO {
+  uid: string;
+  status: 'not-migrated' | 'migrated' | 'migrating' | 'failed';
+  statusMessage?: string;
+  type: 'datasource';
+  resource: {
+    uid: string;
+    name: string;
+    type: string;
+  };
+}
+
+const applications = shuffle(['auth-service', 'web server', 'backend']);
+const environments = shuffle(['DEV', 'PROD']);
+const roles = shuffle(['db', 'load-balancer', 'server', 'logs']);
+const dataSources = shuffle(['Prometheus', 'Loki', 'AWS Athena', 'AWS Cloudwatch', 'InfluxDB', 'Elasticsearch']);
+
+const migrationResources: MigrationResourceDTO[] = Array.from({ length: 500 }).map((_, index) => {
+  const dataSource = dataSources[index % dataSources.length];
+  const environment = environments[index % environments.length];
+  const application = applications[index % applications.length];
+  const role = roles[index % roles.length];
+
+  return {
+    status: 'not-migrated',
+    type: 'datasource',
+    uid: index.toString(16),
+    resource: {
+      uid: `${application}-${environment}-${role}-${index}`,
+      name: `${application} ${environment} ${role}`,
+      type: dataSource,
+    },
+  };
+});
+
 // TODO remove these mock properties/functions
 const MOCK_DELAY_MS = 1000;
 const MOCK_TOKEN = 'TODO_thisWillBeABigLongToken';
@@ -57,7 +93,7 @@ function dataWithMockDelay<T>(data: T): Promise<{ data: T }> {
 }
 
 export const migrateToCloudAPI = createApi({
-  tagTypes: ['migrationToken', 'stackDetails'],
+  tagTypes: ['migrationToken', 'stackDetails', 'resource'],
   reducerPath: 'migrateToCloudAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
@@ -110,6 +146,13 @@ export const migrateToCloudAPI = createApi({
         return dataWithMockDelay(HAS_MIGRATION_TOKEN);
       },
     }),
+
+    listResources: builder.query<MigrationResourceDTO[], void>({
+      providesTags: ['resource'],
+      queryFn: async () => {
+        return dataWithMockDelay(migrationResources);
+      },
+    }),
   }),
 });
 
@@ -120,4 +163,5 @@ export const {
   useCreateMigrationTokenMutation,
   useDeleteMigrationTokenMutation,
   useHasMigrationTokenQuery,
+  useListResourcesQuery,
 } = migrateToCloudAPI;
