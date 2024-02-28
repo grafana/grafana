@@ -110,8 +110,8 @@ describe('AddLibraryPanelWidget', () => {
     addLibPanelWidget.onAddLibraryPanel(panelInfo);
 
     expect(body.state.children.length).toBe(1);
-    expect(gridItem.state.body!.state.key).toBe(addLibPanelWidget.state.key);
     expect(gridItem.state.body!).toBeInstanceOf(LibraryVizPanel);
+    expect((gridItem.state.body! as LibraryVizPanel).state.panelKey).toBe(addLibPanelWidget.state.key);
   });
 
   it('should add a lib panel at correct position', () => {
@@ -150,7 +150,7 @@ describe('AddLibraryPanelWidget', () => {
 
     expect(body.state.children.length).toBe(2);
     expect(gridItemOne.state.body!).toBeInstanceOf(AddLibraryPanelWidget);
-    expect(gridItemTwo.state.body!.state.key).toBe(anotherLibPanelWidget.state.key);
+    expect((gridItemTwo.state.body! as LibraryVizPanel).state.panelKey).toBe(anotherLibPanelWidget.state.key);
   });
 
   it('should add library panel from menu to a row child', () => {
@@ -193,8 +193,8 @@ describe('AddLibraryPanelWidget', () => {
     const gridItem = gridRow.state.children[0] as SceneGridItem;
 
     expect(body.state.children.length).toBe(1);
-    expect(gridItem.state.body!.state.key).toBe(anotherLibPanelWidget.state.key);
     expect(gridItem.state.body!).toBeInstanceOf(LibraryVizPanel);
+    expect((gridItem.state.body! as LibraryVizPanel).state.panelKey).toBe(anotherLibPanelWidget.state.key);
   });
 
   it('should throw error if adding lib panel in a layout that is not SceneGridLayout', () => {
