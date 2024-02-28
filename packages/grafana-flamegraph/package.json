@@ -67,7 +67,7 @@
     "@types/d3": "^7",
     "@types/jest": "^29.5.4",
     "@types/lodash": "4.14.202",
-    "@types/react": "18.2.59",
+    "@types/react": "18.2.60",
     "@types/react-virtualized-auto-sizer": "1.0.4",
     "@types/tinycolor2": "1.4.6",
     "babel-jest": "29.7.0",
@@ -82,7 +82,7 @@
     "typescript": "5.3.3"
   },
   "peerDependencies": {
-    "react": "^17.0.0 || ^18.0.0",
-    "react-dom": "^17.0.0 || ^18.0.0"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   }
 }
