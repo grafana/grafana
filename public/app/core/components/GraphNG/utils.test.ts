@@ -353,7 +353,6 @@ describe('GraphNG utils', () => {
             "config": {
               "custom": {
                 "drawStyle": "bars",
-                "spanNulls": -1,
               },
             },
             "labels": {
@@ -386,7 +385,6 @@ describe('GraphNG utils', () => {
             "config": {
               "custom": {
                 "drawStyle": "bars",
-                "spanNulls": -1,
               },
             },
             "labels": {
