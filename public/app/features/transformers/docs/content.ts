@@ -632,11 +632,11 @@ Use this transformation to construct a matrix by specifying fields from your que
     name: 'Group to nested table',
     getHelperDocs: function() {
       return `
-      Use this transformation to group the data by a specified field (column) value, process calculations on each group, and have records that share the same grouped field value to be displayed in a nested table.
+  Use this transformation to group the data by a specified field (column) value, process calculations on each group, and have records that share the same grouped field value to be displayed in a nested table.
 
-      Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
+  Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
 
-      Here's an example of original data.
+  Here's an example of original data.
 
   | Time                | Server ID | CPU Temperature | Server Status |
   | ------------------- | --------- | --------------- | ------------- |
@@ -657,6 +657,14 @@ Use this transformation to construct a matrix by specifying fields from your que
   | server 1 | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>80</td><td>Shutdown</td></tr><tr><td>2020-07-07 09:28:06</td><td>80</td><td>OK</td></tr><tr><td>2020-07-07 09:23:07</td><td>86</td><td>OK</td></tr></tbody></table> |
   | server 2 | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 10:32:20</td><td>90</td><td>Overload</td></tr><tr><td>2020-07-07 09:30:05</td><td>88</td><td>OK</td></tr><tr><td>2020-07-07 09:25:05</td><td>88</td><td>OK</td></tr></tbody></table> |
   | server 3 | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>62</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>55</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>62</td><td>Rebooting</td></tr></tbody></table> |
+
+  After choosing which field you want to group your data by, you can add various calculations on the other fields, and apply the calculation to each group of rows. For instance, we could want to calculate the average CPU temperature for each of those servers. So we can add the _mean_ calculation applied on the CPU Temperature field to get the following:
+
+  | Server ID      | CPU Temperatute (mean) | |
+  | -------------- | ------------- | ------------- |
+  | server 1 | 82 | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>Shutdown</td></tr><tr><td>2020-07-07 09:28:06</td><td>OK</td></tr><tr><td>2020-07-07 09:23:07</td><td>OK</td></tr></tbody></table> |
+  | server 2 | 88.6 | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 10:32:20</td><td>Overload</td></tr><tr><td>2020-07-07 09:30:05</td><td>OK</td></tr><tr><td>2020-07-07 09:25:05</td><td>OK</td></tr></tbody></table> |
+  | server 3 | 59.6 | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>Rebooting</td></tr></tbody></table> |
       `;
     },
     links: [
