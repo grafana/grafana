@@ -18,7 +18,7 @@ Copy Grafana configuration files that you might have modified in your Grafana de
 The Grafana configuration files are located in the following directories:
 
 - Default configuration: `$WORKING_DIR/defaults.ini` (Don't change this file)
-- Custom configuration: `$WORKING_DIR/conf/custom.ini` or `$WORKING_DIR/grafana/grafana.ini`
+- Custom configuration: `$WORKING_DIR/custom.ini`
 
 For more information on where to find configuration files, refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location).
 
