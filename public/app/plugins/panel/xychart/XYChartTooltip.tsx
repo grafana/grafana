@@ -83,27 +83,25 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     });
   }
 
-  const getLinks = (): Array<LinkModel<Field>> => {
-    let links: Array<LinkModel<Field>> = [];
-    if (yField.getLinks) {
-      const v = yField.values[rowIndex];
-      const disp = yField.display ? yField.display(v) : { text: `${v}`, numeric: +v };
-      links = yField.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).map((linkModel) => {
-        if (!linkModel.title) {
-          linkModel.title = getTitleFromHref(linkModel.href);
-        }
+  let links: Array<LinkModel<Field>> = [];
 
-        return linkModel;
-      });
-    }
-    return links;
-  };
+  if (yField.getLinks) {
+    const v = yField.values[rowIndex];
+    const disp = yField.display ? yField.display(v) : { text: `${v}`, numeric: +v };
+    links = yField.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).map((linkModel) => {
+      if (!linkModel.title) {
+        linkModel.title = getTitleFromHref(linkModel.href);
+      }
+
+      return linkModel;
+    });
+  }
 
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
       <VizTooltipContent items={contentItems} isPinned={isPinned} />
-      {isPinned && <VizTooltipFooter dataLinks={getLinks()} />}
+      {(links.length > 0 || isPinned) && <VizTooltipFooter dataLinks={links} />}
     </div>
   );
 };
