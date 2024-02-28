@@ -1,3 +1,0 @@
-{
-  "ignoreWorkspaces": ["packages/grafana-plugin-configs", "public/app/plugins/**"]
-}
