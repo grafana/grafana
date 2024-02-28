@@ -38,8 +38,6 @@ Grafana managed alert rules can only be edited or deleted by users with Edit per
 If you delete an alerting resource created in the UI, you can no longer retrieve it.
 To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
 
-Watch this video to learn more about creating alert rules: {{< vimeo 720001934 >}}
-
 In the following sections, we’ll guide you through the process of creating your Grafana-managed alert rules.
 
 To create a Grafana-managed alert rule, use the in-product alert creation flow and follow these steps to help you.
