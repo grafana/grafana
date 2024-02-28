@@ -3,6 +3,8 @@ package remote
 import (
 	"context"
 	"crypto/md5"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -25,15 +27,18 @@ type stateStore interface {
 	GetFullState(ctx context.Context, keys ...string) (string, error)
 }
 
+type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
+
 type Alertmanager struct {
-	log      log.Logger
-	metrics  *metrics.RemoteAlertmanager
-	orgID    int64
-	ready    bool
-	sender   *sender.ExternalAlertmanager
-	state    stateStore
-	tenantID string
-	url      string
+	decryptFn DecryptFn
+	log       log.Logger
+	metrics   *metrics.RemoteAlertmanager
+	orgID     int64
+	ready     bool
+	sender    *sender.ExternalAlertmanager
+	state     stateStore
+	tenantID  string
+	url       string
 
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
@@ -61,7 +66,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -111,6 +116,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, metrics *metrics.
 
 	return &Alertmanager{
 		amClient:    amc,
+		decryptFn:   decryptFn,
 		log:         logger,
 		metrics:     metrics,
 		mimirClient: mc,
@@ -178,20 +184,53 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
 	if am.shouldSendConfig(ctx, config) {
 		am.metrics.ConfigSyncsTotal.Inc()
-		if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
-			ctx,
-			config.AlertmanagerConfiguration,
-			config.ConfigurationHash,
-			config.ID,
-			config.CreatedAt,
-			config.Default,
-		); err != nil {
+		if err := am.SendConfiguration(ctx, config); err != nil {
 			am.metrics.ConfigSyncErrorsTotal.Inc()
 			return err
 		}
 		am.metrics.LastConfigSync.SetToCurrentTime()
 	}
 	return nil
+}
+
+func (am *Alertmanager) SendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
+	// Decrypt secrets before sending.
+	postableConfig, err := notifier.Load([]byte(config.AlertmanagerConfiguration))
+	if err != nil {
+		return err
+	}
+
+	for _, rcv := range postableConfig.AlertmanagerConfig.Receivers {
+		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			for k, v := range gmr.SecureSettings {
+				decoded, err := base64.StdEncoding.DecodeString(v)
+				if err != nil {
+					return err
+				}
+
+				decrypted, err := am.decryptFn(ctx, decoded)
+				if err != nil {
+					return err
+				}
+
+				gmr.SecureSettings[k] = string(decrypted)
+			}
+		}
+	}
+
+	rawConfig, err := json.Marshal(postableConfig)
+	if err != nil {
+		return err
+	}
+
+	return am.mimirClient.CreateGrafanaAlertmanagerConfig(
+		ctx,
+		string(rawConfig),
+		config.ConfigurationHash,
+		config.ID,
+		config.CreatedAt,
+		config.Default,
+	)
 }
 
 // CompareAndSendState gets the Alertmanager's internal state and compares it with the remote Alertmanager's one.
