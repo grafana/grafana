@@ -13,12 +13,16 @@ package aggregator
 
 import (
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
@@ -42,14 +46,59 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
-func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig genericapiserver.RecommendedConfig) (*aggregatorapiserver.Config, informersv0alpha1.SharedInformerFactory, error) {
+func readCABundlePEM(path string) (string, error) {
+	//nolint:gosec
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			klog.Errorf("error closing remote services file", err)
+		}
+	}()
+
+	rawCABundle, err := io.ReadAll(f)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(rawCABundle), nil
+}
+
+func readRemoteServices(path string) ([]RemoteService, error) {
+	//nolint:gosec
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			klog.Errorf("error closing remote services file", err)
+		}
+	}()
+
+	rawRemoteServices, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+
+	remoteServices := make([]RemoteService, 0)
+	if err := yaml.Unmarshal(rawRemoteServices, &remoteServices); err != nil {
+		return nil, err
+	}
+
+	return remoteServices, nil
+}
+
+func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig genericapiserver.RecommendedConfig, externalNamesNamespace string) (*aggregatorapiserver.Config, informersv0alpha1.SharedInformerFactory, *RemoteServicesConfig, error) {
 	// Create a fake clientset and informers for the k8s v1 API group.
 	// These are not used in grafana's aggregator because v1 APIs are not available.
 	fakev1Informers := informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 
 	serviceClient, err := serviceclientset.NewForConfig(sharedConfig.LoopbackClientConfig)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	sharedInformerFactory := informersv0alpha1.NewSharedInformerFactory(
 		serviceClient,
@@ -74,13 +123,31 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 	}
 
 	if err := commandOptions.AggregatorOptions.ApplyTo(aggregatorConfig, commandOptions.RecommendedOptions.Etcd, commandOptions.StorageOptions.DataPath); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	return aggregatorConfig, sharedInformerFactory, nil
+	// Exit early, if no remote services file is configured
+	if commandOptions.AggregatorOptions.RemoteServicesFile == "" {
+		return aggregatorConfig, sharedInformerFactory, nil, nil
+	}
+
+	caBundlePEM, err := readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	remoteServices, err := readRemoteServices(commandOptions.AggregatorOptions.RemoteServicesFile)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return aggregatorConfig, sharedInformerFactory, &RemoteServicesConfig{
+		ExternalNamesNamespace: externalNamesNamespace,
+		CABundle:               caBundlePEM,
+		Services:               remoteServices,
+	}, nil
 }
 
-func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, sharedInformerFactory informersv0alpha1.SharedInformerFactory, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
+func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, sharedInformerFactory informersv0alpha1.SharedInformerFactory, remoteServicesConfig *RemoteServicesConfig, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
 	completedConfig := aggregatorConfig.Complete()
 	aggregatorServer, err := completedConfig.NewWithDelegate(delegateAPIServer)
 	if err != nil {
@@ -95,6 +162,10 @@ func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, shared
 
 	autoRegistrationController := autoregister.NewAutoRegisterController(aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(), apiRegistrationClient)
 	apiServices := apiServicesToRegister(delegateAPIServer, autoRegistrationController)
+
+	if remoteServicesConfig != nil {
+		addRemoteAPIServicesToRegister(remoteServicesConfig, autoRegistrationController)
+	}
 
 	// Imbue all builtin group-priorities onto the aggregated discovery
 	if completedConfig.GenericConfig.AggregatedDiscoveryGroupManager != nil {
@@ -238,6 +309,32 @@ var APIVersionPriorities = map[schema.GroupVersion]Priority{
 	// Append a new group to the end of the list if unsure.
 	// You can use min(existing group)-100 as the initial value for a group.
 	// Version can be set to 9 (to have space around) for a new group.
+}
+
+func addRemoteAPIServicesToRegister(config *RemoteServicesConfig, registration autoregister.AutoAPIServiceRegistration) []*v1.APIService {
+	apiServices := make([]*v1.APIService, 0)
+	for i, service := range config.Services {
+		port := service.Port
+		apiService := &v1.APIService{
+			ObjectMeta: metav1.ObjectMeta{Name: service.Version + "." + service.Group},
+			Spec: v1.APIServiceSpec{
+				Group:   service.Group,
+				Version: service.Version,
+				// TODO: Group priority minimum 1000 more than for local services, figure out a better story
+				// when we have multiple versions, potentially running in heterogeneous ways (local and remote)
+				GroupPriorityMinimum: 16000,
+				VersionPriority:      1 + int32(i),
+				Service: &v1.ServiceReference{
+					Name:      service.Version + "." + service.Group,
+					Namespace: config.ExternalNamesNamespace,
+					Port:      &port,
+				},
+			},
+		}
+		apiServices = append(apiServices, apiService)
+		registration.AddAPIServiceToSyncOnStart(apiService)
+	}
+	return apiServices
 }
 
 func apiServicesToRegister(delegateAPIServer genericapiserver.DelegationTarget, registration autoregister.AutoAPIServiceRegistration) []*v1.APIService {
