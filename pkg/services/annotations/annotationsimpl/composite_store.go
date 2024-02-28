@@ -35,7 +35,7 @@ func (c *CompositeStore) Get(ctx context.Context, query *annotations.ItemQuery, 
 	itemCh := make(chan []*annotations.ItemDTO, len(c.readers))
 
 	err := concurrency.ForEachJob(ctx, len(c.readers), len(c.readers), func(ctx context.Context, i int) (err error) {
-		defer panicHandler(c.logger, c.readers[i].Type(), &err)
+		defer handleJobPanic(c.logger, c.readers[i].Type(), &err)
 
 		items, err := c.readers[i].Get(ctx, query, accessResources)
 		itemCh <- items
@@ -60,7 +60,7 @@ func (c *CompositeStore) GetTags(ctx context.Context, query *annotations.TagsQue
 	resCh := make(chan annotations.FindTagsResult, len(c.readers))
 
 	err := concurrency.ForEachJob(ctx, len(c.readers), len(c.readers), func(ctx context.Context, i int) (err error) {
-		defer panicHandler(c.logger, c.readers[i].Type(), &err)
+		defer handleJobPanic(c.logger, c.readers[i].Type(), &err)
 
 		res, err := c.readers[i].GetTags(ctx, query)
 		resCh <- res
@@ -80,13 +80,19 @@ func (c *CompositeStore) GetTags(ctx context.Context, query *annotations.TagsQue
 	return annotations.FindTagsResult{Tags: res}, nil
 }
 
-// panicHandler is a helper function that recovers from a panic and logs the error,
-// and sets the error pointer to a new error if it is not nil.
-func panicHandler(logger log.Logger, storeType string, pErr *error) {
+// handleJobPanic is a helper function that recovers from a panic in a concurrent job.,
+// It will log the error and set the job error if it is not nil.
+func handleJobPanic(logger log.Logger, storeType string, jobErr *error) {
 	if r := recover(); r != nil {
 		logger.Error("Annotation store panic", "error", r, "store", storeType, "stack", log.Stack(1))
-		if pErr != nil {
-			*pErr = fmt.Errorf("unrecoverable error")
+		errMsg := "concurrent job panic"
+
+		if jobErr != nil {
+			err := fmt.Errorf(errMsg)
+			if panicErr, ok := r.(error); ok {
+				err = fmt.Errorf("%s: %w", errMsg, panicErr)
+			}
+			*jobErr = err
 		}
 	}
 }

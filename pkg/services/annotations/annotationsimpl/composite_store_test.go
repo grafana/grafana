@@ -32,7 +32,7 @@ func TestCompositeStore(t *testing.T) {
 
 		_, err := store.Get(context.Background(), nil, nil)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "unrecoverable error")
+		require.Contains(t, err.Error(), "concurrent job panic")
 	})
 
 	t.Run("should return first error", func(t *testing.T) {
