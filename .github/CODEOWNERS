@@ -332,9 +332,7 @@
 /packages/grafana-ui/src/components/VizRepeater/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Sparkline/ @grafana/grafana-frontend-platform @grafana/app-o11y-visualizations
-/packages/grafana-ui/src/graveyard/Graph/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/GraphNG/ @grafana/dataviz-squad
-/packages/grafana-ui/src/graveyard/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-data/src/transformations/ @grafana/dataviz-squad
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
