@@ -212,6 +212,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
       }),
       new AdHocFiltersVariable({
         name: VAR_FILTERS,
+        addFilterButtonText: 'Add label',
         datasource: trailDS,
         hide: VariableHide.hideLabel,
         layout: 'vertical',
