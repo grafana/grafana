@@ -76,6 +76,22 @@ export function ToolbarActions({ dashboard }: Props) {
     condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
     render: () => (
       <ToolbarButton
+        key="add-library-panel"
+        tooltip={'Add library panel'}
+        icon="library-panel"
+        onClick={() => {
+          dashboard.onCreateLibPanelWidget();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
         key="add-row"
         tooltip={'Add row'}
         icon="wrap-text"

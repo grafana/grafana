@@ -264,6 +264,17 @@ describe('DashboardScene', () => {
         expect(gridItem.state.y).toBe(0);
         expect(scene.state.hasCopiedPanel).toBe(false);
       });
+
+      it('Should create a new add library panel widget', () => {
+        scene.onCreateLibPanelWidget();
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridItem = body.state.children[0] as SceneGridItem;
+
+        expect(body.state.children.length).toBe(5);
+        expect(gridItem.state.body!.state.key).toBe('panel-5');
+        expect(gridItem.state.y).toBe(0);
+      });
     });
   });
 

@@ -59,6 +59,7 @@ import {
   isPanelClone,
 } from '../utils/utils';
 
+import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
 import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
@@ -611,6 +612,29 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public onOpenSettings = () => {
     locationService.partial({ editview: 'settings' });
   };
+
+  public onCreateLibPanelWidget() {
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    const panelId = dashboardSceneGraph.getNextPanelId(this);
+
+    const newGridItem = new SceneGridItem({
+      height: NEW_PANEL_HEIGHT,
+      width: NEW_PANEL_WIDTH,
+      x: 0,
+      y: 0,
+      body: new AddLibraryPanelWidget({ key: getVizPanelKeyForPanelId(panelId) }),
+      key: `grid-item-${panelId}`,
+    });
+
+    sceneGridLayout.setState({
+      children: [newGridItem, ...sceneGridLayout.state.children],
+    });
+  }
 
   public onCreateNewRow() {
     const row = getDefaultRow(this);

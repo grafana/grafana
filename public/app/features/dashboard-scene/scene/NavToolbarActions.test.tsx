@@ -18,6 +18,7 @@ describe('NavToolbarActions', () => {
       expect(screen.queryByLabelText('Add visualization')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Add row')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Paste panel')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Add library panel')).not.toBeInTheDocument();
       expect(await screen.findByText('Edit')).toBeInTheDocument();
       expect(await screen.findByText('Share')).toBeInTheDocument();
     });
@@ -32,6 +33,7 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByLabelText('Add visualization')).toBeInTheDocument();
       expect(await screen.findByLabelText('Add row')).toBeInTheDocument();
       expect(await screen.findByLabelText('Paste panel')).toBeInTheDocument();
+      expect(await screen.findByLabelText('Add library panel')).toBeInTheDocument();
       expect(screen.queryByText('Edit')).not.toBeInTheDocument();
       expect(screen.queryByText('Share')).not.toBeInTheDocument();
     });

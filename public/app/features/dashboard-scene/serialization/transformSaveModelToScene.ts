@@ -34,6 +34,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
+import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -109,6 +110,12 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
           currentRow = panel;
           currentRowPanels = [];
         }
+      }
+    } else if (panel.type === 'add-library-panel') {
+      const gridItem = buildGridItemForLibraryPanelWidget(panel);
+
+      if (gridItem) {
+        panels.push(gridItem);
       }
     } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
       const gridItem = buildGridItemForLibPanel(panel);
@@ -397,6 +404,24 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
   }
+}
+
+export function buildGridItemForLibraryPanelWidget(panel: PanelModel) {
+  if (panel.type !== 'add-library-panel') {
+    return null;
+  }
+
+  const body = new AddLibraryPanelWidget({
+    key: getVizPanelKeyForPanelId(panel.id),
+  });
+
+  return new SceneGridItem({
+    body,
+    y: panel.gridPos.y,
+    x: panel.gridPos.x,
+    width: panel.gridPos.w,
+    height: panel.gridPos.h,
+  });
 }
 
 export function buildGridItemForLibPanel(panel: PanelModel) {
