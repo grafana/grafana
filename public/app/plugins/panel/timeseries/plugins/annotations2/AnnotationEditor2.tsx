@@ -1,19 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useAsyncFn, useClickAway } from 'react-use';
 
 import { AnnotationEventUIModel, GrafanaTheme2, dateTimeFormat, systemDateFormats } from '@grafana/data';
-import {
-  Button,
-  Field,
-  Form,
-  HorizontalGroup,
-  InputControl,
-  LayoutItemContext,
-  TextArea,
-  usePanelContext,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, Field, Form, HorizontalGroup, InputControl, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { getAnnotationTags } from 'app/features/annotations/api';
 
@@ -36,9 +26,6 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
   const clickAwayRef = useRef(null);
 
   useClickAway(clickAwayRef, dismiss);
-
-  const layoutCtx = useContext(LayoutItemContext);
-  useEffect(() => layoutCtx.boostZIndex(), [layoutCtx]);
 
   const [createAnnotationState, createAnnotation] = useAsyncFn(async (event: AnnotationEventUIModel) => {
     const result = await onAnnotationCreate!(event);
