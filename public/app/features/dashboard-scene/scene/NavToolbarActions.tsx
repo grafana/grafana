@@ -37,12 +37,22 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel } = dashboard.useState();
+  const {
+    isEditing,
+    viewPanelScene,
+    isDirty,
+    uid,
+    meta,
+    editview,
+    editPanel,
+    hasCopiedPanel: copiedPanel,
+  } = dashboard.useState();
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
   const buttonWithExtraMargin = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
+  const hasCopiedPanel = Boolean(copiedPanel);
 
   toolbarActions.push({
     group: 'icon-actions',
@@ -56,6 +66,39 @@ export function ToolbarActions({ dashboard }: Props) {
           const id = dashboard.onCreateNewPanel();
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
           locationService.partial({ editPanel: id });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="add-row"
+        tooltip={'Add row'}
+        icon="wrap-text"
+        onClick={() => {
+          dashboard.onCreateNewRow();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="paste-panel"
+        disabled={!hasCopiedPanel}
+        tooltip={'Paste panel'}
+        icon="copy"
+        onClick={() => {
+          dashboard.pastePanel();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
         }}
       />
     ),

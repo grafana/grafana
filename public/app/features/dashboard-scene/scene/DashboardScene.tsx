@@ -11,6 +11,7 @@ import {
   sceneGraph,
   SceneGridItem,
   SceneGridLayout,
+  SceneGridRow,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
@@ -28,7 +29,7 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
@@ -37,12 +38,13 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
-import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import {
@@ -50,8 +52,10 @@ import {
   NEW_PANEL_WIDTH,
   forceRenderChildren,
   getClosestVizPanel,
+  getDefaultRow,
   getDefaultVizPanel,
   getPanelIdForVizPanel,
+  getVizPanelKeyForPanelId,
   isPanelClone,
 } from '../utils/utils';
 
@@ -102,6 +106,8 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
+  /** True when a user copies a panel in the dashboard */
+  hasCopiedPanel?: boolean;
   isEmpty?: boolean;
 }
 
@@ -142,6 +148,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       links: state.links ?? [],
+      hasCopiedPanel: store.exists(LS_PANEL_COPY_KEY),
       ...state,
     });
 
@@ -423,6 +430,31 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
+  public addRow(row: SceneGridRow) {
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    // find all panels until the first row and put them into the newly created row. If there are no other rows,
+    // add all panels to the row. If there are no panels just create an empty row
+    const indexTillNextRow = sceneGridLayout.state.children.findIndex((child) => child instanceof SceneGridRow);
+    const rowChildren = sceneGridLayout.state.children
+      .splice(0, indexTillNextRow === -1 ? sceneGridLayout.state.children.length : indexTillNextRow)
+      .map((child) => child.clone());
+
+    if (rowChildren) {
+      row.setState({
+        children: rowChildren,
+      });
+    }
+
+    sceneGridLayout.setState({
+      children: [row, ...sceneGridLayout.state.children],
+    });
+  }
+
   public addPanel(vizPanel: VizPanel): void {
     if (!(this.state.body instanceof SceneGridLayout)) {
       throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
@@ -430,19 +462,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     const sceneGridLayout = this.state.body;
 
-    // move all gridItems below the new one
-    for (const child of sceneGridLayout.state.children) {
-      child.setState({
-        y: NEW_PANEL_HEIGHT + (child.state.y ?? 0),
-      });
-    }
-
+    const panelId = getPanelIdForVizPanel(vizPanel);
     const newGridItem = new SceneGridItem({
       height: NEW_PANEL_HEIGHT,
       width: NEW_PANEL_WIDTH,
       x: 0,
       y: 0,
       body: vizPanel,
+      key: `grid-item-${panelId}`,
     });
 
     sceneGridLayout.setState({
@@ -457,7 +484,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     const gridItem = vizPanel.parent;
 
-    if (!(gridItem instanceof SceneGridItem || PanelRepeaterGridItem)) {
+    if (!(gridItem instanceof SceneGridItem || gridItem instanceof PanelRepeaterGridItem)) {
       console.error('Trying to duplicate a panel in a layout that is not SceneGridItem or PanelRepeaterGridItem');
       return;
     }
@@ -506,7 +533,52 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const jsonData = gridItemToPanel(gridItem);
 
     store.set(LS_PANEL_COPY_KEY, JSON.stringify(jsonData));
-    appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Click **Add panel** icon to paste.']);
+    appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Use **Paste panel** toolbar action to paste.']);
+    this.setState({ hasCopiedPanel: true });
+  }
+
+  public pastePanel() {
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
+    }
+
+    const jsonData = store.get(LS_PANEL_COPY_KEY);
+    const jsonObj = JSON.parse(jsonData);
+    const panelModel = new PanelModel(jsonObj);
+
+    const gridItem = buildGridItemForPanel(panelModel);
+    const sceneGridLayout = this.state.body;
+
+    if (!(gridItem instanceof SceneGridItem) && !(gridItem instanceof PanelRepeaterGridItem)) {
+      throw new Error('Cannot paste invalid grid item');
+    }
+
+    const panelId = dashboardSceneGraph.getNextPanelId(this);
+
+    if (gridItem instanceof SceneGridItem && gridItem.state.body) {
+      gridItem.state.body.setState({
+        key: getVizPanelKeyForPanelId(panelId),
+      });
+    } else if (gridItem instanceof PanelRepeaterGridItem) {
+      gridItem.state.source.setState({
+        key: getVizPanelKeyForPanelId(panelId),
+      });
+    }
+
+    gridItem.setState({
+      height: NEW_PANEL_HEIGHT,
+      width: NEW_PANEL_WIDTH,
+      x: 0,
+      y: 0,
+      key: `grid-item-${panelId}`,
+    });
+
+    sceneGridLayout.setState({
+      children: [gridItem, ...sceneGridLayout.state.children],
+    });
+
+    this.setState({ hasCopiedPanel: false });
+    store.delete(LS_PANEL_COPY_KEY);
   }
 
   public showModal(modal: SceneObject) {
@@ -539,6 +611,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public onOpenSettings = () => {
     locationService.partial({ editview: 'settings' });
   };
+
+  public onCreateNewRow() {
+    const row = getDefaultRow(this);
+
+    this.addRow(row);
+
+    return getPanelIdForVizPanel(row);
+  }
 
   public onCreateNewPanel(): number {
     const vizPanel = getDefaultVizPanel(this);
