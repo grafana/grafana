@@ -637,7 +637,7 @@ const metricsValueToString = (value: ProtoValue): string => {
 };
 
 export function formatTraceQLMetrics(query: string, data: TraceqlMetricsResponse) {
-  const frames = data.series.map((series) => {
+  const frames = data.series.map((series, index) => {
     const labels: Labels = {};
     series.labels?.forEach((label) => {
       labels[label.key] = metricsValueToString(label.value);
@@ -654,7 +654,7 @@ export function formatTraceQLMetrics(query: string, data: TraceqlMetricsResponse
       }
     }
     return createDataFrame({
-      refId: series.promLabels,
+      refId: `A${index}`,
       fields: [
         {
           name: 'time',
