@@ -1140,6 +1140,13 @@ var (
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "sqlExpressions",
+			Description:  "Enables using SQL and DuckDB functions as Expressions.",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAppPlatformSquad,
+		},
+		{
 			Name:         "nodeGraphDotLayout",
 			Description:  "Changed the layout algorithm for the node graph",
 			Stage:        FeatureStageExperimental,

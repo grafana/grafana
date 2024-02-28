@@ -15,7 +15,7 @@ import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
-import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -26,6 +26,7 @@ import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
+jest.mock('../serialization/transformSceneToSaveModel');
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
@@ -133,7 +134,7 @@ describe('DashboardScene', () => {
       it('Should add a new panel to the dashboard', () => {
         const vizPanel = new VizPanel({
           title: 'Panel Title',
-          key: 'panel-4',
+          key: 'panel-5',
           pluginId: 'timeseries',
           $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
         });
@@ -143,9 +144,9 @@ describe('DashboardScene', () => {
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as SceneGridItem;
 
-        expect(scene.state.isDirty).toBe(true);
         expect(body.state.children.length).toBe(5);
-        expect(gridItem.state.body!.state.key).toBe('panel-4');
+        expect(gridItem.state.body!.state.key).toBe('panel-5');
+        expect(gridItem.state.y).toBe(0);
       });
 
       it('Should create and add a new panel to the dashboard', () => {
@@ -154,9 +155,114 @@ describe('DashboardScene', () => {
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as SceneGridItem;
 
-        expect(scene.state.isDirty).toBe(true);
         expect(body.state.children.length).toBe(5);
-        expect(gridItem.state.body!.state.key).toBe('panel-4');
+        expect(gridItem.state.body!.state.key).toBe('panel-5');
+      });
+
+      it('Should create and add a new row to the dashboard', () => {
+        scene.onCreateNewRow();
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridRow = body.state.children[0] as SceneGridRow;
+
+        expect(body.state.children.length).toBe(3);
+        expect(gridRow.state.key).toBe('panel-5');
+        expect(gridRow.state.children[0].state.key).toBe('griditem-1');
+        expect(gridRow.state.children[1].state.key).toBe('griditem-2');
+      });
+
+      it('Should create a row and add all panels in the dashboard under it', () => {
+        const scene = buildTestScene({
+          body: new SceneGridLayout({
+            children: [
+              new SceneGridItem({
+                key: 'griditem-1',
+                x: 0,
+                body: new VizPanel({
+                  title: 'Panel A',
+                  key: 'panel-1',
+                  pluginId: 'table',
+                  $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+                }),
+              }),
+              new SceneGridItem({
+                key: 'griditem-2',
+                body: new VizPanel({
+                  title: 'Panel B',
+                  key: 'panel-2',
+                  pluginId: 'table',
+                }),
+              }),
+            ],
+          }),
+        });
+
+        scene.onCreateNewRow();
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridRow = body.state.children[0] as SceneGridRow;
+
+        expect(body.state.children.length).toBe(1);
+        expect(gridRow.state.children.length).toBe(2);
+      });
+
+      it('Should create and add two new rows, but the second has no children', () => {
+        scene.onCreateNewRow();
+        scene.onCreateNewRow();
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridRow = body.state.children[0] as SceneGridRow;
+
+        expect(body.state.children.length).toBe(4);
+        expect(gridRow.state.children.length).toBe(0);
+      });
+
+      it('Should create an empty row when nothing else in dashboard', () => {
+        const scene = buildTestScene({
+          body: new SceneGridLayout({
+            children: [],
+          }),
+        });
+
+        scene.onCreateNewRow();
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridRow = body.state.children[0] as SceneGridRow;
+
+        expect(body.state.children.length).toBe(1);
+        expect(gridRow.state.children.length).toBe(0);
+      });
+
+      it('Should copy a panel', () => {
+        const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as SceneGridItem).state.body;
+        scene.copyPanel(vizPanel as VizPanel);
+
+        expect(scene.state.hasCopiedPanel).toBe(true);
+      });
+
+      it('Should paste a panel', () => {
+        scene.setState({ hasCopiedPanel: true });
+        jest.spyOn(JSON, 'parse').mockReturnThis();
+        jest.mocked(buildGridItemForPanel).mockReturnValue(
+          new SceneGridItem({
+            key: 'griditem-9',
+            body: new VizPanel({
+              title: 'Panel A',
+              key: 'panel-9',
+              pluginId: 'table',
+            }),
+          })
+        );
+
+        scene.pastePanel();
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridItem = body.state.children[0] as SceneGridItem;
+
+        expect(body.state.children.length).toBe(5);
+        expect(gridItem.state.body!.state.key).toBe('panel-5');
+        expect(gridItem.state.y).toBe(0);
+        expect(scene.state.hasCopiedPanel).toBe(false);
       });
     });
   });
@@ -275,6 +381,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
           }),
         }),
         new SceneGridItem({
+          key: 'griditem-2',
           body: new VizPanel({
             title: 'Panel B',
             key: 'panel-2',
@@ -282,12 +389,12 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
           }),
         }),
         new SceneGridRow({
-          key: 'gridrow-1',
+          key: 'panel-3',
           children: [
             new SceneGridItem({
               body: new VizPanel({
                 title: 'Panel C',
-                key: 'panel-3',
+                key: 'panel-4',
                 pluginId: 'table',
               }),
             }),
