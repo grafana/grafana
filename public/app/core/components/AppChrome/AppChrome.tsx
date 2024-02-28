@@ -96,16 +96,16 @@ export function AppChrome({ children }: Props) {
           </div>
         </>
       )}
-      <main className={contentClass}>
+      <div className={contentClass}>
         <div className={styles.panes}>
           {!state.chromeless && state.megaMenuDocked && state.megaMenuOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
-          <div className={styles.pageContainer} id="pageContent">
+          <main className={styles.pageContainer} id="pageContent">
             {children}
-          </div>
+          </main>
         </div>
-      </main>
+      </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
