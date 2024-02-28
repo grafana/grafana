@@ -90,6 +90,10 @@ export class AppChromeService {
   }
 
   public setReturnToPrevious = (returnToPrevious: ReturnToPreviousProps) => {
+    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
+    if (!isReturnToPreviousEnabled) {
+      return;
+    }
     const previousPage = this.state.getValue().returnToPrevious;
     reportInteraction('grafana_return_to_previous_button_created', {
       page: returnToPrevious.href,
@@ -101,6 +105,10 @@ export class AppChromeService {
   };
 
   public clearReturnToPrevious = (interactionAction: 'clicked' | 'dismissed' | 'auto_dismissed') => {
+    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
+    if (!isReturnToPreviousEnabled) {
+      return;
+    }
     const existingRtp = this.state.getValue().returnToPrevious;
     if (existingRtp) {
       reportInteraction('grafana_return_to_previous_button_dismissed', {

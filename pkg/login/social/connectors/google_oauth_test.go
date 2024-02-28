@@ -890,3 +890,47 @@ func TestSocialGoogle_Reload(t *testing.T) {
 		})
 	}
 }
+
+func TestIsHDAllowed(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		email                string
+		allowedDomains       []string
+		expectedErrorMessage string
+	}{
+		{
+			name:                 "should not fail if no allowed domains are set",
+			email:                "mycompany.com",
+			allowedDomains:       []string{},
+			expectedErrorMessage: "",
+		},
+		{
+			name:                 "should not fail if email is from allowed domain",
+			email:                "mycompany.com",
+			allowedDomains:       []string{"grafana.com", "mycompany.com", "example.com"},
+			expectedErrorMessage: "",
+		},
+		{
+			name:                 "should fail if email is not from allowed domain",
+			email:                "mycompany.com",
+			allowedDomains:       []string{"grafana.com", "example.com"},
+			expectedErrorMessage: "the hd claim found in the ID token is not present in the allowed domains",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			info := &social.OAuthInfo{}
+			info.AllowedDomains = tc.allowedDomains
+			s := NewGoogleProvider(info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			err := s.isHDAllowed(tc.email)
+
+			if tc.expectedErrorMessage != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedErrorMessage)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

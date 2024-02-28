@@ -12,7 +12,13 @@ import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
-import { EditableVariableType, getVariableDefault, getVariableScene } from './variables/utils';
+import {
+  EditableVariableType,
+  RESERVED_GLOBAL_VARIABLE_NAME_REGEX,
+  WORD_CHARACTERS_REGEX,
+  getVariableDefault,
+  getVariableScene,
+} from './variables/utils';
 export interface VariablesEditViewState extends DashboardEditViewState {
   editIndex?: number | undefined;
 }
@@ -168,6 +174,29 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   public onGoBack = () => {
     this.setState({ editIndex: undefined });
   };
+
+  public onValidateVariableName = (name: string, key: string | undefined): [true, string] | [false, null] => {
+    let errorText = null;
+    if (!RESERVED_GLOBAL_VARIABLE_NAME_REGEX.test(name)) {
+      errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
+    }
+
+    if (!WORD_CHARACTERS_REGEX.test(name)) {
+      errorText = 'Only word characters are allowed in variable names';
+    }
+
+    const variable = this.getVariableSet().getByName(name)?.state;
+
+    if (variable && variable.key !== key) {
+      errorText = 'Variable with the same name already exists';
+    }
+
+    if (errorText) {
+      return [true, errorText];
+    }
+
+    return [false, null];
+  };
 }
 
 function VariableEditorSettingsListView({ model }: SceneComponentProps<VariablesEditView>) {
@@ -190,6 +219,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
           navModel={navModel}
           dashboard={dashboard}
           onDelete={onDelete}
+          onValidateVariableName={model.onValidateVariableName}
         />
       );
     }
@@ -218,6 +248,7 @@ interface VariableEditorSettingsEditViewProps {
   onTypeChange: (variableType: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
+  onValidateVariableName: (name: string, key: string | undefined) => [true, string] | [false, null];
 }
 
 function VariableEditorSettingsView({
@@ -228,6 +259,7 @@ function VariableEditorSettingsView({
   onTypeChange,
   onGoBack,
   onDelete,
+  onValidateVariableName,
 }: VariableEditorSettingsEditViewProps) {
   const parentTab = pageNav.children!.find((p) => p.active)!;
   parentTab.parentItem = pageNav;
@@ -240,7 +272,13 @@ function VariableEditorSettingsView({
   return (
     <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      <VariableEditorForm variable={variable} onTypeChange={onTypeChange} onGoBack={onGoBack} onDelete={onDelete} />
+      <VariableEditorForm
+        variable={variable}
+        onTypeChange={onTypeChange}
+        onGoBack={onGoBack}
+        onDelete={onDelete}
+        onValidateVariableName={onValidateVariableName}
+      />
     </Page>
   );
 }

@@ -3,7 +3,7 @@ import { config, SystemJS } from '@grafana/runtime';
 import { transformPluginSourceForCDN } from '../cdn/utils';
 
 import { resolveWithCache } from './cache';
-import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, AMD_MODULE_REGEX, SHARED_DEPENDENCY_PREFIX } from './constants';
+import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, SHARED_DEPENDENCY_PREFIX } from './constants';
 import { SystemJSWithLoaderHooks } from './types';
 import { isHostedOnCDN } from './utils';
 
@@ -18,10 +18,6 @@ export async function decorateSystemJSFetch(
   if (JS_CONTENT_TYPE_REGEX.test(contentType)) {
     const source = await res.text();
     let transformedSrc = source;
-
-    if (AMD_MODULE_REGEX.test(transformedSrc)) {
-      transformedSrc = preventAMDLoaderCollision(source);
-    }
 
     // JS files on the CDN need their asset paths transformed in the source
     if (isHostedOnCDN(res.url)) {
@@ -83,12 +79,4 @@ function getBackWardsCompatibleUrl(url: string) {
   const hasValidFileExtension = systemJSFileExtensions.some((extensionName) => url.endsWith(extensionName));
 
   return hasValidFileExtension ? url : url + '.js';
-}
-
-// This transform prevents a conflict between systemjs and requirejs which Monaco Editor
-// depends on. See packages/grafana-runtime/src/utils/plugin.ts for more.
-function preventAMDLoaderCollision(source: string) {
-  return `(function(define) {
-  ${source}
-})(window.__grafana_amd_define);`;
 }
