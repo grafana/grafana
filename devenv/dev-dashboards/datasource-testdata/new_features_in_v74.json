@@ -33,7 +33,7 @@
       },
       "id": 13,
       "options": {
-        "content": "\n# Welcome to Grafana 7.4\n\nGrafana v7.4 is adds many new enhancements to visualizations, transformations, tracing, security, auditing & more. This dashboard highlights \nsome of the new visualization capabilities. \n\n[Read the what's new article](https://grafana.com/docs/grafana/latest/whatsnew/whats-new-in-v7-4/)  | \n[Download](https://grafana.com/grafana/download/beta)",
+        "content": "\n# Welcome to Oodle 7.4\n\nGrafana v7.4 is adds many new enhancements to visualizations, transformations, tracing, security, auditing & more. This dashboard highlights \nsome of the new visualization capabilities. \n\n[Read the what's new article](https://grafana.com/docs/grafana/latest/whatsnew/whats-new-in-v7-4/)  | \n[Download](https://grafana.com/grafana/download/beta)",
         "mode": "markdown"
       },
       "pluginVersion": "7.4.0-beta1",

@@ -1,4 +1,4 @@
-{{HiddenSubject .Subject "Welcome to Grafana"}}
+{{HiddenSubject .Subject "Welcome to Oodle"}}
 
 Hi {{.Name}},
 

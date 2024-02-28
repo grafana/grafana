@@ -26,7 +26,7 @@
       },
       "id": 13,
       "options": {
-        "content": "\n# Welcome to Grafana 8.0\n\nGrafana v8.0 adds many visualizations and improvements to panel edit, tracing and security. This dashboard highlights \nsome of the new visualization capabilities. There are so many new visualizations and display options so be sure to scroll down\nto see everything. \n\n[Read the what's new article](https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-0/) &nbsp; | &nbsp;\n[Download](https://grafana.com/grafana/download/beta) &nbsp; | &nbsp;\n[Grafana Cloud now free with 50gb logs, 10K metric series](https://grafana.com/signup/cloud/connect-account?pg=play&plcmt=whatnew)",
+        "content": "\n# Welcome to Oodle 8.0\n\nGrafana v8.0 adds many visualizations and improvements to panel edit, tracing and security. This dashboard highlights \nsome of the new visualization capabilities. There are so many new visualizations and display options so be sure to scroll down\nto see everything. \n\n[Read the what's new article](https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-0/) &nbsp; | &nbsp;\n[Download](https://grafana.com/grafana/download/beta) &nbsp; | &nbsp;\n[Grafana Cloud now free with 50gb logs, 10K metric series](https://grafana.com/signup/cloud/connect-account?pg=play&plcmt=whatnew)",
         "mode": "markdown"
       },
       "pluginVersion": "8.1.0-pre",

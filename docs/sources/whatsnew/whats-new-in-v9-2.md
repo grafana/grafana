@@ -19,7 +19,7 @@ weight: -33
 
 # What's new in Grafana v9.2
 
-Welcome to Grafana v9.2, a hefty minor release with a swath of improvements that help you create and share dashboards and alerts.
+Welcome to Oodle v9.2, a hefty minor release with a swath of improvements that help you create and share dashboards and alerts.
 Read on to learn about progress on public dashboards, our new panel help menu, custom branding in Grafana Enterprise, and improvements to access control.
 If you'd prefer to dig into the details, check out the complete [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
