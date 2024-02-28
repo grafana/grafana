@@ -654,29 +654,16 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   | Server ID      |  |
   | -------------- | ------------- |
-  | server 1 |
-  | server 2 |
-  | server 3 |
+  | server 1 | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>80</td><td>Shutdown</td></tr><tr><td>2020-07-07 09:28:06</td><td>80</td><td>OK</td></tr><tr><td>2020-07-07 09:23:07</td><td>86</td><td>OK</td></tr></tbody></table> |
+  | server 2 | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 10:32:20</td><td>90</td><td>Overload</td></tr><tr><td>2020-07-07 09:30:05</td><td>88</td><td>OK</td></tr><tr><td>2020-07-07 09:25:05</td><td>88</td><td>OK</td></tr></tbody></table> |
+  | server 3 | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>62</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>55</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>62</td><td>Rebooting</td></tr></tbody></table> |
   
-    <table>
-      <th>
-        <tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr>
-      </th>
-      <tbody>
-        <tr><td>2020-07-07 11:34:20</td><td>80</td><td>Shutdown</td></tr>
-        <tr><td>2020-07-07 09:28:06</td><td>80</td><td>OK</td></tr>
-        <tr><td>2020-07-07 09:23:07</td><td>86</td><td>OK</td></tr>
-      </tbody>
-    </table>
-      
-  
-  
-  | 2020-07-07 10:32:20 | server 2       | 90              | Overload      |
-  | 2020-07-07 09:30:05 | server 2       | 88              | OK            |
-  | 2020-07-07 09:25:05 | server 2       | 88              | OK            |
-  | 2020-07-07 11:34:20 | **_server 3_** | 62              | OK            |
-  | 2020-07-07 10:31:22 | **_server 3_** | 55              | OK            |
-  | 2020-07-07 09:30:57 | **_server 3_** | 62              | Rebooting     |
+  // | 2020-07-07 10:32:20 | server 2       | 90              | Overload      |
+  // | 2020-07-07 09:30:05 | server 2       | 88              | OK            |
+  // | 2020-07-07 09:25:05 | server 2       | 88              | OK            |
+  // | 2020-07-07 11:34:20 | **_server 3_** | 62              | OK            |
+  // | 2020-07-07 10:31:22 | **_server 3_** | 55              | OK            |
+  // | 2020-07-07 09:30:57 | **_server 3_** | 62              | Rebooting     |
 
       `;
     },
