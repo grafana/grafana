@@ -82,6 +82,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
           <th>Field</th>
           <th>Use as</th>
           {withReducers && <th>Select</th>}
+          <th>Additional settings</th>
         </tr>
       </thead>
       <tbody>

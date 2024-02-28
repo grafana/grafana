@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ColorPicker } from '@grafana/ui';
+import { ColorPicker, Input } from '@grafana/ui';
 
 import { HandlerArguments } from './fieldToConfigMapping';
 
@@ -28,7 +28,22 @@ export function FieldConfigMappingHandlerArgumentsEditor({ handlerArguments, han
   return (
     <>
       {handlerKey === 'threshold1' && (
-        <ColorPicker color={handlerArguments.threshold?.color ?? 'red'} onChange={onChangeThreshold} />
+        <Input
+          type="text"
+          value={'Threshold color'}
+          aria-label={'Threshold color'}
+          disabled
+          width={20}
+          prefix={
+            <div>
+              <ColorPicker
+                color={handlerArguments.threshold?.color ?? 'red'}
+                onChange={onChangeThreshold}
+                enableNamedColors={true}
+              />
+            </div>
+          }
+        />
       )}
     </>
   );
