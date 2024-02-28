@@ -44,7 +44,9 @@ export abstract class DataSourceBase<
    * be used to modify the query structure before sending to the backend.
    *
    */
-  abstract applyTemplateVariables(query: TQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery;
+  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery {
+    return query;
+  }
 
   /**
    * Apply template variables for explore
