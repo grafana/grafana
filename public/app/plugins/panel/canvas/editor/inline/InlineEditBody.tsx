@@ -43,6 +43,17 @@ export function InlineEditBody() {
         builder.addNestedOptions(getLayerEditor(instanceState));
       }
 
+      const selectedConnection = state.selectedConnection;
+      if (selectedConnection && activeTab === InlineEditTabs.SelectedElement) {
+        builder.addNestedOptions(
+          getConnectionEditor({
+            category: [`Selected connection`],
+            connection: selectedConnection,
+            scene: state.scene,
+          })
+        );
+      }
+
       const selection = state.selected;
       if (selection?.length === 1 && activeTab === InlineEditTabs.SelectedElement) {
         const element = selection[0];
@@ -55,17 +66,6 @@ export function InlineEditBody() {
             })
           );
         }
-      }
-
-      const selectedConnection = state.selectedConnection;
-      if (selectedConnection && activeTab === InlineEditTabs.SelectedElement) {
-        builder.addNestedOptions(
-          getConnectionEditor({
-            category: [`Selected connection`],
-            connection: selectedConnection,
-            scene: state.scene,
-          })
-        );
       }
 
       addStandardCanvasEditorOptions(builder);
