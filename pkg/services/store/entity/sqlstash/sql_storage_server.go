@@ -80,13 +80,11 @@ func (s *sqlEntityServer) Init() error {
 	}
 
 	// set up the broadcaster
-	s.broadcaster, err = NewBroadcaster(context.Background(), func() (chan *entity.Entity, error) {
-		stream := make(chan *entity.Entity)
-
+	s.broadcaster, err = NewBroadcaster(context.Background(), func(stream chan *entity.Entity) error {
 		// start the poller
 		go s.poller(stream)
 
-		return stream, nil
+		return nil
 	})
 	if err != nil {
 		return err
