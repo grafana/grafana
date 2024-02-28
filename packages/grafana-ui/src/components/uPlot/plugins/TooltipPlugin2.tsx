@@ -509,7 +509,13 @@ export const TooltipPlugin2 = ({
 
   if (plot && isHovering) {
     return createPortal(
-      <div className={cx(styles.tooltipWrapper, isPinned && styles.pinned)} style={style} ref={domRef}>
+      <div
+        className={cx(styles.tooltipWrapper, isPinned && styles.pinned)}
+        style={style}
+        aria-live="polite"
+        aria-atomic="true"
+        ref={domRef}
+      >
         {isPinned && <CloseButton onClick={dismiss} />}
         {contents}
       </div>,
@@ -527,7 +533,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number, maxHeight?: number) 
     zIndex: theme.zIndex.tooltip,
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
-    position: 'absolute',
+    position: 'fixed',
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z2,
