@@ -29,6 +29,9 @@ describe('NavToolbarActions', () => {
 
       expect(screen.queryByText('Save dashboard')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Add visualization')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Add row')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Paste panel')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Add library panel')).not.toBeInTheDocument();
       expect(await screen.findByText('Edit')).toBeInTheDocument();
       expect(await screen.findByText('Share')).toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
@@ -71,6 +74,9 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(await screen.findByText('Exit edit')).toBeInTheDocument();
       expect(await screen.findByLabelText('Add visualization')).toBeInTheDocument();
+      expect(await screen.findByLabelText('Add row')).toBeInTheDocument();
+      expect(await screen.findByLabelText('Paste panel')).toBeInTheDocument();
+      expect(await screen.findByLabelText('Add library panel')).toBeInTheDocument();
       expect(screen.queryByText('Edit')).not.toBeInTheDocument();
       expect(screen.queryByText('Share')).not.toBeInTheDocument();
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();

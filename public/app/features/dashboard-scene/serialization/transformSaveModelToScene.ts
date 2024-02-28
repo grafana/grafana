@@ -34,6 +34,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
+import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -110,9 +111,28 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
           currentRowPanels = [];
         }
       }
+    } else if (panel.type === 'add-library-panel') {
+      const gridItem = buildGridItemForLibraryPanelWidget(panel);
+
+      if (!gridItem) {
+        continue;
+      }
+
+      if (currentRow) {
+        currentRowPanels.push(gridItem);
+      } else {
+        panels.push(gridItem);
+      }
     } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
       const gridItem = buildGridItemForLibPanel(panel);
-      if (gridItem) {
+
+      if (!gridItem) {
+        continue;
+      }
+
+      if (currentRow) {
+        currentRowPanels.push(gridItem);
+      } else {
         panels.push(gridItem);
       }
     } else {
@@ -148,6 +168,25 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
         if (!(saveModel instanceof PanelModel)) {
           saveModel = new PanelModel(saveModel);
         }
+
+        if (saveModel.type === 'add-library-panel') {
+          const gridItem = buildGridItemForLibraryPanelWidget(saveModel);
+
+          if (!gridItem) {
+            throw new Error('Failed to build grid item for library panel widget');
+          }
+
+          return gridItem;
+        } else if (saveModel.libraryPanel?.uid && !('model' in saveModel.libraryPanel)) {
+          const gridItem = buildGridItemForLibPanel(saveModel);
+
+          if (!gridItem) {
+            throw new Error('Failed to build grid item for library panel');
+          }
+
+          return gridItem;
+        }
+
         return buildGridItemForPanel(saveModel);
       });
     }
@@ -399,6 +438,24 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   }
 }
 
+export function buildGridItemForLibraryPanelWidget(panel: PanelModel) {
+  if (panel.type !== 'add-library-panel') {
+    return null;
+  }
+
+  const body = new AddLibraryPanelWidget({
+    key: getVizPanelKeyForPanelId(panel.id),
+  });
+
+  return new SceneGridItem({
+    body,
+    y: panel.gridPos.y,
+    x: panel.gridPos.x,
+    width: panel.gridPos.w,
+    height: panel.gridPos.h,
+  });
+}
+
 export function buildGridItemForLibPanel(panel: PanelModel) {
   if (!panel.libraryPanel) {
     return null;
@@ -408,7 +465,7 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     title: panel.title,
     uid: panel.libraryPanel.uid,
     name: panel.libraryPanel.name,
-    key: getVizPanelKeyForPanelId(panel.id),
+    panelKey: getVizPanelKeyForPanelId(panel.id),
   });
 
   return new SceneGridItem({

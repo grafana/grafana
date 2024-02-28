@@ -18,7 +18,7 @@ import (
 func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 	queryReader, err := util.NewURLQueryReader(c.Req.URL)
 	if err != nil {
-		c.Handle(hs.Cfg, 400, "Render parameters error", err)
+		c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error", err)
 		return
 	}
 
@@ -36,7 +36,7 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 
 	timeout, err := strconv.Atoi(queryReader.Get("timeout", "60"))
 	if err != nil {
-		c.Handle(hs.Cfg, 400, "Render parameters error", fmt.Errorf("cannot parse timeout as int: %s", err))
+		c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error", fmt.Errorf("cannot parse timeout as int: %s", err))
 		return
 	}
 
@@ -79,11 +79,11 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 	}, nil)
 	if err != nil {
 		if errors.Is(err, rendering.ErrTimeout) {
-			c.Handle(hs.Cfg, 500, err.Error(), err)
+			c.Handle(hs.Cfg, http.StatusInternalServerError, err.Error(), err)
 			return
 		}
 
-		c.Handle(hs.Cfg, 500, "Rendering failed.", err)
+		c.Handle(hs.Cfg, http.StatusInternalServerError, "Rendering failed.", err)
 		return
 	}
 

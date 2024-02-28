@@ -33,7 +33,7 @@ Choose from the options below to import (or provision) your Grafana Alerting res
 1. [Use configuration files to provision your alerting resources][alerting_file_provisioning], such as alert rules and contact points, through files on disk.
 
    {{< admonition type="note" >}}
-   File provisioning is not available in Grafana Cloud instances.
+   Provisioning with configuration files is not available in Grafana Cloud.
    {{< /admonition >}}
 
 1. Use [Terraform to provision alerting resources][alerting_tf_provisioning].
@@ -42,14 +42,15 @@ Choose from the options below to import (or provision) your Grafana Alerting res
 
    {{< admonition type="note" >}}
    The JSON output from the majority of Alerting HTTP endpoints isn't compatible for provisioning via configuration files.
-   Instead, use the [Export Alerting endpoints](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-api-endpoints) to return or download the alerting resources in provisioning format.
+
+   If you need the alerting resources for file provisioning, use [Export Alerting endpoints](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-api-endpoints) to return or download them in provisioning format.
    {{< /admonition >}}
 
 ## Export alerting resources
 
-You can export both manually created and provisioned alerting resources. For more information, refer to [Export alerting resources][alerting_export].
+You can export both manually created and provisioned alerting resources. You can also edit and export an alert rule without applying the changes.
 
-To modify imported alert rules, you can use the **Modify export** feature to edit and then export.
+For detailed instructions on the various export options, refer to [Export alerting resources][alerting_export].
 
 ## View provisioned alerting resources
 
@@ -60,10 +61,6 @@ To view your provisioned resources in Grafana, complete the following steps.
 1. Click an alerting resource folder, for example, Alert rules.
 
 Provisioned resources are labeled **Provisioned**, so that it is clear that they were not created manually.
-
-**Useful Links:**
-
-[Grafana provisioning][provisioning]
 
 {{% docs/reference %}}
 [alerting_tf_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"
