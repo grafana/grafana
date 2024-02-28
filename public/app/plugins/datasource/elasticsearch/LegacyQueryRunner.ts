@@ -151,7 +151,11 @@ export class LegacyQueryRunner {
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
     let payload = '';
-    const targets = this.datasource.interpolateVariablesInQueries(cloneDeep(request.targets), request.scopedVars);
+    const targets = this.datasource.interpolateVariablesInQueries(
+      cloneDeep(request.targets),
+      request.scopedVars,
+      request.filters
+    );
     const sentTargets: ElasticsearchQuery[] = [];
     let targetsContainsLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
 
