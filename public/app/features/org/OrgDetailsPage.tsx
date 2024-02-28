@@ -1,10 +1,15 @@
 import React, { PureComponent } from 'react';
 import { ConnectedProps, connect } from 'react-redux';
 
-import { VerticalGroup } from '@grafana/ui';
+import { PluginExtensionComponent, PluginExtensionPoints } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { getPluginComponentExtensions } from '@grafana/runtime';
+import { Tab, TabsBar, TabContent, VerticalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { appEvents, contextSrv } from 'app/core/core';
+// import { useQueryParams } from 'app/core/hooks/useQueryParams';
+// import { t } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { AccessControlAction, StoreState } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -13,9 +18,26 @@ import OrgProfile from './OrgProfile';
 import { loadOrganization, updateOrganization } from './state/actions';
 import { setOrganizationName } from './state/reducers';
 
+// const TAB_QUERY_PARAM = 'tab';
+const GENERAL_SETTINGS_TAB = 'general';
+
+type TabInfo = {
+  id: string;
+  title: string;
+};
+
 interface OwnProps {}
 
-export class OrgDetailsPage extends PureComponent<Props> {
+interface State {
+  activeTab: string;
+}
+
+// TODO: what is the equivalent of useQueryParams in class components?
+export class OrgDetailsPage extends PureComponent<Props, State> {
+  state: State = {
+    activeTab: GENERAL_SETTINGS_TAB,
+  };
+
   async componentDidMount() {
     await this.props.loadOrganization();
   }
@@ -40,29 +62,115 @@ export class OrgDetailsPage extends PureComponent<Props> {
     });
   };
 
-  render() {
-    const { navModel, organization } = this.props;
-    const isLoading = Object.keys(organization).length === 0;
+  getGroupedPluginComponentExtensions() {
+    const { extensions: extensionComponents } = getPluginComponentExtensions({
+      extensionPointId: PluginExtensionPoints.OrganizationProfileTab,
+      context: {},
+    });
+
+    return extensionComponents.reduce<Record<string, PluginExtensionComponent[]>>((acc, extension) => {
+      const { title } = extension;
+      if (acc[title]) {
+        acc[title].push(extension);
+      } else {
+        acc[title] = [extension];
+      }
+      return acc;
+    }, {});
+  }
+
+  convertExtensionComponentTitleToTabId(title: string) {
+    return title.toLowerCase();
+  }
+
+  renderOrgDetails() {
+    const { organization } = this.props;
     const canReadOrg = contextSrv.hasPermission(AccessControlAction.OrgsRead);
     const canReadPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesRead);
     const canWritePreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesWrite);
 
     return (
-      <Page navModel={navModel}>
-        <Page.Contents isLoading={isLoading}>
-          {!isLoading && (
-            <VerticalGroup spacing="lg">
-              {canReadOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />}
-              {canReadPreferences && (
-                <SharedPreferences
-                  resourceUri="org"
-                  disabled={!canWritePreferences}
-                  preferenceType="org"
-                  onConfirm={this.handleConfirm}
+      <VerticalGroup spacing="lg">
+        {canReadOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />}
+        {canReadPreferences && (
+          <SharedPreferences
+            resourceUri="org"
+            disabled={!canWritePreferences}
+            preferenceType="org"
+            onConfirm={this.handleConfirm}
+          />
+        )}
+      </VerticalGroup>
+    );
+  }
+
+  renderOrgDetailsWithTabs() {
+    const { activeTab } = this.state;
+
+    const groupedExtensionComponents = this.getGroupedPluginComponentExtensions();
+
+    const tabs: TabInfo[] = [
+      {
+        id: GENERAL_SETTINGS_TAB,
+        title: 'General',
+        // title: t('user-profile.tabs.general', 'General'), TODO:
+      },
+      ...Object.keys(groupedExtensionComponents).map((title) => ({
+        id: this.convertExtensionComponentTitleToTabId(title),
+        title,
+      })),
+    ];
+
+    return (
+      <div data-testid={selectors.components.OrgDetails.extensionPointTabs}>
+        <VerticalGroup spacing="md">
+          <TabsBar>
+            {tabs.map(({ id, title }) => {
+              return (
+                <Tab
+                  key={id}
+                  label={title}
+                  active={activeTab === id}
+                  onChangeTab={() => {
+                    this.setState({ activeTab: id });
+                    // updateQueryParams({ [TAB_QUERY_PARAM]: id }); TODO:
+                  }}
+                  data-testid={selectors.components.OrgDetails.extensionPointTab(id)}
                 />
-              )}
-            </VerticalGroup>
-          )}
+              );
+            })}
+          </TabsBar>
+          <TabContent>
+            {activeTab === GENERAL_SETTINGS_TAB && this.renderOrgDetails()}
+            {Object.entries(groupedExtensionComponents).map(([title, pluginExtensionComponents]) => {
+              const tabId = this.convertExtensionComponentTitleToTabId(title);
+
+              if (activeTab === tabId) {
+                return (
+                  <React.Fragment key={tabId}>
+                    {pluginExtensionComponents.map(({ component: Component }, index) => (
+                      <Component key={`${tabId}-${index}`} />
+                    ))}
+                  </React.Fragment>
+                );
+              }
+              return null;
+            })}
+          </TabContent>
+        </VerticalGroup>
+      </div>
+    );
+  }
+
+  render() {
+    const { navModel, organization } = this.props;
+    const groupedExtensionComponents = this.getGroupedPluginComponentExtensions();
+    const showTabs = Object.keys(groupedExtensionComponents).length > 0;
+
+    return (
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={!organization}>
+          {showTabs ? this.renderOrgDetailsWithTabs() : this.renderOrgDetails()}
         </Page.Contents>
       </Page>
     );

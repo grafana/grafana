@@ -518,6 +518,14 @@ export const Components = {
   OrgRolePicker: {
     input: 'Role',
   },
+  OrgDetails: {
+    extensionPointTabs: 'data-testid-extension-point-tabs',
+    extensionPointTab: (tabId: string) => `data-testid-extension-point-tab-${tabId}`,
+  },
+  TeamSettings: {
+    extensionPointTabs: 'data-testid-extension-point-tabs',
+    extensionPointTab: (tabId: string) => `data-testid-extension-point-tab-${tabId}`,
+  },
   AnalyticsToolbarButton: {
     button: 'Dashboard insights',
   },
