@@ -14,12 +14,18 @@ type store interface {
 	writeStore
 }
 
+type commonStore interface {
+	Type() string
+}
+
 type readStore interface {
+	commonStore
 	Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error)
 	GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error)
 }
 
 type writeStore interface {
+	commonStore
 	Add(ctx context.Context, items *annotations.Item) error
 	AddMany(ctx context.Context, items []annotations.Item) error
 	Update(ctx context.Context, item *annotations.Item) error

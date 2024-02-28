@@ -54,6 +54,10 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 	}
 }
 
+func (r *xormRepositoryImpl) Type() string {
+	return "sql"
+}
+
 func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) error {
 	tags := tag.ParseTagPairs(item.Tags)
 	item.Tags = tag.JoinTagPairs(tags)
