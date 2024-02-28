@@ -102,7 +102,7 @@
       "value": {
         "fontFamily": "{font.fontFamily.primary}",
         "fontWeight": "{font.fontWeight.medium}",
-        "lineHeight": "{font.lineHeight.min}",
+        "lineHeight": "{font.lineHeight.0}",
         "fontSize": "{font.fontSize.2}",
         "letterSpacing": "{font.letterSpacing.wide}",
         "textDecoration": "{font.textDecoration.none}",
@@ -116,7 +116,7 @@
       "value": {
         "fontFamily": "{font.fontFamily.primary}",
         "fontWeight": "{font.fontWeight.regular}",
-        "lineHeight": "{font.lineHeight.min}",
+        "lineHeight": "{font.lineHeight.0}",
         "fontSize": "{font.fontSize.2}",
         "letterSpacing": "{font.letterSpacing.wide}",
         "textDecoration": "{font.textDecoration.none}",
@@ -130,7 +130,7 @@
       "value": {
         "fontFamily": "{font.fontFamily.primary}",
         "fontWeight": "{font.fontWeight.medium}",
-        "lineHeight": "{font.lineHeight.min}",
+        "lineHeight": "{font.lineHeight.0}",
         "fontSize": "{font.fontSize.2}",
         "letterSpacing": "{font.letterSpacing.wide}",
         "textDecoration": "{font.textDecoration.none}",
@@ -144,7 +144,7 @@
       "value": {
         "fontFamily": "{font.fontFamily.primary}",
         "fontWeight": "{font.fontWeight.regular}",
-        "lineHeight": "{font.lineHeight.min}",
+        "lineHeight": "{font.lineHeight.0}",
         "fontSize": "{font.fontSize.1}",
         "letterSpacing": "{font.letterSpacing.wide}",
         "textDecoration": "{font.textDecoration.none}",
@@ -158,7 +158,7 @@
       "value": {
         "fontFamily": "{font.fontFamily.primary}",
         "fontWeight": "{font.fontWeight.medium}",
-        "lineHeight": "{font.lineHeight.min}",
+        "lineHeight": "{font.lineHeight.0}",
         "fontSize": "{font.fontSize.1}",
         "letterSpacing": "{font.letterSpacing.wide}",
         "textDecoration": "{font.textDecoration.none}",
@@ -172,7 +172,7 @@
       "value": {
         "fontFamily": "{font.fontFamily.monospace}",
         "fontWeight": "{font.fontWeight.regular}",
-        "lineHeight": "{font.lineHeight.min}",
+        "lineHeight": "{font.lineHeight.0}",
         "fontSize": "{font.fontSize.2}",
         "letterSpacing": "{font.letterSpacing.wide}",
         "textDecoration": "{font.textDecoration.none}",

@@ -32,11 +32,11 @@
         },
         "secondary": {
           "default": {
-            "value": "{color.gray.1100}",
+            "value": "{color.neutral.1100}",
             "type": "color"
           },
           "hover": {
-            "value": "{color.gray.1000}",
+            "value": "{color.neutral.1000}",
             "type": "color"
           }
         }
