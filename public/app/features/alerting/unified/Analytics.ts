@@ -1,3 +1,5 @@
+import { isEmpty } from 'lodash';
+
 import { dateTime } from '@grafana/data';
 import { createMonitoringLogger, getBackendSrv } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
@@ -5,6 +7,9 @@ import { contextSrv } from 'app/core/core';
 
 import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
+
+import { getSearchFilterFromQuery, RulesFilter } from './search/rulesSearchParser';
+import { RuleFormType } from './types/rule-form';
 
 export const USER_CREATION_MIN_DAYS = 7;
 
@@ -150,27 +155,17 @@ export const trackRuleListNavigation = async (
   reportInteraction('grafana_alerting_navigation', props);
 };
 
-export const trackNewAlerRuleFormSaved = async (props: AlertRuleTrackingProps) => {
-  const isNew = await isNewUser();
-  if (isNew) {
-    return;
-  }
+export const trackAlertRuleFormSaved = (props: { formAction: 'create' | 'update'; ruleType?: RuleFormType }) => {
   reportInteraction('grafana_alerting_rule_creation', props);
 };
 
-export const trackNewAlerRuleFormCancelled = async (props: AlertRuleTrackingProps) => {
-  const isNew = await isNewUser();
-  if (isNew) {
-    return;
-  }
+export const trackAlertRuleFormCancelled = (props: { formAction: 'create' | 'update' }) => {
   reportInteraction('grafana_alerting_rule_aborted', props);
 };
 
-export const trackNewAlerRuleFormError = async (props: AlertRuleTrackingProps & { error: string }) => {
-  const isNew = await isNewUser();
-  if (isNew) {
-    return;
-  }
+export const trackAlertRuleFormError = (
+  props: AlertRuleTrackingProps & { error: string; formAction: 'create' | 'update' }
+) => {
   reportInteraction('grafana_alerting_rule_form_error', props);
 };
 
@@ -182,6 +177,48 @@ export const trackInsightsFeedback = async (props: { useful: boolean; panel: str
   };
   reportInteraction('grafana_alerting_insights', { ...defaults, ...props });
 };
+
+interface RulesSearchInteractionPayload {
+  filter: string;
+  triggeredBy: 'typing' | 'component';
+}
+
+function trackRulesSearchInteraction(payload: RulesSearchInteractionPayload) {
+  reportInteraction('grafana_alerting_rules_search', { ...payload });
+}
+
+export function trackRulesSearchInputInteraction({ oldQuery, newQuery }: { oldQuery: string; newQuery: string }) {
+  try {
+    const oldFilter = getSearchFilterFromQuery(oldQuery);
+    const newFilter = getSearchFilterFromQuery(newQuery);
+
+    const oldFilterTerms = extractFilterKeys(oldFilter);
+    const newFilterTerms = extractFilterKeys(newFilter);
+
+    const newTerms = newFilterTerms.filter((term) => !oldFilterTerms.includes(term));
+    newTerms.forEach((term) => {
+      trackRulesSearchInteraction({ filter: term, triggeredBy: 'typing' });
+    });
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      logError(e);
+    }
+  }
+}
+
+function extractFilterKeys(filter: RulesFilter) {
+  return Object.entries(filter)
+    .filter(([_, value]) => !isEmpty(value))
+    .map(([key]) => key);
+}
+
+export function trackRulesSearchComponentInteraction(filter: keyof RulesFilter) {
+  trackRulesSearchInteraction({ filter, triggeredBy: 'component' });
+}
+
+export function trackRulesListViewChange(payload: { view: string }) {
+  reportInteraction('grafana_alerting_rules_list_mode', { ...payload });
+}
 
 export type AlertRuleTrackingProps = {
   user_id: number;
