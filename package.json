@@ -189,6 +189,7 @@
     "jest-fail-on-console": "3.1.2",
     "jest-junit": "16.0.0",
     "jest-matcher-utils": "29.7.0",
+    "knip": "^5.0.2",
     "lerna": "8.1.2",
     "mini-css-extract-plugin": "2.8.0",
     "msw": "2.2.1",
