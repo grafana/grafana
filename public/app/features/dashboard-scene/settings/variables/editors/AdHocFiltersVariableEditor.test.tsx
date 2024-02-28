@@ -86,6 +86,28 @@ describe('AdHocFiltersVariableEditor', () => {
 
     expect(variable.state.datasource).toEqual({ uid: 'prometheus', type: 'prometheus' });
   });
+
+  it('should update the variable static keys when the static keys options is enabled', async () => {
+    const { renderer, variable, user } = await setup();
+
+    // Simulate toggling static options on
+    await user.click(
+      renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle)
+    );
+
+    expect(variable.state.staticKeys).toEqual([]);
+  });
+
+  it('should update the variable static keys when the static keys option is disabled', async () => {
+    const { renderer, variable, user } = await setup([{ text: 'A', value: 'A' }]);
+
+    // Simulate toggling static options off
+    await user.click(
+      renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle)
+    );
+
+    expect(variable.state.staticKeys).toEqual(undefined);
+  });
 });
 
 async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEditor>) {
