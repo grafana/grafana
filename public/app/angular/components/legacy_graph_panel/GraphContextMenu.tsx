@@ -9,20 +9,28 @@ import {
   TimeZone,
   FormattedValue,
   GrafanaTheme2,
+  Dimension,
 } from '@grafana/data';
-
-import { ContextMenu, ContextMenuProps } from '../../components/ContextMenu/ContextMenu';
-import { FormattedValueDisplay } from '../../components/FormattedValueDisplay/FormattedValueDisplay';
-import { HorizontalGroup } from '../../components/Layout/Layout';
-import { MenuGroup, MenuGroupProps } from '../../components/Menu/MenuGroup';
-import { MenuItem } from '../../components/Menu/MenuItem';
-import { SeriesIcon } from '../../components/VizLegend/SeriesIcon';
-import { useStyles2 } from '../../themes';
-
-import { GraphDimensions } from './GraphTooltip/types';
+import {
+  ContextMenu,
+  ContextMenuProps,
+  FormattedValueDisplay,
+  HorizontalGroup,
+  MenuGroup,
+  MenuGroupProps,
+  MenuItem,
+  SeriesIcon,
+  useStyles2,
+} from '@grafana/ui';
 
 /** @deprecated */
 export type ContextDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
+
+/** @deprecated */
+export interface GraphDimensions extends Dimensions {
+  xAxis: Dimension<number>;
+  yAxis: Dimension<number>;
+}
 
 /** @deprecated */
 export type GraphContextMenuProps = ContextMenuProps & {
