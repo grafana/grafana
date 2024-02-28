@@ -8,15 +8,11 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   TestDataSourceResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourceRef,
-  getDataSourceRef,
   makeClassES5Compatible,
   parseLiveChannelAddress,
-  ScopedVars,
-  AdHocVariableFilter,
 } from '@grafana/data';
 
 import { config } from '../config';
@@ -24,12 +20,12 @@ import {
   BackendSrvRequest,
   FetchResponse,
   getBackendSrv,
-  getDataSourceSrv,
   getGrafanaLiveSrv,
   StreamingFrameAction,
   StreamingFrameOptions,
 } from '../services';
 
+import { DataSourceBase } from './DataSourceBase';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
@@ -118,7 +114,7 @@ export interface HealthCheckResult {
 class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
-> extends DataSourceApi<TQuery, TOptions> {
+> extends DataSourceBase<TQuery, TOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     super(instanceSettings);
   }
@@ -134,17 +130,12 @@ class DataSourceWithBackend<
     const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
 
-    if (this.filterQuery) {
-      targets = targets.filter((q) => this.filterQuery!(q));
-    }
-
     let hasExpr = false;
     const pluginIDs = new Set<string>();
     const dsUIDs = new Set<string>();
     const queries = targets.map((q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
-      let shouldApplyTemplateVariables = true;
 
       if (isExpressionReference(q.datasource)) {
         hasExpr = true;
@@ -154,23 +145,6 @@ class DataSourceWithBackend<
         };
       }
 
-      if (q.datasource) {
-        const ds = getDataSourceSrv().getInstanceSettings(q.datasource, request.scopedVars);
-
-        if (!ds) {
-          throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
-        }
-
-        const dsRef = ds.rawRef ?? getDataSourceRef(ds);
-        const dsId = ds.id;
-        if (dsRef.uid !== datasource.uid || datasourceId !== dsId) {
-          datasource = dsRef;
-          datasourceId = dsId;
-          // If the query is using a different datasource, we would need to retrieve the datasource
-          // instance (async) and apply the template variables but it seems it's not necessary for now.
-          shouldApplyTemplateVariables = false;
-        }
-      }
       if (datasource.type?.length) {
         pluginIDs.add(datasource.type);
       }
@@ -178,7 +152,7 @@ class DataSourceWithBackend<
         dsUIDs.add(datasource.uid);
       }
       return {
-        ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars, request.filters) : q),
+        ...q,
         datasource,
         datasourceId, // deprecated!
         intervalMs,
@@ -266,36 +240,6 @@ class DataSourceWithBackend<
     headers[PluginRequestHeaders.PluginID] = this.type;
     headers[PluginRequestHeaders.DatasourceUID] = this.uid;
     return headers;
-  }
-
-  /**
-   * Apply template variables for explore
-   */
-  interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery[] {
-    return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
-  }
-
-  /**
-   * Override to skip executing a query.  Note this function may not be called
-   * if the query method is overwritten.
-   *
-   * @returns false if the query should be skipped
-   *
-   * @virtual
-   */
-  filterQuery?(query: TQuery): boolean;
-
-  /**
-   * Override to apply template variables and adhoc filters.  The result is usually also `TQuery`, but sometimes this can
-   * be used to modify the query structure before sending to the backend.
-   *
-   * NOTE: if you do modify the structure or use template variables, alerting queries may not work
-   * as expected
-   *
-   * @virtual
-   */
-  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
-    return query;
   }
 
   /**

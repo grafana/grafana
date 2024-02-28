@@ -24,6 +24,7 @@ export {
   HealthStatus,
   type StreamOptionsProvider,
 } from './utils/DataSourceWithBackend';
+export { DataSourceBase } from './utils/DataSourceBase';
 export {
   toDataQueryResponse,
   frameToMetricFindValue,

@@ -250,6 +250,9 @@ abstract class DataSourceApi<
 
   /**
    * Query for data, and optionally stream results
+   *
+   * @deprecated -- the query method is now defined in {@link DataSourceBase}. If your building a frontend data source, extend DataSourceBase class.
+   * If you are building a backend data source, extend DataSourceWithBackend class.
    */
   abstract query(request: DataQueryRequest<TQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse>;
 
@@ -259,13 +262,15 @@ abstract class DataSourceApi<
    * When verification fails - errors specific to the data source should be handled here and converted to
    * a TestingStatus object. Unknown errors and HTTP errors can be re-thrown and will be handled here:
    * public/app/features/datasources/state/actions.ts
+   *
+   * @deprecated -- {@link DataSourceBase.testDatasource} is now defined in testDatasource. Extend DataSourceBase instead of DataSourceAPI.
    */
   abstract testDatasource(): Promise<TestDataSourceResponse>;
 
   /**
-   * This function is not called automatically unless running within the DataSourceWithBackend
+   * Optionally, you can implement this method to conditionally prevent certain queries from being executed.
+   * Return false to prevent the query from being executed.
    *
-   * @deprecated
    */
   filterQuery?(query: TQuery): boolean;
 

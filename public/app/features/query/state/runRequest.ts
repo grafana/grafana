@@ -14,11 +14,12 @@ import {
   DataSourceApi,
   DataTopic,
   dateMath,
+  getDataSourceRef,
   LoadingState,
   PanelData,
   TimeRange,
 } from '@grafana/data';
-import { config, toDataQueryError } from '@grafana/runtime';
+import { config, DataSourceBase, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { queryIsEmpty } from 'app/core/utils/query';
@@ -185,15 +186,37 @@ export function callQueryMethod(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ) {
-  // If the datasource has defined a default query, make sure it's applied
-  request.targets = request.targets.map((t) =>
-    queryIsEmpty(t)
-      ? {
-          ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor),
-          ...t,
-        }
-      : t
-  );
+  let shouldApplyTemplateVariables = datasource instanceof DataSourceBase;
+  for (let index = 0; index < request.targets.length; index++) {
+    const q = request.targets[index];
+
+    // If the datasource has defined a default query, make sure it's applied
+    if (queryIsEmpty(q)) {
+      request.targets[index] = {
+        ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor),
+        ...q,
+      };
+    }
+
+    if (datasource.filterQuery?.(q)) {
+      delete request.targets[index];
+    }
+
+    if (q.datasource) {
+      const ds = getDataSourceSrv().getInstanceSettings(q.datasource, request.scopedVars);
+      if (!ds) {
+        throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
+      }
+      const dsRef = ds.rawRef ?? getDataSourceRef(ds);
+      if (dsRef.uid !== datasource.uid) {
+        shouldApplyTemplateVariables = false;
+      }
+    }
+
+    if (shouldApplyTemplateVariables && datasource instanceof DataSourceBase) {
+      request.targets[index] = datasource.applyTemplateVariables(q, request.scopedVars);
+    }
+  }
 
   // If its a public datasource, just return the result. Expressions will be handled on the backend.
   if (config.publicDashboardAccessToken) {
