@@ -197,7 +197,7 @@ func TestValidateRuleGroup(t *testing.T) {
 
 	t.Run("should validate struct and rules", func(t *testing.T) {
 		g := validGroup(cfg, rules...)
-		alerts, err := validateRuleGroup(&g, orgId, folder, cfg)
+		alerts, err := ValidateRuleGroup(&g, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 		require.NoError(t, err)
 		require.Len(t, alerts, len(rules))
 	})
@@ -205,7 +205,7 @@ func TestValidateRuleGroup(t *testing.T) {
 	t.Run("should default to default interval from config if group interval is 0", func(t *testing.T) {
 		g := validGroup(cfg, rules...)
 		g.Interval = 0
-		alerts, err := validateRuleGroup(&g, orgId, folder, cfg)
+		alerts, err := ValidateRuleGroup(&g, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 		require.NoError(t, err)
 		for _, alert := range alerts {
 			require.Equal(t, int64(cfg.DefaultRuleEvaluationInterval.Seconds()), alert.IntervalSeconds)
@@ -220,7 +220,7 @@ func TestValidateRuleGroup(t *testing.T) {
 			isPaused = !(isPaused)
 		}
 		g := validGroup(cfg, rules...)
-		alerts, err := validateRuleGroup(&g, orgId, folder, cfg)
+		alerts, err := ValidateRuleGroup(&g, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 		require.NoError(t, err)
 		for _, alert := range alerts {
 			require.True(t, alert.HasPause)
@@ -292,7 +292,7 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			g := testCase.group()
-			_, err := validateRuleGroup(g, orgId, folder, cfg)
+			_, err := ValidateRuleGroup(g, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 			require.Error(t, err)
 			if testCase.assert != nil {
 				testCase.assert(t, g, err)
@@ -399,7 +399,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 			r := testCase.rule()
 			r.GrafanaManagedAlert.UID = ""
 
-			alert, err := validateRuleNode(r, name, interval, orgId, folder, cfg)
+			alert, err := validateRuleNode(r, name, interval, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 			require.NoError(t, err)
 			testCase.assert(t, r, alert)
 		})
@@ -407,7 +407,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 
 	t.Run("accepts empty group name", func(t *testing.T) {
 		r := validRule()
-		alert, err := validateRuleNode(&r, "", interval, orgId, folder, cfg)
+		alert, err := validateRuleNode(&r, "", interval, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 		require.NoError(t, err)
 		require.Equal(t, "", alert.RuleGroup)
 	})
@@ -560,7 +560,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 				interval = *testCase.interval
 			}
 
-			_, err := validateRuleNode(r, "", interval, orgId, folder, cfg)
+			_, err := validateRuleNode(r, "", interval, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 			require.Error(t, err)
 			if testCase.assert != nil {
 				testCase.assert(t, r, err)
@@ -652,7 +652,7 @@ func TestValidateRuleNode_UID(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			r := testCase.rule()
-			alert, err := validateRuleNode(r, name, interval, orgId, folder, cfg)
+			alert, err := validateRuleNode(r, name, interval, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 			require.NoError(t, err)
 			testCase.assert(t, r, alert)
 		})
@@ -660,7 +660,7 @@ func TestValidateRuleNode_UID(t *testing.T) {
 
 	t.Run("accepts empty group name", func(t *testing.T) {
 		r := validRule()
-		alert, err := validateRuleNode(&r, "", interval, orgId, folder, cfg)
+		alert, err := validateRuleNode(&r, "", interval, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 		require.NoError(t, err)
 		require.Equal(t, "", alert.RuleGroup)
 	})
@@ -755,7 +755,7 @@ func TestValidateRuleNodeFailures_UID(t *testing.T) {
 				interval = *testCase.interval
 			}
 
-			_, err := validateRuleNode(r, "", interval, orgId, folder, cfg)
+			_, err := validateRuleNode(r, "", interval, orgId, folder.UID, RuleLimitsFromConfig(cfg))
 			require.Error(t, err)
 			if testCase.assert != nil {
 				testCase.assert(t, r, err)
@@ -788,7 +788,7 @@ func TestValidateRuleNodeIntervalFailures(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			r := validRule()
-			_, err := validateRuleNode(&r, util.GenerateShortUID(), testCase.interval, rand.Int63(), randFolder(), cfg)
+			_, err := validateRuleNode(&r, util.GenerateShortUID(), testCase.interval, rand.Int63(), randFolder().UID, RuleLimitsFromConfig(cfg))
 			require.Error(t, err)
 		})
 	}
@@ -880,7 +880,7 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := validRule()
 			r.GrafanaManagedAlert.NotificationSettings = AlertRuleNotificationSettingsFromNotificationSettings([]models.NotificationSettings{tt.notificationSettings})
-			_, err := validateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder(), cfg)
+			_, err := validateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, RuleLimitsFromConfig(cfg))
 
 			if tt.expErrorContains != "" {
 				require.Error(t, err)
@@ -901,7 +901,7 @@ func TestValidateRuleNodeReservedLabels(t *testing.T) {
 			r.ApiRuleNode.Labels = map[string]string{
 				label: "true",
 			}
-			_, err := validateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder(), cfg)
+			_, err := validateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, RuleLimitsFromConfig(cfg))
 			require.Error(t, err)
 			require.ErrorContains(t, err, label)
 		})

@@ -7,12 +7,25 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+type RuleLimits struct {
+	// The default interval if not specified.
+	DefaultRuleEvaluationInterval time.Duration
+	// All intervals must be an integer multiple of this duration.
+	BaseInterval time.Duration
+}
+
+func RuleLimitsFromConfig(cfg *setting.UnifiedAlertingSettings) RuleLimits {
+	return RuleLimits{
+		DefaultRuleEvaluationInterval: cfg.DefaultRuleEvaluationInterval,
+		BaseInterval:                  cfg.BaseInterval,
+	}
+}
 
 // validateRuleNode validates API model (definitions.PostableExtendedRuleNode) and converts it to models.AlertRule
 func validateRuleNode(
@@ -20,9 +33,9 @@ func validateRuleNode(
 	groupName string,
 	interval time.Duration,
 	orgId int64,
-	namespace *folder.Folder,
-	cfg *setting.UnifiedAlertingSettings) (*ngmodels.AlertRule, error) {
-	intervalSeconds, err := validateInterval(cfg, interval)
+	namespaceUID string,
+	limits RuleLimits) (*ngmodels.AlertRule, error) {
+	intervalSeconds, err := validateInterval(interval, limits.BaseInterval)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +104,7 @@ func validateRuleNode(
 		Data:            queries,
 		UID:             ruleNode.GrafanaManagedAlert.UID,
 		IntervalSeconds: intervalSeconds,
-		NamespaceUID:    namespace.UID,
+		NamespaceUID:    namespaceUID,
 		RuleGroup:       groupName,
 		NoDataState:     noDataState,
 		ExecErrState:    errorState,
@@ -162,10 +175,10 @@ func validateCondition(condition string, queries []apimodels.AlertQuery) error {
 	return nil
 }
 
-func validateInterval(cfg *setting.UnifiedAlertingSettings, interval time.Duration) (int64, error) {
+func validateInterval(interval, baseInterval time.Duration) (int64, error) {
 	intervalSeconds := int64(interval.Seconds())
 
-	baseIntervalSeconds := int64(cfg.BaseInterval.Seconds())
+	baseIntervalSeconds := int64(baseInterval.Seconds())
 
 	if interval <= 0 {
 		return 0, fmt.Errorf("rule evaluation interval must be positive duration that is multiple of the base interval %d seconds", baseIntervalSeconds)
@@ -193,14 +206,14 @@ func validateForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Dur
 	return duration, nil
 }
 
-// validateRuleGroup validates API model (definitions.PostableRuleGroupConfig) and converts it to a collection of models.AlertRule.
+// ValidateRuleGroup validates API model (definitions.PostableRuleGroupConfig) and converts it to a collection of models.AlertRule.
 // Returns a slice that contains all rules described by API model or error if either group specification or an alert definition is not valid.
 // It also returns a map containing current existing alerts that don't contain the is_paused field in the body of the call.
-func validateRuleGroup(
+func ValidateRuleGroup(
 	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
 	orgId int64,
-	namespace *folder.Folder,
-	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRuleWithOptionals, error) {
+	namespaceUID string,
+	limits RuleLimits) ([]*ngmodels.AlertRuleWithOptionals, error) {
 	if ruleGroupConfig.Name == "" {
 		return nil, errors.New("rule group name cannot be empty")
 	}
@@ -212,11 +225,11 @@ func validateRuleGroup(
 	interval := time.Duration(ruleGroupConfig.Interval)
 	if interval == 0 {
 		// if group interval is 0 (undefined) then we automatically fall back to the default interval
-		interval = cfg.DefaultRuleEvaluationInterval
+		interval = limits.DefaultRuleEvaluationInterval
 	}
 
-	if interval < 0 || int64(interval.Seconds())%int64(cfg.BaseInterval.Seconds()) != 0 {
-		return nil, fmt.Errorf("rule evaluation interval (%d second) should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(cfg.BaseInterval.Seconds()))
+	if interval < 0 || int64(interval.Seconds())%int64(limits.BaseInterval.Seconds()) != 0 {
+		return nil, fmt.Errorf("rule evaluation interval (%d second) should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(limits.BaseInterval.Seconds()))
 	}
 
 	// TODO should we validate that interval is >= cfg.MinInterval? Currently, we allow to save but fix the specified interval if it is < cfg.MinInterval
@@ -224,7 +237,7 @@ func validateRuleGroup(
 	result := make([]*ngmodels.AlertRuleWithOptionals, 0, len(ruleGroupConfig.Rules))
 	uids := make(map[string]int, cap(result))
 	for idx := range ruleGroupConfig.Rules {
-		rule, err := validateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, interval, orgId, namespace, cfg)
+		rule, err := validateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, interval, orgId, namespaceUID, limits)
 		// TODO do not stop on the first failure but return all failures
 		if err != nil {
 			return nil, fmt.Errorf("invalid rule specification at index [%d]: %w", idx, err)
