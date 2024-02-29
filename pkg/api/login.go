@@ -89,16 +89,14 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagClientTokenRotation) {
-		if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
-			c.Redirect(hs.Cfg.AppSubURL + "/")
-			return
-		}
+	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+		c.Redirect(hs.Cfg.AppSubURL + "/")
+		return
 	}
 
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
-		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
+		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
 		return
 	}
 
@@ -198,7 +196,7 @@ func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response
 		return response.JSON(http.StatusOK, util.DynMap{"message": "Logged in"})
 	}
 
-	return response.Error(401, "Unauthorized", nil)
+	return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
 }
 
 func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {

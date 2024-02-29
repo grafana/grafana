@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	jsonitersdk "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
+	jsoniter "github.com/json-iterator/go"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"gonum.org/v1/gonum/graph/simple"
@@ -46,14 +48,22 @@ type rawNode struct {
 	idx int64
 }
 
-func GetExpressionCommandType(rawQuery map[string]any) (c CommandType, err error) {
+func getExpressionCommandTypeString(rawQuery map[string]any) (string, error) {
 	rawType, ok := rawQuery["type"]
 	if !ok {
-		return c, errors.New("no expression command type in query")
+		return "", errors.New("no expression command type in query")
 	}
 	typeString, ok := rawType.(string)
 	if !ok {
-		return c, fmt.Errorf("expected expression command type to be a string, got type %T", rawType)
+		return "", fmt.Errorf("expected expression command type to be a string, got type %T", rawType)
+	}
+	return typeString, nil
+}
+
+func GetExpressionCommandType(rawQuery map[string]any) (c CommandType, err error) {
+	typeString, err := getExpressionCommandTypeString(rawQuery)
+	if err != nil {
+		return c, err
 	}
 	return ParseCommandType(typeString)
 }
@@ -111,6 +121,29 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		CMDType: commandType,
 	}
 
+	if toggles.IsEnabledGlobally(featuremgmt.FlagExpressionParser) {
+		rn.QueryType, err = getExpressionCommandTypeString(rn.Query)
+		if err != nil {
+			return nil, err // should not happen because the command was parsed first thing
+		}
+
+		// NOTE: this structure of this is weird now, because it is targeting a structure
+		// where this is actually run in the root loop, however we want to verify the individual
+		// node parsing before changing the full tree parser
+		reader, err := NewExpressionQueryReader(toggles)
+		if err != nil {
+			return nil, err
+		}
+
+		iter := jsoniter.ParseBytes(jsoniter.ConfigDefault, rn.QueryRaw)
+		q, err := reader.ReadQuery(rn, jsonitersdk.NewIterator(iter))
+		if err != nil {
+			return nil, err
+		}
+		node.Command = q.Command
+		return node, err
+	}
+
 	switch commandType {
 	case TypeMath:
 		node.Command, err = UnmarshalMathCommand(rn)
@@ -122,6 +155,8 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	case TypeThreshold:
 		node.Command, err = UnmarshalThresholdCommand(rn, toggles)
+	case TypeSQL:
+		node.Command, err = UnmarshalSQLCommand(rn)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
@@ -438,7 +473,8 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 			logger.Warn("Ignoring InfluxDB data frame due to missing numeric fields")
 			continue
 		}
-		if schema.Type != data.TimeSeriesTypeWide {
+
+		if schema.Type != data.TimeSeriesTypeWide && !s.allowLongFrames {
 			return "", mathexp.Results{}, fmt.Errorf("input data must be a wide series but got type %s (input refid)", schema.Type)
 		}
 		filtered = append(filtered, frame)
@@ -451,20 +487,29 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 
 	maybeFixerFn := checkIfSeriesNeedToBeFixed(filtered, datasourceType)
 
-	vals := make([]mathexp.Value, 0, totalLen)
-	for _, frame := range filtered {
-		series, err := WideToMany(frame, maybeFixerFn)
-		if err != nil {
-			return "", mathexp.Results{}, err
-		}
-		for _, ser := range series {
-			vals = append(vals, ser)
-		}
-	}
 	dataType := "single frame series"
 	if len(filtered) > 1 {
 		dataType = "multi frame series"
 	}
+
+	vals := make([]mathexp.Value, 0, totalLen)
+	for _, frame := range filtered {
+		schema := frame.TimeSeriesSchema()
+		if schema.Type == data.TimeSeriesTypeWide {
+			series, err := WideToMany(frame, maybeFixerFn)
+			if err != nil {
+				return "", mathexp.Results{}, err
+			}
+			for _, ser := range series {
+				vals = append(vals, ser)
+			}
+		} else {
+			v := mathexp.TableData{Frame: frame}
+			vals = append(vals, v)
+			dataType = "single frame"
+		}
+	}
+
 	return dataType, mathexp.Results{
 		Values: vals,
 	}, nil

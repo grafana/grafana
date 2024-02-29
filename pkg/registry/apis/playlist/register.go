@@ -2,7 +2,6 @@ package playlist
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,15 +15,15 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
@@ -34,7 +33,7 @@ type PlaylistAPIBuilder struct {
 }
 
 func RegisterAPIService(p playlistsvc.Service,
-	apiregistration grafanaapiserver.APIRegistrar,
+	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,
 ) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
@@ -68,28 +67,6 @@ func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		Version: runtime.APIVersionInternal,
 	})
 
-	gvk := playlist.PlaylistResourceInfo.GroupVersionKind()
-
-	// Add playlist thing
-	_ = scheme.AddFieldLabelConversionFunc(gvk,
-		runtime.FieldLabelConversionFunc(
-			func(label, value string) (string, string, error) {
-				if strings.HasPrefix(label, "grafana.app/") {
-					return label, value, nil
-				}
-
-				switch label {
-				case "metadata.name":
-					return label, value, nil
-				case "metadata.namespace":
-					return label, value, nil
-				default:
-					return "", "", fmt.Errorf("%q is not a known field selector: only %q, %q", label, "metadata.name", "metadata.namespace")
-				}
-			},
-		),
-	)
-
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
 	// if err := playlist.RegisterConversions(scheme); err != nil {
 	//   return err
@@ -102,6 +79,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
+	dualWrite bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(playlist.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
@@ -135,7 +113,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	storage[resource.StoragePath()] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
-	if optsGetter != nil {
+	if optsGetter != nil && dualWrite {
 		store, err := newStorage(scheme, optsGetter, legacyStore)
 		if err != nil {
 			return nil, err
@@ -151,7 +129,7 @@ func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinition
 	return playlist.GetOpenAPIDefinitions
 }
 
-func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *PlaylistAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil // no custom API routes
 }
 

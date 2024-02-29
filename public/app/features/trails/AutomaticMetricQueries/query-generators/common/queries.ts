@@ -1,6 +1,6 @@
 import { VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../../shared';
-import { simpleGraphBuilder } from '../../graph-builders/simple';
-import { AutoQueryDef, AutoQueryInfo } from '../../types';
+import { AutoQueryInfo } from '../../types';
+import { generateCommonAutoQueryInfo } from '../common/generator';
 
 import { AutoQueryParameters } from './types';
 
@@ -11,38 +11,29 @@ export function getGeneralBaseQuery(rate: boolean) {
   return rate ? GENERAL_RATE_BASE_QUERY : GENERAL_BASE_QUERY;
 }
 
+const aggLabels: Record<string, string> = {
+  avg: 'average',
+  sum: 'overall',
+};
+
+function getAggLabel(agg: string) {
+  return aggLabels[agg] || agg;
+}
+
 export function generateQueries({ agg, rate, unit }: AutoQueryParameters): AutoQueryInfo {
   const baseQuery = getGeneralBaseQuery(rate);
 
-  const main = createMainQuery(baseQuery, agg, unit);
+  const aggregationDescription = rate ? `${getAggLabel(agg)} per-second rate` : `${getAggLabel(agg)}`;
 
-  const breakdown = createBreakdownQuery(baseQuery, agg, unit);
+  const description = `${VAR_METRIC_EXPR} (${aggregationDescription})`;
 
-  return { preview: main, main: main, breakdown: breakdown, variants: [] };
-}
+  const mainQueryExpr = `${agg}(${baseQuery})`;
+  const breakdownQueryExpr = `${agg}(${baseQuery})by(${VAR_GROUP_BY_EXP})`;
 
-function createMainQuery(baseQuery: string, agg: string, unit: string): AutoQueryDef {
-  return {
-    title: `${VAR_METRIC_EXPR}`,
-    variant: 'graph',
+  return generateCommonAutoQueryInfo({
+    description,
+    mainQueryExpr,
+    breakdownQueryExpr,
     unit,
-    queries: [{ refId: 'A', expr: `${agg}(${baseQuery})` }],
-    vizBuilder: simpleGraphBuilder,
-  };
-}
-
-function createBreakdownQuery(baseQuery: string, agg: string, unit: string): AutoQueryDef {
-  return {
-    title: `${VAR_METRIC_EXPR}`,
-    variant: 'graph',
-    unit,
-    queries: [
-      {
-        refId: 'A',
-        expr: `${agg}(${baseQuery}) by(${VAR_GROUP_BY_EXP})`,
-        legendFormat: `{{${VAR_GROUP_BY_EXP}}}`,
-      },
-    ],
-    vizBuilder: simpleGraphBuilder,
-  };
+  });
 }

@@ -21,7 +21,7 @@ import {
   AxisPlacement,
   GraphDrawStyle,
   GraphFieldConfig,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
@@ -259,16 +259,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
                   return [dataMin, dataMax];
                 }
               : field.type === FieldType.enum
-              ? (u: uPlot, dataMin: number, dataMax: number) => {
-                  // this is the exhaustive enum (stable)
-                  let len = field.config.type!.enum!.text!.length;
+                ? (u: uPlot, dataMin: number, dataMax: number) => {
+                    // this is the exhaustive enum (stable)
+                    let len = field.config.type!.enum!.text!.length;
 
-                  return [-1, len];
+                    return [-1, len];
 
-                  // these are only values that are present
-                  // return [dataMin - 1, dataMax + 1]
-                }
-              : undefined,
+                    // these are only values that are present
+                    // return [dataMin - 1, dataMax + 1]
+                  }
+                : undefined,
           decimals: field.config.decimals,
         },
         field
@@ -519,8 +519,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     // Render thresholds in graph
     if (customConfig.thresholdsStyle && config.thresholds) {
-      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphTresholdsStyleMode.Off;
-      if (thresholdDisplay !== GraphTresholdsStyleMode.Off) {
+      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphThresholdsStyleMode.Off;
+      if (thresholdDisplay !== GraphThresholdsStyleMode.Off) {
         builder.addThresholds({
           config: customConfig.thresholdsStyle,
           thresholds: config.thresholds,

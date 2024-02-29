@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { TemplateSrv } from '@grafana/runtime';
 
@@ -11,6 +10,7 @@ import {
   TempoVariableQueryEditorProps,
   TempoVariableQueryType,
 } from './VariableQueryEditor';
+import { selectOptionInTest } from './_importedDependencies/test/helpers/selectOptionInTest';
 import { createTempoDatasource } from './mocks';
 
 const refId = 'TempoDatasourceVariableQueryEditor-VariableQuery';

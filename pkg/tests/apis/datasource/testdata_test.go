@@ -22,7 +22,6 @@ func TestTestDatasource(t *testing.T) {
 		AppModeProduction: false, // dev mode required for datasource connections
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServer,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},
 	})
@@ -108,7 +107,7 @@ func TestTestDatasource(t *testing.T) {
 	})
 
 	t.Run("Call subresources", func(t *testing.T) {
-		client := helper.Org1.Admin.Client.Resource(schema.GroupVersionResource{
+		client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
 			Group:    "testdata.datasource.grafana.app",
 			Version:  "v0alpha1",
 			Resource: "connections",

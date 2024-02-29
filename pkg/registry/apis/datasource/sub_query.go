@@ -3,14 +3,18 @@ package datasource
 import (
 	"context"
 	"encoding/json"
-	"io"
+	"fmt"
 	"net/http"
-	"time"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type subQueryREST struct {
@@ -20,11 +24,10 @@ type subQueryREST struct {
 var _ = rest.Connecter(&subQueryREST{})
 
 func (r *subQueryREST) New() runtime.Object {
-	return &metav1.Status{}
+	return &v0alpha1.QueryDataResponse{}
 }
 
-func (r *subQueryREST) Destroy() {
-}
+func (r *subQueryREST) Destroy() {}
 
 func (r *subQueryREST) ConnectMethods() []string {
 	return []string{"POST", "GET"}
@@ -34,70 +37,99 @@ func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
-func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, error) {
+func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, *v0alpha1.DataSourceRef, error) {
+	reqDTO := v0alpha1.GenericQueryRequest{}
 	// Simple URL to JSON mapping
 	if req.Method == http.MethodGet {
-		body := make(map[string]any, 0)
-		for k, v := range req.URL.Query() {
-			switch len(v) {
-			case 0:
-				body[k] = true
-			case 1:
-				body[k] = v[0] // TODO, convert numbers
+		query := v0alpha1.GenericDataQuery{
+			RefID:         "A",
+			MaxDataPoints: 1000,
+			IntervalMS:    10,
+		}
+		params := req.URL.Query()
+		for k := range params {
+			v := params.Get(k) // the singular value
+			switch k {
+			case "to":
+				reqDTO.To = v
+			case "from":
+				reqDTO.From = v
+			case "maxDataPoints":
+				query.MaxDataPoints, _ = strconv.ParseInt(v, 10, 64)
+			case "intervalMs":
+				query.IntervalMS, _ = strconv.ParseFloat(v, 64)
+			case "queryType":
+				query.QueryType = v
 			default:
-				body[k] = v // TODO, convert numbers
+				query.AdditionalProperties()[k] = v
 			}
 		}
-
-		var err error
-		dq := backend.DataQuery{
-			RefID: "A",
-			TimeRange: backend.TimeRange{
-				From: time.Now().Add(-1 * time.Hour), // last hour
-				To:   time.Now(),
-			},
-			MaxDataPoints: 1000,
-			Interval:      time.Second * 10,
-		}
-		dq.JSON, err = json.Marshal(body)
-		return []backend.DataQuery{dq}, err
+		reqDTO.Queries = []v0alpha1.GenericDataQuery{query}
+	} else if err := web.Bind(req, &reqDTO); err != nil {
+		return nil, nil, err
 	}
 
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		return nil, err
-	}
-	return readQueries(body)
+	return legacydata.ToDataSourceQueries(reqDTO)
 }
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	pluginCtx, err := r.builder.getDataSourcePluginContext(ctx, name)
+	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		return nil, err
 	}
+	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		queries, err := r.readQueries(req)
+		queries, dsRef, err := r.readQueries(req)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
+		if dsRef != nil && dsRef.UID != name {
+			responder.Error(fmt.Errorf("expected the datasource in the request url and body to match"))
+			return
+		}
 
-		queryResponse, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
-			PluginContext: *pluginCtx,
+		qdr, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
+			PluginContext: pluginCtx,
 			Queries:       queries,
-			//  Headers: // from context
 		})
 		if err != nil {
-			return
-		}
-
-		jsonRsp, err := json.Marshal(queryResponse)
-		if err != nil {
 			responder.Error(err)
 			return
 		}
-		w.WriteHeader(200)
-		_, _ = w.Write(jsonRsp)
+
+		statusCode := http.StatusOK
+		for _, res := range qdr.Responses {
+			if res.Error != nil {
+				statusCode = http.StatusMultiStatus
+			}
+		}
+		if statusCode != http.StatusOK {
+			requestmeta.WithDownstreamStatusSource(ctx)
+		}
+
+		// TODO... someday :) can return protobuf for machine-machine communication
+		// will avoid some hops the current response workflow (for external plugins)
+		// 1. Plugin:
+		//     creates: golang structs
+		//     returns: arrow + protobuf   |
+		// 2. Client:                      | direct when local/non grpc
+		//     reads: protobuf+arrow       V
+		//     returns: golang structs
+		// 3. Datasource Server (eg right here):
+		//     reads: golang structs
+		//     returns: JSON
+		// 4. Query service (alerting etc):
+		//     reads: JSON?  (TODO! raw output from 1???)
+		//     returns: JSON (after more operations)
+		// 5. Browser
+		//     reads: JSON
+		w.WriteHeader(statusCode)
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(qdr)
+		if err != nil {
+			responder.Error(err)
+		}
 	}), nil
 }

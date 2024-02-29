@@ -14,9 +14,18 @@ interface TableCellInspectModalProps {
 export function TableCellInspectModal({ value, onDismiss, mode }: TableCellInspectModalProps) {
   let displayValue = value;
   if (isString(value)) {
-    try {
-      value = JSON.parse(value);
-    } catch {} // ignore errors
+    const trimmedValue = value.trim();
+    // Exclude numeric strings like '123' from being displayed in code/JSON mode
+    if (trimmedValue[0] === '{' || trimmedValue[0] === '[' || mode === 'code') {
+      try {
+        value = JSON.parse(value);
+        mode = 'code';
+      } catch {
+        mode = 'text';
+      } // ignore errors
+    } else {
+      mode = 'text';
+    }
   } else {
     displayValue = JSON.stringify(value, null, ' ');
   }

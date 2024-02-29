@@ -95,6 +95,7 @@ export const Pages = {
            */
           addAnnotationCTA: Components.CallToActionCard.button('Add annotation query'),
           addAnnotationCTAV2: Components.CallToActionCard.buttonV2('Add annotation query'),
+          annotations: 'data-testid list-annotations',
         },
         Settings: {
           name: 'Annotations settings name input',
@@ -103,6 +104,10 @@ export const Pages = {
           panelFilterSelect: 'data-testid annotations-panel-filter',
           showInLabel: 'show-in-label',
           previewInDashboard: 'data-testid annotations-preview',
+          delete: 'data-testid annotations-delete',
+          apply: 'data-testid annotations-apply',
+          enable: 'data-testid annotation-enable',
+          hide: 'data-testid annotation-hide',
         },
       },
       Variables: {
@@ -137,23 +142,22 @@ export const Pages = {
             generalLabelInputV2: 'data-testid Variable editor Form Label field',
             generalHideSelect: 'Variable editor Form Hide select',
             generalHideSelectV2: 'data-testid Variable editor Form Hide select',
-            selectionOptionsMultiSwitch: 'Variable editor Form Multi switch',
-            selectionOptionsIncludeAllSwitch: 'Variable editor Form IncludeAll switch',
-            selectionOptionsCustomAllInput: 'Variable editor Form IncludeAll field',
-            selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
-            previewOfValuesOption: 'Variable editor Preview of Values option',
-            submitButton: 'Variable editor Submit button',
+            selectionOptionsMultiSwitch: 'data-testid Variable editor Form Multi switch',
+            selectionOptionsIncludeAllSwitch: 'data-testid Variable editor Form IncludeAll switch',
+            selectionOptionsCustomAllInput: 'data-testid Variable editor Form IncludeAll field',
+            previewOfValuesOption: 'data-testid Variable editor Preview of Values option',
+            submitButton: 'data-testid Variable editor Run Query button',
             applyButton: 'data-testid Variable editor Apply button',
           },
           QueryVariable: {
-            queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
+            queryOptionsDataSourceSelect: Components.DataSourcePicker.inputV2,
             queryOptionsRefreshSelect: 'Variable editor Form Query Refresh select',
             queryOptionsRefreshSelectV2: 'data-testid Variable editor Form Query Refresh select',
             queryOptionsRegExInput: 'Variable editor Form Query RegEx field',
             queryOptionsRegExInputV2: 'data-testid Variable editor Form Query RegEx field',
             queryOptionsSortSelect: 'Variable editor Form Query Sort select',
             queryOptionsSortSelectV2: 'data-testid Variable editor Form Query Sort select',
-            queryOptionsQueryInput: 'Variable editor Form Default Variable Query Editor textarea',
+            queryOptionsQueryInput: 'data-testid Variable editor Form Default Variable Query Editor textarea',
             valueGroupsTagsEnabledSwitch: 'Variable editor Form Query UseTags switch',
             valueGroupsTagsTagsQueryInput: 'Variable editor Form Query TagsQuery field',
             valueGroupsTagsTagsValuesQueryInput: 'Variable editor Form Query TagsValuesQuery field',
@@ -174,6 +178,18 @@ export const Pages = {
           },
           IntervalVariable: {
             intervalsValueInput: 'data-testid interval variable intervals input',
+            autoEnabledCheckbox: 'data-testid interval variable auto value checkbox',
+            stepCountIntervalSelect: 'data-testid interval variable step count input',
+            minIntervalInput: 'data-testid interval variable mininum interval input',
+          },
+          GroupByVariable: {
+            dataSourceSelect: Components.DataSourcePicker.inputV2,
+            infoText: 'data-testid group by variable info text',
+            modeToggle: 'data-testid group by variable mode toggle',
+          },
+          AdHocFiltersVariable: {
+            datasourceSelect: Components.DataSourcePicker.inputV2,
+            infoText: 'data-testid ad-hoc filters variable info text',
           },
         },
       },
@@ -328,6 +344,9 @@ export const Pages = {
     },
     UsersListPage: {
       container: 'data-testid users-list-page',
+    },
+    UserAnonListPage: {
+      container: 'data-testid user-anon-list-page',
     },
     UsersListPublicDashboardsPage: {
       container: 'data-testid users-list-public-dashboards-page',

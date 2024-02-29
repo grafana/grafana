@@ -1,7 +1,7 @@
 import { configureStore as reduxConfigureStore, createListenerMiddleware } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 
-import { togglesApi } from 'app/features/admin/AdminFeatureTogglesAPI';
+import { migrateToCloudAPI } from 'app/features/admin/migrate-to-cloud/api';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { StoreState } from 'app/types/store';
@@ -31,7 +31,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         alertingApi.middleware,
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
-        togglesApi.middleware,
+        migrateToCloudAPI.middleware,
         shareToSlackApi.middleware
       ),
     devTools: process.env.NODE_ENV !== 'production',

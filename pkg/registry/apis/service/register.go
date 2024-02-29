@@ -12,11 +12,11 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*ServiceAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*ServiceAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type ServiceAPIBuilder struct{}
@@ -25,10 +25,11 @@ func NewServiceAPIBuilder() *ServiceAPIBuilder {
 	return &ServiceAPIBuilder{}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *ServiceAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *ServiceAPIBuilder {
+	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+		return nil // skip registration unless opting into aggregator mode
 	}
+
 	builder := NewServiceAPIBuilder()
 	apiregistration.RegisterAPI(NewServiceAPIBuilder())
 	return builder
@@ -64,6 +65,7 @@ func (b *ServiceAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
+	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(service.GROUP, scheme, metav1.ParameterCodec, codecs)
 
@@ -83,6 +85,6 @@ func (b *ServiceAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server
-func (b *ServiceAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *ServiceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
 }

@@ -35,14 +35,15 @@ func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		pluginCtx, err := r.builder.getDataSourcePluginContext(ctx, name)
+		pluginCtx, err := r.builder.getPluginContext(ctx, name)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
+		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 
 		healthResponse, err := r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
-			PluginContext: *pluginCtx,
+			PluginContext: pluginCtx,
 		})
 		if err != nil {
 			responder.Error(err)

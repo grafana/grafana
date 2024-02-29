@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import { render, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import { setupServer } from 'msw/node';
 import React from 'react';
@@ -8,8 +9,8 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 import { selectors } from '@grafana/e2e-selectors/src';
 import { config, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import 'whatwg-fetch';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import {
@@ -156,7 +157,9 @@ describe('CloneRuleEditor', function () {
         'folder-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
       });
 
-      mockSearchApi(server).search([]);
+      mockSearchApi(server).search([
+        mockDashboardSearchItem({ title: 'folder-one', uid: '123', type: DashboardSearchItemType.DashDB }),
+      ]);
       mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
 
       render(<CloneRuleEditor sourceRuleId={{ uid: 'grafana-rule-1', ruleSourceName: 'grafana' }} />, {
@@ -209,7 +212,15 @@ describe('CloneRuleEditor', function () {
         rules: [originRule],
       });
 
-      mockSearchApi(server).search([]);
+      mockSearchApi(server).search([
+        mockDashboardSearchItem({
+          title: 'folder-one',
+          uid: '123',
+          type: DashboardSearchItemType.DashDB,
+          folderTitle: 'folder-one',
+          folderUid: '123',
+        }),
+      ]);
       mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
 
       render(
@@ -362,3 +373,18 @@ describe('CloneRuleEditor', function () {
     });
   });
 });
+
+function mockDashboardSearchItem(searchItem: Partial<DashboardSearchItem>) {
+  return {
+    title: '',
+    uid: '',
+    type: DashboardSearchItemType.DashDB,
+    url: '',
+    uri: '',
+    items: [],
+    tags: [],
+    slug: '',
+    isStarred: false,
+    ...searchItem,
+  };
+}

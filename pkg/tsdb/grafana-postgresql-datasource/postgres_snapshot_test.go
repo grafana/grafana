@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -15,9 +14,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 
 	_ "github.com/lib/pq"
@@ -53,7 +52,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		t.Skip()
 	}
 
-	openDB := func() *sql.DB {
+	getCnn := func() (*pgx.ConnConfig, error) {
 		host := os.Getenv("POSTGRES_HOST")
 		if host == "" {
 			host = "localhost"
@@ -63,12 +62,10 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 			port = "5432"
 		}
 
-		connStr := fmt.Sprintf("user=grafanatest password=grafanatest host=%s port=%s dbname=grafanadstest sslmode=disable",
+		cnnString := fmt.Sprintf("user=grafanatest password=grafanatest host=%s port=%s dbname=grafanadstest sslmode=disable",
 			host, port)
 
-		db, err := sql.Open("postgres", connStr)
-		require.NoError(t, err)
-		return db
+		return pgx.ParseConfig(cnnString)
 	}
 
 	sqlQueryCommentRe := regexp.MustCompile(`^-- (.+)\n`)
@@ -121,6 +118,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		{format: "time_series", name: "simple"},
 		{format: "time_series", name: "7x_compat_metric_label"},
 		{format: "time_series", name: "convert_to_float64"},
+		{format: "time_series", name: "convert_to_float64_not"},
 		{format: "time_series", name: "fill_null"},
 		{format: "time_series", name: "fill_previous"},
 		{format: "time_series", name: "fill_value"},
@@ -131,6 +129,8 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		{format: "table", name: "types_other"},
 		{format: "table", name: "timestamp_convert_bigint"},
 		{format: "table", name: "timestamp_convert_integer"},
+		{format: "table", name: "timestamp_convert_real"},
+		{format: "table", name: "timestamp_convert_double"},
 	}
 
 	for _, test := range tt {
@@ -141,21 +141,9 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 				sqleng.Interpolate = origInterpolate
 			})
 
-			sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-				return sql, nil
+			sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+				return sql
 			}
-
-			db := openDB()
-
-			t.Cleanup((func() {
-				_, err := db.Exec("DROP TABLE tbl")
-				require.NoError(t, err)
-				err = db.Close()
-				require.NoError(t, err)
-			}))
-
-			cfg := setting.NewCfg()
-			cfg.DataPath = t.TempDir()
 
 			jsonData := sqleng.JsonData{
 				MaxOpenConns:        0,
@@ -170,17 +158,19 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 				DecryptedSecureJSONData: map[string]string{},
 			}
 
-			config := sqleng.DataPluginConfiguration{
-				DSInfo:            dsInfo,
-				MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-				RowLimit:          1000000,
-			}
-
-			queryResultTransformer := postgresQueryResultTransformer{}
-
 			logger := log.New()
-			handler, err := sqleng.NewQueryDataHandler(cfg, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
-				logger)
+
+			cnn, err := getCnn()
+			require.NoError(t, err)
+
+			db, handler, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnn, logger, backend.DataSourceInstanceSettings{})
+
+			t.Cleanup((func() {
+				_, err := db.Exec("DROP TABLE tbl")
+				require.NoError(t, err)
+				err = db.Close()
+				require.NoError(t, err)
+			}))
 
 			require.NoError(t, err)
 

@@ -1,9 +1,11 @@
-import { toDataFrame, FieldType } from '@grafana/data';
+import { toDataFrame, FieldType, AbstractQuery, AbstractLabelOperator } from '@grafana/data';
 
 import {
+  abstractQueryToExpr,
   escapeLabelValueInExactSelector,
   getLabelTypeFromFrame,
   isBytesString,
+  processLabels,
   unescapeLabelValue,
 } from './languageUtils';
 import { LabelType } from './types';
@@ -88,5 +90,40 @@ describe('getLabelTypeFromFrame', () => {
   });
   it('returns null for frame without types', () => {
     expect(getLabelTypeFromFrame('job', frameWithoutTypes, 0)).toBe(null);
+  });
+});
+
+describe('abstractQueryToExpr', () => {
+  it('export abstract query to expr', () => {
+    const abstractQuery: AbstractQuery = {
+      refId: 'bar',
+      labelMatchers: [
+        { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
+        { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
+        { name: 'label3', operator: AbstractLabelOperator.EqualRegEx, value: 'value3' },
+        { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
+      ],
+    };
+
+    expect(abstractQueryToExpr(abstractQuery)).toBe(
+      '{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}'
+    );
+  });
+});
+
+describe('processLabels', () => {
+  it('export abstract query to expr', () => {
+    const labels: Array<{ [key: string]: string }> = [
+      { label1: 'value1' },
+      { label2: 'value2' },
+      { label3: 'value3' },
+      { label1: 'value1' },
+      { label1: 'value1b' },
+    ];
+
+    expect(processLabels(labels)).toEqual({
+      keys: ['label1', 'label2', 'label3'],
+      values: { label1: ['value1', 'value1b'], label2: ['value2'], label3: ['value3'] },
+    });
   });
 });

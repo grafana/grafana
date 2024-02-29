@@ -2,20 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/grafana/grafana/pkg/apis"
-)
-
-const (
-	GROUP   = "*.datasource.grafana.app"
-	VERSION = "v0alpha1"
-)
-
-var GenericConnectionResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"connections", "connection", "DataSourceConnection",
-	func() runtime.Object { return &DataSourceConnection{} },
-	func() runtime.Object { return &DataSourceConnectionList{} },
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -33,7 +21,6 @@ type DataSourceConnection struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceConnectionList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []DataSourceConnection `json:"items,omitempty"`
@@ -53,5 +40,5 @@ type HealthCheckResult struct {
 	Message string `json:"message,omitempty"`
 
 	// Spec depends on the the plugin
-	Details *Unstructured `json:"details,omitempty"`
+	Details *common.Unstructured `json:"details,omitempty"`
 }

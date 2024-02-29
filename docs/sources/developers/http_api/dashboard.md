@@ -37,6 +37,8 @@ The uid can have a maximum length of 40 characters.
 
 Creates a new dashboard or updates an existing dashboard. When updating existing dashboards, if you do not define the `folderId` or the `folderUid` property, then the dashboard(s) are moved to the root level. (You need to define only one property, not both).
 
+> **Note:** This endpoint is not intended for creating folders, use `POST /api/folders` for that.
+
 **Required permissions**
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.

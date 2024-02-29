@@ -12,14 +12,14 @@ export type E2EFunctionWithOnlyOptions = (options?: CypressOptions) => Cypress.C
 export type TypeSelectors<S> = S extends StringSelector
   ? E2EFunctionWithOnlyOptions
   : S extends FunctionSelector
-  ? E2EFunction
-  : S extends CssSelector
-  ? E2EFunction
-  : S extends UrlSelector
-  ? E2EVisit & Omit<E2EFunctions<S>, 'url'>
-  : S extends Record<string, string | FunctionSelector | CssSelector | UrlSelector | Selectors>
-  ? E2EFunctions<S>
-  : S;
+    ? E2EFunction
+    : S extends CssSelector
+      ? E2EFunction
+      : S extends UrlSelector
+        ? E2EVisit & Omit<E2EFunctions<S>, 'url'>
+        : S extends Record<string, string | FunctionSelector | CssSelector | UrlSelector | Selectors>
+          ? E2EFunctions<S>
+          : S;
 
 export type E2EFunctions<S extends Selectors> = {
   [P in keyof S]: TypeSelectors<S[P]>;

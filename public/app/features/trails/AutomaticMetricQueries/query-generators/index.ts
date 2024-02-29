@@ -1,14 +1,13 @@
-import bucket from './bucket';
 import general from './common';
+import { createHistogramQueryDefs } from './histogram';
+import { createSummaryQueryDefs } from './summary';
 import { MetricQueriesGenerator } from './types';
 
 const SUFFIX_TO_ALTERNATIVE_GENERATOR: Record<string, MetricQueriesGenerator> = {
-  bucket: bucket.generator,
+  sum: createSummaryQueryDefs,
+  bucket: createHistogramQueryDefs,
 };
 
 export function getQueryGeneratorFor(suffix?: string) {
-  if (!suffix || suffix === '') {
-    return null;
-  }
-  return SUFFIX_TO_ALTERNATIVE_GENERATOR[suffix] || general.generator;
+  return (suffix && SUFFIX_TO_ALTERNATIVE_GENERATOR[suffix]) || general.generator;
 }

@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.3.0-pre";
+export const pluginVersion = "11.0.0-pre";
 
 export enum VizDisplayMode {
   Candles = 'candles',
@@ -64,7 +64,7 @@ export const defaultCandlestickColors: Partial<CandlestickColors> = {
   up: 'green',
 };
 
-export interface Options extends common.OptionsWithLegend {
+export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
   /**
    * Sets the style of the candlesticks
    */

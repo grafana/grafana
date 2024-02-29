@@ -43,11 +43,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/cloudmigrationimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
@@ -64,13 +67,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
-	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
-	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/oasimpl"
 	extsvcreg "github.com/grafana/grafana/pkg/services/extsvcauth/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -130,6 +130,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeysimpl"
 	"github.com/grafana/grafana/pkg/services/slack"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoSettingsImpl "github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
@@ -137,6 +138,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
@@ -343,8 +345,8 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
-	entityDB.ProvideEntityDB,
-	wire.Bind(new(sqlstash.EntityDB), new(*entityDB.EntityDB)),
+	dbimpl.ProvideEntityDB,
+	wire.Bind(new(entityDB.EntityDBInterface), new(*dbimpl.EntityDB)),
 	sqlstash.ProvideSQLEntityServer,
 	resolver.ProvideEntityReferenceResolver,
 	teamimpl.ProvideService,
@@ -369,8 +371,6 @@ var wireBasicSet = wire.NewSet(
 	supportbundlesimpl.ProvideService,
 	extsvcaccounts.ProvideExtSvcAccountsService,
 	wire.Bind(new(serviceaccounts.ExtSvcAccountsService), new(*extsvcaccounts.ExtSvcAccountsService)),
-	oasimpl.ProvideService,
-	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
 	extsvcreg.ProvideExtSvcRegistry,
 	wire.Bind(new(extsvcauth.ExternalServiceRegistry), new(*extsvcreg.Registry)),
 	anonstore.ProvideAnonDBStore,
@@ -379,9 +379,11 @@ var wireBasicSet = wire.NewSet(
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
 	ssoSettingsImpl.ProvideService,
-	wire.Bind(new(ssosettings.Service), new(*ssoSettingsImpl.SSOSettingsService)),
+	wire.Bind(new(ssosettings.Service), new(*ssoSettingsImpl.Service)),
 	idimpl.ProvideService,
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
+	cloudmigrationimpl.ProvideService,
+	// Kubernetes API server
 	slack.ProvideService,
 	wire.Bind(new(slack.Service), new(*slack.SlackService)),
 	grafanaapiserver.WireSet,
@@ -439,7 +441,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	return &Server{}, nil
 }
 
-func InitializeForTest(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
+func InitializeForTest(t sqlutil.ITestDB, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
 	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}}, nil
 }
@@ -461,4 +463,10 @@ func InitializeForCLITarget(cfg *setting.Cfg) (ModuleRunner, error) {
 func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*ModuleServer, error) {
 	wire.Build(wireExtsModuleServerSet)
 	return &ModuleServer{}, nil
+}
+
+// Initialize the standalone APIServer factory
+func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
+	wire.Build(wireExtsStandaloneAPIServerSet)
+	return &standalone.DummyAPIFactory{}, nil // Wire will replace this with a real interface
 }

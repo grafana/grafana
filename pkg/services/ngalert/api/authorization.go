@@ -21,31 +21,48 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Grafana Paths
 	case http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace")))
 	case http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace")))
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace")))
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules/{Namespace}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace")))
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules",
 		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}/export":
-		scope := dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace"))
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, scope)
 	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}":
-		scope := dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace"))
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingRuleUpdate, scope),
 			ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
 			ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 		)
-		// Grafana rule state history paths
+
+	// Grafana rule state history paths
 	case http.MethodGet + "/api/v1/rules/history":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+
+	// Grafana receivers paths
+	case http.MethodGet + "/api/v1/notifications/receivers":
+		// additional authorization is done at the service level
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversList),
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		)
+	case http.MethodGet + "/api/v1/notifications/receivers/{Name}":
+		// TODO: scope to :Name
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		)
 
 	// Grafana unified alerting upgrade paths
 	case http.MethodGet + "/api/v1/upgrade/org":
@@ -236,8 +253,12 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodPost + "/api/v1/provisioning/alert-rules",
 		http.MethodPut + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}",
-		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
+		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
+		http.MethodDelete + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		eval = ac.EvalPermission(ac.ActionAlertingProvisioningWrite) // organization scope
+	case http.MethodGet + "/api/v1/notifications/time-intervals/{name}",
+		http.MethodGet + "/api/v1/notifications/time-intervals":
+		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsRead), ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead), ac.EvalPermission(ac.ActionAlertingProvisioningRead))
 	}
 
 	if eval != nil {

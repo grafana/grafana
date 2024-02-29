@@ -2,18 +2,13 @@ package datasource
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis"
-	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/kinds"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 var (
@@ -25,9 +20,10 @@ var (
 )
 
 type connectionAccess struct {
-	resourceInfo   apis.ResourceInfo
+	pluginID       string
+	resourceInfo   common.ResourceInfo
 	tableConverter rest.TableConvertor
-	builder        *DataSourceAPIBuilder
+	datasources    PluginDatasourceProvider
 }
 
 func (s *connectionAccess) New() runtime.Object {
@@ -57,39 +53,9 @@ func (s *connectionAccess) ConvertToTable(ctx context.Context, object runtime.Ob
 }
 
 func (s *connectionAccess) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	ds, err := s.builder.getDataSource(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	return s.asConnection(ds), nil
+	return s.datasources.Get(ctx, s.pluginID, name)
 }
 
 func (s *connectionAccess) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	result := &v0alpha1.DataSourceConnectionList{
-		Items: []v0alpha1.DataSourceConnection{},
-	}
-	vals, err := s.builder.getDataSources(ctx)
-	if err == nil {
-		for _, ds := range vals {
-			result.Items = append(result.Items, *s.asConnection(ds))
-		}
-	}
-	return result, err
-}
-
-func (s *connectionAccess) asConnection(ds *datasources.DataSource) *v0alpha1.DataSourceConnection {
-	v := &v0alpha1.DataSourceConnection{
-		TypeMeta: s.resourceInfo.TypeMeta(),
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              ds.UID,
-			Namespace:         s.builder.namespacer(ds.OrgID),
-			CreationTimestamp: metav1.NewTime(ds.Created),
-			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
-		},
-		Title: ds.Name,
-	}
-	v.UID = utils.CalculateClusterWideUID(v) // indicates if the value changed on the server
-	meta := kinds.MetaAccessor(v)
-	meta.SetUpdatedTimestamp(&ds.Updated)
-	return v
+	return s.datasources.List(ctx, s.pluginID)
 }

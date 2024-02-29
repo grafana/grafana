@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apis"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var ExternalNameResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+var ExternalNameResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"externalnames", "externalname", "ExternalName",
 	func() runtime.Object { return &ExternalName{} },
 	func() runtime.Object { return &ExternalNameList{} },

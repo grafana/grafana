@@ -93,7 +93,7 @@ describe('TransformationsEditor', () => {
 
         expect(screen.queryByTestId(debuggerSelector)).toBeNull();
 
-        const debugButton = screen.getByLabelText(selectors.components.QueryEditorRow.actionButton('Debug'));
+        const debugButton = screen.getByTestId(selectors.components.QueryEditorRow.actionButton('Debug'));
         await userEvent.click(debugButton);
 
         expect(screen.getByTestId(debuggerSelector)).toBeInTheDocument();

@@ -58,6 +58,7 @@
     "join-by-labels": (import '../dev-dashboards/transforms/join-by-labels.json'),
     "lazy_loading": (import '../dev-dashboards/panel-common/lazy_loading.json'),
     "linked-viz": (import '../dev-dashboards/panel-common/linked-viz.json'),
+    "live-publish": (import '../dev-dashboards/live/live-publish.json'),
     "loki_fakedata": (import '../dev-dashboards/datasource-loki/loki_fakedata.json'),
     "loki_query_splitting": (import '../dev-dashboards/datasource-loki/loki_query_splitting.json'),
     "migrations": (import '../dev-dashboards/migrations/migrations.json'),

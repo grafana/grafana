@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -42,8 +41,8 @@ func TestIntegrationMySQL(t *testing.T) {
 		sqleng.Interpolate = origInterpolate
 	})
 
-	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-		return sql, nil
+	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+		return sql
 	}
 
 	dsInfo := sqleng.DataSourceInfo{
@@ -67,7 +66,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 	db := InitMySQLTestDB(t, config.DSInfo.JsonData)
 
-	exe, err := sqleng.NewQueryDataHandler(setting.NewCfg(), db, config, &rowTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
+	exe, err := sqleng.NewQueryDataHandler("", db, config, &rowTransformer, newMysqlMacroEngine(logger, ""), logger)
 
 	require.NoError(t, err)
 
@@ -330,7 +329,8 @@ func TestIntegrationMySQL(t *testing.T) {
 								"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series"
 							}`),
-							RefID: "A",
+							RefID:    "A",
+							Interval: time.Second * 60,
 							TimeRange: backend.TimeRange{
 								From: fromStart,
 								To:   fromStart.Add(30 * time.Minute),
@@ -1178,7 +1178,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 			queryResultTransformer := mysqlQueryResultTransformer{}
 
-			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), db, config, &queryResultTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
+			handler, err := sqleng.NewQueryDataHandler("", db, config, &queryResultTransformer, newMysqlMacroEngine(logger, ""), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {

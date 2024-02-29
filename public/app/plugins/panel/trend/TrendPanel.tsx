@@ -11,7 +11,7 @@ import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { findFieldIndex } from 'app/features/dimensions';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
-import { prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
+import { isTooltipScrollable, prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -26,6 +26,8 @@ export const TrendPanel = ({
   replaceVariables,
   id,
 }: PanelProps<Options>) => {
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
+
   const { dataLinkPostProcessor } = usePanelContext();
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
@@ -124,7 +126,7 @@ export const TrendPanel = ({
             <KeyboardPlugin config={uPlotConfig} />
             {options.tooltip.mode !== TooltipDisplayMode.None && (
               <>
-                {config.featureToggles.newVizTooltips ? (
+                {showNewVizTooltips ? (
                   <TooltipPlugin2
                     config={uPlotConfig}
                     hoverMode={
@@ -140,9 +142,12 @@ export const TrendPanel = ({
                           mode={options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
+                          scrollable={isTooltipScrollable(options.tooltip)}
                         />
                       );
                     }}
+                    maxWidth={options.tooltip.maxWidth}
+                    maxHeight={options.tooltip.maxHeight}
                   />
                 ) : (
                   <TooltipPlugin

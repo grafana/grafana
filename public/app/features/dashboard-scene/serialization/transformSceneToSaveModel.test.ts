@@ -21,7 +21,6 @@ import {
   SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
-  SceneVariable,
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
@@ -31,6 +30,7 @@ import { reduceTransformRegistryItem } from 'app/features/transformers/editors/R
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -41,6 +41,7 @@ import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
 import snapshotableWithRowsDashboardJson from './testfiles/snapshotable_with_rows.json';
 import {
   buildGridItemForLibPanel,
+  buildGridItemForLibraryPanelWidget,
   buildGridItemForPanel,
   transformSaveModelToScene,
 } from './transformSaveModelToScene';
@@ -185,6 +186,7 @@ describe('transformSceneToSaveModel', () => {
           time_options: ['5m', '15m', '30m'],
           hidden: true,
         },
+        links: [{ ...NEW_LINK, title: 'Link 1' }],
       };
       const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as any, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
@@ -224,7 +226,7 @@ describe('transformSceneToSaveModel', () => {
       const rowRepeater = rowWithRepeat.state.$behaviors![0] as RowRepeaterBehavior;
 
       // trigger row repeater
-      rowRepeater.variableDependency?.variableUpdatesCompleted(new Set<SceneVariable>([variable]));
+      rowRepeater.variableDependency?.variableUpdateCompleted(variable, true);
 
       // Make sure the repeated rows have been added to runtime scene model
       expect(grid.state.children.length).toBe(5);
@@ -276,6 +278,39 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.gridPos?.w).toBe(12);
       expect(saveModel.gridPos?.h).toBe(8);
     });
+    it('Given panel with links', () => {
+      const gridItem = buildGridItemFromPanelSchema({
+        title: '',
+        type: 'text-plugin-34',
+        gridPos: { x: 1, y: 2, w: 12, h: 8 },
+        links: [
+          // @ts-expect-error Panel link is wrongly typed as DashboardLink
+          {
+            title: 'Link 1',
+            url: 'http://some.test.link1',
+          },
+          // @ts-expect-error Panel link is wrongly typed as DashboardLink
+          {
+            targetBlank: true,
+            title: 'Link 2',
+            url: 'http://some.test.link2',
+          },
+        ],
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.links).toEqual([
+        {
+          title: 'Link 1',
+          url: 'http://some.test.link1',
+        },
+        {
+          targetBlank: true,
+          title: 'Link 2',
+          url: 'http://some.test.link2',
+        },
+      ]);
+    });
   });
 
   describe('Library panels', () => {
@@ -316,6 +351,30 @@ describe('transformSceneToSaveModel', () => {
       expect(result.title).toBe('A panel');
       expect(result.transformations).toBeUndefined();
       expect(result.fieldConfig).toBeUndefined();
+    });
+
+    it('given a library panel widget', () => {
+      const panel = buildGridItemFromPanelSchema({
+        id: 4,
+        gridPos: {
+          h: 8,
+          w: 12,
+          x: 0,
+          y: 0,
+        },
+        type: 'add-library-panel',
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.id).toBe(4);
+      expect(result.gridPos).toEqual({
+        h: 8,
+        w: 12,
+        x: 0,
+        y: 0,
+      });
+      expect(result.type).toBe('add-library-panel');
     });
   });
 
@@ -529,6 +588,37 @@ describe('transformSceneToSaveModel', () => {
         type: 'datasource',
         uid: SHARED_DASHBOARD_QUERY,
       });
+    });
+
+    it('Given panel with query caching options', () => {
+      const panel = buildGridItemFromPanelSchema({
+        datasource: {
+          type: 'grafana-testdata',
+          uid: 'abc',
+        },
+        cacheTimeout: '10',
+        queryCachingTTL: 200000,
+        maxDataPoints: 100,
+        targets: [
+          {
+            refId: 'A',
+            expr: 'A',
+            datasource: {
+              type: 'grafana-testdata',
+              uid: 'abc',
+            },
+          },
+          {
+            refId: 'B',
+            expr: 'B',
+          },
+        ],
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.cacheTimeout).toBe('10');
+      expect(result.queryCachingTTL).toBe(200000);
     });
   });
 
@@ -817,15 +907,14 @@ describe('transformSceneToSaveModel', () => {
         expect(result.panels?.[0].gridPos).toEqual({ w: 24, x: 0, y: 0, h: 20 });
       });
 
-      // TODO: Uncomment when we support links
-      // it('should remove links', async () => {
-      //   const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
-      //   activateFullSceneTree(scene);
-      //   const snapshot = transformSceneToSaveModel(scene, true);
-      //   expect(snapshot.links?.length).toBe(1);
-      //   const result = trimDashboardForSnapshot('Snap title', getTimeRange({ from: 'now-6h', to: 'now' }), snapshot);
-      //   expect(result.links?.length).toBe(0);
-      // });
+      it('should remove links', async () => {
+        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
+        activateFullSceneTree(scene);
+        const snapshot = transformSceneToSaveModel(scene, true);
+        expect(snapshot.links?.length).toBe(1);
+        const result = trimDashboardForSnapshot('Snap title', getTimeRange({ from: 'now-6h', to: 'now' }), snapshot);
+        expect(result.links?.length).toBe(0);
+      });
     });
   });
 });
@@ -833,6 +922,9 @@ describe('transformSceneToSaveModel', () => {
 export function buildGridItemFromPanelSchema(panel: Partial<Panel>): SceneGridItemLike {
   if (panel.libraryPanel) {
     return buildGridItemForLibPanel(new PanelModel(panel))!;
+  } else if (panel.type === 'add-library-panel') {
+    return buildGridItemForLibraryPanelWidget(new PanelModel(panel))!;
   }
+
   return buildGridItemForPanel(new PanelModel(panel));
 }

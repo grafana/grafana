@@ -11,9 +11,13 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.3.0-pre";
+export const pluginVersion = "11.0.0-pre";
 
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
+  /**
+   * Bucket count (approx)
+   */
+  bucketCount?: number;
   /**
    * Offset buckets by this amount
    */
@@ -29,6 +33,7 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
 }
 
 export const defaultOptions: Partial<Options> = {
+  bucketCount: 30,
   bucketOffset: 0,
 };
 

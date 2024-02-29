@@ -3,11 +3,11 @@ import pluralize from 'pluralize';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { logInfo, LogMessages } from '../../Analytics';
+import { LogMessages, logInfo } from '../../Analytics';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
@@ -19,6 +19,7 @@ import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
+import { decodeGrafanaNamespace } from '../expressions/util';
 
 import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditRuleGroupModal';
@@ -204,9 +205,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   // ungrouped rules are rules that are in the "default" group name
   const groupName = isListView ? (
-    <RuleLocation namespace={namespace.name} />
+    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />
   ) : (
-    <RuleLocation namespace={namespace.name} group={group.name} />
+    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />
   );
 
   const closeEditModal = (saved = false) => {
@@ -278,10 +279,16 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           group={group}
           onClose={() => closeEditModal()}
           folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder) : undefined}
+          folderUid={folderUID}
         />
       )}
       {isReorderingGroup && (
-        <ReorderCloudGroupModal group={group} namespace={namespace} onClose={() => setIsReorderingGroup(false)} />
+        <ReorderCloudGroupModal
+          group={group}
+          folderUid={folderUID}
+          namespace={namespace}
+          onClose={() => setIsReorderingGroup(false)}
+        />
       )}
       <ConfirmModal
         isOpen={isDeletingGroup}

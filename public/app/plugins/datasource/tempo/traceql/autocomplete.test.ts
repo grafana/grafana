@@ -137,8 +137,8 @@ describe('CompletionProvider', () => {
     const { provider, model } = setup('', 0, v1Tags);
     const result = await provider.provideCompletionItems(model, emptyPosition);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
-      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
+      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}$0 }` })),
+      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}$0 }` })),
       expect.objectContaining({ label: 'bar', insertText: '{ .bar' }),
       expect.objectContaining({ label: 'foo', insertText: '{ .foo' }),
       expect.objectContaining({ label: 'status', insertText: '{ .status' }),
@@ -149,8 +149,8 @@ describe('CompletionProvider', () => {
     const { provider, model } = setup('', 0, undefined, v2Tags);
     const result = await provider.provideCompletionItems(model, emptyPosition);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
-      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
+      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}$0 }` })),
+      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}$0 }` })),
       expect.objectContaining({ label: 'cluster', insertText: '{ .cluster' }),
       expect.objectContaining({ label: 'container', insertText: '{ .container' }),
       expect.objectContaining({ label: 'db', insertText: '{ .db' }),
@@ -395,7 +395,7 @@ function setup(value: string, offset: number, tagsV1?: string[], tagsV2?: Scope[
   } else if (tagsV2) {
     lp.setV2Tags(tagsV2);
   }
-  const provider = new CompletionProvider({ languageProvider: lp });
+  const provider = new CompletionProvider({ languageProvider: lp, setAlertText: () => {} });
   const model = makeModel(value, offset);
   provider.monaco = {
     Range: {

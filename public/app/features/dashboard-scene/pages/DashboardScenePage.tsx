@@ -5,28 +5,42 @@ import { PageLayoutType } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
+import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
-export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams> {}
+export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {}
 
-export function DashboardScenePage({ match, route }: Props) {
+export function DashboardScenePage({ match, route, queryParams, history }: Props) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, isLoading, loadError } = stateManager.useState();
+  // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
+  const routeReloadCounter = (history.location.state as any)?.routeReloadCounter;
 
   useEffect(() => {
-    if (route.routeName === DashboardRoutes.Home) {
-      stateManager.loadDashboard(route.routeName);
+    if (route.routeName === DashboardRoutes.Normal && match.params.type === 'snapshot') {
+      stateManager.loadSnapshot(match.params.slug!);
     } else {
-      stateManager.loadDashboard(match.params.uid!);
+      stateManager.loadDashboard({
+        uid: match.params.uid ?? '',
+        route: route.routeName as DashboardRoutes,
+        urlFolderUid: queryParams.folderUid,
+      });
     }
 
     return () => {
       stateManager.clearState();
     };
-  }, [stateManager, match.params.uid, route.routeName]);
+  }, [
+    stateManager,
+    match.params.uid,
+    route.routeName,
+    queryParams.folderUid,
+    routeReloadCounter,
+    match.params.slug,
+    match.params.type,
+  ]);
 
   if (!dashboard) {
     return (

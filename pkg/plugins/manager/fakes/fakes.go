@@ -176,7 +176,7 @@ func NewFakePluginRegistry() *FakePluginRegistry {
 	}
 }
 
-func (f *FakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
+func (f *FakePluginRegistry) Plugin(_ context.Context, id, _ string) (*plugins.Plugin, bool) {
 	p, exists := f.Store[id]
 	return p, exists
 }
@@ -195,7 +195,7 @@ func (f *FakePluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func (f *FakePluginRegistry) Remove(_ context.Context, id string) error {
+func (f *FakePluginRegistry) Remove(_ context.Context, id, _ string) error {
 	delete(f.Store, id)
 	return nil
 }
@@ -253,6 +253,21 @@ func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, dirNam
 		return s.ExtractFunc(ctx, pluginID, dirNameFunc, z)
 	}
 	return &storage.ExtractedPluginArchive{}, nil
+}
+
+type FakePluginEnvProvider struct {
+	PluginEnvVarsFunc func(ctx context.Context, plugin *plugins.Plugin) []string
+}
+
+func NewFakePluginEnvProvider() *FakePluginEnvProvider {
+	return &FakePluginEnvProvider{}
+}
+
+func (p *FakePluginEnvProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plugin) []string {
+	if p.PluginEnvVarsFunc != nil {
+		return p.PluginEnvVarsFunc(ctx, plugin)
+	}
+	return []string{}
 }
 
 type FakeProcessManager struct {
@@ -423,12 +438,12 @@ func (s *FakePluginSource) DefaultSignature(ctx context.Context) (plugins.Signat
 }
 
 type FakePluginFileStore struct {
-	FileFunc func(ctx context.Context, pluginID, filename string) (*plugins.File, error)
+	FileFunc func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error)
 }
 
-func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+func (f *FakePluginFileStore) File(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 	if f.FileFunc != nil {
-		return f.FileFunc(ctx, pluginID, filename)
+		return f.FileFunc(ctx, pluginID, pluginVersion, filename)
 	}
 	return nil, nil
 }

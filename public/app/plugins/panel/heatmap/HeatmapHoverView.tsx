@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { ReactElement, useEffect, useRef, useState } from 'react';
 import uPlot from 'uplot';
 
@@ -9,22 +8,23 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   getLinksSupplier,
-  GrafanaTheme2,
   InterpolateFunction,
   LinkModel,
   PanelData,
   ScopedVars,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { TooltipDisplayMode, useStyles2 } from '@grafana/ui';
+import { TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { ColorIndicator, ColorPlacement, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+import { ColorIndicator, ColorPlacement, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
+
+import { getStyles } from '../timeseries/TimeSeriesTooltip';
 
 import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
@@ -39,10 +39,10 @@ interface Props {
   showColorScale?: boolean;
   isPinned: boolean;
   dismiss: () => void;
-  canAnnotate: boolean;
   panelData: PanelData;
   replaceVars: InterpolateFunction;
   scopedVars: ScopedVars[];
+  annotate?: () => void;
 }
 
 export const HeatmapHoverView = (props: Props) => {
@@ -65,11 +65,11 @@ const HeatmapHoverCell = ({
   dataRef,
   showHistogram,
   isPinned,
-  canAnnotate,
   showColorScale = false,
   scopedVars,
   replaceVars,
   mode,
+  annotate,
 }: Props) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
@@ -112,7 +112,7 @@ const HeatmapHoverCell = ({
 
   let nonNumericOrdinalDisplay: string | undefined = undefined;
 
-  let contentLabelValue: LabelValue[] = [];
+  let contentItems: VizTooltipItem[] = [];
 
   const getYValueIndex = (idx: number) => {
     return idx % data.yBucketCount! ?? 0;
@@ -204,7 +204,7 @@ const HeatmapHoverCell = ({
     return vals;
   };
 
-  const getContentLabels = (): LabelValue[] => {
+  const getContentLabels = (): VizTooltipItem[] => {
     const isMulti = mode === TooltipDisplayMode.Multi && !isPinned;
 
     if (nonNumericOrdinalDisplay) {
@@ -242,9 +242,9 @@ const HeatmapHoverCell = ({
   let count = getCountValue(index);
 
   if (mode === TooltipDisplayMode.Single || isPinned) {
-    const fromToInt: LabelValue[] = interval ? [{ label: 'Duration', value: formatMilliseconds(interval) }] : [];
+    const fromToInt: VizTooltipItem[] = interval ? [{ label: 'Duration', value: formatMilliseconds(interval) }] : [];
 
-    contentLabelValue = [
+    contentItems = [
       {
         label: getFieldDisplayName(countField, data.heatmap),
         value: data.display!(count),
@@ -270,9 +270,9 @@ const HeatmapHoverCell = ({
       toIdx++;
     }
 
-    const vals: LabelValue[] = getDisplayData(fromIdx, toIdx);
+    const vals: VizTooltipItem[] = getDisplayData(fromIdx, toIdx);
     vals.forEach((val) => {
-      contentLabelValue.push({
+      contentItems.push({
         label: val.label,
         value: val.value,
         color: val.color ?? '#FFF',
@@ -330,26 +330,17 @@ const HeatmapHoverCell = ({
     [index]
   );
 
-  const getHeaderLabel = (): LabelValue => {
-    return {
-      label: '',
-      value: xDisp(xBucketMax)!,
-    };
+  const headerItem: VizTooltipItem = {
+    label: '',
+    value: xDisp(xBucketMax!)!,
   };
 
-  const getContentLabelValue = (): LabelValue[] => {
-    return contentLabelValue;
-  };
+  let customContent: ReactElement[] = [];
 
-  const getCustomContent = () => {
-    let content: ReactElement[] = [];
-    if (mode !== TooltipDisplayMode.Single) {
-      return content;
-    }
-
+  if (mode === TooltipDisplayMode.Single) {
     // Histogram
-    if (showHistogram) {
-      content.push(
+    if (showHistogram && !isSparse) {
+      customContent.push(
         <canvas
           width={histCanWidth}
           height={histCanHeight}
@@ -361,7 +352,7 @@ const HeatmapHoverCell = ({
 
     // Color scale
     if (colorPalette && showColorScale) {
-      content.push(
+      customContent.push(
         <ColorScale
           colorPalette={colorPalette}
           min={data.heatmapColors?.minValue!}
@@ -371,32 +362,24 @@ const HeatmapHoverCell = ({
         />
       );
     }
-
-    return content;
-  };
-
-  // @TODO remove this when adding annotations support
-  canAnnotate = false;
+  }
 
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
-      <VizTooltipContent
-        contentLabelValue={getContentLabelValue()}
-        customContent={getCustomContent()}
-        isPinned={isPinned}
-      />
-      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={canAnnotate} />}
+      <VizTooltipHeader item={headerItem} isPinned={isPinned} />
+      <VizTooltipContent items={contentItems} isPinned={isPinned}>
+        {customContent?.map((content, i) => (
+          <div key={i} style={{ padding: `${theme.spacing(1)} 0` }}>
+            {content}
+          </div>
+        ))}
+      </VizTooltipContent>
+      {(links.length > 0 || isPinned) && (
+        <VizTooltipFooter dataLinks={links} annotate={isPinned ? annotate : undefined} />
+      )}
     </div>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-    width: '280px',
-  }),
-});
