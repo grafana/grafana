@@ -16,9 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
-func TestSimpleQuery(t *testing.T) {
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func TestIntegrationSimpleQuery(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

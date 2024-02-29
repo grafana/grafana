@@ -18,7 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 var gvr = schema.GroupVersionResource{
 	Group:    "playlist.grafana.app",
@@ -26,7 +31,7 @@ var gvr = schema.GroupVersionResource{
 	Resource: "playlists",
 }
 
-func TestPlaylist(t *testing.T) {
+func TestIntegrationPlaylist(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
