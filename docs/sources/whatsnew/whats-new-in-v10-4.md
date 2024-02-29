@@ -143,3 +143,23 @@ To get there, we are introducing easier self-serve configuration options for OA
 We are working on adding complete support for configuring all other supported OAuth providers as well, such as GitHub, GitLab, Google, Microsoft Azure AD and Okta. You can already manage some of these settings via the new self-serve configuration options, and we’re working on adding more at the moment.
 
 ![Screenshot of the Authentication provider list page](/media/docs/grafana-cloud/screenshot-sso-settings-ui-public-prev-v10.4.png)
+
+## PagerDuty enterprise data source for Grafana
+
+<!-- #enterprise-datasources -->
+
+_Generally available in Grafana Enterprise and Grafana Cloud_
+
+PagerDuty enterprise data source plugin for Grafana allows you to query incidents data or visualize incidents using annotations.
+
+{{< admonition type="note" >}}
+Plugin is currently in a preview phase.
+{{< /admonition >}}
+
+You can find more information and how to configure the plugin in the [documentation](https://grafana.com/docs/plugins/grafana-pagerduty-datasource/latest/).
+
+Screenshots:
+
+{{< figure src="/media/docs/plugins/PagerDuty-incidents-annotation.png" caption="PagerDuty data source annotation editor" alt="PagerDuty data source annotation editor" >}}
+
+{{< figure src="/media/docs/plugins/PagerDuty-incidents-real-life-example.png" caption="Incidents annotations from PagerDuty data source on a dashboard panel" alt="Incidents annotations from PagerDuty data source on a dashboard panel" >}}
