@@ -90,7 +90,7 @@ For example:
 | ----------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `{{ subscriptionid }}`        | Replaced with the subscription ID.                                                                     |
 | `{{ subscription }}`          | Replaced with the subscription name.                                                                   |
-| `{{ resourcegroup }}`         | Replaced with the resource group.                                                                  |
+| `{{ resourcegroup }}`         | Replaced with the resource group.                                                                      |
 | `{{ namespace }}`             | Replaced with the resource type or namespace, such as `Microsoft.Compute/virtualMachines`.             |
 | `{{ resourcename }}`          | Replaced with the resource name.                                                                       |
 | `{{ metric }}`                | Replaced with the metric name, such as "Percentage CPU".                                               |
