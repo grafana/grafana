@@ -53,6 +53,8 @@ func readCABundlePEM(path string, devMode bool) ([]byte, error) {
 		return nil, nil
 	}
 
+	// We can ignore the gosec G304 warning on this one because `path` comes
+	// from Grafana configuration (commandOptions.AggregatorOptions.APIServiceCABundleFile)
 	//nolint:gosec
 	f, err := os.Open(path)
 	if err != nil {
@@ -68,6 +70,8 @@ func readCABundlePEM(path string, devMode bool) ([]byte, error) {
 }
 
 func readRemoteServices(path string) ([]RemoteService, error) {
+	// We can ignore the gosec G304 warning on this one because `path` comes
+	// from Grafana configuration (commandOptions.AggregatorOptions.RemoteServicesFile)
 	//nolint:gosec
 	f, err := os.Open(path)
 	if err != nil {
@@ -333,6 +337,7 @@ var APIVersionPriorities = map[schema.GroupVersion]Priority{
 
 func addRemoteAPIServicesToRegister(config *RemoteServicesConfig, registration autoregister.AutoAPIServiceRegistration) {
 	for i, service := range config.Services {
+		port := service.Port
 		apiService := &v1.APIService{
 			ObjectMeta: metav1.ObjectMeta{Name: service.Version + "." + service.Group},
 			Spec: v1.APIServiceSpec{
@@ -347,7 +352,7 @@ func addRemoteAPIServicesToRegister(config *RemoteServicesConfig, registration a
 				Service: &v1.ServiceReference{
 					Name:      service.Version + "." + service.Group,
 					Namespace: config.ExternalNamesNamespace,
-					Port:      &service.Port,
+					Port:      &port,
 				},
 			},
 		}
@@ -360,13 +365,14 @@ func getRemoteExternalNamesToRegister(config *RemoteServicesConfig) []*servicev0
 	externalNames := make([]*servicev0alpha1applyconfiguration.ExternalNameApplyConfiguration, 0)
 
 	for _, service := range config.Services {
+		host := service.Host
 		name := service.Version + "." + service.Group
 		externalName := &servicev0alpha1applyconfiguration.ExternalNameApplyConfiguration{}
 		externalName.WithAPIVersion(servicev0alpha1.SchemeGroupVersion.String())
 		externalName.WithKind("ExternalName")
 		externalName.WithName(name)
 		externalName.WithSpec(&servicev0alpha1applyconfiguration.ExternalNameSpecApplyConfiguration{
-			Host: &service.Host,
+			Host: &host,
 		})
 		externalNames = append(externalNames, externalName)
 	}
