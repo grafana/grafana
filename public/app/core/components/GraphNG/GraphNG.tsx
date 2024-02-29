@@ -139,8 +139,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
             alignedFrame,
             field,
             {
-              //...field.state?.scopedVars,
-
+              ...field.state?.scopedVars,
               __dataContext: {
                 value: {
                   data: [alignedFrame],
