@@ -87,7 +87,8 @@ func mockCommonFS(root string) (fs.FS, error) {
 			continue
 		}
 
-		b, err := os.ReadFile(filepath.Join(path, d.Name()))
+		readPath := filepath.Join(path, d.Name())
+		b, err := os.ReadFile(filepath.Clean(readPath))
 		if err != nil {
 			return nil, err
 		}
