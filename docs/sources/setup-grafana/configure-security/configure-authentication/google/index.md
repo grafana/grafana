@@ -111,6 +111,14 @@ automatically signed up.
 You may specify a domain to be passed as `hd` query parameter accepted by Google's
 OAuth 2.0 authentication API. Refer to Google's OAuth [documentation](https://developers.google.com/identity/openid-connect/openid-connect#hd-param).
 
+{{% admonition type="note" %}}
+Since Grafana 10.3.0, the `hd` parameter retrieved from Google ID token is also used to determine the user's hosted domain. The Google Oauth `allowed_domains` configuration option is used to restrict access to users from a specific domain. If the `allowed_domains` configuration option is set, the `hd` parameter from the Google ID token must match the `allowed_domains` configuration option. If the `hd` parameter from the Google ID token does not match the `allowed_domains` configuration option, the user is denied access.
+
+When an account does not belong to a google workspace, the hd claim will not be available.
+
+This validation is enabled by default. To disable this validation, set the `validate_hd` configuration option to `false`. The `allowed_domains` configuration option will use the email claim to validate the domain.
+{{% /admonition %}}
+
 #### PKCE
 
 IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)

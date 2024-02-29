@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -129,6 +130,9 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 	[auth.grafana_com]
 	enabled = true
 	allowed_organizations = org1, org2
+
+	[auth.google]
+	validate_hd = true
 	`
 
 	iniFile, err := ini.Load([]byte(iniWithExtraFields))
@@ -139,24 +143,24 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 
 	strategy := NewOAuthStrategy(cfg)
 
-	t.Run("azuread", func(t *testing.T) {
-		result, err := strategy.GetProviderConfig(context.Background(), "azuread")
+	t.Run(social.AzureADProviderName, func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), social.AzureADProviderName)
 		require.NoError(t, err)
 
 		require.Equal(t, "true", result["force_use_graph_api"])
 		require.Equal(t, "org1, org2", result["allowed_organizations"])
 	})
 
-	t.Run("github", func(t *testing.T) {
-		result, err := strategy.GetProviderConfig(context.Background(), "github")
+	t.Run(social.GitHubProviderName, func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), social.GitHubProviderName)
 		require.NoError(t, err)
 
 		require.Equal(t, "first, second", result["team_ids"])
 		require.Equal(t, "org1, org2", result["allowed_organizations"])
 	})
 
-	t.Run("generic_oauth", func(t *testing.T) {
-		result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
+	t.Run(social.GenericOAuthProviderName, func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), social.GenericOAuthProviderName)
 		require.NoError(t, err)
 
 		require.Equal(t, "first, second", result["team_ids"])
@@ -166,11 +170,18 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 		require.Equal(t, "id_token", result["id_token_attribute_name"])
 	})
 
-	t.Run("grafana_com", func(t *testing.T) {
-		result, err := strategy.GetProviderConfig(context.Background(), "grafana_com")
+	t.Run(social.GrafanaComProviderName, func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), social.GrafanaComProviderName)
 		require.NoError(t, err)
 
 		require.Equal(t, "org1, org2", result["allowed_organizations"])
+	})
+
+	t.Run(social.GoogleProviderName, func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), social.GoogleProviderName)
+		require.NoError(t, err)
+
+		require.Equal(t, "true", result["validate_hd"])
 	})
 }
 
