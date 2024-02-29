@@ -204,7 +204,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             })}
           </>
         )}
-        <Box display={'flex'} gap={2} marginTop={6}>
+        <Box display={'flex'} gap={2} marginTop={5}>
           <Field>
             <Button
               type={'submit'}
