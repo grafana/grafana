@@ -3,6 +3,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"go/format"
 
 	"cuelang.org/go/cue"
 	"github.com/grafana/codejen"
@@ -41,7 +42,12 @@ func (jenny *CoreRegistryJenny) Generate(cueFiles []CueSchema) (codejen.Files, e
 		return nil, fmt.Errorf("failed executing kind registry template: %w", err)
 	}
 
-	file := codejen.NewFile(filepath.Join(registryPath, "core_kind.go"), buf.Bytes(), jenny)
+	b, err := format.Source(buf.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	file := codejen.NewFile(filepath.Join(registryPath, "core_kind.go"), b, jenny)
 	return codejen.Files{*file}, nil
 }
 

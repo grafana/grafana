@@ -3,6 +3,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"go/format"
 	"path/filepath"
 	"strings"
 
@@ -51,7 +52,12 @@ func (jenny *PluginRegistryJenny) Generate(files []string) (*codejen.File, error
 		return nil, fmt.Errorf("failed executing kind registry template: %w", err)
 	}
 
-	return codejen.NewFile(filepath.Join(registryPath, "composable_kind.go"), buf.Bytes(), jenny), nil
+	b, err := format.Source(buf.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	return codejen.NewFile(filepath.Join(registryPath, "composable_kind.go"), b, jenny), nil
 }
 
 func getSchemaName(path string) (string, error) {
