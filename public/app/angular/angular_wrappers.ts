@@ -3,7 +3,6 @@ import {
   ColorPicker,
   DataLinksInlineEditor,
   DataSourceHttpSettings,
-  GraphContextMenu,
   Icon,
   LegacyForms,
   SeriesColorPickerPopoverWithTheme,
@@ -21,6 +20,8 @@ import { PageHeader } from '../core/components/PageHeader/PageHeader';
 import { MetricSelect } from '../core/components/Select/MetricSelect';
 import { TagFilter } from '../core/components/TagFilter/TagFilter';
 import { HelpModal } from '../core/components/help/HelpModal';
+
+import { GraphContextMenu } from './components/legacy_graph_panel/GraphContextMenu';
 
 const { SecretFormField } = LegacyForms;
 
