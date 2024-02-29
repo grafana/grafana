@@ -9,12 +9,14 @@ import {
   TestVariable,
   VizPanel,
   SceneGridRow,
+  behaviors,
 } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
+import { Dashboard, DashboardCursorSync } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
+import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
@@ -26,6 +28,20 @@ import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
+jest.mock('../saving/getDashboardChangesFromScene', () => ({
+  // It compares the initial and changed save models and returns the differences
+  // By default we assume there are differences to have the dirty state test logic tested
+  getDashboardChangesFromScene: jest.fn(() => ({
+    changedSaveModel: {},
+    initialSaveModel: {},
+    diffs: [],
+    diffCount: 0,
+    hasChanges: true,
+    hasTimeChanges: false,
+    isNew: false,
+    hasVariableValueChanges: false,
+  })),
+}));
 jest.mock('../serialization/transformSceneToSaveModel');
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -35,6 +51,9 @@ jest.mock('@grafana/runtime', () => ({
     };
   },
 }));
+
+const worker = createWorker();
+mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
 
 describe('DashboardScene', () => {
   describe('DashboardSrv.getCurrent compatibility', () => {
@@ -49,14 +68,27 @@ describe('DashboardScene', () => {
   describe('Editing and discarding', () => {
     describe('Given scene in edit mode', () => {
       let scene: DashboardScene;
+      let deactivateScene: () => void;
 
       beforeEach(() => {
         scene = buildTestScene();
+        deactivateScene = scene.activate();
         scene.onEnterEditMode();
+        jest.clearAllMocks();
       });
 
       it('Should set isEditing to true', () => {
         expect(scene.state.isEditing).toBe(true);
+      });
+
+      it('Should start the detect changes worker', () => {
+        expect(worker.onmessage).toBeDefined();
+      });
+
+      it('Should terminate the detect changes worker when deactivate', () => {
+        expect(worker.terminate).toHaveBeenCalledTimes(0);
+        deactivateScene();
+        expect(worker.terminate).toHaveBeenCalledTimes(1);
       });
 
       it('A change to griditem pos should set isDirty true', () => {
@@ -70,6 +102,22 @@ describe('DashboardScene', () => {
         expect(gridItem2.state.x).toBe(0);
       });
 
+      it('A change to gridlayout children order should set isDirty true', () => {
+        const layout = sceneGraph.findObject(scene, (p) => p instanceof SceneGridLayout) as SceneGridLayout;
+        const originalPanelOrder = layout.state.children.map((c) => c.state.key);
+
+        // Change the order of the children. This happen when panels move around, then the children are re-ordered
+        layout.setState({
+          children: [layout.state.children[1], layout.state.children[0], layout.state.children[2]],
+        });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        const resoredLayout = sceneGraph.findObject(scene, (p) => p instanceof SceneGridLayout) as SceneGridLayout;
+        expect(resoredLayout.state.children.map((c) => c.state.key)).toEqual(originalPanelOrder);
+      });
+
       it.each`
         prop             | value
         ${'title'}       | ${'new title'}
@@ -77,6 +125,7 @@ describe('DashboardScene', () => {
         ${'tags'}        | ${['tag3', 'tag4']}
         ${'editable'}    | ${false}
         ${'links'}       | ${[]}
+        ${'meta'}        | ${{ folderUid: 'new-folder-uid', folderTitle: 'new-folder-title', hasUnsavedFolderChange: true }}
       `(
         'A change to $prop should set isDirty true',
         ({ prop, value }: { prop: keyof DashboardSceneState; value: unknown }) => {
@@ -121,6 +170,40 @@ describe('DashboardScene', () => {
 
         scene.exitEditMode({ skipConfirm: true });
         expect(sceneGraph.getTimeRange(scene)!.state.timeZone).toBe(prevState);
+      });
+
+      it('A change to a cursor sync config should set isDirty true', () => {
+        const cursorSync = dashboardSceneGraph.getCursorSync(scene)!;
+        const initialState = cursorSync.state;
+
+        cursorSync.setState({
+          sync: DashboardCursorSync.Tooltip,
+        });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect(dashboardSceneGraph.getCursorSync(scene)!.state).toEqual(initialState);
+      });
+
+      it.each([
+        { hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false },
+        { hasChanges: true, hasTimeChanges: true, hasVariableValueChanges: false },
+        { hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: true },
+      ])('should set the state to true if there are changes detected in the saving model', (diffResults) => {
+        mockResultsOfDetectChangesWorker(diffResults);
+        scene.setState({ title: 'hello' });
+        expect(scene.state.isDirty).toBeTruthy();
+      });
+
+      it.each([
+        { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false },
+        { hasChanges: false, hasTimeChanges: true, hasVariableValueChanges: false },
+        { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: true },
+      ])('should not set the state to true if there are no change detected in the dashboard', (diffResults) => {
+        mockResultsOfDetectChangesWorker(diffResults);
+        scene.setState({ title: 'hello' });
+        expect(scene.state.isDirty).toBeFalsy();
       });
 
       it('Should throw an error when adding a panel to a layout that is not SceneGridLayout', () => {
@@ -304,7 +387,11 @@ describe('DashboardScene', () => {
   });
 
   describe('When variables change', () => {
-    it('A change to griditem pos should set isDirty true', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('A change to variable values should trigger VariablesChanged event', () => {
       const varA = new TestVariable({ name: 'A', query: 'A.*', value: 'A.AA', text: '', options: [], delayMs: 0 });
       const scene = buildTestScene({
         $variables: new SceneVariableSet({ variables: [varA] }),
@@ -318,6 +405,57 @@ describe('DashboardScene', () => {
       varA.changeValueTo('A.AB');
 
       expect(eventHandler).toHaveBeenCalledTimes(1);
+    });
+
+    it('A change to the variable set should set isDirty true', () => {
+      const varA = new TestVariable({ name: 'A', query: 'A.*', value: 'A.AA', text: '', options: [], delayMs: 0 });
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [varA] }),
+      });
+
+      scene.activate();
+      scene.onEnterEditMode();
+
+      const variableSet = sceneGraph.getVariables(scene);
+      variableSet.setState({ variables: [] });
+
+      expect(scene.state.isDirty).toBe(true);
+    });
+
+    it('A change to a variable state should set isDirty true', () => {
+      mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: true });
+      const variable = new TestVariable({ name: 'A' });
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [variable] }),
+      });
+
+      scene.activate();
+      scene.onEnterEditMode();
+
+      variable.setState({ name: 'new-name' });
+
+      expect(variable.state.name).toBe('new-name');
+      expect(scene.state.isDirty).toBe(true);
+    });
+
+    it('A change to variable name is restored to original name should set isDirty back to false', () => {
+      const variable = new TestVariable({ name: 'A' });
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [variable] }),
+      });
+
+      scene.activate();
+      scene.onEnterEditMode();
+
+      mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
+      variable.setState({ name: 'B' });
+      expect(scene.state.isDirty).toBe(true);
+      mockResultsOfDetectChangesWorker(
+        // No changes, it is the same name than before comparing saving models
+        { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false }
+      );
+      variable.setState({ name: 'A' });
+      expect(scene.state.isDirty).toBe(false);
     });
   });
 
@@ -379,6 +517,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
       timeZone: 'browser',
     }),
     controls: new DashboardControls({}),
+    $behaviors: [new behaviors.CursorSync({})],
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({
@@ -425,6 +564,26 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   });
 
   return scene;
+}
+
+function mockResultsOfDetectChangesWorker({
+  hasChanges,
+  hasTimeChanges,
+  hasVariableValueChanges,
+}: {
+  hasChanges: boolean;
+  hasTimeChanges: boolean;
+  hasVariableValueChanges: boolean;
+}) {
+  jest.mocked(worker.postMessage).mockImplementationOnce(() => {
+    worker.onmessage?.({
+      data: {
+        hasChanges: hasChanges ?? true,
+        hasTimeChanges: hasTimeChanges ?? true,
+        hasVariableValueChanges: hasVariableValueChanges ?? true,
+      },
+    } as unknown as MessageEvent);
+  });
 }
 
 function getVersionMock(): DecoratedRevisionModel {

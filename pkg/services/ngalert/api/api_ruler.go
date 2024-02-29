@@ -273,7 +273,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	rules, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace, srv.cfg)
+	rules, err := ValidateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, RuleLimitsFromConfig(srv.cfg))
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
