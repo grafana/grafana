@@ -282,7 +282,14 @@ export const TooltipPlugin2 = ({
       u.over.addEventListener('click', (e) => {
         if (e.target === u.over) {
           if (e.ctrlKey || e.metaKey) {
-            let xVal = u.posToVal(u.cursor.left!, 'x');
+            let xVal;
+
+            const isXAxisHorizontal = u.scales.x.ori === 0;
+            if (isXAxisHorizontal) {
+              xVal = u.posToVal(u.cursor.left!, 'x');
+            } else {
+              xVal = u.posToVal(u.select.top + u.select.height, 'x');
+            }
 
             selectedRange = {
               from: xVal,
@@ -301,14 +308,19 @@ export const TooltipPlugin2 = ({
     });
 
     config.addHook('setSelect', (u) => {
+      const isXAxisHorizontal = u.scales.x.ori === 0;
       if (!viaSync && (clientZoom || queryZoom != null)) {
         if (maybeZoomAction(u.cursor!.event)) {
           if (clientZoom && yDrag) {
             if (u.select.height >= MIN_ZOOM_DIST) {
               for (let key in u.scales!) {
                 if (key !== 'x') {
-                  const maxY = u.posToVal(u.select.top, key);
-                  const minY = u.posToVal(u.select.top + u.select.height, key);
+                  const maxY = isXAxisHorizontal
+                    ? u.posToVal(u.select.top, key)
+                    : u.posToVal(u.select.left + u.select.width, key);
+                  const minY = isXAxisHorizontal
+                    ? u.posToVal(u.select.top + u.select.height, key)
+                    : u.posToVal(u.select.left, key);
 
                   u.setScale(key, { min: minY, max: maxY });
                 }
@@ -320,8 +332,12 @@ export const TooltipPlugin2 = ({
             yDrag = false;
           } else if (queryZoom != null) {
             if (u.select.width >= MIN_ZOOM_DIST) {
-              const minX = u.posToVal(u.select.left, 'x');
-              const maxX = u.posToVal(u.select.left + u.select.width, 'x');
+              const minX = isXAxisHorizontal
+                ? u.posToVal(u.select.left, 'x')
+                : u.posToVal(u.select.top + u.select.height, 'x');
+              const maxX = isXAxisHorizontal
+                ? u.posToVal(u.select.left + u.select.width, 'x')
+                : u.posToVal(u.select.top, 'x');
 
               queryZoom({ from: minX, to: maxX });
 
@@ -330,8 +346,8 @@ export const TooltipPlugin2 = ({
           }
         } else {
           selectedRange = {
-            from: u.posToVal(u.select.left!, 'x'),
-            to: u.posToVal(u.select.left! + u.select.width, 'x'),
+            from: isXAxisHorizontal ? u.posToVal(u.select.left!, 'x') : u.posToVal(u.select.top + u.select.height, 'x'),
+            to: isXAxisHorizontal ? u.posToVal(u.select.left! + u.select.width, 'x') : u.posToVal(u.select.top, 'x'),
           };
 
           scheduleRender(true);
