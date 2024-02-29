@@ -189,7 +189,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     panelRepeater.setState({
-      source: panelManager.state.panel.clone(),
+      source: panelManager.state.panel.clone({ $data: panelManager.state.$data?.clone() }),
       repeatDirection: panelManager.state.repeatDirection,
       variableName: panelManager.state.repeat,
       maxPerRow: panelManager.state.maxPerRow,
