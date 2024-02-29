@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Grid, Stack, useStyles2 } from '@grafana/ui';
 
-import { CallToAction } from './CallToAction';
+import { CallToAction } from './CallToAction/CallToAction';
 import { InfoPaneLeft } from './InfoPaneLeft';
 import { InfoPaneRight } from './InfoPaneRight';
 
