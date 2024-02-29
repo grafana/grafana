@@ -191,9 +191,9 @@ export class ElementState implements LayerElement {
         this.div.style[key as any] = (this.sizeStyle as any)[key];
       }
 
-      for (const key in this.dataStyle) {
-        this.div.style[key as any] = (this.dataStyle as any)[key];
-      }
+      // for (const key in this.dataStyle) {
+      //   this.div.style[key as any] = (this.dataStyle as any)[key];
+      // }
     }
   }
 
@@ -532,6 +532,7 @@ export class ElementState implements LayerElement {
           config={this.options.config}
           data={this.data}
           isSelected={isSelected}
+          dataStyle={this.dataStyle}
         />
       </div>
     );

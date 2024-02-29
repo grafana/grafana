@@ -1,4 +1,4 @@
-import { ComponentType } from 'react';
+import { ComponentType, CSSProperties } from 'react';
 
 import { RegistryItem } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
@@ -61,6 +61,9 @@ export interface CanvasElementProps<TConfig = any, TData = any> {
 
   // If the element is currently selected
   isSelected?: boolean;
+
+  // Style data
+  dataStyle?: CSSProperties;
 }
 
 /**

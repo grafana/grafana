@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ScalarDimensionConfig } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
@@ -17,8 +17,8 @@ interface DroneFrontConfig {
   rollAngle?: ScalarDimensionConfig;
 }
 
-const DroneFrontDisplay = ({ data }: CanvasElementProps<DroneFrontConfig, DroneFrontData>) => {
-  const styles = useStyles2(getStyles);
+const DroneFrontDisplay = ({ data, dataStyle }: CanvasElementProps<DroneFrontConfig, DroneFrontData>) => {
+  const styles = getStyles(config.theme2, dataStyle);
 
   const droneFrontTransformStyle = `rotate(${data?.rollAngle ? data.rollAngle : 0}deg)`;
 
@@ -117,8 +117,18 @@ export const droneFrontItem: CanvasElementItem = {
   },
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, dataStyle: CSSProperties | undefined) => ({
   droneFront: css({
     transition: 'transform 0.4s',
+
+    borderWidth: dataStyle?.borderWidth,
+    borderStyle: dataStyle?.borderStyle,
+    borderColor: dataStyle?.borderColor,
+
+    backgroundColor: dataStyle?.backgroundColor,
+
+    backgroundImage: dataStyle?.backgroundImage,
+    backgroundSize: dataStyle?.backgroundSize,
+    backgroundRepeat: dataStyle?.backgroundRepeat,
   }),
 });

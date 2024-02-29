@@ -13,8 +13,8 @@ import { Align, TextConfig, TextData, VAlign } from '../types';
 
 class RectangleDisplay extends PureComponent<CanvasElementProps<TextConfig, TextData>> {
   render() {
-    const { data } = this.props;
-    const styles = getStyles(config.theme2, data);
+    const { data, dataStyle } = this.props;
+    const styles = getStyles(config.theme2, data, dataStyle);
 
     return (
       <div className={styles.container}>
@@ -24,12 +24,22 @@ class RectangleDisplay extends PureComponent<CanvasElementProps<TextConfig, Text
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2, data, dataStyle) => ({
   container: css({
     position: 'absolute',
     height: '100%',
     width: '100%',
     display: 'table',
+
+    borderWidth: dataStyle?.borderWidth,
+    borderStyle: dataStyle?.borderStyle,
+    borderColor: dataStyle?.borderColor,
+
+    backgroundColor: dataStyle?.backgroundColor,
+
+    backgroundImage: dataStyle?.backgroundImage,
+    backgroundSize: dataStyle?.backgroundSize,
+    backgroundRepeat: dataStyle?.backgroundRepeat,
   }),
   span: css({
     display: 'table-cell',

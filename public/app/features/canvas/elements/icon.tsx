@@ -32,7 +32,7 @@ const svgStrokePathClass = css({
 });
 
 export function IconDisplay(props: CanvasElementProps) {
-  const { data } = props;
+  const { data, dataStyle } = props;
   if (!data?.path) {
     return null;
   }
@@ -43,6 +43,16 @@ export function IconDisplay(props: CanvasElementProps) {
     strokeWidth: data?.stroke,
     height: '100%',
     width: '100%',
+
+    borderWidth: dataStyle?.borderWidth,
+    borderStyle: dataStyle?.borderStyle,
+    borderColor: dataStyle?.borderColor,
+
+    backgroundColor: dataStyle?.backgroundColor,
+
+    backgroundImage: dataStyle?.backgroundImage,
+    backgroundSize: dataStyle?.backgroundSize,
+    backgroundRepeat: dataStyle?.backgroundRepeat,
   };
 
   return (

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ColorDimensionConfig, ScalarDimensionConfig } from '@grafana/schema';
@@ -38,9 +38,10 @@ enum ServerType {
 type Props = CanvasElementProps<ServerConfig, ServerData>;
 const outlineColor = config.theme2.colors.text.primary;
 
-const ServerDisplay = ({ data }: Props) => {
+const ServerDisplay = ({ data, dataStyle }: Props) => {
+  const styles = getStyles(config.theme2, dataStyle);
   return data ? (
-    <svg viewBox="0 0 75 75">
+    <svg className={styles.container} viewBox="0 0 75 75">
       {data.type === ServerType.Single ? (
         <ServerSingle {...data} />
       ) : data.type === ServerType.Stack ? (
@@ -53,6 +54,20 @@ const ServerDisplay = ({ data }: Props) => {
     </svg>
   ) : null;
 };
+
+const getStyles = (theme: GrafanaTheme2, dataStyle: CSSProperties | undefined) => ({
+  container: css({
+    borderWidth: dataStyle?.borderWidth,
+    borderStyle: dataStyle?.borderStyle,
+    borderColor: dataStyle?.borderColor,
+
+    backgroundColor: dataStyle?.backgroundColor,
+
+    backgroundImage: dataStyle?.backgroundImage,
+    backgroundSize: dataStyle?.backgroundSize,
+    backgroundRepeat: dataStyle?.backgroundRepeat,
+  }),
+});
 
 export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
   id: 'server',

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
@@ -12,8 +12,8 @@ import { Align, VAlign, EllipseConfig, EllipseData } from '../types';
 
 class EllipseDisplay extends PureComponent<CanvasElementProps<EllipseConfig, EllipseData>> {
   render() {
-    const { data } = this.props;
-    const styles = getStyles(config.theme2, data);
+    const { data, dataStyle } = this.props;
+    const styles = getStyles(config.theme2, data, dataStyle);
     return (
       <div className={styles.container}>
         <span className={styles.span}>{data?.text}</span>
@@ -22,7 +22,7 @@ class EllipseDisplay extends PureComponent<CanvasElementProps<EllipseConfig, Ell
   }
 }
 
-const getStyles = (theme: GrafanaTheme2, data: any) => ({
+const getStyles = (theme: GrafanaTheme2, data: any, dataStyle: CSSProperties | undefined) => ({
   container: css({
     display: 'table',
     position: 'absolute',
@@ -30,10 +30,18 @@ const getStyles = (theme: GrafanaTheme2, data: any) => ({
     transform: 'translateY(-50%)',
     width: '100%',
     height: '100%',
-    backgroundColor: data?.backgroundColor,
-    border: `${data?.width}px solid ${data?.borderColor}`,
     // eslint-disable-next-line @grafana/no-border-radius-literal
     borderRadius: '50%',
+
+    borderWidth: dataStyle?.borderWidth,
+    borderStyle: dataStyle?.borderStyle,
+    borderColor: dataStyle?.borderColor,
+
+    backgroundColor: dataStyle?.backgroundColor,
+
+    backgroundImage: dataStyle?.backgroundImage,
+    backgroundSize: dataStyle?.backgroundSize,
+    backgroundRepeat: dataStyle?.backgroundRepeat,
   }),
   span: css({
     display: 'table-cell',
@@ -59,12 +67,6 @@ export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
   getNewOptions: (options) => ({
     ...options,
     config: {
-      backgroundColor: {
-        fixed: defaultBgColor,
-      },
-      borderColor: {
-        fixed: 'transparent',
-      },
       width: 1,
       align: Align.Center,
       valign: VAlign.Middle,
@@ -74,12 +76,13 @@ export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
     },
     background: {
       color: {
-        fixed: 'transparent',
+        fixed: defaultBgColor,
       },
     },
   }),
 
   prepareData: (ctx: DimensionContext, cfg: EllipseConfig) => {
+    // console.log('cfg', cfg);
     const data: EllipseData = {
       width: cfg.width,
       text: cfg.text ? ctx.getText(cfg.text).value() : '',
@@ -88,12 +91,13 @@ export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
       size: cfg.size,
     };
 
-    if (cfg.backgroundColor) {
-      data.backgroundColor = ctx.getColor(cfg.backgroundColor).value();
-    }
-    if (cfg.borderColor) {
-      data.borderColor = ctx.getColor(cfg.borderColor).value();
-    }
+    // if (cfg.backgroundColor) {
+    //   data.backgroundColor = ctx.getColor(cfg.backgroundColor).value();
+    // }
+    // if (cfg.borderColor) {
+    //   // data.borderColor = ctx.getColor(cfg.borderColor).value();
+    //   // data.borderColor = ctx.getColor(cfg.borderColor).value();
+    // }
     if (cfg.color) {
       data.color = ctx.getColor(cfg.color).value();
     }
@@ -134,32 +138,32 @@ export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
         },
         defaultValue: Align.Left,
       })
-      .addCustomEditor({
-        category,
-        id: 'config.borderColor',
-        path: 'config.borderColor',
-        name: 'Ellipse border color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: {},
-      })
-      .addNumberInput({
-        category,
-        path: 'config.width',
-        name: 'Ellipse border width',
-        settings: {
-          placeholder: 'Auto',
-        },
-      })
-      .addCustomEditor({
-        category,
-        id: 'config.backgroundColor',
-        path: 'config.backgroundColor',
-        name: 'Ellipse background color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: {},
-      })
+      // .addCustomEditor({
+      //   category,
+      //   id: 'config.borderColor',
+      //   path: 'config.borderColor',
+      //   name: 'Ellipse border color',
+      //   editor: ColorDimensionEditor,
+      //   settings: {},
+      //   defaultValue: {},
+      // })
+      // .addNumberInput({
+      //   category,
+      //   path: 'config.width',
+      //   name: 'Ellipse border width',
+      //   settings: {
+      //     placeholder: 'Auto',
+      //   },
+      // })
+      // .addCustomEditor({
+      //   category,
+      //   id: 'config.backgroundColor',
+      //   path: 'config.backgroundColor',
+      //   name: 'Ellipse background color',
+      //   editor: ColorDimensionEditor,
+      //   settings: {},
+      //   defaultValue: {},
+      // })
       .addRadio({
         category,
         path: 'config.valign',

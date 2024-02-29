@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { PluginState } from '@grafana/data/src';
 import { TextDimensionMode } from '@grafana/schema';
-import { Button, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, Spinner } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -39,8 +40,8 @@ export const defaultStyleConfig: ButtonStyleConfig = {
   variant: 'primary',
 };
 
-const ButtonDisplay = ({ data }: CanvasElementProps<ButtonConfig, ButtonData>) => {
-  const styles = useStyles2(getStyles, data);
+const ButtonDisplay = ({ data, dataStyle }: CanvasElementProps<ButtonConfig, ButtonData>) => {
+  const styles = getStyles(config.theme2, data, dataStyle);
 
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -65,7 +66,7 @@ const ButtonDisplay = ({ data }: CanvasElementProps<ButtonConfig, ButtonData>) =
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, data: ButtonData | undefined) => ({
+const getStyles = (theme: GrafanaTheme2, data: ButtonData | undefined, dataStyle: CSSProperties | undefined) => ({
   button: css({
     height: '100%',
     width: '100%',
@@ -78,6 +79,16 @@ const getStyles = (theme: GrafanaTheme2, data: ButtonData | undefined) => ({
       fontSize: `${data?.size}px`,
       color: data?.color,
     },
+
+    borderWidth: dataStyle?.borderWidth,
+    borderStyle: dataStyle?.borderStyle,
+    borderColor: dataStyle?.borderColor,
+
+    backgroundColor: dataStyle?.backgroundColor,
+
+    backgroundImage: dataStyle?.backgroundImage,
+    backgroundSize: dataStyle?.backgroundSize,
+    backgroundRepeat: dataStyle?.backgroundRepeat,
   }),
   buttonSpinner: css({
     marginRight: theme.spacing(0.5),

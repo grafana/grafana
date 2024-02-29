@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ScalarDimensionConfig } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
@@ -25,8 +25,8 @@ interface DroneTopConfig {
   yawAngle?: ScalarDimensionConfig;
 }
 
-const DroneTopDisplay = ({ data }: CanvasElementProps<DroneTopConfig, DroneTopData>) => {
-  const styles = useStyles2(getStyles);
+const DroneTopDisplay = ({ data, dataStyle }: CanvasElementProps<DroneTopConfig, DroneTopData>) => {
+  const styles = getStyles(config.theme2, dataStyle);
 
   const fRightRotorAnimation = `spin ${data?.fRightRotorRPM ? 60 / Math.abs(data.fRightRotorRPM) : 0}s linear infinite`;
 
@@ -45,6 +45,7 @@ const DroneTopDisplay = ({ data }: CanvasElementProps<DroneTopConfig, DroneTopDa
       viewBox="-43 -43 640 640"
       xmlSpace="preserve"
       style={{ transform: droneTopTransformStyle, fill: defaultBgColor }}
+      className={styles.container}
     >
       <path
         fillRule="evenodd"
@@ -155,7 +156,18 @@ export const droneTopItem: CanvasElementItem = {
   },
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, dataStyle: CSSProperties | undefined) => ({
+  container: css({
+    borderWidth: dataStyle?.borderWidth,
+    borderStyle: dataStyle?.borderStyle,
+    borderColor: dataStyle?.borderColor,
+
+    backgroundColor: dataStyle?.backgroundColor,
+
+    backgroundImage: dataStyle?.backgroundImage,
+    backgroundSize: dataStyle?.backgroundSize,
+    backgroundRepeat: dataStyle?.backgroundRepeat,
+  }),
   propeller: css({
     transformOrigin: '50% 50%',
     transformBox: 'fill-box',
