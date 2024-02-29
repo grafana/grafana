@@ -87,52 +87,22 @@
         "description": "(empty)"
       },
       "acceptedResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponseBody"
-            }
-          }
-        },
         "description": "AcceptedResponse"
       },
       "adminCreateUserResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/AdminCreateUserResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "adminGetSettingsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SettingsBag"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "adminGetStatsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/AdminStats"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "adminGetUserAuthTokensResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/UserToken"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -140,23 +110,9 @@
         "description": "(empty)"
       },
       "badRequestError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponseBody"
-            }
-          }
-        },
         "description": "BadRequestError is returned when the request is invalid and it cannot be processed."
       },
       "badRequestPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "BadRequestPublicError is returned when the request is invalid and it cannot be processed."
       },
       "calculateDashboardDiffResponse": {
@@ -174,13 +130,6 @@
         "description": "(empty)"
       },
       "conflictError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponseBody"
-            }
-          }
-        },
         "description": "ConflictError"
       },
       "contentResponse": {
@@ -198,128 +147,21 @@
         "description": "(empty)"
       },
       "createCorrelationResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/CreateCorrelationResponseBody"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "createDashboardSnapshotResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "deleteKey": {
-                  "description": "Unique key used to delete the snapshot. It is different from the key so that only the creator can delete the snapshot.",
-                  "type": "string"
-                },
-                "deleteUrl": {
-                  "type": "string"
-                },
-                "id": {
-                  "description": "Snapshot id",
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "key": {
-                  "description": "Unique key",
-                  "type": "string"
-                },
-                "url": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "createOrUpdateDatasourceResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "datasource": {
-                  "$ref": "#/components/schemas/DataSource"
-                },
-                "id": {
-                  "description": "ID Identifier of the new data source.",
-                  "example": 65,
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "description": "Message Message of the deleted dashboard.",
-                  "example": "Data source added",
-                  "type": "string"
-                },
-                "name": {
-                  "description": "Name of the new data source.",
-                  "example": "My Data source",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "id",
-                "name",
-                "message",
-                "datasource"
-              ],
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "createOrgResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "message": {
-                  "description": "Message Message of the created org.",
-                  "example": "Data source added",
-                  "type": "string"
-                },
-                "orgId": {
-                  "description": "ID Identifier of the created org.",
-                  "example": 65,
-                  "format": "int64",
-                  "type": "integer"
-                }
-              },
-              "required": [
-                "orgId",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "createPlaylistResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Playlist"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "createPublicDashboardResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/PublicDashboard"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "createReportResponse": {
@@ -352,71 +194,25 @@
         "description": "(empty)"
       },
       "createServiceAccountResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ServiceAccountDTO"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "createTeamResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "message": {
-                  "type": "string"
-                },
-                "teamId": {
-                  "format": "int64",
-                  "type": "integer"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "createTokenResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/NewApiKeyResult"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "dashboardResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/DashboardFullWithMeta"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "dashboardVersionResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/DashboardVersionMeta"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "dashboardVersionsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/DashboardVersionMeta"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -424,141 +220,25 @@
         "description": "(empty)"
       },
       "deleteAlertNotificationChannelResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "id": {
-                  "description": "ID Identifier of the deleted notification channel.",
-                  "example": 65,
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "description": "Message Message of the deleted notificatiton channel.",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "id",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "deleteCorrelationResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/DeleteCorrelationResponseBody"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "deleteDashboardResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "id": {
-                  "description": "ID Identifier of the deleted dashboard.",
-                  "example": 65,
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "description": "Message Message of the deleted dashboard.",
-                  "example": "Dashboard My Dashboard deleted",
-                  "type": "string"
-                },
-                "title": {
-                  "description": "Title Title of the deleted dashboard.",
-                  "example": "My Dashboard",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "id",
-                "title",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "deleteDataSourceByNameResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "id": {
-                  "description": "ID Identifier of the deleted data source.",
-                  "example": 65,
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "description": "Message Message of the deleted dashboard.",
-                  "example": "Dashboard My Dashboard deleted",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "id",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "deleteFolderResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "id": {
-                  "description": "ID Identifier of the deleted folder.",
-                  "example": 65,
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "description": "Message Message of the deleted folder.",
-                  "example": "Folder My Folder deleted",
-                  "type": "string"
-                },
-                "title": {
-                  "description": "Title of the deleted folder.",
-                  "example": "My Folder",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "id",
-                "title",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "devicesResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/deviceDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -566,62 +246,25 @@
         "description": "(empty)"
       },
       "devicesSearchResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SearchDeviceQueryResult"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "folderResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Folder"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "forbiddenError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponseBody"
-            }
-          }
-        },
         "description": "ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource."
       },
       "forbiddenPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "ForbiddenPublicError is returned if the user/token has insufficient permissions to access the requested resource."
       },
       "genericError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponseBody"
-            }
-          }
-        },
         "description": "A GenericError is the default error message that is generated.\nFor certain status codes there are more appropriate error structures."
       },
       "getAPIkeyResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/ApiKeyDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -639,22 +282,13 @@
         "description": "(empty)"
       },
       "getAlertNotificationChannelResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/AlertNotification"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getAlertNotificationChannelsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AlertNotification"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -665,9 +299,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AlertNotificationLookup"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -675,22 +307,13 @@
         "description": "(empty)"
       },
       "getAlertResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/LegacyAlert"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getAlertsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AlertListItemDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -711,32 +334,16 @@
         "description": "(empty)"
       },
       "getAnnotationByIDResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Annotation"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getAnnotationTagsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GetAnnotationTagsResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getAnnotationsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/Annotation"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -744,22 +351,13 @@
         "description": "(empty)"
       },
       "getCorrelationResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Correlation"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getCorrelationsBySourceUIDResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/Correlation"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -770,9 +368,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/Correlation"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -780,22 +376,13 @@
         "description": "(empty)"
       },
       "getCurrentOrgResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/OrgDetailsDTO"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getDashboardPermissionsListResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/DashboardACLInfoDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -809,9 +396,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AlertStateInfoDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -822,9 +407,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/DashboardTagCloudItem"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -832,63 +415,22 @@
         "description": "(empty)"
       },
       "getDataSourceIDResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "id": {
-                  "description": "ID Identifier of the data source.",
-                  "example": 65,
-                  "format": "int64",
-                  "type": "integer"
-                }
-              },
-              "required": [
-                "id"
-              ],
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getDataSourceResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/DataSource"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getDataSourcesResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/DataSourceList"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getFolderDescendantCountsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/DescendantCounts"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getFolderPermissionListResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/DashboardACLInfoDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -899,9 +441,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/FolderSearchHit"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -909,53 +449,18 @@
         "description": "(empty)"
       },
       "getHomeDashboardResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GetHomeDashboardResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getLibraryElementArrayResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/LibraryElementArrayResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getLibraryElementConnectionsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/LibraryElementConnectionsResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getLibraryElementResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/LibraryElementResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getLibraryElementsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/LibraryElementSearchResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getLicenseTokenResponse": {
@@ -969,32 +474,16 @@
         "description": "(empty)"
       },
       "getOrgByIDResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/OrgDetailsDTO"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getOrgByNameResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/OrgDetailsDTO"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getOrgUsersForCurrentOrgLookupResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/UserLookupDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1005,9 +494,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/OrgUserDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1018,9 +505,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/OrgUserDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1031,9 +516,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/TempUserDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1041,22 +524,13 @@
         "description": "(empty)"
       },
       "getPlaylistDashboardsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/PlaylistDashboardsSlice"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getPlaylistItemsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/PlaylistItemDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1064,32 +538,16 @@
         "description": "(empty)"
       },
       "getPlaylistResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/PlaylistDTO"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getPreferencesResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Preferences"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getPublicAnnotationsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AnnotationEvent"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1097,52 +555,22 @@
         "description": "(empty)"
       },
       "getPublicDashboardResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/PublicDashboard"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getQueryHistoryDeleteQueryResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/QueryHistoryDeleteQueryResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getQueryHistoryResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/QueryHistoryResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getQueryHistorySearchResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/QueryHistorySearchResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getQuotaResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/QuotaDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1185,12 +613,7 @@
       "getResourcePermissionsResponse": {
         "content": {
           "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/resourcePermissionDTO"
-              },
-              "type": "array"
-            }
+            "schema": {}
           }
         },
         "description": "(empty)"
@@ -1216,58 +639,16 @@
         "description": "(empty)"
       },
       "getSSOSettingsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "provider": {
-                  "type": "string"
-                },
-                "settings": {
-                  "additionalProperties": false,
-                  "type": "object"
-                },
-                "source": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getSharingOptionsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "externalEnabled": {
-                  "type": "boolean"
-                },
-                "externalSnapshotName": {
-                  "type": "string"
-                },
-                "externalSnapshotURL": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getSignedInUserOrgListResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/UserOrgDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1278,9 +659,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/TeamDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1301,13 +680,6 @@
         "description": "(empty)"
       },
       "getTeamByIDResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/TeamDTO"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getTeamGroupsApiResponse": {
@@ -1327,9 +699,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/TeamMemberDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1340,9 +710,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/UserToken"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1353,9 +721,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/UserOrgDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1366,9 +732,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/TeamDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1376,70 +740,18 @@
         "description": "(empty)"
       },
       "helpFlagResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "helpFlags1": {
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "importDashboardResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ImportDashboardResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "internalServerError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponseBody"
-            }
-          }
-        },
         "description": "InternalServerError is a general error indicating something went wrong internally."
       },
       "internalServerPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "InternalServerPublicError is a general error indicating something went wrong internally."
       },
       "jwksResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "keys": {
-                  "items": {
-                    "$ref": "#/components/schemas/JSONWebKey"
-                  },
-                  "type": "array"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "listBuiltinRolesResponse": {
@@ -1459,13 +771,6 @@
         "description": "(empty)"
       },
       "listPublicDashboardsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/PublicDashboardListResponseWithPagination"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "listRecordingRulesResponse": {
@@ -1498,24 +803,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "provider": {
-                    "type": "string"
-                  },
-                  "settings": {
-                    "additionalProperties": false,
-                    "type": "object"
-                  },
-                  "source": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1523,27 +811,6 @@
         "description": "(empty)"
       },
       "listSortOptionsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "description": {
-                  "type": "string"
-                },
-                "displayName": {
-                  "type": "string"
-                },
-                "meta": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "listTeamsRolesResponse": {
@@ -1566,9 +833,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/TokenDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1592,223 +857,42 @@
         "description": "(empty)"
       },
       "notFoundError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponseBody"
-            }
-          }
-        },
         "description": "NotFoundError is returned when the requested resource was not found."
       },
       "notFoundPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "NotFoundPublicError is returned when the requested resource was not found."
       },
       "okResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SuccessResponseBody"
-            }
-          }
-        },
         "description": "An OKResponse is returned if the request was successful."
       },
       "pauseAlertResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "alertId": {
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "state": {
-                  "description": "Alert result state\nrequired true",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "alertId",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "pauseAlertsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "alertsAffected": {
-                  "description": "AlertsAffected is the number of the affected alerts.",
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "state": {
-                  "description": "Alert result state\nrequired true",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "alertsAffected",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "postAPIkeyResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/NewApiKeyResult"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "postAnnotationResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "id": {
-                  "description": "ID Identifier of the created annotation.",
-                  "example": 65,
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "description": "Message Message of the created annotation.",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "id",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "postDashboardResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "folderUid": {
-                  "description": "FolderUID The unique identifier (uid) of the folder the dashboard belongs to.",
-                  "type": "string"
-                },
-                "id": {
-                  "description": "ID The unique identifier (id) of the created/updated dashboard.",
-                  "example": 1,
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "status": {
-                  "description": "Status status of the response.",
-                  "example": "success",
-                  "type": "string"
-                },
-                "title": {
-                  "description": "Slug The slug of the dashboard.",
-                  "example": "my-dashboard",
-                  "type": "string"
-                },
-                "uid": {
-                  "description": "UID The unique identifier (uid) of the created/updated dashboard.",
-                  "example": "nHz3SXiiz",
-                  "type": "string"
-                },
-                "url": {
-                  "description": "URL The relative URL for accessing the created/updated dashboard.",
-                  "example": "/d/nHz3SXiiz/my-dashboard",
-                  "type": "string"
-                },
-                "version": {
-                  "description": "Version The version of the dashboard.",
-                  "example": 2,
-                  "format": "int64",
-                  "type": "integer"
-                }
-              },
-              "required": [
-                "status",
-                "title",
-                "version",
-                "id",
-                "uid",
-                "url"
-              ],
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "postRenewLicenseTokenResponse": {
         "description": "(empty)"
       },
       "preconditionFailedError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponseBody"
-            }
-          }
-        },
         "description": "PreconditionFailedError"
       },
       "publicErrorResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "queryMetricsWithExpressionsRespons": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/QueryDataResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "queryPublicDashboardResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/QueryDataResponse"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "receiversResponse": {
@@ -1855,32 +939,16 @@
         "description": "(empty)"
       },
       "resourcePermissionsDescription": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Description"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "retrieveServiceAccountResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ServiceAccountDTO"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "searchDashboardSnapshotsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/DashboardSnapshotDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1888,32 +956,16 @@
         "description": "(empty)"
       },
       "searchOrgServiceAccountsWithPagingResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SearchOrgServiceAccountsResult"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "searchOrgUsersResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SearchOrgUsersQueryResult"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "searchOrgsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/OrgDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1921,23 +973,9 @@
         "description": "(empty)"
       },
       "searchPlaylistsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Playlists"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "searchResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/HitList"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "searchResultResponse": {
@@ -1951,22 +989,13 @@
         "description": "(empty)"
       },
       "searchTeamsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SearchTeamQueryResult"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "searchUsersResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/UserSearchHitDTO"
-              },
+              "items": {},
               "type": "array"
             }
           }
@@ -1974,13 +1003,6 @@
         "description": "(empty)"
       },
       "searchUsersWithPagingResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SearchUserQueryResult"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "setRoleAssignmentsResponse": {
@@ -1994,118 +1016,33 @@
         "description": "(empty)"
       },
       "testAlertResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/AlertTestResult"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "unauthorisedError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponseBody"
-            }
-          }
-        },
         "description": "UnauthorizedError is returned when the request is not authenticated."
       },
       "unauthorisedPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "UnauthorisedPublicError is returned when the request is not authenticated."
       },
       "unprocessableEntityError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponseBody"
-            }
-          }
-        },
         "description": "UnprocessableEntityError"
       },
       "updateCorrelationResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/UpdateCorrelationResponseBody"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "updatePlaylistResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/PlaylistDTO"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "updatePublicDashboardResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/PublicDashboard"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "updateServiceAccountResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "id": {
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "serviceaccount": {
-                  "$ref": "#/components/schemas/ServiceAccountProfileDTO"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "userResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/UserProfileDTO"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "viewPublicDashboardResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/DashboardFullWithMeta"
-            }
-          }
-        },
         "description": "(empty)"
       }
     },
@@ -2153,27 +1090,7 @@
         },
         "type": "object"
       },
-      "AddAPIKeyCommand": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "role": {
-            "enum": [
-              "None",
-              "Viewer",
-              "Editor",
-              "Admin"
-            ],
-            "type": "string"
-          },
-          "secondsToLive": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
+      "AddAPIKeyCommand": {},
       "AddDataSourceCommand": {
         "description": "Also acts as api DTO",
         "properties": {
@@ -3187,80 +2104,7 @@
         },
         "type": "object"
       },
-      "Annotation": {
-        "properties": {
-          "alertId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "alertName": {
-            "type": "string"
-          },
-          "avatarUrl": {
-            "type": "string"
-          },
-          "created": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardUID": {
-            "type": "string"
-          },
-          "data": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "email": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "login": {
-            "type": "string"
-          },
-          "newState": {
-            "type": "string"
-          },
-          "panelId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "prevState": {
-            "type": "string"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "text": {
-            "type": "string"
-          },
-          "time": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "timeEnd": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "updated": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
+      "Annotation": {},
       "AnnotationActions": {
         "properties": {
           "canAdd": {
@@ -3972,125 +2816,15 @@
         "title": "CookiePreferences defines model for CookiePreferences.",
         "type": "object"
       },
-      "CookieType": {
-        "type": "string"
-      },
+      "CookieType": {},
       "Correlation": {
-        "description": "Correlation is the model for correlations definitions",
-        "properties": {
-          "config": {
-            "$ref": "#/components/schemas/CorrelationConfig"
-          },
-          "description": {
-            "description": "Description of the correlation",
-            "example": "Logs to Traces",
-            "type": "string"
-          },
-          "label": {
-            "description": "Label identifying the correlation",
-            "example": "My Label",
-            "type": "string"
-          },
-          "orgId": {
-            "description": "OrgID of the data source the correlation originates from",
-            "example": 1,
-            "format": "int64",
-            "type": "integer"
-          },
-          "provisioned": {
-            "description": "Provisioned True if the correlation was created during provisioning",
-            "type": "boolean"
-          },
-          "sourceUID": {
-            "description": "UID of the data source the correlation originates from",
-            "example": "d0oxYRg4z",
-            "type": "string"
-          },
-          "targetUID": {
-            "description": "UID of the data source the correlation points to",
-            "example": "PE1C5CBDA0504A6A3",
-            "type": "string"
-          },
-          "uid": {
-            "description": "Unique identifier of the correlation",
-            "example": "50xhMlg9k",
-            "type": "string"
-          }
-        },
-        "type": "object"
+        "description": "Correlation is the model for correlations definitions"
       },
-      "CorrelationConfig": {
-        "properties": {
-          "field": {
-            "description": "Field used to attach the correlation link",
-            "example": "message",
-            "type": "string"
-          },
-          "target": {
-            "additionalProperties": false,
-            "description": "Target data query",
-            "example": {
-              "prop1": "value1",
-              "prop2": "value"
-            },
-            "type": "object"
-          },
-          "transformations": {
-            "$ref": "#/components/schemas/Transformations"
-          },
-          "type": {
-            "$ref": "#/components/schemas/CorrelationConfigType"
-          }
-        },
-        "required": [
-          "field",
-          "type",
-          "target"
-        ],
-        "type": "object"
-      },
+      "CorrelationConfig": {},
       "CorrelationConfigType": {
         "type": "string"
       },
-      "CorrelationConfigUpdateDTO": {
-        "properties": {
-          "field": {
-            "description": "Field used to attach the correlation link",
-            "example": "message",
-            "type": "string"
-          },
-          "target": {
-            "additionalProperties": false,
-            "description": "Target data query",
-            "example": {
-              "prop1": "value1",
-              "prop2": "value"
-            },
-            "type": "object"
-          },
-          "transformations": {
-            "description": "Source data transformations",
-            "example": [
-              {
-                "type": "logfmt"
-              },
-              {
-                "expression": "(Superman|Batman)",
-                "type": "regex",
-                "variable": "name"
-              }
-            ],
-            "items": {
-              "$ref": "#/components/schemas/Transformation"
-            },
-            "type": "array"
-          },
-          "type": {
-            "$ref": "#/components/schemas/CorrelationConfigType"
-          }
-        },
-        "type": "object"
-      },
+      "CorrelationConfigUpdateDTO": {},
       "CounterResetHint": {
         "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
         "format": "uint8",
@@ -4133,88 +2867,12 @@
         "type": "object"
       },
       "CreateCorrelationCommand": {
-        "description": "CreateCorrelationCommand is the command for creating a correlation",
-        "properties": {
-          "config": {
-            "$ref": "#/components/schemas/CorrelationConfig"
-          },
-          "description": {
-            "description": "Optional description of the correlation",
-            "example": "Logs to Traces",
-            "type": "string"
-          },
-          "label": {
-            "description": "Optional label identifying the correlation",
-            "example": "My label",
-            "type": "string"
-          },
-          "provisioned": {
-            "description": "True if correlation was created with provisioning. This makes it read-only.",
-            "type": "boolean"
-          },
-          "targetUID": {
-            "description": "Target data source UID to which the correlation is created. required if config.type = query",
-            "example": "PE1C5CBDA0504A6A3",
-            "type": "string"
-          }
-        },
-        "type": "object"
+        "description": "CreateCorrelationCommand is the command for creating a correlation"
       },
       "CreateCorrelationResponseBody": {
-        "description": "CreateCorrelationResponse is the response struct for CreateCorrelationCommand",
-        "properties": {
-          "message": {
-            "example": "Correlation created",
-            "type": "string"
-          },
-          "result": {
-            "$ref": "#/components/schemas/Correlation"
-          }
-        },
-        "type": "object"
+        "description": "CreateCorrelationResponse is the response struct for CreateCorrelationCommand"
       },
-      "CreateDashboardSnapshotCommand": {
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-            "type": "string"
-          },
-          "dashboard": {
-            "$ref": "#/components/schemas/Unstructured"
-          },
-          "deleteKey": {
-            "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
-            "type": "string"
-          },
-          "expires": {
-            "default": 0,
-            "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
-            "format": "int64",
-            "type": "integer"
-          },
-          "external": {
-            "default": false,
-            "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
-            "type": "boolean"
-          },
-          "key": {
-            "description": "Define the unique key. Required if `external` is `true`.",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-            "type": "string"
-          },
-          "name": {
-            "description": "Snapshot name",
-            "type": "string"
-          }
-        },
-        "required": [
-          "dashboard"
-        ],
-        "type": "object"
-      },
+      "CreateDashboardSnapshotCommand": {},
       "CreateFolderCommand": {
         "description": "CreateFolderCommand captures the information required by the folder service\nto create a folder.",
         "properties": {
@@ -4234,39 +2892,7 @@
         "type": "object"
       },
       "CreateLibraryElementCommand": {
-        "description": "CreateLibraryElementCommand is the command for adding a LibraryElement",
-        "properties": {
-          "folderId": {
-            "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
-            "format": "int64",
-            "type": "integer"
-          },
-          "folderUid": {
-            "description": "UID of the folder where the library element is stored.",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
-            "enum": [
-              1,
-              2
-            ],
-            "format": "int64",
-            "type": "integer"
-          },
-          "model": {
-            "description": "The JSON model for the library element.",
-            "type": "object"
-          },
-          "name": {
-            "description": "Name of the library element.",
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
-        "type": "object"
+        "description": "CreateLibraryElementCommand is the command for adding a LibraryElement"
       },
       "CreateOrUpdateReportConfig": {
         "properties": {
@@ -4352,21 +2978,7 @@
         "type": "object"
       },
       "CreateQueryInQueryHistoryCommand": {
-        "description": "CreateQueryInQueryHistoryCommand is the command for adding query history",
-        "properties": {
-          "datasourceUid": {
-            "description": "UID of the data source for which are queries stored.",
-            "example": "PE1C5CBDA0504A6A3",
-            "type": "string"
-          },
-          "queries": {
-            "$ref": "#/components/schemas/Json"
-          }
-        },
-        "required": [
-          "queries"
-        ],
-        "type": "object"
+        "description": "CreateQueryInQueryHistoryCommand is the command for adding query history"
       },
       "CreateRoleForm": {
         "properties": {
@@ -4404,29 +3016,7 @@
         },
         "type": "object"
       },
-      "CreateServiceAccountForm": {
-        "properties": {
-          "isDisabled": {
-            "example": false,
-            "type": "boolean"
-          },
-          "name": {
-            "example": "grafana",
-            "type": "string"
-          },
-          "role": {
-            "enum": [
-              "None",
-              "Viewer",
-              "Editor",
-              "Admin"
-            ],
-            "example": "Admin",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
+      "CreateServiceAccountForm": {},
       "CreateTeamCommand": {
         "properties": {
           "email": {
@@ -4522,31 +3112,7 @@
         },
         "type": "object"
       },
-      "DashboardACLUpdateItem": {
-        "properties": {
-          "permission": {
-            "$ref": "#/components/schemas/PermissionType"
-          },
-          "role": {
-            "enum": [
-              "None",
-              "Viewer",
-              "Editor",
-              "Admin"
-            ],
-            "type": "string"
-          },
-          "teamId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
+      "DashboardACLUpdateItem": {},
       "DashboardCreateCommand": {
         "description": "These are the values expected to be sent from an end user\n+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object",
         "properties": {
@@ -4839,23 +3405,7 @@
       },
       "DataResponse": {
         "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
-        "properties": {
-          "Error": {
-            "description": "Error is a property to be set if the corresponding DataQuery has an error.",
-            "type": "string"
-          },
-          "ErrorSource": {
-            "$ref": "#/components/schemas/ErrorSource"
-          },
-          "Frames": {
-            "$ref": "#/components/schemas/Frames"
-          },
-          "Status": {
-            "$ref": "#/components/schemas/Status"
-          }
-        },
-        "title": "DataResponse contains the results from a DataQuery.",
-        "type": "object"
+        "title": "DataResponse contains the results from a DataQuery."
       },
       "DataSource": {
         "properties": {
@@ -5002,15 +3552,7 @@
         "title": "DataTopic is used to identify which topic the frame should be assigned to.",
         "type": "string"
       },
-      "DeleteCorrelationResponseBody": {
-        "properties": {
-          "message": {
-            "example": "Correlation deleted",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
+      "DeleteCorrelationResponseBody": {},
       "DeleteTokenCommand": {
         "properties": {
           "instance": {
@@ -5438,20 +3980,7 @@
       },
       "Field": {
         "description": "A Field is essentially a slice of various types with extra properties and methods.\nSee NewField() for supported types.\n\nThe slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.",
-        "properties": {
-          "config": {
-            "$ref": "#/components/schemas/FieldConfig"
-          },
-          "labels": {
-            "$ref": "#/components/schemas/FrameLabels"
-          },
-          "name": {
-            "description": "Name is default identifier of the field. The name does not have to be unique, but the combination\nof name and Labels should be unique for proper behavior in all situations.",
-            "type": "string"
-          }
-        },
-        "title": "Field represents a typed column of data within a Frame.",
-        "type": "object"
+        "title": "Field represents a typed column of data within a Frame."
       },
       "FieldConfig": {
         "properties": {
@@ -5701,100 +4230,14 @@
       },
       "Frame": {
         "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
-        "properties": {
-          "Fields": {
-            "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.\nThere should be no `nil` entries in the Fields slice (making them pointers was a mistake).",
-            "items": {
-              "$ref": "#/components/schemas/Field"
-            },
-            "type": "array"
-          },
-          "Meta": {
-            "$ref": "#/components/schemas/FrameMeta"
-          },
-          "Name": {
-            "description": "Name is used in some Grafana visualizations.",
-            "type": "string"
-          },
-          "RefID": {
-            "description": "RefID is a property that can be set to match a Frame to its originating query.",
-            "type": "string"
-          }
-        },
-        "title": "Frame is a columnar data structure where each column is a Field.",
-        "type": "object"
+        "title": "Frame is a columnar data structure where each column is a Field."
       },
       "FrameLabels": {
-        "additionalProperties": {
-          "type": "string"
-        },
-        "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys",
-        "type": "object"
+        "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys"
       },
       "FrameMeta": {
-        "description": "https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
-        "properties": {
-          "channel": {
-            "description": "Channel is the path to a stream in grafana live that has real-time updates for this data.",
-            "type": "string"
-          },
-          "custom": {
-            "description": "Custom datasource specific values."
-          },
-          "dataTopic": {
-            "$ref": "#/components/schemas/DataTopic"
-          },
-          "executedQueryString": {
-            "description": "ExecutedQueryString is the raw query sent to the underlying system. All macros and templating\nhave been applied.  When metadata contains this value, it will be shown in the query inspector.",
-            "type": "string"
-          },
-          "notices": {
-            "description": "Notices provide additional information about the data in the Frame that\nGrafana can display to the user in the user interface.",
-            "items": {
-              "$ref": "#/components/schemas/Notice"
-            },
-            "type": "array"
-          },
-          "path": {
-            "description": "Path is a browsable path on the datasource.",
-            "type": "string"
-          },
-          "pathSeparator": {
-            "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
-            "type": "string"
-          },
-          "preferredVisualisationPluginId": {
-            "description": "PreferredVisualizationPluginId sets the panel plugin id to use to render the data when using Explore. If\nthe plugin cannot be found will fall back to PreferredVisualization.",
-            "type": "string"
-          },
-          "preferredVisualisationType": {
-            "$ref": "#/components/schemas/VisType"
-          },
-          "stats": {
-            "description": "Stats is an array of query result statistics.",
-            "items": {
-              "$ref": "#/components/schemas/QueryStat"
-            },
-            "type": "array"
-          },
-          "type": {
-            "$ref": "#/components/schemas/FrameType"
-          },
-          "typeVersion": {
-            "$ref": "#/components/schemas/FrameTypeVersion"
-          },
-          "uniqueRowIdFields": {
-            "description": "Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID\nbut that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially\nwith streaming data with frequent updates.",
-            "example": "TraceID in Tempo, table name + primary key in SQL",
-            "items": {
-              "format": "int64",
-              "type": "integer"
-            },
-            "type": "array"
-          }
-        },
-        "title": "FrameMeta matches:",
-        "type": "object"
+        "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
+        "title": "FrameMeta matches:"
       },
       "FrameType": {
         "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
@@ -5810,11 +4253,7 @@
       },
       "Frames": {
         "description": "It is the main data container within a backend.DataResponse.\nThere should be no `nil` entries in the Frames slice (making them pointers was a mistake).",
-        "items": {
-          "$ref": "#/components/schemas/Frame"
-        },
-        "title": "Frames is a slice of Frame pointers.",
-        "type": "array"
+        "title": "Frames is a slice of Frame pointers."
       },
       "GenericPublicError": {
         "properties": {
@@ -5834,27 +4273,6 @@
         "type": "object"
       },
       "GetHomeDashboardResponse": {
-        "allOf": [
-          {
-            "properties": {
-              "dashboard": {
-                "$ref": "#/components/schemas/Json"
-              },
-              "meta": {
-                "$ref": "#/components/schemas/DashboardMeta"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "properties": {
-              "redirectUri": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
-        ],
         "title": "Get home dashboard response."
       },
       "GettableAlertmanagers": {
@@ -6782,82 +5200,7 @@
         },
         "type": "array"
       },
-      "LegacyAlert": {
-        "properties": {
-          "Created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "DashboardID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "EvalData": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "ExecutionError": {
-            "type": "string"
-          },
-          "For": {
-            "$ref": "#/components/schemas/Duration"
-          },
-          "Frequency": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Handler": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "ID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Message": {
-            "type": "string"
-          },
-          "Name": {
-            "type": "string"
-          },
-          "NewStateDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "OrgID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "PanelID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "Severity": {
-            "type": "string"
-          },
-          "Silenced": {
-            "type": "boolean"
-          },
-          "State": {
-            "$ref": "#/components/schemas/AlertStateType"
-          },
-          "StateChanges": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Updated": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "Version": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
+      "LegacyAlert": {},
       "LegacyChannel": {
         "properties": {
           "id": {
@@ -7173,48 +5516,7 @@
         "description": "Metadata contains user accesses for a given resource\nEx: map[string]bool{\"create\":true, \"delete\": true}",
         "type": "object"
       },
-      "MetricRequest": {
-        "properties": {
-          "debug": {
-            "type": "boolean"
-          },
-          "from": {
-            "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
-            "example": "now-1h",
-            "type": "string"
-          },
-          "queries": {
-            "description": "queries.refId – Specifies an identifier of the query. Is optional and default to “A”.\nqueries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.\nqueries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.\nqueries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.",
-            "example": [
-              {
-                "datasource": {
-                  "uid": "PD8C576611E62080A"
-                },
-                "format": "table",
-                "intervalMs": 86400000,
-                "maxDataPoints": 1092,
-                "rawSql": "SELECT 1 as valueOne, 2 as valueTwo",
-                "refId": "A"
-              }
-            ],
-            "items": {
-              "$ref": "#/components/schemas/Json"
-            },
-            "type": "array"
-          },
-          "to": {
-            "description": "To End time in epoch timestamps in milliseconds or relative using Grafana time units.",
-            "example": "now",
-            "type": "string"
-          }
-        },
-        "required": [
-          "from",
-          "to",
-          "queries"
-        ],
-        "type": "object"
-      },
+      "MetricRequest": {},
       "MoveFolderCommand": {
         "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
         "properties": {
@@ -7316,24 +5618,7 @@
         },
         "type": "object"
       },
-      "NewApiKeyResult": {
-        "properties": {
-          "id": {
-            "example": 1,
-            "format": "int64",
-            "type": "integer"
-          },
-          "key": {
-            "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a",
-            "type": "string"
-          },
-          "name": {
-            "example": "grafana",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
+      "NewApiKeyResult": {},
       "NotFound": {
         "type": "object"
       },
@@ -7930,58 +6215,9 @@
         },
         "type": "object"
       },
-      "PatchPrefsCmd": {
-        "properties": {
-          "cookies": {
-            "items": {
-              "$ref": "#/components/schemas/CookieType"
-            },
-            "type": "array"
-          },
-          "homeDashboardId": {
-            "default": 0,
-            "description": "The numerical :id of a favorited dashboard",
-            "format": "int64",
-            "type": "integer"
-          },
-          "homeDashboardUID": {
-            "type": "string"
-          },
-          "language": {
-            "type": "string"
-          },
-          "queryHistory": {
-            "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "theme": {
-            "enum": [
-              "light",
-              "dark"
-            ],
-            "type": "string"
-          },
-          "timezone": {
-            "enum": [
-              "utc",
-              "browser"
-            ],
-            "type": "string"
-          },
-          "weekStart": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
+      "PatchPrefsCmd": {},
       "PatchQueryCommentInQueryHistoryCommand": {
-        "description": "PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history",
-        "properties": {
-          "comment": {
-            "description": "Updated comment",
-            "type": "string"
-          }
-        },
-        "type": "object"
+        "description": "PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history"
       },
       "PauseAlertCommand": {
         "properties": {
@@ -8540,36 +6776,7 @@
         "type": "object"
       },
       "Preferences": {
-        "description": "Spec defines user, team or org Grafana preferences",
-        "properties": {
-          "cookiePreferences": {
-            "$ref": "#/components/schemas/CookiePreferences"
-          },
-          "homeDashboardUID": {
-            "description": "UID for the home dashboard",
-            "type": "string"
-          },
-          "language": {
-            "description": "Selected language (beta)",
-            "type": "string"
-          },
-          "queryHistory": {
-            "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "theme": {
-            "description": "Theme light, dark, empty is default",
-            "type": "string"
-          },
-          "timezone": {
-            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
-            "type": "string"
-          },
-          "weekStart": {
-            "description": "WeekStart day of the week (sunday, monday, etc)",
-            "type": "string"
-          }
-        },
-        "type": "object"
+        "description": "Spec defines user, team or org Grafana preferences"
       },
       "PrometheusRemoteWriteTargetJSON": {
         "properties": {
@@ -9600,12 +7807,8 @@
         "type": "object"
       },
       "Responses": {
-        "additionalProperties": {
-          "$ref": "#/components/schemas/DataResponse"
-        },
         "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
-        "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses.",
-        "type": "object"
+        "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses."
       },
       "RestoreDashboardVersionCommand": {
         "properties": {
@@ -9654,53 +7857,7 @@
         },
         "type": "object"
       },
-      "RoleDTO": {
-        "properties": {
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "delegatable": {
-            "type": "boolean"
-          },
-          "description": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "global": {
-            "type": "boolean"
-          },
-          "group": {
-            "type": "string"
-          },
-          "hidden": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "permissions": {
-            "items": {
-              "$ref": "#/components/schemas/Permission"
-            },
-            "type": "array"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "updated": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "version": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
+      "RoleDTO": {},
       "RolesSearchQuery": {
         "properties": {
           "includeHidden": {
@@ -10303,76 +8460,7 @@
         },
         "type": "object"
       },
-      "ServiceAccountProfileDTO": {
-        "properties": {
-          "accessControl": {
-            "additionalProperties": {
-              "type": "boolean"
-            },
-            "type": "object"
-          },
-          "avatarUrl": {
-            "example": "/avatar/8ea890a677d6a223c591a1beea6ea9d2",
-            "type": "string"
-          },
-          "createdAt": {
-            "example": "2022-03-21T14:35:33Z",
-            "format": "date-time",
-            "type": "string"
-          },
-          "id": {
-            "example": 2,
-            "format": "int64",
-            "type": "integer"
-          },
-          "isDisabled": {
-            "example": false,
-            "type": "boolean"
-          },
-          "isExternal": {
-            "example": false,
-            "type": "boolean"
-          },
-          "login": {
-            "example": "sa-grafana",
-            "type": "string"
-          },
-          "name": {
-            "example": "test",
-            "type": "string"
-          },
-          "orgId": {
-            "example": 1,
-            "format": "int64",
-            "type": "integer"
-          },
-          "requiredBy": {
-            "example": "grafana-app",
-            "type": "string"
-          },
-          "role": {
-            "example": "Editor",
-            "type": "string"
-          },
-          "teams": {
-            "example": [],
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "tokens": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "updatedAt": {
-            "example": "2022-03-21T14:35:33Z",
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
+      "ServiceAccountProfileDTO": {},
       "SetResourcePermissionCommand": {
         "properties": {
           "builtInRole": {
@@ -10648,14 +8736,7 @@
       "Success": {
         "$ref": "#/components/schemas/ResponseDetails"
       },
-      "SuccessResponseBody": {
-        "properties": {
-          "message": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
+      "SuccessResponseBody": {},
       "SupportedTransformationTypes": {
         "type": "string"
       },
@@ -11324,48 +9405,7 @@
         },
         "type": "object"
       },
-      "TokenDTO": {
-        "properties": {
-          "created": {
-            "example": "2022-03-23T10:31:02Z",
-            "format": "date-time",
-            "type": "string"
-          },
-          "expiration": {
-            "example": "2022-03-23T10:31:02Z",
-            "format": "date-time",
-            "type": "string"
-          },
-          "hasExpired": {
-            "example": false,
-            "type": "boolean"
-          },
-          "id": {
-            "example": 1,
-            "format": "int64",
-            "type": "integer"
-          },
-          "isRevoked": {
-            "example": false,
-            "type": "boolean"
-          },
-          "lastUsedAt": {
-            "example": "2022-03-23T10:31:02Z",
-            "format": "date-time",
-            "type": "string"
-          },
-          "name": {
-            "example": "grafana",
-            "type": "string"
-          },
-          "secondsUntilExpiration": {
-            "example": 0,
-            "format": "double",
-            "type": "number"
-          }
-        },
-        "type": "object"
-      },
+      "TokenDTO": {},
       "TokenStatus": {
         "format": "int64",
         "type": "integer"
@@ -11570,47 +9610,10 @@
         "type": "object"
       },
       "UpdateCorrelationCommand": {
-        "description": "UpdateCorrelationCommand is the command for updating a correlation",
-        "properties": {
-          "config": {
-            "$ref": "#/components/schemas/CorrelationConfigUpdateDTO"
-          },
-          "description": {
-            "description": "Optional description of the correlation",
-            "example": "Logs to Traces",
-            "type": "string"
-          },
-          "label": {
-            "description": "Optional label identifying the correlation",
-            "example": "My label",
-            "type": "string"
-          }
-        },
-        "type": "object"
+        "description": "UpdateCorrelationCommand is the command for updating a correlation"
       },
-      "UpdateCorrelationResponseBody": {
-        "properties": {
-          "message": {
-            "example": "Correlation updated",
-            "type": "string"
-          },
-          "result": {
-            "$ref": "#/components/schemas/Correlation"
-          }
-        },
-        "type": "object"
-      },
-      "UpdateDashboardACLCommand": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/DashboardACLUpdateItem"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
+      "UpdateCorrelationResponseBody": {},
+      "UpdateDashboardACLCommand": {},
       "UpdateDataSourceCommand": {
         "description": "Also acts as api DTO",
         "properties": {
@@ -11751,50 +9754,7 @@
         },
         "type": "object"
       },
-      "UpdatePrefsCmd": {
-        "properties": {
-          "cookies": {
-            "items": {
-              "$ref": "#/components/schemas/CookieType"
-            },
-            "type": "array"
-          },
-          "homeDashboardId": {
-            "default": 0,
-            "description": "The numerical :id of a favorited dashboard",
-            "format": "int64",
-            "type": "integer"
-          },
-          "homeDashboardUID": {
-            "type": "string"
-          },
-          "language": {
-            "type": "string"
-          },
-          "queryHistory": {
-            "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "theme": {
-            "enum": [
-              "light",
-              "dark",
-              "system"
-            ],
-            "type": "string"
-          },
-          "timezone": {
-            "enum": [
-              "utc",
-              "browser"
-            ],
-            "type": "string"
-          },
-          "weekStart": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
+      "UpdatePrefsCmd": {},
       "UpdateQuotaCmd": {
         "properties": {
           "limit": {
@@ -11866,30 +9826,7 @@
         },
         "type": "object"
       },
-      "UpdateServiceAccountForm": {
-        "properties": {
-          "isDisabled": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "role": {
-            "enum": [
-              "None",
-              "Viewer",
-              "Editor",
-              "Admin"
-            ],
-            "type": "string"
-          },
-          "serviceAccountId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
+      "UpdateServiceAccountForm": {},
       "UpdateTeamCommand": {
         "properties": {
           "Email": {
@@ -12755,32 +10692,7 @@
         "type": "object"
       },
       "publicError": {
-        "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
-        "properties": {
-          "extra": {
-            "additionalProperties": false,
-            "description": "Extra Additional information about the error",
-            "type": "object"
-          },
-          "message": {
-            "description": "Message A human readable message",
-            "type": "string"
-          },
-          "messageId": {
-            "description": "MessageID A unique identifier for the error",
-            "type": "string"
-          },
-          "statusCode": {
-            "description": "StatusCode The HTTP status code returned",
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "statusCode",
-          "messageId"
-        ],
-        "type": "object"
+        "description": "PublicError is derived from Error and only contains information\navailable to the end user."
       },
       "receiver": {
         "description": "Receiver receiver",
@@ -13830,9 +11742,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/setPermissionsCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -13894,9 +11804,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/setPermissionCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -13959,9 +11867,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/setPermissionCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -14024,9 +11930,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/setPermissionCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -14223,9 +12127,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PauseAllAlertsCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -14450,9 +12352,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminCreateUserForm"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -14722,9 +12622,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminUpdateUserPasswordForm"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -14776,9 +12674,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminUpdateUserPermissionsForm"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -14876,9 +12772,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateQuotaCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -14930,9 +12824,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RevokeAuthTokenCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -14998,9 +12890,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateAlertNotificationCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -15060,9 +12950,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NotificationTestCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -15181,9 +13069,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateAlertNotificationWithUidCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -15302,9 +13188,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateAlertNotificationCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -15476,9 +13360,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AlertTestCommand"
-              }
+              "schema": {}
             }
           },
           "x-originalParamName": "body"
@@ -15553,9 +13435,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PauseAlertCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -15714,9 +13594,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PostAnnotationsCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -15752,9 +13630,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PostGraphiteAnnotationsCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -15789,9 +13665,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MassDeleteAnnotationsCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -15931,9 +13805,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PatchAnnotationsCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -15977,9 +13849,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateAnnotationsCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -16052,9 +13922,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddAPIKeyCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -16168,25 +14036,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "properties": {
-                  "base": {
-                    "$ref": "#/components/schemas/CalculateDiffTarget"
-                  },
-                  "diffType": {
-                    "description": "The type of diff to return\nDescription:\n`basic`\n`json`",
-                    "enum": [
-                      "basic",
-                      "json"
-                    ],
-                    "type": "string"
-                  },
-                  "new": {
-                    "$ref": "#/components/schemas/CalculateDiffTarget"
-                  }
-                },
-                "type": "object"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -16219,9 +14069,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveDashboardCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -16335,9 +14183,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateDashboardACLCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -16388,9 +14234,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RestoreDashboardVersionCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -16512,9 +14356,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ImportDashboardRequest"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -16643,9 +14485,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PublicDashboardDTO"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -16740,9 +14580,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PublicDashboardDTO"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -16893,9 +14731,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateDashboardACLCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -16943,9 +14779,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RestoreDashboardVersionCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -17104,9 +14938,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddDataSourceCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -17652,9 +15484,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCorrelationCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -17749,9 +15579,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCorrelationCommand"
-              }
+              "schema": {}
             }
           },
           "x-originalParamName": "body"
@@ -17872,9 +15700,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateDataSourceCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -18120,9 +15946,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateDataSourceCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -18242,9 +16066,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MetricRequest"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -18335,9 +16157,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateFolderCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -18505,9 +16325,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateFolderCommand"
-              }
+              "schema": {}
             }
           },
           "description": "To change the unique identifier (uid), provide another one.\nTo overwrite an existing folder with newer version, set `overwrite` to `true`.\nProvide the current version to safelly update the folder: if the provided version differs from the stored one the request will fail, unless `overwrite` is `true`.",
@@ -18595,9 +16413,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MoveFolderCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -18676,9 +16492,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateDashboardACLCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -18812,9 +16626,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateLibraryElementCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -18970,9 +16782,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PatchLibraryElementCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -19277,9 +17087,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrgForm"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -19314,9 +17122,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrgAddressForm"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -19372,9 +17178,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddInviteForm"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -19469,9 +17273,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PatchPrefsCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -19504,9 +17306,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatePrefsCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -19591,9 +17391,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddOrgUserCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -19714,9 +17512,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrgUserCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -19817,9 +17613,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateOrgCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -19983,9 +17777,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrgForm"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -20036,9 +17828,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrgAddressForm"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -20131,9 +17921,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateQuotaCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -20223,9 +18011,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddOrgUserCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -20363,9 +18149,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrgUserCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -20433,9 +18217,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePlaylistCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -20548,9 +18330,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatePlaylistCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -20845,9 +18625,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateQueryInQueryHistoryCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -20979,9 +18757,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PatchQueryCommentInQueryHistoryCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -22079,9 +19855,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateServiceAccountForm"
-              }
+              "schema": {}
             }
           },
           "x-originalParamName": "Body"
@@ -22268,9 +20042,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateServiceAccountForm"
-              }
+              "schema": {}
             }
           },
           "x-originalParamName": "Body"
@@ -22355,9 +20127,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddServiceAccountTokenCommand"
-              }
+              "schema": {}
             }
           },
           "x-originalParamName": "Body"
@@ -22483,9 +20253,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateDashboardSnapshotCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -22644,9 +20412,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTeamCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -22955,9 +20721,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTeamCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -23039,9 +20803,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddTeamMemberCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -23138,9 +20900,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTeamMemberCommand"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -23213,9 +20973,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatePrefsCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -23271,9 +21029,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateUserCommand"
-              }
+              "schema": {}
             }
           },
           "description": "To change the email, name, login, theme, provide another one.",
@@ -23434,9 +21190,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangeUserPasswordCommand"
-              }
+              "schema": {}
             }
           },
           "description": "To change the email, name, login, theme, provide another one.",
@@ -23495,9 +21249,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PatchPrefsCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -23528,9 +21280,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatePrefsCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -23589,9 +21339,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RevokeAuthTokenCmd"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -23990,9 +21738,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateUserCommand"
-              }
+              "schema": {}
             }
           },
           "description": "To change the email, name, login, theme, provide another one.",
@@ -25559,21 +23305,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "provider": {
-                    "type": "string"
-                  },
-                  "settings": {
-                    "additionalProperties": false,
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
+              "schema": {}
             }
           },
           "required": true,
