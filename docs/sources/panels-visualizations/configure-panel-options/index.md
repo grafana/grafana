@@ -29,7 +29,7 @@ There are settings common to all visualizations, which you set in the **Panel op
 
 ## Panel options
 
-Set the following options to provide basic information about a panel and define basic display elements.
+Set the following options to provide basic information about a panel and define basic display elements:
 
 | Option                 | Description                                                                                                                                                                                                                                                                                             |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -39,7 +39,7 @@ Set the following options to provide basic information about a panel and define 
 | Panel links            | Add [links to the panel][] to create shortcuts to other dashboards, panels, and external websites. Access panel links by clicking the icon next to the panel title.                                                                                                                                     |
 | Repeat options         | Set whether to repeat the panel for each value in the selected variable. For more information, refer to [Configure repeating panels](#configure-repeating-panels).                                                                                                                                      |
 
-You can use generative AI to populate the **Title** and **Description** fields with the [Grafana LLM plugin][], which is currently in public preview. To enable this, refer to [Set up generative AI features for dashboards][]. Alternatively, you can take the following steps to create them yourself.
+You can use generative AI to populate the **Title** and **Description** fields with the [Grafana LLM plugin][], which is currently in public preview. To enable this, refer to [Set up generative AI features for dashboards][].
 
 ## Configure repeating panels
 
