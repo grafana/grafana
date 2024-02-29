@@ -6,18 +6,20 @@ import React from 'react';
 import { SecondaryActions } from './SecondaryActions';
 
 describe('SecondaryActions', () => {
-  it('should render component with three buttons', () => {
+  it('should render component with four buttons', () => {
     render(
       <SecondaryActions
         onClickAddQueryRowButton={noop}
         onClickRichHistoryButton={noop}
         onClickQueryInspectorButton={noop}
+        onClickExploreWorkspacesButton={noop}
       />
     );
 
     expect(screen.getByRole('button', { name: /Add query/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Query history/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Workspaces/i })).toBeInTheDocument();
   });
 
   it('should not render hidden elements', () => {
@@ -28,6 +30,7 @@ describe('SecondaryActions', () => {
         onClickAddQueryRowButton={noop}
         onClickRichHistoryButton={noop}
         onClickQueryInspectorButton={noop}
+        onClickExploreWorkspacesButton={noop}
       />
     );
 
@@ -43,6 +46,7 @@ describe('SecondaryActions', () => {
         onClickAddQueryRowButton={noop}
         onClickRichHistoryButton={noop}
         onClickQueryInspectorButton={noop}
+        onClickExploreWorkspacesButton={noop}
       />
     );
 
@@ -63,6 +67,7 @@ describe('SecondaryActions', () => {
         onClickAddQueryRowButton={onClickAddRow}
         onClickRichHistoryButton={onClickHistory}
         onClickQueryInspectorButton={onClickQueryInspector}
+        onClickExploreWorkspacesButton={onClickQueryInspector}
       />
     );
 
