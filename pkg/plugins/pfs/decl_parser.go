@@ -14,6 +14,18 @@ type declParser struct {
 	skip map[string]bool
 }
 
+// Extracted from kindsys repository
+var schemaInterfaces = map[string]*SchemaInterface{
+	"PanelCfg": {
+		Name:    "PanelCfg",
+		IsGroup: true,
+	},
+	"DataQuery": {
+		Name:    "DataQuery",
+		IsGroup: false,
+	},
+}
+
 func NewDeclParser(rt *thema.Runtime, skip map[string]bool) *declParser {
 	return &declParser{
 		rt:   rt,
@@ -48,24 +60,12 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 			continue
 		}
 
-		// Extracted from kindsys repository
-		schemaInterface := map[string]*SchemaInterface{
-			"PanelCfg": {
-				Name:    "PanelCfg",
-				IsGroup: true,
-			},
-			"DataQuery": {
-				Name:    "DataQuery",
-				IsGroup: false,
-			},
-		}
-
 		for slotName, kind := range pp.ComposableKinds {
 			if err != nil {
 				return nil, fmt.Errorf("parsing plugin failed for %s: %s", dir, err)
 			}
 			decls = append(decls, &PluginDecl{
-				SchemaInterface: schemaInterface[slotName],
+				SchemaInterface: schemaInterfaces[slotName],
 				Lineage:         kind.Lineage(),
 				Imports:         pp.CUEImports,
 				PluginMeta:      pp.Properties,
