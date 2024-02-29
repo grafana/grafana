@@ -56,7 +56,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
       <Menu.Item
         label="Reset to default values"
         icon="history-alt"
-        onClick={(event) => {
+        onClick={() => {
           setResetConfig(true);
         }}
       />
