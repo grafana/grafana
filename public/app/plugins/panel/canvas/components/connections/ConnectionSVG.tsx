@@ -6,8 +6,14 @@ import { useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { ConnectionState } from '../../types';
-import { calculateCoordinates, calculateMidpoint, getConnectionStyles, getParentBoundingClientRect } from '../../utils';
+import { ConnectionState, Vertex } from '../../types';
+import {
+  calculateAbsoluteCoords,
+  calculateCoordinates,
+  calculateMidpoint,
+  getConnectionStyles,
+  getParentBoundingClientRect,
+} from '../../utils';
 
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
@@ -108,13 +114,6 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const transformScale = scene.scale;
       const parentRect = getParentBoundingClientRect(scene);
 
-      const vertices = [
-        { x: 0.25, y: 0 },
-        { x: 0.5, y: 1 },
-      ];
-
-      //vertices.length = 0;
-
       if (!sourceRect || !parent || !parentRect) {
         return;
       }
@@ -130,10 +129,26 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const selectedStyles = { stroke: '#44aaff', strokeOpacity: 0.6, strokeWidth: strokeWidth + 5 };
 
       const CONNECTION_HEAD_ID = `connectionHead-${headId + Math.random()}`;
+      const vertices: Vertex[] = [];
+      const futureVertices: Vertex[] = [];
+      vertices.push({ x: 0.25, y: 0 });
+      vertices.push({ x: 0.5, y: 1 });
+      //vertices.length = 0;
       let pathString = `M${x1} ${y1} `;
       if (vertices.length) {
-        vertices.map((value) => {
-          pathString += `L${value.x * (x2 - x1) + x1} ${value.y * (y2 - y1) + y1} `;
+        vertices.map((value, index) => {
+          const x = value.x;
+          const y = value.y;
+          pathString += `L${x * (x2 - x1) + x1} ${y * (y2 - y1) + y1} `;
+          if (index === 0) {
+            futureVertices.push(calculateMidpoint(0, 0, x, y));
+          } else {
+            const previousVertex = vertices[index - 1];
+            futureVertices.push(calculateMidpoint(previousVertex.x, previousVertex.y, x, y));
+            if (index === vertices.length - 1) {
+              futureVertices.push(calculateMidpoint(1, 1, x, y));
+            }
+          }
         });
         pathString += `L${x2} ${y2}`;
       }
@@ -163,15 +178,14 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
                   fill={'none'}
                   markerEnd={`url(#${CONNECTION_HEAD_ID})`}
                 />
-                {vertices.map((value, index) => (
-                  <circle
-                    key={`vertex${index}_${idx}`}
-                    fill={'gray'}
-                    cx={value.x * (x2 - x1) + x1}
-                    cy={value.y * (y2 - y1) + y1}
-                    r={5}
-                  />
-                ))}
+                {vertices.map((value, index) => {
+                  const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
+                  return <circle key={`vertex${index}_${idx}`} fill={'gray'} cx={x} cy={y} r={5} />;
+                })}
+                {futureVertices.map((value, index) => {
+                  const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
+                  return <circle key={`vertexFuture${index}_${idx}`} fill={'red'} cx={x} cy={y} r={8} />;
+                })}
               </g>
             ) : (
               <g>
