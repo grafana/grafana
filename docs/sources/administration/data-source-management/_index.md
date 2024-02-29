@@ -21,21 +21,6 @@ Grafana supports many different storage backends for your time series data (data
 Refer to [data sources]({{< relref "../../datasources" >}}) for more information about using data sources in Grafana.
 Only users with the organization admin role can add data sources.
 
-## Add a data source
-
-Before you can create your first dashboard, you need to add your data source.
-
-{{% admonition type="note" %}}
-Only users with the organization admin role can add data sources.
-{{% /admonition %}}
-
-**To add a data source:**
-
-1. Click **Connections** in the left-side menu.
-1. Enter the name of a specific data source in the search dialog. You can filter by **Data source** to only see data sources.
-1. Click the data source you want to add.
-1. Configure the data source following instructions specific to that data source.
-
 For links to data source-specific documentation, see [Data sources]({{< relref "../../datasources" >}}).
 
 ## Data source permissions
@@ -178,22 +163,3 @@ This action impacts all cache-enabled data sources. If you are using Memcached, 
 ### Sending a request without cache
 
 If a data source query request contains an `X-Cache-Skip` header, then Grafana skips the caching middleware, and does not search the cache for a response. This can be particularly useful when debugging data source queries using cURL.
-
-## Add data source plugins
-
-Grafana ships with several [built-in data sources]({{< relref "../../datasources#built-in-core-data-sources" >}}).
-You can add additional data sources as plugins, which you can install or create yourself.
-
-### Find data source plugins in the plugin catalog
-
-To view available data source plugins, go to the [plugin catalog](/grafana/plugins/?type=datasource) and select the "Data sources" filter.
-For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management/" >}}).
-
-You can further filter the plugin catalog's results for data sources provided by the Grafana community, Grafana Labs, and partners.
-If you use [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also filter by Enterprise-supported plugins.
-
-For more documentation on a specific data source plugin's features, including its query language and editor, refer to its plugin catalog page.
-
-### Create a data source plugin
-
-To build your own data source plugin, refer to the ["Build a data source plugin"](/developers/plugin-tools/tutorials/build-a-data-source-plugin) tutorial and our documentation about [building a plugin](/developers/plugin-tools).
