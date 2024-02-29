@@ -646,4 +646,12 @@ const (
 	// FlagAlertingUpgradeDryrunOnStart
 	// When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.
 	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
+
+	// FlagSlackSharePreview
+	// Share dashboards preview to Slack
+	FlagSlackSharePreview = "slackSharePreview"
+
+	// FlagSlackUnfurling
+	// Unfurl dashboard links in Slack and display an image preview
+	FlagSlackUnfurling = "slackUnfurling"
 )

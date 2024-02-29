@@ -178,4 +178,6 @@ export interface FeatureToggles {
   expressionParser?: boolean;
   groupByVariable?: boolean;
   alertingUpgradeDryrunOnStart?: boolean;
+  slackSharePreview?: boolean;
+  slackUnfurling?: boolean;
 }

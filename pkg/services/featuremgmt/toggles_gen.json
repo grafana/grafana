@@ -83,7 +83,7 @@
         "name": "pluginsInstrumentationStatusSource",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-29T08:27:47Z"
+        "deletionTimestamp": "2024-02-29T21:32:24Z"
       },
       "spec": {
         "description": "Include a status source label for plugin request metrics and logs",
@@ -511,7 +511,7 @@
         "name": "displayAnonymousStats",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-29T08:27:47Z"
+        "deletionTimestamp": "2024-02-29T21:32:24Z"
       },
       "spec": {
         "description": "Enables anonymous stats to be shown in the UI for Grafana",
@@ -1387,7 +1387,7 @@
         "name": "traceToMetrics",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-29T08:27:47Z"
+        "deletionTimestamp": "2024-02-29T21:32:24Z"
       },
       "spec": {
         "description": "Enable trace to metrics links",
@@ -1516,7 +1516,7 @@
         "name": "splitScopes",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-29T08:27:47Z"
+        "deletionTimestamp": "2024-02-29T21:32:24Z"
       },
       "spec": {
         "description": "Support faster dashboard and folder search by splitting permission scopes into parts",
@@ -1557,7 +1557,7 @@
         "name": "externalServiceAuth",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-29T08:27:47Z"
+        "deletionTimestamp": "2024-02-29T21:32:24Z"
       },
       "spec": {
         "description": "Starts an OAuth2 authentication provider for external services",
@@ -2132,6 +2132,34 @@
         "description": "Enables using SQL and DuckDB functions as Expressions.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "slackSharePreview",
+        "resourceVersion": "1709242208036",
+        "creationTimestamp": "2024-02-29T21:30:08Z"
+      },
+      "spec": {
+        "description": "Share dashboards preview to Slack",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "slackUnfurling",
+        "resourceVersion": "1709242339515",
+        "creationTimestamp": "2024-02-29T21:32:19Z"
+      },
+      "spec": {
+        "description": "Unfurl dashboard links in Slack and display an image preview",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true
       }
     }
   ]

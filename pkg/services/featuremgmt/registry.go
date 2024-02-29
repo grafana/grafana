@@ -1190,6 +1190,22 @@ var (
 			RequiresRestart: true,
 			Expression:      "true", // enabled by default
 		},
+		{
+			Name:            "slackSharePreview",
+			Description:     "Share dashboards preview to Slack",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSharingSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+		},
+		{
+			Name:            "slackUnfurling",
+			Description:     "Unfurl dashboard links in Slack and display an image preview",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSharingSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+		},
 	}
 )
 
