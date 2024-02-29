@@ -22,6 +22,14 @@ describe('histogram frames frames', () => {
       fields: [{ name: 'C', type: FieldType.number, values: [5, 6, 7, 8, 9] }],
     });
 
+    const series3 = toDataFrame({
+      fields: [{ name: 'D', type: FieldType.number, values: [1, 2, 3, null, null] }],
+    });
+
+    const series4 = toDataFrame({
+      fields: [{ name: 'E', type: FieldType.number, values: [4, 5, null, 6, null], config: { noValue: '0' } }],
+    });
+
     const out = histogramFieldsToFrame(buildHistogram([series1, series2])!);
     expect(
       out.fields.map((f) => ({
@@ -184,6 +192,88 @@ describe('histogram frames frames', () => {
             3,
             2,
             2,
+          ],
+        },
+      ]
+    `);
+
+    // NULLs filtering test
+    const out3 = histogramFieldsToFrame(buildHistogram([series3])!);
+    expect(
+      out3.fields.map((f) => ({
+        name: f.name,
+        values: f.values,
+      }))
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "name": "xMin",
+          "values": [
+            1,
+            2,
+            3,
+          ],
+        },
+        {
+          "name": "xMax",
+          "values": [
+            2,
+            3,
+            4,
+          ],
+        },
+        {
+          "name": "D",
+          "values": [
+            1,
+            1,
+            1,
+          ],
+        },
+      ]
+    `);
+
+    // noValue nulls test
+    const out4 = histogramFieldsToFrame(buildHistogram([series4])!);
+    expect(
+      out4.fields.map((f) => ({
+        name: f.name,
+        values: f.values,
+        config: f.config,
+      }))
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "config": {},
+          "name": "xMin",
+          "values": [
+            0,
+            4,
+            5,
+            6,
+          ],
+        },
+        {
+          "config": {},
+          "name": "xMax",
+          "values": [
+            1,
+            5,
+            6,
+            7,
+          ],
+        },
+        {
+          "config": {
+            "noValue": "0",
+            "unit": undefined,
+          },
+          "name": "E",
+          "values": [
+            2,
+            1,
+            1,
+            1,
           ],
         },
       ]

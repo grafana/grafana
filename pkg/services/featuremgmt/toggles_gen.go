@@ -59,10 +59,6 @@ const (
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
 
-	// FlagTraceToMetrics
-	// Enable trace to metrics links
-	FlagTraceToMetrics = "traceToMetrics"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -110,10 +106,6 @@ const (
 	// FlagLogRequestsInstrumentedAsUnknown
 	// Logs the path for requests that are instrumented as unknown
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
-
-	// FlagDataConnectionsConsole
-	// Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.
-	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
 	// FlagTopnav
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
@@ -247,10 +239,6 @@ const (
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
 
-	// FlagExternalServiceAuth
-	// Starts an OAuth2 authentication provider for external services
-	FlagExternalServiceAuth = "externalServiceAuth"
-
 	// FlagRefactorVariablesTimeRange
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
@@ -358,10 +346,6 @@ const (
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
-
-	// FlagSplitScopes
-	// Support faster dashboard and folder search by splitting permission scopes into parts
-	FlagSplitScopes = "splitScopes"
 
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
@@ -491,10 +475,6 @@ const (
 	// Enable searching for dashboards using panel title in search v1
 	FlagPanelTitleSearchInV1 = "panelTitleSearchInV1"
 
-	// FlagPluginsInstrumentationStatusSource
-	// Include a status source label for plugin request metrics and logs
-	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
-
 	// FlagManagedPluginsInstall
 	// Install managed plugins directly from plugins catalog
 	FlagManagedPluginsInstall = "managedPluginsInstall"
@@ -591,10 +571,6 @@ const (
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
 
-	// FlagDisplayAnonymousStats
-	// Enables anonymous stats to be shown in the UI for Grafana
-	FlagDisplayAnonymousStats = "displayAnonymousStats"
-
 	// FlagLokiQueryHints
 	// Enables query hints for Loki
 	FlagLokiQueryHints = "lokiQueryHints"
@@ -638,6 +614,10 @@ const (
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
+
+	// FlagSqlExpressions
+	// Enables using SQL and DuckDB functions as Expressions.
+	FlagSqlExpressions = "sqlExpressions"
 
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph

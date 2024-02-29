@@ -658,6 +658,11 @@ function fillY2DynamicValues(
     }
   }
 
+  props.push({
+    id: `custom.axisPlacement`,
+    value: AxisPlacement.Right,
+  });
+
   // Add any custom property
   const y1G = y1.custom ?? {};
   const y2G = y2.custom ?? {};

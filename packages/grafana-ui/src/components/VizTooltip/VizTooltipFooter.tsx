@@ -6,14 +6,14 @@ import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { Button, ButtonProps, DataLinkButton, HorizontalGroup } from '..';
 import { useStyles2 } from '../../themes';
 
-interface Props {
+interface VizTooltipFooterProps {
   dataLinks: Array<LinkModel<Field>>;
   annotate?: () => void;
 }
 
 export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
-export const VizTooltipFooter = ({ dataLinks, annotate }: Props) => {
+export const VizTooltipFooter = ({ dataLinks, annotate }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
 
   const renderDataLinks = () => {
@@ -33,7 +33,7 @@ export const VizTooltipFooter = ({ dataLinks, annotate }: Props) => {
   return (
     <div className={styles.wrapper}>
       {dataLinks.length > 0 && <div className={styles.dataLinks}>{renderDataLinks()}</div>}
-      {annotate && (
+      {annotate != null && (
         <div className={styles.addAnnotations}>
           <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
             Add annotation

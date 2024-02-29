@@ -82,7 +82,8 @@
       "metadata": {
         "name": "pluginsInstrumentationStatusSource",
         "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
+        "creationTimestamp": "2024-02-16T18:36:28Z",
+        "deletionTimestamp": "2024-02-29T08:27:47Z"
       },
       "spec": {
         "description": "Include a status source label for plugin request metrics and logs",
@@ -479,13 +480,17 @@
     {
       "metadata": {
         "name": "ssoSettingsApi",
-        "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
+        "resourceVersion": "1708503560010",
+        "creationTimestamp": "2024-02-16T18:36:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-21 08:19:20.010283 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
         "stage": "preview",
-        "codeowner": "@grafana/identity-access-team"
+        "codeowner": "@grafana/identity-access-team",
+        "allowSelfServe": true
       }
     },
     {
@@ -505,7 +510,8 @@
       "metadata": {
         "name": "displayAnonymousStats",
         "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
+        "creationTimestamp": "2024-02-16T18:36:28Z",
+        "deletionTimestamp": "2024-02-29T08:27:47Z"
       },
       "spec": {
         "description": "Enables anonymous stats to be shown in the UI for Grafana",
@@ -1110,19 +1116,6 @@
     },
     {
       "metadata": {
-        "name": "dataConnectionsConsole",
-        "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
-      },
-      "spec": {
-        "description": "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
-        "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "allowSelfServe": true
-      }
-    },
-    {
-      "metadata": {
         "name": "extraThemes",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z"
@@ -1393,7 +1386,8 @@
       "metadata": {
         "name": "traceToMetrics",
         "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
+        "creationTimestamp": "2024-02-16T18:36:28Z",
+        "deletionTimestamp": "2024-02-29T08:27:47Z"
       },
       "spec": {
         "description": "Enable trace to metrics links",
@@ -1521,7 +1515,8 @@
       "metadata": {
         "name": "splitScopes",
         "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
+        "creationTimestamp": "2024-02-16T18:36:28Z",
+        "deletionTimestamp": "2024-02-29T08:27:47Z"
       },
       "spec": {
         "description": "Support faster dashboard and folder search by splitting permission scopes into parts",
@@ -1561,7 +1556,8 @@
       "metadata": {
         "name": "externalServiceAuth",
         "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
+        "creationTimestamp": "2024-02-16T18:36:28Z",
+        "deletionTimestamp": "2024-02-29T08:27:47Z"
       },
       "spec": {
         "description": "Starts an OAuth2 authentication provider for external services",
@@ -2121,6 +2117,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "sqlExpressions",
+        "resourceVersion": "1709044973784",
+        "creationTimestamp": "2024-02-19T22:46:11Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-27 14:42:53.784398 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables using SQL and DuckDB functions as Expressions.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
       }
     }
   ]

@@ -150,7 +150,6 @@ export { VizLegend } from './VizLegend/VizLegend';
 export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 
 export { Alert, type AlertVariant } from './Alert/Alert';
-export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from '../graveyard/Graph/GraphSeriesToggler';
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { CollapsableSection } from './Collapse/CollapsableSection';
 export { DataLinkButton } from './DataLinks/DataLinkButton';
@@ -264,8 +263,8 @@ export { Avatar } from './UsersIndicator/Avatar';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
-export { getDragStyles } from './DragHandle/DragHandle';
-export { Splitter } from './Splitter/Splitter';
+export { getDragStyles, type DragHandlePosition } from './DragHandle/DragHandle';
+export { useSplitter } from './Splitter/useSplitter';
 
 export { LayoutItemContext, type LayoutItemContextProps } from './Layout/LayoutItemContext';
 
@@ -296,19 +295,3 @@ export { type UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
 export * from './PanelChrome/types';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
-
-// -----------------------------------------------------
-// Graveyard: exported, but no longer used internally
-// These will be removed in the future
-// -----------------------------------------------------
-
-export { Graph } from '../graveyard/Graph/Graph';
-export { GraphWithLegend } from '../graveyard/Graph/GraphWithLegend';
-export { GraphContextMenu, GraphContextMenuHeader } from '../graveyard/Graph/GraphContextMenu';
-export { graphTimeFormat, graphTickFormatter } from '../graveyard/Graph/utils';
-
-export { GraphNG, type GraphNGProps } from '../graveyard/GraphNG/GraphNG';
-export { TimeSeries } from '../graveyard/TimeSeries/TimeSeries';
-export { useGraphNGContext } from '../graveyard/GraphNG/hooks';
-export { preparePlotFrame, buildScaleKey } from '../graveyard/GraphNG/utils';
-export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
