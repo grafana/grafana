@@ -1,4 +1,12 @@
-import { VizPanel, SceneGridItem, SceneGridRow, SceneDataLayers, sceneGraph, SceneGridLayout } from '@grafana/scenes';
+import {
+  VizPanel,
+  SceneGridItem,
+  SceneGridRow,
+  SceneDataLayers,
+  sceneGraph,
+  SceneGridLayout,
+  behaviors,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -56,6 +64,16 @@ function getDataLayers(scene: DashboardScene): SceneDataLayers {
   }
 
   return data;
+}
+
+export function getCursorSync(scene: DashboardScene) {
+  const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
+
+  if (cursorSync instanceof behaviors.CursorSync) {
+    return cursorSync;
+  }
+
+  return;
 }
 
 export function getNextPanelId(dashboard: DashboardScene): number {
@@ -119,4 +137,5 @@ export const dashboardSceneGraph = {
   getVizPanels,
   getDataLayers,
   getNextPanelId,
+  getCursorSync,
 };

@@ -8,6 +8,7 @@ import {
   SceneRefreshPicker,
   SceneTimeRange,
   SceneVariableSet,
+  behaviors,
 } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
@@ -34,6 +35,9 @@ export class DashboardSceneChangeTracker {
       if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals')) {
         this.detectChanges();
       }
+    }
+    if (payload.changedObject instanceof behaviors.CursorSync) {
+      this.detectChanges();
     }
     if (payload.changedObject instanceof SceneDataLayers) {
       this.detectChanges();

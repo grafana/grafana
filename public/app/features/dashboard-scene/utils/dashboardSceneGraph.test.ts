@@ -6,7 +6,9 @@ import {
   SceneQueryRunner,
   SceneTimeRange,
   VizPanel,
+  behaviors,
 } from '@grafana/scenes';
+import { DashboardCursorSync } from '@grafana/schema';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -199,6 +201,22 @@ describe('dashboardSceneGraph', () => {
       expect(() => getNextPanelId(scene)).toThrow('Dashboard body is not a SceneGridLayout');
     });
   });
+
+  describe('getCursorSync', () => {
+    it('should return cursor sync behavior', () => {
+      const scene = buildTestScene();
+      const cursorSync = dashboardSceneGraph.getCursorSync(scene);
+
+      expect(cursorSync).toBeInstanceOf(behaviors.CursorSync);
+    });
+
+    it('should return undefined if no cursor sync behavior', () => {
+      const scene = buildTestScene({ $behaviors: [] });
+      const cursorSync = dashboardSceneGraph.getCursorSync(scene);
+
+      expect(cursorSync).toBeUndefined();
+    });
+  });
 });
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
@@ -207,6 +225,11 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
     uid: 'dash-1',
     $timeRange: new SceneTimeRange({}),
     controls: new DashboardControls({}),
+    $behaviors: [
+      new behaviors.CursorSync({
+        sync: DashboardCursorSync.Crosshair,
+      }),
+    ],
     $data: new SceneDataLayers({
       layers: [
         new DashboardAnnotationsDataLayer({

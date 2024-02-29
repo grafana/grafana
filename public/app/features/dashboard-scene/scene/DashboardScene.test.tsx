@@ -9,8 +9,9 @@ import {
   TestVariable,
   VizPanel,
   SceneGridRow,
+  behaviors,
 } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
+import { Dashboard, DashboardCursorSync } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -169,6 +170,20 @@ describe('DashboardScene', () => {
 
         scene.exitEditMode({ skipConfirm: true });
         expect(sceneGraph.getTimeRange(scene)!.state.timeZone).toBe(prevState);
+      });
+
+      it('A change to a cursor sync config should set isDirty true', () => {
+        const cursorSync = dashboardSceneGraph.getCursorSync(scene)!;
+        const initialState = cursorSync.state;
+
+        cursorSync.setState({
+          sync: DashboardCursorSync.Tooltip,
+        });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect(dashboardSceneGraph.getCursorSync(scene)!.state).toEqual(initialState);
       });
 
       it.each([
@@ -502,6 +517,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
       timeZone: 'browser',
     }),
     controls: new DashboardControls({}),
+    $behaviors: [new behaviors.CursorSync({})],
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({
