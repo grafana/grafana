@@ -3,7 +3,19 @@ import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, getBackendSrv, isFetchError, locationService, reportInteraction } from '@grafana/runtime';
-import { Box, Button, CollapsableSection, ConfirmModal, Field, LinkButton, Stack, Switch } from '@grafana/ui';
+import {
+  Box,
+  Button,
+  CollapsableSection,
+  ConfirmModal,
+  Dropdown,
+  Field,
+  IconButton,
+  LinkButton,
+  Menu,
+  Stack,
+  Switch,
+} from '@grafana/ui';
 
 import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
 import { Page } from '../../core/components/Page/Page';
@@ -38,6 +50,18 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const dataSubmitted = isSubmitted && !submitError;
   const sections = sectionFields[provider];
   const [resetConfig, setResetConfig] = useState(false);
+
+  const additionalActionsMenu = (
+    <Menu>
+      <Menu.Item
+        label="Reset to default values"
+        icon="history-alt"
+        onClick={() => {
+          setResetConfig(true);
+        }}
+      />
+    </Menu>
+  );
 
   const onSubmit = async (data: SSOProviderDTO) => {
     setIsSaving(true);
@@ -114,95 +138,103 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     }
   };
 
+  const isEnabled = config?.settings.enabled;
+
   return (
     <Page.Contents isLoading={isLoading}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
-        <>
-          <FormPrompt
-            confirmRedirect={!!Object.keys(dirtyFields).length && !dataSubmitted}
-            onDiscard={() => {
-              reportInteraction('grafana_authentication_ssosettings_abandoned', {
-                provider,
-              });
-              reset();
-            }}
-          />
-          <Field label="Enabled">
-            <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
-          </Field>
-          {sections ? (
-            <Stack gap={2} direction={'column'}>
-              {sections
-                .filter((section) => !section.hidden)
-                .map((section, index) => {
-                  return (
-                    <CollapsableSection label={section.name} isOpen={index === 0} key={section.name}>
-                      {section.fields
-                        .filter((field) => (typeof field !== 'string' ? !field.hidden : true))
-                        .map((field) => {
-                          return (
-                            <FieldRenderer
-                              key={typeof field === 'string' ? field : field.name}
-                              field={field}
-                              control={control}
-                              errors={errors}
-                              setValue={setValue}
-                              register={register}
-                              watch={watch}
-                              unregister={unregister}
-                              provider={provider}
-                              secretConfigured={!!config?.settings.clientSecret}
-                            />
-                          );
-                        })}
-                    </CollapsableSection>
-                  );
-                })}
-            </Stack>
-          ) : (
-            <>
-              {providerFields.map((field) => {
+        <FormPrompt
+          confirmRedirect={!!Object.keys(dirtyFields).length && !dataSubmitted}
+          onDiscard={() => {
+            reportInteraction('grafana_authentication_ssosettings_abandoned', {
+              provider,
+            });
+            reset();
+          }}
+        />
+        <Field label="Enabled" hidden={true}>
+          <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
+        </Field>
+        {sections ? (
+          <Stack gap={2} direction={'column'}>
+            {sections
+              .filter((section) => !section.hidden)
+              .map((section, index) => {
                 return (
-                  <FieldRenderer
-                    key={field}
-                    field={field}
-                    control={control}
-                    errors={errors}
-                    setValue={setValue}
-                    register={register}
-                    watch={watch}
-                    unregister={unregister}
-                    provider={provider}
-                    secretConfigured={!!config?.settings.clientSecret}
-                  />
+                  <CollapsableSection label={section.name} isOpen={index === 0} key={section.name}>
+                    {section.fields
+                      .filter((field) => (typeof field !== 'string' ? !field.hidden : true))
+                      .map((field) => {
+                        return (
+                          <FieldRenderer
+                            key={typeof field === 'string' ? field : field.name}
+                            field={field}
+                            control={control}
+                            errors={errors}
+                            setValue={setValue}
+                            register={register}
+                            watch={watch}
+                            unregister={unregister}
+                            provider={provider}
+                            secretConfigured={!!config?.settings.clientSecret}
+                          />
+                        );
+                      })}
+                  </CollapsableSection>
                 );
               })}
-            </>
-          )}
-          <Box display={'flex'} gap={2} marginTop={6}>
-            <Field>
-              <Button type={'submit'} disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Save'}
-              </Button>
-            </Field>
-            <Field>
-              <LinkButton href={'/admin/authentication'} variant={'secondary'}>
-                Discard
-              </LinkButton>
-            </Field>
-            <Field>
-              <Button
-                variant={'secondary'}
+          </Stack>
+        ) : (
+          <>
+            {providerFields.map((field) => {
+              return (
+                <FieldRenderer
+                  key={field}
+                  field={field}
+                  control={control}
+                  errors={errors}
+                  setValue={setValue}
+                  register={register}
+                  watch={watch}
+                  unregister={unregister}
+                  provider={provider}
+                  secretConfigured={!!config?.settings.clientSecret}
+                />
+              );
+            })}
+          </>
+        )}
+        <Box display={'flex'} gap={2} marginTop={5}>
+          <Stack alignItems={'center'} gap={2}>
+            <Button
+              type={'submit'}
+              disabled={isSaving}
+              onClick={() => setValue('enabled', !isEnabled)}
+              variant={isEnabled ? 'secondary' : undefined}
+            >
+              {isSaving ? (isEnabled ? 'Disabling...' : 'Saving...') : isEnabled ? 'Disable' : 'Save and enable'}
+            </Button>
+
+            <Button type={'submit'} disabled={isSaving} variant={'secondary'}>
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+            <LinkButton href={'/admin/authentication'} variant={'secondary'}>
+              Discard
+            </LinkButton>
+
+            <Dropdown overlay={additionalActionsMenu} placement="bottom-start">
+              <IconButton
+                tooltip="More actions"
+                title="More actions"
+                tooltipPlacement="top"
+                size="md"
+                variant="secondary"
+                name="ellipsis-v"
                 hidden={config?.source === 'system'}
-                onClick={(event) => {
-                  setResetConfig(true);
-                }}
-              >
-                Reset
-              </Button>
-            </Field>
-          </Box>
-        </>
+              />
+            </Dropdown>
+          </Stack>
+        </Box>
       </form>
       {resetConfig && (
         <ConfirmModal
