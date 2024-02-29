@@ -9,9 +9,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
-func TestFoldersApp(t *testing.T) {
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func TestIntegrationFoldersApp(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -51,10 +56,19 @@ func TestFoldersApp(t *testing.T) {
 				]
 			  },
 			  {
-				"name": "folders/children",
+				"name": "folders/access",
 				"singularName": "",
 				"namespaced": true,
-				"kind": "FolderInfoList",
+				"kind": "FolderAccessInfo",
+				"verbs": [
+				  "get"
+				]
+			  },
+			  {
+				"name": "folders/count",
+				"singularName": "",
+				"namespaced": true,
+				"kind": "DescendantCounts",
 				"verbs": [
 				  "get"
 				]
