@@ -56,7 +56,7 @@ You can assign data source permissions to users, service accounts, teams, and ro
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
 1. Select the data source for which you want to edit permissions.
-1. On the Permissions tab, find the user, service account, team, or role permission you want to update.
+1. On the Permissions tab, find the **User**, **Service Account**, **Team**, or **Role** permission you want to update.
 1. Select a different option in the **Permission** dropdown.
 
 <div class="clearfix"></div>
@@ -66,7 +66,7 @@ You can assign data source permissions to users, service accounts, teams, and ro
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
 1. Select the data source from which you want to remove permissions.
-1. On the Permissions tab, find the user, service account, team, or role permission you want to remove.
+1. On the Permissions tab, find the **User**, **Service Account**, **Team**, or **Role** permission you want to remove.
 1. Click the **X** next to the permission.
 
 <div class="clearfix"></div>
@@ -122,7 +122,7 @@ By default, data source queries are not cached. To enable query caching for a si
 1. Click **Connections** in the left-side menu.
 1. Under Your Connections, click **Data sources**.
 1. In the data source list, click the data source that you want to turn on caching for.
-1. Go to the Cache tab.
+1. Go to the **Cache** tab.
 1. Click **Enable**.
 1. (Optional) Choose custom TTLs for the data source's queries and resources caching. If you skip this step, then Grafana uses the default TTL.
 
@@ -143,7 +143,7 @@ To disable query caching for a single data source:
 1. Click **Connections** in the left-side menu.
 1. Under Your Connections, click **Data sources**.
 1. In the data source list, click the data source that you want to turn off caching for.
-1. On the Cache tab, click **Disable**.
+1. On the **Cache** tab, click **Disable**.
 
 To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the `caching` section of [Configure Grafana Enterprise]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
 
@@ -158,7 +158,7 @@ This action impacts all cache-enabled data sources. If you are using Memcached, 
 1. Click **Connections** in the left-side menu.
 1. Under Your Connections, click **Data sources**.
 1. In the data source list, click the data source that you want to clear the cache for.
-1. In the Cache tab, click **Clear cache**.
+1. In the **Cache** tab, click **Clear cache**.
 
 ### Sending a request without cache
 
