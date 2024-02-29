@@ -108,3 +108,159 @@ func TestGetProviderConfig(t *testing.T) {
 
 	require.Equal(t, expectedOAuthInfo, result)
 }
+
+func TestGetProviderConfig_ExtraFields(t *testing.T) {
+	iniWithExtraFields := `
+	[auth.azuread]
+	force_use_graph_api = true
+	allowed_organizations = org1, org2
+
+	[auth.github]
+	team_ids = first, second
+	allowed_organizations = org1, org2
+
+	[auth.generic_oauth]
+	name_attribute_path = name
+	login_attribute_path = login
+	id_token_attribute_name = id_token
+	team_ids = first, second
+	allowed_organizations = org1, org2
+
+	[auth.grafana_com]
+	enabled = true
+	allowed_organizations = org1, org2
+	`
+
+	iniFile, err := ini.Load([]byte(iniWithExtraFields))
+	require.NoError(t, err)
+
+	cfg := setting.NewCfg()
+	cfg.Raw = iniFile
+
+	strategy := NewOAuthStrategy(cfg)
+
+	t.Run("azuread", func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), "azuread")
+		require.NoError(t, err)
+
+		require.Equal(t, "true", result["force_use_graph_api"])
+		require.Equal(t, "org1, org2", result["allowed_organizations"])
+	})
+
+	t.Run("github", func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), "github")
+		require.NoError(t, err)
+
+		require.Equal(t, "first, second", result["team_ids"])
+		require.Equal(t, "org1, org2", result["allowed_organizations"])
+	})
+
+	t.Run("generic_oauth", func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
+		require.NoError(t, err)
+
+		require.Equal(t, "first, second", result["team_ids"])
+		require.Equal(t, "org1, org2", result["allowed_organizations"])
+		require.Equal(t, "name", result["name_attribute_path"])
+		require.Equal(t, "login", result["login_attribute_path"])
+		require.Equal(t, "id_token", result["id_token_attribute_name"])
+	})
+
+	t.Run("grafana_com", func(t *testing.T) {
+		result, err := strategy.GetProviderConfig(context.Background(), "grafana_com")
+		require.NoError(t, err)
+
+		require.Equal(t, "org1, org2", result["allowed_organizations"])
+	})
+}
+
+// TestGetProviderConfig_GrafanaComGrafanaNet tests that the connector is setup using the correct section and it supports
+// the legacy settings for the provider (auth.grafananet section). The test cases are based on the current behavior of the
+// SocialService's ProvideService method (TestSocialService_ProvideService_GrafanaComGrafanaNet).
+func TestGetProviderConfig_GrafanaComGrafanaNet(t *testing.T) {
+	testCases := []struct {
+		name                       string
+		rawIniContent              string
+		expectedGrafanaComSettings map[string]any
+	}{
+		{
+			name: "should setup the connector using auth.grafana_com section if it is enabled",
+			rawIniContent: `
+			[auth.grafana_com]
+			enabled = true
+			client_id = grafanaComClientId
+			
+			[auth.grafananet]
+			enabled = false
+			client_id = grafanaNetClientId`,
+			expectedGrafanaComSettings: map[string]any{
+				"enabled":   true,
+				"client_id": "grafanaComClientId",
+			},
+		},
+		{
+			name: "should setup the connector using auth.grafananet section if it is enabled",
+			rawIniContent: `
+			[auth.grafana_com]
+			enabled = false
+			client_id = grafanaComClientId
+			
+			[auth.grafananet]
+			enabled = true
+			client_id = grafanaNetClientId`,
+			expectedGrafanaComSettings: map[string]any{
+				"enabled":   true,
+				"client_id": "grafanaNetClientId",
+			},
+		},
+		{
+			name: "should setup the connector using auth.grafana_com section if both are enabled",
+			rawIniContent: `
+			[auth.grafana_com]
+			enabled = true
+			client_id = grafanaComClientId
+			
+			[auth.grafananet]
+			enabled = true
+			client_id = grafanaNetClientId`,
+			expectedGrafanaComSettings: map[string]any{
+				"enabled":   true,
+				"client_id": "grafanaComClientId",
+			},
+		},
+		{
+			name: "should not setup the connector when both are disabled",
+			rawIniContent: `
+			[auth.grafana_com]
+			enabled = false
+			client_id = grafanaComClientId
+			
+			[auth.grafananet]
+			enabled = false
+			client_id = grafanaNetClientId`,
+			expectedGrafanaComSettings: map[string]any{
+				"enabled":   false,
+				"client_id": "grafanaComClientId",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			iniFile, err := ini.Load([]byte(tc.rawIniContent))
+			require.NoError(t, err)
+
+			cfg := setting.NewCfg()
+			cfg.Raw = iniFile
+
+			strategy := NewOAuthStrategy(cfg)
+
+			actualConfig, err := strategy.GetProviderConfig(context.Background(), "grafana_com")
+			require.NoError(t, err)
+
+			for key, value := range tc.expectedGrafanaComSettings {
+				require.Equal(t, value, actualConfig[key], "Difference in key: %s. Expected: %v, got: %v", key, value, actualConfig[key])
+			}
+		})
+	}
+}

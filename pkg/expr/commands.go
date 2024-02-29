@@ -324,6 +324,8 @@ const (
 	TypeClassicConditions
 	// TypeThreshold is the CMDType for checking if a threshold has been crossed
 	TypeThreshold
+	// TypeSQL is the CMDType for running SQL expressions
+	TypeSQL
 )
 
 func (gt CommandType) String() string {
@@ -336,6 +338,8 @@ func (gt CommandType) String() string {
 		return "resample"
 	case TypeClassicConditions:
 		return "classic_conditions"
+	case TypeSQL:
+		return "sql"
 	default:
 		return "unknown"
 	}
@@ -354,6 +358,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeClassicConditions, nil
 	case "threshold":
 		return TypeThreshold, nil
+	case "sql":
+		return TypeSQL, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 
 import { clearCellsFromRangeSelection, deleteRows } from './utils';
 
@@ -14,19 +14,19 @@ describe('when deleting rows', () => {
         {
           name: 'test1',
           type: FieldType.string,
-          values: new ArrayVector(['a', 'b', 'c', 'd', 'e']),
+          values: ['a', 'b', 'c', 'd', 'e'],
           config: {},
         },
         {
           name: 'test2',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 3, 4, 5]),
+          values: [1, 2, 3, 4, 5],
           config: {},
         },
         {
           name: 'test3',
           type: FieldType.string,
-          values: new ArrayVector(['a', 'b', 'c', 'd', 'e']),
+          values: ['a', 'b', 'c', 'd', 'e'],
           config: {},
         },
       ],
@@ -98,19 +98,19 @@ describe('when clearing cells from range selection', () => {
         {
           name: 'test1',
           type: FieldType.string,
-          values: new ArrayVector(['a', 'b', 'c', 'd', 'e']),
+          values: ['a', 'b', 'c', 'd', 'e'],
           config: {},
         },
         {
           name: 'test2',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 3, 4, 5]),
+          values: [1, 2, 3, 4, 5],
           config: {},
         },
         {
           name: 'test3',
           type: FieldType.string,
-          values: new ArrayVector(['a', 'b', 'c', 'd', 'e']),
+          values: ['a', 'b', 'c', 'd', 'e'],
           config: {},
         },
       ],

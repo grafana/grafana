@@ -38,6 +38,7 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
+		&codegen.GoSpecJenny{},
 		codegen.LatestMajorsOrXJenny(
 			cuectx.TSCoreKindParentPath,
 			true, // forcing group so that we ignore the top level resource (for now)
