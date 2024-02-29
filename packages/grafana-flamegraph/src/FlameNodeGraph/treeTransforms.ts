@@ -1,24 +1,7 @@
 import { LevelItem } from '../FlameGraph/dataTransform';
 
-export type GraphNode = {
-  label: string;
-  self: number;
-  value: number;
-  parents: GraphEdge[];
-  children: GraphEdge[];
-};
-
-export type GraphEdge = {
-  from: GraphNode;
-  to: GraphNode;
-  weight: number;
-  // Residual means it is a skip level node. This happens as we trim the tree based on node priorities and sometimes
-  // we remove intermediate node.
-  residual: boolean;
-};
-
-export type GraphNodes = { [key: string]: GraphNode };
-export type GraphEdges = { [key: string]: GraphEdge };
+import { makeEdgeKey } from './edgeUtils';
+import { GraphEdges, GraphNodes } from './types';
 
 /**
  * Instead of a call tree we make a graph where each function of the profile is only once in the graph. So we merge
@@ -50,8 +33,9 @@ export function treeToGraph(root: LevelItem) {
 
     if (currentNode.parents) {
       for (let parent of currentNode.parents) {
-        if (parent.label === currentNode.label) {
-          // If function calls itself we don't need to add and edge as we will merge those nodes.
+        if (parent.label === currentNode.label || parent.label === root.label) {
+          // If function calls itself we don't need to add an edge as we will merge those nodes.
+          // Also skip edges for root/total item
           break;
         }
 
@@ -74,8 +58,4 @@ export function treeToGraph(root: LevelItem) {
   }
 
   return { nodes: graphNodes, edges: graphEdges };
-}
-
-export function makeEdgeKey(source: string, target: string) {
-  return `${source}-${target}`;
 }

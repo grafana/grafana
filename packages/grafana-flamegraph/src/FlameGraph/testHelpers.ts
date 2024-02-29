@@ -39,7 +39,9 @@ export function textToDataContainer(text: string, options?: Options) {
       });
 
       const node: LevelItem = {
+        label: match[1],
         value: match[0].length,
+        self: match[0].length,
         itemIndexes: [dfValues.length - 1],
         start: match.index - leftMargin,
         children: [],
@@ -55,8 +57,12 @@ export function textToDataContainer(text: string, options?: Options) {
           const nRow = dfValues[n.itemIndexes[0]];
           const value = nRow.value;
           if (n.start + value > node.start) {
+            // This means n is a parent of the current node
             n.children.push(node);
+            node.parents = node.parents || [];
+            node.parents.push(node);
             nRow.self = nRow.self - currentNodeValue;
+            node.self = nRow.self;
             break;
           }
         }

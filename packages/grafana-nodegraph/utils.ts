@@ -210,6 +210,7 @@ export function processNodes(
  * Turn data frame data into EdgeDatum that node graph understands
  * @param edges
  * @param edgeFields
+ * @param nodesMap
  */
 function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id: string]: NodeDatum }): EdgeDatum[] {
   if (!edgeFields.id) {
@@ -222,6 +223,12 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id:
 
     const sourceNode = nodesMap[source];
     const targetNode = nodesMap[target];
+
+    if (!(sourceNode && targetNode)) {
+      throw new Error(
+        `Processing edge ${source} -> ${target} but ${sourceNode ? 'target' : 'source'} node ${sourceNode ? target : source} was not found`
+      );
+    }
 
     return {
       id,
