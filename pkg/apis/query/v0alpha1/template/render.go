@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 	"github.com/spyzhov/ajson"
-
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
 // RenderTemplate applies selected values into a query template
@@ -62,7 +61,7 @@ func RenderTemplate(qt QueryTemplate, selectedValues map[string][]string) ([]Tar
 		if err != nil {
 			return nil, err
 		}
-		u := query.GenericDataQuery{}
+		u := resource.GenericDataQuery{}
 		err = u.UnmarshalJSON(raw)
 		if err != nil {
 			return nil, err

@@ -18,13 +18,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer":          schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServerList":      schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":             GenericDataQuery{}.OpenAPIDefinition(),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest":          schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":            QueryDataResponse{}.OpenAPIDefinition(),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryExample":                 schema_pkg_apis_query_v0alpha1_QueryExample(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinition":          schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinitionList":      schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinitionSpec":      schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Position":            schema_apis_query_v0alpha1_template_Position(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.QueryTemplate":       schema_apis_query_v0alpha1_template_QueryTemplate(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Target":              schema_apis_query_v0alpha1_template_Target(ref),
@@ -198,7 +195,7 @@ func schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery"),
+										Ref: ref("github.com/grafana/grafana-plugin-sdk-go/experimental/resource.GenericDataQuery"),
 									},
 								},
 							},
@@ -216,40 +213,7 @@ func schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery"},
-	}
-}
-
-func schema_pkg_apis_query_v0alpha1_QueryExample(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Version identifier or empty if only one exists",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"queryPayload": {
-						SchemaProps: spec.SchemaProps{
-							Description: "An example payload -- this should not require the frontend code to pre-process anything",
-							Type:        []string{"string"},
-							Format:      "byte",
-						},
-					},
-					"saveModel": {
-						SchemaProps: spec.SchemaProps{
-							Description: "An example save model -- this will require frontend code to convert it into a valid query payload",
-							Type:        []string{"string"},
-							Format:      "byte",
-						},
-					},
-				},
-			},
-		},
+			"github.com/grafana/grafana-plugin-sdk-go/experimental/resource.GenericDataQuery"},
 	}
 }
 
@@ -283,14 +247,14 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref common.ReferenceCall
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinitionSpec"),
+							Ref:     ref("github.com/grafana/grafana-plugin-sdk-go/experimental/resource.QueryTypeDefinitionSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinitionSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana-plugin-sdk-go/experimental/resource.QueryTypeDefinitionSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -338,85 +302,6 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref common.Reference
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinition", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"discriminatorField": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DiscriminatorField is the field used to link behavior to this specific query type.  It is typically \"queryType\", but can be another field if necessary",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"discriminatorValue": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The discriminator value",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"description": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Describe whe the query type is for",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"querySchema": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The query schema represents the properties that can be sent to the API In many cases, this may be the same properties that are saved in a dashboard In the case where the save model is different, we must also specify a save model",
-							Type:        []string{"string"},
-							Format:      "byte",
-						},
-					},
-					"saveModel": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The save model defines properties that can be saved into dashboard or similar These values are processed by frontend components and then sent to the api When specified, this schema will be used to validate saved objects rather than the query schema",
-							Type:        []string{"string"},
-							Format:      "byte",
-						},
-					},
-					"examples": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Examples (include a wrapper) ideally a template!",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryExample"),
-									},
-								},
-							},
-						},
-					},
-					"changelog": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Changelog defines the changed from the previous version All changes in the same version *must* be backwards compatible Only notable changes will be shown here, for the full version history see git!",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"querySchema"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryExample"},
 	}
 }
 
@@ -558,7 +443,7 @@ func schema_apis_query_v0alpha1_template_Target(ref common.ReferenceCallback) co
 					"properties": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Query target",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery"),
+							Ref:         ref("github.com/grafana/grafana-plugin-sdk-go/experimental/resource.GenericDataQuery"),
 						},
 					},
 				},
@@ -566,7 +451,7 @@ func schema_apis_query_v0alpha1_template_Target(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery", "github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.VariableReplacement"},
+			"github.com/grafana/grafana-plugin-sdk-go/experimental/resource.GenericDataQuery", "github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.VariableReplacement"},
 	}
 }
 

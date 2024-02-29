@@ -42,7 +42,7 @@ func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, *res
 	reqDTO := v0alpha1.GenericQueryRequest{}
 	// Simple URL to JSON mapping
 	if req.Method == http.MethodGet {
-		query := v0alpha1.GenericDataQuery{
+		query := resource.GenericDataQuery{
 			CommonQueryProperties: resource.CommonQueryProperties{
 				RefID:         "A",
 				MaxDataPoints: 1000,
@@ -64,10 +64,10 @@ func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, *res
 			case "queryType":
 				query.QueryType = v
 			default:
-				query.Additional[k] = v
+				query.Set(k, v)
 			}
 		}
-		reqDTO.Queries = []v0alpha1.GenericDataQuery{query}
+		reqDTO.Queries = []resource.GenericDataQuery{query}
 	} else if err := web.Bind(req, &reqDTO); err != nil {
 		return nil, nil, err
 	}

@@ -1,7 +1,5 @@
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/query/v0alpha1,DataSourceApiServer,AliasIDs
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/query/v0alpha1,GenericQueryRequest,Queries
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/query/v0alpha1,QueryTypeDefinitionSpec,Changelog
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/query/v0alpha1,QueryTypeDefinitionSpec,Examples
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1,QueryDataResponse,QueryDataResponse
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1/template,QueryTemplate,Variables
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1/template,replacement,Position

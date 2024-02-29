@@ -2,8 +2,8 @@ package peakq
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template"
 )
 
@@ -38,7 +38,7 @@ var basicTemplateSpec = template.QueryTemplate{
 				},
 			},
 
-			Properties: query.NewGenericDataQuery(map[string]any{
+			Properties: resource.NewGenericDataQuery(map[string]any{
 				"refId": "A", // TODO: Set when Where?
 				"datasource": map[string]any{
 					"type": "prometheus",
@@ -58,7 +58,7 @@ var basicTemplateRenderedTargets = []template.Target{
 	{
 		DataType: data.FrameTypeUnknown,
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
-		Properties: query.NewGenericDataQuery(map[string]any{
+		Properties: resource.NewGenericDataQuery(map[string]any{
 			"refId": "A", // TODO: Set when Where?
 			"datasource": map[string]any{
 				"type": "prometheus",

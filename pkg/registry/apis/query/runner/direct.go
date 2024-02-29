@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -67,7 +68,7 @@ func (d *directRunner) ExecuteQueryData(ctx context.Context,
 	name string,
 
 	// The raw backend query objects
-	query []v0alpha1.GenericDataQuery,
+	query []resource.GenericDataQuery,
 ) (*backend.QueryDataResponse, error) {
 	queries, dsRef, err := legacydata.ToDataSourceQueries(v0alpha1.GenericQueryRequest{
 		Queries: query,

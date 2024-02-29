@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -19,7 +20,7 @@ type QueryRunner interface {
 		name string,
 
 		// The raw backend query objects
-		query []GenericDataQuery,
+		query []resource.GenericDataQuery,
 	) (*backend.QueryDataResponse, error)
 }
 

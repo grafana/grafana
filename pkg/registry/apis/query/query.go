@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
@@ -152,6 +153,6 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 
 // NOTE the upstream queries have already been executed
 // https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
-func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, qdr *backend.QueryDataResponse, expressions []v0alpha1.GenericDataQuery) (*backend.QueryDataResponse, error) {
+func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, qdr *backend.QueryDataResponse, expressions []resource.GenericDataQuery) (*backend.QueryDataResponse, error) {
 	return qdr, fmt.Errorf("expressions are not implemented yet")
 }

@@ -51,17 +51,6 @@ func newExprStorage(handler *expr.ExpressionQueryReader) (*exprStorage, error) {
 		return nil, err
 	}
 
-	field := ""
-	for _, qt := range vals.Items {
-		if field == "" {
-			field = qt.Spec.DiscriminatorField
-		} else if qt.Spec.DiscriminatorField != "" {
-			if qt.Spec.DiscriminatorField != field {
-				return nil, fmt.Errorf("only one discriminator field allowed")
-			}
-		}
-	}
-
 	return &exprStorage{
 		resourceInfo:   &resourceInfo,
 		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),

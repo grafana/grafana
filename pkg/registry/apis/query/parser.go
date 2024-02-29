@@ -14,7 +14,7 @@ type parsedQueryRequest struct {
 	Requests []groupedQueries
 
 	// Optionally show the additional query properties
-	Expressions []v0alpha1.GenericDataQuery
+	Expressions []resource.GenericDataQuery
 }
 
 type groupedQueries struct {
@@ -25,7 +25,7 @@ type groupedQueries struct {
 	uid string
 
 	// The raw backend query objects
-	query []v0alpha1.GenericDataQuery
+	query []resource.GenericDataQuery
 }
 
 // Internally define what makes this request unique (eventually may include the apiVersion)
@@ -68,13 +68,13 @@ func parseQueryRequest(raw v0alpha1.GenericQueryRequest) (parsedQueryRequest, er
 		group.query = append(group.query, q)
 	}
 
-	for _, q := range parsed.Expressions {
-		// TODO: parse and build tree, for now just fail fast on unknown commands
-		_, err := expr.GetExpressionCommandType(q.Additional)
-		if err != nil {
-			return parsed, err
-		}
-	}
+	// for _, q := range parsed.Expressions {
+	// 	// TODO: parse and build tree, for now just fail fast on unknown commands
+	// 	_, err := expr.GetExpressionCommandType(q.Additional)
+	// 	if err != nil {
+	// 		return parsed, err
+	// 	}
+	// }
 
 	// Add each request
 	for _, v := range mixed {
