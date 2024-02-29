@@ -96,6 +96,7 @@ def pr_pipelines():
         test_backend(
             get_pr_trigger(
                 include_paths = [
+                    "Makefile",
                     "pkg/**",
                     "packaging/**",
                     ".drone.yml",
@@ -112,6 +113,7 @@ def pr_pipelines():
         lint_backend_pipeline(
             get_pr_trigger(
                 include_paths = [
+                    "Makefile",
                     "pkg/**",
                     "packaging/**",
                     ".drone.yml",

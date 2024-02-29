@@ -366,6 +366,7 @@ trigger:
     - docs/**
     - '*.md'
     include:
+    - Makefile
     - pkg/**
     - packaging/**
     - .drone.yml
@@ -462,6 +463,7 @@ trigger:
     - docs/**
     - '*.md'
     include:
+    - Makefile
     - pkg/**
     - packaging/**
     - .drone.yml
@@ -4924,6 +4926,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 959c920d1ce1f36b68e93dd4b4de180dd64ae58c28b9eb52ee1d343f991f5cfd
+hmac: 38be1b6248aae943e74ffd05c822379dc6ce1d1f08f681316d26be7740470a37
 
 ...
