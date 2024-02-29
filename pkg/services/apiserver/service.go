@@ -370,12 +370,12 @@ func (s *service) startAggregator(
 	if s.cfg.StackID != "" {
 		externalNamesNamespace = s.cfg.StackID
 	}
-	aggregatorConfig, aggregatorInformers, remoteServicesConfig, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig, externalNamesNamespace)
+	aggregatorConfig, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig, externalNamesNamespace)
 	if err != nil {
 		return nil, err
 	}
 
-	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, aggregatorInformers, remoteServicesConfig, server)
+	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig.KubeAggregatorConfig, aggregatorConfig.Informers, aggregatorConfig.RemoteServicesConfig, server)
 	if err != nil {
 		return nil, err
 	}

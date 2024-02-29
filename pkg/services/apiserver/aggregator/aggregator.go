@@ -96,14 +96,14 @@ func readRemoteServices(path string) ([]RemoteService, error) {
 	return remoteServices, nil
 }
 
-func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig genericapiserver.RecommendedConfig, externalNamesNamespace string) (*aggregatorapiserver.Config, informersv0alpha1.SharedInformerFactory, *RemoteServicesConfig, error) {
+func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig genericapiserver.RecommendedConfig, externalNamesNamespace string) (*Config, error) {
 	// Create a fake clientset and informers for the k8s v1 API group.
 	// These are not used in grafana's aggregator because v1 APIs are not available.
 	fakev1Informers := informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 
 	serviceClient, err := serviceclientset.NewForConfig(sharedConfig.LoopbackClientConfig)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
 	sharedInformerFactory := informersv0alpha1.NewSharedInformerFactory(
 		serviceClient,
@@ -128,30 +128,32 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 	}
 
 	if err := commandOptions.AggregatorOptions.ApplyTo(aggregatorConfig, commandOptions.RecommendedOptions.Etcd, commandOptions.StorageOptions.DataPath); err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
 
 	// Exit early, if no remote services file is configured
 	if commandOptions.AggregatorOptions.RemoteServicesFile == "" {
-		return aggregatorConfig, sharedInformerFactory, nil, nil
+		return NewConfig(aggregatorConfig, sharedInformerFactory, nil), nil
 	}
 
 	caBundlePEM, err := readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
 	remoteServices, err := readRemoteServices(commandOptions.AggregatorOptions.RemoteServicesFile)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
 
-	return aggregatorConfig, sharedInformerFactory, &RemoteServicesConfig{
+	remoteServicesConfig := &RemoteServicesConfig{
 		InsecureSkipTLSVerify:  commandOptions.ExtraOptions.DevMode,
 		ExternalNamesNamespace: externalNamesNamespace,
 		CABundle:               caBundlePEM,
 		Services:               remoteServices,
 		serviceClientSet:       serviceClient,
-	}, nil
+	}
+
+	return NewConfig(aggregatorConfig, sharedInformerFactory, remoteServicesConfig), nil
 }
 
 func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, sharedInformerFactory informersv0alpha1.SharedInformerFactory, remoteServicesConfig *RemoteServicesConfig, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
