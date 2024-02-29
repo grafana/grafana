@@ -28,7 +28,7 @@ const isNotSubstringValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
-      return options.value !== '' && (!value || !value.includes(options.value));
+      return typeof value === 'string' && options.value !== '' && !value.includes(options.value);
     };
   },
   getOptionsDisplayText: () => {

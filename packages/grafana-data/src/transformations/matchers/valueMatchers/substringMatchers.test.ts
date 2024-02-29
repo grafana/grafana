@@ -63,7 +63,7 @@ describe('value not substring matcher', () => {
       fields: [
         {
           name: 'temp',
-          values: ['24', null, '050', 'asd', '42'],
+          values: ['24', null, '050', 'asd', '42', '0'],
         },
       ],
     }),
@@ -74,6 +74,21 @@ describe('value not substring matcher', () => {
     options: {
       value: '5',
     },
+  });
+
+  it('should not match if the value is "0" and the option value is "0"' , () => {
+    const frame = data[0];
+    const field = frame.fields[0];
+    const valueIndex = 5;
+
+    const zeroMatcher = getValueMatcher({
+      id: ValueMatcherID.notSubstring,
+      options: {
+        value: '0',
+      },
+    });
+
+    expect(zeroMatcher(valueIndex, field, frame, data)).toBeFalsy();
   });
 
   it('should match when option value is a substring', () => {
