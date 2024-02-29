@@ -120,13 +120,8 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		return nil, err
 	}
 
-	orgID := user.GetOrgID()
-	if options.OrgID != nil {
-		orgID = *options.OrgID
-	}
-
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:        orgID,
+		OrgID:        user.GetOrgID(),
 		UserID:       userID,
 		Roles:        accesscontrol.GetOrgRoles(user),
 		TeamIDs:      user.GetTeams(),
@@ -161,6 +156,30 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	s.cache.Set(key, permissions, cacheTTL)
 
 	return permissions, nil
+}
+
+func (s *Service) GetUserPermissionsInOrg(ctx context.Context, user identity.Requester, orgID int64) ([]accesscontrol.Permission, error) {
+	permissions := make([]accesscontrol.Permission, 0)
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		permissions = append(permissions, SharedWithMeFolderPermission)
+	}
+
+	userID, err := identity.UserIdentifier(user.GetNamespacedID())
+	if err != nil {
+		return nil, err
+	}
+
+	dbPermissions, err := s.store.GetUserPermissionsInOrg(ctx, accesscontrol.GetUserPermissionsQuery{
+		UserID:       userID,
+		OrgID:        orgID,
+		RolePrefixes: []string{accesscontrol.BasicRolePrefix, accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return append(permissions, dbPermissions...), nil
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {

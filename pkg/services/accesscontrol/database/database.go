@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"strings"
 
@@ -51,6 +52,66 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	})
 
 	return result, err
+}
+
+func (s *AccessControlStore) GetUserPermissionsInOrg(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
+	if query.UserID == 0 {
+		return nil, errors.New("user ID should be specified")
+	}
+
+	dbPerms := make([]accesscontrol.Permission, 0)
+	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		// Find permissions
+		q := `
+		SELECT
+			action,
+			scope
+		FROM (
+			SELECT ur.user_id, ur.org_id, p.action, p.scope, ur.role_id
+				FROM permission AS p
+				INNER JOIN user_role AS ur on ur.role_id = p.role_id
+			UNION ALL
+				SELECT tm.user_id, tr.org_id, p.action, p.scope, tr.role_id
+					FROM permission AS p
+					INNER JOIN team_role AS tr ON tr.role_id = p.role_id
+					INNER JOIN team_member AS tm ON tm.team_id = tr.team_id
+			UNION ALL
+				SELECT ou.user_id, ou.org_id, p.action, p.scope, br.role_id
+					FROM permission AS p
+					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
+					INNER JOIN org_user AS ou ON ou.role = br.role
+			UNION ALL
+				SELECT sa.user_id, br.org_id, p.action, p.scope, br.role_id
+					FROM permission AS p
+					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
+					INNER JOIN (
+						SELECT u.id AS user_id
+						FROM ` + s.sql.GetDialect().Quote("user") + ` AS u WHERE u.is_admin
+					) AS sa ON 1 = 1
+					WHERE br.role = ?
+		) AS up
+		INNER JOIN role AS r on up.role_id = r.id
+		WHERE (up.org_id = ? OR up.org_id = ?)
+			AND user_id = ?
+		`
+
+		params := []any{accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, query.OrgID, query.UserID}
+
+		if len(query.RolePrefixes) > 0 {
+			q += " AND ( " + strings.Repeat("r.name LIKE ? OR ", len(query.RolePrefixes)-1)
+			q += "r.name LIKE ? )"
+			for _, prefix := range query.RolePrefixes {
+				params = append(params, prefix+"%")
+			}
+		}
+
+		return sess.SQL(q, params...).
+			Find(&dbPerms)
+	}); err != nil {
+		return nil, err
+	}
+
+	return dbPerms, nil
 }
 
 // SearchUsersPermissions returns the list of user permissions indexed by UserID

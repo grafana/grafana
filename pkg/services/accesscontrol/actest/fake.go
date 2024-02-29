@@ -27,6 +27,10 @@ func (f FakeService) GetUserPermissions(ctx context.Context, user identity.Reque
 	return f.ExpectedPermissions, f.ExpectedErr
 }
 
+func (f FakeService) GetUserPermissionsInOrg(ctx context.Context, user identity.Requester, orgID int64) ([]accesscontrol.Permission, error) {
+	return f.ExpectedPermissions, f.ExpectedErr
+}
+
 func (f FakeService) SearchUsersPermissions(ctx context.Context, user identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	return f.ExpectedUsersPermissions, f.ExpectedErr
 }
@@ -83,6 +87,10 @@ type FakeStore struct {
 }
 
 func (f FakeStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
+	return f.ExpectedUserPermissions, f.ExpectedErr
+}
+
+func (f FakeStore) GetUserPermissionsInOrg(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
 	return f.ExpectedUserPermissions, f.ExpectedErr
 }
 
