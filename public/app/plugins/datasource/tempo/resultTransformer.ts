@@ -657,7 +657,7 @@ export function formatTraceQLMetrics(query: string, data: TraceqlMetricsResponse
       }
     }
     return createDataFrame({
-      refId: `A${index}`,
+      refId: name || `A${index}`,
       fields: [
         {
           name: 'time',
