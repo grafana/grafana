@@ -3,7 +3,19 @@ import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, getBackendSrv, isFetchError, locationService, reportInteraction } from '@grafana/runtime';
-import { Box, Button, CollapsableSection, ConfirmModal, Field, LinkButton, Stack, Switch } from '@grafana/ui';
+import {
+  Box,
+  Button,
+  CollapsableSection,
+  ConfirmModal,
+  Dropdown,
+  Field,
+  IconButton,
+  LinkButton,
+  Menu,
+  Stack,
+  Switch,
+} from '@grafana/ui';
 
 import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
 import { Page } from '../../core/components/Page/Page';
@@ -38,6 +50,18 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const dataSubmitted = isSubmitted && !submitError;
   const sections = sectionFields[provider];
   const [resetConfig, setResetConfig] = useState(false);
+
+  const additionalActionsMenu = (
+    <Menu>
+      <Menu.Item
+        label="Reset to default values"
+        icon="history-alt"
+        onClick={(event) => {
+          setResetConfig(true);
+        }}
+      />
+    </Menu>
+  );
 
   const onSubmit = async (data: SSOProviderDTO) => {
     setIsSaving(true);
@@ -179,19 +203,13 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
           </>
         )}
         <Box display={'flex'} gap={2} marginTop={6}>
-          {!config?.settings.enabled && (
+          {!config?.settings.enabled ? (
             <Field>
               <Button type={'submit'} onClick={() => setValue('enabled', true)} disabled={isSaving}>
                 {isSaving ? 'Saving...' : 'Save and enable'}
               </Button>
             </Field>
-          )}
-          <Field>
-            <Button type={'submit'} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
-          </Field>
-          {config?.settings.enabled && (
+          ) : (
             <Field>
               <Button
                 type={'submit'}
@@ -204,11 +222,29 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             </Field>
           )}
           <Field>
+            <Button type={'submit'} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </Field>
+          <Field>
             <LinkButton href={'/admin/authentication'} variant={'secondary'}>
               Discard
             </LinkButton>
           </Field>
           <Field>
+            <Dropdown overlay={additionalActionsMenu} placement="bottom-start">
+              <IconButton
+                tooltip="More actions"
+                tooltipPlacement="top"
+                size="xxxl"
+                variant="secondary"
+                name="ellipsis-v"
+                hidden={config?.source === 'system'}
+              />
+            </Dropdown>
+          </Field>
+
+          {/* <Field>
             <Button
               variant={'secondary'}
               hidden={config?.source === 'system'}
@@ -218,7 +254,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             >
               Reset
             </Button>
-          </Field>
+          </Field> */}
         </Box>
       </form>
       {resetConfig && (
