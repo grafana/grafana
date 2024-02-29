@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"io"
 	"net/http"
 
@@ -111,7 +112,7 @@ func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareR
 
 		resp, err := s.postRequest(ctx, "chat.postMessage", bytes.NewReader(jsonBody))
 		if err != nil {
-			s.log.Info("Posting to slack api", "eventPayload", err)
+			s.log.Error("Failed to post on slack api", "eventPayload", err)
 			return err
 		}
 
@@ -212,6 +213,7 @@ func (s *SlackService) postRequest(ctx context.Context, endpoint string, body io
 	if err != nil {
 		return nil, err
 	}
+
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			s.log.Error("failed to close response body", "err", err)
@@ -221,6 +223,16 @@ func (s *SlackService) postRequest(ctx context.Context, endpoint string, body io
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	var response PostMessageResponse
+	err = json.Unmarshal(b, &response)
+	if err != nil {
+		s.log.Error("error parsing json", "err", err)
+		return nil, err
+	}
+	if !response.Ok {
+		return b, &errutil.Error{LogMessage: string(b)}
 	}
 
 	return b, nil

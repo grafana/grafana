@@ -49,7 +49,7 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 
 	err = hs.slackService.PostMessage(c.Req.Context(), shareRequest, dashboard.Title, resourceLink)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "error posting message to Slack", err)
+		return response.Error(http.StatusInternalServerError, "Error posting message to Slack", err)
 	}
 
 	return response.Empty(http.StatusOK)
