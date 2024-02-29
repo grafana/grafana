@@ -4,8 +4,6 @@ import (
 	"cuelang.org/go/cue/ast"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
-
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
 )
 
 type PluginDecl struct {
@@ -13,11 +11,18 @@ type PluginDecl struct {
 	Lineage         thema.Lineage
 	Imports         []*ast.ImportSpec
 	PluginPath      string
-	PluginMeta      plugindef.PluginDef
+	PluginMeta      Metadata
 	KindDecl        kindsys.Def[kindsys.ComposableProperties]
 }
 
-func EmptyPluginDecl(path string, meta plugindef.PluginDef) *PluginDecl {
+type Metadata struct {
+	Id      string
+	Name    string
+	Backend *bool
+	Version *string
+}
+
+func EmptyPluginDecl(path string, meta Metadata) *PluginDecl {
 	return &PluginDecl{
 		PluginPath: path,
 		PluginMeta: meta,

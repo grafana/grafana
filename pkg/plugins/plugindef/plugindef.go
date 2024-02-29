@@ -40,7 +40,7 @@ func Lineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.ConvergentLinea
 // whether there exists any value for PluginDef.PascalName.
 //
 // FIXME this should be removable once CUE logic for it works/unmarshals correctly.
-func DerivePascalName(pd PluginDef) string {
+func DerivePascalName(id string, name string) string {
 	sani := func(s string) string {
 		ret := strings.Title(strings.Map(func(r rune) rune {
 			switch {
@@ -65,9 +65,9 @@ func DerivePascalName(pd PluginDef) string {
 		return ret
 	}
 
-	fromname := sani(pd.Name)
+	fromname := sani(name)
 	if len(fromname) != 0 {
 		return fromname
 	}
-	return sani(strings.Split(pd.Id, "-")[1])
+	return sani(strings.Split(id, "-")[1])
 }
