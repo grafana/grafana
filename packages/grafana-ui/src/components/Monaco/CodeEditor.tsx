@@ -102,7 +102,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
   };
 
   handleOnMount = (editor: MonacoEditorType, monaco: Monaco) => {
-    const { getSuggestions, language, onEditorDidMount } = this.props;
+    const { getSuggestions, language, onChange, onEditorDidMount } = this.props;
 
     this.modelId = editor.getModel()?.id;
     this.getEditorValue = () => editor.getValue();
@@ -119,18 +119,12 @@ class UnthemedCodeEditor extends PureComponent<Props> {
       }
     });
 
-    editor.getModel()?.onDidChangeContent(this.handleChangeContent);
+    if (onChange) {
+      editor.getModel()?.onDidChangeContent(() => onChange(editor.getValue()));
+    }
 
     if (onEditorDidMount) {
       onEditorDidMount(editor, monaco);
-    }
-  };
-
-  handleChangeContent = () => {
-    const { onChange } = this.props;
-
-    if (onChange) {
-      onChange(this.getEditorValue());
     }
   };
 
