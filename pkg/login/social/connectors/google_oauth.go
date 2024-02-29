@@ -48,7 +48,7 @@ type googleUserData struct {
 func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
 	provider := &SocialGoogle{
 		SocialBase: newSocialBase(social.GoogleProviderName, info, features, cfg),
-		validateHD: MustBool(info.Extra[validateHDKey], false),
+		validateHD: MustBool(info.Extra[validateHDKey], true),
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
