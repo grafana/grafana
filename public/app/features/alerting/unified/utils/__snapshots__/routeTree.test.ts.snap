@@ -85,9 +85,3 @@ exports[`addRouteToReferenceRoute should be able to add below 1`] = `
   ],
 }
 `;
-
-exports[`omitRouteFromRouteTree should omit route from tree 1`] = `
-{
-  "routes": undefined,
-}
-`;
