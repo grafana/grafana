@@ -4473,7 +4473,7 @@
       }
     },
     "FrameMeta": {
-      "description": "https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
+      "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
       "type": "object",
       "title": "FrameMeta matches:",
       "properties": {
@@ -6056,7 +6056,7 @@
       }
     },
     "QueryStat": {
-      "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/data.ts#L53).",
+      "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
       "type": "object",
       "title": "QueryStat is used for storing arbitrary statistics metadata related to a query and its result, e.g. total request time, data processing time.",
       "properties": {
