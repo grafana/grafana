@@ -1,0 +1,25 @@
+ts-jest[versions] (WARN) Version 5.3.3 of typescript installed has not been tested with ts-jest. If you're experiencing issues, consider using a supported version (>=4.3.0 <5.0.0-0). Please do not report issues in ts-jest if you are using unsupported versions.
+[0m[7m[1m[32m PASS [39m[22m[27m[0m [2msrc/[22m[1mInputDatasource.test.ts[22m
+  InputDatasource
+    [32m✓[39m [2mDataFrame descriptions (1 ms)[22m
+    when querying
+      [32m✓[39m [2mshould return the saved data with a query (2 ms)[22m
+
+[1mTest Suites: [22m[1m[32m1 passed[39m[22m, 1 total
+[1mTests:       [22m[1m[32m2 passed[39m[22m, 2 total
+[1mSnapshots:   [22m0 total
+[1mTime:[22m        2.045 s
+[2mRan all test suites[22m[2m.[22m
+asset [1m[32mmodule.js[39m[22m 7.06 KiB [1m[32m[emitted][39m[22m [1m[32m[minimized][39m[22m (name: module) 1 related asset
+asset [1m[32mimg/input.svg[39m[22m 1.28 KiB [1m[32m[emitted][39m[22m [from: ../../../../../../../../../src/img/input.svg] [1m[32m[copied][39m[22m
+asset [1m[32mplugin.json[39m[22m 397 bytes [1m[32m[emitted][39m[22m [from: ../../../../../../../../../src/plugin.json] [1m[32m[copied][39m[22m
+asset [1m[32mREADME.md[39m[22m 180 bytes [1m[32m[emitted][39m[22m [from: ../../../../../../../../../README.md] [1m[32m[copied][39m[22m
+orphan modules 14 KiB [1m[33m[orphan][39m[22m 4 modules
+runtime modules 937 bytes 4 modules
+built modules 14.4 KiB [1m[33m[built][39m[22m
+  modules by path [1mexternal "@grafana/[39m[22m 84 bytes
+    [1mexternal "@grafana/data"[39m[22m 42 bytes [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+    [1mexternal "@grafana/ui"[39m[22m 42 bytes [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+  [1m../../../../../../../../../src/module.ts + 4 modules[39m[22m 14.3 KiB [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+  [1mexternal "react"[39m[22m 42 bytes [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+webpack 5.90.2 compiled [1m[32msuccessfully[39m[22m in 6932 ms

@@ -1,0 +1,21 @@
+{
+  "type": "datasource",
+  "name": "Direct Input",
+  "id": "input",
+  "state": "alpha",
+
+  "metrics": true,
+
+  "info": {
+    "version": "1.0.0",
+    "description": "Data source that supports manual table & CSV input",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/input.svg",
+      "large": "img/input.svg"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+10 assets
+2346 modules
+
+[1m[33mWARNING[39m[22m in [1masset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets: 
+  module.js (408 KiB)[39m[22m
+
+[1m[33mWARNING[39m[22m in [1mentrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+Entrypoints:
+  module (408 KiB)
+      module.js
+[39m[22m
+
+webpack 5.90.2 compiled with [1m[33m2 warnings[39m[22m in 3995 ms

@@ -1,0 +1,403 @@
+/***
+ * !!! THIS FILE WAS GENERATED AUTOMATICALLY !!!
+ *
+ * Do not modify this file!
+ * - Edit grafana-ui/src/themes/light.ts to regenerate
+ * - Edit grafana-ui/src/themes/_variable.light.scss.tmpl.ts to update template
+ *
+ * !!! THIS FILE WAS GENERATED AUTOMATICALLY !!!
+ */
+
+@use 'sass:color';
+// Global values
+// --------------------------------------------------
+
+$theme-name: light;
+
+$colors-action-hover: rgba(36, 41, 46, 0.12);
+$colors-action-selected: rgba(36, 41, 46, 0.08);
+
+// New Colors
+// -------------------------
+$blue-light: #1F62E0;
+$blue-base: #3871DC;
+$blue-shade: rgb(44, 90, 176);
+$red-base: #E0226E;
+$red-shade: rgb(179, 27, 88);
+$green-base: #1B855E;
+$green-shade: rgb(21, 106, 75);
+$orange-dark: #ff780a;
+
+$gray98: #f7f8fa;
+$gray95: #e9edf2;
+$gray85: #c7d0d9;
+$gray70: #9fa7b3;
+$gray60: #7b8087;
+$gray33: #464c54;
+$gray25: #2c3235;
+$gray15: #202226;
+$gray10: #141619;
+$gray05: #0b0c0e;
+
+// Grays
+// -------------------------
+$black: #000000;
+
+$dark-1: #141414;
+$dark-2: #161719;
+$dark-4: #212124;
+$dark-10: #424345;
+$gray-1: #555555;
+$gray-2: #8e8e8e;
+$gray-3: #b3b3b3;
+$gray-4: #d8d9da;
+$gray-5: #ececec;
+$gray-6: #f4f5f8;
+$gray-7: #fbfbfb;
+
+$white: #ffffff;
+
+$layer0: #F4F5F5;
+$layer1: #FFFFFF;
+$layer2: #F4F5F5;
+
+$divider: rgba(36, 41, 46, 0.12);
+$border0: rgba(36, 41, 46, 0.12);
+$border1: rgba(36, 41, 46, 0.30);
+
+// Accent colors
+// -------------------------
+$blue: #1F62E0;
+$red: $red-base;
+$yellow: #ecbb13;
+$orange: #eb7b18;
+$purple: #9933cc;
+$variable: #1F62E0;
+
+$brand-primary: #eb7b18;
+$brand-success: #1B855E;
+$brand-warning: #FF9900;
+$brand-danger: #E0226E;
+
+$query-red: #CF0E5B;
+$query-green: #0A764E;
+$query-purple: #fe85fc;
+$query-orange: #eb7b18;
+
+// Status colors
+// -------------------------
+$online: #0A764E;
+$warn: #B5510D;
+$critical: #CF0E5B;
+
+
+// Scaffolding
+// -------------------------
+$body-bg: #F4F5F5;
+$page-bg: #F4F5F5;
+$dashboard-bg: #F4F5F5;
+
+$text-color: rgba(36, 41, 46, 1);
+$text-color-strong: #000000;
+$text-color-semi-weak: rgba(36, 41, 46, 0.75);
+$text-color-weak: rgba(36, 41, 46, 0.75);
+$text-color-faint: rgba(36, 41, 46, 0.50);
+$text-color-emphasis: #000000;
+$text-blue: #1F62E0;
+
+$text-shadow-faint: none;
+
+// gradients
+$brand-gradient-horizontal: linear-gradient(90deg, #FF8833 0%, #F53E4C 100%);
+$brand-gradient-vertical: linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);
+
+// Links
+// -------------------------
+$link-color: rgba(36, 41, 46, 1);
+$link-color-disabled: rgba(36, 41, 46, 0.50);
+$link-hover-color: #000000;
+$external-link-color: #1F62E0;
+
+// Typography
+// -------------------------
+$headings-color: rgba(36, 41, 46, 1);
+$abbr-border-color: $gray-2 !default;
+$text-muted: $text-color-weak;
+
+$hr-border-color: $gray-4 !default;
+
+// Panel
+// -------------------------
+$panel-bg: #FFFFFF;
+$panel-border: 1px solid rgba(36, 41, 46, 0.12);
+$panel-header-hover-bg: rgba(36, 41, 46, 0.12);
+$panel-box-shadow: none;
+$panel-corner: $panel-bg;
+
+// Page header
+$page-header-bg: #F4F5F5;
+$page-header-shadow: inset 0px -3px 10px $gray-6;
+$page-header-border-color: #F4F5F5;
+
+$divider-border-color: $gray-2;
+
+// Graphite Target Editor
+$tight-form-func-bg: #F4F5F5;
+$tight-form-func-highlight-bg: #eff0f0;
+
+$modal-backdrop-bg: #FFFFFF;
+$code-tag-bg: $gray-6;
+$code-tag-border: $gray-4;
+
+// cards
+$card-background: #F4F5F5;
+$card-background-hover: #F4F5F5;
+$card-shadow: none;
+
+// Lists
+$list-item-bg: $gray-7;
+$list-item-hover-bg: $gray-6;
+$list-item-shadow: $card-shadow;
+
+$empty-list-cta-bg: $gray-6;
+
+// Scrollbars
+$scrollbarBackground: $gray-4;
+$scrollbarBackground2: $gray-4;
+$scrollbarBorder: $gray-7;
+
+// Tables
+// -------------------------
+$table-bg-accent: #F4F5F5;
+$table-border: rgba(36, 41, 46, 0.30);
+$table-bg-odd: rgb(249, 249, 249);
+$table-bg-hover: rgb(242, 242, 242);
+
+// Buttons
+// -------------------------
+$btn-secondary-bg: $gray-5;
+$btn-secondary-bg-hl: $gray-4;
+
+$btn-primary-bg: $blue-base;
+$btn-primary-bg-hl: $blue-shade;
+
+$btn-success-bg: $green-base;
+$btn-success-bg-hl: $green-shade;
+
+$btn-danger-bg: $red-base;
+$btn-danger-bg-hl: $red-shade;
+
+$btn-inverse-bg: $gray-5;
+$btn-inverse-bg-hl: $gray-4;
+$btn-inverse-text-color: $gray-1;
+$btn-inverse-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+
+$btn-link-color: $gray-1;
+
+$iconContainerBackground: $white;
+
+$btn-divider-left: $gray-4;
+$btn-divider-right: $gray-7;
+
+$btn-drag-image: '../img/grab_light.svg';
+
+$navbar-btn-gicon-brightness: brightness(1.5);
+
+$btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
+
+// Forms
+// -------------------------
+$input-bg: #FFFFFF;
+$input-bg-disabled: rgba(36, 41, 46, 0.04);
+
+$input-color: rgba(36, 41, 46, 1);
+$input-border-color: rgba(36, 41, 46, 0.30);
+$input-box-shadow: none;
+$input-border-focus: #5794f2;
+$input-box-shadow-focus: #5794f2;
+$input-color-placeholder: rgba(36, 41, 46, 0.50);
+$input-label-bg: #F4F5F5;
+$input-color-select-arrow: #7b8087;
+
+// search
+$search-shadow: 0 1px 5px 0 $gray-5;
+
+// Typeahead
+$typeahead-shadow: 0 5px 10px 0 $gray-5;
+$typeahead-selected-bg: $gray-6;
+$typeahead-selected-color: $yellow;
+
+// Dropdowns
+// -------------------------
+$dropdownBackground: #FFFFFF;
+$dropdownBorder: rgba(36, 41, 46, 0.12);
+$dropdownDividerTop: rgba(36, 41, 46, 0.12);
+$dropdownDividerBottom: rgba(36, 41, 46, 0.12);
+$dropdownShadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
+
+$dropdownLinkColor: $dark-2;
+$dropdownLinkColorHover: $link-color;
+$dropdownLinkColorActive: $link-color;
+
+$dropdownLinkBackgroundHover: $gray-6;
+
+// Horizontal forms & lists
+// -------------------------
+$horizontalComponentOffset: 180px;
+
+// Navbar
+// -------------------------
+$navbarHeight: 52px;
+$navbarBorder: 1px solid $gray-5;
+
+// Sidemenu
+// -------------------------
+$side-menu-bg: #202226;
+$side-menu-border: 1px solid #2c3235;
+$side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
+$side-menu-item-hover-bg: #2c3235;
+$side-menu-shadow: 5px 0px 10px -5px $gray-1;
+$side-menu-link-color: $gray-4;
+$side-menu-icon-color: #9fa7b3;
+$side-menu-header-color: #e9edf2;
+
+// Menu dropdowns
+// -------------------------
+$menu-dropdown-bg: #FFFFFF;
+$menu-dropdown-hover-bg: rgba(36, 41, 46, 0.12);
+$menu-dropdown-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
+
+// Tabs
+// -------------------------
+$tab-border-color: $gray-5;
+
+// Form states and alerts
+// -------------------------
+$warning-text-color: #B5510D;
+$error-text-color: #CF0E5B;
+$success-text-color: #0A764E;
+
+$alert-error-bg: #E0226E;
+$alert-success-bg: #1B855E;
+$alert-warning-bg: #FF9900;
+$alert-info-bg: #FF9900;
+
+// Tooltips and popovers
+$tooltipBackground: #F4F5F5;
+$tooltipColor: rgba(36, 41, 46, 1);
+$tooltipArrowColor: #F4F5F5;
+$tooltipBackgroundError: #E0226E;
+$tooltipShadow: 0px 4px 8px rgba(24, 26, 27, 0.2);
+
+$popover-bg: #FFFFFF;
+$popover-color: rgba(36, 41, 46, 1);
+$popover-border-color: rgba(36, 41, 46, 0.12);
+$popover-header-bg: #F4F5F5;
+$popover-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
+
+$graph-tooltip-bg: $gray-5;
+
+$tooltipArrowWidth: 5px;
+$tooltipLinkColor: color.adjust($tooltipColor, $lightness: 5%);
+$tooltipExternalLinkColor: #6E9FFF;
+
+$popover-error-bg: $btn-danger-bg;
+$popover-help-bg: $tooltipBackground;
+$popover-help-color: $tooltipColor;
+
+$popover-code-bg: #FFFFFF;
+$popover-code-boxshadow: 0 0 5px $gray60;
+
+// images
+$checkboxImageUrl: '../img/checkbox_white.png';
+
+// info box
+$info-box-border-color: $blue-base;
+
+// footer
+$footer-link-color: $gray-1;
+$footer-link-hover: $dark-2;
+
+// json explorer
+$json-explorer-default-color: black;
+$json-explorer-string-color: green;
+$json-explorer-number-color: $blue-base;
+$json-explorer-boolean-color: $red-base;
+$json-explorer-null-color: #855a00;
+$json-explorer-undefined-color: rgb(202, 11, 105);
+$json-explorer-function-color: #ff20ed;
+$json-explorer-rotate-time: 100ms;
+$json-explorer-toggler-opacity: 0.6;
+$json-explorer-bracket-color: $blue-base;
+$json-explorer-key-color: #00008b;
+$json-explorer-url-color: $blue-base;
+
+// Changelog and diff
+// -------------------------
+$diff-label-bg: rgba(36, 41, 46, 0.12);
+$diff-label-fg: $gray-2;
+
+$diff-arrow-color: $dark-2;
+$diff-group-bg: #F4F5F5;
+
+$diff-json-bg: #F4F5F5;
+$diff-json-fg: rgba(36, 41, 46, 1);
+
+$diff-json-added: $blue-shade;
+$diff-json-deleted: $red-shade;
+
+$diff-json-old: #5a372a;
+$diff-json-new: #664e33;
+
+$diff-json-changed-fg: $gray-7;
+$diff-json-changed-num: $gray-4;
+
+$diff-json-icon: $gray-4;
+
+//Switch Slider
+// -------------------------
+$switch-bg: $white;
+$switch-slider-color: $gray-7;
+$switch-slider-off-bg: $gray-5;
+$switch-slider-on-bg: #1f60c4;
+$switch-slider-shadow: 0 0 3px $dark-2;
+
+//Checkbox
+// -------------------------
+$checkbox-bg: $gray-6;
+$checkbox-border: 1px solid $gray-3;
+$checkbox-checked-bg: linear-gradient(0deg, #ff9830, #e55400);
+$checkbox-color: $gray-7;
+
+//Panel Edit
+// -------------------------
+$panel-editor-shadow: 0px 0px 8px $gray-3;
+$panel-editor-side-menu-shadow: drop-shadow(0 0 2px $gray-3);
+$panel-editor-viz-item-shadow: 0 0 4px $gray-3;
+$panel-editor-viz-item-border: 1px solid $gray-3;
+$panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
+$panel-editor-viz-item-border-hover: 1px solid $blue-light;
+$panel-editor-viz-item-bg: $card-background;
+$panel-editor-tabs-line-color: $dark-2;
+
+$panel-editor-viz-item-bg-hover: color.adjust($blue-base, $lightness: 45%);
+
+$panel-grid-placeholder-bg: color.adjust(#5794f2, $lightness: 30%);
+$panel-grid-placeholder-shadow: 0 0 4px #5794f2;
+
+// logs
+$logs-color-unknown: $gray-5;
+
+// toggle-group
+$button-toggle-group-btn-active-bg: $brand-primary;
+$button-toggle-group-btn-active-shadow: inset 0 0 4px $white;
+$button-toggle-group-btn-separator-border: 1px solid $gray-6;
+
+$vertical-resize-handle-bg: $gray-4;
+$vertical-resize-handle-dots: $gray-3;
+$vertical-resize-handle-dots-hover: $gray-2;
+
+// Calendar
+$calendar-bg-days: $white;
+$calendar-bg-now: $gray-6;
+
