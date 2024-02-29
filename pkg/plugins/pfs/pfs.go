@@ -107,7 +107,6 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		rt = cuectx.GrafanaThemaRuntime()
 	}
 
-	ctx := rt.Context()
 	metadata, err := getPluginMetadata(fsys)
 	if err != nil {
 		return ParsedPlugin{}, err
@@ -158,7 +157,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		panic("Refactor required - upstream CUE implementation changed, bi.Files is no longer populated")
 	}
 
-	gpi := ctx.BuildInstance(bi)
+	gpi := rt.Context().BuildInstance(bi)
 	if gpi.Err() != nil {
 		return ParsedPlugin{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, pp.Properties.Id), gpi.Err())
 	}

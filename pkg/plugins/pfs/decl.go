@@ -7,12 +7,17 @@ import (
 )
 
 type PluginDecl struct {
-	SchemaInterface *kindsys.SchemaInterface
+	SchemaInterface *SchemaInterface
 	Lineage         thema.Lineage
 	Imports         []*ast.ImportSpec
 	PluginPath      string
 	PluginMeta      Metadata
 	KindDecl        kindsys.Def[kindsys.ComposableProperties]
+}
+
+type SchemaInterface struct {
+	Name    string
+	IsGroup bool
 }
 
 type Metadata struct {
