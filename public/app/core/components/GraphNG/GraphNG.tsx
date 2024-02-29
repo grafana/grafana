@@ -7,10 +7,13 @@ import {
   DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
+  DataLinkPostProcessor,
   Field,
   FieldMatcherID,
   fieldMatchers,
   FieldType,
+  getLinksSupplier,
+  InterpolateFunction,
   LegacyGraphHoverEvent,
   TimeRange,
   TimeZone,
@@ -49,6 +52,8 @@ export interface GraphNGProps extends Themeable2 {
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame | null;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
+  replaceVariables: InterpolateFunction;
+  dataLinkPostProcessor?: DataLinkPostProcessor;
 
   /**
    * needed for propsToDiff to re-init the plot & config
@@ -105,30 +110,67 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   prepState(props: GraphNGProps, withConfig = true) {
     let state: GraphNGState = null as any;
 
-    const { frames, fields, preparePlotFrame } = props;
+    const { frames, fields, preparePlotFrame, replaceVariables, dataLinkPostProcessor } = props;
 
-    const preparePlotFrameFn = preparePlotFrame || defaultPreparePlotFrame;
+    const preparePlotFrameFn = preparePlotFrame ?? defaultPreparePlotFrame;
 
-    const alignedFrame = preparePlotFrameFn(
-      frames,
-      fields || {
-        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.byTypes).get(new Set([FieldType.number, FieldType.enum])),
-      },
-      props.timeRange
-    );
+    const matchY = fieldMatchers.get(FieldMatcherID.byTypes).get(new Set([FieldType.number, FieldType.enum]));
+
+    // if there are data links, we have to keep all fields so they're index-matched, then filter out dimFields.y
+    const withLinks = frames.some((frame) => frame.fields.some((field) => (field.config.links?.length ?? 0) > 0));
+
+    const dimFields = fields ?? {
+      x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+      y: withLinks ? () => true : matchY,
+    };
+
+    const alignedFrame = preparePlotFrameFn(frames, dimFields, props.timeRange);
+
     pluginLog('GraphNG', false, 'data aligned', alignedFrame);
 
     if (alignedFrame) {
+      let alignedFrameFinal = alignedFrame;
+
+      if (withLinks) {
+        const timeZone = Array.isArray(this.props.timeZone) ? this.props.timeZone[0] : this.props.timeZone;
+
+        alignedFrame.fields.forEach((field) => {
+          field.getLinks = getLinksSupplier(
+            alignedFrame,
+            field,
+            {
+              ...field.state?.scopedVars,
+              __dataContext: {
+                value: {
+                  data: [alignedFrame],
+                  field: field,
+                  frame: alignedFrame,
+                  frameIndex: 0,
+                },
+              },
+            },
+            replaceVariables,
+            timeZone,
+            dataLinkPostProcessor
+          );
+        });
+
+        // filter join field and dimFields.y
+        alignedFrameFinal = {
+          ...alignedFrame,
+          fields: alignedFrame.fields.filter((field, i) => i === 0 || matchY(field, alignedFrame, [alignedFrame])),
+        };
+      }
+
       let config = this.state?.config;
 
       if (withConfig) {
-        config = props.prepConfig(alignedFrame, this.props.frames, this.getTimeRange);
+        config = props.prepConfig(alignedFrameFinal, this.props.frames, this.getTimeRange);
         pluginLog('GraphNG', false, 'config prepared', config);
       }
 
       state = {
-        alignedFrame,
+        alignedFrame: alignedFrameFinal,
         config,
       };
 

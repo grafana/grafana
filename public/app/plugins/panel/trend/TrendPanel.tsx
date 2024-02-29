@@ -11,7 +11,7 @@ import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { findFieldIndex } from 'app/features/dimensions';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
-import { isTooltipScrollable, prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
+import { isTooltipScrollable, prepareGraphableFields } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -109,18 +109,10 @@ export const TrendPanel = ({
       legend={options.legend}
       options={options}
       preparePlotFrame={preparePlotFrameTimeless}
+      replaceVariables={replaceVariables}
+      dataLinkPostProcessor={dataLinkPostProcessor}
     >
       {(uPlotConfig, alignedDataFrame) => {
-        if (alignedDataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
-          alignedDataFrame = regenerateLinksSupplier(
-            alignedDataFrame,
-            info.frames!,
-            replaceVariables,
-            timeZone,
-            dataLinkPostProcessor
-          );
-        }
-
         return (
           <>
             <KeyboardPlugin config={uPlotConfig} />

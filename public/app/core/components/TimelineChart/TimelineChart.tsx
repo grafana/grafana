@@ -93,6 +93,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
         prepConfig={this.prepConfig}
         propsToDiff={propsToDiff}
         renderLegend={this.renderLegend}
+        dataLinkPostProcessor={this.panelContext?.dataLinkPostProcessor}
       />
     );
   }

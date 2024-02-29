@@ -45,6 +45,7 @@ export const StatusHistoryPanel = ({
   options,
   width,
   height,
+  replaceVariables,
   onChangeTimeRange,
 }: TimelinePanelProps) => {
   const theme = useTheme2();
@@ -67,7 +68,7 @@ export const StatusHistoryPanel = ({
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const { sync, canAddAnnotations } = usePanelContext();
+  const { sync, canAddAnnotations, dataLinkPostProcessor } = usePanelContext();
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
@@ -213,6 +214,8 @@ export const StatusHistoryPanel = ({
       legendItems={legendItems}
       {...options}
       mode={TimelineMode.Samples}
+      replaceVariables={replaceVariables}
+      dataLinkPostProcessor={dataLinkPostProcessor}
     >
       {(builder, alignedFrame) => {
         if (oldConfig.current !== builder && !showNewVizTooltips) {
