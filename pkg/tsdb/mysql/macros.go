@@ -98,7 +98,7 @@ func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		if len(args) == 4 && args[3] == "true" {
 			query.TimeRange.To = time.Now()
 		} else if len(args) == 4 && args[3] != "false" {
-			return "", fmt.Errorf("fourth argument must be 'true' or 'false'")
+			return "", fmt.Errorf("fourth argument of %v must be 'true' or 'false'", name)
 		}
 		return fmt.Sprintf("UNIX_TIMESTAMP(%s) DIV %.0f * %.0f", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__timeGroupAlias":
@@ -138,7 +138,7 @@ func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		if len(args) == 4 && args[3] == "true" {
 			query.TimeRange.To = time.Now()
 		} else if len(args) == 4 && args[3] != "false" {
-			return "", fmt.Errorf("fourth argument must be 'true' or 'false'")
+			return "", fmt.Errorf("fourth argument of %v must be 'true' or 'false'", name)
 		}
 		return fmt.Sprintf("%s DIV %v * %v", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochGroupAlias":
