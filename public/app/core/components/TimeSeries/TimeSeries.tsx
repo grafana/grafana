@@ -35,6 +35,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       tweakAxis,
       eventsScope,
       hoverProximity: options?.tooltip?.hoverProximity,
+      orientation: options?.orientation,
     });
   };
 
