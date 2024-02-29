@@ -1303,7 +1303,7 @@
    "type": "object"
   },
   "FrameMeta": {
-   "description": "https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
+   "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
    "properties": {
     "channel": {
      "description": "Channel is the path to a stream in grafana live that has real-time updates for this data.",
@@ -3233,7 +3233,7 @@
    "type": "object"
   },
   "QueryStat": {
-   "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/data.ts#L53).",
+   "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
    "properties": {
     "color": {
      "additionalProperties": {},
