@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Modal, Button } from '@grafana/ui';
+import { Modal, Button, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
@@ -24,10 +24,12 @@ export const DeleteMigrationTokenModal = ({ hideModal, onConfirm }: Props) => {
       title={t('migrate-to-cloud.migration-token.delete-modal-title', 'Delete migration token')}
       onDismiss={hideModal}
     >
-      <Trans i18nKey="migrate-to-cloud.migration-token.delete-modal-body">
-        If you&apos;ve already used this token with a self-managed installation, that installation will no longer be
-        able to upload content.
-      </Trans>
+      <Text color="secondary">
+        <Trans i18nKey="migrate-to-cloud.migration-token.delete-modal-body">
+          If you&apos;ve already used this token with a self-managed installation, that installation will no longer be
+          able to upload content.
+        </Trans>
+      </Text>
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={hideModal}>
           <Trans i18nKey="migrate-to-cloud.migration-token.delete-modal-cancel">Cancel</Trans>
