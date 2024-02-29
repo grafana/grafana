@@ -56,8 +56,6 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	dir, path := testinfra.CreateGrafDir(t, opts)
 	_, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	time.Sleep(1 * time.Second)
-
 	c := &K8sTestHelper{
 		env:        *env,
 		t:          t,
@@ -67,14 +65,26 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	c.Org1 = c.createTestUsers("Org1")
 	c.OrgB = c.createTestUsers("OrgB")
 
-	// Read the API groups
-	rsp := DoRequest(c, RequestParams{
-		User: c.Org1.Viewer,
-		Path: "/apis",
-		// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
-	}, &metav1.APIGroupList{})
-	c.groups = rsp.Result.Groups
+	c.loadAPIGroups()
+
 	return c
+}
+
+func (c *K8sTestHelper) loadAPIGroups() {
+	for {
+		rsp := DoRequest(c, RequestParams{
+			User: c.Org1.Viewer,
+			Path: "/apis",
+			// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
+		}, &metav1.APIGroupList{})
+
+		if rsp.Response.StatusCode == http.StatusOK {
+			c.groups = rsp.Result.Groups
+			return
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func (c *K8sTestHelper) Shutdown() {
