@@ -7,7 +7,7 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
-      "env": {},
+      "env": {"GF_FEATURE_TOGGLES_ENABLE":"sqlExpressions"},
       "cwd": "${workspaceFolder}",
       "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
