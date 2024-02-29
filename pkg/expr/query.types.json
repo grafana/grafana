@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "math",
-        "resourceVersion": "1708842365132",
+        "resourceVersion": "1709232058029",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -18,7 +18,7 @@
             "value": "math"
           }
         ],
-        "querySchema": {
+        "schema": {
           "$schema": "https://json-schema.org/draft-04/schema",
           "additionalProperties": false,
           "properties": {
@@ -56,7 +56,7 @@
     {
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1708922654872",
+        "resourceVersion": "1709232058029",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -66,7 +66,7 @@
             "value": "reduce"
           }
         ],
-        "querySchema": {
+        "schema": {
           "$schema": "https://json-schema.org/draft-04/schema",
           "additionalProperties": false,
           "properties": {
@@ -79,7 +79,7 @@
               "type": "string"
             },
             "reducer": {
-              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+              "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
               "enum": [
                 "sum",
                 "mean",
@@ -141,7 +141,7 @@
     {
       "metadata": {
         "name": "resample",
-        "resourceVersion": "1708877050427",
+        "resourceVersion": "1709232058029",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -151,7 +151,7 @@
             "value": "resample"
           }
         ],
-        "querySchema": {
+        "schema": {
           "$schema": "https://json-schema.org/draft-04/schema",
           "additionalProperties": false,
           "description": "QueryType = resample",
@@ -214,10 +214,10 @@
           {
             "name": "resample at a every day",
             "saveModel": {
-              "downsampler": "last",
               "expression": "$A",
-              "upsampler": "pad",
-              "window": "1d"
+              "window": "1d",
+              "downsampler": "last",
+              "upsampler": "pad"
             }
           }
         ]
@@ -226,7 +226,7 @@
     {
       "metadata": {
         "name": "classic_conditions",
-        "resourceVersion": "1708906386845",
+        "resourceVersion": "1709232058029",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -236,7 +236,7 @@
             "value": "classic_conditions"
           }
         ],
-        "querySchema": {
+        "schema": {
           "$schema": "https://json-schema.org/draft-04/schema",
           "additionalProperties": false,
           "properties": {
@@ -331,7 +331,7 @@
     {
       "metadata": {
         "name": "threshold",
-        "resourceVersion": "1708906386845",
+        "resourceVersion": "1709232058029",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -341,7 +341,7 @@
             "value": "threshold"
           }
         ],
-        "querySchema": {
+        "schema": {
           "$schema": "https://json-schema.org/draft-04/schema",
           "additionalProperties": false,
           "properties": {
@@ -439,7 +439,7 @@
     {
       "metadata": {
         "name": "sql",
-        "resourceVersion": "1709168280033",
+        "resourceVersion": "1709232058029",
         "creationTimestamp": "2024-02-29T00:58:00Z"
       },
       "spec": {
@@ -449,23 +449,23 @@
             "value": "sql"
           }
         ],
-        "querySchema": {
+        "schema": {
           "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
+          "description": "SQLQuery requires the sqlExpression feature flag",
           "properties": {
             "expression": {
-              "type": "string",
-              "minLength": 1,
               "examples": [
                 "SELECT * FROM A LIMIT 1"
-              ]
+              ],
+              "minLength": 1,
+              "type": "string"
             }
           },
-          "additionalProperties": false,
-          "type": "object",
           "required": [
             "expression"
           ],
-          "description": "SQLQuery requires the sqlExpression feature flag"
+          "type": "object"
         },
         "examples": [
           {

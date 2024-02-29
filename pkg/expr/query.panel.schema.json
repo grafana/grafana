@@ -177,7 +177,7 @@
                 "pattern": "^reduce$"
               },
               "reducer": {
-                "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+                "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
                 "type": "string",
                 "enum": [
                   "sum",
@@ -966,7 +966,7 @@
             "$schema": "https://json-schema.org/draft-04/schema"
           }
         ],
-        "$schema": "https://json-schema.org/draft-04/schema"
+        "$schema": "https://json-schema.org/draft-04/schema#"
       }
     },
     "type": {
@@ -975,5 +975,5 @@
     }
   },
   "additionalProperties": true,
-  "$schema": "https://json-schema.org/draft-04/schema"
+  "$schema": "https://json-schema.org/draft-04/schema#"
 }

@@ -8,76 +8,76 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1708922901483",
+        "resourceVersion": "1709232207413",
         "creationTimestamp": "2024-02-21T22:08:04Z"
       },
       "spec": {
-        "querySchema": {
+        "schema": {
           "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
+          "description": "PrometheusDataQuery defines model for PrometheusDataQuery.",
           "properties": {
-            "format": {
+            "editorMode": {
+              "description": "what we should show in the editor\n\n\nPossible enum values:\n - `\"builder\"` \n - `\"code\"` ",
+              "enum": [
+                "builder",
+                "code"
+              ],
               "type": "string",
+              "x-enum-description": {}
+            },
+            "exemplar": {
+              "description": "Execute an additional query to identify interesting raw samples relevant for the given expr",
+              "type": "boolean"
+            },
+            "expr": {
+              "description": "The actual expression/query that will be evaluated by Prometheus",
+              "type": "string"
+            },
+            "format": {
+              "description": "The response format\n\n\nPossible enum values:\n - `\"time_series\"` \n - `\"table\"` \n - `\"heatmap\"` ",
               "enum": [
                 "time_series",
                 "table",
                 "heatmap"
               ],
-              "description": "The response format\n\n\nPossible enum values:\n - `\"time_series\"` \n - `\"table\"` \n - `\"heatmap\"` ",
-              "x-enum-description": {}
-            },
-            "expr": {
               "type": "string",
-              "description": "The actual expression/query that will be evaluated by Prometheus"
-            },
-            "range": {
-              "type": "boolean",
-              "description": "Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series"
+              "x-enum-description": {}
             },
             "instant": {
-              "type": "boolean",
-              "description": "Returns only the latest value that Prometheus has scraped for the requested time series"
-            },
-            "exemplar": {
-              "type": "boolean",
-              "description": "Execute an additional query to identify interesting raw samples relevant for the given expr"
-            },
-            "editorMode": {
-              "type": "string",
-              "enum": [
-                "builder",
-                "code"
-              ],
-              "description": "what we should show in the editor\n\n\nPossible enum values:\n - `\"builder\"` \n - `\"code\"` ",
-              "x-enum-description": {}
+              "description": "Returns only the latest value that Prometheus has scraped for the requested time series",
+              "type": "boolean"
             },
             "intervalFactor": {
-              "type": "number",
-              "description": "@deprecated Used to specify how many times to divide max data points by. We use max data points under query options\nSee https://github.com/grafana/grafana/issues/48081"
+              "description": "@deprecated Used to specify how many times to divide max data points by. We use max data points under query options\nSee https://github.com/grafana/grafana/issues/48081",
+              "type": "number"
             },
             "legendFormat": {
-              "type": "string",
-              "description": "Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname"
+              "description": "Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname",
+              "type": "string"
+            },
+            "range": {
+              "description": "Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series",
+              "type": "boolean"
             },
             "scope": {
+              "additionalProperties": false,
+              "description": "???",
               "properties": {
                 "matchers": {
                   "type": "string"
                 }
               },
-              "additionalProperties": false,
-              "type": "object",
               "required": [
                 "matchers"
               ],
-              "description": "???"
+              "type": "object"
             }
           },
-          "additionalProperties": false,
-          "type": "object",
           "required": [
             "expr"
           ],
-          "description": "PrometheusDataQuery defines model for PrometheusDataQuery."
+          "type": "object"
         },
         "examples": [
           {
