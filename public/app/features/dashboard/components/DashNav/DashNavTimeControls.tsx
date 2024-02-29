@@ -93,7 +93,7 @@ export class DashNavTimeControls extends Component<Props> {
 
   render() {
     const { dashboard, isOnCanvas } = this.props;
-    const { refresh_intervals } = dashboard.timepicker;
+    const { refresh_intervals, hidden } = dashboard.timepicker;
     const intervals = getTimeSrv().getValidIntervals(refresh_intervals || defaultIntervals);
 
     const timePickerValue = getTimeSrv().timeRange();
@@ -108,7 +108,7 @@ export class DashNavTimeControls extends Component<Props> {
 
     return (
       <>
-        <TimePickerWithHistory
+        {!hidden && (<TimePickerWithHistory
           value={timePickerValue}
           onChange={this.onChangeTimePicker}
           timeZone={timeZone}
@@ -120,7 +120,7 @@ export class DashNavTimeControls extends Component<Props> {
           onChangeFiscalYearStartMonth={this.onChangeFiscalYearStartMonth}
           isOnCanvas={isOnCanvas}
           onToolbarTimePickerClick={this.props.onToolbarTimePickerClick}
-        />
+        />)}
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
           onRefresh={this.onRefreshClick}

@@ -258,11 +258,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const renderTimeControls = () => {
-    const { dashboard, updateTimeZoneForSession, hideTimePicker } = props;
-
-    if (hideTimePicker) {
-      return null;
-    }
+    const { dashboard, updateTimeZoneForSession } = props;
     return (
       <DashNavTimeControls
         dashboard={dashboard}
