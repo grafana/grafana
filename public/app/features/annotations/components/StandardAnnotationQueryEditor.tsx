@@ -114,7 +114,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
   renderStatus() {
     const { response, running } = this.state;
-    let text = '...';
+    let text = '';
     let severity: AlertVariant = 'info';
 
     if (running || response?.panelData?.state === LoadingState.Loading || !response) {
@@ -154,23 +154,13 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
           )}
         </div>
         <Space v={2} layout="block" />
-        <div
-        // className={cx(css`
-        //   margin: 4px 0px;
-        //   padding: 4px;
-        //   display: flex;
-        //   justify-content: space-between;
-        //   align-items: center;
-        // `)}
+        <Alert
+          data-testid={selectors.components.Annotations.editor.resultContainer}
+          severity={severity}
+          title="Query result"
         >
-          <Alert
-            data-testid={selectors.components.Annotations.editor.resultContainer}
-            severity={severity}
-            title="Query result"
-          >
-            {text}
-          </Alert>
-        </div>
+          {text}
+        </Alert>
       </>
     );
   }
