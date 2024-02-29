@@ -30,10 +30,6 @@ var nonAlphaNumRegex = regexp.MustCompile("[^a-zA-Z0-9 ]+")
 // If kind names are given as parameters, the script will make the above actions only for the
 // given kinds.
 func main() {
-	kindRegistry, err := NewKindRegistry()
-	defer kindRegistry.cleanUp()
-	die(err)
-
 	// File generation
 	jfs := codejen.NewFS()
 	outputPath := filepath.Join(".github", "workflows", "scripts", "kinds")
