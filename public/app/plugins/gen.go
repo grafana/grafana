@@ -145,5 +145,7 @@ func genRawResources() (*codejen.FS, error) {
 		return nil
 	})
 
+	jennies.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"))
+
 	return jennies.GenerateFS(schemas)
 }
