@@ -89,7 +89,6 @@ export const GenAIHistory = ({
 
   const onGenerateWithFeedback = (suggestion: string | QuickFeedbackType) => {
     if (suggestion !== QuickFeedbackType.Regenerate) {
-      console.log('history[currentIndex - 1]', history[currentIndex - 1]);
       messages = [...messages, ...getFeedbackMessage(history[currentIndex - 1], suggestion)];
     }
 
