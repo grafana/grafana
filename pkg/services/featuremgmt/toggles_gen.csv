@@ -24,7 +24,6 @@ newVizTooltips,preview,@grafana/dataviz-squad,false,false,true
 scenes,experimental,@grafana/dashboards-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
-dataConnectionsConsole,GA,@grafana/plugins-platform-backend,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
 returnToPrevious,preview,@grafana/grafana-frontend-platform,false,false,true
 grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false

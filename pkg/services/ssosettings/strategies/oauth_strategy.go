@@ -19,6 +19,7 @@ var extraKeysByProvider = map[string][]string{
 	social.AzureADProviderName:      connectors.ExtraAzureADSettingKeys,
 	social.GenericOAuthProviderName: connectors.ExtraGenericOAuthSettingKeys,
 	social.GitHubProviderName:       connectors.ExtraGithubSettingKeys,
+	social.GoogleProviderName:       connectors.ExtraGoogleSettingKeys,
 	social.GrafanaComProviderName:   connectors.ExtraGrafanaComSettingKeys,
 	social.GrafanaNetProviderName:   connectors.ExtraGrafanaComSettingKeys,
 }
