@@ -43,6 +43,15 @@
       "expression": "$A",
       "upsampler": "pad",
       "window": "1d"
+    },
+    {
+      "refId": "E",
+      "datasource": {
+        "type": "__expr__",
+        "uid": "TheUID"
+      },
+      "queryType": "sql",
+      "expression": "SELECT * FROM A limit 1"
     }
   ]
 }

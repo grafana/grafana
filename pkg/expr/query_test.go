@@ -80,6 +80,18 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schemabuilder.QueryTypeInfo{
+			Discriminators: resource.NewDiscriminators("queryType", QueryTypeSQL),
+			GoType:         reflect.TypeOf(&SQLExpression{}),
+			Examples: []resource.QueryExample{
+				{
+					Name: "Select the first row from A",
+					SaveModel: SQLExpression{
+						Expression: "SELECT * FROM A limit 1",
+					},
+				},
+			},
+		},
+		schemabuilder.QueryTypeInfo{
 			Discriminators: resource.NewDiscriminators("queryType", QueryTypeClassic),
 			GoType:         reflect.TypeOf(&ClassicQuery{}),
 			Examples:       []resource.QueryExample{

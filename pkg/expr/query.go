@@ -24,6 +24,9 @@ const (
 
 	// Threshold
 	QueryTypeThreshold QueryType = "threshold"
+
+	// SQL query via DuckDB
+	QueryTypeSQL QueryType = "sql"
 )
 
 type MathQuery struct {
@@ -67,6 +70,11 @@ type ThresholdQuery struct {
 
 type ClassicQuery struct {
 	Conditions []classic.ConditionJSON `json:"conditions"`
+}
+
+// SQLQuery requires the sqlExpression feature flag
+type SQLExpression struct {
+	Expression string `json:"expression" jsonschema:"minLength=1,example=SELECT * FROM A LIMIT 1"`
 }
 
 //-------------------------------

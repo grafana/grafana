@@ -2,15 +2,8 @@ import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useClickAway } from 'react-use';
 
 import { CartesianCoords2D, DataFrame, getFieldDisplayName, InterpolateFunction, TimeZone } from '@grafana/data';
-import {
-  ContextMenu,
-  GraphContextMenuHeader,
-  MenuItemProps,
-  MenuItemsGroup,
-  MenuGroup,
-  MenuItem,
-  UPlotConfigBuilder,
-} from '@grafana/ui';
+import { ContextMenu, MenuItemProps, MenuItemsGroup, MenuGroup, MenuItem, UPlotConfigBuilder } from '@grafana/ui';
+import { GraphContextMenuHeader } from 'app/angular/components/legacy_graph_panel/GraphContextMenu';
 
 type ContextMenuSelectionCoords = { viewport: CartesianCoords2D; plotCanvas: CartesianCoords2D };
 type ContextMenuSelectionPoint = { seriesIdx: number | null; dataIdx: number | null };

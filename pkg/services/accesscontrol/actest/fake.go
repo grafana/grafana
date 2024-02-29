@@ -41,6 +41,10 @@ func (f FakeService) DeleteUserPermissions(ctx context.Context, orgID, userID in
 	return f.ExpectedErr
 }
 
+func (f FakeService) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error {
+	return f.ExpectedErr
+}
+
 func (f FakeService) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
 	return f.ExpectedErr
 }
@@ -91,6 +95,10 @@ func (f FakeStore) GetUsersBasicRoles(ctx context.Context, userFilter []int64, o
 }
 
 func (f FakeStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
+	return f.ExpectedErr
+}
+
+func (f FakeStore) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error {
 	return f.ExpectedErr
 }
 

@@ -444,13 +444,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "externalServiceAuth",
-			Description:     "Starts an OAuth2 authentication provider for external services",
-			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
-			Owner:           identityAccessTeam,
-		},
-		{
 			Name:              "refactorVariablesTimeRange",
 			Description:       "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
 			Stage:             FeatureStagePublicPreview,
@@ -1145,6 +1138,13 @@ var (
 			Description: "In-development feature that will allow injection of labels into prometheus queries.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "sqlExpressions",
+			Description:  "Enables using SQL and DuckDB functions as Expressions.",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAppPlatformSquad,
 		},
 		{
 			Name:         "nodeGraphDotLayout",

@@ -32,10 +32,17 @@
       "queryType": "resample",
       "maxDataPoints": 1000,
       "intervalMs": 5,
+      "window": "1d",
       "downsampler": "last",
       "expression": "$A",
-      "upsampler": "pad",
-      "window": "1d"
+      "upsampler": "pad"
+    },
+    {
+      "refId": "E",
+      "queryType": "sql",
+      "maxDataPoints": 1000,
+      "intervalMs": 5,
+      "expression": "SELECT * FROM A limit 1"
     }
   ]
 }

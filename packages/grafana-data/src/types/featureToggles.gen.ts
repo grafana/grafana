@@ -77,7 +77,6 @@ export interface FeatureToggles {
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
-  externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   faroDatasourceSelector?: boolean;
@@ -172,6 +171,7 @@ export interface FeatureToggles {
   onPremToCloudMigrations?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
+  sqlExpressions?: boolean;
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;

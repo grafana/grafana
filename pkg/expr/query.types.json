@@ -2,7 +2,7 @@
   "kind": "QueryTypeDefinitionList",
   "apiVersion": "query.grafana.app/v0alpha1",
   "metadata": {
-    "resourceVersion": "1708553366066"
+    "resourceVersion": "1709168280033"
   },
   "items": [
     {
@@ -68,17 +68,18 @@
         ],
         "querySchema": {
           "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
           "properties": {
             "expression": {
-              "type": "string",
-              "minLength": 1,
               "description": "Reference to single query result",
               "examples": [
                 "$A"
-              ]
+              ],
+              "minLength": 1,
+              "type": "string"
             },
             "reducer": {
-              "type": "string",
+              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
               "enum": [
                 "sum",
                 "mean",
@@ -87,42 +88,41 @@
                 "count",
                 "last"
               ],
-              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+              "type": "string",
               "x-enum-description": {}
             },
             "settings": {
+              "additionalProperties": false,
+              "description": "Reducer Options",
               "properties": {
                 "mode": {
-                  "type": "string",
+                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
                   "enum": [
                     "dropNN",
                     "replaceNN"
                   ],
-                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
+                  "type": "string",
                   "x-enum-description": {
                     "dropNN": "Drop non-numbers",
                     "replaceNN": "Replace non-numbers"
                   }
                 },
                 "replaceWithValue": {
-                  "type": "number",
-                  "description": "Only valid when mode is replace"
+                  "description": "Only valid when mode is replace",
+                  "type": "number"
                 }
               },
-              "additionalProperties": false,
-              "type": "object",
               "required": [
                 "mode"
               ],
-              "description": "Reducer Options"
+              "type": "object"
             }
           },
-          "additionalProperties": false,
-          "type": "object",
           "required": [
             "expression",
             "reducer"
-          ]
+          ],
+          "type": "object"
         },
         "examples": [
           {
@@ -434,6 +434,47 @@
           ],
           "type": "object"
         }
+      }
+    },
+    {
+      "metadata": {
+        "name": "sql",
+        "resourceVersion": "1709168280033",
+        "creationTimestamp": "2024-02-29T00:58:00Z"
+      },
+      "spec": {
+        "discriminators": [
+          {
+            "field": "queryType",
+            "value": "sql"
+          }
+        ],
+        "querySchema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "examples": [
+                "SELECT * FROM A LIMIT 1"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "expression"
+          ],
+          "description": "SQLQuery requires the sqlExpression feature flag"
+        },
+        "examples": [
+          {
+            "name": "Select the first row from A",
+            "saveModel": {
+              "expression": "SELECT * FROM A limit 1"
+            }
+          }
+        ]
       }
     }
   ]
