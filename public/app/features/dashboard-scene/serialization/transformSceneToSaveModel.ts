@@ -33,6 +33,7 @@ import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
+import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
@@ -167,6 +168,20 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
       } as Panel;
     }
 
+    // Handle library panel widget as well and exit early
+    if (gridItem.state.body instanceof AddLibraryPanelWidget) {
+      x = gridItem.state.x ?? 0;
+      y = gridItem.state.y ?? 0;
+      w = gridItem.state.width ?? 0;
+      h = gridItem.state.height ?? 0;
+
+      return {
+        id: getPanelIdForVizPanel(gridItem.state.body),
+        type: 'add-library-panel',
+        gridPos: { x, y, w, h },
+      };
+    }
+
     if (!(gridItem.state.body instanceof VizPanel)) {
       throw new Error('SceneGridItem body expected to be VizPanel');
     }
@@ -229,7 +244,7 @@ export function vizPanelToPanel(
   }
 
   const panelLinks = dashboardSceneGraph.getPanelLinks(vizPanel);
-  panel.links = (panelLinks.state.rawLinks as DashboardLink[]) ?? [];
+  panel.links = (panelLinks?.state.rawLinks as DashboardLink[]) ?? [];
 
   if (panel.links.length === 0) {
     delete panel.links;

@@ -1,14 +1,14 @@
 import React from 'react';
 
-import { DataFrame, Field, getFieldDisplayName, LinkModel } from '@grafana/data';
+import { DataFrame, Field, getFieldDisplayName } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { ColorIndicator, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
-import { getTitleFromHref } from 'app/features/explore/utils/links';
 
+import { getDataLinks } from '../status-history/utils';
 import { getStyles } from '../timeseries/TimeSeriesTooltip';
 
 import { Options } from './panelcfg.gen';
@@ -83,27 +83,13 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     });
   }
 
-  const getLinks = (): Array<LinkModel<Field>> => {
-    let links: Array<LinkModel<Field>> = [];
-    if (yField.getLinks) {
-      const v = yField.values[rowIndex];
-      const disp = yField.display ? yField.display(v) : { text: `${v}`, numeric: +v };
-      links = yField.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).map((linkModel) => {
-        if (!linkModel.title) {
-          linkModel.title = getTitleFromHref(linkModel.href);
-        }
-
-        return linkModel;
-      });
-    }
-    return links;
-  };
+  const links = getDataLinks(yField, rowIndex);
 
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
       <VizTooltipContent items={contentItems} isPinned={isPinned} />
-      {isPinned && <VizTooltipFooter dataLinks={getLinks()} />}
+      {(links.length > 0 || isPinned) && <VizTooltipFooter dataLinks={links} />}
     </div>
   );
 };

@@ -20,7 +20,7 @@ func (srv RulerSrv) ExportFromPayload(c *contextmodel.ReqContext, ruleGroupConfi
 		return toNamespaceErrorResponse(err)
 	}
 
-	rulesWithOptionals, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace, srv.cfg)
+	rulesWithOptionals, err := ValidateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, RuleLimitsFromConfig(srv.cfg))
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
