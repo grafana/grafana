@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
+	"path/filepath"
+	"strings"
 
 	"cuelang.org/go/cue"
 	"github.com/grafana/codejen"
-	"path/filepath"
-	"strings"
 )
 
 var registryPath = filepath.Join("pkg", "registry", "schemas")

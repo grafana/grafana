@@ -2,10 +2,10 @@ package codegen
 
 import (
 	"bytes"
-	"cuelang.org/go/cue"
 	"fmt"
 	"path/filepath"
 
+	"cuelang.org/go/cue"
 	"github.com/grafana/codejen"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
@@ -15,19 +15,6 @@ type OneToOne codejen.OneToOne[kindsys.Kind]
 type OneToMany codejen.OneToMany[kindsys.Kind]
 type ManyToOne codejen.ManyToOne[kindsys.Kind]
 type ManyToMany codejen.ManyToMany[kindsys.Kind]
-
-// ForLatestSchema returns a [SchemaForGen] for the latest schema in the
-// provided [kindsys.Kind]'s lineage.
-//
-// TODO this will be replaced by thema-native constructs
-func ForLatestSchema(k kindsys.Kind) SchemaForGen {
-	comm := k.Props().Common()
-	return SchemaForGen{
-		Name:    comm.Name,
-		Schema:  k.Lineage().Latest(),
-		IsGroup: comm.LineageIsGroup,
-	}
-}
 
 // SlashHeaderMapper produces a FileMapper that injects a comment header onto
 // a [codejen.File] indicating the main generator that produced it (via the provided
