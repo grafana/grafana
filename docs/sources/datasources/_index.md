@@ -221,6 +221,7 @@ Grafana includes three special data sources:
   - You can't change an existing query to use the **Mixed** data source.
   - Grafana Play example: [Mixed data sources](https://play.grafana.org/d/000000100/mixed-datasources?orgId=1)
 - **Dashboard:** A data source that uses the result set from another panel in the same dashboard. The dashboard data source can use data either directly from the selected panel or from annotations attached to the selected panel.
+  - Grafana Play example: [Panel as Data source](https://play.grafana.org/d/ede8zps8ndb0gc/panel-as-data-source?orgId=1)
 
 ## Built-in core data sources
 
