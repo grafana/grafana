@@ -177,7 +177,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
 }
 
 export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPaneCategoryDescriptor {
-  const { panel } = panelManager.state;
+  const { panel, repeat } = panelManager.state;
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',
@@ -270,7 +270,8 @@ export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPa
               return (
                 <RepeatRowSelect2
                   id="repeat-by-variable-select"
-                  panelManager={panelManager}
+                  sceneObject={panel}
+                  repeat={repeat}
                   onChange={(value?: string) => {
                     const stateUpdate: Partial<VizPanelManagerState> = { repeat: value };
                     if (value && !panelManager.state.repeatDirection) {

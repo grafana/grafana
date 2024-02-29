@@ -16,7 +16,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
-import { RowActions } from '../scene/RowActions';
+import { RowActions } from '../scene/row-actions/RowActions';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
 

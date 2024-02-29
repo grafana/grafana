@@ -13,13 +13,14 @@ import {
 } from '@grafana/scenes';
 import { Icon, TextLink, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { RowOptionsButton } from 'app/features/dashboard/components/RowOptions/RowOptionsButton';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneFor } from '../../utils/utils';
+import { DashboardScene } from '../DashboardScene';
+import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 
-import { DashboardScene } from './DashboardScene';
+import { RowOptionsButton } from './RowOptionsButton';
 
 export interface RowActionsState extends SceneObjectState {}
 
@@ -46,8 +47,53 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
     return this._dashboard;
   }
 
-  public onUpdate = () => {
-    console.log('onUpdate');
+  public onUpdate = (title: string, repeat?: string | null): void => {
+    const row = this.getParent();
+
+    // return early if there is no repeat
+    if (!repeat) {
+      row.setState({
+        title,
+      });
+
+      return;
+    }
+
+    const behaviour = row.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
+
+    // return early if repeat is set and behaviour exists and we just need to update it
+    if (behaviour instanceof RowRepeaterBehavior) {
+      behaviour.setState({
+        variableName: repeat,
+      });
+
+      //todo test if needed
+      behaviour.activate();
+
+      row.setState({
+        title,
+      });
+
+      return;
+    }
+
+    // build a new behaviour if none exists and repeat is set
+    const children = row.state.children.map((child) => child.clone());
+
+    const newBehaviour = new RowRepeaterBehavior({
+      variableName: repeat,
+      sources: children,
+    });
+
+    const behaviours = row.state.$behaviors ?? [];
+    behaviours.push(newBehaviour);
+
+    row.setState({
+      title,
+      $behaviors: behaviours,
+    });
+
+    newBehaviour.activate();
   };
 
   public onDelete = () => {
@@ -115,6 +161,7 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
     const { isCollapsed } = row.useState();
     const count = row.state.children ? row.state.children.length : 0;
     const panels = count === 1 ? 'panel' : 'panels';
+    const behaviour = row.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
 
     return (
       <>
@@ -126,8 +173,8 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
             <div className={styles.rowActions}>
               <RowOptionsButton
                 title={row.state.title}
-                //TODO add repeat prop to SceneGridRow?
-                repeat={undefined}
+                repeat={behaviour instanceof RowRepeaterBehavior ? behaviour.state.variableName : undefined}
+                obj={row}
                 onUpdate={model.onUpdate}
                 warning={model.getWarning()}
               />
