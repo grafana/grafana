@@ -12,6 +12,8 @@ import {
   GroupByVariable,
   SceneVariable,
   MultiValueVariable,
+  sceneUtils,
+  SceneObject,
   AdHocFiltersVariable,
   SceneVariableState,
 } from '@grafana/scenes';
@@ -194,6 +196,27 @@ export function getOptionDataSourceTypes() {
   optionTypes.unshift({ label: '', value: '' });
 
   return optionTypes;
+}
+
+function isSceneVariable(sceneObject: SceneObject): sceneObject is SceneVariable {
+  return 'type' in sceneObject.state && 'getValue' in sceneObject;
+}
+
+export function isSceneVariableInstance(sceneObject: SceneObject): sceneObject is SceneVariable {
+  if (!isSceneVariable(sceneObject)) {
+    return false;
+  }
+
+  return (
+    sceneUtils.isAdHocVariable(sceneObject) ||
+    sceneUtils.isConstantVariable(sceneObject) ||
+    sceneUtils.isCustomVariable(sceneObject) ||
+    sceneUtils.isDataSourceVariable(sceneObject) ||
+    sceneUtils.isIntervalVariable(sceneObject) ||
+    sceneUtils.isQueryVariable(sceneObject) ||
+    sceneUtils.isTextBoxVariable(sceneObject) ||
+    sceneUtils.isGroupByVariable(sceneObject)
+  );
 }
 
 export const RESERVED_GLOBAL_VARIABLE_NAME_REGEX = /^(?!__).*$/;
