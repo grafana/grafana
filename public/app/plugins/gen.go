@@ -86,7 +86,7 @@ func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneTo
 		return corecodegen.SchemaForGen{
 			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
 			Schema:  pd.Lineage.Latest(),
-			IsGroup: pd.SchemaInterface.IsGroup(),
+			IsGroup: pd.SchemaInterface.IsGroup,
 		}
 	})
 }
