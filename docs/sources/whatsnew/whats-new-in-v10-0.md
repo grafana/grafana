@@ -423,4 +423,4 @@ The answer is Private Data Source Connect (PDC), available now in public preview
 
 ### App plugins can start using react-router v6
 
-We've added support for using `react-router` v6 in app plugins. However, we still support the use of `react-router` v5 for plugins that need to support a minimum Grafana version earlier than v10.  For more information, refer to our [react-router migration guide](https://grafana.com/developers/plugin-tools/migration-guides/update-from-grafana-versions/migrate-9_x-to-10_x#update-to-react-router-v6).
+We've added support for using `react-router` v6 in app plugins. However, we still support the use of `react-router` v5 for plugins that need to support a minimum Grafana version earlier than v10. For more information, refer to our [react-router migration guide](https://grafana.com/developers/plugin-tools/migration-guides/update-from-grafana-versions/migrate-9_x-to-10_x#update-to-react-router-v6).
