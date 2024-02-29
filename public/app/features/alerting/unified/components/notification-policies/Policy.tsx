@@ -42,7 +42,6 @@ import { Authorize } from '../Authorize';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
-import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
@@ -281,16 +280,22 @@ const Policy = (props: PolicyComponentProps) => {
                                   />
                                   <Menu.Divider />
                                   <Menu.Item
-                                    label="Insert child policy"
-                                    icon="arrow-from-right"
+                                    label="New child policy"
+                                    icon="plus"
                                     onClick={() => onAddPolicy(currentRoute, 'child')}
                                   />
                                 </Menu>
                               }
                             >
-                              <MoreButton size="sm" variant="secondary" disabled={provisioned} type="button">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={provisioned}
+                                icon="angle-down"
+                                type="button"
+                              >
                                 Add new policy
-                              </MoreButton>
+                              </Button>
                             </Dropdown>
                           )}
                         </ConditionalWrap>
