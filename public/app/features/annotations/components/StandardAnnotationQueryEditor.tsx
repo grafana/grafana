@@ -141,7 +141,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
         const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
         text = (
           <p>
-            `{events.length} events (from {frame?.fields.length} fields)`
+            {events.length} events (from {frame?.fields.length} fields)
           </p>
         );
       }

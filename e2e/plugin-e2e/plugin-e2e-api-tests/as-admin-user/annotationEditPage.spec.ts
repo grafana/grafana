@@ -30,11 +30,11 @@ const scenarios: Scenario[] = [
 for (const scenario of scenarios) {
   test(`annotation query data with ${scenario.name}`, async ({ annotationEditPage, page }) => {
     annotationEditPage.mockQueryDataResponse(scenario.mock, scenario.status);
-    const resultContainerSelector = selectors.components.Annotations.editor.resultContainer;
     await annotationEditPage.datasource.set('gdev-testdata');
     await page.getByLabel('Scenario').last().fill('CSV Content');
     await page.keyboard.press('Tab');
     await annotationEditPage.runQuery();
+    const resultContainerSelector = selectors.components.Annotations.editor.resultContainer;
     await expect(annotationEditPage.getByTestIdOrAriaLabel(resultContainerSelector)).toContainText(scenario.text);
   });
 }
