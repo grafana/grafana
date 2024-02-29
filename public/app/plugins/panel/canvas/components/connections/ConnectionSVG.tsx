@@ -7,7 +7,7 @@ import { config } from 'app/core/config';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionState } from '../../types';
-import { calculateCoordinates, getConnectionStyles, getParentBoundingClientRect } from '../../utils';
+import { calculateCoordinates, calculateMidpoint, getConnectionStyles, getParentBoundingClientRect } from '../../utils';
 
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
@@ -101,17 +101,26 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
     return scene.connections.state.map((v, idx) => {
+      console.log(v);
       const { source, target, info } = v;
       const sourceRect = source.div?.getBoundingClientRect();
       const parent = source.div?.parentElement;
       const transformScale = scene.scale;
       const parentRect = getParentBoundingClientRect(scene);
 
+      const vertices = [
+        { x: 0.25, y: 0 },
+        { x: 0.5, y: 1 },
+      ];
+
+      //vertices.length = 0;
+
       if (!sourceRect || !parent || !parentRect) {
         return;
       }
 
       const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
+      const midpoint = calculateMidpoint(x1, y1, x2, y2);
 
       const { strokeColor, strokeWidth } = getConnectionStyles(info, scene, defaultArrowSize);
 
@@ -121,6 +130,13 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const selectedStyles = { stroke: '#44aaff', strokeOpacity: 0.6, strokeWidth: strokeWidth + 5 };
 
       const CONNECTION_HEAD_ID = `connectionHead-${headId + Math.random()}`;
+      let pathString = `M${x1} ${y1} `;
+      if (vertices.length) {
+        vertices.map((value) => {
+          pathString += `L${value.x * (x2 - x1) + x1} ${value.y * (y2 - y1) + y1} `;
+        });
+        pathString += `L${x2} ${y2}`;
+      }
 
       return (
         <svg className={styles.connection} key={idx}>
@@ -138,30 +154,54 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
                 <polygon points="0 0, 10 3.5, 0 7" fill={strokeColor} />
               </marker>
             </defs>
-            <line
-              id={`${CONNECTION_LINE_ID}_transparent`}
-              cursor={connectionCursorStyle}
-              pointerEvents="auto"
-              stroke="transparent"
-              strokeWidth={15}
-              style={isSelected ? selectedStyles : {}}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-            />
-            <line
-              id={CONNECTION_LINE_ID}
-              stroke={strokeColor}
-              pointerEvents="auto"
-              strokeWidth={strokeWidth}
-              markerEnd={`url(#${CONNECTION_HEAD_ID})`}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              cursor={connectionCursorStyle}
-            />
+            {vertices.length ? (
+              <g>
+                <path
+                  d={pathString}
+                  stroke={strokeColor}
+                  strokeWidth={3}
+                  fill={'none'}
+                  markerEnd={`url(#${CONNECTION_HEAD_ID})`}
+                />
+                {vertices.map((value, index) => (
+                  <circle
+                    key={`vertex${index}_${idx}`}
+                    fill={'gray'}
+                    cx={value.x * (x2 - x1) + x1}
+                    cy={value.y * (y2 - y1) + y1}
+                    r={5}
+                  />
+                ))}
+              </g>
+            ) : (
+              <g>
+                <line
+                  id={`${CONNECTION_LINE_ID}_transparent`}
+                  cursor={connectionCursorStyle}
+                  pointerEvents="auto"
+                  stroke="transparent"
+                  strokeWidth={15}
+                  style={isSelected ? selectedStyles : {}}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                />
+                <line
+                  id={CONNECTION_LINE_ID}
+                  stroke={strokeColor}
+                  pointerEvents="auto"
+                  strokeWidth={strokeWidth}
+                  markerEnd={`url(#${CONNECTION_HEAD_ID})`}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  cursor={connectionCursorStyle}
+                />
+                <circle fill={'gray'} cx={midpoint.x} cy={midpoint.y} r={5} />
+              </g>
+            )}
           </g>
         </svg>
       );

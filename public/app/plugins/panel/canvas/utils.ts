@@ -221,6 +221,10 @@ export const calculateCoordinates = (
   return { x1, y1, x2, y2 };
 };
 
+export const calculateMidpoint = (x1: number, y1: number, x2: number, y2: number) => {
+  return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
+};
+
 // @TODO revisit, currently returning last row index for field
 export const getRowIndex = (fieldName: string | undefined, scene: Scene) => {
   if (fieldName) {
