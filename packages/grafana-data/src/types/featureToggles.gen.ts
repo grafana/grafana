@@ -43,7 +43,6 @@ export interface FeatureToggles {
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
-  dataConnectionsConsole?: boolean;
   topnav?: boolean;
   returnToPrevious?: boolean;
   grpcServer?: boolean;

@@ -83,7 +83,7 @@
         "name": "pluginsInstrumentationStatusSource",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-27T14:43:01Z"
+        "deletionTimestamp": "2024-02-29T08:27:47Z"
       },
       "spec": {
         "description": "Include a status source label for plugin request metrics and logs",
@@ -511,7 +511,7 @@
         "name": "displayAnonymousStats",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-27T14:43:01Z"
+        "deletionTimestamp": "2024-02-29T08:27:47Z"
       },
       "spec": {
         "description": "Enables anonymous stats to be shown in the UI for Grafana",
@@ -1116,19 +1116,6 @@
     },
     {
       "metadata": {
-        "name": "dataConnectionsConsole",
-        "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
-      },
-      "spec": {
-        "description": "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
-        "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "allowSelfServe": true
-      }
-    },
-    {
-      "metadata": {
         "name": "extraThemes",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z"
@@ -1400,7 +1387,7 @@
         "name": "traceToMetrics",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-27T14:43:01Z"
+        "deletionTimestamp": "2024-02-29T08:27:47Z"
       },
       "spec": {
         "description": "Enable trace to metrics links",
@@ -1529,7 +1516,7 @@
         "name": "splitScopes",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-27T14:43:01Z"
+        "deletionTimestamp": "2024-02-29T08:27:47Z"
       },
       "spec": {
         "description": "Support faster dashboard and folder search by splitting permission scopes into parts",
@@ -1570,7 +1557,7 @@
         "name": "externalServiceAuth",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-27T14:43:01Z"
+        "deletionTimestamp": "2024-02-29T08:27:47Z"
       },
       "spec": {
         "description": "Starts an OAuth2 authentication provider for external services",
