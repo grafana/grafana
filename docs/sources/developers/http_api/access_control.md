@@ -383,12 +383,12 @@ Content-Type: application/json
 
 #### Status codes
 
-| Code | Description                                                                           |
-| ---- | ------------------------------------------------------------------------------------- |
-| 200  | Role is updated.                                                                      |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).    |
-| 403  | Access denied (one of the specified permissions is not assigned to the requester)     |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.                  |
+| Code | Description                                                                        |
+| ---- | ---------------------------------------------------------------------------------- |
+| 200  | Role is updated.                                                                   |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.). |
+| 403  | Access denied (one of the specified permissions is not assigned to the requester)  |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
 
 ### Update a role
 
@@ -498,13 +498,13 @@ For more information, refer to [Create role validation errors]({{< ref "#create-
 
 #### Status codes
 
-| Code | Description                                                                           |
-| ---- | ------------------------------------------------------------------------------------- |
-| 200  | Role is updated.                                                                      |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).    |
-| 403  | Access denied (one of the specified permissions is not assigned to the requester)     |
-| 404  | Role was not found to update.                                                         |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.                  |
+| Code | Description                                                                        |
+| ---- | ---------------------------------------------------------------------------------- |
+| 200  | Role is updated.                                                                   |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.). |
+| 403  | Access denied (one of the specified permissions is not assigned to the requester)  |
+| 404  | Role was not found to update.                                                      |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
 
 ### Delete a custom role
 
