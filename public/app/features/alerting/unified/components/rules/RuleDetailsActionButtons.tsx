@@ -160,8 +160,11 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
             key="panel"
             variant="primary"
             icon="apps"
-            target="_blank"
+            target={isReturnToPreviousEnabled ? undefined : '_blank'}
             href={`d/${encodeURIComponent(dashboardUID)}?viewPanel=${encodeURIComponent(panelId)}`}
+            onClick={() => {
+              setReturnToPrevious(rule.name);
+            }}
           >
             Go to panel
           </LinkButton>
