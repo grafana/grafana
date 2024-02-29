@@ -244,6 +244,24 @@ These built-in core data sources are also included in the Grafana documentation:
 - [Testdata]({{< relref "./testdata" >}})
 - [Zipkin]({{< relref "./zipkin" >}})
 
+## Add additional data source plugins
+
+You can also add additional data sources as plugins (that are not available in core Grafana), which you can install or create yourself.
+
+### Find data source plugins in the plugin catalog
+
+To view available data source plugins, go to the [plugin catalog](/grafana/plugins/?type=datasource) and select the "Data sources" filter.
+For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management/" >}}).
+
+You can further filter the plugin catalog's results for data sources provided by the Grafana community, Grafana Labs, and partners.
+If you use [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also filter by Enterprise-supported plugins.
+
+For more documentation on a specific data source plugin's features, including its query language and editor, refer to its plugin catalog page.
+
+### Create a data source plugin
+
+To build your own data source plugin, refer to the ["Build a data source plugin"](/developers/plugin-tools/tutorials/build-a-data-source-plugin) tutorial and our documentation about [building a plugin](/developers/plugin-tools).
+
 {{% docs/reference %}}
 [alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
 [alerts]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
