@@ -96,7 +96,11 @@ export const addRouteToReferenceRoute = (
 
     // if user wants to insert new child policy, append to the bottom of children
     if (position === 'child') {
-      routeInTree.routes = routeInTree.routes?.concat(newRoute);
+      if (routeInTree.routes) {
+        routeInTree.routes.push(newRoute);
+      } else {
+        routeInTree.routes = [newRoute];
+      }
     }
 
     // insert new policy before / above the referenceRoute
@@ -113,7 +117,7 @@ export const addRouteToReferenceRoute = (
 
 type RouteMatch = Route | undefined;
 
-function findRouteInTree(
+export function findRouteInTree(
   routeTree: RouteWithID,
   referenceRoute: RouteWithID
 ): [matchingRoute: RouteMatch, parentRoute: RouteMatch, positionInParent: number | undefined] {
@@ -143,17 +147,18 @@ export function findExistingRoute(id: string, routeTree: RouteWithID): RouteWith
   return routeTree.id === id ? routeTree : routeTree.routes?.find((route) => findExistingRoute(id, route));
 }
 
-function insertBefore<T>(array: T[], item: T, index: number): T[] {
+export function insertBefore<T>(array: T[], item: T, index: number): T[] {
   if (index < 0 || index > array.length) {
     throw new Error('Index out of bounds');
   }
 
-  // Use the spread operator to create a new array with the item inserted at the specified index
-  const newArray = [...array.slice(0, index), item, ...array.slice(index)];
-
-  return newArray;
+  return [...array.slice(0, index), item, ...array.slice(index)];
 }
 
-function insertAfter<T>(array: T[], item: T, index: number): T[] {
-  return insertBefore(array, item, index + 1);
+export function insertAfter<T>(array: T[], item: T, index: number): T[] {
+  if (index < 0 || index > array.length) {
+    throw new Error('Index out of bounds');
+  }
+
+  return [...array.slice(0, index + 1), item, ...array.slice(index + 1)];
 }
