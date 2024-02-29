@@ -3,6 +3,7 @@ import { Unsubscribable } from 'rxjs';
 import {
   SceneDataLayers,
   SceneGridItem,
+  SceneGridLayout,
   SceneObjectStateChangedEvent,
   SceneRefreshPicker,
   SceneTimeRange,
@@ -38,6 +39,9 @@ export class DashboardSceneChangeTracker {
       this.detectChanges();
     }
     if (payload.changedObject instanceof SceneGridItem) {
+      this.detectChanges();
+    }
+    if (payload.changedObject instanceof SceneGridLayout) {
       this.detectChanges();
     }
     if (payload.changedObject instanceof DashboardScene) {

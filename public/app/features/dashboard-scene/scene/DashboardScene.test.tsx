@@ -101,6 +101,22 @@ describe('DashboardScene', () => {
         expect(gridItem2.state.x).toBe(0);
       });
 
+      it('A change to gridlayout children order should set isDirty true', () => {
+        const layout = sceneGraph.findObject(scene, (p) => p instanceof SceneGridLayout) as SceneGridLayout;
+        const originalPanelOrder = layout.state.children.map((c) => c.state.key);
+
+        // Change the order of the children. This happen when panels move around, then the children are re-ordered
+        layout.setState({
+          children: [layout.state.children[1], layout.state.children[0], layout.state.children[2]],
+        });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        const resoredLayout = sceneGraph.findObject(scene, (p) => p instanceof SceneGridLayout) as SceneGridLayout;
+        expect(resoredLayout.state.children.map((c) => c.state.key)).toBe(originalPanelOrder);
+      });
+
       it.each`
         prop             | value
         ${'title'}       | ${'new title'}
