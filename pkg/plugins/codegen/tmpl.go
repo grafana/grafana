@@ -22,15 +22,6 @@ var tmplFS embed.FS
 // The following group of types, beginning with templateVars_*, all contain the set
 // of variables expected by the corresponding named template file under tmpl/
 type (
-	templateVars_plugin_registry struct {
-		Plugins []struct {
-			PkgName    string
-			Path       string
-			ImportPath string
-			NoAlias    bool
-		}
-	}
-
 	tmpl_vars_plugin_registry struct {
 		Schemas []Schema
 	}
