@@ -48,7 +48,7 @@
         "name": "Prometheus alertmanager",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Add external Alertmanagers (supports Prometheus and Mimir implementations) so you can use the Grafana Alerting UI to manage silences, contact points, and notification policies.",
       "links": [
         {
           "name": "Learn more",
@@ -63,7 +63,14 @@
       "screenshots": null,
       "version": "",
       "updated": "",
-      "keywords": null
+      "keywords": [
+        "alerts",
+        "alerting",
+        "prometheus",
+        "alertmanager",
+        "mimir",
+        "cortex"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -271,7 +278,7 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Graphical representation of price movements of a security, derivative, or currency.",
       "links": null,
       "logos": {
         "small": "public/app/plugins/panel/candlestick/img/candlestick.svg",
@@ -281,7 +288,12 @@
       "screenshots": null,
       "version": "",
       "updated": "",
-      "keywords": null
+      "keywords": [
+        "financial",
+        "price",
+        "currency",
+        "k-line"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -870,7 +882,7 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Distribution of values presented as a bar chart.",
       "links": null,
       "logos": {
         "small": "public/app/plugins/panel/histogram/img/histogram.svg",
@@ -880,7 +892,12 @@
       "screenshots": null,
       "version": "",
       "updated": "",
-      "keywords": null
+      "keywords": [
+        "distribution",
+        "bar chart",
+        "frequency",
+        "proportional"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1896,7 +1913,7 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Supports arbitrary X vs Y in a graph to visualize the relationship between two variables.",
       "links": null,
       "logos": {
         "small": "public/app/plugins/panel/xychart/img/icn-xychart.svg",
@@ -1906,7 +1923,10 @@
       "screenshots": null,
       "version": "",
       "updated": "",
-      "keywords": null
+      "keywords": [
+        "scatter",
+        "plot"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",

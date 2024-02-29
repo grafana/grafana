@@ -5,6 +5,8 @@
   "state": "beta",
 
   "info": {
+    "description": "Supports arbitrary X vs Y in a graph to visualize the relationship between two variables.",
+    "keywords": ["scatter", "plot"],
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

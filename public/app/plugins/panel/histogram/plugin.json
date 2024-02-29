@@ -4,6 +4,8 @@
   "id": "histogram",
 
   "info": {
+    "description": "Distribution of values presented as a bar chart.",
+    "keywords": ["distribution", "bar chart", "frequency", "proportional"],
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
