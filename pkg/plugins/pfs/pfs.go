@@ -3,7 +3,6 @@ package pfs
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"io/fs"
 	"path/filepath"
 	"sort"
@@ -169,8 +168,8 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		}
 
 		iv = iv.FillPath(cue.MakePath(cue.Str("schemaInterface")), si.Name())
-		iv = iv.FillPath(cue.MakePath(cue.Str("name")), plugindef.DerivePascalName(pp.Properties.Id, pp.Properties.Name)+si.Name())
-		iv = iv.FillPath(cue.MakePath(cue.Str("lineage"), cue.Str("name")), plugindef.DerivePascalName(pp.Properties.Id, pp.Properties.Name)+si.Name())
+		iv = iv.FillPath(cue.MakePath(cue.Str("name")), derivePascalName(pp.Properties.Id, pp.Properties.Name)+si.Name())
+		iv = iv.FillPath(cue.MakePath(cue.Str("lineage"), cue.Str("name")), derivePascalName(pp.Properties.Id, pp.Properties.Name)+si.Name())
 
 		props, err := kindsys.ToKindProps[kindsys.ComposableProperties](iv)
 		if err != nil {
@@ -277,4 +276,36 @@ func getPluginMetadata(fsys fs.FS) (Metadata, error) {
 		Backend: metadata.Backend,
 		Version: metadata.Info.Version,
 	}, nil
+}
+
+func derivePascalName(id string, name string) string {
+	sani := func(s string) string {
+		ret := strings.Title(strings.Map(func(r rune) rune {
+			switch {
+			case r >= 'a' && r <= 'z':
+				return r
+			case r >= 'A' && r <= 'Z':
+				return r
+			default:
+				return -1
+			}
+		}, strings.Title(strings.Map(func(r rune) rune {
+			switch r {
+			case '-', '_':
+				return ' '
+			default:
+				return r
+			}
+		}, s))))
+		if len(ret) > 63 {
+			return ret[:63]
+		}
+		return ret
+	}
+
+	fromname := sani(name)
+	if len(fromname) != 0 {
+		return fromname
+	}
+	return sani(strings.Split(id, "-")[1])
 }

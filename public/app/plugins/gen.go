@@ -14,12 +14,11 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/kindsys"
-
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
 
