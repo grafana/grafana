@@ -117,92 +117,109 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   return (
     <Page.Contents isLoading={isLoading}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
-        <>
-          <FormPrompt
-            confirmRedirect={!!Object.keys(dirtyFields).length && !dataSubmitted}
-            onDiscard={() => {
-              reportInteraction('grafana_authentication_ssosettings_abandoned', {
-                provider,
-              });
-              reset();
-            }}
-          />
-          <Field label="Enabled">
-            <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
-          </Field>
-          {sections ? (
-            <Stack gap={2} direction={'column'}>
-              {sections
-                .filter((section) => !section.hidden)
-                .map((section, index) => {
-                  return (
-                    <CollapsableSection label={section.name} isOpen={index === 0} key={section.name}>
-                      {section.fields
-                        .filter((field) => (typeof field !== 'string' ? !field.hidden : true))
-                        .map((field) => {
-                          return (
-                            <FieldRenderer
-                              key={typeof field === 'string' ? field : field.name}
-                              field={field}
-                              control={control}
-                              errors={errors}
-                              setValue={setValue}
-                              register={register}
-                              watch={watch}
-                              unregister={unregister}
-                              provider={provider}
-                              secretConfigured={!!config?.settings.clientSecret}
-                            />
-                          );
-                        })}
-                    </CollapsableSection>
-                  );
-                })}
-            </Stack>
-          ) : (
-            <>
-              {providerFields.map((field) => {
+        <FormPrompt
+          confirmRedirect={!!Object.keys(dirtyFields).length && !dataSubmitted}
+          onDiscard={() => {
+            reportInteraction('grafana_authentication_ssosettings_abandoned', {
+              provider,
+            });
+            reset();
+          }}
+        />
+        <Field label="Enabled">
+          <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
+        </Field>
+        {sections ? (
+          <Stack gap={2} direction={'column'}>
+            {sections
+              .filter((section) => !section.hidden)
+              .map((section, index) => {
                 return (
-                  <FieldRenderer
-                    key={field}
-                    field={field}
-                    control={control}
-                    errors={errors}
-                    setValue={setValue}
-                    register={register}
-                    watch={watch}
-                    unregister={unregister}
-                    provider={provider}
-                    secretConfigured={!!config?.settings.clientSecret}
-                  />
+                  <CollapsableSection label={section.name} isOpen={index === 0} key={section.name}>
+                    {section.fields
+                      .filter((field) => (typeof field !== 'string' ? !field.hidden : true))
+                      .map((field) => {
+                        return (
+                          <FieldRenderer
+                            key={typeof field === 'string' ? field : field.name}
+                            field={field}
+                            control={control}
+                            errors={errors}
+                            setValue={setValue}
+                            register={register}
+                            watch={watch}
+                            unregister={unregister}
+                            provider={provider}
+                            secretConfigured={!!config?.settings.clientSecret}
+                          />
+                        );
+                      })}
+                  </CollapsableSection>
                 );
               })}
-            </>
-          )}
-          <Box display={'flex'} gap={2} marginTop={6}>
+          </Stack>
+        ) : (
+          <>
+            {providerFields.map((field) => {
+              return (
+                <FieldRenderer
+                  key={field}
+                  field={field}
+                  control={control}
+                  errors={errors}
+                  setValue={setValue}
+                  register={register}
+                  watch={watch}
+                  unregister={unregister}
+                  provider={provider}
+                  secretConfigured={!!config?.settings.clientSecret}
+                />
+              );
+            })}
+          </>
+        )}
+        <Box display={'flex'} gap={2} marginTop={6}>
+          {!config?.settings.enabled && (
             <Field>
-              <Button type={'submit'} disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Save'}
+              <Button type={'submit'} onClick={() => setValue('enabled', true)} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save and enable'}
               </Button>
             </Field>
-            <Field>
-              <LinkButton href={'/admin/authentication'} variant={'secondary'}>
-                Discard
-              </LinkButton>
-            </Field>
+          )}
+          <Field>
+            <Button type={'submit'} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </Field>
+          {config?.settings.enabled && (
             <Field>
               <Button
+                type={'submit'}
+                disabled={isSaving}
+                onClick={() => setValue('enabled', false)}
                 variant={'secondary'}
-                hidden={config?.source === 'system'}
-                onClick={(event) => {
-                  setResetConfig(true);
-                }}
               >
-                Reset
+                {isSaving ? 'Disabling...' : 'Disable'}
               </Button>
             </Field>
-          </Box>
-        </>
+          )}
+          <Field>
+            <LinkButton href={'/admin/authentication'} variant={'secondary'}>
+              Discard
+            </LinkButton>
+          </Field>
+          <Field>
+            <Button
+              variant={'secondary'}
+              hidden={config?.source === 'system'}
+              onClick={(event) => {
+                setResetConfig(true);
+              }}
+            >
+              Reset
+            </Button>
+          </Field>
+        </Box>
       </form>
       {resetConfig && (
         <ConfirmModal
