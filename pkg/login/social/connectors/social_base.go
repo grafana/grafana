@@ -9,6 +9,7 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"sync"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
@@ -24,6 +25,7 @@ import (
 type SocialBase struct {
 	*oauth2.Config
 	info              *social.OAuthInfo
+	reloadMutex       sync.RWMutex
 	log               log.Logger
 	autoAssignOrgRole string
 	features          featuremgmt.FeatureManager
