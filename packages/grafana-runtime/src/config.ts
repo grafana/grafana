@@ -57,7 +57,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   feedbackLinksEnabled = true;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
-  alertingEnabled = false;
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';
   alertingMinInterval = 1;
