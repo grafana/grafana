@@ -128,7 +128,7 @@ func extractURLInfo(dashboardURL string) (string, string) {
 }
 
 func (hs *HTTPServer) renderDashboard(ctx context.Context, renderPath string) (string, error) {
-	result, err := hs.RenderService.Render(ctx, rendering.Opts{
+	result, err := hs.RenderService.Render(ctx, rendering.RenderPNG, rendering.Opts{
 		TimeoutOpts: rendering.TimeoutOpts{
 			Timeout: time.Duration(60) * time.Second,
 		},
