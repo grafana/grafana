@@ -11,7 +11,7 @@ import { DataTransformerID } from './ids';
 
 export const SHOW_NESTED_HEADERS_DEFAULT = true;
 
-export enum GroupByOperationID {
+enum GroupByOperationID {
   aggregate = 'aggregate',
   groupBy = 'groupby',
 }
