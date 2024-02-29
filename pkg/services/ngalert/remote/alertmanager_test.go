@@ -77,7 +77,6 @@ func TestNewAlertmanager(t *testing.T) {
 	}
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	decryptFn := secretsService.Decrypt
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
 			cfg := AlertmanagerConfig{
@@ -87,7 +86,7 @@ func TestNewAlertmanager(t *testing.T) {
 				BasicAuthPassword: test.password,
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			am, err := NewAlertmanager(cfg, nil, decryptFn, m)
+			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -107,11 +106,14 @@ func TestApplyConfig(t *testing.T) {
 		w.WriteHeader(http.StatusInternalServerError)
 	})
 
-	var sent client.UserGrafanaConfig
+	var configSent string
 	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
-			require.NoError(t, json.NewDecoder(r.Body).Decode(&sent))
+			var c client.UserGrafanaConfig
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&c))
+			configSent = c.GrafanaAlertmanagerConfig
 		}
+
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -133,22 +135,21 @@ func TestApplyConfig(t *testing.T) {
 	// Encrypt receivers to save secrets in the database.
 	var c apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
-
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	err := notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)
 
+	// The encrypted configuration should be different than the one we will send.
 	encryptedConfig, err := json.Marshal(c)
 	require.NoError(t, err)
+	require.NotEqual(t, testGrafanaConfig, encryptedConfig)
 
+	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
 	require.NoError(t, err)
-
-	// Check that the encrypted configuration is different than the one we will send.
-	require.NotEqual(t, testGrafanaConfig, encryptedConfig)
 
 	config := &ngmodels.AlertConfiguration{
 		AlertmanagerConfiguration: string(encryptedConfig),
@@ -162,7 +163,7 @@ func TestApplyConfig(t *testing.T) {
 	require.True(t, am.Ready())
 
 	// Secrets in the sent configuration should be unencrypted.
-	require.JSONEq(t, testGrafanaConfigWithSecret, sent.GrafanaAlertmanagerConfig)
+	require.JSONEq(t, testGrafanaConfigWithSecret, configSent)
 
 	// If we already got a 200 status code response, we shouldn't make the HTTP request again.
 	server.Config.Handler = errorHandler
@@ -222,9 +223,8 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	encodedFullState := base64.StdEncoding.EncodeToString(fullState)
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	decryptFn := secretsService.Decrypt
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, decryptFn, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
 	require.NoError(t, err)
 
 	// We should have no configuration or state at first.
@@ -310,9 +310,8 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	}
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	decryptFn := secretsService.Decrypt
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, decryptFn, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -394,9 +393,8 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	}
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	decryptFn := secretsService.Decrypt
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, decryptFn, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -463,9 +461,8 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	}
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	decryptFn := secretsService.Decrypt
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, decryptFn, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
 	require.NoError(t, err)
 
 	// We should start with the default config.
