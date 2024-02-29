@@ -171,8 +171,9 @@ func (s *Service) GetUserPermissionsInOrg(ctx context.Context, user identity.Req
 	}
 
 	dbPermissions, err := s.store.GetUserPermissionsInOrg(ctx, accesscontrol.GetUserPermissionsQuery{
-		UserID:       userID,
-		OrgID:        orgID,
+		UserID: userID,
+		OrgID:  orgID,
+		// Query only basic, managed and plugin roles in OSS
 		RolePrefixes: []string{accesscontrol.BasicRolePrefix, accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
 	})
 	if err != nil {

@@ -105,8 +105,7 @@ func (s *AccessControlStore) GetUserPermissionsInOrg(ctx context.Context, query 
 			}
 		}
 
-		return sess.SQL(q, params...).
-			Find(&dbPerms)
+		return sess.SQL(q, params...).Find(&dbPerms)
 	}); err != nil {
 		return nil, err
 	}
