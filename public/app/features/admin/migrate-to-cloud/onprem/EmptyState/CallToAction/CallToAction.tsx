@@ -3,14 +3,13 @@ import React from 'react';
 import { Box, Button, ModalsController, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { ConnectStackDTO, useConnectStackMutation, useGetStatusQuery } from '../../../api';
+import { useConnectStackMutation, useGetStatusQuery } from '../../../api';
 
 import { ConnectModal } from './ConnectModal';
 
 export const CallToAction = () => {
   const [connectStack, connectResponse] = useConnectStackMutation();
   const { isFetching } = useGetStatusQuery();
-  const onClickMigrate = async (connectStackData: ConnectStackDTO) => connectStack(connectStackData);
 
   return (
     <ModalsController>
@@ -24,7 +23,7 @@ export const CallToAction = () => {
             onClick={() =>
               showModal(ConnectModal, {
                 hideModal,
-                onConfirm: onClickMigrate,
+                onConfirm: connectStack,
               })
             }
           >

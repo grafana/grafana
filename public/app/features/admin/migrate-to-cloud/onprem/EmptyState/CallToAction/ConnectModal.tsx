@@ -25,7 +25,6 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
     formState: { errors },
     watch,
   } = useForm<ConnectStackDTO>({
-    mode: 'onBlur',
     defaultValues: {
       stackURL: '',
       token: '',
@@ -68,6 +67,7 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
               invalid={!!errors.stackURL}
               error={errors.stackURL?.message}
               label={t('migrate-to-cloud.connect-modal.body-url-field', 'Cloud stack URL')}
+              required
             >
               <Input
                 {...register('stackURL', {
@@ -94,6 +94,7 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
               invalid={!!errors.token}
               error={errors.token?.message}
               label={t('migrate-to-cloud.connect-modal.body-token-field', 'Migration token')}
+              required
             >
               <Input
                 {...register('token', {

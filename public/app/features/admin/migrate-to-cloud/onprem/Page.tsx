@@ -11,7 +11,7 @@ import { EmptyState } from './EmptyState/EmptyState';
 export const Page = () => {
   const { data, isFetching } = useGetStatusQuery();
   const [disconnectStack, disconnectResponse] = useDisconnectStackMutation();
-  if (!data || !data.enabled) {
+  if (!data?.enabled) {
     return <EmptyState />;
   }
 
