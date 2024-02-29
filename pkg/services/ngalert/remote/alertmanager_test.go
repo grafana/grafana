@@ -17,7 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/util"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/cluster/clusterpb"
@@ -62,6 +64,8 @@ func TestNewAlertmanager(t *testing.T) {
 		},
 	}
 
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	decryptFn := secretsService.Decrypt
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
 			cfg := AlertmanagerConfig{
@@ -71,7 +75,7 @@ func TestNewAlertmanager(t *testing.T) {
 				BasicAuthPassword: test.password,
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			am, err := NewAlertmanager(cfg, nil, m)
+			am, err := NewAlertmanager(cfg, nil, decryptFn, m)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -104,13 +108,15 @@ func TestApplyConfig(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	store := fakes.NewFakeKVStore(t)
+	store := ngfakes.NewFakeKVStore(t)
 	fstore := notifier.NewFileStore(1, store, "")
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, "test"))
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, "test"))
 
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	decryptFn := secretsService.Decrypt
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, m)
+	am, err := NewAlertmanager(cfg, fstore, decryptFn, m)
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{}
@@ -162,7 +168,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 
 	silences := []byte("test-silences")
 	nflog := []byte("test-notifications")
-	store := fakes.NewFakeKVStore(t)
+	store := ngfakes.NewFakeKVStore(t)
 	fstore := notifier.NewFileStore(cfg.OrgID, store, "")
 
 	ctx := context.Background()
@@ -179,8 +185,10 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	require.NoError(t, err)
 	encodedFullState := base64.StdEncoding.EncodeToString(fullState)
 
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	decryptFn := secretsService.Decrypt
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, m)
+	am, err := NewAlertmanager(cfg, fstore, decryptFn, m)
 	require.NoError(t, err)
 
 	// We should have no configuration or state at first.
@@ -264,8 +272,11 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
+
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	decryptFn := secretsService.Decrypt
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, m)
+	am, err := NewAlertmanager(cfg, nil, decryptFn, m)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -345,8 +356,11 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
+
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	decryptFn := secretsService.Decrypt
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, m)
+	am, err := NewAlertmanager(cfg, nil, decryptFn, m)
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -412,8 +426,10 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 		BasicAuthPassword: password,
 	}
 
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	decryptFn := secretsService.Decrypt
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, m)
+	am, err := NewAlertmanager(cfg, nil, decryptFn, m)
 	require.NoError(t, err)
 
 	// We should start with the default config.

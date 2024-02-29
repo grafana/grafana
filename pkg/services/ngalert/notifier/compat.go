@@ -66,7 +66,6 @@ func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, pro
 
 		for k, v := range r.SecureSettings {
 			decryptedValue := decryptFn(v)
-			// TODO: fix this line, no err to check.
 			if err != nil {
 				return apimodels.GettableGrafanaReceiver{}, err
 			}

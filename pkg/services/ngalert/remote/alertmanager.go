@@ -27,18 +27,20 @@ type stateStore interface {
 	GetFullState(ctx context.Context, keys ...string) (string, error)
 }
 
+// DecryptFn is a function that takes in an encrypted value and returns it decrypted.
+// It's used to decrypt secrets before sending a configuration to a remote Alertmanager.
 type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
 type Alertmanager struct {
-	decryptFn DecryptFn
-	log       log.Logger
-	metrics   *metrics.RemoteAlertmanager
-	orgID     int64
-	ready     bool
-	sender    *sender.ExternalAlertmanager
-	state     stateStore
-	tenantID  string
-	url       string
+	decrypt  DecryptFn
+	log      log.Logger
+	metrics  *metrics.RemoteAlertmanager
+	orgID    int64
+	ready    bool
+	sender   *sender.ExternalAlertmanager
+	state    stateStore
+	tenantID string
+	url      string
 
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
@@ -116,7 +118,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 
 	return &Alertmanager{
 		amClient:    amc,
-		decryptFn:   decryptFn,
+		decrypt:     decryptFn,
 		log:         logger,
 		metrics:     metrics,
 		mimirClient: mc,
@@ -194,23 +196,23 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 }
 
 func (am *Alertmanager) SendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	// Decrypt secrets before sending.
 	postableConfig, err := notifier.Load([]byte(config.AlertmanagerConfiguration))
 	if err != nil {
 		return err
 	}
 
+	// Decode and decrypt secure fields before sending the config.
 	for _, rcv := range postableConfig.AlertmanagerConfig.Receivers {
 		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
 			for k, v := range gmr.SecureSettings {
 				decoded, err := base64.StdEncoding.DecodeString(v)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to decode value for key %s: %w", k, err)
 				}
 
-				decrypted, err := am.decryptFn(ctx, decoded)
+				decrypted, err := am.decrypt(ctx, decoded)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to decrypt value for key %s: %w", k, err)
 				}
 
 				gmr.SecureSettings[k] = string(decrypted)
