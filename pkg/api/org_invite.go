@@ -216,14 +216,14 @@ func (hs *HTTPServer) GetInviteInfoByCode(c *contextmodel.ReqContext) response.R
 	queryResult, err := hs.tempUserService.GetTempUserByCode(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, tempuser.ErrTempUserNotFound) {
-			return response.Error(404, "Invite not found", nil)
+			return response.Error(http.StatusNotFound, "Invite not found", nil)
 		}
-		return response.Error(500, "Failed to get invite", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get invite", err)
 	}
 
 	invite := queryResult
 	if invite.Status != tempuser.TmpUserInvitePending {
-		return response.Error(404, "Invite not found", nil)
+		return response.Error(http.StatusNotFound, "Invite not found", nil)
 	}
 
 	return response.JSON(http.StatusOK, dtos.InviteInfo{
@@ -285,17 +285,17 @@ func (hs *HTTPServer) CompleteInvite(c *contextmodel.ReqContext) response.Respon
 	usr, err := hs.userService.Create(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, user.ErrUserAlreadyExists) {
-			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", completeInvite.Email, completeInvite.Username), err)
+			return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("User with email '%s' or username '%s' already exists", completeInvite.Email, completeInvite.Username), err)
 		}
 
-		return response.Error(500, "failed to create user", err)
+		return response.Error(http.StatusInternalServerError, "failed to create user", err)
 	}
 
 	if err := hs.bus.Publish(c.Req.Context(), &events.SignUpCompleted{
 		Name:  usr.NameOrFallback(),
 		Email: usr.Email,
 	}); err != nil {
-		return response.Error(500, "failed to publish event", err)
+		return response.Error(http.StatusInternalServerError, "failed to publish event", err)
 	}
 
 	if ok, rsp := hs.applyUserInvite(c.Req.Context(), usr, invite, true); !ok {
@@ -304,7 +304,7 @@ func (hs *HTTPServer) CompleteInvite(c *contextmodel.ReqContext) response.Respon
 
 	err = hs.loginUserWithUser(usr, c)
 	if err != nil {
-		return response.Error(500, "failed to accept invite", err)
+		return response.Error(http.StatusInternalServerError, "failed to accept invite", err)
 	}
 
 	metrics.MApiUserSignUpCompleted.Inc()
@@ -320,7 +320,7 @@ func (hs *HTTPServer) updateTempUserStatus(ctx context.Context, code string, sta
 	// update temp user status
 	updateTmpUserCmd := tempuser.UpdateTempUserStatusCommand{Code: code, Status: status}
 	if err := hs.tempUserService.UpdateTempUserStatus(ctx, &updateTmpUserCmd); err != nil {
-		return false, response.Error(500, "Failed to update invite status", err)
+		return false, response.Error(http.StatusInternalServerError, "Failed to update invite status", err)
 	}
 
 	return true, nil
@@ -331,7 +331,7 @@ func (hs *HTTPServer) applyUserInvite(ctx context.Context, usr *user.User, invit
 	addOrgUserCmd := org.AddOrgUserCommand{OrgID: invite.OrgID, UserID: usr.ID, Role: invite.Role}
 	if err := hs.orgService.AddOrgUser(ctx, &addOrgUserCmd); err != nil {
 		if !errors.Is(err, org.ErrOrgUserAlreadyAdded) {
-			return false, response.Error(500, "Error while trying to create org user", err)
+			return false, response.Error(http.StatusInternalServerError, "Error while trying to create org user", err)
 		}
 	}
 
@@ -343,7 +343,7 @@ func (hs *HTTPServer) applyUserInvite(ctx context.Context, usr *user.User, invit
 	if setActive {
 		// set org to active
 		if err := hs.userService.SetUsingOrg(ctx, &user.SetUsingOrgCommand{OrgID: invite.OrgID, UserID: usr.ID}); err != nil {
-			return false, response.Error(500, "Failed to set org as active", err)
+			return false, response.Error(http.StatusInternalServerError, "Failed to set org as active", err)
 		}
 	}
 
