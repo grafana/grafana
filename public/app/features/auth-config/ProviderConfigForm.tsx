@@ -138,6 +138,8 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     }
   };
 
+  const isEnabled = config?.settings.enabled;
+
   return (
     <Page.Contents isLoading={isLoading}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
@@ -150,7 +152,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             reset();
           }}
         />
-        <Field label="Enabled">
+        <Field label="Enabled" hidden={true}>
           <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
         </Field>
         {sections ? (
@@ -203,58 +205,38 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
           </>
         )}
         <Box display={'flex'} gap={2} marginTop={6}>
-          {!config?.settings.enabled ? (
-            <Field>
-              <Button type={'submit'} onClick={() => setValue('enabled', true)} disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Save and enable'}
-              </Button>
-            </Field>
-          ) : (
-            <Field>
-              <Button
-                type={'submit'}
-                disabled={isSaving}
-                onClick={() => setValue('enabled', false)}
-                variant={'secondary'}
-              >
-                {isSaving ? 'Disabling...' : 'Disable'}
-              </Button>
-            </Field>
-          )}
           <Field>
-            <Button type={'submit'} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
-          </Field>
-          <Field>
-            <LinkButton href={'/admin/authentication'} variant={'secondary'}>
-              Discard
-            </LinkButton>
-          </Field>
-          <Field>
-            <Dropdown overlay={additionalActionsMenu} placement="bottom-start">
-              <IconButton
-                tooltip="More actions"
-                tooltipPlacement="top"
-                size="xxxl"
-                variant="secondary"
-                name="ellipsis-v"
-                hidden={config?.source === 'system'}
-              />
-            </Dropdown>
-          </Field>
-
-          {/* <Field>
             <Button
-              variant={'secondary'}
-              hidden={config?.source === 'system'}
-              onClick={(event) => {
-                setResetConfig(true);
-              }}
+              type={'submit'}
+              disabled={isSaving}
+              onClick={() => setValue('enabled', !isEnabled)}
+              variant={isEnabled ? 'secondary' : undefined}
             >
-              Reset
+              {isSaving ? (isEnabled ? 'Disabling...' : 'Saving...') : isEnabled ? 'Disable' : 'Save and enable'}
             </Button>
-          </Field> */}
+          </Field>
+          <Field>
+            <Stack alignItems={'center'} gap={2}>
+              <Button type={'submit'} disabled={isSaving} variant={'secondary'}>
+                {isSaving ? 'Saving...' : 'Save'}
+              </Button>
+              <LinkButton href={'/admin/authentication'} variant={'secondary'}>
+                Discard
+              </LinkButton>
+
+              <Dropdown overlay={additionalActionsMenu} placement="bottom-start">
+                <IconButton
+                  tooltip="More actions"
+                  title="More actions"
+                  tooltipPlacement="top"
+                  size="md"
+                  variant="secondary"
+                  name="ellipsis-v"
+                  hidden={config?.source === 'system'}
+                />
+              </Dropdown>
+            </Stack>
+          </Field>
         </Box>
       </form>
       {resetConfig && (
