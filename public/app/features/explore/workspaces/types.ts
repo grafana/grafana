@@ -8,6 +8,30 @@ export type ExploreWorkspace = {
 
 export type ExploreWorkspaceSnapshot = {};
 
+// get workspaces
+
+export type GetExploreWorkspacesCommand = {};
+
 export type GetExploreWorkspacesResponse = {
-  exploreWorkspaceSnapshot: ExploreWorkspace;
+  exploreWorkspaces: ExploreWorkspace[];
+};
+
+// get a workspace
+
+export type GetExploreWorkspaceCommand = {
+  exploreWorkspaceUID: string;
+};
+
+export type GetExploreWorkspaceResponse = {
+  exploreWorkspace: ExploreWorkspace;
+};
+
+// create a workspace
+
+export type CreateExploreWorkspaceCommand = {
+  name: string;
+};
+
+export type CreateExploreWorkspaceResponse = {
+  uid: string;
 };

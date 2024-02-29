@@ -23,16 +23,39 @@ type ExploreWorkspaceSnapshot struct {
 	Config             string    `json:"config" xorm:"config"`
 }
 
+// create a new workspace
+
 type CreateExploreWorkspaceCommand struct {
-	Name        string
-	Description string
-	OrgId       int64
+	Name  string
+	OrgId int64
 }
+
+type CreateExploreWorkspaceResponse struct {
+	UID string `json:"uid"`
+}
+
+// get a workspace
 
 type GetExploreWorkspaceCommand struct {
 	ExploreWorkspaceUID string
 	OrgId               int64
 }
+
+type GetExploreWorkspaceResponse struct {
+	ExploreWorkspace ExploreWorkspace `json:"exploreWorkspace"`
+}
+
+// get all workspaces
+
+type GetExploreWorkspacesCommand struct {
+	OrgId int64
+}
+
+type GetExploreWorkspacesResponse struct {
+	ExploreWorkspaces []ExploreWorkspace `json:"exploreWorkspaces"`
+}
+
+//
 
 type TakeExploreWorkspaceSnapshotCommand struct {
 	ExploreWorkspaceUID string
@@ -44,8 +67,4 @@ type GetExploreWorkspaceSnapshotsCommand struct {
 
 type GetExploreWorkspaceSnapshotCommand struct {
 	ExploreWorkspaceSnapshotUID string
-}
-
-type GetExploreWorkspaceResponse struct {
-	ExploreWorkspace ExploreWorkspace `json:"exploreWorkspace"`
 }
