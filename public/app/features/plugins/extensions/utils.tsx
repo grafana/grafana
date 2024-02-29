@@ -44,6 +44,18 @@ export function isPluginExtensionFunctionConfig(
   return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.function;
 }
 
+export function isPluginCapability(
+  extension: PluginExtensionConfig | undefined
+): extension is PluginExtensionFunctionConfig {
+  return (
+    typeof extension === 'object' &&
+    'type' in extension &&
+    extension['type'] === PluginExtensionTypes.function &&
+    extension.extensionPointId.startsWith('capabilities/')
+  );
+}
+
+
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   return (...args: unknown[]) => {
     try {

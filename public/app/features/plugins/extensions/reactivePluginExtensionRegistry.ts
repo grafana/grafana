@@ -3,7 +3,7 @@ import { Observable, ReplaySubject, Subject, firstValueFrom, map, scan, startWit
 import { PluginPreloadResult } from '../pluginPreloader';
 
 import { PluginExtensionRegistry, PluginExtensionRegistryItem } from './types';
-import { deepFreeze, logWarning } from './utils';
+import { deepFreeze, isPluginCapability, logWarning } from './utils';
 import { isPluginExtensionConfigValid } from './validators';
 
 export class ReactivePluginExtensionsRegistry {
@@ -53,6 +53,7 @@ function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPrel
   for (const extensionConfig of extensionConfigs) {
     const { extensionPointId } = extensionConfig;
 
+    // Check if the config is valid
     if (!extensionConfig || !isPluginExtensionConfigValid(pluginId, extensionConfig)) {
       return registry;
     }
@@ -64,7 +65,12 @@ function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPrel
       pluginId,
     };
 
-    if (!Array.isArray(registry[extensionPointId])) {
+    // Capability (only a single value per identifier, can be overriden)
+    if (isPluginCapability(extensionConfig)) {
+      registry[extensionPointId] = [registryItem];
+    }
+    // Extension (multiple extensions per extension point identifier)
+    else if (!Array.isArray(registry[extensionPointId])) {
       registry[extensionPointId] = [registryItem];
     } else {
       registry[extensionPointId].push(registryItem);
