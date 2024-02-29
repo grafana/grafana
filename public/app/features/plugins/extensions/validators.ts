@@ -6,7 +6,12 @@ import type {
 } from '@grafana/data';
 import { isPluginExtensionLink } from '@grafana/runtime';
 
-import { isPluginExtensionComponentConfig, isPluginExtensionLinkConfig, logWarning } from './utils';
+import {
+  isPluginExtensionComponentConfig,
+  isPluginExtensionFunctionConfig,
+  isPluginExtensionLinkConfig,
+  logWarning,
+} from './utils';
 
 export function assertPluginExtensionLink(
   extension: PluginExtension | undefined,
@@ -40,10 +45,18 @@ export function assertIsReactComponent(component: React.ComponentType) {
   }
 }
 
-export function assertExtensionPointIdIsValid(extension: PluginExtensionConfig) {
-  if (!isExtensionPointIdValid(extension)) {
+export function assertIsFunction(fn: Function) {
+  if (typeof fn !== 'function') {
     throw new Error(
-      `Invalid extension "${extension.title}". The extensionPointId should start with either "grafana/" or "plugins/" (currently: "${extension.extensionPointId}"). Skipping the extension.`
+      `Invalid function extension, the "functino" property needs to be a valid javascript function definition.`
+    );
+  }
+}
+
+export function assertExtensionPointIdIsValid(pluginId: string, extension: PluginExtensionConfig) {
+  if (!isExtensionPointIdValid(pluginId, extension)) {
+    throw new Error(
+      `Invalid extension "${extension.title}". The extensionPointId should start with either "grafana/", "plugins/" or "capabilities/${pluginId}" (currently: "${extension.extensionPointId}"). Skipping the extension.`
     );
   }
 }
@@ -76,9 +89,11 @@ export function isLinkPathValid(pluginId: string, path: string) {
   return Boolean(typeof path === 'string' && path.length > 0 && path.startsWith(`/a/${pluginId}/`));
 }
 
-export function isExtensionPointIdValid(extension: PluginExtensionConfig) {
+export function isExtensionPointIdValid(pluginId: string, extension: PluginExtensionConfig) {
   return Boolean(
-    extension.extensionPointId?.startsWith('grafana/') || extension.extensionPointId?.startsWith('plugins/')
+    extension.extensionPointId?.startsWith('grafana/') ||
+      extension.extensionPointId?.startsWith('plugins/') ||
+      extension.extensionPointId?.startsWith(`capabilities/${pluginId}/`)
   );
 }
 
@@ -93,8 +108,9 @@ export function isStringPropValid(prop: unknown) {
 export function isPluginExtensionConfigValid(pluginId: string, extension: PluginExtensionConfig): boolean {
   try {
     assertStringProps(extension, ['title', 'description', 'extensionPointId']);
-    assertExtensionPointIdIsValid(extension);
+    assertExtensionPointIdIsValid(pluginId, extension);
 
+    // Link
     if (isPluginExtensionLinkConfig(extension)) {
       assertConfigureIsValid(extension);
 
@@ -108,8 +124,14 @@ export function isPluginExtensionConfigValid(pluginId: string, extension: Plugin
       }
     }
 
+    // Component
     if (isPluginExtensionComponentConfig(extension)) {
       assertIsReactComponent(extension.component);
+    }
+
+    // Function
+    if (isPluginExtensionFunctionConfig(extension)) {
+      assertIsFunction(extension.function);
     }
 
     return true;

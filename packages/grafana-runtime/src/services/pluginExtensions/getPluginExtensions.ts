@@ -1,6 +1,11 @@
-import type { PluginExtension, PluginExtensionLink, PluginExtensionComponent } from '@grafana/data';
+import type {
+  PluginExtension,
+  PluginExtensionLink,
+  PluginExtensionComponent,
+  PluginExtensionFunction,
+} from '@grafana/data';
 
-import { isPluginExtensionComponent, isPluginExtensionLink } from './utils';
+import { isPluginExtensionComponent, isPluginExtensionFunction, isPluginExtensionLink } from './utils';
 
 export type GetPluginExtensions<T = PluginExtension> = (
   options: GetPluginExtensionsOptions
@@ -62,5 +67,13 @@ export const getPluginComponentExtensions = <Props = {}>(options: {
 
   return {
     extensions: componentExtensions,
+  };
+};
+
+export const getPluginFunctionExtensions: GetPluginExtensions<PluginExtensionFunction> = (options) => {
+  const { extensions } = getPluginExtensions(options);
+
+  return {
+    extensions: extensions.filter(isPluginExtensionFunction),
   };
 };

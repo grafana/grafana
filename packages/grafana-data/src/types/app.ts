@@ -8,6 +8,7 @@ import {
   PluginExtensionTypes,
   PluginExtensionComponentConfig,
   PluginExtensionConfig,
+  PluginExtensionFunctionConfig,
 } from './pluginExtensions';
 
 /**
@@ -116,6 +117,28 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
       ...extension,
       type: PluginExtensionTypes.component,
     } as PluginExtensionComponentConfig);
+
+    return this;
+  }
+
+  configureExtensionFunction<Fn extends Function>(extension: Omit<PluginExtensionFunctionConfig<Fn>, 'type'>) {
+    this._extensionConfigs.push({
+      ...extension,
+      type: PluginExtensionTypes.function,
+    } as PluginExtensionFunctionConfig);
+
+    return this;
+  }
+
+  configureCapability<Fn extends Function>(
+    id: string,
+    extension: Omit<PluginExtensionFunctionConfig<Fn>, 'type' | 'extensionPointId'>
+  ) {
+    this._extensionConfigs.push({
+      ...extension,
+      extensionPointId: `capabilities/${id}`,
+      type: PluginExtensionTypes.function,
+    } as PluginExtensionFunctionConfig);
 
     return this;
   }

@@ -83,7 +83,7 @@ describe('Plugin Extension Validators', () => {
   describe('assertExtensionPointIdIsValid()', () => {
     it('should throw an error if the extensionPointId does not have the right prefix', () => {
       expect(() => {
-        assertExtensionPointIdIsValid({
+        assertExtensionPointIdIsValid('my-org-app', {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
@@ -94,14 +94,14 @@ describe('Plugin Extension Validators', () => {
 
     it('should NOT throw an error if the extensionPointId is correct', () => {
       expect(() => {
-        assertExtensionPointIdIsValid({
+        assertExtensionPointIdIsValid('my-org-app', {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           extensionPointId: 'grafana/some-page/extension-point-a',
         });
 
-        assertExtensionPointIdIsValid({
+        assertExtensionPointIdIsValid('my-org-app', {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',

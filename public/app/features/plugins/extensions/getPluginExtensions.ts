@@ -7,8 +7,9 @@ import {
   type PluginExtensionLinkConfig,
   type PluginExtensionComponent,
   urlUtil,
+  PluginExtensionFunction,
 } from '@grafana/data';
-import { GetPluginExtensions, reportInteraction } from '@grafana/runtime';
+import { GetPluginExtensions, GetPluginCapability, reportInteraction } from '@grafana/runtime';
 
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 import type { PluginExtensionRegistry } from './types';
@@ -20,6 +21,7 @@ import {
   getEventHelpers,
   isPluginExtensionComponentConfig,
   wrapWithPluginContext,
+  isPluginExtensionFunctionConfig,
 } from './utils';
 import {
   assertIsReactComponent,
@@ -27,6 +29,7 @@ import {
   assertLinkPathIsValid,
   assertStringProps,
   isPromise,
+  assertIsFunction,
 } from './validators';
 
 type GetExtensions = ({
@@ -41,9 +44,9 @@ type GetExtensions = ({
   registry: PluginExtensionRegistry;
 }) => { extensions: PluginExtension[] };
 
-let registry: PluginExtensionRegistry = { id: '', extensions: {} };
-
 export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginExtensionsRegistry): GetPluginExtensions {
+  let registry: PluginExtensionRegistry = { id: '', extensions: {} };
+
   // Create a subscription to keep an copy of the registry state for use in the non-async
   // plugin extensions getter.
   extensionRegistry.asObservable().subscribe((r) => {
@@ -52,6 +55,48 @@ export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginEx
 
   return (options) => getPluginExtensions({ ...options, registry });
 }
+
+export const createPluginCapabilityGetter = (
+  extensionRegistry: ReactivePluginExtensionsRegistry
+): GetPluginCapability => {
+  return (id, options = {}) =>
+    new Promise((resolve, reject) => {
+      const { timeout } = options;
+      const registryId = `capabilities/${id}`;
+      const pluginId = id.split('/')[0];
+      let timer: ReturnType<typeof setTimeout> | null = null;
+
+      if (timeout) {
+        timer = setTimeout(() => {
+          reject(null);
+        }, timeout);
+      }
+
+      // Subscribes to the registry and checks if there are any capabilities for the given id
+      // (If there was a timeout set, it will clear it if it finds the capability before the timeout.)
+      extensionRegistry.asObservable().subscribe((r) => {
+        const registryItems = r.extensions[registryId];
+        const registryItem = Array.isArray(registryItems) ? registryItems[0] : null;
+
+        if (registryItem && isPluginExtensionFunctionConfig(registryItem.config)) {
+          const capability = {
+            id: generateExtensionId(pluginId, registryItem.config),
+            type: PluginExtensionTypes.function,
+            pluginId: pluginId,
+            function: registryItem.config.function,
+            title: registryItem.config.title,
+            description: registryItem.config.description,
+          };
+
+          resolve(capability.function);
+
+          if (timer) {
+            clearTimeout(timer);
+          }
+        }
+      });
+    });
+};
 
 // Returns with a list of plugin extensions for the given extension point
 export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, limitPerPlugin, registry }) => {
@@ -116,6 +161,24 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
           title: extensionConfig.title,
           description: extensionConfig.description,
           component: wrapWithPluginContext(pluginId, extensionConfig.component),
+        };
+
+        extensions.push(extension);
+        extensionsByPlugin[pluginId] += 1;
+      }
+
+      // FUNCTION
+      if (isPluginExtensionFunctionConfig(extensionConfig)) {
+        assertIsFunction(extensionConfig.function);
+
+        const extension: PluginExtensionFunction = {
+          id: generateExtensionId(registryItem.pluginId, extensionConfig),
+          type: PluginExtensionTypes.function,
+          pluginId: registryItem.pluginId,
+
+          title: extensionConfig.title,
+          description: extensionConfig.description,
+          function: extensionConfig.function, // should we wrap with something?
         };
 
         extensions.push(extension);

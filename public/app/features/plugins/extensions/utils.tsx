@@ -6,6 +6,7 @@ import { useAsync } from 'react-use';
 import {
   type PluginExtensionLinkConfig,
   type PluginExtensionComponentConfig,
+  type PluginExtensionFunctionConfig,
   type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
   PluginExtensionTypes,
@@ -36,6 +37,24 @@ export function isPluginExtensionComponentConfig(
 ): extension is PluginExtensionComponentConfig {
   return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.component;
 }
+
+export function isPluginExtensionFunctionConfig(
+  extension: PluginExtensionConfig | undefined
+): extension is PluginExtensionFunctionConfig {
+  return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.function;
+}
+
+export function isPluginCapability(
+  extension: PluginExtensionConfig | undefined
+): extension is PluginExtensionFunctionConfig {
+  return (
+    typeof extension === 'object' &&
+    'type' in extension &&
+    extension['type'] === PluginExtensionTypes.function &&
+    extension.extensionPointId.startsWith('capabilities/')
+  );
+}
+
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   return (...args: unknown[]) => {
