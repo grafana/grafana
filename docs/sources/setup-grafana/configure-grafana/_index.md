@@ -1684,68 +1684,6 @@ It should be kept false when not needed, as it may cause unintended data loss if
 
 <hr>
 
-## [alerting]
-
-For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts](/docs/grafana/v8.5/alerting/old-alerting/).
-
-### enabled
-
-Set to `true` to [enable legacy dashboard alerting]({{< relref "#unified_alerting" >}}). The default value is `false`.
-
-### execute_alerts
-
-Turns off alert rule execution, but alerting is still visible in the Grafana UI.
-
-### error_or_timeout
-
-Default setting for new alert rules. Defaults to categorize error and timeouts as alerting. (alerting, keep_state)
-
-### nodata_or_nullvalues
-
-Defines how Grafana handles nodata or null values in alerting. Options are `alerting`, `no_data`, `keep_state`, and `ok`. Default is `no_data`.
-
-### concurrent_render_limit
-
-Alert notifications can include images, but rendering many images at the same time can overload the server.
-This limit protects the server from render overloading and ensures notifications are sent out quickly. Default value is `5`.
-
-### evaluation_timeout_seconds
-
-Sets the alert calculation timeout. Default value is `30`.
-
-### notification_timeout_seconds
-
-Sets the alert notification timeout. Default value is `30`.
-
-### max_attempts
-
-Sets a maximum limit on attempts to sending alert notifications. Default value is `3`.
-
-### min_interval_seconds
-
-Sets the minimum interval between rule evaluations. Default value is `1`.
-
-> **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
-
-### max_annotation_age
-
-{{% admonition type="note" %}}
-This option is deprecated - See `max_age` option in [unified_alerting.state_history.annotations]({{< relref "#unified_alertingstate_historyannotations" >}}) instead.
-{{% /admonition %}}
-
-Configures for how long alert annotations are stored. Default is 0, which keeps them forever.
-This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
-
-### max_annotations_to_keep
-
-{{% admonition type="note" %}}
-This option is deprecated - See `max_annotations_to_keep` option in [unified_alerting.state_history.annotations]({{< relref "#unified_alertingstate_historyannotations" >}}) instead.
-{{% /admonition %}}
-
-Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
-
-<hr>
-
 ## [annotations]
 
 ### cleanupjob_batchsize
