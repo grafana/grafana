@@ -60,7 +60,7 @@ func TestSimpleQuery(t *testing.T) {
 		q.Set("csvContent", `a,b,c\n1,hello,true`)
 		q.Set("scenarioId", `csv_content`)
 		body, err := json.Marshal(&resource.GenericQueryRequest{
-			Queries: []resource.GenericDataQuery{q},
+			Queries: []*resource.GenericDataQuery{&q},
 		})
 		require.NoError(t, err)
 
