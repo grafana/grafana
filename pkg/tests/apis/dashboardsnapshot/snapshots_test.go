@@ -15,7 +15,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestDashboardSnapshots(t *testing.T) {
+func TestIntegrationDashboardSnapshots(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

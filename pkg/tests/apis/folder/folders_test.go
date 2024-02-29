@@ -16,7 +16,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestFoldersApp(t *testing.T) {
+func TestIntegrationFoldersApp(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

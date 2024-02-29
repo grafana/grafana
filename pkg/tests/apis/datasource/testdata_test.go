@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestTestDatasource(t *testing.T) {
+func TestIntegrationTestDatasource(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

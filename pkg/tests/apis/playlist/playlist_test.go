@@ -31,7 +31,7 @@ var gvr = schema.GroupVersionResource{
 	Resource: "playlists",
 }
 
-func TestPlaylist(t *testing.T) {
+func TestIntegrationPlaylist(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

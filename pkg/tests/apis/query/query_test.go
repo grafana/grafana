@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestSimpleQuery(t *testing.T) {
+func TestIntegrationSimpleQuery(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

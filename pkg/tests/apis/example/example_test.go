@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestExampleApp(t *testing.T) {
+func TestIntegrationExampleApp(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
