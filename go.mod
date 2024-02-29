@@ -30,6 +30,13 @@ require (
 	k8s.io/apimachinery v0.26.2
 )
 
+replace (
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1 // @grafana/backend-platform
+	go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.22.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.22.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.22.0 // @grafana/backend-platform
+)
+
 require (
 	cloud.google.com/go/storage v1.30.1
 	cuelang.org/go v0.5.0-beta.2
