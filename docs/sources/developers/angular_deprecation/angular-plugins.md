@@ -48,7 +48,7 @@ Additionally, warning icons and messages will be displayed when browsing the cat
 
 ## Automatic migration of plugins
 
-Certain legacy Grafana panel plugins automatically update to their React-based replacements when Angular support is disabled. This migration is usually available within the panel options, as shown in the screenshot below for World Map. Automatic migration can also be tested by appending `&__feature.autoMigrateOldPanels=true` to the dashboard URL in your browser.
+Certain legacy Grafana panel plugins automatically update to their React-based replacements when Angular support is disabled. This migration is usually available within the panel options, as shown in the screenshot below for World Map. Automatic migration can be triggered by setting the feature toggle `autoMigrateOldPanels` to `true`.
 
 Automatic migration is supported for the plugins shown in the following table. Each of the target plugins are included in Grafana as Core plugins which don't require installation.
 
