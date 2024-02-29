@@ -124,8 +124,6 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		return pp, nil
 	}
 
-	gpv := loadGP(rt.Context())
-
 	fsys, err = ensureCueMod(fsys, pp.Properties)
 	if err != nil {
 		return ParsedPlugin{}, fmt.Errorf("%s has invalid cue.mod: %w", pp.Properties.Id, err)
@@ -160,8 +158,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		panic("Refactor required - upstream CUE implementation changed, bi.Files is no longer populated")
 	}
 
-	gpv = gpv.FillPath(cue.MakePath(cue.Str("pascalName")), plugindef.DerivePascalName(pp.Properties.Id, pp.Properties.Name))
-	gpi := ctx.BuildInstance(bi).Unify(gpv)
+	gpi := ctx.BuildInstance(bi)
 	if gpi.Err() != nil {
 		return ParsedPlugin{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, pp.Properties.Id), gpi.Err())
 	}
@@ -171,6 +168,10 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		if !iv.Exists() {
 			continue
 		}
+
+		iv = iv.FillPath(cue.MakePath(cue.Str("schemaInterface")), si.Name())
+		iv = iv.FillPath(cue.MakePath(cue.Str("name")), plugindef.DerivePascalName(pp.Properties.Id, pp.Properties.Name)+si.Name())
+		iv = iv.FillPath(cue.MakePath(cue.Str("lineage"), cue.Str("name")), plugindef.DerivePascalName(pp.Properties.Id, pp.Properties.Name)+si.Name())
 
 		props, err := kindsys.ToKindProps[kindsys.ComposableProperties](iv)
 		if err != nil {
