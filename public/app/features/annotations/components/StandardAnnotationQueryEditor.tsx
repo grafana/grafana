@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactElement } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -114,26 +114,36 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
   renderStatus() {
     const { response, running } = this.state;
-    let text = '';
+    let text: ReactElement;
     let severity: AlertVariant = 'info';
 
     if (running || response?.panelData?.state === LoadingState.Loading || !response) {
-      text = 'loading...';
+      text = <p>{'loading...'}</p>;
     } else {
       const { events, panelData } = response;
 
       if (panelData?.errors) {
         severity = 'error';
-        text = panelData.errors?.map((e) => e.message).join('. ') ?? 'There was an error fetching data';
+        text = (
+          <>
+            {panelData.errors.map((e, i) => (
+              <p key={i}>{e.message}</p>
+            ))}
+          </>
+        );
       } else if (panelData?.error) {
         severity = 'error';
-        text = panelData.error.message ?? 'There was an error fetching data';
+        text = <p>{panelData.error.message ?? 'There was an error fetching data'}</p>;
       } else if (!events?.length) {
         severity = 'warning';
-        text = 'No events found';
+        text = <p>No events found</p>;
       } else {
         const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
-        text = `${events.length} events (from ${frame?.fields.length} fields)`;
+        text = (
+          <p>
+            `{events.length} events (from {frame?.fields.length} fields)`
+          </p>
+        );
       }
     }
     return (
