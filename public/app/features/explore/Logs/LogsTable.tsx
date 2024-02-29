@@ -19,7 +19,11 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { AdHocFilterItem, Table } from '@grafana/ui';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
+import {
+  CustomHeaderRendererProps,
+  FILTER_FOR_OPERATOR,
+  FILTER_OUT_OPERATOR,
+} from '@grafana/ui/src/components/Table/types';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
@@ -83,7 +87,7 @@ export function LogsTable(props: Props) {
             inspect: true,
             filterable: true, // This sets the columns to be filterable
             width: getInitialFieldWidth(field),
-            headerComponent: LogsTableHeader,
+            headerComponent: (props: CustomHeaderRendererProps) => <LogsTableHeader {...props} myProp={'hallo'} />,
             ...field.config.custom,
           },
           // This sets the individual field value as filterable
