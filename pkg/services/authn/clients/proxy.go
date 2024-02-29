@@ -43,12 +43,12 @@ var (
 	_ authn.ContextAwareClient = new(Proxy)
 )
 
-func ProvideProxy(cfg *setting.Cfg, cache proxyCache, userSrv user.Service, clients ...authn.ProxyClient) (*Proxy, error) {
+func ProvideProxy(cfg *setting.Cfg, cache proxyCache, userSrv user.Service, authInfoService login.AuthInfoService, clients ...authn.ProxyClient) (*Proxy, error) {
 	list, err := parseAcceptList(cfg.AuthProxyWhitelist)
 	if err != nil {
 		return nil, err
 	}
-	return &Proxy{log.New(authn.ClientProxy), cfg, cache, userSrv, clients, list}, nil
+	return &Proxy{log.New(authn.ClientProxy), cfg, cache, userSrv, authInfoService, clients, list}, nil
 }
 
 type proxyCache interface {
@@ -58,12 +58,13 @@ type proxyCache interface {
 }
 
 type Proxy struct {
-	log         log.Logger
-	cfg         *setting.Cfg
-	cache       proxyCache
-	userSrv     user.Service
-	clients     []authn.ProxyClient
-	acceptedIPs []*net.IPNet
+	log             log.Logger
+	cfg             *setting.Cfg
+	cache           proxyCache
+	userSrv         user.Service
+	authInfoService login.AuthInfoService
+	clients         []authn.ProxyClient
+	acceptedIPs     []*net.IPNet
 }
 
 func (c *Proxy) Name() string {
@@ -103,8 +104,14 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 				// if we for some reason cannot find the user we proceed with the normal flow, authenticate with ProxyClient
 				// and perform syncs
 				if usr != nil {
-					c.log.FromContext(ctx).Debug("User was loaded from cache, skip syncs", "userId", usr.UserID)
-					return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{SyncPermissions: true}, login.AuthProxyAuthModule), nil
+					// Get the authentication information for the user
+					authedBy, err := c.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.UserID})
+					if err != nil || authedBy == nil {
+						c.log.FromContext(ctx).Warn("Cached user had no valid auth info", "error", err, "userId", string(entry))
+					} else {
+						c.log.FromContext(ctx).Debug("User was loaded from cache, skip syncs", "userId", usr.UserID)
+						return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{SyncPermissions: true}, authedBy.AuthModule), nil
+					}
 				}
 			}
 		}
@@ -116,7 +123,6 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		identity, clientErr = proxyClient.AuthenticateProxy(ctx, r, username, additional)
 		if identity != nil {
 			identity.ClientParams.CacheAuthProxyKey = cacheKey
-			identity.AuthenticatedBy = login.AuthProxyAuthModule
 			return identity, nil
 		}
 	}
