@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 import { DataFrame, Field, getFieldDisplayName } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
@@ -83,13 +83,19 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     });
   }
 
-  const links = getDataLinks(yField, rowIndex);
+  let footer: ReactNode;
+
+  if (isPinned && seriesIdx != null) {
+    const links = getDataLinks(yField, rowIndex);
+
+    footer = <VizTooltipFooter dataLinks={links} />;
+  }
 
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
       <VizTooltipContent items={contentItems} isPinned={isPinned} />
-      {(links.length > 0 || isPinned) && <VizTooltipFooter dataLinks={links} />}
+      {footer}
     </div>
   );
 };
