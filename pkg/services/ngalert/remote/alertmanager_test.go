@@ -4,22 +4,29 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/grafana/pkg/infra/db"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/cluster/clusterpb"
@@ -27,8 +34,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Valid Grafana Alertmanager configuration.
+// Valid Grafana Alertmanager configurations.
 const testGrafanaConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
+const testGrafanaConfigWithSecret = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestNewAlertmanager(t *testing.T) {
 	tests := []struct {
@@ -94,7 +106,12 @@ func TestApplyConfig(t *testing.T) {
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	})
+
+	var sent client.UserGrafanaConfig
 	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&sent))
+		}
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -113,13 +130,29 @@ func TestApplyConfig(t *testing.T) {
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, "test"))
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, "test"))
 
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	decryptFn := secretsService.Decrypt
-	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, decryptFn, m)
+	// Encrypt receivers to save secrets in the database.
+	var c apimodels.PostableUserConfig
+	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
+
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	err := notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+		return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
+	})
 	require.NoError(t, err)
 
-	config := &ngmodels.AlertConfiguration{}
+	encryptedConfig, err := json.Marshal(c)
+	require.NoError(t, err)
+
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
+	require.NoError(t, err)
+
+	// Check that the encrypted configuration is different than the one we will send.
+	require.NotEqual(t, testGrafanaConfig, encryptedConfig)
+
+	config := &ngmodels.AlertConfiguration{
+		AlertmanagerConfiguration: string(encryptedConfig),
+	}
 	require.Error(t, am.ApplyConfig(ctx, config))
 	require.False(t, am.Ready())
 
@@ -127,6 +160,9 @@ func TestApplyConfig(t *testing.T) {
 	server.Config.Handler = okHandler
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.True(t, am.Ready())
+
+	// Secrets in the sent configuration should be unencrypted.
+	require.JSONEq(t, testGrafanaConfigWithSecret, sent.GrafanaAlertmanagerConfig)
 
 	// If we already got a 200 status code response, we shouldn't make the HTTP request again.
 	server.Config.Handler = errorHandler
