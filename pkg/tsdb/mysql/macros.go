@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
@@ -88,11 +89,16 @@ func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
-		if len(args) == 3 {
+		if len(args) == 3 || len(args) == 4 {
 			err := sqleng.SetupFillmode(query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
+		}
+		if len(args) == 4 && args[3] == "true" {
+			query.TimeRange.To = time.Now()
+		} else if len(args) == 4 && args[3] != "false" {
+			return "", fmt.Errorf("fourth argument must be 'true' or 'false'")
 		}
 		return fmt.Sprintf("UNIX_TIMESTAMP(%s) DIV %.0f * %.0f", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__timeGroupAlias":
@@ -123,11 +129,16 @@ func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
-		if len(args) == 3 {
+		if len(args) == 3 || len(args) == 4 {
 			err := sqleng.SetupFillmode(query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
+		}
+		if len(args) == 4 && args[3] == "true" {
+			query.TimeRange.To = time.Now()
+		} else if len(args) == 4 && args[3] != "false" {
+			return "", fmt.Errorf("fourth argument must be 'true' or 'false'")
 		}
 		return fmt.Sprintf("%s DIV %v * %v", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochGroupAlias":
