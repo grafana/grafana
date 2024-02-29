@@ -216,12 +216,12 @@ func (s *SocialAzureAD) getThreadSafeParams() *socialAzureADParams {
 	defer s.reloadMutex.RUnlock()
 
 	params := socialAzureADParams{
-		info:                 s.info,
-		config:               s.Config,
-		allowedOrganizations: []string{},
-		forceUseGraphAPI:     s.forceUseGraphAPI,
+		info:             s.info,
+		config:           s.Config,
+		forceUseGraphAPI: s.forceUseGraphAPI,
 	}
 
+	params.allowedOrganizations = make([]string, len(s.allowedOrganizations))
 	copy(params.allowedOrganizations, s.allowedOrganizations)
 
 	return &params

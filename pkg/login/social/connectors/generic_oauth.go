@@ -332,7 +332,6 @@ func (s *SocialGenericOAuth) getThreadSafeParams() *socialGenericOAuthParams {
 	params := socialGenericOAuthParams{
 		info:                 s.info,
 		config:               s.Config,
-		allowedOrganizations: []string{},
 		teamsUrl:             s.teamsUrl,
 		emailAttributeName:   s.emailAttributeName,
 		emailAttributePath:   s.emailAttributePath,
@@ -341,10 +340,12 @@ func (s *SocialGenericOAuth) getThreadSafeParams() *socialGenericOAuthParams {
 		groupsAttributePath:  s.groupsAttributePath,
 		idTokenAttributeName: s.idTokenAttributeName,
 		teamIdsAttributePath: s.teamIdsAttributePath,
-		teamIds:              []string{},
 	}
 
+	params.allowedOrganizations = make([]string, len(s.allowedOrganizations))
 	copy(params.allowedOrganizations, s.allowedOrganizations)
+
+	params.teamIds = make([]string, len(s.teamIds))
 	copy(params.teamIds, s.teamIds)
 
 	return &params

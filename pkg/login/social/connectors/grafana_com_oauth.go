@@ -105,12 +105,12 @@ func (s *SocialGrafanaCom) getThreadSafeParams() *socialGrafanaComParams {
 	defer s.reloadMutex.RUnlock()
 
 	params := socialGrafanaComParams{
-		info:                 s.info,
-		config:               s.Config,
-		url:                  s.url,
-		allowedOrganizations: []string{},
+		info:   s.info,
+		config: s.Config,
+		url:    s.url,
 	}
 
+	params.allowedOrganizations = make([]string, len(s.allowedOrganizations))
 	copy(params.allowedOrganizations, s.allowedOrganizations)
 
 	return &params

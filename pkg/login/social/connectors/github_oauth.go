@@ -141,13 +141,14 @@ func (s *SocialGithub) getThreadSafeParams() *socialGithubParams {
 	defer s.reloadMutex.RUnlock()
 
 	params := socialGithubParams{
-		info:                 s.info,
-		config:               s.Config,
-		allowedOrganizations: []string{},
-		teamIds:              []int{},
+		info:   s.info,
+		config: s.Config,
 	}
 
+	params.allowedOrganizations = make([]string, len(s.allowedOrganizations))
 	copy(params.allowedOrganizations, s.allowedOrganizations)
+
+	params.teamIds = make([]int, len(s.teamIds))
 	copy(params.teamIds, s.teamIds)
 
 	return &params
