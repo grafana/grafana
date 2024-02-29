@@ -40,3 +40,8 @@ export interface ConnectionState {
   target: ElementState;
   info: CanvasConnection;
 }
+
+export interface Vertex {
+  x: number;
+  y: number;
+}
