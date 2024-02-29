@@ -21,7 +21,15 @@ interface Props {
   setOperator: (item: SelectableValue<string>) => void;
 }
 
-export const FilterPopup = ({ column: { preFilteredRows, filterValue, setFilter }, onClose, field, searchFilter, setSearchFilter, operator, setOperator }: Props) => {
+export const FilterPopup = ({
+  column: { preFilteredRows, filterValue, setFilter },
+  onClose,
+  field,
+  searchFilter,
+  setSearchFilter,
+  operator,
+  setOperator,
+}: Props) => {
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);

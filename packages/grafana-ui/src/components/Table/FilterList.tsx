@@ -65,8 +65,17 @@ const comparableValue = (value: string): string | number | Date | boolean => {
   return value;
 };
 
-export const FilterList = ({ options, values, caseSensitive, showOperators, onChange, searchFilter, setSearchFilter, operator, setOperator }: Props) => {
-  
+export const FilterList = ({
+  options,
+  values,
+  caseSensitive,
+  showOperators,
+  onChange,
+  searchFilter,
+  setSearchFilter,
+  operator,
+  setOperator,
+}: Props) => {
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
     () =>

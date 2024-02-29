@@ -40,16 +40,18 @@ export const Filter = ({ column, field, tableStyles }: Props) => {
       <Icon name="filter" />
       {isPopoverVisible && ref.current && (
         <Popover
-          content={<FilterPopup 
-            column={column}
-            tableStyles={tableStyles}
-            field={field}
-            onClose={onClosePopover}
-            searchFilter={searchFilter}
-            setSearchFilter={setSearchFilter}
-            operator={operator}
-            setOperator={setOperator}
-          />}
+          content={
+            <FilterPopup
+              column={column}
+              tableStyles={tableStyles}
+              field={field}
+              onClose={onClosePopover}
+              searchFilter={searchFilter}
+              setSearchFilter={setSearchFilter}
+              operator={operator}
+              setOperator={setOperator}
+            />
+          }
           placement="bottom-start"
           referenceElement={ref.current}
           show
