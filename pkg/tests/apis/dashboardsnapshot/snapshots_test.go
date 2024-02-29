@@ -36,14 +36,14 @@ func TestIntegrationDashboardSnapshots(t *testing.T) {
 			  "freshness": "Current",
 			  "resources": [
 				{
-				  "resource": "dashboardsnapshot",
+				  "resource": "dashboardsnapshots",
 				  "responseKind": {
 					"group": "",
 					"kind": "DashboardSnapshot",
 					"version": ""
 				  },
 				  "scope": "Namespaced",
-				  "singularResource": "dashsnap",
+				  "singularResource": "dashboardsnapshot",
 				  "subresources": [
 					{
 					  "responseKind": {

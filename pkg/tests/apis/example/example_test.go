@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -54,7 +55,7 @@ func TestIntegrationExampleApp(t *testing.T) {
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
 		require.NoError(t, err)
-		//	fmt.Printf("%s", string(v1Disco))
+		//fmt.Printf("%s", string(v1Disco))
 
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
@@ -152,7 +153,11 @@ func TestIntegrationExampleApp(t *testing.T) {
 		rsp, err := client.Get(context.Background(), "test2", metav1.GetOptions{})
 		require.NoError(t, err)
 
-		require.Equal(t, "dummy: test2", rsp.Object["spec"])
+		v, ok, err := unstructured.NestedString(rsp.Object, "spec", "Dummy")
+		require.NoError(t, err)
+		require.True(t, ok)
+
+		require.Equal(t, "test2", v)
 		require.Equal(t, "DummyResource", rsp.GetObjectKind().GroupVersionKind().Kind)
 
 		// Now a sub-resource

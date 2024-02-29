@@ -75,7 +75,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 					{
 					  "responseKind": {
 						"group": "",
-						"kind": "Status",
+						"kind": "QueryDataResponse",
 						"version": ""
 					  },
 					  "subresource": "query",
