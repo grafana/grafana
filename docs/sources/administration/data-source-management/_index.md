@@ -10,7 +10,7 @@ description: Data source management information for Grafana administrators
 labels:
   products:
     - enterprise
-    - oss
+    - cloud
 title: Data source management
 weight: 100
 ---
