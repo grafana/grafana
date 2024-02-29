@@ -197,7 +197,7 @@ Click the **Copy time range to clipboard** icon to copy the current time range t
 
 <img class="no-shadow" src="/media/docs/grafana/dashboards/screenshot-copy-paste-time-range.png" max-width="900">
 
-You can also copy and paste a time range using the the keyboard shortcuts `t+c` and `t+v` respectively.
+You can also copy and paste a time range using the keyboard shortcuts `t+c` and `t+v` respectively.
 
 #### Zoom out (Cmd+Z or Ctrl+Z)
 

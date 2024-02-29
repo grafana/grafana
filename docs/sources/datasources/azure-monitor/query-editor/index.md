@@ -90,7 +90,7 @@ For example:
 | ------------------------------ | ------------------------------------------------------------------------------------------------------ |
 | `{{ subscriptionid }}`         | Replaced with the subscription ID.                                                                     |
 | `{{ subscription }}`           | Replaced with the subscription name.                                                                   |
-| `{{ resourcegroup }}`          | Replaced with the the resource group.                                                                  |
+| `{{ resourcegroup }}`          | Replaced with the resource group.                                                                      |
 | `{{ namespace }}`              | Replaced with the resource type or namespace, such as `Microsoft.Compute/virtualMachines`.             |
 | `{{ resourcename }}`           | Replaced with the resource name.                                                                       |
 | `{{ metric }}`                 | Replaced with the metric name, such as "Percentage CPU".                                               |
@@ -106,7 +106,7 @@ Grafana can display and filter metrics based on dimension values.
 
 The data source supports the `equals`, `not equals`, and `starts with` operators as detailed in the [Monitor Metrics API documentation](https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list).
 
-For more information onmulti-dimensional metrics, refer to the [Azure Monitor data platform metrics documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/data-platform-metrics#multi-dimensional-metrics) and [Azure Monitor filtering documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-charts#filters).
+For more information on multi-dimensional metrics, refer to the [Azure Monitor data platform metrics documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/data-platform-metrics#multi-dimensional-metrics) and [Azure Monitor filtering documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-charts#filters).
 
 ## Query Azure Monitor Logs
 

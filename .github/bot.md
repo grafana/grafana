@@ -9,8 +9,8 @@ Comment commands:
 
 Label commands:
 
-* Add label `bot/question` the the bot will close with standard question message and add label `type/question`
-* Add label `bot/duplicate` the the bot will close with standard duplicate message and add label `type/duplicate`
+* Add label `bot/question` the bot will close with standard question message and add label `type/question`
+* Add label `bot/duplicate` the bot will close with standard duplicate message and add label `type/duplicate`
 * Add label `bot/needs more info` for bot to request more info (or use comment command mentioned above)
 * Add label `bot/close feature request` for bot to close a feature request with standard message and adds label `not implemented`
 * Add label `bot/no new info` for bot to close an issue where we asked for more info but has not received any updates in at least 14 days.
