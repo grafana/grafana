@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { locationService } from '@grafana/runtime';
 import { ModalsContext, Button, Dropdown, Icon } from '@grafana/ui';
 
 import { useQueryParams } from '../../../../../core/hooks/useQueryParams';
@@ -39,7 +40,10 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
         data-testid={e2eSelectors.pages.Dashboard.DashNav.shareButton}
         variant="primary"
         size="sm"
-        onClick={DashboardInteractions.toolbarShareClick}
+        onClick={() => {
+          DashboardInteractions.toolbarShareClick();
+          locationService.partial({ shareView: 'link' });
+        }}
       >
         <Trans i18nKey="dashboard.toolbar.share-button">Share</Trans>
         <Icon name={isMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />
