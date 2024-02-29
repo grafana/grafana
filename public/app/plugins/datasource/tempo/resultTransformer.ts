@@ -633,7 +633,10 @@ function transformToTraceData(data: TraceSearchMetadata) {
 }
 
 const metricsValueToString = (value: ProtoValue): string => {
-  return '' + (value.stringValue || value.intValue || value.doubleValue || value.boolValue || '""');
+  if (value.stringValue) {
+    return `"${value.stringValue}"`;
+  }
+  return '' + (value.intValue || value.doubleValue || value.boolValue || '""');
 };
 
 export function formatTraceQLMetrics(query: string, data: TraceqlMetricsResponse) {
@@ -650,7 +653,7 @@ export function formatTraceQLMetrics(query: string, data: TraceqlMetricsResponse
         name = metricsValueToString(series.labels[0].value);
       } else {
         // otherwise build a string using the label keys and values
-        name = `{${series.labels.map((label) => `${label.key}=${metricsValueToString(label.value)}`).join(',')}}`;
+        name = `{${series.labels.map((label) => `${label.key}=${metricsValueToString(label.value)}`).join(', ')}}`;
       }
     }
     return createDataFrame({
