@@ -75,7 +75,7 @@ describe('value not substring matcher', () => {
     },
   });
 
-  it('should not match if the value is "0" and the option value is "0"' , () => {
+  it('should not match if the value is "0" and the option value is "0"', () => {
     const frame = data[0];
     const field = frame.fields[0];
     const valueIndex = 5;
