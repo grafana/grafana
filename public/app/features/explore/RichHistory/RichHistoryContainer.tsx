@@ -1,6 +1,6 @@
 // Libraries
 import { flatten } from 'lodash';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { config, reportInteraction } from '@grafana/runtime';
@@ -9,6 +9,7 @@ import { useTheme2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 // Types
 import { dataSource } from 'app/features/expressions/ExpressionDatasource';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { StoreState } from 'app/types';
 
 // Components, enums
@@ -22,7 +23,7 @@ import {
   updateHistorySearchFilters,
 } from '../state/history';
 
-import { RichHistory, Tabs } from './RichHistory';
+import { DataSourceData, RichHistory, Tabs } from './RichHistory';
 
 //Actions
 
@@ -33,6 +34,7 @@ function mapStateToProps(state: StoreState) {
   const datasourceInstances = flatten(
     Object.entries(state.explore.panes).map((pane) => pane[1]?.queries.map((q) => q.datasource))
   ).filter((datasource): datasource is DataSourceRef => !!dataSource);
+
   const firstTab = richHistorySettings?.starredTabAsFirstTab ? Tabs.Starred : Tabs.RichHistory;
   return {
     richHistory,
@@ -63,6 +65,8 @@ export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export function RichHistoryContainer(props: Props) {
   const theme = useTheme2();
+  const dsSrv = getDatasourceSrv();
+  const [datasources, setDatasources] = useState<DataSourceData[]>([]);
 
   const {
     richHistory,
@@ -88,6 +92,23 @@ export function RichHistoryContainer(props: Props) {
     });
   }, [initRichHistory]);
 
+  useEffect(() => {
+    const enhanceDS = async (datasourceInstances: DataSourceRef[]) => {
+      const enhancedDatasourceDataProm = await datasourceInstances.map(async (dsI) => {
+        const dsData = await dsSrv.get(dsI);
+        return {
+          ref: dsI,
+          name: dsData.name,
+        };
+      });
+
+      const enhancedDatasourceData = await Promise.all(enhancedDatasourceDataProm);
+      setDatasources(enhancedDatasourceData);
+    };
+
+    enhanceDS(datasourceInstances);
+  }, [datasourceInstances, dsSrv]);
+
   if (!richHistorySettings) {
     return (
       <span>
@@ -101,7 +122,7 @@ export function RichHistoryContainer(props: Props) {
       richHistory={richHistory}
       richHistoryTotal={richHistoryTotal}
       firstTab={firstTab}
-      datasourceInstances={datasourceInstances}
+      datasourceInstances={datasources}
       onClose={onClose}
       height={theme.components.horizontalDrawer.defaultHeight}
       deleteRichHistory={deleteRichHistory}

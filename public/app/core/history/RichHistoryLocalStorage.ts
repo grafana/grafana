@@ -119,7 +119,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
 
   async getSettings() {
     return {
-      activeDatasourceOnly: store.getObject(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, false),
+      activeDatasourcesOnly: store.getObject(RICH_HISTORY_SETTING_KEYS.activeDatasourcesOnly, false),
       retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
       starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
       lastUsedDatasourceFilters: store
@@ -129,7 +129,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
   }
 
   async updateSettings(settings: RichHistorySettings) {
-    store.set(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, settings.activeDatasourceOnly);
+    store.set(RICH_HISTORY_SETTING_KEYS.activeDatasourcesOnly, settings.activeDatasourcesOnly);
     store.set(RICH_HISTORY_SETTING_KEYS.retentionPeriod, settings.retentionPeriod);
     store.set(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, settings.starredTabAsFirstTab);
     store.setObject(

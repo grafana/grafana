@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
-import { DataSourceRef, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
@@ -13,14 +13,14 @@ import {
 } from 'app/core/utils/richHistory';
 import { RichHistoryQuery } from 'app/types/explore';
 
-import { getSortOrderOptions } from './RichHistory';
+import { DataSourceData, getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 
 export interface RichHistoryStarredTabProps {
   queries: RichHistoryQuery[];
   totalQueries: number;
   loading: boolean;
-  datasourceInstances: DataSourceRef[];
+  datasourceInstances: DataSourceData[];
   updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
   loadMoreRichHistory: () => void;
@@ -85,9 +85,9 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
 
   useEffect(() => {
     const datasourceFilters =
-      richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters
+      richHistorySettings.activeDatasourcesOnly && richHistorySettings.lastUsedDatasourceFilters
         ? richHistorySettings.lastUsedDatasourceFilters
-        : datasourceInstances.map((di) => di.uid).filter((s): s is string => !!s);
+        : datasourceInstances.map((di) => di.name).filter((s): s is string => !!s);
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,
@@ -117,7 +117,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
     <div className={styles.container}>
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
-          {!richHistorySettings.activeDatasourceOnly && (
+          {!richHistorySettings.activeDatasourcesOnly && (
             <MultiSelect
               className={styles.multiselect}
               options={listOfDatasources.map((ds) => {

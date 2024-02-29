@@ -42,7 +42,7 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
     richHistorySettings: {
       retentionPeriod: 0,
       starredTabAsFirstTab: false,
-      activeDatasourceOnly: true,
+      activeDatasourcesOnly: true,
       lastUsedDatasourceFilters: [],
     },
     updateHistorySearchFilters: jest.fn(),

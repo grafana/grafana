@@ -28,6 +28,11 @@ export const getSortOrderOptions = () =>
     { label: t('explore.rich-history.datasource-z-a', 'Data source Z-A'), value: SortOrder.DatasourceZA },
   ].filter((option) => supportedFeatures().availableFilters.includes(option.value));
 
+export interface DataSourceData {
+  ref: DataSourceRef;
+  name: string;
+}
+
 export interface RichHistoryProps {
   richHistory: RichHistoryQuery[];
   richHistoryTotal?: number;
@@ -39,7 +44,7 @@ export interface RichHistoryProps {
   loadMoreRichHistory: () => void;
   clearRichHistoryResults: () => void;
   deleteRichHistory: () => void;
-  datasourceInstances: DataSourceRef[];
+  datasourceInstances: DataSourceData[];
   firstTab: Tabs;
   height: number;
   onClose: () => void;
@@ -78,8 +83,8 @@ export function RichHistory(props: RichHistoryProps) {
   const toggleStarredTabAsFirstTab = () =>
     updateSettings({ starredTabAsFirstTab: !props.richHistorySettings.starredTabAsFirstTab });
 
-  const toggleActiveDatasourceOnly = () =>
-    updateSettings({ activeDatasourceOnly: !props.richHistorySettings.activeDatasourceOnly });
+  const toggleactiveDatasourcesOnly = () =>
+    updateSettings({ activeDatasourcesOnly: !props.richHistorySettings.activeDatasourcesOnly });
 
   useEffect(() => {
     setLoading(false);
@@ -131,10 +136,10 @@ export function RichHistory(props: RichHistoryProps) {
       <RichHistorySettingsTab
         retentionPeriod={props.richHistorySettings.retentionPeriod}
         starredTabAsFirstTab={props.richHistorySettings.starredTabAsFirstTab}
-        activeDatasourceOnly={props.richHistorySettings.activeDatasourceOnly}
+        activeDatasourcesOnly={props.richHistorySettings.activeDatasourcesOnly}
         onChangeRetentionPeriod={onChangeRetentionPeriod}
         toggleStarredTabAsFirstTab={toggleStarredTabAsFirstTab}
-        toggleactiveDatasourceOnly={toggleActiveDatasourceOnly}
+        toggleactiveDatasourcesOnly={toggleactiveDatasourcesOnly}
         deleteRichHistory={deleteRichHistory}
       />
     ),

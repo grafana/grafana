@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction, getAppEvents } from '@grafana/runtime';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -20,6 +20,8 @@ import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
 import { RichHistoryQuery } from 'app/types/explore';
 
+import { DataSourceData } from './RichHistory';
+
 const mapDispatchToProps = {
   changeDatasource,
   deleteHistoryItem,
@@ -31,7 +33,7 @@ const mapDispatchToProps = {
 const connector = connect(undefined, mapDispatchToProps);
 
 interface OwnProps<T extends DataQuery = DataQuery> {
-  datasourceInstances: DataSourceRef[];
+  datasourceInstances: DataSourceData[];
   queryHistoryItem: RichHistoryQuery<T>;
 }
 
@@ -167,7 +169,8 @@ export function RichHistoryCard(props: Props) {
 
   const styles = useStyles2(getStyles);
 
-  const isDifferentDatasource = (uid: string) => props.datasourceInstances.find((di) => di.uid === uid) === undefined;
+  const isDifferentDatasource = (uid: string) =>
+    props.datasourceInstances.find((di) => di.ref.uid === uid) === undefined;
 
   const onRunQuery = async () => {
     const queriesToRun = queryHistoryItem.queries;

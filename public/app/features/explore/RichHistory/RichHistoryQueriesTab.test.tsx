@@ -25,7 +25,7 @@ const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
     },
     richHistorySettings: {
       retentionPeriod: 30,
-      activeDatasourceOnly: false,
+      activeDatasourcesOnly: false,
       lastUsedDatasourceFilters: [],
       starredTabAsFirstTab: false,
     },

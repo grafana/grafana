@@ -30,7 +30,6 @@ import {
 //
 
 export interface HistoryUpdatedPayload {
-  exploreId: string;
   history: HistoryItem[];
 }
 export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');
@@ -192,6 +191,7 @@ export const updateHistorySearchFilters = (filters: RichHistorySearchFilters): T
 };
 
 export const historyReducer = (state: ExploreItemState, action: AnyAction): ExploreItemState => {
+  console.log(action.type, action.payload);
   if (historyUpdatedAction.match(action)) {
     return {
       ...state,

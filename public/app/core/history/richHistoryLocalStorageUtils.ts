@@ -94,6 +94,6 @@ export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => 
 export const RICH_HISTORY_SETTING_KEYS = {
   retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
   starredTabAsFirstTab: 'grafana.explore.richHistory.starredTabAsFirstTab',
-  activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
+  activeDatasourcesOnly: 'grafana.explore.richHistory.activeDatasourcesOnly',
   datasourceFilters: 'grafana.explore.richHistory.datasourceFilters',
 };

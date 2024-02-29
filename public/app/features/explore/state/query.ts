@@ -488,7 +488,7 @@ async function handleHistory(
 ) {
   const datasourceId = datasource.meta.id;
   const nextHistory = updateHistory(history, datasourceId, queries);
-  dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+  dispatch(historyUpdatedAction({ history: nextHistory }));
 
   dispatch(addHistoryItem(datasource.uid, datasource.name, queries));
   await dispatch(loadRichHistory());

@@ -245,6 +245,23 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
+  if (richHistoryUpdatedAction.match(action)) {
+    const { richHistory, total } = action.payload.richHistoryResults;
+    return {
+      ...state,
+      richHistory,
+      richHistoryTotal: total,
+    };
+  }
+
+  if (richHistorySearchFiltersUpdatedAction.match(action)) {
+    const richHistorySearchFilters = action.payload.filters;
+    return {
+      ...state,
+      richHistorySearchFilters,
+    };
+  }
+
   if (createNewSplitOpenPane.pending.match(action)) {
     return {
       ...state,

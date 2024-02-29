@@ -29,7 +29,7 @@ const setup = (propOverrides?: Partial<RichHistoryStarredTabProps>) => {
     richHistorySettings: {
       retentionPeriod: 7,
       starredTabAsFirstTab: false,
-      activeDatasourceOnly: false,
+      activeDatasourcesOnly: false,
       lastUsedDatasourceFilters: [],
     },
     richHistorySearchFilters: {
@@ -57,17 +57,17 @@ describe('RichHistoryStarredTab', () => {
   });
 
   describe('select datasource', () => {
-    it('should render select datasource if activeDatasourceOnly is false', () => {
+    it('should render select datasource if activeDatasourcesOnly is false', () => {
       const container = setup();
       expect(container.queryByLabelText('Filter queries for data sources(s)')).toBeInTheDocument();
     });
 
-    it('should not render select datasource if activeDatasourceOnly is true', () => {
+    it('should not render select datasource if activeDatasourcesOnly is true', () => {
       const container = setup({
         richHistorySettings: {
           retentionPeriod: 7,
           starredTabAsFirstTab: false,
-          activeDatasourceOnly: true,
+          activeDatasourcesOnly: true,
           lastUsedDatasourceFilters: [],
         },
       });

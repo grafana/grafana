@@ -44,7 +44,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     richHistorySettings: {
       retentionPeriod: 0,
       starredTabAsFirstTab: false,
-      activeDatasourceOnly: true,
+      activeDatasourcesOnly: true,
       lastUsedDatasourceFilters: [],
     },
     richHistoryTotal: 0,
