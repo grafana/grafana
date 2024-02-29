@@ -17,11 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/schemas"
 )
 
-const (
-	GITHUB_OWNER = "grafana"
-	GITHUB_REPO  = "kind-registry"
-)
-
 var nonAlphaNumRegex = regexp.MustCompile("[^a-zA-Z0-9 ]+")
 
 // main This script verifies that stable kinds are not updated once published (new schemas
@@ -39,7 +34,7 @@ func main() {
 
 	coreJennies := codejen.JennyList[schemas.CoreKind]{}
 	coreJennies.Append(
-		KindRegistryJenny(outputPath),
+		CoreKindRegistryJenny(outputPath),
 	)
 	corefs, err := coreJennies.GenerateFS(corekinds...)
 	die(err)
@@ -122,16 +117,8 @@ func die(errs ...error) {
 	}
 }
 
-func isLess(v1 []uint64, v2 []uint64) bool {
-	if len(v1) == 1 || len(v2) == 1 {
-		return v1[0] < v2[0]
-	}
-
-	return v1[0] < v2[0] || (v1[0] == v2[0] && isLess(v1[2:], v2[2:]))
-}
-
-// KindRegistryJenny generates kind files into the "next" folder of the local kind registry.
-func KindRegistryJenny(path string) codejen.OneToOne[schemas.CoreKind] {
+// CoreKindRegistryJenny generates kind files into the "next" folder of the local kind registry.
+func CoreKindRegistryJenny(path string) codejen.OneToOne[schemas.CoreKind] {
 	return &kindregjenny{
 		path: path,
 	}
