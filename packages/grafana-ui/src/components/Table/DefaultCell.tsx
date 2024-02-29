@@ -51,7 +51,8 @@ export const DefaultCell = (props: TableCellProps) => {
 
   const isStringValue = typeof value === 'string';
 
-  const textShouldWrap = displayValue.text.length < OG_TWEET_LENGTH && displayValue.text.search(/\s/) >= 0;
+  // Text should wrap when the content length is less than or equal to the length of an OG tweet and it contains whitespace
+  const textShouldWrap = displayValue.text.length <= OG_TWEET_LENGTH && displayValue.text.search(/\s/) >= 0;
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled, isStringValue, textShouldWrap);
 
   if (isStringValue) {
