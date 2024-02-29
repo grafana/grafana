@@ -32,7 +32,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
     });
 
   let time = timeFormatter(annoVals.time[annoIdx]);
-  let text = annoVals.text[annoIdx];
+  let text = annoVals.text?.[annoIdx] ?? '';
 
   if (annoVals.isRegion?.[annoIdx]) {
     time += ' - ' + timeFormatter(annoVals.timeEnd[annoIdx]);
@@ -56,7 +56,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
 
     // alertText = alertDef.getAlertAnnotationInfo(annotation); // @TODO ??
   } else if (annoVals.title?.[annoIdx]) {
-    text = annoVals.title[annoIdx] + '<br />' + (typeof text === 'string' ? text : '');
+    text = annoVals.title[annoIdx] + text ? `<br />${text}` : '';
   }
 
   return (
