@@ -176,7 +176,7 @@ describe('ProviderConfigForm', () => {
 
   it('should delete the current config', async () => {
     const { user } = setup(<ProviderConfigForm config={emptyConfig} provider={emptyConfig.provider} />);
-    await user.click(screen.getByTitle(/More actions/i))
+    await user.click(screen.getByTitle(/More actions/i));
 
     await user.click(screen.getByRole('menuitem', { name: /Reset to default values/i }));
 

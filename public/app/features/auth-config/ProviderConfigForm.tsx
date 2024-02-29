@@ -205,7 +205,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
           </>
         )}
         <Box display={'flex'} gap={2} marginTop={5}>
-          <Field>
+          <Stack alignItems={'center'} gap={2}>
             <Button
               type={'submit'}
               disabled={isSaving}
@@ -214,29 +214,26 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             >
               {isSaving ? (isEnabled ? 'Disabling...' : 'Saving...') : isEnabled ? 'Disable' : 'Save and enable'}
             </Button>
-          </Field>
-          <Field>
-            <Stack alignItems={'center'} gap={2}>
-              <Button type={'submit'} disabled={isSaving} variant={'secondary'}>
-                {isSaving ? 'Saving...' : 'Save'}
-              </Button>
-              <LinkButton href={'/admin/authentication'} variant={'secondary'}>
-                Discard
-              </LinkButton>
 
-              <Dropdown overlay={additionalActionsMenu} placement="bottom-start">
-                <IconButton
-                  tooltip="More actions"
-                  title="More actions"
-                  tooltipPlacement="top"
-                  size="md"
-                  variant="secondary"
-                  name="ellipsis-v"
-                  hidden={config?.source === 'system'}
-                />
-              </Dropdown>
-            </Stack>
-          </Field>
+            <Button type={'submit'} disabled={isSaving} variant={'secondary'}>
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+            <LinkButton href={'/admin/authentication'} variant={'secondary'}>
+              Discard
+            </LinkButton>
+
+            <Dropdown overlay={additionalActionsMenu} placement="bottom-start">
+              <IconButton
+                tooltip="More actions"
+                title="More actions"
+                tooltipPlacement="top"
+                size="md"
+                variant="secondary"
+                name="ellipsis-v"
+                hidden={config?.source === 'system'}
+              />
+            </Dropdown>
+          </Stack>
         </Box>
       </form>
       {resetConfig && (
