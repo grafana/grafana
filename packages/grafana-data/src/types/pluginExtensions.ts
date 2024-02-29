@@ -14,6 +14,7 @@ import { RawTimeRange, TimeZone } from './time';
 export enum PluginExtensionTypes {
   link = 'link',
   component = 'component',
+  function = 'function',
 }
 
 type PluginExtensionBase = {
@@ -37,7 +38,12 @@ export type PluginExtensionComponent = PluginExtensionBase & {
   component: React.ComponentType;
 };
 
-export type PluginExtension = PluginExtensionLink | PluginExtensionComponent;
+export type PluginExtensionFunction = PluginExtensionBase & {
+  type: PluginExtensionTypes.function;
+  function: Function;
+};
+
+export type PluginExtension = PluginExtensionLink | PluginExtensionComponent | PluginExtensionFunction;
 
 // Objects used for registering extensions (in app plugins)
 // --------------------------------------------------------
@@ -93,7 +99,23 @@ export type PluginExtensionComponentConfig<Context extends object = object> = {
   extensionPointId: string;
 };
 
-export type PluginExtensionConfig = PluginExtensionLinkConfig | PluginExtensionComponentConfig;
+export type PluginExtensionFunctionConfig<Fn = Function> = {
+  type: PluginExtensionTypes.function;
+  title: string;
+  description: string;
+
+  // A function that the plugin registers
+  function: Fn;
+
+  // The unique identifier of the Extension Point
+  // (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+  extensionPointId: string;
+};
+
+export type PluginExtensionConfig =
+  | PluginExtensionLinkConfig
+  | PluginExtensionComponentConfig
+  | PluginExtensionFunctionConfig;
 
 export type PluginExtensionOpenModalOptions = {
   // The title of the modal

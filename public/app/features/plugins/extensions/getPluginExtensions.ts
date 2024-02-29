@@ -7,6 +7,7 @@ import {
   type PluginExtensionLinkConfig,
   type PluginExtensionComponent,
   urlUtil,
+  PluginExtensionFunction,
 } from '@grafana/data';
 import { GetPluginExtensions, reportInteraction } from '@grafana/runtime';
 
@@ -20,6 +21,7 @@ import {
   getEventHelpers,
   isPluginExtensionComponentConfig,
   wrapWithPluginContext,
+  isPluginExtensionFunctionConfig,
 } from './utils';
 import {
   assertIsReactComponent,
@@ -27,6 +29,7 @@ import {
   assertLinkPathIsValid,
   assertStringProps,
   isPromise,
+  assertIsFunction,
 } from './validators';
 
 type GetExtensions = ({
@@ -116,6 +119,24 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
           title: extensionConfig.title,
           description: extensionConfig.description,
           component: wrapWithPluginContext(pluginId, extensionConfig.component),
+        };
+
+        extensions.push(extension);
+        extensionsByPlugin[pluginId] += 1;
+      }
+
+      // FUNCTION
+      if (isPluginExtensionFunctionConfig(extensionConfig)) {
+        assertIsFunction(extensionConfig.function);
+
+        const extension: PluginExtensionFunction = {
+          id: generateExtensionId(registryItem.pluginId, extensionConfig),
+          type: PluginExtensionTypes.function,
+          pluginId: registryItem.pluginId,
+
+          title: extensionConfig.title,
+          description: extensionConfig.description,
+          function: extensionConfig.function, // should we wrap with something?
         };
 
         extensions.push(extension);

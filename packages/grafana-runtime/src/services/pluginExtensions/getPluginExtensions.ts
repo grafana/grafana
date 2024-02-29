@@ -1,6 +1,11 @@
-import type { PluginExtension, PluginExtensionLink, PluginExtensionComponent } from '@grafana/data';
+import type {
+  PluginExtension,
+  PluginExtensionLink,
+  PluginExtensionComponent,
+  PluginExtensionFunction,
+} from '@grafana/data';
 
-import { isPluginExtensionComponent, isPluginExtensionLink } from './utils';
+import { isPluginExtensionComponent, isPluginExtensionFunction, isPluginExtensionLink } from './utils';
 
 export type GetPluginExtensions<T = PluginExtension> = (
   options: GetPluginExtensionsOptions
@@ -50,3 +55,25 @@ export const getPluginComponentExtensions: GetPluginExtensions<PluginExtensionCo
     extensions: extensions.filter(isPluginExtensionComponent),
   };
 };
+
+export const getPluginFunctionExtensions: GetPluginExtensions<PluginExtensionFunction> = (options) => {
+  const { extensions } = getPluginExtensions(options);
+
+  return {
+    extensions: extensions.filter(isPluginExtensionFunction),
+  };
+};
+
+// The `id` param is the following: "{PLUGIN ID}/{NAME}", e.g. "my-org-app/predictCpuUsage"
+export const getPluginCapability = (id: string) => {
+  const { extensions } = getPluginExtensions({ extensionPointId: id });
+
+  // A plugin can only register a single capability with a given name
+  return extensions[0];
+};
+
+// Calls a capability if it is registered.
+// (It will call the capability once it's available.)
+// export const callCapabality = async (id: string, ...params) => {
+//   // ...
+// };
