@@ -169,7 +169,15 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 
 		iv = iv.FillPath(cue.MakePath(cue.Str("schemaInterface")), si.Name())
 		iv = iv.FillPath(cue.MakePath(cue.Str("name")), derivePascalName(pp.Properties.Id, pp.Properties.Name)+si.Name())
-		iv = iv.FillPath(cue.MakePath(cue.Str("lineage"), cue.Str("name")), derivePascalName(pp.Properties.Id, pp.Properties.Name)+si.Name())
+		lineageNamePath := iv.LookupPath(cue.MakePath(cue.Str("lineage"), cue.Str("name")))
+		if !lineageNamePath.Exists() {
+			iv = iv.FillPath(cue.MakePath(cue.Str("lineage"), cue.Str("name")), derivePascalName(pp.Properties.Id, pp.Properties.Name)+si.Name())
+		}
+
+		validSchema := iv.LookupPath(cue.ParsePath("lineage.schemas[0].schema"))
+		if !validSchema.Exists() {
+			return ParsedPlugin{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, pp.Properties.Id), validSchema.Err())
+		}
 
 		props, err := kindsys.ToKindProps[kindsys.ComposableProperties](iv)
 		if err != nil {
@@ -259,6 +267,10 @@ func getPluginMetadata(fsys fs.FS) (Metadata, error) {
 	var metadata PluginDef
 	if err := json.Unmarshal(b, &metadata); err != nil {
 		return Metadata{}, fmt.Errorf("error unmarshalling plugin.json: %s", err)
+	}
+
+	if err := metadata.Validate(); err != nil {
+		return Metadata{}, err
 	}
 
 	return Metadata{

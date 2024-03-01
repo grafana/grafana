@@ -32,3 +32,11 @@ type Permission struct {
 	Action string  `json:"action"`
 	Scope  *string `json:"scope,omitempty"`
 }
+
+func (pd PluginDef) Validate() error {
+	if pd.Id == "" || pd.Name == "" || pd.Type == "" {
+		return ErrInvalidRootFile
+	}
+
+	return nil
+}
