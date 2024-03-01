@@ -46,6 +46,7 @@ import { PanelNotices } from '../scene/PanelNotices';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
@@ -174,6 +175,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
     isCollapsed: row.collapsed,
     children: children,
     $behaviors: behaviors,
+    actions: new RowActions({}),
   });
 }
 

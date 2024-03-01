@@ -234,7 +234,6 @@ export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
     key: getVizPanelKeyForPanelId(id),
     title: 'Row title',
     actions: new RowActions({}),
-    isDraggable: true,
     y: 0,
   });
 }

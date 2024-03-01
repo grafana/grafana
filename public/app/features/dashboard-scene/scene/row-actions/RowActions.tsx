@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -158,18 +158,12 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
     const { meta, isEditing } = dashboard.useState();
     const styles = useStyles2(getStyles);
 
-    const { isCollapsed } = row.useState();
-    const count = row.state.children ? row.state.children.length : 0;
-    const panels = count === 1 ? 'panel' : 'panels';
     const behaviour = row.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
 
     return (
       <>
         {meta.canEdit && isEditing && (
           <>
-            <span className={cx(styles.panelCount, isCollapsed && styles.panelCountCollapsed)}>
-              ({count} {panels})
-            </span>
             <div className={styles.rowActions}>
               <RowOptionsButton
                 title={row.state.title}
@@ -193,35 +187,18 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     rowActions: css({
       color: theme.colors.text.secondary,
-      opacity: 0,
-      transition: '200ms opacity ease-in 200ms',
+      lineHeight: '27px',
 
       button: {
         color: theme.colors.text.secondary,
-        paddingLeft: theme.spacing(1),
+        paddingLeft: theme.spacing(2),
         background: 'transparent',
         border: 'none',
-        height: '100%',
 
         '&:hover': {
           color: theme.colors.text.maxContrast,
         },
       },
-
-      '&:hover, &:focus-within': {
-        opacity: 1,
-      },
-    }),
-    panelCount: css({
-      paddingLeft: theme.spacing(1),
-      color: theme.colors.text.secondary,
-      fontStyle: 'italic',
-      fontSize: theme.typography.size.sm,
-      fontWeight: 'normal',
-      display: 'none',
-    }),
-    panelCountCollapsed: css({
-      display: 'inline-block',
     }),
   };
 };
