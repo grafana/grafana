@@ -30,7 +30,7 @@ Legends are supported for the following visualizations:
 - [Trend][trend]
 <!-- - xy chart -->
 
-[Geomaps][] and [heatmaps][] also have legends, but they only provide the the choice to display or not display a legend and don't support other legend options.
+[Geomaps][] and [heatmaps][] also have legends, but they only provide the choice to display or not display a legend and don't support other legend options.
 
 ## Legend options
 

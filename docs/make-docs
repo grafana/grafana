@@ -6,6 +6,12 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 6.0.1 (2024-02-28)
+#
+# ### Added
+#
+# - Suppress new errors relating to absent content introduced in https://github.com/grafana/website/pull/17561.
+#
 # ## 6.0.0 (2024-02-16)
 #
 # ### Changed
@@ -822,7 +828,8 @@ EOF
               -e '/rm -rf dist*/ d' \
               -e '/Press Ctrl+C to stop/ d' \
               -e '/make/ d' \
-              -e '/WARNING: The manual_mount source directory/ d'
+              -e '/WARNING: The manual_mount source directory/ d' \
+              -e '/docs\/_index.md .* not found/ d'
     fi
     ;;
 esac
