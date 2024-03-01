@@ -42,6 +42,8 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 	Scope:  dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
 }
 
+var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
+
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features featuremgmt.FeatureToggles) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
@@ -126,7 +128,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		UserID:       userID,
 		Roles:        accesscontrol.GetOrgRoles(user),
 		TeamIDs:      user.GetTeams(),
-		RolePrefixes: []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
+		RolePrefixes: OSSRolesPrefixes,
 	})
 	if err != nil {
 		return nil, err
@@ -193,7 +195,7 @@ func (s *Service) GetUserPermissionsInOrg(ctx context.Context, user identity.Req
 	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, accesscontrol.SearchOptions{
 		NamespacedID: authn.NamespacedID(namespace, userID),
 		// Query only basic, managed and plugin roles in OSS
-		RolePrefixes: []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
+		RolePrefixes: OSSRolesPrefixes,
 	})
 	if err != nil {
 		return nil, err
@@ -287,7 +289,7 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	// Limit roles to available in OSS
-	options.RolePrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
+	options.RolePrefixes = OSSRolesPrefixes
 	if options.NamespacedID != "" {
 		userID, err := options.ComputeUserID()
 		if err != nil {
