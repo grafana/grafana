@@ -172,10 +172,28 @@ func (s *Service) GetUserPermissionsInOrg(ctx context.Context, user identity.Req
 		return nil, err
 	}
 
+	// Get permissions for user's basic roles from RAM
+	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{userID}, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
+	}
+	var roles []string
+	var ok bool
+	if roles, ok = roleList[userID]; !ok {
+		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", userID, orgID)
+	}
+	for _, builtin := range roles {
+		if basicRole, ok := s.roles[builtin]; ok {
+			for _, permission := range basicRole.Permissions {
+				permissions = append(permissions, permission)
+			}
+		}
+	}
+
 	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, accesscontrol.SearchOptions{
 		NamespacedID: authn.NamespacedID(namespace, userID),
 		// Query only basic, managed and plugin roles in OSS
-		RolePrefixes: []string{accesscontrol.BasicRolePrefix, accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
+		RolePrefixes: []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
 	})
 	if err != nil {
 		return nil, err
@@ -236,6 +254,10 @@ func permissionCacheKey(user identity.Requester) string {
 	return fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
 }
 
+func permissionInOrgCacheKey(user identity.Requester, orgID int64) string {
+	return fmt.Sprintf("rbac-permissions-%s-%d", user.GetCacheKey(), orgID)
+}
+
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
@@ -265,7 +287,7 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	// Limit roles to available in OSS
-	options.RolePrefixes = []string{accesscontrol.BasicRolePrefix, accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
+	options.RolePrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 	if options.NamespacedID != "" {
 		userID, err := options.ComputeUserID()
 		if err != nil {
