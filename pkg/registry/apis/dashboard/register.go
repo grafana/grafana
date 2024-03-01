@@ -13,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
@@ -82,7 +83,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.Dashboard{},
 		&v0alpha1.DashboardList{},
 		&v0alpha1.DashboardAccessInfo{},
-		&v0alpha1.DashboardVersionsInfo{},
+		&v0alpha1.DashboardVersionList{},
 		&v0alpha1.DashboardSummary{},
 		&v0alpha1.DashboardSummaryList{},
 		&v0alpha1.VersionsQueryOptions{},
@@ -194,6 +195,26 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return v0alpha1.GetOpenAPIDefinitions
+}
+
+func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// The plugin description
+	oas.Info.Description = "Grafana dashboards as resources"
+
+	// The root api URL
+	root := "/apis/" + b.GetGroupVersion().String() + "/"
+
+	// Hide the ability to list or watch across all tenants
+	delete(oas.Paths.Paths, root+v0alpha1.DashboardResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+"watch/"+v0alpha1.DashboardResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+v0alpha1.DashboardSummaryResourceInfo.GroupResource().Resource)
+
+	// The root API discovery list
+	sub := oas.Paths.Paths[root]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, nil
 }
 
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {

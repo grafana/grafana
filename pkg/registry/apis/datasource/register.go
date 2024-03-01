@@ -14,12 +14,13 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/utils/strings/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -117,9 +118,9 @@ func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&v0alpha1.DataSourceConnection{},
-		&v0alpha1.DataSourceConnectionList{},
-		&v0alpha1.HealthCheckResult{},
+		&datasource.DataSourceConnection{},
+		&datasource.DataSourceConnectionList{},
+		&datasource.HealthCheckResult{},
 		&unstructured.Unstructured{},
 		// Query handler
 		&query.QueryDataResponse{},
@@ -152,7 +153,7 @@ func resourceFromPluginID(pluginID string) (common.ResourceInfo, error) {
 	if err != nil {
 		return common.ResourceInfo{}, err
 	}
-	return v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
+	return datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
 }
 
 func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
@@ -177,7 +178,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 				{Name: "Created At", Type: "date"},
 			},
 			func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*v0alpha1.DataSourceConnection)
+				m, ok := obj.(*datasource.DataSourceConnection)
 				if !ok {
 					return nil, fmt.Errorf("expected connection")
 				}
@@ -220,11 +221,29 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
 		defs := query.GetOpenAPIDefinitions(ref) // required when running standalone
-		for k, v := range v0alpha1.GetOpenAPIDefinitions(ref) {
+		for k, v := range datasource.GetOpenAPIDefinitions(ref) {
 			defs[k] = v
 		}
 		return defs
 	}
+}
+
+func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// The plugin description
+	oas.Info.Description = b.pluginJSON.Info.Description
+
+	// The root api URL
+	root := "/apis/" + b.connectionResourceInfo.GroupVersion().String() + "/"
+
+	// Hide the ability to list all connections across tenants
+	delete(oas.Paths.Paths, root+b.connectionResourceInfo.GroupResource().Resource)
+
+	// The root API discovery list
+	sub := oas.Paths.Paths[root]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, nil
 }
 
 // Register additional routes with the server

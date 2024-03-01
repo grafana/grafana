@@ -80,8 +80,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 					  },
 					  "subresource": "query",
 					  "verbs": [
-						"create",
-						"get"
+						"create"
 					  ]
 					},
 					{
