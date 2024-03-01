@@ -10,8 +10,8 @@ type SlackChannels struct {
 
 type ShareRequest struct {
 	ChannelIds      []string `json:"channelIds"`
-	Message         string   `json:"message,omitempty"`
 	ImagePreviewUrl string   `json:"imagePreviewUrl"`
-	PanelTitle      string   `json:"panelTitle,omitempty"`
 	ResourcePath    string   `json:"resourcePath"`
+	Title           string   `json:"title,omitempty"`
+	Message         string   `json:"message,omitempty"`
 }

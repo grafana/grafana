@@ -32,13 +32,6 @@ func (hs *HTTPServer) GetSlackChannels(c *contextmodel.ReqContext) response.Resp
 }
 
 func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response {
-	dashboardUid := web.Params(c.Req)[":uid"]
-	dashboard, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dashboards.GetDashboardQuery{UID: dashboardUid})
-	if err != nil {
-		hs.log.Error("fail to get dashboard", "err", err, "dashboard UID", dashboardUid)
-		return response.Error(400, "error parsing body", err)
-	}
-
 	var shareRequest dtos.ShareRequest
 	if err := web.Bind(c.Req, &shareRequest); err != nil {
 		return response.Error(400, "error parsing body", err)
@@ -47,7 +40,7 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 	grafanaURL := hs.getGrafanaURL()
 	resourceLink := fmt.Sprintf("%s%s", grafanaURL, shareRequest.ResourcePath)
 
-	err = hs.slackService.PostMessage(c.Req.Context(), shareRequest, dashboard.Title, resourceLink)
+	err := hs.slackService.PostMessage(c.Req.Context(), shareRequest, resourceLink)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error posting message to Slack", err)
 	}
@@ -55,7 +48,7 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 	return response.Empty(http.StatusOK)
 }
 
-func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response.Response {
+func (hs *HTTPServer) SlackUnfurl(c *contextmodel.ReqContext) response.Response {
 	rawBody, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "error reading body", err)

@@ -18,13 +18,13 @@ import {
 import { useCreatePreviewQuery, useGetChannelsQuery, useShareMutation } from '../../../api/shareToSlackApi';
 
 export function ShareSlackModal({
+  resourceType,
   resourcePath,
-  dashboardUid,
-  panelTitle,
+  title,
 }: {
-  dashboardUid: string;
+  resourceType: string;
   resourcePath: string;
-  panelTitle?: string;
+  title?: string;
 }) {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
   const [description, setDescription] = useState<string>();
@@ -43,7 +43,6 @@ export function ShareSlackModal({
   const [share, { isLoading: isShareLoading, isSuccess: isShareSuccess }] = useShareMutation();
 
   const disableShareButton = isChannelsLoading || isChannelsFetching || isPreviewLoading || isPreviewFetching;
-  const resourceType = panelTitle ? 'panel' : 'dashboard';
 
   useEffect(() => {
     if (isShareSuccess) {
@@ -54,11 +53,11 @@ export function ShareSlackModal({
   const onShareClick = () => {
     share({
       channels: value.map((v) => ({ label: v.label!, value: v.value! })),
-      message: description,
-      imagePreviewUrl: preview!.previewUrl,
-      dashboardUid,
+      resourceType,
       resourcePath,
-      panelTitle,
+      imagePreviewUrl: preview!.previewUrl,
+      title: title,
+      message: description,
     });
   };
 

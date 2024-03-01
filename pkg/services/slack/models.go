@@ -9,7 +9,7 @@ import (
 
 type Service interface {
 	GetUserConversations(ctx context.Context) (*dtos.SlackChannels, error)
-	PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, dashboardTitle string, dashboardLink string) error
+	PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, dashboardLink string) error
 	PostUnfurl(ctx context.Context, linkEvent EventPayload, imageURL string, dashboardTitle string) error
 	ValidateSignatureRequest(c *contextmodel.ReqContext, body string) bool
 }

@@ -48,19 +48,14 @@ func (s *SlackService) GetUserConversations(ctx context.Context) (*dtos.SlackCha
 	return result, nil
 }
 
-func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, DashboardTitle string, resourceLink string) error {
-	title := DashboardTitle
-	imageText := "Dashboard preview"
-	if shareRequest.PanelTitle != "" {
-		title = shareRequest.PanelTitle
-		imageText = "Panel preview"
-	}
+func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, resourceLink string) error {
+	imageText := "Preview"
 
 	blocks := []Block{{
 		Type: "header",
 		Text: &Text{
 			Type: "plain_text",
-			Text: title,
+			Text: shareRequest.Title,
 		},
 	}}
 
@@ -98,6 +93,7 @@ func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareR
 			}},
 		}}...)
 
+	// async? should we support multiple channels?
 	for _, channelID := range shareRequest.ChannelIds {
 		postMessageRequest := &PostMessageRequest{
 			Channel: channelID,

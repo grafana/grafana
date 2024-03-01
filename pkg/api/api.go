@@ -576,6 +576,13 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
+
+		// Share to Slack
+		if hs.Features.IsEnabledGlobally(featuremgmt.FlagSlackSharePreview) {
+			apiRoute.Get("/share/slack/channels", hs.GetSlackChannels)
+			apiRoute.Post("/share/slack", hs.ShareToSlack)
+		}
+
 	}, reqSignedIn)
 
 	// admin api
@@ -636,11 +643,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))
 
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSlackUnfurling) {
-		r.Post("/api/unfurl-url", routing.Wrap(hs.AcknowledgeSlackEvent))
-	}
-
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSlackSharePreview) {
-		r.Get("/api/share/slack/channels", reqSignedIn, hs.GetSlackChannels)
-		r.Post("/api/share/:uid/slack", reqSignedIn, hs.ShareToSlack)
+		r.Post("/api/share/slack/unfurl", routing.Wrap(hs.SlackUnfurl))
 	}
 }

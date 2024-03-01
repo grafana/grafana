@@ -64,15 +64,15 @@ export const shareToSlackApi = createApi({
       void,
       {
         channels: Channel[];
-        message?: string;
-        imagePreviewUrl: string;
-        dashboardUid: string;
-        panelTitle?: string;
+        resourceType: string;
         resourcePath: string;
+        imagePreviewUrl: string;
+        title?: string;
+        message?: string;
       }
     >({
       query: (payload) => ({
-        url: `/share/${payload.dashboardUid}/slack`,
+        url: `/share/slack`,
         method: 'POST',
         data: { ...payload, channelIds: payload.channels.map((c) => c.value) },
       }),
@@ -82,7 +82,7 @@ export const shareToSlackApi = createApi({
           notifyApp(
             createSuccessNotification(
               'Shared to Slack',
-              `Your ${payload.panelTitle ? 'panel' : 'dashboard'} has been successfully shared to ${payload.channels
+              `Your ${payload.resourceType} has been successfully shared to ${payload.channels
                 .map((c) => c.label)
                 .join(' ,')}.`
             )

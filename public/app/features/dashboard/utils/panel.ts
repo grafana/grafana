@@ -76,7 +76,7 @@ export const shareToSlack = (dashboard: DashboardModel, panel: PanelModel) => {
     new ShowModalReactEvent({
       component: ShareSlackModal,
       props: {
-        dashboardUid: dashboard.uid,
+        resourceType: 'panel',
         resourcePath: buildRenderPath(dashboard.uid, panel),
         panelTitle: panel.title,
       },
