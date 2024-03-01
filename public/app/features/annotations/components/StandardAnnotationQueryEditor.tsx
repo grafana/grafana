@@ -123,7 +123,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       return 'warning';
     }
 
-    return 'info';
+    return 'success';
   }
 
   renderStatusText(response: AnnotationQueryResponse, running: boolean | undefined): ReactElement {
