@@ -81,6 +81,9 @@ const ContactPoints = () => {
   const [exportContactPointsSupported, exportContactPointsAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.ExportContactPoint
   );
+  const [createTemplateSupported, createTemplateAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.CreateNotificationTemplate
+  );
 
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
@@ -177,9 +180,16 @@ const ContactPoints = () => {
                       Create notification templates to customize your notifications.
                     </Text>
                     <Spacer />
-                    <LinkButton icon="plus" variant="primary" href="/alerting/notifications/templates/new">
-                      Add notification template
-                    </LinkButton>
+                    {createTemplateSupported && (
+                      <LinkButton
+                        icon="plus"
+                        variant="primary"
+                        href="/alerting/notifications/templates/new"
+                        disabled={!createTemplateAllowed}
+                      >
+                        Add notification template
+                      </LinkButton>
+                    )}
                   </Stack>
                   <NotificationTemplates />
                 </>

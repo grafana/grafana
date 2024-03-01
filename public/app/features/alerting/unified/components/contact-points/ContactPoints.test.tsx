@@ -127,6 +127,11 @@ describe('contact points', () => {
         const deleteButton = await screen.queryByRole('menuitem', { name: 'delete' });
         expect(deleteButton).toBeDisabled();
       }
+
+      // check buttons in Notification Templates
+      const notificationTemplatesTab = screen.getByRole('tab', { name: 'Tab Notification Templates' });
+      await userEvent.click(notificationTemplatesTab);
+      expect(screen.getByRole('link', { name: 'Add notification template' })).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('should call delete when clicked and not disabled', async () => {
@@ -326,6 +331,11 @@ describe('contact points', () => {
       const viewProvisioned = screen.getByRole('link', { name: 'view-action' });
       expect(viewProvisioned).toBeInTheDocument();
       expect(viewProvisioned).not.toBeDisabled();
+
+      // check buttons in Notification Templates
+      const notificationTemplatesTab = screen.getByRole('tab', { name: 'Tab Notification Templates' });
+      await userEvent.click(notificationTemplatesTab);
+      expect(screen.queryByRole('link', { name: 'Add notification template' })).not.toBeInTheDocument();
     });
   });
 });
