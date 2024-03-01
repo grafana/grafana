@@ -45,9 +45,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
   private lastPanelBottom = 0;
   private isLayoutInitialized = false;
 
-  private measureRef = React.createRef<HTMLDivElement>();
-  private resizeObserver?: ResizeObserver;
-
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -58,15 +55,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   componentDidMount() {
     const { dashboard } = this.props;
-
-    if (this.measureRef.current) {
-      this.resizeObserver = new ResizeObserver((entries) => {
-        entries.forEach((entry) => {
-          this.setState({ width: entry.contentRect.width });
-        });
-      });
-      this.resizeObserver.observe(this.measureRef.current);
-    }
 
     if (config.featureToggles.panelFilterVariable) {
       // If panel filter variable is set on load then
@@ -99,9 +87,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.eventSubs.unsubscribe();
-    if (this.resizeObserver && this.measureRef.current) {
-      this.resizeObserver.unobserve(this.measureRef.current);
-    }
   }
 
   setPanelFilter(regex: string) {
@@ -309,6 +294,26 @@ export class DashboardGrid extends PureComponent<Props, State> {
     }
   };
 
+  private resizeObserver?: ResizeObserver;
+  private rootEl: HTMLDivElement | null = null;
+  onMeasureRef = (rootEl: HTMLDivElement | null) => {
+    if (!rootEl) {
+      if (this.rootEl && this.resizeObserver) {
+        this.resizeObserver.unobserve(this.rootEl);
+      }
+      return;
+    }
+
+    this.rootEl = rootEl;
+    this.resizeObserver = new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        this.setState({ width: entry.contentRect.width });
+      });
+    });
+
+    this.resizeObserver.observe(rootEl);
+  };
+
   render() {
     const { isEditable, dashboard } = this.props;
     const { width } = this.state;
@@ -323,7 +328,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     // the escalating z-indexes of the panels
     return (
       <div
-        ref={this.measureRef}
+        ref={this.onMeasureRef}
         style={{
           flex: '1 1 auto',
           position: 'relative',
