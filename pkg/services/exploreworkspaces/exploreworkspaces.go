@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -64,9 +65,31 @@ func (s *ExploreWorkspacesService) CreateExploreWorkspace(ctx context.Context, c
 
 	storingError := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		_, err := session.Insert(exploreWorkspace)
+
 		if err != nil {
 			return err
 		}
+
+		snapshot, storingSnapshotError := s.createExploreWorkspaceSnapshot(session, ctx, CreateExploreWorkspaceSnapshotCommand{
+			Name:               "Latest",
+			Description:        "Latest snapshot, updated with each change",
+			Config:             cmd.Config,
+			ExploreWorspaceUID: exploreWorkspace.UID,
+			UserId:             cmd.UserId,
+			Created:            time.Now(),
+			Updated:            time.Now(),
+		})
+
+		if storingSnapshotError != nil {
+			return errors.New("Couldn't create snapshot for the workspace. " + err.Error())
+		}
+		exploreWorkspace.ActiveSnapshotUID = snapshot.UID
+
+		_, updateSnapshotError := session.ID(exploreWorkspace.UID).AllCols().Update(exploreWorkspace)
+		if updateSnapshotError != nil {
+			return errors.New("Couldn't assign snapshot to the workspace. " + err.Error())
+		}
+
 		return nil
 	})
 
@@ -101,6 +124,9 @@ func (s *ExploreWorkspacesService) GetExploreWorkspace(ctx context.Context, cmd 
 	creator, _ := s.UserService.GetByID(ctx, &user.GetUserByIDQuery{ID: exploreWorkspace.UserId})
 	exploreWorkspace.User = creator
 
+	snapshot, _ := s.getExploreWorkspaceSnapshot(ctx, GetExploreWorkspaceSnapshotCommand{UID: exploreWorkspace.ActiveSnapshotUID})
+	exploreWorkspace.ActiveSnapshot = snapshot
+
 	return *exploreWorkspace, nil
 }
 
@@ -121,9 +147,55 @@ func (s *ExploreWorkspacesService) GetExploreWorkspaces(ctx context.Context, cmd
 
 	for idx := range exploreWorkspaces {
 		exploreWorkspace := &exploreWorkspaces[idx]
+
 		creator, _ := s.UserService.GetByID(ctx, &user.GetUserByIDQuery{ID: exploreWorkspace.UserId})
 		exploreWorkspace.User = creator
+
+		snapshot, _ := s.getExploreWorkspaceSnapshot(ctx, GetExploreWorkspaceSnapshotCommand{UID: exploreWorkspace.ActiveSnapshotUID})
+		exploreWorkspace.ActiveSnapshot = snapshot
 	}
 
 	return exploreWorkspaces, nil
+}
+
+func (s *ExploreWorkspacesService) createExploreWorkspaceSnapshot(session *db.Session, ctx context.Context, cmd CreateExploreWorkspaceSnapshotCommand) (ExploreWorkspaceSnapshot, error) {
+	uid := util.GenerateShortUID()
+
+	exploreWorkspaceSnapshot := ExploreWorkspaceSnapshot{
+		UID:                uid,
+		ExploreWorspaceUID: cmd.ExploreWorspaceUID,
+		Name:               cmd.Name,
+		Description:        cmd.Description,
+		Config:             cmd.Description,
+		Created:            cmd.Created,
+		Updated:            cmd.Updated,
+		UserId:             cmd.UserId,
+		Version:            1,
+	}
+
+	_, storingError := session.Insert(exploreWorkspaceSnapshot)
+	return exploreWorkspaceSnapshot, storingError
+}
+
+func (s *ExploreWorkspacesService) getExploreWorkspaceSnapshot(ctx context.Context, cmd GetExploreWorkspaceSnapshotCommand) (ExploreWorkspaceSnapshot, error) {
+	exploreWorkspaceSnapshot := &ExploreWorkspaceSnapshot{
+		UID: cmd.UID,
+	}
+
+	queryError := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
+		has, err := session.Get(exploreWorkspaceSnapshot)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return errors.New("Workspace snapshot" + cmd.UID + " not found. ")
+		}
+		return nil
+	})
+
+	if queryError != nil {
+		return *exploreWorkspaceSnapshot, errors.New("Getting the explore workspace snapshot" + cmd.UID + " failed. " + queryError.Error())
+	}
+
+	return *exploreWorkspaceSnapshot, nil
 }

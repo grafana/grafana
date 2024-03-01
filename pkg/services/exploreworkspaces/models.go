@@ -16,8 +16,8 @@ type ExploreWorkspace struct {
 	OrgId             int64  `json:"orgId" xorm:"org_id"`
 
 	// dynamic
-	User *user.User `json:"user" xorm:"-"`
-	// ActiveSnapshot ExploreWorkspaceSnapshot `json:"activeSnapshot" xorm:"-"`
+	User           *user.User               `json:"user" xorm:"-"`
+	ActiveSnapshot ExploreWorkspaceSnapshot `json:"activeSnapshot" xorm:"-"`
 }
 
 type ExploreWorkspaceSnapshot struct {
@@ -35,11 +35,14 @@ type ExploreWorkspaceSnapshot struct {
 // create a new workspace
 
 type CreateExploreWorkspaceCommand struct {
+	// workspace
 	Name        string
 	Description string
-	Config      string
 	OrgId       int64
 	UserId      int64
+
+	// snapshot
+	Config string
 }
 
 type CreateExploreWorkspaceResponse struct {
@@ -69,6 +72,25 @@ type GetExploreWorkspacesResponse struct {
 
 //
 
+type CreateExploreWorkspaceSnapshotCommand struct {
+	ExploreWorspaceUID string
+	Name               string
+	Description        string
+	Created            time.Time
+	Updated            time.Time
+	UserId             int64
+	Config             string
+}
+
+type UpdateExploreWorkspaceSnapshotCommand struct {
+	UID         string
+	Name        string
+	Description string
+	Updated     time.Time
+	UserId      int64
+	Config      string
+}
+
 type TakeExploreWorkspaceSnapshotCommand struct {
 	ExploreWorkspaceUID string
 }
@@ -78,5 +100,5 @@ type GetExploreWorkspaceSnapshotsCommand struct {
 }
 
 type GetExploreWorkspaceSnapshotCommand struct {
-	ExploreWorkspaceSnapshotUID string
+	UID string
 }
