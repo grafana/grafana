@@ -36,15 +36,15 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			Examples: []resource.QueryExample{
 				{
 					Name: "constant addition",
-					SaveModel: MathQuery{
+					SaveModel: resource.AsUnstructured(MathQuery{
 						Expression: "$A + 10",
-					},
+					}),
 				},
 				{
 					Name: "math with two queries",
-					SaveModel: MathQuery{
+					SaveModel: resource.AsUnstructured(MathQuery{
 						Expression: "$A - $B",
-					},
+					}),
 				},
 			},
 		},
@@ -54,13 +54,13 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			Examples: []resource.QueryExample{
 				{
 					Name: "get max value",
-					SaveModel: ReduceQuery{
+					SaveModel: resource.AsUnstructured(ReduceQuery{
 						Expression: "$A",
 						Reducer:    mathexp.ReducerMax,
 						Settings: &ReduceSettings{
 							Mode: ReduceModeDrop,
 						},
-					},
+					}),
 				},
 			},
 		},
@@ -70,12 +70,12 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			Examples: []resource.QueryExample{
 				{
 					Name: "resample at a every day",
-					SaveModel: ResampleQuery{
+					SaveModel: resource.AsUnstructured(ResampleQuery{
 						Expression:  "$A",
 						Window:      "1d",
 						Downsampler: mathexp.ReducerLast,
 						Upsampler:   mathexp.UpsamplerPad,
-					},
+					}),
 				},
 			},
 		},
@@ -85,9 +85,9 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			Examples: []resource.QueryExample{
 				{
 					Name: "Select the first row from A",
-					SaveModel: SQLExpression{
+					SaveModel: resource.AsUnstructured(SQLExpression{
 						Expression: "SELECT * FROM A limit 1",
-					},
+					}),
 				},
 			},
 		},

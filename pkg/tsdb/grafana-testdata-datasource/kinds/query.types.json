@@ -2,14 +2,14 @@
   "kind": "QueryTypeDefinitionList",
   "apiVersion": "query.grafana.app/v0alpha1",
   "metadata": {
-    "resourceVersion": "1709232258209"
+    "resourceVersion": "1709261615323"
   },
   "items": [
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1709232363119",
-        "creationTimestamp": "2024-02-29T18:44:18Z"
+        "resourceVersion": "1709262331716",
+        "creationTimestamp": "2024-03-01T02:53:35Z"
       },
       "spec": {
         "schema": {
@@ -102,7 +102,6 @@
             },
             "points": {
               "items": {
-                "items": null,
                 "type": "array"
               },
               "type": "array"
@@ -278,15 +277,7 @@
           },
           "type": "object"
         },
-        "examples": [
-          {
-            "name": "example timeseries",
-            "saveModel": {
-              "nodes": {},
-              "scenarioId": "manual_entry"
-            }
-          }
-        ]
+        "examples": []
       }
     }
   ]

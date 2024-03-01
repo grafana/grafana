@@ -27,6 +27,8 @@ replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.
 // The v0.120.0 is needed for now to be compatible with grafana/thema.
 replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.120.0
 
+//replace github.com/grafana/grafana-plugin-sdk-go => /Users/ryan/workspace/grafana/more/grafana-plugin-sdk-go
+
 require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
@@ -63,7 +65,7 @@ require (
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.23.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.12.0 // @grafana/partner-datasources
-	github.com/grafana/grafana-plugin-sdk-go v0.212.1-0.20240229205630-bb0cd981b9c7 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.212.1-0.20240301032506-424be9acc75f // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
@@ -495,6 +497,7 @@ require (
 require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/invopop/jsonschema v0.12.0 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 )

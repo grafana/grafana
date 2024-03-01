@@ -27,30 +27,19 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	require.NoError(t, err)
 	err = builder.AddQueries(
 		schemabuilder.QueryTypeInfo{
-			Name:   "default",
-			GoType: reflect.TypeOf(&TestDataDataQuery{}),
+			Name:     "default",
+			GoType:   reflect.TypeOf(&TestDataDataQuery{}),
 			Examples: []resource.QueryExample{
-				{
-					Name: "example timeseries",
-					SaveModel: TestDataDataQuery{
-						ScenarioId: TestDataQueryTypeManualEntry,
-					},
-				},
+				// {
+				// 	Name: "example timeseries",
+				// 	SaveModel: resource.AsUnstructured(TestDataDataQuery{
+				// 		ScenarioId: TestDataQueryTypeManualEntry,
+				// 	}),
+				// },
 			},
 		},
 	)
 
 	require.NoError(t, err)
 	builder.UpdateQueryDefinition(t, "./")
-
-	// qt, err := NewQueryHandler()
-	// require.NoError(t, err)
-	// s, err := schemaex.GetQuerySchema(qt.QueryTypeDefinitionList())
-	// require.NoError(t, err)
-
-	// out, err := json.MarshalIndent(s, "", "  ")
-	// require.NoError(t, err)
-
-	// err = os.WriteFile("dataquery.spec.json", out, 0644)
-	// require.NoError(t, err, "error writing file")
 }

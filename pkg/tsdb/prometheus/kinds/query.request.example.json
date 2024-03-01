@@ -6,15 +6,15 @@
       "refId": "A",
       "maxDataPoints": 1000,
       "intervalMs": 5,
-      "expr": "???",
-      "format": "time_series"
+      "format": "time_series",
+      "expr": "???"
     },
     {
       "refId": "B",
       "maxDataPoints": 1000,
       "intervalMs": 5,
-      "expr": "???",
-      "format": "table"
+      "format": "table",
+      "expr": "something"
     }
   ]
 }

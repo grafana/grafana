@@ -214,10 +214,10 @@
           {
             "name": "resample at a every day",
             "saveModel": {
-              "expression": "$A",
-              "window": "1d",
               "downsampler": "last",
-              "upsampler": "pad"
+              "expression": "$A",
+              "upsampler": "pad",
+              "window": "1d"
             }
           }
         ]
@@ -226,7 +226,7 @@
     {
       "metadata": {
         "name": "classic_conditions",
-        "resourceVersion": "1709232058029",
+        "resourceVersion": "1709252408346",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -325,13 +325,14 @@
             "conditions"
           ],
           "type": "object"
-        }
+        },
+        "examples": []
       }
     },
     {
       "metadata": {
         "name": "threshold",
-        "resourceVersion": "1709232058029",
+        "resourceVersion": "1709252408346",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -433,7 +434,8 @@
             "conditions"
           ],
           "type": "object"
-        }
+        },
+        "examples": []
       }
     },
     {

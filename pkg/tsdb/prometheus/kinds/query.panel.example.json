@@ -17,7 +17,7 @@
         "uid": "TheUID"
       },
       "format": "table",
-      "expr": "???"
+      "expr": "something"
     }
   ]
 }

@@ -1,14 +1,4 @@
 {
   "type": "table",
-  "targets": [
-    {
-      "refId": "A",
-      "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "TheUID"
-      },
-      "nodes": {},
-      "scenarioId": "manual_entry"
-    }
-  ]
+  "targets": []
 }

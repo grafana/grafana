@@ -30,17 +30,17 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			Examples: []resource.QueryExample{
 				{
 					Name: "example timeseries",
-					SaveModel: PrometheusDataQuery{
+					SaveModel: resource.AsUnstructured(PrometheusDataQuery{
 						Format: PromQueryFormatTimeSeries,
 						Expr:   "???",
-					},
+					}),
 				},
 				{
 					Name: "example table",
-					SaveModel: PrometheusDataQuery{
+					SaveModel: resource.AsUnstructured(PrometheusDataQuery{
 						Format: PromQueryFormatTable,
-						Expr:   "???",
-					},
+						Expr:   "something",
+					}),
 				},
 			},
 		},

@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1709232207413",
+        "resourceVersion": "1709259126227",
         "creationTimestamp": "2024-02-21T22:08:04Z"
       },
       "spec": {
@@ -83,15 +83,15 @@
           {
             "name": "example timeseries",
             "saveModel": {
-              "format": "time_series",
-              "expr": "???"
+              "expr": "???",
+              "format": "time_series"
             }
           },
           {
             "name": "example table",
             "saveModel": {
-              "format": "table",
-              "expr": "???"
+              "expr": "something",
+              "format": "table"
             }
           }
         ]
