@@ -31,7 +31,7 @@ To create and manage your alerting resources using Terraform, you have to comple
 1. Create your alerting resources in Terraform format by
    - [exporting configured alerting resources][alerting_export]
    - or writing the [Terraform Alerting schemas](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
-     > By default, you cannot edit provisioned resources. Enable [`disable_provenance` in the Terraform resource](#edit-provisioned-resources-in-the-grafana-ui) to allow changes in the Grafana UI.
+     > By default, you cannot edit provisioned resources. Enable [`disable_provenance` in the Terraform resource](#enable-editing-resources-in-the-grafana-ui) to allow changes in the Grafana UI.
 1. Run `terraform apply` to provision your alerting resources.
 
 Before you begin, you should have available a Grafana instance and [Terraform installed](https://www.terraform.io/downloads) on your machine.
@@ -70,7 +70,7 @@ Replace the following values:
 
 This Terraform configuration installs the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) and authenticates against your Grafana instance using an API token. For other authentication alternatives including basic authentication, refer to the [`auth` option documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
 
-For Grafana Cloud, refer to the [instructions to manage a Grafana Cloud stack with Terraform][provision-cloud-with-terraform]. For Role-based access control, refer to [Provisioning RBAC with Terraform](rbac-terraform-provisioning) and the [alerting provisioning roles (`fixed:alerting.provisioning.*`)][rbac-role-definitions].
+For Grafana Cloud, refer to the [instructions to manage a Grafana Cloud stack with Terraform][provision-cloud-with-terraform]. For Role-based access control, refer to [Provisioning RBAC with Terraform][rbac-terraform-provisioning] and the [alerting provisioning roles (`fixed:alerting.provisioning.*`)][rbac-role-definitions].
 
 ## Create Terraform configurations for alerting resources
 
