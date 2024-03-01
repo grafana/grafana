@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 
@@ -126,13 +125,13 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 		plog.Error("Invalid HTTP method", "method", req.Method)
 		return fmt.Errorf("invalid HTTP method: %s", req.Method)
 	}
-	if (!strings.HasPrefix(url, "labels?")) &&
-		(!strings.HasPrefix(url, "label/")) && // the `/label/$label_name/values` form
-		(!strings.HasPrefix(url, "series?")) &&
-		(!strings.HasPrefix(url, "index/stats?")) {
-		plog.Error("Invalid URL", "url", url)
-		return fmt.Errorf("invalid URL: %s", url)
-	}
+	// if (!strings.HasPrefix(url, "labels?")) &&
+	// 	(!strings.HasPrefix(url, "label/")) && // the `/label/$label_name/values` form
+	// 	(!strings.HasPrefix(url, "series?")) &&
+	// 	(!strings.HasPrefix(url, "index/stats?")) {
+	// 	plog.Error("Invalid URL", "url", url)
+	// 	return fmt.Errorf("invalid URL: %s", url)
+	// }
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
 	ctx, span := tracer.Start(ctx, "datasource.loki.CallResource", trace.WithAttributes(
