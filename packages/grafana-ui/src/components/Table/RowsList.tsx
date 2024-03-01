@@ -285,6 +285,7 @@ export const RowsList = (props: RowsListProps) => {
       theme.components.table.rowHoverBackground,
       timeRange,
       width,
+      rowBg
     ]
   );
 
