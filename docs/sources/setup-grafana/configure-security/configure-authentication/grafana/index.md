@@ -112,6 +112,27 @@ To disable basic auth:
 enabled = false
 ```
 
+### Strong password policy
+
+By default, the password policy for all basic auth users is set to a minimum of four characters. You can enable a stronger password policy with the `password_policy` configuration option.
+
+With the `password_policy` option enabled, new and updated passwords must meet the following criteria:
+
+- At least 12 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+- At least one special character
+
+```bash
+[auth.basic]
+password_policy = true
+```
+
+{{% admonition type="note" %}}
+Existing passwords that don't comply with the new password policy will not be impacted until the user updates their password.
+{{% /admonition %}}
+
 ### Disable login form
 
 You can hide the Grafana login form using the below configuration settings.
