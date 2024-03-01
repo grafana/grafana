@@ -70,7 +70,7 @@ For example, this video demonstrates the visual Prometheus query builder:
 
 {{< vimeo 720004179 >}}
 
-For general information about querying in Grafana, and common options and user interface elements across all query editors, refer to [Query and transform data][query-transform-data] .
+For general information about querying in Grafana, and common options and user interface elements across all query editors, refer to [Query and transform data][query-transform-data].
 
 ## Special data sources
 
@@ -114,7 +114,7 @@ You can add additional data sources as plugins (that are not available in core G
 ### Find data source plugins in the plugin catalog
 
 To view available data source plugins, go to the [plugin catalog](/grafana/plugins/?type=datasource) and select the "Data sources" filter.
-For details about the plugin catalog, refer to [Plugin management]({{< relref "../administration/plugin-management/" >}}).
+For details about the plugin catalog, refer to [Plugin management][Plugin-management].
 
 You can further filter the plugin catalog's results for data sources provided by the Grafana community, Grafana Labs, and partners.
 If you use [Grafana Enterprise]({{< relref "../introduction/grafana-enterprise/" >}}), you can also filter by Enterprise-supported plugins.
@@ -143,4 +143,8 @@ To build your own data source plugin, refer to the [Build a data source plugin](
 
 [query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
 [query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+
+[Plugin-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/plugin-management"
+[Plugin-management]: "/docs/grafana-cloud -> /docs/grafana/<GRAFANA VERSION>/administration/plugin-management"
+
 {{% /docs/reference %}}
