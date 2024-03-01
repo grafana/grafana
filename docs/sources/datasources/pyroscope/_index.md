@@ -42,7 +42,7 @@ In this case, the screenshot shows memory profiles alongside panels for logs and
 ## Visualize traces and profiles data using Traces to profiles
 
 You can link profile and tracing data using your Pyroscope data source with the Tempo data source.
-To learn more about how profiles and tracing can work together, refer to [Profiling and tracing synergies](./profiling-tracing-intro/).
+To learn more about how profiles and tracing can work together, refer to [Profiling and tracing synergies](./profiling-and-tracing/).
 
 Combined traces and profiles let you see granular line-level detail when available for a trace span. This allows you pinpoint the exact function that's causing a bottleneck in your application as well as a specific request.
 

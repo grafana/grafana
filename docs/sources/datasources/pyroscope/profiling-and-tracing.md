@@ -3,11 +3,8 @@ title: Profiling and tracing synergies
 menuTitle: Profiling and tracing
 description: Learn about how profiling and tracing work together.
 weight: 250
-aliases:
-  - ../introduction/traces-to-profiles/
-  - ../introduction/profile-tracing/
 keywords:
-  - pyroscope
+  - pyroscope data source
   - continuous profiling
   - tracing
 ---
