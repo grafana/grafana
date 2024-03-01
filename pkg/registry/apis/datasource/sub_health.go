@@ -33,7 +33,7 @@ func (r *subHealthREST) ConnectMethods() []string {
 }
 
 func (r *subHealthREST) ProducesMIMETypes(verb string) []string {
-	return nil // any? []string{"application/json"} // and parquet!
+	return nil
 }
 
 func (r *subHealthREST) ProducesObject(verb string) interface{} {
