@@ -3,9 +3,11 @@ package remote
 import (
 	"context"
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -213,8 +215,21 @@ func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
 	return nil
 }
 
-func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	return nil
+// SaveAndApplyConfig should just forward the configuration to the remote Alertmanager.
+func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, postableConfig *apimodels.PostableUserConfig) error {
+	rawConfig, err := json.Marshal(postableConfig)
+	if err != nil {
+		return err
+	}
+
+	return am.mimirClient.CreateGrafanaAlertmanagerConfig(
+		ctx,
+		string(rawConfig),
+		fmt.Sprintf("%x", md5.Sum([]byte(rawConfig))),
+		1, // TODO: remove ID, config ID is always 1 when there's one org
+		time.Now().Unix(),
+		false,
+	)
 }
 
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
