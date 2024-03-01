@@ -2,8 +2,7 @@ package auth
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
 type ExternalService struct {
@@ -14,6 +13,6 @@ type ExternalService struct {
 
 type ExternalServiceRegistry interface {
 	HasExternalService(ctx context.Context, pluginID string) (bool, error)
-	RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.IAM) (*ExternalService, error)
+	RegisterExternalService(ctx context.Context, pluginID string, pType pfs.Type, svc *pfs.IAM) (*ExternalService, error)
 	RemoveExternalService(ctx context.Context, pluginID string) error
 }

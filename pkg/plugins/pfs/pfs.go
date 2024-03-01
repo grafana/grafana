@@ -256,16 +256,7 @@ func getPluginMetadata(fsys fs.FS) (Metadata, error) {
 		return Metadata{}, fmt.Errorf("error reading plugin.json: %w", err)
 	}
 
-	type plugin struct {
-		Id      string
-		Name    string
-		Backend *bool
-		Info    struct {
-			Version *string
-		}
-	}
-
-	var metadata plugin
+	var metadata PluginDef
 	if err := json.Unmarshal(b, &metadata); err != nil {
 		return Metadata{}, fmt.Errorf("error unmarshalling plugin.json: %s", err)
 	}
