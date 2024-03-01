@@ -35,7 +35,7 @@ export function resolveWithCache(url: string, defaultBust = initializedAt): stri
 }
 
 function extractPath(address: string): string | undefined {
-  const match = /\/.+\/(plugins\/.+\/module)\.js/i.exec(address);
+  const match = /\/?.+\/(plugins\/.+\/module)\.js/i.exec(address);
   if (!match) {
     return;
   }
