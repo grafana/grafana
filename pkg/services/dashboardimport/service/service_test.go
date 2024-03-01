@@ -47,7 +47,7 @@ func TestImportDashboardService(t *testing.T) {
 		importLibraryPanelsForDashboard := false
 		connectLibraryPanelsForDashboardCalled := false
 		libraryPanelService := &libraryPanelServiceMock{
-			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error {
+			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
 				importLibraryPanelsForDashboard = true
 				return nil
 			},
@@ -75,8 +75,9 @@ func TestImportDashboardService(t *testing.T) {
 			Inputs: []dashboardimport.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
-			User:      &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
-			FolderUid: "folderUID",
+			User: &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
+			// FolderId:  5,
+			FolderUid: "123",
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
 		require.NoError(t, err)
@@ -90,7 +91,7 @@ func TestImportDashboardService(t *testing.T) {
 		require.Equal(t, int64(3), importDashboardArg.OrgID)
 		require.Equal(t, int64(2), userID)
 		require.Equal(t, "prometheus", importDashboardArg.Dashboard.PluginID)
-		require.Equal(t, "folderUID", importDashboardArg.Dashboard.FolderUID)
+		require.Equal(t, "123", importDashboardArg.Dashboard.FolderUID)
 
 		panel := importDashboardArg.Dashboard.Data.Get("panels").GetIndex(0)
 		require.Equal(t, "prom", panel.Get("datasource").MustString())
@@ -142,7 +143,7 @@ func TestImportDashboardService(t *testing.T) {
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
 			User:      &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
-			FolderUid: "folderUID",
+			FolderUid: "123",
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
 		require.NoError(t, err)
@@ -156,7 +157,7 @@ func TestImportDashboardService(t *testing.T) {
 		require.Equal(t, int64(3), importDashboardArg.OrgID)
 		require.Equal(t, int64(2), userID)
 		require.Equal(t, "", importDashboardArg.Dashboard.PluginID)
-		require.Equal(t, "folderUID", importDashboardArg.Dashboard.FolderUID)
+		require.Equal(t, "123", importDashboardArg.Dashboard.FolderUID)
 
 		panel := importDashboardArg.Dashboard.Data.Get("panels").GetIndex(0)
 		require.Equal(t, "prom", panel.Get("datasource").MustString())
@@ -210,7 +211,7 @@ func (s *dashboardServiceMock) ImportDashboard(ctx context.Context, dto *dashboa
 type libraryPanelServiceMock struct {
 	librarypanels.Service
 	connectLibraryPanelsForDashboardFunc func(c context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) error
-	importLibraryPanelsForDashboardFunc  func(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error
+	importLibraryPanelsForDashboardFunc  func(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64) error
 }
 
 var _ librarypanels.Service = (*libraryPanelServiceMock)(nil)
@@ -223,9 +224,9 @@ func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.C
 	return nil
 }
 
-func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error {
+func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
 	if s.importLibraryPanelsForDashboardFunc != nil {
-		return s.importLibraryPanelsForDashboardFunc(ctx, signedInUser, libraryPanels, panels, folderID, folderUID)
+		return s.importLibraryPanelsForDashboardFunc(ctx, signedInUser, libraryPanels, panels, folderID)
 	}
 
 	return nil

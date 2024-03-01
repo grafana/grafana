@@ -86,7 +86,8 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
+			// nolint:staticcheck
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
@@ -100,7 +101,8 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with library panels inside and outside of rows, it should connect all",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.CreateLibraryElementCommand{
-				Name: "Outside row",
+				FolderID: sc.initialResult.Result.FolderID, // nolint:staticcheck
+				Name:     "Outside row",
 				Model: []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
@@ -110,8 +112,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			  "description": "A description"
 			}
 		`),
-				Kind:      int64(model.PanelElement),
-				FolderUID: &sc.folder.UID,
+				Kind: int64(model.PanelElement),
 			}
 			outsidePanel, err := sc.elementService.CreateElement(sc.ctx, sc.user, cmd)
 			require.NoError(t, err)
@@ -184,7 +185,8 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
+			// nolint:staticcheck
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
@@ -230,7 +232,8 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
+			// nolint:staticcheck
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
@@ -239,7 +242,8 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with unused/removed library panels, it should disconnect unused/removed library panels",
 		func(t *testing.T, sc scenarioContext) {
 			unused, err := sc.elementService.CreateElement(sc.ctx, sc.user, model.CreateLibraryElementCommand{
-				Name: "Unused Libray Panel",
+				FolderID: sc.folder.ID, // nolint:staticcheck
+				Name:     "Unused Libray Panel",
 				Model: []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
@@ -249,8 +253,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			  "description": "Unused description"
 			}
 		`),
-				Kind:      int64(model.PanelElement),
-				FolderUID: &sc.folder.UID,
+				Kind: int64(model.PanelElement),
 			})
 			require.NoError(t, err)
 			dashJSON := map[string]any{
@@ -286,7 +289,8 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
+			// nolint:staticcheck
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 			err = sc.elementService.ConnectElementsToDashboard(sc.ctx, sc.user, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
@@ -395,7 +399,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 
-			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0, "")
+			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0)
 			require.NoError(t, err)
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user,
@@ -436,14 +440,14 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			require.NoError(t, err)
 
 			// nolint:staticcheck
-			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.New(), panels, sc.folder.ID, sc.folder.UID)
+			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.New(), panels, sc.folder.ID)
 			require.NoError(t, err)
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user,
 				model.GetLibraryElementCommand{UID: existingUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 			var expected = getExpected(t, element, existingUID, existingName, sc.initialResult.Result.Model)
-			expected.FolderUID = sc.initialResult.Result.FolderUID
+			expected.FolderID = sc.initialResult.Result.FolderID
 			expected.Description = sc.initialResult.Result.Description
 			expected.Meta.FolderUID = sc.folder.UID
 			expected.Meta.FolderName = sc.folder.Title
@@ -552,7 +556,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			_, err = sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: insideUID, FolderName: dashboards.RootFolderName})
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 
-			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0, "")
+			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0)
 			require.NoError(t, err)
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: outsideUID, FolderName: dashboards.RootFolderName})
@@ -574,11 +578,9 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 }
 
 type libraryPanel struct {
-	ID    int64
-	OrgID int64
-	// Deprecated: use FolderUID instead
+	ID          int64
+	OrgID       int64
 	FolderID    int64
-	FolderUID   string
 	UID         string
 	Name        string
 	Type        string
@@ -614,7 +616,6 @@ type libraryElement struct {
 	ID          int64                       `json:"id"`
 	OrgID       int64                       `json:"orgId"`
 	FolderID    int64                       `json:"folderId"`
-	FolderUID   string                      `json:"folderUid"`
 	UID         string                      `json:"uid"`
 	Name        string                      `json:"name"`
 	Kind        int64                       `json:"kind"`
@@ -648,6 +649,7 @@ func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement 
 	return libraryElement{
 		ID:          res.ID,
 		OrgID:       res.OrgID,
+		FolderID:    res.FolderID, // nolint:staticcheck
 		UID:         res.UID,
 		Name:        res.Name,
 		Type:        res.Type,
@@ -713,7 +715,9 @@ func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name str
 	}
 }
 
-func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash *dashboards.Dashboard) *dashboards.Dashboard {
+func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
+	// nolint:staticcheck
+	dash.FolderID = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   "",
@@ -770,9 +774,8 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := model.CreateLibraryElementCommand{
-			FolderID:  sc.folder.ID, // nolint:staticcheck
-			FolderUID: &sc.folder.UID,
-			Name:      "Text - Library Panel",
+			FolderID: sc.folder.ID, // nolint:staticcheck
+			Name:     "Text - Library Panel",
 			Model: []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
@@ -794,7 +797,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 			Result: libraryPanel{
 				ID:          resp.ID,
 				OrgID:       resp.OrgID,
-				FolderUID:   resp.FolderUID,
+				FolderID:    resp.FolderID, // nolint:staticcheck
 				UID:         resp.UID,
 				Name:        resp.Name,
 				Type:        resp.Type,

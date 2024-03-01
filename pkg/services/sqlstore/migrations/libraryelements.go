@@ -61,26 +61,4 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("alter library_element model to mediumtext", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE library_element MODIFY model MEDIUMTEXT NOT NULL;"))
-
-	q := `UPDATE library_element
-	SET folder_uid = dashboard.uid
-	FROM dashboard
-	WHERE library_element.folder_id = dashboard.folder_id AND library_element.org_id = dashboard.org_id`
-
-	if mg.Dialect.DriverName() == migrator.MySQL {
-		q = `UPDATE library_element
-		SET folder_uid = (
-			SELECT dashboard.uid
-			FROM dashboard
-			WHERE library_element.folder_id = dashboard.folder_id AND library_element.org_id = dashboard.org_id
-		)`
-	}
-
-	mg.AddMigration("add library_element folder uid", migrator.NewAddColumnMigration(libraryElementsV1, &migrator.Column{
-		Name: "folder_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: true,
-	}))
-
-	mg.AddMigration("populate library_element folder_uid", migrator.NewRawSQLMigration(q))
-
-	mg.AddMigration("add index library_element org_id-folder_uid-name-kind", migrator.NewAddIndexMigration(libraryElementsV1, &migrator.Index{Cols: []string{"org_id", "folder_uid", "name", "kind"}, Type: migrator.UniqueIndex}))
 }
