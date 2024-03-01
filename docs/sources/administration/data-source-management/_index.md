@@ -27,9 +27,9 @@ For links to data source-specific documentation, see [Data sources]({{< relref "
 
 You can configure data source permissions to allow or deny certain users the ability to query, edit, or administrate a data source. Each data source’s configuration includes a Permissions tab where you can restrict data source permissions to specific users, service accounts, teams, or roles.
 
-- Query permission allows users to query the data source.
-- Edit permission allows users to query the data source, edit the data source’s configuration and delete the data source.
-- Admin permission allows users to query and edit the data source, change permissions on the data source and enable or disable query caching for the data source.
+- The `query` permission allows users to query the data source.
+- The `edit` permission allows users to query the data source, edit the data source’s configuration and delete the data source.
+- The `admin` permission allows users to query and edit the data source, change permissions on the data source and enable or disable query caching for the data source.
 
 {{% admonition type="note" %}}
 Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
