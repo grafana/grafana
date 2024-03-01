@@ -54,7 +54,6 @@ type Service interface {
 //go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/
 type Store interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
-	GetUserPermissionsInOrg(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
 	SearchUsersPermissions(ctx context.Context, orgID int64, options SearchOptions) (map[int64][]Permission, error)
 	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
@@ -78,6 +77,7 @@ type SearchOptions struct {
 	Scope        string
 	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
 	wildcards    Wildcards // private field computed based on the Scope
+	RolePrefixes []string
 }
 
 // Wildcards computes the wildcard scopes that include the scope

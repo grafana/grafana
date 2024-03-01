@@ -90,10 +90,6 @@ func (f FakeStore) GetUserPermissions(ctx context.Context, query accesscontrol.G
 	return f.ExpectedUserPermissions, f.ExpectedErr
 }
 
-func (f FakeStore) GetUserPermissionsInOrg(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
-	return f.ExpectedUserPermissions, f.ExpectedErr
-}
-
 func (f FakeStore) SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	return f.ExpectedUsersPermissions, f.ExpectedErr
 }

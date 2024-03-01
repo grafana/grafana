@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -165,14 +166,14 @@ func (s *Service) GetUserPermissionsInOrg(ctx context.Context, user identity.Req
 		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
 
-	userID, err := identity.UserIdentifier(user.GetNamespacedID())
+	namespace, id := user.GetNamespacedID()
+	userID, err := identity.UserIdentifier(namespace, id)
 	if err != nil {
 		return nil, err
 	}
 
-	dbPermissions, err := s.store.GetUserPermissionsInOrg(ctx, accesscontrol.GetUserPermissionsQuery{
-		UserID: userID,
-		OrgID:  orgID,
+	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, accesscontrol.SearchOptions{
+		NamespacedID: authn.NamespacedID(namespace, userID),
 		// Query only basic, managed and plugin roles in OSS
 		RolePrefixes: []string{accesscontrol.BasicRolePrefix, accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
 	})
@@ -180,7 +181,8 @@ func (s *Service) GetUserPermissionsInOrg(ctx context.Context, user identity.Req
 		return nil, err
 	}
 
-	return append(permissions, dbPermissions...), nil
+	userPermissions := dbPermissions[userID]
+	return append(permissions, userPermissions...), nil
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
