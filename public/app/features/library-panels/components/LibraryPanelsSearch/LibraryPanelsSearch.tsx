@@ -192,7 +192,8 @@ function getRowStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       flexGrow: 1,
       flexDirection: 'row',
-      justifyContent: 'end',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
     }),
     containerTight: css({
       flexGrow: 'initial',
@@ -202,8 +203,7 @@ function getRowStyles(theme: GrafanaTheme2) {
     filterContainer: css({
       display: 'flex',
       flexDirection: 'row',
-      marginLeft: 'auto',
-      gap: '4px',
+      gap: theme.spacing(1),
     }),
     filterContainerTight: css({
       flexDirection: 'column',
