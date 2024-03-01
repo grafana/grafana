@@ -11,8 +11,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
-	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
+	service "github.com/grafana/grafana/pkg/apps/service/apis/service/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 

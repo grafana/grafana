@@ -7,7 +7,7 @@ import (
 
 	"k8s.io/kube-aggregator/pkg/apiserver"
 
-	servicelistersv0alpha1 "github.com/grafana/grafana/pkg/generated/listers/service/v0alpha1"
+	servicelistersv0alpha1 "github.com/grafana/grafana/pkg/apps/service/generated/listers/service/v0alpha1"
 )
 
 func NewExternalNameResolver(externalNames servicelistersv0alpha1.ExternalNameLister) apiserver.ServiceResolver {
