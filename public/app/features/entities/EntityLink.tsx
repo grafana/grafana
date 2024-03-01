@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 
-import { Drawer } from '@grafana/ui';
-
+import { EntityDrawer } from './EntityDrawer';
 import { entityService } from './EntityService';
 
 type Props = {
@@ -28,15 +27,14 @@ export function EntityLink(props: Props) {
       </span>
 
       {drawerVisible && (
-        <Drawer
-          closeOnMaskClick={true}
+        <EntityDrawer
+          // TODO: make this more clever
+          entity={'service:app'}
           title={`${props.context.key}: ${props.context.value}`}
           onClose={() => {
             setDrawerVisible(false);
           }}
-        >
-          somethings
-        </Drawer>
+        />
       )}
     </>
   );
