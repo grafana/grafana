@@ -27,7 +27,7 @@ replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.
 // The v0.120.0 is needed for now to be compatible with grafana/thema.
 replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.120.0
 
-//replace github.com/grafana/grafana-plugin-sdk-go => /Users/ryan/workspace/grafana/more/grafana-plugin-sdk-go
+replace github.com/grafana/grafana-plugin-sdk-go => /Users/ryan/workspace/grafana/more/grafana-plugin-sdk-go
 
 require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
