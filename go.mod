@@ -471,14 +471,9 @@ require (
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4 // @grafana/grafana-app-platform-squad
 )
 
-require github.com/jackc/pgx/v5 v5.5.3 // @grafana/oss-big-tent
-
 require (
 	github.com/bufbuild/protocompile v0.4.0 // indirect
 	github.com/grafana/sqlds/v3 v3.2.0 // indirect
-	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jhump/protoreflect v1.15.1 // indirect
 	github.com/klauspost/asmfmt v1.3.2 // indirect
 	github.com/krasun/gosqlparser v1.0.5 // @grafana/grafana-app-platform-squad
