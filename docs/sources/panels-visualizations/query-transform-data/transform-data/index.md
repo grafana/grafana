@@ -1263,7 +1263,9 @@ This transformation allows you to manipulate and analyze geospatial data, enabli
 
 ### Time series to table transform
 
-Use this transformation to convert time series results into a table, transforming a time series data frame into a **Trend** field. The **Trend** field can then be rendered using the [sparkline cell type][], generating an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+Use this transformation to convert time series results into a table, transforming a time series data frame into a **Trend** field which can then be used with the [sparkline cell type][]. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+
+{{< figure src="/static/img/docs/transformations/table-sparklines.png" class="docs-image--no-shadow" max-width= "1100px" alt="A table panel showing multiple values and their corresponding sparklines." >}}
 
 For each generated **Trend** field value, a calculation function can be selected. The default is **Last non-null value**. This value is displayed next to the sparkline and used for sorting table rows.
 
