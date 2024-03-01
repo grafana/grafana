@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -117,6 +118,20 @@ func TestApplyConfig(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
+	// Encrypt receivers to save secrets in the database.
+	var c apimodels.PostableUserConfig
+	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	err := notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+		return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
+	})
+	require.NoError(t, err)
+
+	// The encrypted configuration should be different than the one we will send.
+	encryptedConfig, err := json.Marshal(c)
+	require.NoError(t, err)
+	require.NotEqual(t, testGrafanaConfig, encryptedConfig)
+
 	// ApplyConfig performs a readiness check at startup.
 	// A non-200 response should result in an error.
 	server := httptest.NewServer(errorHandler)
@@ -131,20 +146,6 @@ func TestApplyConfig(t *testing.T) {
 	fstore := notifier.NewFileStore(1, store, "")
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, "test"))
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, "test"))
-
-	// Encrypt receivers to save secrets in the database.
-	var c apimodels.PostableUserConfig
-	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-	err := notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
-		return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
-	})
-	require.NoError(t, err)
-
-	// The encrypted configuration should be different than the one we will send.
-	encryptedConfig, err := json.Marshal(c)
-	require.NoError(t, err)
-	require.NotEqual(t, testGrafanaConfig, encryptedConfig)
 
 	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
@@ -169,6 +170,82 @@ func TestApplyConfig(t *testing.T) {
 	server.Config.Handler = errorHandler
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.True(t, am.Ready())
+}
+
+func TestSendConfiguration(t *testing.T) {
+	testValue := "test-value"
+	testErr := errors.New("test error")
+	decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
+		if string(payload) == testValue {
+			return []byte("test"), nil
+		}
+		return nil, testErr
+	}
+
+	configWithInvalidBase64 := strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, `"password":"!"`, 1)
+	configWithDecryptableKey := strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString([]byte(testValue))), 1)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("content-type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status": "success"}`))
+	}))
+
+	store := ngfakes.NewFakeKVStore(t)
+	fstore := notifier.NewFileStore(1, store, "")
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+
+	cfg := AlertmanagerConfig{
+		OrgID:    1,
+		TenantID: "test",
+		URL:      server.URL,
+	}
+	am, err := NewAlertmanager(cfg, fstore, decryptFn, m)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name   string
+		config ngmodels.AlertConfiguration
+		expErr string
+	}{
+		{
+			"invalid config",
+			ngmodels.AlertConfiguration{},
+			"unable to parse Alertmanager configuration: unexpected end of JSON input",
+		},
+		{
+			"non base-64 encoded key",
+			ngmodels.AlertConfiguration{
+				AlertmanagerConfiguration: configWithInvalidBase64,
+			},
+			"failed to decode value for key 'password': illegal base64 data at input byte 0",
+		},
+		{
+			"decrypt error",
+			ngmodels.AlertConfiguration{
+				AlertmanagerConfiguration: testGrafanaConfigWithSecret,
+			},
+			fmt.Sprintf("failed to decrypt value for key 'password': %s", testErr.Error()),
+		},
+		{
+			"no error",
+			ngmodels.AlertConfiguration{
+				AlertmanagerConfiguration: configWithDecryptableKey,
+			},
+			"",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			err = am.SendConfiguration(context.Background(), &test.config)
+			if test.expErr == "" {
+				require.NoError(tt, err)
+				return
+			}
+			require.Equal(tt, test.expErr, err.Error())
+		})
+	}
 }
 
 func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {

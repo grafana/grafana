@@ -207,12 +207,12 @@ func (am *Alertmanager) SendConfiguration(ctx context.Context, config *models.Al
 			for k, v := range gmr.SecureSettings {
 				decoded, err := base64.StdEncoding.DecodeString(v)
 				if err != nil {
-					return fmt.Errorf("failed to decode value for key %s: %w", k, err)
+					return fmt.Errorf("failed to decode value for key '%s': %w", k, err)
 				}
 
 				decrypted, err := am.decrypt(ctx, decoded)
 				if err != nil {
-					return fmt.Errorf("failed to decrypt value for key %s: %w", k, err)
+					return fmt.Errorf("failed to decrypt value for key '%s': %w", k, err)
 				}
 
 				gmr.SecureSettings[k] = string(decrypted)
