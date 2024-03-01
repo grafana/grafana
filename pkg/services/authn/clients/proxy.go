@@ -15,7 +15,6 @@ import (
 	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -43,12 +42,12 @@ var (
 	_ authn.ContextAwareClient = new(Proxy)
 )
 
-func ProvideProxy(cfg *setting.Cfg, cache proxyCache, userSrv user.Service, clients ...authn.ProxyClient) (*Proxy, error) {
+func ProvideProxy(cfg *setting.Cfg, cache proxyCache, clients ...authn.ProxyClient) (*Proxy, error) {
 	list, err := parseAcceptList(cfg.AuthProxyWhitelist)
 	if err != nil {
 		return nil, err
 	}
-	return &Proxy{log.New(authn.ClientProxy), cfg, cache, userSrv, clients, list}, nil
+	return &Proxy{log.New(authn.ClientProxy), cfg, cache, clients, list}, nil
 }
 
 type proxyCache interface {
@@ -61,7 +60,6 @@ type Proxy struct {
 	log         log.Logger
 	cfg         *setting.Cfg
 	cache       proxyCache
-	userSrv     user.Service
 	clients     []authn.ProxyClient
 	acceptedIPs []*net.IPNet
 }
@@ -91,21 +89,17 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			if err != nil {
 				c.log.FromContext(ctx).Warn("Failed to parse user id from cache", "error", err, "userId", string(entry))
 			} else {
-				usr, err := c.userSrv.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
-					UserID: uid,
-					OrgID:  r.OrgID,
-				})
-
-				if err != nil {
-					c.log.FromContext(ctx).Warn("Could not resolved cached user", "error", err, "userId", string(entry))
-				}
-
-				// if we for some reason cannot find the user we proceed with the normal flow, authenticate with ProxyClient
-				// and perform syncs
-				if usr != nil {
-					c.log.FromContext(ctx).Debug("User was loaded from cache, skip syncs", "userId", usr.UserID)
-					return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{SyncPermissions: true}, login.AuthProxyAuthModule), nil
-				}
+				return &authn.Identity{
+					ID:    authn.NamespacedID(authn.NamespaceUser, uid),
+					OrgID: r.OrgID,
+					// FIXME: This does not match the actual auth module used, but should not have any impact
+					// Maybe caching the auth module used with the user ID would be a good idea
+					AuthenticatedBy: login.AuthProxyAuthModule,
+					ClientParams: authn.ClientParams{
+						FetchSyncedUser: true,
+						SyncPermissions: true,
+					},
+				}, nil
 			}
 		}
 	}
@@ -116,7 +110,6 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		identity, clientErr = proxyClient.AuthenticateProxy(ctx, r, username, additional)
 		if identity != nil {
 			identity.ClientParams.CacheAuthProxyKey = cacheKey
-			identity.AuthenticatedBy = login.AuthProxyAuthModule
 			return identity, nil
 		}
 	}
