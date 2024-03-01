@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -93,6 +94,7 @@ func (sc *SmtpClient) buildEmail(ctx context.Context, msg *Message) *gomail.Mess
 	m.SetHeader("From", msg.From)
 	m.SetHeader("To", msg.To...)
 	m.SetHeader("Subject", msg.Subject)
+	m.SetHeader("Message-ID", uuid.New().String())
 
 	if sc.cfg.EnableTracing {
 		otel.GetTextMapPropagator().Inject(ctx, gomailHeaderCarrier{m})
