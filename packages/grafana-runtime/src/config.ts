@@ -171,6 +171,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   disableFrontendSandboxForPlugins: string[] = [];
   sharedWithMeFolderUID: string | undefined;
   rootFolderUID: string | undefined;
+  localFileSystemAvailable: boolean | undefined;
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;

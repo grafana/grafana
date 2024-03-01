@@ -366,6 +366,8 @@ type Cfg struct {
 	StackID string
 	Slug    string
 
+	LocalFileSystemAvailable bool
+
 	// Deprecated
 	ForceMigration bool
 
@@ -1063,6 +1065,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
 	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
+	cfg.LocalFileSystemAvailable = iniFile.Section("environment").Key("local_file_system_available").MustBool(true)
 	//nolint:staticcheck
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
