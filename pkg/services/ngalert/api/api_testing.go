@@ -66,8 +66,8 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		body.RuleGroup,
 		srv.cfg.BaseInterval,
 		c.SignedInUser.GetOrgID(),
-		folder,
-		srv.cfg,
+		folder.UID,
+		RuleLimitsFromConfig(srv.cfg),
 	)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -238,7 +238,7 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		return ErrResp(400, nil, "Bad For interval")
 	}
 
-	intervalSeconds, err := validateInterval(srv.cfg, time.Duration(cmd.Interval))
+	intervalSeconds, err := validateInterval(time.Duration(cmd.Interval), srv.cfg.BaseInterval)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}

@@ -9,6 +9,7 @@ import { ClassicConditions } from 'app/features/expressions/components/ClassicCo
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
+import { SqlExpr } from 'app/features/expressions/components/SqlExpr';
 import { Threshold } from 'app/features/expressions/components/Threshold';
 import {
   ExpressionQuery,
@@ -109,6 +110,9 @@ export const Expression: FC<ExpressionProps> = ({
               useHysteresis={true}
             />
           );
+
+        case ExpressionQueryType.sql:
+          return <SqlExpr onChange={onChangeQuery} query={query} refIds={availableRefIds} />;
 
         default:
           return <>Expression not supported: {query.type}</>;
