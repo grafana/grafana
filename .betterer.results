@@ -439,11 +439,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
-    "packages/grafana-data/src/vector/ArrayVector.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
     "packages/grafana-data/src/vector/CircularVector.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -2529,9 +2524,17 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataPane.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/dashboard-scene/saving/DetectChangesWorker.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
     "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
+    "public/app/features/dashboard-scene/saving/getDashboardChanges.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/dashboard-scene/saving/getSaveDashboardChange.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
