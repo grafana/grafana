@@ -5,6 +5,8 @@ import { SQLEditor } from '@grafana/experimental';
 
 import { ExpressionQuery } from '../types';
 
+import { NaturalLanguageQuery } from './NaturalLanguageQuery';
+
 interface Props {
   refIds: Array<SelectableValue<string>>;
   query: ExpressionQuery;
@@ -23,5 +25,10 @@ export const SqlExpr = ({ onChange, refIds, query }: Props) => {
     });
   };
 
-  return <SQLEditor query={query.expression || initialQuery} onChange={onEditorChange}></SQLEditor>;
+  return (
+    <>
+      <SQLEditor query={query.expression || initialQuery} onChange={onEditorChange}></SQLEditor>
+      <NaturalLanguageQuery />
+    </>
+  );
 };
