@@ -319,13 +319,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
     const draggable = width <= config.theme2.breakpoints.values.md ? false : isEditable;
 
-    /**
-     * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
-     * properly working. For more information go here:
-     * https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#can-i-use-autosizer-within-a-flex-container
-     *
-     * pos: rel + z-index is required to create a new stacking context to contain the escalating z-indexes of the panels
-     */
+    // pos: rel + z-index is required to create a new stacking context to contain
+    // the escalating z-indexes of the panels
     return (
       <div
         ref={this.rootRef}
