@@ -631,11 +631,19 @@ Use this transformation to construct a matrix by specifying fields from your que
 
 ### Group to nested table
 
-Use this transformation to group the data by a specified field (column) value, process calculations on each group, and have records that share the same grouped field value to be displayed in a nested table.
+Use this transformation to group the data by a specified field (column) value and process calculations on each group. This generates records that share the same grouped field value to be displayed in a nested table.
 
-Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
+To calculate a statistic for a field, click the select box next to it and select the `Calculate` option:
 
-Here's an example of original data.
+{{< figure src="/static/img/docs/transformations/nested-table-select-calculation.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing the Group and Calculate options for the transformation." >}}
+
+Once `Calculate` has been selected, another select box will appear next to the respsective field which will allow statistics to be selected:
+
+{{< figure src="/static/img/docs/transformations/nested-table-select-stat.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing available statistic calculations once the calculate option for the field has been selected." >}}
+
+For information about available calculations, refer to [Calculation types][].
+
+Here's an example of original data:
 
 | Time                | Server ID | CPU Temperature | Server Status |
 | ------------------- | --------- | --------------- | ------------- |
@@ -649,7 +657,7 @@ Here's an example of original data.
 | 2020-07-07 09:25:05 | server 2  | 88              | OK            |
 | 2020-07-07 09:23:07 | server 1  | 86              | OK            |
 
-This transformation goes in two steps. First you specify one or multiple fields to group the data by. This will group all the same values of those fields together, as if you sorted them. For instance if we group by the Server ID field, then it would group the data this way:
+This transformation has two steps. First, specify one or more fields by which to group the data. This groups all the same values of those fields together, as if you sorted them. For instance, if you group by the Server ID field, Grafana groups the data this way:
 
 | Server ID |                                                                                                                                                                                                                                                                                                     |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -657,7 +665,7 @@ This transformation goes in two steps. First you specify one or multiple fields 
 | server 2  | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 10:32:20</td><td>90</td><td>Overload</td></tr><tr><td>2020-07-07 09:30:05</td><td>88</td><td>OK</td></tr><tr><td>2020-07-07 09:25:05</td><td>88</td><td>OK</td></tr></tbody></table>  |
 | server 3  | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>62</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>55</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>62</td><td>Rebooting</td></tr></tbody></table> |
 
-After choosing which field you want to group your data by, you can add various calculations on the other fields, and apply the calculation to each group of rows. For instance, we could want to calculate the average CPU temperature for each of those servers. So we can add the _mean_ calculation applied on the CPU Temperature field to get the following:
+After choosing the field by which you want to group your data, you can add various calculations on the other fields and apply the calculation to each group of rows. For instance, you might want to calculate the average CPU temperature for each of those servers. To do so, add the `mean` calculation applied on the CPU Temperature field to get the following result:
 
 | Server ID | CPU Temperatute (mean) |                                                                                                                                                                                                                                            |
 | --------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
