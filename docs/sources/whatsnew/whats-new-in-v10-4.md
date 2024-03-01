@@ -124,7 +124,8 @@ Grafana Alerting previously evaluated rules at the start of the evaluation inter
 
 _Generally available in all editions of Grafana_
 
-Grafana can now be used to manage both Prometheus and Mimir Alertmanagers with UTF-8 configurations. For more information, please see the [release notes for Alertmanager 0.27.0](https://github.com/prometheus/alertmanager/releases).
+Grafana can now be used to manage both Prometheus and Mimir Alertmanagers with UTF-8 configurations. For more information, please see the
+[release notes for Alertmanager 0.27.0](https://github.com/prometheus/alertmanager/releases).
 
 ## Authentication and authorization
 
@@ -144,7 +145,45 @@ We are working on adding complete support for configuring all other supported OA
 
 ![Screenshot of the Authentication provider list page](/media/docs/grafana-cloud/screenshot-sso-settings-ui-public-prev-v10.4.png)
 
-## PagerDuty enterprise data source for Grafana
+[Documentation](https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/)
+
+<!--entry to be edited for grammar in Cloud notes and regenerated here
+
+### Team LBAC
+
+#identity-access"
+
+_Available in public preview in Grafana Enterprise and Grafana Cloud_
+
+Introducing Team LBAC (Label Based Access Control) feature for Loki is a significant enhancement that simplifies and streamlines data source access management based on team memberships.
+
+**LBAC** control access to data based on labels. In the context of Loki, it is a way to control access to logs based on labels. Users wanting fine grained access to their logs in Loki, can now configure their users access based on their team memberships via **LogQL**.
+
+This feature addresses a common challenge faced by Grafana users: managing Loki data source access for different teams.
+- Previously, this led to the creation of numerous connections and duplicate dashboards across your Grafana.
+
+Team LBAC, you can now configure access to specific labels based solely on team memberships, enabling you to reduce your number of datasources to a bare minimum.
+
+#### Team LBAC rules
+
+Team LBAC rules are added to the http request to Loki data source. Setting up Team LBAC rules for any team will apply those rules to the teams.
+Users who want teams with a specific set of label selectors can add rules for each team.
+
+##### Best practices
+
+We recommend you only add team LBAC permissions for teams that should use the data source and remove default `Viewer` and `Editor` query permissions.
+
+We recommend for a first setup, setting up as few rules for each team as possible and make them additive and not negated.
+
+For validating the rules, we recommend testing the rules in the Loki Explore view. This will allow you to see the logs that would be returned for the rule.
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/)
+
+-->
+
+## Data sources
+
+### PagerDuty enterprise data source for Grafana
 
 <!-- #enterprise-datasources -->
 
@@ -163,3 +202,37 @@ Screenshots:
 {{< figure src="/media/docs/plugins/PagerDuty-incidents-annotation.png" caption="PagerDuty data source annotation editor" alt="PagerDuty data source annotation editor" >}}
 
 {{< figure src="/media/docs/plugins/PagerDuty-incidents-real-life-example.png" caption="Incidents annotations from PagerDuty data source on a dashboard panel" alt="Incidents annotations from PagerDuty data source on a dashboard panel" >}}
+
+### SurrealDB Data Source
+
+<!--#grafana-partner-datasources, @adamyeats-->
+
+_Experimental in all editions of Grafana_
+
+A SurrealDB data source has been [added to the Plugin Catalog](https://grafana.com/grafana/plugins/grafana-surrealdb-datasource/), enabling the integration of [SurrealDB](https://surrealdb.com/), a real-time, multi-model database, with Grafana's visualization capabilities. This datasource allows users to directly query and visualize data from SurrealDB within Grafana, using SurrealDB's query language.
+
+The SurrealDB data source launches with just the basics today. You can write queries in SurrealQL using the built-in query editor, although many Grafana features like macros are not supported for now.
+
+You can find more information and how to configure the plugin [on Github](https://github.com/grafana/surrealdb-datasource).
+
+{{< figure src="/media/images/dashboards/surrealdb-dashboard-example.png" >}}
+
+[Documentation](https://grafana.com/grafana/plugins/grafana-surrealdb-datasource/)
+
+## Return to previous
+
+<!--#grafana-frontend-platform-->
+
+_Available in public preview in all editions of Grafana_
+
+When you're browsing Grafana - for example, exploring the dashboard and metrics related to an alert - it's easy to end up far from where you started and hard get back to where you came from. The ‘Return to previous’ button is an easy way to go back to the previous context, like the alert rule that kicked off your exploration. This first release works for Alerts, and we plan to expand to other apps and features in Grafana in future releases to make it easier to navigate around.
+
+Return to Previous is rolling out across Grafana Cloud now. To try Return to Previous in self-managed Grafana, turn on the `returnToPrevious` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana v10.4 or newer.
+
+{{< video-embed src="/media/docs/grafana/2024-01-30-Return-to-previous-Enablement-Video.mp4" >}}
+
+{{< admonition type="note" >}}
+The term **context** refers to applications in Grafana like Incident and OnCall, as well as core features like Explore and Dashboards.
+
+To notice a change in your context, look at Grafana's breadcrumbs. If you go from \*Home > **Dashboards\*** to \*Home > **Explore\***, you've changed context. If you go from _Home > **Dashboards** > Playlist > Edit playlist_ to _Home > **Dashboards** > Reporting > Settings_, you are in the same context.
+{{< /admonition >}}
