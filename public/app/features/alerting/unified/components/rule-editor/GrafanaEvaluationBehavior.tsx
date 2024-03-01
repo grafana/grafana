@@ -137,6 +137,7 @@ function FolderGroupAndEvaluationInterval({
         <EditCloudGroupModal
           namespace={existingNamespace ?? emptyNamespace}
           group={existingGroup ?? emptyGroup}
+          folderUid={folderUid}
           onClose={() => closeEditGroupModal()}
           intervalEditOnly
           hideFolder={true}
