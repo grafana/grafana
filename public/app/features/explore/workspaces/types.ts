@@ -10,7 +10,16 @@ export type ExploreWorkspace = {
   activeSnapshot?: ExploreWorkspaceSnapshot;
 };
 
-export type ExploreWorkspaceSnapshot = {};
+export type ExploreWorkspaceSnapshot = {
+  uid: string;
+  name: string;
+  description: string;
+  userId: string;
+  updated: string;
+  created: string;
+  config: string;
+  version: number;
+};
 
 // get workspaces
 
@@ -51,4 +60,36 @@ export type UpdateExploreWorkspaceLatestSnapshotCommand = {
 
 export type UpdateExploreWorkspaceLatestSnapshotResponse = {
   snapshot: ExploreWorkspaceSnapshot;
+};
+
+// snapshots
+
+export type CreateExploreWorkspaceSnapshotCommand = {
+  name: string;
+  description: string;
+  exploreWorkspaceUID: string;
+};
+
+export type CreateExploreWorkspaceSnapshotResponse = {
+  createdSnapshot: ExploreWorkspaceSnapshot;
+};
+
+// get single snapshot
+
+export type GetExploreWorkspaceSnapshotCommand = {
+  uid: string;
+};
+
+export type GetExploreWorkspaceSnapshotResponse = {
+  snapshot: ExploreWorkspaceSnapshot;
+};
+
+// get all snapshots
+
+export type GetExploreWorkspaceSnapshotsCommand = {
+  exploreWorkspaceUid: string;
+};
+
+export type GetExploreWorkspaceSnapshotsResponse = {
+  snapshots: ExploreWorkspaceSnapshot[];
 };

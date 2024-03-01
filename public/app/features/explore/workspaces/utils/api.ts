@@ -15,9 +15,15 @@ import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import {
   CreateExploreWorkspaceCommand,
   CreateExploreWorkspaceResponse,
+  CreateExploreWorkspaceSnapshotCommand,
+  CreateExploreWorkspaceSnapshotResponse,
   GetExploreWorkspaceCommand,
   GetExploreWorkspaceResponse,
   GetExploreWorkspacesCommand,
+  GetExploreWorkspaceSnapshotCommand,
+  GetExploreWorkspaceSnapshotResponse,
+  GetExploreWorkspaceSnapshotsCommand,
+  GetExploreWorkspaceSnapshotsResponse,
   GetExploreWorkspacesResponse,
   UpdateExploreWorkspaceLatestSnapshotCommand,
   UpdateExploreWorkspaceLatestSnapshotResponse,
@@ -65,4 +71,28 @@ export const updateExploreWorkspaceLatestSnapshot = apiCall<
 >({
   method: 'POST',
   url: (command) => '/api/exploreworkspaces/' + command.exploreWorkspaceUID,
+});
+
+export const createExploreWorkspaceSnapshot = apiCall<
+  CreateExploreWorkspaceSnapshotCommand,
+  CreateExploreWorkspaceSnapshotResponse
+>({
+  method: 'POST',
+  url: (command) => `/api/exploreworkspaces/${command.exploreWorkspaceUID}/snapshot`,
+});
+
+export const getExploreWorkspaceSnapshot = apiCall<
+  GetExploreWorkspaceSnapshotCommand,
+  GetExploreWorkspaceSnapshotResponse
+>({
+  method: 'GET',
+  url: (command) => `/api/exploreworkspaces/snapshot/${command.uid}`,
+});
+
+export const getExploreWorkspaceSnapshots = apiCall<
+  GetExploreWorkspaceSnapshotsCommand,
+  GetExploreWorkspaceSnapshotsResponse
+>({
+  method: 'GET',
+  url: (command) => `/api/exploreworkspaces/${command.exploreWorkspaceUid}/snapshots`,
 });

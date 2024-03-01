@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@grafana/ui';
 
 import { ExploreDrawer } from '../../ExploreDrawer';
-import { ExploreWorkspace } from '../types';
+import { ExploreWorkspace, ExploreWorkspaceSnapshot } from '../types';
 import { useExploreWorkspaces } from '../utils/hooks';
 
 type Props = {
@@ -11,10 +11,18 @@ type Props = {
 };
 
 export const ExploreWorkspacesDebugger = (props: Props) => {
-  const { getExploreWorkspace, createExploreWorkspace, updateExploreWorkspaceLatestSnapshot, workspaces } =
-    useExploreWorkspaces();
+  const {
+    getExploreWorkspace,
+    createExploreWorkspace,
+    updateExploreWorkspaceLatestSnapshot,
+    createExploreWorkspaceSnapshot,
+    getExploreWorkspaceSnapshot,
+    getExploreWorkspaceSnapshots,
+    workspaces,
+  } = useExploreWorkspaces();
 
   const [loadedWorkspace, setLoadedWorkspace] = React.useState<ExploreWorkspace | undefined>();
+  const [loadedSnapshots, setLoadedSnapshots] = React.useState<ExploreWorkspaceSnapshot[] | undefined>();
 
   return (
     <ExploreDrawer width={props.width}>
@@ -31,11 +39,11 @@ export const ExploreWorkspacesDebugger = (props: Props) => {
       <Button
         onClick={async () => {
           if (loadedWorkspace) {
-            const updatedSnapshot = await updateExploreWorkspaceLatestSnapshot({
+            const response = await updateExploreWorkspaceLatestSnapshot({
               exploreWorkspaceUID: loadedWorkspace.uid,
-              config: JSON.stringify({ foo: 2 }),
+              config: JSON.stringify({ foo: (loadedWorkspace.activeSnapshot?.version || 0) + 1 }),
             });
-            loadedWorkspace.activeSnapshot = updatedSnapshot;
+            loadedWorkspace.activeSnapshot = response.snapshot;
           }
         }}
       >
@@ -52,6 +60,49 @@ export const ExploreWorkspacesDebugger = (props: Props) => {
       >
         Create Workspace
       </Button>
+
+      <Button
+        onClick={async () => {
+          if (loadedWorkspace) {
+            await createExploreWorkspaceSnapshot({
+              name: 'Snapshot at v' + loadedWorkspace.activeSnapshot?.version || '',
+              description: 'Desc at v' + loadedWorkspace.activeSnapshot?.version || '',
+              exploreWorkspaceUID: loadedWorkspace.uid,
+            });
+          }
+        }}
+      >
+        Take snapshot
+      </Button>
+
+      <Button
+        onClick={async () => {
+          if (loadedWorkspace) {
+            const response = await getExploreWorkspaceSnapshots({
+              exploreWorkspaceUid: loadedWorkspace?.uid,
+            });
+            setLoadedSnapshots(response.snapshots);
+          }
+        }}
+      >
+        Get snapshots
+      </Button>
+      <p>Snapshots loaded: {loadedSnapshots?.length}</p>
+
+      <Button
+        onClick={async () => {
+          if (loadedSnapshots) {
+            const snapshot = await getExploreWorkspaceSnapshot({
+              uid: loadedSnapshots[loadedSnapshots.length - 2].uid,
+            });
+
+            console.log(snapshot);
+          }
+        }}
+      >
+        Get snapshot
+      </Button>
+
       <p>Workspaces: {workspaces.length}</p>
       {workspaces.map((workspace: ExploreWorkspace, index) => (
         <pre key={index}>{JSON.stringify(workspace)}</pre>

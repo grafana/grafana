@@ -18,6 +18,11 @@ func (s *ExploreWorkspacesService) registerAPIEndpoints() {
 	s.RouteRegister.Post("/api/exploreworkspaces/", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.CreateExploreWorkspaceHandler))
 	s.RouteRegister.Post("/api/exploreworkspaces/:uid", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.UpdateExploreWorkspaceLatestSnapshotHandler))
 	s.RouteRegister.Get("/api/exploreworkspaces/", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.GetExploreWorkspacesHandler))
+
+	s.RouteRegister.Post("/api/exploreworkspaces/:uid/snapshot", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.CreateExploreWorkspaceSnapshotHander))
+	s.RouteRegister.Get("/api/exploreworkspaces/:uid/snapshots", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.GetExploreWorkspaceSnapshotsHander))
+	s.RouteRegister.Get("/api/exploreworkspaces/snapshot/:uid", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.GetExploreWorkspaceSnapshotHander))
+
 }
 
 func (s *ExploreWorkspacesService) CreateExploreWorkspaceHandler(c *contextmodel.ReqContext) response.Response {
@@ -34,6 +39,23 @@ func (s *ExploreWorkspacesService) CreateExploreWorkspaceHandler(c *contextmodel
 	}
 
 	return response.JSON(http.StatusOK, CreateExploreWorkspaceResponse{UID: uid})
+}
+
+func (s *ExploreWorkspacesService) CreateExploreWorkspaceSnapshotHander(c *contextmodel.ReqContext) response.Response {
+	cmd := CreateExploreWorkspaceSnapshotCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	cmd.OrgId = c.SignedInUser.OrgID
+	cmd.UserId = c.SignedInUser.UserID
+	cmd.ExploreWorspaceUID = web.Params(c.Req)[":uid"]
+	snapshot, err := s.CreateExploreWorkspaceSnapshot(c.Req.Context(), cmd)
+
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Cannot create a new workspace snapshot. "+err.Error(), err)
+	}
+
+	return response.JSON(http.StatusOK, CreateExploreWorkspaceSnapshotResponse{CreatedSnapshot: *snapshot})
 }
 
 func (s *ExploreWorkspacesService) GetExploreWorkspaceHandler(c *contextmodel.ReqContext) response.Response {
@@ -82,4 +104,32 @@ func (s *ExploreWorkspacesService) UpdateExploreWorkspaceLatestSnapshotHandler(c
 
 	return response.JSON(http.StatusOK, UpdateExploreWorkspaceLatestSnapshotResponse{Snapshot: *snapshot})
 
+}
+
+func (s *ExploreWorkspacesService) GetExploreWorkspaceSnapshotHander(c *contextmodel.ReqContext) response.Response {
+	query := GetExploreWorkspaceSnapshotCommand{
+		UID: web.Params(c.Req)[":uid"],
+	}
+
+	exploreWorkspaceSnapshot, err := s.getExploreWorkspaceSnapshot(c.Req.Context(), query)
+
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Cannot get snapshot. "+err.Error(), err)
+	}
+
+	return response.JSON(http.StatusOK, GetExploreWorkspaceSnapshotResponse{Snapshot: exploreWorkspaceSnapshot})
+}
+
+func (s *ExploreWorkspacesService) GetExploreWorkspaceSnapshotsHander(c *contextmodel.ReqContext) response.Response {
+	query := GetExploreWorkspaceSnapshotsCommand{
+		ExploreWorkspaceUID: web.Params(c.Req)[":uid"],
+	}
+
+	exploreWorkspaceSnapshots, err := s.GetExploreWorkspaceSnapshots(c.Req.Context(), query)
+
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Cannot get snapshots. "+err.Error(), err)
+	}
+
+	return response.JSON(http.StatusOK, GetExploreWorkspaceSnapshotsResponse{Snapshots: exploreWorkspaceSnapshots})
 }

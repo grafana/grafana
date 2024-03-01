@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 
-import { CreateExploreWorkspaceCommand, ExploreWorkspace, UpdateExploreWorkspaceLatestSnapshotCommand } from '../types';
+import {
+  CreateExploreWorkspaceCommand,
+  CreateExploreWorkspaceSnapshotCommand,
+  ExploreWorkspace,
+  GetExploreWorkspaceSnapshotCommand,
+  GetExploreWorkspaceSnapshotsCommand,
+  UpdateExploreWorkspaceLatestSnapshotCommand,
+} from '../types';
 
 import * as api from './api';
 
@@ -29,6 +36,18 @@ export const useExploreWorkspaces = () => {
     return result;
   };
 
+  const createExploreWorkspaceSnapshot = async (cmd: CreateExploreWorkspaceSnapshotCommand) => {
+    return await api.createExploreWorkspaceSnapshot(cmd);
+  };
+
+  const getExploreWorkspaceSnapshot = async (cmd: GetExploreWorkspaceSnapshotCommand) => {
+    return await api.getExploreWorkspaceSnapshot(cmd);
+  };
+
+  const getExploreWorkspaceSnapshots = async (cmd: GetExploreWorkspaceSnapshotsCommand) => {
+    return await api.getExploreWorkspaceSnapshots(cmd);
+  };
+
   const reload = async () => {
     const exploreWorkspacesResponse = await getExploreWorkspaces();
     setWorkspaces(exploreWorkspacesResponse.exploreWorkspaces);
@@ -44,6 +63,9 @@ export const useExploreWorkspaces = () => {
     getExploreWorkspaces,
     createExploreWorkspace,
     updateExploreWorkspaceLatestSnapshot,
+    createExploreWorkspaceSnapshot,
+    getExploreWorkspaceSnapshot,
+    getExploreWorkspaceSnapshots,
     workspaces,
   };
 };

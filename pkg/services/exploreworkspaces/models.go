@@ -74,12 +74,17 @@ type GetExploreWorkspacesResponse struct {
 
 type CreateExploreWorkspaceSnapshotCommand struct {
 	ExploreWorspaceUID string
+	OrgId              int64
 	Name               string
 	Description        string
 	Created            time.Time
 	Updated            time.Time
 	UserId             int64
 	Config             string
+}
+
+type CreateExploreWorkspaceSnapshotResponse struct {
+	CreatedSnapshot ExploreWorkspaceSnapshot `json:"createdSnapshot"`
 }
 
 type UpdateExploreWorkspaceLatestSnapshotCommand struct {
@@ -102,7 +107,9 @@ type UpdateExploreWorkspaceSnapshotCommand struct {
 	Config      string
 }
 
-type TakeExploreWorkspaceSnapshotCommand struct {
+type CreateaExploreWorkspaceSnapshotCommand struct {
+	Name                string
+	Description         string
 	ExploreWorkspaceUID string
 }
 
@@ -110,6 +117,14 @@ type GetExploreWorkspaceSnapshotsCommand struct {
 	ExploreWorkspaceUID string
 }
 
+type GetExploreWorkspaceSnapshotResponse struct {
+	Snapshot ExploreWorkspaceSnapshot `json:"snapshot"`
+}
+
 type GetExploreWorkspaceSnapshotCommand struct {
 	UID string
+}
+
+type GetExploreWorkspaceSnapshotsResponse struct {
+	Snapshots []ExploreWorkspaceSnapshot `json:"snapshots"`
 }

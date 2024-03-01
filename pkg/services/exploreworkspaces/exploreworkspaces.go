@@ -47,9 +47,9 @@ type Service interface {
 	GetExploreWorkspaces(ctx context.Context, cmd GetExploreWorkspacesCommand) ([]ExploreWorkspace, error)
 
 	UpdateLatestExploreWorkspaceSnapshot(ctx context.Context, cmd UpdateExploreWorkspaceLatestSnapshotCommand) (*ExploreWorkspaceSnapshot, error)
-	// TakeExploreWorkspaceSnapshot(ctx context.Context, cmd TakeExploreWorkspaceSnapshotCommand) error
-	// GetExploreWorkspaceSnapshot(ctx context.Context, cmd GetExploreWorkspaceSnapshotCommand) (ExploreWorkspaceSnapshot, error)
-	// GetExploreWorkspaceSnapshots(ctx context.Context, cmd GetExploreWorkspaceSnapshotsCommand) ([]ExploreWorkspaceSnapshot, error)
+	CreateExploreWorkspaceSnapshot(ctx context.Context, cmd CreateExploreWorkspaceSnapshotCommand) (*ExploreWorkspaceSnapshot, error)
+	GetExploreWorkspaceSnapshot(ctx context.Context, cmd GetExploreWorkspaceSnapshotCommand) (*ExploreWorkspaceSnapshot, error)
+	GetExploreWorkspaceSnapshots(ctx context.Context, cmd GetExploreWorkspaceSnapshotsCommand) ([]ExploreWorkspaceSnapshot, error)
 }
 
 func (s *ExploreWorkspacesService) CreateExploreWorkspace(ctx context.Context, cmd CreateExploreWorkspaceCommand) (string, error) {
@@ -79,6 +79,7 @@ func (s *ExploreWorkspacesService) CreateExploreWorkspace(ctx context.Context, c
 			UserId:             cmd.UserId,
 			Created:            time.Now(),
 			Updated:            time.Now(),
+			OrgId:              cmd.OrgId,
 		})
 
 		if storingSnapshotError != nil {
@@ -182,6 +183,77 @@ func (s *ExploreWorkspacesService) UpdateLatestExploreWorkspaceSnapshot(ctx cont
 	}
 
 	return exploreWorkspaceSnapshot, nil
+}
+
+func (s *ExploreWorkspacesService) CreateExploreWorkspaceSnapshot(ctx context.Context, cmd CreateExploreWorkspaceSnapshotCommand) (*ExploreWorkspaceSnapshot, error) {
+	exploreWorkspace, queryWorkspaceError := s.GetExploreWorkspace(ctx, GetExploreWorkspaceCommand{
+		ExploreWorkspaceUID: cmd.ExploreWorspaceUID,
+		OrgId:               cmd.OrgId,
+	})
+
+	if queryWorkspaceError != nil {
+		return nil, queryWorkspaceError
+	}
+
+	latest := exploreWorkspace.ActiveSnapshot
+
+	createExploreWorkspaceSnapshotCommand := CreateExploreWorkspaceSnapshotCommand{
+		ExploreWorspaceUID: latest.ExploreWorspaceUID,
+		Name:               cmd.Name,
+		Description:        cmd.Description,
+		Created:            time.Now(),
+		Updated:            time.Now(),
+		UserId:             cmd.UserId,
+		Config:             latest.Config,
+	}
+
+	var exploreWorkspaceSnapshot ExploreWorkspaceSnapshot
+	snapshotError := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+		snapshot, err := s.createExploreWorkspaceSnapshot(session, ctx, createExploreWorkspaceSnapshotCommand)
+		exploreWorkspaceSnapshot = snapshot
+		return err
+	})
+
+	return &exploreWorkspaceSnapshot, snapshotError
+
+}
+
+func (s *ExploreWorkspacesService) GetExploreWorkspaceSnapshot(ctx context.Context, cmd GetExploreWorkspaceSnapshotCommand) (*ExploreWorkspaceSnapshot, error) {
+	exploreWorkspaceSnapshot := ExploreWorkspaceSnapshot{
+		UID: cmd.UID,
+	}
+
+	snapshotError := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+		has, err := session.Get(&exploreWorkspaceSnapshot)
+
+		if err != nil {
+			return err
+		}
+		if !has {
+			return errors.New("Workspace snapshot " + cmd.UID + " not found. ")
+		}
+		return nil
+	})
+
+	return &exploreWorkspaceSnapshot, snapshotError
+}
+
+func (s *ExploreWorkspacesService) GetExploreWorkspaceSnapshots(ctx context.Context, cmd GetExploreWorkspaceSnapshotsCommand) ([]ExploreWorkspaceSnapshot, error) {
+	exploreWorkspaceSnapshots := make([]ExploreWorkspaceSnapshot, 0)
+
+	queryError := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+		err := session.Find(&exploreWorkspaceSnapshots, &ExploreWorkspaceSnapshot{ExploreWorspaceUID: cmd.ExploreWorkspaceUID})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if queryError != nil {
+		return exploreWorkspaceSnapshots, errors.New("Getting explore workspace snapshots failed. " + queryError.Error())
+	}
+
+	return exploreWorkspaceSnapshots, nil
 }
 
 func (s *ExploreWorkspacesService) createExploreWorkspaceSnapshot(session *db.Session, ctx context.Context, cmd CreateExploreWorkspaceSnapshotCommand) (ExploreWorkspaceSnapshot, error) {
