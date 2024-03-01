@@ -20,6 +20,7 @@ import (
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	trace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -185,7 +186,7 @@ func initTracerProvider(exp tracesdk.SpanExporter, version string, customAttribs
 }
 
 func (ots *Opentelemetry) initNoopTracerProvider() (tracerProvider, error) {
-	return &noopTracerProvider{TracerProvider: trace.NewNoopTracerProvider()}, nil
+	return &noopTracerProvider{TracerProvider: noop.NewTracerProvider()}, nil
 }
 
 func (ots *Opentelemetry) initOpentelemetryTracer() error {
