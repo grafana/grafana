@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { EmbeddedDashboard } from '@grafana/runtime';
-import { Button, Drawer, Stack, VerticalGroup } from '@grafana/ui';
+import { Button, Divider, Drawer, FilterPill, Stack, VerticalGroup } from '@grafana/ui';
+import { IconButton } from '@grafana/ui/';
 
 import { DashboardGrid } from '../dashboard/dashgrid/DashboardGrid';
 import { dashboardLoaderSrv } from '../dashboard/services/DashboardLoaderSrv';
@@ -49,19 +50,27 @@ type Entity = {
 };
 
 const entitiesMap: Record<string, Entity> = {
+  'namespace:tns': {
+    type: 'namespace',
+    id: 'tns',
+    dashboardUid: 'bdecitbzna96od',
+    children: ['service:app', 'service:db'],
+  },
+
   'service:app': {
     type: 'service',
     id: 'app',
     dashboardUid: 'dde9o9plp1c00c',
     parents: ['namespace:tns'],
-    children: ['container:devenv-app-1'],
+    children: ['container:devenv-app-1', 'container:devenv-app-2'],
   },
 
-  'namespace:tns': {
-    type: 'namespace',
-    id: 'tns',
-    dashboardUid: 'bdecitbzna96od',
-    children: ['service:app'],
+  'service:db': {
+    type: 'service',
+    id: 'db',
+    dashboardUid: 'dde9o9plp1c00c',
+    parents: ['namespace:tns'],
+    children: ['container:devenv-db-1'],
   },
 
   'container:devenv-app-1': {
@@ -69,6 +78,20 @@ const entitiesMap: Record<string, Entity> = {
     id: 'devenv-app-1',
     dashboardUid: 'bdecitbzna96od',
     parents: ['service:app'],
+  },
+
+  'container:devenv-app-2': {
+    type: 'container',
+    id: 'devenv-app-2',
+    dashboardUid: 'bdecitbzna96od',
+    parents: ['service:app'],
+  },
+
+  'container:devenv-db-1': {
+    type: 'container',
+    id: 'devenv-db-1',
+    dashboardUid: 'bdecitbzna96od',
+    parents: ['service:db'],
   },
 };
 
@@ -92,10 +115,23 @@ export function EntityDrawer(props: Props) {
   const currentEntity = navStack[navStack.length - 1];
 
   return (
-    <Drawer closeOnMaskClick={true} title={props.title} onClose={props.onClose}>
+    <Drawer closeOnMaskClick={true} onClose={props.onClose}>
       <Stack direction={'column'} gap={1}>
+        <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
+          <Breadcrumbs stack={navStack} />
+          <IconButton name={'times'} onClick={props.onClose} aria-label={'close'} size={'xl'} />
+        </Stack>
+        <Divider />
         <EntityMap entity={currentEntity} onEntityChange={(id) => setNavStack([...navStack, entitiesMap[id]])} />
-        <EmbeddedDashboard uid={currentEntity.dashboardUid} />
+        <Divider />
+        <div style={{ flex: '1', overflow: 'scroll' }}>
+          <EmbeddedDashboard
+            uid={currentEntity.dashboardUid}
+            // This should rather be synchrnoized with the current time range of the parent view
+            // but for testing this makes sense as default
+            initialState={'?from=now-15m&to=now'}
+          />
+        </div>
       </Stack>
     </Drawer>
   );
@@ -109,24 +145,55 @@ type EntityMapProps = {
 function EntityMap(props: EntityMapProps) {
   // TODO ideally should be Asserts entity map visualization but for now test it like this.
   return (
-    <div>
-      {props.entity.parents?.map((id) => <EntityButton entityId={id} onEntityChange={props.onEntityChange} />)}
-      <span>
-        {props.entity.type}: {props.entity.id}
-      </span>
-      {props.entity.children?.map((id) => <EntityButton entityId={id} onEntityChange={props.onEntityChange} />)}
-    </div>
+    <Stack direction={'row'} alignItems={'center'}>
+      {props.entity.parents?.length && (
+        <>
+          <Stack direction={'column'}>
+            {props.entity.parents?.map((id) => (
+              <EntityButton key={'parent' + id} entityId={id} onEntityChange={props.onEntityChange} />
+            ))}
+          </Stack>
+          <span> &gt; </span>
+        </>
+      )}
+
+      <FilterPill label={`${props.entity.type}: ${props.entity.id}`} selected={true} onClick={() => {}} />
+
+      {props.entity.children?.length && (
+        <>
+          <span> &gt; </span>
+          <Stack direction={'column'}>
+            {props.entity.children?.map((id) => (
+              <EntityButton key={'child' + id} entityId={id} onEntityChange={props.onEntityChange} />
+            ))}
+          </Stack>
+        </>
+      )}
+    </Stack>
+  );
+}
+
+function Breadcrumbs(props: { stack: Entity[] }) {
+  return (
+    <Stack direction={'row'} alignItems={'center'}>
+      {props.stack.map((entity, index) => (
+        <>
+          <span key={entity.id}>{entity.id}</span>
+          {index < props.stack.length - 1 && <span>&gt;</span>}
+        </>
+      ))}
+    </Stack>
   );
 }
 
 function EntityButton(props: { entityId: string; onEntityChange: (id: string) => void }) {
   return (
-    <Button
+    <FilterPill
+      label={`${entitiesMap[props.entityId].type}: ${entitiesMap[props.entityId].id}`}
       onClick={() => {
         props.onEntityChange(props.entityId);
       }}
-    >
-      {entitiesMap[props.entityId].type}: {entitiesMap[props.entityId].id}
-    </Button>
+      selected={false}
+    />
   );
 }
