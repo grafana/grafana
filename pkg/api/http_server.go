@@ -221,10 +221,10 @@ type HTTPServer struct {
 }
 
 type TLSCerts struct {
-	certLock        sync.Mutex
-	cert_file_mtime time.Time
-	key_file_mtime  time.Time
-	certs           *tls.Certificate
+	certLock  sync.RWMutex
+	certMtime time.Time
+	keyMtime  time.Time
+	certs     *tls.Certificate
 }
 
 type ServerOptions struct {
@@ -849,9 +849,9 @@ func (hs *HTTPServer) configureTLS() error {
 }
 
 func (hs *HTTPServer) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error) {
-	hs.tlsCerts.certLock.Lock()
+	hs.tlsCerts.certLock.RLock()
 	tlsCerts := hs.tlsCerts.certs
-	hs.tlsCerts.certLock.Unlock()
+	hs.tlsCerts.certLock.RUnlock()
 
 	return tlsCerts, nil
 }
@@ -883,16 +883,16 @@ func (hs *HTTPServer) updateCerts() error {
 		return err
 	}
 
-	if cMtime.Compare(tlsInfo.cert_file_mtime) != 0 || kMtime.Compare(tlsInfo.key_file_mtime) != 0 {
+	if cMtime.Compare(tlsInfo.certMtime) != 0 || kMtime.Compare(tlsInfo.keyMtime) != 0 {
 		certs, err := hs.readCertificates()
 		if err != nil {
 			return err
 		}
 		tlsInfo.certLock.Lock()
 		tlsInfo.certs = certs
-		tlsInfo.cert_file_mtime = cMtime
-		tlsInfo.key_file_mtime = kMtime
-		hs.log.Info("Server certificates got reloaded", "cMtime", tlsInfo.cert_file_mtime, "kMtime", tlsInfo.key_file_mtime)
+		tlsInfo.certMtime = cMtime
+		tlsInfo.keyMtime = kMtime
+		hs.log.Info("Server certificates updated", "cMtime", tlsInfo.certMtime, "kMtime", tlsInfo.keyMtime)
 		tlsInfo.certLock.Unlock()
 	}
 
@@ -909,12 +909,12 @@ func getMtime(name string) (time.Time, error) {
 
 func (hs *HTTPServer) updateMtimeOfServerCerts() error {
 	var err error
-	hs.tlsCerts.cert_file_mtime, err = getMtime(hs.Cfg.CertFile)
+	hs.tlsCerts.certMtime, err = getMtime(hs.Cfg.CertFile)
 	if err != nil {
 		return err
 	}
 
-	hs.tlsCerts.key_file_mtime, err = getMtime(hs.Cfg.KeyFile)
+	hs.tlsCerts.keyMtime, err = getMtime(hs.Cfg.KeyFile)
 	if err != nil {
 		return err
 	}
