@@ -19,12 +19,15 @@
     {
       "metadata": {
         "name": "teamHttpHeaders",
-        "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
+        "resourceVersion": "1709290509653",
+        "creationTimestamp": "2024-02-16T18:36:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-01 10:55:09.653587 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables datasources to apply team headers to the client requests",
-        "stage": "experimental",
+        "description": "Enables Team LBAC for datasources to apply team headers to the client requests",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
       }
     },
@@ -83,7 +86,7 @@
         "name": "pluginsInstrumentationStatusSource",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-27T14:43:01Z"
+        "deletionTimestamp": "2024-03-01T10:55:12Z"
       },
       "spec": {
         "description": "Include a status source label for plugin request metrics and logs",
@@ -511,7 +514,7 @@
         "name": "displayAnonymousStats",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-27T14:43:01Z"
+        "deletionTimestamp": "2024-03-01T10:55:12Z"
       },
       "spec": {
         "description": "Enables anonymous stats to be shown in the UI for Grafana",
@@ -1400,7 +1403,7 @@
         "name": "traceToMetrics",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-27T14:43:01Z"
+        "deletionTimestamp": "2024-03-01T10:55:12Z"
       },
       "spec": {
         "description": "Enable trace to metrics links",
@@ -1529,7 +1532,7 @@
         "name": "splitScopes",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-27T14:43:01Z"
+        "deletionTimestamp": "2024-03-01T10:55:12Z"
       },
       "spec": {
         "description": "Support faster dashboard and folder search by splitting permission scopes into parts",
@@ -1570,7 +1573,7 @@
         "name": "externalServiceAuth",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-27T14:43:01Z"
+        "deletionTimestamp": "2024-03-01T10:55:12Z"
       },
       "spec": {
         "description": "Starts an OAuth2 authentication provider for external services",
