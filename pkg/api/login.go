@@ -287,7 +287,7 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *contextmodel.ReqContext, cookie
 		return err
 	}
 
-	cookies.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), 60, hs.CookieOptionsFromCfg)
+	cookies.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), maxAge, hs.CookieOptionsFromCfg)
 
 	return nil
 }
