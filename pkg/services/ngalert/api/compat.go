@@ -272,7 +272,7 @@ func ReceiverExportFromEmbeddedContactPoint(contact definitions.EmbeddedContactP
 	}, nil
 }
 
-// AlertingFileExportFromRoute creates a definitions.AlertingFileExport DTO from definitions.Route.
+// AlertingFileExportFromRoute creates a definitions.AlertingFileExport DTO from definition.Route.
 func AlertingFileExportFromRoute(orgID int64, route definition.Route) (definitions.AlertingFileExport, error) {
 	f := definitions.AlertingFileExport{
 		APIVersion: 1,
@@ -284,8 +284,8 @@ func AlertingFileExportFromRoute(orgID int64, route definition.Route) (definitio
 	return f, nil
 }
 
-// RouteExportFromRoute creates a definitions.RouteExport DTO from definitions.Route.
-func RouteExportFromRoute(route *definition.Route) *definitions.RouteExport {
+// RouteExportFromRoute creates a definition.RouteExport DTO from definition.Route.
+func RouteExportFromRoute(route *definition.Route) *definition.RouteExport {
 	toStringIfNotNil := func(d *model.Duration) *string {
 		if d == nil {
 			return nil
@@ -303,7 +303,7 @@ func RouteExportFromRoute(route *definition.Route) *definitions.RouteExport {
 		})
 	}
 
-	export := definitions.RouteExport{
+	export := definition.RouteExport{
 		Receiver:            route.Receiver,
 		GroupByStr:          NilIfEmpty(util.Pointer(route.GroupByStr)),
 		Match:               route.Match,
@@ -319,7 +319,7 @@ func RouteExportFromRoute(route *definition.Route) *definitions.RouteExport {
 	}
 
 	if len(route.Routes) > 0 {
-		export.Routes = make([]*definitions.RouteExport, 0, len(route.Routes))
+		export.Routes = make([]*definition.RouteExport, 0, len(route.Routes))
 		for _, r := range route.Routes {
 			export.Routes = append(export.Routes, RouteExportFromRoute(r))
 		}

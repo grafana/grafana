@@ -804,7 +804,7 @@ func fromAlertNotification(channel *legacymodels.AlertNotification) *definitions
 }
 
 // fromContactPointUpgrade converts a postable grafana receiver and route to the api representation.
-func fromContactPointUpgrade(recv *definitions.PostableGrafanaReceiver, route *definitions.Route) *definitions.ContactPointUpgrade {
+func fromContactPointUpgrade(recv *definition.PostableGrafanaReceiver, route *definition.Route) *definitions.ContactPointUpgrade {
 	if recv == nil || len(route.ObjectMatchers) == 0 {
 		return nil
 	}

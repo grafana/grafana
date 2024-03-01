@@ -1554,7 +1554,7 @@ Status: Accepted
 
 ### <span id="route-export"></span> RouteExport
 
-> RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't usable in
+> RouteExport is the provisioned file export of definition.Route. This is needed to hide fields that aren't usable in
 > provisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.
 
 **Properties**

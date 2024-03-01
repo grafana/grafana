@@ -3,7 +3,6 @@ package alerting
 import (
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
@@ -30,7 +29,7 @@ func (v1 *NotificiationPolicyV1) mapToModel() (NotificiationPolicy, error) {
 	if orgID < 1 {
 		orgID = 1
 	}
-	var route definitions.Route
+	var route definition.Route
 	// We need the string json representation, so we marshal the policy back
 	// as a string and interpolate it at the same time.
 	data, err := json.Marshal(v1.Policy.Value())
@@ -53,5 +52,5 @@ func (v1 *NotificiationPolicyV1) mapToModel() (NotificiationPolicy, error) {
 
 type NotificiationPolicy struct {
 	OrgID  int64
-	Policy definitions.Route
+	Policy definition.Route
 }

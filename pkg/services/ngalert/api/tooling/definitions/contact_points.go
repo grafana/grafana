@@ -7,7 +7,7 @@ package definitions
 // The consistency between  models in the alerting module and this file is enforced by unit-tests.
 
 //
-// 1. JSON tags are used for unmarshalling from the definitions.PostableGrafanaReceiver.Settings.
+// 1. JSON tags are used for unmarshalling from the definition.PostableGrafanaReceiver.Settings.
 // 2. YAML tags are not used but kept while copying of models from the alerting module
 // 3. Each integration struct contains field 'DisableResolveMessage'. In Terraform provider the field is on the same level as the settings.
 //    Currently, HCL encoder does not support composition of structures or generic ones. This can be change after https://github.com/hashicorp/hcl/issues/290 is solved.

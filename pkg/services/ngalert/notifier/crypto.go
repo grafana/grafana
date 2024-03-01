@@ -14,11 +14,11 @@ import (
 
 // Crypto allows decryption of Alertmanager Configuration and encryption of arbitrary payloads.
 type Crypto interface {
-	LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error
+	LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definition.PostableApiReceiver) error
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 
-	getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error)
-	ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error
+	getDecryptedSecret(r *definition.PostableGrafanaReceiver, key string) (string, error)
+	ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definition.PostableApiReceiver) error
 }
 
 // alertmanagerCrypto implements decryption of Alertmanager configuration and encryption of arbitrary payloads based on Grafana's encryptions.
@@ -37,7 +37,7 @@ func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logg
 }
 
 // ProcessSecureSettings encrypts new secure settings and loads existing secure settings from the database.
-func (c *alertmanagerCrypto) ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error {
+func (c *alertmanagerCrypto) ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definition.PostableApiReceiver) error {
 	// First, we encrypt the new or updated secure settings. Then, we load the existing secure settings from the database
 	// and add back any that weren't updated.
 	// We perform these steps in this order to ensure the hash of the secure settings remains stable when no secure
@@ -56,7 +56,7 @@ func (c *alertmanagerCrypto) ProcessSecureSettings(ctx context.Context, orgId in
 }
 
 // EncryptReceiverConfigs encrypts all SecureSettings in the given receivers.
-func EncryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt definitions.EncryptFn) error {
+func EncryptReceiverConfigs(c []*definition.PostableApiReceiver, encrypt definitions.EncryptFn) error {
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
 		switch r.Type() {
@@ -77,7 +77,7 @@ func EncryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 }
 
 // LoadSecureSettings adds the corresponding unencrypted secrets stored to the list of input receivers.
-func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
+func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definition.PostableApiReceiver) error {
 	// Get the last known working configuration.
 	amConfig, err := c.configs.GetLatestAlertmanagerConfiguration(ctx, orgId)
 	if err != nil {
@@ -87,7 +87,7 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 		}
 	}
 
-	currentReceiverMap := make(map[string]*definitions.PostableGrafanaReceiver)
+	currentReceiverMap := make(map[string]*definition.PostableGrafanaReceiver)
 	if amConfig != nil {
 		currentConfig, err := Load([]byte(amConfig.AlertmanagerConfiguration))
 		// If the current config is un-loadable, treat it as if it never existed. Providing a new, valid config should be able to "fix" this state.
@@ -127,7 +127,7 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 	return nil
 }
 
-func (c *alertmanagerCrypto) getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error) {
+func (c *alertmanagerCrypto) getDecryptedSecret(r *definition.PostableGrafanaReceiver, key string) (string, error) {
 	storedValue, ok := r.SecureSettings[key]
 	if !ok {
 		return "", nil

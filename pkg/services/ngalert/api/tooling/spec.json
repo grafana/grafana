@@ -7130,7 +7130,7 @@
       }
     },
     "RouteExport": {
-      "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
+      "description": "RouteExport is the provisioned file export of definition.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
       "type": "object",
       "properties": {
         "continue": {

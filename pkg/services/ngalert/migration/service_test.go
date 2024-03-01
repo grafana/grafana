@@ -1632,10 +1632,10 @@ func compareAmConfig(t *testing.T, x *xorm.Engine, orgId int64, expectedConfig *
 
 	// Order of nested GrafanaManagedReceivers is not guaranteed.
 	cOpt := []cmp.Option{
-		cmpopts.IgnoreUnexported(definitions.PostableApiReceiver{}),
-		cmpopts.IgnoreFields(definitions.PostableGrafanaReceiver{}, "UID", "SecureSettings"),
-		cmpopts.SortSlices(func(a, b *definitions.PostableGrafanaReceiver) bool { return a.Name < b.Name }),
-		cmpopts.SortSlices(func(a, b *definitions.PostableApiReceiver) bool { return a.Name < b.Name }),
+		cmpopts.IgnoreUnexported(definition.PostableApiReceiver{}),
+		cmpopts.IgnoreFields(definition.PostableGrafanaReceiver{}, "UID", "SecureSettings"),
+		cmpopts.SortSlices(func(a, b *definition.PostableGrafanaReceiver) bool { return a.Name < b.Name }),
+		cmpopts.SortSlices(func(a, b *definition.PostableApiReceiver) bool { return a.Name < b.Name }),
 	}
 	if !cmp.Equal(expectedConfig.AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers, cOpt...) {
 		t.Errorf("Unexpected Receivers: %v", cmp.Diff(expectedConfig.AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers, cOpt...))
@@ -1643,14 +1643,14 @@ func compareAmConfig(t *testing.T, x *xorm.Engine, orgId int64, expectedConfig *
 
 	// Order of routes is not guaranteed.
 	cOpt = []cmp.Option{
-		cmpopts.SortSlices(func(a, b *definitions.Route) bool {
+		cmpopts.SortSlices(func(a, b *definition.Route) bool {
 			if a.Receiver != b.Receiver {
 				return a.Receiver < b.Receiver
 			}
 			return a.ObjectMatchers[0].Value < b.ObjectMatchers[0].Value
 		}),
-		cmpopts.IgnoreUnexported(definitions.Route{}, labels.Matcher{}),
-		cmpopts.IgnoreFields(definitions.Route{}, "GroupBy", "GroupByAll"),
+		cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}),
+		cmpopts.IgnoreFields(definition.Route{}, "GroupBy", "GroupByAll"),
 	}
 	if !cmp.Equal(expectedConfig.AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route, cOpt...) {
 		t.Errorf("Unexpected Route: %v", cmp.Diff(expectedConfig.AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route, cOpt...))
@@ -1750,28 +1750,28 @@ func setupUATables(t *testing.T, store *store.DBstore, orgID int64, rules []*mod
 func createPostableUserConfig(t *testing.T, channels ...*legacymodels.AlertNotification) *definitions.PostableUserConfig {
 	t.Helper()
 	am := &definitions.PostableUserConfig{
-		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-			Config: definitions.Config{Route: &definitions.Route{
+		AlertmanagerConfig: definition.PostableApiAlertingConfig{
+			Config: definition.Config{Route: &definition.Route{
 				Receiver:   "autogen-contact-point-default",
 				GroupByStr: []string{models.FolderTitleLabel, model.AlertNameLabel},
-				Routes: []*definitions.Route{
+				Routes: []*definition.Route{
 					{
 						ObjectMatchers: definitions.ObjectMatchers{{Type: labels.MatchEqual, Name: models.MigratedUseLegacyChannelsLabel, Value: "true"}},
 						Continue:       true,
-						Routes:         []*definitions.Route{},
+						Routes:         []*definition.Route{},
 					},
 				},
 			}},
-			Receivers: []*definitions.PostableApiReceiver{
-				{Receiver: config.Receiver{Name: "autogen-contact-point-default"}, PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{}},
+			Receivers: []*definition.PostableApiReceiver{
+				{Receiver: config.Receiver{Name: "autogen-contact-point-default"}, PostableGrafanaReceivers: definition.PostableGrafanaReceivers{}},
 			},
 		},
 	}
 	for _, c := range channels {
 		settings, err := c.Settings.MarshalJSON()
 		require.NoError(t, err)
-		am.AlertmanagerConfig.Receivers = append(am.AlertmanagerConfig.Receivers, &definitions.PostableApiReceiver{Receiver: config.Receiver{Name: c.Name}, PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{{UID: c.UID, Name: c.Name, Type: c.Type, Settings: settings}}}})
-		am.AlertmanagerConfig.Route.Routes[0].Routes = append(am.AlertmanagerConfig.Route.Routes[0].Routes, &definitions.Route{Receiver: c.Name, ObjectMatchers: definitions.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel(c.Name), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)})
+		am.AlertmanagerConfig.Receivers = append(am.AlertmanagerConfig.Receivers, &definition.PostableApiReceiver{Receiver: config.Receiver{Name: c.Name}, PostableGrafanaReceivers: definition.PostableGrafanaReceivers{GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{{UID: c.UID, Name: c.Name, Type: c.Type, Settings: settings}}}})
+		am.AlertmanagerConfig.Route.Routes[0].Routes = append(am.AlertmanagerConfig.Route.Routes[0].Routes, &definition.Route{Receiver: c.Name, ObjectMatchers: definitions.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel(c.Name), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)})
 	}
 	return am
 }
