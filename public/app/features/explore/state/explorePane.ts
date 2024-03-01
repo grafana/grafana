@@ -121,6 +121,15 @@ export function changeSize(exploreId: string, { width }: { width: number }): Pay
   return changeSizeAction({ exploreId, width });
 }
 
+/**
+ * set pane highlight
+ */
+export interface SetHighlightPayload {
+  exploreId: string;
+  isHighlighted: boolean;
+}
+export const setHighlightAction = createAction<SetHighlightPayload>('explore/setHighlightState');
+
 export interface InitializeExploreOptions {
   exploreId: string;
   datasource: DataSourceRef | string | undefined;
@@ -234,6 +243,14 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     return {
       ...state,
       correlations: action.payload.correlations,
+    };
+  }
+
+  if (setHighlightAction.match(action)) {
+    const { isHighlighted } = action.payload;
+    return {
+      ...state,
+      isHighlighted: isHighlighted,
     };
   }
 

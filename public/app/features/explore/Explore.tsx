@@ -92,6 +92,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingRight: theme.spacing(2),
       marginBottom: theme.spacing(2),
     }),
+    highlighted: css({
+      content: '""',
+      width: '100%',
+      height: '100%',
+      backgroundColor: theme.colors.warning.main,
+      opacity: '.5',
+    }),
     left: css({
       marginBottom: theme.spacing(2),
     }),
@@ -554,6 +561,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       correlationEditorDetails,
       correlationEditorHelperData,
       showQueryHistory,
+      isHighlighted,
     } = this.props;
     const { openDrawer, contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
@@ -606,7 +614,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
               hideHorizontalTrack
             >
-              <div className={styles.exploreContainer}>
+              <div className={cx(styles.exploreContainer, { [styles.highlighted]: isHighlighted })}>
                 {datasourceInstance ? (
                   <>
                     <ContentOutlineItem title="Queries" icon="arrow">
@@ -717,6 +725,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showRawPrometheus,
     supplementaryQueries,
     correlationEditorHelperData,
+    isHighlighted,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -750,6 +759,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
     showQueryHistory: explore.showQueryHistory,
+    isHighlighted,
   };
 }
 
