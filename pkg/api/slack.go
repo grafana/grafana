@@ -22,6 +22,17 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// swagger:route GET /share/slack/channels slack getSlackChannels
+//
+// # Get Slack channels
+//
+// Will return a list of Slack channels available for posting messages.
+//
+// Responses:
+// 200: slackChannelsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetSlackChannels(c *contextmodel.ReqContext) response.Response {
 	channels, err := hs.slackService.GetUserConversations(c.Req.Context())
 	if err != nil {
@@ -31,10 +42,22 @@ func (hs *HTTPServer) GetSlackChannels(c *contextmodel.ReqContext) response.Resp
 	return response.JSON(http.StatusOK, channels.Channels)
 }
 
+// swagger:route POST /share/slack slack shareToSlack
+//
+// # Post message to Slack
+//
+// Will post a message to Slack.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response {
 	var shareRequest dtos.ShareRequest
 	if err := web.Bind(c.Req, &shareRequest); err != nil {
-		return response.Error(400, "error parsing body", err)
+		return response.Error(http.StatusBadRequest, "error parsing body", err)
 	}
 
 	grafanaURL := hs.getGrafanaURL()
@@ -48,6 +71,18 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 	return response.Empty(http.StatusOK)
 }
 
+// swagger:route POST /share/slack/unfurl slack slackUnfurl
+//
+// # Post message to Slack
+//
+// Will post a message to Slack.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) SlackUnfurl(c *contextmodel.ReqContext) response.Response {
 	rawBody, err := io.ReadAll(c.Req.Body)
 	if err != nil {
@@ -213,4 +248,24 @@ type PreviewResponse struct {
 
 type EventChallengeAck struct {
 	Challenge string `json:"challenge"`
+}
+
+// swagger:response slackChannelsResponse
+type SlackChannelsResponse struct {
+	// in: body
+	Body dtos.SlackChannels
+}
+
+// swagger:parameters shareToSlack
+type ShareToSlack struct {
+	// in:body
+	// required:true
+	Body dtos.ShareRequest `json:"body"`
+}
+
+// swagger:parameters slackUnfurl
+type SlackUnfurl struct {
+	// in:body
+	// required:true
+	Body slack.EventPayload `json:"body"`
 }

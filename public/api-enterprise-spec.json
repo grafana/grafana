@@ -2759,6 +2759,25 @@
         "Value": {}
       }
     },
+    "Authorization": {
+      "description": "Authorization represents the \"authorizations\" field in the payload",
+      "type": "object",
+      "properties": {
+        "enterprise_id": {},
+        "is_bot": {
+          "type": "boolean"
+        },
+        "is_enterprise_install": {
+          "type": "boolean"
+        },
+        "team_id": {
+          "type": "string"
+        },
+        "user_id": {
+          "type": "string"
+        }
+      }
+    },
     "CalculateDiffTarget": {
       "type": "object",
       "properties": {
@@ -4195,6 +4214,84 @@
         }
       }
     },
+    "Event": {
+      "description": "Event represents the \"event\" field in the payload",
+      "type": "object",
+      "properties": {
+        "channel": {
+          "type": "string"
+        },
+        "event_ts": {
+          "type": "string"
+        },
+        "is_bot_user_member": {
+          "type": "boolean"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Link"
+          }
+        },
+        "message_ts": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "unfurl_id": {
+          "type": "string"
+        },
+        "user": {
+          "type": "string"
+        }
+      }
+    },
+    "EventPayload": {
+      "type": "object",
+      "properties": {
+        "api_app_id": {
+          "type": "string"
+        },
+        "authorizations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Authorization"
+          }
+        },
+        "challenge": {
+          "type": "string"
+        },
+        "event": {
+          "$ref": "#/definitions/Event"
+        },
+        "event_context": {
+          "type": "string"
+        },
+        "event_id": {
+          "type": "string"
+        },
+        "event_time": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "is_ext_shared_channel": {
+          "type": "boolean"
+        },
+        "team_id": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
     },
@@ -5137,6 +5234,18 @@
         "totalCount": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "Link": {
+      "description": "Link represents the \"links\" field in the event",
+      "type": "object",
+      "properties": {
+        "domain": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
         }
       }
     },
@@ -6280,6 +6389,9 @@
         "templateVars": {
           "type": "object"
         },
+        "uid": {
+          "type": "string"
+        },
         "updated": {
           "type": "string",
           "format": "date-time"
@@ -6966,12 +7078,57 @@
         }
       }
     },
+    "ShareRequest": {
+      "type": "object",
+      "properties": {
+        "channelIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "imagePreviewUrl": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "resourcePath": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
     "ShareType": {
       "type": "string"
     },
     "SignatureAlgorithm": {
       "type": "integer",
       "format": "int64"
+    },
+    "SlackChannel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "SlackChannels": {
+      "type": "object",
+      "properties": {
+        "channels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SlackChannel"
+          }
+        }
+      }
     },
     "State": {
       "type": "string"
@@ -9603,6 +9760,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/RoleAssignmentsDTO"
+      }
+    },
+    "slackChannelsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SlackChannels"
       }
     },
     "testAlertResponse": {

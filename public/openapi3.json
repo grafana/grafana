@@ -1993,6 +1993,16 @@
         },
         "description": "(empty)"
       },
+      "slackChannelsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SlackChannels"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "testAlertResponse": {
         "content": {
           "application/json": {
@@ -3505,18 +3515,22 @@
         "type": "object"
       },
       "Authorization": {
+        "description": "Authorization represents the \"authorizations\" field in the payload",
         "properties": {
-          "credentials": {
-            "$ref": "#/components/schemas/Secret"
+          "enterprise_id": {},
+          "is_bot": {
+            "type": "boolean"
           },
-          "credentials_file": {
+          "is_enterprise_install": {
+            "type": "boolean"
+          },
+          "team_id": {
             "type": "string"
           },
-          "type": {
+          "user_id": {
             "type": "string"
           }
         },
-        "title": "Authorization contains HTTP authorization credentials.",
         "type": "object"
       },
       "BacktestConfig": {
@@ -5361,6 +5375,84 @@
         "type": "object"
       },
       "EvalQueriesResponse": {},
+      "Event": {
+        "description": "Event represents the \"event\" field in the payload",
+        "properties": {
+          "channel": {
+            "type": "string"
+          },
+          "event_ts": {
+            "type": "string"
+          },
+          "is_bot_user_member": {
+            "type": "boolean"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            },
+            "type": "array"
+          },
+          "message_ts": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "unfurl_id": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "EventPayload": {
+        "properties": {
+          "api_app_id": {
+            "type": "string"
+          },
+          "authorizations": {
+            "items": {
+              "$ref": "#/components/schemas/Authorization"
+            },
+            "type": "array"
+          },
+          "challenge": {
+            "type": "string"
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          },
+          "event_context": {
+            "type": "string"
+          },
+          "event_id": {
+            "type": "string"
+          },
+          "event_time": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "is_ext_shared_channel": {
+            "type": "boolean"
+          },
+          "team_id": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ExplorePanelsState": {
         "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
       },
@@ -7067,6 +7159,18 @@
           }
         },
         "title": "LibraryElementSearchResult is the search result for entities.",
+        "type": "object"
+      },
+      "Link": {
+        "description": "Link represents the \"links\" field in the event",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "LinkTransformationConfig": {
@@ -9422,6 +9526,9 @@
           "templateVars": {
             "type": "object"
           },
+          "uid": {
+            "type": "string"
+          },
           "updated": {
             "format": "date-time",
             "type": "string"
@@ -10444,6 +10551,29 @@
         },
         "type": "object"
       },
+      "ShareRequest": {
+        "properties": {
+          "channelIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "imagePreviewUrl": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "resourcePath": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ShareType": {
         "type": "string"
       },
@@ -10498,6 +10628,28 @@
           }
         },
         "title": "SlackAction configures a single Slack action that is sent with each notification.",
+        "type": "object"
+      },
+      "SlackChannel": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SlackChannels": {
+        "properties": {
+          "channels": {
+            "items": {
+              "$ref": "#/components/schemas/SlackChannel"
+            },
+            "type": "array"
+          }
+        },
         "type": "object"
       },
       "SlackConfig": {
@@ -22438,6 +22590,106 @@
         "summary": "DeleteToken deletes service account tokens",
         "tags": [
           "service_accounts"
+        ]
+      }
+    },
+    "/share/slack": {
+      "post": {
+        "description": "Will post a message to Slack.",
+        "operationId": "shareToSlack",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Post message to Slack",
+        "tags": [
+          "slack"
+        ]
+      }
+    },
+    "/share/slack/channels": {
+      "get": {
+        "description": "Will return a list of Slack channels available for posting messages.",
+        "operationId": "getSlackChannels",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/slackChannelsResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get Slack channels",
+        "tags": [
+          "slack"
+        ]
+      }
+    },
+    "/share/slack/unfurl": {
+      "post": {
+        "description": "Will post a message to Slack.",
+        "operationId": "slackUnfurl",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventPayload"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Post message to Slack",
+        "tags": [
+          "slack"
         ]
       }
     },

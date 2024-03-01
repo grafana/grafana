@@ -74,7 +74,13 @@ export const shareToSlackApi = createApi({
       query: (payload) => ({
         url: `/share/slack`,
         method: 'POST',
-        data: { ...payload, channelIds: payload.channels.map((c) => c.value) },
+        data: {
+          resourcePath: payload.resourcePath,
+          channelIds: payload.channels.map((c) => c.value),
+          imagePreviewUrl: payload.imagePreviewUrl,
+          title: payload.title,
+          message: payload.message,
+        },
       }),
       async onQueryStarted(payload, { dispatch, queryFulfilled }) {
         await queryFulfilled;
