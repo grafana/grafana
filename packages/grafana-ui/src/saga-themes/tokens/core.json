@@ -642,8 +642,9 @@
         }
       },
       "500": {
-        "value": "#8d95a5",
-        "type": "color"
+        "value": "#8D95A5",
+        "type": "color",
+        "$extensions": {}
       },
       "600": {
         "value": "{color.neutral.500}",
