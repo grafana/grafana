@@ -15,6 +15,7 @@ labels:
     - oss
 cascade:
   TEMPO_VERSION: latest
+  PYROSCPE_VERSION: latest
 title: Grafana open source documentation
 ---
 
