@@ -8,7 +8,7 @@ labels:
 
 [//]: # 'This file documents the introductory material for traces to profiling for the Pyroscope data source.'
 [//]: # 'This shared file is included in these locations:'
-[//]: # '/grafana/docs/sources/datasources/pyroscope/profiling-tracing.md'
+[//]: # '/grafana/docs/sources/datasources/pyroscope/profiling-and-tracing.md'
 [//]: # '/website/docs/grafana-cloud/data-configuration/traces/traces-query-editor.md'
 [//]: # '/docs/sources/view-and-analyze-profile-data/profile-tracing/_index.md'
 [//]: #
@@ -22,7 +22,7 @@ However, each tool has its own strengths and weaknesses, and it is important to 
 
 ## Profiling
 
-Profiling offers a deep-dive into an application's performance at the code level, highlighting resource usage and performance spots.
+Profiling offers a deep-dive into an application's performance at the code level, highlighting resource usage and performance hotspots.
 
 <table>
   <tr>
