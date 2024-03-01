@@ -79,6 +79,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
       const panel = new VizPanel(vizPanelState);
       const gridItem = this.parent;
       if (libPanelModel.repeat && gridItem instanceof SceneGridItem && gridItem.parent instanceof SceneGridLayout) {
+        this._parent = undefined;
         const repeater = new PanelRepeaterGridItem({
           key: gridItem.state.key,
           x: libPanelModel.gridPos.x,

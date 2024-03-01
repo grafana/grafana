@@ -122,5 +122,5 @@ function setUpApiMock(
     result: libPanel,
   };
 
-  server.use(http.get('/api/library-elements/*', () => HttpResponse.json(libPanelMock)));
+  server.use(http.get('/api/library-elements/:uid', () => HttpResponse.json(libPanelMock)));
 }
