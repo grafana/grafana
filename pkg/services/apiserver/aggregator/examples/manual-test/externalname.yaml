@@ -1,3 +1,4 @@
+---
 apiVersion: service.grafana.app/v0alpha1
 kind: ExternalName
 metadata:
