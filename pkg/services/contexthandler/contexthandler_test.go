@@ -114,9 +114,9 @@ func TestContextHandler(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.JWTAuth.Enabled = true
 		cfg.JWTAuth.HeaderName = "jwt-header"
-		cfg.AuthProxyEnabled = true
-		cfg.AuthProxyHeaderName = "proxy-header"
-		cfg.AuthProxyHeaders = map[string]string{
+		cfg.AuthProxy.Enabled = true
+		cfg.AuthProxy.HeaderName = "proxy-header"
+		cfg.AuthProxy.Headers = map[string]string{
 			"name": "proxy-header-name",
 		}
 
