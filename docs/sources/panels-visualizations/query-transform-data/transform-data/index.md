@@ -1267,7 +1267,9 @@ Use this transformation to convert time series results into a table, transformin
 
 {{< figure src="/static/img/docs/transformations/table-sparklines.png" class="docs-image--no-shadow" max-width= "1100px" alt="A table panel showing multiple values and their corresponding sparklines." >}}
 
-For each generated **Trend** field value, a calculation function can be selected. The default is **Last non-null value**. This value is displayed next to the sparkline and used for sorting table rows.
+For each generated **Trend** field value, a calculation function can be selected. This value is displayed next to the sparkline and will be used for sorting table rows.
+
+{{< figure src="/static/img/docs/transformations/timeseries-table-select-stat.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing available statistics that can be calculated." >}}
 
 > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
 
