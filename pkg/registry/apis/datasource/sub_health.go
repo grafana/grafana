@@ -22,7 +22,7 @@ var (
 )
 
 func (r *subHealthREST) New() runtime.Object {
-	return &datasource.DataSourceConnection{}
+	return &datasource.HealthCheckResult{}
 }
 
 func (r *subHealthREST) Destroy() {

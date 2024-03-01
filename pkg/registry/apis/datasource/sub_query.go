@@ -5,13 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
@@ -25,13 +23,13 @@ type subQueryREST struct {
 var _ = rest.Connecter(&subQueryREST{})
 
 func (r *subQueryREST) New() runtime.Object {
-	return &datasource.DataSourceConnection{}
+	return &query.QueryDataResponse{}
 }
 
 func (r *subQueryREST) Destroy() {}
 
 func (r *subQueryREST) ConnectMethods() []string {
-	return []string{"POST", "GET"}
+	return []string{"POST"}
 }
 
 func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -40,36 +38,9 @@ func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, *query.DataSourceRef, error) {
 	reqDTO := query.GenericQueryRequest{}
-	// Simple URL to JSON mapping
-	if req.Method == http.MethodGet {
-		query := query.GenericDataQuery{
-			RefID:         "A",
-			MaxDataPoints: 1000,
-			IntervalMS:    10,
-		}
-		params := req.URL.Query()
-		for k := range params {
-			v := params.Get(k) // the singular value
-			switch k {
-			case "to":
-				reqDTO.To = v
-			case "from":
-				reqDTO.From = v
-			case "maxDataPoints":
-				query.MaxDataPoints, _ = strconv.ParseInt(v, 10, 64)
-			case "intervalMs":
-				query.IntervalMS, _ = strconv.ParseFloat(v, 64)
-			case "queryType":
-				query.QueryType = v
-			default:
-				query.AdditionalProperties()[k] = v
-			}
-		}
-		reqDTO.Queries = append(reqDTO.Queries, query)
-	} else if err := web.Bind(req, &reqDTO); err != nil {
+	if err := web.Bind(req, &reqDTO); err != nil {
 		return nil, nil, err
 	}
-
 	return legacydata.ToDataSourceQueries(reqDTO)
 }
 
