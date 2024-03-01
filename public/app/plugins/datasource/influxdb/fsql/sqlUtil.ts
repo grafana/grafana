@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash';
 
-import { SQLQuery, createSelectClause, haveColumns } from '@grafana/sql';
+import { createSelectClause, haveColumns, SQLQuery } from '@grafana/sql';
 
 // remove identifier quoting from identifier to use in metadata queries
 export function unquoteIdentifier(value: string) {
@@ -25,25 +25,27 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
     return rawQuery;
   }
 
-  rawQuery += createSelectClause(sql.columns);
+  // wrapping the column name with quotes
+  const sc = sql.columns.map((c) => ({ ...c, parameters: c.parameters?.map((p) => ({ ...p, name: `"${p.name}"` })) }));
+  rawQuery += createSelectClause(sc);
 
   if (dataset && table) {
-    rawQuery += `FROM ${dataset}.${table} `;
+    rawQuery += `FROM "${dataset}.${table}" `;
   }
 
   // $__timeFrom and $__timeTo will be interpolated on the backend
-  rawQuery += `WHERE time >= $__timeFrom AND time <= $__timeTo `;
+  rawQuery += `WHERE "time" >= $__timeFrom AND "time" <= $__timeTo `;
   if (sql.whereString) {
     rawQuery += `AND ${sql.whereString} `;
   }
 
   if (sql.groupBy?.[0]?.property.name) {
-    const groupBy = sql.groupBy.map((g) => g.property.name).filter((g) => !isEmpty(g));
+    const groupBy = sql.groupBy.map((g) => `"${g.property.name}"`).filter((g) => !isEmpty(g));
     rawQuery += `GROUP BY ${groupBy.join(', ')} `;
   }
 
   if (sql.orderBy?.property.name) {
-    rawQuery += `ORDER BY ${sql.orderBy.property.name} `;
+    rawQuery += `ORDER BY "${sql.orderBy.property.name}" `;
   }
 
   if (sql.orderBy?.property.name && sql.orderByDirection) {
