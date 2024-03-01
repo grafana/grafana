@@ -13,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
@@ -151,6 +152,25 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 
 func (b *FolderAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil // no custom API routes
+}
+
+func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// The plugin description
+	oas.Info.Description = "Grafana folders"
+
+	// The root api URL
+	root := "/apis/" + b.GetGroupVersion().String() + "/"
+
+	// Hide the ability to list or watch across all tenants
+	delete(oas.Paths.Paths, root+v0alpha1.FolderResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+"watch/"+v0alpha1.FolderResourceInfo.GroupResource().Resource)
+
+	// The root API discovery list
+	sub := oas.Paths.Paths[root]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, nil
 }
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
