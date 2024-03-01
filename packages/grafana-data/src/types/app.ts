@@ -138,7 +138,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   ) {
     this._extensionConfigs.push({
       ...extension,
-      extensionPointId: `capabilities/${this.meta.id}/${id}`,
+      extensionPointId: `capabilities/${id}`,
       type: PluginExtensionTypes.function,
     } as PluginExtensionFunctionConfig);
 

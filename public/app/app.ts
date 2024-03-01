@@ -220,6 +220,7 @@ export class GrafanaApp {
 
       setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
       setPluginExtensionsHook(createPluginExtensionsHook(extensionsRegistry));
+      window.extensionsRegistry = extensionsRegistry;
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
