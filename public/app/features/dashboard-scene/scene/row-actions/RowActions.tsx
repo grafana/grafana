@@ -54,6 +54,7 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
     if (!repeat) {
       row.setState({
         title,
+        $behaviors: [], //todo might be others, remove the rowRepeaterBehaviour
       });
 
       return;
@@ -67,12 +68,11 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
         variableName: repeat,
       });
 
-      //todo test if needed
-      behaviour.activate();
-
       row.setState({
         title,
       });
+
+      //TODO rows are not updated when behaviour changed
 
       return;
     }
@@ -155,6 +155,7 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
   static Component = ({ model }: SceneComponentProps<RowActions>) => {
     const dashboard = model.getDashboard();
     const row = model.getParent();
+    const { title } = row.useState();
     const { meta, isEditing } = dashboard.useState();
     const styles = useStyles2(getStyles);
 
@@ -166,9 +167,9 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
           <>
             <div className={styles.rowActions}>
               <RowOptionsButton
-                title={row.state.title}
+                title={title}
                 repeat={behaviour instanceof RowRepeaterBehavior ? behaviour.state.variableName : undefined}
-                obj={row}
+                obj={dashboard}
                 onUpdate={model.onUpdate}
                 warning={model.getWarning()}
               />
