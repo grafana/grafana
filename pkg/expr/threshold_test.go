@@ -175,7 +175,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				require.Equal(t, ThresholdIsAbove, cmd.LoadingThresholdFunc.ThresholdFunc)
 				require.Equal(t, []float64{100.0}, cmd.LoadingThresholdFunc.Conditions)
 				require.Equal(t, []string{"B"}, cmd.UnloadingThresholdFunc.NeedsVars())
-				require.Equal(t, "lt", cmd.UnloadingThresholdFunc.ThresholdFunc)
+				require.Equal(t, ThresholdIsBelow, cmd.UnloadingThresholdFunc.ThresholdFunc)
 				require.Equal(t, []float64{31.0}, cmd.UnloadingThresholdFunc.Conditions)
 				require.True(t, cmd.UnloadingThresholdFunc.Invert)
 				require.NotNil(t, cmd.LoadedDimensions)
