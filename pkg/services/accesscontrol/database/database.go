@@ -61,7 +61,13 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		Scope  string `xorm:"scope"`
 	}
 	dbPerms := make([]UserRBACPermission, 0)
+
 	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		roleNameFilterJoin := ""
+		if len(options.RolePrefixes) > 0 {
+			roleNameFilterJoin = "INNER JOIN role AS r on up.role_id = r.id"
+		}
+
 		// Find permissions
 		q := `
 		SELECT
@@ -91,8 +97,7 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 						FROM ` + s.sql.GetDialect().Quote("user") + ` AS u WHERE u.is_admin
 					) AS sa ON 1 = 1
 					WHERE br.role = ?
-		) AS up
-		INNER JOIN role AS r on up.role_id = r.id
+		) AS up ` + roleNameFilterJoin + `
 		WHERE (up.org_id = ? OR up.org_id = ?)
 		`
 
