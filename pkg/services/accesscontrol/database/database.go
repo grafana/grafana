@@ -36,8 +36,8 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 		` + filter
 
 		if len(query.RolePrefixes) > 0 {
-			q += " WHERE ( " + strings.Repeat("role.name LIKE ? OR ", len(query.RolePrefixes))
-			q = q[:len(q)-4] + " )" // remove last " OR "
+			q += " WHERE ( " + strings.Repeat("role.name LIKE ? OR ", len(query.RolePrefixes)-1)
+			q += "role.name LIKE ? )"
 			for i := range query.RolePrefixes {
 				params = append(params, query.RolePrefixes[i]+"%")
 			}
@@ -53,7 +53,7 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	return result, err
 }
 
-// SearchUsersPermissions returns the list of user permissions indexed by UserID
+// SearchUsersPermissions returns the list of user permissions in specific organization indexed by UserID
 func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	type UserRBACPermission struct {
 		UserID int64  `xorm:"user_id"`
@@ -127,7 +127,6 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 			q += ` AND user_id = ?`
 			params = append(params, userID)
 		}
-
 		if len(options.RolePrefixes) > 0 {
 			q += " AND ( " + strings.Repeat("r.name LIKE ? OR ", len(options.RolePrefixes)-1)
 			q += "r.name LIKE ? )"
