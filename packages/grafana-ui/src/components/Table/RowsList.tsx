@@ -24,7 +24,7 @@ import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
 import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
 import { TableFieldOptions, TableFilterActionCallback } from './types';
-import { calculateAroundPointThreshold, isPointTimeValAroundTableTimeVal } from './utils';
+import { calculateAroundPointThreshold, getCellColors, isPointTimeValAroundTableTimeVal } from './utils';
 
 interface RowsListProps {
   data: DataFrame;
@@ -202,17 +202,16 @@ export const RowsList = (props: RowsListProps) => {
     [tableState.pageIndex, tableState.pageSize]
   );
 
-  let rowBg: (rowIndex: number) => string | undefined;
+  let rowBg: (rowIndex: number) => { textColor: string | undefined, bgColor: string | undefined } | undefined;
 
   for (const field of data.fields) {
     const fieldOptions = field.config.custom as TableFieldOptions;
 
-    // Should also check fieldOptions.cellOptions.applyToRow
     if (fieldOptions.cellOptions?.type === TableCellDisplayMode.ColorBackground &&
         fieldOptions.cellOptions.applyToRow) {
       rowBg = (rowIndex: number) => {
         const display = field.display!(field.values.get(rowIndex));
-        return display.color;
+        return getCellColors(tableStyles, fieldOptions.cellOptions, display);
       };
     }
   }
@@ -235,8 +234,9 @@ export const RowsList = (props: RowsListProps) => {
       }
 
       if (rowBg) {
-        style.backgroundColor = rowBg(index);
-        style.color = getTextColorForAlphaBackground(style.backgroundColor!, tableStyles.theme.isDark);
+        const { textColor, bgColor } = rowBg(index);
+        style.backgroundColor = bgColor;
+        style.color = textColor;
       }
 
       return (

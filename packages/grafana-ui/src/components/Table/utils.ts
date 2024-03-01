@@ -571,7 +571,7 @@ export function calculateAroundPointThreshold(timeField: Field): number {
   return (max - min) / timeField.values.length;
 }
 
-export function getCellBackgroundColor(tableStyles: TableStyles,
+export function getCellColors(tableStyles: TableStyles,
   cellOptions: TableCellOptions,
   displayValue: DisplayValue,) {
 // How much to darken elements depends upon if we're in dark mode
