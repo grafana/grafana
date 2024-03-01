@@ -124,7 +124,7 @@ If you're unsure, see the existing [changelog](https://github.com/grafana/grafan
 
 The pull request title should be formatted according to `<Area>: <Summary>` (Both "Area" and "Summary" should start with a capital letter).
 
-The Grafana team _squashes_ all commits into one when we accept a pull request. The title of the pull request becomes the subject line of the squashed commit message. We still encourage contributors to write informative commit messages, as they becomes a part of the Git commit body.
+The Grafana team _squashes_ all commits into one when we accept a pull request. The title of the pull request becomes the subject line of the squashed commit message. We still encourage contributors to write informative commit messages, as they become a part of the Git commit body.
 
 We use the pull request title when we generate change logs for releases. As such, we strive to make the title as informative as possible.
 
@@ -133,7 +133,7 @@ We use the pull request title when we generate change logs for releases. As such
 
 ## Configuration changes
 
-If your PR includes configuration changes, all of the following files must be changed correspondingly:
+If your PR includes configuration changes, all the following files must be changed correspondingly:
 
 - conf/defaults.ini
 - conf/sample.ini
