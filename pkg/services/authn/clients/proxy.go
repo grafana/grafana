@@ -92,27 +92,18 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			if err != nil {
 				c.log.FromContext(ctx).Warn("Failed to parse user id from cache", "error", err, "userId", string(entry))
 			} else {
-				usr, err := c.userSrv.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
-					UserID: uid,
-					OrgID:  r.OrgID,
-				})
-
-				if err != nil {
-					c.log.FromContext(ctx).Warn("Could not resolved cached user", "error", err, "userId", string(entry))
-				}
-
-				// if we for some reason cannot find the user we proceed with the normal flow, authenticate with ProxyClient
-				// and perform syncs
-				if usr != nil {
-					// Get the authentication information for the user
-					authedBy, err := c.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.UserID})
-					if err != nil || authedBy == nil {
-						c.log.FromContext(ctx).Warn("Cached user had no valid auth info", "error", err, "userId", string(entry))
-					} else {
-						c.log.FromContext(ctx).Debug("User was loaded from cache, skip syncs", "userId", usr.UserID)
-						return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{SyncPermissions: true}, authedBy.AuthModule), nil
-					}
-				}
+				return &authn.Identity{
+					ID:    authn.NamespacedID(authn.NamespaceUser, uid),
+					OrgID: r.OrgID,
+					// FIXME: This does not match the actual auth module used, but should not have any impact
+					// Maybe caching the auth module used with the user ID would be a good idea
+					AuthenticatedBy: login.AuthProxyAuthModule,
+					ClientParams: authn.ClientParams{
+						FetchSyncedUser:   true,
+						SyncPermissions:   true,
+						CacheAuthProxyKey: cacheKey,
+					},
+				}, nil
 			}
 		}
 	}
