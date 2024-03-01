@@ -264,6 +264,8 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	// Limit roles to available in OSS
+	options.RolePrefixes = []string{accesscontrol.BasicRolePrefix, accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 	if options.NamespacedID != "" {
 		userID, err := options.ComputeUserID()
 		if err != nil {
