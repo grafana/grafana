@@ -1,6 +1,7 @@
 package definitions
 
 import (
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 )
 
@@ -45,7 +46,7 @@ import (
 type Policytree struct {
 	// The new notification routing tree to use
 	// in:body
-	Body Route
+	Body definition.Route
 }
 
 // swagger:parameters RoutePutPolicyTree
