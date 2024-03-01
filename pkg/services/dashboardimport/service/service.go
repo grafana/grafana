@@ -141,7 +141,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
 	// nolint:staticcheck
-	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId, req.FolderUid)
+	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId)
 	if err != nil {
 		return nil, err
 	}

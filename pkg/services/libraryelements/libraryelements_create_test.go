@@ -15,7 +15,7 @@ func TestCreateLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to create a library panel that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
@@ -28,7 +28,6 @@ func TestCreateLibraryElement(t *testing.T) {
 					ID:          1,
 					OrgID:       1,
 					FolderID:    1, // nolint:staticcheck
-					FolderUID:   sc.folder.UID,
 					UID:         sc.initialResult.Result.UID,
 					Name:        "Text - Library Panel",
 					Kind:        int64(model.PanelElement),
@@ -69,7 +68,7 @@ func TestCreateLibraryElement(t *testing.T) {
 	testScenario(t, "When an admin tries to create a library panel that does not exists using an nonexistent UID, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Nonexistent UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Nonexistent UID")
 			command.UID = util.GenerateShortUID()
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -79,7 +78,6 @@ func TestCreateLibraryElement(t *testing.T) {
 					ID:          1,
 					OrgID:       1,
 					FolderID:    1, // nolint:staticcheck
-					FolderUID:   sc.folder.UID,
 					UID:         command.UID,
 					Name:        "Nonexistent UID",
 					Kind:        int64(model.PanelElement),
@@ -120,7 +118,7 @@ func TestCreateLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists using an existent UID, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Existing UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Existing UID")
 			command.UID = sc.initialResult.Result.UID
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -130,7 +128,7 @@ func TestCreateLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists using an invalid UID, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Invalid UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Invalid UID")
 			command.UID = "Testing an invalid UID"
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -140,7 +138,7 @@ func TestCreateLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists using an UID that is too long, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Invalid UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Invalid UID")
 			command.UID = "j6T00KRZzj6T00KRZzj6T00KRZzj6T00KRZzj6T00K"
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -149,7 +147,7 @@ func TestCreateLibraryElement(t *testing.T) {
 
 	testScenario(t, "When an admin tries to create a library panel where name and panel title differ, it should not update panel title",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(1, sc.folder.UID, "Library Panel Name")
+			command := getCreatePanelCommand(1, "Library Panel Name")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
@@ -158,7 +156,6 @@ func TestCreateLibraryElement(t *testing.T) {
 					ID:          1,
 					OrgID:       1,
 					FolderID:    1, // nolint:staticcheck
-					FolderUID:   sc.folder.UID,
 					UID:         result.Result.UID,
 					Name:        "Library Panel Name",
 					Kind:        int64(model.PanelElement),
