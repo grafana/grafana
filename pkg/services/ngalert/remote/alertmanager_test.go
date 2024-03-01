@@ -188,7 +188,8 @@ func TestSendConfiguration(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("content-type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status": "success"}`))
+		_, err := w.Write([]byte(`{"status": "success"}`))
+		require.NoError(t, err)
 	}))
 
 	store := ngfakes.NewFakeKVStore(t)
