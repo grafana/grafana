@@ -19,12 +19,15 @@
     {
       "metadata": {
         "name": "teamHttpHeaders",
-        "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
+        "resourceVersion": "1709290509653",
+        "creationTimestamp": "2024-02-16T18:36:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-01 10:55:09.653587 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables datasources to apply team headers to the client requests",
-        "stage": "experimental",
+        "description": "Enables Team LBAC for datasources to apply team headers to the client requests",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
       }
     },
