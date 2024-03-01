@@ -1,56 +1,104 @@
 {
   "color": {
-    "background": {
-      "canvas": {
-        "value": "#111217",
-        "type": "color"
+    "shadow": {
+      "z1": {
+        "value": "{color.base.black}",
+        "type": "color",
+        "$extensions": {
+          "studio.tokens": {
+            "modify": {
+              "type": "alpha",
+              "value": "{opacity.75}",
+              "space": "hsl"
+            }
+          }
+        }
       },
-      "primary": {
-        "value": "#181b1f",
-        "type": "color"
+      "z2": {
+        "value": "{color.base.black}",
+        "type": "color",
+        "$extensions": {
+          "studio.tokens": {
+            "modify": {
+              "type": "alpha",
+              "value": "{opacity.75}",
+              "space": "hsl"
+            }
+          }
+        }
       },
-      "secondary": {
-        "value": "#22252b",
+      "z3": {
+        "value": "{color.base.black}",
         "type": "color"
       }
     },
-    "text": {
-      "primary": {
-        "value": "#ccccdc",
-        "type": "color"
-      },
-      "secondary": {
-        "value": "rgba(204,204,220,0.65)",
-        "type": "color"
-      },
-      "disabled": {
-        "value": "rgba(204,204,220,0.6)",
-        "type": "color"
-      },
-      "link": {
-        "value": "#6e9fff",
-        "type": "color"
-      },
-      "maxContrast": {
-        "value": "#ffffff",
-        "type": "color"
-      },
-      "maxContrastInverted": {
-        "value": "#24292e",
-        "type": "color"
+    "background": {
+      "ui": {
+        "primary": {
+          "value": "{color.neutral.950}",
+          "type": "color",
+          "description": "This token was previously known as background.canvas and is the primary background color in UI."
+        },
+        "secondary": {
+          "value": "{color.neutral.900}",
+          "type": "color",
+          "description": "This token was previously known as background.primary and is the secondary background color in UI."
+        },
+        "tertiary": {
+          "value": "{color.neutral.800}",
+          "type": "color",
+          "description": "This token was previously known as background.secondary and is the tertiary background color in UI."
+        },
+        "quaternary": {
+          "value": "{color.neutral.700}",
+          "type": "color",
+          "description": "This token didn't existed in the previous color palette for the UI but it can help leverage more levels of background needs and is the quaternary background color in the current UI palette."
+        },
+        "overlay": {
+          "value": "{color.background.ui.primary}",
+          "type": "color",
+          "$extensions": {
+            "studio.tokens": {
+              "modify": {
+                "type": "alpha",
+                "value": "{opacity.40}",
+                "space": "hsl"
+              }
+            }
+          },
+          "description": "This token didn't existed in the previous color palette for the UI. It will be used in the overlays and is using the base.black with alpha modifier with opacity.40"
+        }
       }
     },
     "border": {
       "weak": {
-        "value": "rgba(204,204,220,0.12)",
+        "value": "{color.neutral.800}",
         "type": "color"
       },
       "medium": {
-        "value": "rgba(204,204,220,0.2)",
+        "value": "{color.neutral.700}",
         "type": "color"
       },
       "strong": {
-        "value": "rgba(204,204,220,0.3)",
+        "value": "{color.neutral.600}",
+        "type": "color"
+      }
+    },
+    "content": {
+      "primary": {
+        "value": "{color.neutral.50}",
+        "type": "color"
+      },
+      "secondary": {
+        "value": "{color.neutral.300}",
+        "type": "color"
+      },
+      "disabled": {
+        "value": "{color.neutral.500}",
+        "type": "color"
+      },
+      "link": {
+        "value": "{color.blue.400}",
         "type": "color"
       }
     }
@@ -58,66 +106,36 @@
   "shadow": {
     "z1": {
       "value": {
-        "x": "{dimension.scale} *0",
-        "y": "{dimension.scale} *0.125",
-        "blur": "{dimension.scale} *0.25",
-        "spread": "{dimension.scale} *0",
-        "color": "#010409bf",
+        "x": "0",
+        "y": "1",
+        "blur": "2",
+        "spread": "0",
+        "color": "{color.shadow.z1}",
         "type": "dropShadow"
       },
-      "type": "boxShadow",
-      "oldValue": [
-        {
-          "x": "0px",
-          "y": "1px",
-          "blur": "2px",
-          "spread": "0px",
-          "color": "rgba( {color.gray.1400} ,0.75)",
-          "type": "dropShadow"
-        }
-      ]
+      "type": "boxShadow"
     },
     "z2": {
       "value": {
-        "color": "#010409bf",
-        "type": "dropShadow",
         "x": "0",
         "y": "4",
         "blur": "8",
-        "spread": "0"
+        "spread": "0",
+        "color": "{color.shadow.z2}",
+        "type": "dropShadow"
       },
-      "type": "boxShadow",
-      "oldValue": [
-        {
-          "x": "0px",
-          "y": "4px",
-          "blur": "8px",
-          "spread": "0px",
-          "color": "rgba( {color.gray.1400} ,0.75)",
-          "type": "dropShadow"
-        }
-      ]
+      "type": "boxShadow"
     },
     "z3": {
       "value": {
-        "color": "#010409",
-        "type": "dropShadow",
         "x": "0",
         "y": "8",
         "blur": "24",
-        "spread": "0"
+        "spread": "0",
+        "color": "{color.shadow.z3}",
+        "type": "dropShadow"
       },
-      "type": "boxShadow",
-      "oldValue": [
-        {
-          "x": "0px",
-          "y": "8px",
-          "blur": "24px",
-          "spread": "0px",
-          "color": "rgb( {color.gray.1400} )",
-          "type": "dropShadow"
-        }
-      ]
+      "type": "boxShadow"
     }
   }
 }

@@ -1,13 +1,13 @@
 [
   {
     "id": "32288a55d245a83c27d6624279b3f7943f326446",
-    "name": "Saga",
+    "name": "Saga Primitives",
     "$figmaStyleReferences": {
       "color.background.button.primary.default": "S:d1762280b4c49db0898ad489021e0c95173b261e,",
       "color.background.button.primary.hover": "S:f5d2f2fda1d9179154a545e4fe27c4582faafa8c,",
-      "color.background.level.canvas": "S:a0b13243e42620931cb1e472da868756d1b3db3d,",
-      "color.background.level.primary": "S:be2751dce906d1f3aaf4ba93e7dab8832fe1bd6b,",
-      "color.background.level.secondary": "S:49ac7b1da92d526341f55edc26e6165527a44116,"
+      "color.background.ui.canvas": "S:a0b13243e42620931cb1e472da868756d1b3db3d,",
+      "color.background.ui.primary": "S:be2751dce906d1f3aaf4ba93e7dab8832fe1bd6b,",
+      "color.background.ui.secondary": "S:49ac7b1da92d526341f55edc26e6165527a44116,"
     },
     "selectedTokenSets": {
       "core": "enabled",
@@ -137,9 +137,24 @@
     "id": "6fff78a46dacef84af2fc9fbe742b29dbef489bf",
     "name": "Dark",
     "$figmaStyleReferences": {
-      "shadow.z1": "S:f51a80e26bd7b47069d249d04997171bd4cdaba9,",
-      "shadow.z2": "S:e084be1d64946c0b7b758f80c41ded81ad7acfea,",
-      "shadow.z3": "S:2b701c2b2cc5f689abd7636c688d2a99f59e860d,"
+      "shadow.z1": "S:f62c4bb2506b9cbf10e37546fc773eaa5cfecd52,",
+      "shadow.z2": "S:0f529283ea2c004b8730d8a32249728deea55805,",
+      "shadow.z3": "S:60acaff3a1f570b0d5e6fd93fc0947fbb570a100,",
+      "color.shadow.z1": "S:7459bf4f709db37727944f722b6843c5b44b414e,",
+      "color.shadow.z2": "S:1ca0fe2adc9d4d18b80151f3d8ac767138658191,",
+      "color.shadow.z3": "S:52f2eabe94097f304362d4e2e8de169e02799d92,",
+      "color.background.ui.primary": "S:d259fe0d4d6cf490a94b057ba827258a3c25164d,",
+      "color.background.ui.secondary": "S:7cf91c3237d926e86f49aab1ab153a92807b6fa8,",
+      "color.background.ui.tertiary": "S:fe43160f51975c778fb83f83bc57dc2670ecbe76,",
+      "color.background.ui.quaternary": "S:578fbe85dfaa3a7c06a69431fc27cca9c3e74d48,",
+      "color.background.ui.overlay": "S:963a8e237c67466601a55ef20b4ad8c9987fc80a,",
+      "color.border.weak": "S:e723c9e268f36b2199a09adcab4da3bc071fe447,",
+      "color.border.medium": "S:41fdd0fa21e31ecae04fdac44cc61eae47472f01,",
+      "color.border.strong": "S:d7898cb650b663aa1830b85ea00791e5503e260e,",
+      "color.content.primary": "S:078a58e8347c113f08c1d998d9fc7bf95d22dcd4,",
+      "color.content.secondary": "S:591b81f373aefd907c21bdd28ed69013359991b3,",
+      "color.content.disabled": "S:d5561eba9f397a371a39ee25fe90972106abc3c2,",
+      "color.content.link": "S:c44c12b6f2e0bc617ac98f70456b58bb6e7f0172,"
     },
     "selectedTokenSets": {
       "core": "source",
@@ -166,14 +181,14 @@
       "color.level.background.canvas": "19f600326ce0da62a4583eec4d49759c9d418eee",
       "color.level.background.primary": "5f6d46c856a0dce114d3d6527e824ebc46164885",
       "color.level.background.secondary": "b3e5eae21c1fcb77b1a0fcb887cb1185afab0754",
-      "color.text.primary": "c0ff4924d8bd92c6247a4383e9c197a4d8359d3e",
-      "color.text.secondary": "c7ce255450007e29c5382da9f2b85b6f9b9509d2",
-      "color.text.disabled": "3b4daa4c80c4c4f73c92f1a4126354c59bafe4c0",
       "color.text.max-contrast": "6cf8a18fd0543544fe21d644245328978792a6f8",
-      "color.text.link": "3027a5be4699f9230c5f1a8286ac0fb537e97a7b",
       "color.border.weak": "adedb1435c07da75ff0c94859f6ef211e54befc9",
       "color.border.medium": "529aeff2c2600b28d48dfc0c85e07ef8d629962d",
-      "color.border.strong": "357885cbf26c0c18b588f8a3ec4a9b58588e0dce"
+      "color.border.strong": "357885cbf26c0c18b588f8a3ec4a9b58588e0dce",
+      "color.foreground.primary.primary": "c0ff4924d8bd92c6247a4383e9c197a4d8359d3e",
+      "color.foreground.primary.secondary": "c7ce255450007e29c5382da9f2b85b6f9b9509d2",
+      "color.foreground.primary.disabled": "3b4daa4c80c4c4f73c92f1a4126354c59bafe4c0",
+      "color.foreground.primary.link": "3027a5be4699f9230c5f1a8286ac0fb537e97a7b"
     },
     "group": "Saga Themes"
   },
@@ -181,9 +196,9 @@
     "id": "fbe099152beb8adb76d992721d447104f9aea052",
     "name": "Light",
     "$figmaStyleReferences": {
-      "shadow.z1": "S:04855e4cfd2ef41f7625534ef472fb4e9584cbfa,",
-      "shadow.z2": "S:aabf29978909e6492f1db87f6fbd37a6fcbbc836,",
-      "shadow.z3": "S:f8b17724320b476ca6debf9570d874403334d515,"
+      "shadow.z1": "S:b393e9525d5be82faeb3993a070120c5f3e6e5e6,",
+      "shadow.z2": "S:b802e6d6dede922c52afc241c89581fdc04b6bac,",
+      "shadow.z3": "S:0cab397cc0656061c1e0de84cf4c4497b405f785,"
     },
     "selectedTokenSets": {
       "core": "source",
