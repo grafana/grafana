@@ -38,7 +38,7 @@ func (r *subCountREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subCountREST) ProducesObject(verb string) interface{} {
-	return nil // &datasource.HealthCheckResult{}
+	return &v0alpha1.DescendantCounts{}
 }
 
 func (r *subCountREST) NewConnectOptions() (runtime.Object, bool, string) {
