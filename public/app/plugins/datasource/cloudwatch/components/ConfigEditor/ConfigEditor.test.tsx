@@ -216,6 +216,11 @@ describe('Render', () => {
       await waitFor(async () => expect(screen.getByText('Assume Role ARN')).toBeInTheDocument());
     });
 
+    it('should display namespace field', async () => {
+      setup();
+      await waitFor(async () => expect(screen.getByText('Namespaces of Custom Metrics')).toBeInTheDocument());
+    });
+
     it('should show a deprecation warning if `arn` auth type is used', async () => {
       setup({
         jsonData: {
