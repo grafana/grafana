@@ -164,7 +164,7 @@ func (h *ExpressionQueryReader) QueryTypeDefinitionListJSON() ([]byte, error) {
 }
 
 func getReferenceVar(exp string, refId string) (string, error) {
-	exp = strings.TrimPrefix(exp, "%")
+	exp = strings.TrimPrefix(exp, "$")
 	if exp == "" {
 		return "", fmt.Errorf("no variable specified to reference for refId %v", refId)
 	}

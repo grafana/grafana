@@ -22,16 +22,27 @@ type subQueryREST struct {
 	builder *DataSourceAPIBuilder
 }
 
-var _ = rest.Connecter(&subQueryREST{})
+var (
+	_ = rest.Connecter(&subQueryREST{})
+	_ = rest.StorageMetadata(&subQueryREST{})
+)
 
 func (r *subQueryREST) New() runtime.Object {
-	return &v0alpha1.QueryDataResponse{}
+	return &v0alpha1.GenericQueryRequest{}
 }
 
 func (r *subQueryREST) Destroy() {}
 
 func (r *subQueryREST) ConnectMethods() []string {
 	return []string{"POST", "GET"}
+}
+
+func (r *subQueryREST) ProducesMIMETypes(verb string) []string {
+	return []string{"application/json"} // and parquet!
+}
+
+func (r *subQueryREST) ProducesObject(verb string) interface{} {
+	return &v0alpha1.QueryDataResponse{}
 }
 
 func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {

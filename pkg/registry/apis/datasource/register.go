@@ -123,6 +123,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.HealthCheckResult{},
 		&unstructured.Unstructured{},
 		// Query handler
+		&query.GenericQueryRequest{},
 		&query.QueryDataResponse{},
 		&metav1.Status{},
 	)

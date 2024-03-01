@@ -14,7 +14,7 @@ import (
 
 func TestNewThresholdCommand(t *testing.T) {
 	type testCase struct {
-		fn            ThresholdFunc
+		fn            ThresholdType
 		args          []float64
 		shouldError   bool
 		expectedError string
@@ -107,7 +107,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				require.IsType(t, &ThresholdCommand{}, command)
 				cmd := command.(*ThresholdCommand)
 				require.Equal(t, []string{"A"}, cmd.NeedsVars())
-				require.Equal(t, "gt", cmd.ThresholdFunc)
+				require.Equal(t, ThresholdIsAbove, cmd.ThresholdFunc)
 				require.Equal(t, []float64{20.0, 80.0}, cmd.Conditions)
 			},
 		},
@@ -172,10 +172,10 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				cmd := c.(*HysteresisCommand)
 				require.Equal(t, []string{"B"}, cmd.NeedsVars())
 				require.Equal(t, []string{"B"}, cmd.LoadingThresholdFunc.NeedsVars())
-				require.Equal(t, "gt", cmd.LoadingThresholdFunc.ThresholdFunc)
+				require.Equal(t, ThresholdIsAbove, cmd.LoadingThresholdFunc.ThresholdFunc)
 				require.Equal(t, []float64{100.0}, cmd.LoadingThresholdFunc.Conditions)
 				require.Equal(t, []string{"B"}, cmd.UnloadingThresholdFunc.NeedsVars())
-				require.Equal(t, "lt", cmd.UnloadingThresholdFunc.ThresholdFunc)
+				require.Equal(t, ThresholdIsBelow, cmd.UnloadingThresholdFunc.ThresholdFunc)
 				require.Equal(t, []float64{31.0}, cmd.UnloadingThresholdFunc.Conditions)
 				require.True(t, cmd.UnloadingThresholdFunc.Invert)
 				require.NotNil(t, cmd.LoadedDimensions)
@@ -233,7 +233,7 @@ func TestCreateMathExpression(t *testing.T) {
 		expected    string
 
 		ref      string
-		function ThresholdFunc
+		function ThresholdType
 		params   []float64
 	}
 
@@ -297,7 +297,7 @@ func TestCreateMathExpression(t *testing.T) {
 
 func TestIsSupportedThresholdFunc(t *testing.T) {
 	type testCase struct {
-		function  ThresholdFunc
+		function  ThresholdType
 		supported bool
 	}
 
