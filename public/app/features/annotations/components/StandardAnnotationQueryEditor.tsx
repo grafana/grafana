@@ -112,40 +112,59 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     });
   };
 
-  renderStatus() {
-    const { response, running } = this.state;
-    let text: ReactElement;
-    let severity: AlertVariant = 'info';
+  getStatusSeverity(response: AnnotationQueryResponse): AlertVariant {
+    const { events, panelData } = response;
+
+    if (panelData?.errors || panelData?.error) {
+      return 'error';
+    }
+
+    if (!events?.length) {
+      return 'warning';
+    }
+
+    return 'info';
+  }
+
+  renderStatusText(response: AnnotationQueryResponse, running: boolean | undefined): ReactElement {
+    const { events, panelData } = response;
 
     if (running || response?.panelData?.state === LoadingState.Loading || !response) {
-      text = <p>{'loading...'}</p>;
-    } else {
-      const { events, panelData } = response;
-
-      if (panelData?.errors) {
-        severity = 'error';
-        text = (
-          <>
-            {panelData.errors.map((e, i) => (
-              <p key={i}>{e.message}</p>
-            ))}
-          </>
-        );
-      } else if (panelData?.error) {
-        severity = 'error';
-        text = <p>{panelData.error.message ?? 'There was an error fetching data'}</p>;
-      } else if (!events?.length) {
-        severity = 'warning';
-        text = <p>No events found</p>;
-      } else {
-        const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
-        text = (
-          <p>
-            {events.length} events (from {frame?.fields.length} fields)
-          </p>
-        );
-      }
+      return <p>{'loading...'}</p>;
     }
+
+    if (panelData?.errors) {
+      return (
+        <>
+          {panelData.errors.map((e, i) => (
+            <p key={i}>{e.message}</p>
+          ))}
+        </>
+      );
+    }
+    if (panelData?.error) {
+      return <p>{panelData.error.message ?? 'There was an error fetching data'}</p>;
+    }
+
+    if (!events?.length) {
+      return <p>No events found</p>;
+    }
+
+    const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
+    return (
+      <p>
+        {events.length} events (from {frame?.fields.length} fields)
+      </p>
+    );
+  }
+
+  renderStatus() {
+    const { response, running } = this.state;
+
+    if (!response) {
+      return null;
+    }
+
     return (
       <>
         <Space v={2} />
@@ -166,10 +185,10 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
         <Space v={2} layout="block" />
         <Alert
           data-testid={selectors.components.Annotations.editor.resultContainer}
-          severity={severity}
+          severity={this.getStatusSeverity(response)}
           title="Query result"
         >
-          {text}
+          {this.renderStatusText(response, running)}
         </Alert>
       </>
     );
