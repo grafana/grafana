@@ -107,10 +107,6 @@ const (
 	// Logs the path for requests that are instrumented as unknown
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
 
-	// FlagDataConnectionsConsole
-	// Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.
-	FlagDataConnectionsConsole = "dataConnectionsConsole"
-
 	// FlagTopnav
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
@@ -618,6 +614,10 @@ const (
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
+
+	// FlagSqlExpressions
+	// Enables using SQL and DuckDB functions as Expressions.
+	FlagSqlExpressions = "sqlExpressions"
 
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph

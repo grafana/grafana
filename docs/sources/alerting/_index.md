@@ -27,8 +27,6 @@ Using Grafana Alerting, you create queries and expressions from multiple data so
 
 Grafana Alerting is available for Grafana OSS, Grafana Enterprise, or Grafana Cloud. With Mimir and Loki alert rules you can run alert expressions closer to your data and at massive scale, all managed by the Grafana UI you are already familiar with.
 
-Watch this video to learn more about Grafana Alerting: {{< vimeo 720001629 >}}
-
 _Refer to [Manage your alert rules][alerting-rules] for current instructions._
 
 ## Key features and benefits

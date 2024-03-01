@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useContext, useEffect } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2, dateTimeFormat, systemDateFormats, textUtil } from '@grafana/data';
-import { HorizontalGroup, IconButton, LayoutItemContext, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
+import { HorizontalGroup, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 
 interface Props {
@@ -25,9 +25,6 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
   const canEdit = canEditAnnotations(dashboardUID);
   const canDelete = canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;
 
-  const layoutCtx = useContext(LayoutItemContext);
-  useEffect(() => layoutCtx.boostZIndex(), [layoutCtx]);
-
   const timeFormatter = (value: number) =>
     dateTimeFormat(value, {
       format: systemDateFormats.fullDate,
@@ -35,7 +32,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
     });
 
   let time = timeFormatter(annoVals.time[annoIdx]);
-  let text = annoVals.text[annoIdx];
+  let text = annoVals.text?.[annoIdx] ?? '';
 
   if (annoVals.isRegion?.[annoIdx]) {
     time += ' - ' + timeFormatter(annoVals.timeEnd[annoIdx]);
@@ -59,7 +56,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
 
     // alertText = alertDef.getAlertAnnotationInfo(annotation); // @TODO ??
   } else if (annoVals.title?.[annoIdx]) {
-    text = annoVals.title[annoIdx] + '<br />' + (typeof text === 'string' ? text : '');
+    text = annoVals.title[annoIdx] + text ? `<br />${text}` : '';
   }
 
   return (
