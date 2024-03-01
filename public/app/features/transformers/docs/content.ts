@@ -636,7 +636,7 @@ Use this transformation to construct a matrix by specifying fields from your que
 
   Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
 
-  Here's an example of original data.
+  Here's an example of original data:
 
   | Time                | Server ID | CPU Temperature | Server Status |
   | ------------------- | --------- | --------------- | ------------- |
