@@ -96,9 +96,8 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 					// Maybe caching the auth module used with the user ID would be a good idea
 					AuthenticatedBy: login.AuthProxyAuthModule,
 					ClientParams: authn.ClientParams{
-						FetchSyncedUser:   true,
-						SyncPermissions:   true,
-						CacheAuthProxyKey: cacheKey,
+						FetchSyncedUser: true,
+						SyncPermissions: true,
 					},
 				}, nil
 			}
