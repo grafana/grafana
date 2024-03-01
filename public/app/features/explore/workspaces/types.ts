@@ -30,6 +30,8 @@ export type GetExploreWorkspaceResponse = {
 
 export type CreateExploreWorkspaceCommand = {
   name: string;
+  description: string;
+  config: Object;
 };
 
 export type CreateExploreWorkspaceResponse = {

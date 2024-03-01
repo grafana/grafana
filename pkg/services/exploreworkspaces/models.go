@@ -26,8 +26,10 @@ type ExploreWorkspaceSnapshot struct {
 // create a new workspace
 
 type CreateExploreWorkspaceCommand struct {
-	Name  string
-	OrgId int64
+	Name        string
+	Description string
+	Config      string
+	OrgId       int64
 }
 
 type CreateExploreWorkspaceResponse struct {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { ExploreWorkspace } from '../types';
+import { CreateExploreWorkspaceCommand, ExploreWorkspace } from '../types';
 
 import * as api from './api';
 
@@ -17,10 +17,8 @@ export const useExploreWorkspaces = () => {
     return await api.getExploreWorkspaces({});
   };
 
-  const createExploreWorkspace = async (name: string) => {
-    const result = await api.createExploreWorkspace({
-      name,
-    });
+  const createExploreWorkspace = async (cmd: CreateExploreWorkspaceCommand) => {
+    const result = await api.createExploreWorkspace(cmd);
     await reload();
     return result;
   };

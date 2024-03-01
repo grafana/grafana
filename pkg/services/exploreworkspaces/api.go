@@ -23,13 +23,14 @@ func (s *ExploreWorkspacesService) CreateExploreWorkspaceHandler(c *contextmodel
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	createExploreWorkspaceRespose, err := s.CreateExploreWorkspace(c.Req.Context(), cmd)
+	cmd.OrgId = c.SignedInUser.OrgID
+	uid, err := s.CreateExploreWorkspace(c.Req.Context(), cmd)
 
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "cannot create a workspace", err)
+		return response.Error(http.StatusBadRequest, "Cannot create a new workspace. "+err.Error(), err)
 	}
 
-	return response.JSON(http.StatusOK, createExploreWorkspaceRespose)
+	return response.JSON(http.StatusOK, CreateExploreWorkspaceResponse{UID: uid})
 }
 
 func (s *ExploreWorkspacesService) GetExploreWorkspaceHandler(c *contextmodel.ReqContext) response.Response {
@@ -41,7 +42,7 @@ func (s *ExploreWorkspacesService) GetExploreWorkspaceHandler(c *contextmodel.Re
 	exploreWorkspace, err := s.GetExploreWorkspace(c.Req.Context(), query)
 
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "cannot get workspace", err)
+		return response.Error(http.StatusBadRequest, "Cannot get workspace. "+err.Error(), err)
 	}
 
 	return response.JSON(http.StatusOK, GetExploreWorkspaceResponse{ExploreWorkspace: exploreWorkspace})
@@ -55,7 +56,7 @@ func (s *ExploreWorkspacesService) GetExploreWorkspacesHandler(c *contextmodel.R
 	exploreWorkspaces, err := s.GetExploreWorkspaces(c.Req.Context(), query)
 
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "cannot get workspaces", err)
+		return response.Error(http.StatusBadRequest, "Cannot get all workspaces. "+err.Error(), err)
 	}
 
 	return response.JSON(http.StatusOK, GetExploreWorkspacesResponse{ExploreWorkspaces: exploreWorkspaces})
