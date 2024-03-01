@@ -650,7 +650,7 @@ Use this transformation to construct a matrix by specifying fields from your que
   | 2020-07-07 09:25:05 | server 2  | 88              | OK            |
   | 2020-07-07 09:23:07 | server 1  | 86              | OK            |
 
-  This transformation goes in two steps. First you specify one or multiple fields to group the data by. This will group all the same values of those fields together, as if you sorted them. For instance if we group by the Server ID field, then it would group the data this way:
+  This transformation has two steps. First, specify one or more fields by which to group the data. This groups all the same values of those fields together, as if you sorted them. For instance, if you group by the Server ID field, Grafana groups the data this way:
 
   | Server ID      |  |
   | -------------- | ------------- |
