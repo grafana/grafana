@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
-	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 // Make sure we implement both store + admin
@@ -37,12 +36,22 @@ var (
 	ErrUnauthorizedNamespace = errors.New("namespace not authorized for user")
 	ErrNotPostgresDriver     = errors.New("expecting postgres driver")
 	ErrPgListenerNotInit     = errors.New("postgres listener not initialized")
+	ErrPgWatchTerminated     = errors.New("watch operation terminated by the administrator")
+)
+
+const (
+	DefaultPgWatcherChannelBufferLen      = 64
+	DefaultPgListenerMinReconnectInterval = 10 * time.Second
+	DefaultPgListenerMaxReconnectInterval = time.Minute
 )
 
 func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
 	entityServer := &sqlEntityServer{
-		db:  db,
-		log: log.New("sql-entity-server"),
+		db:                             db,
+		log:                            log.New("sql-entity-server"),
+		pgWatcherChannelBufferLen:      DefaultPgWatcherChannelBufferLen,
+		pgListenerMinReconnectInterval: DefaultPgListenerMinReconnectInterval,
+		pgListenerMaxReconnectInterval: DefaultPgListenerMaxReconnectInterval,
 	}
 
 	return entityServer, nil
@@ -57,19 +66,47 @@ type sqlEntityServer struct {
 	broadcaster Broadcaster[*entity.Entity]
 
 	// Postgres LISTEN/NOTIFY. TODO: move to a different struct
-	pgListener        *pq.Listener
-	pgBrokerDone      chan struct{}
-	pgListenerMu      sync.RWMutex
-	pgListenerInitErr error
-	pgListenerOnce    sync.Once
-	// we could receive multiple watch requests to watch for the same postrges channel, so we keep a map from postgres
-	// channel name to another map. We would have typically used a map[T]struct{}, but as channels are not comparable,
-	// we assign them a pointer. We could use a random string id, but there's no need for generating them and all we
-	// care is that they are unique to the server process, so allocating any new pointer works perfectly. We cannot use a
-	// pointer to struct{} as the Go compiler optimizes all *struct{} to point to the same address.
-	pgNotifyMap   map[string]map[*int]chan<- *pq.Notification // map[pgChannelName]map[listenerChanID]GoNotificationChan
+	pgListener   *pq.Listener
+	pgBrokerDone chan struct{}
+	pgListenerMu sync.RWMutex
+
+	pgNotifyMap   pgChannelMap
 	pgNotifyMapMu sync.RWMutex
+
+	// TODO: make configurable
+	pgWatcherChannelBufferLen      int
+	pgListenerMinReconnectInterval time.Duration
+	pgListenerMaxReconnectInterval time.Duration
 }
+
+// Types aliases that serve to provide consistent namning and documentation throughout postgres LISTEN/NOTIFY
+// implementation for the Watch method of entity.EntityStoreServer.
+type (
+	// pgWatcherChannel is a channel of postgres notifications. These channels are created by watchers and registered by
+	// pgAddNotifyChan. Watchers only receive from them, then the broker sends to them, and finally pgRemoveNotifyChan
+	// closes them. (*pq.Listener).NotificationChannel() returns a receive-only version of this channel, whose values
+	// are forwarded to the appropriate watchers through pgWatcherChannel.
+	pgWatcherChannel = chan<- *pq.Notification
+
+	// pgWatcherChannelMap could be better expressed as a map[pgWatcherChannel]struct{}, except for the fact that
+	// pgWatcherChannel is a channel type, hence it's not comparable and cannot be used as a map key. We could use
+	// anything, like a random UUID, as the key, but we chose to use a pointer type because it's far more trivial and
+	// provides an even stronger against collisions, since a new allocation will provide a unique address, and all we
+	// care for here is uniqueness at the server process level. Note that we cannot use something like *struct{} since
+	// the Go compiler optimizes all *struct{} to point to the same address, so we need to choose something else.
+	pgWatcherChannelMapKey = *byte
+	pgWatcherChannelMap    = map[pgWatcherChannelMapKey]pgWatcherChannel
+
+	// pgChannel is a postgres channel identifier, which is used to call the postgres LISTEN SQL command on it to
+	// receive notifications of changes to "entity" table. These notifications are created by a trigger on that table
+	// that calls the postgres NOTIFY SQL command, and include a payload JSON payload that we decode on this side.
+	pgChannel = string
+
+	// pgChannelMap holds a reference to all watcher channels. As we could receive multiple Watch requests for the same
+	// channel (which we map to a k8s namespace, which in turn we map to a Grafana tenant), then we use each of these
+	// pgWatcherChannel to provide the appropriate notifications to each client served.
+	pgChannelMap = map[pgChannel]pgWatcherChannelMap
+)
 
 func (s *sqlEntityServer) Init() error {
 	if s.sess != nil {
@@ -157,7 +194,7 @@ func (s *sqlEntityServer) getReadSelect(r *entity.ReadEntityRequest) (string, er
 	return "SELECT " + strings.Join(quotedFields, ","), nil
 }
 
-func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.Entity, error) {
+func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, withBody, withStatus bool) (*entity.Entity, error) {
 	raw := &entity.Entity{
 		Origin: &entity.EntityOriginInfo{},
 	}
@@ -177,10 +214,10 @@ func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *en
 		&raw.Message,
 		&raw.Action,
 	}
-	if r.WithBody {
+	if withBody {
 		args = append(args, &raw.Body)
 	}
-	if r.WithStatus {
+	if withStatus {
 		args = append(args, &raw.Status)
 	}
 
@@ -265,7 +302,7 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 		return &entity.Entity{}, nil
 	}
 
-	return s.rowToEntity(ctx, rows, r)
+	return s.rowToEntity(ctx, rows, r.WithBody, r.WithStatus)
 }
 
 func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEntityRequest) (*entity.BatchReadEntityResponse, error) {
@@ -311,7 +348,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 	// TODO? make sure the results are in order?
 	rsp := &entity.BatchReadEntityResponse{}
 	for rows.Next() {
-		r, err := s.rowToEntity(ctx, rows, req)
+		r, err := s.rowToEntity(ctx, rows, req.WithBody, req.WithStatus)
 		if err != nil {
 			return nil, err
 		}
@@ -982,7 +1019,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		Key: r.Key,
 	}
 	for rows.Next() {
-		v, err := s.rowToEntity(ctx, rows, rr)
+		v, err := s.rowToEntity(ctx, rows, rr.WithBody, rr.WithStatus)
 		if err != nil {
 			return nil, err
 		}
@@ -1181,7 +1218,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	defer func() { _ = rows.Close() }()
 	rsp := &entity.EntityListResponse{}
 	for rows.Next() {
-		result, err := s.rowToEntity(ctx, rows, rr)
+		result, err := s.rowToEntity(ctx, rows, rr.WithBody, rr.WithStatus)
 		if err != nil {
 			return rsp, err
 		}
@@ -1227,8 +1264,17 @@ func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntitySto
 		return err
 	}
 
+	engine, err := s.db.GetEngine()
+	if err != nil {
+		return fmt.Errorf("get engine: %w", err)
+	}
+
 	// subscribe to new events
-	err = s.watch(w.Context(), cr, w)
+	if engine.DriverName() == "postgres" {
+		err = s.watch(w.Context(), cr, w)
+	} else {
+		err = s.pgWatch(w.Context(), cr, w)
+	}
 	if err != nil {
 		s.log.Error("watch error", "err", err)
 		return err
@@ -1366,7 +1412,7 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r cachedEntityWatchRequ
 					return nil
 				}
 
-				result, err := s.rowToEntity(ctx, rows, rr)
+				result, err := s.rowToEntity(ctx, rows, rr.WithBody, rr.WithStatus)
 				if err != nil {
 					return err
 				}
@@ -1455,7 +1501,7 @@ func (s *sqlEntityServer) poll(ctx context.Context, since int64, out chan *entit
 					return nil
 				}
 
-				result, err := s.rowToEntity(ctx, rows, rr)
+				result, err := s.rowToEntity(ctx, rows, rr.WithBody, rr.WithStatus)
 				if err != nil {
 					return err
 				}
@@ -1579,39 +1625,9 @@ func (ne notifiedEntity) toEntity(namespace string) (*entity.Entity, error) {
 	return ret, nil
 }
 
-// initPgListener lazily creates a new postgres database connection to handle all NOTIFY events from the database to
-// which we subscribe within watchNotify method.
-func (s *sqlEntityServer) initPgListener() {
-	s.pgListenerOnce.Do(func() {
-		var engine *xorm.Engine
-		engine, s.pgListenerInitErr = s.db.GetEngine()
-		if s.pgListenerInitErr != nil {
-			return
-		}
-
-		if dn := engine.DriverName(); dn != "postgres" {
-			s.pgListenerInitErr = fmt.Errorf("unexpected driver %q: %w", dn, ErrNotPostgresDriver)
-			return
-		}
-
-		l := pq.NewListener(engine.DataSourceName())
-		if s.pgListenerInitErr = l.Ping(); s.pgListenerInitErr != nil {
-			return
-		}
-
-		s.pgListenerMu.Lock()
-		s.pgBrokerDone = make(chan struct{})
-		s.pgListener = l
-		s.pgListenerMu.Unlock()
-
-		go s.pgNotificationBrokerLoop()
-	})
-}
-
-// terminatePgListener should not be called concurrently with initPgListener. If it ever needs to be exported, then it
-// should use a mutex to access pgListener, which should also be protected wherever that field is used as well since
-// initialization is lazy and we can't predict when it will run.
-func (s *sqlEntityServer) terminatePgListener() error {
+// pgTerminateListener closes the connection used for postgres notifications, terminates all watchers and resets the
+// state to be ready again for new watchers. Current watchers will return ErrPgWatchTerminated error.
+func (s *sqlEntityServer) pgTerminateListener() error {
 	s.pgListenerMu.Lock()
 	defer s.pgListenerMu.Unlock()
 	if s.pgListener == nil {
@@ -1625,72 +1641,166 @@ func (s *sqlEntityServer) terminatePgListener() error {
 	// wait until the broker goroutine has completed
 	<-s.pgBrokerDone
 
+	// cleanup
+	s.pgTerminateWatchers()
+	s.pgListener = nil
+	s.pgBrokerDone = nil
+
 	return err
 }
 
-func (s *sqlEntityServer) getPgListener() *pq.Listener {
+// pgGetListener returns the *pq.Listener used for postgres notifications, initializing it if necessary.
+func (s *sqlEntityServer) pgGetListener() (*pq.Listener, error) {
 	s.pgListenerMu.RLock()
-	defer s.pgListenerMu.RUnlock()
-	return s.pgListener
+	l := s.pgListener
+	s.pgListenerMu.RUnlock()
+
+	if l != nil {
+		return l, nil
+	}
+
+	// initialize
+
+	s.pgListenerMu.Lock()
+	defer s.pgListenerMu.Unlock()
+	engine, err := s.db.GetEngine()
+	if err != nil {
+		return nil, fmt.Errorf("get engine: %w", err)
+	}
+
+	if dn := engine.DriverName(); dn != "postgres" {
+		return nil, fmt.Errorf("unexpected driver %q: %w", dn, ErrNotPostgresDriver)
+	}
+
+	// TODO: provide a non-nil func to collect reconnection metrics
+	l = pq.NewListener(engine.DataSourceName(), s.pgListenerMinReconnectInterval, s.pgListenerMaxReconnectInterval, nil)
+	if err = l.Ping(); err != nil {
+		return nil, err
+	}
+
+	s.pgBrokerDone = make(chan struct{})
+	s.pgListener = l
+
+	go s.pgNotificationBrokerLoop(l.Notify)
+
+	return l, nil
 }
 
-// addNotifyChan registers the given Go channel for the postgres notification broker to direct relevant notifications to
-// it. The pointer it returns is used as an ID (or handle) to remove the channel with removeNotifyChan when the calling
+// pgAddNotifyChan registers the given Go channel for the postgres notification broker to direct relevant notifications to
+// it. The pointer it returns is used as an ID (or handle) to remove the channel with pgRemoveNotifyChan when the calling
 // function no longer needs to receive notifications. The postgres channel name is the k8s namespace, and is directly
 // associated with the tenant id.
-func (s *sqlEntityServer) addNotifyChan(pgChannelName string, c chan<- *pq.Notification) (listenerChanID *int, _ error) {
+func (s *sqlEntityServer) pgAddNotifyChan(pgChannelName string, c chan<- *pq.Notification) (pgWatcherChannelMapKey, error) {
 	s.pgNotifyMapMu.Lock()
 	defer s.pgNotifyMapMu.Unlock()
-	if _, ok := s.pgNotifyMap[pgChannelName]; !ok {
-		s.pgNotifyMap[pgChannelName] = map[*int]chan<- *pq.Notification{}
+
+	if s.pgNotifyMap == nil {
+		s.pgNotifyMap = pgChannelMap{}
+
+	} else if _, ok := s.pgNotifyMap[pgChannelName]; !ok {
+		s.pgNotifyMap[pgChannelName] = pgWatcherChannelMap{}
 		// we weren't listening before, so we start listening
-		if err := s.getPgListener().Listen(r.namespace); err != nil {
-			return nil, fmt.Errorf("pg listen on channel %q: %w", r.namespace, err)
+		l, err := s.pgGetListener()
+		if err != nil {
+			return nil, fmt.Errorf("pg get listener: %w", err)
+		}
+		if err = l.Listen(pgChannelName); err != nil {
+			return nil, fmt.Errorf("pg listen on channel %q: %w", pgChannelName, err)
 		}
 	}
-	listenerChanID = new(int)
-	s.pgNotifyMap[pgChannelName][listenerChanID] = c
-	return listenerChanID, nil
+
+	watcherKey := new(byte)
+	s.pgNotifyMap[pgChannelName][watcherKey] = c
+
+	return watcherKey, nil
 }
 
-// removeNotifyChan removes the channel associated with the given id (or handle).
-func (s *sqlEntityServer) removeNotifyChan(pgChannelName string, listenerChanID *int) error {
+// pgRemoveNotifyChan removes the channel associated with the given id (or handle). If either the pgChannelName or
+// watcherKey are registered it becomes a nop.
+func (s *sqlEntityServer) pgRemoveNotifyChan(pgChannelName string, watcherKey pgWatcherChannelMapKey) error {
 	s.pgNotifyMapMu.Lock()
 	defer s.pgNotifyMapMu.Unlock()
+	return s.pgRemoveNotifyChanLocked(pgChannelName, watcherKey)
+}
+
+func (s *sqlEntityServer) pgRemoveNotifyChanLocked(pgChannelName string, watcherKey pgWatcherChannelMapKey) error {
+	if s.pgNotifyMap == nil {
+		return nil
+	}
+
+	// close the watcher channel and delete the entry from watcher channel map
 	m := s.pgNotifyMap[pgChannelName]
-	delete(m, listenerChanID)
+	if m == nil {
+		return nil
+	}
+
+	c := m[watcherKey]
+	if c == nil {
+		return nil
+	}
+	close(c)
+	delete(m, watcherKey)
+
+	// if the watcher channel map no longer has items, unlisten from that postgres channel and remove the entry from the
+	// postgres channel map
 	if len(m) == 0 {
 		delete(s.pgNotifyMap, pgChannelName)
-		if err := s.getPgListener().Unlisten(r.namespace); err != nil {
-			return fmt.Errorf("pg unlisten on channel %q: %w", r.namespace, err)
+		l, err := s.pgGetListener()
+		if err != nil {
+			return fmt.Errorf("pg get listener: %w", err)
+		}
+		if err := l.Unlisten(pgChannelName); err != nil {
+			return fmt.Errorf("pg unlisten on channel %q: %w", pgChannelName, err)
 		}
 	}
+
 	return nil
+}
+
+// pgTerminateWatchers manually terminates all watchers, unlistens from all postgres channels and performs local state
+// cleanup, but doesn't terminate the dedicated postgres listener connection. Current watchers will return
+// ErrPgWatchTerminated error.
+func (s *sqlEntityServer) pgTerminateWatchers() {
+	s.pgNotifyMapMu.Lock()
+	defer s.pgNotifyMapMu.Unlock()
+	for c, m := range s.pgNotifyMap {
+		for k := range m {
+			if err := s.pgRemoveNotifyChanLocked(c, k); err != nil {
+				s.log.Error("terminate all postgres watchers: %w", err)
+			}
+		}
+	}
 }
 
 // pgNotificationBrokerLoop processes all the postgres server notifications sent to this server instance. As we use a
 // single DB connection to handle all postgres notifications, we need this broker to send the notification to the
 // appropriate running watcher.
-func (s *sqlEntityServer) pgNotificationBrokerLoop() {
+func (s *sqlEntityServer) pgNotificationBrokerLoop(c <-chan *pq.Notification) {
 	// signal that we have terminated, as this is meant to be run in a differnet goroutine
 	defer close(s.pgBrokerDone)
-
-	// get the postgres notification listener channel. We do this here to prevent unnecessary contention within the loop
-	// when calling getPgListener
-	c := s.getPgListener().NotificationChannel()
 
 	// main broker loop
 	for {
 		// get the next notification
 		var n *pq.Notification
+		var ok bool
+
+		// TODO: add case with ticker, which requires importing clock for an effectively testable ticker implementation.
+		// In the example code from the library they use 90 * time.Second for the ticker. For more information see:
+		//	https://pkg.go.dev/github.com/lib/pq/example/listen
 		select {
-		case n <- c:
+		case n, ok = <-c:
 		}
 
-		// when we close the postgres notification listener the channel is closed, so we will receive a zero-value,
-		// which means we're done
-		if n == nil {
+		// when we close the postgres notification listener the channel is closed
+		if !ok {
 			break
+		}
+
+		// the listener could send a nil notification during reconnection, so discard it. For more information, see:
+		//	https://pkg.go.dev/github.com/lib/pq#hdr-Notifications
+		if n == nil {
+			continue
 		}
 
 		s.pgNotificationBroker(n)
@@ -1701,34 +1811,45 @@ func (s *sqlEntityServer) pgNotificationBrokerLoop() {
 func (s *sqlEntityServer) pgNotificationBroker(n *pq.Notification) {
 	s.pgNotifyMapMu.RLock()
 	defer s.pgNotifyMapMu.RUnlock()
-	// TODO
+	for _, c := range s.pgNotifyMap[n.Channel] {
+		// we non-blockingly send to each watcher channel. This is because we need to be able to handle larger amounts
+		// notifications received. We cannot use a different goroutine to send to the channel here because if more than
+		// one goroutine is blocked waiting to send to a channel, there is no guarantee of which goroutine will get to
+		// send to the channel (this is by design in Go), which would cause some notifications to be dropped if they
+		// arrive out of sequence. Instead, we provide an individual buffer for each watcher channel, which satisfies
+		// our strict queueing needs. In the case that too many notifications are dropped, consider increasing
+		// pgWatcherChannelBufferLen
+		select {
+		case c <- n:
+		default:
+			s.log.Error("postgres notification dropped due to filled watcher queue",
+				"channel", n.Channel,
+				"payload", n.Extra,
+				"watcher_queue_capacity", cap(c))
+		}
+	}
 }
 
-// watchNotify is like watch but uses the native postgres LISTEN/NOTIFY SQL commands, and only queries for the rows we
+// pgWatch is like watch but uses the native postgres LISTEN/NOTIFY SQL commands, and only queries for the rows we
 // are sure we are interested in. Notifications include a payload which aids discriminating which are relevant to a
 // watcher.
-func (s *sqlEntityServer) watchNotify(ctx context.Context, r cachedEntityWatchRequest, w entity.EntityStore_WatchServer) error {
-	// initialize the connection we will use for notifications, lazily
-	s.initPgListener()
-	if s.pgListenerInitErr != nil {
-		return s.pgListenerInitErr
-	}
-
-	// create a channel for the broker to send us the notifications we're interested in
-	c := make(chan *pq.Notification, cap(s.getPgListener().NotificationChannel()))
-	listenerChanID, err := s.addNotifyChan(r.namespace, c)
+func (s *sqlEntityServer) pgWatch(ctx context.Context, r cachedEntityWatchRequest, w entity.EntityStore_WatchServer) error {
+	// create a channel for the broker to send us the notifications we're interested in and register it
+	c := make(chan *pq.Notification, s.pgWatcherChannelBufferLen)
+	watcherKey, err := s.pgAddNotifyChan(r.namespace, c)
 	if err != nil {
 		return err
 	}
 
 	// cleanup
 	defer func() {
-		if err := s.removeNotifyChan(r.namespace, listenerChanID); err != nil {
+		if err := s.pgRemoveNotifyChan(r.namespace, watcherKey); err != nil {
 			s.log.Error("remove notify channel", "error", err)
 		}
 		close(c)
 	}()
 
+	// main notifications loop
 loop:
 	for {
 		select {
@@ -1737,7 +1858,12 @@ loop:
 			// explicitly refer to the loop
 			break loop
 
-		case n := <-c:
+		case n, ok := <-c:
+			if !ok {
+				// we were terminated by pgTerminateWatchers
+				return ErrPgWatchTerminated
+			}
+
 			// decode the notification payload
 			var ne notifiedEntity
 			if err := json.NewDecoder(strings.NewReader(n.Extra)).Decode(&ne); err != nil {
@@ -1746,7 +1872,12 @@ loop:
 			}
 
 			// continue if we don't care about this notification
-			if !watchMatches(r, ne.toEntity(r.namespace)) {
+			partialEntity, err := ne.toEntity(r.namespace)
+			if err != nil {
+				s.log.Error("convert notification with payload %q to entity: %w", n.Extra, err)
+				continue
+			}
+			if !watchMatches(r, partialEntity) {
 				continue
 			}
 
@@ -1765,7 +1896,7 @@ loop:
 			}
 
 			// convert the row to entity
-			entity, err := s.rowToEntity(ctx, rows, r.EntityWatchRequest)
+			result, err := s.rowToEntity(ctx, rows, r.WithBody, r.WithStatus)
 			if err != nil {
 				return fmt.Errorf("convert SQL row to entity with GUID %q: %w", ne.GUID, err)
 			}
@@ -1774,7 +1905,7 @@ loop:
 			s.log.Debug("sending watch result", "guid", result.Guid, "action", result.Action)
 			err = w.Send(&entity.EntityWatchResponse{
 				Timestamp: time.Now().UnixMilli(),
-				Entity:    entity,
+				Entity:    result,
 			})
 			if err != nil {
 				return fmt.Errorf("sending entity with GUID %q to client: %w", ne.GUID, err)
