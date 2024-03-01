@@ -8,9 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
-func TestRequiresDevMode(t *testing.T) {
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func TestIntegrationRequiresDevMode(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -26,7 +31,7 @@ func TestRequiresDevMode(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestDashboardsApp(t *testing.T) {
+func TestIntegrationDashboardsApp(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
