@@ -49,6 +49,7 @@ describe('ReturnToPrevious', () => {
       action: 'clicked',
       page: '/dashboards',
     });
+    expect(reportInteraction).toHaveBeenCalledTimes(1);
   });
 
   it('should trigger event once when clicking on the Close button', async () => {
@@ -60,5 +61,6 @@ describe('ReturnToPrevious', () => {
       action: 'dismissed',
       page: '/dashboards',
     });
+    expect(reportInteraction).toHaveBeenCalledTimes(1);
   });
 });
