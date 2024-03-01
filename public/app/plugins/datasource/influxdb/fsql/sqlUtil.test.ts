@@ -52,4 +52,30 @@ describe('toRawSql', () => {
     const result = toRawSql(testQuery);
     expect(result).toEqual(expected);
   });
+
+  it('should wrap filters in where', () => {
+    const expected = `SELECT "host" FROM "iox.TestValue" WHERE "time" >= $__timeFrom AND "time" <= $__timeTo AND ("sensor_id" = '12' AND "sensor_id" = '23') LIMIT 50`;
+    const testQuery: SQLQuery = {
+      refId: 'A',
+      sql: {
+        limit: 50,
+        columns: [
+          {
+            parameters: [
+              {
+                name: 'host',
+                type: QueryEditorExpressionType.FunctionParameter,
+              },
+            ],
+            type: QueryEditorExpressionType.Function,
+          },
+        ],
+        whereString: `(sensor_id = '12' AND sensor_id = '23')`,
+      },
+      dataset: 'iox',
+      table: 'TestValue',
+    };
+    const result = toRawSql(testQuery);
+    expect(result).toEqual(expected);
+  });
 });
