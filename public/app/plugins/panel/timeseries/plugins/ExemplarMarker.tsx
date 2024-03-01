@@ -1,6 +1,15 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
-import { usePopper } from 'react-popper';
+import {
+  autoUpdate,
+  flip,
+  safePolygon,
+  shift,
+  useDismiss,
+  useFloating,
+  useHover,
+  useInteractions,
+} from '@floating-ui/react';
+import React, { CSSProperties, useCallback, useEffect, useState } from 'react';
 
 import {
   DataFrame,
@@ -44,25 +53,34 @@ export const ExemplarMarker = ({
   const styles = useStyles2(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
-  const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
-  const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement, {
-    modifiers: [
-      {
-        name: 'preventOverflow',
-        options: {
-          altAxis: true,
-        },
-      },
-      {
-        name: 'flip',
-        options: {
-          fallbackPlacements: ['top', 'left-start'],
-        },
-      },
-    ],
+
+  // the order of middleware is important!
+  const middleware = [
+    flip({
+      fallbackAxisSideDirection: 'end',
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+    shift(),
+  ];
+
+  const { context, refs, floatingStyles } = useFloating({
+    open: isOpen,
+    placement: 'bottom',
+    onOpenChange: setIsOpen,
+    middleware,
+    whileElementsMounted: autoUpdate,
+    strategy: 'fixed',
   });
-  const popoverRenderTimeout = useRef<NodeJS.Timeout>();
+
+  const dismiss = useDismiss(context);
+  const hover = useHover(context, {
+    handleClose: safePolygon(),
+    enabled: clickedExemplarFieldIndex === undefined,
+  });
+
+  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, hover]);
 
   useEffect(() => {
     if (
@@ -107,24 +125,9 @@ export const ExemplarMarker = ({
     return symbols[dataFrameFieldIndex.frameIndex % symbols.length];
   };
 
-  const onMouseEnter = useCallback(() => {
-    if (clickedExemplarFieldIndex === undefined) {
-      if (popoverRenderTimeout.current) {
-        clearTimeout(popoverRenderTimeout.current);
-      }
-      setIsOpen(true);
-    }
-  }, [setIsOpen, clickedExemplarFieldIndex]);
-
   const lockExemplarModal = () => {
     setIsLocked(true);
   };
-
-  const onMouseLeave = useCallback(() => {
-    popoverRenderTimeout.current = setTimeout(() => {
-      setIsOpen(false);
-    }, 150);
-  }, [setIsOpen]);
 
   const renderMarker = useCallback(() => {
     //Put fields with links on the top
@@ -220,28 +223,20 @@ export const ExemplarMarker = ({
     };
 
     return (
-      <div
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        className={styles.tooltip}
-        ref={setPopperElement}
-        style={popperStyles.popper}
-        {...attributes.popper}
-      >
+      <div className={styles.tooltip} ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
         {getExemplarMarkerContent()}
       </div>
     );
   }, [
-    attributes.popper,
     dataFrame.fields,
     dataFrameFieldIndex,
-    onMouseEnter,
-    onMouseLeave,
-    popperStyles.popper,
     styles,
     timeZone,
     isLocked,
     setClickedExemplarFieldIndex,
+    floatingStyles,
+    getFloatingProps,
+    refs.setFloating,
   ]);
 
   const seriesColor = config
@@ -256,19 +251,18 @@ export const ExemplarMarker = ({
   return (
     <>
       <div
-        ref={setMarkerElement}
+        ref={refs.setReference}
+        className={styles.markerWrapper}
+        data-testid={selectors.components.DataSource.Prometheus.exemplarMarker}
+        role="button"
+        tabIndex={0}
+        {...getReferenceProps()}
         onClick={onExemplarClick}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === 'Enter') {
             onExemplarClick();
           }
         }}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        className={styles.markerWrapper}
-        data-testid={selectors.components.DataSource.Prometheus.exemplarMarker}
-        role="button"
-        tabIndex={0}
       >
         <svg
           viewBox="0 0 7 7"

@@ -194,7 +194,12 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
   }
 
   if (gridItem instanceof PanelRepeaterGridItem) {
-    vizPanel = gridItem.state.source;
+    if (gridItem.state.source instanceof LibraryVizPanel) {
+      vizPanel = gridItem.state.source.state.panel;
+    } else {
+      vizPanel = gridItem.state.source;
+    }
+
     x = gridItem.state.x ?? 0;
     y = gridItem.state.y ?? 0;
     w = gridItem.state.width ?? 0;
@@ -316,6 +321,22 @@ export function panelRepeaterToPanels(repeater: PanelRepeaterGridItem, isSnapsho
   if (!isSnapshot) {
     return [gridItemToPanel(repeater)];
   } else {
+    if (repeater.state.source instanceof LibraryVizPanel) {
+      const { x = 0, y = 0, width: w = 0, height: h = 0 } = repeater.state;
+
+      return [
+        {
+          id: getPanelIdForVizPanel(repeater.state.source),
+          title: repeater.state.source.state.title,
+          gridPos: { x, y, w, h },
+          libraryPanel: {
+            name: repeater.state.source.state.name,
+            uid: repeater.state.source.state.uid,
+          },
+        } as Panel,
+      ];
+    }
+
     if (repeater.state.repeatedPanels) {
       const itemHeight = repeater.state.itemHeight ?? 10;
       const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
