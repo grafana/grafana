@@ -43,7 +43,7 @@ var (
 )
 
 func ProvideProxy(cfg *setting.Cfg, cache proxyCache, clients ...authn.ProxyClient) (*Proxy, error) {
-	list, err := parseAcceptList(cfg.AuthProxyWhitelist)
+	list, err := parseAcceptList(cfg.AuthProxy.Whitelist)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errNotAcceptedIP.Errorf("request ip is not in the configured accept list")
 	}
 
-	username := getProxyHeader(r, c.cfg.AuthProxyHeaderName, c.cfg.AuthProxyHeadersEncoded)
+	username := getProxyHeader(r, c.cfg.AuthProxy.HeaderName, c.cfg.AuthProxy.HeadersEncoded)
 	if len(username) == 0 {
 		return nil, errEmptyProxyHeader.Errorf("no username provided in auth proxy header")
 	}
@@ -118,7 +118,7 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 }
 
 func (c *Proxy) Test(ctx context.Context, r *authn.Request) bool {
-	return len(getProxyHeader(r, c.cfg.AuthProxyHeaderName, c.cfg.AuthProxyHeadersEncoded)) != 0
+	return len(getProxyHeader(r, c.cfg.AuthProxy.HeaderName, c.cfg.AuthProxy.HeadersEncoded)) != 0
 }
 
 func (c *Proxy) Priority() uint {
@@ -147,7 +147,7 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 	// 3. Name = x; Role = Admin			# cache hit with key Name=x;Role=Admin, no update, the user stays with Role=Editor
 	// To avoid such a problem we also cache the key used using `prefix:[username]`.
 	// Then whenever we get a cache miss due to changes in any header we use it to invalidate the previous item.
-	username := getProxyHeader(r, c.cfg.AuthProxyHeaderName, c.cfg.AuthProxyHeadersEncoded)
+	username := getProxyHeader(r, c.cfg.AuthProxy.HeaderName, c.cfg.AuthProxy.HeadersEncoded)
 	userKey := fmt.Sprintf("%s:%s", proxyCachePrefix, username)
 
 	// invalidate previously cached user id
@@ -159,7 +159,7 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 
 	c.log.FromContext(ctx).Debug("Cache proxy user", "userId", id)
 	bytes := []byte(strconv.FormatInt(id, 10))
-	duration := time.Duration(c.cfg.AuthProxySyncTTL) * time.Minute
+	duration := time.Duration(c.cfg.AuthProxy.SyncTTL) * time.Minute
 	if err := c.cache.Set(ctx, identity.ClientParams.CacheAuthProxyKey, bytes, duration); err != nil {
 		c.log.Warn("Failed to cache proxy user", "error", err, "userId", id)
 	}
@@ -232,7 +232,7 @@ func getProxyHeader(r *authn.Request, headerName string, encoded bool) string {
 func getAdditionalProxyHeaders(r *authn.Request, cfg *setting.Cfg) map[string]string {
 	additional := make(map[string]string, len(proxyFields))
 	for _, k := range proxyFields {
-		if v := getProxyHeader(r, cfg.AuthProxyHeaders[k], cfg.AuthProxyHeadersEncoded); v != "" {
+		if v := getProxyHeader(r, cfg.AuthProxy.Headers[k], cfg.AuthProxy.HeadersEncoded); v != "" {
 			additional[k] = v
 		}
 	}

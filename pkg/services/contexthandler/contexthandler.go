@@ -195,9 +195,9 @@ func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context 
 	}
 
 	// if auth proxy is enabled add the main proxy header and all configured headers
-	if cfg.AuthProxyEnabled {
-		list.Items = append(list.Items, cfg.AuthProxyHeaderName)
-		for _, header := range cfg.AuthProxyHeaders {
+	if cfg.AuthProxy.Enabled {
+		list.Items = append(list.Items, cfg.AuthProxy.HeaderName)
+		for _, header := range cfg.AuthProxy.Headers {
 			if header != "" {
 				list.Items = append(list.Items, header)
 			}
