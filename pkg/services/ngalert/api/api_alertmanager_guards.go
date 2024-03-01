@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/alerting/definition"
 	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 
@@ -36,7 +37,7 @@ func checkRoutes(currentConfig apimodels.GettableUserConfig, newConfig apimodels
 	reporter := cmputil.DiffReporter{}
 	options := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(labels.Matcher{})}
 	routesEqual := cmp.Equal(currentConfig.AlertmanagerConfig.Route, newConfig.AlertmanagerConfig.Route, options...)
-	if !routesEqual && currentConfig.AlertmanagerConfig.Route.Provenance != apimodels.Provenance(ngmodels.ProvenanceNone) {
+	if !routesEqual && currentConfig.AlertmanagerConfig.Route.Provenance != definition.Provenance(ngmodels.ProvenanceNone) {
 		return fmt.Errorf("policies were provisioned and cannot be changed through the UI")
 	}
 	return nil
@@ -69,8 +70,8 @@ func checkTemplates(currentConfig apimodels.GettableUserConfig, newConfig apimod
 	return nil
 }
 
-func checkContactPoints(l log.Logger, currReceivers []*apimodels.GettableApiReceiver, newReceivers []*apimodels.PostableApiReceiver) error {
-	newCPs := make(map[string]*apimodels.PostableGrafanaReceiver)
+func checkContactPoints(l log.Logger, currReceivers []*apimodels.GettableApiReceiver, newReceivers []*definition.PostableApiReceiver) error {
+	newCPs := make(map[string]*definition.PostableGrafanaReceiver)
 	for _, postedReceiver := range newReceivers {
 		for _, postedContactPoint := range postedReceiver.GrafanaManagedReceivers {
 			newCPs[postedContactPoint.UID] = postedContactPoint
@@ -78,7 +79,7 @@ func checkContactPoints(l log.Logger, currReceivers []*apimodels.GettableApiRece
 	}
 	for _, existingReceiver := range currReceivers {
 		for _, contactPoint := range existingReceiver.GrafanaManagedReceivers {
-			if contactPoint.Provenance == apimodels.Provenance(ngmodels.ProvenanceNone) {
+			if contactPoint.Provenance == definition.Provenance(ngmodels.ProvenanceNone) {
 				continue // we are only interested in non none
 			}
 			postedContactPoint, present := newCPs[contactPoint.UID]

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/definition"
 	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
@@ -65,9 +66,9 @@ func gettableRoute(t *testing.T, provenance models.Provenance) definitions.Getta
 	t.Helper()
 	return definitions.GettableUserConfig{
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
-			Config: definitions.Config{
-				Route: &definitions.Route{
-					Provenance: definitions.Provenance(provenance),
+			Config: definition.Config{
+				Route: &definition.Route{
+					Provenance: definition.Provenance(provenance),
 					Continue:   true,
 					GroupBy: []model.LabelName{
 						"...",
@@ -79,7 +80,7 @@ func gettableRoute(t *testing.T, provenance models.Provenance) definitions.Getta
 							Value: "b",
 						},
 					},
-					Routes: []*definitions.Route{
+					Routes: []*definition.Route{
 						{
 							Matchers: amConfig.Matchers{
 								{
@@ -99,10 +100,10 @@ func gettableRoute(t *testing.T, provenance models.Provenance) definitions.Getta
 func postableRoute(t *testing.T, provenace models.Provenance) definitions.PostableUserConfig {
 	t.Helper()
 	return definitions.PostableUserConfig{
-		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-			Config: definitions.Config{
-				Route: &definitions.Route{
-					Provenance: definitions.Provenance(provenace),
+		AlertmanagerConfig: definition.PostableApiAlertingConfig{
+			Config: definition.Config{
+				Route: &definition.Route{
+					Provenance: definition.Provenance(provenace),
 					Continue:   true,
 					GroupBy: []model.LabelName{
 						"...",
@@ -114,7 +115,7 @@ func postableRoute(t *testing.T, provenace models.Provenance) definitions.Postab
 							Value: "b",
 						},
 					},
-					Routes: []*definitions.Route{
+					Routes: []*definition.Route{
 						{
 							Matchers: amConfig.Matchers{
 								{
@@ -201,8 +202,8 @@ func gettableTemplates(t *testing.T, name string, provenance models.Provenance) 
 		TemplateFiles: map[string]string{
 			name: "some-template",
 		},
-		TemplateFileProvenances: map[string]definitions.Provenance{
-			name: definitions.Provenance(provenance),
+		TemplateFileProvenances: map[string]definition.Provenance{
+			name: definition.Provenance(provenance),
 		},
 	}
 }
@@ -223,7 +224,7 @@ func TestCheckContactPoints(t *testing.T) {
 		name          string
 		shouldErr     bool
 		currentConfig []*definitions.GettableApiReceiver
-		newConfig     []*definitions.PostableApiReceiver
+		newConfig     []*definition.PostableApiReceiver
 	}{
 		{
 			name:      "equal configs should not error",
@@ -231,7 +232,7 @@ func TestCheckContactPoints(t *testing.T) {
 			currentConfig: []*definitions.GettableApiReceiver{
 				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
 			},
-			newConfig: []*definitions.PostableApiReceiver{
+			newConfig: []*definition.PostableApiReceiver{
 				defaultPostableReceiver(t, "test-1"),
 			},
 		},
@@ -241,7 +242,7 @@ func TestCheckContactPoints(t *testing.T) {
 			currentConfig: []*definitions.GettableApiReceiver{
 				defaultGettableReceiver(t, "test-1", models.ProvenanceNone),
 			},
-			newConfig: []*definitions.PostableApiReceiver{},
+			newConfig: []*definition.PostableApiReceiver{},
 		},
 		{
 			name:      "removing a provisioned object should fail",
@@ -249,7 +250,7 @@ func TestCheckContactPoints(t *testing.T) {
 			currentConfig: []*definitions.GettableApiReceiver{
 				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
 			},
-			newConfig: []*definitions.PostableApiReceiver{},
+			newConfig: []*definition.PostableApiReceiver{},
 		},
 		{
 			name:      "adding a non provisioned object should not fail",
@@ -257,7 +258,7 @@ func TestCheckContactPoints(t *testing.T) {
 			currentConfig: []*definitions.GettableApiReceiver{
 				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
 			},
-			newConfig: []*definitions.PostableApiReceiver{
+			newConfig: []*definition.PostableApiReceiver{
 				defaultPostableReceiver(t, "test-1"),
 				defaultPostableReceiver(t, "test-2"),
 			},
@@ -268,8 +269,8 @@ func TestCheckContactPoints(t *testing.T) {
 			currentConfig: []*definitions.GettableApiReceiver{
 				defaultGettableReceiver(t, "test-1", models.ProvenanceNone),
 			},
-			newConfig: []*definitions.PostableApiReceiver{
-				func() *definitions.PostableApiReceiver {
+			newConfig: []*definition.PostableApiReceiver{
+				func() *definition.PostableApiReceiver {
 					receiver := defaultPostableReceiver(t, "test-1")
 					receiver.GrafanaManagedReceivers[0].SecureSettings = map[string]string{
 						"url": "newUrl",
@@ -284,8 +285,8 @@ func TestCheckContactPoints(t *testing.T) {
 			currentConfig: []*definitions.GettableApiReceiver{
 				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
 			},
-			newConfig: []*definitions.PostableApiReceiver{
-				func() *definitions.PostableApiReceiver {
+			newConfig: []*definition.PostableApiReceiver{
+				func() *definition.PostableApiReceiver {
 					receiver := defaultPostableReceiver(t, "test-1")
 					receiver.GrafanaManagedReceivers[0].SecureSettings = map[string]string{
 						"url": "newUrl",
@@ -300,10 +301,10 @@ func TestCheckContactPoints(t *testing.T) {
 			currentConfig: []*definitions.GettableApiReceiver{
 				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
 			},
-			newConfig: []*definitions.PostableApiReceiver{
-				func() *definitions.PostableApiReceiver {
+			newConfig: []*definition.PostableApiReceiver{
+				func() *definition.PostableApiReceiver {
 					receiver := defaultPostableReceiver(t, "test-1")
-					receiver.GrafanaManagedReceivers[0].Settings = definitions.RawMessage(`{ "hello": "data", "data": { "test": "test"}}`)
+					receiver.GrafanaManagedReceivers[0].Settings = definition.RawMessage(`{ "hello": "data", "data": { "test": "test"}}`)
 					return receiver
 				}(),
 			},
@@ -331,7 +332,7 @@ func defaultGettableReceiver(t *testing.T, uid string, provenance models.Provena
 					Name:                  "yeah",
 					Type:                  "slack",
 					DisableResolveMessage: true,
-					Provenance:            definitions.Provenance(provenance),
+					Provenance:            definition.Provenance(provenance),
 					SecureFields: map[string]bool{
 						"url": true,
 					},
@@ -345,17 +346,17 @@ func defaultGettableReceiver(t *testing.T, uid string, provenance models.Provena
 	}
 }
 
-func defaultPostableReceiver(t *testing.T, uid string) *definitions.PostableApiReceiver {
+func defaultPostableReceiver(t *testing.T, uid string) *definition.PostableApiReceiver {
 	t.Helper()
-	return &definitions.PostableApiReceiver{
-		PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+	return &definition.PostableApiReceiver{
+		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
+			GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
 				{
 					UID:                   "123",
 					Name:                  "yeah",
 					Type:                  "slack",
 					DisableResolveMessage: true,
-					Settings: definitions.RawMessage(`{
+					Settings: definition.RawMessage(`{
 						"hello": "world",
 						"data" : {}
 					}`),
@@ -386,8 +387,8 @@ func TestCheckMuteTimes(t *testing.T) {
 						TimeIntervals: defaultInterval(t),
 					},
 				},
-				map[string]definitions.Provenance{
-					"test-1": definitions.Provenance(models.ProvenanceNone),
+				map[string]definition.Provenance{
+					"test-1": definition.Provenance(models.ProvenanceNone),
 				}),
 			newConfig: postableMuteIntervals(t,
 				[]amConfig.MuteTimeInterval{
@@ -411,8 +412,8 @@ func TestCheckMuteTimes(t *testing.T) {
 						TimeIntervals: defaultInterval(t),
 					},
 				},
-				map[string]definitions.Provenance{
-					"test-1": definitions.Provenance(models.ProvenanceNone),
+				map[string]definition.Provenance{
+					"test-1": definition.Provenance(models.ProvenanceNone),
 				}),
 			newConfig: postableMuteIntervals(t, []amConfig.MuteTimeInterval{}),
 		},
@@ -430,8 +431,8 @@ func TestCheckMuteTimes(t *testing.T) {
 						TimeIntervals: defaultInterval(t),
 					},
 				},
-				map[string]definitions.Provenance{
-					"test-1": definitions.Provenance(models.ProvenanceAPI),
+				map[string]definition.Provenance{
+					"test-1": definition.Provenance(models.ProvenanceAPI),
 				}),
 			newConfig: postableMuteIntervals(t, []amConfig.MuteTimeInterval{
 				{
@@ -450,8 +451,8 @@ func TestCheckMuteTimes(t *testing.T) {
 						TimeIntervals: defaultInterval(t),
 					},
 				},
-				map[string]definitions.Provenance{
-					"test-1": definitions.Provenance(models.ProvenanceNone),
+				map[string]definition.Provenance{
+					"test-1": definition.Provenance(models.ProvenanceNone),
 				}),
 			newConfig: postableMuteIntervals(t,
 				[]amConfig.MuteTimeInterval{
@@ -475,8 +476,8 @@ func TestCheckMuteTimes(t *testing.T) {
 						TimeIntervals: defaultInterval(t),
 					},
 				},
-				map[string]definitions.Provenance{
-					"test-1": definitions.Provenance(models.ProvenanceNone),
+				map[string]definition.Provenance{
+					"test-1": definition.Provenance(models.ProvenanceNone),
 				}),
 			newConfig: postableMuteIntervals(t,
 				[]amConfig.MuteTimeInterval{
@@ -505,8 +506,8 @@ func TestCheckMuteTimes(t *testing.T) {
 						TimeIntervals: defaultInterval(t),
 					},
 				},
-				map[string]definitions.Provenance{
-					"test-1": definitions.Provenance(models.ProvenanceAPI),
+				map[string]definition.Provenance{
+					"test-1": definition.Provenance(models.ProvenanceAPI),
 				}),
 			newConfig: postableMuteIntervals(t,
 				[]amConfig.MuteTimeInterval{
@@ -538,11 +539,11 @@ func TestCheckMuteTimes(t *testing.T) {
 	}
 }
 
-func gettableMuteIntervals(t *testing.T, muteTimeIntervals []amConfig.MuteTimeInterval, provenances map[string]definitions.Provenance) definitions.GettableUserConfig {
+func gettableMuteIntervals(t *testing.T, muteTimeIntervals []amConfig.MuteTimeInterval, provenances map[string]definition.Provenance) definitions.GettableUserConfig {
 	return definitions.GettableUserConfig{
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
 			MuteTimeProvenances: provenances,
-			Config: definitions.Config{
+			Config: definition.Config{
 				MuteTimeIntervals: muteTimeIntervals,
 			},
 		},
@@ -552,8 +553,8 @@ func gettableMuteIntervals(t *testing.T, muteTimeIntervals []amConfig.MuteTimeIn
 func postableMuteIntervals(t *testing.T, muteTimeIntervals []amConfig.MuteTimeInterval) definitions.PostableUserConfig {
 	t.Helper()
 	return definitions.PostableUserConfig{
-		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-			Config: definitions.Config{
+		AlertmanagerConfig: definition.PostableApiAlertingConfig{
+			Config: definition.Config{
 				MuteTimeIntervals: muteTimeIntervals,
 			},
 		},

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/notify"
 	receiversTesting "github.com/grafana/alerting/receivers/testing"
 	"github.com/stretchr/testify/require"
@@ -21,12 +22,12 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 	getContactPointExport := func(t *testing.T, receiver *notify.APIReceiver) definitions.ContactPointExport {
 		export := make([]definitions.ReceiverExport, 0, len(receiver.Integrations))
 		for _, integrationConfig := range receiver.Integrations {
-			postable := &definitions.PostableGrafanaReceiver{
+			postable := &definition.PostableGrafanaReceiver{
 				UID:                   integrationConfig.UID,
 				Name:                  integrationConfig.Name,
 				Type:                  integrationConfig.Type,
 				DisableResolveMessage: integrationConfig.DisableResolveMessage,
-				Settings:              definitions.RawMessage(integrationConfig.Settings),
+				Settings:              definition.RawMessage(integrationConfig.Settings),
 				SecureSettings:        integrationConfig.SecureSettings,
 			}
 			emb, err := provisioning.PostableGrafanaReceiverToEmbeddedContactPoint(

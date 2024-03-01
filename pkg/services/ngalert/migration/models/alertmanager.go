@@ -3,6 +3,7 @@ package models
 import (
 	"strings"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -15,9 +16,9 @@ import (
 // Alertmanager is a helper struct for creating migrated alertmanager configs.
 type Alertmanager struct {
 	config                *apiModels.PostableUserConfig
-	legacyRoute           *apiModels.Route
-	legacyReceiverToRoute map[string]*apiModels.Route
-	legacyUIDToReceiver   map[string]*apiModels.PostableGrafanaReceiver
+	legacyRoute           *definition.Route
+	legacyReceiverToRoute map[string]*definition.Route
+	legacyUIDToReceiver   map[string]*definition.PostableGrafanaReceiver
 	matcherRoute          *dispatch.Route
 }
 
@@ -34,7 +35,7 @@ func FromPostableUserConfig(config *apiModels.PostableUserConfig) *Alertmanager 
 	am := &Alertmanager{
 		config:                config,
 		legacyRoute:           getOrCreateNestedLegacyRoute(config),
-		legacyReceiverToRoute: make(map[string]*apiModels.Route),
+		legacyReceiverToRoute: make(map[string]*definition.Route),
 		legacyUIDToReceiver:   config.GetGrafanaReceiverMap(),
 		matcherRoute:          dispatch.NewRoute(config.AlertmanagerConfig.Route.AsAMRoute(), nil),
 	}
@@ -62,7 +63,7 @@ func (am *Alertmanager) Match(lset model.LabelSet) []*dispatch.Route {
 }
 
 // AddRoute adds a route to the alertmanager config.
-func (am *Alertmanager) AddRoute(route *apiModels.Route) {
+func (am *Alertmanager) AddRoute(route *definition.Route) {
 	if route == nil {
 		return
 	}
@@ -72,16 +73,16 @@ func (am *Alertmanager) AddRoute(route *apiModels.Route) {
 }
 
 // AddReceiver adds a receiver to the alertmanager config.
-func (am *Alertmanager) AddReceiver(recv *apiModels.PostableGrafanaReceiver) {
+func (am *Alertmanager) AddReceiver(recv *definition.PostableGrafanaReceiver) {
 	if recv == nil {
 		return
 	}
-	am.config.AlertmanagerConfig.Receivers = append(am.config.AlertmanagerConfig.Receivers, &apiModels.PostableApiReceiver{
+	am.config.AlertmanagerConfig.Receivers = append(am.config.AlertmanagerConfig.Receivers, &definition.PostableApiReceiver{
 		Receiver: config.Receiver{
 			Name: recv.Name, // Channel name is unique within an Org.
 		},
-		PostableGrafanaReceivers: apiModels.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: []*apiModels.PostableGrafanaReceiver{recv},
+		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
+			GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{recv},
 		},
 	})
 	am.legacyUIDToReceiver[recv.UID] = recv
@@ -105,7 +106,7 @@ func (am *Alertmanager) RemoveContactPointsAndRoutes(uid string) {
 
 // RemoveRoutes legacy routes that send to the given receiver.
 func (am *Alertmanager) RemoveRoutes(recv string) {
-	var keptRoutes []*apiModels.Route
+	var keptRoutes []*definition.Route
 	for i, route := range am.legacyRoute.Routes {
 		if route.Receiver != recv {
 			keptRoutes = append(keptRoutes, am.legacyRoute.Routes[i])
@@ -116,13 +117,13 @@ func (am *Alertmanager) RemoveRoutes(recv string) {
 }
 
 // GetLegacyRoute retrieves the legacy route for a given migrated channel UID.
-func (am *Alertmanager) GetLegacyRoute(recv string) (*apiModels.Route, bool) {
+func (am *Alertmanager) GetLegacyRoute(recv string) (*definition.Route, bool) {
 	route, ok := am.legacyReceiverToRoute[recv]
 	return route, ok
 }
 
 // GetReceiver retrieves the receiver for a given UID.
-func (am *Alertmanager) GetReceiver(uid string) (*apiModels.PostableGrafanaReceiver, bool) {
+func (am *Alertmanager) GetReceiver(uid string) (*definition.PostableGrafanaReceiver, bool) {
 	recv, ok := am.legacyUIDToReceiver[uid]
 	return recv, ok
 }
@@ -142,7 +143,7 @@ func (am *Alertmanager) GetContactLabel(uid string) string {
 }
 
 // getOrCreateNestedLegacyRoute finds or creates the nested route for migrated channels.
-func getOrCreateNestedLegacyRoute(config *apiModels.PostableUserConfig) *apiModels.Route {
+func getOrCreateNestedLegacyRoute(config *apiModels.PostableUserConfig) *definition.Route {
 	for _, r := range config.AlertmanagerConfig.Route.Routes {
 		if isNestedLegacyRoute(r) {
 			return r
@@ -150,12 +151,12 @@ func getOrCreateNestedLegacyRoute(config *apiModels.PostableUserConfig) *apiMode
 	}
 	nestedLegacyChannelRoute := createNestedLegacyRoute()
 	// Add new nested route as the first of the top-level routes.
-	config.AlertmanagerConfig.Route.Routes = append([]*apiModels.Route{nestedLegacyChannelRoute}, config.AlertmanagerConfig.Route.Routes...)
+	config.AlertmanagerConfig.Route.Routes = append([]*definition.Route{nestedLegacyChannelRoute}, config.AlertmanagerConfig.Route.Routes...)
 	return nestedLegacyChannelRoute
 }
 
 // isNestedLegacyRoute checks whether a route is the nested legacy route for migrated channels.
-func isNestedLegacyRoute(r *apiModels.Route) bool {
+func isNestedLegacyRoute(r *definition.Route) bool {
 	return len(r.ObjectMatchers) == 1 && r.ObjectMatchers[0].Name == ngmodels.MigratedUseLegacyChannelsLabel
 }
 
@@ -164,18 +165,18 @@ func isNestedLegacyRoute(r *apiModels.Route) bool {
 func createBaseConfig() *apiModels.PostableUserConfig {
 	defaultRoute := createDefaultRoute()
 	return &apiModels.PostableUserConfig{
-		AlertmanagerConfig: apiModels.PostableApiAlertingConfig{
-			Receivers: []*apiModels.PostableApiReceiver{
+		AlertmanagerConfig: definition.PostableApiAlertingConfig{
+			Receivers: []*definition.PostableApiReceiver{
 				{
 					Receiver: config.Receiver{
 						Name: "autogen-contact-point-default",
 					},
-					PostableGrafanaReceivers: apiModels.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*apiModels.PostableGrafanaReceiver{},
+					PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{},
 					},
 				},
 			},
-			Config: apiModels.Config{
+			Config: definition.Config{
 				Route: defaultRoute,
 			},
 		},
@@ -183,11 +184,11 @@ func createBaseConfig() *apiModels.PostableUserConfig {
 }
 
 // createDefaultRoute creates a default root-level route and associated nested route that will contain all the migrated channels.
-func createDefaultRoute() *apiModels.Route {
+func createDefaultRoute() *definition.Route {
 	nestedRoute := createNestedLegacyRoute()
-	return &apiModels.Route{
+	return &definition.Route{
 		Receiver:       "autogen-contact-point-default",
-		Routes:         []*apiModels.Route{nestedRoute},
+		Routes:         []*definition.Route{nestedRoute},
 		GroupByStr:     []string{ngmodels.FolderTitleLabel, model.AlertNameLabel}, // To keep parity with pre-migration notifications.
 		RepeatInterval: nil,
 	}
@@ -195,10 +196,10 @@ func createDefaultRoute() *apiModels.Route {
 
 // createNestedLegacyRoute creates a nested route that will contain all the migrated channels.
 // This route is matched on the UseLegacyChannelsLabel and mostly exists to keep the migrated channels separate and organized.
-func createNestedLegacyRoute() *apiModels.Route {
+func createNestedLegacyRoute() *definition.Route {
 	mat, _ := labels.NewMatcher(labels.MatchEqual, ngmodels.MigratedUseLegacyChannelsLabel, "true")
-	return &apiModels.Route{
-		ObjectMatchers: apiModels.ObjectMatchers{mat},
+	return &definition.Route{
+		ObjectMatchers: definition.ObjectMatchers{mat},
 		Continue:       true,
 	}
 }

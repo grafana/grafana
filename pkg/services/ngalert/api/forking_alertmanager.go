@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -116,7 +117,7 @@ func (f *AlertmanagerApiHandler) handleRoutePostAlertingConfig(ctx *contextmodel
 	if err != nil {
 		return errorToResponse(err)
 	}
-	if !body.AlertmanagerConfig.ReceiverType().Can(apimodels.AlertmanagerReceiverType) {
+	if !body.AlertmanagerConfig.ReceiverType().Can(definition.AlertmanagerReceiverType) {
 		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.AlertmanagerBackend, body.AlertmanagerConfig.ReceiverType().String()))
 	}
 	return s.RoutePostAlertingConfig(ctx, body)
@@ -176,7 +177,7 @@ func (f *AlertmanagerApiHandler) handleRouteGetGrafanaSilences(ctx *contextmodel
 }
 
 func (f *AlertmanagerApiHandler) handleRoutePostGrafanaAlertingConfig(ctx *contextmodel.ReqContext, conf apimodels.PostableUserConfig) response.Response {
-	if !conf.AlertmanagerConfig.ReceiverType().Can(apimodels.GrafanaReceiverType) {
+	if !conf.AlertmanagerConfig.ReceiverType().Can(definition.GrafanaReceiverType) {
 		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.GrafanaBackend, conf.AlertmanagerConfig.ReceiverType().String()))
 	}
 	return f.GrafanaSvc.RoutePostAlertingConfig(ctx, conf)

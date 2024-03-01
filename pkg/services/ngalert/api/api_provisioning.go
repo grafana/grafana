@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -44,9 +45,9 @@ type TemplateService interface {
 }
 
 type NotificationPolicyService interface {
-	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
-	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance) error
-	ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
+	GetPolicyTree(ctx context.Context, orgID int64) (definition.Route, error)
+	UpdatePolicyTree(ctx context.Context, orgID int64, tree definition.Route, p alerting_models.Provenance) error
+	ResetPolicyTree(ctx context.Context, orgID int64) (definition.Route, error)
 }
 
 type MuteTimingService interface {
@@ -100,7 +101,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 	return exportResponse(c, e)
 }
 
-func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definitions.Route) response.Response {
+func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definition.Route) response.Response {
 	provenance := determineProvenance(c)
 	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), tree, alerting_models.Provenance(provenance))
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
@@ -518,11 +519,11 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRuleGroup(c *contextmodel.ReqContext
 	return response.JSON(http.StatusNoContent, "")
 }
 
-func determineProvenance(ctx *contextmodel.ReqContext) definitions.Provenance {
+func determineProvenance(ctx *contextmodel.ReqContext) definition.Provenance {
 	if _, disabled := ctx.Req.Header[disableProvenanceHeaderName]; disabled {
-		return definitions.Provenance(alerting_models.ProvenanceNone)
+		return definition.Provenance(alerting_models.ProvenanceNone)
 	}
-	return definitions.Provenance(alerting_models.ProvenanceAPI)
+	return definition.Provenance(alerting_models.ProvenanceAPI)
 }
 
 func extractExportRequest(c *contextmodel.ReqContext) definitions.ExportQueryParams {

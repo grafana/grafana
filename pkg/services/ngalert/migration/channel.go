@@ -12,10 +12,10 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -62,7 +62,7 @@ func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotificati
 }
 
 // createNotifier creates a PostableGrafanaReceiver from a legacy notification channel.
-func (om *OrgMigration) createReceiver(c *legacymodels.AlertNotification) (*apimodels.PostableGrafanaReceiver, error) {
+func (om *OrgMigration) createReceiver(c *legacymodels.AlertNotification) (*definition.PostableGrafanaReceiver, error) {
 	if c.Type == "hipchat" || c.Type == "sensu" {
 		return nil, fmt.Errorf("'%s': %w", c.Type, ErrDiscontinued)
 	}
@@ -76,7 +76,7 @@ func (om *OrgMigration) createReceiver(c *legacymodels.AlertNotification) (*apim
 		return nil, err
 	}
 
-	recv := &apimodels.PostableGrafanaReceiver{
+	recv := &definition.PostableGrafanaReceiver{
 		UID:                   c.UID,
 		Name:                  c.Name,
 		Type:                  c.Type,
@@ -92,7 +92,7 @@ func (om *OrgMigration) createReceiver(c *legacymodels.AlertNotification) (*apim
 }
 
 // validateReceiver validates a receiver by building the configuration and checking for errors.
-func validateReceiver(receiver *apimodels.PostableGrafanaReceiver, decrypt func(ctx context.Context, sjd map[string][]byte, key, fallback string) string) error {
+func validateReceiver(receiver *definition.PostableGrafanaReceiver, decrypt func(ctx context.Context, sjd map[string][]byte, key, fallback string) string) error {
 	var (
 		cfg = &alertingNotify.GrafanaIntegrationConfig{
 			UID:                   receiver.UID,
@@ -111,7 +111,7 @@ func validateReceiver(receiver *apimodels.PostableGrafanaReceiver, decrypt func(
 }
 
 // createRoute creates a route from a legacy notification channel, and matches using a label based on the channel UID.
-func createRoute(channel *legacymodels.AlertNotification, receiverName string) (*apimodels.Route, error) {
+func createRoute(channel *legacymodels.AlertNotification, receiverName string) (*definition.Route, error) {
 	// We create a matchers based on channel name so that we only need a single route per channel.
 	// All channel routes are nested in a single route under the root. This is so we can keep the migrated channels separate
 	// and organized.
@@ -144,9 +144,9 @@ func createRoute(channel *legacymodels.AlertNotification, receiverName string) (
 		repeatInterval = model.Duration(channel.Frequency)
 	}
 
-	return &apimodels.Route{
+	return &definition.Route{
 		Receiver:       receiverName,
-		ObjectMatchers: apimodels.ObjectMatchers{mat},
+		ObjectMatchers: definition.ObjectMatchers{mat},
 		Continue:       true, // We continue so that each sibling contact point route can separately match.
 		RepeatInterval: &repeatInterval,
 	}, nil

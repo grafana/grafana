@@ -12,6 +12,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/alerting/definition"
 	alertingNotify "github.com/grafana/alerting/notify"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -261,7 +262,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			body := asGettableUserConfig(t, response)
-			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceNone), body.AlertmanagerConfig.Route.Provenance)
+			require.Equal(t, definition.Provenance(ngmodels.ProvenanceNone), body.AlertmanagerConfig.Route.Provenance)
 		})
 		t.Run("contact point from GET config has no provenance", func(t *testing.T) {
 			sut := createSut(t)
@@ -270,7 +271,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			body := asGettableUserConfig(t, response)
-			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceNone), body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+			require.Equal(t, definition.Provenance(ngmodels.ProvenanceNone), body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
 		})
 		t.Run("templates from GET config have no provenance", func(t *testing.T) {
 			sut := createSut(t)
@@ -292,7 +293,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			body := asGettableUserConfig(t, response)
-			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.AlertmanagerConfig.Route.Provenance)
+			require.Equal(t, definition.Provenance(ngmodels.ProvenanceAPI), body.AlertmanagerConfig.Route.Provenance)
 		})
 		t.Run("contact point from GET config has expected provenance", func(t *testing.T) {
 			sut := createSut(t)
@@ -312,7 +313,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response = sut.RouteGetAlertingConfig(rc)
 			body = asGettableUserConfig(t, response)
 
-			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+			require.Equal(t, definition.Provenance(ngmodels.ProvenanceAPI), body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
 		})
 		t.Run("templates from GET config have expected provenance", func(t *testing.T) {
 			sut := createSut(t)
@@ -324,7 +325,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			body := asGettableUserConfig(t, response)
 			require.NotNil(t, body.TemplateFileProvenances)
 			require.Len(t, body.TemplateFileProvenances, 1)
-			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.TemplateFileProvenances["a"])
+			require.Equal(t, definition.Provenance(ngmodels.ProvenanceAPI), body.TemplateFileProvenances["a"])
 		})
 	})
 }
@@ -348,8 +349,8 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		cOpt := []cmp.Option{
-			cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}),
-			cmpopts.IgnoreFields(apimodels.PostableGrafanaReceiver{}, "UID", "Settings"),
+			cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, definition.Route{}, labels.Matcher{}),
+			cmpopts.IgnoreFields(definition.PostableGrafanaReceiver{}, "UID", "Settings"),
 		}
 		if !cmp.Equal(test, exp, cOpt...) {
 			t.Errorf("Unexpected AM Config: %v", cmp.Diff(test, exp, cOpt...))
@@ -375,7 +376,7 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 
 			setRouteProvenance(t, 1, sut.mam.ProvStore)
 			request = createAmConfigRequest(t, validConfigWithAutogen)
-			request.AlertmanagerConfig.Route.Provenance = apimodels.Provenance(ngmodels.ProvenanceAPI)
+			request.AlertmanagerConfig.Route.Provenance = definition.Provenance(ngmodels.ProvenanceAPI)
 			response := sut.RoutePostAlertingConfig(rc, request)
 			require.Equal(t, 202, response.Status())
 		})
@@ -981,7 +982,7 @@ func createRequestCtxInOrg(org int64) *contextmodel.ReqContext {
 // setRouteProvenance marks an org's routing tree as provisioned.
 func setRouteProvenance(t *testing.T, orgID int64, ps provisioning.ProvisioningStore) {
 	t.Helper()
-	err := ps.SetProvenance(context.Background(), &apimodels.Route{}, orgID, ngmodels.ProvenanceAPI)
+	err := ps.SetProvenance(context.Background(), &definition.Route{}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 

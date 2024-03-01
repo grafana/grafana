@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/grafana/alerting/definition"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/prometheus/common/model"
 
@@ -51,7 +52,7 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		ExecErrState:         definitions.ExecutionErrorState(rule.ExecErrState), // TODO there may be a validation
 		Annotations:          rule.Annotations,
 		Labels:               rule.Labels,
-		Provenance:           definitions.Provenance(provenance), // TODO validate enum conversion?
+		Provenance:           definition.Provenance(provenance), // TODO validate enum conversion?
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
 	}
@@ -272,7 +273,7 @@ func ReceiverExportFromEmbeddedContactPoint(contact definitions.EmbeddedContactP
 }
 
 // AlertingFileExportFromRoute creates a definitions.AlertingFileExport DTO from definitions.Route.
-func AlertingFileExportFromRoute(orgID int64, route definitions.Route) (definitions.AlertingFileExport, error) {
+func AlertingFileExportFromRoute(orgID int64, route definition.Route) (definitions.AlertingFileExport, error) {
 	f := definitions.AlertingFileExport{
 		APIVersion: 1,
 		Policies: []definitions.NotificationPolicyExport{{
@@ -284,7 +285,7 @@ func AlertingFileExportFromRoute(orgID int64, route definitions.Route) (definiti
 }
 
 // RouteExportFromRoute creates a definitions.RouteExport DTO from definitions.Route.
-func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
+func RouteExportFromRoute(route *definition.Route) *definitions.RouteExport {
 	toStringIfNotNil := func(d *model.Duration) *string {
 		if d == nil {
 			return nil

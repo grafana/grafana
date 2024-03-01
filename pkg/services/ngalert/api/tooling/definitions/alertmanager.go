@@ -646,13 +646,11 @@ func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-type Provenance string
-
 // swagger:model
 type GettableUserConfig struct {
-	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
-	TemplateFileProvenances map[string]Provenance     `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
-	AlertmanagerConfig      GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	TemplateFiles           map[string]string                `yaml:"template_files" json:"template_files"`
+	TemplateFileProvenances map[string]definition.Provenance `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
+	AlertmanagerConfig      GettableApiAlertingConfig        `yaml:"alertmanager_config" json:"alertmanager_config"`
 
 	// amSimple stores a map[string]interface of the decoded alertmanager config.
 	// This enables circumventing the underlying alertmanager secret type
@@ -715,11 +713,11 @@ func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafana
 }
 
 type GettableHistoricUserConfig struct {
-	ID                      int64                     `yaml:"id" json:"id"`
-	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
-	TemplateFileProvenances map[string]Provenance     `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
-	AlertmanagerConfig      GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
-	LastApplied             *strfmt.DateTime          `yaml:"last_applied,omitempty" json:"last_applied,omitempty"`
+	ID                      int64                            `yaml:"id" json:"id"`
+	TemplateFiles           map[string]string                `yaml:"template_files" json:"template_files"`
+	TemplateFileProvenances map[string]definition.Provenance `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
+	AlertmanagerConfig      GettableApiAlertingConfig        `yaml:"alertmanager_config" json:"alertmanager_config"`
+	LastApplied             *strfmt.DateTime                 `yaml:"last_applied,omitempty" json:"last_applied,omitempty"`
 }
 
 // swagger:response GettableHistoricUserConfigs
@@ -730,7 +728,7 @@ type GettableHistoricUserConfigs struct {
 
 type GettableApiAlertingConfig struct {
 	definition.Config   `yaml:",inline"`
-	MuteTimeProvenances map[string]Provenance `yaml:"muteTimeProvenances,omitempty" json:"muteTimeProvenances,omitempty"`
+	MuteTimeProvenances map[string]definition.Provenance `yaml:"muteTimeProvenances,omitempty" json:"muteTimeProvenances,omitempty"`
 	// Override with our superset receiver type
 	Receivers []*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
@@ -874,13 +872,13 @@ func (r RawMessage) MarshalYAML() (interface{}, error) {
 }
 
 type GettableGrafanaReceiver struct {
-	UID                   string          `json:"uid"`
-	Name                  string          `json:"name"`
-	Type                  string          `json:"type"`
-	DisableResolveMessage bool            `json:"disableResolveMessage"`
-	Settings              RawMessage      `json:"settings,omitempty"`
-	SecureFields          map[string]bool `json:"secureFields"`
-	Provenance            Provenance      `json:"provenance,omitempty"`
+	UID                   string                `json:"uid"`
+	Name                  string                `json:"name"`
+	Type                  string                `json:"type"`
+	DisableResolveMessage bool                  `json:"disableResolveMessage"`
+	Settings              RawMessage            `json:"settings,omitempty"`
+	SecureFields          map[string]bool       `json:"secureFields"`
+	Provenance            definition.Provenance `json:"provenance,omitempty"`
 }
 
 type GettableApiReceiver struct {
