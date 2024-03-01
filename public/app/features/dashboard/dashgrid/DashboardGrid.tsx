@@ -45,8 +45,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
   private lastPanelBottom = 0;
   private isLayoutInitialized = false;
 
-  private rootRef = React.createRef<HTMLDivElement>();
-  resizeObserver?: ResizeObserver;
+  private measureRef = React.createRef<HTMLDivElement>();
+  private resizeObserver?: ResizeObserver;
 
   constructor(props: Props) {
     super(props);
@@ -59,13 +59,13 @@ export class DashboardGrid extends PureComponent<Props, State> {
   componentDidMount() {
     const { dashboard } = this.props;
 
-    if (this.rootRef.current) {
+    if (this.measureRef.current) {
       this.resizeObserver = new ResizeObserver((entries) => {
         entries.forEach((entry) => {
           this.setState({ width: entry.contentRect.width });
         });
       });
-      this.resizeObserver.observe(this.rootRef.current);
+      this.resizeObserver.observe(this.measureRef.current);
     }
 
     if (config.featureToggles.panelFilterVariable) {
@@ -99,8 +99,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.eventSubs.unsubscribe();
-    if (this.resizeObserver && this.rootRef.current) {
-      this.resizeObserver.unobserve(this.rootRef.current);
+    if (this.resizeObserver && this.measureRef.current) {
+      this.resizeObserver.unobserve(this.measureRef.current);
     }
   }
 
@@ -323,7 +323,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     // the escalating z-indexes of the panels
     return (
       <div
-        ref={this.rootRef}
+        ref={this.measureRef}
         style={{
           flex: '1 1 auto',
           position: 'relative',
