@@ -18,7 +18,7 @@ export const ExploreWorkspacesDebugger = (props: Props) => {
       <div>ExploreWorkspacesDebugger</div>
       <Button
         onClick={async () => {
-          const workspace = await getExploreWorkspace('adec2kfdo6ccga');
+          const workspace = await getExploreWorkspace(workspaces[workspaces.length - 1].uid);
           console.log(workspace);
         }}
       >

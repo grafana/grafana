@@ -24,6 +24,7 @@ func (s *ExploreWorkspacesService) CreateExploreWorkspaceHandler(c *contextmodel
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.SignedInUser.OrgID
+	cmd.UserId = c.SignedInUser.UserID
 	uid, err := s.CreateExploreWorkspace(c.Req.Context(), cmd)
 
 	if err != nil {

@@ -12,6 +12,7 @@ func addExploreWorkspaces(mg *Migrator) {
 			{Name: "name", Type: DB_NVarchar, Length: 100, Nullable: false},
 			{Name: "description", Type: DB_NVarchar, Length: 100, Nullable: false},
 			{Name: "active_snapshot_uid", Type: DB_NVarchar, Nullable: false},
+			{Name: "user_id", Type: DB_BigInt, Nullable: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 		},
 	}
@@ -26,6 +27,7 @@ func addExploreWorkspaces(mg *Migrator) {
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 			{Name: "user_id", Type: DB_BigInt, Nullable: true},
+			{Name: "version", Type: DB_BigInt, Nullable: true},
 			{Name: "config", Type: DB_Text, Nullable: true},
 		},
 	}
