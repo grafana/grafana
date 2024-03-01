@@ -4,7 +4,7 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 
 import { ReturnToPrevious, ReturnToPreviousProps } from './ReturnToPrevious';
 
@@ -18,8 +18,6 @@ jest.mock('@grafana/runtime', () => {
     reportInteraction: jest.fn(),
   };
 });
-const reportInteractionMock = jest.mocked(reportInteraction);
-
 const setup = () => {
   const grafanaContext = getGrafanaContextMock();
   grafanaContext.chrome.setReturnToPrevious(mockReturnToPreviousProps);
@@ -31,12 +29,26 @@ const setup = () => {
 };
 
 describe('ReturnToPrevious', () => {
+  /* We enabled the feature toggle */
+  config.featureToggles.returnToPrevious = true;
   afterEach(() => {
     window.sessionStorage.clear();
+    jest.resetAllMocks();
   });
   it('should render component', async () => {
     setup();
     expect(await screen.findByTitle('Back to Dashboards Page')).toBeInTheDocument();
+  });
+
+  it('should trigger event once when clicking on the RTP button', async () => {
+    setup();
+    const returnButton = await screen.findByTitle('Back to Dashboards Page');
+    expect(returnButton).toBeInTheDocument();
+    await userEvent.click(returnButton);
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_return_to_previous_button_dismissed', {
+      action: 'clicked',
+      page: '/dashboards',
+    });
   });
 
   it('should trigger event once when clicking on the Close button', async () => {
@@ -44,14 +56,9 @@ describe('ReturnToPrevious', () => {
     const closeBtn = await screen.findByRole('button', { name: 'Close' });
     expect(closeBtn).toBeInTheDocument();
     await userEvent.click(closeBtn);
-    const [args] = reportInteractionMock.mock.calls;
-    const [interactionName, properties] = args;
-
-    expect(reportInteractionMock.mock.calls.length).toBe(1);
-    expect(interactionName).toBe('grafana_return_to_previous_button_dismissed');
-    expect(properties).toEqual({
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_return_to_previous_button_dismissed', {
       action: 'dismissed',
-      page: mockReturnToPreviousProps.href,
+      page: '/dashboards',
     });
   });
 });
