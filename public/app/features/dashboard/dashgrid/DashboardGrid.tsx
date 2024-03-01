@@ -62,7 +62,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
     if (this.rootRef.current) {
       this.resizeObserver = new ResizeObserver((entries) => {
         entries.forEach((entry) => {
-          console.log('observed width', entry.contentRect.width);
           this.setState({ width: entry.contentRect.width });
         });
       });
