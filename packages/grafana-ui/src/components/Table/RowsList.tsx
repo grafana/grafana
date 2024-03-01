@@ -208,7 +208,8 @@ export const RowsList = (props: RowsListProps) => {
     const fieldOptions = field.config.custom as TableFieldOptions;
 
     // Should also check fieldOptions.cellOptions.applyToRow
-    if (fieldOptions.cellOptions?.type === TableCellDisplayMode.ColorBackground) {
+    if (fieldOptions.cellOptions?.type === TableCellDisplayMode.ColorBackground &&
+        fieldOptions.cellOptions.applyToRow) {
       rowBg = (rowIndex: number) => {
         const display = field.display!(field.values.get(rowIndex));
         return display.color;
