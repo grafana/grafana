@@ -3,6 +3,7 @@ package clients
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"net"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -79,28 +81,16 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	additional := getAdditionalProxyHeaders(r, c.cfg)
-
 	cacheKey, ok := getProxyCacheKey(username, additional)
-	if ok {
-		// See if we have cached the user id, in that case we can fetch the signed-in user and skip sync.
-		// Error here means that we could not find anything in cache, so we can proceed as usual
-		if entry, err := c.cache.Get(ctx, cacheKey); err == nil {
-			uid, err := strconv.ParseInt(string(entry), 10, 64)
-			if err != nil {
-				c.log.FromContext(ctx).Warn("Failed to parse user id from cache", "error", err, "userId", string(entry))
-			} else {
-				return &authn.Identity{
-					ID:    authn.NamespacedID(authn.NamespaceUser, uid),
-					OrgID: r.OrgID,
-					// FIXME: This does not match the actual auth module used, but should not have any impact
-					// Maybe caching the auth module used with the user ID would be a good idea
-					AuthenticatedBy: login.AuthProxyAuthModule,
-					ClientParams: authn.ClientParams{
-						FetchSyncedUser: true,
-						SyncPermissions: true,
-					},
-				}, nil
-			}
+
+	if c.cfg.AuthProxy.SyncTTL != 0 && ok {
+		identity, errCache := c.retrieveIDFromCache(ctx, cacheKey, r)
+		if errCache == nil {
+			return identity, nil
+		}
+
+		if !errors.Is(errCache, remotecache.ErrCacheItemNotFound) {
+			c.log.FromContext(ctx).Warn("Failed to fetch auth proxy info from cache", "error", errCache)
 		}
 	}
 
@@ -115,6 +105,32 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	return nil, clientErr
+}
+
+// See if we have cached the user id, in that case we can fetch the signed-in user and skip sync.
+// Error here means that we could not find anything in cache, so we can proceed as usual
+func (c *Proxy) retrieveIDFromCache(ctx context.Context, cacheKey string, r *authn.Request) (*authn.Identity, error) {
+	entry, err := c.cache.Get(ctx, cacheKey)
+	if err != nil {
+		return nil, err
+	}
+
+	uid, err := strconv.ParseInt(string(entry), 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse user id from cache: %w - entry: %s", err, string(entry))
+	}
+
+	return &authn.Identity{
+		ID:    authn.NamespacedID(authn.NamespaceUser, uid),
+		OrgID: r.OrgID,
+		// FIXME: This does not match the actual auth module used, but should not have any impact
+		// Maybe caching the auth module used with the user ID would be a good idea
+		AuthenticatedBy: login.AuthProxyAuthModule,
+		ClientParams: authn.ClientParams{
+			FetchSyncedUser: true,
+			SyncPermissions: true,
+		},
+	}, nil
 }
 
 func (c *Proxy) Test(ctx context.Context, r *authn.Request) bool {
