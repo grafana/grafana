@@ -256,15 +256,7 @@ type Cfg struct {
 	Azure *azsettings.AzureSettings
 
 	// Auth proxy settings
-	AuthProxyEnabled          bool
-	AuthProxyHeaderName       string
-	AuthProxyHeaderProperty   string
-	AuthProxyAutoSignUp       bool
-	AuthProxyEnableLoginToken bool
-	AuthProxyWhitelist        string
-	AuthProxyHeaders          map[string]string
-	AuthProxyHeadersEncoded   bool
-	AuthProxySyncTTL          int
+	AuthProxy AuthProxySettings
 
 	// OAuth
 	OAuthAutoLogin                bool
@@ -1197,6 +1189,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
 	cfg.readAuthJWTSettings()
+	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
@@ -1616,31 +1609,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.ExtendedJWTAuthEnabled = authExtendedJWT.Key("enabled").MustBool(false)
 	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
 	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
-
-	// Auth Proxy
-	authProxy := iniFile.Section("auth.proxy")
-	cfg.AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
-
-	cfg.AuthProxyHeaderName = valueAsString(authProxy, "header_name", "")
-	cfg.AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
-	cfg.AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
-	cfg.AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
-
-	cfg.AuthProxySyncTTL = authProxy.Key("sync_ttl").MustInt()
-
-	cfg.AuthProxyWhitelist = valueAsString(authProxy, "whitelist", "")
-
-	cfg.AuthProxyHeaders = make(map[string]string)
-	headers := valueAsString(authProxy, "headers", "")
-
-	for _, propertyAndHeader := range util.SplitString(headers) {
-		split := strings.SplitN(propertyAndHeader, ":", 2)
-		if len(split) == 2 {
-			cfg.AuthProxyHeaders[split[0]] = split[1]
-		}
-	}
-
-	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
 	// SSO Settings
 	ssoSettings := iniFile.Section("sso_settings")

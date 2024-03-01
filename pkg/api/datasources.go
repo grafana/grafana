@@ -344,11 +344,11 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 		return nil
 	}
 
-	if cfg.AuthProxyEnabled {
+	if cfg.AuthProxy.Enabled {
 		for key, value := range jsonData.MustMap() {
 			if strings.HasPrefix(key, datasources.CustomHeaderName) {
 				header := fmt.Sprint(value)
-				if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxyHeaderName) {
+				if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxy.HeaderName) {
 					datasourcesLogger.Error("Forbidden to add a data source header with a name equal to auth proxy header name", "headerName", key)
 					return errors.New("validation error, invalid header name specified")
 				}

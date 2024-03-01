@@ -171,7 +171,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		AppUrl:                              hs.Cfg.AppURL,
 		AppSubUrl:                           hs.Cfg.AppSubURL,
 		AllowOrgCreate:                      (hs.Cfg.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		AuthProxyEnabled:                    hs.Cfg.AuthProxyEnabled,
+		AuthProxyEnabled:                    hs.Cfg.AuthProxy.Enabled,
 		LdapEnabled:                         hs.Cfg.LDAPAuthEnabled,
 		JwtHeaderName:                       hs.Cfg.JWTAuth.HeaderName,
 		JwtUrlLogin:                         hs.Cfg.JWTAuth.URLLogin,
@@ -322,7 +322,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	oauthProviders := hs.SocialService.GetOAuthInfoProviders()
 	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
-		AuthProxyEnableLoginToken:   hs.Cfg.AuthProxyEnableLoginToken,
+		AuthProxyEnableLoginToken:   hs.Cfg.AuthProxy.EnableLoginToken,
 		OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 		SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
 		LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
