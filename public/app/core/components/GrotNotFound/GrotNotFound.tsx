@@ -5,7 +5,7 @@ import SVG from 'react-inlinesvg';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import notFoundSvg from '../../../../../public/img/grot-not-found.svg';
+import notFoundSvg from '../../../../img/grot-not-found.svg';
 
 import useMousePosition from './useMousePosition';
 
