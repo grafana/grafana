@@ -12,6 +12,13 @@ const mockReturnToPreviousProps: ReturnToPreviousProps = {
   title: 'Dashboards Page',
   href: '/dashboards',
 };
+const reportInteractionMock = jest.mocked(reportInteraction);
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: reportInteractionMock,
+  };
+});
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
@@ -48,7 +55,7 @@ describe('ReturnToPrevious', () => {
     const returnButton = await screen.findByTitle('Back to Dashboards Page');
     expect(returnButton).toBeInTheDocument();
     await userEvent.click(returnButton);
-    const mockCalls = (reportInteraction as jest.Mock).mock.calls;
+    const mockCalls = reportInteractionMock.mock.calls;
     /* The report is called 'grafana_return_to_previous_button_dismissed' but the action is 'clicked' */
     const mockReturn = mockCalls.filter((call) => call[0] === 'grafana_return_to_previous_button_dismissed');
     expect(mockReturn).toHaveLength(1);
@@ -60,7 +67,7 @@ describe('ReturnToPrevious', () => {
     const closeBtn = await screen.findByRole('button', { name: 'Close' });
     expect(closeBtn).toBeInTheDocument();
     await userEvent.click(closeBtn);
-    const mockCalls = (reportInteraction as jest.Mock).mock.calls;
+    const mockCalls = reportInteractionMock.mock.calls;
     /* The report is called 'grafana_return_to_previous_button_dismissed' but the action is 'dismissed' */
     const mockDismissed = mockCalls.filter((call) => call[0] === 'grafana_return_to_previous_button_dismissed');
     expect(mockDismissed).toHaveLength(1);
