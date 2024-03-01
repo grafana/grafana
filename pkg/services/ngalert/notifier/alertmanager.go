@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/alerting/definition"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers"
 	alertingTemplates "github.com/grafana/alerting/templates"
@@ -295,7 +296,7 @@ func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
 		Set(hashAsMetricValue(am.Base.ConfigHash()))
 }
 
-func (am *alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
+func (am *alertmanager) aggregateRouteMatchers(r *definition.Route, amu *AggregateMatchersUsage) {
 	amu.Matchers += len(r.Matchers)
 	amu.MatchRE += len(r.MatchRE)
 	amu.Match += len(r.Match)

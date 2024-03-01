@@ -3,6 +3,7 @@ package notifier
 import (
 	"encoding/json"
 
+	"github.com/grafana/alerting/definition"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func PostableGrafanaReceiverToGrafanaIntegrationConfig(p *apimodels.PostableGrafanaReceiver) *alertingNotify.GrafanaIntegrationConfig {
+func PostableGrafanaReceiverToGrafanaIntegrationConfig(p *definition.PostableGrafanaReceiver) *alertingNotify.GrafanaIntegrationConfig {
 	return &alertingNotify.GrafanaIntegrationConfig{
 		UID:                   p.UID,
 		Name:                  p.Name,
@@ -22,7 +23,7 @@ func PostableGrafanaReceiverToGrafanaIntegrationConfig(p *apimodels.PostableGraf
 	}
 }
 
-func PostableApiReceiverToApiReceiver(r *apimodels.PostableApiReceiver) *alertingNotify.APIReceiver {
+func PostableApiReceiverToApiReceiver(r *definition.PostableApiReceiver) *alertingNotify.APIReceiver {
 	integrations := alertingNotify.GrafanaIntegrations{
 		Integrations: make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers)),
 	}
@@ -36,7 +37,7 @@ func PostableApiReceiverToApiReceiver(r *apimodels.PostableApiReceiver) *alertin
 	}
 }
 
-func PostableApiAlertingConfigToApiReceivers(c apimodels.PostableApiAlertingConfig) []*alertingNotify.APIReceiver {
+func PostableApiAlertingConfigToApiReceivers(c definition.PostableApiAlertingConfig) []*alertingNotify.APIReceiver {
 	apiReceivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, receiver := range c.Receivers {
 		apiReceivers = append(apiReceivers, PostableApiReceiverToApiReceiver(receiver))
@@ -46,14 +47,14 @@ func PostableApiAlertingConfigToApiReceivers(c apimodels.PostableApiAlertingConf
 
 type DecryptFn = func(value string) string
 
-func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableGrafanaReceiver, error) {
+func PostableToGettableGrafanaReceiver(r *definition.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableGrafanaReceiver, error) {
 	out := apimodels.GettableGrafanaReceiver{
 		UID:  r.UID,
 		Name: r.Name,
 		Type: r.Type,
 	}
 	if provenance != nil {
-		out.Provenance = apimodels.Provenance(*provenance)
+		out.Provenance = definition.Provenance(*provenance)
 	}
 
 	// if we aren't only listing, include the settings in the output
@@ -90,7 +91,7 @@ func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, pro
 	return out, nil
 }
 
-func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableApiReceiver, error) {
+func PostableToGettableApiReceiver(r *definition.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableApiReceiver, error) {
 	out := apimodels.GettableApiReceiver{
 		Receiver: config.Receiver{
 			Name: r.Receiver.Name,

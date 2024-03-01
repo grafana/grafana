@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -60,7 +61,7 @@ func EncryptReceiverConfigs(c []*definition.PostableApiReceiver, encrypt definit
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
 		switch r.Type() {
-		case definitions.GrafanaReceiverType:
+		case definition.GrafanaReceiverType:
 			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				for k, v := range gr.SecureSettings {
 					encryptedData, err := encrypt(context.Background(), []byte(v))

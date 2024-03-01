@@ -3,8 +3,8 @@ package models
 import (
 	"fmt"
 
+	"github.com/grafana/alerting/definition"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
-	apiModels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -24,8 +24,8 @@ type AlertPair struct {
 
 type ContactPair struct {
 	Channel      *legacymodels.AlertNotification
-	ContactPoint *apiModels.PostableGrafanaReceiver
-	Route        *apiModels.Route
+	ContactPoint *definition.PostableGrafanaReceiver
+	Route        *definition.Route
 	Error        error
 }
 
