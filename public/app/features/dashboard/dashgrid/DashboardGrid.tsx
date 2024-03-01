@@ -1,7 +1,6 @@
 import classNames from 'classnames';
 import React, { PureComponent, CSSProperties, useRef, useCallback, useReducer, useMemo } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
 import { zIndex } from '@grafana/data/src/themes/zIndex';
@@ -33,6 +32,7 @@ export interface Props {
 
 interface State {
   panelFilter?: RegExp;
+  width: number;
 }
 
 export class DashboardGrid extends PureComponent<Props, State> {
@@ -45,15 +45,29 @@ export class DashboardGrid extends PureComponent<Props, State> {
   private lastPanelBottom = 0;
   private isLayoutInitialized = false;
 
+  private rootRef = React.createRef<HTMLDivElement>();
+  resizeObserver?: ResizeObserver;
+
   constructor(props: Props) {
     super(props);
     this.state = {
       panelFilter: undefined,
+      width: 0,
     };
   }
 
   componentDidMount() {
     const { dashboard } = this.props;
+
+    if (this.rootRef.current) {
+      this.resizeObserver = new ResizeObserver((entries) => {
+        entries.forEach((entry) => {
+          console.log('observed width', entry.contentRect.width);
+          this.setState({ width: entry.contentRect.width });
+        });
+      });
+      this.resizeObserver.observe(this.rootRef.current);
+    }
 
     if (config.featureToggles.panelFilterVariable) {
       // If panel filter variable is set on load then
@@ -86,6 +100,9 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.eventSubs.unsubscribe();
+    if (this.resizeObserver && this.rootRef.current) {
+      this.resizeObserver.unobserve(this.rootRef.current);
+    }
   }
 
   setPanelFilter(regex: string) {
@@ -295,10 +312,13 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   render() {
     const { isEditable, dashboard } = this.props;
+    const { width } = this.state;
 
     if (dashboard.panels.length === 0) {
       return <DashboardEmpty dashboard={dashboard} canCreate={isEditable} />;
     }
+
+    const draggable = width <= config.theme2.breakpoints.values.md ? false : isEditable;
 
     /**
      * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
@@ -309,53 +329,36 @@ export class DashboardGrid extends PureComponent<Props, State> {
      */
     return (
       <div
+        ref={this.rootRef}
         style={{
           flex: '1 1 auto',
           position: 'relative',
           zIndex: 1,
           display: this.props.editPanel ? 'none' : undefined,
         }}
+        data-help="down-below"
       >
-        <AutoSizer disableHeight>
-          {({ width }) => {
-            if (width === 0) {
-              return null;
-            }
-
-            // Disable draggable if mobile device, solving an issue with unintentionally
-            // moving panels. https://github.com/grafana/grafana/issues/18497
-            const draggable = width <= config.theme2.breakpoints.values.md ? false : isEditable;
-
-            return (
-              /**
-               * The children is using a width of 100% so we need to guarantee that it is wrapped
-               * in an element that has the calculated size given by the AutoSizer. The AutoSizer
-               * has a width of 0 and will let its content overflow its div.
-               */
-              <div style={{ width: width, height: '100%' }} ref={this.onGetWrapperDivRef}>
-                <ReactGridLayout
-                  width={width}
-                  isDraggable={draggable}
-                  isResizable={isEditable}
-                  containerPadding={[0, 0]}
-                  useCSSTransforms={true}
-                  margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
-                  cols={GRID_COLUMN_COUNT}
-                  rowHeight={GRID_CELL_HEIGHT}
-                  draggableHandle=".grid-drag-handle"
-                  draggableCancel=".grid-drag-cancel"
-                  layout={this.buildLayout()}
-                  onDragStop={this.onDragStop}
-                  onResize={this.onResize}
-                  onResizeStop={this.onResizeStop}
-                  onLayoutChange={this.onLayoutChange}
-                >
-                  {this.renderPanels(width, draggable)}
-                </ReactGridLayout>
-              </div>
-            );
-          }}
-        </AutoSizer>
+        <div data-help="first-child" style={{ width: width, height: '100%' }} ref={this.onGetWrapperDivRef}>
+          <ReactGridLayout
+            width={width}
+            isDraggable={draggable}
+            isResizable={isEditable}
+            containerPadding={[0, 0]}
+            useCSSTransforms={true}
+            margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
+            cols={GRID_COLUMN_COUNT}
+            rowHeight={GRID_CELL_HEIGHT}
+            draggableHandle=".grid-drag-handle"
+            draggableCancel=".grid-drag-cancel"
+            layout={this.buildLayout()}
+            onDragStop={this.onDragStop}
+            onResize={this.onResize}
+            onResizeStop={this.onResizeStop}
+            onLayoutChange={this.onLayoutChange}
+          >
+            {this.renderPanels(width, draggable)}
+          </ReactGridLayout>
+        </div>
       </div>
     );
   }
