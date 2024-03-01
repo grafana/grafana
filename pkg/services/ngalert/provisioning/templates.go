@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -41,7 +42,7 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 		if err != nil {
 			return nil, err
 		}
-		tmpl.Provenance = definitions.Provenance(provenance)
+		tmpl.Provenance = definition.Provenance(provenance)
 		templates = append(templates, tmpl)
 	}
 

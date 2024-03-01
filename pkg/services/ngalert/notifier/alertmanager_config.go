@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/alerting/definition"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -234,12 +235,12 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 }
 
 // assignReceiverConfigsUIDs assigns missing UUIDs to receiver configs.
-func assignReceiverConfigsUIDs(c []*definitions.PostableApiReceiver) error {
+func assignReceiverConfigsUIDs(c []*definition.PostableApiReceiver) error {
 	seenUIDs := make(map[string]struct{})
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
 		switch r.Type() {
-		case definitions.GrafanaReceiverType:
+		case definition.GrafanaReceiverType:
 			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				if gr.UID == "" {
 					retries := 5
@@ -276,7 +277,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		if err != nil {
 			return definitions.GettableUserConfig{}, err
 		}
-		config.AlertmanagerConfig.Route.Provenance = definitions.Provenance(provenance)
+		config.AlertmanagerConfig.Route.Provenance = definition.Provenance(provenance)
 	}
 
 	cp := definitions.EmbeddedContactPoint{}
@@ -287,7 +288,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 	for _, receiver := range config.AlertmanagerConfig.Receivers {
 		for _, contactPoint := range receiver.GrafanaManagedReceivers {
 			if provenance, exists := cpProvs[contactPoint.UID]; exists {
-				contactPoint.Provenance = definitions.Provenance(provenance)
+				contactPoint.Provenance = definition.Provenance(provenance)
 			}
 		}
 	}
@@ -297,9 +298,9 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil
 	}
-	config.TemplateFileProvenances = make(map[string]definitions.Provenance, len(tmplProvs))
+	config.TemplateFileProvenances = make(map[string]definition.Provenance, len(tmplProvs))
 	for key, provenance := range tmplProvs {
-		config.TemplateFileProvenances[key] = definitions.Provenance(provenance)
+		config.TemplateFileProvenances[key] = definition.Provenance(provenance)
 	}
 
 	mt := definitions.MuteTimeInterval{}
@@ -307,9 +308,9 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil
 	}
-	config.AlertmanagerConfig.MuteTimeProvenances = make(map[string]definitions.Provenance, len(mtProvs))
+	config.AlertmanagerConfig.MuteTimeProvenances = make(map[string]definition.Provenance, len(mtProvs))
 	for key, provenance := range mtProvs {
-		config.AlertmanagerConfig.MuteTimeProvenances[key] = definitions.Provenance(provenance)
+		config.AlertmanagerConfig.MuteTimeProvenances[key] = definition.Provenance(provenance)
 	}
 
 	return config, nil

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
@@ -44,7 +45,7 @@ func TestNotificationPolicyService(t *testing.T) {
 			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 			Return(nil)
 		newRoute := createTestRoutingTree()
-		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
+		newRoute.Routes = append(newRoute.Routes, &definition.Route{
 			Receiver:          "slack receiver",
 			MuteTimeIntervals: []string{"not-existing"},
 		})
@@ -70,7 +71,7 @@ func TestNotificationPolicyService(t *testing.T) {
 			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 			Return(nil)
 		newRoute := createTestRoutingTree()
-		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
+		newRoute.Routes = append(newRoute.Routes, &definition.Route{
 			Receiver:          "slack receiver",
 			MuteTimeIntervals: []string{"existing"},
 		})
@@ -96,7 +97,7 @@ func TestNotificationPolicyService(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 
 		newRoute := createTestRoutingTree()
-		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
+		newRoute.Routes = append(newRoute.Routes, &definition.Route{
 			Receiver: "not-existing",
 		})
 
@@ -115,7 +116,7 @@ func TestNotificationPolicyService(t *testing.T) {
 			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 			Return(nil)
 		newRoute := createTestRoutingTree()
-		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
+		newRoute.Routes = append(newRoute.Routes, &definition.Route{
 			Receiver: "existing",
 		})
 
@@ -186,10 +187,10 @@ func TestNotificationPolicyService(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 		sut.configStore.store = &MockAMConfigStore{}
 		cfg := createTestAlertingConfig()
-		cfg.AlertmanagerConfig.Route = &definitions.Route{
+		cfg.AlertmanagerConfig.Route = &definition.Route{
 			Receiver: "slack receiver",
 		}
-		cfg.AlertmanagerConfig.Receivers = []*definitions.PostableApiReceiver{
+		cfg.AlertmanagerConfig.Receivers = []*definition.PostableApiReceiver{
 			{
 				Receiver: config.Receiver{
 					Name: "slack receiver",
@@ -227,8 +228,8 @@ func createNotificationPolicyServiceSut() *NotificationPolicyService {
 	}
 }
 
-func createTestRoutingTree() definitions.Route {
-	return definitions.Route{
+func createTestRoutingTree() definition.Route {
+	return definition.Route{
 		Receiver: "slack receiver",
 	}
 }
@@ -236,14 +237,14 @@ func createTestRoutingTree() definitions.Route {
 func createTestAlertingConfig() *definitions.PostableUserConfig {
 	cfg, _ := deserializeAlertmanagerConfig([]byte(defaultConfig))
 	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,
-		&definitions.PostableApiReceiver{
+		&definition.PostableApiReceiver{
 			Receiver: config.Receiver{
 				// default one from createTestRoutingTree()
 				Name: "slack receiver",
 			},
 		})
 	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,
-		&definitions.PostableApiReceiver{
+		&definition.PostableApiReceiver{
 			Receiver: config.Receiver{
 				Name: "existing",
 			},

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/definition"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
@@ -58,7 +59,7 @@ func TestProvisioningApi(t *testing.T) {
 		t.Run("successful PUT returns 202", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
-			tree := definitions.Route{}
+			tree := definition.Route{}
 
 			response := sut.RoutePutPolicyTree(&rc, tree)
 
@@ -79,7 +80,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				sut.policies = &fakeRejectingNotificationPolicyService{}
 				rc := createTestRequestCtx()
-				tree := definitions.Route{}
+				tree := definition.Route{}
 
 				response := sut.RoutePutPolicyTree(&rc, tree)
 
@@ -128,7 +129,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				sut.policies = &fakeFailingNotificationPolicyService{}
 				rc := createTestRequestCtx()
-				tree := definitions.Route{}
+				tree := definition.Route{}
 
 				response := sut.RoutePutPolicyTree(&rc, tree)
 
@@ -286,7 +287,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 201, response.Status())
 				created := deserializeRule(t, response.Body())
 				require.Equal(t, int64(3), created.OrgID)
-				require.Equal(t, definitions.Provenance(models.ProvenanceNone), created.Provenance)
+				require.Equal(t, definition.Provenance(models.ProvenanceNone), created.Provenance)
 			})
 
 			t.Run("PUT sets expected fields with no provenance", func(t *testing.T) {
@@ -305,7 +306,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				created := deserializeRule(t, response.Body())
 				require.Equal(t, int64(3), created.OrgID)
-				require.Equal(t, definitions.Provenance(models.ProvenanceNone), created.Provenance)
+				require.Equal(t, definition.Provenance(models.ProvenanceNone), created.Provenance)
 			})
 		})
 
@@ -1683,13 +1684,13 @@ func createTestRequestCtx() contextmodel.ReqContext {
 }
 
 type fakeNotificationPolicyService struct {
-	tree definitions.Route
+	tree definition.Route
 	prov models.Provenance
 }
 
 func newFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	return &fakeNotificationPolicyService{
-		tree: definitions.Route{
+		tree: definition.Route{
 			Receiver: "some-receiver",
 		},
 		prov: models.ProvenanceNone,
@@ -1701,13 +1702,13 @@ func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	minutes := model.Duration(time.Duration(5) * time.Minute)
 	hours := model.Duration(time.Duration(1) * time.Hour)
 	return &fakeNotificationPolicyService{
-		tree: definitions.Route{
+		tree: definition.Route{
 			Receiver:       "default-receiver",
 			GroupByStr:     []string{"g1", "g2"},
 			GroupWait:      &seconds,
 			GroupInterval:  &minutes,
 			RepeatInterval: &hours,
-			Routes: []*definitions.Route{{
+			Routes: []*definition.Route{{
 				Receiver:   "nested-receiver",
 				GroupByStr: []string{"g3", "g4"},
 				Matchers: prometheus.Matchers{
@@ -1717,7 +1718,7 @@ func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
 						Value: "b",
 					},
 				},
-				ObjectMatchers:    definitions.ObjectMatchers{{Type: 0, Name: "foo", Value: "bar"}},
+				ObjectMatchers:    definition.ObjectMatchers{{Type: 0, Name: "foo", Value: "bar"}},
 				MuteTimeIntervals: []string{"interval"},
 				Continue:          true,
 				GroupWait:         &minutes,
@@ -1729,16 +1730,16 @@ func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	}
 }
 
-func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definition.Route, error) {
 	if orgID != 1 {
-		return definitions.Route{}, store.ErrNoAlertmanagerConfiguration
+		return definition.Route{}, store.ErrNoAlertmanagerConfiguration
 	}
 	result := f.tree
-	result.Provenance = definitions.Provenance(f.prov)
+	result.Provenance = definition.Provenance(f.prov)
 	return result, nil
 }
 
-func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definition.Route, p models.Provenance) error {
 	if orgID != 1 {
 		return store.ErrNoAlertmanagerConfiguration
 	}
@@ -1747,37 +1748,37 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 	return nil
 }
 
-func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	f.tree = definitions.Route{} // TODO
+func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definition.Route, error) {
+	f.tree = definition.Route{} // TODO
 	return f.tree, nil
 }
 
 type fakeFailingNotificationPolicyService struct{}
 
-func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	return definitions.Route{}, fmt.Errorf("something went wrong")
+func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definition.Route, error) {
+	return definition.Route{}, fmt.Errorf("something went wrong")
 }
 
-func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definition.Route, p models.Provenance) error {
 	return fmt.Errorf("something went wrong")
 }
 
-func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	return definitions.Route{}, fmt.Errorf("something went wrong")
+func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definition.Route, error) {
+	return definition.Route{}, fmt.Errorf("something went wrong")
 }
 
 type fakeRejectingNotificationPolicyService struct{}
 
-func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	return definitions.Route{}, nil
+func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definition.Route, error) {
+	return definition.Route{}, nil
 }
 
-func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definition.Route, p models.Provenance) error {
 	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
 }
 
-func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	return definitions.Route{}, nil
+func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definition.Route, error) {
+	return definition.Route{}, nil
 }
 
 func createInvalidContactPoint() definitions.EmbeddedContactPoint {

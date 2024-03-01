@@ -3,8 +3,8 @@ package alerting
 import (
 	"context"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
@@ -31,7 +31,7 @@ func (c *defaultTextTemplateProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, template := range file.Templates {
-			template.Data.Provenance = definitions.Provenance(models.ProvenanceFile)
+			template.Data.Provenance = definition.Provenance(models.ProvenanceFile)
 			_, err := c.templateService.SetTemplate(ctx, template.OrgID, template.Data)
 			if err != nil {
 				return err

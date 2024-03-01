@@ -876,7 +876,7 @@ type GettableGrafanaReceiver struct {
 	Name                  string                `json:"name"`
 	Type                  string                `json:"type"`
 	DisableResolveMessage bool                  `json:"disableResolveMessage"`
-	Settings              RawMessage            `json:"settings,omitempty"`
+	Settings              definition.RawMessage `json:"settings,omitempty"`
 	SecureFields          map[string]bool       `json:"secureFields"`
 	Provenance            definition.Provenance `json:"provenance,omitempty"`
 }

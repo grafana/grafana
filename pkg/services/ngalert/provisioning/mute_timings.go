@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -46,7 +47,7 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 	for _, interval := range rev.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		def := definitions.MuteTimeInterval{MuteTimeInterval: interval}
 		if prov, ok := provenances[def.ResourceID()]; ok {
-			def.Provenance = definitions.Provenance(prov)
+			def.Provenance = definition.Provenance(prov)
 		}
 		result = append(result, def)
 	}
@@ -73,7 +74,7 @@ func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, name string, or
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-	result.Provenance = definitions.Provenance(prov)
+	result.Provenance = definition.Provenance(prov)
 	return result, nil
 }
 
@@ -155,7 +156,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 	if revision.cfg.AlertmanagerConfig.MuteTimeIntervals == nil {
 		return nil
 	}
-	if isMuteTimeInUse(name, []*definitions.Route{revision.cfg.AlertmanagerConfig.Route}) {
+	if isMuteTimeInUse(name, []*definition.Route{revision.cfg.AlertmanagerConfig.Route}) {
 		return ErrTimeIntervalInUse.Errorf("")
 	}
 	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
@@ -174,7 +175,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 	})
 }
 
-func isMuteTimeInUse(name string, routes []*definitions.Route) bool {
+func isMuteTimeInUse(name string, routes []*definition.Route) bool {
 	if len(routes) == 0 {
 		return false
 	}

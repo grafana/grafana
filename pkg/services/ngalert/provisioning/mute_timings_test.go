@@ -7,6 +7,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/stretchr/testify/mock"
@@ -21,8 +22,8 @@ func TestGetMuteTimings(t *testing.T) {
 	orgID := int64(1)
 	revision := &cfgRevision{
 		cfg: &definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
+			AlertmanagerConfig: definition.PostableApiAlertingConfig{
+				Config: definition.Config{
 					MuteTimeIntervals: []config.MuteTimeInterval{
 						{
 							Name:          "Test1",
@@ -117,8 +118,8 @@ func TestGetMuteTiming(t *testing.T) {
 	orgID := int64(1)
 	revision := &cfgRevision{
 		cfg: &definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
+			AlertmanagerConfig: definition.PostableApiAlertingConfig{
+				Config: definition.Config{
 					MuteTimeIntervals: []config.MuteTimeInterval{
 						{
 							Name:          "Test1",
@@ -207,8 +208,8 @@ func TestCreateMuteTimings(t *testing.T) {
 	initialConfig := func() *definitions.PostableUserConfig {
 		return &definitions.PostableUserConfig{
 			TemplateFiles: nil,
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
+			AlertmanagerConfig: definition.PostableApiAlertingConfig{
+				Config: definition.Config{
 					MuteTimeIntervals: []config.MuteTimeInterval{
 						{
 							Name: "TEST",
@@ -235,7 +236,7 @@ func TestCreateMuteTimings(t *testing.T) {
 	expectedProvenance := models.ProvenanceAPI
 	timing := definitions.MuteTimeInterval{
 		MuteTimeInterval: expected,
-		Provenance:       definitions.Provenance(expectedProvenance),
+		Provenance:       definition.Provenance(expectedProvenance),
 	}
 
 	t.Run("returns ErrTimeIntervalInvalid if mute timings fail validation", func(t *testing.T) {
@@ -244,7 +245,7 @@ func TestCreateMuteTimings(t *testing.T) {
 			MuteTimeInterval: config.MuteTimeInterval{
 				Name: "",
 			},
-			Provenance: definitions.Provenance(models.ProvenanceFile),
+			Provenance: definition.Provenance(models.ProvenanceFile),
 		}
 
 		_, err := sut.CreateMuteTiming(context.Background(), timing, orgID)
@@ -261,7 +262,7 @@ func TestCreateMuteTimings(t *testing.T) {
 		existing := initialConfig().AlertmanagerConfig.MuteTimeIntervals[0]
 		timing := definitions.MuteTimeInterval{
 			MuteTimeInterval: existing,
-			Provenance:       definitions.Provenance(models.ProvenanceFile),
+			Provenance:       definition.Provenance(models.ProvenanceFile),
 		}
 
 		_, err := sut.CreateMuteTiming(context.Background(), timing, orgID)
@@ -365,8 +366,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 	initialConfig := func() *definitions.PostableUserConfig {
 		return &definitions.PostableUserConfig{
 			TemplateFiles: nil,
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
+			AlertmanagerConfig: definition.PostableApiAlertingConfig{
+				Config: definition.Config{
 					MuteTimeIntervals: []config.MuteTimeInterval{
 						{
 							Name: "Test",
@@ -393,7 +394,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 	expectedProvenance := models.ProvenanceAPI
 	timing := definitions.MuteTimeInterval{
 		MuteTimeInterval: expected,
-		Provenance:       definitions.Provenance(expectedProvenance),
+		Provenance:       definition.Provenance(expectedProvenance),
 	}
 
 	t.Run("rejects mute timings that fail validation", func(t *testing.T) {
@@ -402,7 +403,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			MuteTimeInterval: config.MuteTimeInterval{
 				Name: "",
 			},
-			Provenance: definitions.Provenance(models.ProvenanceFile),
+			Provenance: definition.Provenance(models.ProvenanceFile),
 		}
 
 		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
@@ -420,7 +421,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			MuteTimeInterval: config.MuteTimeInterval{
 				Name: "No-timing",
 			},
-			Provenance: definitions.Provenance(models.ProvenanceFile),
+			Provenance: definition.Provenance(models.ProvenanceFile),
 		}
 
 		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
@@ -525,9 +526,9 @@ func TestDeleteMuteTimings(t *testing.T) {
 	initialConfig := func() *definitions.PostableUserConfig {
 		return &definitions.PostableUserConfig{
 			TemplateFiles: nil,
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{
+			AlertmanagerConfig: definition.PostableApiAlertingConfig{
+				Config: definition.Config{
+					Route: &definition.Route{
 						MuteTimeIntervals: []string{usedTiming},
 					},
 					MuteTimeIntervals: []config.MuteTimeInterval{

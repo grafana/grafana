@@ -3,6 +3,7 @@ package alerting
 import (
 	"context"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -42,7 +43,7 @@ func (c *defaultMuteTimesProvisioner) Provision(ctx context.Context,
 					cache[muteTiming.OrgID][interval.Name] = interval
 				}
 			}
-			muteTiming.MuteTime.Provenance = definitions.Provenance(models.ProvenanceFile)
+			muteTiming.MuteTime.Provenance = definition.Provenance(models.ProvenanceFile)
 			if _, exists := cache[muteTiming.OrgID][muteTiming.MuteTime.Name]; exists {
 				_, err := c.muteTimingService.UpdateMuteTiming(ctx, muteTiming.MuteTime, muteTiming.OrgID)
 				if err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/common/model"
 )
 
@@ -318,7 +319,7 @@ const (
 type PostableExtendedRuleNode struct {
 	// note: this works with yaml v3 but not v2 (the inline tag isn't accepted on pointers in v2)
 	*ApiRuleNode `yaml:",inline"`
-	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
+	// GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
 	GrafanaManagedAlert *PostableGrafanaRule `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
 }
 
@@ -355,7 +356,7 @@ func (n *PostableExtendedRuleNode) validate() error {
 type GettableExtendedRuleNode struct {
 	// note: this works with yaml v3 but not v2 (the inline tag isn't accepted on pointers in v2)
 	*ApiRuleNode `yaml:",inline"`
-	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
+	// GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
 	GrafanaManagedAlert *GettableGrafanaRule `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
 }
 
@@ -477,7 +478,7 @@ type GettableGrafanaRule struct {
 	RuleGroup            string                         `json:"rule_group" yaml:"rule_group"`
 	NoDataState          NoDataState                    `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState         ExecutionErrorState            `json:"exec_err_state" yaml:"exec_err_state"`
-	Provenance           Provenance                     `json:"provenance,omitempty" yaml:"provenance,omitempty"`
+	Provenance           definition.Provenance          `json:"provenance,omitempty" yaml:"provenance,omitempty"`
 	IsPaused             bool                           `json:"is_paused" yaml:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
 }

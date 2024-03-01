@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
@@ -753,16 +754,16 @@ func (a apiClient) DeleteMuteTimingWithStatus(t *testing.T, name string) (int, s
 	return resp.StatusCode, string(body)
 }
 
-func (a apiClient) GetRouteWithStatus(t *testing.T) (apimodels.Route, int, string) {
+func (a apiClient) GetRouteWithStatus(t *testing.T) (definition.Route, int, string) {
 	t.Helper()
 
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/policies", a.url), nil)
 	require.NoError(t, err)
 
-	return sendRequest[apimodels.Route](t, req, http.StatusOK)
+	return sendRequest[definition.Route](t, req, http.StatusOK)
 }
 
-func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route) (int, string) {
+func (a apiClient) UpdateRouteWithStatus(t *testing.T, route definition.Route) (int, string) {
 	t.Helper()
 
 	buf := bytes.Buffer{}

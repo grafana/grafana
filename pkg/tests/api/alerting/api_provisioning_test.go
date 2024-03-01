@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/stretchr/testify/assert"
@@ -373,8 +374,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 		sort.Slice(rules, func(i, j int) bool {
 			return rules[i].ID < rules[j].ID
 		})
-		require.Equal(t, definitions.Provenance("api"), rules[0].Provenance)
-		require.Equal(t, definitions.Provenance(""), rules[1].Provenance)
+		require.Equal(t, definition.Provenance("api"), rules[0].Provenance)
+		require.Equal(t, definition.Provenance(""), rules[1].Provenance)
 	})
 }
 
@@ -590,9 +591,9 @@ func TestMuteTimings(t *testing.T) {
 	t.Run("should get 409 Conflict if deletes used mute-timing", func(t *testing.T) {
 		route, status, response := apiClient.GetRouteWithStatus(t)
 		requireStatusCode(t, http.StatusOK, status, response)
-		route.Routes = append(route.Routes, &definitions.Route{
+		route.Routes = append(route.Routes, &definition.Route{
 			Receiver: route.Receiver,
-			ObjectMatchers: definitions.ObjectMatchers{
+			ObjectMatchers: definition.ObjectMatchers{
 				{
 					Name:  "a",
 					Value: "b",
