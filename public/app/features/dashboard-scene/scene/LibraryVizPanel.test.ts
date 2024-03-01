@@ -30,7 +30,12 @@ describe('LibraryVizPanel', () => {
 
   it('should fetch and init', async () => {
     setUpApiMock(server);
-    const libVizPanel = new LibraryVizPanel({ name: 'My Library Panel', title: 'Panel title', uid: 'fdcvggvfy2qdca' });
+    const libVizPanel = new LibraryVizPanel({
+      name: 'My Library Panel',
+      title: 'Panel title',
+      uid: 'fdcvggvfy2qdca',
+      panelKey: 'lib-panel',
+    });
     libVizPanel.activate();
     await waitFor(() => {
       expect(libVizPanel.state.panel).toBeInstanceOf(VizPanel);
@@ -39,7 +44,12 @@ describe('LibraryVizPanel', () => {
 
   it('should change parent from SceneGridItem to PanelRepeaterGridItem if repeat is set', async () => {
     setUpApiMock(server, { model: { repeat: 'query0', repeatDirection: 'h' } });
-    const libVizPanel = new LibraryVizPanel({ name: 'My Library Panel', title: 'Panel title', uid: 'fdcvggvfy2qdca' });
+    const libVizPanel = new LibraryVizPanel({
+      name: 'My Library Panel',
+      title: 'Panel title',
+      uid: 'fdcvggvfy2qdca',
+      panelKey: 'lib-panel',
+    });
 
     const layout = new SceneGridLayout({
       children: [new SceneGridItem({ body: libVizPanel })],
