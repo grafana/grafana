@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"path/filepath"
 	"sort"
 	"strings"
-	"sync"
 	"testing/fstest"
 
 	"cuelang.org/go/cue"
@@ -25,28 +23,6 @@ import (
 // PackageName is the name of the CUE package that Grafana will load when
 // looking for a Grafana plugin's kind declarations.
 const PackageName = "grafanaplugin"
-
-var onceGP sync.Once
-var defaultGP cue.Value
-
-func doLoadGP(ctx *cue.Context) cue.Value {
-	v, err := cuectx.BuildGrafanaInstance(ctx, filepath.Join("pkg", "plugins", "pfs"), "pfs", nil)
-	if err != nil {
-		// should be unreachable
-		panic(err)
-	}
-	return v.LookupPath(cue.MakePath(cue.Str("GrafanaPlugin")))
-}
-
-func loadGP(ctx *cue.Context) cue.Value {
-	if ctx == nil || ctx == cuectx.GrafanaCUEContext() {
-		onceGP.Do(func() {
-			defaultGP = doLoadGP(ctx)
-		})
-		return defaultGP
-	}
-	return doLoadGP(ctx)
-}
 
 // PermittedCUEImports returns the list of import paths that may be used in a
 // plugin's grafanaplugin cue package.
