@@ -377,6 +377,10 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     for (let j = 0; j < topSeries.values.length; j++) {
       const bottomPoint = bottomSeries.values[j] || [0];
       topSeries.values[j] -= bottomPoint;
+
+      if (topSeries.values[j] < 1e-9) {
+        topSeries.values[j] = 0;
+      }
     }
   }
 
