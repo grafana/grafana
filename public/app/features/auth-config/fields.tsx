@@ -46,7 +46,6 @@ export const sectionFields: Section = {
         'name',
         'clientId',
         'clientSecret',
-        'authStyle',
         'scopes',
         'authUrl',
         'tokenUrl',
@@ -66,17 +65,15 @@ export const sectionFields: Section = {
       fields: [
         'allowedOrganizations',
         'allowedDomains',
-        'defineAllowedGroups',
-        { name: 'allowedGroups', dependsOn: 'defineAllowedGroups' },
+        'allowedGroups',
         'forceUseGraphApi',
         'usePkce',
         'useRefreshToken',
+        'tlsSkipVerifyInsecure',
+        'tlsClientCert',
+        'tlsClientKey',
+        'tlsClientCa',
       ],
-    },
-    {
-      name: 'TLS',
-      id: 'tls',
-      fields: ['tlsSkipVerifyInsecure', 'tlsClientCert', 'tlsClientKey', 'tlsClientCa'],
     },
   ],
   generic_oauth: [
@@ -362,7 +359,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     forceUseGraphApi: {
       label: 'Force use Graph API',
-      description: 'If enabled, Grafana will fetch the users\' groups using the Microsoft Graph API.',
+      description: "If enabled, Grafana will fetch the users' groups using the Microsoft Graph API.",
       type: 'checkbox',
     },
     usePkce: {
