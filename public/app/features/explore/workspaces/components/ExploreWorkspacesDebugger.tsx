@@ -11,18 +11,35 @@ type Props = {
 };
 
 export const ExploreWorkspacesDebugger = (props: Props) => {
-  const { getExploreWorkspace, createExploreWorkspace, workspaces } = useExploreWorkspaces();
+  const { getExploreWorkspace, createExploreWorkspace, updateExploreWorkspaceLatestSnapshot, workspaces } =
+    useExploreWorkspaces();
+
+  const [loadedWorkspace, setLoadedWorkspace] = React.useState<ExploreWorkspace | undefined>();
 
   return (
     <ExploreDrawer width={props.width}>
       <div>ExploreWorkspacesDebugger</div>
+      <div>Currently loaded workspace: {loadedWorkspace?.name || 'none'}</div>
       <Button
         onClick={async () => {
-          const workspace = await getExploreWorkspace(workspaces[workspaces.length - 1].uid);
-          console.log(workspace);
+          const response = await getExploreWorkspace(workspaces[workspaces.length - 1].uid);
+          setLoadedWorkspace(response.exploreWorkspace);
         }}
       >
         Get Workspace
+      </Button>
+      <Button
+        onClick={async () => {
+          if (loadedWorkspace) {
+            const updatedSnapshot = await updateExploreWorkspaceLatestSnapshot({
+              exploreWorkspaceUID: loadedWorkspace.uid,
+              config: JSON.stringify({ foo: 2 }),
+            });
+            loadedWorkspace.activeSnapshot = updatedSnapshot;
+          }
+        }}
+      >
+        Update
       </Button>
       <Button
         onClick={() =>

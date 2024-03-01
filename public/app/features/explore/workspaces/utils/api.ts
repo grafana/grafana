@@ -19,6 +19,8 @@ import {
   GetExploreWorkspaceResponse,
   GetExploreWorkspacesCommand,
   GetExploreWorkspacesResponse,
+  UpdateExploreWorkspaceLatestSnapshotCommand,
+  UpdateExploreWorkspaceLatestSnapshotResponse,
 } from '../types';
 
 type RequestOptions<Command, Response> = {
@@ -55,4 +57,12 @@ export const getExploreWorkspace = apiCall<GetExploreWorkspaceCommand, GetExplor
 export const createExploreWorkspace = apiCall<CreateExploreWorkspaceCommand, CreateExploreWorkspaceResponse>({
   method: 'POST',
   url: () => '/api/exploreworkspaces/',
+});
+
+export const updateExploreWorkspaceLatestSnapshot = apiCall<
+  UpdateExploreWorkspaceLatestSnapshotCommand,
+  UpdateExploreWorkspaceLatestSnapshotResponse
+>({
+  method: 'POST',
+  url: (command) => '/api/exploreworkspaces/' + command.exploreWorkspaceUID,
 });

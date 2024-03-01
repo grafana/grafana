@@ -2,6 +2,7 @@ package exploreworkspaces
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -15,6 +16,7 @@ func (s *ExploreWorkspacesService) registerAPIEndpoints() {
 	authorize := ac.Middleware(s.AccessControl)
 	s.RouteRegister.Get("/api/exploreworkspaces/:uid", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.GetExploreWorkspaceHandler))
 	s.RouteRegister.Post("/api/exploreworkspaces/", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.CreateExploreWorkspaceHandler))
+	s.RouteRegister.Post("/api/exploreworkspaces/:uid", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.UpdateExploreWorkspaceLatestSnapshotHandler))
 	s.RouteRegister.Get("/api/exploreworkspaces/", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.GetExploreWorkspacesHandler))
 }
 
@@ -61,4 +63,23 @@ func (s *ExploreWorkspacesService) GetExploreWorkspacesHandler(c *contextmodel.R
 	}
 
 	return response.JSON(http.StatusOK, GetExploreWorkspacesResponse{ExploreWorkspaces: exploreWorkspaces})
+}
+
+func (s *ExploreWorkspacesService) UpdateExploreWorkspaceLatestSnapshotHandler(c *contextmodel.ReqContext) response.Response {
+	cmd := UpdateExploreWorkspaceLatestSnapshotCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	cmd.Updated = time.Now()
+	cmd.UserId = c.SignedInUser.UserID
+	cmd.ExploreWorspaceUID = web.Params(c.Req)[":uid"]
+
+	snapshot, err := s.UpdateLatestExploreWorkspaceSnapshot(c.Req.Context(), cmd)
+
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Cannot update the snapshot "+err.Error(), err)
+	}
+
+	return response.JSON(http.StatusOK, UpdateExploreWorkspaceLatestSnapshotResponse{Snapshot: *snapshot})
+
 }

@@ -82,6 +82,17 @@ type CreateExploreWorkspaceSnapshotCommand struct {
 	Config             string
 }
 
+type UpdateExploreWorkspaceLatestSnapshotCommand struct {
+	ExploreWorspaceUID string `json:"exploreWorkspaceUID"`
+	Updated            time.Time
+	UserId             int64
+	Config             string `json:"config"`
+}
+
+type UpdateExploreWorkspaceLatestSnapshotResponse struct {
+	Snapshot ExploreWorkspaceSnapshot `json:"snapshot"`
+}
+
 type UpdateExploreWorkspaceSnapshotCommand struct {
 	UID         string
 	Name        string

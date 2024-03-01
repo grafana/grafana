@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { CreateExploreWorkspaceCommand, ExploreWorkspace } from '../types';
+import { CreateExploreWorkspaceCommand, ExploreWorkspace, UpdateExploreWorkspaceLatestSnapshotCommand } from '../types';
 
 import * as api from './api';
 
@@ -23,6 +23,12 @@ export const useExploreWorkspaces = () => {
     return result;
   };
 
+  const updateExploreWorkspaceLatestSnapshot = async (cmd: UpdateExploreWorkspaceLatestSnapshotCommand) => {
+    const result = await api.updateExploreWorkspaceLatestSnapshot(cmd);
+    await reload();
+    return result;
+  };
+
   const reload = async () => {
     const exploreWorkspacesResponse = await getExploreWorkspaces();
     setWorkspaces(exploreWorkspacesResponse.exploreWorkspaces);
@@ -37,6 +43,7 @@ export const useExploreWorkspaces = () => {
     getExploreWorkspace,
     getExploreWorkspaces,
     createExploreWorkspace,
+    updateExploreWorkspaceLatestSnapshot,
     workspaces,
   };
 };

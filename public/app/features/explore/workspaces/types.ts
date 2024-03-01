@@ -4,6 +4,10 @@ export type ExploreWorkspace = {
   description: string;
   activeSnapshotUid: string;
   orgId: number;
+  userId: number;
+
+  user: { login: string; name: string };
+  activeSnapshot?: ExploreWorkspaceSnapshot;
 };
 
 export type ExploreWorkspaceSnapshot = {};
@@ -36,4 +40,15 @@ export type CreateExploreWorkspaceCommand = {
 
 export type CreateExploreWorkspaceResponse = {
   uid: string;
+};
+
+// update latest
+
+export type UpdateExploreWorkspaceLatestSnapshotCommand = {
+  exploreWorkspaceUID: string;
+  config: string;
+};
+
+export type UpdateExploreWorkspaceLatestSnapshotResponse = {
+  snapshot: ExploreWorkspaceSnapshot;
 };

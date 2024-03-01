@@ -46,6 +46,7 @@ type Service interface {
 	GetExploreWorkspace(ctx context.Context, cmd GetExploreWorkspaceCommand) (ExploreWorkspace, error)
 	GetExploreWorkspaces(ctx context.Context, cmd GetExploreWorkspacesCommand) ([]ExploreWorkspace, error)
 
+	UpdateLatestExploreWorkspaceSnapshot(ctx context.Context, cmd UpdateExploreWorkspaceLatestSnapshotCommand) (*ExploreWorkspaceSnapshot, error)
 	// TakeExploreWorkspaceSnapshot(ctx context.Context, cmd TakeExploreWorkspaceSnapshotCommand) error
 	// GetExploreWorkspaceSnapshot(ctx context.Context, cmd GetExploreWorkspaceSnapshotCommand) (ExploreWorkspaceSnapshot, error)
 	// GetExploreWorkspaceSnapshots(ctx context.Context, cmd GetExploreWorkspaceSnapshotsCommand) ([]ExploreWorkspaceSnapshot, error)
@@ -158,6 +159,31 @@ func (s *ExploreWorkspacesService) GetExploreWorkspaces(ctx context.Context, cmd
 	return exploreWorkspaces, nil
 }
 
+func (s *ExploreWorkspacesService) UpdateLatestExploreWorkspaceSnapshot(ctx context.Context, cmd UpdateExploreWorkspaceLatestSnapshotCommand) (*ExploreWorkspaceSnapshot, error) {
+	exploreWorkspace, queryWorkspaceError := s.GetExploreWorkspace(ctx, GetExploreWorkspaceCommand{
+		ExploreWorkspaceUID: cmd.ExploreWorspaceUID,
+	})
+
+	if queryWorkspaceError != nil {
+		return nil, errors.New("Cannot retrieve workspace " + cmd.ExploreWorspaceUID + ". " + queryWorkspaceError.Error())
+	}
+
+	exploreWorkspaceSnapshot, querySnapshotError := s.updateExploreWorkspaceSnapshot(ctx, UpdateExploreWorkspaceSnapshotCommand{
+		UID:         exploreWorkspace.ActiveSnapshotUID,
+		Name:        exploreWorkspace.ActiveSnapshot.Name,
+		Description: exploreWorkspace.ActiveSnapshot.Description,
+		Updated:     cmd.Updated,
+		UserId:      cmd.UserId,
+		Config:      cmd.Config,
+	})
+
+	if querySnapshotError != nil {
+		return nil, querySnapshotError
+	}
+
+	return exploreWorkspaceSnapshot, nil
+}
+
 func (s *ExploreWorkspacesService) createExploreWorkspaceSnapshot(session *db.Session, ctx context.Context, cmd CreateExploreWorkspaceSnapshotCommand) (ExploreWorkspaceSnapshot, error) {
 	uid := util.GenerateShortUID()
 
@@ -166,7 +192,7 @@ func (s *ExploreWorkspacesService) createExploreWorkspaceSnapshot(session *db.Se
 		ExploreWorspaceUID: cmd.ExploreWorspaceUID,
 		Name:               cmd.Name,
 		Description:        cmd.Description,
-		Config:             cmd.Description,
+		Config:             cmd.Config,
 		Created:            cmd.Created,
 		Updated:            cmd.Updated,
 		UserId:             cmd.UserId,
@@ -198,4 +224,43 @@ func (s *ExploreWorkspacesService) getExploreWorkspaceSnapshot(ctx context.Conte
 	}
 
 	return *exploreWorkspaceSnapshot, nil
+}
+
+func (s *ExploreWorkspacesService) updateExploreWorkspaceSnapshot(ctx context.Context, cmd UpdateExploreWorkspaceSnapshotCommand) (*ExploreWorkspaceSnapshot, error) {
+	currentSnapshot, queryError := s.getExploreWorkspaceSnapshot(ctx, GetExploreWorkspaceSnapshotCommand{UID: cmd.UID})
+	if queryError != nil {
+		return nil, queryError
+	}
+
+	exploreWorkspaceSnapshot := ExploreWorkspaceSnapshot{
+		UID:         cmd.UID,
+		Name:        cmd.Name,
+		Description: cmd.Description,
+		Updated:     cmd.Updated,
+		UserId:      cmd.UserId,
+		Config:      cmd.Config,
+		Version:     currentSnapshot.Version, // automatically incremented
+	}
+
+	updateError := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+		updated, err := session.ID(cmd.UID).Cols("name", "description", "updated", "user_id", "config", "version").Update(&exploreWorkspaceSnapshot)
+		if err != nil {
+			return err
+		}
+		if updated == 0 {
+			return errors.New("no snapshots updated")
+		}
+		return nil
+	})
+
+	if updateError != nil {
+		return nil, errors.New("Cannot update snapshot with id: " + cmd.UID + ". " + updateError.Error())
+	}
+
+	currentSnapshot, queryError = s.getExploreWorkspaceSnapshot(ctx, GetExploreWorkspaceSnapshotCommand{UID: cmd.UID})
+	if queryError != nil {
+		return nil, queryError
+	}
+
+	return &currentSnapshot, nil
 }
