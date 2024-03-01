@@ -185,7 +185,7 @@ export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPa
   });
 
   const panelLinksObject = dashboardSceneGraph.getPanelLinks(panel);
-  const links = panelLinksObject.state.rawLinks;
+  const links = panelLinksObject?.state.rawLinks ?? [];
 
   return descriptor
     .addItem(
@@ -251,7 +251,7 @@ export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPa
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: 'Panel links',
-          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject} />,
+          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
         })
       )
     )
@@ -323,16 +323,16 @@ export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPa
 }
 
 interface ScenePanelLinksEditorProps {
-  panelLinks: VizPanelLinks;
+  panelLinks?: VizPanelLinks;
 }
 
 function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
-  const { rawLinks: links } = panelLinks.useState();
+  const { rawLinks: links } = panelLinks ? panelLinks.useState() : { rawLinks: [] };
 
   return (
     <DataLinksInlineEditor
       links={links}
-      onChange={(links) => panelLinks.setState({ rawLinks: links })}
+      onChange={(links) => panelLinks?.setState({ rawLinks: links })}
       getSuggestions={getPanelLinksVariableSuggestions}
       data={[]}
     />
