@@ -83,7 +83,7 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		userProfile.IsGrafanaAdminExternallySynced = login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule)
 	}
 
-	userProfile.AccessControl = hs.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "global.users:id:", strconv.FormatInt(userID, 10))
+	userProfile.AccessControl = hs.getAccessControlMetadata(c, "global.users:id:", strconv.FormatInt(userID, 10))
 	userProfile.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, userProfile.Email)
 
 	return response.JSON(http.StatusOK, userProfile)

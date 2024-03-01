@@ -37,7 +37,7 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 				}
 
 				if !c.IsSignedIn && forceLogin {
-					unauthorized(c, nil)
+					unauthorized(c)
 					return
 				}
 			}
@@ -49,7 +49,7 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 					return
 				}
 
-				unauthorized(c, c.LookupTokenErr)
+				unauthorized(c)
 				return
 			}
 
@@ -113,7 +113,7 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 	})
 }
 
-func unauthorized(c *contextmodel.ReqContext, err error) {
+func unauthorized(c *contextmodel.ReqContext) {
 	if c.IsApiRequest() {
 		c.WriteErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), c.LookupTokenErr)
 		return
