@@ -74,7 +74,12 @@ const RuleViewerV2Wrapper = (props: RuleViewerProps) => {
     );
   }
 
-  return null;
+  // if we get here assume we can't find the rule
+  return (
+    <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+      <EntityNotFound entity="Rule" />
+    </AlertingPageWrapper>
+  );
 };
 
 interface ErrorMessageProps {
