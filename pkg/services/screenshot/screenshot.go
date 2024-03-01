@@ -122,7 +122,7 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 		Width:           opts.Width,
 		Height:          opts.Height,
 		Theme:           opts.Theme,
-		ConcurrentLimit: s.cfg.AlertingRenderLimit,
+		ConcurrentLimit: s.cfg.RendererConcurrentRequestLimit,
 		Path:            u.String(),
 	}
 

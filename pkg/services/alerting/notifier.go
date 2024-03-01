@@ -219,7 +219,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		},
 		Width:           1000,
 		Height:          500,
-		ConcurrentLimit: n.cfg.AlertingRenderLimit,
+		ConcurrentLimit: 5,
 		Theme:           models.ThemeDark,
 	}
 

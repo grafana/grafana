@@ -507,7 +507,6 @@ type Cfg struct {
 	// Alerting
 	AlertingEnabled            *bool
 	ExecuteAlerts              bool
-	AlertingRenderLimit        int
 	AlertingErrorOrTimeout     string
 	AlertingNoDataOrNullValues string
 
@@ -1770,7 +1769,6 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 		cfg.AlertingEnabled = &enabled
 	}
 	cfg.ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
-	cfg.AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 
 	cfg.AlertingErrorOrTimeout = valueAsString(alerting, "error_or_timeout", "alerting")
 	cfg.AlertingNoDataOrNullValues = valueAsString(alerting, "nodata_or_nullvalues", "no_data")
