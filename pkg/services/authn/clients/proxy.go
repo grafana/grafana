@@ -15,7 +15,6 @@ import (
 	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -43,12 +42,12 @@ var (
 	_ authn.ContextAwareClient = new(Proxy)
 )
 
-func ProvideProxy(cfg *setting.Cfg, cache proxyCache, userSrv user.Service, authInfoService login.AuthInfoService, clients ...authn.ProxyClient) (*Proxy, error) {
+func ProvideProxy(cfg *setting.Cfg, cache proxyCache, clients ...authn.ProxyClient) (*Proxy, error) {
 	list, err := parseAcceptList(cfg.AuthProxyWhitelist)
 	if err != nil {
 		return nil, err
 	}
-	return &Proxy{log.New(authn.ClientProxy), cfg, cache, userSrv, authInfoService, clients, list}, nil
+	return &Proxy{log.New(authn.ClientProxy), cfg, cache, clients, list}, nil
 }
 
 type proxyCache interface {
@@ -58,13 +57,11 @@ type proxyCache interface {
 }
 
 type Proxy struct {
-	log             log.Logger
-	cfg             *setting.Cfg
-	cache           proxyCache
-	userSrv         user.Service
-	authInfoService login.AuthInfoService
-	clients         []authn.ProxyClient
-	acceptedIPs     []*net.IPNet
+	log         log.Logger
+	cfg         *setting.Cfg
+	cache       proxyCache
+	clients     []authn.ProxyClient
+	acceptedIPs []*net.IPNet
 }
 
 func (c *Proxy) Name() string {

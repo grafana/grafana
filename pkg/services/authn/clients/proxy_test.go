@@ -13,8 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/login/authinfotest"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -114,7 +112,7 @@ func TestProxy_Authenticate(t *testing.T) {
 				calledAdditional = additional
 				return nil, nil
 			}}
-			c, err := ProvideProxy(cfg, &fakeCache{expectedErr: errors.New("")}, usertest.NewUserServiceFake(), &authinfotest.FakeService{}, proxyClient)
+			c, err := ProvideProxy(cfg, &fakeCache{expectedErr: errors.New("")}, proxyClient)
 			require.NoError(t, err)
 
 			_, err = c.Authenticate(context.Background(), tt.req)
@@ -211,7 +209,7 @@ func TestProxy_Hook(t *testing.T) {
 	withRole := func(role string) func(t *testing.T) {
 		cacheKey := fmt.Sprintf("users:johndoe-%s", role)
 		return func(t *testing.T) {
-			c, err := ProvideProxy(cfg, cache, usertest.NewUserServiceFake(), &authinfotest.FakeService{}, authntest.MockProxyClient{})
+			c, err := ProvideProxy(cfg, cache, authntest.MockProxyClient{})
 			require.NoError(t, err)
 			userIdentity := &authn.Identity{
 				ID: userID,
