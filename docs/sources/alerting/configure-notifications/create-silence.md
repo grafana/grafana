@@ -27,7 +27,9 @@ weight: 440
 
 Silences stop notifications from getting created and last for only a specified window of time.
 
-**Note that inhibition rules are not supported in the Grafana Alertmanager.**
+**Note:** 
+- Inhibition rules are not supported in the Grafana Alertmanager.
+- The preview of silenced alerts will only apply to alerts in firing state
 
 ## Add silences
 
@@ -39,7 +41,7 @@ To add a silence, complete the following steps.
 1. Click **Create silence** to open the Create silence page.
 1. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
 1. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the **Silence start and end** field.
-1. In the **Label** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to.
+1. In the **Label** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to. Any matching alerts (in firing state) will show in the **Affected alert instances** field
 1. In **Comment**, add details about the silence.
 1. Click **Submit**.
 
