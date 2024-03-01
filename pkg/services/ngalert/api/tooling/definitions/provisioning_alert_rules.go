@@ -3,6 +3,7 @@ package definitions
 import (
 	"time"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/common/model"
 )
 
@@ -153,7 +154,7 @@ type ProvisionedAlertRule struct {
 	// example: {"team": "sre-team-1"}
 	Labels map[string]string `json:"labels,omitempty"`
 	// readonly: true
-	Provenance Provenance `json:"provenance,omitempty"`
+	Provenance definition.Provenance `json:"provenance,omitempty"`
 	// example: false
 	IsPaused bool `json:"isPaused"`
 	// example: {"receiver":"email","group_by":["alertname","grafana_folder","cluster"],"group_wait":"30s","group_interval":"1m","repeat_interval":"4d","mute_time_intervals":["Weekends","Holidays"]}

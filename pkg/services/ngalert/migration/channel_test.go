@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,16 +29,16 @@ func TestCreateRoute(t *testing.T) {
 	tc := []struct {
 		name     string
 		channel  *legacymodels.AlertNotification
-		recv     *apimodels.PostableGrafanaReceiver
-		expected *apimodels.Route
+		recv     *definition.PostableGrafanaReceiver
+		expected *definition.Route
 	}{
 		{
 			name:    "when a receiver is passed in, the route should exact match based on channel uid with continue=true",
 			channel: &legacymodels.AlertNotification{UID: "uid1", Name: "recv1"},
 			recv:    createPostableGrafanaReceiver("uid1", "recv1"),
-			expected: &apimodels.Route{
+			expected: &definition.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("recv1"), Value: "true"}},
+				ObjectMatchers: definition.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("recv1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -49,9 +49,9 @@ func TestCreateRoute(t *testing.T) {
 			name:    "notification channel labels matcher should work with special characters",
 			channel: &legacymodels.AlertNotification{UID: "uid1", Name: `. ^ $ * + - ? ( ) [ ] { } \ |`},
 			recv:    createPostableGrafanaReceiver("uid1", `. ^ $ * + - ? ( ) [ ] { } \ |`),
-			expected: &apimodels.Route{
+			expected: &definition.Route{
 				Receiver:       `. ^ $ * + - ? ( ) [ ] { } \ |`,
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel(`. ^ $ * + - ? ( ) [ ] { } \ |`), Value: "true"}},
+				ObjectMatchers: definition.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel(`. ^ $ * + - ? ( ) [ ] { } \ |`), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -62,9 +62,9 @@ func TestCreateRoute(t *testing.T) {
 			name:    "when a channel has sendReminder=true, the route should use the frequency in repeat interval",
 			channel: &legacymodels.AlertNotification{SendReminder: true, Frequency: time.Duration(42) * time.Hour, UID: "uid1", Name: "recv1"},
 			recv:    createPostableGrafanaReceiver("uid1", "recv1"),
-			expected: &apimodels.Route{
+			expected: &definition.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("recv1"), Value: "true"}},
+				ObjectMatchers: definition.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("recv1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -75,9 +75,9 @@ func TestCreateRoute(t *testing.T) {
 			name:    "when a channel has sendReminder=false, the route should ignore the frequency in repeat interval and use DisabledRepeatInterval",
 			channel: &legacymodels.AlertNotification{SendReminder: false, Frequency: time.Duration(42) * time.Hour, UID: "uid1", Name: "recv1"},
 			recv:    createPostableGrafanaReceiver("uid1", "recv1"),
-			expected: &apimodels.Route{
+			expected: &definition.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("recv1"), Value: "true"}},
+				ObjectMatchers: definition.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("recv1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -93,13 +93,13 @@ func TestCreateRoute(t *testing.T) {
 
 			// Order of nested routes is not guaranteed.
 			cOpt := []cmp.Option{
-				cmpopts.SortSlices(func(a, b *apimodels.Route) bool {
+				cmpopts.SortSlices(func(a, b *definition.Route) bool {
 					if a.Receiver != b.Receiver {
 						return a.Receiver < b.Receiver
 					}
 					return a.ObjectMatchers[0].Value < b.ObjectMatchers[0].Value
 				}),
-				cmpopts.IgnoreUnexported(apimodels.Route{}, labels.Matcher{}),
+				cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}),
 			}
 
 			if !cmp.Equal(tt.expected, res, cOpt...) {
@@ -151,7 +151,7 @@ func TestCreateReceivers(t *testing.T) {
 	tc := []struct {
 		name    string
 		channel *legacymodels.AlertNotification
-		expRecv *apimodels.PostableGrafanaReceiver
+		expRecv *definition.PostableGrafanaReceiver
 		expErr  error
 	}{
 		{
@@ -223,13 +223,13 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 		}
 		return not
 	}
-	genExpSlack := func(fn func(channel *apimodels.PostableGrafanaReceiver)) *apimodels.PostableGrafanaReceiver {
+	genExpSlack := func(fn func(channel *definition.PostableGrafanaReceiver)) *definition.PostableGrafanaReceiver {
 		rawSettings, err := json.Marshal(map[string]string{
 			"something": "some value",
 		})
 		require.NoError(t, err)
 
-		recv := &apimodels.PostableGrafanaReceiver{
+		recv := &definition.PostableGrafanaReceiver{
 			UID:      "uid",
 			Name:     "channel name",
 			Type:     "slack",
@@ -249,7 +249,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 	tc := []struct {
 		name    string
 		channel *legacymodels.AlertNotification
-		expRecv *apimodels.PostableGrafanaReceiver
+		expRecv *definition.PostableGrafanaReceiver
 		expErr  error
 	}{
 		{
@@ -265,7 +265,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 		{
 			name:    "when no secure settings are encrypted, do nothing",
 			channel: gen("slack", nil),
-			expRecv: genExpSlack(func(recv *apimodels.PostableGrafanaReceiver) {
+			expRecv: genExpSlack(func(recv *definition.PostableGrafanaReceiver) {
 				delete(recv.SecureSettings, "token")
 				delete(recv.SecureSettings, "url")
 			}),
@@ -392,12 +392,12 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 				{
 					Channel:      createNotChannel(t, "uid1", int64(1), "notifier1", false, 0),
 					ContactPoint: createPostableGrafanaReceiver("uid1", "notifier1"),
-					Route:        &apimodels.Route{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+					Route:        &definition.Route{Receiver: "notifier1", ObjectMatchers: definition.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 				},
 				{
 					Channel:      createNotChannel(t, "uid2", int64(2), "notifier2", false, 0),
 					ContactPoint: createPostableGrafanaReceiver("uid2", "notifier2"),
-					Route:        &apimodels.Route{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+					Route:        &definition.Route{Receiver: "notifier2", ObjectMatchers: definition.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 				},
 			},
 		},
@@ -408,12 +408,12 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 				{
 					Channel:      createNotChannel(t, "uid1", int64(1), "notifier1", false, 0),
 					ContactPoint: createPostableGrafanaReceiver("uid1", "notifier1"),
-					Route:        &apimodels.Route{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+					Route:        &definition.Route{Receiver: "notifier1", ObjectMatchers: definition.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 				},
 				{
 					Channel:      createNotChannel(t, "uid2", int64(2), "notifier2", true, 0),
 					ContactPoint: createPostableGrafanaReceiver("uid2", "notifier2"),
-					Route:        &apimodels.Route{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchRegexp, Name: model.AlertNameLabel, Value: ".+"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+					Route:        &definition.Route{Receiver: "notifier2", ObjectMatchers: definition.ObjectMatchers{{Type: labels.MatchRegexp, Name: model.AlertNameLabel, Value: ".+"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 				},
 			},
 		},
@@ -424,12 +424,12 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 				{
 					Channel:      createNotChannel(t, "uid1", int64(1), "notifier1", false, time.Duration(42)),
 					ContactPoint: createPostableGrafanaReceiver("uid1", "notifier1"),
-					Route:        &apimodels.Route{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(42)},
+					Route:        &definition.Route{Receiver: "notifier1", ObjectMatchers: definition.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(42)},
 				},
 				{
 					Channel:      createNotChannel(t, "uid2", int64(2), "notifier2", false, time.Duration(43)),
 					ContactPoint: createPostableGrafanaReceiver("uid2", "notifier2"),
-					Route:        &apimodels.Route{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(43)},
+					Route:        &definition.Route{Receiver: "notifier2", ObjectMatchers: definition.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(43)},
 				},
 			},
 		},
@@ -463,11 +463,11 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 	}
 }
 
-func createReceiverNoValidation(t *testing.T, c *legacymodels.AlertNotification, settings *simplejson.Json, secureSettings map[string]string) *apimodels.PostableGrafanaReceiver {
+func createReceiverNoValidation(t *testing.T, c *legacymodels.AlertNotification, settings *simplejson.Json, secureSettings map[string]string) *definition.PostableGrafanaReceiver {
 	data, err := settings.MarshalJSON()
 	require.NoError(t, err)
 
-	return &apimodels.PostableGrafanaReceiver{
+	return &definition.PostableGrafanaReceiver{
 		UID:                   c.UID,
 		Name:                  c.Name,
 		Type:                  c.Type,
@@ -477,12 +477,12 @@ func createReceiverNoValidation(t *testing.T, c *legacymodels.AlertNotification,
 	}
 }
 
-func createPostableGrafanaReceiver(uid string, name string) *apimodels.PostableGrafanaReceiver {
-	return &apimodels.PostableGrafanaReceiver{
+func createPostableGrafanaReceiver(uid string, name string) *definition.PostableGrafanaReceiver {
+	return &definition.PostableGrafanaReceiver{
 		UID:            uid,
 		Type:           "email",
 		Name:           name,
-		Settings:       apimodels.RawMessage(`{"addresses":"example"}`),
+		Settings:       definition.RawMessage(`{"addresses":"example"}`),
 		SecureSettings: map[string]string{},
 	}
 }

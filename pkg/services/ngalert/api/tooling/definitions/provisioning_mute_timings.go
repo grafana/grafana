@@ -1,6 +1,7 @@
 package definitions
 
 import (
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 )
 
@@ -92,7 +93,7 @@ type MuteTimingHeaders struct {
 // swagger:model
 type MuteTimeInterval struct {
 	config.MuteTimeInterval `json:",inline" yaml:",inline"`
-	Provenance              Provenance `json:"provenance,omitempty"`
+	Provenance              definition.Provenance `json:"provenance,omitempty"`
 }
 
 func (mt *MuteTimeInterval) ResourceType() string {

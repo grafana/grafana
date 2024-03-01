@@ -1,5 +1,7 @@
 package definitions
 
+import "github.com/grafana/alerting/definition"
+
 // swagger:route GET /v1/notifications/time-intervals notifications RouteNotificationsGetTimeIntervals
 //
 // Get all the time intervals
@@ -58,7 +60,7 @@ type TimeIntervalTimeRange struct {
 
 // swagger:model
 type GettableTimeIntervals struct {
-	Name          string             `json:"name" hcl:"name"`
-	TimeIntervals []TimeIntervalItem `json:"time_intervals" hcl:"intervals,block"`
-	Provenance    Provenance         `json:"provenance,omitempty"`
+	Name          string                `json:"name" hcl:"name"`
+	TimeIntervals []TimeIntervalItem    `json:"time_intervals" hcl:"intervals,block"`
+	Provenance    definition.Provenance `json:"provenance,omitempty"`
 }
