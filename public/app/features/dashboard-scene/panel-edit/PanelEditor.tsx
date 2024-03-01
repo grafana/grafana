@@ -138,7 +138,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       width: repeatDirection === 'h' ? 24 : gridItem.state.width,
       height: gridItem.state.height,
       itemHeight: gridItem.state.height,
-      source: panelManager.state.panel.clone(),
+      source: panelManager.state.panel.clone({ $data: panelManager.state.$data?.clone() }),
       variableName: panelManager.state.repeat!,
       repeatedPanels: [],
       repeatDirection: panelManager.state.repeatDirection,
@@ -157,7 +157,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     const panelManager = this.state.vizManager;
-    const panelClone = panelManager.state.panel.clone();
+    const panelClone = panelManager.state.panel.clone({ $data: panelManager.state.$data?.clone() });
     const gridItem = new SceneGridItem({
       key: panelRepeater.state.key,
       x: panelRepeater.state.x,
