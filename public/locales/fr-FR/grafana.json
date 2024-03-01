@@ -697,9 +697,34 @@
       "link-title": "",
       "title": ""
     },
+    "connect-modal": {
+      "body-cloud-stack": "",
+      "body-get-started": "",
+      "body-paste-stack": "",
+      "body-sign-up": "",
+      "body-token": "",
+      "body-token-field": "",
+      "body-token-field-placeholder": "",
+      "body-token-instructions": "",
+      "body-url-field": "",
+      "body-view-stacks": "",
+      "cancel": "",
+      "connect": "",
+      "connecting": "",
+      "stack-required-error": "",
+      "title": "",
+      "token-required-error": ""
+    },
     "cta": {
       "button": "",
       "header": ""
+    },
+    "disconnect-modal": {
+      "body": "",
+      "cancel": "",
+      "disconnect": "",
+      "disconnecting": "",
+      "title": ""
     },
     "get-started": {
       "body": "",
@@ -750,6 +775,9 @@
       "body": "",
       "link-title": "",
       "title": ""
+    },
+    "resources": {
+      "disconnect": ""
     },
     "token-status": {
       "active": "",
