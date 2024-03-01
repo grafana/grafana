@@ -1,6 +1,15 @@
 import React from 'react';
 
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneGridItem,
+  SceneGridLayout,
+  SceneObjectBase,
+  SceneObjectState,
+  VizPanel,
+  VizPanelMenu,
+  VizPanelState,
+} from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
@@ -9,6 +18,7 @@ import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from './PanelMenuBehavior';
 import { PanelNotices } from './PanelNotices';
+import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
 
 interface LibraryVizPanelState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
@@ -52,7 +62,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
 
       const libPanelModel = new PanelModel(libPanel.model);
 
-      const panel = new VizPanel({
+      const vizPanelState: VizPanelState = {
         title: this.state.title,
         key: this.state.panelKey,
         options: libPanelModel.options ?? {},
@@ -70,12 +80,36 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
           }),
           new PanelNotices(),
         ],
-      });
+      };
+
+      const panel = new VizPanel(vizPanelState);
+      const gridItem = this.parent;
+      if (libPanelModel.repeat && gridItem instanceof SceneGridItem && gridItem.parent instanceof SceneGridLayout) {
+        this._parent = undefined;
+        const repeater = new PanelRepeaterGridItem({
+          key: gridItem.state.key,
+          x: libPanelModel.gridPos.x,
+          y: libPanelModel.gridPos.y,
+          width: libPanelModel.repeatDirection === 'h' ? 24 : libPanelModel.gridPos.w,
+          height: libPanelModel.gridPos.h,
+          itemHeight: libPanelModel.gridPos.h,
+          source: this,
+          variableName: libPanelModel.repeat,
+          repeatedPanels: [],
+          repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
+          maxPerRow: libPanelModel.maxPerRow,
+        });
+        gridItem.parent.setState({
+          children: gridItem.parent.state.children.map((child) =>
+            child.state.key === gridItem.state.key ? repeater : child
+          ),
+        });
+      }
 
       this.setState({ panel, _loadedVersion: libPanel.version, isLoaded: true });
     } catch (err) {
       vizPanel.setState({
-        _pluginLoadError: 'Unable to load library panel: ' + this.state.uid,
+        _pluginLoadError: `Unable to load library panel: ${this.state.uid}`,
       });
     }
   }
