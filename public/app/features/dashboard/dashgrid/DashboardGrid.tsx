@@ -335,29 +335,30 @@ export class DashboardGrid extends PureComponent<Props, State> {
           zIndex: 1,
           display: this.props.editPanel ? 'none' : undefined,
         }}
-        data-help="down-below"
       >
-        <div data-help="first-child" style={{ width: width, height: '100%' }} ref={this.onGetWrapperDivRef}>
-          <ReactGridLayout
-            width={width}
-            isDraggable={draggable}
-            isResizable={isEditable}
-            containerPadding={[0, 0]}
-            useCSSTransforms={true}
-            margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
-            cols={GRID_COLUMN_COUNT}
-            rowHeight={GRID_CELL_HEIGHT}
-            draggableHandle=".grid-drag-handle"
-            draggableCancel=".grid-drag-cancel"
-            layout={this.buildLayout()}
-            onDragStop={this.onDragStop}
-            onResize={this.onResize}
-            onResizeStop={this.onResizeStop}
-            onLayoutChange={this.onLayoutChange}
-          >
-            {this.renderPanels(width, draggable)}
-          </ReactGridLayout>
-        </div>
+        {width !== 0 && (
+          <div style={{ width: width, height: '100%' }} ref={this.onGetWrapperDivRef}>
+            <ReactGridLayout
+              width={width}
+              isDraggable={draggable}
+              isResizable={isEditable}
+              containerPadding={[0, 0]}
+              useCSSTransforms={true}
+              margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
+              cols={GRID_COLUMN_COUNT}
+              rowHeight={GRID_CELL_HEIGHT}
+              draggableHandle=".grid-drag-handle"
+              draggableCancel=".grid-drag-cancel"
+              layout={this.buildLayout()}
+              onDragStop={this.onDragStop}
+              onResize={this.onResize}
+              onResizeStop={this.onResizeStop}
+              onLayoutChange={this.onLayoutChange}
+            >
+              {this.renderPanels(width, draggable)}
+            </ReactGridLayout>
+          </div>
+        )}
       </div>
     );
   }
