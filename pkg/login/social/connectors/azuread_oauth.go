@@ -31,7 +31,10 @@ import (
 const forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
 
 var (
-	ExtraAzureADSettingKeys = []string{forceUseGraphAPIKey, allowedOrganizationsKey}
+	ExtraAzureADSettingKeys = map[string]ExtraKeyInfo{
+		forceUseGraphAPIKey:     {Type: Bool, DefaultValue: false},
+		allowedOrganizationsKey: {Type: String},
+	}
 	errAzureADMissingGroups = &SocialError{"either the user does not have any group membership or the groups claim is missing from the token."}
 )
 
@@ -80,7 +83,7 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ss
 		SocialBase:           newSocialBase(social.AzureADProviderName, info, features, cfg),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
-		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),
+		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
 	}
 
 	if info.UseRefreshToken {
