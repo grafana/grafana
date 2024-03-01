@@ -25,7 +25,7 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
     <Card href={hasWriteRights ? dsLink : undefined}>
       <Card.Heading>{dataSource.name}</Card.Heading>
       <Card.Figure>
-        <img src={dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />
+        <img src={dataSource.jsonData?.logoUrl || dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />
       </Card.Figure>
       <Card.Meta>
         {[

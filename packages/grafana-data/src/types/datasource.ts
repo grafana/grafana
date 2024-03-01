@@ -623,6 +623,7 @@ export interface DataSourceJsonData {
   manageAlerts?: boolean;
   alertmanagerUid?: string;
   disableGrafanaCache?: boolean;
+  logoUrl?: string;
 }
 
 /**

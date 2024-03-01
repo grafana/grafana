@@ -31,7 +31,7 @@ export function DataSourceCard({ ds, onClick, selected, description, ...htmlProp
         </div>
       </Card.Heading>
       <Card.Figure className={styles.logo}>
-        <img src={ds.meta.info.logos.small} alt={`${ds.meta.name} Logo`} />
+        <img src={ds.jsonData?.logoUrl || ds.meta.info.logos.small} alt={`${ds.meta.name} Logo`} />
       </Card.Figure>
     </Card>
   );

@@ -14,7 +14,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   const pluginMeta = plugin.meta;
   const highlightsEnabled = config.featureToggles.featureHighlights;
   const navModel: NavModelItem = {
-    img: pluginMeta.info.logos.large,
+    img: dataSource.jsonData?.logoUrl|| pluginMeta.info.logos.large,
     id: 'datasource-' + dataSource.uid,
     url: '',
     text: dataSource.name,
