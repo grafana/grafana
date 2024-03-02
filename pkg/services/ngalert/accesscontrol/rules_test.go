@@ -119,6 +119,12 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ruleCreate: {
 						namespaceIdScope,
 					},
+					ruleRead: {
+						namespaceIdScope,
+					},
+					dashboards.ActionFoldersRead: {
+						namespaceIdScope,
+					},
 					datasources.ActionQuery: scopes,
 				}
 			},

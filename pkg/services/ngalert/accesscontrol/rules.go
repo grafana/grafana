@@ -143,9 +143,17 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 		if err := r.AuthorizeAccessToRuleGroup(ctx, user, rules); err != nil { // if user is not authorized to do operation in the group that is being changed
 			return err
 		}
-	} else if len(change.Delete) > 0 {
-		// add a safeguard in the case of inconsistency. If user hit this then there is a bug in the calculating of changes struct
-		return fmt.Errorf("failed to authorize changes in rule group %s. Detected %d deletes but group was not provided", change.GroupKey.RuleGroup, len(change.Delete))
+	} else {
+		if len(change.Delete) > 0 {
+			// add a safeguard in the case of inconsistency. If user hit this then there is a bug in the calculating of changes struct
+			return fmt.Errorf("failed to authorize changes in rule group %s. Detected %d deletes but group was not provided", change.GroupKey.RuleGroup, len(change.Delete))
+		}
+		if len(change.New) > 0 {
+			// create a new group, check that user has "read" access to that new group. Otherwise, it will not be able to read it back.
+			if err := r.AuthorizeAccessToRuleGroup(ctx, user, change.New); err != nil { // if user is not authorized to do operation in the group that is being changed
+				return err
+			}
+		}
 	}
 
 	if len(change.Delete) > 0 {
