@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"golang.org/x/sync/errgroup"
@@ -13,6 +14,7 @@ import (
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -192,5 +194,41 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 // NOTE the upstream queries have already been executed
 // https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
 func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, qdr *backend.QueryDataResponse, expressions []expr.ExpressionQuery) (*backend.QueryDataResponse, error) {
-	return qdr, fmt.Errorf("expressions are not implemented yet")
+	now := time.Now()
+
+	vars := make(mathexp.Vars)
+	for _, expression := range expressions {
+		// Setup the variables
+		for _, refId := range expression.Command.NeedsVars() {
+			_, ok := vars[refId]
+			if !ok {
+				dr, ok := qdr.Responses[refId]
+				if ok {
+					// Convert the generic DataFrame response to Results
+					fmt.Printf("TODO... %v\n", dr)
+				} else {
+					err := fmt.Errorf("missing variable %s", refId)
+					qdr.Responses[expression.RefID] = backend.DataResponse{
+						Error: err,
+					}
+					return qdr, err
+				}
+			}
+		}
+
+		refId := expression.RefID
+		results, err := expression.Command.Execute(ctx, now, vars, nil)
+		if err != nil {
+			qdr.Responses[refId] = backend.DataResponse{
+				Error: err,
+			}
+		} else {
+			vars[refId] = results
+			qdr.Responses[refId] = backend.DataResponse{
+				Error:  results.Error,
+				Frames: results.Values.AsDataFrames(refId),
+			}
+		}
+	}
+	return qdr, nil
 }

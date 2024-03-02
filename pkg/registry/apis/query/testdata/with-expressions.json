@@ -5,6 +5,16 @@
     "to": "now",
     "queries": [
       {
+        "refId": "C",
+        "datasource": {
+          "type": "",
+          "uid": "__expr__"
+        },
+        "queryType": "reduce",
+        "reducer": "last",
+        "expression": "$B"
+      },
+      {
         "refId": "A",
         "datasource": {
           "type": "sql",
@@ -19,43 +29,10 @@
         },
         "queryType": "math",
         "expression": "$A + 10"
-      },
-      {
-        "refId": "C",
-        "datasource": {
-          "type": "",
-          "uid": "__expr__"
-        },
-        "queryType": "reduce",
-        "expression": "$B",
-        "reducer": "last"
       }
     ]
   },
   "expect": {
-    "expressions": [
-      {
-        "refId": "B",
-        "queryType": "math",
-        "properties": {
-          "expression": "$A + 10"
-        },
-        "variables": [
-          "A"
-        ]
-      },
-      {
-        "refId": "C",
-        "queryType": "reduce",
-        "properties": {
-          "expression": "$B",
-          "reducer": "last"
-        },
-        "variables": [
-          "B"
-        ]
-      }
-    ],
     "requests": [
       {
         "pluginId": "sql",
@@ -72,6 +49,25 @@
               }
             }
           ]
+        }
+      }
+    ],
+    "expressions": [
+      {
+        "id": 2,
+        "refId": "B",
+        "queryType": "math",
+        "properties": {
+          "expression": "$A + 10"
+        }
+      },
+      {
+        "id": 1,
+        "refId": "C",
+        "queryType": "reduce",
+        "properties": {
+          "expression": "$B",
+          "reducer": "last"
         }
       }
     ]

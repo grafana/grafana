@@ -7,6 +7,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	"gonum.org/v1/gonum/graph/simple"
+	"gonum.org/v1/gonum/graph/topo"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
@@ -24,11 +26,11 @@ type datasourceRequest struct {
 }
 
 type parsedRequestInfo struct {
-	// Expressions
-	Expressions []expr.ExpressionQuery `json:"expressions,omitempty"`
-
 	// Datasource queries, one for each datasource
-	Requests []datasourceRequest `json:"requests"`
+	Requests []datasourceRequest `json:"requests,omitempty"`
+
+	// Expressions in required execution order
+	Expressions []expr.ExpressionQuery `json:"expressions,omitempty"`
 }
 
 // Support old requests with name or internal ids
@@ -48,18 +50,12 @@ func newQueryParser(reader *expr.ExpressionQueryReader, lookup LegacyLookupFunct
 
 // Split the main query into multiple
 func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRequest) (parsedRequestInfo, error) {
-	refIDs := make(map[string]bool, len(input.Queries))
+	queryRefIDs := make(map[string]bool, len(input.Queries))
+	expressions := make(map[string]*expr.ExpressionQuery)
 	index := make(map[string]int) // index lookup
 	rsp := parsedRequestInfo{}
 	for _, q := range input.Queries {
-		// 1. Verify the RefID is unique
-		_, ok := refIDs[q.RefID]
-		if ok {
-			return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
-		}
-		refIDs[q.RefID] = true
-
-		// 2. Ensure a valid datasource
+		// 1. Ensure a valid datasource
 		ds := q.Datasource
 		if ds == nil {
 			if q.DatasourceID < 0 {
@@ -80,6 +76,15 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 
 		// Process each query
 		if expr.IsDataSource(ds.UID) {
+			_, ok := expressions[q.RefID]
+			if ok {
+				return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
+			}
+			_, ok = queryRefIDs[q.RefID]
+			if ok {
+				return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
+			}
+
 			raw, err := json.Marshal(q)
 			if err != nil {
 				return rsp, err
@@ -92,8 +97,20 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 			if err != nil {
 				return rsp, err
 			}
-			rsp.Expressions = append(rsp.Expressions, exp)
+			exp.GraphID = int64(len(expressions) + 1)
+			expressions[q.RefID] = &exp
 		} else {
+			// 2. Verify the RefID is unique
+			_, ok := queryRefIDs[q.RefID]
+			if ok {
+				return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
+			}
+			_, ok = expressions[q.RefID]
+			if ok {
+				return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
+			}
+			queryRefIDs[q.RefID] = true
+
 			// 3. Match the query group
 			key := fmt.Sprintf("%s/%s", ds.Type, ds.UID)
 			idx, ok := index[key]
@@ -115,16 +132,47 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 		}
 	}
 
-	// Make sure all referenced variables exist
-	for idx, exp := range rsp.Expressions {
-		vars := exp.Command.NeedsVars()
-		for _, refId := range vars {
-			_, ok := refIDs[refId]
-			if !ok {
-				return rsp, fmt.Errorf("expression [%s] is missing variable [%s]", exp.RefID, refId)
+	// Make sure all referenced variables exist and the expression order is stable
+	if len(expressions) > 0 {
+		queryNode := &expr.ExpressionQuery{
+			GraphID: -1,
+		}
+
+		// Build the graph for a request
+		dg := simple.NewDirectedGraph()
+		dg.AddNode(queryNode)
+		for _, exp := range expressions {
+			dg.AddNode(exp)
+		}
+		for _, exp := range expressions {
+			vars := exp.Command.NeedsVars()
+			for _, refId := range vars {
+				target := queryNode
+				_, ok := queryRefIDs[refId]
+				if !ok {
+					target, ok = expressions[refId]
+					if !ok {
+						return rsp, fmt.Errorf("expression [%s] is missing variable [%s]", exp.RefID, refId)
+					}
+				}
+				if target.ID() == exp.ID() {
+					return rsp, fmt.Errorf("expression [%s] can not depend on itself", exp.RefID)
+				}
+				dg.SetEdge(dg.NewEdge(target, exp))
 			}
 		}
-		rsp.Expressions[idx].Variables = vars
+
+		// Add the sorted expressions
+		sortedNodes, err := topo.SortStabilized(dg, nil)
+		if err != nil {
+			return rsp, fmt.Errorf("cyclic references in query")
+		}
+		for _, v := range sortedNodes {
+			if v.ID() > 0 {
+				rsp.Expressions = append(rsp.Expressions, *v.(*expr.ExpressionQuery))
+			}
+		}
 	}
+
 	return rsp, nil
 }

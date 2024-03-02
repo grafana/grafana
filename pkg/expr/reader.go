@@ -17,15 +17,20 @@ import (
 // Once we are comfortable with the parsing logic, this struct will
 // be merged/replace the existing Query struct in grafana/pkg/expr/transform.go
 type ExpressionQuery struct {
+	GraphID   int64     `json:"id,omitempty"`
 	RefID     string    `json:"refId"`
 	QueryType QueryType `json:"queryType"`
 
-	// the typed query parameters
-	Properties any      `json:"properties"`
-	Variables  []string `json:"variables"`
+	// The typed query parameters
+	Properties any `json:"properties"`
 
 	// Hidden in debug JSON
 	Command Command `json:"-"`
+}
+
+// ID is used to identify nodes in the directed graph
+func (q ExpressionQuery) ID() int64 {
+	return q.GraphID
 }
 
 type ExpressionQueryReader struct {
