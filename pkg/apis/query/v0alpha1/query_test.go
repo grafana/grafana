@@ -53,7 +53,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	// And read it back with standard JSON marshal functions
-	query := &resource.GenericDataQuery{}
+	query := &resource.DataQuery{}
 	err = json.Unmarshal(out, query)
 	require.NoError(t, err)
 	require.Equal(t, "spreadsheetID", query.MustString("spreadsheet"))

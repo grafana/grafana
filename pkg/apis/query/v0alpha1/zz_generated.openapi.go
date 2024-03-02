@@ -195,7 +195,7 @@ func schema_pkg_apis_query_v0alpha1_QueryDataRequest(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/grafana/grafana-plugin-sdk-go/experimental/resource.GenericDataQuery"),
+										Ref: ref("github.com/grafana/grafana-plugin-sdk-go/experimental/resource.DataQuery"),
 									},
 								},
 							},
@@ -213,7 +213,7 @@ func schema_pkg_apis_query_v0alpha1_QueryDataRequest(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana-plugin-sdk-go/experimental/resource.GenericDataQuery"},
+			"github.com/grafana/grafana-plugin-sdk-go/experimental/resource.DataQuery"},
 	}
 }
 
@@ -488,7 +488,7 @@ func schema_apis_query_v0alpha1_template_Target(ref common.ReferenceCallback) co
 					"properties": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Query target",
-							Ref:         ref("github.com/grafana/grafana-plugin-sdk-go/experimental/resource.GenericDataQuery"),
+							Ref:         ref("github.com/grafana/grafana-plugin-sdk-go/experimental/resource.DataQuery"),
 						},
 					},
 				},
@@ -496,7 +496,7 @@ func schema_apis_query_v0alpha1_template_Target(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana-plugin-sdk-go/experimental/resource.GenericDataQuery", "github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.VariableReplacement"},
+			"github.com/grafana/grafana-plugin-sdk-go/experimental/resource.DataQuery", "github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.VariableReplacement"},
 	}
 }
 

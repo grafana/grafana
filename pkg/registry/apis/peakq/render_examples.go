@@ -38,7 +38,7 @@ var basicTemplateSpec = template.QueryTemplate{
 				},
 			},
 
-			Properties: resource.NewGenericDataQuery(map[string]any{
+			Properties: resource.NewDataQuery(map[string]any{
 				"refId": "A", // TODO: Set when Where?
 				"datasource": map[string]any{
 					"type": "prometheus",
@@ -58,7 +58,7 @@ var basicTemplateRenderedTargets = []template.Target{
 	{
 		DataType: data.FrameTypeUnknown,
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
-		Properties: resource.NewGenericDataQuery(map[string]any{
+		Properties: resource.NewDataQuery(map[string]any{
 			"refId": "A", // TODO: Set when Where?
 			"datasource": map[string]any{
 				"type": "prometheus",

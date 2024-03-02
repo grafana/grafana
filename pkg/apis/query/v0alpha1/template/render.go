@@ -61,7 +61,7 @@ func RenderTemplate(qt QueryTemplate, selectedValues map[string][]string) ([]Tar
 		if err != nil {
 			return nil, err
 		}
-		u := resource.GenericDataQuery{}
+		u := resource.DataQuery{}
 		err = u.UnmarshalJSON(raw)
 		if err != nil {
 			return nil, err

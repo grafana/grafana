@@ -39,7 +39,7 @@ func (d *testdataDummy) ExecuteQueryData(ctx context.Context,
 	name string,
 
 	// The raw backend query objects
-	raw []resource.GenericDataQuery,
+	raw []resource.DataQuery,
 ) (*backend.QueryDataResponse, error) {
 	if datasource.Group != "testdata.datasource.grafana.app" {
 		return nil, fmt.Errorf("expecting testdata requests")

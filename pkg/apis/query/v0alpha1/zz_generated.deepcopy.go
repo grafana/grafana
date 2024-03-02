@@ -82,7 +82,7 @@ func (in *QueryDataRequest) DeepCopyInto(out *QueryDataRequest) {
 	out.TypeMeta = in.TypeMeta
 	if in.Queries != nil {
 		in, out := &in.Queries, &out.Queries
-		*out = make([]resource.GenericDataQuery, len(*in))
+		*out = make([]resource.DataQuery, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

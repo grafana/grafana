@@ -49,7 +49,7 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 			Version: "v0alpha1",
 		})
 
-		q := resource.GenericDataQuery{
+		q := resource.DataQuery{
 			CommonQueryProperties: resource.CommonQueryProperties{
 				Datasource: &resource.DataSourceRef{
 					Type: "grafana-testdata-datasource",
@@ -59,8 +59,8 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 		}
 		q.Set("csvContent", `a,b,c\n1,hello,true`)
 		q.Set("scenarioId", `csv_content`)
-		body, err := json.Marshal(&resource.GenericQueryRequest{
-			Queries: []*resource.GenericDataQuery{&q},
+		body, err := json.Marshal(&resource.DataQueryRequest{
+			Queries: []resource.DataQuery{q},
 		})
 		require.NoError(t, err)
 

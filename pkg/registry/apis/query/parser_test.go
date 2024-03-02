@@ -30,7 +30,7 @@ func TestQuerySplitting(t *testing.T) {
 
 	t.Run("missing datasource flavors", func(t *testing.T) {
 		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
-			Queries: []resource.GenericDataQuery{{
+			Queries: []resource.DataQuery{{
 				CommonQueryProperties: resource.CommonQueryProperties{
 					RefID: "A",
 				},

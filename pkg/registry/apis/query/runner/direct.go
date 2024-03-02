@@ -68,7 +68,7 @@ func (d *directRunner) ExecuteQueryData(ctx context.Context,
 	name string,
 
 	// The raw backend query objects
-	raw []resource.GenericDataQuery,
+	raw []resource.DataQuery,
 ) (*backend.QueryDataResponse, error) {
 	queries, dsRef, err := legacydata.ToDataSourceQueries(query.QueryDataRequest{
 		Queries: raw,

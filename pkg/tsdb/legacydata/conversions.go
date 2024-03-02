@@ -48,7 +48,7 @@ func ToDataSourceQueries(req query.QueryDataRequest) ([]backend.DataQuery, *reso
 }
 
 // Converts a generic query to a backend one
-func toBackendDataQuery(q resource.GenericDataQuery, defaultTimeRange *backend.TimeRange) (backend.DataQuery, error) {
+func toBackendDataQuery(q resource.DataQuery, defaultTimeRange *backend.TimeRange) (backend.DataQuery, error) {
 	var err error
 	bq := backend.DataQuery{
 		RefID:         q.RefID,

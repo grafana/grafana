@@ -36,7 +36,7 @@ type Target struct {
 	Variables map[string][]VariableReplacement `json:"variables"`
 
 	// Query target
-	Properties resource.GenericDataQuery `json:"properties"`
+	Properties resource.DataQuery `json:"properties"`
 }
 
 // TemplateVariable is the definition of a variable that will be interpolated
