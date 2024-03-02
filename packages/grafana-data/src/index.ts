@@ -5,7 +5,6 @@
  */
 export * from './utils';
 export * from './types';
-export * from './vector';
 export * from './dataframe';
 export * from './transformations';
 export * from './datetime';
@@ -44,3 +43,8 @@ export {
 export { usePluginContext } from './context/plugins/usePluginContext';
 export { isDataSourcePluginContext } from './context/plugins/guards';
 export { getLinksSupplier } from './field/fieldOverrides';
+
+// deprecated
+export { CircularVector } from './vector/CircularVector';
+export { vectorator } from './vector/FunctionalVector';
+export { ArrayVector } from './vector/ArrayVector';

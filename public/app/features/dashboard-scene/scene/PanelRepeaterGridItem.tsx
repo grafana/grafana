@@ -19,10 +19,11 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { getMultiVariableValues } from '../utils/utils';
 
+import { LibraryVizPanel } from './LibraryVizPanel';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 interface PanelRepeaterGridItemState extends SceneGridItemStateLike {
-  source: VizPanel;
+  source: VizPanel | LibraryVizPanel;
   repeatedPanels?: VizPanel[];
   variableName: string;
   itemHeight?: number;
@@ -94,11 +95,12 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
       return;
     }
 
-    const panelToRepeat = this.state.source;
+    let panelToRepeat =
+      this.state.source instanceof LibraryVizPanel ? this.state.source.state.panel! : this.state.source;
     const { values, texts } = getMultiVariableValues(variable);
     const repeatedPanels: VizPanel[] = [];
 
-    // Loop through variable values and create repeates
+    // Loop through variable values and create repeats
     for (let index = 0; index < values.length; index++) {
       const clone = panelToRepeat.clone({
         $variables: new SceneVariableSet({
