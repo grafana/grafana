@@ -50,10 +50,11 @@ func TestQuerySplitting(t *testing.T) {
 			}
 
 			fpath := path.Join("testdata", file.Name())
+			// nolint:gosec
 			body, err := os.ReadFile(fpath)
 			require.NoError(t, err)
 			harness := &parserTestObject{}
-			json.Unmarshal(body, harness)
+			err = json.Unmarshal(body, harness)
 			require.NoError(t, err)
 
 			changed := false

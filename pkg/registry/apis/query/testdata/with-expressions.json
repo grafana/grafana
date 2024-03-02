@@ -40,7 +40,7 @@
         "properties": {
           "expression": "$A + 10"
         },
-        "vars": [
+        "variables": [
           "A"
         ]
       },
@@ -51,7 +51,7 @@
           "expression": "$B",
           "reducer": "last"
         },
-        "vars": [
+        "variables": [
           "B"
         ]
       }

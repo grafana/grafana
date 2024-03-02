@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
@@ -26,7 +25,7 @@ var (
 )
 
 func (r *subQueryREST) New() runtime.Object {
-	return &query.QueryDataRequest{}
+	return &query.QueryDataResponse{}
 }
 
 func (r *subQueryREST) Destroy() {}
@@ -59,7 +58,7 @@ func (r *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator
 
 	fmt.Printf("TODO: %v // %v\n", req, ctx)
 
-	res := &v0alpha1.QueryDataResponse{
+	res := &query.QueryDataResponse{
 		QueryDataResponse: backend.QueryDataResponse{},
 	}
 	return res, nil
