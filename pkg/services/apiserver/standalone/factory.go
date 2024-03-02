@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -75,6 +76,9 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 			featuremgmt.WithFeatures(),
 			runner.NewDummyTestRunner(),
 			runner.NewDummyRegistry(),
+			func(context context.Context, name string, id int64) *resource.DataSourceRef {
+				return nil // SQL lookups (for migration)
+			},
 		)
 
 	case "featuretoggle.grafana.app":

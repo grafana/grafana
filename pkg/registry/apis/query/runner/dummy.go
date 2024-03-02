@@ -11,22 +11,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	testdata "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 type testdataDummy struct{}
 
-var _ v0alpha1.QueryRunner = (*testdataDummy)(nil)
-var _ v0alpha1.DataSourceApiServerRegistry = (*testdataDummy)(nil)
+var _ query.QueryRunner = (*testdataDummy)(nil)
+var _ query.DataSourceApiServerRegistry = (*testdataDummy)(nil)
 
 // NewDummyTestRunner creates a runner that only works with testdata
-func NewDummyTestRunner() v0alpha1.QueryRunner {
+func NewDummyTestRunner() query.QueryRunner {
 	return &testdataDummy{}
 }
 
-func NewDummyRegistry() v0alpha1.DataSourceApiServerRegistry {
+func NewDummyRegistry() query.DataSourceApiServerRegistry {
 	return &testdataDummy{}
 }
 
@@ -39,14 +39,14 @@ func (d *testdataDummy) ExecuteQueryData(ctx context.Context,
 	name string,
 
 	// The raw backend query objects
-	query []resource.GenericDataQuery,
+	raw []resource.GenericDataQuery,
 ) (*backend.QueryDataResponse, error) {
 	if datasource.Group != "testdata.datasource.grafana.app" {
 		return nil, fmt.Errorf("expecting testdata requests")
 	}
 
-	queries, _, err := legacydata.ToDataSourceQueries(v0alpha1.GenericQueryRequest{
-		Queries: query,
+	queries, _, err := legacydata.ToDataSourceQueries(query.QueryDataRequest{
+		Queries: raw,
 	})
 	if err != nil {
 		return nil, err
@@ -69,12 +69,12 @@ func (*testdataDummy) GetDatasourceGroupVersion(pluginId string) (schema.GroupVe
 }
 
 // GetDatasourcePlugins implements QueryHelper.
-func (d *testdataDummy) GetDatasourceApiServers(ctx context.Context) (*v0alpha1.DataSourceApiServerList, error) {
-	return &v0alpha1.DataSourceApiServerList{
+func (d *testdataDummy) GetDatasourceApiServers(ctx context.Context) (*query.DataSourceApiServerList, error) {
+	return &query.DataSourceApiServerList{
 		ListMeta: metav1.ListMeta{
 			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
 		},
-		Items: []v0alpha1.DataSourceApiServer{
+		Items: []query.DataSourceApiServer{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "grafana-testdata-datasource",

@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -28,7 +28,7 @@ type directRunner struct {
 
 type directRegistry struct {
 	pluginsMu     sync.Mutex
-	plugins       *v0alpha1.DataSourceApiServerList
+	plugins       *query.DataSourceApiServerList
 	apis          map[string]schema.GroupVersion
 	groupToPlugin map[string]string
 	pluginStore   pluginstore.Store
@@ -37,13 +37,13 @@ type directRegistry struct {
 	dataSourcesService datasources.DataSourceService
 }
 
-var _ v0alpha1.QueryRunner = (*directRunner)(nil)
-var _ v0alpha1.DataSourceApiServerRegistry = (*directRegistry)(nil)
+var _ query.QueryRunner = (*directRunner)(nil)
+var _ query.DataSourceApiServerRegistry = (*directRegistry)(nil)
 
 // NewDummyTestRunner creates a runner that only works with testdata
 func NewDirectQueryRunner(
 	pluginClient plugins.Client,
-	pCtxProvider *plugincontext.Provider) v0alpha1.QueryRunner {
+	pCtxProvider *plugincontext.Provider) query.QueryRunner {
 	return &directRunner{
 		pluginClient: pluginClient,
 		pCtxProvider: pCtxProvider,
@@ -52,7 +52,7 @@ func NewDirectQueryRunner(
 
 func NewDirectRegistry(pluginStore pluginstore.Store,
 	dataSourcesService datasources.DataSourceService,
-) v0alpha1.DataSourceApiServerRegistry {
+) query.DataSourceApiServerRegistry {
 	return &directRegistry{
 		pluginStore:        pluginStore,
 		dataSourcesService: dataSourcesService,
@@ -68,10 +68,10 @@ func (d *directRunner) ExecuteQueryData(ctx context.Context,
 	name string,
 
 	// The raw backend query objects
-	query []resource.GenericDataQuery,
+	raw []resource.GenericDataQuery,
 ) (*backend.QueryDataResponse, error) {
-	queries, dsRef, err := legacydata.ToDataSourceQueries(v0alpha1.GenericQueryRequest{
-		Queries: query,
+	queries, dsRef, err := legacydata.ToDataSourceQueries(query.QueryDataRequest{
+		Queries: raw,
 	})
 	if err != nil {
 		return nil, err
@@ -118,7 +118,7 @@ func (d *directRegistry) GetDatasourceGroupVersion(pluginId string) (schema.Grou
 }
 
 // GetDatasourcePlugins no namespace? everything that is available
-func (d *directRegistry) GetDatasourceApiServers(ctx context.Context) (*v0alpha1.DataSourceApiServerList, error) {
+func (d *directRegistry) GetDatasourceApiServers(ctx context.Context) (*query.DataSourceApiServerList, error) {
 	d.pluginsMu.Lock()
 	defer d.pluginsMu.Unlock()
 
@@ -136,7 +136,7 @@ func (d *directRegistry) GetDatasourceApiServers(ctx context.Context) (*v0alpha1
 func (d *directRegistry) updatePlugins() error {
 	groupToPlugin := map[string]string{}
 	apis := map[string]schema.GroupVersion{}
-	result := &v0alpha1.DataSourceApiServerList{
+	result := &query.DataSourceApiServerList{
 		ListMeta: metav1.ListMeta{
 			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
 		},
@@ -160,7 +160,7 @@ func (d *directRegistry) updatePlugins() error {
 		}
 		groupToPlugin[group] = dsp.ID
 
-		ds := v0alpha1.DataSourceApiServer{
+		ds := query.DataSourceApiServer{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              dsp.ID,
 				CreationTimestamp: metav1.NewTime(time.UnixMilli(ts)),

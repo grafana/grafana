@@ -18,7 +18,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer":          schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServerList":      schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest":          schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataRequest":             schema_pkg_apis_query_v0alpha1_QueryDataRequest(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":            schema_pkg_apis_query_v0alpha1_QueryDataResponse(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinition":          schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinitionList":      schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref),
@@ -153,7 +153,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref common.Reference
 	}
 }
 
-func schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_query_v0alpha1_QueryDataRequest(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{

@@ -40,7 +40,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 		"to": "1692646267389"
 	}`)
 
-	req := &v0alpha1.GenericQueryRequest{}
+	req := &v0alpha1.QueryDataRequest{}
 	err := json.Unmarshal(request, req)
 	require.NoError(t, err)
 

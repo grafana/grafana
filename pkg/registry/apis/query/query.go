@@ -2,46 +2,89 @@ package query
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 	"golang.org/x/sync/errgroup"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
-	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
-	"github.com/grafana/grafana/pkg/web"
+	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
-func (b *QueryAPIBuilder) handleQuery(w http.ResponseWriter, r *http.Request) {
-	reqDTO := v0alpha1.GenericQueryRequest{}
-	if err := web.Bind(r, &reqDTO); err != nil {
-		errhttp.Write(r.Context(), err, w)
-		return
-	}
+type subQueryREST struct {
+	builder *QueryAPIBuilder
+}
 
-	parsed, err := parseQueryRequest(reqDTO)
+var (
+	_ rest.Storage              = (*subQueryREST)(nil)
+	_ rest.SingularNameProvider = (*subQueryREST)(nil)
+	_ rest.Creater              = (*subQueryREST)(nil)
+	_ rest.StorageMetadata      = (*subQueryREST)(nil)
+	_ rest.Scoper               = (*subQueryREST)(nil)
+)
+
+func (r *subQueryREST) New() runtime.Object {
+	return &query.QueryDataRequest{}
+}
+
+func (r *subQueryREST) Destroy() {}
+
+func (r *subQueryREST) ProducesMIMETypes(verb string) []string {
+	return []string{"application/json"} // and parquet!
+}
+
+func (r *subQueryREST) ProducesObject(verb string) interface{} {
+	return &query.QueryDataResponse{}
+}
+
+func (s *subQueryREST) NamespaceScoped() bool {
+	return true
+}
+
+func (s *subQueryREST) GetSingularName() string {
+	return "query"
+}
+
+// The query method (not really a create)
+func (r *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
 	if err != nil {
-		errhttp.Write(r.Context(), err, w)
-		return
+		return nil, err
+	}
+	// We use the orgId from ctx, so need to make sure it was the same one requested
+	if info.OrgID < 1 {
+		return nil, fmt.Errorf("invalid namespace")
 	}
 
-	ctx := r.Context()
-	qdr, err := b.processRequest(ctx, parsed)
+	raw, ok := obj.(*query.QueryDataRequest)
+	if !ok {
+		return nil, fmt.Errorf("error reading request")
+	}
+
+	// Parses and does basic validation
+	req, err := r.builder.parser.parseRequest(ctx, raw)
 	if err != nil {
-		errhttp.Write(r.Context(), err, w)
-		return
+		return nil, err
 	}
 
+	rsp, err := r.execute(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO? does this request make it though?
 	statusCode := http.StatusOK
-	for _, res := range qdr.Responses {
+	for _, res := range rsp.Responses {
 		if res.Error != nil {
 			statusCode = http.StatusBadRequest
-			if b.returnMultiStatus {
+			if r.builder.returnMultiStatus {
 				statusCode = http.StatusMultiStatus
 			}
 		}
@@ -49,46 +92,41 @@ func (b *QueryAPIBuilder) handleQuery(w http.ResponseWriter, r *http.Request) {
 	if statusCode != http.StatusOK {
 		requestmeta.WithDownstreamStatusSource(ctx)
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(qdr)
-	if err != nil {
-		errhttp.Write(r.Context(), err, w)
-	}
+	return &query.QueryDataResponse{
+		QueryDataResponse: *rsp,
+	}, err
 }
 
-// See:
-// https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L88
-func (b *QueryAPIBuilder) processRequest(ctx context.Context, req parsedQueryRequest) (qdr *backend.QueryDataResponse, err error) {
+func (r *subQueryREST) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
 	switch len(req.Requests) {
 	case 0:
 		break // nothing to do
 	case 1:
-		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
+		qdr, err = r.builder.handleQuerySingleDatasource(ctx, req.Requests[0])
 	default:
-		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
+		qdr, err = r.builder.executeConcurrentQueries(ctx, req.Requests)
 	}
 
 	if len(req.Expressions) > 0 {
-		return b.handleExpressions(ctx, qdr, req.Expressions)
+		qdr, err = r.builder.handleExpressions(ctx, qdr, req.Expressions)
 	}
-	return qdr, err
+	return
 }
 
 // Process a single request
 // See: https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
-func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req groupedQueries) (*backend.QueryDataResponse, error) {
-	gv, err := b.registry.GetDatasourceGroupVersion(req.pluginId)
+func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req datasourceRequest) (*backend.QueryDataResponse, error) {
+	gv, err := b.registry.GetDatasourceGroupVersion(req.PluginId)
 	if err != nil {
 		return nil, err
 	}
-	return b.runner.ExecuteQueryData(ctx, gv, req.uid, req.query)
+	return b.runner.ExecuteQueryData(ctx, gv, req.UID, req.Request.Queries)
 }
 
 // buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
-func buildErrorResponse(err error, req groupedQueries) *backend.QueryDataResponse {
+func buildErrorResponse(err error, req datasourceRequest) *backend.QueryDataResponse {
 	rsp := backend.NewQueryDataResponse()
-	for _, query := range req.query {
+	for _, query := range req.Request.Queries {
 		rsp.Responses[query.RefID] = backend.DataResponse{
 			Error: err,
 		}
@@ -97,13 +135,13 @@ func buildErrorResponse(err error, req groupedQueries) *backend.QueryDataRespons
 }
 
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
-func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests []groupedQueries) (*backend.QueryDataResponse, error) {
+func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests []datasourceRequest) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(b.concurrentQueryLimit) // prevent too many concurrent requests
 	rchan := make(chan *backend.QueryDataResponse, len(requests))
 
 	// Create panic recovery function for loop below
-	recoveryFn := func(req groupedQueries) {
+	recoveryFn := func(req datasourceRequest) {
 		if r := recover(); r != nil {
 			var err error
 			b.log.Error("query datasource panic", "error", r, "stack", log.Stack(1))
@@ -153,6 +191,6 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 
 // NOTE the upstream queries have already been executed
 // https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
-func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, qdr *backend.QueryDataResponse, expressions []resource.GenericDataQuery) (*backend.QueryDataResponse, error) {
+func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, qdr *backend.QueryDataResponse, expressions []expr.ExpressionQuery) (*backend.QueryDataResponse, error) {
 	return qdr, fmt.Errorf("expressions are not implemented yet")
 }

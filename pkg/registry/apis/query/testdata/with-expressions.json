@@ -1,0 +1,79 @@
+{
+  "description": "simple query with two expressions",
+  "input": {
+    "from": "now-6",
+    "to": "now",
+    "queries": [
+      {
+        "refId": "A",
+        "datasource": {
+          "type": "sql",
+          "uid": "123"
+        }
+      },
+      {
+        "refId": "B",
+        "datasource": {
+          "type": "",
+          "uid": "-100"
+        },
+        "queryType": "math",
+        "expression": "$A + 10"
+      },
+      {
+        "refId": "C",
+        "datasource": {
+          "type": "",
+          "uid": "__expr__"
+        },
+        "queryType": "reduce",
+        "expression": "$B",
+        "reducer": "last"
+      }
+    ]
+  },
+  "expect": {
+    "expressions": [
+      {
+        "refId": "B",
+        "queryType": "math",
+        "properties": {
+          "expression": "$A + 10"
+        },
+        "vars": [
+          "A"
+        ]
+      },
+      {
+        "refId": "C",
+        "queryType": "reduce",
+        "properties": {
+          "expression": "$B",
+          "reducer": "last"
+        },
+        "vars": [
+          "B"
+        ]
+      }
+    ],
+    "requests": [
+      {
+        "pluginId": "sql",
+        "uid": "123",
+        "request": {
+          "from": "now-6",
+          "to": "now",
+          "queries": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "sql",
+                "uid": "123"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

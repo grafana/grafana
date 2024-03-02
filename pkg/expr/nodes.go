@@ -10,8 +10,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	jsonitersdk "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-	jsoniter "github.com/json-iterator/go"
+	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"gonum.org/v1/gonum/graph/simple"
@@ -130,13 +130,15 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		// NOTE: this structure of this is weird now, because it is targeting a structure
 		// where this is actually run in the root loop, however we want to verify the individual
 		// node parsing before changing the full tree parser
-		reader, err := NewExpressionQueryReader(toggles)
+		reader := NewExpressionQueryReader(toggles)
+		iter, err := jsoniter.ParseBytes(jsoniter.ConfigDefault, rn.QueryRaw)
 		if err != nil {
 			return nil, err
 		}
-
-		iter := jsoniter.ParseBytes(jsoniter.ConfigDefault, rn.QueryRaw)
-		q, err := reader.ReadQuery(rn, jsonitersdk.NewIterator(iter))
+		q, err := reader.ReadQuery(resource.CommonQueryProperties{
+			RefID:     rn.RefID,
+			QueryType: rn.QueryType,
+		}, iter)
 		if err != nil {
 			return nil, err
 		}
