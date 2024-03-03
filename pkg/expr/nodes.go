@@ -10,8 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	jsonitersdk "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-	jsoniter "github.com/json-iterator/go"
+	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"gonum.org/v1/gonum/graph/simple"
@@ -19,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -130,13 +130,12 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		// NOTE: this structure of this is weird now, because it is targeting a structure
 		// where this is actually run in the root loop, however we want to verify the individual
 		// node parsing before changing the full tree parser
-		reader, err := NewExpressionQueryReader(toggles)
+		reader := NewExpressionQueryReader(toggles)
+		iter, err := jsoniter.ParseBytes(jsoniter.ConfigDefault, rn.QueryRaw)
 		if err != nil {
 			return nil, err
 		}
-
-		iter := jsoniter.ParseBytes(jsoniter.ConfigDefault, rn.QueryRaw)
-		q, err := reader.ReadQuery(rn, jsonitersdk.NewIterator(iter))
+		q, err := reader.ReadQuery(rn, iter)
 		if err != nil {
 			return nil, err
 		}
@@ -325,7 +324,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				}
 
 				var result mathexp.Results
-				responseType, result, err := convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
+				responseType, result, err := ConvertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s.features, s.allowLongFrames, s.tracer, logger)
 				if err != nil {
 					result.Error = makeConversionError(dn.RefID(), err)
 				}
@@ -393,7 +392,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}
 
 	var result mathexp.Results
-	responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
+	responseType, result, err = ConvertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s.features, s.allowLongFrames, s.tracer, logger)
 	if err != nil {
 		err = makeConversionError(dn.refID, err)
 	}
@@ -418,16 +417,23 @@ func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frame
 	return response.Frames, nil
 }
 
-func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasourceType string, s *Service, logger log.Logger) (string, mathexp.Results, error) {
+func ConvertDataFramesToResults(ctx context.Context,
+	frames data.Frames,
+	datasourceType string,
+	features featuremgmt.FeatureToggles,
+	allowLongFrames bool,
+	tracer tracing.Tracer,
+	logger log.Logger,
+) (string, mathexp.Results, error) {
 	if len(frames) == 0 {
 		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
 	}
 
 	var dt data.FrameType
-	dt, useDataplane, _ := shouldUseDataplane(frames, logger, s.features.IsEnabled(ctx, featuremgmt.FlagDisableSSEDataplane))
+	dt, useDataplane, _ := shouldUseDataplane(frames, logger, features.IsEnabled(ctx, featuremgmt.FlagDisableSSEDataplane))
 	if useDataplane {
 		logger.Debug("Handling SSE data source query through dataplane", "datatype", dt)
-		result, err := handleDataplaneFrames(ctx, s.tracer, dt, frames)
+		result, err := handleDataplaneFrames(ctx, tracer, dt, frames)
 		return fmt.Sprintf("dataplane-%s", dt), result, err
 	}
 
@@ -474,7 +480,7 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 			continue
 		}
 
-		if schema.Type != data.TimeSeriesTypeWide && !s.allowLongFrames {
+		if schema.Type != data.TimeSeriesTypeWide && !allowLongFrames {
 			return "", mathexp.Results{}, fmt.Errorf("input data must be a wide series but got type %s (input refid)", schema.Type)
 		}
 		filtered = append(filtered, frame)
