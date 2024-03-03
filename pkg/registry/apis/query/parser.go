@@ -12,6 +12,7 @@ import (
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 type datasourceRequest struct {
@@ -31,6 +32,12 @@ type parsedRequestInfo struct {
 
 	// Expressions in required execution order
 	Expressions []expr.ExpressionQuery `json:"expressions,omitempty"`
+
+	// Expressions include explicit hacks for influx+prometheus
+	RefIDTypes map[string]string `json:"types,omitempty"`
+
+	// Hidden queries used as dependencies
+	HideBeforeReturn []string `json:"hide,omitempty"`
 }
 
 // Support old requests with name or internal ids
@@ -39,21 +46,37 @@ type LegacyLookupFunction = func(context context.Context, name string, id int64)
 type queryParser struct {
 	lookup LegacyLookupFunction
 	reader *expr.ExpressionQueryReader
+	tracer tracing.Tracer
 }
 
-func newQueryParser(reader *expr.ExpressionQueryReader, lookup LegacyLookupFunction) *queryParser {
+func newQueryParser(reader *expr.ExpressionQueryReader, lookup LegacyLookupFunction, tracer tracing.Tracer) *queryParser {
 	return &queryParser{
 		reader: reader,
 		lookup: lookup,
+		tracer: tracer,
 	}
 }
 
 // Split the main query into multiple
 func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRequest) (parsedRequestInfo, error) {
-	queryRefIDs := make(map[string]bool, len(input.Queries))
+	ctx, span := p.tracer.Start(ctx, "QueryService.parseRequest")
+	defer span.End()
+
+	queryRefIDs := make(map[string]*resource.DataQuery, len(input.Queries))
 	expressions := make(map[string]*expr.ExpressionQuery)
 	index := make(map[string]int) // index lookup
-	rsp := parsedRequestInfo{}
+	rsp := parsedRequestInfo{
+		RefIDTypes: make(map[string]string, len(input.Queries)),
+	}
+
+	// Ensure a valid time range
+	if input.From == "" {
+		input.From = "now-6h"
+	}
+	if input.To == "" {
+		input.To = ""
+	}
+
 	for _, q := range input.Queries {
 		// 1. Ensure a valid datasource
 		ds := q.Datasource
@@ -72,6 +95,17 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 			if ds == nil {
 				return rsp, fmt.Errorf("unable to find datasource by name: %s", name)
 			}
+		}
+
+		// Fill the time range from
+		if q.TimeRange == nil {
+			q.TimeRange = &resource.TimeRange{}
+		}
+		if q.TimeRange.From == "" {
+			q.TimeRange.From = input.From
+		}
+		if q.TimeRange.To == "" {
+			q.TimeRange.To = input.To
 		}
 
 		// Process each query
@@ -109,7 +143,6 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 			if ok {
 				return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
 			}
-			queryRefIDs[q.RefID] = true
 
 			// 3. Match the query group
 			key := fmt.Sprintf("%s/%s", ds.Type, ds.UID)
@@ -128,7 +161,15 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 					},
 				})
 			}
-			rsp.Requests[idx].Request.Queries = append(rsp.Requests[idx].Request.Queries, q)
+
+			req := rsp.Requests[idx].Request
+			req.Queries = append(req.Queries, q)
+			queryRefIDs[q.RefID] = &req.Queries[len(req.Queries)-1]
+		}
+
+		// Mark all the queries that should be hidden ()
+		if q.Hide {
+			rsp.HideBeforeReturn = append(rsp.HideBeforeReturn, q.RefID)
 		}
 	}
 
@@ -148,12 +189,16 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 			vars := exp.Command.NeedsVars()
 			for _, refId := range vars {
 				target := queryNode
-				_, ok := queryRefIDs[refId]
+				q, ok := queryRefIDs[refId]
 				if !ok {
 					target, ok = expressions[refId]
 					if !ok {
 						return rsp, fmt.Errorf("expression [%s] is missing variable [%s]", exp.RefID, refId)
 					}
+				}
+				// Do not hide queries used in variables
+				if q != nil && q.Hide {
+					q.Hide = false
 				}
 				if target.ID() == exp.ID() {
 					return rsp, fmt.Errorf("expression [%s] can not depend on itself", exp.RefID)

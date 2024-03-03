@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -55,7 +58,10 @@ func (s *subQueryREST) GetSingularName() string {
 }
 
 // The query method (not really a create)
-func (r *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+func (s *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+	ctx, span := s.builder.tracer.Start(ctx, "QueryService.Query")
+	defer span.End()
+
 	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -71,12 +77,12 @@ func (r *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator
 	}
 
 	// Parses and does basic validation
-	req, err := r.builder.parser.parseRequest(ctx, raw)
+	req, err := s.builder.parser.parseRequest(ctx, raw)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := r.execute(ctx, req)
+	rsp, err := s.execute(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +92,7 @@ func (r *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator
 	for _, res := range rsp.Responses {
 		if res.Error != nil {
 			statusCode = http.StatusBadRequest
-			if r.builder.returnMultiStatus {
+			if s.builder.returnMultiStatus {
 				statusCode = http.StatusMultiStatus
 			}
 		}
@@ -99,18 +105,26 @@ func (r *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator
 	}, err
 }
 
-func (r *subQueryREST) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
+func (s *subQueryREST) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
 	switch len(req.Requests) {
 	case 0:
 		break // nothing to do
 	case 1:
-		qdr, err = r.builder.handleQuerySingleDatasource(ctx, req.Requests[0])
+		qdr, err = s.builder.handleQuerySingleDatasource(ctx, req.Requests[0])
 	default:
-		qdr, err = r.builder.executeConcurrentQueries(ctx, req.Requests)
+		qdr, err = s.builder.executeConcurrentQueries(ctx, req.Requests)
 	}
 
 	if len(req.Expressions) > 0 {
-		qdr, err = r.builder.handleExpressions(ctx, qdr, req.Expressions)
+		qdr, err = s.builder.handleExpressions(ctx, req, qdr)
+	}
+
+	// Remove hidden results
+	for _, refId := range req.HideBeforeReturn {
+		r, ok := qdr.Responses[refId]
+		if ok && r.Error == nil {
+			delete(qdr.Responses, refId)
+		}
 	}
 	return
 }
@@ -118,11 +132,78 @@ func (r *subQueryREST) execute(ctx context.Context, req parsedRequestInfo) (qdr 
 // Process a single request
 // See: https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
 func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req datasourceRequest) (*backend.QueryDataResponse, error) {
+	ctx, span := b.tracer.Start(ctx, "Query.handleQuerySingleDatasource")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("datasource.type", req.PluginId),
+		attribute.String("datasource.uid", req.UID),
+	)
+
+	allHidden := true
+	for idx := range req.Request.Queries {
+		if !req.Request.Queries[idx].Hide {
+			allHidden = false
+			break
+		}
+	}
+	if allHidden {
+		return &backend.QueryDataResponse{}, nil
+	}
+
 	gv, err := b.registry.GetDatasourceGroupVersion(req.PluginId)
 	if err != nil {
 		return nil, err
 	}
-	return b.runner.ExecuteQueryData(ctx, gv, req.UID, req.Request.Queries)
+
+	rsp, err := b.runner.ExecuteQueryData(ctx, gv, req.UID, req.Request.Queries)
+	if err == nil {
+		// Verify result assertions
+		for _, q := range req.Request.Queries {
+			if q.ResultAssertions != nil {
+				result, ok := rsp.Responses[q.RefID]
+				if ok && result.Error == nil {
+					err := checkAssertions(q.ResultAssertions, result.Frames)
+					if err != nil {
+						result.Error = err
+						result.ErrorSource = backend.ErrorSourceDownstream
+						rsp.Responses[q.RefID] = result
+					}
+				}
+			}
+		}
+	}
+	return rsp, err
+}
+
+// TODO... this should be in the SDK
+func checkAssertions(assertions *resource.ResultAssertions, frames data.Frames) error {
+	if assertions == nil {
+		return nil
+	}
+
+	if assertions.MaxFrames > 0 && assertions.MaxFrames > int64(len(frames)) {
+		return fmt.Errorf("more frames that expected")
+	}
+
+	// Check all frames
+	if assertions.Type != "" {
+		checkVersion := !assertions.TypeVersion.IsZero()
+		for _, frame := range frames {
+			if frame.Meta == nil {
+				frame.Meta = &data.FrameMeta{}
+			}
+			if frame.Meta.Type == "" {
+				fmt.Printf("TODO... detect frame type")
+			}
+			if assertions.Type != frame.Meta.Type {
+				return fmt.Errorf("expected frame type [%s], found [%s]", assertions.Type, frame.Meta.Type)
+			}
+			if checkVersion && assertions.TypeVersion != frame.Meta.TypeVersion {
+				return fmt.Errorf("expected type version [%v], found [%v]", assertions.TypeVersion, frame.Meta.TypeVersion)
+			}
+		}
+	}
+	return nil
 }
 
 // buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
@@ -138,6 +219,9 @@ func buildErrorResponse(err error, req datasourceRequest) *backend.QueryDataResp
 
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
 func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests []datasourceRequest) (*backend.QueryDataResponse, error) {
+	ctx, span := b.tracer.Start(ctx, "Query.executeConcurrentQueries")
+	defer span.End()
+
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(b.concurrentQueryLimit) // prevent too many concurrent requests
 	rchan := make(chan *backend.QueryDataResponse, len(requests))
@@ -191,22 +275,45 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 	return resp, nil
 }
 
-// NOTE the upstream queries have already been executed
-// https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
-func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, qdr *backend.QueryDataResponse, expressions []expr.ExpressionQuery) (*backend.QueryDataResponse, error) {
-	now := time.Now()
+// Unlike the implementation in expr/node.go, all datasource queries have been processed first
+func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedRequestInfo, data *backend.QueryDataResponse) (qdr *backend.QueryDataResponse, err error) {
+	start := time.Now()
+	ctx, span := b.tracer.Start(ctx, "SSE.handleExpressions")
+	defer func() {
+		var respStatus string
+		switch {
+		case err == nil:
+			respStatus = "success"
+		default:
+			respStatus = "failure"
+		}
+		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
+		b.metrics.expressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
 
+		span.End()
+	}()
+
+	qdr = data
+	if qdr == nil {
+		qdr = &backend.QueryDataResponse{}
+	}
+	now := start // <<< this should come from the original query parser
 	vars := make(mathexp.Vars)
-	for _, expression := range expressions {
+	for _, expression := range req.Expressions {
 		// Setup the variables
 		for _, refId := range expression.Command.NeedsVars() {
 			_, ok := vars[refId]
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
-					// Convert the generic DataFrame response to Results
-					fmt.Printf("TODO... %v\n", dr)
+					_, res, err := expr.ConvertDataFramesToResults(ctx, dr.Frames,
+						req.RefIDTypes[refId], b.features, false, b.tracer, b.log)
+					if err != nil {
+						res.Error = err
+					}
+					vars[expression.RefID] = res
 				} else {
+					// This should error in the parsing phase
 					err := fmt.Errorf("missing variable %s", refId)
 					qdr.Responses[expression.RefID] = backend.DataResponse{
 						Error: err,
@@ -217,7 +324,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, qdr *backend.Qu
 		}
 
 		refId := expression.RefID
-		results, err := expression.Command.Execute(ctx, now, vars, nil)
+		results, err := expression.Command.Execute(ctx, now, vars, b.tracer)
 		if err != nil {
 			qdr.Responses[refId] = backend.DataResponse{
 				Error: err,

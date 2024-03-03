@@ -6,11 +6,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
@@ -79,6 +81,8 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 			func(context context.Context, name string, id int64) *resource.DataSourceRef {
 				return nil // SQL lookups (for migration)
 			},
+			prometheus.NewRegistry(),          // ???
+			tracing.InitializeTracerForTest(), // ???
 		)
 
 	case "featuretoggle.grafana.app":

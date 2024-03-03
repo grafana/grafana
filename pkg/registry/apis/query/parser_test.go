@@ -14,6 +14,7 @@ import (
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -26,7 +27,8 @@ type parserTestObject struct {
 
 func TestQuerySplitting(t *testing.T) {
 	ctx := context.Background()
-	parser := newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()), lookup)
+	parser := newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
+		lookup, tracing.InitializeTracerForTest())
 
 	t.Run("missing datasource flavors", func(t *testing.T) {
 		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{

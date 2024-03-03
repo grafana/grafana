@@ -17,12 +17,14 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	"github.com/prometheus/client_golang/prometheus"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -39,7 +41,10 @@ type QueryAPIBuilder struct {
 	concurrentQueryLimit   int
 	userFacingDefaultError string
 	returnMultiStatus      bool // from feature toggle
+	features               featuremgmt.FeatureToggles
 
+	tracer   tracing.Tracer
+	metrics  *metrics
 	parser   *queryParser
 	runner   v0alpha1.QueryRunner
 	registry v0alpha1.DataSourceApiServerRegistry
@@ -50,6 +55,8 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	runner v0alpha1.QueryRunner,
 	registry v0alpha1.DataSourceApiServerRegistry,
 	legacy LegacyLookupFunction,
+	registerer prometheus.Registerer,
+	tracer tracing.Tracer,
 ) (*QueryAPIBuilder, error) {
 	reader := expr.NewExpressionQueryReader(features)
 	expr, err := newExprStorage(reader)
@@ -60,7 +67,10 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 		runner:               runner,
 		registry:             registry,
 		expr:                 expr,
-		parser:               newQueryParser(reader, legacy),
+		parser:               newQueryParser(reader, legacy, tracer),
+		metrics:              newMetrics(registerer),
+		tracer:               tracer,
+		features:             features,
 	}, err
 }
 
@@ -71,21 +81,24 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl,
 	pluginClient plugins.Client,
 	pCtxProvider *plugincontext.Provider,
+	registerer prometheus.Registerer,
+	tracer tracing.Tracer,
 ) (*QueryAPIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
-	// TODO hook SQL fallbacks
-	legacy := func(context context.Context, name string, id int64) *resource.DataSourceRef {
-		return nil
+	legacy := func(ctx context.Context, name string, id int64) *resource.DataSourceRef {
+		ctx, span := tracer.Start(ctx, "QueryService.LegacyLookup")
+		defer span.End()
+		return nil // TODO... SQL calls
 	}
 
 	builder, err := NewQueryAPIBuilder(
 		features,
 		runner.NewDirectQueryRunner(pluginClient, pCtxProvider),
 		runner.NewDirectRegistry(pluginStore, dataSourcesService),
-		legacy,
+		legacy, registerer, tracer,
 	)
 
 	// ONLY testdata...
@@ -94,7 +107,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 			features,
 			runner.NewDummyTestRunner(),
 			runner.NewDummyRegistry(),
-			legacy,
+			legacy, registerer, tracer,
 		)
 	}
 

@@ -1,5 +1,5 @@
 {
-  "description": "simple query with two expressions",
+  "description": "one hidden query with two expressions that start out-of-order",
   "input": {
     "from": "now-6",
     "to": "now",
@@ -19,7 +19,8 @@
         "datasource": {
           "type": "sql",
           "uid": "123"
-        }
+        },
+        "hide": true
       },
       {
         "refId": "B",
@@ -70,6 +71,9 @@
           "reducer": "last"
         }
       }
+    ],
+    "hide": [
+      "A"
     ]
   }
 }
