@@ -176,21 +176,23 @@ func schema_pkg_apis_query_v0alpha1_QueryDataRequest(ref common.ReferenceCallbac
 					},
 					"from": {
 						SchemaProps: spec.SchemaProps{
-							Description: "From Start time in epoch timestamps in milliseconds or relative using Grafana time units. example: now-1h",
+							Description: "From is the start time of the query.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"to": {
 						SchemaProps: spec.SchemaProps{
-							Description: "To End time in epoch timestamps in milliseconds or relative using Grafana time units. example: now",
+							Description: "To is the end time of the query.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"queries": {
 						SchemaProps: spec.SchemaProps{
-							Description: "queries.refId – Specifies an identifier of the query. Is optional and default to “A”. queries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId. queries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100. queries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000. required: true example: [ { \"refId\": \"A\", \"intervalMs\": 86400000, \"maxDataPoints\": 1092, \"datasource\":{ \"uid\":\"PD8C576611E62080A\" }, \"rawSql\": \"SELECT 1 as valueOne, 2 as valueTwo\", \"format\": \"table\" } ]",
+							Description: "Queries sent to datasources",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -203,13 +205,13 @@ func schema_pkg_apis_query_v0alpha1_QueryDataRequest(ref common.ReferenceCallbac
 					},
 					"debug": {
 						SchemaProps: spec.SchemaProps{
-							Description: "required: false",
+							Description: "Include debug information in the results",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"queries"},
+				Required: []string{"from", "to", "queries"},
 			},
 		},
 		Dependencies: []string{

@@ -99,13 +99,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 
 		// Fill the time range from
 		if q.TimeRange == nil {
-			q.TimeRange = &resource.TimeRange{}
-		}
-		if q.TimeRange.From == "" {
-			q.TimeRange.From = input.From
-		}
-		if q.TimeRange.To == "" {
-			q.TimeRange.To = input.To
+			q.TimeRange = &input.TimeRange
 		}
 
 		// Process each query
@@ -153,11 +147,11 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 				rsp.Requests = append(rsp.Requests, datasourceRequest{
 					PluginId: ds.Type,
 					UID:      ds.UID,
+					// Copy with no queries
 					Request: &query.QueryDataRequest{
-						TypeMeta: input.TypeMeta,
-						From:     input.From,
-						To:       input.To,
-						Debug:    input.Debug,
+						TypeMeta:  input.TypeMeta,
+						TimeRange: input.TimeRange,
+						Debug:     input.Debug,
 					},
 				})
 			}

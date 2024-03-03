@@ -80,6 +80,7 @@ func (in *DataSourceApiServerList) DeepCopyObject() runtime.Object {
 func (in *QueryDataRequest) DeepCopyInto(out *QueryDataRequest) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
+	out.TimeRange = in.TimeRange
 	if in.Queries != nil {
 		in, out := &in.Queries, &out.Queries
 		*out = make([]resource.DataQuery, len(*in))

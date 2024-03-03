@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -157,12 +155,11 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 
 	rsp, err := b.runner.ExecuteQueryData(ctx, gv, req.UID, req.Request.Queries)
 	if err == nil {
-		// Verify result assertions
 		for _, q := range req.Request.Queries {
 			if q.ResultAssertions != nil {
 				result, ok := rsp.Responses[q.RefID]
 				if ok && result.Error == nil {
-					err := checkAssertions(q.ResultAssertions, result.Frames)
+					err = q.ResultAssertions.Validate(result.Frames)
 					if err != nil {
 						result.Error = err
 						result.ErrorSource = backend.ErrorSourceDownstream
@@ -173,37 +170,6 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		}
 	}
 	return rsp, err
-}
-
-// TODO... this should be in the SDK
-func checkAssertions(assertions *resource.ResultAssertions, frames data.Frames) error {
-	if assertions == nil {
-		return nil
-	}
-
-	if assertions.MaxFrames > 0 && assertions.MaxFrames > int64(len(frames)) {
-		return fmt.Errorf("more frames that expected")
-	}
-
-	// Check all frames
-	if assertions.Type != "" {
-		checkVersion := !assertions.TypeVersion.IsZero()
-		for _, frame := range frames {
-			if frame.Meta == nil {
-				frame.Meta = &data.FrameMeta{}
-			}
-			if frame.Meta.Type == "" {
-				fmt.Printf("TODO... detect frame type")
-			}
-			if assertions.Type != frame.Meta.Type {
-				return fmt.Errorf("expected frame type [%s], found [%s]", assertions.Type, frame.Meta.Type)
-			}
-			if checkVersion && assertions.TypeVersion != frame.Meta.TypeVersion {
-				return fmt.Errorf("expected type version [%v], found [%v]", assertions.TypeVersion, frame.Meta.TypeVersion)
-			}
-		}
-	}
-	return nil
 }
 
 // buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
