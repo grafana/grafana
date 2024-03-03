@@ -53,7 +53,7 @@ type QueryAPIBuilder struct {
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	runner v0alpha1.QueryRunner,
 	registry v0alpha1.DataSourceApiServerRegistry,
-	legacy service.LegacyDataSourceRetriever,
+	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
 ) (*QueryAPIBuilder, error) {
@@ -82,7 +82,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	pCtxProvider *plugincontext.Provider,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
-	legacy service.LegacyDataSourceRetriever,
+	legacy service.LegacyDataSourceLookup,
 ) (*QueryAPIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis

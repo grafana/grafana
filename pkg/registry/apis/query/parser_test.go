@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -28,15 +29,17 @@ type parserTestObject struct {
 func TestQuerySplitting(t *testing.T) {
 	ctx := context.Background()
 	parser := newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
-		lookup, tracing.InitializeTracerForTest())
+		&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest())
 
 	t.Run("missing datasource flavors", func(t *testing.T) {
 		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
-			Queries: []resource.DataQuery{{
-				CommonQueryProperties: resource.CommonQueryProperties{
-					RefID: "A",
-				},
-			}},
+			DataQueryRequest: resource.DataQueryRequest{
+				Queries: []resource.DataQuery{{
+					CommonQueryProperties: resource.CommonQueryProperties{
+						RefID: "A",
+					},
+				}},
+			},
 		})
 		require.Error(t, err) // Missing datasource
 		require.Empty(t, split.Requests)
@@ -88,19 +91,20 @@ func TestQuerySplitting(t *testing.T) {
 	})
 }
 
-// lokup for tests
-func lookup(context context.Context, name string, id int64) *resource.DataSourceRef {
+type legacyDataSourceRetriever struct{}
+
+func (s *legacyDataSourceRetriever) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*resource.DataSourceRef, error) {
 	if id == 100 {
 		return &resource.DataSourceRef{
 			Type: "plugin-aaaa",
 			UID:  "AAA",
-		}
+		}, nil
 	}
 	if name != "" {
 		return &resource.DataSourceRef{
 			Type: "plugin-bbb",
 			UID:  name,
-		}
+		}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("missing parameter")
 }

@@ -284,7 +284,7 @@ var wireBasicSet = wire.NewSet(
 	dashsnapsvc.ProvideService,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
-	wire.Bind(new(datasourceservice.LegacyDataSourceRetriever), new(*datasourceservice.Service)),
+	datasourceservice.ProvideLegacyDataSourceLookup,
 	alerting.ProvideService,
 	serviceaccountsretriever.ProvideService,
 	wire.Bind(new(serviceaccountsretriever.ServiceAccountRetriever), new(*serviceaccountsretriever.Service)),

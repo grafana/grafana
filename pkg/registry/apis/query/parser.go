@@ -42,12 +42,12 @@ type parsedRequestInfo struct {
 }
 
 type queryParser struct {
-	legacy service.LegacyDataSourceRetriever
+	legacy service.LegacyDataSourceLookup
 	reader *expr.ExpressionQueryReader
 	tracer tracing.Tracer
 }
 
-func newQueryParser(reader *expr.ExpressionQueryReader, legacy service.LegacyDataSourceRetriever, tracer tracing.Tracer) *queryParser {
+func newQueryParser(reader *expr.ExpressionQueryReader, legacy service.LegacyDataSourceLookup, tracer tracing.Tracer) *queryParser {
 	return &queryParser{
 		reader: reader,
 		legacy: legacy,
