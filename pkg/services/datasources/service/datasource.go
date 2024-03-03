@@ -192,7 +192,7 @@ func (s *Service) GetDataSourceFromDeprecatedFields(ctx context.Context, name st
 		Name:  name,
 		ID:    id,
 	})
-	if err == datasources.ErrDataSourceNotFound && name != "" {
+	if errors.Is(err, datasources.ErrDataSourceNotFound) && name != "" {
 		ds, err = s.SQLStore.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 			OrgID: user.OrgID,
 			UID:   name, // Sometimes name is actually the UID :(

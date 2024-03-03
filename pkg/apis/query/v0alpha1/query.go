@@ -12,11 +12,5 @@ type QueryDataRequest struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// The time range used when not included on each query
-	resource.TimeRange `json:",inline"`
-
-	// Queries sent to datasources
-	Queries []resource.DataQuery `json:"queries"`
-
-	// Include debug information in the results
-	Debug bool `json:"debug,omitempty"`
+	resource.DataQueryRequest `json:",inline"`
 }

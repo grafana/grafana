@@ -65,10 +65,6 @@
                   "typeVersion"
                 ],
                 "properties": {
-                  "maxBytes": {
-                    "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast",
-                    "type": "integer"
-                  },
                   "maxFrames": {
                     "description": "Maximum frame count",
                     "type": "integer"
@@ -114,6 +110,7 @@
                   "from": {
                     "description": "From is the start time of the query.",
                     "type": "string",
+                    "default": "now-6h",
                     "examples": [
                       "now-1h"
                     ]
@@ -121,6 +118,7 @@
                   "to": {
                     "description": "To is the end time of the query.",
                     "type": "string",
+                    "default": "now",
                     "examples": [
                       "now"
                     ]
@@ -200,10 +198,6 @@
                   "typeVersion"
                 ],
                 "properties": {
-                  "maxBytes": {
-                    "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast",
-                    "type": "integer"
-                  },
                   "maxFrames": {
                     "description": "Maximum frame count",
                     "type": "integer"
@@ -246,11 +240,13 @@
                 ],
                 "properties": {
                   "mode": {
-                    "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
+                    "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers\n - `\"__expr__\"` \n - `\"-100\"` ",
                     "type": "string",
                     "enum": [
                       "dropNN",
-                      "replaceNN"
+                      "replaceNN",
+                      "__expr__",
+                      "-100"
                     ],
                     "x-enum-description": {
                       "dropNN": "Drop non-numbers",
@@ -275,6 +271,7 @@
                   "from": {
                     "description": "From is the start time of the query.",
                     "type": "string",
+                    "default": "now-6h",
                     "examples": [
                       "now-1h"
                     ]
@@ -282,6 +279,7 @@
                   "to": {
                     "description": "To is the end time of the query.",
                     "type": "string",
+                    "default": "now",
                     "examples": [
                       "now"
                     ]
@@ -365,10 +363,6 @@
                   "typeVersion"
                 ],
                 "properties": {
-                  "maxBytes": {
-                    "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast",
-                    "type": "integer"
-                  },
                   "maxFrames": {
                     "description": "Maximum frame count",
                     "type": "integer"
@@ -414,6 +408,7 @@
                   "from": {
                     "description": "From is the start time of the query.",
                     "type": "string",
+                    "default": "now-6h",
                     "examples": [
                       "now-1h"
                     ]
@@ -421,6 +416,7 @@
                   "to": {
                     "description": "To is the end time of the query.",
                     "type": "string",
+                    "default": "now",
                     "examples": [
                       "now"
                     ]
@@ -581,10 +577,6 @@
                   "typeVersion"
                 ],
                 "properties": {
-                  "maxBytes": {
-                    "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast",
-                    "type": "integer"
-                  },
                   "maxFrames": {
                     "description": "Maximum frame count",
                     "type": "integer"
@@ -630,6 +622,7 @@
                   "from": {
                     "description": "From is the start time of the query.",
                     "type": "string",
+                    "default": "now-6h",
                     "examples": [
                       "now-1h"
                     ]
@@ -637,6 +630,7 @@
                   "to": {
                     "description": "To is the end time of the query.",
                     "type": "string",
+                    "default": "now",
                     "examples": [
                       "now"
                     ]
@@ -777,10 +771,6 @@
                   "typeVersion"
                 ],
                 "properties": {
-                  "maxBytes": {
-                    "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast",
-                    "type": "integer"
-                  },
                   "maxFrames": {
                     "description": "Maximum frame count",
                     "type": "integer"
@@ -826,6 +816,7 @@
                   "from": {
                     "description": "From is the start time of the query.",
                     "type": "string",
+                    "default": "now-6h",
                     "examples": [
                       "now-1h"
                     ]
@@ -833,6 +824,7 @@
                   "to": {
                     "description": "To is the end time of the query.",
                     "type": "string",
+                    "default": "now",
                     "examples": [
                       "now"
                     ]
@@ -898,10 +890,6 @@
                   "typeVersion"
                 ],
                 "properties": {
-                  "maxBytes": {
-                    "description": "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast",
-                    "type": "integer"
-                  },
                   "maxFrames": {
                     "description": "Maximum frame count",
                     "type": "integer"
@@ -947,6 +935,7 @@
                   "from": {
                     "description": "From is the start time of the query.",
                     "type": "string",
+                    "default": "now-6h",
                     "examples": [
                       "now-1h"
                     ]
@@ -954,6 +943,7 @@
                   "to": {
                     "description": "To is the end time of the query.",
                     "type": "string",
+                    "default": "now",
                     "examples": [
                       "now"
                     ]

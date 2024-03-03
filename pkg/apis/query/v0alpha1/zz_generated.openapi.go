@@ -192,7 +192,7 @@ func schema_pkg_apis_query_v0alpha1_QueryDataRequest(ref common.ReferenceCallbac
 					},
 					"queries": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Queries sent to datasources",
+							Description: "Each item has a",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -205,7 +205,7 @@ func schema_pkg_apis_query_v0alpha1_QueryDataRequest(ref common.ReferenceCallbac
 					},
 					"debug": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Include debug information in the results",
+							Description: "required: false",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},

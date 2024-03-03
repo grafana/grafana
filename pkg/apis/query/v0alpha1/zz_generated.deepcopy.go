@@ -8,7 +8,6 @@
 package v0alpha1
 
 import (
-	resource "github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -80,14 +79,7 @@ func (in *DataSourceApiServerList) DeepCopyObject() runtime.Object {
 func (in *QueryDataRequest) DeepCopyInto(out *QueryDataRequest) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.TimeRange = in.TimeRange
-	if in.Queries != nil {
-		in, out := &in.Queries, &out.Queries
-		*out = make([]resource.DataQuery, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
-	}
+	in.DataQueryRequest.DeepCopyInto(&out.DataQueryRequest)
 	return
 }
 

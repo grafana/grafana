@@ -56,7 +56,7 @@
     {
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1709232058029",
+        "resourceVersion": "1709495762706",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -96,10 +96,12 @@
               "description": "Reducer Options",
               "properties": {
                 "mode": {
-                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
+                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers\n - `\"__expr__\"` \n - `\"-100\"` ",
                   "enum": [
                     "dropNN",
-                    "replaceNN"
+                    "replaceNN",
+                    "__expr__",
+                    "-100"
                   ],
                   "type": "string",
                   "x-enum-description": {

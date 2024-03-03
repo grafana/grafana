@@ -153,7 +153,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return nil, err
 	}
 
-	rsp, err := b.runner.ExecuteQueryData(ctx, gv, req.UID, req.Request.Queries)
+	rsp, err := b.runner.ExecuteQueryData(ctx, gv, req.UID, req.Request.DataQueryRequest)
 	if err == nil {
 		for _, q := range req.Request.Queries {
 			if q.ResultAssertions != nil {

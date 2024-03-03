@@ -19,8 +19,9 @@ type QueryRunner interface {
 		// The datasource name/uid
 		name string,
 
-		// The raw backend query objects
-		query []resource.DataQuery,
+		// Query request -- the datasource in each query should either be empty
+		// or match the two previous parameters
+		request resource.DataQueryRequest,
 	) (*backend.QueryDataResponse, error)
 }
 
