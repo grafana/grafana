@@ -47,17 +47,17 @@ func (r *subQueryREST) ProducesObject(verb string) interface{} {
 	return &query.QueryDataResponse{}
 }
 
-func (s *subQueryREST) NamespaceScoped() bool {
+func (r *subQueryREST) NamespaceScoped() bool {
 	return true
 }
 
-func (s *subQueryREST) GetSingularName() string {
+func (r *subQueryREST) GetSingularName() string {
 	return "query"
 }
 
 // The query method (not really a create)
-func (s *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
-	ctx, span := s.builder.tracer.Start(ctx, "QueryService.Query")
+func (r *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+	ctx, span := r.builder.tracer.Start(ctx, "QueryService.Query")
 	defer span.End()
 
 	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
@@ -75,12 +75,12 @@ func (s *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator
 	}
 
 	// Parses and does basic validation
-	req, err := s.builder.parser.parseRequest(ctx, raw)
+	req, err := r.builder.parser.parseRequest(ctx, raw)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := s.execute(ctx, req)
+	rsp, err := r.execute(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (s *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator
 	for _, res := range rsp.Responses {
 		if res.Error != nil {
 			statusCode = http.StatusBadRequest
-			if s.builder.returnMultiStatus {
+			if r.builder.returnMultiStatus {
 				statusCode = http.StatusMultiStatus
 			}
 		}
@@ -103,18 +103,18 @@ func (s *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator
 	}, err
 }
 
-func (s *subQueryREST) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
+func (r *subQueryREST) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
 	switch len(req.Requests) {
 	case 0:
 		break // nothing to do
 	case 1:
-		qdr, err = s.builder.handleQuerySingleDatasource(ctx, req.Requests[0])
+		qdr, err = r.builder.handleQuerySingleDatasource(ctx, req.Requests[0])
 	default:
-		qdr, err = s.builder.executeConcurrentQueries(ctx, req.Requests)
+		qdr, err = r.builder.executeConcurrentQueries(ctx, req.Requests)
 	}
 
 	if len(req.Expressions) > 0 {
-		qdr, err = s.builder.handleExpressions(ctx, req, qdr)
+		qdr, err = r.builder.handleExpressions(ctx, req, qdr)
 	}
 
 	// Remove hidden results
