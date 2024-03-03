@@ -1,7 +1,6 @@
 package query
 
 import (
-	"context"
 	"net/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +15,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 	"github.com/prometheus/client_golang/prometheus"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
@@ -29,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -54,7 +53,7 @@ type QueryAPIBuilder struct {
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	runner v0alpha1.QueryRunner,
 	registry v0alpha1.DataSourceApiServerRegistry,
-	legacy LegacyLookupFunction,
+	legacy service.LegacyDataSourceRetriever,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
 ) (*QueryAPIBuilder, error) {
@@ -83,15 +82,10 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	pCtxProvider *plugincontext.Provider,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
+	legacy service.LegacyDataSourceRetriever,
 ) (*QueryAPIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis
-	}
-
-	legacy := func(ctx context.Context, name string, id int64) *resource.DataSourceRef {
-		ctx, span := tracer.Start(ctx, "QueryService.LegacyLookup")
-		defer span.End()
-		return nil // TODO... SQL calls
 	}
 
 	builder, err := NewQueryAPIBuilder(

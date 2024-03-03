@@ -57,7 +57,7 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 				},
 			},
 		}
-		q.Set("csvContent", `a,b,c\n1,hello,true`)
+		q.Set("csvContent", "a,b,c\n1,hello,true")
 		q.Set("scenarioId", `csv_content`)
 		body, err := json.Marshal(&resource.DataQueryRequest{
 			Queries: []resource.DataQuery{q},

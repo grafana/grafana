@@ -13,6 +13,7 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/datasources/service"
 )
 
 type datasourceRequest struct {
@@ -40,19 +41,16 @@ type parsedRequestInfo struct {
 	HideBeforeReturn []string `json:"hide,omitempty"`
 }
 
-// Support old requests with name or internal ids
-type LegacyLookupFunction = func(context context.Context, name string, id int64) *resource.DataSourceRef
-
 type queryParser struct {
-	lookup LegacyLookupFunction
+	legacy service.LegacyDataSourceRetriever
 	reader *expr.ExpressionQueryReader
 	tracer tracing.Tracer
 }
 
-func newQueryParser(reader *expr.ExpressionQueryReader, lookup LegacyLookupFunction, tracer tracing.Tracer) *queryParser {
+func newQueryParser(reader *expr.ExpressionQueryReader, legacy service.LegacyDataSourceRetriever, tracer tracing.Tracer) *queryParser {
 	return &queryParser{
 		reader: reader,
-		lookup: lookup,
+		legacy: legacy,
 		tracer: tracer,
 	}
 }
@@ -78,23 +76,18 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 	}
 
 	for _, q := range input.Queries {
-		// 1. Ensure a valid datasource
-		ds := q.Datasource
-		if ds == nil {
-			if q.DatasourceID < 0 {
-				return rsp, fmt.Errorf("missing datasource reference")
-			}
-			ds = p.lookup(ctx, "", q.DatasourceID)
-			if ds == nil {
-				return rsp, fmt.Errorf("unable to find datasource: %d", q.DatasourceID)
-			}
+		_, found := queryRefIDs[q.RefID]
+		if found {
+			return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
 		}
-		if ds.Type == "" {
-			name := ds.UID
-			ds = p.lookup(ctx, name, 0)
-			if ds == nil {
-				return rsp, fmt.Errorf("unable to find datasource by name: %s", name)
-			}
+		_, found = expressions[q.RefID]
+		if found {
+			return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
+		}
+
+		ds, err := p.getValidDataSourceRef(ctx, q.Datasource, q.DatasourceID)
+		if err != nil {
+			return rsp, err
 		}
 
 		// Fill the time range from
@@ -104,15 +97,6 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 
 		// Process each query
 		if expr.IsDataSource(ds.UID) {
-			_, ok := expressions[q.RefID]
-			if ok {
-				return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
-			}
-			_, ok = queryRefIDs[q.RefID]
-			if ok {
-				return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
-			}
-
 			raw, err := json.Marshal(q)
 			if err != nil {
 				return rsp, err
@@ -128,17 +112,6 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 			exp.GraphID = int64(len(expressions) + 1)
 			expressions[q.RefID] = &exp
 		} else {
-			// 2. Verify the RefID is unique
-			_, ok := queryRefIDs[q.RefID]
-			if ok {
-				return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
-			}
-			_, ok = expressions[q.RefID]
-			if ok {
-				return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
-			}
-
-			// 3. Match the query group
 			key := fmt.Sprintf("%s/%s", ds.Type, ds.UID)
 			idx, ok := index[key]
 			if !ok {
@@ -214,4 +187,26 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 	}
 
 	return rsp, nil
+}
+
+func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *resource.DataSourceRef, id int64) (*resource.DataSourceRef, error) {
+	if ds == nil {
+		if id == 0 {
+			return nil, fmt.Errorf("missing datasource reference or id")
+		}
+		if p.legacy == nil {
+			return nil, fmt.Errorf("legacy datasource lookup unsupported (id:%d)", id)
+		}
+		return p.legacy.GetDataSourceFromDeprecatedFields(ctx, "", id)
+	}
+	if ds.Type == "" {
+		if ds.UID == "" {
+			return nil, fmt.Errorf("missing name/uid in data source reference")
+		}
+		if p.legacy == nil {
+			return nil, fmt.Errorf("legacy datasource lookup unsupported (name:%s)", ds.UID)
+		}
+		return p.legacy.GetDataSourceFromDeprecatedFields(ctx, ds.UID, 0)
+	}
+	return ds, nil
 }

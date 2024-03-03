@@ -14,8 +14,10 @@ import (
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -32,6 +34,24 @@ import (
 const (
 	maxDatasourceNameLen = 190
 	maxDatasourceUrlLen  = 255
+)
+
+// DataSourceRetriever interface for retrieving a datasource.
+type DataSourceRetriever interface {
+	// GetDataSource gets a datasource.
+	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
+}
+
+// LegacyDataSourceRetriever supports finding a reference to datasources using the name or internal ID
+type LegacyDataSourceRetriever interface {
+	// Find the UID from either the name or internal id
+	// NOTE the orgID will be fetched from the context
+	GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*resource.DataSourceRef, error)
+}
+
+var (
+	_ DataSourceRetriever       = (*Service)(nil)
+	_ LegacyDataSourceRetriever = (*Service)(nil)
 )
 
 type Service struct {
@@ -104,12 +124,6 @@ func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters)
 	return s.SQLStore.Count(ctx, scopeParams)
 }
 
-// DataSourceRetriever interface for retrieving a datasource.
-type DataSourceRetriever interface {
-	// GetDataSource gets a datasource.
-	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
-}
-
 // NewNameScopeResolver provides an ScopeAttributeResolver able to
 // translate a scope prefixed with "datasources:name:" into an uid based scope.
 func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttributeResolver) {
@@ -161,6 +175,33 @@ func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttr
 
 		return []string{datasources.ScopeProvider.GetResourceScopeUID(dataSource.UID)}, nil
 	})
+}
+
+func (s *Service) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*resource.DataSourceRef, error) {
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if id == 0 && name == "" {
+		return nil, fmt.Errorf("either name or ID must be set")
+	}
+
+	ds, err := s.SQLStore.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+		OrgID: user.OrgID,
+		Name:  name,
+		ID:    id,
+	})
+	if err == datasources.ErrDataSourceNotFound && name != "" {
+		ds, err = s.SQLStore.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+			OrgID: user.OrgID,
+			UID:   name, // Sometimes name is actually the UID :(
+		})
+	}
+	if ds != nil {
+		return &resource.DataSourceRef{Type: ds.Type, UID: ds.UID}, err
+	}
+	return nil, err
 }
 
 func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
