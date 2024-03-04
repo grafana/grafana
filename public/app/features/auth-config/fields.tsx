@@ -1,6 +1,7 @@
 import React from 'react';
 import { validate as uuidValidate } from 'uuid';
 
+import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
@@ -86,12 +87,11 @@ export const sectionFields: Section = {
         { name: 'teamIdsAttributePath', dependsOn: 'defineAllowedTeamsIds' },
         'usePkce',
         'useRefreshToken',
+        'tlsSkipVerifyInsecure',
+        'tlsClientCert',
+        'tlsClientKey',
+        'tlsClientCa',
       ],
-    },
-    {
-      name: 'TLS',
-      id: 'tls',
-      fields: ['tlsSkipVerifyInsecure', 'tlsClientCert', 'tlsClientKey', 'tlsClientCa'],
     },
   ],
 };
@@ -343,16 +343,19 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'TLS client ca',
       description: 'The file path to the trusted certificate authority list. Is not applicable on Grafana Cloud.',
       type: 'text',
+      hidden: !config.localFileSystemAvailable,
     },
     tlsClientCert: {
       label: 'TLS client cert',
       description: 'The file path to the certificate. Is not applicable on Grafana Cloud.',
       type: 'text',
+      hidden: !config.localFileSystemAvailable,
     },
     tlsClientKey: {
       label: 'TLS client key',
       description: 'The file path to the key. Is not applicable on Grafana Cloud.',
       type: 'text',
+      hidden: !config.localFileSystemAvailable,
     },
     tlsSkipVerifyInsecure: {
       label: 'TLS skip verify',

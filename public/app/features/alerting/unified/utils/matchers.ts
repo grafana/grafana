@@ -137,9 +137,10 @@ export const matcherFormatter = {
     return `${name} ${operator} ${formattedValue}`;
   },
   unquote: ([name, operator, value]: ObjectMatcher): string => {
+    const unquotedName = unquoteWithUnescape(name);
     // Unquoted value can be an empty string which we want to display as ""
     const unquotedValue = unquoteWithUnescape(value) || '""';
-    return `${name} ${operator} ${unquotedValue}`;
+    return `${unquotedName} ${operator} ${unquotedValue}`;
   },
 } as const;
 
