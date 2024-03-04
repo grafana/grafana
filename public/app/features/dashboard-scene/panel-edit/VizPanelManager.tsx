@@ -367,7 +367,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     return { error: 'Unsupported panel parent' };
   }
 
-  public clonePanelWithData(): VizPanel {
+  public getPanelCloneWithData(): VizPanel {
     return this.state.panel.clone({ $data: this.state.$data?.clone() });
   }
 
