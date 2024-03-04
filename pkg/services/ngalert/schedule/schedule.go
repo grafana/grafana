@@ -256,7 +256,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		if newRoutine && !invalidInterval {
 			dispatcherGroup.Go(func() error {
-				return sch.ruleRoutine(ruleInfo.ctx, key, ruleInfo.evalCh, ruleInfo.updateCh)
+				return sch.ruleRoutine(key, ruleInfo)
 			})
 		}
 
@@ -345,8 +345,8 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 }
 
 //nolint:gocyclo
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersionAndPauseStatus) error {
-	grafanaCtx = ngmodels.WithRuleKey(grafanaCtx, key)
+func (sch *schedule) ruleRoutine(key ngmodels.AlertRuleKey, ruleInfo *alertRuleInfo) error {
+	grafanaCtx := ngmodels.WithRuleKey(ruleInfo.ctx, key)
 	logger := sch.log.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
 
@@ -474,7 +474,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	for {
 		select {
 		// used by external services (API) to notify that rule is updated.
-		case ctx := <-updateCh:
+		case ctx := <-ruleInfo.updateCh:
 			if currentFingerprint == ctx.Fingerprint {
 				logger.Info("Rule's fingerprint has not changed. Skip resetting the state", "currentFingerprint", currentFingerprint)
 				continue
@@ -485,7 +485,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			resetState(grafanaCtx, ctx.IsPaused)
 			currentFingerprint = ctx.Fingerprint
 		// evalCh - used by the scheduler to signal that evaluation is needed.
-		case ctx, ok := <-evalCh:
+		case ctx, ok := <-ruleInfo.evalCh:
 			if !ok {
 				logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
