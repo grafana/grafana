@@ -74,7 +74,7 @@ For Grafana Cloud, refer to the [instructions to manage a Grafana Cloud stack wi
 
 ## Create Terraform configurations for alerting resources
 
-[Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) allows to manage the following alerting resources.
+[Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) enables you to manage the following alerting resources.
 
 | Alerting resource                               | Terraform resource                                                                                                               |
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
