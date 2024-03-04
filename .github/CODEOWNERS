@@ -383,6 +383,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/components/GraphNG/ @grafana/dataviz-squad
 /public/app/core/components/TimeSeries/ @grafana/dataviz-squad
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
+/public/app/core/components/Form/ @grafana/grafana-frontend-platform
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/identity-access-team
 
