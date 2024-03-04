@@ -60,6 +60,7 @@ type Service struct {
 	dataService  backend.QueryDataHandler
 	pCtxProvider pluginContextProvider
 	features     featuremgmt.FeatureToggles
+	converter    *ResultConverter
 
 	pluginsClient backend.CallResourceHandler
 
@@ -83,6 +84,10 @@ func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider 
 		tracer:        tracer,
 		metrics:       newMetrics(registerer),
 		pluginsClient: pluginClient,
+		converter: &ResultConverter{
+			Features: features,
+			Tracer:   tracer,
+		},
 	}
 }
 
