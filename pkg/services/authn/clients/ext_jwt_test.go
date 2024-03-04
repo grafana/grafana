@@ -63,7 +63,9 @@ func TestExtendedJWT_Test(t *testing.T) {
 		{
 			name: "should return false when extended jwt is disabled",
 			cfg: &setting.Cfg{
-				ExtendedJWTAuthEnabled: false,
+				ExtJWTAuth: setting.ExtJWTSettings{
+					Enabled: false,
+				},
 			},
 			authHeaderFunc: func() string { return "eyJ" },
 			want:           false,
@@ -95,7 +97,9 @@ func TestExtendedJWT_Test(t *testing.T) {
 		{
 			name: "should return false when the issuer does not match the configured issuer",
 			cfg: &setting.Cfg{
-				ExtendedJWTExpectIssuer: "http://localhost:3000",
+				ExtJWTAuth: setting.ExtJWTSettings{
+					ExpectIssuer: "http://localhost:3000",
+				},
 			},
 			authHeaderFunc: func() string {
 				payload := validPayload
@@ -486,9 +490,11 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 func setupTestCtx(t *testing.T, cfg *setting.Cfg) *testEnv {
 	if cfg == nil {
 		cfg = &setting.Cfg{
-			ExtendedJWTAuthEnabled:    true,
-			ExtendedJWTExpectIssuer:   "http://localhost:3000",
-			ExtendedJWTExpectAudience: "http://localhost:3000",
+			ExtJWTAuth: setting.ExtJWTSettings{
+				Enabled:        true,
+				ExpectIssuer:   "http://localhost:3000",
+				ExpectAudience: "http://localhost:3000",
+			},
 		}
 	}
 

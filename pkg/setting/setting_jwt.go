@@ -23,6 +23,21 @@ type AuthJWTSettings struct {
 	GroupsAttributePath     string
 }
 
+type ExtJWTSettings struct {
+	Enabled        bool
+	ExpectIssuer   string
+	ExpectAudience string
+}
+
+func (cfg *Cfg) readAuthExtJWTSettings() {
+	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")
+	jwtSettings := ExtJWTSettings{}
+	jwtSettings.Enabled = authExtendedJWT.Key("enabled").MustBool(false)
+	jwtSettings.ExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
+	jwtSettings.ExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
+	cfg.ExtJWTAuth = jwtSettings
+}
+
 func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings := AuthJWTSettings{}
 	authJWT := cfg.Raw.Section("auth.jwt")

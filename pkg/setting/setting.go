@@ -263,11 +263,8 @@ type Cfg struct {
 	OAuthCookieMaxAge             int
 	OAuthAllowInsecureEmailLookup bool
 
-	JWTAuth AuthJWTSettings
-	// Extended JWT Auth
-	ExtendedJWTAuthEnabled    bool
-	ExtendedJWTExpectIssuer   string
-	ExtendedJWTExpectAudience string
+	JWTAuth    AuthJWTSettings
+	ExtJWTAuth ExtJWTSettings
 
 	// SSO Settings Auth
 	SSOSettingsReloadInterval        time.Duration
@@ -1605,10 +1602,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.BasicAuthStrongPasswordPolicy = authBasic.Key("password_policy").MustBool(false)
 
 	// Extended JWT auth
-	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")
-	cfg.ExtendedJWTAuthEnabled = authExtendedJWT.Key("enabled").MustBool(false)
-	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
-	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
 
 	// SSO Settings
 	ssoSettings := iniFile.Section("sso_settings")

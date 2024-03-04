@@ -103,7 +103,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 }
 
 func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
-	if !s.cfg.ExtendedJWTAuthEnabled {
+	if !s.cfg.ExtJWTAuth.Enabled {
 		return false
 	}
 
@@ -122,7 +122,7 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
-	return claims.Issuer == s.cfg.ExtendedJWTExpectIssuer
+	return claims.Issuer == s.cfg.ExtJWTAuth.ExpectIssuer
 }
 
 func (s *ExtendedJWT) Name() string {
@@ -198,8 +198,8 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 	}
 
 	err = claims.ValidateWithLeeway(jwt.Expected{
-		Issuer:   s.cfg.ExtendedJWTExpectIssuer,
-		Audience: jwt.Audience{s.cfg.ExtendedJWTExpectAudience},
+		Issuer:   s.cfg.ExtJWTAuth.ExpectIssuer,
+		Audience: jwt.Audience{s.cfg.ExtJWTAuth.ExpectAudience},
 		Time:     timeNow(),
 	}, 0)
 
