@@ -22,12 +22,9 @@ func getSchema(frames data.Frames, rowLimit int) string {
 	result := []string{}
 
 	for _, f := range frames {
-		name := f.RefID
-		if name == "" {
-			name = f.Name
-		}
 		fields := getFields(f)
 		schema := strings.Join(fields, ", ")
+		schema = fmt.Sprintf("%s %s%s", f.RefID, schema, ":")
 		result = append(result, schema)
 		result = append(result, header)
 		result = append(result, getData(f, rowLimit))
