@@ -134,11 +134,11 @@ export async function getInstancePlugins(): Promise<InstancePlugin[]> {
 }
 
 export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
-  const { items: instancePlugins }: { items: ProvisionedPlugin[] } = await getBackendSrv().get(
+  const { items: provisionedPlugins }: { items: Array<{ type: string }> } = await getBackendSrv().get(
     `${INSTANCE_API_ROOT}/provisioned-plugins`
   );
 
-  return instancePlugins;
+  return provisionedPlugins.map(plugin => ({ slug: plugin.type }));
 }
 
 export async function installPlugin(id: string) {

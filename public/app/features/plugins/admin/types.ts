@@ -324,5 +324,5 @@ export type InstancePlugin = {
 };
 
 export type ProvisionedPlugin = {
-  type: string; // type contains the plugin slug
+  slug: string;
 };

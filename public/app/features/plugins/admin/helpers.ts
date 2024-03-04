@@ -39,7 +39,7 @@ export function mergeLocalsAndRemotes({
   }, new Map<string, InstancePlugin>());
 
   const provisionedSet = provisioned.reduce((map, provisionedPlugin) => {
-    map.add(provisionedPlugin.type);
+    map.add(provisionedPlugin.slug);
     return map;
   }, new Set<string>());
 
