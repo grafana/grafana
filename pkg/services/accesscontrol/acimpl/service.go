@@ -256,10 +256,6 @@ func permissionCacheKey(user identity.Requester) string {
 	return fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
 }
 
-func permissionInOrgCacheKey(user identity.Requester, orgID int64) string {
-	return fmt.Sprintf("rbac-permissions-%s-%d", user.GetCacheKey(), orgID)
-}
-
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
