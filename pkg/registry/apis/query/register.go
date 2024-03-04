@@ -42,12 +42,13 @@ type QueryAPIBuilder struct {
 	returnMultiStatus      bool // from feature toggle
 	features               featuremgmt.FeatureToggles
 
-	tracer   tracing.Tracer
-	metrics  *metrics
-	parser   *queryParser
-	runner   v0alpha1.QueryRunner
-	registry v0alpha1.DataSourceApiServerRegistry
-	expr     *exprStorage
+	tracer    tracing.Tracer
+	metrics   *metrics
+	parser    *queryParser
+	runner    v0alpha1.QueryRunner
+	registry  v0alpha1.DataSourceApiServerRegistry
+	expr      *exprStorage
+	converter *expr.ResultConverter
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
@@ -58,18 +59,22 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	tracer tracing.Tracer,
 ) (*QueryAPIBuilder, error) {
 	reader := expr.NewExpressionQueryReader(features)
-	expr, err := newExprStorage(reader)
+	expressions, err := newExprStorage(reader)
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
 		returnMultiStatus:    features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryMultiStatus),
 		runner:               runner,
 		registry:             registry,
-		expr:                 expr,
+		expr:                 expressions,
 		parser:               newQueryParser(reader, legacy, tracer),
 		metrics:              newMetrics(registerer),
 		tracer:               tracer,
 		features:             features,
+		converter: &expr.ResultConverter{
+			Features: features,
+			Tracer:   tracer,
+		},
 	}, err
 }
 

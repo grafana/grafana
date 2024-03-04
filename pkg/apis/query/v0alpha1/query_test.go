@@ -32,7 +32,8 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 				"timeRange": {
 					"from": "100",
 					"to": "200"
-				}
+				},
+				"queryType": "foo"
 			}
 		],
 		"from": "1692624667389",
@@ -67,6 +68,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 		  "uid": "old"
 		},
 		"maxDataPoints": 10,
+		"queryType": "foo",
 		"refId": "Z",
 		"timeRange": {
 		  "from": "100",

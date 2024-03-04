@@ -14,7 +14,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
@@ -272,8 +271,8 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
-					_, res, err := expr.ConvertDataFramesToResults(ctx, dr.Frames,
-						req.RefIDTypes[refId], b.features, false, b.tracer, b.log)
+					allowLongFrames := false // TODO -- depends on input type and only if SQL?
+					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, allowLongFrames)
 					if err != nil {
 						res.Error = err
 					}
