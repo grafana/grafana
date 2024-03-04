@@ -66,6 +66,20 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
+      if (isLibraryPanelChild(panel)) {
+        this._handleLibraryPanel(panel, (p) => {
+          if (p.state.key === undefined) {
+            // throw an error because viz panel key should not open drawers
+            throw new Error('library panel key is undefined');
+          }
+          const drawer = new PanelInspectDrawer({
+            $behaviors: [new ResolveInspectPanelByKey({ panelKey: p.state.key })],
+          });
+          this._scene.setState({ overlay: drawer, inspectPanelKey: p.state.key });
+        });
+        return;
+      }
+
       update.inspectPanelKey = values.inspect;
       update.overlay = new PanelInspectDrawer({
         $behaviors: [new ResolveInspectPanelByKey({ panelKey: values.inspect })],

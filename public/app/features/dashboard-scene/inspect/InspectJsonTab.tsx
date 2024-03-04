@@ -274,8 +274,18 @@ function vizPanelToLibraryPanel(panel: VizPanel): LibraryPanel {
   if (!(panel.parent instanceof LibraryVizPanel)) {
     throw new Error('Panel not a child of LibraryVizPanel');
   }
-  const { name, uid, _loadedVersion: version } = panel.parent.state;
-  return { model: vizPanelToPanel(panel), name, uid, version: version || 0, type: panel.state.pluginId || '' };
+  const { name, uid, _loadedVersion: version, folderUid, description, meta, schemaVersion } = panel.parent.state;
+  return {
+    name,
+    uid,
+    version: version || 0,
+    type: panel.state.pluginId || '',
+    folderUid: folderUid || '',
+    description: description || '',
+    meta: meta,
+    schemaVersion: schemaVersion,
+    model: vizPanelToPanel(panel),
+  };
 }
 
 function hasGridPosChanged(a: SceneGridItemStateLike, b: SceneGridItemStateLike) {
