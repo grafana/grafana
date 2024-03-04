@@ -1,5 +1,3 @@
-// Package service provides the implementation of various service functions for user authorization and tag assignment.
-
 package heimdall
 
 import (
@@ -51,7 +49,7 @@ const (
 	ContentType   = "application/json"
 )
 
-type config struct {
+type Config struct {
 	DataosAdminTagsKey string `env:"DATAOS_ADMIN_ACCESS_TAGS"`
 	HeimdallUseUnsafe  string `env:"HEIMDALL_USE_UNSAFE" envDefault:"true"`
 	HeimdallBaseUrlKey string `env:"HEIMDALL_BASE_URL" envDefault:"true"`
@@ -111,7 +109,7 @@ func Authorize(authorizeUrl string, authz AuthorizationRequest) (*AuthorizationR
 // and updates the provided BasicUserInfo with appropriate role and admin status.
 // It returns an error if authorization fails or encounters any issues.
 func AuthorizeUser(token string, userInfo *BasicUserInfo,) (*BasicUserInfo, error) {
-	var config *config
+	var config Config
 	logger.Info("calling heimdall for authorization...")
 	heimdallBaseUrl := config.HeimdallBaseUrlKey
 	if len(heimdallBaseUrl) <= 0 {
@@ -178,7 +176,7 @@ func findCommonTag(userTags, adminTags []string) bool {
 
 // client configures an HTTP client with TLS verification disabled.
 func client() *http.Client {
-	var config *config
+	var config Config
 	if config.HeimdallUseUnsafe == "true" {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
