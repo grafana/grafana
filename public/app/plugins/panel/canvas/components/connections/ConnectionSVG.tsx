@@ -127,6 +127,8 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
 
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
       const selectedStyles = { stroke: '#44aaff', strokeOpacity: 0.6, strokeWidth: strokeWidth + 5 };
+      const vertexStyles = { fill: '#44aaff', strokeWidth: 1 };
+      const futureVertexStyles = { fill: '#44aaff', opacity: 0.6, strokeWidth: 1 };
 
       const CONNECTION_HEAD_ID = `connectionHead-${headId + Math.random()}`;
       const vertices: Vertex[] = [];
@@ -172,20 +174,56 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
             {vertices.length ? (
               <g>
                 <path
+                  id={`${CONNECTION_LINE_ID}_transparent`}
+                  d={pathString}
+                  cursor={connectionCursorStyle}
+                  pointerEvents="auto"
+                  stroke="transparent"
+                  strokeWidth={15}
+                  fill={'none'}
+                  style={isSelected ? selectedStyles : {}}
+                />
+                <path
                   d={pathString}
                   stroke={strokeColor}
-                  strokeWidth={3}
+                  strokeWidth={strokeWidth}
                   fill={'none'}
                   markerEnd={`url(#${CONNECTION_HEAD_ID})`}
                 />
-                {vertices.map((value, index) => {
-                  const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
-                  return <circle key={`vertex${index}_${idx}`} fill={'gray'} cx={x} cy={y} r={5} />;
-                })}
-                {futureVertices.map((value, index) => {
-                  const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
-                  return <circle key={`vertexFuture${index}_${idx}`} fill={'red'} cx={x} cy={y} r={8} />;
-                })}
+                {isSelected && (
+                  <g>
+                    {vertices.map((value, index) => {
+                      const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
+                      return (
+                        <circle
+                          key={`vertex${index}_${idx}`}
+                          cx={x}
+                          cy={y}
+                          r={4}
+                          stroke={strokeColor}
+                          style={vertexStyles}
+                          cursor={'crosshair'}
+                          pointerEvents="auto"
+                        />
+                      );
+                    })}
+                    {futureVertices.map((value, index) => {
+                      const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
+                      return (
+                        <circle
+                          key={`vertexFuture${index}_${idx}`}
+                          cx={x}
+                          cy={y}
+                          r={4}
+                          stroke={strokeColor}
+                          style={futureVertexStyles}
+                          cursor={'crosshair'}
+                          pointerEvents="auto"
+                        />
+                      );
+                    })}
+                  </g>
+                )}
               </g>
             ) : (
               <g>
