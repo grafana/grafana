@@ -110,9 +110,9 @@ func Authorize(authorizeUrl string, authz AuthorizationRequest) (*AuthorizationR
 // It validates the user's token against Heimdall's authorization service
 // and updates the provided BasicUserInfo with appropriate role and admin status.
 // It returns an error if authorization fails or encounters any issues.
-func AuthorizeUser(token string, userInfo *BasicUserInfo, config *config) (*BasicUserInfo, error) {
+func AuthorizeUser(token string, userInfo *BasicUserInfo,) (*BasicUserInfo, error) {
+	var config *config
 	logger.Info("calling heimdall for authorization...")
-
 	heimdallBaseUrl := config.HeimdallBaseUrlKey
 	if len(heimdallBaseUrl) <= 0 {
 		logger.Warn(fmt.Sprintf("environment variable %s not configured", config.HeimdallBaseUrlKey))
