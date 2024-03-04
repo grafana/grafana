@@ -18,6 +18,7 @@ import {
   TimeRange,
   ToggleFilterAction,
   DataQueryRequest,
+  ScopedVars,
 } from '@grafana/data';
 import {
   BackendSrv,
@@ -1650,6 +1651,19 @@ describe('LokiDatasource', () => {
       expect(async () => {
         await ds.statsMetadataRequest('/index');
       }).rejects.toThrow('invalid metadata request url: /index');
+    });
+  });
+
+  describe('runLiveQueryThroughBackend', () => {
+    it('interpolates variables with scopedVars and filters', () => {
+      const ds = createLokiDatasource();
+      const query: LokiQuery = { expr: '{app=$app}', refId: 'A' };
+      const scopedVars: ScopedVars = { app: { text: 'interpolated', value: 'interpolated' } };
+      const filters: AdHocFilter[] = [];
+
+      jest.spyOn(ds, 'applyTemplateVariables').mockImplementation((query) => query);
+      ds.runLiveQueryThroughBackend({ targets: [query], scopedVars, filters } as DataQueryRequest<LokiQuery>);
+      expect(ds.applyTemplateVariables).toHaveBeenCalledWith(query, scopedVars, filters);
     });
   });
 });

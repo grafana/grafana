@@ -300,7 +300,7 @@ export class LokiDatasource
       return merge(
         ...streamQueries.map((q) =>
           doLokiChannelStream(
-            this.applyTemplateVariables(q, request.scopedVars),
+            this.applyTemplateVariables(q, request.scopedVars, request.filters),
             this, // the datasource
             streamRequest
           )
@@ -344,11 +344,9 @@ export class LokiDatasource
    * @returns An Observable of DataQueryResponse with live query results or an empty response if no suitable queries are found.
    * @todo: The name says "backend" but it's actually running the query through the frontend. We should fix this.
    */
-  private runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
-    // this only works in explore-mode so variables don't need to be handled,
+  runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     // and only for logs-queries, not metric queries
     const logsQueries = request.targets.filter((query) => query.expr !== '' && isLogsQuery(query.expr));
-
     if (logsQueries.length === 0) {
       return of({
         data: [],
@@ -357,9 +355,10 @@ export class LokiDatasource
     }
 
     const subQueries = logsQueries.map((query) => {
-      const maxDataPoints = query.maxLines || this.maxLines;
+      const interpolatedQuery = this.applyTemplateVariables(query, request.scopedVars, request.filters);
+      const maxDataPoints = interpolatedQuery.maxLines || this.maxLines;
       // FIXME: currently we are running it through the frontend still.
-      return this.runLiveQuery(query, maxDataPoints);
+      return this.runLiveQuery(interpolatedQuery, maxDataPoints);
     });
 
     return merge(...subQueries);
