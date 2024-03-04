@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -28,7 +27,7 @@ func Translate(text string, schema string) (string, error) {
 func doRequest(question string, schema string) (string, error) {
 	b := Body{
 		question,
-		schema
+		schema,
 	}
 	body, err := json.Marshal(&b)
 	if err != nil {
@@ -54,7 +53,7 @@ func doRequest(question string, schema string) (string, error) {
 	resBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		fmt.Printf("error reading response: %s\n", err)
-		
+		return "", err
 	}
-	return resBody
+	return string(resBody), nil
 }
