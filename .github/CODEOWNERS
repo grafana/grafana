@@ -31,28 +31,32 @@
 /contribute/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 /devenv/README.md @grafana/docs-grafana
 
-# Technical documentation
+# START Technical documentation
 # `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
-# Documentation sources might have different owners.
-/docs/                                                                       @grafana/docs-tooling
-/docs/.codespellignore @grafana/docs-tooling
-/docs/sources/                                                               @Eve832
-/docs/sources/administration/                                                @jdbaldry
-/docs/sources/alerting/                                                      @brendamuir
-/docs/sources/dashboards/                                                    @imatwawana
-/docs/sources/datasources/                                                   @lwandz13
-/docs/sources/explore/                                                       @grafana/explore-squad
-/docs/sources/fundamentals                                                   @chri2547
-/docs/sources/getting-started/                                               @chri2547
-/docs/sources/introduction/                                                  @chri2547
-/docs/sources/old-alerting/                                                  @brendamuir
-/docs/sources/panels-visualizations/                                         @imatwawana
+/docs/                                                                            @grafana/docs-tooling
+
+/docs/.codespellignore                                                            @grafana/docs-tooling
+/docs/sources/                                                                    @Eve832
+
+/docs/sources/administration/                                                     @jdbaldry @lwandz13
+/docs/sources/alerting/                                                           @brendamuir
+/docs/sources/dashboards/                                                         @imatwawana
+/docs/sources/datasources/                                                        @jdbaldry
+/docs/sources/explore/                                                            @grafana/explore-squad
+/docs/sources/fundamentals                                                        @chri2547
+/docs/sources/getting-started/                                                    @chri2547
+/docs/sources/introduction/                                                       @chri2547
+/docs/sources/old-alerting/                                                       @brendamuir
+/docs/sources/panels-visualizations/                                              @imatwawana
+/docs/sources/release-notes/                                                      @Eve832 @GrafanaWriter
+/docs/sources/setup-grafana/                                                      @chri2547
+/docs/sources/upgrade-guide/                                                      @imatwawana
+/docs/sources/whatsnew/                                                           @imatwawana
+
+/docs/sources/developers/plugins/                                                 @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+
 /docs/sources/panels-visualizations/query-transform-data/transform-data/index.md  @imatwawana @baldm0mma
-/docs/sources/release-notes/                                                 @Eve832 @GrafanaWriter
-/docs/sources/setup-grafana/                                                 @chri2547
-/docs/sources/upgrade-guide/                                                 @imatwawana
-/docs/sources/whatsnew/                                                      @imatwawana
-/docs/sources/developers/plugins/                                            @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+# END Technical documentation
 
 # Backend code
 /go.mod @grafana/backend-platform

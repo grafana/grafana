@@ -714,7 +714,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }).pipe(
       map((response) => {
         return {
-          data: formatTraceQLMetrics(response.data),
+          data: formatTraceQLMetrics(queryValue, response.data),
         };
       }),
       catchError((err) => {
