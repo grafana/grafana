@@ -27,6 +27,10 @@ func (f FakeService) GetUserPermissions(ctx context.Context, user identity.Reque
 	return f.ExpectedPermissions, f.ExpectedErr
 }
 
+func (f FakeService) GetUserPermissionsInOrg(ctx context.Context, user identity.Requester, orgID int64) ([]accesscontrol.Permission, error) {
+	return f.ExpectedPermissions, f.ExpectedErr
+}
+
 func (f FakeService) SearchUsersPermissions(ctx context.Context, user identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	return f.ExpectedUsersPermissions, f.ExpectedErr
 }

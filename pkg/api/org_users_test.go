@@ -368,6 +368,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 				}
 				hs.authInfoService = &authinfotest.FakeService{}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tt.permissions)}
+				hs.accesscontrolService = actest.FakeService{ExpectedPermissions: tt.permissions}
 			})
 
 			url := "/api/orgs/1/users"
