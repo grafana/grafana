@@ -88,7 +88,7 @@ In this section, we'll create Terraform configurations for each alerting resourc
 
 ### Add alert rules
 
-[Alert rules][alerting-rules] enable you to receive alerts by querying any backend Grafana datasources.
+[Alert rules][alerting-rules] enable you to receive alerts by querying any backend Grafana data sources.
 
 1. First, create a data source to query and a folder to store your rules in.
 
