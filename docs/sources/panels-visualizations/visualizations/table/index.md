@@ -27,7 +27,7 @@ weight: 100
 
 # Table
 
-Tables are very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This visualization also provides date formatting, value formatting, and coloring options. In addition to formatting and coloring options, Grafana also provides a variety of _Cell types_ which can be used to display gauges, sparklines, and other rich data displays.
+Tables are very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This visualization also provides date formatting, value formatting, and coloring options. In addition to formatting and coloring options, Grafana also provides a variety of _Cell types_ which you can use to display gauges, sparklines, and other rich data displays.
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
@@ -148,11 +148,11 @@ If you have a field value that is an image URL or a base64 encoded image you can
 
 ### Sparkline
 
-Shows value rendered as a sparkline. Sparklines can be shown by taking data with multiple time series and using the [Time series to table transformation][] to process data to a format the table can show.
+Shows values rendered as a sparkline. You can show sparklines using the [Time series to table transformation][] on data with multiple time series to process it into a format the table can show.
 
 {{< figure src="/static/img/docs/tables/sparkline2.png" max-width="500px" caption="Sparkline" class="docs-image--no-shadow" >}}
 
-Sparklines can be customized with many of the same options as the [Time series panel][] including line width, fill opacity, and more. The color of the sparkline can also be changed by updating the [color scheme][] in the _Standard options_ section of the panel configuration.
+You can be customize sparklines with many of the same options as the [Time series panel][] including line width, fill opacity, and more. You can also change the color of the sparkline by updating the [color scheme][] in the _Standard options_ section of the panel configuration.
 
 ## Cell value inspect
 
