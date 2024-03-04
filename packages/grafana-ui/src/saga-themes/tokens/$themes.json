@@ -191,13 +191,10 @@
     "$figmaCollectionId": "VariableCollectionId:2742:9784",
     "$figmaModeId": "2742:4",
     "$figmaVariableReferences": {
-      "color.shadow.z1": "1408b61b5b1e7762cdf47aaf9ac758f8ccb7c00d",
-      "color.shadow.z2": "0921cccd9c9d5f882fd1b0fa944277eb1f339de9",
-      "color.shadow.z3": "3b7f2fa7246a475e98787cd923ff21c3346da555",
+      "color.background.ui.canvas": "c3e4e4acf7e0385102ba3b749c33ee8027c19b79",
       "color.background.ui.primary": "628ef2923af0e939e0bf11928bf759bd5051f42b",
       "color.background.ui.secondary": "98c6298745f43ebed8f2fbfa8718e24ed356c0ea",
       "color.background.ui.tertiary": "2a2a2ffb0874643bb5c448cd759c94ef275b5ea0",
-      "color.background.ui.quaternary": "568dbdf1ba9411089d10cddfe793d684731efae3",
       "color.background.ui.overlay": "ca23265ce9e94524aaed3157e7f7c55d3ae2e67f",
       "color.background.system.success": "ba0b89eb50008798a7543aa877c914054c55f557",
       "color.background.system.warning": "5a95afae78d97914ec980a9431bc230f3473e972",
@@ -221,7 +218,10 @@
       "color.content.system.error.heading": "09e0736faac34beda2158c4315e6ed48da49ff2d",
       "color.content.system.error.body": "06c51ec87bac4dabac41068d1be2190a5ee61841",
       "color.content.system.info.heading": "f6e38bf5a20550901b59736d49d7f37e91e2db8d",
-      "color.content.system.info.body": "473c2f629060123005563f7344a1546637ddd5e4"
+      "color.content.system.info.body": "473c2f629060123005563f7344a1546637ddd5e4",
+      "color.shadow.z1": "1408b61b5b1e7762cdf47aaf9ac758f8ccb7c00d",
+      "color.shadow.z2": "0921cccd9c9d5f882fd1b0fa944277eb1f339de9",
+      "color.shadow.z3": "3b7f2fa7246a475e98787cd923ff21c3346da555"
     },
     "group": "Saga Themes"
   },
@@ -268,13 +268,10 @@
     "$figmaCollectionId": "VariableCollectionId:2742:9784",
     "$figmaModeId": "2742:5",
     "$figmaVariableReferences": {
-      "color.shadow.z1": "1408b61b5b1e7762cdf47aaf9ac758f8ccb7c00d",
-      "color.shadow.z2": "0921cccd9c9d5f882fd1b0fa944277eb1f339de9",
-      "color.shadow.z3": "3b7f2fa7246a475e98787cd923ff21c3346da555",
+      "color.background.ui.canvas": "c3e4e4acf7e0385102ba3b749c33ee8027c19b79",
       "color.background.ui.primary": "628ef2923af0e939e0bf11928bf759bd5051f42b",
       "color.background.ui.secondary": "98c6298745f43ebed8f2fbfa8718e24ed356c0ea",
       "color.background.ui.tertiary": "2a2a2ffb0874643bb5c448cd759c94ef275b5ea0",
-      "color.background.ui.quaternary": "568dbdf1ba9411089d10cddfe793d684731efae3",
       "color.background.ui.overlay": "ca23265ce9e94524aaed3157e7f7c55d3ae2e67f",
       "color.background.system.success": "ba0b89eb50008798a7543aa877c914054c55f557",
       "color.background.system.warning": "5a95afae78d97914ec980a9431bc230f3473e972",
@@ -298,7 +295,10 @@
       "color.content.system.error.heading": "09e0736faac34beda2158c4315e6ed48da49ff2d",
       "color.content.system.error.body": "06c51ec87bac4dabac41068d1be2190a5ee61841",
       "color.content.system.info.heading": "f6e38bf5a20550901b59736d49d7f37e91e2db8d",
-      "color.content.system.info.body": "473c2f629060123005563f7344a1546637ddd5e4"
+      "color.content.system.info.body": "473c2f629060123005563f7344a1546637ddd5e4",
+      "color.shadow.z1": "1408b61b5b1e7762cdf47aaf9ac758f8ccb7c00d",
+      "color.shadow.z2": "0921cccd9c9d5f882fd1b0fa944277eb1f339de9",
+      "color.shadow.z3": "3b7f2fa7246a475e98787cd923ff21c3346da555"
     },
     "group": "Saga Themes"
   }
