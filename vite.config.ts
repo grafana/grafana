@@ -65,32 +65,28 @@ export default defineConfig({
   },
 });
 
-// This is a Vite plugin for handling angular templates.
-// https://vitejs.dev/guide/api-plugin.html#simple-examples
+/**
+This is a Vite plugin for handling angular templates.
+https://vitejs.dev/guide/api-plugin.html#simple-examples
 
-// The webpack output from https://github.com/WearyMonkey/ngtemplate-loader looks like this:
-// var code = "\n<div class=\"graph-annotation\">\n\t<div class=\"graph-annotation__header\">\n\t\t</div></div>\n";
-// Exports
-// var _module_exports =code;;
-// var path = 'public/app/features/annotations/partials/event_editor.html';
-// window.angular.module('ng').run(['$templateCache', function(c) { c.put(path, _module_exports) }]);
-// module.exports = path;
-
-// const htmlComponentFile = /\.html\?inline$/;
+The webpack output from https://github.com/WearyMonkey/ngtemplate-loader looks like this:
+var code = "\n<div class=\"graph-annotation\">\n\t<div class=\"graph-annotation__header\">\n\t\t</div></div>\n";
+Exports
+var _module_exports =code;;
+var path = 'public/app/features/annotations/partials/event_editor.html';
+window.angular.module('ng').run(['$templateCache', function(c) { c.put(path, _module_exports) }]);
+module.exports = path;
+ */
 
 function angularHtmlImport() {
-  let isDevelopment = true;
+  const htmlComponentFile = /\.html\?inline$/;
   return {
     name: 'transform-angular-html',
-    configResolved(config) {
-      isDevelopment = config.command === 'serve';
-    },
     async transform(src, id) {
-      if (id.endsWith('.html')) {
+      if (htmlComponentFile.test(id)) {
         const idParts = id.split('/public/');
         const path = idParts[idParts.length - 1];
-        // const minifysrc = await minify(src, minifierOptions);
-        const html = isDevelopment ? JSON.stringify(src) : src;
+        const html = JSON.stringify(src);
         const result = `const path = 'public/${path}';
 const htmlTemplate = ${html};
 angular.module('ng').run(['$templateCache', c => { c.put(path, htmlTemplate) }]); export default path;`;
