@@ -29,7 +29,6 @@ var (
 
 const (
 	rfc9068ShortMediaType = "at+jwt"
-	rfc9068MediaType      = "application/at+jwt"
 	authenticationHeader  = "X-Access-Token"
 	authorizationHeader   = "X-Grafana-Id"
 )
@@ -62,7 +61,7 @@ type ExtendedJWTClaims struct {
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	jwtToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 
-	claims, err := s.verifyRFC9068Token(ctx, jwtToken)
+	claims, err := s.verifyRFC9068Token(ctx, jwtToken, rfc9068ShortMediaType)
 	if err != nil {
 		s.log.Error("Failed to verify JWT", "error", err)
 		return nil, errJWTInvalid.Errorf("Failed to verify JWT: %w", err)
@@ -70,7 +69,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	idToken := s.retrieveAuthorizationToken(r.HTTPRequest)
 	if idToken != "" {
-		idTokenClaims, err := s.verifyRFC9068Token(ctx, idToken)
+		idTokenClaims, err := s.verifyRFC9068Token(ctx, idToken, "jwt")
 		if err != nil {
 			s.log.Error("Failed to verify id token", "error", err)
 			return nil, errJWTInvalid.Errorf("Failed to verify id token: %w", err)
@@ -144,6 +143,7 @@ func (s *ExtendedJWT) authenticateService(ctx context.Context,
 		ID:              claims.Subject,
 		OrgID:           defaultOrgID,
 		AuthenticatedBy: login.ExtendedJWTModule,
+		AuthID:          claims.Subject,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: false,
 			FetchSyncedUser: false,
@@ -200,7 +200,7 @@ func (s *ExtendedJWT) retrieveAuthorizationToken(httpRequest *http.Request) stri
 }
 
 // verifyRFC9068Token verifies the token against the RFC 9068 specification.
-func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (*ExtendedJWTClaims, error) {
+func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string, typ string) (*ExtendedJWTClaims, error) {
 	parsedToken, err := jwt.ParseSigned(rawToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse JWT: %w", err)
@@ -218,7 +218,7 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 	}
 
 	jwtType := strings.ToLower(typeHeader.(string))
-	if jwtType != rfc9068ShortMediaType && jwtType != rfc9068MediaType {
+	if strings.EqualFold(jwtType, typ) {
 		return nil, fmt.Errorf("invalid JWT type: %s", jwtType)
 	}
 

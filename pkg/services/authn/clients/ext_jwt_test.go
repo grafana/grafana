@@ -466,7 +466,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 				tc.alg = jose.RS256
 			}
 			tokenToTest := generateToken(tc.payload, pk, tc.alg)
-			_, err := env.s.verifyRFC9068Token(context.Background(), tokenToTest)
+			_, err := env.s.verifyRFC9068Token(context.Background(), tokenToTest, rfc9068ShortMediaType)
 			require.Error(t, err)
 		})
 	}
