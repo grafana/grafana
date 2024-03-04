@@ -288,8 +288,8 @@
 /public/app/features/alerting/ @grafana/alerting-frontend
 
 # Library Services
-/pkg/services/libraryelements/ @grafana/grafana-frontend-platform
-/pkg/services/librarypanels/ @grafana/grafana-frontend-platform
+/pkg/services/libraryelements/ @grafana/dashboards-squad
+/pkg/services/librarypanels/ @grafana/dashboards-squad
 
 # Plugins
 /pkg/api/pluginproxy/ @grafana/plugins-platform-backend
@@ -410,7 +410,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/folders/ @grafana/grafana-frontend-platform
 /public/app/features/inspector/ @grafana/dashboards-squad
 /public/app/features/invites/ @grafana/grafana-frontend-platform
-/public/app/features/library-panels/ @grafana/grafana-frontend-platform
+/public/app/features/library-panels/ @grafana/dashboards-squad
 /public/app/features/logs/ @grafana/observability-logs
 /public/app/features/live/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
