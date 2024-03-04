@@ -1,9 +1,9 @@
 import { sanitizeUrl as braintreeSanitizeUrl } from '@braintree/sanitize-url';
 import DOMPurify from 'dompurify';
-import * as xss from 'xss';
+import { FilterXSS, type IWhiteList, escapeAttrValue, getDefaultCSSWhiteList, whiteList } from 'xss';
 
-const XSSWL = Object.keys(xss.whiteList).reduce<xss.IWhiteList>((acc, element) => {
-  acc[element] = xss.whiteList[element]?.concat(['class', 'style']);
+const XSSWL = Object.keys(whiteList).reduce<IWhiteList>((acc, element) => {
+  acc[element] = whiteList[element]?.concat(['class', 'style']);
   return acc;
 }, {});
 
@@ -11,12 +11,12 @@ const XSSWL = Object.keys(xss.whiteList).reduce<xss.IWhiteList>((acc, element) =
 // We don't allow the sandbox attribute, since it can be overridden, instead we add it below.
 XSSWL.iframe = ['src', 'width', 'height'];
 
-const sanitizeTextPanelWhitelist = new xss.FilterXSS({
+const sanitizeTextPanelWhitelist = new FilterXSS({
   // Add sandbox attribute to iframe tags if an attribute is allowed.
   onTagAttr: function (tag, name, value, isWhiteAttr) {
     if (tag === 'iframe') {
       return isWhiteAttr
-        ? ` ${name}="${xss.escapeAttrValue(sanitizeUrl(value))}" sandbox credentialless referrerpolicy=no-referrer`
+        ? ` ${name}="${escapeAttrValue(sanitizeUrl(value))}" sandbox credentialless referrerpolicy=no-referrer`
         : '';
     }
     return;
@@ -24,7 +24,7 @@ const sanitizeTextPanelWhitelist = new xss.FilterXSS({
   whiteList: XSSWL,
   css: {
     whiteList: {
-      ...xss.getDefaultCSSWhiteList(),
+      ...getDefaultCSSWhiteList(),
       'flex-direction': true,
       'flex-wrap': true,
       'flex-basis': true,
