@@ -17,7 +17,7 @@ export function quoteLiteral(value: string) {
   return "'" + value.replace(/'/g, "''") + "'";
 }
 
-export function toRawSql({ sql, dataset, table }: SQLQuery): string {
+export function toRawSql({ sql, table }: SQLQuery): string {
   let rawQuery = '';
 
   // Return early with empty string if there is no sql column
@@ -29,8 +29,8 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
   const sc = sql.columns.map((c) => ({ ...c, parameters: c.parameters?.map((p) => ({ ...p, name: `"${p.name}"` })) }));
   rawQuery += createSelectClause(sc);
 
-  if (dataset && table) {
-    rawQuery += `FROM "${dataset}.${table}" `;
+  if (table) {
+    rawQuery += `FROM "${table}" `;
   }
 
   // $__timeFrom and $__timeTo will be interpolated on the backend

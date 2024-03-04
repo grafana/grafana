@@ -4,7 +4,7 @@ import { toRawSql } from './sqlUtil';
 
 describe('toRawSql', () => {
   it('should render sql properly', () => {
-    const expected = 'SELECT "host" FROM "iox.value1" WHERE "time" >= $__timeFrom AND "time" <= $__timeTo LIMIT 50';
+    const expected = 'SELECT "host" FROM "value1" WHERE "time" >= $__timeFrom AND "time" <= $__timeTo LIMIT 50';
     const testQuery: SQLQuery = {
       refId: 'A',
       sql: {
@@ -29,7 +29,7 @@ describe('toRawSql', () => {
   });
 
   it('should wrap the identifiers with quote', () => {
-    const expected = 'SELECT "host" FROM "iox.TestValue" WHERE "time" >= $__timeFrom AND "time" <= $__timeTo LIMIT 50';
+    const expected = 'SELECT "host" FROM "TestValue" WHERE "time" >= $__timeFrom AND "time" <= $__timeTo LIMIT 50';
     const testQuery: SQLQuery = {
       refId: 'A',
       sql: {
@@ -54,7 +54,7 @@ describe('toRawSql', () => {
   });
 
   it('should wrap filters in where', () => {
-    const expected = `SELECT "host" FROM "iox.TestValue" WHERE "time" >= $__timeFrom AND "time" <= $__timeTo AND ("sensor_id" = '12' AND "sensor_id" = '23') LIMIT 50`;
+    const expected = `SELECT "host" FROM "TestValue" WHERE "time" >= $__timeFrom AND "time" <= $__timeTo AND ("sensor_id" = '12' AND "sensor_id" = '23') LIMIT 50`;
     const testQuery: SQLQuery = {
       refId: 'A',
       sql: {
