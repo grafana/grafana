@@ -1,5 +1,5 @@
 import { identity, isEmpty, isEqual, isObject, mapValues, omitBy } from 'lodash';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { CoreApp, ExploreUrlState, DataSourceApi, toURLRange, EventBusSrv, isTruthy } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
@@ -18,6 +18,8 @@ import { selectPanes } from '../../state/selectors';
 import { changeRangeAction, updateTime } from '../../state/time';
 import { DEFAULT_RANGE, fromURLRange } from '../../state/utils';
 import { withUniqueRefIds } from '../../utils/queries';
+import { ExploreWorkspace, ExploreWorkspaceSnapshot } from '../../workspaces/types';
+import { useExploreWorkspaces } from '../../workspaces/utils/hooks';
 import { isFulfilled } from '../utils';
 
 import { parseURL } from './parseURL';
@@ -25,7 +27,15 @@ import { parseURL } from './parseURL';
 /**
  * Bi-directionally syncs URL changes with Explore's state.
  */
-export function useStateSync(params: ExploreQueryParams) {
+export function useStateSync(
+  params: ExploreQueryParams,
+  workspace: string,
+  snapshot: string
+): {
+  loadedWorkspace?: ExploreWorkspace;
+  loadedSnapshot?: ExploreWorkspaceSnapshot;
+  currentState?: Record<string, string | number | object>;
+} {
   const { location } = useGrafana();
   const dispatch = useDispatch();
   const panesState = useSelector(selectPanes);
@@ -34,6 +44,13 @@ export function useStateSync(params: ExploreQueryParams) {
   const initState = useRef<'notstarted' | 'pending' | 'done'>('notstarted');
   const paused = useRef(false);
   const { warning } = useAppNotification();
+
+  const [latest, setLatest] = useState<Record<string, string | number | object> | undefined>(undefined);
+  const [loadedWorkspace, setLoadedWorkspace] = useState<ExploreWorkspace | undefined>(undefined);
+  const [loadedSnapshot, setLoadedSnapshot] = useState<ExploreWorkspaceSnapshot | undefined>(undefined);
+
+  const { updateExploreWorkspaceLatestSnapshot, getExploreWorkspace, getExploreWorkspaceSnapshot } =
+    useExploreWorkspaces();
 
   useEffect(() => {
     // This happens when the user navigates to an explore "empty page" while within Explore.
@@ -56,7 +73,7 @@ export function useStateSync(params: ExploreQueryParams) {
            - panel state is updated
            - a datasource change has completed.
 
-          Note: Changing datasource causes a bunch of actions to be dispatched, we want to update the URL 
+          Note: Changing datasource causes a bunch of actions to be dispatched, we want to update the URL
           only when the change set has completed. This is done by checking if the changeDatasource.pending action
           has been dispatched and pausing the listener until the changeDatasource.fulfilled action is dispatched.
         */
@@ -104,7 +121,23 @@ export function useStateSync(params: ExploreQueryParams) {
               panes: JSON.stringify(panesQueryParams),
             };
 
-            location.partial({ panes: prevParams.current.panes }, replace);
+            const latestValue = {
+              schemaVersion: 1,
+              panes: JSON.stringify(panesQueryParams),
+              orgId: `${orgId}`,
+            };
+            setLatest(latestValue);
+
+            if (workspace) {
+              if (!snapshot) {
+                await updateExploreWorkspaceLatestSnapshot({
+                  exploreWorkspaceUID: workspace,
+                  config: JSON.stringify(latestValue),
+                });
+              }
+            } else {
+              location.partial({ panes: prevParams.current.panes }, replace);
+            }
           }
         },
       })
@@ -112,12 +145,12 @@ export function useStateSync(params: ExploreQueryParams) {
 
     // @ts-expect-error the return type of addListener is actually callable, but dispatch is not middleware-aware
     return () => unsubscribe();
-  }, [dispatch, location]);
+  }, [dispatch, location, workspace, orgId, updateExploreWorkspaceLatestSnapshot, snapshot]);
 
   useEffect(() => {
     const isURLOutOfSync = prevParams.current?.panes !== params.panes;
 
-    const [urlState, hasParseError] = parseURL(params);
+    let [urlState, hasParseError] = parseURL(params);
     hasParseError &&
       warning(
         'Could not parse Explore URL',
@@ -202,106 +235,166 @@ export function useStateSync(params: ExploreQueryParams) {
       // Clear all the panes in the store first to avoid stale data.
       dispatch(clearPanes());
 
-      Promise.all(
-        Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState }]) => {
-          return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
-            return Promise.resolve(
-              // Given the Grafana datasource will always be present, this should always be defined.
-              paneDatasource
-                ? queries.length
-                  ? // if we have queries in the URL, we use them
-                    withUniqueRefIds(queries)
-                      // but filter out the ones that are not compatible with the pane datasource
-                      .filter(getQueryFilter(paneDatasource))
-                      .map(
-                        isMixedDatasource(paneDatasource)
-                          ? identity<DataQuery>
-                          : (query) => ({ ...query, datasource: paneDatasource.getRef() })
-                      )
-                  : getDatasourceSrv()
-                      // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
-                      .get(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef())
-                      .then((ds) => [getDefaultQuery(ds)])
-                : []
-            ).then(async (queries) => {
-              // we remove queries that have an invalid datasources
-              let validQueries = await removeQueriesWithInvalidDatasource(queries);
+      const initialize = async () =>
+        Promise.all(
+          Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState }]) => {
+            return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
+              return Promise.resolve(
+                // Given the Grafana datasource will always be present, this should always be defined.
+                paneDatasource
+                  ? queries.length
+                    ? // if we have queries in the URL, we use them
+                      withUniqueRefIds(queries)
+                        // but filter out the ones that are not compatible with the pane datasource
+                        .filter(getQueryFilter(paneDatasource))
+                        .map(
+                          isMixedDatasource(paneDatasource)
+                            ? identity<DataQuery>
+                            : (query) => ({ ...query, datasource: paneDatasource.getRef() })
+                        )
+                    : getDatasourceSrv()
+                        // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
+                        .get(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef())
+                        .then((ds) => [getDefaultQuery(ds)])
+                  : []
+              ).then(async (queries) => {
+                // we remove queries that have an invalid datasources
+                let validQueries = await removeQueriesWithInvalidDatasource(queries);
 
-              if (!validQueries.length && paneDatasource) {
-                // and in case there's no query left we add a default one.
-                validQueries = [
-                  getDefaultQuery(isMixedDatasource(paneDatasource) ? await getDatasourceSrv().get() : paneDatasource),
-                ];
-              }
+                if (!validQueries.length && paneDatasource) {
+                  // and in case there's no query left we add a default one.
+                  validQueries = [
+                    getDefaultQuery(
+                      isMixedDatasource(paneDatasource) ? await getDatasourceSrv().get() : paneDatasource
+                    ),
+                  ];
+                }
 
-              return { exploreId, range, panelsState, queries: validQueries, datasource: paneDatasource };
+                return { exploreId, range, panelsState, queries: validQueries, datasource: paneDatasource };
+              });
+            });
+          })
+        ).then(async (panes) => {
+          const initializedPanes = await Promise.all(
+            panes.map(({ exploreId, range, panelsState, queries, datasource }) => {
+              return dispatch(
+                initializeExplore({
+                  exploreId,
+                  datasource,
+                  queries,
+                  range: fromURLRange(range),
+                  panelsState,
+                  eventBridge: new EventBusSrv(),
+                })
+              ).unwrap();
+            })
+          );
+
+          if (initializedPanes.length > 1) {
+            const paneTimesUnequal = initializedPanes.some(
+              ({ state }, _, [{ state: firstState }]) => !isEqual(state.range.raw, firstState.range.raw)
+            );
+            dispatch(syncTimesAction({ syncedTimes: !paneTimesUnequal })); // if all time ranges are equal, keep them synced
+          }
+
+          const panesObj = initializedPanes.reduce((acc, { exploreId, state }) => {
+            return {
+              ...acc,
+              [exploreId]: getUrlStateFromPaneState(state),
+            };
+          }, {});
+
+          // we need to use partial here beacuse replace doesn't encode the query params.
+          const oldQuery = location.getSearchObject();
+
+          // we create the default query params from the current URL, omitting all the properties we know should be in the final url.
+          // This includes params from previous schema versions and 'schemaVersion', 'panes', 'orgId' as we want to replace those.
+          let defaults: Record<string, unknown> = {};
+          for (const [key, value] of Object.entries(oldQuery).filter(
+            ([key]) => !['schemaVersion', 'panes', 'orgId', 'left', 'right'].includes(key)
+          )) {
+            defaults[key] = value;
+          }
+
+          const searchParams = new URLSearchParams({
+            // we set the schemaVersion as the first parameter so that when URLs are truncated the schemaVersion is more likely to be present.
+            schemaVersion: `${urlState.schemaVersion}`,
+            panes: JSON.stringify(panesObj),
+            orgId: `${orgId}`,
+            ...defaults,
+          });
+
+          if (!workspace) {
+            location.replace({
+              pathname: location.getLocation().pathname,
+              search: searchParams.toString(),
+            });
+          }
+          initState.current = 'done';
+        });
+
+      if (workspace) {
+        getExploreWorkspace(workspace)
+          .then((response) => {
+            return response.exploreWorkspace;
+          })
+          .then((exploreWorkspace) => {
+            if (snapshot) {
+              return getExploreWorkspaceSnapshot({ uid: snapshot }).then((response) => {
+                return { snapshot: response.snapshot, workspace: exploreWorkspace };
+              });
+            } else {
+              return { snapshot: exploreWorkspace.activeSnapshot, workspace: exploreWorkspace };
+            }
+          })
+          .then(({ workspace, snapshot }) => {
+            // @ts-ignore
+            [urlState, _] = parseURL(JSON.parse(snapshot.config));
+            initialize().then(() => {
+              setLoadedWorkspace(workspace);
+              setLoadedSnapshot(snapshot);
             });
           });
-        })
-      ).then(async (panes) => {
-        const initializedPanes = await Promise.all(
-          panes.map(({ exploreId, range, panelsState, queries, datasource }) => {
-            return dispatch(
-              initializeExplore({
-                exploreId,
-                datasource,
-                queries,
-                range: fromURLRange(range),
-                panelsState,
-                eventBridge: new EventBusSrv(),
-              })
-            ).unwrap();
-          })
-        );
-
-        if (initializedPanes.length > 1) {
-          const paneTimesUnequal = initializedPanes.some(
-            ({ state }, _, [{ state: firstState }]) => !isEqual(state.range.raw, firstState.range.raw)
-          );
-          dispatch(syncTimesAction({ syncedTimes: !paneTimesUnequal })); // if all time ranges are equal, keep them synced
-        }
-
-        const panesObj = initializedPanes.reduce((acc, { exploreId, state }) => {
-          return {
-            ...acc,
-            [exploreId]: getUrlStateFromPaneState(state),
-          };
-        }, {});
-
-        // we need to use partial here beacuse replace doesn't encode the query params.
-        const oldQuery = location.getSearchObject();
-
-        // we create the default query params from the current URL, omitting all the properties we know should be in the final url.
-        // This includes params from previous schema versions and 'schemaVersion', 'panes', 'orgId' as we want to replace those.
-        let defaults: Record<string, unknown> = {};
-        for (const [key, value] of Object.entries(oldQuery).filter(
-          ([key]) => !['schemaVersion', 'panes', 'orgId', 'left', 'right'].includes(key)
-        )) {
-          defaults[key] = value;
-        }
-
-        const searchParams = new URLSearchParams({
-          // we set the schemaVersion as the first parameter so that when URLs are truncated the schemaVersion is more likely to be present.
-          schemaVersion: `${urlState.schemaVersion}`,
-          panes: JSON.stringify(panesObj),
-          orgId: `${orgId}`,
-          ...defaults,
+        // getExploreWorkspace(workspace).then((response) => {
+        //
+        //   // @ts-ignore
+        //   [urlState, hasParseError] = parseURL(JSON.parse(response.exploreWorkspace.activeSnapshot?.config));
+        //   initialize().then(() => {
+        //     setLoadedWorkspace(response.exploreWorkspace);
+        //   });
+        // });
+      } else {
+        initialize().then(() => {
+          setLoadedWorkspace(undefined);
         });
-
-        location.replace({
-          pathname: location.getLocation().pathname,
-          search: searchParams.toString(),
-        });
-        initState.current = 'done';
-      });
+      }
     }
 
     prevParams.current = params;
 
     if (isURLOutOfSync && initState.current === 'done') {
-      sync();
+      if (!workspace) {
+        sync();
+      }
     }
-  }, [dispatch, panesState, orgId, location, params, warning]);
+  }, [
+    dispatch,
+    panesState,
+    orgId,
+    location,
+    params,
+    warning,
+    workspace,
+    getExploreWorkspace,
+    getExploreWorkspaceSnapshot,
+    snapshot,
+  ]);
+
+  return {
+    loadedWorkspace,
+    loadedSnapshot: snapshot ? loadedSnapshot : undefined,
+    currentState: initState.current === 'done' ? latest : undefined,
+  };
 }
 
 function getDefaultQuery(ds: DataSourceApi) {

@@ -1,8 +1,11 @@
 import React from 'react';
 
 import { Button } from '@grafana/ui';
+import { useSelector } from 'app/types';
 
+import { useGrafana } from '../../../../core/context/GrafanaContext';
 import { ExploreDrawer } from '../../ExploreDrawer';
+import { selectExploreRoot } from '../../state/selectors';
 import { ExploreWorkspace, ExploreWorkspaceSnapshot } from '../types';
 import { useExploreWorkspaces } from '../utils/hooks';
 
@@ -21,6 +24,12 @@ export const ExploreWorkspacesDebugger = (props: Props) => {
     workspaces,
   } = useExploreWorkspaces();
 
+  const { location } = useGrafana();
+
+  const state = useSelector(selectExploreRoot);
+
+  console.log(state);
+
   const [loadedWorkspace, setLoadedWorkspace] = React.useState<ExploreWorkspace | undefined>();
   const [loadedSnapshots, setLoadedSnapshots] = React.useState<ExploreWorkspaceSnapshot[] | undefined>();
 
@@ -32,6 +41,9 @@ export const ExploreWorkspacesDebugger = (props: Props) => {
         onClick={async () => {
           const response = await getExploreWorkspace(workspaces[workspaces.length - 1].uid);
           setLoadedWorkspace(response.exploreWorkspace);
+
+          location.push('/explore/' + response.exploreWorkspace.uid);
+          window.location.reload();
         }}
       >
         Get Workspace
@@ -50,13 +62,15 @@ export const ExploreWorkspacesDebugger = (props: Props) => {
         Update
       </Button>
       <Button
-        onClick={() =>
-          createExploreWorkspace({
+        onClick={async () => {
+          const workspace = await createExploreWorkspace({
             name: 'Test Workspace',
             description: 'Test Workspace Description',
-            config: JSON.stringify({ foo: 1 }),
-          })
-        }
+            config: JSON.stringify(state),
+          });
+          location.push('/explore/' + workspace.uid);
+          window.location.reload();
+        }}
       >
         Create Workspace
       </Button>

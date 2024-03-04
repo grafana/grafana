@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ErrorBoundaryAlert, useStyles2, useTheme2 } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -14,26 +15,39 @@ import { ExploreQueryParams } from 'app/types/explore';
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
+import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
+import { ExploreWorkspacesMenu } from './workspaces/components/ExploreWorkspacesMenu';
 
 const MIN_PANE_WIDTH = 200;
 
-export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
+type ExplorePageParams = {
+  workspace: string;
+  snapshot: string;
+};
+
+export default function ExplorePage(props: GrafanaRouteComponentProps<ExplorePageParams, ExploreQueryParams>) {
   const styles = useStyles2(getStyles);
+
+  const snapshot = props.match.params.snapshot;
+  const workspace = props.match.params.workspace;
+
   const theme = useTheme2();
   useTimeSrvFix();
-  useStateSync(props.queryParams);
+
+  const { currentState, loadedWorkspace, loadedSnapshot } = useStateSync(props.queryParams, workspace, snapshot);
+
   // We want  to set the title according to the URL and not to the state because the URL itself may lag
   // (due to how useStateSync above works) by a few milliseconds.
   // When a URL is pushed to the history, the browser also saves the title of the page and
   // if we were to update the URL on state change, the title would not match the URL.
   // Ultimately the URL is the single source of truth from which state is derived, the page title is not different
-  useExplorePageTitle(props.queryParams);
+  useExplorePageTitle(props.queryParams, loadedWorkspace, loadedSnapshot);
   const { chrome } = useGrafana();
   const navModel = useNavModel('explore');
   const { updateSplitSize, widthCalc } = useSplitSizeUpdater(MIN_PANE_WIDTH);
@@ -51,12 +65,26 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
 
   useKeyboardShortcuts();
 
+  const navBarActions = [
+    <ShortLinkButtonMenu key="share" />,
+    <div style={{ flex: 1 }} key="spacer0" />,
+    <ExploreWorkspacesMenu
+      key="exploreWorkspacesMenu"
+      currentState={currentState}
+      loadedWorkspace={loadedWorkspace}
+      loadedSnapshot={loadedSnapshot}
+    />,
+  ];
+
   return (
     <div
       className={cx(styles.pageScrollbarWrapper, {
         [styles.correlationsEditorIndicator]: showCorrelationEditorBar,
       })}
     >
+      <div>
+        <AppChromeUpdate actions={navBarActions} />
+      </div>
       <ExploreActions />
       {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
       <SplitPaneWrapper

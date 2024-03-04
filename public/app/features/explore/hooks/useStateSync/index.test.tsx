@@ -108,13 +108,16 @@ function setup({ queryParams = {}, datasourceGetter = defaultDsGetter }: SetupPa
   );
 
   return {
-    ...renderHook<{ params: UrlQueryMap; children: ReactNode }, void>(({ params }) => useStateSync(params), {
-      wrapper,
-      initialProps: {
-        children: null,
-        params: queryParams,
-      },
-    }),
+    ...renderHook<{ params: UrlQueryMap; children: ReactNode }, void>(
+      ({ params }) => useStateSync(params, 'workspaceId', 'snapshotId'),
+      {
+        wrapper,
+        initialProps: {
+          children: null,
+          params: queryParams,
+        },
+      }
+    ),
     location,
     store,
   };

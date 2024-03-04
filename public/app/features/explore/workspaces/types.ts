@@ -6,8 +6,8 @@ export type ExploreWorkspace = {
   orgId: number;
   userId: number;
 
-  user: { login: string; name: string };
-  activeSnapshot?: ExploreWorkspaceSnapshot;
+  user: { Login: string; Name: string };
+  activeSnapshot: ExploreWorkspaceSnapshot;
 };
 
 export type ExploreWorkspaceSnapshot = {
@@ -19,6 +19,8 @@ export type ExploreWorkspaceSnapshot = {
   created: string;
   config: string;
   version: number;
+
+  user: { Login: string; Name: string };
 };
 
 // get workspaces

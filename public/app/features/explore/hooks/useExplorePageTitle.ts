@@ -6,14 +6,30 @@ import { useNavModel } from 'app/core/hooks/useNavModel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ExploreQueryParams } from 'app/types';
 
+import { ExploreWorkspace, ExploreWorkspaceSnapshot } from '../workspaces/types';
+
 import { isFulfilled, hasKey } from './utils';
 
-export function useExplorePageTitle(params: ExploreQueryParams) {
+export function useExplorePageTitle(
+  params: ExploreQueryParams,
+  workspace?: ExploreWorkspace,
+  snapshot?: ExploreWorkspaceSnapshot
+) {
   const navModel = useRef<NavModel>();
   navModel.current = useNavModel('explore');
   const dsService = useRef(getDatasourceSrv());
 
   useEffect(() => {
+    if (snapshot && workspace) {
+      global.document.title = '📷 ' + snapshot.name + ' (' + workspace.name + ')';
+      return;
+    }
+
+    if (workspace) {
+      global.document.title = workspace.name;
+      return;
+    }
+
     if (!params.panes || typeof params.panes !== 'string') {
       return;
     }
@@ -59,5 +75,5 @@ export function useExplorePageTitle(params: ExploreQueryParams) {
 
         global.document.title = `${navModel.current.main.text} - ${names.join(' | ')} - ${Branding.AppTitle}`;
       });
-  }, [params.panes]);
+  }, [params.panes, workspace, snapshot]);
 }

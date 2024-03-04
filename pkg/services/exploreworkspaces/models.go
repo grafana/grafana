@@ -30,6 +30,9 @@ type ExploreWorkspaceSnapshot struct {
 	UserId             int64     `json:"userId" xorm:"user_id"`
 	Config             string    `json:"config" xorm:"config"`
 	Version            int64     `json:"version" xorm:"version"`
+
+	// dynamic
+	User *user.User `json:"user" xorm:"-"`
 }
 
 // create a new workspace

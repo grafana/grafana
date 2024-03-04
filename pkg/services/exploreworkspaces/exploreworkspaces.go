@@ -154,6 +154,8 @@ func (s *ExploreWorkspacesService) GetExploreWorkspaces(ctx context.Context, cmd
 		exploreWorkspace.User = creator
 
 		snapshot, _ := s.getExploreWorkspaceSnapshot(ctx, GetExploreWorkspaceSnapshotCommand{UID: exploreWorkspace.ActiveSnapshotUID})
+		snapshotCreator, _ := s.UserService.GetByID(ctx, &user.GetUserByIDQuery{ID: snapshot.UserId})
+		snapshot.User = snapshotCreator
 		exploreWorkspace.ActiveSnapshot = snapshot
 	}
 
@@ -251,6 +253,13 @@ func (s *ExploreWorkspacesService) GetExploreWorkspaceSnapshots(ctx context.Cont
 
 	if queryError != nil {
 		return exploreWorkspaceSnapshots, errors.New("Getting explore workspace snapshots failed. " + queryError.Error())
+	}
+
+	for idx := range exploreWorkspaceSnapshots {
+		exploreWorkspaceSnaphot := &exploreWorkspaceSnapshots[idx]
+
+		creator, _ := s.UserService.GetByID(ctx, &user.GetUserByIDQuery{ID: exploreWorkspaceSnaphot.UserId})
+		exploreWorkspaceSnaphot.User = creator
 	}
 
 	return exploreWorkspaceSnapshots, nil
