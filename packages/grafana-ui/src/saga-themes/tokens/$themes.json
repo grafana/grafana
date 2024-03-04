@@ -178,10 +178,10 @@
       "color.border.system.warning": "S:ad6c4dd06c2e58d339a91e5246940edcf14f1a6f,",
       "color.border.system.error": "S:31965388f2f34acab3004e983d2515d017e80b95,",
       "color.border.system.info": "S:85e9ac2b093b316052f52a718b749b5f32386a42,",
-      "color.content.system.success": "S:759baf56ea890f9bf39e8ca230b70856b0202e58,",
-      "color.content.system.warning": "S:bb8525fdb64ae8b71642495d2ff8db354df4e8f3,",
-      "color.content.system.error": "S:749ca0cf2f7fb49e94984f2c711b9e34a1dc1f9d,",
-      "color.content.system.info": "S:d9ce7707fbb9c9d91ad219c0f46a240daf20c155,"
+      "color.content.system.success.heading": "S:759baf56ea890f9bf39e8ca230b70856b0202e58,",
+      "color.content.system.warning.heading": "S:bb8525fdb64ae8b71642495d2ff8db354df4e8f3,",
+      "color.content.system.info.heading": "S:d9ce7707fbb9c9d91ad219c0f46a240daf20c155,",
+      "color.content.system.error.heading": "S:749ca0cf2f7fb49e94984f2c711b9e34a1dc1f9d,"
     },
     "selectedTokenSets": {
       "core": "source",
@@ -214,10 +214,10 @@
       "color.content.secondary": "1b52e5f48894cb356975ceb6aa0032b3bb8db147",
       "color.content.disabled": "6a9d5eb891b72ca00e1f699715260ebd0caa6a88",
       "color.content.link": "b689eb78edb2da02c6236bc72d6d7af818e771d4",
-      "color.content.system.success": "7ecc76a4ba5db9558294cfe942f95c6827b5c147",
-      "color.content.system.warning": "abd546f1baf2dd29d54a843d69c6d0a472a3dbcb",
-      "color.content.system.error": "28ea12bccdb331dc2349dc4ff22157ed19c3b76e",
-      "color.content.system.info": "9385f8544b4d8fb5f414e9874188e2bb0ff81689"
+      "color.content.system.success.heading": "7ecc76a4ba5db9558294cfe942f95c6827b5c147",
+      "color.content.system.warning.heading": "abd546f1baf2dd29d54a843d69c6d0a472a3dbcb",
+      "color.content.system.info.heading": "9385f8544b4d8fb5f414e9874188e2bb0ff81689",
+      "color.content.system.error.heading": "28ea12bccdb331dc2349dc4ff22157ed19c3b76e"
     },
     "group": "Saga Themes"
   },
@@ -251,10 +251,10 @@
       "color.content.secondary": "S:77c3af8680b2290770e1bacb627263b60613a2e3,",
       "color.content.disabled": "S:57aef368a3ccdfadc1ee613eb354dc4743b4820b,",
       "color.content.link": "S:ba9150312cf6c47b4a49b95e4ac0c0b2bd04c387,",
-      "color.content.system.success": "S:5b93abaf4b67318abf598a51fb3ee2cb4b66bcd6,",
-      "color.content.system.warning": "S:2252a8ef5bc2eccf55078a338141641e1c1e7b5c,",
-      "color.content.system.error": "S:4100dbd3652e712ca505ea23e097097e6e32d8a6,",
-      "color.content.system.info": "S:2d643433f1e6f87bfb30ef8b1a58635baa9a4df7,"
+      "color.content.system.success.heading": "S:5b93abaf4b67318abf598a51fb3ee2cb4b66bcd6,",
+      "color.content.system.warning.heading": "S:2252a8ef5bc2eccf55078a338141641e1c1e7b5c,",
+      "color.content.system.info.heading": "S:2d643433f1e6f87bfb30ef8b1a58635baa9a4df7,",
+      "color.content.system.error.heading": "S:4100dbd3652e712ca505ea23e097097e6e32d8a6,"
     },
     "selectedTokenSets": {
       "core": "source",
@@ -287,10 +287,10 @@
       "color.content.secondary": "1b52e5f48894cb356975ceb6aa0032b3bb8db147",
       "color.content.disabled": "6a9d5eb891b72ca00e1f699715260ebd0caa6a88",
       "color.content.link": "b689eb78edb2da02c6236bc72d6d7af818e771d4",
-      "color.content.system.success": "7ecc76a4ba5db9558294cfe942f95c6827b5c147",
-      "color.content.system.warning": "abd546f1baf2dd29d54a843d69c6d0a472a3dbcb",
-      "color.content.system.error": "28ea12bccdb331dc2349dc4ff22157ed19c3b76e",
-      "color.content.system.info": "9385f8544b4d8fb5f414e9874188e2bb0ff81689"
+      "color.content.system.success.heading": "7ecc76a4ba5db9558294cfe942f95c6827b5c147",
+      "color.content.system.warning.heading": "abd546f1baf2dd29d54a843d69c6d0a472a3dbcb",
+      "color.content.system.info.heading": "9385f8544b4d8fb5f414e9874188e2bb0ff81689",
+      "color.content.system.error.heading": "28ea12bccdb331dc2349dc4ff22157ed19c3b76e"
     },
     "group": "Saga Themes"
   }
