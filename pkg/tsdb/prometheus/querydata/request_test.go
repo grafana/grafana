@@ -15,8 +15,6 @@ import (
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -67,7 +65,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheusDataQuery: kinds.PrometheusDataQuery{
+			PrometheuQueryProperties: models.PrometheuQueryProperties{
 				LegendFormat: "legend {{app}}",
 				Exemplar:     true,
 			},
@@ -114,7 +112,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheusDataQuery: kinds.PrometheusDataQuery{
+			PrometheuQueryProperties: models.PrometheuQueryProperties{
 				Range:        true,
 				LegendFormat: "legend {{app}}",
 			},
@@ -163,7 +161,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheusDataQuery: kinds.PrometheusDataQuery{
+			PrometheuQueryProperties: models.PrometheuQueryProperties{
 				Range:        true,
 				LegendFormat: "",
 			},
@@ -208,7 +206,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheusDataQuery: kinds.PrometheusDataQuery{
+			PrometheuQueryProperties: models.PrometheuQueryProperties{
 				Range:        true,
 				LegendFormat: "",
 			},
@@ -251,7 +249,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheusDataQuery: kinds.PrometheusDataQuery{
+			PrometheuQueryProperties: models.PrometheuQueryProperties{
 				Range:        true,
 				LegendFormat: "",
 			},
@@ -288,7 +286,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheusDataQuery: kinds.PrometheusDataQuery{
+			PrometheuQueryProperties: models.PrometheuQueryProperties{
 				Instant:      true,
 				LegendFormat: "legend {{app}}",
 			},
@@ -329,7 +327,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheusDataQuery: kinds.PrometheusDataQuery{
+			PrometheuQueryProperties: models.PrometheuQueryProperties{
 				Instant:      true,
 				LegendFormat: "",
 			},

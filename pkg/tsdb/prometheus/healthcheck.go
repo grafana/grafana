@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
@@ -58,8 +57,10 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *instance) (*backend.CheckHealthResult, error) {
 	qm := models.QueryModel{
 		UtcOffsetSec: 0,
-		RefId:        refID,
-		PrometheusDataQuery: kinds.PrometheusDataQuery{
+		CommonQueryProperties: models.CommonQueryProperties{
+			RefId: refID,
+		},
+		PrometheuQueryProperties: models.PrometheuQueryProperties{
 			Expr:    "1+1",
 			Instant: true,
 		},
