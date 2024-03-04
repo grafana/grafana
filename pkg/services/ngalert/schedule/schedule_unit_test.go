@@ -591,7 +591,6 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		ruleInfo := newAlertRuleInfo(ctx)
 
 		go func() {
-
 			_ = sch.ruleRoutine(rule.GetKey(), ruleInfo)
 		}()
 
@@ -673,7 +672,6 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		ruleInfo := newAlertRuleInfo(ctx)
 
 		go func() {
-
 			_ = sch.ruleRoutine(rule.GetKey(), ruleInfo)
 		}()
 
@@ -779,7 +777,6 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			ruleInfo := newAlertRuleInfo(ctx)
 
 			go func() {
-
 				_ = sch.ruleRoutine(rule.GetKey(), ruleInfo)
 			}()
 
