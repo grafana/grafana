@@ -124,7 +124,7 @@ func createJsonTestData(start int64, step int64, timestampCount int, seriesCount
 	bytes := []byte(fmt.Sprintf(`{"status":"success","data":{"resultType":"matrix","result":[%v]}}`, strings.Join(allSeries, ",")))
 
 	qm := models.QueryModel{
-		PrometheuQueryProperties: models.PrometheuQueryProperties{
+		PrometheusQueryProperties: models.PrometheusQueryProperties{
 			Range: true,
 			Expr:  "test",
 		},

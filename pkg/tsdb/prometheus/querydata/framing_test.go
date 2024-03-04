@@ -107,7 +107,7 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 	}
 
 	qm := models.QueryModel{
-		PrometheuQueryProperties: models.PrometheuQueryProperties{
+		PrometheusQueryProperties: models.PrometheusQueryProperties{
 			Range:        sq.RangeQuery,
 			Exemplar:     sq.ExemplarQuery,
 			Expr:         sq.Expr,

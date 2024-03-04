@@ -35,8 +35,8 @@ const (
 	QueryEditorModeCode    QueryEditorMode = "code"
 )
 
-// PrometheuQueryProperties defines the specific properties used for prometheus
-type PrometheuQueryProperties struct {
+// PrometheusQueryProperties defines the specific properties used for prometheus
+type PrometheusQueryProperties struct {
 	// The response format
 	Format PromQueryFormat `json:"format,omitempty"`
 
@@ -105,8 +105,8 @@ var safeResolution = 11000
 
 // QueryModel includes both the common and specific values
 type QueryModel struct {
-	PrometheuQueryProperties `json:",inline"`
-	CommonQueryProperties    `json:",inline"`
+	PrometheusQueryProperties `json:",inline"`
+	CommonQueryProperties     `json:",inline"`
 
 	// The following properties may be part of the request payload, however they are not saved in panel JSON
 	// Timezone offset to align start & end time on backend

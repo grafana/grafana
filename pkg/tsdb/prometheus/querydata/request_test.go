@@ -65,7 +65,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheuQueryProperties: models.PrometheuQueryProperties{
+			PrometheusQueryProperties: models.PrometheusQueryProperties{
 				LegendFormat: "legend {{app}}",
 				Exemplar:     true,
 			},
@@ -112,7 +112,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheuQueryProperties: models.PrometheuQueryProperties{
+			PrometheusQueryProperties: models.PrometheusQueryProperties{
 				Range:        true,
 				LegendFormat: "legend {{app}}",
 			},
@@ -161,7 +161,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheuQueryProperties: models.PrometheuQueryProperties{
+			PrometheusQueryProperties: models.PrometheusQueryProperties{
 				Range:        true,
 				LegendFormat: "",
 			},
@@ -206,7 +206,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheuQueryProperties: models.PrometheuQueryProperties{
+			PrometheusQueryProperties: models.PrometheusQueryProperties{
 				Range:        true,
 				LegendFormat: "",
 			},
@@ -249,7 +249,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheuQueryProperties: models.PrometheuQueryProperties{
+			PrometheusQueryProperties: models.PrometheusQueryProperties{
 				Range:        true,
 				LegendFormat: "",
 			},
@@ -286,7 +286,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheuQueryProperties: models.PrometheuQueryProperties{
+			PrometheusQueryProperties: models.PrometheusQueryProperties{
 				Instant:      true,
 				LegendFormat: "legend {{app}}",
 			},
@@ -327,7 +327,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 		qm := models.QueryModel{
 			UtcOffsetSec: 0,
-			PrometheuQueryProperties: models.PrometheuQueryProperties{
+			PrometheusQueryProperties: models.PrometheusQueryProperties{
 				Instant:      true,
 				LegendFormat: "",
 			},

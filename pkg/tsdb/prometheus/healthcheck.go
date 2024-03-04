@@ -60,7 +60,7 @@ func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *instan
 		CommonQueryProperties: models.CommonQueryProperties{
 			RefId: refID,
 		},
-		PrometheuQueryProperties: models.PrometheuQueryProperties{
+		PrometheusQueryProperties: models.PrometheusQueryProperties{
 			Expr:    "1+1",
 			Instant: true,
 		},
