@@ -419,9 +419,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
         if (event.payload.changedObject instanceof ScopeSelectorScene) {
-          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'isExpanded')) {
-            this.forceRender();
-          } else if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'value')) {
+          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'value')) {
             sceneGraph.getTimeRange(this).onRefresh();
           }
         }

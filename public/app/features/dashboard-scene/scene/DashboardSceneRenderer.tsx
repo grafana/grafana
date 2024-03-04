@@ -46,12 +46,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       {!editPanel && (
         <CustomScrollbar autoHeightMin={'100%'}>
           <div className={styles.innerScrollbarContainer}>
-            {scopeSelector && isScopesExpanded && <scopeSelector.Component model={scopeSelector} />}
+            {scopeSelector && <scopeSelector.Component model={scopeSelector} renderExpanded />}
             <div className={styles.canvasContent}>
               <NavToolbarActions dashboard={model} />
               {(controls || (scopeSelector && !isScopesExpanded)) && (
                 <div className={styles.controlsWrapper}>
-                  {scopeSelector && !isScopesExpanded && <scopeSelector.Component model={scopeSelector} />}
+                  {scopeSelector && <scopeSelector.Component model={scopeSelector} />}
                   {controls && <controls.Component model={controls} />}
                 </div>
               )}
