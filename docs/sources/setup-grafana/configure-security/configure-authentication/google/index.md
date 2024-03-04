@@ -69,7 +69,7 @@ OAuth 2.0 authentication API. Refer to Google's OAuth [documentation](https://de
 {{% admonition type="note" %}}
 The `hd` parameter retrieved from Google ID token is also used to determine the user's hosted domain. The Google Oauth `allowed_domains` configuration option is used to restrict access to users from a specific domain. If the `allowed_domains` configuration option is set, the `hd` parameter from the Google ID token must match the `allowed_domains` configuration option. If the `hd` parameter from the Google ID token does not match the `allowed_domains` configuration option, the user is denied access.
 
-When an account does not belong to a Google Workspace, the hd claim will not be available.
+When an account does not belong to a Google Workspace, the `hd` claim is not available.
 
 This validation will be enabled by default with Grafana 11.0. To disable this validation, set the `validate_hd` configuration option to `false`. The `allowed_domains` configuration option will use the email claim to validate the domain.
 {{% /admonition %}}
