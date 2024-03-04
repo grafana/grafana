@@ -273,7 +273,7 @@ func TestRuleRoutine(t *testing.T) {
 			t.Cleanup(cancel)
 			ruleInfo := newAlertRuleInfo(ctx)
 			go func() {
-				_ = sch.ruleRoutine(rule.GetKey(), ruleInfo)
+				_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
@@ -421,7 +421,7 @@ func TestRuleRoutine(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			ruleInfo := newAlertRuleInfo(ctx)
 			go func() {
-				err := sch.ruleRoutine(models.AlertRuleKey{}, ruleInfo)
+				err := ruleInfo.ruleRoutine(models.AlertRuleKey{}, sch)
 				stoppedChan <- err
 			}()
 
@@ -440,7 +440,7 @@ func TestRuleRoutine(t *testing.T) {
 
 			ruleInfo := newAlertRuleInfo(context.Background())
 			go func() {
-				err := sch.ruleRoutine(rule.GetKey(), ruleInfo)
+				err := ruleInfo.ruleRoutine(rule.GetKey(), sch)
 				stoppedChan <- err
 			}()
 
@@ -470,7 +470,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := newAlertRuleInfo(ctx)
 
 		go func() {
-			_ = sch.ruleRoutine(rule.GetKey(), ruleInfo)
+			_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
 		}()
 
 		// init evaluation loop so it got the rule version
@@ -551,7 +551,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := newAlertRuleInfo(ctx)
 
 		go func() {
-			_ = sch.ruleRoutine(rule.GetKey(), ruleInfo)
+			_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
 		}()
 
 		ruleInfo.evalCh <- &evaluation{
@@ -656,7 +656,7 @@ func TestRuleRoutine(t *testing.T) {
 			ruleInfo := newAlertRuleInfo(ctx)
 
 			go func() {
-				_ = sch.ruleRoutine(rule.GetKey(), ruleInfo)
+				_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
 			}()
 
 			ruleInfo.evalCh <- &evaluation{
@@ -689,7 +689,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := newAlertRuleInfo(ctx)
 
 		go func() {
-			_ = sch.ruleRoutine(rule.GetKey(), ruleInfo)
+			_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
 		}()
 
 		ruleInfo.evalCh <- &evaluation{

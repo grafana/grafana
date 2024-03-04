@@ -249,7 +249,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		if newRoutine && !invalidInterval {
 			dispatcherGroup.Go(func() error {
-				return sch.ruleRoutine(key, ruleInfo)
+				return ruleInfo.ruleRoutine(key, sch)
 			})
 		}
 
