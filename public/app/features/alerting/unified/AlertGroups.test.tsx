@@ -4,6 +4,7 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types';
 
@@ -48,7 +49,7 @@ const ui = {
   groupCollapseToggle: byTestId('alert-group-collapse-toggle'),
   groupTable: byTestId('alert-group-table'),
   row: byTestId('row'),
-  collapseToggle: byTestId('data-testid collapse-toggle'),
+  collapseToggle: byTestId(selectors.components.AlertRules.toggle),
   silenceButton: byText('Silence'),
   sourceButton: byText('See source'),
   matcherInput: byTestId('search-query-input'),
