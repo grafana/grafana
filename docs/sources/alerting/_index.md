@@ -64,4 +64,3 @@ Using Grafana Alerting, you create queries and expressions from multiple data so
 ## Explore
 
 {{< card-grid key="cards" type="simple" >}}
-
