@@ -1,4 +1,4 @@
-import $ from 'jquery';
+import 'jquery';
 import { each, reduce } from 'lodash';
 
 import coreModule from './core_module';

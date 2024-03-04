@@ -1,4 +1,4 @@
-import $ from 'jquery';
+import 'jquery';
 import { partition, each } from 'lodash';
 //@ts-ignore
 import Drop from 'tether-drop';
