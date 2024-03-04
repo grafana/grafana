@@ -138,7 +138,7 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
     `${INSTANCE_API_ROOT}/provisioned-plugins`
   );
 
-  return provisionedPlugins.map(plugin => ({ slug: plugin.type }));
+  return provisionedPlugins.map((plugin) => ({ slug: plugin.type }));
 }
 
 export async function installPlugin(id: string) {
