@@ -11,21 +11,7 @@ import { isUrlValid } from './utils/url';
 
 /** Map providers to their settings */
 export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['settings']>> = {
-  github: ['name', 'clientId', 'clientSecret', 'teamIds', 'allowedOrganizations'],
-  google: ['name', 'clientId', 'clientSecret', 'allowedDomains'],
-  gitlab: ['name', 'clientId', 'clientSecret', 'allowedOrganizations', 'teamIds'],
   azuread: ['name', 'clientId', 'clientSecret', 'authUrl', 'tokenUrl', 'scopes', 'allowedGroups', 'allowedDomains'],
-  okta: [
-    'name',
-    'clientId',
-    'clientSecret',
-    'authUrl',
-    'tokenUrl',
-    'apiUrl',
-    'roleAttributePath',
-    'allowedGroups',
-    'allowedDomains',
-  ],
 };
 
 type Section = Record<
@@ -85,6 +71,130 @@ export const sectionFields: Section = {
         { name: 'teamIds', dependsOn: 'defineAllowedTeamsIds' },
         { name: 'teamsUrl', dependsOn: 'defineAllowedTeamsIds' },
         { name: 'teamIdsAttributePath', dependsOn: 'defineAllowedTeamsIds' },
+        'usePkce',
+        'useRefreshToken',
+        'tlsSkipVerifyInsecure',
+        'tlsClientCert',
+        'tlsClientKey',
+        'tlsClientCa',
+      ],
+    },
+  ],
+  google: [
+    {
+      name: 'General settings',
+      id: 'general',
+      fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+    },
+    {
+      name: 'User mapping',
+      id: 'user',
+      fields: ['allowAssignGrafanaAdmin', 'roleAttributePath', 'roleAttributeStrict', 'skipOrgRoleSync'],
+    },
+    {
+      name: 'Extra security measures',
+      id: 'extra',
+      fields: [
+        'allowedDomains',
+        'allowedGroups',
+        'usePkce',
+        'useRefreshToken',
+        'tlsSkipVerifyInsecure',
+        'tlsClientCert',
+        'tlsClientKey',
+        'tlsClientCa',
+      ],
+    },
+  ],
+  github: [
+    {
+      name: 'General settings',
+      id: 'general',
+      fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+    },
+    {
+      name: 'User mapping',
+      id: 'user',
+      fields: ['allowAssignGrafanaAdmin', 'roleAttributePath', 'roleAttributeStrict', 'skipOrgRoleSync'],
+    },
+    {
+      name: 'Extra security measures',
+      id: 'extra',
+      fields: [
+        'allowedOrganizations',
+        'allowedDomains',
+        'teamIds',
+        'usePkce',
+        'useRefreshToken',
+        'tlsSkipVerifyInsecure',
+        'tlsClientCert',
+        'tlsClientKey',
+        'tlsClientCa',
+      ],
+    },
+  ],
+  gitlab: [
+    {
+      name: 'General settings',
+      id: 'general',
+      fields: [
+        'name',
+        'clientId',
+        'clientSecret',
+        'scopes',
+        'authStyle',
+        'allowSignUp',
+        'autoLogin',
+        'signoutRedirectUrl',
+      ],
+    },
+    {
+      name: 'User mapping',
+      id: 'user',
+      fields: ['allowAssignGrafanaAdmin', 'roleAttributePath', 'roleAttributeStrict', 'skipOrgRoleSync'],
+    },
+    {
+      name: 'Extra security measures',
+      id: 'extra',
+      fields: [
+        'allowedDomains',
+        'allowedGroups',
+        'usePkce',
+        'useRefreshToken',
+        'tlsSkipVerifyInsecure',
+        'tlsClientCert',
+        'tlsClientKey',
+        'tlsClientCa',
+      ],
+    },
+  ],
+  okta: [
+    {
+      name: 'General settings',
+      id: 'general',
+      fields: [
+        'name',
+        'clientId',
+        'clientSecret',
+        'scopes',
+        'authStyle',
+        'authUrl',
+        'tokenUrl',
+        'apiUrl',
+        'signoutRedirectUrl',
+      ],
+    },
+    {
+      name: 'User mapping',
+      id: 'user',
+      fields: ['allowAssignGrafanaAdmin', 'roleAttributePath', 'roleAttributeStrict', 'skipOrgRoleSync'],
+    },
+    {
+      name: 'Extra security measures',
+      id: 'extra',
+      fields: [
+        'allowedDomains',
+        'allowedGroups',
         'usePkce',
         'useRefreshToken',
         'tlsSkipVerifyInsecure',
