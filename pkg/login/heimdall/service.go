@@ -62,7 +62,7 @@ type config struct {
 // It returns the authorization response and any encountered error.
 func Authorize(authorizeUrl string, authz AuthorizationRequest) (*AuthorizationResponse, error) {
 
-	myClient := client(&config{})
+	myClient := client()
 
 	req, err := json.Marshal(authz)
 	if err != nil {
@@ -177,7 +177,8 @@ func findCommonTag(userTags, adminTags []string) bool {
 }
 
 // client configures an HTTP client with TLS verification disabled.
-func client(config *config) *http.Client {
+func client() *http.Client {
+	var config *config
 	if config.HeimdallUseUnsafe == "true" {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
