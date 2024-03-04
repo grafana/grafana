@@ -101,6 +101,7 @@ func (s *ExtendedJWT) authenticateAsUser(idTokenClaims,
 		ID:              idTokenClaims.Subject,
 		OrgID:           defaultOrgID,
 		AuthenticatedBy: login.ExtendedJWTModule,
+		AuthID:          accessTokenClaims.Subject,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchSyncedUser: true,
