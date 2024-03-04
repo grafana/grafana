@@ -15,7 +15,7 @@ export enum NodeGraphDataFrameFieldNames {
   // grafana/ui [nodes]
   icon = 'icon',
   // Defines a single color if string (hex or html named value) or color mode config can be used as threshold or
-  // gradient. arc__ fields must not be defined if used [nodes]
+  // gradient. arc__ fields must not be defined if used [nodes + edges]
   color = 'color',
 
   // Id of the source node [required] [edges]
@@ -34,4 +34,10 @@ export enum NodeGraphDataFrameFieldNames {
 
   // Whether the node or edge should be highlighted (e.g., shown in red) in the UI
   highlighted = 'highlighted',
+
+  // Defines a single color (hex or html named value) to be used as the color of an edge is highlighted [edges]
+  highlightedColor = 'highlightedColor',
+
+  // Defines the stroke dash array for the edge [edges]
+  strokeDasharray = 'strokeDasharray',
 }

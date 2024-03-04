@@ -88,6 +88,9 @@ export type EdgeFields = {
   details: Field[];
   highlighted?: Field;
   thickness?: Field;
+  color?: Field;
+  highlightedColor?: Field;
+  strokeDasharray?: Field;
 };
 
 export function getEdgeFields(edges: DataFrame): EdgeFields {
@@ -105,6 +108,9 @@ export function getEdgeFields(edges: DataFrame): EdgeFields {
     details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
     highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
     thickness: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.thickness.toLowerCase()),
+    color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color.toLowerCase()),
+    highlightedColor: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlightedColor.toLowerCase()),
+    strokeDasharray: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.strokeDasharray.toLowerCase()),
   };
 }
 
@@ -236,6 +242,9 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id:
         : '',
       highlighted: edgeFields.highlighted?.values[index] || false,
       thickness: edgeFields.thickness?.values[index] || 1,
+      color: edgeFields.color?.values[index],
+      highlightedColor: edgeFields.highlightedColor?.values[index],
+      strokeDasharray: edgeFields.strokeDasharray?.values[index],
     };
   });
 }

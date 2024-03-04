@@ -37,6 +37,9 @@ export type EdgeDatum = LinkDatum & {
   targetNodeRadius: number;
   highlighted: boolean;
   thickness: number;
+  color?: string;
+  highlightedColor?: string;
+  strokeDasharray?: string;
 };
 
 // After layout is run D3 will change the string IDs for actual references to the nodes.
