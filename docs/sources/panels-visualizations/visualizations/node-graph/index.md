@@ -104,13 +104,16 @@ Required fields:
 
 Optional fields:
 
-| Field name    | Type          | Description                                                                                                                                                                                         |
-| ------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| mainstat      | string/number | First stat shown in the overlay when hovering over the edge. It can be a string showing the value as is or it can be a number. If it is a number, any unit associated with that field is also shown |
-| secondarystat | string/number | Same as mainStat, but shown right under it.                                                                                                                                                         |
-| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the edge. Use `config.displayName` for more human readable label.                                    |
-| thickness     | number        | The thickness of the edge. Default: `1`                                                                                                                                                             |
-| highlighted   | boolean       | Sets whether the edge should be highlighted. Useful, for example, to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                               |
+| Field name       | Type          | Description                                                                                                                                                                                                                      |
+| ---------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| mainstat         | string/number | First stat shown in the overlay when hovering over the edge. It can be a string showing the value as is or it can be a number. If it is a number, any unit associated with that field is also shown                              |
+| secondarystat    | string/number | Same as mainStat, but shown right under it.                                                                                                                                                                                      |
+| detail\_\_\*     | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the edge. Use `config.displayName` for more human readable label.                                                                 |
+| thickness        | number        | The thickness of the edge. Default: `1`                                                                                                                                                                                          |
+| highlighted      | boolean       | Sets whether the edge should be highlighted. Useful, for example, to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                            |
+| color            | string        | Sets the default color of the edge. It can be an acceptable HTML color string. Default: `#999`                                                                                                                                   |
+| highlightedColor | string        | Sets the highlighted color of the edge. It can be an acceptable HTML color string, and requires that `highlighted` be `true` for use.                                                                                            |
+| strokeDasharray  | string        | Sets the pattern of dashes and gaps used to render the edge. For more information and examples, refer to the [`stroke-dasharray` MDN documentation](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray) |
 
 ### Nodes data frame structure
 
