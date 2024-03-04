@@ -14,7 +14,7 @@ import (
 	"github.com/prometheus/prometheus/promql/parser"
 
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/intervalv2"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds"
 )
 
 // Internal interval and range variables
@@ -52,11 +52,12 @@ const (
 var safeResolution = 11000
 
 type QueryModel struct {
-	dataquery.PrometheusDataQuery
+	kinds.PrometheusDataQuery
+	RefId string `json:"refId,omitempty"`
+
 	// The following properties may be part of the request payload, however they are not saved in panel JSON
 	// Timezone offset to align start & end time on backend
 	UtcOffsetSec   int64  `json:"utcOffsetSec,omitempty"`
-	LegendFormat   string `json:"legendFormat,omitempty"`
 	Interval       string `json:"interval,omitempty"`
 	IntervalMs     int64  `json:"intervalMs,omitempty"`
 	IntervalFactor int64  `json:"intervalFactor,omitempty"`
@@ -119,29 +120,14 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 			return nil, err
 		}
 	}
-	var rangeQuery, instantQuery bool
-	if model.Instant == nil {
-		instantQuery = false
-	} else {
-		instantQuery = *model.Instant
-	}
-	if model.Range == nil {
-		rangeQuery = false
-	} else {
-		rangeQuery = *model.Range
-	}
-	if !instantQuery && !rangeQuery {
+	if !model.Instant && !model.Range {
 		// In older dashboards, we were not setting range query param and !range && !instant was run as range query
-		rangeQuery = true
+		model.Range = true
 	}
 
 	// We never want to run exemplar query for alerting
-	exemplarQuery := false
-	if model.Exemplar != nil {
-		exemplarQuery = *model.Exemplar
-	}
 	if fromAlert {
-		exemplarQuery = false
+		model.Exemplar = false
 	}
 
 	return &Query{
@@ -151,9 +137,9 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 		Start:         query.TimeRange.From,
 		End:           query.TimeRange.To,
 		RefId:         query.RefID,
-		InstantQuery:  instantQuery,
-		RangeQuery:    rangeQuery,
-		ExemplarQuery: exemplarQuery,
+		InstantQuery:  model.Instant,
+		RangeQuery:    model.Range,
+		ExemplarQuery: model.Exemplar,
 		UtcOffsetSec:  model.UtcOffsetSec,
 	}, nil
 }

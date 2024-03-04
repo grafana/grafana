@@ -7,12 +7,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/kindsys"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
@@ -59,12 +57,11 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *instance) (*backend.CheckHealthResult, error) {
 	qm := models.QueryModel{
-		LegendFormat: "",
 		UtcOffsetSec: 0,
-		PrometheusDataQuery: dataquery.PrometheusDataQuery{
+		RefId:        refID,
+		PrometheusDataQuery: kinds.PrometheusDataQuery{
 			Expr:    "1+1",
-			Instant: kindsys.Ptr(true),
-			RefId:   refID,
+			Instant: true,
 		},
 	}
 	b, _ := json.Marshal(&qm)
