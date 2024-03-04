@@ -143,7 +143,7 @@ export class GrafanaApp {
       setBackendSrv(backendSrv);
       initEchoSrv();
       // TODO: Vite cannot locate this Icon files right now.
-      // initIconCache();
+      initIconCache();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
