@@ -9,6 +9,8 @@ import { useExploreWorkspaces } from '../utils/hooks';
 
 import { ExploreWorkspaceSnapshotsList } from './ExploreWorkspaceSnapshotsList';
 import { ExploreWorkspacesList } from './ExploreWorkspacesList';
+import { NewExploreWorkspaceFormModal } from './NewExploreWorkspaceForm';
+import { NewExploreWorkspaceSnapshotFormModal } from './NewExploreWorkspaceSnapshotForm';
 
 type Props = {
   loadedWorkspace?: ExploreWorkspace;
@@ -32,21 +34,21 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     }
   };
 
-  const createExploreWorkspaceHandler = async () => {
+  const createExploreWorkspaceHandler = async (data: Pick<ExploreWorkspace, 'name' | 'description'>) => {
     const workspace = await createExploreWorkspace({
-      name: 'Test Workspace',
-      description: 'Test Workspace Description',
+      name: data.name,
+      description: data.description,
       config: JSON.stringify(currentState),
     });
     location.push('/explore/' + workspace.uid);
     window.location.reload();
   };
 
-  const takeSnapshotHandler = async () => {
+  const takeSnapshotHandler = async (data: Pick<ExploreWorkspaceSnapshot, 'name' | 'description'>) => {
     if (loadedWorkspace) {
       await createExploreWorkspaceSnapshot({
-        name: 'Snapshot at v' + loadedWorkspace.activeSnapshot?.version || '',
-        description: 'Desc at v' + loadedWorkspace.activeSnapshot?.version || '',
+        name: data.name,
+        description: data.description,
         exploreWorkspaceUID: loadedWorkspace.uid,
       });
     }
@@ -58,7 +60,7 @@ export const ExploreWorkspacesMenu = (props: Props) => {
       const snapshotsResponse = await getExploreWorkspaceSnapshots({
         exploreWorkspaceUid: loadedWorkspace.uid,
       });
-      setLoadedSnapshots(snapshotsResponse.snapshots);
+      setLoadedSnapshots(snapshotsResponse.snapshots.slice(1));
     }
   };
 
@@ -73,15 +75,29 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     return <>Loading...</>;
   }
 
-  const CreateWorkspace = () => (
-    <>
-      <ToolbarButton variant={'primary'} icon="plus" onClick={createExploreWorkspaceHandler}>
-        new workspace
-      </ToolbarButton>
-    </>
-  );
+  const CreateWorkspace = () => {
+    const [isOpen, setIsOpen] = useState<boolean>(false);
+
+    return (
+      <>
+        <ToolbarButton variant={'primary'} icon="plus" onClick={() => setIsOpen(true)}>
+          new workspace
+        </ToolbarButton>
+        {isOpen && (
+          <NewExploreWorkspaceFormModal
+            isOpen={isOpen}
+            onCancel={() => setIsOpen(false)}
+            onSave={(data) => {
+              createExploreWorkspaceHandler(data);
+            }}
+          />
+        )}
+      </>
+    );
+  };
 
   const ForkWorkspace = () => {
+    const [isOpen, setIsOpen] = useState<boolean>(false);
     return loadedWorkspace ? (
       <>
         <span>
@@ -103,8 +119,17 @@ export const ExploreWorkspacesMenu = (props: Props) => {
           aria-label="fork"
           variant="default"
           icon="user-arrows"
-          onClick={createExploreWorkspaceHandler}
+          onClick={() => setIsOpen(true)}
         ></ToolbarButton>
+        {isOpen && (
+          <NewExploreWorkspaceFormModal
+            isOpen={isOpen}
+            onCancel={() => setIsOpen(false)}
+            onSave={(data) => {
+              createExploreWorkspaceHandler(data);
+            }}
+          />
+        )}
       </>
     ) : undefined;
   };
@@ -113,7 +138,7 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     const [activeTab, setActiveTab] = useState('snapshots');
 
     useEffect(() => {
-      if (!loadedSnapshots?.length) {
+      if (!loadedSnapshots) {
         setActiveTab('workspaces');
       } else {
         setActiveTab('snapshots');
@@ -163,16 +188,31 @@ export const ExploreWorkspacesMenu = (props: Props) => {
   };
 
   const ShowLatest = () => <ToolbarButton icon="sync" variant="default" onClick={showLatestHandler}></ToolbarButton>;
-  const TakeSnapshot = () => (
-    <ToolbarButton icon="capture" variant="primary" onClick={takeSnapshotHandler}></ToolbarButton>
-  );
+  const TakeSnapshot = () => {
+    const [isOpen, setIsOpen] = useState<boolean>(false);
+
+    return (
+      <>
+        <ToolbarButton icon="capture" variant="primary" onClick={() => setIsOpen(true)}></ToolbarButton>
+        {isOpen && (
+          <NewExploreWorkspaceSnapshotFormModal
+            isOpen={isOpen}
+            onCancel={() => setIsOpen(false)}
+            onSave={(data) => {
+              takeSnapshotHandler(data).then(() => setIsOpen(false));
+            }}
+          />
+        )}
+      </>
+    );
+  };
 
   return (
     <ToolbarButtonRow>
       {!loadedWorkspace ? <CreateWorkspace /> : undefined}
       {loadedWorkspace ? <ForkWorkspace /> : undefined}
       {loadedSnapshot ? <ShowLatest /> : undefined}
-      {!loadedSnapshot && loadedWorkspace ? <TakeSnapshot /> : undefined}
+      {loadedWorkspace ? <TakeSnapshot /> : undefined}
       <ListWorkspacesAndSnapshots />
     </ToolbarButtonRow>
   );

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, Card } from '@grafana/ui';
+import { Alert, Button, Card } from '@grafana/ui';
 
 import { ExploreWorkspaceSnapshot } from '../types';
 
@@ -12,6 +12,10 @@ type Props = {
 export const ExploreWorkspaceSnapshotsList = (props: Props) => {
   if (!props.snapshots) {
     return <div>Loading snapshots...</div>;
+  }
+
+  if (props.snapshots.length === 0) {
+    return <Alert severity="info" title="No snapshots"></Alert>;
   }
 
   return (
@@ -30,6 +34,9 @@ export const ExploreWorkspaceSnapshotsList = (props: Props) => {
           </Card.Meta>
           <Card.Actions>
             <Button onClick={() => props.selected(snapshot)}>load</Button>
+            <Button variant="destructive" onClick={() => props.selected(snapshot)}>
+              delete
+            </Button>
           </Card.Actions>
         </Card>
       ))}
