@@ -1,11 +1,34 @@
 import leven from 'leven';
 
-export function sortRelatedMetrics(metricList: string[], metric: string) {
-  return metricList.sort((aValue, bValue) => {
-    const a = getLevenDistances(aValue, metric);
-    const b = getLevenDistances(bValue, metric);
+import { HeuristicByMetric } from './Integrations/types';
 
-    return a.halfLeven + a.wholeLeven - (b.halfLeven + b.wholeLeven);
+export type CalculateDistanceFactor = (compareMetric: string) => number;
+
+export function getLevenDistanceFactorCalculator(selectedMetric: string) {
+  return (compareMetric: string) => {
+    const { halfLeven, wholeLeven } = getLevenDistances(compareMetric, selectedMetric);
+    return halfLeven + wholeLeven;
+  };
+}
+
+export function getHeuristicByMetricFactorCalculator(heuristic: HeuristicByMetric) {
+  return (compareMetric: string) => heuristic.get(compareMetric) || 1.0;
+}
+
+export function sortMetrics(metricList: string[], calculator: CalculateDistanceFactor) {
+  return metricList.sort((metricA, metricB) => {
+    const [a, b] = [metricA, metricB].map(calculator);
+    return a - b;
+  });
+}
+
+export function sortRelatedMetrics(metricList: string[], factorCalculators: CalculateDistanceFactor[]) {
+  return metricList.sort((metricA, metricB) => {
+    const [a, b] = [metricA, metricB].map((metric) =>
+      factorCalculators.map((calc) => calc(metric) || 1.0).reduce((prev, curr) => prev * curr, 1.0)
+    );
+
+    return a - b;
   });
 }
 
