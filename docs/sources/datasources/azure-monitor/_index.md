@@ -215,7 +215,7 @@ Grafana refers to such variables as template variables.
 
 For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
 
-## Application Insights and Insights Analytics (removed))
+## Application Insights and Insights Analytics (removed)
 
 Until Grafana v8.0, you could query the same Azure Application Insights data using Application Insights and Insights Analytics.
 
