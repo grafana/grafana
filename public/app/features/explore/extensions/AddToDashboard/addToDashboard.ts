@@ -1,7 +1,6 @@
 import { DataFrame, ExplorePanelsState } from '@grafana/data';
 import { Dashboard, DataQuery, DataSourceRef, Panel } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
-import { TableFooterCalc } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
 import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
