@@ -172,11 +172,14 @@ export class ScopeSelectorScene extends SceneObjectBase<ScopeSelectorSceneState>
   }
 }
 
-export function ScopeSelectorSceneRenderer({ model }: SceneComponentProps<ScopeSelectorScene>) {
+export function ScopeSelectorSceneRenderer({
+  model,
+  renderExpanded,
+}: SceneComponentProps<ScopeSelectorScene> & { renderExpanded: string }) {
   const { isExpanded, scopes, isScopesLoading, value } = model.useState();
   const styles = useStyles2(getStyles);
 
-  if (isScopesLoading) {
+  if (isScopesLoading || !!renderExpanded !== isExpanded) {
     return null;
   }
 
