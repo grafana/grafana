@@ -1,6 +1,7 @@
 import { DataFrame, ExplorePanelsState } from '@grafana/data';
-import { Dashboard, DataQuery, DataSourceRef } from '@grafana/schema';
+import { Dashboard, DataQuery, DataSourceRef, Panel } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
+import { TableFooterCalc } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
 import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
@@ -64,6 +65,25 @@ function getLogsTableTransformations(panelType: string, options: AddPanelToDashb
   return transformations;
 }
 
+function getLogsTablePanelOptions(panelType: string, options: AddPanelToDashboardOptions): Partial<Panel> | null {
+  if (panelType === 'table' && options.panelState?.logs?.columns) {
+    return {
+      transformations: getLogsTableTransformations(panelType, options),
+      fieldConfig: {
+        overrides: [],
+        defaults: {
+          custom: {
+            inspect: true,
+            filterable: true,
+          },
+        },
+      },
+    };
+  }
+
+  return null;
+}
+
 export async function setDashboardInLocalStorage(options: AddPanelToDashboardOptions) {
   const panelType = getPanelType(options.queries, options.queryResponse, options?.panelState);
 
@@ -73,7 +93,7 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
     title: 'New Panel',
     gridPos: { x: 0, y: 0, w: 12, h: 8 },
     datasource: options.datasource,
-    transformations: getLogsTableTransformations(panelType, options),
+    ...getLogsTablePanelOptions(panelType, options),
   };
 
   let dto: DashboardDTO;
