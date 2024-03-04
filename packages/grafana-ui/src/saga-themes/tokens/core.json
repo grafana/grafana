@@ -530,8 +530,7 @@
       },
       "black": {
         "value": "#020409",
-        "type": "color",
-        "$extensions": {}
+        "type": "color"
       }
     },
     "modifier": {

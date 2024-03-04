@@ -68,6 +68,24 @@
           },
           "description": "This token didn't existed in the previous color palette for the UI. It will be used in the overlays and is using the base.black with alpha modifier with opacity.40"
         }
+      },
+      "system": {
+        "success": {
+          "value": "{color.green.900}",
+          "type": "color"
+        },
+        "warning": {
+          "value": "{color.orange.900}",
+          "type": "color"
+        },
+        "error": {
+          "value": "{color.magenta.900}",
+          "type": "color"
+        },
+        "info": {
+          "value": "{color.blue.900}",
+          "type": "color"
+        }
       }
     },
     "border": {
@@ -82,6 +100,24 @@
       "strong": {
         "value": "{color.neutral.600}",
         "type": "color"
+      },
+      "system": {
+        "success": {
+          "value": "{color.green.700}",
+          "type": "color"
+        },
+        "warning": {
+          "value": "{color.orange.700}",
+          "type": "color"
+        },
+        "error": {
+          "value": "{color.magenta.700}",
+          "type": "color"
+        },
+        "info": {
+          "value": "{color.blue.700}",
+          "type": "color"
+        }
       }
     },
     "content": {
@@ -100,6 +136,24 @@
       "link": {
         "value": "{color.blue.400}",
         "type": "color"
+      },
+      "system": {
+        "success": {
+          "value": "{color.green.100}",
+          "type": "color"
+        },
+        "warning": {
+          "value": "{color.orange.100}",
+          "type": "color"
+        },
+        "error": {
+          "value": "{color.magenta.100}",
+          "type": "color"
+        },
+        "info": {
+          "value": "{color.blue.100}",
+          "type": "color"
+        }
       }
     }
   },
