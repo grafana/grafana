@@ -27,9 +27,12 @@ const (
 	validateHDKey           = "validate_hd"
 )
 
+var ExtraGoogleSettingKeys = map[string]ExtraKeyInfo{
+	validateHDKey: {Type: Bool, DefaultValue: true},
+}
+
 var _ social.SocialConnector = (*SocialGoogle)(nil)
 var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
-var ExtraGoogleSettingKeys = []string{validateHDKey}
 
 type SocialGoogle struct {
 	*SocialBase
@@ -93,7 +96,7 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	defer s.reloadMutex.Unlock()
 
 	s.updateInfo(social.GoogleProviderName, newInfo)
-	s.validateHD = MustBool(newInfo.Extra[validateHDKey], false)
+	s.validateHD = MustBool(newInfo.Extra[validateHDKey], true)
 
 	return nil
 }
