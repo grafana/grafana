@@ -14,7 +14,6 @@ export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['se
   github: ['name', 'clientId', 'clientSecret', 'teamIds', 'allowedOrganizations'],
   google: ['name', 'clientId', 'clientSecret', 'allowedDomains'],
   gitlab: ['name', 'clientId', 'clientSecret', 'allowedOrganizations', 'teamIds'],
-  azuread: ['name', 'clientId', 'clientSecret', 'authUrl', 'tokenUrl', 'scopes', 'allowedGroups', 'allowedDomains'],
   okta: [
     'name',
     'clientId',
@@ -39,6 +38,44 @@ type Section = Record<
 >;
 
 export const sectionFields: Section = {
+  azuread: [
+    {
+      name: 'General settings',
+      id: 'general',
+      fields: [
+        'name',
+        'clientId',
+        'clientSecret',
+        'scopes',
+        'authUrl',
+        'tokenUrl',
+        'allowSignUp',
+        'autoLogin',
+        'signoutRedirectUrl',
+      ],
+    },
+    {
+      name: 'User mapping',
+      id: 'user',
+      fields: ['roleAttributePath', 'roleAttributeStrict', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
+    },
+    {
+      name: 'Extra security measures',
+      id: 'extra',
+      fields: [
+        'allowedOrganizations',
+        'allowedDomains',
+        'allowedGroups',
+        'forceUseGraphApi',
+        'usePkce',
+        'useRefreshToken',
+        'tlsSkipVerifyInsecure',
+        'tlsClientCert',
+        'tlsClientKey',
+        'tlsClientCa',
+      ],
+    },
+  ],
   generic_oauth: [
     {
       name: 'General settings',
@@ -319,6 +356,11 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     defineAllowedTeamsIds: {
       label: 'Define allowed teams ids',
       type: 'switch',
+    },
+    forceUseGraphApi: {
+      label: 'Force use Graph API',
+      description: "If enabled, Grafana will fetch the users' groups using the Microsoft Graph API.",
+      type: 'checkbox',
     },
     usePkce: {
       label: 'Use PKCE',
