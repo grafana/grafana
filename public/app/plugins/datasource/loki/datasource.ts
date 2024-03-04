@@ -344,7 +344,7 @@ export class LokiDatasource
    * @returns An Observable of DataQueryResponse with live query results or an empty response if no suitable queries are found.
    * @todo: The name says "backend" but it's actually running the query through the frontend. We should fix this.
    */
-  runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
+  private runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     // and only for logs-queries, not metric queries
     const logsQueries = request.targets.filter((query) => query.expr !== '' && isLogsQuery(query.expr));
     if (logsQueries.length === 0) {

@@ -1654,7 +1654,7 @@ describe('LokiDatasource', () => {
     });
   });
 
-  describe('runLiveQueryThroughBackend', () => {
+  describe('live tailing', () => {
     it('interpolates variables with scopedVars and filters', () => {
       const ds = createLokiDatasource();
       const query: LokiQuery = { expr: '{app=$app}', refId: 'A' };
@@ -1662,8 +1662,8 @@ describe('LokiDatasource', () => {
       const filters: AdHocFilter[] = [];
 
       jest.spyOn(ds, 'applyTemplateVariables').mockImplementation((query) => query);
-      ds.runLiveQueryThroughBackend({ targets: [query], scopedVars, filters } as DataQueryRequest<LokiQuery>);
-      expect(ds.applyTemplateVariables).toHaveBeenCalledWith(query, scopedVars, filters);
+      ds.query({ targets: [query], scopedVars, filters, liveStreaming: true } as DataQueryRequest<LokiQuery>);
+      expect(ds.applyTemplateVariables).toHaveBeenCalledWith(expect.objectContaining(query), scopedVars, filters);
     });
   });
 });
