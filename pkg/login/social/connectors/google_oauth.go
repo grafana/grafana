@@ -47,7 +47,7 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	config := createOAuthConfig(info, cfg, social.GoogleProviderName)
 	provider := &SocialGoogle{
 		SocialBase: newSocialBase(social.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, *features),
-		validateHD: MustBool(info.Extra[validateHDKey], true),
+		validateHD: MustBool(info.Extra[validateHDKey], false),
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
