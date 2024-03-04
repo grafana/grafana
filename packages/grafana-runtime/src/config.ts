@@ -99,6 +99,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   rendererVersion = '';
+  rendererDefaultImageWidth = 1000;
+  rendererDefaultImageHeight = 500;
+  rendererDefaultImageScale = 1;
   secretsManagerPluginEnabled = false;
   supportBundlesEnabled = false;
   http2Enabled = false;
@@ -168,6 +171,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   disableFrontendSandboxForPlugins: string[] = [];
   sharedWithMeFolderUID: string | undefined;
   rootFolderUID: string | undefined;
+  localFileSystemAvailable: boolean | undefined;
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;

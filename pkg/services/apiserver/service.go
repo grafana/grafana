@@ -19,6 +19,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
+	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -28,11 +31,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	grafanaresponsewriter "github.com/grafana/grafana/pkg/services/apiserver/endpoints/responsewriter"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	entitystorage "github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
-	filestorage "github.com/grafana/grafana/pkg/services/apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -280,7 +280,15 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Add OpenAPI specs for each group+version
-	err := builder.SetupConfig(Scheme, serverConfig, builders)
+	err := builder.SetupConfig(
+		Scheme,
+		serverConfig,
+		builders,
+		s.cfg.BuildStamp,
+		s.cfg.BuildVersion,
+		s.cfg.BuildCommit,
+		s.cfg.BuildBranch,
+	)
 	if err != nil {
 		return err
 	}
@@ -358,12 +366,16 @@ func (s *service) startAggregator(
 	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
-	aggregatorConfig, aggregatorInformers, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig)
+	externalNamesNamespace := "default"
+	if s.cfg.StackID != "" {
+		externalNamesNamespace = s.cfg.StackID
+	}
+	aggregatorConfig, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig, externalNamesNamespace)
 	if err != nil {
 		return nil, err
 	}
 
-	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, aggregatorInformers, server)
+	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig.KubeAggregatorConfig, aggregatorConfig.Informers, aggregatorConfig.RemoteServicesConfig, server)
 	if err != nil {
 		return nil, err
 	}

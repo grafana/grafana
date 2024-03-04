@@ -213,6 +213,46 @@ describe('QueryVariableEditor', () => {
     expect(variable.state.sort).toBe(VariableSort.alphabeticalDesc);
   });
 
+  it('should update the variable query definition when changing the query', async () => {
+    const {
+      variable,
+      renderer: { getByTestId },
+      user,
+    } = await setup();
+    const queryEditor = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
+    );
+
+    await user.type(queryEditor, '-new');
+    await user.tab();
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.definition).toEqual('my-query-new');
+
+    await user.clear(queryEditor);
+
+    await user.type(queryEditor, 'new definition');
+    await user.tab();
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.definition).toEqual('new definition');
+
+    await user.clear(queryEditor);
+    await user.tab();
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.definition).toEqual('');
+  });
+
   it('should update the variable state when changing the refresh', async () => {
     const {
       variable,

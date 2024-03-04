@@ -195,14 +195,6 @@ var (
 			Owner:       hostedGrafanaTeam,
 		},
 		{
-			Name:           "dataConnectionsConsole",
-			Description:    "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // turned on by default
-			Owner:          grafanaPluginsPlatformSquad,
-			AllowSelfServe: true,
-		},
-		{
 			// Some plugins rely on topnav feature flag being enabled, so we cannot remove this until we
 			// can afford the breaking change, or we've detemined no one else is relying on it
 			Name:        "topnav",
@@ -444,13 +436,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "externalServiceAuth",
-			Description:     "Starts an OAuth2 authentication provider for external services",
-			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
-			Owner:           identityAccessTeam,
-		},
-		{
 			Name:              "refactorVariablesTimeRange",
 			Description:       "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
 			Stage:             FeatureStagePublicPreview,
@@ -648,16 +633,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
-		},
-		{
-			Name:              "splitScopes",
-			Description:       "Support faster dashboard and folder search by splitting permission scopes into parts",
-			Stage:             FeatureStageDeprecated,
-			FrontendOnly:      false,
-			Expression:        "true", // enabled by default
-			Owner:             identityAccessTeam,
-			RequiresRestart:   true,
-			HideFromAdminPage: true, // This is internal work to speed up dashboard search, and is not ready for wider use
 		},
 		{
 			Name:        "permissionsFilterRemoveSubquery",
@@ -872,8 +847,8 @@ var (
 		},
 		{
 			Name:         "teamHttpHeaders",
-			Description:  "Enables datasources to apply team headers to the client requests",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables Team LBAC for datasources to apply team headers to the client requests",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        identityAccessTeam,
 		},
@@ -988,11 +963,12 @@ var (
 			Owner:        grafanaSharingSquad,
 		},
 		{
-			Name:         "ssoSettingsApi",
-			Description:  "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: false,
-			Owner:        identityAccessTeam,
+			Name:           "ssoSettingsApi",
+			Description:    "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
+			Stage:          FeatureStagePublicPreview,
+			AllowSelfServe: true,
+			FrontendOnly:   false,
+			Owner:          identityAccessTeam,
 		},
 		{
 			Name:         "canvasPanelPanZoom",
@@ -1066,15 +1042,6 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:           "displayAnonymousStats",
-			Description:    "Enables anonymous stats to be shown in the UI for Grafana",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Owner:          identityAccessTeam,
-			AllowSelfServe: false,
-			Expression:     "true", // enabled by default
 		},
 		{
 			// this is mainly used a a way to quickly disable query hints as a safe guard for our infrastructure
@@ -1163,6 +1130,13 @@ var (
 			Description: "In-development feature that will allow injection of labels into prometheus queries.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "sqlExpressions",
+			Description:  "Enables using SQL and DuckDB functions as Expressions.",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAppPlatformSquad,
 		},
 		{
 			Name:         "nodeGraphDotLayout",
