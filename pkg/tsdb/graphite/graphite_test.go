@@ -3,7 +3,7 @@ package graphite
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+
 	"io"
 	"net/http"
 	"reflect"
@@ -12,12 +12,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestFixIntervalFormat(t *testing.T) {
@@ -59,14 +56,14 @@ func TestFixIntervalFormat(t *testing.T) {
 func TestProcessQueries(t *testing.T) {
 	service := &Service{}
 	log := logger.FromContext(context.Background())
+
+	// REMOVING THIS THE FUTURE BECAUSE WE ARE NOW MAKING MULTIPLE REQUESTS TO HANDLE MULTIPLE QUERIES
 	t.Run("Parses single valid query", func(t *testing.T) {
-		queries := []backend.DataQuery{
-			{
-				RefID: "A",
-				JSON: []byte(`{
-					"target": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
+		queries := backend.DataQuery{
+			RefID: "A",
+			JSON: []byte(`{
+			"target": "app.grafana.*.dashboards.views.1M.count"
+		}`),
 		}
 		targets, invalids, mapping, err := service.processQueries(log, queries)
 		assert.NoError(t, err)
@@ -74,79 +71,6 @@ func TestProcessQueries(t *testing.T) {
 		assert.Len(t, mapping, 1)
 		assert.Len(t, targets, 1)
 		assert.Equal(t, "aliasSub(app.grafana.*.dashboards.views.1M.count,\"(^.*$)\",\"\\1 A\")", targets[0])
-	})
-
-	t.Run("Parses multiple valid queries with refId mappings", func(t *testing.T) {
-		queries := []backend.DataQuery{
-			{
-				RefID: "A",
-				JSON: []byte(`{
-					"target": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-			{
-				RefID: "query B",
-				JSON: []byte(`{
-					"target": "aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1mon'), 4)"
-				}`),
-			},
-		}
-		targets, invalids, mapping, err := service.processQueries(log, queries)
-		assert.NoError(t, err)
-		assert.Empty(t, invalids)
-		assert.Len(t, mapping, 2)
-		assert.Len(t, targets, 2)
-		assert.Equal(t, "aliasSub(app.grafana.*.dashboards.views.1M.count,\"(^.*$)\",\"\\1 A\")", targets[0])
-		assert.Equal(t, "aliasSub(aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1mon'), 4),\"(^.*$)\",\"\\1 query_B\")", targets[1])
-	})
-
-	t.Run("Parses multiple queries with one invalid", func(t *testing.T) {
-		queries := []backend.DataQuery{
-			{
-				RefID: "A",
-				JSON: []byte(`{
-					"target": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-			{
-				RefID: "B",
-				JSON: []byte(`{
-					"query": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-		}
-		targets, invalids, mapping, err := service.processQueries(log, queries)
-		assert.NoError(t, err)
-		assert.Len(t, invalids, 1)
-		assert.Len(t, mapping, 1)
-		assert.Len(t, targets, 1)
-		json, _ := simplejson.NewJson(queries[1].JSON)
-		expectedInvalid := fmt.Sprintf("Query: %v has no target", json)
-		assert.Equal(t, expectedInvalid, invalids[0])
-	})
-
-	t.Run("QueryData with no valid queries returns an error", func(t *testing.T) {
-		queries := []backend.DataQuery{
-			{
-				RefID: "A",
-				JSON: []byte(`{
-					"query": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-			{
-				RefID: "B",
-				JSON: []byte(`{
-					"query": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-		}
-
-		service.im = fakeInstanceManager{}
-		_, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
-			Queries: queries,
-		})
-		assert.Error(t, err)
-		assert.Equal(t, err.Error(), "no query target found for the alert rule")
 	})
 }
 
@@ -287,14 +211,4 @@ func TestConvertResponses(t *testing.T) {
 		_, err := service.toDataFrames(logger, httpResponse, map[string]string{})
 		require.Error(t, err)
 	})
-}
-
-type fakeInstanceManager struct{}
-
-func (f fakeInstanceManager) Get(_ context.Context, _ backend.PluginContext) (instancemgmt.Instance, error) {
-	return datasourceInfo{}, nil
-}
-
-func (f fakeInstanceManager) Do(_ context.Context, _ backend.PluginContext, _ instancemgmt.InstanceCallbackFunc) error {
-	return nil
 }
