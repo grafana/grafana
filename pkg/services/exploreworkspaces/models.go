@@ -131,3 +131,11 @@ type GetExploreWorkspaceSnapshotCommand struct {
 type GetExploreWorkspaceSnapshotsResponse struct {
 	Snapshots []ExploreWorkspaceSnapshot `json:"snapshots"`
 }
+
+type DeleteExploreWorkspaceCommand struct {
+	UID string
+}
+
+type DeleteExploreWorkspaceSnapshotCommand struct {
+	UID string
+}

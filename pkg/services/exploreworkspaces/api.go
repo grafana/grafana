@@ -23,6 +23,9 @@ func (s *ExploreWorkspacesService) registerAPIEndpoints() {
 	s.RouteRegister.Get("/api/exploreworkspaces/:uid/snapshots", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.GetExploreWorkspaceSnapshotsHander))
 	s.RouteRegister.Get("/api/exploreworkspaces/snapshot/:uid", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.GetExploreWorkspaceSnapshotHander))
 
+	s.RouteRegister.Delete("/api/exploreworkspaces/:uid", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.DeleteExploreWorkspaceHander))
+	s.RouteRegister.Delete("/api/exploreworkspaces/snapshot/:uid", middleware.ReqSignedIn, authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), routing.Wrap(s.DeleteExploreWorkspaceSnapshotHander))
+
 }
 
 func (s *ExploreWorkspacesService) CreateExploreWorkspaceHandler(c *contextmodel.ReqContext) response.Response {
@@ -132,4 +135,32 @@ func (s *ExploreWorkspacesService) GetExploreWorkspaceSnapshotsHander(c *context
 	}
 
 	return response.JSON(http.StatusOK, GetExploreWorkspaceSnapshotsResponse{Snapshots: exploreWorkspaceSnapshots})
+}
+
+func (s *ExploreWorkspacesService) DeleteExploreWorkspaceHander(c *contextmodel.ReqContext) response.Response {
+	query := DeleteExploreWorkspaceCommand{
+		UID: web.Params(c.Req)[":uid"],
+	}
+
+	err := s.deleteExploreWorkspace(c.Req.Context(), query)
+
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Cannot delete workspace. "+err.Error(), err)
+	}
+
+	return response.JSON(http.StatusOK, "")
+}
+
+func (s *ExploreWorkspacesService) DeleteExploreWorkspaceSnapshotHander(c *contextmodel.ReqContext) response.Response {
+	query := DeleteExploreWorkspaceSnapshotCommand{
+		UID: web.Params(c.Req)[":uid"],
+	}
+
+	err := s.deleteExploreWorkspaceSnapshot(c.Req.Context(), query)
+
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Cannot delete snapshot. "+err.Error(), err)
+	}
+
+	return response.JSON(http.StatusOK, "")
 }

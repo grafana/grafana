@@ -352,3 +352,52 @@ func (s *ExploreWorkspacesService) updateExploreWorkspaceSnapshot(ctx context.Co
 
 	return &currentSnapshot, nil
 }
+
+func (s *ExploreWorkspacesService) deleteExploreWorkspace(ctx context.Context, cmd DeleteExploreWorkspaceCommand) error {
+	exploreWorkspace := ExploreWorkspace{
+		UID: cmd.UID,
+	}
+
+	exploreWorkspaceSnapshot := ExploreWorkspaceSnapshot{
+		ExploreWorspaceUID: cmd.UID,
+	}
+
+	deleteError := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+		_, err := session.Delete(&exploreWorkspaceSnapshot)
+		if err != nil {
+			return err
+		}
+
+		count, err := session.Delete(&exploreWorkspace)
+		if err != nil {
+			return err
+		}
+		if count == 0 {
+			return errors.New("no workspaces deleted")
+		}
+
+		return nil
+	})
+
+	return deleteError
+
+}
+
+func (s *ExploreWorkspacesService) deleteExploreWorkspaceSnapshot(ctx context.Context, cmd DeleteExploreWorkspaceSnapshotCommand) error {
+	exploreWorkspaceSnapshot := ExploreWorkspaceSnapshot{
+		UID: cmd.UID,
+	}
+
+	deleteError := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+		count, err := session.Delete(&exploreWorkspaceSnapshot)
+		if err != nil {
+			return err
+		}
+		if count == 0 {
+			return errors.New("no snapshots deleted")
+		}
+		return nil
+	})
+
+	return deleteError
+}

@@ -53,6 +53,19 @@ export const useExploreWorkspaces = () => {
     setWorkspaces(exploreWorkspacesResponse.exploreWorkspaces);
   };
 
+  const deleteExploreWorkspace = async (uid: string) => {
+    await api.deleteExploreWorkspace({
+      uid,
+    });
+    reload();
+  };
+
+  const deleteExploreWorkspaceSnapshot = async (uid: string) => {
+    return await api.deleteExploreWorkspaceSnapshot({
+      uid,
+    });
+  };
+
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,6 +79,8 @@ export const useExploreWorkspaces = () => {
     createExploreWorkspaceSnapshot,
     getExploreWorkspaceSnapshot,
     getExploreWorkspaceSnapshots,
+    deleteExploreWorkspace,
+    deleteExploreWorkspaceSnapshot,
     workspaces,
   };
 };

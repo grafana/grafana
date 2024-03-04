@@ -96,3 +96,10 @@ export type GetExploreWorkspaceSnapshotsCommand = {
 export type GetExploreWorkspaceSnapshotsResponse = {
   snapshots: ExploreWorkspaceSnapshot[];
 };
+
+//
+
+export type DeleteExploreWorkspaceCommand = { uid: string };
+export type DeleteExploreWorkspaceResponse = {};
+export type DeleteExploreWorkspaceSnapshotCommand = { uid: string };
+export type DeleteExploreWorkspaceSnapshotResponse = {};

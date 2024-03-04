@@ -17,6 +17,10 @@ import {
   CreateExploreWorkspaceResponse,
   CreateExploreWorkspaceSnapshotCommand,
   CreateExploreWorkspaceSnapshotResponse,
+  DeleteExploreWorkspaceCommand,
+  DeleteExploreWorkspaceResponse,
+  DeleteExploreWorkspaceSnapshotCommand,
+  DeleteExploreWorkspaceSnapshotResponse,
   GetExploreWorkspaceCommand,
   GetExploreWorkspaceResponse,
   GetExploreWorkspacesCommand,
@@ -95,4 +99,17 @@ export const getExploreWorkspaceSnapshots = apiCall<
 >({
   method: 'GET',
   url: (command) => `/api/exploreworkspaces/${command.exploreWorkspaceUid}/snapshots`,
+});
+
+export const deleteExploreWorkspace = apiCall<DeleteExploreWorkspaceCommand, DeleteExploreWorkspaceResponse>({
+  method: 'DELETE',
+  url: (command) => `/api/exploreworkspaces/${command.uid}`,
+});
+
+export const deleteExploreWorkspaceSnapshot = apiCall<
+  DeleteExploreWorkspaceSnapshotCommand,
+  DeleteExploreWorkspaceSnapshotResponse
+>({
+  method: 'DELETE',
+  url: (command) => `/api/exploreworkspaces/snapshot/${command.uid}`,
 });

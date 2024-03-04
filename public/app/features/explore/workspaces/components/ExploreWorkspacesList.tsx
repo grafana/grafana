@@ -7,6 +7,7 @@ import { ExploreWorkspace } from '../types';
 type Props = {
   current?: string;
   workspaces: ExploreWorkspace[] | undefined;
+  deleted: (ExploreWorkspace: ExploreWorkspace) => void;
   selected: (ExploreWorkspace: ExploreWorkspace) => void;
 };
 
@@ -40,7 +41,7 @@ export const ExploreWorkspacesList = (props: Props) => {
             <Button icon="sync" onClick={() => props.selected(workspace)}>
               switch
             </Button>
-            <Button variant="destructive" onClick={() => props.selected(workspace)}>
+            <Button variant="destructive" onClick={() => props.deleted(workspace)}>
               delete
             </Button>
           </Card.Actions>

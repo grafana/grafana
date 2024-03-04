@@ -22,7 +22,13 @@ type Props = {
 export const ExploreWorkspacesMenu = (props: Props) => {
   const { loadedWorkspace, loadedSnapshot, currentState } = props;
 
-  const { workspaces, createExploreWorkspace, createExploreWorkspaceSnapshot } = useExploreWorkspaces();
+  const {
+    workspaces,
+    createExploreWorkspace,
+    createExploreWorkspaceSnapshot,
+    deleteExploreWorkspace,
+    deleteExploreWorkspaceSnapshot,
+  } = useExploreWorkspaces();
   const { location } = useGrafana();
   const notifyApp = useAppNotification();
 
@@ -62,8 +68,7 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     }
   };
 
-  const loadWorkspacesAndSnapshotsHandler = async () => {
-    setIsOpen(true);
+  const reloadSnapshots = async () => {
     if (loadedWorkspace) {
       const snapshotsResponse = await getExploreWorkspaceSnapshots({
         exploreWorkspaceUid: loadedWorkspace.uid,
@@ -72,11 +77,27 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     }
   };
 
+  const loadWorkspacesAndSnapshotsHandler = async () => {
+    setIsOpen(true);
+    await reloadSnapshots();
+  };
+
   const loadSnapshotHandler = async (snapshot: ExploreWorkspaceSnapshot) => {
     if (loadedWorkspace) {
       location.push('/explore/' + loadedWorkspace.uid + '/' + snapshot.uid);
       window.location.reload();
     }
+  };
+
+  const deleteWorkspaceHandler = async (workspace: ExploreWorkspace) => {
+    await deleteExploreWorkspace(workspace.uid);
+    notifyApp.success('Explore Workspace deleted successfully.');
+  };
+
+  const deleteSnapshotHandler = async (snapshot: ExploreWorkspaceSnapshot) => {
+    await deleteExploreWorkspaceSnapshot(snapshot.uid);
+    notifyApp.success('Explore Workspace snapshot deleted successfully.');
+    await reloadSnapshots();
   };
 
   const CreateWorkspace = () => {
@@ -149,7 +170,7 @@ export const ExploreWorkspacesMenu = (props: Props) => {
         {isOpen && (
           <Drawer onClose={() => setIsOpen(false)}>
             <TabsBar>
-              <Tab label="Current" onChangeTab={() => setActiveTab('info')} />
+              {loadedWorkspace && <Tab label="Current" onChangeTab={() => setActiveTab('info')} />}
               {loadedWorkspace && (
                 <Tab
                   label="Snapshots"
@@ -205,6 +226,9 @@ export const ExploreWorkspacesMenu = (props: Props) => {
                 <ExploreWorkspaceSnapshotsList
                   current={loadedSnapshot?.uid}
                   snapshots={loadedSnapshots}
+                  deleted={(snapshot: ExploreWorkspaceSnapshot) => {
+                    deleteSnapshotHandler(snapshot);
+                  }}
                   selected={(snapshot) => {
                     if (snapshot) {
                       loadSnapshotHandler(snapshot);
@@ -218,6 +242,9 @@ export const ExploreWorkspacesMenu = (props: Props) => {
                 <ExploreWorkspacesList
                   current={loadedWorkspace?.uid}
                   workspaces={workspaces}
+                  deleted={(workspace: ExploreWorkspace) => {
+                    deleteWorkspaceHandler(workspace);
+                  }}
                   selected={(workspace) => {
                     location.push('/explore/' + workspace.uid);
                     window.location.reload();

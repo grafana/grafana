@@ -7,6 +7,7 @@ import { ExploreWorkspaceSnapshot } from '../types';
 type Props = {
   current?: string;
   snapshots: ExploreWorkspaceSnapshot[] | undefined;
+  deleted: (snapshot: ExploreWorkspaceSnapshot) => void;
   selected: (snapshot?: ExploreWorkspaceSnapshot) => void;
 };
 
@@ -37,7 +38,7 @@ export const ExploreWorkspaceSnapshotsList = (props: Props) => {
                 switch
               </Button>
             )}
-            <Button variant="destructive" onClick={() => props.selected(snapshot)}>
+            <Button variant="destructive" onClick={() => props.deleted(snapshot)}>
               delete
             </Button>
           </Card.Actions>
