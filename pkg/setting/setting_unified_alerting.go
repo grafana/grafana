@@ -46,7 +46,7 @@ const (
 `
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
-	schedulereDefaultExecuteAlerts          = true
+	schedulerDefaultExecuteAlerts           = true
 	schedulerDefaultMaxAttempts             = 1
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
@@ -274,7 +274,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	// TODO load from ini file
 	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration
-	uaCfg.ExecuteAlerts = ua.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
+	uaCfg.ExecuteAlerts = ua.Key("execute_alerts").MustBool(schedulerDefaultExecuteAlerts)
 
 	// if the unified alerting options equal the defaults, apply the respective legacy one
 	uaEvaluationTimeout, err := gtime.ParseDuration(valueAsString(ua, "evaluation_timeout", evaluatorDefaultEvaluationTimeout.String()))
