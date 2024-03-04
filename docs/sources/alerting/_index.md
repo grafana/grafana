@@ -19,8 +19,7 @@ hero:
   image: /media/docs/grafana-cloud/alerting-and-irm/grafana-icon-alerting.svg
   width: 110
   height: 110
-  description: >-
-    Grafana Alerting allows you to learn about problems in your systems moments after they occur.
+  description: Grafana Alerting allows you to learn about problems in your systems moments after they occur.
 cards:
   title_class: pt-0 lh-1
   items:
