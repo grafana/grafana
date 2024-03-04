@@ -1187,6 +1187,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:            "alertingUpgradeDryrunOnStart",
