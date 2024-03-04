@@ -279,7 +279,7 @@
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
 /pkg/generated @grafana/grafana-app-platform-squad
-f
+
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-backend-product
 /pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-backend-product
