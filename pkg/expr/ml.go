@@ -130,7 +130,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 	}
 
 	// process the response the same way DSNode does. Use plugin ID as data source type. Semantically, they are the same.
-	responseType, result, err = ConvertDataFramesToResults(ctx, dataFrames, mlPluginID, s.features, s.allowLongFrames, s.tracer, logger)
+	responseType, result, err = s.converter.Convert(ctx, mlPluginID, dataFrames, s.allowLongFrames)
 	return result, err
 }
 
