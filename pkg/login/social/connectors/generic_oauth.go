@@ -310,8 +310,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	// Call the AuthorizeUser function with the correct arguments
-	userInfo, err := heimdall.AuthorizeUser(token.AccessToken, heimdall.BasicUserInfo{}, &heimdall.Config{})
-
+	_, err := heimdall.AuthorizeUser(token.AccessToken, &heimdall.Config{}, (*heimdall.BasicUserInfo)(userInfo))
 	if err != nil {
 		// Log the error if authorization failed
 		s.log.Debug("heimdall authorization failed: ", err)
