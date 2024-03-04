@@ -61,20 +61,6 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
       });
     }
 
-    // Dev only feature flag!  TODO, plugin details can include the apiserver info
-    if (
-      config.featureToggles.grafanaAPIServerWithExperimentalAPIs &&
-      pluginConfig.meta.type === PluginType.datasource
-    ) {
-      navModelChildren.push({
-        text: PluginTabLabels.APISERVER,
-        icon: 'list-ul',
-        id: PluginTabIds.APISERVER,
-        url: `${pathname}?page=${PluginTabIds.APISERVER}`,
-        active: PluginTabIds.APISERVER === currentPageId,
-      });
-    }
-
     if (!canConfigurePlugins) {
       return navModelChildren;
     }

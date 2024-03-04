@@ -250,7 +250,6 @@ export enum PluginTabLabels {
   DASHBOARDS = 'Dashboards',
   USAGE = 'Usage',
   IAM = 'IAM',
-  APISERVER = 'API server',
 }
 
 export enum PluginTabIds {
@@ -260,7 +259,6 @@ export enum PluginTabIds {
   DASHBOARDS = 'dashboards',
   USAGE = 'usage',
   IAM = 'iam',
-  APISERVER = 'apiserver',
 }
 
 export enum RequestStatus {
