@@ -55,9 +55,10 @@ type PrometheuQueryProperties struct {
 	// what we should show in the editor
 	EditorMode QueryEditorMode `json:"editorMode,omitempty"`
 
-	// @deprecated Used to specify how many times to divide max data points by. We use max data points under query options
+	// Used to specify how many times to divide max data points by. We use max data points under query options
 	// See https://github.com/grafana/grafana/issues/48081
-	IntervalFactor *float32 `json:"intervalFactor,omitempty"`
+	// Deprecated: use interval
+	IntervalFactor int64 `json:"intervalFactor,omitempty"`
 
 	// Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname
 	LegendFormat string `json:"legendFormat,omitempty"`
@@ -109,9 +110,8 @@ type QueryModel struct {
 
 	// The following properties may be part of the request payload, however they are not saved in panel JSON
 	// Timezone offset to align start & end time on backend
-	UtcOffsetSec   int64  `json:"utcOffsetSec,omitempty"`
-	Interval       string `json:"interval,omitempty"`
-	IntervalFactor int64  `json:"intervalFactor,omitempty"`
+	UtcOffsetSec int64  `json:"utcOffsetSec,omitempty"`
+	Interval     string `json:"interval,omitempty"`
 }
 
 // CommonQueryProperties is properties applied to all queries
@@ -127,6 +127,7 @@ type TimeRange struct {
 	Step  time.Duration
 }
 
+// The internal query object
 type Query struct {
 	Expr          string
 	Step          time.Duration
