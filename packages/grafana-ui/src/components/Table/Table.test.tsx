@@ -4,8 +4,10 @@ import React from 'react';
 
 import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
+import { Icon } from '../Icon/Icon';
+
 import { Table } from './Table';
-import { Props } from './types';
+import { CustomHeaderRendererProps, Props } from './types';
 
 function getDefaultDataFrame(): DataFrame {
   const dataFrame = toDataFrame({
@@ -28,6 +30,12 @@ function getDefaultDataFrame(): DataFrame {
         config: {
           custom: {
             filterable: false,
+            headerComponent: (props: CustomHeaderRendererProps) => (
+              <span>
+                {props.defaultContent}
+                <Icon aria-label={'header-icon'} name={'ellipsis-v'} />
+              </span>
+            ),
           },
           links: [
             {
@@ -181,6 +189,19 @@ describe('Table', () => {
         { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
         { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
       ]);
+    });
+  });
+
+  describe('custom header', () => {
+    it('Should be rendered', async () => {
+      getTestContext();
+
+      await userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
+      await userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
+
+      const rows = within(getTable()).getAllByRole('row');
+      expect(rows).toHaveLength(5);
+      expect(within(rows[0]).getByLabelText('header-icon')).toBeInTheDocument();
     });
   });
 
