@@ -98,89 +98,91 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	// take the first query in the request list, since all query should share the same timerange
-	q := req.Queries[0]
-
-	/*
-		graphite doc about from and until, with sdk we are getting absolute instead of relative time
-		https://graphite-api.readthedocs.io/en/latest/api.html#from-until
-	*/
-	from, until := epochMStoGraphiteTime(q.TimeRange)
-	formData := url.Values{
-		"from":          []string{from},
-		"until":         []string{until},
-		"format":        []string{"json"},
-		"maxDataPoints": []string{"500"},
-		"target":        []string{},
-	}
-
-	// Convert datasource query to graphite target request
-	targetList, emptyQueries, origRefIds, err := s.processQueries(logger, req.Queries)
-	if err != nil {
-		return nil, err
-	}
-
+	// to respect different time ranges sent in alerting,
+	// we must make multiple queries to Graphite
+	// because Graphite allows one range per request to the render endpoint
+	// https://graphite.readthedocs.io/en/latest/render_api.html#graphing-metrics
+	var allFrames = data.Frames{}
 	var result = backend.QueryDataResponse{}
-	if len(emptyQueries) != 0 {
-		logger.Warn("Found query models without targets", "models without targets", strings.Join(emptyQueries, "\n"))
-		// If no queries had a valid target, return an error; otherwise, attempt with the targets we have
-		if len(emptyQueries) == len(req.Queries) {
-			return &result, errors.New("no query target found for the alert rule")
+	for _, q := range req.Queries {
+		from, until := epochMStoGraphiteTime(q.TimeRange)
+		formData := url.Values{
+			"from":          []string{from},
+			"until":         []string{until},
+			"format":        []string{"json"},
+			"maxDataPoints": []string{"500"},
+			"target":        []string{},
 		}
-	}
-	formData["target"] = targetList
-
-	if setting.Env == setting.Dev {
-		logger.Debug("Graphite request", "params", formData)
-	}
-
-	graphiteReq, err := s.createRequest(ctx, logger, dsInfo, formData)
-	if err != nil {
-		return &result, err
-	}
-
-	ctx, span := s.tracer.Start(ctx, "graphite query")
-	defer span.End()
-
-	targetStr := strings.Join(formData["target"], ",")
-	span.SetAttributes(
-		attribute.String("target", targetStr),
-		attribute.String("from", from),
-		attribute.String("until", until),
-		attribute.Int64("datasource_id", dsInfo.Id),
-		attribute.Int64("org_id", req.PluginContext.OrgID),
-	)
-	s.tracer.Inject(ctx, graphiteReq.Header, span)
-
-	res, err := dsInfo.HTTPClient.Do(graphiteReq)
-	if res != nil {
-		span.SetAttributes(attribute.Int("graphite.response.code", res.StatusCode))
-	}
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return &result, err
-	}
-
-	defer func() {
-		err := res.Body.Close()
+		// Convert datasource query to graphite target request
+		targetList, emptyQueries, origRefIds, err := s.processQueries(logger, q)
 		if err != nil {
-			logger.Warn("Failed to close response body", "error", err)
+			return nil, err
 		}
-	}()
 
-	frames, err := s.toDataFrames(logger, res, origRefIds)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return &result, err
+		if len(emptyQueries) != 0 {
+			logger.Warn("Found query models without targets", "models without targets", strings.Join(emptyQueries, "\n"))
+			// If no queries had a valid target, return an error; otherwise, attempt with the targets we have
+			if len(emptyQueries) == len(req.Queries) {
+				return &result, errors.New("no query target found for the alert rule")
+			}
+		}
+		formData["target"] = targetList
+
+		if setting.Env == setting.Dev {
+			logger.Debug("Graphite request", "params", formData)
+		}
+
+		graphiteReq, err := s.createRequest(ctx, logger, dsInfo, formData)
+		if err != nil {
+			return &result, err
+		}
+
+		ctx, span := s.tracer.Start(ctx, "graphite query")
+		defer span.End()
+
+		targetStr := strings.Join(formData["target"], ",")
+		span.SetAttributes(
+			attribute.String("target", targetStr),
+			attribute.String("from", from),
+			attribute.String("until", until),
+			attribute.Int64("datasource_id", dsInfo.Id),
+			attribute.Int64("org_id", req.PluginContext.OrgID),
+		)
+
+		s.tracer.Inject(ctx, graphiteReq.Header, span)
+
+		res, err := dsInfo.HTTPClient.Do(graphiteReq)
+		if res != nil {
+			span.SetAttributes(attribute.Int("graphite.response.code", res.StatusCode))
+		}
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return &result, err
+		}
+
+		defer func() {
+			err := res.Body.Close()
+			if err != nil {
+				logger.Warn("Failed to close response body", "error", err)
+			}
+		}()
+
+		frames, err := s.toDataFrames(logger, res, origRefIds)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return &result, err
+		}
+
+		allFrames = append(allFrames, frames[0])
 	}
 
 	result = backend.QueryDataResponse{
 		Responses: make(backend.Responses),
 	}
 
-	for _, f := range frames {
+	for _, f := range allFrames {
 		if resp, ok := result.Responses[f.Name]; ok {
 			resp.Frames = append(resp.Frames, f)
 			result.Responses[f.Name] = resp
@@ -197,41 +199,41 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 // processQueries converts each datasource query to a graphite query target. It returns the list of
 // targets, a list of invalid queries, and a mapping of formatted refIds (used in the target query)
 // to original query refIds, later used to associate ressponses with the original queries
-func (s *Service) processQueries(logger log.Logger, queries []backend.DataQuery) ([]string, []string, map[string]string, error) {
+func (s *Service) processQueries(logger log.Logger, query backend.DataQuery) ([]string, []string, map[string]string, error) {
 	emptyQueries := make([]string, 0)
 	origRefIds := make(map[string]string, 0)
 	targets := make([]string, 0)
 
-	for _, query := range queries {
-		model, err := simplejson.NewJson(query.JSON)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		logger.Debug("Graphite", "query", model)
-		currTarget := ""
-		if fullTarget, err := model.Get(TargetFullModelField).String(); err == nil {
-			currTarget = fullTarget
-		} else {
-			currTarget = model.Get(TargetModelField).MustString()
-		}
-		if currTarget == "" {
-			logger.Debug("Graphite", "empty query target", model)
-			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
-			continue
-		}
-		target := fixIntervalFormat(currTarget)
-
-		// This is a somewhat inglorious way to ensure we can associate results with the right query
-		// By using aliasSub, we can get back a resolved series Target name (accounting for other aliases)
-		// And the original refId. Since there are no restrictions on refId, we need to format it to make it
-		// easy to find in the response
-		formattedRefId := strings.ReplaceAll(query.RefID, " ", "_")
-		origRefIds[formattedRefId] = query.RefID
-		// This will set the alias to `<resolvedSeriesName> <formattedRefId>`
-		// e.g. aliasSub(alias(myquery, "foo"), "(^.*$)", "\1 A") will return "foo A"
-		target = fmt.Sprintf("aliasSub(%s,\"(^.*$)\",\"\\1 %s\")", target, formattedRefId)
-		targets = append(targets, target)
+	// for _, query := range queries {
+	model, err := simplejson.NewJson(query.JSON)
+	if err != nil {
+		return nil, nil, nil, err
 	}
+	logger.Debug("Graphite", "query", model)
+	currTarget := ""
+	if fullTarget, err := model.Get(TargetFullModelField).String(); err == nil {
+		currTarget = fullTarget
+	} else {
+		currTarget = model.Get(TargetModelField).MustString()
+	}
+	// if currTarget == "" {
+	// 	logger.Debug("Graphite", "empty query target", model)
+	// 	emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
+	// 	continue
+	// }
+	target := fixIntervalFormat(currTarget)
+
+	// This is a somewhat inglorious way to ensure we can associate results with the right query
+	// By using aliasSub, we can get back a resolved series Target name (accounting for other aliases)
+	// And the original refId. Since there are no restrictions on refId, we need to format it to make it
+	// easy to find in the response
+	formattedRefId := strings.ReplaceAll(query.RefID, " ", "_")
+	origRefIds[formattedRefId] = query.RefID
+	// This will set the alias to `<resolvedSeriesName> <formattedRefId>`
+	// e.g. aliasSub(alias(myquery, "foo"), "(^.*$)", "\1 A") will return "foo A"
+	target = fmt.Sprintf("aliasSub(%s,\"(^.*$)\",\"\\1 %s\")", target, formattedRefId)
+	targets = append(targets, target)
+	// }
 
 	return targets, emptyQueries, origRefIds, nil
 }
