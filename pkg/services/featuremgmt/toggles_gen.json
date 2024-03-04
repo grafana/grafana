@@ -1810,7 +1810,8 @@
       "metadata": {
         "name": "removeCustomScrollbars",
         "resourceVersion": "1709568338306",
-        "creationTimestamp": "2024-03-04T16:05:38Z"
+        "creationTimestamp": "2024-03-04T16:05:38Z",
+        "deletionTimestamp": "2024-03-04T19:50:02Z"
       },
       "spec": {
         "description": "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
@@ -2069,6 +2070,22 @@
         "description": "Writes the state periodically to the database, asynchronous to rule evaluation",
         "stage": "privatePreview",
         "codeowner": "@grafana/alerting-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "betterPageScrolling",
+        "resourceVersion": "1709581798271",
+        "creationTimestamp": "2024-03-04T19:49:10Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-04 19:49:58.271886389 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
       }
     }
   ]

@@ -1182,9 +1182,9 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:         "removeCustomScrollbars",
+			Name:         "betterPageScrolling",
 			Description:  "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 			Expression:   "true", // enabled by default

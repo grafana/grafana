@@ -56,6 +56,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
 | `alertingPreviewUpgrade`             | Show Unified Alerting preview and upgrade page in legacy alerting                                                                                                                                                            | Yes                |
 | `alertingQueryOptimization`          | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
+| `betterPageScrolling`                | Removes CustomScrollbar from the UI, relying on native browser scrollbars                                                                                                                                                    | Yes                |
 | `alertingUpgradeDryrunOnStart`       | When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.                                   | Yes                |
 
 ## Preview feature toggles
@@ -177,7 +178,6 @@ Experimental features might be changed or removed without prior notice.
 | `newPDFRendering`                           | New implementation for the dashboard to PDF rendering                                                                                                                                                                                                                             |
 | `kubernetesAggregator`                      | Enable grafana aggregator                                                                                                                                                                                                                                                         |
 | `expressionParser`                          | Enable new expression parser                                                                                                                                                                                                                                                      |
-| `removeCustomScrollbars`                    | Removes CustomScrollbar from the UI, relying on native browser scrollbars                                                                                                                                                                                                         |
 
 ## Development feature toggles
 

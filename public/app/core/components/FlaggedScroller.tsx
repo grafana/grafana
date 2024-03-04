@@ -7,7 +7,7 @@ import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 type FlaggedScrollerProps = Parameters<typeof CustomScrollbar>[0];
 
 export default function FlaggedScrollbar(props: FlaggedScrollerProps) {
-  if (config.featureToggles.removeCustomScrollbars) {
+  if (config.featureToggles.betterPageScrolling) {
     return <NativeScrollbar {...props}>{props.children}</NativeScrollbar>;
   }
 
