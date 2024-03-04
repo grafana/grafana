@@ -30,6 +30,8 @@ var (
 const (
 	rfc9068ShortMediaType = "at+jwt"
 	rfc9068MediaType      = "application/at+jwt"
+	authenticationHeader  = "X-Access-Token"
+	authorizationHeader   = "X-Grafana-Id"
 )
 
 func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service) *ExtendedJWT {
@@ -50,17 +52,14 @@ type ExtendedJWT struct {
 
 type ExtendedJWTClaims struct {
 	jwt.Claims
-	ClientID     string              `json:"client_id"`
-	Groups       []string            `json:"groups"`
-	Email        string              `json:"email"`
-	Name         string              `json:"name"`
-	Login        string              `json:"login"`
-	Scopes       []string            `json:"scope"`
+	// Access policy scopes
+	Scopes []string `json:"scopes"`
+	// Grafana permissions
 	Entitlements map[string][]string `json:"entitlements"`
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	jwtToken := s.retrieveToken(r.HTTPRequest)
+	jwtToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 
 	claims, err := s.verifyRFC9068Token(ctx, jwtToken)
 	if err != nil {
@@ -68,14 +67,52 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		return nil, errJWTInvalid.Errorf("Failed to verify JWT: %w", err)
 	}
 
-	// user:id:18
-	userID, err := strconv.ParseInt(strings.TrimPrefix(claims.Subject, fmt.Sprintf("%s:id:", authn.NamespaceUser)), 10, 64)
+	idToken := s.retrieveAuthorizationToken(r.HTTPRequest)
+	if idToken != "" {
+		idTokenClaims, err := s.verifyRFC9068Token(ctx, idToken)
+		if err != nil {
+			s.log.Error("Failed to verify id token", "error", err)
+			return nil, errJWTInvalid.Errorf("Failed to verify id token: %w", err)
+		}
+
+		return s.authenticateAsUser(idTokenClaims, claims, r)
+	}
+
+	return s.authenticateService(ctx, claims, r)
+}
+
+func (s *ExtendedJWT) authenticateAsUser(idTokenClaims, accessTokenClaims *ExtendedJWTClaims, r *authn.Request) (*authn.Identity, error) {
+	_, err := strconv.ParseInt(strings.TrimPrefix(idTokenClaims.Subject, fmt.Sprintf("%s:id:", authn.NamespaceUser)), 10, 64)
 	if err != nil {
 		s.log.Error("Failed to parse sub", "error", err)
 		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
 	}
 
-	// FIXME: support multiple organizations
+	// FIX multi org support
+	defaultOrgID := s.getDefaultOrgID()
+	if r.OrgID != defaultOrgID {
+		s.log.Error("Failed to verify the Organization: OrgID is not the default")
+		return nil, errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported")
+	}
+
+	return &authn.Identity{
+		ID:              idTokenClaims.Subject,
+		OrgID:           defaultOrgID,
+		AuthenticatedBy: login.ExtendedJWTModule,
+		ClientParams: authn.ClientParams{
+			SyncPermissions: true,
+			FetchSyncedUser: true,
+		}}, nil
+}
+
+func (s *ExtendedJWT) authenticateService(ctx context.Context, claims *ExtendedJWTClaims, r *authn.Request) (*authn.Identity, error) {
+	userID, err := strconv.ParseInt(strings.TrimPrefix(claims.Subject, fmt.Sprintf("%s:id:", authn.NamespaceServiceAccount)), 10, 64)
+	if err != nil {
+		s.log.Error("Failed to parse sub", "error", err)
+		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
+	}
+
+	// FIX multi org support
 	defaultOrgID := s.getDefaultOrgID()
 	if r.OrgID != defaultOrgID {
 		s.log.Error("Failed to verify the Organization: OrgID is not the default")
@@ -97,9 +134,15 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		return nil, errJWTInvalid.Errorf("Entitlements claim is missing")
 	}
 
-	signedInUser.Permissions[s.getDefaultOrgID()] = claims.Entitlements
-
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false}, login.ExtendedJWTModule), nil
+	return &authn.Identity{
+		ID:              claims.Subject,
+		OrgID:           defaultOrgID,
+		AuthenticatedBy: login.ExtendedJWTModule,
+		ClientParams: authn.ClientParams{
+			SyncPermissions: false,
+			FetchSyncedUser: false,
+		},
+	}, nil
 }
 
 func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
@@ -107,7 +150,7 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
-	rawToken := s.retrieveToken(r.HTTPRequest)
+	rawToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 	if rawToken == "" {
 		return false
 	}
@@ -134,9 +177,17 @@ func (s *ExtendedJWT) Priority() uint {
 	return 15
 }
 
-// retrieveToken retrieves the JWT token from the request.
-func (s *ExtendedJWT) retrieveToken(httpRequest *http.Request) string {
-	jwtToken := httpRequest.Header.Get("Authorization")
+// retrieveAuthenticationToken retrieves the JWT token from the request.
+func (s *ExtendedJWT) retrieveAuthenticationToken(httpRequest *http.Request) string {
+	jwtToken := httpRequest.Header.Get(authenticationHeader)
+
+	// Strip the 'Bearer' prefix if it exists.
+	return strings.TrimPrefix(jwtToken, "Bearer ")
+}
+
+// retrieveAuthorizationToken retrieves the JWT token from the request.
+func (s *ExtendedJWT) retrieveAuthorizationToken(httpRequest *http.Request) string {
+	jwtToken := httpRequest.Header.Get(authorizationHeader)
 
 	// Strip the 'Bearer' prefix if it exists.
 	return strings.TrimPrefix(jwtToken, "Bearer ")
@@ -207,19 +258,7 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 		return nil, fmt.Errorf("failed to validate JWT: %w", err)
 	}
 
-	if err := s.validateClientIdClaim(ctx, claims); err != nil {
-		return nil, err
-	}
-
 	return &claims, nil
-}
-
-func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims ExtendedJWTClaims) error {
-	if claims.ClientID == "" {
-		return fmt.Errorf("missing 'client_id' claim")
-	}
-
-	return nil
 }
 
 func (s *ExtendedJWT) getDefaultOrgID() int64 {
