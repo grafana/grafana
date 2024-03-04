@@ -1,4 +1,4 @@
-import { faro, LogContext, LogLevel } from '@grafana/faro-web-sdk';
+import { faro, LogContext, LogLevel, MeasurementEvent } from '@grafana/faro-web-sdk';
 
 import { config } from '../config';
 
@@ -59,6 +59,19 @@ export function logError(err: Error, contexts?: LogContext) {
 }
 
 /**
+ * Log a measurement
+ *
+ * @public
+ */
+export function logMeasurement(measurement: Omit<MeasurementEvent, 'timestamp'>, context?: LogContext) {
+  if (config.grafanaJavascriptAgent.enabled) {
+    faro.api.pushMeasurement(measurement, {
+      context,
+    });
+  }
+}
+
+/**
  * Creates a monitoring logger with four levels of logging methods: `logDebug`, `logInfo`, `logWarning`, and `logError`.
  * These methods use `faro.api.pushX` web SDK methods to report these logs or errors to the Faro collector.
  *
@@ -70,6 +83,7 @@ export function logError(err: Error, contexts?: LogContext) {
  * - `logInfo(message: string, contexts?: LogContext)`: Logs an informational message.
  * - `logWarning(message: string, contexts?: LogContext)`: Logs a warning message.
  * - `logError(error: Error, contexts?: LogContext)`: Logs an error message.
+ * - `logMeasurement(measurement: Omit<MeasurementEvent, 'timestamp'>, contexts?: LogContext)`: Logs a measurement.
  * Each method combines the `defaultContext` (if provided), the `source`, and an optional `LogContext` parameter into a full context that is included with the log message.
  */
 export function createMonitoringLogger(source: string, defaultContext?: LogContext) {

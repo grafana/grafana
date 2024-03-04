@@ -205,14 +205,9 @@ export function fetchPromAndRulerRulesAction({
 export const fetchSilencesAction = createAsyncThunk(
   'unifiedalerting/fetchSilences',
   (alertManagerSourceName: string): Promise<Silence[]> => {
-    const fetchSilencesWithLogging = withPerformanceLogging(
-      fetchSilences,
-      `[${alertManagerSourceName}] Silences loaded`,
-      {
-        dataSourceName: alertManagerSourceName,
-        thunk: 'unifiedalerting/fetchSilences',
-      }
-    );
+    const fetchSilencesWithLogging = withPerformanceLogging('unifiedalerting/fetchSilences', fetchSilences, {
+      dataSourceName: alertManagerSourceName,
+    });
 
     return withSerializedError(fetchSilencesWithLogging(alertManagerSourceName));
   }
@@ -265,8 +260,8 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
         const { id, name } = ds;
 
         const discoverFeaturesWithLogging = withPerformanceLogging(
+          'unifiedalerting/fetchPromBuildinfo',
           discoverFeatures,
-          `[${rulesSourceName}] Rules source features discovered`,
           {
             dataSourceName: rulesSourceName,
             thunk: 'unifiedalerting/fetchPromBuildinfo',

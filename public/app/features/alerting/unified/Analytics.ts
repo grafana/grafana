@@ -3,6 +3,7 @@ import { isEmpty } from 'lodash';
 import { dateTime } from '@grafana/data';
 import { createMonitoringLogger, getBackendSrv } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
+import { logMeasurement } from '@grafana/runtime/src/utils/logging';
 import { contextSrv } from 'app/core/core';
 
 import { RuleNamespace } from '../../../types/unified-alerting';
@@ -37,17 +38,24 @@ export function logError(error: Error, context?: Record<string, string>) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
+export function withPerformanceLogging<TFunc extends (type: string, ...args: any[]) => Promise<any>>(
+  type: string,
   func: TFunc,
-  message: string,
   context: Record<string, string>
 ): (...args: Parameters<TFunc>) => Promise<Awaited<ReturnType<TFunc>>> {
   return async function (...args) {
     const startLoadingTs = performance.now();
+
+    // @ts-ignore
     const response = await func(...args);
-    logInfo(message, {
-      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
-      ...context,
+    const loadTimesMs = Number((performance.now() - startLoadingTs).toFixed(0));
+
+    logMeasurement({
+      type,
+      context,
+      values: {
+        loadTimesMs,
+      },
     });
 
     return response;
