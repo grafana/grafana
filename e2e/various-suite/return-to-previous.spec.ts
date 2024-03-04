@@ -29,29 +29,26 @@ describe('ReturnToPrevious button', () => {
     cy.url().should('eq', url);
   });
 
-  // it('should disappear and clear session storage when clicking "Dismiss"', () => {
-  //   cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('exist');
-  //   e2e.components.ReturnToPrevious.dismissButton().should('be.visible').click();
-  //   e2e.components.ReturnToPrevious.buttonGroup().should('not.exist');
-  //   cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('not.exist');
-  // });
+  it('should disappear and clear session storage when clicking "Dismiss"', () => {
+    cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('exist');
+    e2e.components.ReturnToPrevious.dismissButton().should('be.visible').click();
+    e2e.components.ReturnToPrevious.buttonGroup().should('not.exist');
+    cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('not.exist');
+  });
 
-  // it('should persist when going back to alert rules page via nav and disappear when in the alert rule details view', () => {
-  //   e2e.components.ReturnToPrevious.buttonGroup().should('be.visible');
-  //   cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('exist');
-  //
-  //   // make sure the dashboard finished loading
-  //   cy.get('button[aria-label*="BarChart - Label Rotation & Skipping"]').should('be.visible');
-  //
-  //   cy.get('a[href="/alerting/list"]').click();
-  //   e2e.components.ReturnToPrevious.buttonGroup().should('exist');
-  //   cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('exist');
-  //
-  //   e2e.components.AlertRules.groupToggle().first().click();
-  //   cy.get('a[title="View"]').click();
-  //   e2e.components.ReturnToPrevious.buttonGroup().should('not.exist');
-  //   cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('not.exist');
-  // });
+  it('should not persist when going back to the alert rule details view', () => {
+    e2e.components.ReturnToPrevious.buttonGroup().should('be.visible');
+    cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('exist');
+
+    // make sure the dashboard finished loading
+    cy.get('button[aria-label*="BarChart - Label Rotation & Skipping"]').should('be.visible');
+
+    cy.get('a[href="/alerting/list"]').click();
+    e2e.components.AlertRules.groupToggle().first().click();
+    cy.get('a[title="View"]').click();
+    e2e.components.ReturnToPrevious.buttonGroup().should('not.exist');
+    cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('not.exist');
+  });
 
   // it('should override the information in session storage when user changes alert rules', () => {
   //   const alertRule1 =
