@@ -1,6 +1,7 @@
 package models
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -8,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/prometheus/prometheus/model/labels"
@@ -105,20 +107,13 @@ var safeResolution = 11000
 
 // QueryModel includes both the common and specific values
 type QueryModel struct {
-	PrometheusQueryProperties `json:",inline"`
-	CommonQueryProperties     `json:",inline"`
+	PrometheusQueryProperties    `json:",inline"`
+	sdkapi.CommonQueryProperties `json:",inline"`
 
 	// The following properties may be part of the request payload, however they are not saved in panel JSON
 	// Timezone offset to align start & end time on backend
 	UtcOffsetSec int64  `json:"utcOffsetSec,omitempty"`
 	Interval     string `json:"interval,omitempty"`
-}
-
-// CommonQueryProperties is properties applied to all queries
-// NOTE: this will soon be replaced with a struct from the SDK
-type CommonQueryProperties struct {
-	RefId      string `json:"refId,omitempty"`
-	IntervalMs int64  `json:"intervalMs,omitempty"`
 }
 
 type TimeRange struct {
@@ -153,7 +148,7 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 	}
 
 	// Final step value for prometheus
-	calculatedStep, err := calculatePrometheusInterval(model.Interval, dsScrapeInterval, model.IntervalMs, model.IntervalFactor, query, intervalCalculator)
+	calculatedStep, err := calculatePrometheusInterval(model.Interval, dsScrapeInterval, int64(model.IntervalMS), model.IntervalFactor, query, intervalCalculator)
 	if err != nil {
 		return nil, err
 	}
@@ -358,4 +353,12 @@ func AlignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
 	offsetNano := float64(offset * 1e9)
 	stepNano := float64(step.Nanoseconds())
 	return time.Unix(0, int64(math.Floor((float64(t.UnixNano())+offsetNano)/stepNano)*stepNano-offsetNano)).UTC()
+}
+
+//go:embed query.types.json
+var f embed.FS
+
+// QueryTypeDefinitionsJSON returns the query type definitions
+func QueryTypeDefinitionsJSON() (json.RawMessage, error) {
+	return f.ReadFile("query.types.json")
 }

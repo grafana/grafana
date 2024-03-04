@@ -27,15 +27,32 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	require.NoError(t, err)
 	err = builder.AddQueries(
 		schemabuilder.QueryTypeInfo{
-			Name:     "default",
-			GoType:   reflect.TypeOf(&TestDataDataQuery{}),
+			Name:   "default",
+			GoType: reflect.TypeOf(&TestDataDataQuery{}),
 			Examples: []sdkapi.QueryExample{
-				// {
-				// 	Name: "example timeseries",
-				// 	SaveModel: sdkapi.AsUnstructured(TestDataDataQuery{
-				// 		ScenarioId: TestDataQueryTypeManualEntry,
-				// 	}),
-				// },
+				{
+					Name: "simple random walk",
+					SaveModel: sdkapi.AsUnstructured(
+						TestDataDataQuery{
+							ScenarioId: TestDataQueryTypeRandomWalk,
+						},
+					),
+				},
+				{
+					Name: "pulse wave example",
+					SaveModel: sdkapi.AsUnstructured(
+						TestDataDataQuery{
+							ScenarioId: TestDataQueryTypePredictablePulse,
+							PulseWave: &PulseWaveQuery{
+								TimeStep: int64(1000),
+								OnCount:  10,
+								OffCount: 20,
+								OffValue: 1.23, // should be any (rather json any)
+								OnValue:  4.56, // should be any
+							},
+						},
+					),
+				},
 			},
 		},
 	)

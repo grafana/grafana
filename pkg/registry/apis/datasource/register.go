@@ -2,9 +2,13 @@ package datasource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,9 +19,10 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 	"k8s.io/utils/strings/slices"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -28,6 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	kinds_testdata "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
+	kinds_prometheus "github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
 var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
@@ -41,6 +48,7 @@ type DataSourceAPIBuilder struct {
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
+	queryTypes      *query.QueryTypeDefinitionList
 }
 
 func RegisterAPIService(
@@ -102,6 +110,10 @@ func NewDataSourceAPIBuilder(
 	if err != nil {
 		return nil, err
 	}
+	queryTypes, err := getQueryTypes(plugin.ID)
+	if err != nil {
+		return nil, err
+	}
 
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: ri,
@@ -110,7 +122,27 @@ func NewDataSourceAPIBuilder(
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
+		queryTypes:             queryTypes,
 	}, nil
+}
+
+// This is a quick hack to load the local statically defined definitions
+func getQueryTypes(pluginId string) (*query.QueryTypeDefinitionList, error) {
+	var err error
+	var b []byte
+	defs := &query.QueryTypeDefinitionList{}
+	switch pluginId {
+	case "grafana-testdata-datasource":
+		b, err = kinds_testdata.QueryTypeDefinitionsJSON()
+	case "prometheus":
+		b, err = kinds_prometheus.QueryTypeDefinitionsJSON()
+	}
+
+	// Read the JSON bytes into a definition list
+	if b != nil && err == nil {
+		err = json.Unmarshal(b, defs)
+	}
+	return defs, err
 }
 
 func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -240,15 +272,111 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	// Hide the ability to list all connections across tenants
 	delete(oas.Paths.Paths, root+b.connectionResourceInfo.GroupResource().Resource)
 
+	// Add the typed query models
+	queryPayloadSchemaKey := b.pluginJSON.ID + "-query"
+	queryRequestSchemaKey := b.pluginJSON.ID + "-query-request"
+	var err error
+	opts := schemabuilder.QuerySchemaOptions{
+		PluginID:   []string{b.pluginJSON.ID},
+		QueryTypes: []sdkapi.QueryTypeDefinition{},
+		Mode:       schemabuilder.SchemaTypeQueryPayload,
+	}
+	if b.pluginJSON.AliasIDs != nil {
+		opts.PluginID = append(opts.PluginID, b.pluginJSON.AliasIDs...)
+	}
+	for _, qt := range b.queryTypes.Items {
+		// The SDK type and api type are not the same so we recreate it here
+		opts.QueryTypes = append(opts.QueryTypes, sdkapi.QueryTypeDefinition{
+			ObjectMeta: sdkapi.ObjectMeta{
+				Name: qt.Name,
+			},
+			Spec: qt.Spec,
+		})
+	}
+	oas.Components.Schemas[queryPayloadSchemaKey], err = schemabuilder.GetQuerySchema(opts)
+	if err != nil {
+		return oas, err
+	}
+	opts.Mode = schemabuilder.SchemaTypeQueryRequest
+	oas.Components.Schemas[queryRequestSchemaKey], err = schemabuilder.GetQuerySchema(opts)
+	if err != nil {
+		return oas, err
+	}
+
+	// Update the request object
+	sub := oas.Paths.Paths[root+"namespaces/{namespace}/connections/{name}/query"]
+	if sub != nil && sub.Post != nil {
+		sub.Post.Description = "Execute queries"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Required: true,
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema:   spec.RefSchema("#/components/schemas/" + queryRequestSchemaKey),
+							Examples: getExamples(b.queryTypes),
+						},
+					},
+				},
+			},
+		}
+		okrsp, ok := sub.Post.Responses.StatusCodeResponses[200]
+		if ok {
+			sub.Post.Responses.StatusCodeResponses[http.StatusBadRequest] = &spec3.Response{
+				ResponseProps: spec3.ResponseProps{
+					Description: "Bad request",
+					Content:     okrsp.Content,
+				},
+			}
+			sub.Post.Responses.StatusCodeResponses[http.StatusMultiStatus] = &spec3.Response{
+				ResponseProps: spec3.ResponseProps{
+					Description: "Error exists, see the payload for more details",
+					Content:     okrsp.Content,
+				},
+			}
+		}
+	}
+
 	// The root API discovery list
-	sub := oas.Paths.Paths[root]
+	sub = oas.Paths.Paths[root]
 	if sub != nil && sub.Get != nil {
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}
-	return oas, nil
+	return oas, err
 }
 
 // Register additional routes with the server
 func (b *DataSourceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
+}
+
+func getExamples(queryTypes *query.QueryTypeDefinitionList) map[string]*spec3.Example {
+	tr := sdkapi.TimeRange{From: "now-1h", To: "now"}
+	examples := map[string]*spec3.Example{}
+	for _, queryType := range queryTypes.Items {
+		for idx, example := range queryType.Spec.Examples {
+			q := sdkapi.NewDataQuery(example.SaveModel.Object)
+			q.RefID = "A"
+			for _, dis := range queryType.Spec.Discriminators {
+				_ = q.Set(dis.Field, dis.Value)
+			}
+			if q.MaxDataPoints < 1 {
+				q.MaxDataPoints = 1000
+			}
+			if q.IntervalMS < 1 {
+				q.IntervalMS = 5000 // 5s
+			}
+			examples[fmt.Sprintf("%s-%d", example.Name, idx)] = &spec3.Example{
+				ExampleProps: spec3.ExampleProps{
+					Summary:     example.Name,
+					Description: example.Description,
+					Value: sdkapi.DataQueryRequest{
+						TimeRange: tr,
+						Queries:   []sdkapi.DataQuery{q},
+					},
+				},
+			}
+		}
+	}
+	return examples
 }

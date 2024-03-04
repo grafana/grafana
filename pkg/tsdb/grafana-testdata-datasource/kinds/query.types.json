@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1709262331716",
+        "resourceVersion": "1709594645494",
         "creationTimestamp": "2024-03-01T02:53:35Z"
       },
       "spec": {
@@ -277,7 +277,27 @@
           },
           "type": "object"
         },
-        "examples": []
+        "examples": [
+          {
+            "name": "simple random walk",
+            "saveModel": {
+              "scenarioId": "random_walk"
+            }
+          },
+          {
+            "name": "pulse wave example",
+            "saveModel": {
+              "pulseWave": {
+                "offCount": 20,
+                "offValue": 1.23,
+                "onCount": 10,
+                "onValue": 4.56,
+                "timeStep": 1000
+              },
+              "scenarioId": "predictable_pulse"
+            }
+          }
+        ]
       }
     }
   ]

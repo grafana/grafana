@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
+
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
@@ -57,7 +59,7 @@ func TestExemplarResponses(t *testing.T) {
 	}
 }
 
-func goldenScenario(name, queryFileName, responseFileName, goldenFileName string) func(t *testing.T) {
+func goldenScenario(_, queryFileName, responseFileName, goldenFileName string) func(t *testing.T) {
 	return func(t *testing.T) {
 		query, err := loadStoredQuery(queryFileName)
 		require.NoError(t, err)
@@ -113,8 +115,8 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 			Expr:         sq.Expr,
 			LegendFormat: sq.LegendFormat,
 		},
-		CommonQueryProperties: models.CommonQueryProperties{
-			IntervalMs: sq.Step * 1000,
+		CommonQueryProperties: sdkapi.CommonQueryProperties{
+			IntervalMS: float64(sq.Step * 1000),
 		},
 		Interval: fmt.Sprintf("%ds", sq.Step),
 	}
