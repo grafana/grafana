@@ -84,10 +84,11 @@ function angularHtmlImport() {
     name: 'transform-angular-html',
     async transform(src, id) {
       if (htmlComponentFile.test(id)) {
-        const idParts = id.split('/public/');
-        const path = idParts[idParts.length - 1];
+        const cleanId = id.replace(/\?inline$/, '');
+        const idParts = cleanId.split('/public/');
+        const path = `public/${idParts[idParts.length - 1]}`;
         const html = JSON.stringify(src);
-        const result = `const path = 'public/${path}';
+        const result = `const path = '${path}';
 const htmlTemplate = ${html};
 angular.module('ng').run(['$templateCache', c => { c.put(path, htmlTemplate) }]); export default path;`;
         return { code: result, map: null };
