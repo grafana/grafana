@@ -71,7 +71,7 @@
           "type": "color"
         },
         "divider": {
-          "value": "{color.border.ui.weak}",
+          "value": "{color.border.ui.medium}",
           "type": "color"
         }
       },
