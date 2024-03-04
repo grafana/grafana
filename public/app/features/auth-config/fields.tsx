@@ -128,6 +128,7 @@ export const sectionFields: Section = {
       name: 'Extra security measures',
       id: 'extra',
       fields: [
+        'validateHd',
         'allowedDomains',
         'allowedGroups',
         'usePkce',
@@ -590,6 +591,12 @@ export function fieldMap(provider: string): Record<string, FieldData> {
               message: 'Team Ids must be numbers.',
             }
           : undefined,
+    },
+    validateHd: {
+      label: 'Validate hosted domain',
+      description:
+        'If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the Allowed Domains list specified by the user.',
+      type: 'checkbox',
     },
   };
 }
