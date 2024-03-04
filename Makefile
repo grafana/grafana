@@ -340,7 +340,8 @@ help: ## Display this help.
 build-tmdc-docker: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container"
 	tar -ch . | \
-	docker buildx build --output type=docker \
+	docker buildx build - \
+	--output type=docker \
 	--platform $(PLATFORM) \
 	--build-arg BINGO=false \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
