@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"regexp"
 	"time"
@@ -156,6 +157,13 @@ func extractURLInfo(dashboardURL string) (string, string) {
 }
 
 func (hs *HTTPServer) renderDashboard(ctx context.Context, renderPath string) (string, error) {
+	params := url.Values{
+		"fullPageImage": {"true"},
+		"kiosk":         {"true"},
+	}
+
+	renderPath = fmt.Sprintf("%s&%s", renderPath, params.Encode())
+
 	result, err := hs.RenderService.Render(ctx, rendering.RenderPNG, rendering.Opts{
 		TimeoutOpts: rendering.TimeoutOpts{
 			Timeout: time.Duration(60) * time.Second,
