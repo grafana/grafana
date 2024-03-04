@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/intervalv2"
@@ -17,6 +19,58 @@ var (
 	now                = time.Now()
 	intervalCalculator = intervalv2.NewCalculator()
 )
+
+func TestQueryTypeDefinitions(t *testing.T) {
+	builder, err := schemabuilder.NewSchemaBuilder(
+		schemabuilder.BuilderOptions{
+			PluginID: []string{"prometheus"},
+			ScanCode: []schemabuilder.CodePaths{{
+				BasePackage: "github.com/grafana/grafana/pkg/tsdb/prometheus/models",
+				CodePath:    "./",
+			}},
+			Enums: []reflect.Type{
+				reflect.TypeOf(models.PromQueryFormatTimeSeries), // pick an example value (not the root)
+				reflect.TypeOf(models.QueryEditorModeCode),       // pick an example value (not the root)
+			},
+		})
+	require.NoError(t, err)
+	err = builder.AddQueries(
+		schemabuilder.QueryTypeInfo{
+			Name:   "default",
+			GoType: reflect.TypeOf(&models.PrometheusQueryProperties{}),
+			Examples: []sdkapi.QueryExample{
+				{
+					Name: "example timeseries",
+					SaveModel: sdkapi.AsUnstructured(models.PrometheusQueryProperties{
+						Format: models.PromQueryFormatTimeSeries,
+						Expr:   "???",
+					}),
+				},
+				{
+					Name: "example table",
+					SaveModel: sdkapi.AsUnstructured(models.PrometheusQueryProperties{
+						Format: models.PromQueryFormatTable,
+						Expr:   "something",
+					}),
+				},
+			},
+		},
+	)
+
+	require.NoError(t, err)
+	builder.UpdateQueryDefinition(t, "./")
+
+	// qt, err := NewQueryHandler()
+	// require.NoError(t, err)
+	// s, err := schemaex.GetQuerySchema(qt.QueryTypeDefinitionList())
+	// require.NoError(t, err)
+
+	// out, err := json.MarshalIndent(s, "", "  ")
+	// require.NoError(t, err)
+
+	// err = os.WriteFile("dataquery.spec.json", out, 0644)
+	// require.NoError(t, err, "error writing file")
+}
 
 func TestParse(t *testing.T) {
 	t.Run("parsing query from unified alerting", func(t *testing.T) {
