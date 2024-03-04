@@ -68,7 +68,7 @@ type ModalWrapperProps = {
   onDismiss: () => void;
 };
 
-export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>) => {
+export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>, context?: unknown) => {
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
     const {
       error,
@@ -92,7 +92,7 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
 
     return (
       <PluginContextProvider meta={pluginMeta}>
-        <Component {...props} />
+        <Component {...props} context={context} />
       </PluginContextProvider>
     );
   };

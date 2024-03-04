@@ -102,7 +102,7 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
 
           title: extensionConfig.title,
           description: extensionConfig.description,
-          component: wrapWithPluginContext(pluginId, extensionConfig.component),
+          component: wrapWithPluginContext(pluginId, extensionConfig.component, frozenContext),
         };
 
         extensions.push(extension);
