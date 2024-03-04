@@ -14,6 +14,7 @@ import {
   sceneGraph,
   MultiValueVariable,
   LocalValueVariable,
+  CustomVariable,
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
@@ -84,11 +85,15 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
       return;
     }
 
-    const variable = sceneGraph.lookupVariable(this.state.variableName, this);
-    if (!variable) {
-      console.error('SceneGridItemRepeater: Variable not found');
-      return;
-    }
+    const variable =
+      sceneGraph.lookupVariable(this.state.variableName, this) ??
+      new CustomVariable({
+        name: '_____default_sys_repeat_var_____',
+        options: [],
+        value: '',
+        text: '',
+        query: 'A',
+      });
 
     if (!(variable instanceof MultiValueVariable)) {
       console.error('PanelRepeaterGridItem: Variable is not a MultiValueVariable');

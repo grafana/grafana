@@ -98,7 +98,7 @@ describe('PanelRepeaterGridItem', () => {
     expect(repeater.state.itemHeight).toBe(5);
   });
 
-  it('When updating variable should update repeats', async () => {
+  it('Should update repeats when updating variable', async () => {
     const { scene, repeater, variable } = buildPanelRepeaterScene({ variableQueryTime: 0 });
 
     activateFullSceneTree(scene);
@@ -106,5 +106,14 @@ describe('PanelRepeaterGridItem', () => {
     variable.changeValueTo(['1', '3'], ['A', 'C']);
 
     expect(repeater.state.repeatedPanels?.length).toBe(2);
+  });
+
+  it('Should fall back to default variable if specified variable cannot be found', () => {
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0 });
+    scene.setState({ $variables: undefined });
+    activateFullSceneTree(scene);
+    expect(repeater.state.repeatedPanels?.[0].state.$variables?.state.variables[0].state.name).toBe(
+      '_____default_sys_repeat_var_____'
+    );
   });
 });
