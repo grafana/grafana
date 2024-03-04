@@ -231,11 +231,11 @@ If you want to show the number of rows in the dataset instead of the number of v
 [Time series to table transformation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
 [Time series to table transformation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
 
-[Time series panel]: "docs/grafana/" --> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series/
-[Time series panel]: "docs/grafana-cloud/" --> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series/
+[Time series panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series"
+[Time series panel]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series"
 
-[color scheme]: "docs/grafana/" --> docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme
-[color scheme]: "docs/grafana-cloud" -> docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme
+[color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+[color scheme]: "/docs/grafana-cloud -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#color-scheme"
 
 [configuration file]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
 [configuration file]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
