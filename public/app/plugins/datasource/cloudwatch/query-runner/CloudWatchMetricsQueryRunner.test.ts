@@ -22,7 +22,7 @@ import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery, DataQueryErr
 describe('CloudWatchMetricsQueryRunner', () => {
   describe('performTimeSeriesQuery', () => {
     it('should return the same length of data as result', async () => {
-      const { runner, timeRange, request } = setupMockedMetricsQueryRunner({
+      const { runner, timeRange, request, queryMock } = setupMockedMetricsQueryRunner({
         data: {
           results: {
             a: { refId: 'a', series: [{ target: 'cpu', datapoints: [[1, 1]] }] },
@@ -37,7 +37,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
           targets: [validMetricSearchCodeQuery, validMetricSearchCodeQuery],
           range: timeRange,
         },
-        timeRange
+        queryMock
       );
 
       await expect(observable).toEmitValuesWith((received) => {
@@ -47,7 +47,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
     });
 
     it('sets fields.config.interval based on period', async () => {
-      const { runner, timeRange, request } = setupMockedMetricsQueryRunner({
+      const { runner, timeRange, request, queryMock } = setupMockedMetricsQueryRunner({
         data: {
           results: {
             a: {
@@ -68,7 +68,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
           targets: [validMetricSearchCodeQuery, validMetricSearchCodeQuery],
           range: timeRange,
         },
-        timeRange
+        queryMock
       );
 
       await expect(observable).toEmitValuesWith((received) => {
@@ -124,7 +124,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
       it('should generate the correct query', async () => {
         const { runner, queryMock, request } = setupMockedMetricsQueryRunner({ data });
 
-        await expect(runner.handleMetricQueries(queries, request)).toEmitValuesWith(() => {
+        await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith(() => {
           expect(queryMock.mock.calls[0][0].targets).toMatchObject(
             expect.arrayContaining([
               expect.objectContaining({
@@ -163,15 +163,15 @@ describe('CloudWatchMetricsQueryRunner', () => {
           variables: [periodIntervalVariable],
         });
 
-        await expect(runner.handleMetricQueries(queries, request)).toEmitValuesWith(() => {
+        await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith(() => {
           expect(queryMock.mock.calls[0][0].targets[0].period).toEqual('600');
         });
       });
 
       it('should return series list', async () => {
-        const { runner, request } = setupMockedMetricsQueryRunner({ data });
+        const { runner, request, queryMock } = setupMockedMetricsQueryRunner({ data });
 
-        await expect(runner.handleMetricQueries(queries, request)).toEmitValuesWith((received) => {
+        await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith((received) => {
           const result = received[0];
           expect(getFrameDisplayName(result.data[0])).toBe(
             data.results.A.series?.length && data.results.A.series[0].target
@@ -264,10 +264,10 @@ describe('CloudWatchMetricsQueryRunner', () => {
         });
 
         it('should display one alert error message per region+datasource combination', async () => {
-          const { runner, request } = setupMockedMetricsQueryRunner({ errorResponse: backendErrorResponse });
+          const { runner, request, queryMock } = setupMockedMetricsQueryRunner({ errorResponse: backendErrorResponse });
           const memoizedDebounceSpy = jest.spyOn(runner, 'debouncedAlert');
 
-          await expect(runner.handleMetricQueries(queries, request)).toEmitValuesWith(() => {
+          await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith(() => {
             expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'us-east-1');
             expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'us-east-2');
             expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'eu-north-1');
@@ -323,9 +323,9 @@ describe('CloudWatchMetricsQueryRunner', () => {
     };
 
     it('should return series list', async () => {
-      const { runner, request } = setupMockedMetricsQueryRunner({ data });
+      const { runner, request, queryMock } = setupMockedMetricsQueryRunner({ data });
 
-      await expect(runner.handleMetricQueries(queries, request)).toEmitValuesWith((received) => {
+      await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith((received) => {
         const result = received[0];
         expect(getFrameDisplayName(result.data[0])).toBe(
           data.results.A.series?.length && data.results.A.series[0].target
@@ -379,7 +379,8 @@ describe('CloudWatchMetricsQueryRunner', () => {
             sqlExpression: 'SELECT SUM($metric) FROM "$namespace" GROUP BY ${labels:raw} LIMIT $limit',
           },
         ],
-        request
+        request,
+        queryMock
       );
       expect(queryMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -477,7 +478,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
             period: '300s',
           },
         ];
-        await expect(runner.handleMetricQueries(queries, request)).toEmitValuesWith(() => {
+        await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith(() => {
           expect(queryMock.mock.calls[0][0].targets[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
         });
       });
@@ -505,13 +506,17 @@ describe('CloudWatchMetricsQueryRunner', () => {
         ];
 
         await expect(
-          runner.handleMetricQueries(queries, {
-            ...request,
-            scopedVars: {
-              var1: { value: 'var1-foo', text: '' },
-              var2: { value: 'var2-foo', text: '' },
+          runner.handleMetricQueries(
+            queries,
+            {
+              ...request,
+              scopedVars: {
+                var1: { value: 'var1-foo', text: '' },
+                var2: { value: 'var2-foo', text: '' },
+              },
             },
-          })
+            queryMock
+          )
         ).toEmitValuesWith(() => {
           expect(queryMock.mock.calls[0][0].targets[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
           expect(queryMock.mock.calls[0][0].targets[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
@@ -541,7 +546,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
           },
         ];
 
-        await expect(runner.handleMetricQueries(queries, request)).toEmitValuesWith(() => {
+        await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith(() => {
           expect(queryMock.mock.calls[0][0].targets[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
           expect(queryMock.mock.calls[0][0].targets[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
           expect(queryMock.mock.calls[0][0].targets[0].dimensions['dim4']).toStrictEqual(['var4-foo', 'var4-baz']);
@@ -571,12 +576,16 @@ describe('CloudWatchMetricsQueryRunner', () => {
         ];
 
         await expect(
-          runner.handleMetricQueries(queries, {
-            ...request,
-            scopedVars: {
-              var1: { value: 'var1-foo', text: '' },
+          runner.handleMetricQueries(
+            queries,
+            {
+              ...request,
+              scopedVars: {
+                var1: { value: 'var1-foo', text: '' },
+              },
             },
-          })
+            queryMock
+          )
         ).toEmitValuesWith(() => {
           expect(queryMock.mock.calls[0][0].targets[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
           expect(queryMock.mock.calls[0][0].targets[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
@@ -618,11 +627,15 @@ describe('CloudWatchMetricsQueryRunner', () => {
     ];
     test.each(testTable)('should use the right time zone offset', (ianaTimezone, expectedOffset) => {
       const { runner, queryMock, request } = setupMockedMetricsQueryRunner();
-      runner.handleMetricQueries([testQuery], {
-        ...request,
-        range: { ...request.range, from: dateTime(), to: dateTime() },
-        timezone: ianaTimezone,
-      });
+      runner.handleMetricQueries(
+        [testQuery],
+        {
+          ...request,
+          range: { ...request.range, from: dateTime(), to: dateTime() },
+          timezone: ianaTimezone,
+        },
+        queryMock
+      );
 
       expect(queryMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -639,7 +652,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
   describe('debouncedCustomAlert', () => {
     const debouncedAlert = jest.fn();
     beforeEach(() => {
-      const { runner, request } = setupMockedMetricsQueryRunner({
+      const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
         variables: [
           { ...namespaceVariable, multi: true },
           { ...metricVariable, multi: true },
@@ -666,7 +679,8 @@ describe('CloudWatchMetricsQueryRunner', () => {
             metricEditorMode: MetricEditorMode.Code,
           },
         ],
-        request
+        request,
+        queryMock
       );
     });
     it('should show debounced alert for namespace and metric name', async () => {
@@ -848,7 +862,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
     });
 
     it('should query for the datasource region if empty or "default"', async () => {
-      const { runner, instanceSettings, request } = setupMockedMetricsQueryRunner();
+      const { runner, instanceSettings, request, queryMock } = setupMockedMetricsQueryRunner();
       const performTimeSeriesQueryMock = jest
         .spyOn(runner, 'performTimeSeriesQuery')
         .mockReturnValue(of({ data: [], error: undefined }));
@@ -871,7 +885,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         },
       ];
 
-      await expect(runner.handleMetricQueries(queries, request)).toEmitValuesWith(() => {
+      await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith(() => {
         expect(performTimeSeriesQueryMock.mock.calls[0][0].targets[0].region).toBe(
           instanceSettings.jsonData.defaultRegion
         );

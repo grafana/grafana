@@ -11,7 +11,6 @@ import {
   FieldType,
   rangeUtil,
   ScopedVars,
-  TimeRange,
 } from '@grafana/data';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -45,17 +44,14 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
     AppNotificationTimeout.Error
   );
 
-  constructor(
-    instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    templateSrv: TemplateSrv,
-    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
-  ) {
-    super(instanceSettings, templateSrv, queryFn);
+  constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
+    super(instanceSettings, templateSrv);
   }
 
   handleMetricQueries = (
     metricQueries: CloudWatchMetricsQuery[],
-    options: DataQueryRequest<CloudWatchQuery>
+    options: DataQueryRequest<CloudWatchQuery>,
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
   ): Observable<DataQueryResponse> => {
     const timezoneUTCOffset = dateTimeFormat(Date.now(), {
       timeZone: options.timezone,
@@ -86,7 +82,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
       targets: validMetricsQueries,
     };
 
-    return this.performTimeSeriesQuery(request, options.range);
+    return this.performTimeSeriesQuery(request, queryFn);
   };
 
   interpolateMetricsQueryVariables(
@@ -109,9 +105,9 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
 
   performTimeSeriesQuery(
     request: DataQueryRequest<CloudWatchQuery>,
-    { from, to }: TimeRange
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
   ): Observable<DataQueryResponse> {
-    return this.query(request).pipe(
+    return queryFn(request).pipe(
       map((res) => {
         const dataframes: DataFrame[] = res.data;
         if (!dataframes || dataframes.length <= 0) {
