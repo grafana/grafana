@@ -48,22 +48,19 @@ type AuthorizationResult struct {
 }
 
 const (
-	AuthorizePath = "/api/v1/authorize"
-	ContentType   = "application/json"
+	AuthorizePath      = "/api/v1/authorize"
+	ContentType        = "application/json"
+	DataosAdminTagsKey = "DATAOS_ADMIN_ACCESS_TAGS"
+	HeimdallUseUnsafe  = "HEIMDALL_USE_UNSAFE"
+	HeimdallBaseUrlKey = "HEIMDALL_BASE_URL"
 )
-
-type Config struct {
-	DataosAdminTagsKey string `env:"DATAOS_ADMIN_ACCESS_TAGS"`
-	HeimdallUseUnsafe  string `env:"HEIMDALL_USE_UNSAFE" envDefault:"true"`
-	HeimdallBaseUrlKey string `env:"HEIMDALL_BASE_URL"`
-}
 
 // Authorize sends a POST request to the specified authorization URL
 // with the provided authorization request, using the given HTTP client.
 // It returns the authorization response and any encountered error.
 func Authorize(authorizeUrl string, authz AuthorizationRequest) (*AuthorizationResponse, error) {
 
-	myClient := client(&Config{})
+	myClient := client()
 
 	req, err := json.Marshal(authz)
 	if err != nil {
@@ -111,18 +108,18 @@ func Authorize(authorizeUrl string, authz AuthorizationRequest) (*AuthorizationR
 // It validates the user's token against Heimdall's authorization service
 // and updates the provided BasicUserInfo with appropriate role and admin status.
 // It returns an error if authorization fails or encounters any issues.
-func AuthorizeUser(token string, userInfo *BasicUserInfo, config *Config) (*BasicUserInfo, error) {
+func AuthorizeUser(token string, userInfo *BasicUserInfo) (*BasicUserInfo, error) {
 	logger.Info("calling heimdall for authorization...")
 
-	heimdallBaseUrl := config.HeimdallBaseUrlKey
+	heimdallBaseUrl := os.Getenv(HeimdallBaseUrlKey)
 	if len(heimdallBaseUrl) <= 0 {
-		logger.Warn(fmt.Sprintf("environment variable %s not configured", config.HeimdallBaseUrlKey))
-		return nil, errors.New(fmt.Sprintf("environment variable %s not configured", config.HeimdallBaseUrlKey))
+		logger.Warn(fmt.Sprintf("environment variable %s not configured", HeimdallBaseUrlKey))
+		return nil, errors.New(fmt.Sprintf("environment variable %s not configured", HeimdallBaseUrlKey))
 	}
-	adminTag := strings.ReplaceAll(os.Getenv(config.DataosAdminTagsKey), " ", "")
+	adminTag := strings.ReplaceAll(os.Getenv(DataosAdminTagsKey), " ", "")
 	if len(adminTag) <= 0 {
-		logger.Warn(fmt.Sprintf("environment variable %s not configured", config.DataosAdminTagsKey))
-		return nil, errors.New(fmt.Sprintf("environment variable %s not configured", config.DataosAdminTagsKey))
+		logger.Warn(fmt.Sprintf("environment variable %s not configured", DataosAdminTagsKey))
+		return nil, errors.New(fmt.Sprintf("environment variable %s not configured", DataosAdminTagsKey))
 	}
 	adminTags := strings.Split(adminTag, ",")
 	if len(adminTags) < 1 {
@@ -178,19 +175,19 @@ func findCommonTag(userTags, adminTags []string) bool {
 }
 
 // client configures an HTTP client with TLS verification disabled.
-func client(config *Config) *http.Client {
-	if config.HeimdallUseUnsafe == "true" {
+func client() *http.Client {
+	if os.Getenv(HeimdallUseUnsafe) == "true" {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 		return &http.Client{Transport: tr}
-	} else if config.HeimdallUseUnsafe == "false" {
+	} else if os.Getenv(HeimdallUseUnsafe) == "false" {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
 		}
 		return &http.Client{Transport: tr}
 	} else {
-		logger.Warn("Value of HEIMDALL_USE_UNSAFE is neither true nor false")
+		fmt.Println("Value of HEIMDALL_USE_UNSAFE is neither true nor false")
 		return nil
 	}
 }
