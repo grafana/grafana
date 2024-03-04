@@ -585,6 +585,10 @@ export function prepConfig(opts: PrepConfigOpts) {
 
       return hRect && seriesIdx === hRect.sidx ? hRect.didx : null;
     },
+    focus: {
+      prox: 1e3,
+      dist: (u, seriesIdx) => (hRect?.sidx === seriesIdx ? 0 : Infinity),
+    },
     points: {
       fill: 'rgba(255,255,255, 0.3)',
       bbox: (u, seriesIdx) => {
