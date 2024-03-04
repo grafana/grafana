@@ -629,6 +629,50 @@ We can generate a matrix using the values of 'Server Status' as column names, th
 
 Use this transformation to construct a matrix by specifying fields from your query results. The matrix output reflects the relationships between the unique values in these fields. This helps you present complex relationships in a clear and structured matrix format.
 
+### Group to nested table
+
+Use this transformation to group the data by a specified field (column) value and process calculations on each group. Records are generated that share the same grouped field value, to be displayed in a nested table.
+
+To calculate a statistic for a field, click the selection box next to it and select the **Calculate** option:
+
+{{< figure src="/static/img/docs/transformations/nested-table-select-calculation.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing the Group and Calculate options for the transformation." >}}
+
+Once **Calculate** has been selected, another selection box will appear next to the respective field which will allow statistics to be selected:
+
+{{< figure src="/static/img/docs/transformations/nested-table-select-stat.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing available statistic calculations once the calculate option for the field has been selected." >}}
+
+For information about available calculations, refer to [Calculation types][].
+
+Here's an example of original data:
+
+| Time                | Server ID | CPU Temperature | Server Status |
+| ------------------- | --------- | --------------- | ------------- |
+| 2020-07-07 11:34:20 | server 1  | 80              | Shutdown      |
+| 2020-07-07 11:34:20 | server 3  | 62              | OK            |
+| 2020-07-07 10:32:20 | server 2  | 90              | Overload      |
+| 2020-07-07 10:31:22 | server 3  | 55              | OK            |
+| 2020-07-07 09:30:57 | server 3  | 62              | Rebooting     |
+| 2020-07-07 09:30:05 | server 2  | 88              | OK            |
+| 2020-07-07 09:28:06 | server 1  | 80              | OK            |
+| 2020-07-07 09:25:05 | server 2  | 88              | OK            |
+| 2020-07-07 09:23:07 | server 1  | 86              | OK            |
+
+This transformation has two steps. First, specify one or more fields by which to group the data. This groups all the same values of those fields together, as if you sorted them. For instance, if you group by the Server ID field, Grafana groups the data this way:
+
+| Server ID |                                                                                                                                                                                                                                                                                                     |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| server 1  | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>80</td><td>Shutdown</td></tr><tr><td>2020-07-07 09:28:06</td><td>80</td><td>OK</td></tr><tr><td>2020-07-07 09:23:07</td><td>86</td><td>OK</td></tr></tbody></table>  |
+| server 2  | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 10:32:20</td><td>90</td><td>Overload</td></tr><tr><td>2020-07-07 09:30:05</td><td>88</td><td>OK</td></tr><tr><td>2020-07-07 09:25:05</td><td>88</td><td>OK</td></tr></tbody></table>  |
+| server 3  | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>62</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>55</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>62</td><td>Rebooting</td></tr></tbody></table> |
+
+After choosing the field by which you want to group your data, you can add various calculations on the other fields and apply the calculation to each group of rows. For instance, you might want to calculate the average CPU temperature for each of those servers. To do so, add the **mean calculation** applied on the CPU Temperature field to get the following result:
+
+| Server ID | CPU Temperatute (mean) |                                                                                                                                                                                                                                            |
+| --------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| server 1  | 82                     | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>Shutdown</td></tr><tr><td>2020-07-07 09:28:06</td><td>OK</td></tr><tr><td>2020-07-07 09:23:07</td><td>OK</td></tr></tbody></table>  |
+| server 2  | 88.6                   | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 10:32:20</td><td>Overload</td></tr><tr><td>2020-07-07 09:30:05</td><td>OK</td></tr><tr><td>2020-07-07 09:25:05</td><td>OK</td></tr></tbody></table>  |
+| server 3  | 59.6                   | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>Rebooting</td></tr></tbody></table> |
+
 ### Create heatmap
 
 Use this transformation to prepare histogram data for visualizing trends over time. Similar to the heatmap visualization, this transformation converts histogram metrics into temporal buckets.
