@@ -53,6 +53,8 @@ export type SSOProviderSettingsBase = {
   defineAllowedTeamsIds?: boolean;
   configureTLS?: boolean;
   tlsSkipVerifyInsecure?: boolean;
+  // For Azure AD
+  forceUseGraphApi?: boolean;
 };
 
 // SSO data received from the API and sent to it

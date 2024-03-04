@@ -15,7 +15,7 @@ type OAuthStrategy struct {
 	settingsByProvider map[string]map[string]any
 }
 
-var extraKeysByProvider = map[string][]string{
+var extraKeysByProvider = map[string]map[string]connectors.ExtraKeyInfo{
 	social.AzureADProviderName:      connectors.ExtraAzureADSettingKeys,
 	social.GenericOAuthProviderName: connectors.ExtraGenericOAuthSettingKeys,
 	social.GitHubProviderName:       connectors.ExtraGithubSettingKeys,
@@ -104,9 +104,18 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"signout_redirect_url":       section.Key("signout_redirect_url").Value(),
 	}
 
-	extraFields := extraKeysByProvider[provider]
-	for _, key := range extraFields {
-		result[key] = section.Key(key).Value()
+	extraKeys := extraKeysByProvider[provider]
+	for key, keyInfo := range extraKeys {
+		switch keyInfo.Type {
+		case connectors.Bool:
+			result[key] = section.Key(key).MustBool(keyInfo.DefaultValue.(bool))
+		default:
+			if _, ok := keyInfo.DefaultValue.(string); !ok {
+				result[key] = section.Key(key).Value()
+			} else {
+				result[key] = section.Key(key).MustString(keyInfo.DefaultValue.(string))
+			}
+		}
 	}
 
 	return result

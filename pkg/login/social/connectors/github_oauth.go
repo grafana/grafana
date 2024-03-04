@@ -24,7 +24,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ExtraGithubSettingKeys = []string{allowedOrganizationsKey, teamIdsKey}
+var ExtraGithubSettingKeys = map[string]ExtraKeyInfo{
+	allowedOrganizationsKey: {Type: String},
+	teamIdsKey:              {Type: String},
+}
 
 var _ social.SocialConnector = (*SocialGithub)(nil)
 var _ ssosettings.Reloadable = (*SocialGithub)(nil)

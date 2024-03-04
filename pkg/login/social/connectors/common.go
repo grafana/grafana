@@ -18,6 +18,18 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type ExtraFieldType int
+
+const (
+	String ExtraFieldType = iota
+	Bool
+)
+
+type ExtraKeyInfo struct {
+	Type         ExtraFieldType
+	DefaultValue any
+}
+
 const (
 	// consider moving this to OAuthInfo
 	teamIdsKey = "team_ids"
