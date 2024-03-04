@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef } from 'react';
 
 import { config } from '@grafana/runtime';
@@ -32,7 +32,8 @@ function NativeScrollbar({ children, scrollRefCallback, scrollTop }: FlaggedScro
   }, [scrollTop]);
 
   return (
-    <div ref={ref} className={styles.nativeScrollbars}>
+    // Set the .scrollbar-view class to help e2e tests find this, like in CustomScrollbar
+    <div ref={ref} className={cx(styles.nativeScrollbars, 'scrollbar-view')}>
       {children}
     </div>
   );
