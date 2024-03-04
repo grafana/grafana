@@ -77,7 +77,7 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 					{
 					  "responseKind": {
 						"group": "",
-						"kind": "DashboardVersionsInfo",
+						"kind": "DashboardVersionList",
 						"version": ""
 					  },
 					  "subresource": "versions",
