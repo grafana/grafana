@@ -9,7 +9,7 @@ import {
   urlUtil,
   PluginExtensionFunction,
 } from '@grafana/data';
-import { GetPluginExtensions, reportInteraction } from '@grafana/runtime';
+import { GetPluginExtensions, GetPluginCapability, reportInteraction } from '@grafana/runtime';
 
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 import type { PluginExtensionRegistry } from './types';
@@ -44,13 +44,6 @@ type GetExtensions = ({
   registry: PluginExtensionRegistry;
 }) => { extensions: PluginExtension[] };
 
-type GetCapability = (
-  id: string,
-  options?: {
-    timeout?: number;
-  }
-) => Promise<PluginExtensionFunction | null>;
-
 export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginExtensionsRegistry): GetPluginExtensions {
   let registry: PluginExtensionRegistry = {};
 
@@ -63,7 +56,9 @@ export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginEx
   return (options) => getPluginExtensions({ ...options, registry });
 }
 
-export const createPluginCapabilityGetter = (extensionRegistry: ReactivePluginExtensionsRegistry): GetCapability => {
+export const createPluginCapabilityGetter = (
+  extensionRegistry: ReactivePluginExtensionsRegistry
+): GetPluginCapability => {
   return (id, options = {}) =>
     new Promise((resolve, reject) => {
       const { timeout } = options;
@@ -84,14 +79,16 @@ export const createPluginCapabilityGetter = (extensionRegistry: ReactivePluginEx
         const registryItem = Array.isArray(registryItems) ? registryItems[0] : null;
 
         if (registryItem && isPluginExtensionFunctionConfig(registryItem.config)) {
-          resolve({
+          const capability = {
             id: generateExtensionId(pluginId, registryItem.config),
             type: PluginExtensionTypes.function,
             pluginId: pluginId,
             function: registryItem.config.function,
             title: registryItem.config.title,
             description: registryItem.config.description,
-          });
+          };
+
+          resolve(capability.function);
 
           if (timer) {
             clearTimeout(timer);

@@ -1,11 +1,9 @@
-import type { PluginExtensionFunction } from '@grafana/data';
-
 export type GetPluginCapability<T = Function> = (
   id: string,
   options?: {
     timeout?: number;
   }
-) => Promise<PluginExtensionFunction<T> | null>;
+) => Promise<T | null>;
 
 let singleton: GetPluginCapability | undefined;
 
