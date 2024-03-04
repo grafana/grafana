@@ -66,6 +66,23 @@ describe('DashboardScene', () => {
   });
 
   describe('Editing and discarding', () => {
+    describe('Given scene in view mode', () => {
+      it('Should set isEditing to false', () => {
+        const scene = buildTestScene();
+        scene.activate();
+
+        expect(scene.state.isEditing).toBeFalsy();
+      });
+
+      it('Should not start the detect changes worker', () => {
+        const scene = buildTestScene();
+        scene.activate();
+
+        // @ts-expect-error it is a private property
+        expect(scene._changesWorker).toBeUndefined();
+      });
+    });
+
     describe('Given scene in edit mode', () => {
       let scene: DashboardScene;
       let deactivateScene: () => void;

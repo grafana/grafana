@@ -22,12 +22,11 @@ import { DashboardChangeInfo } from './shared';
 
 export class DashboardSceneChangeTracker {
   private _changeTrackerSub: Unsubscribable | undefined;
-  private _changesWorker: Worker;
+  private _changesWorker?: Worker;
   private _dashboard: DashboardScene;
 
   constructor(dashboard: DashboardScene) {
     this._dashboard = dashboard;
-    this._changesWorker = createWorker();
   }
 
   private onStateChanged({ payload }: SceneObjectStateChangedEvent) {
@@ -95,8 +94,15 @@ export class DashboardSceneChangeTracker {
     }
   }
 
+  private init() {
+    this._changesWorker = createWorker();
+  }
+
   public startTrackingChanges() {
-    this._changesWorker.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
+    if (!this._changesWorker) {
+      this.init();
+    }
+    this._changesWorker!.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
       this.updateIsDirty(e.data);
     };
 
@@ -112,6 +118,6 @@ export class DashboardSceneChangeTracker {
 
   public terminate() {
     this.stopTrackingChanges();
-    this._changesWorker.terminate();
+    this._changesWorker?.terminate();
   }
 }
