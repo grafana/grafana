@@ -65,14 +65,14 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 	q := `UPDATE library_element
 	SET folder_uid = dashboard.uid
 	FROM dashboard
-	WHERE library_element.folder_id = dashboard.folder_id AND library_element.org_id = dashboard.org_id`
+	WHERE library_element.folder_id = dashboard.id AND library_element.org_id = dashboard.org_id`
 
 	if mg.Dialect.DriverName() == migrator.MySQL {
 		q = `UPDATE library_element
 		SET folder_uid = (
 			SELECT dashboard.uid
 			FROM dashboard
-			WHERE library_element.folder_id = dashboard.folder_id AND library_element.org_id = dashboard.org_id
+			WHERE library_element.folder_id = dashboard.id AND library_element.org_id = dashboard.org_id
 		)`
 	}
 
