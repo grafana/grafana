@@ -10,9 +10,9 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
 	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)

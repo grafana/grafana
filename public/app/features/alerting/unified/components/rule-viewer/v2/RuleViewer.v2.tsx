@@ -1,47 +1,36 @@
+import { css } from '@emotion/css';
 import { isEmpty, truncate } from 'lodash';
-import React from 'react';
+import React, { useState } from 'react';
 
-import { AppEvents, NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, Button, Dropdown, LinkButton, Menu, Stack, TabContent, Text, TextLink } from '@grafana/ui';
+import { NavModelItem, UrlQueryValue } from '@grafana/data';
+import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
-import { appEvents } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
+import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../../RuleViewer';
-import { AlertRuleAction, useAlertRuleAbility } from '../../../hooks/useAbilities';
 import { Annotation } from '../../../utils/constants';
-import {
-  createShareLink,
-  isLocalDevEnv,
-  isOpenSourceEdition,
-  makeDashboardLink,
-  makePanelLink,
-  makeRuleBasedSilenceLink,
-} from '../../../utils/misc';
-import * as ruleId from '../../../utils/rule-id';
-import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../../utils/rules';
+import { makeDashboardLink, makePanelLink } from '../../../utils/misc';
+import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule, isRecordingRule } from '../../../utils/rules';
 import { createUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
-import { AlertStateDot } from '../../AlertStateDot';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
-import MoreButton from '../../MoreButton';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
-import { DeclareIncidentMenuItem } from '../../bridges/DeclareIncidentButton';
+import { WithReturnButton } from '../../WithReturnButton';
 import { decodeGrafanaNamespace } from '../../expressions/util';
+import { RedirectToCloneRule } from '../../rules/CloneRule';
+import { FederatedRuleWarning } from '../FederatedRuleWarning';
 import { Details } from '../tabs/Details';
 import { History } from '../tabs/History';
 import { InstancesList } from '../tabs/Instances';
 import { QueryResults } from '../tabs/Query';
 import { Routing } from '../tabs/Routing';
 
+import { useAlertRulePageActions } from './Actions';
 import { useDeleteModal } from './DeleteModal';
-
-type RuleViewerProps = {
-  rule: CombinedRule;
-  identifier: RuleIdentifier;
-};
+import { useAlertRule } from './RuleContext';
+import { RecordingBadge, StateBadge } from './StateBadges';
 
 enum ActiveTab {
   Query = 'query',
@@ -51,140 +40,87 @@ enum ActiveTab {
   Details = 'details',
 }
 
-const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
+const RuleViewer = () => {
+  const { rule } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
+
+  // this will be used to track if we are in the process of cloning a rule
+  // we want to be able to show a modal if the rule has been provisioned explain the limitations
+  // of duplicating provisioned alert rules
+  const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
+
   const [deleteModal, showDeleteModal] = useDeleteModal();
+  const actions = useAlertRulePageActions({
+    handleDuplicateRule: setDuplicateRuleIdentifier,
+    handleDelete: showDeleteModal,
+  });
 
-  const [editSupported, editAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
-  const canEdit = editSupported && editAllowed;
-
-  const [deleteSupported, deleteAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Delete);
-  const canDelete = deleteSupported && deleteAllowed;
-
-  const [duplicateSupported, duplicateAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Duplicate);
-  const canDuplicate = duplicateSupported && duplicateAllowed;
-
-  const [silenceSupported, silenceAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Silence);
-  const canSilence = silenceSupported && silenceAllowed;
-
-  const [exportSupported, exportAllowed] = useAlertRuleAbility(rule, AlertRuleAction.ModifyExport);
-  const canExport = exportSupported && exportAllowed;
-
-  const promRule = rule.promRule;
+  const { annotations, promRule } = rule;
+  const hasError = isErrorHealth(rule.promRule?.health);
 
   const isAlertType = isAlertingRule(promRule);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
-  /**
-   * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
-   * We should show it in development mode
-   */
-  const shouldShowDeclareIncidentButton = !isOpenSourceEdition() || isLocalDevEnv();
-  const shareUrl = createShareLink(rule.namespace.rulesSource, rule);
-
-  const copyShareUrl = () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(shareUrl);
-      appEvents.emit(AppEvents.alertSuccess, ['URL copied to clipboard']);
-    }
-  };
+  const summary = annotations[Annotation.summary];
 
   return (
     <AlertingPageWrapper
       pageNav={pageNav}
       navId="alert-list"
       isLoading={false}
-      renderTitle={(title) => {
-        return <Title name={title} state={isAlertType ? promRule.state : undefined} />;
-      }}
-      actions={[
-        canEdit && <EditButton key="edit-action" identifier={identifier} />,
-        <Dropdown
-          key="more-actions"
-          overlay={
-            <Menu>
-              {canSilence && (
-                <Menu.Item
-                  label="Silence"
-                  icon="bell-slash"
-                  url={makeRuleBasedSilenceLink(identifier.ruleSourceName, rule)}
-                />
-              )}
-              {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />}
-              {canDuplicate && <Menu.Item label="Duplicate" icon="copy" />}
-              <Menu.Divider />
-              <Menu.Item label="Copy link" icon="share-alt" onClick={copyShareUrl} />
-              {canExport && (
-                <Menu.Item
-                  label="Export"
-                  icon="download-alt"
-                  childItems={[
-                    <Menu.Item key="no-modifications" label="Without modifications" icon="file-blank" />,
-                    <Menu.Item key="with-modifications" label="With modifications" icon="file-alt" />,
-                  ]}
-                />
-              )}
-              {canDelete && (
-                <>
-                  <Menu.Divider />
-                  <Menu.Item label="Delete" icon="trash-alt" destructive onClick={() => showDeleteModal(rule)} />
-                </>
-              )}
-            </Menu>
-          }
-        >
-          <MoreButton size="md" />
-        </Dropdown>,
-      ]}
+      renderTitle={(title) => (
+        <Title
+          name={title}
+          state={isAlertType ? promRule.state : undefined}
+          health={rule.promRule?.health}
+          ruleType={rule.promRule?.type}
+        />
+      )}
+      actions={actions}
       info={createMetadata(rule)}
-    >
-      <Stack direction="column" gap={2}>
-        {/* actions */}
-        <Stack direction="column" gap={2}>
+      subTitle={
+        <Stack direction="column">
+          {summary}
           {/* alerts and notifications and stuff */}
-          {isFederatedRule && (
-            <Alert severity="info" title="This rule is part of a federated rule group.">
-              <Stack direction="column">
-                Federated rule groups are currently an experimental feature.
-                <Button fill="text" icon="book">
-                  <a href="https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation">
-                    Read documentation
-                  </a>
-                </Button>
-              </Stack>
+          {isFederatedRule && <FederatedRuleWarning />}
+          {/* indicator for rules in a provisioned group */}
+          {isProvisioned && (
+            <ProvisioningAlert resource={ProvisionedResource.AlertRule} bottomSpacing={0} topSpacing={2} />
+          )}
+          {/* error state */}
+          {hasError && (
+            <Alert title="Something went wrong when evaluating this alert rule" bottomSpacing={0} topSpacing={2}>
+              <pre style={{ marginBottom: 0 }}>
+                <code>{rule.promRule?.lastError ?? 'No error message'}</code>
+              </pre>
             </Alert>
           )}
-          {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
-          {/* tabs and tab content */}
-          <TabContent>
-            {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
-            {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
-            {activeTab === ActiveTab.History && isGrafanaRulerRule(rule.rulerRule) && <History rule={rule.rulerRule} />}
-            {activeTab === ActiveTab.Routing && <Routing />}
-            {activeTab === ActiveTab.Details && <Details rule={rule} />}
-          </TabContent>
         </Stack>
+      }
+    >
+      <Stack direction="column" gap={2}>
+        {/* tabs and tab content */}
+        <TabContent>
+          {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
+          {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
+          {activeTab === ActiveTab.History && isGrafanaRulerRule(rule.rulerRule) && <History rule={rule.rulerRule} />}
+          {activeTab === ActiveTab.Routing && <Routing />}
+          {activeTab === ActiveTab.Details && <Details rule={rule} />}
+        </TabContent>
       </Stack>
+
       {deleteModal}
+      {duplicateRuleIdentifier && (
+        <RedirectToCloneRule
+          redirectTo={true}
+          identifier={duplicateRuleIdentifier}
+          isProvisioned={isProvisioned}
+          onDismiss={() => setDuplicateRuleIdentifier(undefined)}
+        />
+      )}
     </AlertingPageWrapper>
-  );
-};
-
-interface EditButtonProps {
-  identifier: RuleIdentifier;
-}
-
-export const EditButton = ({ identifier }: EditButtonProps) => {
-  const returnTo = location.pathname + location.search;
-  const ruleIdentifier = ruleId.stringifyIdentifier(identifier);
-  const editURL = createUrl(`/alerting/${encodeURIComponent(ruleIdentifier)}/edit`, { returnTo });
-
-  return (
-    <LinkButton variant="secondary" icon="pen" href={editURL}>
-      Edit
-    </LinkButton>
   );
 };
 
@@ -196,8 +132,8 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   const dashboardUID = annotations[Annotation.dashboardUID];
   const panelID = annotations[Annotation.panelID];
 
-  const hasPanel = dashboardUID && panelID;
-  const hasDashboardWithoutPanel = dashboardUID && !panelID;
+  const hasDashboardAndPanel = dashboardUID && panelID;
+  const hasDashboard = dashboardUID;
   const hasLabels = !isEmpty(labels);
 
   const interval = group.interval;
@@ -214,22 +150,32 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
     });
   }
 
-  if (hasPanel) {
+  if (hasDashboardAndPanel) {
     metadata.push({
       label: 'Dashboard and panel',
       value: (
-        <TextLink variant="bodySmall" href={makePanelLink(dashboardUID, panelID)} external>
-          View panel
-        </TextLink>
+        <WithReturnButton
+          title={rule.name}
+          component={
+            <TextLink variant="bodySmall" href={makePanelLink(dashboardUID, panelID)}>
+              View panel
+            </TextLink>
+          }
+        />
       ),
     });
-  } else if (hasDashboardWithoutPanel) {
+  } else if (hasDashboard) {
     metadata.push({
       label: 'Dashboard',
       value: (
-        <TextLink variant="bodySmall" href={makeDashboardLink(dashboardUID)} external>
-          View dashboard
-        </TextLink>
+        <WithReturnButton
+          title={rule.name}
+          component={
+            <TextLink title={rule.name} variant="bodySmall" href={makeDashboardLink(dashboardUID)}>
+              View dashboard
+            </TextLink>
+          }
+        />
       ),
     });
   }
@@ -262,52 +208,28 @@ interface TitleProps {
   name: string;
   // recording rules don't have a state
   state?: PromAlertingRuleState;
+  health?: RuleHealth;
+  ruleType?: PromRuleType;
 }
 
-export const Title = ({ name, state }: TitleProps) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: '100%' }}>
-    <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
-    <Text element="h1" truncate>
-      {name}
-    </Text>
-    {/* recording rules won't have a state */}
-    {state && <StateBadge state={state} />}
-  </div>
-);
-
-interface StateBadgeProps {
-  state: PromAlertingRuleState;
-}
-
-// TODO move to separate component
-const StateBadge = ({ state }: StateBadgeProps) => {
-  let stateLabel: string;
-  let textColor: 'success' | 'error' | 'warning';
-
-  switch (state) {
-    case PromAlertingRuleState.Inactive:
-      textColor = 'success';
-      stateLabel = 'Normal';
-      break;
-    case PromAlertingRuleState.Firing:
-      textColor = 'error';
-      stateLabel = 'Firing';
-      break;
-    case PromAlertingRuleState.Pending:
-      textColor = 'warning';
-      stateLabel = 'Pending';
-      break;
-  }
+export const Title = ({ name, state, health, ruleType }: TitleProps) => {
+  const styles = useStyles2(getStyles);
+  const isRecordingRule = ruleType === PromRuleType.Recording;
 
   return (
-    <Stack direction="row" gap={0.5}>
-      <AlertStateDot size="md" state={state} />
-      <Text variant="bodySmall" color={textColor}>
-        {stateLabel}
+    <div className={styles.title}>
+      <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
+      <Text variant="h1" truncate>
+        {name}
       </Text>
-    </Stack>
+      {/* recording rules won't have a state */}
+      {state && <StateBadge state={state} health={health} />}
+      {isRecordingRule && <RecordingBadge health={health} />}
+    </div>
   );
 };
+
+export const isErrorHealth = (health?: RuleHealth) => health === 'error' || health === 'err';
 
 function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
   const [queryParams, setQueryParams] = useQueryParams();
@@ -337,8 +259,11 @@ function usePageNav(rule: CombinedRule) {
   const isAlertType = isAlertingRule(promRule);
   const numberOfInstance = isAlertType ? (promRule.alerts ?? []).length : undefined;
 
-  const namespaceName = decodeGrafanaNamespace(rule.namespace);
+  const namespaceName = decodeGrafanaNamespace(rule.namespace).name;
   const groupName = rule.group.name;
+
+  const isGrafanaAlertRule = isGrafanaRulerRule(rule.rulerRule) && isAlertType;
+  const isRecordingRuleType = isRecordingRule(rule.promRule);
 
   const pageNav: NavModelItem = {
     ...defaultPageNav,
@@ -359,6 +284,7 @@ function usePageNav(rule: CombinedRule) {
           setActiveTab(ActiveTab.Instances);
         },
         tabCounter: numberOfInstance,
+        hideFromTabs: isRecordingRuleType,
       },
       {
         text: 'History',
@@ -366,6 +292,8 @@ function usePageNav(rule: CombinedRule) {
         onClick: () => {
           setActiveTab(ActiveTab.History);
         },
+        // alert state history is only available for Grafana managed alert rules
+        hideFromTabs: !isGrafanaAlertRule,
       },
       {
         text: 'Details',
@@ -381,6 +309,7 @@ function usePageNav(rule: CombinedRule) {
         ['namespace', namespaceName],
         ['group', groupName],
       ]),
+      // @TODO support nested folders here
       parentItem: {
         text: namespaceName,
         url: createListFilterLink([['namespace', namespaceName]]),
@@ -393,5 +322,14 @@ function usePageNav(rule: CombinedRule) {
     activeTab,
   };
 }
+
+const getStyles = () => ({
+  title: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 0,
+  }),
+});
 
 export default RuleViewer;

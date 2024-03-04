@@ -20,10 +20,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/loki/instrumentation"
-	"github.com/grafana/grafana/pkg/util/converter"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/converter"
 )
 
 type LokiAPI struct {
@@ -205,7 +206,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 			Error:       err,
 			ErrorSource: backend.ErrorSourceFromHTTPStatus(resp.StatusCode),
 		}
-		lp = append(lp, "status", "error", "error", err)
+		lp = append(lp, "status", "error", "error", err, "statusSource", res.ErrorSource)
 		api.log.Error("Error received from Loki", lp...)
 		return &res, nil
 	} else {
@@ -332,7 +333,9 @@ func getSupportingQueryHeaderValue(req *http.Request, supportingQueryType Suppor
 		value = "logsample"
 	case SupportingQueryDataSample:
 		value = "datasample"
-	default: //ignore
+	case SupportingQueryInfiniteScroll:
+		value = "infinitescroll"
+	default: // ignore
 	}
 
 	return value

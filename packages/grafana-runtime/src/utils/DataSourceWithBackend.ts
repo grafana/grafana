@@ -80,6 +80,7 @@ enum PluginRequestHeaders {
   DatasourceUID = 'X-Datasource-Uid', // can be used for routing/ load balancing
   DashboardUID = 'X-Dashboard-Uid', // mainly useful for debugging slow queries
   PanelID = 'X-Panel-Id', // mainly useful for debugging slow queries
+  PanelPluginId = 'X-Panel-Plugin-Id',
   QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query splitting
   FromExpression = 'X-Grafana-From-Expr', // used by datasources to identify expression queries
   SkipQueryCache = 'X-Cache-Skip', // used by datasources to skip the query cache
@@ -225,6 +226,9 @@ class DataSourceWithBackend<
     }
     if (request.panelId) {
       headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
+    }
+    if (request.panelPluginId) {
+      headers[PluginRequestHeaders.PanelPluginId] = `${request.panelPluginId}`;
     }
     if (request.queryGroupId) {
       headers[PluginRequestHeaders.QueryGroupID] = `${request.queryGroupId}`;

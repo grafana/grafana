@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"testing"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -30,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/cmputil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -86,7 +89,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			})
 			t.Run("delete only non-provisioned groups that user is authorized", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
-				provisioningStore := provisioning.NewFakeProvisioningStore()
+				provisioningStore := fakes.NewFakeProvisioningStore()
 
 				authorizedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup("authz_"+util.GenerateShortUID())))
 
@@ -109,7 +112,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			})
 			t.Run("return 400 if all rules user can access are provisioned", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
-				provisioningStore := provisioning.NewFakeProvisioningStore()
+				provisioningStore := fakes.NewFakeProvisioningStore()
 
 				provisionedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(util.GenerateShortUID())))
 				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
@@ -158,7 +161,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			})
 			t.Run("return 400 if group is provisioned", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
-				provisioningStore := provisioning.NewFakeProvisioningStore()
+				provisioningStore := fakes.NewFakeProvisioningStore()
 
 				provisionedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
 				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
@@ -200,7 +203,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			require.NoError(t, json.Unmarshal(response.Body(), result))
 			require.NotNil(t, result)
 			for namespace, groups := range *result {
-				require.Equal(t, models.GetNamespaceKey(folder.ParentUID, folder.Title), namespace)
+				require.Equal(t, folder.Fullpath, namespace)
 				for _, group := range groups {
 				grouploop:
 					for _, actualRule := range group.Rules {
@@ -243,7 +246,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		require.NotNil(t, result)
 		found := false
 		for namespace, groups := range *result {
-			require.Equal(t, models.GetNamespaceKey(folder.ParentUID, folder.Title), namespace)
+			require.Equal(t, folder.Fullpath, namespace)
 			for _, group := range groups {
 				for _, actualRule := range group.Rules {
 					if actualRule.GrafanaManagedAlert.UID == expectedRules[0].UID {
@@ -278,7 +281,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 
 		models.RulesGroup(expectedRules).SortByGroupIndex()
 
-		groups, ok := (*result)[models.GetNamespaceKey(folder.ParentUID, folder.Title)]
+		groups, ok := (*result)[folder.Fullpath]
 		require.True(t, ok)
 		require.Len(t, groups, 1)
 		group := groups[0]
@@ -329,10 +332,10 @@ func TestRouteGetRulesConfig(t *testing.T) {
 				require.NoError(t, json.Unmarshal(response.Body(), result))
 				require.NotNil(t, result)
 
-				require.Contains(t, *result, models.GetNamespaceKey(folder1.ParentUID, folder1.Title))
+				require.Contains(t, *result, folder1.Fullpath)
 				require.NotContains(t, *result, folder2.UID)
 
-				groups := (*result)[models.GetNamespaceKey(folder1.ParentUID, folder1.Title)]
+				groups := (*result)[folder1.Fullpath]
 				require.Len(t, groups, 1)
 				require.Equal(t, group1Key.RuleGroup, groups[0].Name)
 				require.Len(t, groups[0].Rules, len(group1))
@@ -361,7 +364,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 
 		models.RulesGroup(expectedRules).SortByGroupIndex()
 
-		groups, ok := (*result)[models.GetNamespaceKey(folder.ParentUID, folder.Title)]
+		groups, ok := (*result)[folder.Fullpath]
 		require.True(t, ok)
 		require.Len(t, groups, 1)
 		group := groups[0]
@@ -537,7 +540,24 @@ func TestValidateQueries(t *testing.T) {
 				New: models.AlertRuleGen(func(rule *models.AlertRule) {
 					rule.Condition = "Update_New"
 				})(),
-				Diff: nil,
+				Diff: cmputil.DiffReport{
+					cmputil.Diff{
+						Path: "SomeField",
+					},
+				},
+			},
+			{
+				Existing: models.AlertRuleGen(func(rule *models.AlertRule) {
+					rule.Condition = "Update_Index_Existing"
+				})(),
+				New: models.AlertRuleGen(func(rule *models.AlertRule) {
+					rule.Condition = "Update_Index_New"
+				})(),
+				Diff: cmputil.DiffReport{
+					cmputil.Diff{
+						Path: "RuleGroupIndex",
+					},
+				},
 			},
 		},
 		Delete: []*models.AlertRule{
@@ -547,12 +567,13 @@ func TestValidateQueries(t *testing.T) {
 		},
 	}
 
-	t.Run("should validate New and Updated only", func(t *testing.T) {
+	t.Run("should not validate deleted rules or updated rules with ignored fields", func(t *testing.T) {
 		validator := &recordingConditionValidator{}
 		err := validateQueries(context.Background(), &delta, validator, nil)
 		require.NoError(t, err)
+		noValidate := []string{"Deleted", "Update_Index_New"}
 		for _, condition := range validator.recorded {
-			if condition.Condition == "New" || condition.Condition == "Update_New" {
+			if !slices.Contains(noValidate, condition.Condition) {
 				continue
 			}
 			assert.Failf(t, "validated unexpected condition", "condition '%s' was validated but should not", condition.Condition)
@@ -598,13 +619,27 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		xactManager:     store,
 		store:           store,
 		QuotaService:    nil,
-		provenanceStore: provisioning.NewFakeProvisioningStore(),
+		provenanceStore: fakes.NewFakeProvisioningStore(),
 		log:             log.New("test"),
 		cfg: &setting.UnifiedAlertingSettings{
 			BaseInterval: 10 * time.Second,
 		},
-		authz: accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
+		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
+		amConfigStore:  &fakeAMRefresher{},
+		amRefresher:    &fakeAMRefresher{},
+		featureManager: &featuremgmt.FeatureManager{},
 	}
+}
+
+type fakeAMRefresher struct {
+}
+
+func (f *fakeAMRefresher) ApplyConfig(ctx context.Context, orgId int64, dbConfig *models.AlertConfiguration) error {
+	return nil
+}
+
+func (f *fakeAMRefresher) GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {
+	return nil, nil
 }
 
 func createRequestContext(orgID int64, params map[string]string) *contextmodel.ReqContext {

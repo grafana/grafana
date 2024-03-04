@@ -6,6 +6,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import {
   decodeGrafanaNamespace,
+  encodeGrafanaNamespace,
   formatLabels,
   getSeriesLabels,
   getSeriesName,
@@ -58,7 +59,8 @@ describe('decodeGrafanaNamespace', () => {
         },
       ],
     };
-    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe('my_rule_namespace');
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toHaveProperty('name', 'my_rule_namespace');
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toHaveProperty('parents', []);
   });
 
   it('should work for Grafana namespaces in nested folders format', () => {
@@ -74,7 +76,8 @@ describe('decodeGrafanaNamespace', () => {
       ],
     };
 
-    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe('my_rule_namespace');
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toHaveProperty('name', 'my_rule_namespace');
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toHaveProperty('parents', ['parentUID']);
   });
 
   it('should default to name if format is invalid: invalid JSON', () => {
@@ -90,7 +93,8 @@ describe('decodeGrafanaNamespace', () => {
       ],
     };
 
-    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe(`["parentUID"`);
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toHaveProperty('name', `["parentUID"`);
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toHaveProperty('parents', []);
   });
 
   it('should default to name if format is invalid: empty array', () => {
@@ -106,7 +110,8 @@ describe('decodeGrafanaNamespace', () => {
       ],
     };
 
-    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe(`[]`);
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toHaveProperty('name', `[]`);
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toHaveProperty('parents', []);
   });
 
   it('grab folder name if format is long array', () => {
@@ -122,7 +127,8 @@ describe('decodeGrafanaNamespace', () => {
       ],
     };
 
-    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe('another_part');
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toHaveProperty('name', 'another_part');
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toHaveProperty('parents', ['parentUID', 'my_rule_namespace']);
   });
 
   it('should not change output for cloud namespaces', () => {
@@ -138,7 +144,23 @@ describe('decodeGrafanaNamespace', () => {
       ],
     };
 
-    expect(decodeGrafanaNamespace(cloudNamespace)).toBe(`["parentUID","my_rule_namespace"]`);
+    expect(decodeGrafanaNamespace(cloudNamespace)).toHaveProperty('name', `["parentUID","my_rule_namespace"]`);
+    expect(decodeGrafanaNamespace(cloudNamespace)).toHaveProperty('parents', []);
+  });
+});
+
+describe('encodeGrafanaNamespace', () => {
+  it('should encode with parents', () => {
+    const name = 'folder';
+    const parents = ['1', '2', '3'];
+
+    expect(encodeGrafanaNamespace(name, parents)).toBe(`["1","2","3","folder"]`);
+  });
+
+  it('should encode without parents', () => {
+    const name = 'folder';
+
+    expect(encodeGrafanaNamespace(name)).toBe(`["folder"]`);
   });
 });
 

@@ -815,6 +815,15 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "chatid",
 					Required:     true,
 				},
+				{
+					Label:          "Message Thread ID",
+					Element:        ElementTypeInput,
+					InputType:      InputTypeText,
+					Description:    "Integer Telegram Message Thread Identifier",
+					PropertyName:   "message_thread_id",
+					Required:       false,
+					ValidationRule: "-?[0-9]{1,10}",
+				},
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,

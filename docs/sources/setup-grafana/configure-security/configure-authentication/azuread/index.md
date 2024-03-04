@@ -58,7 +58,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 1. Click **Users and Groups**.
 1. Click **Add user/group** to add a user or group to the Grafana roles.
 
-#### Configure application roles for Grafana in the Azure Portal
+### Configure application roles for Grafana in the Azure Portal
 
 This section describes setting up basic application roles for Grafana within the Azure Portal. For more information, see [Add app roles to your application and receive them in the token](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps).
 
@@ -78,7 +78,7 @@ This section describes setting up basic application roles for Grafana within the
 
    1. Click **Apply**.
 
-#### Configure application roles for Grafana in the manifest file
+### Configure application roles for Grafana in the manifest file
 
 If you prefer to configure the application roles for Grafana in the manifest file, complete the following steps:
 
@@ -161,7 +161,60 @@ If the setting is set to `false`, the user is assigned the role of `Admin` of th
 }
 ```
 
-## Enable Azure AD OAuth in Grafana
+## Before you begin
+
+Ensure that you have followed the steps in [Create the Azure AD application](#create-the-azure-ad-application) before you begin.
+
+## Configure Azure AD authentication client using the Grafana UI
+
+{{% admonition type="note" %}}
+Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
+{{% /admonition %}}
+
+As a Grafana Admin, you can configure your Azure AD OAuth2 client from within Grafana using the GitLab UI. To do this, navigate to **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
+
+After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
+
+If you need to reset changes you made in the UI back to the default values, click **Reset**. After you have reset the changes, Grafana will apply the configuration from the Grafana configuration file (if there is any configuration) or the default values.
+
+{{% admonition type="note" %}}
+If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
+{{% /admonition %}}
+
+## Configure Azure AD authentication client using the Terraform provider
+
+{{% admonition type="note" %}}
+Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v2.12.0.
+{{% /admonition %}}
+
+```terraform
+resource "grafana_sso_settings" "azuread_sso_settings" {
+  provider_name = "azuread"
+  oauth2_settings {
+    name                       = "Azure AD"
+    auth_url                   = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize"
+    token_url                  = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token"
+    client_id                  = "APPLICATION_ID"
+    client_secret              = "CLIENT_SECRET"
+    allow_sign_up              = true
+    auto_login                 = false
+    scopes                     = "openid email profile"
+    allowed_organizations      = "TENANT_ID"
+    role_attribute_strict      = false
+    allow_assign_grafana_admin = false
+    skip_org_role_sync         = false
+    use_pkce                   = true
+  }
+}
+```
+
+Refer to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings) for a complete reference on using the `grafana_sso_settings` resource.
+
+## Configure Azure AD authentication client using the Grafana configuration file
+
+Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
+
+### Enable Azure AD OAuth in Grafana
 
 Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}):
 
@@ -340,7 +393,7 @@ Admin consent might be required for this permission.
 Admin consent may be required for this permission.
 {{% /admonition %}}
 
-### Force fetching groups from Microsoft graph API
+### Force fetching groups from Microsoft Graph API
 
 To force fetching groups from Microsoft Graph API instead of the `id_token`. You can use the `force_use_graph_api` config option.
 

@@ -28,7 +28,6 @@ import (
 )
 
 func TestPluginProxy(t *testing.T) {
-	setting.SecretKey = "password"
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 	t.Run("When getting proxy headers", func(t *testing.T) {

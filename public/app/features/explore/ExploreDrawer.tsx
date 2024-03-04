@@ -5,7 +5,7 @@ import React from 'react';
 
 // Services & Utils
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 
 export interface Props {
   width: number;
@@ -17,13 +17,14 @@ export function ExploreDrawer(props: Props) {
   const { width, children, onResize } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const dragStyles = getDragStyles(theme);
   const drawerWidth = `${width + 31.5}px`;
 
   return (
     <Resizable
       className={cx(styles.fixed, styles.container, styles.drawerActive)}
       defaultSize={{ width: drawerWidth, height: `${theme.components.horizontalDrawer.defaultHeight}px` }}
-      handleClasses={{ top: styles.rzHandle }}
+      handleClasses={{ top: dragStyles.dragHandleHorizontal }}
       enable={{
         top: true,
         right: false,
@@ -70,19 +71,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   drawerActive: css({
     opacity: 1,
     animation: `0.5s ease-out ${drawerSlide(theme)}`,
-  }),
-  rzHandle: css({
-    background: theme.colors.secondary.main,
-    transition: '0.3s background ease-in-out',
-    position: 'relative',
-    width: '200px !important',
-    height: '7px !important',
-    left: 'calc(50% - 100px) !important',
-    top: '-4px !important',
-    cursor: 'grab',
-    borderRadius: theme.shape.radius.pill,
-    ['&:hover']: {
-      background: theme.colors.secondary.shade,
-    },
   }),
 });

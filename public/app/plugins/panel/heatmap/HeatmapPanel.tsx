@@ -60,6 +60,13 @@ export const HeatmapPanel = ({
   const styles = useStyles2(getStyles);
   const { sync, canAddAnnotations } = usePanelContext();
 
+  // TODO: we should just re-init when this changes, and have this be a static setting
+  const syncTooltip = useCallback(
+    () => sync?.() === DashboardCursorSync.Tooltip,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
 
@@ -159,8 +166,7 @@ export const HeatmapPanel = ({
   // ugh
   const dataRef = useRef(info);
   dataRef.current = info;
-  const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
 
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
@@ -243,8 +249,9 @@ export const HeatmapPanel = ({
                     config={builder}
                     hoverMode={TooltipHoverMode.xyOne}
                     queryZoom={onChangeTimeRange}
-                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
-                      if (timeRange2 != null) {
+                    syncTooltip={syncTooltip}
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
+                      if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
                         return;
@@ -259,7 +266,7 @@ export const HeatmapPanel = ({
 
                       return (
                         <HeatmapHoverView
-                          mode={options.tooltip.mode}
+                          mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                           dataIdxs={dataIdxs}
                           seriesIdx={seriesIdx}
                           dataRef={dataRef}

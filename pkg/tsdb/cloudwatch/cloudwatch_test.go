@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	awsclient "github.com/aws/aws-sdk-go/aws/client"
@@ -14,9 +15,11 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -26,9 +29,11 @@ import (
 )
 
 func TestNewInstanceSettings(t *testing.T) {
+	ctxDuration := 10 * time.Minute
 	tests := []struct {
 		name       string
 		settings   backend.DataSourceInstanceSettings
+		settingCtx context.Context
 		expectedDS DataSource
 		Err        require.ErrorAssertionFunc
 	}{
@@ -49,6 +54,14 @@ func TestNewInstanceSettings(t *testing.T) {
 					"secretKey": "secret",
 				},
 			},
+			settingCtx: backend.WithGrafanaConfig(context.Background(), backend.NewGrafanaCfg(map[string]string{
+				awsds.AllowedAuthProvidersEnvVarKeyName:  "foo , bar,baz",
+				awsds.AssumeRoleEnabledEnvVarKeyName:     "false",
+				awsds.SessionDurationEnvVarKeyName:       "10m",
+				awsds.GrafanaAssumeRoleExternalIdKeyName: "mock_id",
+				awsds.ListMetricsPageLimitKeyName:        "50",
+				proxy.PluginSecureSocksProxyEnabled:      "true",
+			})),
 			expectedDS: DataSource{
 				Settings: models.CloudWatchSettings{
 					AWSDatasourceSettings: awsds.AWSDatasourceSettings{
@@ -62,6 +75,14 @@ func TestNewInstanceSettings(t *testing.T) {
 						SecretKey:     "secret",
 					},
 					Namespace: "ns",
+					GrafanaSettings: awsds.AuthSettings{
+						AllowedAuthProviders:      []string{"foo", "bar", "baz"},
+						AssumeRoleEnabled:         false,
+						SessionDuration:           &ctxDuration,
+						ExternalID:                "mock_id",
+						ListMetricsPageLimit:      50,
+						SecureSocksDSProxyEnabled: true,
+					},
 				},
 			},
 			Err: require.NoError,
@@ -71,8 +92,9 @@ func TestNewInstanceSettings(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := NewInstanceSettings(httpclient.NewProvider())
-			model, err := f(context.Background(), tt.settings)
+			model, err := f(tt.settingCtx, tt.settings)
 			tt.Err(t, err)
+			assert.Equal(t, tt.expectedDS.Settings.GrafanaSettings, model.(DataSource).Settings.GrafanaSettings)
 			datasourceComparer := cmp.Comparer(func(d1 DataSource, d2 DataSource) bool {
 				return d1.Settings.Profile == d2.Settings.Profile &&
 					d1.Settings.Region == d2.Settings.Region &&
@@ -109,17 +131,11 @@ func Test_CheckHealth(t *testing.T) {
 	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
 		return client
 	}
-	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{
-			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
-				Region: "us-east-1",
-			},
-		}}, nil
-	})
+	im := defaultTestInstanceManager()
 
 	t.Run("successfully query metrics and logs", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -138,7 +154,7 @@ func Test_CheckHealth(t *testing.T) {
 				return nil, fmt.Errorf("some logs query error")
 			}}
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -157,7 +173,7 @@ func Test_CheckHealth(t *testing.T) {
 				return fmt.Errorf("some list metrics error")
 			}}
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -172,10 +188,16 @@ func Test_CheckHealth(t *testing.T) {
 
 	t.Run("fail to get clients", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{
+				Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-1"}},
+				sessions: &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
+					return nil, fmt.Errorf("some sessions error")
+				}},
+			}, nil
+		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
-			return nil, fmt.Errorf("some sessions error")
-		}}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -187,6 +209,40 @@ func Test_CheckHealth(t *testing.T) {
 			Message: "1. CloudWatch metrics query failed: some sessions error\n2. CloudWatch logs query failed: some sessions error",
 		}, resp)
 	})
+}
+
+func TestNewSession_passes_authSettings(t *testing.T) {
+	ctxDuration := 15 * time.Minute
+	expectedSettings := awsds.AuthSettings{
+		AllowedAuthProviders:      []string{"foo", "bar", "baz"},
+		AssumeRoleEnabled:         false,
+		SessionDuration:           &ctxDuration,
+		ExternalID:                "mock_id",
+		ListMetricsPageLimit:      50,
+		SecureSocksDSProxyEnabled: true,
+	}
+	im := datasource.NewInstanceManager((func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return DataSource{
+			Settings: models.CloudWatchSettings{
+				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+					Region: "us-east-1",
+				},
+				GrafanaSettings: expectedSettings,
+			},
+			sessions: &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
+				assert.NotNil(t, c.AuthSettings)
+				assert.Equal(t, expectedSettings, *c.AuthSettings)
+				return &session.Session{
+					Config: &aws.Config{},
+				}, nil
+			}},
+		}, nil
+	}))
+	executor := newExecutor(im, log.NewNullLogger())
+
+	_, err := executor.newSessionFromContext(context.Background(),
+		backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, "us-east-1")
+	require.NoError(t, err)
 }
 
 func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *testing.T) {
@@ -210,13 +266,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		return &logsApi
 	}
 
-	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{
-			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
-				Region: "us-east-1",
-			},
-		}}, nil
-	})
+	im := defaultTestInstanceManager()
 
 	t.Run("maps log group api response to resource response of log-groups", func(t *testing.T) {
 		logsApi = mocks.LogsAPI{}
@@ -234,8 +284,8 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 			},
 		}
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchCrossAccountQuerying))
-		err := executor.CallResource(context.Background(), req, sender)
+		executor := newExecutor(im, log.NewNullLogger())
+		err := executor.CallResource(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), req, sender)
 		assert.NoError(t, err)
 
 		assert.JSONEq(t, `[

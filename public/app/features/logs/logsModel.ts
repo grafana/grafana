@@ -35,7 +35,6 @@ import {
   ScopedVars,
   sortDataFrame,
   textUtil,
-  TimeRange,
   toDataFrame,
   toUtc,
 } from '@grafana/data';
@@ -46,7 +45,7 @@ import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';
-import { findMatchingRow, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
+import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -415,6 +414,7 @@ export function logSeriesToLogsModel(
   let rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
 
+  const findMatchingRow = createLogRowsMap();
   for (const info of allSeries) {
     const { logsFrame, rawFrame: series, frameLabels } = info;
     const { timeField, timeNanosecondField, bodyField: stringField, severityField: logLevelField, idField } = logsFrame;
@@ -478,7 +478,7 @@ export function logSeriesToLogsModel(
         row.rowId = idField.values[j];
       }
 
-      if (filterDuplicateRows && findMatchingRow(row, rows)) {
+      if (filterDuplicateRows && findMatchingRow(row)) {
         continue;
       }
 
@@ -640,10 +640,21 @@ const updateLogsVolumeConfig = (
 };
 
 type LogsVolumeQueryOptions<T extends DataQuery> = {
-  extractLevel: (dataFrame: DataFrame) => LogLevel;
   targets: T[];
-  range: TimeRange;
 };
+
+function defaultExtractLevel(dataFrame: DataFrame): LogLevel {
+  let valueField;
+  try {
+    valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number);
+  } catch {}
+  return valueField?.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
+}
+
+function getLogLevelFromLabels(labels: Labels): LogLevel {
+  const level = labels['level'] ?? labels['lvl'] ?? labels['loglevel'] ?? '';
+  return level ? getLogLevelFromKey(level) : LogLevel.unknown;
+}
 
 /**
  * Creates an observable, which makes requests to get logs volume and aggregates results.
@@ -653,7 +664,10 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
   logsVolumeRequest: DataQueryRequest<TQuery>,
   options: LogsVolumeQueryOptions<TQuery>
 ): Observable<DataQueryResponse> {
-  const timespan = options.range.to.valueOf() - options.range.from.valueOf();
+  const range = logsVolumeRequest.range;
+  const targets = options.targets;
+  const extractLevel = defaultExtractLevel;
+  const timespan = range.to.valueOf() - range.from.valueOf();
   const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
 
   logsVolumeRequest.interval = intervalInfo.interval;
@@ -704,9 +718,9 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 
             const logsVolumeCustomMetaData: LogsVolumeCustomMetaData = {
               logsVolumeType: LogsVolumeType.FullRange,
-              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+              absoluteRange: { from: range.from.valueOf(), to: range.to.valueOf() },
               datasourceName: datasource.name,
-              sourceQuery: options.targets.find((dataQuery) => dataQuery.refId === sourceRefId)!,
+              sourceQuery: targets.find((dataQuery) => dataQuery.refId === sourceRefId)!,
             };
 
             dataFrame.meta = {
@@ -716,7 +730,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
                 ...logsVolumeCustomMetaData,
               },
             };
-            return updateLogsVolumeConfig(dataFrame, options.extractLevel, framesByRefId[dataFrame.refId].length === 1);
+            return updateLogsVolumeConfig(dataFrame, extractLevel, framesByRefId[dataFrame.refId].length === 1);
           });
 
           observer.next({
@@ -843,6 +857,7 @@ export function logRowToSingleRowDataFrame(logRow: LogRowModel): DataFrame | nul
   // create a new data frame containing only the single row from `logRow`
   const frame = createDataFrame({
     fields: originFrame.fields.map((field) => ({ ...field, values: [field.values[logRow.rowIndex]] })),
+    refId: originFrame.refId,
   });
 
   return frame;

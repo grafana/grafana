@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.4.0-pre";
+export const pluginVersion = "11.0.0-pre";
 
 export enum QueryEditorMode {
   Builder = 'builder',
@@ -54,4 +54,7 @@ export interface PrometheusDataQuery extends common.DataQuery {
    * Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series
    */
   range?: boolean;
+  scope?: {
+    matchers: string;
+  };
 }

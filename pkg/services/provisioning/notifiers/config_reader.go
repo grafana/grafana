@@ -21,6 +21,7 @@ import (
 )
 
 type configReader struct {
+	cfg                 *setting.Cfg
 	encryptionService   encryption.Internal
 	notificationService *notifications.NotificationService
 	orgService          org.Service
@@ -168,14 +169,14 @@ func (cr *configReader) validateNotifications(notifications []*notificationsAsCo
 			encryptedSecureSettings, err := cr.encryptionService.EncryptJsonData(
 				context.Background(),
 				notification.SecureSettings,
-				setting.SecretKey,
+				cr.cfg.SecretKey,
 			)
 
 			if err != nil {
 				return err
 			}
 
-			_, err = alerting.InitNotifier(&models.AlertNotification{
+			_, err = alerting.InitNotifier(cr.cfg, &models.AlertNotification{
 				Name:           notification.Name,
 				Settings:       notification.SettingsToJSON(),
 				SecureSettings: encryptedSecureSettings,

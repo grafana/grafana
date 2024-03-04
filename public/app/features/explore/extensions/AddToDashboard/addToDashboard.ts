@@ -2,10 +2,8 @@ import { DataFrame, ExplorePanelsState } from '@grafana/data';
 import { Dashboard, DataQuery, DataSourceRef } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
-import {
-  getNewDashboardModelData,
-  setDashboardToFetchFromLocalStorage,
-} from 'app/features/dashboard/state/initDashboard';
+import { setDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
+import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
 import { DashboardDTO, ExplorePanelData } from 'app/types';
 
 export enum AddToDashboardError {
@@ -20,15 +18,6 @@ interface AddPanelToDashboardOptions {
   dashboardUid?: string;
   panelState?: ExplorePanelsState;
   time: Dashboard['time'];
-}
-
-function createDashboard(): DashboardDTO {
-  const dto = getNewDashboardModelData();
-
-  // getNewDashboardModelData adds by default the "add-panel" panel. We don't want that.
-  dto.dashboard.panels = [];
-
-  return dto;
 }
 
 /**
@@ -96,7 +85,7 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
       throw AddToDashboardError.FETCH_DASHBOARD;
     }
   } else {
-    dto = createDashboard();
+    dto = buildNewDashboardSaveModel();
   }
 
   dto.dashboard.panels = [panel, ...(dto.dashboard.panels ?? [])];

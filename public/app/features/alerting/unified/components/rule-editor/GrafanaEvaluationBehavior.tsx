@@ -18,7 +18,7 @@ import {
 } from '@grafana/ui';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
-import { logInfo, LogMessages } from '../../Analytics';
+import { LogMessages, logInfo } from '../../Analytics';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RuleFormValues } from '../../types/rule-form';
@@ -57,7 +57,7 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
         const millisEvery = parsePrometheusDuration(evaluateEvery);
         return millisFor >= millisEvery
           ? true
-          : 'For duration must be greater than or equal to the evaluation interval.';
+          : 'Pending period must be greater than or equal to the evaluation interval.';
       } catch (err) {
         // if we fail to parse "every", assume validation is successful, or the error messages
         // will overlap in the UI
@@ -137,6 +137,7 @@ function FolderGroupAndEvaluationInterval({
         <EditCloudGroupModal
           namespace={existingNamespace ?? emptyNamespace}
           group={existingGroup ?? emptyGroup}
+          folderUid={folderUid}
           onClose={() => closeEditGroupModal()}
           intervalEditOnly
           hideFolder={true}

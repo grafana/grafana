@@ -22,6 +22,7 @@ const (
 	WeightInfrastructure
 	WeightApplication
 	WeightFrontend
+	WeightAsserts
 	WeightDataConnections
 	WeightApps
 	WeightPlugin
@@ -141,6 +142,7 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("global-orgs"))
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("feature-toggles"))
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("storage"))
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("migrate-to-cloud"))
 
 		generalNode := &NavLink{
 			Text:     "General",

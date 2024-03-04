@@ -23,6 +23,7 @@ Supported data sources are:
 - [Zipkin]({{< relref "../datasources/zipkin/" >}})
 - [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
 - [Azure Monitor Application Insights]({{< relref "../datasources/azure-monitor/" >}})
+- [ClickHouse](https://github.com/grafana/clickhouse-datasource)
 
 For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
 
@@ -38,6 +39,7 @@ For information on querying each data source, refer to their documentation:
 - [Jaeger query editor]({{< relref "../datasources/jaeger/#query-the-data-source" >}})
 - [Zipkin query editor]({{< relref "../datasources/zipkin/#query-the-data-source" >}})
 - [Azure Monitor Application Insights query editor]({{< relref "../datasources/azure-monitor/query-editor/#query-application-insights-traces" >}})
+- [ClickHouse query editor](https://clickhouse.com/docs/en/integrations/grafana/query-builder#traces)
 
 ## Trace view
 
@@ -117,12 +119,10 @@ You can navigate from a span in a trace view directly to metrics relevant for th
 
 ### Trace to profiles
 
-{{< docs/experimental product="Trace to profiles" featureFlag="traceToProfiles" >}}
-
 Using Trace to profiles, you can use Grafana’s ability to correlate different signals by adding the functionality to link between traces and profiles.
 Refer to the [relevant documentation](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source#trace-to-profiles) for configuration instructions.
 
-![Selecting a link in the span queries the profile data source](/static/img/docs/tempo/profiles/tempo-profiles-Span-link-profile-data-source.png)
+{{< figure src="/static/img/docs/tempo/profiles/tempo-trace-to-profile.png" max-width="900px" class="docs-image--no-shadow" alt="Selecting a link in the span queries the profile data source" >}}
 
 ## Node graph
 

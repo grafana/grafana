@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { EditorRow } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Drawer } from '@grafana/ui';
@@ -35,15 +36,12 @@ export interface Props {
   showExplain: boolean;
 }
 
-// initial commit for hackathon-2023-08-promqail
-// AI/ML + Prometheus
-const prometheusPromQAIL = config.featureToggles.prometheusPromQAIL;
-
 export const PromQueryBuilder = React.memo<Props>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
   const [showDrawer, setShowDrawer] = useState<boolean>(false);
   const [llmAppEnabled, updateLlmAppEnabled] = useState<boolean>(false);
+  const { prometheusPromQAIL } = config.featureToggles; // AI/ML + Prometheus
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
 
@@ -54,8 +52,11 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       const check = await isLLMPluginEnabled();
       updateLlmAppEnabled(check);
     }
-    checkLlms();
-  }, []);
+
+    if (prometheusPromQAIL) {
+      checkLlms();
+    }
+  }, [prometheusPromQAIL]);
 
   return (
     <>
@@ -111,14 +112,16 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
             <QueryAssistantButton llmAppEnabled={llmAppEnabled} metric={query.metric} setShowDrawer={setShowDrawer} />
           </div>
         )}
-        <QueryBuilderHints<PromVisualQuery>
-          datasource={datasource}
-          query={query}
-          onChange={onChange}
-          data={data}
-          queryModeller={promQueryModeller}
-          buildVisualQueryFromString={buildVisualQueryFromString}
-        />
+        <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.hints}>
+          <QueryBuilderHints<PromVisualQuery>
+            datasource={datasource}
+            query={query}
+            onChange={onChange}
+            data={data}
+            queryModeller={promQueryModeller}
+            buildVisualQueryFromString={buildVisualQueryFromString}
+          />
+        </div>
       </OperationsEditorRow>
       {showExplain && (
         <OperationListExplained<PromVisualQuery>

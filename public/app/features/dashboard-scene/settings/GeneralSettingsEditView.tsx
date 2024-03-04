@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { behaviors, SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
@@ -61,21 +61,15 @@ export class GeneralSettingsEditView
   }
 
   public getRefreshPicker() {
-    return dashboardSceneGraph.getRefreshPicker(this._dashboard);
+    return this.getDashboardControls().state.refreshPicker;
   }
 
   public getCursorSync() {
-    const cursorSync = this._dashboard.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
-
-    if (cursorSync instanceof behaviors.CursorSync) {
-      return cursorSync;
-    }
-
-    return;
+    return dashboardSceneGraph.getCursorSync(this._dashboard);
   }
 
   public getDashboardControls() {
-    return dashboardSceneGraph.getDashboardControls(this._dashboard);
+    return this._dashboard.state.controls!;
   }
 
   public onTitleChange = (value: string) => {
@@ -90,7 +84,7 @@ export class GeneralSettingsEditView
     this._dashboard.setState({ tags: value });
   };
 
-  public onFolderChange = (newUID: string, newTitle: string) => {
+  public onFolderChange = (newUID: string | undefined, newTitle: string | undefined) => {
     const newMeta = {
       ...this._dashboard.state.meta,
       folderUid: newUID || this._dashboard.state.meta.folderUid,
@@ -148,11 +142,11 @@ export class GeneralSettingsEditView
 
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const { navModel, pageNav } = useDashboardEditPageNav(model.getDashboard(), model.getUrlKey());
-    const { title, description, tags, meta, editable, overlay } = model.getDashboard().useState();
+    const { title, description, tags, meta, editable } = model.getDashboard().useState();
     const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
     const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
-    const { intervals } = model.getRefreshPicker()?.useState() || {};
-    const { hideTimeControls } = model.getDashboardControls()?.useState() || {};
+    const { intervals } = model.getRefreshPicker().useState();
+    const { hideTimeControls } = model.getDashboardControls().useState();
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
@@ -260,7 +254,6 @@ export class GeneralSettingsEditView
 
           <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton />}</Box>
         </div>
-        {overlay && <overlay.Component model={overlay} />}
       </Page>
     );
   };

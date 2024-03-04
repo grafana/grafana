@@ -20,7 +20,7 @@ import React from 'react';
 
 import { createDataFrame, DataSourceInstanceSettings } from '@grafana/data';
 import { data } from '@grafana/flamegraph';
-import { config, DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import traceGenerator from '../../demo/trace-generators';
@@ -242,8 +242,6 @@ describe('<SpanDetail>', () => {
   });
 
   it('renders the flame graph', async () => {
-    config.featureToggles.tracesEmbeddedFlameGraph = true;
-
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await act(async () => {
       expect(screen.getByText(/16.5 Bil/)).toBeInTheDocument();

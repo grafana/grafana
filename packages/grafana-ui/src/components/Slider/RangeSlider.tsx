@@ -34,7 +34,7 @@ export const RangeSlider = ({
     [onChange]
   );
 
-  const handleAfterChange = useCallback(
+  const handleChangeComplete = useCallback(
     (v: number | number[]) => {
       const value = typeof v === 'number' ? [v, v] : v;
       onAfterChange?.(value);
@@ -69,7 +69,7 @@ export const RangeSlider = ({
         defaultValue={value}
         range={true}
         onChange={handleChange}
-        onAfterChange={handleAfterChange}
+        onChangeComplete={handleChangeComplete}
         vertical={!isHorizontal}
         reverse={reverse}
         handleRender={tipHandleRender}

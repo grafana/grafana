@@ -51,3 +51,7 @@ func (s *FakeService) RegisterService(service folder.RegistryService) error {
 func (s *FakeService) GetDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
 	return s.ExpectedDescendantCounts, s.ExpectedError
 }
+
+func (s *FakeService) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	return s.ExpectedFolders, s.ExpectedError
+}

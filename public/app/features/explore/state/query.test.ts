@@ -16,9 +16,12 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
+import config from 'app/core/config';
+import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
 import { createAsyncThunk, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import * as richHistory from '../../../core/utils/richHistory';
 import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { makeLogs } from '../__mocks__/makeLogs';
@@ -48,6 +51,8 @@ import {
 } from './query';
 import * as actions from './query';
 import { makeExplorePaneState } from './utils';
+
+jest.mock('app/features/logs/logsModel');
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
@@ -152,6 +157,11 @@ describe('runQueries', () => {
     } as unknown as Partial<StoreState>);
   };
 
+  beforeEach(() => {
+    config.queryHistoryEnabled = false;
+    jest.clearAllMocks();
+  });
+
   it('should pass dataFrames to state even if there is error in response', async () => {
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
@@ -198,6 +208,24 @@ describe('runQueries', () => {
     expect(getState().explore.panes.left!.graphResult).not.toBeDefined();
     await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
     expect(getState().explore.panes.left!.graphResult).toBeDefined();
+  });
+
+  it('should add history items to both local and remote storage with the flag enabled', async () => {
+    config.queryHistoryEnabled = true;
+    const { dispatch } = setupTests();
+    jest.spyOn(richHistory, 'addToRichHistory');
+    await dispatch(runQueries({ exploreId: 'left' }));
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls).toHaveLength(2);
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[0][0].localOverride).toBeTruthy();
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[1][0].localOverride).toBeFalsy();
+  });
+
+  it('should add history items to local storage only with the flag disabled', async () => {
+    const { dispatch } = setupTests();
+    jest.spyOn(richHistory, 'addToRichHistory');
+    await dispatch(runQueries({ exploreId: 'left' }));
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls).toHaveLength(1);
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[0][0].localOverride).toBeTruthy();
   });
 });
 
@@ -846,7 +874,7 @@ describe('reducer', () => {
     });
   });
 
-  describe('supplementary queries', () => {
+  describe('legacy supplementary queries', () => {
     let dispatch: ThunkDispatch,
       getState: () => StoreState,
       unsubscribes: Function[],
@@ -878,8 +906,69 @@ describe('reducer', () => {
                 meta: {
                   id: 'something',
                 },
-                getDataProvider: () => {
+                getDataProvider: (_: SupplementaryQueryType, request: DataQueryRequest<DataQuery>) => {
                   return mockDataProvider();
+                },
+                getSupportedSupplementaryQueryTypes: () => [
+                  SupplementaryQueryType.LogsVolume,
+                  SupplementaryQueryType.LogsSample,
+                ],
+                getSupplementaryQuery: jest.fn(),
+              },
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      dispatch = store.dispatch;
+      getState = store.getState;
+
+      setupQueryResponse(getState());
+    });
+
+    it('should load supplementary queries after running the query', async () => {
+      await dispatch(runQueries({ exploreId: 'left' }));
+      expect(unsubscribes).toHaveLength(2);
+    });
+  });
+
+  describe('supplementary queries', () => {
+    let dispatch: ThunkDispatch,
+      getState: () => StoreState,
+      unsubscribes: Function[],
+      mockDataProvider: () => Observable<DataQueryResponse>;
+
+    beforeEach(() => {
+      unsubscribes = [];
+      mockDataProvider = () => {
+        return {
+          subscribe: () => {
+            const unsubscribe = jest.fn();
+            unsubscribes.push(unsubscribe);
+            return {
+              unsubscribe,
+            };
+          },
+        } as unknown as Observable<DataQueryResponse>;
+      };
+
+      jest.mocked(queryLogsVolume).mockImplementation(() => mockDataProvider());
+      jest.mocked(queryLogsSample).mockImplementation(() => mockDataProvider());
+
+      const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: {
+                query: jest.fn(),
+                getRef: jest.fn(),
+                meta: {
+                  id: 'something',
+                },
+                getSupplementaryRequest: (_: SupplementaryQueryType, request: DataQueryRequest<DataQuery>) => {
+                  return request;
                 },
                 getSupportedSupplementaryQueryTypes: () => [
                   SupplementaryQueryType.LogsVolume,

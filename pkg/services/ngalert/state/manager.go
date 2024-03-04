@@ -30,7 +30,7 @@ type AlertInstanceManager interface {
 }
 
 type StatePersister interface {
-	Async(ctx context.Context, ticker *clock.Ticker, cache *cache)
+	Async(ctx context.Context, cache *cache)
 	Sync(ctx context.Context, span trace.Span, states, staleStates []StateTransition)
 }
 
@@ -50,6 +50,7 @@ type Manager struct {
 
 	doNotSaveNormalState           bool
 	applyNoDataAndErrorToAllStates bool
+	rulesPerRuleGroupLimit         int64
 
 	persister StatePersister
 }
@@ -68,6 +69,7 @@ type ManagerCfg struct {
 	// ApplyNoDataAndErrorToAllStates makes state manager to apply exceptional results (NoData and Error)
 	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
 	ApplyNoDataAndErrorToAllStates bool
+	RulesPerRuleGroupLimit         int64
 
 	Tracer tracing.Tracer
 	Log    log.Logger
@@ -92,6 +94,7 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		externalURL:                    cfg.ExternalURL,
 		doNotSaveNormalState:           cfg.DoNotSaveNormalState,
 		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
+		rulesPerRuleGroupLimit:         cfg.RulesPerRuleGroupLimit,
 		persister:                      statePersister,
 		tracer:                         cfg.Tracer,
 	}
@@ -101,6 +104,11 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 	}
 
 	return m
+}
+
+func (st *Manager) Run(ctx context.Context) error {
+	st.persister.Async(ctx, st.cache)
+	return nil
 }
 
 func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
@@ -129,8 +137,23 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 		}
 
 		ruleByUID := make(map[string]*ngModels.AlertRule, len(alertRules))
+		groupSizes := make(map[string]int64)
 		for _, rule := range alertRules {
 			ruleByUID[rule.UID] = rule
+			groupSizes[rule.RuleGroup] += 1
+		}
+
+		// Emit a warning if we detect a large group.
+		// We will not enforce this here, but it's convenient to emit the warning here as we load up all the rules.
+		for name, size := range groupSizes {
+			if st.rulesPerRuleGroupLimit > 0 && size > st.rulesPerRuleGroupLimit {
+				st.log.Warn(
+					"Large rule group was loaded. Large groups are discouraged and changes to them may be disallowed in the future.",
+					"limit", st.rulesPerRuleGroupLimit,
+					"actual", size,
+					"group", name,
+				)
+			}
 		}
 
 		orgStates := make(map[string]*ruleStates, len(ruleByUID))

@@ -65,6 +65,7 @@ import {
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
+import { encodeGrafanaNamespace } from '../components/expressions/util';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -189,7 +190,7 @@ export function fetchPromAndRulerRulesAction({
   limitAlerts?: number;
   matcher?: Matcher[];
   state?: string[];
-}): ThunkResult<void> {
+}): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const dsConfig = getDataSourceConfig(getState, rulesSourceName);
@@ -692,10 +693,24 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
       alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
     ).unwrap();
 
-    const muteIntervals =
-      config?.alertmanager_config?.mute_time_intervals?.filter(({ name }) => name !== muteTimingName) ?? [];
+    const isGrafanaDatasource = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
+
+    const muteIntervalsFiltered =
+      (config?.alertmanager_config?.mute_time_intervals ?? [])?.filter(({ name }) => name !== muteTimingName) ?? [];
+    const timeIntervalsFiltered =
+      (config?.alertmanager_config?.time_intervals ?? [])?.filter(({ name }) => name !== muteTimingName) ?? [];
+
+    const time_intervals_without_mute_to_save = isGrafanaDatasource
+      ? {
+          mute_time_intervals: [...muteIntervalsFiltered, ...timeIntervalsFiltered],
+        }
+      : {
+          time_intervals: timeIntervalsFiltered,
+          mute_time_intervals: muteIntervalsFiltered,
+        };
 
     if (config) {
+      const { mute_time_intervals: _, ...configWithoutMuteTimings } = config?.alertmanager_config ?? {};
       withAppEvents(
         dispatch(
           updateAlertManagerConfigAction({
@@ -704,11 +719,11 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
             newConfig: {
               ...config,
               alertmanager_config: {
-                ...config.alertmanager_config,
+                ...configWithoutMuteTimings,
                 route: config.alertmanager_config.route
                   ? removeMuteTimingFromRoute(muteTimingName, config.alertmanager_config?.route)
                   : undefined,
-                mute_time_intervals: muteIntervals,
+                ...time_intervals_without_mute_to_save,
               },
             },
           })
@@ -803,11 +818,14 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
           }
 
           const newNamespaceAlreadyExists = Boolean(rulesResult[newNamespaceName]);
-          if (newNamespaceName !== namespaceName && newNamespaceAlreadyExists) {
+          const isGrafanaManagedGroup = rulesSourceName === GRAFANA_RULES_SOURCE_NAME;
+          const originalNamespace = isGrafanaManagedGroup ? encodeGrafanaNamespace(namespaceName) : namespaceName;
+
+          if (newNamespaceName !== originalNamespace && newNamespaceAlreadyExists) {
             throw new Error(`Namespace "${newNamespaceName}" already exists.`);
           }
           if (
-            newNamespaceName === namespaceName &&
+            newNamespaceName === originalNamespace &&
             groupName === newGroupName &&
             groupInterval === existingGroup.interval
           ) {
@@ -829,8 +847,8 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
             }
           }
           // if renaming namespace - make new copies of all groups, then delete old namespace
-
-          if (newNamespaceName !== namespaceName) {
+          // this is only possible for cloud rules
+          if (newNamespaceName !== originalNamespace) {
             for (const group of rulesResult[namespaceName]) {
               await setRulerRuleGroup(
                 rulerConfig,

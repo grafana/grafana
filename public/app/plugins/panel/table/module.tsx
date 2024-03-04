@@ -53,10 +53,10 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           name: 'Column alignment',
           settings: {
             options: [
-              { label: 'auto', value: 'auto' },
-              { label: 'left', value: 'left' },
-              { label: 'center', value: 'center' },
-              { label: 'right', value: 'right' },
+              { label: 'Auto', value: 'auto' },
+              { label: 'Left', value: 'left' },
+              { label: 'Center', value: 'center' },
+              { label: 'Right', value: 'right' },
             ],
           },
           defaultValue: defaultTableFieldOptions.align,

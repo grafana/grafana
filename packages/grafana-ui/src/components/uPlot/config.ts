@@ -4,7 +4,7 @@ import {
   BarAlignment,
   GraphDrawStyle,
   GraphGradientMode,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   LineInterpolation,
   VisibilityMode,
   StackingMode,
@@ -21,7 +21,7 @@ export const graphFieldOptions: {
   axisPlacement: Array<SelectableValue<AxisPlacement>>;
   fillGradient: Array<SelectableValue<GraphGradientMode>>;
   stacking: Array<SelectableValue<StackingMode>>;
-  thresholdsDisplayModes: Array<SelectableValue<GraphTresholdsStyleMode>>;
+  thresholdsDisplayModes: Array<SelectableValue<GraphThresholdsStyleMode>>;
 } = {
   drawStyle: [
     { label: 'Lines', value: GraphDrawStyle.Line },
@@ -73,11 +73,11 @@ export const graphFieldOptions: {
   ],
 
   thresholdsDisplayModes: [
-    { label: 'Off', value: GraphTresholdsStyleMode.Off },
-    { label: 'As lines', value: GraphTresholdsStyleMode.Line },
-    { label: 'As lines (dashed)', value: GraphTresholdsStyleMode.Dashed },
-    { label: 'As filled regions', value: GraphTresholdsStyleMode.Area },
-    { label: 'As filled regions and lines', value: GraphTresholdsStyleMode.LineAndArea },
-    { label: 'As filled regions and lines (dashed)', value: GraphTresholdsStyleMode.DashedAndArea },
+    { label: 'Off', value: GraphThresholdsStyleMode.Off },
+    { label: 'As lines', value: GraphThresholdsStyleMode.Line },
+    { label: 'As lines (dashed)', value: GraphThresholdsStyleMode.Dashed },
+    { label: 'As filled regions', value: GraphThresholdsStyleMode.Area },
+    { label: 'As filled regions and lines', value: GraphThresholdsStyleMode.LineAndArea },
+    { label: 'As filled regions and lines (dashed)', value: GraphThresholdsStyleMode.DashedAndArea },
   ],
 };

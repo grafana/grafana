@@ -13,12 +13,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// groupByAll is a special value defined by alertmanager that can be used in a Route's GroupBy field to aggregate by all possible labels.
+const groupByAll = "..."
+
 // Validate normalizes a possibly nested Route r, and returns errors if r is invalid.
 func (r *Route) validateChild() error {
 	r.GroupBy = nil
 	r.GroupByAll = false
 	for _, l := range r.GroupByStr {
-		if l == "..." {
+		if l == groupByAll {
 			r.GroupByAll = true
 		} else {
 			r.GroupBy = append(r.GroupBy, model.LabelName(l))

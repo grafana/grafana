@@ -61,10 +61,14 @@ files = [
   "**/pkg/tsdb/grafana-testdata-datasource/**/*",
   "**/pkg/tsdb/azuremonitor/*",
   "**/pkg/tsdb/azuremonitor/**/*",
+  "**/pkg/tsdb/cloud-monitoring/*",
+  "**/pkg/tsdb/cloud-monitoring/**/*",
   "**/pkg/tsdb/parca/*",
   "**/pkg/tsdb/parca/**/*",
   "**/pkg/tsdb/tempo/*",
   "**/pkg/tsdb/tempo/**/*",
+  "**/pkg/tsdb/cloudwatch/*",
+  "**/pkg/tsdb/cloudwatch/**/*",
 ]
 
 [linters-settings.gocritic]

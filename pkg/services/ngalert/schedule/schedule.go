@@ -155,6 +155,13 @@ func (sch *schedule) Run(ctx context.Context) error {
 	return nil
 }
 
+// Rules fetches the entire set of rules considered for evaluation by the scheduler on the next tick.
+// Such rules are not guaranteed to have been evaluated by the scheduler.
+// Rules returns all supplementary metadata for the rules that is stored by the scheduler - namely, the set of folder titles.
+func (sch *schedule) Rules() ([]*ngmodels.AlertRule, map[ngmodels.FolderKey]string) {
+	return sch.schedulableAlertRules.all()
+}
+
 // deleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
 func (sch *schedule) deleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 	for _, key := range keys {
@@ -204,41 +211,6 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 type readyToRunItem struct {
 	ruleInfo *alertRuleInfo
 	evaluation
-}
-
-func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
-	rulesPerOrg := make(map[int64]int64)                // orgID -> count
-	orgsPaused := make(map[int64]int64)                 // orgID -> count
-	groupsPerOrg := make(map[int64]map[string]struct{}) // orgID -> set of groups
-	for _, rule := range alertRules {
-		rulesPerOrg[rule.OrgID]++
-
-		if rule.IsPaused {
-			orgsPaused[rule.OrgID]++
-		}
-
-		orgGroups, ok := groupsPerOrg[rule.OrgID]
-		if !ok {
-			orgGroups = make(map[string]struct{})
-			groupsPerOrg[rule.OrgID] = orgGroups
-		}
-		orgGroups[rule.RuleGroup] = struct{}{}
-	}
-
-	for orgID, numRules := range rulesPerOrg {
-		numRulesPaused := orgsPaused[orgID]
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRuleActiveLabelValue).Set(float64(numRules - numRulesPaused))
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRulePausedLabelValue).Set(float64(numRulesPaused))
-	}
-
-	for orgID, groups := range groupsPerOrg {
-		sch.metrics.Groups.WithLabelValues(fmt.Sprint(orgID)).Set(float64(len(groups)))
-	}
-
-	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
-	// scheduled as rules could be removed before we get a chance to evaluate them.
-	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
-	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 }
 
 // TODO refactor to accept a callback for tests that will be called with things that are returned currently, and return nothing.
@@ -301,7 +273,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		var folderTitle string
 		if !sch.disableGrafanaFolder {
-			title, ok := folderTitles[item.NamespaceUID]
+			title, ok := folderTitles[item.GetFolderKey()]
 			if ok {
 				folderTitle = title
 			} else {
@@ -478,7 +450,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			e.scheduledAt,
 			e.rule,
 			results,
-			state.GetRuleExtraLabels(e.rule, e.folderTitle, !sch.disableGrafanaFolder),
+			state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !sch.disableGrafanaFolder),
 		)
 		processDuration.Observe(sch.clock.Now().Sub(start).Seconds())
 

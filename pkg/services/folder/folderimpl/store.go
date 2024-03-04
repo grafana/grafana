@@ -6,13 +6,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
+type getFoldersQuery struct {
+	folder.GetFoldersQuery
+	ancestorUIDs []string
+}
+
+func NewGetFoldersQuery(q folder.GetFoldersQuery) getFoldersQuery {
+	return getFoldersQuery{
+		GetFoldersQuery: q,
+		ancestorUIDs:    []string{},
+	}
+}
+
 // store is the interface which a folder store must implement.
 type store interface {
 	// Create creates a folder and returns the newly-created folder.
 	Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error)
 
-	// Delete deletes a folder from the folder store.
-	Delete(ctx context.Context, uid string, orgID int64) error
+	// Delete folders with the specified UIDs and orgID from the folder store.
+	Delete(ctx context.Context, UIDs []string, orgID int64) error
 
 	// Update updates the given folder's UID, Title, and Description (update mode).
 	// If the NewParentUID field is not nil, it updates also the parent UID (move mode).
@@ -35,5 +47,7 @@ type store interface {
 	GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error)
 
 	// GetFolders returns folders with given uids
-	GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error)
+	GetFolders(ctx context.Context, q getFoldersQuery) ([]*folder.Folder, error)
+	// GetDescendants returns all descendants of a folder
+	GetDescendants(ctx context.Context, orgID int64, anchestor_uid string) ([]*folder.Folder, error)
 }

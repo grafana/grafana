@@ -10,10 +10,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,9 +41,8 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	info.AuthStyle = "inheader"
 
-	config := createOAuthConfig(info, cfg, social.GrafanaComProviderName)
 	provider := &SocialGrafanaCom{
-		SocialBase:           newSocialBase(social.GrafanaComProviderName, config, info, cfg.AutoAssignOrgRole, features),
+		SocialBase:           newSocialBase(social.GrafanaComProviderName, info, features, cfg),
 		url:                  cfg.GrafanaComURL,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}
@@ -53,18 +54,41 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings
 	return provider
 }
 
-func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info)
+	err = validateInfo(info, requester)
 	if err != nil {
 		return err
 	}
 
-	// add specific validation rules for GrafanaCom
+	return validation.Validate(info, requester,
+		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
+		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
+		validation.MustBeEmptyValidator(info.TeamsUrl, "Teams URL"))
+}
+
+func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	// Override necessary settings
+	newInfo.AuthUrl = s.cfg.GrafanaComURL + "/oauth2/authorize"
+	newInfo.TokenUrl = s.cfg.GrafanaComURL + "/api/oauth2/token"
+	newInfo.AuthStyle = "inheader"
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.updateInfo(social.GrafanaComProviderName, newInfo)
+
+	s.url = s.cfg.GrafanaComURL
+	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
 
 	return nil
 }

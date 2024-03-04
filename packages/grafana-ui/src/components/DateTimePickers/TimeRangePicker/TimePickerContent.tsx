@@ -83,7 +83,6 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
             <div className={styles.timeRangeFilter}>
               <FilterInput
                 width={0}
-                autoFocus={true}
                 value={searchTerm}
                 onChange={setSearchQuery}
                 placeholder={t('time-picker.content.filter-placeholder', 'Search quick ranges')}
@@ -281,6 +280,8 @@ const getStyles = (
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
     [`${isReversed ? 'left' : 'right'}`]: 0,
+    display: 'flex',
+    flexDirection: 'column',
   }),
   body: css({
     display: 'flex',
@@ -293,7 +294,7 @@ const getStyles = (
     flexDirection: 'column',
     borderRight: `${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`}`,
     width: `${!hideQuickRanges ? '60%' : '100%'}`,
-    overflow: 'hidden',
+    overflow: 'auto',
     order: isReversed ? 1 : 0,
   }),
   rightSide: css({

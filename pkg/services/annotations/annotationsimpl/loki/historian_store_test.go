@@ -27,10 +27,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 	if testing.Short() {
@@ -56,14 +61,19 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 	})
 
 	knownUIDs := &sync.Map{}
+	generator := ngmodels.AlertRuleGen(
+		ngmodels.WithUniqueUID(knownUIDs),
+		ngmodels.WithUniqueID(),
+		ngmodels.WithOrgID(1),
+	)
 
 	dashboardRules := map[string][]*ngmodels.AlertRule{
 		dashboard1.UID: {
-			createAlertRuleWithDashboard(t, sql, knownUIDs, "Test Rule 1", dashboard1.UID),
-			createAlertRuleWithDashboard(t, sql, knownUIDs, "Test Rule 2", dashboard1.UID),
+			createAlertRuleFromDashboard(t, sql, "Test Rule 1", *dashboard1, generator),
+			createAlertRuleFromDashboard(t, sql, "Test Rule 2", *dashboard1, generator),
 		},
 		dashboard2.UID: {
-			createAlertRuleWithDashboard(t, sql, knownUIDs, "Test Rule 3", dashboard2.UID),
+			createAlertRuleFromDashboard(t, sql, "Test Rule 3", *dashboard2, generator),
 		},
 	}
 
@@ -274,7 +284,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			rule := dashboardRules[dashboard1.UID][0]
 			stream1 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
-			rule = createAlertRule(t, sql, knownUIDs, "Test rule")
+			rule = createAlertRule(t, sql, "Test rule", generator)
 			stream2 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
 			stream := historian.Stream{
@@ -364,7 +374,23 @@ func TestHasAccess(t *testing.T) {
 	})
 }
 
-func TestFloat64Map(t *testing.T) {
+func TestNumericMap(t *testing.T) {
+	t.Run("should return error for nil value", func(t *testing.T) {
+		var jsonMap *simplejson.Json
+		_, err := numericMap[float64](jsonMap)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unexpected nil value")
+	})
+
+	t.Run("should return error for nil interface value", func(t *testing.T) {
+		jsonMap := simplejson.NewFromAny(map[string]any{
+			"key1": nil,
+		})
+		_, err := numericMap[float64](jsonMap)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unexpected value type")
+	})
+
 	t.Run(`should convert json string:float kv to Golang map[string]float64`, func(t *testing.T) {
 		jsonMap := simplejson.NewFromAny(map[string]any{
 			"key1": json.Number("1.0"),
@@ -504,22 +530,23 @@ func createTestLokiStore(t *testing.T, sql db.DB, client lokiQueryClient) *LokiH
 	}
 }
 
-func createAlertRule(t *testing.T, sql db.DB, knownUIDs *sync.Map, title string) *ngmodels.AlertRule {
+// createAlertRule creates an alert rule in the database and returns it.
+// If a generator is not specified, uniqueness of primary key is not guaranteed.
+func createAlertRule(t *testing.T, sql db.DB, title string, generator func() *ngmodels.AlertRule) *ngmodels.AlertRule {
 	t.Helper()
 
-	if knownUIDs == nil {
-		knownUIDs = &sync.Map{}
+	if generator == nil {
+		generator = ngmodels.AlertRuleGen(ngmodels.WithTitle(title), withDashboardUID(nil), withPanelID(nil), ngmodels.WithOrgID(1))
 	}
 
-	generator := ngmodels.AlertRuleGen(
-		ngmodels.WithTitle(title),
-		ngmodels.WithUniqueUID(knownUIDs),
-		withDashboardUID(""), // no dashboard
-		ngmodels.WithUniqueID(),
-		ngmodels.WithOrgID(1),
-	)
-
 	rule := generator()
+	// ensure rule has correct values
+	if rule.Title != title {
+		rule.Title = title
+	}
+	// rule should not have linked dashboard or panel
+	rule.DashboardUID = nil
+	rule.PanelID = nil
 
 	err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err := sess.Table(ngmodels.AlertRule{}).InsertOne(rule)
@@ -544,23 +571,29 @@ func createAlertRule(t *testing.T, sql db.DB, knownUIDs *sync.Map, title string)
 	return rule
 }
 
-func createAlertRuleWithDashboard(t *testing.T, sql db.DB, knownUIDs *sync.Map, title string, dashboardUID string) *ngmodels.AlertRule {
+// createAlertRuleFromDashboard creates an alert rule with a linked dashboard and panel in the database and returns it.
+// If a generator is not specified, uniqueness of primary key is not guaranteed.
+func createAlertRuleFromDashboard(t *testing.T, sql db.DB, title string, dashboard dashboards.Dashboard, generator func() *ngmodels.AlertRule) *ngmodels.AlertRule {
 	t.Helper()
 
-	if knownUIDs == nil {
-		knownUIDs = &sync.Map{}
+	panelID := new(int64)
+	*panelID = 123
+
+	if generator == nil {
+		generator = ngmodels.AlertRuleGen(ngmodels.WithTitle(title), ngmodels.WithOrgID(1), withDashboardUID(&dashboard.UID), withPanelID(panelID))
 	}
 
-	generator := ngmodels.AlertRuleGen(
-		ngmodels.WithTitle(title),
-		ngmodels.WithUniqueUID(knownUIDs),
-		ngmodels.WithUniqueID(),
-		ngmodels.WithOrgID(1),
-		withDashboardUID(dashboardUID),
-		withPanelID(123),
-	)
-
 	rule := generator()
+	// ensure rule has correct values
+	if rule.Title != title {
+		rule.Title = title
+	}
+	if rule.DashboardUID == nil || (rule.DashboardUID != nil && *rule.DashboardUID != dashboard.UID) {
+		rule.DashboardUID = &dashboard.UID
+	}
+	if rule.PanelID == nil || (rule.PanelID != nil && *rule.PanelID != *panelID) {
+		rule.PanelID = panelID
+	}
 
 	err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err := sess.Table(ngmodels.AlertRule{}).InsertOne(rule)
@@ -649,15 +682,15 @@ func genStateTransitions(t *testing.T, num int, start time.Time) []state.StateTr
 	return transitions
 }
 
-func withDashboardUID(dashboardUID string) ngmodels.AlertRuleMutator {
+func withDashboardUID(dashboardUID *string) ngmodels.AlertRuleMutator {
 	return func(rule *ngmodels.AlertRule) {
-		rule.DashboardUID = &dashboardUID
+		rule.DashboardUID = dashboardUID
 	}
 }
 
-func withPanelID(panelID int64) ngmodels.AlertRuleMutator {
+func withPanelID(panelID *int64) ngmodels.AlertRuleMutator {
 	return func(rule *ngmodels.AlertRule) {
-		rule.PanelID = &panelID
+		rule.PanelID = panelID
 	}
 }
 

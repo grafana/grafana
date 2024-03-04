@@ -14,7 +14,6 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
-import { AddPanelWidget } from '../components/AddPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
 import { DashboardModel, PanelModel } from '../state';
 import { GridPos } from '../state/PanelModel';
@@ -262,11 +261,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
       return <DashboardRow key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
 
-    // Todo: Remove this when we remove the emptyDashboardPage toggle
-    if (panel.type === 'add-panel') {
-      return <AddPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
-    }
-
     if (panel.type === 'add-library-panel') {
       return <AddLibraryPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
@@ -302,7 +296,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
   render() {
     const { isEditable, dashboard } = this.props;
 
-    if (config.featureToggles.emptyDashboardPage && dashboard.panels.length === 0) {
+    if (dashboard.panels.length === 0) {
       return <DashboardEmpty dashboard={dashboard} canCreate={isEditable} />;
     }
 

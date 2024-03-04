@@ -44,9 +44,9 @@ export interface TempoQuery extends common.DataQuery {
    */
   serviceMapIncludeNamespace?: boolean;
   /**
-   * Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
+   * Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}. Providing multiple values will produce union of results for each filter, using PromQL OR operator internally.
    */
-  serviceMapQuery?: string;
+  serviceMapQuery?: (string | Array<string>);
   /**
    * @deprecated Query traces by service name
    */

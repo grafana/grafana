@@ -11,23 +11,29 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
 	legacyAPIURL            = "https://www.googleapis.com/oauth2/v1/userinfo"
 	googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
 	googleIAMScope          = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
+	validateHDKey           = "validate_hd"
 )
 
 var _ social.SocialConnector = (*SocialGoogle)(nil)
 var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
+var ExtraGoogleSettingKeys = []string{validateHDKey}
 
 type SocialGoogle struct {
 	*SocialBase
+	validateHD bool
 }
 
 type googleUserData struct {
@@ -35,13 +41,14 @@ type googleUserData struct {
 	Email         string `json:"email"`
 	Name          string `json:"name"`
 	EmailVerified bool   `json:"email_verified"`
+	HD            string `json:"hd"`
 	rawJSON       []byte `json:"-"`
 }
 
 func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
-	config := createOAuthConfig(info, cfg, social.GoogleProviderName)
 	provider := &SocialGoogle{
-		SocialBase: newSocialBase(social.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, features),
+		SocialBase: newSocialBase(social.GoogleProviderName, info, features, cfg),
+		validateHD: MustBool(info.Extra[validateHDKey], true),
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
@@ -55,18 +62,38 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	return provider
 }
 
-func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info)
+	err = validateInfo(info, requester)
 	if err != nil {
 		return err
 	}
 
-	// add specific validation rules for Google
+	return validation.Validate(info, requester,
+		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
+		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"))
+}
+
+func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	if strings.HasPrefix(newInfo.ApiUrl, legacyAPIURL) {
+		s.log.Warn("Using legacy Google API URL, please update your configuration")
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.updateInfo(social.GoogleProviderName, newInfo)
+	s.validateHD = MustBool(newInfo.Extra[validateHDKey], false)
 
 	return nil
 }
@@ -93,6 +120,10 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 
 	if !data.EmailVerified {
 		return nil, fmt.Errorf("user email is not verified")
+	}
+
+	if err := s.isHDAllowed(data.HD, info); err != nil {
+		return nil, err
 	}
 
 	groups, errPage := s.retrieveGroups(ctx, client, data)
@@ -137,6 +168,7 @@ type googleAPIData struct {
 	Name          string `json:"name"`
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"verified_email"`
+	HD            string `json:"hd"`
 }
 
 func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) (*googleUserData, error) {
@@ -158,6 +190,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 			Name:          data.Name,
 			Email:         data.Email,
 			EmailVerified: data.EmailVerified,
+			HD:            data.HD,
 			rawJSON:       response.Body,
 		}, nil
 	}
@@ -199,7 +232,7 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, client *http.Client
 		return nil, nil
 	}
 
-	if setting.Env == setting.Dev {
+	if s.cfg.Env == setting.Dev {
 		s.log.Debug("Received id_token", "raw_json", string(rawJSON))
 	}
 
@@ -225,7 +258,7 @@ type googleGroupResp struct {
 }
 
 func (s *SocialGoogle) retrieveGroups(ctx context.Context, client *http.Client, userData *googleUserData) ([]string, error) {
-	s.log.Debug("Retrieving groups", "scopes", s.SocialBase.Config.Scopes)
+	s.log.Debug("Retrieving groups", "scopes", s.Config.Scopes)
 	if !slices.Contains(s.Scopes, googleIAMScope) {
 		return nil, nil
 	}
@@ -269,4 +302,22 @@ func (s *SocialGoogle) getGroupsPage(ctx context.Context, client *http.Client, u
 	}
 
 	return &data, nil
+}
+
+func (s *SocialGoogle) isHDAllowed(hd string, info *social.OAuthInfo) error {
+	if s.validateHD {
+		return nil
+	}
+
+	if len(info.AllowedDomains) == 0 {
+		return nil
+	}
+
+	for _, allowedDomain := range info.AllowedDomains {
+		if hd == allowedDomain {
+			return nil
+		}
+	}
+
+	return errutil.Forbidden("the hd claim found in the ID token is not present in the allowed domains", errutil.WithPublicMessage("Invalid domain"))
 }

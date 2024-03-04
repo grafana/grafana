@@ -114,6 +114,11 @@ export function InstallControlsButton({
   };
 
   if (pluginStatus === PluginStatus.UNINSTALL) {
+    const disableUninstall =
+      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
+        ? plugin.isUninstallingFromInstance
+        : isUninstalling;
+
     return (
       <>
         <ConfirmModal
@@ -126,7 +131,7 @@ export function InstallControlsButton({
           onDismiss={hideConfirmModal}
         />
         <HorizontalGroup align="flex-start" width="auto" height="auto">
-          <Button variant="destructive" disabled={isUninstalling} onClick={showConfirmModal}>
+          <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal}>
             {uninstallBtnText}
           </Button>
         </HorizontalGroup>
@@ -140,9 +145,14 @@ export function InstallControlsButton({
   }
 
   if (pluginStatus === PluginStatus.UPDATE) {
+    const disableUpdate =
+      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
+        ? plugin.isUpdatingFromInstance
+        : isInstalling;
+
     return (
       <HorizontalGroup align="flex-start" width="auto" height="auto">
-        <Button disabled={isInstalling} onClick={onUpdate}>
+        <Button disabled={disableUpdate} onClick={onUpdate}>
           {isInstalling ? 'Updating' : 'Update'}
         </Button>
         <Button variant="destructive" disabled={isUninstalling} onClick={onUninstall}>

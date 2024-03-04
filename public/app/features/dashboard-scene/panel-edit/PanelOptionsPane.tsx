@@ -1,146 +1,133 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { ButtonGroup, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
+import { FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
+import { PanelEditor } from './PanelEditor';
+import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
-import { VizPanelManager } from './VizPanelManager';
 
-export interface PanelOptionsPaneState extends SceneObjectState {}
+export interface PanelOptionsPaneState extends SceneObjectState {
+  isVizPickerOpen?: boolean;
+  searchQuery: string;
+  listMode: OptionFilter;
+}
 
 export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
-  public panelManager: VizPanelManager;
-
-  public constructor(panelMgr: VizPanelManager) {
-    super({});
-
-    this.panelManager = panelMgr;
+  public constructor(state: Partial<PanelOptionsPaneState>) {
+    super({
+      searchQuery: '',
+      listMode: OptionFilter.All,
+      ...state,
+    });
   }
 
+  onToggleVizPicker = () => {
+    this.setState({ isVizPickerOpen: !this.state.isVizPickerOpen });
+  };
+
+  onSetSearchQuery = (searchQuery: string) => {
+    this.setState({ searchQuery });
+  };
+
+  onSetListMode = (listMode: OptionFilter) => {
+    this.setState({ listMode });
+  };
+
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
-    const { panelManager } = model;
-    const { panel } = panelManager.state;
-    const { pluginId } = panel.useState();
+    const { isVizPickerOpen, searchQuery, listMode } = model.useState();
+    const vizManager = sceneGraph.getAncestor(model, PanelEditor).state.vizManager;
+    const { pluginId } = vizManager.state.panel.useState();
     const styles = useStyles2(getStyles);
-    const [isVizPickerOpen, setVizPickerOpen] = useState(true);
 
     return (
-      <div className={styles.wrapper}>
+      <>
         {!isVizPickerOpen && (
-          <VisualizationButton
-            pluginId={pluginId}
-            onClick={() => {
-              setVizPickerOpen(true);
-            }}
-          />
+          <>
+            <div className={styles.top}>
+              <VisualizationButton pluginId={pluginId} onOpen={model.onToggleVizPicker} />
+              <FilterInput
+                className={styles.searchOptions}
+                value={searchQuery}
+                placeholder="Search options"
+                onChange={model.onSetSearchQuery}
+              />
+            </div>
+            <div className={styles.listOfOptions}>
+              <PanelOptions vizManager={vizManager} searchQuery={searchQuery} listMode={listMode} />
+            </div>
+          </>
         )}
-        <div className={styles.box}>
-          {isVizPickerOpen && (
-            <PanelVizTypePicker panelManager={panelManager} onChange={() => setVizPickerOpen(false)} />
-          )}
-          {!isVizPickerOpen && (
-            <>
-              <FilterInput value={''} placeholder="Search options" onChange={() => {}} />
-              <RadioButtonGroup
-                options={[
-                  { label: 'All', value: 'All' },
-                  { label: 'Overrides', value: 'Overrides' },
-                ]}
-                value={'All'}
-                fullWidth
-              ></RadioButtonGroup>
-              {/* <OptionsPaneCategory id="test" title="Panel options">
-                Placeholder
-              </OptionsPaneCategory> */}
-            </>
-          )}
-        </div>
-      </div>
+        {isVizPickerOpen && <PanelVizTypePicker vizManager={vizManager} onChange={model.onToggleVizPicker} />}
+      </>
     );
   };
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    box: css({
+    top: css({
       display: 'flex',
       flexDirection: 'column',
-      flexGrow: '1',
-      padding: theme.spacing(1),
-      background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      gap: theme.spacing(1),
-    }),
-    wrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
+      padding: theme.spacing(2, 1),
       gap: theme.spacing(2),
+    }),
+    listOfOptions: css({
+      display: 'flex',
+      flexDirection: 'column',
       flexGrow: '1',
+      overflow: 'auto',
+    }),
+    searchOptions: css({
+      minHeight: theme.spacing(4),
+    }),
+    searchWrapper: css({
+      padding: theme.spacing(2, 2, 2, 0),
+    }),
+    vizField: css({
+      marginBottom: theme.spacing(1),
+    }),
+    rotateIcon: css({
+      rotate: '180deg',
     }),
   };
 }
 
-export const VisualizationButton = ({ pluginId, onClick }: { pluginId: string; onClick: () => void }) => {
-  // const dispatch = useDispatch();
-  // const plugin = useSelector(getPanelPluginWithFallback(panel.type));
-  // const isPanelOptionsVisible = useSelector((state) => state.panelEditor.ui.isPanelOptionsVisible);
-  // const isVizPickerOpen = useSelector((state) => state.panelEditor.isVizPickerOpen);
+interface VisualizationButtonProps {
+  pluginId: string;
+  onOpen: () => void;
+}
 
-  // const onToggleOpen = () => {
-  //   dispatch(toggleVizPicker(!isVizPickerOpen));
-  // };
-
-  // const onToggleOptionsPane = () => {
-  //   dispatch(updatePanelEditorUIState({ isPanelOptionsVisible: !isPanelOptionsVisible }));
-  // };
-
-  // if (!plugin) {
-  //   return null;
-  // }
-
+export function VisualizationButton({ pluginId, onOpen }: VisualizationButtonProps) {
   const styles = useStyles2(getVizButtonStyles);
   const pluginMeta = useMemo(() => getAllPanelPluginMeta().filter((p) => p.id === pluginId)[0], [pluginId]);
 
   return (
-    <div className={styles.wrapper}>
-      <ButtonGroup>
-        <ToolbarButton
-          className={styles.vizButton}
-          tooltip="Click to change visualization"
-          imgSrc={pluginMeta.info.logos.small}
-          // isOpen={isVizPickerOpen}
-          onClick={onClick}
-          data-testid={selectors.components.PanelEditor.toggleVizPicker}
-          aria-label="Change Visualization"
-          variant="canvas"
-          fullWidth
-        >
-          {pluginMeta.name}
-        </ToolbarButton>
-        {/* <ToolbarButton
-          tooltip={isPanelOptionsVisible ? 'Close options pane' : 'Show options pane'}
-          icon={isPanelOptionsVisible ? 'angle-right' : 'angle-left'}
-          onClick={onToggleOptionsPane}
-          variant="canvas"
-          data-testid={selectors.components.PanelEditor.toggleVizOptions}
-          aria-label={isPanelOptionsVisible ? 'Close options pane' : 'Show options pane'}
-        /> */}
-      </ButtonGroup>
-    </div>
+    <Stack gap={1}>
+      <ToolbarButton
+        className={styles.vizButton}
+        tooltip="Click to change visualization"
+        imgSrc={pluginMeta.info.logos.small}
+        onClick={onOpen}
+        data-testid={selectors.components.PanelEditor.toggleVizPicker}
+        aria-label="Change Visualization"
+        variant="canvas"
+        isOpen={false}
+        fullWidth
+      >
+        {pluginMeta.name}
+      </ToolbarButton>
+    </Stack>
   );
-};
+}
 
 function getVizButtonStyles(theme: GrafanaTheme2) {
   return {
-    wrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-      paddingRight: theme.spacing(2),
-    }),
     vizButton: css({
       textAlign: 'left',
     }),

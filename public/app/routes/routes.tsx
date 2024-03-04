@@ -71,26 +71,29 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/d-solo/:uid/:slug',
+      // We currently have no core usage of the embedded dashboard so is to have a page for e2e to test
+      path: '/dashboards/embedding-test',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "DashboardPage"*/ 'app/features/dashboard-scene/embedding/EmbeddedDashboardTestPage'
+          )
+      ),
+    },
+    {
+      path: '/d-solo/:uid/:slug?',
       pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
+      component: SafeDynamicImport(() =>
+        config.featureToggles.dashboardSceneSolo
+          ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
+          : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
       ),
     },
     // This route handles embedding of snapshot/scripted dashboard panels
     {
       path: '/dashboard-solo/:type/:slug',
-      pageClass: 'dashboard-solo',
-      routeName: DashboardRoutes.Normal,
-      chromeless: true,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
-      ),
-    },
-    {
-      path: '/d-solo/:uid',
       pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
@@ -288,6 +291,10 @@ export function getAppRoutes(): RouteDescriptor[] {
           : () => <Redirect to="/admin" />,
     },
     {
+      path: '/admin/authentication/ldap',
+      component: LdapPage,
+    },
+    {
       path: '/admin/authentication/:provider',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
       component: config.featureToggles.ssoSettingsApi
@@ -355,9 +362,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
       ),
     },
-    {
-      path: '/admin/authentication/ldap',
-      component: LdapPage,
+    config.featureToggles.onPremToCloudMigrations && {
+      path: '/admin/migrate-to-cloud',
+      roles: () => ['ServerAdmin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/admin/migrate-to-cloud/MigrateToCloud')
+      ),
     },
     // LOGIN / SIGNUP
     {

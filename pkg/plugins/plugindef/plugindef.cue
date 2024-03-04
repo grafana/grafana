@@ -16,7 +16,7 @@ schemas: [{
 		// grafana.com, then the plugin `id` has to follow the naming
 		// conventions.
 		id: string & strings.MinRunes(1)
-		id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|datagrid|gauge|geomap|gettingstarted|graph|heatmap|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|trend|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|grafana-testdata-datasource|zipkin|phlare|parca)$"
+		id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|datagrid|gauge|geomap|gettingstarted|graph|heatmap|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|trend|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|stackdriver|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|grafana-testdata-datasource|zipkin|phlare|parca)$"
 
 		// An alias is useful when migrating from one plugin id to another (rebranding etc)
 		// This should be used sparingly, and is currently only supported though a hardcoded checklist
@@ -421,20 +421,6 @@ schemas: [{
 		// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
 		#IAM: {
 			// Permissions are the permissions that the external service needs its associated service account to have.
-			permissions?: [...#Permission]
-
-			// Impersonation describes the permissions that the external service will have on behalf of the user
-			// This is only available with the OAuth2 Server
-			impersonation?: #Impersonation
-		}
-
-		#Impersonation: {
-			// Groups allows the service to list the impersonated user's teams.
-			// Defaults to true.
-			groups?: bool
-			// Permissions are the permissions that the external service needs when impersonating a user.
-			// The intersection of this set with the impersonated user's permission guarantees that the client will not
-			// gain more privileges than the impersonated user has.
 			permissions?: [...#Permission]
 		}
 	}

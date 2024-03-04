@@ -24,39 +24,43 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel }:
   const filteredSuggestions = filterSuggestionsBySearch(searchQuery, suggestions);
 
   return (
-    <AutoSizer disableHeight style={{ width: '100%', height: '100%' }}>
-      {({ width }) => {
-        if (!width) {
-          return null;
-        }
+    // This div is needed in some places to make AutoSizer work
+    <div>
+      <AutoSizer disableHeight style={{ width: '100%', height: '100%' }}>
+        {({ width }) => {
+          if (!width) {
+            return null;
+          }
 
-        const columnCount = Math.floor(width / 170);
-        const spaceBetween = 8 * (columnCount! - 1);
-        const previewWidth = (width - spaceBetween) / columnCount!;
+          width = width - 1;
+          const columnCount = Math.floor(width / 200);
+          const spaceBetween = 8 * (columnCount! - 1);
+          const previewWidth = Math.floor((width - spaceBetween) / columnCount!);
 
-        return (
-          <div>
-            <div className={styles.filterRow}>
-              <div className={styles.infoText}>Based on current data</div>
+          return (
+            <div>
+              <div className={styles.filterRow}>
+                <div className={styles.infoText}>Based on current data</div>
+              </div>
+              <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth}px)` }}>
+                {filteredSuggestions.map((suggestion, index) => (
+                  <VisualizationSuggestionCard
+                    key={index}
+                    data={data!}
+                    suggestion={suggestion}
+                    onChange={onChange}
+                    width={previewWidth - 1}
+                  />
+                ))}
+                {searchQuery && filteredSuggestions.length === 0 && (
+                  <div className={styles.infoText}>No results matched your query</div>
+                )}
+              </div>
             </div>
-            <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth - 1}px)` }}>
-              {filteredSuggestions.map((suggestion, index) => (
-                <VisualizationSuggestionCard
-                  key={index}
-                  data={data!}
-                  suggestion={suggestion}
-                  onChange={onChange}
-                  width={previewWidth}
-                />
-              ))}
-              {searchQuery && filteredSuggestions.length === 0 && (
-                <div className={styles.infoText}>No results matched your query</div>
-              )}
-            </div>
-          </div>
-        );
-      }}
-    </AutoSizer>
+          );
+        }}
+      </AutoSizer>
+    </div>
   );
 }
 

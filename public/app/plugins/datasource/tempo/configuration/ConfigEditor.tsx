@@ -12,16 +12,15 @@ import {
   convertLegacyAuthProps,
   DataSourceDescription,
 } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
-import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/ui';
-
-import { NodeGraphSection } from '../_importedDependencies/components/NodeGraphSettings';
-import { SpanBarSection } from '../_importedDependencies/components/TraceView/SpanBarSettings';
 import {
+  NodeGraphSection,
+  SpanBarSection,
   TraceToLogsSection,
   TraceToMetricsSection,
   TraceToProfilesSection,
-} from '../_importedDependencies/grafana-traces/src';
+} from '@grafana/o11y-ds-frontend';
+import { config } from '@grafana/runtime';
+import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/ui';
 
 import { LokiSearchSettings } from './LokiSearchSettings';
 import { QuerySettings } from './QuerySettings';
@@ -54,21 +53,14 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 
       <Divider spacing={4} />
       <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
-
       <Divider spacing={4} />
-      {config.featureToggles.traceToMetrics ? (
-        <>
-          <TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
-          <Divider spacing={4} />
-        </>
-      ) : null}
 
-      {config.featureToggles.traceToProfiles && (
-        <>
-          <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
-          <Divider spacing={4} />
-        </>
-      )}
+      <TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
+      <Divider spacing={4} />
+
+      <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
+      <Divider spacing={4} />
+
       <ConfigSection
         title="Additional settings"
         description="Additional settings are optional settings that can be configured for more control over your data source."
@@ -146,9 +138,9 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    label: container;
-    margin-bottom: ${theme.spacing(2)};
-    max-width: 900px;
-  `,
+  container: css({
+    label: 'container',
+    marginBottom: theme.spacing(2),
+    maxWidth: '900px',
+  }),
 });

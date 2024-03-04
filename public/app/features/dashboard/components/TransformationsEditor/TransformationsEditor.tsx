@@ -37,7 +37,7 @@ interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
 }
 
-const VIEW_ALL_VALUE = 'viewAll';
+export const VIEW_ALL_VALUE = 'viewAll';
 export type viewAllType = 'viewAll';
 export type FilterCategory = TransformerCategory | viewAllType;
 
@@ -359,7 +359,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           search={search}
           suffix={suffix}
           xforms={xforms}
-          setState={this.setState.bind(this)}
+          onClose={() => this.setState({ showPicker: false })}
+          onSelectedFilterChange={(filter) => this.setState({ selectedFilter: filter })}
+          onShowIllustrationsChange={(showIllustrations) => this.setState({ showIllustrations })}
           onSearchChange={this.onSearchChange}
           onSearchKeyDown={this.onSearchKeyDown}
           onTransformationAdd={this.onTransformationAdd}

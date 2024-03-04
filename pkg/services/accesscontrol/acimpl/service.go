@@ -50,51 +50,39 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 		return nil, err
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSplitScopes) {
-		// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
-		// This will be removed once we've:
-		// 1) removed the feature toggle and
-		// 2) have released enough versions not to support a version without split scopes
-		if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
-			return nil, err
-		}
+	// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
+	// This will be removed once we've:
+	// 1) removed the feature toggle and
+	// 2) have released enough versions not to support a version without split scopes
+	if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
+		return nil, err
 	}
 
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features featuremgmt.FeatureToggles) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, cache *localcache.CacheService, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
-		cfg:      cfg,
-		store:    store,
-		log:      log.New("accesscontrol.service"),
 		cache:    cache,
-		roles:    accesscontrol.BuildBasicRoleDefinitions(),
+		cfg:      cfg,
 		features: features,
+		log:      log.New("accesscontrol.service"),
+		roles:    accesscontrol.BuildBasicRoleDefinitions(),
+		store:    store,
 	}
 
 	return s
 }
 
-//go:generate  mockery --name store --structname MockStore --outpkg actest --filename store_mock.go --output ../actest/
-type store interface {
-	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
-	SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
-	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
-	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
-	SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error
-	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
-}
-
 // Service is the service implementing role based access control.
 type Service struct {
-	log           log.Logger
-	cfg           *setting.Cfg
-	store         store
 	cache         *localcache.CacheService
+	cfg           *setting.Cfg
+	features      featuremgmt.FeatureToggles
+	log           log.Logger
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
-	features      featuremgmt.FeatureToggles
+	store         accesscontrol.Store
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -151,11 +139,13 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	if !options.ReloadCache {
 		permissions, ok := s.cache.Get(key)
 		if ok {
+			metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
 			s.log.Debug("Using cached permissions", "key", key)
 			return permissions.([]accesscontrol.Permission), nil
 		}
 	}
 
+	metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 	s.log.Debug("Fetch permissions from store", "key", key)
 	permissions, err := s.getUserPermissions(ctx, user, options)
 	if err != nil {
@@ -174,6 +164,10 @@ func (s *Service) ClearUserPermissionCache(user identity.Requester) {
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
 	return s.store.DeleteUserPermissions(ctx, orgID, userID)
+}
+
+func (s *Service) DeleteTeamPermissions(ctx context.Context, orgID int64, teamID int64) error {
+	return s.store.DeleteTeamPermissions(ctx, orgID, teamID)
 }
 
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
@@ -241,8 +235,24 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 }
 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
-func (s *Service) SearchUsersPermissions(ctx context.Context, user identity.Requester,
+func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	if options.NamespacedID != "" {
+		userID, err := options.ComputeUserID()
+		if err != nil {
+			s.log.Error("Failed to resolve user ID", "error", err)
+			return nil, err
+		}
+
+		// Reroute to the user specific implementation of search permissions
+		// because it leverages the user permission cache.
+		userPerms, err := s.SearchUserPermissions(ctx, usr.GetOrgID(), options)
+		if err != nil {
+			return nil, err
+		}
+		return map[int64][]accesscontrol.Permission{userID: userPerms}, nil
+	}
+
 	timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
 	defer timer.ObserveDuration()
 
@@ -256,20 +266,20 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user identity.Requ
 		}
 	}
 
-	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, user.GetOrgID())
+	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, usr.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
 
 	// Get managed permissions (DB)
-	usersPermissions, err := s.store.SearchUsersPermissions(ctx, user.GetOrgID(), options)
+	usersPermissions, err := s.store.SearchUsersPermissions(ctx, usr.GetOrgID(), options)
 	if err != nil {
 		return nil, err
 	}
 
 	// helper to filter out permissions the signed in users cannot see
 	canView := func() func(userID int64) bool {
-		siuPermissions := user.GetPermissions()
+		siuPermissions := usr.GetPermissions()
 		if len(siuPermissions) == 0 {
 			return func(_ int64) bool { return false }
 		}
@@ -327,8 +337,8 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if searchOptions.UserID == 0 {
-		return nil, fmt.Errorf("expected user ID to be specified")
+	if searchOptions.NamespacedID == "" {
+		return nil, fmt.Errorf("expected namespaced ID to be specified")
 	}
 
 	if permissions, success := s.searchUserPermissionsFromCache(orgID, searchOptions); success {
@@ -338,15 +348,20 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 }
 
 func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	userID, err := searchOptions.ComputeUserID()
+	if err != nil {
+		return nil, err
+	}
+
 	// Get permissions for user's basic roles from RAM
-	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{searchOptions.UserID}, orgID)
+	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{userID}, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
 	}
 	var roles []string
 	var ok bool
-	if roles, ok = roleList[searchOptions.UserID]; !ok {
-		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", searchOptions.UserID, orgID)
+	if roles, ok = roleList[userID]; !ok {
+		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", userID, orgID)
 	}
 	permissions := make([]accesscontrol.Permission, 0)
 	for _, builtin := range roles {
@@ -364,23 +379,31 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	if err != nil {
 		return nil, err
 	}
-	permissions = append(permissions, dbPermissions[searchOptions.UserID]...)
+	permissions = append(permissions, dbPermissions[userID]...)
 
 	return permissions, nil
 }
 
 func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, bool) {
+	userID, err := searchOptions.ComputeUserID()
+	if err != nil {
+		return nil, false
+	}
+
 	// Create a temp signed in user object to retrieve cache key
 	tempUser := &user.SignedInUser{
-		UserID: searchOptions.UserID,
+		UserID: userID,
 		OrgID:  orgID,
 	}
 
 	key := permissionCacheKey(tempUser)
 	permissions, ok := s.cache.Get((key))
 	if !ok {
+		metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 		return nil, false
 	}
+
+	metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
 
 	s.log.Debug("Using cached permissions", "key", key)
 	filteredPermissions := make([]accesscontrol.Permission, 0)
@@ -408,7 +431,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 }
 
 func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
-	if !(s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts)) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
@@ -421,7 +444,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 }
 
 func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
-	if !(s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts)) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}

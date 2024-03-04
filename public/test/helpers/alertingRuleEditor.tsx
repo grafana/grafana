@@ -13,7 +13,7 @@ export const ui = {
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     alertType: byTestId('alert-type-picker'),
-    dataSource: byTestId('datasource-picker'),
+    dataSource: byTestId(selectors.components.DataSourcePicker.inputV2),
     folder: byTestId('folder-picker'),
     folderContainer: byTestId(selectors.components.FolderPicker.containerV2),
     namespace: byTestId('namespace-picker'),
