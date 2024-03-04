@@ -95,7 +95,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
     alignItems: 'center',
     boxSizing: 'border-box',
     position: 'relative',
-    color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
+    color: theme.colors.cm.text,
     padding: theme.spacing(1, 1, 1, isChild ? 5 : 0),
     ...(isChild && {
       borderRadius: theme.shape.radius.default,
@@ -106,7 +106,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
         background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
       }),
       textDecoration: 'underline',
-      color: theme.colors.text.primary,
+      color: theme.colors.cm.text,
     },
     '&:focus-visible': {
       boxShadow: 'none',

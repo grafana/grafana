@@ -77,7 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
   }),
   collapseButton: css({
-    color: theme.colors.text.disabled,
+    color: theme.colors.cm.text,
     padding: theme.spacing(0, 0.5),
     marginRight: theme.spacing(1),
   }),
@@ -96,7 +96,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
   }),
   isActive: css({
-    color: theme.colors.text.primary,
+    color: theme.colors.cm.text,
 
     '&::before': {
       display: 'block',
@@ -112,6 +112,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   hasActiveChild: css({
-    color: theme.colors.text.primary,
+    color: theme.colors.cm.text,
   }),
 });

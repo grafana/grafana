@@ -181,7 +181,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     default: css({
-      color: theme.colors.text.secondary,
+      color: theme.colors.cm.icons,
       background: 'transparent',
       border: `1px solid transparent`,
 

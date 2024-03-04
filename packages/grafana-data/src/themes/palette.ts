@@ -41,4 +41,14 @@ export const palette = {
   greenLightText: '#0A764E',
   orangeLightMain: '#FF9900',
   orangeLightText: '#B5510D',
+
+  cmLightNavBar: '#3C4650',
+  cmLightIcons: '#0066A1',
+  cmLightTopBar: '#D2CDC8',
+  cmLightText: '#FFFFFF',
+
+  cmDarkNavBar: '#141414',
+  cmDarkIcons: '#3CAAF0',
+  cmDarkTopBar: '#1E1E1E',
+  cmDarkText: '#FFFFFF',
 };

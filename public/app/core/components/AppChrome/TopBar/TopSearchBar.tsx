@@ -81,6 +81,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0, 1, 0, 2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
+    backgroundColor: theme.colors.cm.topBar,
 
     [theme.breakpoints.up('sm')]: {
       gridTemplateColumns: '1.5fr minmax(240px, 1fr) 1.5fr', // search should not be smaller than 240px
