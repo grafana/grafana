@@ -70,6 +70,7 @@ export type CreateExploreWorkspaceSnapshotCommand = {
   name: string;
   description: string;
   exploreWorkspaceUID: string;
+  config?: string;
 };
 
 export type CreateExploreWorkspaceSnapshotResponse = {

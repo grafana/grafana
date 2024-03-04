@@ -50,6 +50,7 @@ export const ExploreWorkspacesMenu = (props: Props) => {
         name: data.name,
         description: data.description,
         exploreWorkspaceUID: loadedWorkspace.uid,
+        config: JSON.stringify(currentState),
       });
     }
   };
@@ -115,12 +116,7 @@ export const ExploreWorkspacesMenu = (props: Props) => {
             </em>
           </span>
         ) : undefined}
-        <ToolbarButton
-          aria-label="fork"
-          variant="default"
-          icon="user-arrows"
-          onClick={() => setIsOpen(true)}
-        ></ToolbarButton>
+        <ToolbarButton variant="default" icon="plus" onClick={() => setIsOpen(true)}></ToolbarButton>
         {isOpen && (
           <NewExploreWorkspaceFormModal
             isOpen={isOpen}
@@ -167,12 +163,20 @@ export const ExploreWorkspacesMenu = (props: Props) => {
             <TabContent>
               {activeTab === 'snapshots' && (
                 <ExploreWorkspaceSnapshotsList
+                  current={loadedSnapshot?.uid}
                   snapshots={loadedSnapshots}
-                  selected={(snapshot) => loadSnapshotHandler(snapshot)}
+                  selected={(snapshot) => {
+                    if (snapshot) {
+                      loadSnapshotHandler(snapshot);
+                    } else {
+                      showLatestHandler();
+                    }
+                  }}
                 />
               )}
               {activeTab === 'workspaces' && (
                 <ExploreWorkspacesList
+                  current={loadedWorkspace?.uid}
                   workspaces={workspaces}
                   selected={(workspace) => {
                     location.push('/explore/' + workspace.uid);
@@ -187,7 +191,7 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     );
   };
 
-  const ShowLatest = () => <ToolbarButton icon="sync" variant="default" onClick={showLatestHandler}></ToolbarButton>;
+  // const ShowLatest = () => <ToolbarButton icon="sync" variant="default" onClick={showLatestHandler}></ToolbarButton>;
   const TakeSnapshot = () => {
     const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -211,7 +215,7 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     <ToolbarButtonRow>
       {!loadedWorkspace ? <CreateWorkspace /> : undefined}
       {loadedWorkspace ? <ForkWorkspace /> : undefined}
-      {loadedSnapshot ? <ShowLatest /> : undefined}
+      {/*{loadedSnapshot ? <ShowLatest /> : undefined}*/}
       {loadedWorkspace ? <TakeSnapshot /> : undefined}
       <ListWorkspacesAndSnapshots />
     </ToolbarButtonRow>

@@ -5,6 +5,7 @@ import { Alert, Button, Card } from '@grafana/ui';
 import { ExploreWorkspace } from '../types';
 
 type Props = {
+  current?: string;
   workspaces: ExploreWorkspace[] | undefined;
   selected: (ExploreWorkspace: ExploreWorkspace) => void;
 };
@@ -21,7 +22,7 @@ export const ExploreWorkspacesList = (props: Props) => {
   return (
     <div>
       {props.workspaces.map((workspace, index) => (
-        <Card key={index}>
+        <Card key={index} isSelected={workspace.uid === props.current}>
           <Card.Heading>{workspace.name}</Card.Heading>
           <Card.Description>{workspace.description}</Card.Description>
           {workspace.activeSnapshot && (
@@ -36,7 +37,9 @@ export const ExploreWorkspacesList = (props: Props) => {
             </Card.Meta>
           )}
           <Card.Actions>
-            <Button onClick={() => props.selected(workspace)}>load</Button>
+            <Button icon="sync" onClick={() => props.selected(workspace)}>
+              switch
+            </Button>
             <Button variant="destructive" onClick={() => props.selected(workspace)}>
               delete
             </Button>

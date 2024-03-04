@@ -199,6 +199,10 @@ func (s *ExploreWorkspacesService) CreateExploreWorkspaceSnapshot(ctx context.Co
 
 	latest := exploreWorkspace.ActiveSnapshot
 
+	if cmd.Config != "" {
+		latest.Config = cmd.Config
+	}
+
 	createExploreWorkspaceSnapshotCommand := CreateExploreWorkspaceSnapshotCommand{
 		ExploreWorspaceUID: latest.ExploreWorspaceUID,
 		Name:               cmd.Name,

@@ -5,8 +5,9 @@ import { Alert, Button, Card } from '@grafana/ui';
 import { ExploreWorkspaceSnapshot } from '../types';
 
 type Props = {
+  current?: string;
   snapshots: ExploreWorkspaceSnapshot[] | undefined;
-  selected: (workspace: ExploreWorkspaceSnapshot) => void;
+  selected: (snapshot?: ExploreWorkspaceSnapshot) => void;
 };
 
 export const ExploreWorkspaceSnapshotsList = (props: Props) => {
@@ -20,8 +21,19 @@ export const ExploreWorkspaceSnapshotsList = (props: Props) => {
 
   return (
     <div>
+      <Card isSelected={!props.current}>
+        <Card.Heading>Latest</Card.Heading>
+        <Card.Description>Currently active</Card.Description>
+        <Card.Actions>
+          {props.current && (
+            <Button icon="sync" onClick={() => props.selected(undefined)}>
+              switch
+            </Button>
+          )}
+        </Card.Actions>
+      </Card>
       {props.snapshots.map((snapshot, index) => (
-        <Card key={index}>
+        <Card key={index} isSelected={snapshot.uid === props.current}>
           <Card.Heading>{snapshot.name}</Card.Heading>
           <Card.Description>{snapshot.description}</Card.Description>
           <Card.Meta>
@@ -33,7 +45,11 @@ export const ExploreWorkspaceSnapshotsList = (props: Props) => {
             </span>
           </Card.Meta>
           <Card.Actions>
-            <Button onClick={() => props.selected(snapshot)}>load</Button>
+            {snapshot.uid !== props.current && (
+              <Button icon="sync" onClick={() => props.selected(snapshot)}>
+                switch
+              </Button>
+            )}
             <Button variant="destructive" onClick={() => props.selected(snapshot)}>
               delete
             </Button>
