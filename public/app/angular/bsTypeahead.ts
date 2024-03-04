@@ -1,5 +1,5 @@
 import angular from 'angular';
-import $ from 'jquery';
+import 'jquery';
 import { isFunction } from 'lodash';
 
 import coreModule from './core_module';
