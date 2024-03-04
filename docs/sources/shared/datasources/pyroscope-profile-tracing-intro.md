@@ -94,7 +94,7 @@ Traces requests as they cross multiple services, revealing interactions and serv
 
 ## Combined power of tracing and profiling
 
-When used together, tracing and provide a powerful tool for understanding system and application performance.
+When used together, tracing and profiling provide a powerful tool for understanding system and application performance.
 
 <table>
   <tr>
