@@ -214,7 +214,7 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 
 	if r.ResourceVersion != 0 {
 		table = "entity_history"
-		where = append(where, s.dialect.Quote("resource_version")+"=?")
+		where = append(where, s.dialect.Quote("resource_version")+">=?")
 		args = append(args, r.ResourceVersion)
 	}
 
@@ -229,6 +229,11 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 
 	query += " FROM " + table +
 		" WHERE " + strings.Join(where, " AND ")
+
+	if r.ResourceVersion != 0 {
+		query += " ORDER BY resource_version DESC"
+	}
+	query += " LIMIT 1"
 
 	s.log.Debug("read", "query", query, "args", args)
 
@@ -1156,7 +1161,9 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
-	rsp := &entity.EntityListResponse{}
+	rsp := &entity.EntityListResponse{
+		ResourceVersion: s.snowflake.Generate().Int64(),
+	}
 	for rows.Next() {
 		result, err := s.rowToEntity(ctx, rows, rr)
 		if err != nil {
