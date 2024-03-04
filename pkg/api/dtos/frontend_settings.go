@@ -260,4 +260,6 @@ type FrontendSettingsDTO struct {
 	// Enterprise
 	Licensing     *FrontendSettingsLicensingDTO     `json:"licensing,omitempty"`
 	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
+
+	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
 }
