@@ -16,8 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
-
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
@@ -109,14 +107,16 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 	}
 
 	qm := models.QueryModel{
-		PrometheusDataQuery: dataquery.PrometheusDataQuery{
-			Range:    &sq.RangeQuery,
-			Exemplar: &sq.ExemplarQuery,
-			Expr:     sq.Expr,
+		PrometheusQueryProperties: models.PrometheusQueryProperties{
+			Range:        sq.RangeQuery,
+			Exemplar:     sq.ExemplarQuery,
+			Expr:         sq.Expr,
+			LegendFormat: sq.LegendFormat,
 		},
-		Interval:     fmt.Sprintf("%ds", sq.Step),
-		IntervalMs:   sq.Step * 1000,
-		LegendFormat: sq.LegendFormat,
+		CommonQueryProperties: models.CommonQueryProperties{
+			IntervalMs: sq.Step * 1000,
+		},
+		Interval: fmt.Sprintf("%ds", sq.Step),
 	}
 
 	data, err := json.Marshal(&qm)

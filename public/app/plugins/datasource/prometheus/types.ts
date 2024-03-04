@@ -1,7 +1,7 @@
 import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-import { Prometheus as GenPromQuery } from './dataquery.gen';
+import { Prometheus as GenPromQuery } from './dataquery';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends GenPromQuery, DataQuery {
