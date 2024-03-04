@@ -22,6 +22,11 @@ i18next.use(initReactI18next).init({
   lng: 'en-US', // this should be the locale of the phrases in our source JSX
 });
 
+// mock out the worker that detects changes in the dashboard
+// The mock is needed because JSDOM does not support workers and
+// the factory uses import.meta.url so we can't use it in CommonJS modules.
+jest.mock('app/features/dashboard-scene/saving/createDetectChangesWorker.ts');
+
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness
 configure({ asyncUtilTimeout: 2000 });

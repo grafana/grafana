@@ -18,7 +18,7 @@ labels:
     - enterprise
     - oss
 title: Configure notification policies
-weight: 430
+weight: 420
 ---
 
 # Configure notification policies
@@ -36,10 +36,6 @@ You can configure Grafana-managed notification policies as well as notification 
 For more information on notification policies, see [fundamentals of Notification Policies][notification-policies].
 
 ## Edit default notification policy
-
-{{% admonition type="note" %}}
-Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organizations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 Alerts only if they have one organization. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
-{{% /admonition %}}
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.

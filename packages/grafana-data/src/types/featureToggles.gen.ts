@@ -43,7 +43,6 @@ export interface FeatureToggles {
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
-  dataConnectionsConsole?: boolean;
   topnav?: boolean;
   returnToPrevious?: boolean;
   grpcServer?: boolean;
@@ -171,6 +170,7 @@ export interface FeatureToggles {
   onPremToCloudMigrations?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
+  sqlExpressions?: boolean;
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;

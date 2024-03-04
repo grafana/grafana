@@ -220,10 +220,15 @@ export class DashboardGrid extends PureComponent<Props, State> {
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
 
+      // used to allow overflowing content to show on top of the next panel
+      // requires parent create stacking context to prevent overlap with parent elements
+      const descIndex = this.props.dashboard.panels.length - panelElements.length;
+
       const p = (
         <GrafanaGridItem
           key={panel.key}
           className={panelClasses}
+          descendingOrderIndex={descIndex}
           data-panelid={panel.id}
           gridPos={panel.gridPos}
           gridWidth={gridWidth}
@@ -297,9 +302,18 @@ export class DashboardGrid extends PureComponent<Props, State> {
      * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
      * properly working. For more information go here:
      * https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#can-i-use-autosizer-within-a-flex-container
+     *
+     * pos: rel + z-index is required to create a new stacking context to contain the escalating z-indexes of the panels
      */
     return (
-      <div style={{ flex: '1 1 auto', display: this.props.editPanel ? 'none' : undefined }}>
+      <div
+        style={{
+          flex: '1 1 auto',
+          position: 'relative',
+          zIndex: 1,
+          display: this.props.editPanel ? 'none' : undefined,
+        }}
+      >
         <AutoSizer disableHeight>
           {({ width }) => {
             if (width === 0) {
@@ -348,6 +362,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
 interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   gridWidth?: number;
   gridPos?: GridPos;
+  descendingOrderIndex?: number;
   isViewing: boolean;
   windowHeight: number;
   windowWidth: number;
@@ -362,7 +377,7 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
   let width = 100;
   let height = 100;
 
-  const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, ...divProps } = props;
+  const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, descendingOrderIndex, ...divProps } = props;
   const style: CSSProperties = props.style ?? {};
 
   if (isViewing) {
@@ -392,7 +407,7 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
 
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]
   return (
-    <div {...divProps} ref={ref}>
+    <div {...divProps} style={{ ...divProps.style, zIndex: descendingOrderIndex }} ref={ref}>
       {/* Pass width and height to children as render props */}
       {[props.children[0](width, height), props.children.slice(1)]}
     </div>
