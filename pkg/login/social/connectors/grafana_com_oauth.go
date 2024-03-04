@@ -20,7 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var ExtraGrafanaComSettingKeys = []string{allowedOrganizationsKey}
+var ExtraGrafanaComSettingKeys = map[string]ExtraKeyInfo{
+	allowedOrganizationsKey: {Type: String, DefaultValue: ""},
+}
 
 var _ social.SocialConnector = (*SocialGrafanaCom)(nil)
 var _ ssosettings.Reloadable = (*SocialGrafanaCom)(nil)
