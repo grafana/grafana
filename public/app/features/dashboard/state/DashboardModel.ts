@@ -90,7 +90,7 @@ export class DashboardModel implements TimeModel {
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
-  private timeRangeUpdatedDuringEdit = false;
+  private timeRangeUpdatedDuringEditOrView = false;
   private originalDashboard: Dashboard | null = null;
 
   // ------------------
@@ -439,8 +439,8 @@ export class DashboardModel implements TimeModel {
     this.events.publish(new TimeRangeUpdatedEvent(timeRange));
     dispatch(onTimeRangeUpdated(this.uid, timeRange));
 
-    if (this.panelInEdit) {
-      this.timeRangeUpdatedDuringEdit = true;
+    if (this.panelInEdit || this.panelInView) {
+      this.timeRangeUpdatedDuringEditOrView = true;
     }
   }
 
@@ -482,7 +482,7 @@ export class DashboardModel implements TimeModel {
   initEditPanel(sourcePanel: PanelModel): PanelModel {
     getTimeSrv().stopAutoRefresh();
     this.panelInEdit = sourcePanel.getEditClone();
-    this.timeRangeUpdatedDuringEdit = false;
+    this.timeRangeUpdatedDuringEditOrView = false;
     return this.panelInEdit;
   }
 
@@ -492,34 +492,30 @@ export class DashboardModel implements TimeModel {
 
     getTimeSrv().resumeAutoRefresh();
 
-    if (this.panelsAffectedByVariableChange || this.timeRangeUpdatedDuringEdit) {
-      this.startRefresh({
-        panelIds: this.panelsAffectedByVariableChange ?? [],
-        refreshAll: this.timeRangeUpdatedDuringEdit,
-      });
-      this.panelsAffectedByVariableChange = null;
-      this.timeRangeUpdatedDuringEdit = false;
-    }
+    this.refreshIfPanelsAffectedByVariableChangeOrTimeRangeChanged();
   }
 
   initViewPanel(panel: PanelModel) {
     this.panelInView = panel;
+    this.timeRangeUpdatedDuringEditOrView = false;
     panel.setIsViewing(true);
   }
 
   exitViewPanel(panel: PanelModel) {
     this.panelInView = undefined;
     panel.setIsViewing(false);
-    this.refreshIfPanelsAffectedByVariableChange();
+    this.refreshIfPanelsAffectedByVariableChangeOrTimeRangeChanged();
   }
 
-  private refreshIfPanelsAffectedByVariableChange() {
-    if (!this.panelsAffectedByVariableChange) {
-      return;
+  private refreshIfPanelsAffectedByVariableChangeOrTimeRangeChanged() {
+    if (this.panelsAffectedByVariableChange || this.timeRangeUpdatedDuringEditOrView) {
+      this.startRefresh({
+        panelIds: this.panelsAffectedByVariableChange ?? [],
+        refreshAll: this.timeRangeUpdatedDuringEditOrView,
+      });
+      this.panelsAffectedByVariableChange = null;
+      this.timeRangeUpdatedDuringEditOrView = false;
     }
-
-    this.startRefresh({ panelIds: this.panelsAffectedByVariableChange, refreshAll: false });
-    this.panelsAffectedByVariableChange = null;
   }
 
   private ensurePanelsHaveUniqueIds() {
@@ -1355,7 +1351,9 @@ export class DashboardModel implements TimeModel {
   hasAngularPlugins(): boolean {
     return this.panels.some((panel) => {
       // Return false for plugins that are angular but have angular.hideDeprecation = false
-      const isAngularPanel = panel.isAngularPlugin() && !panel.plugin?.meta.angular?.hideDeprecation;
+      // We cannot use panel.plugin.isAngularPlugin() because panel.plugin may not be initialized at this stage.
+      const isAngularPanel =
+        config.panels[panel.type]?.angular?.detected && !config.panels[panel.type]?.angular?.hideDeprecation;
       let isAngularDs = false;
       if (panel.datasource?.uid) {
         isAngularDs = isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid);

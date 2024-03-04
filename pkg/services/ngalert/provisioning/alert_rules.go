@@ -276,6 +276,38 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	return service.persistDelta(ctx, orgID, delta, userID, provenance)
 }
 
+func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, orgID int64, namespaceUID, group string, provenance models.Provenance) error {
+	// List all rules in the group.
+	q := models.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{namespaceUID},
+		RuleGroup:     group,
+	}
+	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
+	if err != nil {
+		return err
+	}
+	if len(ruleList) == 0 {
+		return store.ErrAlertRuleGroupNotFound
+	}
+
+	// Check provenance for all rules in the group. Fail to delete if any deletions aren't allowed.
+	for _, rule := range ruleList {
+		storedProvenance, err := service.provenanceStore.GetProvenance(ctx, rule, rule.OrgID)
+		if err != nil {
+			return err
+		}
+		if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+			return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+		}
+	}
+
+	// Delete all rules.
+	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		return service.deleteRules(ctx, orgID, ruleList...)
+	})
+}
+
 func (service *AlertRuleService) calcDelta(ctx context.Context, orgID int64, group models.AlertRuleGroup) (*store.GroupDelta, error) {
 	// If the provided request did not provide the rules list at all, treat it as though it does not wish to change rules.
 	// This is done for backwards compatibility. Requests which specify only the interval must update only the interval.

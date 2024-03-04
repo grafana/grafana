@@ -70,7 +70,7 @@ export const StateTimelinePanel = ({
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const { sync, canAddAnnotations } = usePanelContext();
+  const { sync, canAddAnnotations, dataLinkPostProcessor } = usePanelContext();
 
   const onCloseToolTip = () => {
     isToolTipOpen.current = false;
@@ -184,6 +184,8 @@ export const StateTimelinePanel = ({
       legendItems={legendItems}
       {...options}
       mode={TimelineMode.Changes}
+      replaceVariables={replaceVariables}
+      dataLinkPostProcessor={dataLinkPostProcessor}
     >
       {(builder, alignedFrame) => {
         if (oldConfig.current !== builder && !showNewVizTooltips) {
