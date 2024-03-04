@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -108,4 +109,16 @@ func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances
 	}
 
 	return out, nil
+}
+
+// ToTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of TemplateDefinitions.
+func ToTemplateDefinitions(cfg *apimodels.PostableUserConfig) []alertingTemplates.TemplateDefinition {
+	out := make([]alertingTemplates.TemplateDefinition, 0, len(cfg.TemplateFiles))
+	for name, tmpl := range cfg.TemplateFiles {
+		out = append(out, alertingTemplates.TemplateDefinition{
+			Name:     name,
+			Template: tmpl,
+		})
+	}
+	return out
 }
