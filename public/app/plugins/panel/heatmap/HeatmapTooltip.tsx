@@ -30,7 +30,7 @@ import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
 import { formatMilliseconds, getFieldFromData, getHoverCellColor, getSparseCellMinMax } from './tooltip/utils';
 
-interface Props {
+interface HeatmapTooltipProps {
   mode: TooltipDisplayMode;
   dataIdxs: Array<number | null>;
   seriesIdx: number | null | undefined;
@@ -45,7 +45,7 @@ interface Props {
   annotate?: () => void;
 }
 
-export const HeatmapHoverView = (props: Props) => {
+export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
   if (props.seriesIdx === 2) {
     return (
       <DataHoverView
@@ -70,7 +70,7 @@ const HeatmapHoverCell = ({
   replaceVars,
   mode,
   annotate,
-}: Props) => {
+}: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
 

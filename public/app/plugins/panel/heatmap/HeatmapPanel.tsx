@@ -34,8 +34,8 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 
 import { ExemplarModalHeader } from './ExemplarModalHeader';
-import { HeatmapHoverView } from './HeatmapHoverView';
-import { HeatmapHoverView as HeatmapHoverViewOld } from './HeatmapHoverViewOld';
+import { HeatmapHoverView } from './HeatmapHoverViewOld';
+import { HeatmapTooltip } from './HeatmapTooltip';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
 import { Options } from './types';
@@ -265,7 +265,7 @@ export const HeatmapPanel = ({
                       };
 
                       return (
-                        <HeatmapHoverView
+                        <HeatmapTooltip
                           mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                           dataIdxs={dataIdxs}
                           seriesIdx={seriesIdx}
@@ -308,7 +308,7 @@ export const HeatmapPanel = ({
                 allowPointerEvents={isToolTipOpen.current}
               >
                 {shouldDisplayCloseButton && <ExemplarModalHeader onClick={onCloseToolTip} />}
-                <HeatmapHoverViewOld
+                <HeatmapHoverView
                   timeRange={timeRange}
                   data={info}
                   hover={hover}
