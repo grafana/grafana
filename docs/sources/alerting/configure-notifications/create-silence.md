@@ -28,9 +28,10 @@ weight: 440
 Silences stop notifications from getting created and last for only a specified window of time.
 
 {{< admonition type="note" >}}
+
 - Inhibition rules are not supported in the Grafana Alertmanager.
 - The preview of silenced alerts only applies to alerts in firing state.
-{{< /admonition >}}
+  {{< /admonition >}}
 
 ## Add silences
 
