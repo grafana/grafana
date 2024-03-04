@@ -309,14 +309,18 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		return nil, errMissingGroupMembership
 	}
 
-	// call heimdallAuthorizer for dataos
-	_ ,err := heimdall.AuthorizeUser(token.AccessToken, (*heimdall.BasicUserInfo)(userInfo))
+	// Call the AuthorizeUser function with the correct arguments
+	userInfo, err := heimdall.AuthorizeUser(token.AccessToken, heimdall.BasicUserInfo{}, &heimdall.Config{})
+
 	if err != nil {
+		// Log the error if authorization failed
 		s.log.Debug("heimdall authorization failed: ", err)
 		return nil, errors.New("heimdall authorization failed: " + err.Error())
 	}
 
+	// Log the user info result
 	s.log.Debug("User info result", "result", userInfo)
+
 	return userInfo, nil
 }
 
