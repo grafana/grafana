@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	"github.com/stretchr/testify/require"
 )
 

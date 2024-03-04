@@ -3,8 +3,8 @@ package template
 import (
 	"testing"
 
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	"github.com/stretchr/testify/require"
 )
 

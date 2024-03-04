@@ -2202,6 +2202,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.212.1-0.20240304044524-0e568d62d6fe 
 github.com/grafana/grafana-plugin-sdk-go v0.212.1-0.20240304044524-0e568d62d6fe/go.mod h1:l+qrlSQC34H5CF2XGKRlRpTRHp+hMWFzgw15u7ItKk0=
 github.com/grafana/grafana-plugin-sdk-go v0.212.1-0.20240304175158-bd58a3b08c1f h1:C/H9p059taQo1e9LvYOZmnbhDAXCGja207mChkEQWhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.212.1-0.20240304175158-bd58a3b08c1f/go.mod h1:l+qrlSQC34H5CF2XGKRlRpTRHp+hMWFzgw15u7ItKk0=
+github.com/grafana/grafana-plugin-sdk-go v0.212.1-0.20240304202454-66438c497366 h1:kijdp1x0uMldqyTZkfA+f+XBKsGNVvM699kdOLszS50=
+github.com/grafana/grafana-plugin-sdk-go v0.212.1-0.20240304202454-66438c497366/go.mod h1:l+qrlSQC34H5CF2XGKRlRpTRHp+hMWFzgw15u7ItKk0=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4 h1:hpyusz8c3yRFoJPlA0o34rWnsLbaOOBZleqRhFBi5Lg=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4/go.mod h1:vrRQJuNprTWqwm6JPxHf3BoTJhvO15QMEjQ7Q/YUOnI=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4 h1:tIbI5zgos92vwJ8lV3zwHwuxkV03GR3FGLkFW9V5LxY=

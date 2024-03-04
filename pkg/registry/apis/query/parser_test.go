@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

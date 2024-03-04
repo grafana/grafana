@@ -3,8 +3,8 @@ package schema
 import (
 	"fmt"
 
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"

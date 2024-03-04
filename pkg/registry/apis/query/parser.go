@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 

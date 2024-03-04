@@ -1,8 +1,8 @@
 package peakq
 
 import (
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template"
 )

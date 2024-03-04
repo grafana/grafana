@@ -1,8 +1,8 @@
 package template
 
 import (
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )

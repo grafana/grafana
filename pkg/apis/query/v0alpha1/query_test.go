@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
 	"github.com/stretchr/testify/require"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
