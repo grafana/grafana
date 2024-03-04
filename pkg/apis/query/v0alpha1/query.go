@@ -138,6 +138,9 @@ func (g GenericDataQuery) MarshalJSON() ([]byte, error) {
 	if g.MaxDataPoints > 0 {
 		vals["maxDataPoints"] = g.MaxDataPoints
 	}
+	if g.QueryType != "" {
+		vals["queryType"] = g.QueryType
+	}
 	return json.Marshal(vals)
 }
 
@@ -218,6 +221,17 @@ func (g *GenericDataQuery) unmarshal(vals map[string]any) error {
 			return fmt.Errorf("expected datasourceId as number (got: %t)", v)
 		}
 		g.DatasourceId = int64(count)
+		delete(vals, key)
+	}
+
+	key = "queryType"
+	v, ok = vals[key]
+	if ok {
+		queryType, ok := v.(string)
+		if !ok {
+			return fmt.Errorf("expected queryType as string (got: %t)", v)
+		}
+		g.QueryType = queryType
 		delete(vals, key)
 	}
 
