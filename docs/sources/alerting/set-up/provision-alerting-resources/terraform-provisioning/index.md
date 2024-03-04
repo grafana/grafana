@@ -70,7 +70,7 @@ Replace the following values:
 
 This Terraform configuration installs the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) and authenticates against your Grafana instance using an API token. For other authentication alternatives including basic authentication, refer to the [`auth` option documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
 
-For Grafana Cloud, refer to the [instructions to manage a Grafana Cloud stack with Terraform][provision-cloud-with-terraform]. For Role-based access control, refer to [Provisioning RBAC with Terraform][rbac-terraform-provisioning] and the [alerting provisioning roles (`fixed:alerting.provisioning.*`)][rbac-role-definitions].
+For Grafana Cloud, refer to the [instructions to manage a Grafana Cloud stack with Terraform][provision-cloud-with-terraform]. For role-based access control, refer to [Provisioning RBAC with Terraform][rbac-terraform-provisioning] and the [alerting provisioning roles (`fixed:alerting.provisioning.*`)][rbac-role-definitions].
 
 ## Create Terraform configurations for alerting resources
 
