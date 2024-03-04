@@ -186,9 +186,7 @@ func (s *Service) GetUserPermissionsInOrg(ctx context.Context, user identity.Req
 	}
 	for _, builtin := range roles {
 		if basicRole, ok := s.roles[builtin]; ok {
-			for _, permission := range basicRole.Permissions {
-				permissions = append(permissions, permission)
-			}
+			permissions = append(permissions, basicRole.Permissions...)
 		}
 	}
 
