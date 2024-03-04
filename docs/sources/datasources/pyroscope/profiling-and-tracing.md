@@ -1,6 +1,6 @@
 ---
-title: Profiling and tracing synergies
-menuTitle: Profiling and tracing
+title: How profiling and tracing work together
+menuTitle: How profiling and tracing work together
 description: Learn about how profiling and tracing work together.
 weight: 250
 keywords:
@@ -9,7 +9,7 @@ keywords:
   - tracing
 ---
 
-# Profiling and tracing synergies
+# How profiling and tracing work together
 
 [//]: # 'Shared content for Trace to profiles in the Pyroscope data source'
 
