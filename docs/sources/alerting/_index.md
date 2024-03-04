@@ -27,23 +27,23 @@ cards:
       href: /docs/grafana-cloud/alerting-and-irm/alerting/
       description: Learn more about the fundamentals and available features that help you create, manage, and respond to alerts; and improve your team’s ability to resolve issues quickly.
       height: 24
-- title: Set up
+    - title: Set up
       href: /docs/grafana/next/alerting/set-up/
       description: Set up your implementation of Grafana Alerting.
       height: 24
-- title: Configure alert rules
+    - title: Configure alert rules
       href: /docs/grafana/next/alerting/alerting-rules/
       description: Create, manage, view, and adjust alert rules to alert on your metrics data or log entries from multiple data sources — no matter where your data is stored.
       height: 24
-- title: Configure notifications
+    - title: Configure notifications
       href: /docs/grafana/next/alerting/configure-notifications/
       description: Choose how, when, and where to send your alert notifications.
       height: 24
-- title: Detect and respond
+    - title: Detect and respond
       href: /docs/grafana/next/alerting/manage-notifications/
       description: Monitor, respond to, and triage issues within your services.
       height: 24
-- title: Monitor
+    - title: Monitor
       href: /docs/grafana/next/alerting/monitor/
       description: Monitor your alerting metrics to ensure you identify potential issues before they become critical.
       height: 24
