@@ -267,8 +267,6 @@ export { Divider } from './Divider/Divider';
 export { getDragStyles, type DragHandlePosition } from './DragHandle/DragHandle';
 export { useSplitter } from './Splitter/useSplitter';
 
-export { LayoutItemContext, type LayoutItemContextProps } from './Layout/LayoutItemContext';
-
 /** @deprecated Please use non-legacy versions of these components */
 const LegacyForms = {
   SecretFormField,
