@@ -2,11 +2,10 @@ import { css, cx } from '@emotion/css';
 import React, { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import FlaggedScroller from '../FlaggedScroller';
+import FlaggedScrollbar from '../FlaggedScroller';
 
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
@@ -51,13 +50,10 @@ export const Page: PageType = ({
     }
   }, [navModel, pageNav, chrome, layout]);
 
-  // When the
-  // const applyPrimaryBgClass = config.featureToggles.removeCustomScrollbars && layout === PageLayoutType.Standard;
-
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
-        <FlaggedScroller autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+        <FlaggedScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
           <div className={styles.pageInner}>
             {pageHeaderNav && (
               <PageHeader
@@ -72,13 +68,13 @@ export const Page: PageType = ({
             {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
             <div className={styles.pageContent}>{children}</div>
           </div>
-        </FlaggedScroller>
+        </FlaggedScrollbar>
       )}
 
       {layout === PageLayoutType.Canvas && (
-        <FlaggedScroller autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+        <FlaggedScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
           <div className={styles.canvasContent}>{children}</div>
-        </FlaggedScroller>
+        </FlaggedScrollbar>
       )}
 
       {layout === PageLayoutType.Custom && children}

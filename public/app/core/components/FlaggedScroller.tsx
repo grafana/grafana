@@ -1,35 +1,49 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { CustomScrollbar, useStyles2, useTheme2 } from '@grafana/ui';
+import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 
 type FlaggedScrollerProps = Parameters<typeof CustomScrollbar>[0];
 
-export default function FlaggedScroller(props: FlaggedScrollerProps) {
-  const styles = useStyles2(getStyles);
-  const theme = useTheme2();
-
-  useEffect(() => {
-    if (config.featureToggles.removeCustomScrollbars && window.location.search.includes('styleScrollbars')) {
-      // @ts-ignore - no, trust me, scrollbarColor really is there
-      document.body.style.scrollbarColor = `${theme.colors.action.focus} transparent`;
-    }
-  }, [theme]);
-
+export default function FlaggedScrollbar(props: FlaggedScrollerProps) {
   if (config.featureToggles.removeCustomScrollbars) {
-    return <div className={styles.nativeScrollbars}>{props.children}</div>;
+    return <NativeScrollbar {...props}>{props.children}</NativeScrollbar>;
   }
 
   return <CustomScrollbar {...props} />;
 }
 
-function getStyles(theme: GrafanaTheme2) {
+// Shim to provide API-compatibility for Page's scroll-related props
+function NativeScrollbar({ children, scrollRefCallback, scrollTop }: FlaggedScrollerProps) {
+  const styles = useStyles2(getStyles);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ref.current && scrollRefCallback) {
+      scrollRefCallback(ref.current);
+    }
+  }, [ref, scrollRefCallback]);
+
+  useEffect(() => {
+    if (ref.current && scrollTop != null) {
+      ref.current?.scrollTo(0, scrollTop);
+    }
+  }, [scrollTop]);
+
+  return (
+    <div ref={ref} className={styles.nativeScrollbars}>
+      {children}
+    </div>
+  );
+}
+
+function getStyles() {
   return {
     nativeScrollbars: css({
-      minHeight: `calc(100% + 0px)`,
-      maxHeight: `calc(100% + 0px)`,
+      label: 'native-scroll-container',
+      minHeight: `calc(100% + 0px)`, // I don't know, just copied from custom scrollbars
+      maxHeight: `calc(100% + 0px)`, // I don't know, just copied from custom scrollbars
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
