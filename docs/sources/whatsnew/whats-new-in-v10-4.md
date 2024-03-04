@@ -114,17 +114,27 @@ _Available in public preview in all editions of Grafana_
 
 We’ve made a number of small improvements to the way tooltips work in Grafana. To try out the new tooltips, enable the `newVizTooltips` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
-- +**Copy on click support**
-- +You can now copy the content from within a tooltip by clicking on the text.
-- +![Tooltip](/media/docs/grafana/gif-grafana-10-4-tooltip–copy.gif)
-- +**Scrollable content**
-- +You can now scroll the content of a tooltip, which allows you to view long lists. This is currently supported in the time series, candlestick, and trend visualizations. We'll add more improvements to the scrolling functionality in a future version.
-- +![Tooltip](/media/docs/grafana/gif-grafana-10-4-tooltip-content-scroll.gif)
-- +**Added tooltip options for candlestick visualization**
-- +The default tooltip options are now also visible in candlestick visualizations.
-- +**Hover proximity option in time series**
-- +We've added a tooltip hover proximity limit option (in pixels), which makes it possible to reduce the number of hovered-over data points under the cursor when two datasets are not aligned in time.
-- +![Time Series hover proximity](/media/docs/grafana/gif-grafana-10-4-hover-proximity.gif)
+**Copy on click support**
+
+You can now copy the content from within a tooltip by clicking on the text.
+
+![Tooltip](/media/docs/grafana/gif-grafana-10-4-tooltip–copy.gif)
+
+**Scrollable content**
+
+You can now scroll the content of a tooltip, which allows you to view long lists. This is currently supported in the time series, candlestick, and trend visualizations. We'll add more improvements to the scrolling functionality in a future version.
+
+![Tooltip](/media/docs/grafana/gif-grafana-10-4-tooltip-content-scroll.gif)
+
+**Added tooltip options for candlestick visualization**
+
+The default tooltip options are now also visible in candlestick visualizations.
+
+**Hover proximity option in time series**
+
+We've added a tooltip hover proximity limit option (in pixels), which makes it possible to reduce the number of hovered-over data points under the cursor when two datasets are not aligned in time.
+
+![Time Series hover proximity](/media/docs/grafana/gif-grafana-10-4-hover-proximity.gif)
 
 ## Alerting
 
@@ -259,5 +269,5 @@ Return to Previous is rolling out across Grafana Cloud now. To try Return to Pre
 {{< admonition type="note" >}}
 The term **context** refers to applications in Grafana like Incident and OnCall, as well as core features like Explore and Dashboards.
 
-To notice a change in your context, look at Grafana's breadcrumbs. If you go from \*Home > **Dashboards\*** to \*Home > **Explore\***, you've changed context. If you go from _Home > **Dashboards** > Playlist > Edit playlist_ to _Home > **Dashboards** > Reporting > Settings_, you are in the same context.
+To notice a change in your context, look at Grafana's breadcrumbs. If you go from _Home > **Dashboards**_ to _Home > **Explore**_, you've changed context. If you go from _Home > **Dashboards** > Playlist > Edit playlist_ to _Home > **Dashboards** > Reporting > Settings_, you are in the same context.
 {{< /admonition >}}
