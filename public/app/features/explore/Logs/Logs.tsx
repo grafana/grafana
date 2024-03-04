@@ -463,7 +463,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     return {
       from: new Date(this.props.absoluteRange.from).toISOString(),
-      to: new Date(prevLog ? prevLog.timeEpochMs : this.props.absoluteRange.to).toISOString(),
+      to: new Date(prevLog ? new Date(prevLog.timeEpochMs + 1) : this.props.absoluteRange.to).toISOString(),
     };
   }
 
