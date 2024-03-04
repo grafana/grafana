@@ -998,6 +998,35 @@ describe('Prometheus Result Transformer', () => {
           ?.values.at(1)
       ).toBe(0);
     });
+
+    it('should throw an error if the series does not contain number-type values', () => {
+      const response = {
+        state: 'Done',
+        data: [
+          ['10', '10', '0'],
+          ['20', '10', '30'],
+          ['20', '10', '35'],
+        ].map((values) =>
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              { name: 'Value', type: FieldType.string, values },
+            ],
+          })
+        ),
+      } as unknown as DataQueryResponse;
+      const request = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+
+      expect(() => transformV2(response, request, {})).toThrow();
+    });
   });
 
   describe('transformDFToTable', () => {
