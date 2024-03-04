@@ -316,7 +316,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	// call heimdallAuthorizer for dataos
-	_, err := heimdall.AuthorizeUser(token.AccessToken, *heimdall.config, (*heimdall.BasicUserInfo)(userInfo))
+	_, err := heimdall.AuthorizeUser(token.AccessToken, &heimdall.config{}, (*heimdall.BasicUserInfo)(userInfo))
 	if err != nil {
 		s.log.Debug("heimdall authorization failed: ", err)
 		return nil, errors.New("heimdall authorization failed: " + err.Error())
