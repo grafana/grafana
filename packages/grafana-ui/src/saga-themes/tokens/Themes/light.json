@@ -1,64 +1,23 @@
 {
   "color": {
-    "shadow": {
-      "z1": {
-        "value": "{color.base.black}",
-        "type": "color",
-        "$extensions": {
-          "studio.tokens": {
-            "modify": {
-              "type": "alpha",
-              "value": "{opacity.20}",
-              "space": "hsl"
-            }
-          }
-        }
-      },
-      "z2": {
-        "value": "{color.base.black}",
-        "type": "color",
-        "$extensions": {
-          "studio.tokens": {
-            "modify": {
-              "type": "alpha",
-              "value": "{opacity.20}",
-              "space": "hsl"
-            }
-          }
-        }
-      },
-      "z3": {
-        "value": "{color.base.black}",
-        "type": "color",
-        "$extensions": {
-          "studio.tokens": {
-            "modify": {
-              "type": "alpha",
-              "value": "{opacity.20}",
-              "space": "hsl"
-            }
-          }
-        }
-      }
-    },
     "background": {
       "ui": {
-        "primary": {
+        "canvas": {
           "value": "{color.neutral.100}",
           "type": "color",
           "description": "This token was previously known as background.canvas and is the primary background color in UI."
         },
-        "secondary": {
+        "primary": {
           "value": "{color.neutral.50}",
           "type": "color",
           "description": "This token was previously known as background.primary and is the secondary background color in UI."
         },
-        "tertiary": {
+        "secondary": {
           "value": "{color.neutral.100}",
           "type": "color",
           "description": "This token was previously known as background.secondary and is the tertiary background color in UI."
         },
-        "quaternary": {
+        "tertiary": {
           "value": "{color.neutral.200}",
           "type": "color",
           "description": "This token didn't existed in the previous color palette for the UI but it can help leverage more levels of background needs and is the quaternary background color in the current UI palette."
@@ -187,6 +146,47 @@
           "body": {
             "value": "{color.blue.800}",
             "type": "color"
+          }
+        }
+      }
+    },
+    "shadow": {
+      "z1": {
+        "value": "{color.base.black}",
+        "type": "color",
+        "$extensions": {
+          "studio.tokens": {
+            "modify": {
+              "type": "alpha",
+              "value": "{opacity.20}",
+              "space": "hsl"
+            }
+          }
+        }
+      },
+      "z2": {
+        "value": "{color.base.black}",
+        "type": "color",
+        "$extensions": {
+          "studio.tokens": {
+            "modify": {
+              "type": "alpha",
+              "value": "{opacity.20}",
+              "space": "hsl"
+            }
+          }
+        }
+      },
+      "z3": {
+        "value": "{color.base.black}",
+        "type": "color",
+        "$extensions": {
+          "studio.tokens": {
+            "modify": {
+              "type": "alpha",
+              "value": "{opacity.20}",
+              "space": "hsl"
+            }
           }
         }
       }
