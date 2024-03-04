@@ -632,7 +632,7 @@ Use this transformation to construct a matrix by specifying fields from your que
     name: 'Group to nested table',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
-  Use this transformation to group the data by a specified field (column) value and process calculations on each group. This generates records that share the same grouped field value to be displayed in a nested table.
+  Use this transformation to group the data by a specified field (column) value and process calculations on each group. Records are generated that share the same grouped field value, to be displayed in a nested table.
     
   To calculate a statistic for a field, click the select box next to it and select the \`Calculate\` option:
 
