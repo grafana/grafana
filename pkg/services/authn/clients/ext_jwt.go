@@ -34,7 +34,8 @@ const (
 	authorizationHeader   = "X-Grafana-Id"
 )
 
-func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service) *ExtendedJWT {
+func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg,
+	signingKeys signingkeys.Service) *ExtendedJWT {
 	return &ExtendedJWT{
 		cfg:         cfg,
 		log:         log.New(authn.ClientExtendedJWT),
@@ -81,7 +82,8 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	return s.authenticateService(ctx, claims, r)
 }
 
-func (s *ExtendedJWT) authenticateAsUser(idTokenClaims, accessTokenClaims *ExtendedJWTClaims, r *authn.Request) (*authn.Identity, error) {
+func (s *ExtendedJWT) authenticateAsUser(idTokenClaims,
+	accessTokenClaims *ExtendedJWTClaims, r *authn.Request) (*authn.Identity, error) {
 	_, err := strconv.ParseInt(strings.TrimPrefix(idTokenClaims.Subject, fmt.Sprintf("%s:id:", authn.NamespaceUser)), 10, 64)
 	if err != nil {
 		s.log.Error("Failed to parse sub", "error", err)
@@ -105,8 +107,10 @@ func (s *ExtendedJWT) authenticateAsUser(idTokenClaims, accessTokenClaims *Exten
 		}}, nil
 }
 
-func (s *ExtendedJWT) authenticateService(ctx context.Context, claims *ExtendedJWTClaims, r *authn.Request) (*authn.Identity, error) {
-	userID, err := strconv.ParseInt(strings.TrimPrefix(claims.Subject, fmt.Sprintf("%s:id:", authn.NamespaceServiceAccount)), 10, 64)
+func (s *ExtendedJWT) authenticateService(ctx context.Context,
+	claims *ExtendedJWTClaims, r *authn.Request) (*authn.Identity, error) {
+	userID, err := strconv.ParseInt(strings.TrimPrefix(claims.Subject,
+		fmt.Sprintf("%s:id:", authn.NamespaceServiceAccount)), 10, 64)
 	if err != nil {
 		s.log.Error("Failed to parse sub", "error", err)
 		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
@@ -119,7 +123,8 @@ func (s *ExtendedJWT) authenticateService(ctx context.Context, claims *ExtendedJ
 		return nil, errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported")
 	}
 
-	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{OrgID: defaultOrgID, UserID: userID})
+	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx,
+		&user.GetSignedInUserQuery{OrgID: defaultOrgID, UserID: userID})
 	if err != nil {
 		s.log.Error("Failed to get user", "error", err)
 		return nil, errJWTInvalid.Errorf("Failed to get user: %w", err)
@@ -217,7 +222,8 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 	}
 
 	if !slices.Contains(acceptedSigningMethods, parsedHeader.Algorithm) {
-		return nil, fmt.Errorf("invalid algorithm: %s. Accepted algorithms: %s", parsedHeader.Algorithm, strings.Join(acceptedSigningMethods, ", "))
+		return nil, fmt.Errorf("invalid algorithm: %s. Accepted algorithms: %s",
+			parsedHeader.Algorithm, strings.Join(acceptedSigningMethods, ", "))
 	}
 
 	var claims ExtendedJWTClaims
