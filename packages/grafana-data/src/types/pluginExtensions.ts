@@ -38,9 +38,9 @@ export type PluginExtensionComponent = PluginExtensionBase & {
   component: React.ComponentType;
 };
 
-export type PluginExtensionFunction = PluginExtensionBase & {
+export type PluginExtensionFunction<T = Function> = PluginExtensionBase & {
   type: PluginExtensionTypes.function;
-  function: Function;
+  function: T;
 };
 
 export type PluginExtension = PluginExtensionLink | PluginExtensionComponent | PluginExtensionFunction;

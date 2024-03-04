@@ -24,4 +24,5 @@ export {
   usePluginLinkExtensions,
   usePluginComponentExtensions,
 } from './pluginExtensions/usePluginExtensions';
+export { setPluginCapabilityGetter, getPluginCapability } from './pluginExtensions/getPluginCapabilities';
 export { isPluginExtensionLink, isPluginExtensionComponent } from './pluginExtensions/utils';

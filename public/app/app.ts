@@ -37,6 +37,7 @@ import {
   setAppEvents,
   setReturnToPreviousHook,
   setPluginExtensionsHook,
+  setPluginCapabilityGetter,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -82,7 +83,10 @@ import { PanelDataErrorView } from './features/panel/components/PanelDataErrorVi
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
-import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
+import {
+  createPluginCapabilityGetter,
+  createPluginExtensionsGetter,
+} from './features/plugins/extensions/getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
 import { createPluginExtensionsHook } from './features/plugins/extensions/usePluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
@@ -220,6 +224,7 @@ export class GrafanaApp {
 
       setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
       setPluginExtensionsHook(createPluginExtensionsHook(extensionsRegistry));
+      setPluginCapabilityGetter(createPluginCapabilityGetter(extensionsRegistry));
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

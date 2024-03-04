@@ -44,36 +44,12 @@ type GetExtensions = ({
   registry: PluginExtensionRegistry;
 }) => { extensions: PluginExtension[] };
 
-type GetCapabilities = ({
-  id, // The ID of the capability, e.g. "foo" (optional)
-  pluginId, // The ID of the plugin, e.g. "myorg-myplugin-app"
-  registry,
-}: {
-  id?: string;
-  pluginId: string;
-  registry: PluginExtensionRegistry;
-}) => PluginExtensionFunction[];
-
-/**
- * In a plugin:
- *  const fn = await getPluginCapability('myorg-myplugin-app/foo', { timeout: 10000 }); // returns `undefined` after the timeout and logs a warning ("plugin or capability not available")
- *  const fn = await getPluginCapability('myorg-myplugin-app/foo', { version: 1, timeout: 10000 }); // looks for the exact version of the capability, otherwise returns `undefined` and logs a warning ("plugin or capability not available")
- *  const fn = await getPluginCapability('myorg-myplugin-app/foo', { minVersion: 1, timeout: 10000 }); // looks for a minimum version of the capability, otherwise returns `undefined` and logs a warning ("plugin or capability not available")
-
-*  fn();
-
-  * Discovering capabilities:
-const fns = await getPluginCapabilities('myorg-myplugin-app/*'); // all capabilities for a plugin
-const fns = await getPluginCapabilities(); // all capabilities 
- */
-
-type GetCapabilitiesForPlugin = ({
-  pluginId,
-  registry,
-}: {
-  pluginId: string;
-  registry: PluginExtensionRegistry;
-}) => PluginExtensionFunction | undefined;
+type GetCapability = (
+  id: string,
+  options?: {
+    timeout?: number;
+  }
+) => Promise<PluginExtensionFunction | null>;
 
 export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginExtensionsRegistry): GetPluginExtensions {
   let registry: PluginExtensionRegistry = {};
@@ -87,40 +63,43 @@ export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginEx
   return (options) => getPluginExtensions({ ...options, registry });
 }
 
-export function createPluginCapabilitiesGetter(extensionRegistry: ReactivePluginExtensionsRegistry): GetPluginExtensions {
-  let registry: PluginExtensionRegistry = {};
+export const createPluginCapabilityGetter = (extensionRegistry: ReactivePluginExtensionsRegistry): GetCapability => {
+  return (id, options = {}) =>
+    new Promise((resolve, reject) => {
+      const { timeout } = options;
+      const registryId = `capabilities/${id}`;
+      const pluginId = id.split('/')[0];
+      let timer: ReturnType<typeof setTimeout> | null = null;
 
-  // Create a subscription to keep an copy of the registry state for use in the non-async
-  // plugin extensions getter.
-  extensionRegistry.asObservable().subscribe((r) => {
-    registry = r;
-  });
+      if (timeout) {
+        timer = setTimeout(() => {
+          reject(null);
+        }, timeout);
+      }
 
-  return (options) => getPluginExtensions({ ...options, registry });
-}
+      // Subscribes to the registry and checks if there are any capabilities for the given id
+      // (If there was a timeout set, it will clear it if it finds the capability before the timeout.)
+      extensionRegistry.asObservable().subscribe((r) => {
+        const registryItems = r[registryId];
+        const registryItem = Array.isArray(registryItems) ? registryItems[0] : null;
 
-export const getPluginCapabilities: GetCapabilities = ({ id, pluginId, registry }) => {
-  const registryItems = (id ? registry[`capabilities/${pluginId}/${id}`] : registry[`capabilities/${pluginId}`]) ?? [];
-  const capabilities: PluginExtensionFunction[] = [];
+        if (registryItem && isPluginExtensionFunctionConfig(registryItem.config)) {
+          resolve({
+            id: generateExtensionId(pluginId, registryItem.config),
+            type: PluginExtensionTypes.function,
+            pluginId: pluginId,
+            function: registryItem.config.function,
+            title: registryItem.config.title,
+            description: registryItem.config.description,
+          });
 
-  for (const registryItem of registryItems) {
-    if (isPluginExtensionFunctionConfig(registryItem.config)) {
-      capabilities.push({
-          id: generateExtensionId(pluginId, registryItem.config),
-          type: PluginExtensionTypes.function,
-          pluginId: pluginId,
-          function: registryItem.config.function,
-          title: registryItem.config.title,
-          description: registryItem.config.description,
+          if (timer) {
+            clearTimeout(timer);
+          }
+        }
       });
-    }
-  }
-
-  return capabilities;
-}
-
-export const getAllPluginCapabilities = () => {
-});
+    });
+};
 
 // Returns with a list of plugin extensions for the given extension point
 export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, limitPerPlugin, registry }) => {

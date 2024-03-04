@@ -63,17 +63,3 @@ export const getPluginFunctionExtensions: GetPluginExtensions<PluginExtensionFun
     extensions: extensions.filter(isPluginExtensionFunction),
   };
 };
-
-// The `id` param is the following: "{PLUGIN ID}/{NAME}", e.g. "my-org-app/predictCpuUsage"
-export const getPluginCapability = (id: string) => {
-  const { extensions } = getPluginExtensions({ extensionPointId: id });
-
-  // A plugin can only register a single capability with a given name
-  return extensions[0];
-};
-
-// Calls a capability if it is registered.
-// (It will call the capability once it's available.)
-// export const callCapabality = async (id: string, ...params) => {
-//   // ...
-// };
