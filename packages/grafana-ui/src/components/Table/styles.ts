@@ -50,7 +50,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       '&:hover': {
         overflow: overflowOnHover ? 'visible' : undefined,
         width: textShouldWrap || !overflowOnHover ? 'auto' : 'auto !important',
-        height: textShouldWrap ? 'auto !important' : `${rowHeight - 1}px`,
+        height: textShouldWrap || overflowOnHover ? 'auto !important' : `${rowHeight - 1}px`,
         minHeight: `${rowHeight - 1}px`,
         wordBreak: textShouldWrap ? 'break-word' : undefined,
         whiteSpace: overflowOnHover ? 'normal' : 'nowrap',
