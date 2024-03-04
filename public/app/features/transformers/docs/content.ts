@@ -642,7 +642,7 @@ Use this transformation to construct a matrix by specifying fields from your que
     'A select box showing the Group and Calculate options for the transformation.'
   )}
 
-  Once \`Calculate\` has been selected, another select box will appear next to the respsective field which will allow statistics to be selected:
+  Once **Calculate** has been selected, another selection box will appear next to the respective field which will allow statistics to be selected:
 
   ${buildImageContent(
     '/static/img/docs/transformations/nested-table-select-stat.png',
