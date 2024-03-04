@@ -12,7 +12,7 @@ products:
   - enterprise
   - oss
 title: What's new in Grafana v10.4
-weight: -40
+weight: -41
 ---
 
 # What’s new in Grafana v10.4
@@ -54,7 +54,7 @@ This complements the existing warnings already present on the **Plugins** page u
 
 In addition, you can use our [detect-angular-dashboards](https://github.com/grafana/detect-angular-dashboards) open source tool, which can be run against any Grafana instance to generate a report listing all dashboards that have a dependency on an AngularJS plugin, as well as which plugins are in use. This tool also supports the detection of [private plugins](https://grafana.com/legal/plugins/) that are dependent on AngularJS, however this particular feature requires Grafana v10.1.0 or higher.
 
-Use the aforementioned tooling and warnings to plan migrations to React based [visualizations](https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/) and [data sources](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/) included in Grafana or from the [Grafana plugins catalog](https://grafana.com/grafana/plugins/).
+Use the aforementioned tooling and warnings to plan migrations to React based [visualizations](https://grafana.com/docs/grafana/latest/panels-visualizations/) and [data sources](https://grafana.com/docs/grafana/latest/datasources/) included in Grafana or from the [Grafana plugins catalog](https://grafana.com/grafana/plugins/).
 
 To learn more, refer to the [Angular support deprecation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/), which includes [recommended alternative plugins](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/angular-plugins/).
 
