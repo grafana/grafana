@@ -89,17 +89,19 @@
       }
     },
     "border": {
-      "weak": {
-        "value": "{color.neutral.800}",
-        "type": "color"
-      },
-      "medium": {
-        "value": "{color.neutral.700}",
-        "type": "color"
-      },
-      "strong": {
-        "value": "{color.neutral.600}",
-        "type": "color"
+      "ui": {
+        "weak": {
+          "value": "{color.neutral.800}",
+          "type": "color"
+        },
+        "medium": {
+          "value": "{color.neutral.700}",
+          "type": "color"
+        },
+        "strong": {
+          "value": "{color.neutral.600}",
+          "type": "color"
+        }
       },
       "system": {
         "success": {
