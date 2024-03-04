@@ -46,7 +46,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 
 	require.Len(t, req.Queries, 2)
 	require.Equal(t, "b1808c48-9fc9-4045-82d7-081781f8a553", req.Queries[0].Datasource.UID)
-	require.Equal(t, "spreadsheetID", req.Queries[0].MustString("spreadsheet"))
+	require.Equal(t, "spreadsheetID", req.Queries[0].GetString("spreadsheet"))
 
 	// Write the query (with additional spreadsheetID) to JSON
 	out, err := json.MarshalIndent(req.Queries[0], "", "  ")
@@ -56,7 +56,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 	query := &sdkapi.DataQuery{}
 	err = json.Unmarshal(out, query)
 	require.NoError(t, err)
-	require.Equal(t, "spreadsheetID", query.MustString("spreadsheet"))
+	require.Equal(t, "spreadsheetID", query.GetString("spreadsheet"))
 
 	// The second query has an explicit time range, and legacy datasource name
 	out, err = json.MarshalIndent(req.Queries[1], "", "  ")

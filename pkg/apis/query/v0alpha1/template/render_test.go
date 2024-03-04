@@ -206,5 +206,5 @@ func TestRenderWithRune(t *testing.T) {
 	rq, err := RenderTemplate(qt, selectedValues)
 	require.NoError(t, err)
 
-	require.Equal(t, "🐦 🦥!", rq[0].Properties.MustString("message"))
+	require.Equal(t, "🐦 🦥!", rq[0].Properties.GetString("message"))
 }
