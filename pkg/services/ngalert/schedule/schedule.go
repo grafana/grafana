@@ -235,9 +235,10 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	readyToRun := make([]readyToRunItem, 0)
 	updatedRules := make([]ngmodels.AlertRuleKeyWithVersion, 0, len(updated)) // this is needed for tests only
 	missingFolder := make(map[string][]string)
+	ruleFactory := newRuleFactory()
 	for _, item := range alertRules {
 		key := item.GetKey()
-		ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key)
+		ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key, ruleFactory)
 
 		// enforce minimum evaluation interval
 		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
