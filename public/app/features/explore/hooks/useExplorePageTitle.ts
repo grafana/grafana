@@ -21,7 +21,7 @@ export function useExplorePageTitle(
 
   useEffect(() => {
     if (snapshot && workspace) {
-      global.document.title = '📷 ' + snapshot.name + ' (' + workspace.name + ')';
+      global.document.title = snapshot.name + ' (' + workspace.name + ')';
       return;
     }
 

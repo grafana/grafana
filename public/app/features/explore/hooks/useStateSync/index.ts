@@ -34,7 +34,7 @@ export function useStateSync(
 ): {
   loadedWorkspace?: ExploreWorkspace;
   loadedSnapshot?: ExploreWorkspaceSnapshot;
-  currentState?: Record<string, string | number | object>;
+  currentState?: string;
 } {
   const { location } = useGrafana();
   const dispatch = useDispatch();
@@ -45,7 +45,7 @@ export function useStateSync(
   const paused = useRef(false);
   const { warning } = useAppNotification();
 
-  const [latest, setLatest] = useState<Record<string, string | number | object> | undefined>(undefined);
+  const [latest, setLatest] = useState<string | undefined>(undefined);
   const [loadedWorkspace, setLoadedWorkspace] = useState<ExploreWorkspace | undefined>(undefined);
   const [loadedSnapshot, setLoadedSnapshot] = useState<ExploreWorkspaceSnapshot | undefined>(undefined);
 
@@ -121,18 +121,18 @@ export function useStateSync(
               panes: JSON.stringify(panesQueryParams),
             };
 
-            const latestValue = {
+            const latestValue = JSON.stringify({
               schemaVersion: 1,
               panes: JSON.stringify(panesQueryParams),
               orgId: `${orgId}`,
-            };
+            });
             setLatest(latestValue);
 
             if (workspace) {
               if (!snapshot) {
                 await updateExploreWorkspaceLatestSnapshot({
                   exploreWorkspaceUID: workspace,
-                  config: JSON.stringify(latestValue),
+                  config: latestValue,
                 });
               }
             } else {
@@ -324,6 +324,8 @@ export function useStateSync(
             ...defaults,
           });
 
+          setLatest(JSON.stringify(searchParams));
+
           if (!workspace) {
             location.replace({
               pathname: location.getLocation().pathname,
@@ -355,14 +357,6 @@ export function useStateSync(
               setLoadedSnapshot(snapshot);
             });
           });
-        // getExploreWorkspace(workspace).then((response) => {
-        //
-        //   // @ts-ignore
-        //   [urlState, hasParseError] = parseURL(JSON.parse(response.exploreWorkspace.activeSnapshot?.config));
-        //   initialize().then(() => {
-        //     setLoadedWorkspace(response.exploreWorkspace);
-        //   });
-        // });
       } else {
         initialize().then(() => {
           setLoadedWorkspace(undefined);

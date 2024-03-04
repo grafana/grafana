@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 
-import { Drawer, Tab, TabContent, TabsBar, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
+import { Button, Card, Drawer, Tab, TabContent, TabsBar, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
+import { useAppNotification } from '../../../../core/copy/appNotification';
 import { ExploreWorkspace, ExploreWorkspaceSnapshot } from '../types';
 import { getExploreWorkspaceSnapshots } from '../utils/api';
 import { useExploreWorkspaces } from '../utils/hooks';
@@ -15,7 +16,7 @@ import { NewExploreWorkspaceSnapshotFormModal } from './NewExploreWorkspaceSnaps
 type Props = {
   loadedWorkspace?: ExploreWorkspace;
   loadedSnapshot?: ExploreWorkspaceSnapshot;
-  currentState?: Record<string, string | number | object>;
+  currentState?: string;
 };
 
 export const ExploreWorkspacesMenu = (props: Props) => {
@@ -23,9 +24,14 @@ export const ExploreWorkspacesMenu = (props: Props) => {
 
   const { workspaces, createExploreWorkspace, createExploreWorkspaceSnapshot } = useExploreWorkspaces();
   const { location } = useGrafana();
+  const notifyApp = useAppNotification();
 
   const [isOpen, setIsOpen] = useState(false);
   const [loadedSnapshots, setLoadedSnapshots] = useState<ExploreWorkspaceSnapshot[] | undefined>(undefined);
+
+  if (!currentState) {
+    return <></>;
+  }
 
   const showLatestHandler = () => {
     if (loadedWorkspace) {
@@ -38,10 +44,10 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     const workspace = await createExploreWorkspace({
       name: data.name,
       description: data.description,
-      config: JSON.stringify(currentState),
+      config: currentState,
     });
     location.push('/explore/' + workspace.uid);
-    window.location.reload();
+    notifyApp.success('Explore Workspace created successfully.');
   };
 
   const takeSnapshotHandler = async (data: Pick<ExploreWorkspaceSnapshot, 'name' | 'description'>) => {
@@ -50,8 +56,9 @@ export const ExploreWorkspacesMenu = (props: Props) => {
         name: data.name,
         description: data.description,
         exploreWorkspaceUID: loadedWorkspace.uid,
-        config: JSON.stringify(currentState),
+        config: currentState,
       });
+      notifyApp.success('Snapshot created successfully.');
     }
   };
 
@@ -72,18 +79,14 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     }
   };
 
-  if (!props.currentState) {
-    return <>Loading...</>;
-  }
-
   const CreateWorkspace = () => {
     const [isOpen, setIsOpen] = useState<boolean>(false);
 
     return (
       <>
-        <ToolbarButton variant={'primary'} icon="plus" onClick={() => setIsOpen(true)}>
-          new workspace
-        </ToolbarButton>
+        <Button size="sm" fill="outline" variant={'primary'} icon="plus" onClick={() => setIsOpen(true)}>
+          workspace
+        </Button>
         {isOpen && (
           <NewExploreWorkspaceFormModal
             isOpen={isOpen}
@@ -99,24 +102,19 @@ export const ExploreWorkspacesMenu = (props: Props) => {
 
   const ForkWorkspace = () => {
     const [isOpen, setIsOpen] = useState<boolean>(false);
+    let name = '';
+    if (loadedSnapshot && loadedWorkspace) {
+      name = `${loadedSnapshot.name} (${loadedWorkspace.name})`;
+    } else if (loadedWorkspace) {
+      name = `${loadedWorkspace.name}`;
+    }
+
     return loadedWorkspace ? (
       <>
         <span>
-          <em>
-            {loadedWorkspace.name}
-            {!loadedSnapshot ? ' (' + new Date(loadedWorkspace.activeSnapshot.updated).toLocaleString() + ')' : ''}
-          </em>
+          <em>{name}</em>
         </span>
-        {loadedSnapshot ? (
-          <span>
-            {' '}
-            📷{' '}
-            <em>
-              {loadedSnapshot.name} ({new Date(loadedSnapshot.updated).toLocaleString()})
-            </em>
-          </span>
-        ) : undefined}
-        <ToolbarButton variant="default" icon="plus" onClick={() => setIsOpen(true)}></ToolbarButton>
+        <Button size="sm" variant="secondary" icon="plus" onClick={() => setIsOpen(true)}></Button>
         {isOpen && (
           <NewExploreWorkspaceFormModal
             isOpen={isOpen}
@@ -134,10 +132,10 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     const [activeTab, setActiveTab] = useState('snapshots');
 
     useEffect(() => {
-      if (!loadedSnapshots) {
+      if (!loadedWorkspace) {
         setActiveTab('workspaces');
       } else {
-        setActiveTab('snapshots');
+        setActiveTab('info');
       }
     }, []);
 
@@ -151,6 +149,7 @@ export const ExploreWorkspacesMenu = (props: Props) => {
         {isOpen && (
           <Drawer onClose={() => setIsOpen(false)}>
             <TabsBar>
+              <Tab label="Current" onChangeTab={() => setActiveTab('info')} />
               {loadedWorkspace && (
                 <Tab
                   label="Snapshots"
@@ -161,6 +160,47 @@ export const ExploreWorkspacesMenu = (props: Props) => {
               <Tab label="Workspaces" counter={workspaces.length} onChangeTab={() => setActiveTab('workspaces')} />
             </TabsBar>
             <TabContent>
+              {activeTab === 'info' && loadedWorkspace && (
+                <div>
+                  <Card>
+                    <Card.Heading>Workspace: {loadedWorkspace.name}</Card.Heading>
+                    <Card.Description>{loadedWorkspace.description}</Card.Description>
+                    <Card.Meta>
+                      <span>
+                        Created: {new Date(loadedWorkspace.activeSnapshot.created).toLocaleString()} (by{' '}
+                        {loadedWorkspace.user.Login})
+                      </span>
+                      <span>
+                        Updated: {new Date(loadedWorkspace.activeSnapshot.updated).toLocaleString()} (by{' '}
+                        {loadedWorkspace.activeSnapshot.user?.Login})
+                      </span>
+                    </Card.Meta>
+                    <Card.Actions>
+                      <Button variant="secondary">Reload workspace</Button>
+                      <Button variant="secondary">Fork current to new workspace</Button>
+                    </Card.Actions>
+                  </Card>
+                  {loadedSnapshot && (
+                    <Card>
+                      <Card.Heading>Snapshot: {loadedSnapshot.name}</Card.Heading>
+                      <Card.Description>{loadedSnapshot.description}</Card.Description>
+                      <Card.Meta>
+                        <span>
+                          Created: {new Date(loadedSnapshot.created).toLocaleString()} (by {loadedSnapshot.user.Login})
+                        </span>
+                        <span>
+                          Updated: {new Date(loadedSnapshot.updated).toLocaleString()} (by {loadedSnapshot.user.Login})
+                        </span>
+                      </Card.Meta>
+                      <Card.Actions>
+                        <Button icon="sync" onClick={() => {}}>
+                          reload
+                        </Button>
+                      </Card.Actions>
+                    </Card>
+                  )}
+                </div>
+              )}
               {activeTab === 'snapshots' && (
                 <ExploreWorkspaceSnapshotsList
                   current={loadedSnapshot?.uid}

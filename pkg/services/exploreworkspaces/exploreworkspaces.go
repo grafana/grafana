@@ -308,6 +308,9 @@ func (s *ExploreWorkspacesService) getExploreWorkspaceSnapshot(ctx context.Conte
 		return *exploreWorkspaceSnapshot, errors.New("Getting the explore workspace snapshot" + cmd.UID + " failed. " + queryError.Error())
 	}
 
+	creator, _ := s.UserService.GetByID(ctx, &user.GetUserByIDQuery{ID: exploreWorkspaceSnapshot.UserId})
+	exploreWorkspaceSnapshot.User = creator
+
 	return *exploreWorkspaceSnapshot, nil
 }
 

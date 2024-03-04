@@ -70,7 +70,6 @@ import {
 } from './state/query';
 import { isSplit } from './state/selectors';
 import { updateTimeRange } from './state/time';
-import { ExploreWorkspacesDebugger } from './workspaces/components/ExploreWorkspacesDebugger';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -117,7 +116,6 @@ export interface ExploreProps extends Themeable2 {
 enum ExploreDrawer {
   RichHistory,
   QueryInspector,
-  ExploreWorkspaces = 2,
 }
 
 interface ExploreState {
@@ -328,14 +326,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.setState((state) => {
       return {
         openDrawer: state.openDrawer === ExploreDrawer.QueryInspector ? undefined : ExploreDrawer.QueryInspector,
-      };
-    });
-  };
-
-  toggleExploreWorkspaces = () => {
-    this.setState((state) => {
-      return {
-        openDrawer: state.openDrawer === ExploreDrawer.ExploreWorkspaces ? undefined : ExploreDrawer.ExploreWorkspaces,
       };
     });
   };
@@ -575,7 +565,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
-    const showExploreWorkspaces = openDrawer === ExploreDrawer.ExploreWorkspaces;
     const showNoData =
       queryResponse.state === LoadingState.Done &&
       [
@@ -640,11 +629,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           richHistoryRowButtonHidden={richHistoryRowButtonHidden}
                           richHistoryButtonActive={showRichHistory}
                           queryInspectorButtonActive={showQueryInspector}
-                          exploreWorkspacesButtonActive={showExploreWorkspaces}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                           onClickRichHistoryButton={this.toggleShowRichHistory}
                           onClickQueryInspectorButton={this.toggleShowQueryInspector}
-                          onClickExploreWorkspacesButton={this.toggleExploreWorkspaces}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
@@ -698,7 +685,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                                   isMixed={datasourceInstance.meta.mixed || false}
                                 />
                               )}
-                              {showExploreWorkspaces && <ExploreWorkspacesDebugger width={width} />}
                             </ErrorBoundaryAlert>
                           </main>
                         );

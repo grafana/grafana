@@ -46,7 +46,7 @@ export type GetExploreWorkspaceResponse = {
 export type CreateExploreWorkspaceCommand = {
   name: string;
   description: string;
-  config: Object;
+  config: string;
 };
 
 export type CreateExploreWorkspaceResponse = {

@@ -15,23 +15,10 @@ export const ExploreWorkspaceSnapshotsList = (props: Props) => {
     return <div>Loading snapshots...</div>;
   }
 
-  if (props.snapshots.length === 0) {
-    return <Alert severity="info" title="No snapshots"></Alert>;
-  }
-
   return (
     <div>
-      <Card isSelected={!props.current}>
-        <Card.Heading>Latest</Card.Heading>
-        <Card.Description>Currently active</Card.Description>
-        <Card.Actions>
-          {props.current && (
-            <Button icon="sync" onClick={() => props.selected(undefined)}>
-              switch
-            </Button>
-          )}
-        </Card.Actions>
-      </Card>
+      {props.snapshots.length === 0 && <Alert severity="info" title="No snapshots"></Alert>}
+
       {props.snapshots.map((snapshot, index) => (
         <Card key={index} isSelected={snapshot.uid === props.current}>
           <Card.Heading>{snapshot.name}</Card.Heading>

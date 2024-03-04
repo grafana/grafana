@@ -17,7 +17,6 @@ type Props = {
   onClickAddQueryRowButton: () => void;
   onClickRichHistoryButton: () => void;
   onClickQueryInspectorButton: () => void;
-  onClickExploreWorkspacesButton: () => void;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -65,14 +64,6 @@ export function SecondaryActions(props: Props) {
         icon="info-circle"
       >
         <Trans i18nKey="explore.secondary-actions.query-inspector-button">Query inspector</Trans>
-      </ToolbarButton>
-      <ToolbarButton
-        variant={props.exploreWorkspacesButtonActive ? 'active' : 'canvas'}
-        aria-label={t('explore.secondary-actions.query-inspector-button-aria-label', 'Explore Workspaces')}
-        onClick={props.onClickExploreWorkspacesButton}
-        icon="info-circle"
-      >
-        <Trans i18nKey="explore.secondary-actions.explore-worksapces-button">Workspaces</Trans>
       </ToolbarButton>
     </div>
   );
