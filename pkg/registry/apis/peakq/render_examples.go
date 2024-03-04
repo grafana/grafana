@@ -2,7 +2,7 @@ package peakq
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template"
 )
@@ -38,7 +38,7 @@ var basicTemplateSpec = template.QueryTemplate{
 				},
 			},
 
-			Properties: resource.NewDataQuery(map[string]any{
+			Properties: sdkapi.NewDataQuery(map[string]any{
 				"refId": "A", // TODO: Set when Where?
 				"datasource": map[string]any{
 					"type": "prometheus",
@@ -58,7 +58,7 @@ var basicTemplateRenderedTargets = []template.Target{
 	{
 		DataType: data.FrameTypeUnknown,
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
-		Properties: resource.NewDataQuery(map[string]any{
+		Properties: sdkapi.NewDataQuery(map[string]any{
 			"refId": "A", // TODO: Set when Where?
 			"datasource": map[string]any{
 				"type": "prometheus",

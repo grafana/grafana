@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
-
-	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
 func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
@@ -40,7 +39,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 		"to": "1692646267389"
 	}`)
 
-	req := &v0alpha1.QueryDataRequest{}
+	req := &query.QueryDataRequest{}
 	err := json.Unmarshal(request, req)
 	require.NoError(t, err)
 
@@ -53,7 +52,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	// And read it back with standard JSON marshal functions
-	query := &resource.DataQuery{}
+	query := &sdkapi.DataQuery{}
 	err = json.Unmarshal(out, query)
 	require.NoError(t, err)
 	require.Equal(t, "spreadsheetID", query.MustString("spreadsheet"))

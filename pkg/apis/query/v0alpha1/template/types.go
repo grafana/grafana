@@ -2,7 +2,7 @@ package template
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -36,7 +36,7 @@ type Target struct {
 	Variables map[string][]VariableReplacement `json:"variables"`
 
 	// Query target
-	Properties resource.DataQuery `json:"properties"`
+	Properties sdkapi.DataQuery `json:"properties"`
 }
 
 // TemplateVariable is the definition of a variable that will be interpolated

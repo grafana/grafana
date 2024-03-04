@@ -1,7 +1,7 @@
 package v0alpha1
 
 import (
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -11,7 +11,7 @@ type QueryTypeDefinition struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec resource.QueryTypeDefinitionSpec `json:"spec,omitempty"`
+	Spec sdkapi.QueryTypeDefinitionSpec `json:"spec,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

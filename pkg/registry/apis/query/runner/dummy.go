@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
-
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -39,7 +38,7 @@ func (d *testdataDummy) ExecuteQueryData(ctx context.Context,
 	name string,
 
 	// The raw backend query objects
-	request resource.DataQueryRequest,
+	request sdkapi.DataQueryRequest,
 ) (*backend.QueryDataResponse, error) {
 	if datasource.Group != "testdata.datasource.grafana.app" {
 		return nil, fmt.Errorf("expecting testdata requests")

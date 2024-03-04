@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource/schemabuilder"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
@@ -31,30 +31,30 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	require.NoError(t, err)
 	err = builder.AddQueries(
 		schemabuilder.QueryTypeInfo{
-			Discriminators: resource.NewDiscriminators("queryType", QueryTypeMath),
+			Discriminators: sdkapi.NewDiscriminators("queryType", QueryTypeMath),
 			GoType:         reflect.TypeOf(&MathQuery{}),
-			Examples: []resource.QueryExample{
+			Examples: []sdkapi.QueryExample{
 				{
 					Name: "constant addition",
-					SaveModel: resource.AsUnstructured(MathQuery{
+					SaveModel: sdkapi.AsUnstructured(MathQuery{
 						Expression: "$A + 10",
 					}),
 				},
 				{
 					Name: "math with two queries",
-					SaveModel: resource.AsUnstructured(MathQuery{
+					SaveModel: sdkapi.AsUnstructured(MathQuery{
 						Expression: "$A - $B",
 					}),
 				},
 			},
 		},
 		schemabuilder.QueryTypeInfo{
-			Discriminators: resource.NewDiscriminators("queryType", QueryTypeReduce),
+			Discriminators: sdkapi.NewDiscriminators("queryType", QueryTypeReduce),
 			GoType:         reflect.TypeOf(&ReduceQuery{}),
-			Examples: []resource.QueryExample{
+			Examples: []sdkapi.QueryExample{
 				{
 					Name: "get max value",
-					SaveModel: resource.AsUnstructured(ReduceQuery{
+					SaveModel: sdkapi.AsUnstructured(ReduceQuery{
 						Expression: "$A",
 						Reducer:    mathexp.ReducerMax,
 						Settings: &ReduceSettings{
@@ -65,12 +65,12 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schemabuilder.QueryTypeInfo{
-			Discriminators: resource.NewDiscriminators("queryType", QueryTypeResample),
+			Discriminators: sdkapi.NewDiscriminators("queryType", QueryTypeResample),
 			GoType:         reflect.TypeOf(&ResampleQuery{}),
-			Examples: []resource.QueryExample{
+			Examples: []sdkapi.QueryExample{
 				{
 					Name: "resample at a every day",
-					SaveModel: resource.AsUnstructured(ResampleQuery{
+					SaveModel: sdkapi.AsUnstructured(ResampleQuery{
 						Expression:  "$A",
 						Window:      "1d",
 						Downsampler: mathexp.ReducerLast,
@@ -80,21 +80,21 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schemabuilder.QueryTypeInfo{
-			Discriminators: resource.NewDiscriminators("queryType", QueryTypeSQL),
+			Discriminators: sdkapi.NewDiscriminators("queryType", QueryTypeSQL),
 			GoType:         reflect.TypeOf(&SQLExpression{}),
-			Examples: []resource.QueryExample{
+			Examples: []sdkapi.QueryExample{
 				{
 					Name: "Select the first row from A",
-					SaveModel: resource.AsUnstructured(SQLExpression{
+					SaveModel: sdkapi.AsUnstructured(SQLExpression{
 						Expression: "SELECT * FROM A limit 1",
 					}),
 				},
 			},
 		},
 		schemabuilder.QueryTypeInfo{
-			Discriminators: resource.NewDiscriminators("queryType", QueryTypeClassic),
+			Discriminators: sdkapi.NewDiscriminators("queryType", QueryTypeClassic),
 			GoType:         reflect.TypeOf(&ClassicQuery{}),
-			Examples:       []resource.QueryExample{
+			Examples:       []sdkapi.QueryExample{
 				// {
 				// 	Name: "do classic query (TODO)",
 				// 	SaveModel: ClassicQuery{
@@ -105,9 +105,9 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schemabuilder.QueryTypeInfo{
-			Discriminators: resource.NewDiscriminators("queryType", QueryTypeThreshold),
+			Discriminators: sdkapi.NewDiscriminators("queryType", QueryTypeThreshold),
 			GoType:         reflect.TypeOf(&ThresholdQuery{}),
-			Examples:       []resource.QueryExample{
+			Examples:       []sdkapi.QueryExample{
 				// {
 				// 	Name: "TODO... a threshold query",
 				// 	SaveModel: ThresholdQuery{

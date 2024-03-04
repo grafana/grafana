@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -21,7 +21,7 @@ type QueryRunner interface {
 
 		// Query request -- the datasource in each query should either be empty
 		// or match the two previous parameters
-		request resource.DataQueryRequest,
+		request sdkapi.DataQueryRequest,
 	) (*backend.QueryDataResponse, error)
 }
 

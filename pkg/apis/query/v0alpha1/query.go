@@ -1,7 +1,7 @@
 package v0alpha1
 
 import (
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -12,5 +12,5 @@ type QueryDataRequest struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// The time range used when not included on each query
-	resource.DataQueryRequest `json:",inline"`
+	sdkapi.DataQueryRequest `json:",inline"`
 }

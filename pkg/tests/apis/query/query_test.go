@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -49,9 +48,9 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 			Version: "v0alpha1",
 		})
 
-		q := resource.DataQuery{
-			CommonQueryProperties: resource.CommonQueryProperties{
-				Datasource: &resource.DataSourceRef{
+		q := sdkapi.DataQuery{
+			CommonQueryProperties: sdkapi.CommonQueryProperties{
+				Datasource: &sdkapi.DataSourceRef{
 					Type: "grafana-testdata-datasource",
 					UID:  ds.UID,
 				},
@@ -59,8 +58,8 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 		}
 		q.Set("csvContent", "a,b,c\n1,hello,true")
 		q.Set("scenarioId", `csv_content`)
-		body, err := json.Marshal(&resource.DataQueryRequest{
-			Queries: []resource.DataQuery{q},
+		body, err := json.Marshal(&sdkapi.DataQueryRequest{
+			Queries: []sdkapi.DataQuery{q},
 		})
 		require.NoError(t, err)
 

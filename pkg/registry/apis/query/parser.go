@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 
@@ -60,7 +60,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 	ctx, span := p.tracer.Start(ctx, "QueryService.parseRequest")
 	defer span.End()
 
-	queryRefIDs := make(map[string]*resource.DataQuery, len(input.Queries))
+	queryRefIDs := make(map[string]*sdkapi.DataQuery, len(input.Queries))
 	expressions := make(map[string]*expr.ExpressionQuery)
 	index := make(map[string]int) // index lookup
 	rsp := parsedRequestInfo{
@@ -117,7 +117,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 					UID:      ds.UID,
 					Request: &query.QueryDataRequest{
 						TypeMeta: input.TypeMeta,
-						DataQueryRequest: resource.DataQueryRequest{
+						DataQueryRequest: sdkapi.DataQueryRequest{
 							TimeRange: input.TimeRange,
 							Debug:     input.Debug,
 							// no queries
@@ -186,7 +186,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 	return rsp, nil
 }
 
-func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *resource.DataSourceRef, id int64) (*resource.DataSourceRef, error) {
+func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *sdkapi.DataSourceRef, id int64) (*sdkapi.DataSourceRef, error) {
 	if ds == nil {
 		if id == 0 {
 			return nil, fmt.Errorf("missing datasource reference or id")

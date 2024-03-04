@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
@@ -46,7 +46,7 @@ func NewExpressionQueryReader(features featuremgmt.FeatureToggles) *ExpressionQu
 // nolint:gocyclo
 func (h *ExpressionQueryReader) ReadQuery(
 	// Properties that have been parsed off the same node
-	common resource.CommonQueryProperties,
+	common sdkapi.CommonQueryProperties,
 	// An iterator with context for the full node (include common values)
 	iter *jsoniter.Iterator,
 ) (eq ExpressionQuery, err error) {

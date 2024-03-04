@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"gonum.org/v1/gonum/graph/simple"
@@ -136,7 +136,7 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		if err != nil {
 			return nil, err
 		}
-		q, err := reader.ReadQuery(resource.CommonQueryProperties{
+		q, err := reader.ReadQuery(sdkapi.CommonQueryProperties{
 			RefID:     rn.RefID,
 			QueryType: rn.QueryType,
 		}, iter)

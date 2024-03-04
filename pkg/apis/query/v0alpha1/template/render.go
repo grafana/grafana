@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	"github.com/spyzhov/ajson"
 )
 
@@ -61,7 +61,7 @@ func RenderTemplate(qt QueryTemplate, selectedValues map[string][]string) ([]Tar
 		if err != nil {
 			return nil, err
 		}
-		u := resource.DataQuery{}
+		u := sdkapi.DataQuery{}
 		err = u.UnmarshalJSON(raw)
 		if err != nil {
 			return nil, err

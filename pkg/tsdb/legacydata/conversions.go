@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 )
 
 // ToDataSourceQueries returns queries that should be sent to a single datasource
 // This will throw an error if the queries reference multiple instances
-func ToDataSourceQueries(req resource.DataQueryRequest) ([]backend.DataQuery, *resource.DataSourceRef, error) {
-	var dsRef *resource.DataSourceRef
+func ToDataSourceQueries(req sdkapi.DataQueryRequest) ([]backend.DataQuery, *sdkapi.DataSourceRef, error) {
+	var dsRef *sdkapi.DataSourceRef
 	var tr *backend.TimeRange
 	if req.From != "" {
 		val := NewDataTimeRange(req.From, req.To)
@@ -46,7 +46,7 @@ func ToDataSourceQueries(req resource.DataQueryRequest) ([]backend.DataQuery, *r
 }
 
 // Converts a generic query to a backend one
-func toBackendDataQuery(q resource.DataQuery, defaultTimeRange *backend.TimeRange) (backend.DataQuery, error) {
+func toBackendDataQuery(q sdkapi.DataQuery, defaultTimeRange *backend.TimeRange) (backend.DataQuery, error) {
 	var err error
 	bq := backend.DataQuery{
 		RefID:         q.RefID,

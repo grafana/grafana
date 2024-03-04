@@ -3,10 +3,9 @@ package schema
 import (
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 	"k8s.io/kube-openapi/pkg/validation/spec"
-
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource/schemabuilder"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
@@ -17,10 +16,10 @@ func GetQuerySchema(defs *query.QueryTypeDefinitionList) (*spec.Schema, error) {
 	}
 
 	// Convert the real k8s resource to the fake one used in the sdk
-	qtds := resource.QueryTypeDefinitionList{}
+	qtds := sdkapi.QueryTypeDefinitionList{}
 	for _, def := range defs.Items {
-		qtds.Items = append(qtds.Items, resource.QueryTypeDefinition{
-			ObjectMeta: resource.ObjectMeta{
+		qtds.Items = append(qtds.Items, sdkapi.QueryTypeDefinition{
+			ObjectMeta: sdkapi.ObjectMeta{
 				Name: def.Name,
 			},
 			Spec: def.Spec,

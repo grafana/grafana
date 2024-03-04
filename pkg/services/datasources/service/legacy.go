@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/resource"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -16,7 +16,7 @@ import (
 type LegacyDataSourceLookup interface {
 	// Find the UID from either the name or internal id
 	// NOTE the orgID will be fetched from the context
-	GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*resource.DataSourceRef, error)
+	GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*sdkapi.DataSourceRef, error)
 }
 
 var (
@@ -27,10 +27,10 @@ var (
 
 // NoopLegacyDataSourceRetriever does not even try to lookup, it returns a raw reference
 type NoopLegacyDataSourcLookup struct {
-	Ref *resource.DataSourceRef
+	Ref *sdkapi.DataSourceRef
 }
 
-func (s *NoopLegacyDataSourcLookup) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*resource.DataSourceRef, error) {
+func (s *NoopLegacyDataSourcLookup) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*sdkapi.DataSourceRef, error) {
 	return s.Ref, nil
 }
 
@@ -41,7 +41,7 @@ type cachingLegacyDataSourceLookup struct {
 }
 
 type cachedValue struct {
-	ref *resource.DataSourceRef
+	ref *sdkapi.DataSourceRef
 	err error
 }
 
@@ -52,7 +52,7 @@ func ProvideLegacyDataSourceLookup(p *Service) LegacyDataSourceLookup {
 	}
 }
 
-func (s *cachingLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*resource.DataSourceRef, error) {
+func (s *cachingLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*sdkapi.DataSourceRef, error) {
 	if id == 0 && name == "" {
 		return nil, fmt.Errorf("either name or ID must be set")
 	}
@@ -84,7 +84,7 @@ func (s *cachingLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx co
 		err: err,
 	}
 	if ds != nil {
-		v.ref = &resource.DataSourceRef{Type: ds.Type, UID: ds.UID}
+		v.ref = &sdkapi.DataSourceRef{Type: ds.Type, UID: ds.UID}
 	}
 	return v.ref, v.err
 }
