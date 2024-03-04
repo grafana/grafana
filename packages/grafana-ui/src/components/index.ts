@@ -150,6 +150,7 @@ export { VizLegend } from './VizLegend/VizLegend';
 export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 
 export { Alert, type AlertVariant } from './Alert/Alert';
+export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from '../graveyard/Graph/GraphSeriesToggler';
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { CollapsableSection } from './Collapse/CollapsableSection';
 export { DataLinkButton } from './DataLinks/DataLinkButton';
@@ -295,3 +296,19 @@ export { type UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
 export * from './PanelChrome/types';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
+
+// -----------------------------------------------------
+// Graveyard: exported, but no longer used internally
+// These will be removed in the future
+// -----------------------------------------------------
+
+export { Graph } from '../graveyard/Graph/Graph';
+export { GraphWithLegend } from '../graveyard/Graph/GraphWithLegend';
+export { GraphContextMenu, GraphContextMenuHeader } from '../graveyard/Graph/GraphContextMenu';
+export { graphTimeFormat, graphTickFormatter } from '../graveyard/Graph/utils';
+
+export { GraphNG, type GraphNGProps } from '../graveyard/GraphNG/GraphNG';
+export { TimeSeries } from '../graveyard/TimeSeries/TimeSeries';
+export { useGraphNGContext } from '../graveyard/GraphNG/hooks';
+export { preparePlotFrame, buildScaleKey } from '../graveyard/GraphNG/utils';
+export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';

@@ -1,6 +1,7 @@
 import { Meta } from '@storybook/react';
 import React from 'react';
 
+import { GraphContextMenuHeader } from '..';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { VerticalGroup } from '../Layout/Layout';
 
@@ -107,6 +108,30 @@ export function Examples() {
             ]}
           />
           <Menu.Item label="Disabled destructive action" icon="trash-alt" destructive disabled />
+        </Menu>
+      </StoryExample>
+      <StoryExample name="With header & groups">
+        <Menu
+          header={
+            <GraphContextMenuHeader
+              timestamp="2020-11-25 19:04:25"
+              seriesColor="#00ff00"
+              displayName="A-series"
+              displayValue={{
+                text: '128',
+                suffix: 'km/h',
+              }}
+            />
+          }
+          ariaLabel="Menu header"
+        >
+          <Menu.Group label="Group 1">
+            <Menu.Item label="item1" icon="history" />
+            <Menu.Item label="item2" icon="filter" />
+          </Menu.Group>
+          <Menu.Group label="Group 2">
+            <Menu.Item label="item1" icon="history" />
+          </Menu.Group>
         </Menu>
       </StoryExample>
       <StoryExample name="With submenu and shortcuts">

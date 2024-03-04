@@ -54,10 +54,10 @@ type ResampleQuery struct {
 	Window string `json:"window" jsonschema:"minLength=1,example=1w,example=10m"`
 
 	// The downsample function
-	Downsampler string `json:"downsampler"`
+	Downsampler mathexp.ReducerID `json:"downsampler"`
 
 	// The upsample function
-	Upsampler string `json:"upsampler"`
+	Upsampler mathexp.Upsampler `json:"upsampler"`
 }
 
 type ThresholdQuery struct {

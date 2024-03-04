@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-import { Field, FieldType, getFieldDisplayName, LinkModel, TimeRange } from '@grafana/data';
+import { FieldType, getFieldDisplayName, TimeRange } from '@grafana/data';
 import { SortOrder } from '@grafana/schema/dist/esm/common/common.gen';
 import { TooltipDisplayMode, useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
@@ -65,12 +65,14 @@ export const StateTimelineTooltip2 = ({
     contentItems.push({ label: 'Duration', value: duration });
   }
 
-  let links: Array<LinkModel<Field>> = [];
+  let footer: ReactNode;
 
-  if (seriesIdx != null) {
+  if (isPinned && seriesIdx != null) {
     const field = seriesFrame.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
-    links = getDataLinks(field, dataIdx);
+    const links = getDataLinks(field, dataIdx);
+
+    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} />;
   }
 
   const headerItem: VizTooltipItem = {
@@ -79,14 +81,10 @@ export const StateTimelineTooltip2 = ({
   };
 
   return (
-    <div>
-      <div className={styles.wrapper}>
-        <VizTooltipHeader item={headerItem} isPinned={isPinned} />
-        <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} />
-        {(links.length > 0 || isPinned) && (
-          <VizTooltipFooter dataLinks={links} annotate={isPinned ? annotate : undefined} />
-        )}
-      </div>
+    <div className={styles.wrapper}>
+      <VizTooltipHeader item={headerItem} isPinned={isPinned} />
+      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} />
+      {footer}
     </div>
   );
 };

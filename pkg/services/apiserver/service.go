@@ -366,12 +366,16 @@ func (s *service) startAggregator(
 	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
-	aggregatorConfig, aggregatorInformers, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig)
+	externalNamesNamespace := "default"
+	if s.cfg.StackID != "" {
+		externalNamesNamespace = s.cfg.StackID
+	}
+	aggregatorConfig, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig, externalNamesNamespace)
 	if err != nil {
 		return nil, err
 	}
 
-	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, aggregatorInformers, server)
+	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig.KubeAggregatorConfig, aggregatorConfig.Informers, aggregatorConfig.RemoteServicesConfig, server)
 	if err != nil {
 		return nil, err
 	}
