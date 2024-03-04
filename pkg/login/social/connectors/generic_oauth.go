@@ -28,7 +28,13 @@ const (
 	idTokenAttributeNameKey = "id_token_attribute_name" // #nosec G101 not a hardcoded credential
 )
 
-var ExtraGenericOAuthSettingKeys = []string{nameAttributePathKey, loginAttributePathKey, idTokenAttributeNameKey, teamIdsKey, allowedOrganizationsKey}
+var ExtraGenericOAuthSettingKeys = map[string]ExtraKeyInfo{
+	nameAttributePathKey:    {Type: String},
+	loginAttributePathKey:   {Type: String},
+	idTokenAttributeNameKey: {Type: String},
+	teamIdsKey:              {Type: String},
+	allowedOrganizationsKey: {Type: String},
+}
 
 var _ social.SocialConnector = (*SocialGenericOAuth)(nil)
 var _ ssosettings.Reloadable = (*SocialGenericOAuth)(nil)
@@ -116,7 +122,7 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.SocialBase = newSocialBase(social.GenericOAuthProviderName, newInfo, s.features, s.cfg)
+	s.updateInfo(social.GenericOAuthProviderName, newInfo)
 
 	s.teamsUrl = newInfo.TeamsUrl
 	s.emailAttributeName = newInfo.EmailAttributeName

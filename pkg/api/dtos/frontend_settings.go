@@ -208,6 +208,9 @@ type FrontendSettingsDTO struct {
 	AnonymousDeviceLimit             int64                          `json:"anonymousDeviceLimit"`
 	RendererAvailable                bool                           `json:"rendererAvailable"`
 	RendererVersion                  string                         `json:"rendererVersion"`
+	RendererDefaultImageWidth        int                            `json:"rendererDefaultImageWidth"`
+	RendererDefaultImageHeight       int                            `json:"rendererDefaultImageHeight"`
+	RendererDefaultImageScale        float64                        `json:"rendererDefaultImageScale"`
 	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`
 	Http2Enabled                     bool                           `json:"http2Enabled"`
 	GrafanaJavascriptAgent           setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent"`
@@ -257,4 +260,6 @@ type FrontendSettingsDTO struct {
 	// Enterprise
 	Licensing     *FrontendSettingsLicensingDTO     `json:"licensing,omitempty"`
 	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
+
+	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
 }

@@ -12,9 +12,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
-func TestTestDatasource(t *testing.T) {
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func TestIntegrationTestDatasource(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -70,13 +75,12 @@ func TestTestDatasource(t *testing.T) {
 					{
 					  "responseKind": {
 						"group": "",
-						"kind": "Status",
+						"kind": "QueryDataResponse",
 						"version": ""
 					  },
 					  "subresource": "query",
 					  "verbs": [
-						"create",
-						"get"
+						"create"
 					  ]
 					},
 					{

@@ -24,13 +24,19 @@ const (
 	legacyAPIURL            = "https://www.googleapis.com/oauth2/v1/userinfo"
 	googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
 	googleIAMScope          = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
+	validateHDKey           = "validate_hd"
 )
+
+var ExtraGoogleSettingKeys = map[string]ExtraKeyInfo{
+	validateHDKey: {Type: Bool, DefaultValue: true},
+}
 
 var _ social.SocialConnector = (*SocialGoogle)(nil)
 var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
 
 type SocialGoogle struct {
 	*SocialBase
+	validateHD bool
 }
 
 type googleUserData struct {
@@ -45,6 +51,7 @@ type googleUserData struct {
 func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
 	provider := &SocialGoogle{
 		SocialBase: newSocialBase(social.GoogleProviderName, info, features, cfg),
+		validateHD: MustBool(info.Extra[validateHDKey], true),
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
@@ -88,7 +95,8 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.SocialBase = newSocialBase(social.GoogleProviderName, newInfo, s.features, s.cfg)
+	s.updateInfo(social.GoogleProviderName, newInfo)
+	s.validateHD = MustBool(newInfo.Extra[validateHDKey], true)
 
 	return nil
 }
@@ -117,7 +125,7 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		return nil, fmt.Errorf("user email is not verified")
 	}
 
-	if err := s.isHDAllowed(data.HD); err != nil {
+	if err := s.isHDAllowed(data.HD, info); err != nil {
 		return nil, err
 	}
 
@@ -163,6 +171,7 @@ type googleAPIData struct {
 	Name          string `json:"name"`
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"verified_email"`
+	HD            string `json:"hd"`
 }
 
 func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) (*googleUserData, error) {
@@ -184,6 +193,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 			Name:          data.Name,
 			Email:         data.Email,
 			EmailVerified: data.EmailVerified,
+			HD:            data.HD,
 			rawJSON:       response.Body,
 		}, nil
 	}
@@ -297,12 +307,16 @@ func (s *SocialGoogle) getGroupsPage(ctx context.Context, client *http.Client, u
 	return &data, nil
 }
 
-func (s *SocialGoogle) isHDAllowed(hd string) error {
-	if len(s.info.AllowedDomains) == 0 {
+func (s *SocialGoogle) isHDAllowed(hd string, info *social.OAuthInfo) error {
+	if s.validateHD {
 		return nil
 	}
 
-	for _, allowedDomain := range s.info.AllowedDomains {
+	if len(info.AllowedDomains) == 0 {
+		return nil
+	}
+
+	for _, allowedDomain := range info.AllowedDomains {
 		if hd == allowedDomain {
 			return nil
 		}

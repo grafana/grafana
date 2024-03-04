@@ -149,6 +149,9 @@ type Cfg struct {
 	RendererAuthToken              string
 	RendererConcurrentRequestLimit int
 	RendererRenderKeyLifeTime      time.Duration
+	RendererDefaultImageWidth      int
+	RendererDefaultImageHeight     int
+	RendererDefaultImageScale      float64
 
 	// Security
 	DisableInitAdminCreation          bool
@@ -253,15 +256,7 @@ type Cfg struct {
 	Azure *azsettings.AzureSettings
 
 	// Auth proxy settings
-	AuthProxyEnabled          bool
-	AuthProxyHeaderName       string
-	AuthProxyHeaderProperty   string
-	AuthProxyAutoSignUp       bool
-	AuthProxyEnableLoginToken bool
-	AuthProxyWhitelist        string
-	AuthProxyHeaders          map[string]string
-	AuthProxyHeadersEncoded   bool
-	AuthProxySyncTTL          int
+	AuthProxy AuthProxySettings
 
 	// OAuth
 	OAuthAutoLogin                bool
@@ -339,7 +334,7 @@ type Cfg struct {
 
 	// IP range access control
 	IPRangeACEnabled     bool
-	IPRangeACAllowedURLs []string
+	IPRangeACAllowedURLs []*url.URL
 	IPRangeACSecretKey   string
 
 	// SQL Data sources
@@ -362,6 +357,8 @@ type Cfg struct {
 
 	StackID string
 	Slug    string
+
+	LocalFileSystemAvailable bool
 
 	// Deprecated
 	ForceMigration bool
@@ -699,7 +696,6 @@ func (cfg *Cfg) readAnnotationSettings() error {
 
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
-	alertingSection := cfg.Raw.Section("alerting")
 
 	var newAnnotationCleanupSettings = func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
 		maxAge, err := gtime.ParseDuration(section.Key(maxAgeField).MustString(""))
@@ -713,7 +709,18 @@ func (cfg *Cfg) readAnnotationSettings() error {
 		}
 	}
 
-	cfg.AlertingAnnotationCleanupSetting = newAnnotationCleanupSettings(alertingSection, "max_annotation_age")
+	alertingAnnotations := cfg.Raw.Section("unified_alerting.state_history.annotations")
+	if alertingAnnotations.Key("max_age").Value() == "" && section.Key("max_annotations_to_keep").Value() == "" {
+		alertingSection := cfg.Raw.Section("alerting")
+		cleanup := newAnnotationCleanupSettings(alertingSection, "max_annotation_age")
+		if cleanup.MaxCount > 0 || cleanup.MaxAge > 0 {
+			cfg.Logger.Warn("settings 'max_annotations_to_keep' and 'max_annotation_age' in section [alerting] are deprecated. Please use settings 'max_annotations_to_keep' and 'max_age' in section [unified_alerting.state_history.annotations]")
+		}
+		cfg.AlertingAnnotationCleanupSetting = cleanup
+	} else {
+		cfg.AlertingAnnotationCleanupSetting = newAnnotationCleanupSettings(alertingAnnotations, "max_age")
+	}
+
 	cfg.DashboardAnnotationCleanupSettings = newAnnotationCleanupSettings(dashboardAnnotation, "max_age")
 	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(apiIAnnotation, "max_age")
 
@@ -1050,6 +1057,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
 	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
+	cfg.LocalFileSystemAvailable = iniFile.Section("environment").Key("local_file_system_available").MustBool(true)
 	//nolint:staticcheck
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
@@ -1181,6 +1189,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
 	cfg.readAuthJWTSettings()
+	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
@@ -1601,31 +1610,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
 	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
 
-	// Auth Proxy
-	authProxy := iniFile.Section("auth.proxy")
-	cfg.AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
-
-	cfg.AuthProxyHeaderName = valueAsString(authProxy, "header_name", "")
-	cfg.AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
-	cfg.AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
-	cfg.AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
-
-	cfg.AuthProxySyncTTL = authProxy.Key("sync_ttl").MustInt()
-
-	cfg.AuthProxyWhitelist = valueAsString(authProxy, "whitelist", "")
-
-	cfg.AuthProxyHeaders = make(map[string]string)
-	headers := valueAsString(authProxy, "headers", "")
-
-	for _, propertyAndHeader := range util.SplitString(headers) {
-		split := strings.SplitN(propertyAndHeader, ":", 2)
-		if len(split) == 2 {
-			cfg.AuthProxyHeaders[split[0]] = split[1]
-		}
-	}
-
-	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
-
 	// SSO Settings
 	ssoSettings := iniFile.Section("sso_settings")
 	cfg.SSOSettingsReloadInterval = ssoSettings.Key("reload_interval").MustDuration(1 * time.Minute)
@@ -1739,6 +1723,9 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
+	cfg.RendererDefaultImageWidth = renderSec.Key("default_image_width").MustInt(1000)
+	cfg.RendererDefaultImageHeight = renderSec.Key("default_image_height").MustInt(500)
+	cfg.RendererDefaultImageScale = renderSec.Key("default_image_scale").MustFloat64(1)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 	cfg.PDFsDir = filepath.Join(cfg.DataPath, "pdf")
@@ -1949,7 +1936,15 @@ func (cfg *Cfg) readDataSourceSecuritySettings() {
 	cfg.IPRangeACEnabled = datasources.Key("enabled").MustBool(false)
 	cfg.IPRangeACSecretKey = datasources.Key("secret_key").MustString("")
 	allowedURLString := datasources.Key("allow_list").MustString("")
-	cfg.IPRangeACAllowedURLs = util.SplitString(allowedURLString)
+	for _, urlString := range util.SplitString(allowedURLString) {
+		allowedURL, err := url.Parse(urlString)
+		if err != nil {
+			cfg.Logger.Error("Error parsing allowed URL for IP range access control", "error", err)
+			continue
+		} else {
+			cfg.IPRangeACAllowedURLs = append(cfg.IPRangeACAllowedURLs, allowedURL)
+		}
+	}
 }
 
 func (cfg *Cfg) readSqlDataSourceSettings() {
