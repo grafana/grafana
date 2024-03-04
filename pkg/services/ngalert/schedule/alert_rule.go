@@ -82,8 +82,8 @@ func (a *alertRuleInfo) stop(reason error) {
 }
 
 //nolint:gocyclo
-func (ruleInfo *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) error {
-	grafanaCtx := ngmodels.WithRuleKey(ruleInfo.ctx, key)
+func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) error {
+	grafanaCtx := ngmodels.WithRuleKey(a.ctx, key)
 	logger := sch.log.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
 
@@ -211,7 +211,7 @@ func (ruleInfo *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *sched
 	for {
 		select {
 		// used by external services (API) to notify that rule is updated.
-		case ctx := <-ruleInfo.updateCh:
+		case ctx := <-a.updateCh:
 			if currentFingerprint == ctx.Fingerprint {
 				logger.Info("Rule's fingerprint has not changed. Skip resetting the state", "currentFingerprint", currentFingerprint)
 				continue
@@ -222,7 +222,7 @@ func (ruleInfo *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *sched
 			resetState(grafanaCtx, ctx.IsPaused)
 			currentFingerprint = ctx.Fingerprint
 		// evalCh - used by the scheduler to signal that evaluation is needed.
-		case ctx, ok := <-ruleInfo.evalCh:
+		case ctx, ok := <-a.evalCh:
 			if !ok {
 				logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
