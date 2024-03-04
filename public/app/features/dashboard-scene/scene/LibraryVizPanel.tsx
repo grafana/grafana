@@ -112,15 +112,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
         });
       }
 
-      // extra information from library panel
-      const libraryPanelExtendedInformation = {
-        folderUid: libPanel.folderUid,
-        description: libPanel.description,
-        meta: libPanel.meta,
-        schemaVersion: libPanel.schemaVersion,
-      };
-
-      this.setState({ panel, _loadedVersion: libPanel.version, isLoaded: true, ...libraryPanelExtendedInformation });
+      this.setState({ panel, _loadedVersion: libPanel.version, isLoaded: true, ...libPanel });
     } catch (err) {
       vizPanel.setState({
         _pluginLoadError: `Unable to load library panel: ${this.state.uid}`,
