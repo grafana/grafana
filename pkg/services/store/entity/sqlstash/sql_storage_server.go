@@ -1271,9 +1271,9 @@ func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntitySto
 
 	// subscribe to new events
 	if engine.DriverName() == "postgres" {
-		err = s.watch(w.Context(), cr, w)
-	} else {
 		err = s.pgWatch(w.Context(), cr, w)
+	} else {
+		err = s.watch(w.Context(), cr, w)
 	}
 	if err != nil {
 		s.log.Error("watch error", "err", err)
@@ -1695,7 +1695,7 @@ func (s *sqlEntityServer) pgAddNotifyChan(pgChannelName string, c chan<- *pq.Not
 	defer s.pgNotifyMapMu.Unlock()
 
 	if s.pgNotifyMap == nil {
-		s.pgNotifyMap = pgChannelMap{}
+		s.pgNotifyMap = pgChannelMap{pgChannelName: make(pgWatcherChannelMap)}
 
 	} else if _, ok := s.pgNotifyMap[pgChannelName]; !ok {
 		s.pgNotifyMap[pgChannelName] = pgWatcherChannelMap{}
@@ -1846,7 +1846,6 @@ func (s *sqlEntityServer) pgWatch(ctx context.Context, r cachedEntityWatchReques
 		if err := s.pgRemoveNotifyChan(r.namespace, watcherKey); err != nil {
 			s.log.Error("remove notify channel", "error", err)
 		}
-		close(c)
 	}()
 
 	// main notifications loop
