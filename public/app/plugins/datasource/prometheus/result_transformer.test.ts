@@ -1,10 +1,11 @@
 import {
   cacheFieldDisplayNames,
   createDataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
   FieldType,
-  PreferredVisualisationType,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type PreferredVisualisationType,
 } from '@grafana/data';
 
 import { parseSampleValue, sortSeriesByLabel, transformDFToTable, transformV2 } from './result_transformer';
@@ -404,6 +405,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[2].name).toEqual('2');
       expect(series.data[0].fields[3].name).toEqual('+Inf');
     });
+
     it('results with heatmap format (with metric name) should be correctly transformed', () => {
       const options = {
         targets: [
@@ -924,6 +926,77 @@ describe('Prometheus Result Transformer', () => {
       const traceField = series.data[1].fields.find((f) => f.name === 'traceID');
       expect(traceField).toBeDefined();
       expect(traceField!.config.links?.length).toBe(0);
+    });
+
+    it('should convert values less than 1e-9 to 0', () => {
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse & { data: DataFrame[] };
+
+      // Create a situation where the series subtraction in histogram transformation results in a value less than 1e-9
+      response.data[1].fields[1].values[1] += 0.0000000001;
+      response.data[2].fields[1].values[1] += 0.00000000015;
+
+      const series = transformV2(response, options, {});
+
+      expect(
+        series.data
+          .at(0)
+          ?.fields.find((field) => field.name === '2')
+          ?.values.at(1)
+      ).toBe(0);
+      expect(
+        series.data
+          .at(0)
+          ?.fields.find((field) => field.name === '+Inf')
+          ?.values.at(1)
+      ).toBe(0);
     });
   });
 
