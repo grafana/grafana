@@ -254,6 +254,8 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 	nodeIt := dp.Nodes()
 
+	nodeList := []Node{}
+
 	for nodeIt.Next() {
 		node := nodeIt.Node().(Node)
 
@@ -262,13 +264,28 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 			// used as datasource query params some day this will need change
 			continue
 		}
-
 		cmdNode := node.(*CMDNode)
+
+		// TODO - just set any previous query as needed for now since we can't determine this from the text
+		textToSqlCmd, ok := cmdNode.Command.(*TextToSQLCommand)
+		if ok {
+			refs := []string{}
+			for _, ref := range nodeList {
+				refs = append(refs, ref.RefID())
+			}
+			textToSqlCmd.varsToQuery = refs
+		}
+
+		nodeList = append(nodeList, node)
 
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]
 			if !ok {
 				_, ok := cmdNode.Command.(*SQLCommand)
+				if ok {
+					continue
+				}
+				_, ok = cmdNode.Command.(*TextToSQLCommand)
 				if ok {
 					continue
 				}
@@ -324,6 +341,10 @@ func hasSqlExpression(dp DataPipeline) bool {
 		if node.NodeType() == TypeCMDNode {
 			cmdNode := node.(*CMDNode)
 			_, ok := cmdNode.Command.(*SQLCommand)
+			if ok {
+				return true
+			}
+			_, ok = cmdNode.Command.(*TextToSQLCommand)
 			if ok {
 				return true
 			}

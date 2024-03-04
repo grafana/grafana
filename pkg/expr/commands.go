@@ -326,6 +326,8 @@ const (
 	TypeThreshold
 	// TypeSQL is the CMDType for running SQL expressions
 	TypeSQL
+	// TypeAsk is the CMDType for running NL expressions
+	TypeAsk
 )
 
 func (gt CommandType) String() string {
@@ -340,6 +342,8 @@ func (gt CommandType) String() string {
 		return "classic_conditions"
 	case TypeSQL:
 		return "sql"
+	case TypeAsk:
+		return "ask"
 	default:
 		return "unknown"
 	}
@@ -360,6 +364,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeThreshold, nil
 	case "sql":
 		return TypeSQL, nil
+	case "ask":
+		return TypeAsk, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

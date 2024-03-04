@@ -24,21 +24,14 @@ type TextToSQLCommand struct {
 }
 
 // NewTextToSQLCommand creates a new TextToSQLCommand.
-func NewTextToSQLCommand(refID, rawSQL string, tr TimeRange) (*TextToSQLCommand, error) {
-	if rawSQL == "" {
+func NewTextToSQLCommand(refID, text string, tr TimeRange) (*TextToSQLCommand, error) {
+	if text == "" {
 		return nil, errutil.BadRequest("sql-missing-query",
 			errutil.WithPublicMessage("missing SQL query"))
 	}
-	tables, err := sql.TablesList(rawSQL)
-	if err != nil {
-		logger.Warn("invalid sql query", "sql", rawSQL, "error", err)
-		return nil, errutil.BadRequest("sql-invalid-sql",
-			errutil.WithPublicMessage("error reading SQL command"),
-		)
-	}
 	return &TextToSQLCommand{
-		query:       rawSQL,
-		varsToQuery: tables,
+		query:       text,
+		varsToQuery: nil, // TODO: this will just use all upstream refs
 		timeRange:   tr,
 		refID:       refID,
 	}, nil
@@ -71,7 +64,7 @@ func (gr *TextToSQLCommand) NeedsVars() []string {
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
 func (gr *TextToSQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
-	_, span := tracer.Start(ctx, "SSE.ExecuteSQL")
+	_, span := tracer.Start(ctx, "SSE.ExecuteTextToSQL")
 	defer span.End()
 
 	allFrames := []*data.Frame{}
@@ -83,9 +76,15 @@ func (gr *TextToSQLCommand) Execute(ctx context.Context, now time.Time, vars mat
 
 	rsp := mathexp.Results{}
 
+	s, err := sql.TextToSQL(gr.query, allFrames)
+	if err != nil {
+		rsp.Error = err
+		return rsp, err
+	}
+
 	duckDB := duck.NewInMemoryDB()
 	var frame = &data.Frame{}
-	err := duckDB.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
+	err = duckDB.QueryFramesInto(gr.refID, s, allFrames, frame)
 	if err != nil {
 		rsp.Error = err
 		return rsp, nil

@@ -12,6 +12,11 @@ import (
 
 const header = "5 row sample:"
 
+func TextToSQL(text string, frames data.Frames) (string, error) {
+	schema := getSchema(frames, 1)
+	return Translate(text, schema)
+}
+
 // should look like this https://github.com/scottlepp/ducker/blob/main/schema.txt
 func getSchema(frames data.Frames, rowLimit int) string {
 	result := []string{}
