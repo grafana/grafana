@@ -19,8 +19,8 @@ import './jquery';
 //   __webpack_nonce__ = window.nonce;
 // }
 
-// // This is an indication to the window.onLoad failure check that the app bundle has loaded.
-// window.__grafana_app_bundle_loaded = true;
+// This is an indication to the window.onLoad failure check that the app bundle has loaded.
+window.__grafana_app_bundle_loaded = true;
 
 import app from './app';
 
