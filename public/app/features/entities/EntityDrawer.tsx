@@ -1,15 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { useAsync } from 'react-use';
+import { LayoutConfig } from '@antv/g6';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { EmbeddedDashboard } from '@grafana/runtime';
-import { Button, Divider, Drawer, FilterPill, Stack, VerticalGroup } from '@grafana/ui';
+import { Divider, Drawer, FilterPill, Stack } from '@grafana/ui';
 import { IconButton } from '@grafana/ui/';
 
-import { DashboardGrid } from '../dashboard/dashgrid/DashboardGrid';
-import { dashboardLoaderSrv } from '../dashboard/services/DashboardLoaderSrv';
-import { getTimeSrv, TimeSrv } from '../dashboard/services/TimeSrv';
-import { DashboardModel } from '../dashboard/state';
-import { createDashboardQueryRunner } from '../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import GraphinGraph from './GraphinGraph/GraphinGraph.component';
+import { GraphCustomData, GraphCustomEdge, GraphCustomNode } from './asserts-types';
 
 // export function EntityDrawer(props: Props) {
 //   const dashboard = useAsync(async () => {
@@ -113,6 +110,12 @@ export function EntityDrawer(props: Props) {
   }, [entity]);
 
   const currentEntity = navStack[navStack.length - 1];
+  const onEntityChange = useCallback(
+    (id: string) => {
+      setNavStack([...navStack, entitiesMap[id]]);
+    },
+    [navStack]
+  );
 
   return (
     <Drawer closeOnMaskClick={true} onClose={props.onClose}>
@@ -121,9 +124,8 @@ export function EntityDrawer(props: Props) {
           <Breadcrumbs stack={navStack} />
           <IconButton name={'times'} onClick={props.onClose} aria-label={'close'} size={'xl'} />
         </Stack>
-        <Divider />
-        <EntityMap entity={currentEntity} onEntityChange={(id) => setNavStack([...navStack, entitiesMap[id]])} />
-        <Divider />
+        {/*<EntityMap entity={currentEntity} onEntityChange={onEntityChange} />*/}
+        <EntityMapAsserts entity={currentEntity} onEntityChange={onEntityChange} />
         <div style={{ flex: '1', overflow: 'scroll' }}>
           <EmbeddedDashboard
             uid={currentEntity.dashboardUid}
@@ -173,6 +175,64 @@ function EntityMap(props: EntityMapProps) {
   );
 }
 
+type EntityMapAssertsProps = {
+  entity: Entity;
+  onEntityChange: (entityId: string) => void;
+};
+
+function EntityMapAsserts({ onEntityChange, entity }: EntityMapAssertsProps) {
+  const onNodeClick = useCallback(
+    (id: string) => {
+      onEntityChange(id);
+    },
+    [onEntityChange]
+  );
+  return (
+    <GraphinGraph data={entityToAssertsGraph(entity)} layout={DEFAULT_FORCE_LAYOUT_OPTIONS} onNodeClick={onNodeClick} />
+  );
+}
+
+function entityToAssertsGraph(entity: Entity): GraphCustomData {
+  const nodes: GraphCustomNode[] = [];
+  const edges: GraphCustomEdge[] = [];
+  nodes.push(toNode(entity));
+  entity.children?.forEach((child) => {
+    nodes.push(toNode(entitiesMap[child]));
+    edges.push({
+      source: entity.type + ':' + entity.id,
+      target: child,
+      trafficPresent: false,
+      callsPerMinute: 0,
+    });
+  });
+  entity.parents?.forEach((parent) => {
+    nodes.push(toNode(entitiesMap[parent]));
+    edges.push({
+      source: parent,
+      target: entity.type + ':' + entity.id,
+      trafficPresent: false,
+      callsPerMinute: 0,
+    });
+  });
+  return { nodes, edges };
+}
+
+function toNode(entity: Entity): GraphCustomNode {
+  return {
+    id: entity.type + ':' + entity.id,
+    entityType: 'Node',
+
+    type: 'asserts-node',
+    hidden: false,
+    label: entity.id,
+    cluster: entity.type,
+    scope: undefined,
+    assertion: undefined,
+    properties: {},
+    connectedAssertion: undefined,
+  };
+}
+
 function Breadcrumbs(props: { stack: Entity[] }) {
   return (
     <Stack direction={'row'} alignItems={'center'}>
@@ -197,3 +257,23 @@ function EntityButton(props: { entityId: string; onEntityChange: (id: string) =>
     />
   );
 }
+
+export const DEFAULT_FORCE_LAYOUT_OPTIONS: LayoutConfig = {
+  type: 'force',
+  linkDistance: 100, // Edge length
+  edgeStrength: 1,
+  nodeStrength: -200,
+  preventOverlap: true,
+  collideStrength: 2,
+  nodeSpacing: 40,
+  nodeSize: (node: GraphCustomNode) => node.size,
+  alpha: 0.3,
+  alphaDecay: 0.028,
+  alphaMin: 0.01,
+  clustering: true,
+  clusterNodeStrength: -5,
+  clusterNodeSize: 80,
+  clusterFociStrength: 1.2,
+  // workerEnabled: true,
+  // workerScriptURL: `${window.location.origin}/public/plugins/${pluginJson.id}${workerScript}`,
+};

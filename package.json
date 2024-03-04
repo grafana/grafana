@@ -222,6 +222,8 @@
     "yargs": "^17.5.1"
   },
   "dependencies": {
+    "@antv/g2": "4.1.x",
+    "@antv/g6": "4.2.x",
     "@daybrush/utils": "1.13.0",
     "@emotion/css": "11.11.2",
     "@emotion/react": "11.11.3",
