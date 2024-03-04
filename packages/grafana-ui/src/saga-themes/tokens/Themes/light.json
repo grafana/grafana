@@ -69,6 +69,10 @@
         "strong": {
           "value": "{color.neutral.400}",
           "type": "color"
+        },
+        "divider": {
+          "value": "{color.border.ui.weak}",
+          "type": "color"
         }
       },
       "system": {
