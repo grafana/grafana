@@ -56,7 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.v1.palette.blue95,
     }),
     cards: css({
-      overflow: 'auto',
+      overflowX: 'auto',
       overflowY: 'hidden',
       width: '100%',
       display: 'flex',
