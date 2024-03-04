@@ -340,7 +340,7 @@ export class LokiDatasource
 
   /**
    * Used within the `query` to execute live queries.
-   * It is intended for explore-mode and logs-queries, not metric queries.
+   * It is intended for logs-queries, not metric queries.
    * @returns An Observable of DataQueryResponse with live query results or an empty response if no suitable queries are found.
    * @todo: The name says "backend" but it's actually running the query through the frontend. We should fix this.
    */
