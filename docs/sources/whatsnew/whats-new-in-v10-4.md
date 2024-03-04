@@ -40,6 +40,26 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 
 ## Dashboards and visualizations
 
+### AngularJS plugin warnings in dashboards
+
+<!--#grafana-deprecate-angularjs-->
+
+_Generally available in all editions of Grafana_
+
+AngularJS support in Grafana was deprecated in v9 and will be turned off by default in Grafana v11. When this happens, any plugin which depended on AngularJS will not load, and dashboard panels will be unable to show data.
+
+To help you understand where you may be impacted, Grafana now displays a warning banner in any dashboard with a dependency on an AngularJS plugin. Additionally, warning icons are present in any panel where the panel plugin or underlying data source plugin has an AngularJS dependency.
+
+This complements the existing warnings already present on the **Plugins** page under the administration menu.
+
+In addition, you can use our [detect-angular-dashboards](https://github.com/grafana/detect-angular-dashboards) open source tool, which can be run against any Grafana instance to generate a report listing all dashboards that have a dependency on an AngularJS plugin, as well as which plugins are in use. This tool also supports the detection of [private plugins](https://grafana.com/legal/plugins/) that are dependent on AngularJS, however this particular feature requires Grafana v10.1.0 or higher.
+
+Use the aforementioned tooling and warnings to plan migrations to React based [visualizations](https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/) and [data sources](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/) included in Grafana or from the [Grafana plugins catalog](https://grafana.com/grafana/plugins/).
+
+To learn more, refer to the [Angular support deprecation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/), which includes [recommended alternative plugins](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/angular-plugins/).
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/)
+
 ### Data visualization quality of life improvements
 
 <!-- Nathan Marrs -->
@@ -85,6 +105,26 @@ _Generally available in Grafana Enterprise and Grafana Cloud_
 We've added the option to manage library panel permissions through role-based access control (RBAC). With this feature, you can choose who can create, edit, and read library panels. RBAC provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as dashboards, reports, and administrative settings.
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-library-panels/)
+
+### Tooltip improvements
+
+<!--Adela Almasan-->
+
+_Available in public preview in all editions of Grafana_
+
+We’ve made a number of small improvements to the way tooltips work in Grafana. To try out the new tooltips, enable the `newVizTooltips` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+
+- +**Copy on click support**
+- +You can now copy the content from within a tooltip by clicking on the text.
+- +![Tooltip](/media/docs/grafana/gif-grafana-10-4-tooltip–copy.gif)
+- +**Scrollable content**
+- +You can now scroll the content of a tooltip, which allows you to view long lists. This is currently supported in the time series, candlestick, and trend visualizations. We'll add more improvements to the scrolling functionality in a future version.
+- +![Tooltip](/media/docs/grafana/gif-grafana-10-4-tooltip-content-scroll.gif)
+- +**Added tooltip options for candlestick visualization**
+- +The default tooltip options are now also visible in candlestick visualizations.
+- +**Hover proximity option in time series**
+- +We've added a tooltip hover proximity limit option (in pixels), which makes it possible to reduce the number of hovered-over data points under the cursor when two datasets are not aligned in time.
+- +![Time Series hover proximity](/media/docs/grafana/gif-grafana-10-4-hover-proximity.gif)
 
 ## Alerting
 
@@ -147,39 +187,24 @@ We are working on adding complete support for configuring all other supported OA
 
 [Documentation](https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/)
 
-<!--entry to be edited for grammar in Cloud notes and regenerated here
+### Team LBAC for Loki
 
-### Team LBAC
-
-#identity-access"
+<!--#identity-access-->
 
 _Available in public preview in Grafana Enterprise and Grafana Cloud_
 
-Introducing Team LBAC (Label Based Access Control) feature for Loki is a significant enhancement that simplifies and streamlines data source access management based on team memberships.
+Do you need better access control over your Loki logs? Introducing Team LBAC (Label Based Access Control), a major improvement to Loki that streamlines and simplifies data source access control according to team memberships.
 
-**LBAC** control access to data based on labels. In the context of Loki, it is a way to control access to logs based on labels. Users wanting fine grained access to their logs in Loki, can now configure their users access based on their team memberships via **LogQL**.
+LBAC restricts access to data by label. Within Loki, this restricts access to **logs** by label. Users who want fine-grained access to their logs within Loki can now configure user access based on team memberships through **LogQL.**
 
-This feature addresses a common challenge faced by Grafana users: managing Loki data source access for different teams.
-- Previously, this led to the creation of numerous connections and duplicate dashboards across your Grafana.
+This feature addresses a common challenge faced by Grafana users: managing Loki data source access for different teams. Previously, this led to the creation of numerous connections and duplicate dashboards across your Grafana instance. With Team LBAC, you can minimize the amount of data sources you have by configuring access to particular labels based only on team memberships
 
-Team LBAC, you can now configure access to specific labels based solely on team memberships, enabling you to reduce your number of datasources to a bare minimum.
-
-#### Team LBAC rules
-
-Team LBAC rules are added to the http request to Loki data source. Setting up Team LBAC rules for any team will apply those rules to the teams.
+Team LBAC rules are added to the HTTP request to the Loki data source. Setting up Team LBAC rules for any team applies those rules to teams.
 Users who want teams with a specific set of label selectors can add rules for each team.
 
-##### Best practices
-
-We recommend you only add team LBAC permissions for teams that should use the data source and remove default `Viewer` and `Editor` query permissions.
-
-We recommend for a first setup, setting up as few rules for each team as possible and make them additive and not negated.
-
-For validating the rules, we recommend testing the rules in the Loki Explore view. This will allow you to see the logs that would be returned for the rule.
+Grafana recommends you only add Team LBAC permissions for teams that should use a specific data source, and remove default `Viewer` and `Editor` query permissions. As an initial setup, we recommend defining as few rules as possible for each team, making sure that they are additive rather than negating one another. For validating rules, we recommend testing each rule in Loki Explore view. This allows you to see the logs that would be returned for the rule.
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/)
-
--->
 
 ## Data sources
 
