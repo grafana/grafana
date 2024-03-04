@@ -2,7 +2,7 @@ import { LayoutConfig } from '@antv/g6';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { EmbeddedDashboard } from '@grafana/runtime';
-import { Divider, Drawer, FilterPill, Stack } from '@grafana/ui';
+import { Drawer, FilterPill, Stack } from '@grafana/ui';
 import { IconButton } from '@grafana/ui/';
 
 import GraphinGraph from './GraphinGraph/GraphinGraph.component';
@@ -121,8 +121,13 @@ export function EntityDrawer(props: Props) {
     <Drawer closeOnMaskClick={true} onClose={props.onClose}>
       <Stack direction={'column'} gap={1}>
         <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
-          <Breadcrumbs stack={navStack} />
-          <IconButton name={'times'} onClick={props.onClose} aria-label={'close'} size={'xl'} />
+          <Header
+            stack={navStack}
+            onBack={() => {
+              setNavStack(navStack.slice(0, -1));
+            }}
+            onClose={props.onClose}
+          />
         </Stack>
         {/*<EntityMap entity={currentEntity} onEntityChange={onEntityChange} />*/}
         <EntityMapAsserts entity={currentEntity} onEntityChange={onEntityChange} />
@@ -220,8 +225,11 @@ function entityToAssertsGraph(entity: Entity): GraphCustomData {
 function toNode(entity: Entity): GraphCustomNode {
   return {
     id: entity.type + ':' + entity.id,
-    entityType: 'Node',
-
+    entityType: {
+      service: 'Service',
+      namespace: 'Namespace',
+      container: 'Pod',
+    }[entity.type]!,
     type: 'asserts-node',
     hidden: false,
     label: entity.id,
@@ -230,19 +238,34 @@ function toNode(entity: Entity): GraphCustomNode {
     assertion: undefined,
     properties: {},
     connectedAssertion: undefined,
+    style: {
+      activeBgStroke: '#56595e',
+      fill: '#D2B48C',
+      fontColor: '#d0d3d8',
+    },
   };
 }
 
-function Breadcrumbs(props: { stack: Entity[] }) {
+function Header(props: { stack: Entity[]; onBack: () => void; onClose: () => void }) {
+  const current = props.stack.length === 1 ? props.stack[0] : props.stack[props.stack.length - 1];
+  const prev = props.stack.length === 1 ? undefined : props.stack[props.stack.length - 2];
   return (
-    <Stack direction={'row'} alignItems={'center'}>
-      {props.stack.map((entity, index) => (
-        <>
-          <span key={entity.id}>{entity.id}</span>
-          {index < props.stack.length - 1 && <span>&gt;</span>}
-        </>
-      ))}
-    </Stack>
+    <div style={{ flex: 1 }}>
+      <Stack direction={'row'} alignItems={'center'} justifyContent={'space-between'}>
+        <div style={{ display: 'flex' }}>
+          {prev && (
+            <>
+              <IconButton name={'arrow-left'} onClick={props.onBack} aria-label={'back'} size={'xl'} />
+              <span>{prev.id}</span>
+            </>
+          )}
+        </div>
+        <span>
+          {current?.type}: {current?.id}
+        </span>
+        <IconButton name={'times'} onClick={props.onClose} aria-label={'close'} size={'xl'} />
+      </Stack>
+    </div>
   );
 }
 

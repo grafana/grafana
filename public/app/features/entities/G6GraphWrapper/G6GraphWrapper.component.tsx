@@ -206,7 +206,7 @@ const G6GraphWrapper: ForwardRefRenderFunction<Graph, IProps> = (
   });
 
   return (
-    <div ref={containerRef} style={{ width: '100%', minHeight: '200px' }}>
+    <div ref={containerRef} style={{ width: '100%', minHeight: '200px', ...style }}>
       {graphLoaded && childrenWithProps}
     </div>
   );

@@ -127,13 +127,9 @@ const GraphinGraph = ({
 
   return (
     <>
-      {buildingLayout && (
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[1] text-secondary">
-          Building layout...
-        </div>
-      )}
+      {buildingLayout && <div>Building layout...</div>}
       <G6GraphWrapper
-        // style={{ visibility: buildingLayout ? 'hidden' : 'visible' }}
+        style={{ visibility: buildingLayout ? 'hidden' : 'visible' }}
         ref={(c) => {
           c && (graphRef.current = c);
         }}

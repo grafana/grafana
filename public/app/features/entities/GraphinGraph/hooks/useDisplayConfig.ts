@@ -30,7 +30,10 @@ export default function ({ data, showLabels, lastUpdateTime }: Props) {
       connectedAssertion: node.connectedAssertion,
       showLabels: showNodeNames ? showLabels : false,
       style: {
-        fill: isOutOfDate ? OUT_OF_DATE_COLOR : '#0000FF',
+        fill: isOutOfDate
+          ? OUT_OF_DATE_COLOR
+          : // @ts-ignore
+            entities[node.entityType || '']?.color || '#0000FF',
         fontColor: theme.isLight ? '#666666' : '#d0d3d8',
         activeBgStroke: theme.isLight ? '#f4f7fc' : '#56595e',
       },
@@ -87,3 +90,25 @@ export default function ({ data, showLabels, lastUpdateTime }: Props) {
   });
   return { nodes, edges } as GraphCustomData;
 }
+
+const entities = {
+  Schema: { color: '#B9ABA2', shape: 'circle', icon: 'none' },
+  KubeCluster: { color: '#326CE5', shape: 'circle', icon: 'none' },
+  Pod: { color: '#A6CFD5', shape: 'circle', icon: 'none' },
+  Node: { color: '#D2B48C', shape: 'square', icon: 'server' },
+  Assertion: { color: '#FFFFFF', shape: 'triangle', icon: 'exclamation' },
+  Deployment: { color: '#C2E7D9', shape: 'circle', icon: 'none' },
+  Service: { color: '#6B8E23', shape: 'square', icon: 'none' },
+  DataSource: { color: '#4479A1', shape: 'circle', icon: 'none' },
+  ServiceInstance: { color: '#8FBC8B', shape: 'circle', icon: 'none' },
+  Namespace: { color: '#F2B880', shape: 'circle', icon: 'none' },
+  Topic: { color: '#BC8F8F', shape: 'square', icon: 'none' },
+  KafkaBroker: { color: '#32CD32', shape: 'square', icon: 'none' },
+  Volume: { color: '#AFBC88', shape: 'circle', icon: 'none' },
+  DaemonSet: { color: '#FF6347', shape: 'square', icon: 'none' },
+  StatefulSet: { color: '#FFB6C1', shape: 'circle', icon: 'none' },
+  ReplicaSet: { color: '#7B68EE', shape: 'square', icon: 'none' },
+  KubeService: { color: '#B1BDBE', shape: 'circle', icon: 'none' },
+  KubeControlPlane: { color: '#C0C0C0', shape: 'circle', icon: 'none' },
+  NodeGroup: { color: '#EDAFB8', shape: 'square', icon: 'none' },
+};
