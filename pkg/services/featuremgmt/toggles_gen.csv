@@ -112,7 +112,7 @@ kubernetesQueryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,t
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
 recoveryThreshold,GA,@grafana/alerting-squad,false,true,false
 lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
-teamHttpHeaders,experimental,@grafana/identity-access-team,false,false,false
+teamHttpHeaders,preview,@grafana/identity-access-team,false,false,false
 awsDatasourcesNewFormStyling,preview,@grafana/aws-datasources,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 panelTitleSearchInV1,experimental,@grafana/backend-platform,true,false,false

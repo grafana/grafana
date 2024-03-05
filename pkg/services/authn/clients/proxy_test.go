@@ -100,9 +100,9 @@ func TestProxy_Authenticate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.AuthProxyHeaderName = "X-Username"
-			cfg.AuthProxyHeaders = tt.proxyHeaders
-			cfg.AuthProxyWhitelist = tt.ips
+			cfg.AuthProxy.HeaderName = "X-Username"
+			cfg.AuthProxy.Headers = tt.proxyHeaders
+			cfg.AuthProxy.Whitelist = tt.ips
 
 			calledUsername := ""
 			var calledAdditional map[string]string
@@ -166,7 +166,7 @@ func TestProxy_Test(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.AuthProxyHeaderName = "Proxy-Header"
+			cfg.AuthProxy.HeaderName = "Proxy-Header"
 
 			c, _ := ProvideProxy(cfg, nil, nil, nil)
 			assert.Equal(t, tt.expectedOK, c.Test(context.Background(), tt.req))
@@ -197,8 +197,8 @@ func (f fakeCache) Delete(ctx context.Context, key string) error {
 
 func TestProxy_Hook(t *testing.T) {
 	cfg := setting.NewCfg()
-	cfg.AuthProxyHeaderName = "X-Username"
-	cfg.AuthProxyHeaders = map[string]string{
+	cfg.AuthProxy.HeaderName = "X-Username"
+	cfg.AuthProxy.Headers = map[string]string{
 		proxyFieldRole: "X-Role",
 	}
 	cache := &fakeCache{data: make(map[string][]byte)}

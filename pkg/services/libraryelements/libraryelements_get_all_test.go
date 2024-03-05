@@ -39,7 +39,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all panel elements and both panels and variables exist, it should only return panels",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreateVariableCommand(sc.folder.ID, sc.folder.UID, "query0")
+			command := getCreateVariableCommand(sc.folder.ID, "query0")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -64,7 +64,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -107,7 +106,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all variable elements and both panels and variables exist, it should only return panels",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreateVariableCommand(sc.folder.ID, sc.folder.UID, "query0")
+			command := getCreateVariableCommand(sc.folder.ID, "query0")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -132,7 +131,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "query0",
 							Kind:        int64(model.VariableElement),
@@ -174,7 +172,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -195,7 +193,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -231,7 +228,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -274,7 +270,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and sort desc is set, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -298,7 +294,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -334,7 +329,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -377,7 +371,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and typeFilter is set to existing types, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreateCommandWithModel(sc.folder.ID, sc.folder.UID, "Gauge - Library Panel", model.PanelElement, []byte(`
+			command := getCreateCommandWithModel(sc.folder.ID, "Gauge - Library Panel", model.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -391,7 +385,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 			require.Equal(t, 200, resp.Status())
 
 			// nolint:staticcheck
-			command = getCreateCommandWithModel(sc.folder.ID, sc.folder.UID, "BarGauge - Library Panel", model.PanelElement, []byte(`
+			command = getCreateCommandWithModel(sc.folder.ID, "BarGauge - Library Panel", model.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -423,7 +417,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          3,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "BarGauge - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -459,7 +452,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Gauge - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -502,7 +494,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and typeFilter is set to a nonexistent type, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreateCommandWithModel(sc.folder.ID, sc.folder.UID, "Gauge - Library Panel", model.PanelElement, []byte(`
+			command := getCreateCommandWithModel(sc.folder.ID, "Gauge - Library Panel", model.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -537,24 +529,25 @@ func TestGetAllLibraryElements(t *testing.T) {
 			}
 		})
 
-	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilterUIDs is set to existing folders, it should succeed and the result should be correct",
+	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to existing folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolder(t, sc, "NewFolder")
 			// nolint:staticcheck
-			command := getCreatePanelCommand(newFolder.ID, newFolder.UID, "Text - Library Panel2")
+			command := getCreatePanelCommand(newFolder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
-			folderFilterUID := newFolder.UID
+			// nolint:staticcheck
+			folderFilter := strconv.FormatInt(newFolder.ID, 10)
+
 			err := sc.reqContext.Req.ParseForm()
 			require.NoError(t, err)
-			sc.reqContext.Req.Form.Add("folderFilterUIDs", folderFilterUID)
+			sc.reqContext.Req.Form.Add("folderFilter", folderFilter)
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
 			var result libraryElementsSearch
 			err = json.Unmarshal(resp.Body(), &result)
-
 			require.NoError(t, err)
 			var expected = libraryElementsSearch{
 				Result: libraryElementsSearchResult{
@@ -566,7 +559,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    newFolder.ID, // nolint:staticcheck
-							FolderUID:   newFolder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -610,15 +602,15 @@ func TestGetAllLibraryElements(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolder(t, sc, "NewFolder")
 			// nolint:staticcheck
-			command := getCreatePanelCommand(newFolder.ID, sc.folder.UID, "Text - Library Panel2")
+			command := getCreatePanelCommand(newFolder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
-			folderFilterUIDs := "2020,2021"
+			folderFilter := "2020,2021"
 
 			err := sc.reqContext.Req.ParseForm()
 			require.NoError(t, err)
-			sc.reqContext.Req.Form.Add("folderFilterUIDs", folderFilterUIDs)
+			sc.reqContext.Req.Form.Add("folderFilter", folderFilter)
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
@@ -641,7 +633,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to General folder, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -666,7 +658,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -702,7 +693,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -745,7 +735,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and excludeUID is set, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -769,7 +759,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -812,7 +801,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -836,7 +825,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -879,7 +867,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 2, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -904,7 +892,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -947,7 +934,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and searchString exists in the description, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreateCommandWithModel(sc.folder.ID, sc.folder.UID, "Text - Library Panel2", model.PanelElement, []byte(`
+			command := getCreateCommandWithModel(sc.folder.ID, "Text - Library Panel2", model.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -981,7 +968,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -1024,7 +1010,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and searchString exists in both name and description, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreateCommandWithModel(sc.folder.ID, sc.folder.UID, "Some Other", model.PanelElement, []byte(`
+			command := getCreateCommandWithModel(sc.folder.ID, "Some Other", model.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -1056,7 +1042,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Some Other",
 							Kind:        int64(model.PanelElement),
@@ -1092,7 +1077,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -1135,7 +1119,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 1 and searchString is panel2, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -1161,7 +1145,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -1204,7 +1187,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 3 and searchString is panel, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -1236,7 +1219,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 3 and searchString does not exist, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel2")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())

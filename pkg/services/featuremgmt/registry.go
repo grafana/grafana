@@ -847,8 +847,8 @@ var (
 		},
 		{
 			Name:         "teamHttpHeaders",
-			Description:  "Enables datasources to apply team headers to the client requests",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables Team LBAC for datasources to apply team headers to the client requests",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        identityAccessTeam,
 		},

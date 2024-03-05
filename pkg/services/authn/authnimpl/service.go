@@ -122,7 +122,7 @@ func ProvideService(
 		}
 	}
 
-	if s.cfg.AuthProxyEnabled && len(proxyClients) > 0 {
+	if s.cfg.AuthProxy.Enabled && len(proxyClients) > 0 {
 		proxy, err := clients.ProvideProxy(cfg, cache, proxyClients...)
 		if err != nil {
 			s.log.Error("Failed to configure auth proxy", "err", err)
