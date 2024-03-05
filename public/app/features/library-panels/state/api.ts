@@ -65,6 +65,12 @@ export async function getLibraryPanel(uid: string, isHandled = false): Promise<L
     panels: [result.model],
   });
   const { scopedVars, ...model } = dash.panels[0].getSaveModel(); // migrated panel
+
+  //These properties should not exist on LibraryPanel.model which is of type Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>
+  delete model.gridPos;
+  delete model.id;
+  delete model.libraryPanel;
+
   dash.destroy(); // kill event listeners
   return {
     ...result,

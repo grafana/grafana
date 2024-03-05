@@ -10,6 +10,7 @@ import {
   VizPanelMenu,
   VizPanelState,
 } from '@grafana/scenes';
+import { LibraryPanel } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
@@ -28,7 +29,7 @@ interface LibraryVizPanelState extends SceneObjectState {
   panel?: VizPanel;
   isLoaded?: boolean;
   panelKey: string;
-  _loadedVersion?: number;
+  _loadedPanel?: LibraryPanel;
 }
 
 export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
@@ -56,7 +57,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
 
-      if (this.state._loadedVersion === libPanel.version) {
+      if (this.state._loadedPanel?.version === libPanel.version) {
         return;
       }
 
@@ -107,7 +108,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
         });
       }
 
-      this.setState({ panel, _loadedVersion: libPanel.version, isLoaded: true });
+      this.setState({ panel, _loadedPanel: libPanel, isLoaded: true });
     } catch (err) {
       vizPanel.setState({
         _pluginLoadError: `Unable to load library panel: ${this.state.uid}`,
