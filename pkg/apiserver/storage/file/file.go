@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -310,7 +309,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 
 	// Since it's a get, check if the dir exists and return early as needed
 	dirname := filepath.Dir(filename)
-	if _, err := os.Stat(dirname); err != nil {
+	if !exists(dirname) {
 		return apierrors.NewNotFound(s.gr, s.nameFromKey(key))
 	}
 
@@ -374,7 +373,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	dirname := s.dirPath(key)
 	// Since it's a get, check if the dir exists and return early as needed
-	if _, err := os.Stat(dirname); err != nil {
+	if !exists(dirname) {
 		return apierrors.NewNotFound(s.gr, s.nameFromKey(key))
 	}
 
