@@ -54,8 +54,10 @@ type ExtendedJWTClaims struct {
 	jwt.Claims
 	// Access policy scopes
 	Scopes []string `json:"scopes"`
-	// Grafana permissions
-	Entitlements map[string][]string `json:"entitlements"`
+	// Grafana roles
+	Entitlements []string `json:"entitlements"`
+	// On-behalf-of user
+	DelegatedEntitlements []string `json:"delegatedEntitlements"`
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -103,6 +105,9 @@ func (s *ExtendedJWT) authenticateAsUser(idTokenClaims,
 		AuthID:          accessTokenClaims.Subject,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
+			FetchPermissionsParams: authn.FetchPermissionsParams{
+				ActionsLookup: accessTokenClaims.DelegatedEntitlements,
+			},
 			FetchSyncedUser: true,
 		}}, nil
 }
@@ -145,7 +150,10 @@ func (s *ExtendedJWT) authenticateService(ctx context.Context,
 		AuthenticatedBy: login.ExtendedJWTModule,
 		AuthID:          claims.Subject,
 		ClientParams: authn.ClientParams{
-			SyncPermissions: false,
+			SyncPermissions: true,
+			FetchPermissionsParams: authn.FetchPermissionsParams{
+				Roles: claims.Entitlements,
+			},
 			FetchSyncedUser: false,
 		},
 	}, nil
@@ -227,9 +235,14 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string, t
 			parsedHeader.Algorithm, strings.Join(acceptedSigningMethods, ", "))
 	}
 
+	keyID := parsedHeader.KeyID
+	if keyID == "" {
+		return nil, fmt.Errorf("missing 'kid' field from the header")
+	}
+
 	var claims ExtendedJWTClaims
-	_, key, err := s.signingKeys.GetOrCreatePrivateKey(ctx,
-		signingkeys.ServerPrivateKeyID, jose.ES256)
+	// ToDo: Use the authlib authn package to get the public key
+	_, key, err := s.signingKeys.GetOrCreatePrivateKey(ctx, keyID, jose.ES256)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get public key: %w", err)
 	}
@@ -241,10 +254,6 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string, t
 
 	if claims.Expiry == nil {
 		return nil, fmt.Errorf("missing 'exp' claim")
-	}
-
-	if claims.ID == "" {
-		return nil, fmt.Errorf("missing 'jti' claim")
 	}
 
 	if claims.Subject == "" {

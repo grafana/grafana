@@ -504,3 +504,24 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 func (*Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
 	return nil
 }
+
+func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName string) (*accesscontrol.RoleDTO, error) {
+	err := accesscontrol.ErrRoleNotFound
+	if _, ok := s.roles[roleName]; ok {
+		return nil, err
+	}
+
+	var role *accesscontrol.RoleDTO
+	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+		if registration.Role.Name == roleName {
+			role = &accesscontrol.RoleDTO{
+				Name:        registration.Role.Name,
+				Permissions: registration.Role.Permissions,
+			}
+			err = nil
+			return false
+		}
+		return true
+	})
+	return role, err
+}
