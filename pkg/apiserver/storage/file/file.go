@@ -33,24 +33,20 @@ const MaxUpdateAttempts = 30
 
 var _ storage.Interface = (*Storage)(nil)
 
-// Replace with: https://github.com/kubernetes/kubernetes/blob/v1.29.0-alpha.3/staging/src/k8s.io/apiserver/pkg/storage/errors.go#L28
-// When we upgrade to 1.29
-var errResourceVersionSetOnCreate = errors.New("resourceVersion should not be set on objects to be created")
-
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
 	// The FS abstraction includes the root folder
-	fs             hackpadfs.FS
-	resourcePrefix string
+	fs hackpadfs.FS
 
-	gr           schema.GroupResource
-	codec        runtime.Codec
-	keyFunc      func(obj runtime.Object) (string, error)
-	newFunc      func() runtime.Object
-	newListFunc  func() runtime.Object
-	getAttrsFunc storage.AttrFunc
-	trigger      storage.IndexerFuncs
-	indexers     *cache.Indexers
+	resourcePrefix string
+	gr             schema.GroupResource
+	codec          runtime.Codec
+	keyFunc        func(obj runtime.Object) (string, error)
+	newFunc        func() runtime.Object
+	newListFunc    func() runtime.Object
+	getAttrsFunc   storage.AttrFunc
+	trigger        storage.IndexerFuncs
+	indexers       *cache.Indexers
 
 	watchSet *WatchSet
 }
@@ -143,7 +139,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 	metaObj.SetSelfLink("")
 	if metaObj.GetResourceVersion() != "" {
-		return errResourceVersionSetOnCreate
+		return storage.ErrResourceVersionSetOnCreate
 	}
 
 	if err := s.Versioner().UpdateObject(obj, *generatedRV); err != nil {

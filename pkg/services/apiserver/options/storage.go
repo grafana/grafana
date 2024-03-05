@@ -20,8 +20,6 @@ const (
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
 )
 
-var StorageTypes = []StorageType{StorageTypeFile, StorageTypeMemory, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc}
-
 type StorageOptions struct {
 	StorageType StorageType
 	DataPath    string
