@@ -10,7 +10,7 @@ import {
   VizPanelMenu,
   VizPanelState,
 } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
+import { LibraryPanel } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
