@@ -189,6 +189,30 @@ export function generateExtensionId(pluginId: string, extensionConfig: PluginExt
     .toString();
 }
 
+// This one is used to generate a unique id for a plugin extension
+// (We don't yet have a way to have unique ids for plugin extensions (TODO - explain why))
+export async function generateSHA256Hash(str: string) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+
+  return hashHex;
+}
+
+export async function generateIdForExtension(pluginId: string, extensionConfig: PluginExtensionConfig) {
+  const prefix = `${pluginId}/${extensionConfig.extensionPointId}`;
+  let contentHash = '';
+
+  if (isPluginExtensionLinkConfig(extensionConfig)) {
+    contentHash = await generateSHA256Hash(`${prefix}${extensionConfig.title}${extensionConfig.path}`);
+  }
+}
+
+export async function generateIdForCapability(pluginId: string, extensionConfig: PluginExtensionConfig) {}
+
+
 const _isProxy = Symbol('isReadOnlyProxy');
 
 /**

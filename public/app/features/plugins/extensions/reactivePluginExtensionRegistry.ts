@@ -6,6 +6,7 @@ import { PluginPreloadResult } from '../pluginPreloader';
 import { PluginExtensionRegistry, PluginExtensionRegistryItem } from './types';
 import { deepFreeze, isPluginCapability, logWarning } from './utils';
 import { isPluginExtensionConfigValid } from './validators';
+import { PluginExtensionConfig } from '@grafana/data';
 
 export class ReactivePluginExtensionsRegistry {
   private resultSubject: Subject<PluginPreloadResult>;
@@ -30,6 +31,23 @@ export class ReactivePluginExtensionsRegistry {
 
   register(result: PluginPreloadResult): void {
     this.resultSubject.next(result);
+  }
+
+  async updateExtension(id: string, extensionConfig: Partial<PluginExtensionConfig>) {
+    const registry = await this.getRegistry();
+    const registryItem = this.resultSubject.next(result);
+  }
+
+  async enableExtension(id: string) {
+    // const registry = await this.getRegistry();
+    // const registryItem =
+    // this.resultSubject.next(result);
+  }
+
+  async disableExtension(id: string) {
+    // const registry = await this.getRegistry();
+    // const registryItem =
+    // this.resultSubject.next(result);
   }
 
   asObservable(): Observable<PluginExtensionRegistry> {
@@ -71,7 +89,7 @@ function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPrel
       extensionPointId = `capabilities/${pluginId}/${capabilityId}`;
       extensionConfig.extensionPointId = extensionPointId;
     }
-    
+
     // Check if the config is valid
     if (!extensionConfig || !isPluginExtensionConfigValid(pluginId, extensionConfig)) {
       return registry;
@@ -93,6 +111,9 @@ function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPrel
       registry.extensions[extensionPointId] = [registryItem];
     } else {
       registry.extensions[extensionPointId].push(registryItem);
+
+      // Make it possible to override existing extensions, in case they are re-registered using the `update()` method
+      // (This can only be called from the core itself)
     }
   }
 
@@ -101,3 +122,7 @@ function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPrel
 
   return registry;
 }
+
+// This is a singleton of the reactive registry that can be accessed throughout the Grafana core
+// TODO - check if this is only accessible by core Grafana (and not by plugins)
+export const reactivePluginExtensionRegistry = new ReactivePluginExtensionsRegistry();

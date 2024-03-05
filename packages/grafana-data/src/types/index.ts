@@ -54,6 +54,7 @@ export * from './icon';
 export {
   PluginExtensionTypes,
   PluginExtensionPoints,
+  PluginExtensionPointsMeta,
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
