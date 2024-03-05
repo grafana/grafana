@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
@@ -24,9 +24,8 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   }, [href, chrome]);
 
   const handleOnDismiss = useCallback(() => {
-    reportInteraction('grafana_return_to_previous_button_dismissed', { action: 'dismissed', page: href });
     chrome.clearReturnToPrevious('dismissed');
-  }, [href, chrome]);
+  }, [chrome]);
 
   return (
     <div className={styles.returnToPrevious}>

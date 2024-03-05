@@ -595,7 +595,7 @@ templates:
   - orgId: 1
     # <string, required> name of the template, must be unique
     name: my_first_template
-    # <string, required> content of the the template
+    # <string, required> content of the template
     template: |
       {{ define "my_first_template" }}
         Custom notification message

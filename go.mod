@@ -59,9 +59,9 @@ require (
 	github.com/google/uuid v1.6.0 // @grafana/backend-platform
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20240222104113-abfafef9a7d2 // @grafana/alerting-squad-backend
+	github.com/grafana/alerting v0.0.0-20240304175322-e81931acc11b // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
-	github.com/grafana/grafana-aws-sdk v0.23.1 // @grafana/aws-datasources
+	github.com/grafana/grafana-aws-sdk v0.24.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.12.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-plugin-sdk-go v0.212.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
@@ -471,14 +471,9 @@ require (
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4 // @grafana/grafana-app-platform-squad
 )
 
-require github.com/jackc/pgx/v5 v5.5.3 // @grafana/oss-big-tent
-
 require (
 	github.com/bufbuild/protocompile v0.4.0 // indirect
 	github.com/grafana/sqlds/v3 v3.2.0 // indirect
-	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jhump/protoreflect v1.15.1 // indirect
 	github.com/klauspost/asmfmt v1.3.2 // indirect
 	github.com/krasun/gosqlparser v1.0.5 // @grafana/grafana-app-platform-squad

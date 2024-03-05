@@ -460,7 +460,7 @@ const (
 	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
 
 	// FlagTeamHttpHeaders
-	// Enables datasources to apply team headers to the client requests
+	// Enables Team LBAC for datasources to apply team headers to the client requests
 	FlagTeamHttpHeaders = "teamHttpHeaders"
 
 	// FlagAwsDatasourcesNewFormStyling
