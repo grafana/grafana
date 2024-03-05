@@ -81,7 +81,7 @@ describe('GrafanaRuleQueryViewer', () => {
 
     await waitFor(() => {
       expect(getByTestId('queries-container')).toHaveStyle('flex-wrap: wrap');
-      expect(getByTestId('expressions-container')).toHaveStyle('flex-wrap: wrap');
     });
+expect(getByTestId('expressions-container')).toHaveStyle('flex-wrap: wrap');
   });
 });
