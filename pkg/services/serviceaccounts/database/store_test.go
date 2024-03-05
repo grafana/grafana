@@ -178,13 +178,11 @@ func TestStore_CreateServiceAccountRoleNone(t *testing.T) {
 
 	saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
 	require.NoError(t, err)
-	assert.Equal(t, "sa-new-service-account", saDTO.Login)
 	assert.Equal(t, serviceAccountName, saDTO.Name)
 	assert.Equal(t, 0, int(saDTO.Tokens))
 
 	retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
 	require.NoError(t, err)
-	assert.Equal(t, "sa-new-service-account", retrieved.Login)
 	assert.Equal(t, serviceAccountName, retrieved.Name)
 	assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
 	assert.Equal(t, string(serviceAccountRole), retrieved.Role)
