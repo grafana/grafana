@@ -308,7 +308,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	filename := s.filePath(key)
 
 	// Since it's a get, check if the dir exists and return early as needed
-	dirname := filepath.Dir(filename)
+	dirname := s.dirPath(key)
 	if !exists(dirname) {
 		return apierrors.NewNotFound(s.gr, s.nameFromKey(key))
 	}
