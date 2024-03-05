@@ -153,7 +153,6 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, serviceAccountName, saDTOSecond.Name)
 		assert.Equal(t, 0, int(saDTOSecond.Tokens))
-
 	})
 }
 
