@@ -1,4 +1,4 @@
-package prometheus
+package prometheus_library
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 )
@@ -66,9 +65,7 @@ func TestService(t *testing.T) {
 			t.Run("creates correct request", func(t *testing.T) {
 				f := &fakeHTTPClientProvider{}
 				httpProvider := getMockPromTestSDKProvider(f)
-				service := &Service{
-					im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"))),
-				}
+				service := NewService(httpProvider, backend.NewLoggerWith("logger", "test"))
 
 				req := &backend.CallResourceRequest{
 					PluginContext: backend.PluginContext{

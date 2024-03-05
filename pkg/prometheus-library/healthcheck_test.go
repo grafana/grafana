@@ -1,4 +1,4 @@
-package prometheus
+package prometheus_library
 
 import (
 	"context"
@@ -21,6 +21,7 @@ type healthCheckProvider[T http.RoundTripper] struct {
 
 type healthCheckSuccessRoundTripper struct {
 }
+
 type healthCheckFailRoundTripper struct {
 }
 

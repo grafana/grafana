@@ -1,4 +1,4 @@
-package prometheus
+package prometheus_library
 
 import (
 	"context"
@@ -47,7 +47,6 @@ func Test_GetHeuristics(t *testing.T) {
 			res:    io.NopCloser(strings.NewReader("{\"status\":\"success\",\"data\":{\"version\":\"1.0\"}}")),
 			status: http.StatusOK,
 		}
-		//httpProvider := getHeuristicsMockProvider(&rt)
 		httpProvider := newHeuristicsSDKProvider(rt)
 		s := &Service{
 			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"))),
