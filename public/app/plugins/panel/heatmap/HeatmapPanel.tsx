@@ -1,17 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import {
-  DashboardCursorSync,
-  DataFrame,
-  DataFrameType,
-  Field,
-  getLinksSupplier,
-  GrafanaTheme2,
-  PanelProps,
-  ScopedVars,
-  TimeRange,
-} from '@grafana/data';
+import { DashboardCursorSync, DataFrameType, GrafanaTheme2, PanelProps, TimeRange } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
@@ -70,50 +60,26 @@ export const HeatmapPanel = ({
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
 
-  //  necessary for enabling datalinks in hover view
-  let scopedVarsFromRawData: ScopedVars[] = [];
-  for (const series of data.series) {
-    for (const field of series.fields) {
-      if (field.state?.scopedVars) {
-        scopedVarsFromRawData.push(field.state.scopedVars);
-      }
-    }
-  }
-
   // ugh
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
-
-  const getFieldLinksSupplier = useCallback(
-    (exemplars: DataFrame, field: Field) => {
-      return getLinksSupplier(exemplars, field, field.state?.scopedVars ?? {}, replaceVariables);
-    },
-    [replaceVariables]
-  );
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
   const info = useMemo(() => {
     try {
-      return prepareHeatmapData(
-        data.series,
-        data.annotations,
-        options,
-        palette,
-        theme,
-        getFieldLinksSupplier,
-        replaceVariables
-      );
+      return prepareHeatmapData(data.series, data.annotations, options, palette, theme, replaceVariables);
     } catch (ex) {
       return { warning: `${ex}` };
     }
-  }, [data.series, data.annotations, options, palette, theme, getFieldLinksSupplier, replaceVariables]);
+  }, [data.series, data.annotations, options, palette, theme, replaceVariables]);
 
   const facets = useMemo(() => {
     let exemplarsXFacet: number[] | undefined = []; // "Time" field
     let exemplarsYFacet: Array<number | undefined> = [];
 
     const meta = readHeatmapRowsCustomMeta(info.heatmap);
+
     if (info.exemplars?.length) {
       exemplarsXFacet = info.exemplars?.fields[0].values;
 
@@ -275,8 +241,6 @@ export const HeatmapPanel = ({
                           showHistogram={options.tooltip.yHistogram}
                           showColorScale={options.tooltip.showColorScale}
                           panelData={data}
-                          replaceVars={replaceVariables}
-                          scopedVars={scopedVarsFromRawData}
                           annotate={enableAnnotationCreation ? annotate : undefined}
                         />
                       );
@@ -314,7 +278,6 @@ export const HeatmapPanel = ({
                   hover={hover}
                   showHistogram={options.tooltip.yHistogram}
                   replaceVars={replaceVariables}
-                  scopedVars={scopedVarsFromRawData}
                 />
               </VizTooltipContainer>
             )}
