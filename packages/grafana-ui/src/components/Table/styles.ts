@@ -50,7 +50,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         overflow: overflowOnHover ? 'visible' : undefined,
         width: overflowOnHover ? 'auto !important' : undefined,
         boxShadow: overflowOnHover ? `0 0 2px ${theme.colors.primary.main}` : undefined,
-        background: overflowOnHover ? background ?? theme.components.table.rowHoverBackground : undefined,
+        background: overflowOnHover ? background ?? 'rgba(0, 0, 0, 0.1)' : undefined,
         zIndex: overflowOnHover ? 1 : undefined,
         '.cellActions': {
           visibility: 'visible',
