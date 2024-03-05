@@ -169,7 +169,7 @@ func (j *ckrJenny) Generate(k schemas.ComposableKind) (*codejen.File, error) {
 
 	newKindBytes = []byte(fmt.Sprintf("package grafanaplugin\n\n%s", newKindBytes))
 
-	return codejen.NewFile(filepath.Join(j.path, "next", "composable", name+".cue"), newKindBytes, j), nil
+	return codejen.NewFile(filepath.Join(j.path, "next", "composable", name), newKindBytes, j), nil
 }
 
 // kindToBytes converts a kind cue value to a .cue file content
