@@ -124,9 +124,19 @@ export interface TableCustomCellOptions {
   type: schema.TableCellDisplayMode.Custom;
 }
 
+/**
+ * @alpha
+ * Props that will be passed to the TableCustomCellOptions.cellComponent when rendered.
+ */
+export interface CustomHeaderRendererProps {
+  field: Field;
+  defaultContent: React.ReactNode;
+}
+
 // As cue/schema cannot define function types (as main point of schema is to be serializable) we have to extend the
 // types here with the dynamic API. This means right now this is not usable as a table panel option for example.
 export type TableCellOptions = schema.TableCellOptions | TableCustomCellOptions;
 export type TableFieldOptions = Omit<schema.TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
+  headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
 };
