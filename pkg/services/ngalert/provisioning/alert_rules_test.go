@@ -15,6 +15,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
@@ -517,6 +519,23 @@ func TestAlertRuleService(t *testing.T) {
 
 		require.ErrorIs(t, err, models.ErrQuotaReached)
 	})
+
+	t.Run("namespace not set in new rule should be set to the group's namespace", func(t *testing.T) {
+		ruleService := createAlertRuleService(t)
+		group := createDummyGroup("namespace-test", 1)
+		group.FolderUID = ""
+		group.Rules[0].NamespaceUID = ""
+
+		err := ruleService.ReplaceRuleGroup(context.Background(), 1, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		defaultNS, err := ruleService.ruleStore.GetOrCreateDefaultAlertingNamespace(context.Background(), orgID)
+		require.NoError(t, err)
+
+		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, defaultNS.UID, "namespace-test")
+		require.NoError(t, err)
+		require.NotEmpty(t, updatedGroup.Rules)
+	})
 }
 
 func TestCreateAlertRule(t *testing.T) {
@@ -561,13 +580,19 @@ func TestCreateAlertRule(t *testing.T) {
 func createAlertRuleService(t *testing.T) AlertRuleService {
 	t.Helper()
 	sqlStore := db.InitTestDB(t)
+	folderService := foldertest.NewFakeService()
+	folderService.ExpectedFolder = &folder.Folder{
+		UID: "default-namespace",
+	}
 	store := store.DBstore{
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Second * 10,
 		},
-		Logger: log.NewNopLogger(),
+		Logger:        log.NewNopLogger(),
+		FolderService: folderService,
 	}
+	// store := fakes.NewRuleStore(t)
 	quotas := MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
 	return AlertRuleService{
@@ -578,6 +603,7 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 		log:                    log.New("testing"),
 		baseIntervalSeconds:    10,
 		defaultIntervalSeconds: 60,
+		folderService:          folderService,
 	}
 }
 

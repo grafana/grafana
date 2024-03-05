@@ -756,3 +756,41 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 	}
 	return len(updates), st.UpdateAlertRules(ctx, updates)
 }
+
+func (st DBstore) GetOrCreateDefaultAlertingNamespace(ctx context.Context, orgID int64) (*folder.Folder, error) {
+	defaultFolderTitle := ngmodels.DefaultNamespaceTitle
+	// use bg user to avoid access control checks
+	user := accesscontrol.BackgroundUser(
+		"ngalert_namespace_admin",
+		orgID,
+		org.RoleAdmin,
+		[]accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersAll},
+			{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+		},
+	)
+
+	f, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{
+		OrgID:        orgID,
+		Title:        &defaultFolderTitle,
+		WithFullpath: true,
+		SignedInUser: user,
+	})
+
+	if err != nil {
+		if !errors.Is(err, dashboards.ErrFolderNotFound) {
+			return nil, err
+		}
+		// if default folder does not exist, create it
+		f, err = st.FolderService.Create(ctx, &folder.CreateFolderCommand{
+			OrgID:        orgID,
+			Title:        defaultFolderTitle,
+			Description:  "Default folder for Grafana managed alert rules",
+			SignedInUser: user,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return f, nil
+}

@@ -342,3 +342,37 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 func (f *RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
 	return 0, nil
 }
+
+func (f *RuleStore) GetOrCreateDefaultAlertingNamespace(ctx context.Context, orgID int64) (*folder.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "GetOrCreateDefaultAlertingNamespace",
+		Params: []any{orgID},
+	})
+
+	if _, ok := f.Folders[orgID]; !ok {
+		f.Folders[orgID] = []*folder.Folder{}
+	}
+
+	var existing *folder.Folder
+	folders := f.Folders[orgID]
+	for _, folder := range folders {
+		if folder.Title == models.DefaultNamespaceTitle {
+			existing = folder
+			break
+		}
+	}
+
+	if existing == nil {
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
+		folders = append(folders, &folder.Folder{
+			ID:    rand.Int63(), // nolint:staticcheck
+			Title: models.DefaultNamespaceTitle,
+		})
+		f.Folders[orgID] = folders
+	}
+
+	return existing, nil
+}

@@ -7,10 +7,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -25,6 +28,7 @@ type AlertRuleService struct {
 	rulesPerRuleGroupLimit int64
 	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
+	folderService          folder.Service
 	dashboardService       dashboards.DashboardService
 	quotas                 QuotaChecker
 	xact                   TransactionManager
@@ -34,6 +38,7 @@ type AlertRuleService struct {
 
 func NewAlertRuleService(ruleStore RuleStore,
 	provenanceStore ProvisioningStore,
+	folderService folder.Service,
 	dashboardService dashboards.DashboardService,
 	quotas QuotaChecker,
 	xact TransactionManager,
@@ -49,6 +54,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 		rulesPerRuleGroupLimit: rulesPerRuleGroupLimit,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
+		folderService:          folderService,
 		dashboardService:       dashboardService,
 		quotas:                 quotas,
 		xact:                   xact,
@@ -143,6 +149,13 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	rule.IntervalSeconds = interval
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
+		return models.AlertRule{}, err
+	}
+	defaultNamespace, err := service.ruleStore.GetOrCreateDefaultAlertingNamespace(ctx, rule.OrgID)
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+	if err = service.ensureRuleNamespace(ctx, &rule, defaultNamespace.UID); err != nil {
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
@@ -254,6 +267,17 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	delta, err := service.calcDelta(ctx, orgID, group)
 	if err != nil {
 		return err
+	}
+
+	defaultNamespace, err := service.ruleStore.GetOrCreateDefaultAlertingNamespace(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	for _, rule := range delta.New {
+		if err := service.ensureRuleNamespace(ctx, rule, defaultNamespace.UID); err != nil {
+			return err
+		}
 	}
 
 	if len(delta.New) == 0 && len(delta.Update) == 0 && len(delta.Delete) == 0 {
@@ -635,6 +659,40 @@ func (service *AlertRuleService) checkGroupLimits(group models.AlertRuleGroup) e
 			"actual", len(group.Rules),
 			"group", group.Title,
 		)
+	}
+
+	return nil
+}
+
+// ensureRuleNamespace ensures that the rule has a valid namespace UID.
+// If the rule does not have a namespace UID, it will be set to the default namespace.
+func (service *AlertRuleService) ensureRuleNamespace(ctx context.Context, rule *models.AlertRule, defaultNsUID string) error {
+	if rule == nil {
+		return errors.New("rule must not be nil")
+	}
+
+	if rule.NamespaceUID != "" {
+		// if namespace UID is set, check that it exists
+		_, err := service.folderService.Get(ctx, &folder.GetFolderQuery{
+			OrgID: rule.OrgID,
+			UID:   &rule.NamespaceUID,
+			// use bg user to avoid access control checks
+			SignedInUser: accesscontrol.BackgroundUser(
+				"ngalert_provisioning",
+				rule.OrgID,
+				org.RoleAdmin,
+				[]accesscontrol.Permission{{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll}},
+			),
+		})
+		if err != nil {
+			if errors.Is(err, dashboards.ErrFolderNotFound) {
+				return fmt.Errorf("namespace UID '%s' does not exist", rule.NamespaceUID)
+			}
+			return err
+		}
+	} else {
+		// if namespace UID is not set, use the default
+		rule.NamespaceUID = defaultNsUID
 	}
 
 	return nil

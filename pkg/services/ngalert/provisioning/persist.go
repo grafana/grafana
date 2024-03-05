@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -40,6 +41,7 @@ type RuleStore interface {
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
 	InsertAlertRules(ctx context.Context, rule []models.AlertRule) ([]models.AlertRuleKeyWithId, error)
 	UpdateAlertRules(ctx context.Context, rule []models.UpdateRule) error
+	GetOrCreateDefaultAlertingNamespace(ctx context.Context, orgID int64) (*folder.Folder, error)
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error)
 }
