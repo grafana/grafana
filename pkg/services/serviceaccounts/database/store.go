@@ -42,10 +42,10 @@ func ProvideServiceAccountsStore(cfg *setting.Cfg, store db.DB, apiKeyService ap
 	}
 }
 
-// generatedLogin makes a generated string to have a ID for the service account across orgs and it's name
+// generateLogin makes a generated string to have a ID for the service account across orgs and it's name
 // this causes you to create a service account with the same name in different orgs
 // not the same name in the same org
-func generatedLogin(prefix string, orgId int64, name string) string {
+func generateLogin(prefix string, orgId int64, name string) string {
 	generatedLogin := fmt.Sprintf("%v-%v-%v", prefix, orgId, strings.ToLower(name))
 	// in case the name has multiple spaces or dashes in the prefix or otherwise, replace them with a single dash
 	generatedLogin = strings.Replace(generatedLogin, "--", "-", 1)
@@ -54,7 +54,7 @@ func generatedLogin(prefix string, orgId int64, name string) string {
 
 // CreateServiceAccount creates service account
 func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
-	login := generatedLogin(serviceaccounts.ServiceAccountPrefix, orgId, saForm.Name)
+	login := generateLogin(serviceaccounts.ServiceAccountPrefix, orgId, saForm.Name)
 	isDisabled := false
 	role := org.RoleViewer
 	if saForm.IsDisabled != nil {
@@ -444,7 +444,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
 	prefix := "sa-autogen"
 	cmd := user.CreateUserCommand{
-		Login:            generatedLogin(prefix, key.OrgID, key.Name),
+		Login:            generateLogin(prefix, key.OrgID, key.Name),
 		Name:             fmt.Sprintf("%v-%v", prefix, key.Name),
 		OrgID:            key.OrgID,
 		DefaultOrgRole:   string(key.Role),
