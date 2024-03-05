@@ -1099,8 +1099,12 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 				return nil, err
 			}
 
-			args = append(args, key.Namespace, key.Group, key.Resource)
-			whereclause := "(" + s.dialect.Quote("namespace") + "=? AND " + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
+			args = append(args, key.Group, key.Resource)
+			whereclause := "(" + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
+			if key.Namespace != "" {
+				args = append(args, key.Namespace)
+				whereclause += " AND " + s.dialect.Quote("namespace") + "=?"
+			}
 			if key.Name != "" {
 				args = append(args, key.Name)
 				whereclause += " AND " + s.dialect.Quote("name") + "=?"
@@ -1257,8 +1261,12 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 				return err
 			}
 
-			args = append(args, key.Namespace, key.Group, key.Resource)
-			whereclause := "(" + s.dialect.Quote("namespace") + "=? AND " + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
+			args = append(args, key.Group, key.Resource)
+			whereclause := "(" + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
+			if key.Namespace != "" {
+				args = append(args, key.Namespace)
+				whereclause += " AND " + s.dialect.Quote("namespace") + "=?"
+			}
 			if key.Name != "" {
 				args = append(args, key.Name)
 				whereclause += " AND " + s.dialect.Quote("name") + "=?"
@@ -1465,7 +1473,7 @@ func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
 				return false
 			}
 
-			if key.Namespace == result.Namespace && key.Group == result.Group && key.Resource == result.Resource && (key.Name == "" || key.Name == result.Name) {
+			if key.Group == result.Group && key.Resource == result.Resource && (key.Namespace == "" || key.Namespace == result.Namespace) && (key.Name == "" || key.Name == result.Name) {
 				matched = true
 				break
 			}

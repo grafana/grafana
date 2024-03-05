@@ -24,22 +24,18 @@ func TestResourceToEntity(t *testing.T) {
 	updatedAt := createdAt.Add(time.Hour).Truncate(time.Second)
 	updatedAtStr := updatedAt.UTC().Format(time.RFC3339)
 
-	apiVersion := "v0alpha1"
-	requestInfo := &request.RequestInfo{
-		APIVersion: apiVersion,
-	}
-
 	Scheme := runtime.NewScheme()
 	Scheme.AddKnownTypes(v0alpha1.PlaylistResourceInfo.GroupVersion(), &v0alpha1.Playlist{})
 	Codecs := serializer.NewCodecFactory(Scheme)
 
 	testCases := []struct {
-		key                  string
+		requestInfo          *request.RequestInfo
 		resource             runtime.Object
 		codec                runtime.Codec
 		expectedKey          string
 		expectedGroupVersion string
 		expectedName         string
+		expectedNamespace    string
 		expectedTitle        string
 		expectedGuid         string
 		expectedVersion      string
@@ -55,11 +51,14 @@ func TestResourceToEntity(t *testing.T) {
 		expectedBody         []byte
 	}{
 		{
-			key: "/playlist.grafana.app/playlists/default/test-uid",
+			requestInfo: &request.RequestInfo{
+				APIGroup:   "playlist.grafana.app",
+				APIVersion: "v0alpha1",
+				Resource:   "playlists",
+				Namespace:  "default",
+				Name:       "test-name",
+			},
 			resource: &v0alpha1.Playlist{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: apiVersion,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					CreationTimestamp: createdAt,
 					Labels:            map[string]string{"label1": "value1", "label2": "value2"},
@@ -83,9 +82,10 @@ func TestResourceToEntity(t *testing.T) {
 					},
 				},
 			},
-			expectedKey:          "/playlist.grafana.app/playlists/default/test-uid",
-			expectedGroupVersion: apiVersion,
+			expectedKey:          "/playlist.grafana.app/playlists/namespaces/default/test-name",
+			expectedGroupVersion: "v0alpha1",
 			expectedName:         "test-name",
+			expectedNamespace:    "default",
 			expectedTitle:        "A playlist",
 			expectedGuid:         "test-uid",
 			expectedVersion:      "1",
@@ -104,10 +104,11 @@ func TestResourceToEntity(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.resource.GetObjectKind().GroupVersionKind().Kind+" to entity conversion should succeed", func(t *testing.T) {
-			entity, err := resourceToEntity(tc.key, tc.resource, requestInfo, Codecs.LegacyCodec(v0alpha1.PlaylistResourceInfo.GroupVersion()))
+			entity, err := resourceToEntity(tc.resource, tc.requestInfo, Codecs.LegacyCodec(v0alpha1.PlaylistResourceInfo.GroupVersion()))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedKey, entity.Key)
 			assert.Equal(t, tc.expectedName, entity.Name)
+			assert.Equal(t, tc.expectedNamespace, entity.Namespace)
 			assert.Equal(t, tc.expectedTitle, entity.Title)
 			assert.Equal(t, tc.expectedGroupVersion, entity.GroupVersion)
 			assert.Equal(t, tc.expectedName, entity.Name)
@@ -152,7 +153,7 @@ func TestEntityToResource(t *testing.T) {
 	}{
 		{
 			entity: &entityStore.Entity{
-				Key:             "/playlist.grafana.app/playlists/default/test-uid",
+				Key:             "/playlist.grafana.app/playlists/namespaces/default/test-uid",
 				GroupVersion:    "v0alpha1",
 				Name:            "test-uid",
 				Title:           "A playlist",
