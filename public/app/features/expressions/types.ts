@@ -15,6 +15,7 @@ export enum ExpressionQueryType {
   classic = 'classic_conditions',
   threshold = 'threshold',
   sql = 'sql',
+  ask = 'ask',
 }
 
 export const getExpressionLabel = (type: ExpressionQueryType) => {
@@ -31,6 +32,8 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
       return 'Threshold';
     case ExpressionQueryType.sql:
       return 'SQL';
+    case ExpressionQueryType.ask:
+      return 'Ask';
   }
 };
 
@@ -67,6 +70,11 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
     value: ExpressionQueryType.sql,
     label: 'SQL',
     description: 'Transform data using SQL. Supports Aggregate/Analytics functions from DuckDB',
+  },
+  {
+    value: ExpressionQueryType.ask,
+    label: 'Ask',
+    description: 'Ask questions about your data',
   },
 ].filter((expr) => {
   if (expr.value === ExpressionQueryType.sql) {
