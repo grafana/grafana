@@ -217,7 +217,9 @@ We are working on adding complete support for configuring all other supported OA
 
 ## Data sources
 
-> Note: the following data sources are released separately from Grafana itself. They are included here for extra visibility.
+{{< admonition type="note" >}}
+The following data sources are released separately from Grafana itself. They are included here for extra visibility.
+{{< /admonition >}}
 
 ### PagerDuty enterprise data source for Grafana
 
