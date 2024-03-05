@@ -873,7 +873,7 @@ func (r *Route) AsAMRoute() *config.Route {
 	return amRoute
 }
 
-// AsGrafanaRoute returns a Grafana route from an Alertmanager route. The Matchers are converted to ObjectMatchers.
+// AsGrafanaRoute returns a Grafana route from an Alertmanager route.
 func AsGrafanaRoute(r *config.Route) *Route {
 	gRoute := &Route{
 		Receiver:          r.Receiver,
@@ -882,7 +882,7 @@ func AsGrafanaRoute(r *config.Route) *Route {
 		GroupByAll:        r.GroupByAll,
 		Match:             r.Match,
 		MatchRE:           r.MatchRE,
-		ObjectMatchers:    ObjectMatchers(r.Matchers),
+		Matchers:          r.Matchers,
 		MuteTimeIntervals: r.MuteTimeIntervals,
 		Continue:          r.Continue,
 
