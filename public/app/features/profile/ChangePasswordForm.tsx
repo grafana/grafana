@@ -7,6 +7,7 @@ import { t, Trans } from 'app/core/internationalization';
 import { UserDTO } from 'app/types';
 
 import { PasswordField } from '../../core/components/PasswordField/PasswordField';
+import { StrongPasswordField } from '../../core/components/PasswordField/StrongPasswordField';
 
 import { ChangePasswordFields } from './types';
 
@@ -66,7 +67,7 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
                 invalid={!!errors.newPassword}
                 error={errors?.newPassword?.message}
               >
-                <PasswordField
+                <StrongPasswordField
                   id="new-password"
                   autoComplete="new-password"
                   {...register('newPassword', {
