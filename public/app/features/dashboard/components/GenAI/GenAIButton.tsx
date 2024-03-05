@@ -57,7 +57,8 @@ export const GenAIButton = ({
   const [showHistory, setShowHistory] = useState(true);
 
   const hasHistory = history.length > 0;
-  const isFirstHistoryEntry = streamStatus === StreamStatus.GENERATING && !hasHistory;
+  const isGenerating = streamStatus === StreamStatus.GENERATING;
+  const isFirstHistoryEntry = !hasHistory;
   const isButtonDisabled = disabled || (value && !value.enabled && !error);
   const reportInteraction = (item: AutoGenerateItem) => reportAutoGenerateInteraction(eventTrackingSrc, item);
 
@@ -77,11 +78,11 @@ export const GenAIButton = ({
 
     const buttonItem = error
       ? AutoGenerateItem.erroredRetryButton
-      : isFirstHistoryEntry
+      : isGenerating
         ? AutoGenerateItem.stopGenerationButton
-        : hasHistory
-          ? AutoGenerateItem.improveButton
-          : AutoGenerateItem.autoGenerateButton;
+        : isFirstHistoryEntry
+          ? AutoGenerateItem.autoGenerateButton
+          : AutoGenerateItem.improveButton;
     reportInteraction(buttonItem);
   };
 
@@ -96,10 +97,10 @@ export const GenAIButton = ({
 
   useEffect(() => {
     // Todo: Consider other options for `"` sanitation
-    if (isFirstHistoryEntry && reply) {
+    if (streamStatus === StreamStatus.COMPLETED && reply) {
       onGenerate(sanitizeReply(reply));
     }
-  }, [streamStatus, reply, onGenerate, isFirstHistoryEntry]);
+  }, [streamStatus, reply, onGenerate]);
 
   useEffect(() => {
     if (streamStatus === StreamStatus.COMPLETED) {
@@ -119,7 +120,7 @@ export const GenAIButton = ({
   };
 
   const getIcon = () => {
-    if (isFirstHistoryEntry) {
+    if (isGenerating) {
       return undefined;
     }
     if (error || (value && !value?.enabled)) {
@@ -135,7 +136,7 @@ export const GenAIButton = ({
       buttonText = 'Retry';
     }
 
-    if (isFirstHistoryEntry) {
+    if (isGenerating) {
       buttonText = STOP_GENERATION_TEXT;
     }
 
@@ -189,8 +190,8 @@ export const GenAIButton = ({
 
   return (
     <div className={styles.wrapper}>
-      {isFirstHistoryEntry && <Spinner size="sm" className={styles.spinner} />}
-      {!hasHistory && (
+      {isGenerating && <Spinner size="sm" className={styles.spinner} />}
+      {isFirstHistoryEntry ? (
         <Tooltip
           show={error ? undefined : false}
           interactive
@@ -200,8 +201,9 @@ export const GenAIButton = ({
         >
           {button}
         </Tooltip>
+      ) : (
+        renderButtonWithToggletip()
       )}
-      {hasHistory && renderButtonWithToggletip()}
     </div>
   );
 };

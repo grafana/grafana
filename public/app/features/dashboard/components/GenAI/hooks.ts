@@ -52,6 +52,8 @@ export function useOpenAIStream(
   const [streamStatus, setStreamStatus] = useState<StreamStatus>(StreamStatus.IDLE);
   const [error, setError] = useState<Error>();
   const { error: notifyError } = useAppNotification();
+  // Accumulate response and it will only update the state of the attatched component when the stream is completed.
+  let partialReply = '';
 
   const onError = useCallback(
     (e: Error) => {
@@ -102,9 +104,12 @@ export function useOpenAIStream(
     return {
       enabled,
       stream: stream.subscribe({
-        next: setReply,
+        next: (reply) => {
+          partialReply = reply;
+        },
         error: onError,
         complete: () => {
+          setReply(partialReply);
           setStreamStatus(StreamStatus.COMPLETED);
           setTimeout(() => {
             setStreamStatus(StreamStatus.IDLE);
