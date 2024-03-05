@@ -169,7 +169,6 @@ export const FilterList = ({
   }, [onChange, values, items, selectedItems]);
 
   return (
-    // spacing="md"
     <Stack direction="column" gap={0.25}>
       {!showOperators && <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />}
       {showOperators && (
@@ -207,7 +206,6 @@ export const FilterList = ({
         </List>
       )}
       {items.length && (
-        // spacing="xs"
         <Stack direction="column" gap={0.25}>
           <div className={cx(styles.selectDivider)} />
           <div className={cx(styles.filterListRow)}>
