@@ -113,7 +113,7 @@ Optional fields:
 | highlighted      | boolean       | Sets whether the edge should be highlighted. Useful, for example, to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                            |
 | color            | string        | Sets the default color of the edge. It can be an acceptable HTML color string. Default: `#999`                                                                                                                                   |
 | highlightedColor | string        | Sets the highlighted color of the edge. It can be an acceptable HTML color string, and requires that `highlighted` be `true` for use. Default: `#a00`                                                                            |
-| strokeDasharray  | string        | Sets the pattern of dashes and gaps used to render the edge. For more information and examples, refer to the [`stroke-dasharray` MDN documentation](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray) |
+| strokeDasharray  | string        | Sets the pattern of dashes and gaps used to render the edge. If unset, a solid line is used as edge. For more information and examples, refer to the [`stroke-dasharray` MDN documentation](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray). |
 
 ### Nodes data frame structure
 
