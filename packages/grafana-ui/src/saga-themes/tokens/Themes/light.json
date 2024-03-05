@@ -1,187 +1,234 @@
 {
   "color": {
     "background": {
-      "level": {
+      "ui": {
         "canvas": {
-          "value": "#f4f5f5",
-          "type": "color"
+          "value": "{color.neutral.100}",
+          "type": "color",
+          "description": "This token was previously known as background.canvas and is the primary background color in UI."
         },
         "primary": {
-          "value": "#ffffff",
-          "type": "color"
+          "value": "{color.neutral.50}",
+          "type": "color",
+          "description": "This token was previously known as background.primary and is the secondary background color in UI."
         },
         "secondary": {
-          "value": "#f4f5f5",
-          "type": "color"
+          "value": "{color.neutral.100}",
+          "type": "color",
+          "description": "This token was previously known as background.secondary and is the tertiary background color in UI."
+        },
+        "tertiary": {
+          "value": "{color.neutral.200}",
+          "type": "color",
+          "description": "This token didn't existed in the previous color palette for the UI but it can help leverage more levels of background needs and is the quaternary background color in the current UI palette."
+        },
+        "overlay": {
+          "value": "{color.background.ui.primary}",
+          "type": "color",
+          "$extensions": {
+            "studio.tokens": {
+              "modify": {
+                "type": "alpha",
+                "value": "{opacity.40}",
+                "space": "hsl"
+              }
+            }
+          },
+          "description": "This token didn't existed in the previous color palette for the UI. It will be used in the overlays and is using the neutral.50 with alpha modifier with opacity.40"
         }
       },
-      "primary": {
-        "default": {
-          "value": "{color.blue.400}",
+      "system": {
+        "success": {
+          "value": "{color.green.100}",
           "type": "color"
         },
-        "hover": {
-          "value": "{color.blue.300}",
+        "warning": {
+          "value": "{color.orange.100}",
+          "type": "color"
+        },
+        "error": {
+          "value": "{color.magenta.100}",
+          "type": "color"
+        },
+        "info": {
+          "value": "{color.blue.100}",
           "type": "color"
         }
-      },
-      "error": {
-        "default": {
-          "value": "{color.magenta.400}",
-          "type": "color"
-        },
-        "hover": {
-          "value": "{color.magenta.300}",
-          "type": "color"
-        },
-        "text": {
-          "value": "{color.magenta.50}",
-          "type": "color"
-        }
-      },
-      "success": {
-        "default": {
-          "value": "{color.green.400}",
-          "type": "color"
-        },
-        "hover": {
-          "value": "{color.green.300}",
-          "type": "color"
-        },
-        "text": {
-          "value": "{color.green.50}",
-          "type": "color"
-        }
-      },
-      "warning": {
-        "default": {
-          "value": "{color.orange.400}",
-          "type": "color"
-        },
-        "hover": {
-          "value": "{color.orange.300}",
-          "type": "color"
-        },
-        "text": {
-          "value": "{color.orange.50}",
-          "type": "color"
-        }
-      },
-      "info": {
-        "default": {
-          "value": "{color.blue.400}",
-          "type": "color"
-        },
-        "hover": {
-          "value": "{color.blue.300}",
-          "type": "color"
-        },
-        "text": {
-          "value": "{color.blue.50}",
-          "type": "color"
-        }
-      }
-    },
-    "text": {
-      "primary": {
-        "value": "{color.neutral.200}",
-        "type": "color"
-      },
-      "secondary": {
-        "value": "{color.neutral.500}",
-        "type": "color"
-      },
-      "disabled": {
-        "value": "{color.neutral.800}",
-        "type": "color"
-      },
-      "max-contrast": {
-        "value": "{color.neutral.50}",
-        "type": "color"
-      },
-      "link": {
-        "value": "{color.blue.300}",
-        "type": "color"
       }
     },
     "border": {
-      "weak": {
-        "value": "{color.neutral.1100}",
+      "ui": {
+        "weak": {
+          "value": "{color.neutral.200}",
+          "type": "color"
+        },
+        "medium": {
+          "value": "{color.neutral.300}",
+          "type": "color"
+        },
+        "strong": {
+          "value": "{color.neutral.400}",
+          "type": "color"
+        },
+        "divider": {
+          "value": "{color.border.ui.medium}",
+          "type": "color"
+        }
+      },
+      "system": {
+        "success": {
+          "value": "{color.green.400}",
+          "type": "color"
+        },
+        "warning": {
+          "value": "{color.orange.400}",
+          "type": "color"
+        },
+        "error": {
+          "value": "{color.magenta.400}",
+          "type": "color"
+        },
+        "info": {
+          "value": "{color.blue.400}",
+          "type": "color"
+        }
+      }
+    },
+    "content": {
+      "primary": {
+        "value": "{color.neutral.950}",
         "type": "color"
       },
-      "medium": {
-        "value": "{color.neutral.1000}",
+      "secondary": {
+        "value": "{color.neutral.700}",
         "type": "color"
       },
-      "strong": {
-        "value": "{color.neutral.900}",
+      "disabled": {
+        "value": "{color.neutral.500}",
         "type": "color"
+      },
+      "link": {
+        "value": "{color.blue.600}",
+        "type": "color"
+      },
+      "system": {
+        "success": {
+          "heading": {
+            "value": "{color.green.700}",
+            "type": "color"
+          },
+          "body": {
+            "value": "{color.green.800}",
+            "type": "color"
+          }
+        },
+        "warning": {
+          "heading": {
+            "value": "{color.orange.700}",
+            "type": "color"
+          },
+          "body": {
+            "value": "{color.orange.800}",
+            "type": "color"
+          }
+        },
+        "error": {
+          "heading": {
+            "value": "{color.magenta.700}",
+            "type": "color"
+          },
+          "body": {
+            "value": "{color.magenta.800}",
+            "type": "color"
+          }
+        },
+        "info": {
+          "heading": {
+            "value": "{color.blue.700}",
+            "type": "color"
+          },
+          "body": {
+            "value": "{color.blue.800}",
+            "type": "color"
+          }
+        }
+      }
+    },
+    "shadow": {
+      "z1": {
+        "value": "{color.base.black}",
+        "type": "color",
+        "$extensions": {
+          "studio.tokens": {
+            "modify": {
+              "type": "alpha",
+              "value": "{opacity.20}",
+              "space": "hsl"
+            }
+          }
+        }
+      },
+      "z2": {
+        "value": "{color.base.black}",
+        "type": "color",
+        "$extensions": {
+          "studio.tokens": {
+            "modify": {
+              "type": "alpha",
+              "value": "{opacity.20}",
+              "space": "hsl"
+            }
+          }
+        }
+      },
+      "z3": {
+        "value": "{color.base.black}",
+        "type": "color",
+        "$extensions": {
+          "studio.tokens": {
+            "modify": {
+              "type": "alpha",
+              "value": "{opacity.20}",
+              "space": "hsl"
+            }
+          }
+        }
       }
     }
   },
   "shadow": {
     "z1": {
       "value": {
-        "x": "{dimension.scale} *0",
-        "y": "{dimension.scale} *0.125",
-        "blur": "{dimension.scale} *0.25",
-        "spread": "{dimension.scale} *0",
-        "color": "rgba(24,26,27,0.2)",
+        "x": "0",
+        "y": "1",
+        "blur": "2",
+        "spread": "0",
+        "color": "{color.shadow.z1}",
         "type": "dropShadow"
       },
-      "type": "boxShadow",
-      "oldValue": [
-        {
-          "x": "0px",
-          "y": "1px",
-          "blur": "2px",
-          "spread": "0px",
-          "color": "rgba( {color.gray.1400} ,0.75)",
-          "type": "dropShadow"
-        }
-      ]
+      "type": "boxShadow"
     },
     "z2": {
       "value": {
-        "x": "{dimension.scale} *0",
-        "y": "{dimension.scale} *0.5",
-        "blur": "{dimension.scale} *1",
-        "spread": "{dimension.scale} *0",
-        "color": "rgba(24,26,27,0.2)",
+        "x": "0",
+        "y": "4",
+        "blur": "8",
+        "spread": "0",
+        "color": "{color.shadow.z2}",
         "type": "dropShadow"
       },
-      "type": "boxShadow",
-      "oldValue": [
-        {
-          "x": "0px",
-          "y": "4px",
-          "blur": "8px",
-          "spread": "0px",
-          "color": "rgba( {color.gray.1400} ,0.75)",
-          "type": "dropShadow"
-        }
-      ]
+      "type": "boxShadow"
     },
     "z3": {
       "value": {
-        "x": "{dimension.scale} *0",
-        "y": "{dimension.scale} *1.5",
-        "blur": "{dimension.scale} *2.5",
-        "spread": "{dimension.scale} *0.125",
-        "color": "rgba(24,26,27,0.18)",
+        "x": "0",
+        "y": "12",
+        "blur": "20",
+        "spread": "1",
+        "color": "{color.shadow.z3}",
         "type": "dropShadow"
       },
-      "type": "boxShadow",
-      "oldValue": [
-        {
-          "x": "0px",
-          "y": "8px",
-          "blur": "24px",
-          "spread": "0px",
-          "color": "rgb( {color.gray.1400} )",
-          "type": "dropShadow"
-        }
-      ]
+      "type": "boxShadow"
     }
   }
 }

@@ -529,7 +529,7 @@
         "type": "color"
       },
       "black": {
-        "value": "#000000",
+        "value": "#020409",
         "type": "color"
       }
     },
@@ -643,8 +643,7 @@
       },
       "500": {
         "value": "#8D95A5",
-        "type": "color",
-        "$extensions": {}
+        "type": "color"
       },
       "600": {
         "value": "{color.neutral.500}",
