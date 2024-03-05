@@ -32,7 +32,7 @@ cards:
       description: Set up your implementation of Grafana Alerting.
       height: 24
     - title: Configure alert rules
-      href: /docs/grafana/next/alerting/alerting-rules/
+      href: ./alerting-rules/
       description: Create, manage, view, and adjust alert rules to alert on your metrics data or log entries from multiple data sources — no matter where your data is stored.
       height: 24
     - title: Configure notifications
