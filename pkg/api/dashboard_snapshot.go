@@ -308,6 +308,10 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqCont
 		return response.Err(err)
 	}
 
+	if queryResult.OrgID != c.OrgID {
+		return response.Error(http.StatusUnauthorized, "OrgID mismatch", nil)
+	}
+
 	if queryResult.External {
 		err := deleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
 		if err != nil {
