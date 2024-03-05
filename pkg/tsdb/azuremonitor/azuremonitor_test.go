@@ -13,7 +13,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
@@ -111,7 +110,7 @@ func TestNewInstanceSettings(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			factory := NewInstanceSettings(&httpclient.Provider{}, map[string]azDatasourceExecutor{}, log.DefaultLogger)
+			factory := NewInstanceSettings(map[string]azDatasourceExecutor{}, log.DefaultLogger)
 			instance, err := factory(context.Background(), tt.settings)
 			tt.Err(t, err)
 			if !cmp.Equal(instance, tt.expectedModel) {

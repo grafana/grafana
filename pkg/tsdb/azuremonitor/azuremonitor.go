@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-func ProvideService(httpClientProvider *httpclient.Provider) *Service {
+func ProvideService() *Service {
 	logger := backend.NewLoggerWith("logger", "tsdb.azuremonitor")
 	proxy := &httpServiceProxy{
 		logger: logger,
@@ -37,7 +37,7 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 		azureTraces:        &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy, Logger: logger},
 	}
 
-	im := datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider, executors, logger))
+	im := datasource.NewInstanceManager(NewInstanceSettings(executors, logger))
 
 	s := &Service{
 		im:        im,
@@ -81,7 +81,7 @@ func getDatasourceService(ctx context.Context, settings *backend.DataSourceInsta
 	}, nil
 }
 
-func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor, logger log.Logger) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(executors map[string]azDatasourceExecutor, logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -122,6 +122,8 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 			Routes:                  routesForModel,
 			Services:                map[string]types.DatasourceService{},
 		}
+
+		clientProvider := httpclient.NewProvider()
 
 		for routeName := range executors {
 			service, err := getDatasourceService(ctx, &settings, azureSettings, clientProvider, model, routeName, logger)

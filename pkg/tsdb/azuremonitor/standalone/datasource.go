@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	azuremonitor "github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 )
@@ -17,7 +16,7 @@ var (
 
 func NewDatasource(context.Context, backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &Datasource{
-		Service: azuremonitor.ProvideService(httpclient.NewProvider()),
+		Service: azuremonitor.ProvideService(),
 	}, nil
 }
 
