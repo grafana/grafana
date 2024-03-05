@@ -3,7 +3,7 @@ import { contextSrv } from 'app/core/core';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types';
 
-import { PluginAdminRoutes } from './types';
+import { ExtensionAdminRoutes, PluginAdminRoutes } from './types';
 
 const DEFAULT_ROUTES = [
   {
@@ -35,6 +35,19 @@ const DEFAULT_ROUTES = [
     ),
     routeName: PluginAdminRoutes.Details,
     component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginPage" */ './pages/PluginDetails')),
+  },
+  // EXTENSIONS
+  // -------------------------------
+  {
+    path: '/extensions',
+    navId: 'extensions',
+    roles: evaluateAccess(
+      // TODO: maybe we should have a separate permission for this
+      [AccessControlAction.PluginsInstall, AccessControlAction.PluginsWrite],
+      ['Admin', 'ServerAdmin']
+    ),
+    routeName: ExtensionAdminRoutes.Settings,
+    component: SafeDynamicImport(() => import(/* webpackChunkName: "ExtensionsAdmin" */ './pages/ExtensionSettings')),
   },
 ];
 
