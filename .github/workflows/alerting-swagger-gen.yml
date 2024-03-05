@@ -16,7 +16,7 @@ jobs:
       - name: Set go version
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21.6'
+          go-version: '1.21.8'
       - name: Build swagger
         run: |
           make -C pkg/services/ngalert/api/tooling post.json api.json
