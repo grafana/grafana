@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"net/http"
-	"path"
 
 	"github.com/google/uuid"
 
@@ -20,13 +19,10 @@ const GrafanaRequestIDHeaderMiddlewareName = "grafana-request-id-header-middlewa
 func GrafanaRequestIDHeaderMiddleware(cfg *setting.Cfg) sdkhttpclient.Middleware {
 	return sdkhttpclient.NamedMiddlewareFunc(GrafanaRequestIDHeaderMiddlewareName, func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			// Check if the request is for a datasource that is allowed to have the header
-			// TODO check if this is the path to the datasource
-			target := req.URL.Path
-
 			foundMatch := false
 			for _, allowedURL := range cfg.IPRangeACAllowedURLs {
-				if path.Clean(allowedURL) == path.Clean(target) {
+				// Only look at the scheme and host, ignore the path
+				if allowedURL.Host == req.URL.Host && allowedURL.Scheme == req.URL.Scheme {
 					foundMatch = true
 					break
 				}
@@ -51,9 +47,10 @@ func GrafanaRequestIDHeaderMiddleware(cfg *setting.Cfg) sdkhttpclient.Middleware
 			req.Header.Set(clientmiddleware.GrafanaRequestID, grafanaRequestID)
 
 			remoteAddress := web.RemoteAddr(req)
-			if remoteAddress == "" {
-				req.Header.Set(clientmiddleware.GrafanaInternalRequest, grafanaRequestID)
+			if remoteAddress != "" {
+				req.Header.Set(clientmiddleware.XRealIPHeader, remoteAddress)
 			}
+			req.Header.Set(clientmiddleware.GrafanaInternalRequest, "true")
 
 			return next.RoundTrip(req)
 		})
