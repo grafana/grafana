@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, Select } from '@grafana/ui';
 
+import { AskExpr } from './components/AskExpr';
 import { ClassicConditions } from './components/ClassicConditions';
 import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
@@ -29,6 +30,7 @@ function useExpressionsCache() {
       case ExpressionQueryType.resample:
       case ExpressionQueryType.threshold:
       case ExpressionQueryType.sql:
+      case ExpressionQueryType.ask:
         return expressionCache.current[queryType];
       case ExpressionQueryType.classic:
         return undefined;
@@ -96,6 +98,9 @@ export function ExpressionQueryEditor(props: Props) {
 
       case ExpressionQueryType.sql:
         return <SqlExpr onChange={onChange} query={query} refIds={refIds} />;
+
+      case ExpressionQueryType.ask:
+          return <AskExpr onChange={onChange} query={query} refIds={refIds} />;
     }
   };
 

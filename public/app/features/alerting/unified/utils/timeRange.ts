@@ -30,6 +30,7 @@ const getReferencedIds = (model: ExpressionQuery, queries: AlertQuery[]): string
       return getReferencedIdsForClassicCondition(model);
     case ExpressionQueryType.math:
     case ExpressionQueryType.sql:
+    case ExpressionQueryType.ask:
       return getReferencedIdsForMath(model, queries);
     case ExpressionQueryType.resample:
     case ExpressionQueryType.reduce:

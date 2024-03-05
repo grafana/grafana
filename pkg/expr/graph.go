@@ -262,6 +262,7 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		if node.NodeType() != TypeCMDNode {
 			// datasource node, nothing to do for now. Although if we want expression results to be
 			// used as datasource query params some day this will need change
+			nodeList = append(nodeList, node)
 			continue
 		}
 		cmdNode := node.(*CMDNode)
