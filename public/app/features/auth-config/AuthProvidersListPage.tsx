@@ -2,10 +2,11 @@ import React, { JSX, useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { reportInteraction } from '@grafana/runtime';
-import { Drawer, Grid, TextLink, ToolbarButton } from '@grafana/ui';
+import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 
+import { AuthDrawer } from './AuthDrawer';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
@@ -98,16 +99,7 @@ export const AuthConfigPageUnconnected = ({
                   configPath={settings.configPath}
                 />
               ))}
-            {showDrawer && (
-              <Drawer
-                title="Auth Settings"
-                subtitle="Configure auth settings. Find out more in our documentation"
-                size="sm"
-                onClose={() => setShowDrawer(false)}
-              >
-                <div>Put your Drawer content here</div>
-              </Drawer>
-            )}
+            {showDrawer && <AuthDrawer onClose={() => setShowDrawer(false)}></AuthDrawer>}
           </Grid>
         )}
       </Page.Contents>
