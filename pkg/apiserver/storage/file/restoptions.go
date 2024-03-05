@@ -3,9 +3,13 @@
 package file
 
 import (
+	"fmt"
+	goos "os"
+	"path/filepath"
 	"time"
 
 	"github.com/hack-pad/hackpadfs"
+	"github.com/hack-pad/hackpadfs/os"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -17,6 +21,22 @@ var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 type RESTOptionsGetter struct {
 	fs       hackpadfs.FS
 	original storagebackend.Config
+}
+
+func NewWriteableFS(path string) (hackpadfs.FS, error) {
+	path, err := filepath.Abs(path)
+	if err != nil {
+		return nil, fmt.Errorf("invalid path")
+	}
+	path = filepath.Clean(path)
+	_, err = goos.Stat(path)
+	if err != nil {
+		err = goos.MkdirAll(path, 0700)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("could not establish a writable directory at path=%s", path)
+	}
+	return os.NewFS().Sub(path[1:]) // remove leading "/"
 }
 
 func NewRESTOptionsGetter(fs hackpadfs.FS, originalStorageConfig storagebackend.Config) *RESTOptionsGetter {

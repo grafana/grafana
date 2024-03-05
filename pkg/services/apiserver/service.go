@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	goos "os"
+	"os"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/grafana/dskit/services"
 	"github.com/hack-pad/hackpadfs/mem"
-	"github.com/hack-pad/hackpadfs/os"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -191,6 +189,7 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
+//nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
 	// Get the list of groups the server will support
 	builders := s.builders
@@ -284,16 +283,9 @@ func (s *service) start(ctx context.Context) error {
 	case grafanaapiserveroptions.StorageTypeFile:
 		path := o.StorageOptions.DataPath
 		if path == "" {
-			path = filepath.Join(goos.TempDir(), "grafana-apiserver")
+			path = filepath.Join(os.TempDir(), "grafana-apiserver")
 		}
-		_, err := goos.Stat(path)
-		if err != nil {
-			err = goos.MkdirAll(path, 0700)
-		}
-		if err != nil {
-			return fmt.Errorf("could not establish a writable directory at path=%s", path)
-		}
-		fs, err := os.NewFS().Sub(strings.TrimPrefix(path, "/")) // windows?
+		fs, err := filestorage.NewWriteableFS(path)
 		if err != nil {
 			return err
 		}
