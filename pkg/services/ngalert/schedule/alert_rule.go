@@ -28,9 +28,9 @@ func (f ruleFactoryFunc) new(ctx context.Context) *alertRuleInfo {
 	return f(ctx)
 }
 
-func newRuleFactory(clock clock.Clock, met *metrics.Scheduler, logger log.Logger, tracer tracing.Tracer) ruleFactoryFunc {
+func newRuleFactory(sender AlertsSender, stateManager *state.Manager, evalFactory eval.EvaluatorFactory, clock clock.Clock, met *metrics.Scheduler, logger log.Logger, tracer tracing.Tracer) ruleFactoryFunc {
 	return func(ctx context.Context) *alertRuleInfo {
-		return newAlertRuleInfo(ctx, clock, met, logger, tracer)
+		return newAlertRuleInfo(ctx, sender, stateManager, evalFactory, clock, met, logger, tracer)
 	}
 }
 
@@ -40,24 +40,30 @@ type alertRuleInfo struct {
 	ctx      context.Context
 	stopFn   util.CancelCauseFunc
 
-	clock clock.Clock
+	clock        clock.Clock
+	sender       AlertsSender
+	stateManager *state.Manager
+	evalFactory  eval.EvaluatorFactory
 
 	metrics *metrics.Scheduler
 	logger  log.Logger
 	tracer  tracing.Tracer
 }
 
-func newAlertRuleInfo(parent context.Context, clock clock.Clock, met *metrics.Scheduler, logger log.Logger, tracer tracing.Tracer) *alertRuleInfo {
+func newAlertRuleInfo(parent context.Context, sender AlertsSender, stateManager *state.Manager, evalFactory eval.EvaluatorFactory, clock clock.Clock, met *metrics.Scheduler, logger log.Logger, tracer tracing.Tracer) *alertRuleInfo {
 	ctx, stop := util.WithCancelCause(parent)
 	return &alertRuleInfo{
-		evalCh:   make(chan *evaluation),
-		updateCh: make(chan ruleVersionAndPauseStatus),
-		ctx:      ctx,
-		stopFn:   stop,
-		clock:    clock,
-		metrics:  met,
-		logger:   logger,
-		tracer:   tracer,
+		evalCh:       make(chan *evaluation),
+		updateCh:     make(chan ruleVersionAndPauseStatus),
+		ctx:          ctx,
+		stopFn:       stop,
+		clock:        clock,
+		sender:       sender,
+		stateManager: stateManager,
+		evalFactory:  evalFactory,
+		metrics:      met,
+		logger:       logger,
+		tracer:       tracer,
 	}
 }
 
@@ -123,7 +129,7 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 	notify := func(states []state.StateTransition) {
 		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, sch.appURL, a.clock)
 		if len(expiredAlerts.PostableAlerts) > 0 {
-			sch.alertsSender.Send(grafanaCtx, key, expiredAlerts)
+			a.sender.Send(grafanaCtx, key, expiredAlerts)
 		}
 	}
 
@@ -133,7 +139,7 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 		if isPaused {
 			reason = ngmodels.StateReasonPaused
 		}
-		states := sch.stateManager.ResetStateByRuleUID(ctx, rule, reason)
+		states := a.stateManager.ResetStateByRuleUID(ctx, rule, reason)
 		notify(states)
 	}
 
@@ -142,10 +148,10 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 		start := a.clock.Now()
 
 		evalCtx := eval.NewContextWithPreviousResults(ctx, SchedulerUserFor(e.rule.OrgID), sch.newLoadedMetricsReader(e.rule))
-		if sch.evaluatorFactory == nil {
+		if a.evalFactory == nil {
 			panic("evalfactory nil")
 		}
-		ruleEval, err := sch.evaluatorFactory.Create(evalCtx, e.rule.GetEvalCondition())
+		ruleEval, err := a.evalFactory.Create(evalCtx, e.rule.GetEvalCondition())
 		var results eval.Results
 		var dur time.Duration
 		if err != nil {
@@ -208,7 +214,7 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 			))
 		}
 		start = a.clock.Now()
-		processedStates := sch.stateManager.ProcessEvalResults(
+		processedStates := a.stateManager.ProcessEvalResults(
 			ctx,
 			e.scheduledAt,
 			e.rule,
@@ -218,13 +224,13 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 		processDuration.Observe(a.clock.Now().Sub(start).Seconds())
 
 		start = a.clock.Now()
-		alerts := state.FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
+		alerts := state.FromStateTransitionToPostableAlerts(processedStates, a.stateManager, sch.appURL)
 		span.AddEvent("results processed", trace.WithAttributes(
 			attribute.Int64("state_transitions", int64(len(processedStates))),
 			attribute.Int64("alerts_to_send", int64(len(alerts.PostableAlerts))),
 		))
 		if len(alerts.PostableAlerts) > 0 {
-			sch.alertsSender.Send(ctx, key, alerts)
+			a.sender.Send(ctx, key, alerts)
 		}
 		sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
 
@@ -332,7 +338,7 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 				// cases.
 				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
 				defer cancelFunc()
-				states := sch.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, key), key, ngmodels.StateReasonRuleDeleted)
+				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, key), key, ngmodels.StateReasonRuleDeleted)
 				notify(states)
 			}
 			logger.Debug("Stopping alert rule routine")
