@@ -70,6 +70,7 @@ type PluginInstanceCfg struct {
 	GrafanaVersion string
 
 	ConcurrentQueryCount int
+	ResponseLimit        int64
 
 	UserFacingDefaultError string
 
