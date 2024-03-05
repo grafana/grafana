@@ -376,7 +376,7 @@ function getPluginDetailsForFuzzySearch(plugins: CatalogPlugin[]): string[] {
 }
 export function filterByKeyword(plugins: CatalogPlugin[], query: string) {
   const dataArray = getPluginDetailsForFuzzySearch(plugins);
-  let uf = new uFuzzy({});
+  let uf = new uFuzzy({ intraMode: 1, intraSub: 0 });
   let idxs = uf.filter(dataArray, query);
   if (idxs === null) {
     return null;
