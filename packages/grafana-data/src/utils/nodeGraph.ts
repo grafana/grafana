@@ -35,7 +35,7 @@ export enum NodeGraphDataFrameFieldNames {
   // Whether the node or edge should be highlighted (e.g., shown in red) in the UI
   highlighted = 'highlighted',
 
-  // Defines a single color (hex or html named value) to be used as the color of an edge is highlighted [edges]
+  // Defines a single color (hex or html named value) to be used as the color of a highlighted edge [edges]
   highlightedColor = 'highlightedColor',
 
   // Defines the stroke dash array for the edge [edges]
