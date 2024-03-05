@@ -84,10 +84,10 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
   useEffect(() => {
     const subscription = watch((value) => {
       let dirty = correlationDetails?.correlationDirty || false;
-
-      if (!dirty && (value.label !== defaultLabel || value.description !== '')) {
+      let description = value.description || '';
+      if (!dirty && (value.label !== defaultLabel || description !== '')) {
         dirty = true;
-      } else if (dirty && value.label === defaultLabel && value.description.trim() === '') {
+      } else if (dirty && value.label === defaultLabel && description.trim() === '') {
         dirty = false;
       }
       dispatch(
@@ -150,7 +150,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
             }
             setShowTransformationAddModal(false);
           }}
-          fieldList={correlations.vars}
+          fieldList={correlations.origVars}
           transformationToEdit={
             transformationIdxToEdit !== undefined ? transformations[transformationIdxToEdit] : undefined
           }

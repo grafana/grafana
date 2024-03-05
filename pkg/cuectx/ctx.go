@@ -6,6 +6,7 @@ package cuectx
 
 import (
 	"path/filepath"
+	"sync"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
@@ -26,14 +27,25 @@ var GoCoreKindParentPath = filepath.Join("pkg", "kinds")
 // contains one directory per kind, full of generated TS kind output: types and default consts.
 var TSCoreKindParentPath = filepath.Join("packages", "grafana-schema", "src", "raw")
 
-var ctx = cuecontext.New()
-var rt = thema.NewRuntime(ctx)
+var (
+	ctx  *cue.Context
+	rt   *thema.Runtime
+	once sync.Once
+)
+
+func initContext() {
+	once.Do(func() {
+		ctx = cuecontext.New()
+		rt = thema.NewRuntime(ctx)
+	})
+}
 
 // GrafanaCUEContext returns Grafana's singleton instance of [cue.Context].
 //
 // All code within grafana/grafana that needs a *cue.Context should get it
 // from this function, when one was not otherwise provided.
 func GrafanaCUEContext() *cue.Context {
+	initContext()
 	return ctx
 }
 
@@ -42,6 +54,7 @@ func GrafanaCUEContext() *cue.Context {
 // All code within grafana/grafana that needs a *thema.Runtime should get it
 // from this function, when one was not otherwise provided.
 func GrafanaThemaRuntime() *thema.Runtime {
+	initContext()
 	return rt
 }
 
@@ -56,5 +69,5 @@ func GrafanaThemaRuntime() *thema.Runtime {
 // call it repeatedly. Most use cases should probably prefer making
 // their own Thema/CUE decoders.
 func JSONtoCUE(path string, b []byte) (cue.Value, error) {
-	return vmux.NewJSONCodec(path).Decode(ctx, b)
+	return vmux.NewJSONCodec(path).Decode(GrafanaCUEContext(), b)
 }

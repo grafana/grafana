@@ -22,7 +22,7 @@ const labelClass = css`
 `;
 
 export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor(props: Props) {
-  const { query, data, datasource, exploreId } = props;
+  const { query, data, datasource } = props;
 
   let absolute: AbsoluteTimeRange;
   if (data?.request?.range?.from) {
@@ -50,7 +50,6 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
   ) : (
     <CloudWatchLogsQueryField
       {...props}
-      exploreId={exploreId}
       history={[]}
       absoluteRange={absolute}
       ExtraFieldElement={

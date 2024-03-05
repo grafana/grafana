@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { createMonitoringLogger, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { ExploreItemState } from 'app/types';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
@@ -54,9 +54,10 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
     field.config.links = field.config.links?.filter((link) => link.origin !== DataLinkConfigOrigin.Correlations) || [];
     correlations.map((correlation) => {
       if (correlation.config?.field === field.name) {
+        const targetQuery = correlation.config?.target || {};
         field.config.links!.push({
           internal: {
-            query: correlation.config?.target,
+            query: { ...targetQuery, datasource: { uid: correlation.target.uid } },
             datasourceUid: correlation.target.uid,
             datasourceName: correlation.target.name,
             transformations: correlation.config?.transformations,
@@ -107,3 +108,5 @@ export const generateDefaultLabel = async (sourcePane: ExploreItemState, targetP
       : '';
   });
 };
+
+export const correlationsLogger = createMonitoringLogger('features.correlations');

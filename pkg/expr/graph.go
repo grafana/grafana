@@ -61,7 +61,7 @@ type DataPipeline []Node
 func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
 
-	groupByDSFlag := s.features.IsEnabled(featuremgmt.FlagSseGroupByDatasource)
+	groupByDSFlag := s.features.IsEnabled(c, featuremgmt.FlagSseGroupByDatasource)
 	// Execute datasource nodes first, and grouped by datasource.
 	if groupByDSFlag {
 		dsNodes := []*DSNode{}
@@ -74,6 +74,8 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 
 		executeDSNodesGrouped(c, now, vars, s, dsNodes)
 	}
+
+	s.allowLongFrames = hasSqlExpression(*dp)
 
 	for _, node := range *dp {
 		if groupByDSFlag && node.NodeType() == TypeDatasourceNode {
@@ -227,7 +229,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		case TypeCMDNode:
 			node, err = buildCMDNode(rn, s.features)
 		case TypeMLNode:
-			if s.features.IsEnabled(featuremgmt.FlagMlExpressions) {
+			if s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {
 				node, err = s.buildMLNode(dp, rn, req)
 				if err != nil {
 					err = fmt.Errorf("fail to parse expression with refID %v: %w", rn.RefID, err)
@@ -266,6 +268,10 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]
 			if !ok {
+				_, ok := cmdNode.Command.(*SQLCommand)
+				if ok {
+					continue
+				}
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
 			}
 
@@ -292,3 +298,57 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 	}
 	return nil
 }
+
+// GetCommandsFromPipeline traverses the pipeline and extracts all CMDNode commands that match the type
+func GetCommandsFromPipeline[T Command](pipeline DataPipeline) []T {
+	var results []T
+	for _, p := range pipeline {
+		if p.NodeType() != TypeCMDNode {
+			continue
+		}
+		switch cmd := p.(type) {
+		case *CMDNode:
+			switch r := cmd.Command.(type) {
+			case T:
+				results = append(results, r)
+			}
+		default:
+			continue
+		}
+	}
+	return results
+}
+
+func hasSqlExpression(dp DataPipeline) bool {
+	for _, node := range dp {
+		if node.NodeType() == TypeCMDNode {
+			cmdNode := node.(*CMDNode)
+			_, ok := cmdNode.Command.(*SQLCommand)
+			if ok {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// func graphHasSqlExpresssion(dp *simple.DirectedGraph) bool {
+// 	node := dp.Nodes()
+// 	for node.Next() {
+// 		if cmdNode, ok := node.Node().(*CMDNode); ok {
+// 			// res[dpNode.RefID()] = dpNode
+// 			_, ok := cmdNode.Command.(*SQLCommand)
+// 			if ok {
+// 				return true
+// 			}
+// 		}
+// 		// if node.NodeType() == TypeCMDNode {
+// 		// 	cmdNode := node.(*CMDNode)
+// 		// 	_, ok := cmdNode.Command.(*SQLCommand)
+// 		// 	if ok {
+// 		// 		return true
+// 		// 	}
+// 		// }
+// 	}
+// 	return false
+// }

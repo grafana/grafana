@@ -17,20 +17,20 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
 import React from 'react';
 
-import { dateTimeFormat, GrafanaTheme2, IconName, LinkModel, TimeZone } from '@grafana/data';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel } from '@grafana/data';
+import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
-import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
+import { TimeZone } from '@grafana/schema';
+import { DataLinkButton, Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
+import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
-import { Divider } from '../../common/Divider';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { SpanLinkFunc, TNil } from '../../types';
 import { SpanLinkDef, SpanLinkType } from '../../types/links';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
-import { uAlignIcon, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
-import { TopOfViewRefType } from '../VirtualizedTraceView';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -38,6 +38,7 @@ import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
+import SpanFlameGraph from './SpanFlameGraph';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -51,6 +52,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     listWrapper: css`
       overflow: hidden;
     `,
+    list: css({
+      textAlign: 'right',
+    }),
+    operationName: css({
+      margin: 0,
+    }),
     debugInfo: css`
       label: debugInfo;
       display: block;
@@ -97,6 +104,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: AccordianWarningsLabel;
       color: ${autoColor(theme, '#d36c08')};
     `,
+    AccordianKeyValuesItem: css({
+      marginBottom: theme.spacing(0.5),
+    }),
     Textarea: css`
       word-break: break-all;
       white-space: pre;
@@ -107,6 +117,14 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+export const alignIcon = css({
+  margin: '-0.2rem 0.25rem 0 0',
+});
+
+export type TraceFlameGraphs = {
+  [spanID: string]: DataFrame;
+};
+
 export type SpanDetailProps = {
   detailState: DetailState;
   linksGetter: ((links: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
@@ -114,9 +132,12 @@ export type SpanDetailProps = {
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
   span: TraceSpan;
+  traceToProfilesOptions?: TraceToProfilesOptions;
   timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
+  traceDuration: number;
+  traceName: string;
   warningsToggle: (spanID: string) => void;
   stackTracesToggle: (spanID: string) => void;
   referenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
@@ -124,8 +145,10 @@ export type SpanDetailProps = {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  topOfViewRefType?: TopOfViewRefType;
   datasourceType: string;
+  traceFlameGraphs: TraceFlameGraphs;
+  setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
+  setRedrawListView: (redraw: {}) => void;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -138,14 +161,19 @@ export default function SpanDetail(props: SpanDetailProps) {
     span,
     tagsToggle,
     traceStartTime,
+    traceDuration,
+    traceName,
     warningsToggle,
     stackTracesToggle,
     referencesToggle,
     referenceItemToggle,
     createSpanLink,
     createFocusSpanLink,
-    topOfViewRefType,
     datasourceType,
+    traceFlameGraphs,
+    setTraceFlameGraphs,
+    traceToProfilesOptions,
+    setRedrawListView,
   } = props;
   const {
     isTagsOpen,
@@ -197,6 +225,8 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
 
+  const styles = useStyles2(getStyles);
+
   if (span.kind) {
     overviewItems.push({
       key: KIND,
@@ -239,8 +269,6 @@ export default function SpanDetail(props: SpanDetailProps) {
       value: span.traceState,
     });
   }
-
-  const styles = useStyles2(getStyles);
 
   const createLinkButton = (link: SpanLinkDef, type: SpanLinkType, title: string, icon: IconName) => {
     return (
@@ -293,14 +321,14 @@ export default function SpanDetail(props: SpanDetailProps) {
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
-        <h2 className={cx(ubM0)}>{operationName}</h2>
+        <h2 className={styles.operationName}>{operationName}</h2>
         <div className={styles.listWrapper}>
-          <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
+          <LabeledList className={styles.list} divider={true} items={overviewItems} />
         </div>
       </div>
       <span style={{ marginRight: '10px' }}>{logLinkButton}</span>
       {profileLinkButton}
-      <Divider className={ubMy1} type={'horizontal'} />
+      <Divider spacing={1} />
       <div>
         <div>
           <AccordianKeyValues
@@ -312,7 +340,7 @@ export default function SpanDetail(props: SpanDetailProps) {
           />
           {process.tags && (
             <AccordianKeyValues
-              className={ubMb1}
+              className={styles.AccordianKeyValuesItem}
               data={process.tags}
               label="Resource Attributes"
               linksGetter={linksGetter}
@@ -380,31 +408,41 @@ export default function SpanDetail(props: SpanDetailProps) {
             createFocusSpanLink={createFocusSpanLink}
           />
         )}
-        {topOfViewRefType === TopOfViewRefType.Explore && (
-          <small className={styles.debugInfo}>
-            {/* TODO: fix keyboard a11y */}
-            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-            <a
-              {...focusSpanLink}
-              onClick={(e) => {
-                // click handling logic copied from react router:
-                // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
-                if (
-                  focusSpanLink.onClick &&
-                  e.button === 0 && // Ignore everything but left clicks
-                  (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
-                  !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
-                ) {
-                  e.preventDefault();
-                  focusSpanLink.onClick(e);
-                }
-              }}
-            >
-              <Icon name={'link'} className={cx(uAlignIcon, styles.LinkIcon)}></Icon>
-            </a>
-            <span className={styles.debugLabel} data-label="SpanID:" /> {spanID}
-          </small>
+        {span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey) && (
+          <SpanFlameGraph
+            span={span}
+            timeZone={timeZone}
+            traceFlameGraphs={traceFlameGraphs}
+            setTraceFlameGraphs={setTraceFlameGraphs}
+            traceToProfilesOptions={traceToProfilesOptions}
+            setRedrawListView={setRedrawListView}
+            traceDuration={traceDuration}
+            traceName={traceName}
+          />
         )}
+        <small className={styles.debugInfo}>
+          {/* TODO: fix keyboard a11y */}
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+          <a
+            {...focusSpanLink}
+            onClick={(e) => {
+              // click handling logic copied from react router:
+              // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
+              if (
+                focusSpanLink.onClick &&
+                e.button === 0 && // Ignore everything but left clicks
+                (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
+                !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
+              ) {
+                e.preventDefault();
+                focusSpanLink.onClick(e);
+              }
+            }}
+          >
+            <Icon name={'link'} className={cx(alignIcon, styles.LinkIcon)}></Icon>
+          </a>
+          <span className={styles.debugLabel} data-label="SpanID:" /> {spanID}
+        </small>
       </div>
     </div>
   );

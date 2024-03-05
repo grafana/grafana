@@ -18,6 +18,10 @@ export type DashboardPageProxyProps = GrafanaRouteComponentProps<
 // This proxy component is used for Dashboard -> Scenes migration.
 // It will render DashboardScenePage if the user is only allowed to view the dashboard.
 function DashboardPageProxy(props: DashboardPageProxyProps) {
+  if (config.featureToggles.dashboardScene || props.queryParams.scenes) {
+    return <DashboardScenePage {...props} />;
+  }
+
   const stateManager = getDashboardScenePageStateManager();
   const isScenesSupportedRoute = Boolean(
     props.route.routeName === DashboardRoutes.Home ||
@@ -26,14 +30,16 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
 
   // We pre-fetch dashboard to render dashboard page component depending on dashboard permissions.
   // To avoid querying single dashboard multiple times, stateManager.fetchDashboard uses a simple, short-lived cache.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const dashboard = useAsync(async () => {
-    const dashToFetch = props.route.routeName === DashboardRoutes.Home ? props.route.routeName : props.match.params.uid;
-
-    if (!dashToFetch) {
+    if (props.match.params.type === 'snapshot') {
       return null;
     }
 
-    return stateManager.fetchDashboard(dashToFetch);
+    return stateManager.fetchDashboard({
+      route: props.route.routeName as DashboardRoutes,
+      uid: props.match.params.uid ?? '',
+    });
   }, [props.match.params.uid, props.route.routeName]);
 
   if (!config.featureToggles.dashboardSceneForViewers) {
@@ -44,7 +50,11 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return null;
   }
 
-  if (dashboard.value && !dashboard.value.meta.canEdit && isScenesSupportedRoute) {
+  if (
+    dashboard.value &&
+    !(dashboard.value.meta.canEdit || dashboard.value.meta.canMakeEditable) &&
+    isScenesSupportedRoute
+  ) {
     return <DashboardScenePage {...props} />;
   } else {
     return <DashboardPage {...props} />;

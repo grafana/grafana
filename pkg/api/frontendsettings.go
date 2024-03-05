@@ -2,17 +2,23 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"hash"
 	"net/http"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/webassets"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -21,6 +27,61 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// Returns a file that is easy to check for changes
+// Any changes to the file means we should refresh the frontend
+func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
+	hash := sha256.New()
+	keys := map[string]any{}
+
+	// BuildVersion
+	hash.Reset()
+	_, _ = hash.Write([]byte(setting.BuildVersion))
+	_, _ = hash.Write([]byte(setting.BuildCommit))
+	_, _ = hash.Write([]byte(fmt.Sprintf("%d", setting.BuildStamp)))
+	keys["version"] = fmt.Sprintf("%x", hash.Sum(nil))
+
+	// Plugin configs
+	plugins := []string{}
+	for _, p := range hs.pluginStore.Plugins(c.Req.Context()) {
+		plugins = append(plugins, fmt.Sprintf("%s@%s", p.Name, p.Info.Version))
+	}
+	keys["plugins"] = sortedHash(plugins, hash)
+
+	// Feature flags
+	enabled := []string{}
+	for flag, set := range hs.Features.GetEnabled(c.Req.Context()) {
+		if set {
+			enabled = append(enabled, flag)
+		}
+	}
+	keys["flags"] = sortedHash(enabled, hash)
+
+	// Assets
+	hash.Reset()
+	dto, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
+	if err == nil && dto != nil {
+		_, _ = hash.Write([]byte(dto.ContentDeliveryURL))
+		_, _ = hash.Write([]byte(dto.Dark))
+		_, _ = hash.Write([]byte(dto.Light))
+		for _, f := range dto.JSFiles {
+			_, _ = hash.Write([]byte(f.FilePath))
+			_, _ = hash.Write([]byte(f.Integrity))
+		}
+	}
+	keys["assets"] = fmt.Sprintf("%x", hash.Sum(nil))
+
+	c.JSON(http.StatusOK, keys)
+}
+
+func sortedHash(vals []string, hash hash.Hash) string {
+	hash.Reset()
+	sort.Strings(vals)
+	for _, v := range vals {
+		_, _ = hash.Write([]byte(v))
+	}
+	return fmt.Sprintf("%x", hash.Sum(nil))
+}
 
 func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 	settings, err := hs.getFrontendSettings(c)
@@ -66,23 +127,23 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			continue
 		}
 
-		if panel.ID == "datagrid" && !hs.Features.IsEnabled(featuremgmt.FlagEnableDatagridEditing) {
+		if panel.ID == "datagrid" && !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagEnableDatagridEditing) {
 			continue
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:              panel.ID,
-			Name:            panel.Name,
-			AliasIDs:        panel.AliasIDs,
-			Info:            panel.Info,
-			Module:          panel.Module,
-			BaseURL:         panel.BaseURL,
-			SkipDataQuery:   panel.SkipDataQuery,
-			HideFromList:    panel.HideFromList,
-			ReleaseState:    string(panel.State),
-			Signature:       string(panel.Signature),
-			Sort:            getPanelSort(panel.ID),
-			AngularDetected: panel.AngularDetected,
+			ID:            panel.ID,
+			Name:          panel.Name,
+			AliasIDs:      panel.AliasIDs,
+			Info:          panel.Info,
+			Module:        panel.Module,
+			BaseURL:       panel.BaseURL,
+			SkipDataQuery: panel.SkipDataQuery,
+			HideFromList:  panel.HideFromList,
+			ReleaseState:  string(panel.State),
+			Signature:     string(panel.Signature),
+			Sort:          getPanelSort(panel.ID),
+			Angular:       panel.Angular,
 		}
 	}
 
@@ -104,29 +165,29 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                   defaultDS,
 		Datasources:                         dataSources,
-		MinRefreshInterval:                  setting.MinRefreshInterval,
+		MinRefreshInterval:                  hs.Cfg.MinRefreshInterval,
 		Panels:                              panels,
 		Apps:                                apps,
 		AppUrl:                              hs.Cfg.AppURL,
 		AppSubUrl:                           hs.Cfg.AppSubURL,
-		AllowOrgCreate:                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		AuthProxyEnabled:                    hs.Cfg.AuthProxyEnabled,
+		AllowOrgCreate:                      (hs.Cfg.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		AuthProxyEnabled:                    hs.Cfg.AuthProxy.Enabled,
 		LdapEnabled:                         hs.Cfg.LDAPAuthEnabled,
-		JwtHeaderName:                       hs.Cfg.JWTAuthHeaderName,
-		JwtUrlLogin:                         hs.Cfg.JWTAuthURLLogin,
-		AlertingErrorOrTimeout:              setting.AlertingErrorOrTimeout,
-		AlertingNoDataOrNullValues:          setting.AlertingNoDataOrNullValues,
-		AlertingMinInterval:                 setting.AlertingMinInterval,
+		JwtHeaderName:                       hs.Cfg.JWTAuth.HeaderName,
+		JwtUrlLogin:                         hs.Cfg.JWTAuth.URLLogin,
+		AlertingErrorOrTimeout:              hs.Cfg.AlertingErrorOrTimeout,
+		AlertingNoDataOrNullValues:          hs.Cfg.AlertingNoDataOrNullValues,
+		AlertingMinInterval:                 hs.Cfg.AlertingMinInterval,
 		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
 		AutoAssignOrg:                       hs.Cfg.AutoAssignOrg,
-		VerifyEmailEnabled:                  setting.VerifyEmailEnabled,
-		SigV4AuthEnabled:                    setting.SigV4AuthEnabled,
-		AzureAuthEnabled:                    setting.AzureAuthEnabled,
+		VerifyEmailEnabled:                  hs.Cfg.VerifyEmailEnabled,
+		SigV4AuthEnabled:                    hs.Cfg.SigV4AuthEnabled,
+		AzureAuthEnabled:                    hs.Cfg.AzureAuthEnabled,
 		RbacEnabled:                         true,
-		ExploreEnabled:                      setting.ExploreEnabled,
-		HelpEnabled:                         setting.HelpEnabled,
-		ProfileEnabled:                      setting.ProfileEnabled,
-		NewsFeedEnabled:                     setting.NewsFeedEnabled,
+		ExploreEnabled:                      hs.Cfg.ExploreEnabled,
+		HelpEnabled:                         hs.Cfg.HelpEnabled,
+		ProfileEnabled:                      hs.Cfg.ProfileEnabled,
+		NewsFeedEnabled:                     hs.Cfg.NewsFeedEnabled,
 		QueryHistoryEnabled:                 hs.Cfg.QueryHistoryEnabled,
 		GoogleAnalyticsId:                   hs.Cfg.GoogleAnalyticsID,
 		GoogleAnalytics4Id:                  hs.Cfg.GoogleAnalytics4ID,
@@ -140,12 +201,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
 		DisableLoginForm:                    hs.Cfg.DisableLoginForm,
-		DisableUserSignUp:                   !setting.AllowUserSignUp,
-		LoginHint:                           setting.LoginHint,
-		PasswordHint:                        setting.PasswordHint,
-		ExternalUserMngInfo:                 setting.ExternalUserMngInfo,
-		ExternalUserMngLinkUrl:              setting.ExternalUserMngLinkUrl,
-		ExternalUserMngLinkName:             setting.ExternalUserMngLinkName,
+		DisableUserSignUp:                   !hs.Cfg.AllowUserSignUp,
+		LoginHint:                           hs.Cfg.LoginHint,
+		PasswordHint:                        hs.Cfg.PasswordHint,
+		ExternalUserMngInfo:                 hs.Cfg.ExternalUserMngInfo,
+		ExternalUserMngLinkUrl:              hs.Cfg.ExternalUserMngLinkUrl,
+		ExternalUserMngLinkName:             hs.Cfg.ExternalUserMngLinkName,
 		ViewersCanEdit:                      hs.Cfg.ViewersCanEdit,
 		AngularSupportEnabled:               hs.Cfg.AngularSupportEnabled,
 		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
@@ -156,21 +217,10 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
 		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
-
-		Auth: dtos.FrontendSettingsAuthDTO{
-			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-			SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
-			LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
-			GoogleSkipOrgRoleSync:       hs.Cfg.GoogleSkipOrgRoleSync,
-			JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuthSkipOrgRoleSync,
-			GrafanaComSkipOrgRoleSync:   hs.Cfg.GrafanaComSkipOrgRoleSync,
-			GenericOAuthSkipOrgRoleSync: hs.Cfg.GenericOAuthSkipOrgRoleSync,
-			AzureADSkipOrgRoleSync:      hs.Cfg.AzureADSkipOrgRoleSync,
-			GithubSkipOrgRoleSync:       hs.Cfg.GitHubSkipOrgRoleSync,
-			GitLabSkipOrgRoleSync:       hs.Cfg.GitLabSkipOrgRoleSync,
-			OktaSkipOrgRoleSync:         hs.Cfg.OktaSkipOrgRoleSync,
-			AuthProxyEnableLoginToken:   hs.Cfg.AuthProxyEnableLoginToken,
-		},
+		PublicDashboardsEnabled:             hs.Cfg.PublicDashboardsEnabled,
+		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
+		RootFolderUID:                       accesscontrol.GeneralFolderUID,
+		LocalFileSystemAvailable:            hs.Cfg.LocalFileSystemAvailable,
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
@@ -180,7 +230,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Edition:       hs.License.Edition(),
 			LatestVersion: hs.grafanaUpdateChecker.LatestVersion(),
 			HasUpdate:     hs.grafanaUpdateChecker.UpdateAvailable(),
-			Env:           setting.Env,
+			Env:           hs.Cfg.Env,
 		},
 
 		LicenseInfo: dtos.FrontendSettingsLicenseInfoDTO{
@@ -193,8 +243,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 		FeatureToggles:                   hs.Features.GetEnabled(c.Req.Context()),
 		AnonymousEnabled:                 hs.Cfg.AnonymousEnabled,
+		AnonymousDeviceLimit:             hs.Cfg.AnonymousDeviceLimit,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
 		RendererVersion:                  hs.RenderService.Version(),
+		RendererDefaultImageWidth:        hs.Cfg.RendererDefaultImageWidth,
+		RendererDefaultImageHeight:       hs.Cfg.RendererDefaultImageHeight,
+		RendererDefaultImageScale:        hs.Cfg.RendererDefaultImageScale,
 		SecretsManagerPluginEnabled:      secretsManagerPluginEnabled,
 		Http2Enabled:                     hs.Cfg.Protocol == setting.HTTP2Scheme,
 		GrafanaJavascriptAgent:           hs.Cfg.GrafanaJavascriptAgent,
@@ -222,6 +276,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		},
 		Reporting: dtos.FrontendSettingsReportingDTO{
 			Enabled: hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
+		},
+		Analytics: dtos.FrontendSettingsAnalyticsDTO{
+			Enabled: hs.Cfg.SectionWithEnvOverrides("analytics").Key("enabled").MustBool(true),
 		},
 
 		UnifiedAlerting: dtos.FrontendSettingsUnifiedAlertingDTO{
@@ -251,8 +308,33 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
 	}
 
-	if setting.AlertingEnabled != nil {
-		frontendSettings.AlertingEnabled = *setting.AlertingEnabled
+	if hs.Cfg.AlertingEnabled != nil {
+		frontendSettings.AlertingEnabled = *(hs.Cfg.AlertingEnabled)
+	}
+
+	// It returns false if the provider is not enabled or the skip org role sync is false.
+	parseSkipOrgRoleSyncEnabled := func(info *social.OAuthInfo) bool {
+		if info == nil {
+			return false
+		}
+		return info.SkipOrgRoleSync
+	}
+
+	oauthProviders := hs.SocialService.GetOAuthInfoProviders()
+	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
+		AuthProxyEnableLoginToken:   hs.Cfg.AuthProxy.EnableLoginToken,
+		OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
+		SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
+		LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
+		JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuth.SkipOrgRoleSync,
+		GoogleSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
+		GrafanaComSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
+		GenericOAuthSkipOrgRoleSync: parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
+		AzureADSkipOrgRoleSync:      parseSkipOrgRoleSyncEnabled(oauthProviders[social.AzureADProviderName]),
+		GithubSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
+		GitLabSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
+		OktaSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
+		DisableLogin:                hs.Cfg.DisableLogin,
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
@@ -269,6 +351,15 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	if !hs.Cfg.GeomapEnableCustomBaseLayers {
 		frontendSettings.GeomapDisableCustomBaseLayer = true
+	}
+
+	// Set the kubernetes namespace
+	frontendSettings.Namespace = hs.namespacer(c.SignedInUser.OrgID)
+
+	// experimental scope features
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagScopeFilters) {
+		frontendSettings.ListScopesEndpoint = hs.Cfg.ScopesListScopesURL
+		frontendSettings.ListDashboardScopesEndpoint = hs.Cfg.ScopesListDashboardsURL
 	}
 
 	return frontendSettings, nil
@@ -333,8 +424,8 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Signature: plugin.Signature,
 			Module:    plugin.Module,
 			BaseURL:   plugin.BaseURL,
+			Angular:   plugin.Angular,
 		}
-		dsDTO.AngularDetected = plugin.AngularDetected
 
 		if ds.JsonData == nil {
 			dsDTO.JSONData = make(map[string]any)
@@ -416,8 +507,8 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					Signature: ds.Signature,
 					Module:    ds.Module,
 					BaseURL:   ds.BaseURL,
+					Angular:   ds.Angular,
 				},
-				AngularDetected: ds.AngularDetected,
 			}
 			if ds.Name == grafanads.DatasourceName {
 				dto.ID = grafanads.DatasourceID
@@ -432,11 +523,11 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 
 func newAppDTO(plugin pluginstore.Plugin, settings pluginsettings.InfoDTO) *plugins.AppDTO {
 	app := &plugins.AppDTO{
-		ID:              plugin.ID,
-		Version:         plugin.Info.Version,
-		Path:            plugin.Module,
-		Preload:         false,
-		AngularDetected: plugin.AngularDetected,
+		ID:      plugin.ID,
+		Version: plugin.Info.Version,
+		Path:    plugin.Module,
+		Preload: false,
+		Angular: plugin.Angular,
 	}
 
 	if settings.Enabled {

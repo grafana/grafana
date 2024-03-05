@@ -28,6 +28,7 @@ import {
 } from '@grafana/schema';
 
 import { BarGaugeCell } from './BarGaugeCell';
+import { DataLinksCell } from './DataLinksCell';
 import { DefaultCell } from './DefaultCell';
 import { getFooterValue } from './FooterRow';
 import { GeoCell } from './GeoCell';
@@ -183,6 +184,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return SparklineCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
+    case TableCellDisplayMode.DataLinks:
+      return DataLinksCell;
   }
 
   if (field.type === FieldType.geo) {
@@ -382,10 +385,25 @@ export function getFooterItems(
 }
 
 function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2) {
-  const fmt = field.display ?? getDisplayProcessor({ field, theme });
+  // If we don't have anything to return then we display nothing
   const calc = reducer[0];
-  const v = reduceField({ field, reducers: reducer })[calc];
-  return formattedValueToString(fmt(v));
+  if (calc === undefined) {
+    return '';
+  }
+
+  // Calculate the reduction
+  const format = field.display ?? getDisplayProcessor({ field, theme });
+  const fieldCalcValue = reduceField({ field, reducers: reducer })[calc];
+
+  // If the reducer preserves units then format the
+  // end value with the field display processor
+  const reducerInfo = fieldReducers.get(calc);
+  if (reducerInfo.preservesUnits) {
+    return formattedValueToString(format(fieldCalcValue));
+  }
+
+  // Otherwise we simply return the formatted string
+  return formattedValueToString({ text: fieldCalcValue });
 }
 
 // This strips the raw vales from the `rows` object.
@@ -532,4 +550,34 @@ export function getAlignmentFactor(
 
     return alignmentFactor;
   }
+}
+
+// since the conversion from timeseries panel crosshair to time is pixel based, we need
+// to set a threshold where the table row highlights when the crosshair is hovered over a certain point
+// because multiple pixels (converted to times) may represent the same point/row in table
+export function isPointTimeValAroundTableTimeVal(pointTime: number, rowTime: number, threshold: number) {
+  return Math.abs(Math.floor(pointTime) - rowTime) < threshold;
+}
+
+// calculate the threshold for which we consider a point in a chart
+// to match a row in a table based on a time value
+export function calculateAroundPointThreshold(timeField: Field): number {
+  let max = -Number.MAX_VALUE;
+  let min = Number.MAX_VALUE;
+
+  if (timeField.values.length < 2) {
+    return 0;
+  }
+
+  for (let i = 0; i < timeField.values.length; i++) {
+    const value = timeField.values[i];
+    if (value > max) {
+      max = value;
+    }
+    if (value < min) {
+      min = value;
+    }
+  }
+
+  return (max - min) / timeField.values.length;
 }

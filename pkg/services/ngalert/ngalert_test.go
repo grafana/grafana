@@ -26,7 +26,6 @@ import (
 func Test_subscribeToFolderChanges(t *testing.T) {
 	orgID := rand.Int63()
 	folder := &folder.Folder{
-		ID:    0,
 		UID:   util.GenerateShortUID(),
 		Title: "Folder" + util.GenerateShortUID(),
 	}
@@ -42,7 +41,6 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 	err := bus.Publish(context.Background(), &events.FolderTitleUpdated{
 		Timestamp: time.Now(),
 		Title:     "Folder" + util.GenerateShortUID(),
-		ID:        folder.ID,
 		UID:       folder.UID,
 		OrgID:     orgID,
 	})
@@ -61,7 +59,7 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 
 func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("fail initialization if invalid backend", func(t *testing.T) {
-		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 		logger := log.NewNopLogger()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
@@ -74,7 +72,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	})
 
 	t.Run("fail initialization if invalid multi-backend primary", func(t *testing.T) {
-		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 		logger := log.NewNopLogger()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled:      true,
@@ -89,7 +87,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	})
 
 	t.Run("fail initialization if invalid multi-backend secondary", func(t *testing.T) {
-		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 		logger := log.NewNopLogger()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled:          true,
@@ -105,7 +103,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	})
 
 	t.Run("do not fail initialization if pinging Loki fails", func(t *testing.T) {
-		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 		logger := log.NewNopLogger()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
@@ -123,7 +121,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 
 	t.Run("emit metric describing chosen backend", func(t *testing.T) {
 		reg := prometheus.NewRegistry()
-		met := metrics.NewHistorianMetrics(reg)
+		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
 		logger := log.NewNopLogger()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
@@ -145,7 +143,7 @@ grafana_alerting_state_history_info{backend="annotations"} 1
 
 	t.Run("emit special zero metric if state history disabled", func(t *testing.T) {
 		reg := prometheus.NewRegistry()
-		met := metrics.NewHistorianMetrics(reg)
+		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
 		logger := log.NewNopLogger()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: false,

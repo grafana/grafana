@@ -114,7 +114,7 @@ func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
 }
 
 func (m *SecretsMigrator) initProvidersIfNeeded() error {
-	if m.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
+	if m.features.IsEnabledGlobally(featuremgmt.FlagDisableEnvelopeEncryption) {
 		logger.Info("Envelope encryption is not enabled but trying to init providers anyway...")
 
 		if err := m.secretsSrv.InitProviders(); err != nil {

@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, LinkButton, Link, useStyles2, ConfirmModal, Stack } from '@grafana/ui';
+import { Button, ConfirmModal, IconButton, Link, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types/store';
 
@@ -11,20 +12,56 @@ import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } 
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { deleteMuteTimingAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
-import { DynamicTable, DynamicTableItemProps, DynamicTableColumnProps } from '../DynamicTable';
+import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
+import { GrafanaMuteTimingsExporter } from '../export/GrafanaMuteTimingsExporter';
 
-import { renderTimeIntervals } from './util';
+import { mergeTimeIntervals, renderTimeIntervals } from './util';
 
-interface Props {
+const ALL_MUTE_TIMINGS = Symbol('all mute timings');
+
+type ExportProps = [JSX.Element | null, (muteTiming: string | typeof ALL_MUTE_TIMINGS) => void];
+
+const useExportMuteTiming = (): ExportProps => {
+  const [muteTimingName, setMuteTimingName] = useState<string | typeof ALL_MUTE_TIMINGS | null>(null);
+  const [isExportDrawerOpen, toggleShowExportDrawer] = useToggle(false);
+
+  const handleClose = useCallback(() => {
+    setMuteTimingName(null);
+    toggleShowExportDrawer(false);
+  }, [toggleShowExportDrawer]);
+
+  const handleOpen = (receiverName: string | typeof ALL_MUTE_TIMINGS) => {
+    setMuteTimingName(receiverName);
+    toggleShowExportDrawer(true);
+  };
+
+  const drawer = useMemo(() => {
+    if (!muteTimingName || !isExportDrawerOpen) {
+      return null;
+    }
+
+    if (muteTimingName === ALL_MUTE_TIMINGS) {
+      // use this drawer when we want to export all mute timings
+      return <GrafanaMuteTimingsExporter onClose={handleClose} />;
+    } else {
+      // use this one for exporting a single mute timing
+      return <GrafanaMuteTimingsExporter muteTimingName={muteTimingName} onClose={handleClose} />;
+    }
+  }, [isExportDrawerOpen, handleClose, muteTimingName]);
+
+  return [drawer, handleOpen];
+};
+
+interface MuteTimingsTableProps {
   alertManagerSourceName: string;
   muteTimingNames?: string[];
   hideActions?: boolean;
 }
 
-export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hideActions }: Props) => {
+export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hideActions }: MuteTimingsTableProps) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
@@ -35,9 +72,9 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
   const config = currentData?.alertmanager_config;
 
   const [muteTimingName, setMuteTimingName] = useState<string>('');
-
   const items = useMemo((): Array<DynamicTableItemProps<MuteTimeInterval>> => {
-    const muteTimings = config?.mute_time_intervals ?? [];
+    // merge both fields mute_time_intervals and time_intervals to support both old and new config
+    const muteTimings = config ? mergeTimeIntervals(config) : [];
     const muteTimingsProvenances = config?.muteTimeProvenances ?? {};
 
     return muteTimings
@@ -51,10 +88,15 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
           },
         };
       });
-  }, [config?.mute_time_intervals, config?.muteTimeProvenances, muteTimingNames]);
+  }, [muteTimingNames, config]);
 
-  const columns = useColumns(alertManagerSourceName, hideActions, setMuteTimingName);
   const [_, allowedToCreateMuteTiming] = useAlertmanagerAbility(AlertmanagerAction.CreateMuteTiming);
+
+  const [ExportDrawer, showExportDrawer] = useExportMuteTiming();
+  const [exportMuteTimingsSupported, exportMuteTimingsAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.ExportMuteTimings
+  );
+  const columns = useColumns(alertManagerSourceName, hideActions, setMuteTimingName, showExportDrawer);
 
   return (
     <div className={styles.container}>
@@ -67,7 +109,7 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
         {!hideActions && items.length > 0 && (
           <Authorize actions={[AlertmanagerAction.CreateMuteTiming]}>
             <LinkButton
-              className={styles.addMuteButton}
+              className={styles.muteTimingsButtons}
               icon="plus"
               variant="primary"
               href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
@@ -75,6 +117,18 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
               Add mute timing
             </LinkButton>
           </Authorize>
+        )}
+        {exportMuteTimingsSupported && (
+          <Button
+            icon="download-alt"
+            className={styles.muteTimingsButtons}
+            variant="secondary"
+            aria-label="export all"
+            disabled={!exportMuteTimingsAllowed}
+            onClick={() => showExportDrawer(ALL_MUTE_TIMINGS)}
+          >
+            Export all
+          </Button>
         )}
       </Stack>
       {items.length > 0 ? (
@@ -104,16 +158,26 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
           onDismiss={() => setMuteTimingName('')}
         />
       )}
+      {ExportDrawer}
     </div>
   );
 };
 
-function useColumns(alertManagerSourceName: string, hideActions = false, setMuteTimingName: (name: string) => void) {
+function useColumns(
+  alertManagerSourceName: string,
+  hideActions = false,
+  setMuteTimingName: (name: string) => void,
+  openExportDrawer: (muteTiming: string | typeof ALL_MUTE_TIMINGS) => void
+) {
   const [[_editSupported, allowedToEdit], [_deleteSupported, allowedToDelete]] = useAlertmanagerAbilities([
     AlertmanagerAction.UpdateMuteTiming,
     AlertmanagerAction.DeleteMuteTiming,
   ]);
   const showActions = !hideActions && (allowedToEdit || allowedToDelete);
+
+  // const [ExportDrawer, openExportDrawer] = useExportMuteTiming();
+  // const [_, openExportDrawer] = useExportMuteTiming();
+  const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportMuteTimings);
 
   return useMemo((): Array<DynamicTableColumnProps<MuteTimeInterval>> => {
     const columns: Array<DynamicTableColumnProps<MuteTimeInterval>> = [
@@ -176,11 +240,32 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
             </div>
           );
         },
+        size: '80px',
+      });
+    }
+    if (exportSupported) {
+      columns.push({
+        id: 'actions',
+        label: '',
+        renderCell: function renderActions({ data }) {
+          return (
+            <div>
+              <Menu.Item
+                icon="download-alt"
+                label="Export"
+                ariaLabel="export"
+                disabled={!exportAllowed}
+                data-testid="export"
+                onClick={() => openExportDrawer(data.name)}
+              />
+            </div>
+          );
+        },
         size: '100px',
       });
     }
     return columns;
-  }, [alertManagerSourceName, setMuteTimingName, showActions]);
+  }, [alertManagerSourceName, setMuteTimingName, showActions, exportSupported, exportAllowed, openExportDrawer]);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -188,7 +273,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-flow: column nowrap;
   `,
-  addMuteButton: css`
+  muteTimingsButtons: css`
     margin-bottom: ${theme.spacing(2)};
     align-self: flex-end;
   `,

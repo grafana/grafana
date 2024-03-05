@@ -1,27 +1,27 @@
-import { of, throwError } from 'rxjs';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
-
 import { DataQueryRequest, DataSourceInstanceSettings, toUtc } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime'; // will use the version in __mocks__
 
-import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
-import { CustomVariableModel } from '../../../../features/variables/types';
 import CloudMonitoringDataSource from '../datasource';
 import { CloudMonitoringQuery } from '../types/query';
-import { CloudMonitoringOptions } from '../types/types';
+import { CloudMonitoringOptions, CustomVariableModel } from '../types/types';
+
+let getTempVars = () => [] as CustomVariableModel[];
+let replace = () => '';
 
 jest.mock('@grafana/runtime', () => ({
+  __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
+  getTemplateSrv: () => ({
+    replace: replace,
+    getVariables: getTempVars,
+    updateTimeRange: jest.fn(),
+    containsTemplate: jest.fn(),
+  }),
 }));
 
 type Args = { response?: unknown; throws?: boolean; templateSrv?: TemplateSrv };
 
-const fetchMock = jest.spyOn(backendSrv, 'fetch');
-
-function getTestcontext({ response = {}, throws = false, templateSrv = new TemplateSrv() }: Args = {}) {
+function getTestcontext({ response = {}, throws = false, templateSrv = getTemplateSrv() }: Args = {}) {
   jest.clearAllMocks();
 
   const instanceSettings = {
@@ -30,18 +30,7 @@ function getTestcontext({ response = {}, throws = false, templateSrv = new Templ
     },
   } as unknown as DataSourceInstanceSettings<CloudMonitoringOptions>;
 
-  const timeSrv = {
-    timeRange: () => ({
-      from: toUtc('2017-08-22T20:00:00Z'),
-      to: toUtc('2017-08-22T23:59:00Z'),
-    }),
-  } as TimeSrv;
-
-  throws
-    ? fetchMock.mockImplementation(() => throwError(response))
-    : fetchMock.mockImplementation(() => of(createFetchResponse(response)));
-
-  const ds = new CloudMonitoringDataSource(instanceSettings, templateSrv, timeSrv);
+  const ds = new CloudMonitoringDataSource(instanceSettings, templateSrv);
 
   return { ds };
 }
@@ -89,46 +78,15 @@ describe('CloudMonitoringDataSource', () => {
     });
   });
 
-  describe('When loading labels', () => {
-    describe('and no aggregation was specified', () => {
-      it('should use default values', async () => {
-        const { ds } = getTestcontext();
-        await ds.getLabels('cpu', 'a', 'default-proj');
-
-        await expect(fetchMock.mock.calls[0][0].data.queries[0].timeSeriesList).toMatchObject({
-          crossSeriesReducer: 'REDUCE_NONE',
-          groupBys: [],
-          filters: ['metric.type', '=', 'cpu'],
-          projectName: 'default-proj',
-          view: 'HEADERS',
-        });
-      });
-    });
-
-    describe('and an aggregation was specified', () => {
-      it('should use the provided aggregation', async () => {
-        const { ds } = getTestcontext();
-        await ds.getLabels('sql', 'b', 'default-proj', {
-          crossSeriesReducer: 'REDUCE_MEAN',
-          groupBys: ['metadata.system_label.name'],
-        });
-
-        await expect(fetchMock.mock.calls[0][0].data.queries[0].timeSeriesList).toMatchObject({
-          crossSeriesReducer: 'REDUCE_MEAN',
-          groupBys: ['metadata.system_label.name'],
-          filters: ['metric.type', '=', 'sql'],
-          projectName: 'default-proj',
-          view: 'HEADERS',
-        });
-      });
-    });
-  });
-
   describe('when interpolating a template variable for the filter', () => {
+    beforeEach(() => {
+      getTempVars = () => [] as CustomVariableModel[];
+      replace = (target?: string) => target || '';
+    });
     describe('and is single value variable', () => {
       it('should replace the variable with the value', () => {
-        const templateSrv = initTemplateSrv('filtervalue1');
-        const { ds } = getTestcontext({ templateSrv });
+        replace = () => 'filtervalue1';
+        const { ds } = getTestcontext();
         const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '${test}'], {});
 
         expect(interpolated.length).toBe(3);
@@ -138,8 +96,8 @@ describe('CloudMonitoringDataSource', () => {
 
     describe('and is single value variable for the label part', () => {
       it('should replace the variable with the value and not with regex formatting', () => {
-        const templateSrv = initTemplateSrv('resource.label.zone');
-        const { ds } = getTestcontext({ templateSrv });
+        replace = () => 'resource.label.zone';
+        const { ds } = getTestcontext();
         const interpolated = ds.interpolateFilters(['${test}', '=~', 'europe-north-1a'], {});
 
         expect(interpolated.length).toBe(3);
@@ -148,26 +106,30 @@ describe('CloudMonitoringDataSource', () => {
     });
 
     describe('and is multi value variable', () => {
+      beforeEach(() => {
+        getTempVars = () => [] as CustomVariableModel[];
+        replace = (target?: string) => target || '';
+      });
       it('should replace the variable with a regex expression', () => {
-        const templateSrv = initTemplateSrv(['filtervalue1', 'filtervalue2'], true);
-        const { ds } = getTestcontext({ templateSrv });
-        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
+        replace = () => '(filtervalue1|filtervalue2)';
+        const { ds } = getTestcontext();
+        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '${test}'], {});
 
         expect(interpolated[2]).toBe('(filtervalue1|filtervalue2)');
       });
 
       it('should not escape a regex', () => {
-        const templateSrv = initTemplateSrv('/[a-Z]*.html', true);
-        const { ds } = getTestcontext({ templateSrv });
-        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
+        replace = () => '/[a-Z]*.html';
+        const { ds } = getTestcontext();
+        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '${test}'], {});
 
         expect(interpolated[2]).toBe('/[a-Z]*.html');
       });
 
       it('should not escape an array of regexes but join them as a regex', () => {
-        const templateSrv = initTemplateSrv(['/[a-Z]*.html', '/foo.html'], true);
-        const { ds } = getTestcontext({ templateSrv });
-        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
+        replace = () => '(/[a-Z]*.html|/foo.html)';
+        const { ds } = getTestcontext();
+        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '${test}'], {});
 
         expect(interpolated[2]).toBe('(/[a-Z]*.html|/foo.html)');
       });
@@ -177,9 +139,9 @@ describe('CloudMonitoringDataSource', () => {
   describe('when interpolating a template variable for group bys', () => {
     describe('and is single value variable', () => {
       it('should replace the variable with the value', () => {
-        const templateSrv = initTemplateSrv('groupby1');
-        const { ds } = getTestcontext({ templateSrv });
-        const interpolated = ds.interpolateGroupBys(['[[test]]'], {});
+        replace = () => 'groupby1';
+        const { ds } = getTestcontext();
+        const interpolated = ds.interpolateGroupBys(['${test}'], {});
 
         expect(interpolated.length).toBe(1);
         expect(interpolated[0]).toBe('groupby1');
@@ -188,9 +150,9 @@ describe('CloudMonitoringDataSource', () => {
 
     describe('and is multi value variable', () => {
       it('should replace the variable with an array of group bys', () => {
-        const templateSrv = initTemplateSrv(['groupby1', 'groupby2'], true);
-        const { ds } = getTestcontext({ templateSrv });
-        const interpolated = ds.interpolateGroupBys(['[[test]]'], {});
+        replace = () => 'groupby1,groupby2';
+        const { ds } = getTestcontext();
+        const interpolated = ds.interpolateGroupBys(['${test}'], {});
 
         expect(interpolated.length).toBe(2);
         expect(interpolated[0]).toBe('groupby1');
@@ -199,17 +161,3 @@ describe('CloudMonitoringDataSource', () => {
     });
   });
 });
-
-function initTemplateSrv(values: string | string[], multi = false) {
-  const templateSrv = new TemplateSrv();
-  const test: CustomVariableModel = {
-    ...initialCustomVariableModelState,
-    id: 'test',
-    name: 'test',
-    current: { value: values, text: Array.isArray(values) ? values.toString() : values, selected: true },
-    options: [{ value: values, text: Array.isArray(values) ? values.toString() : values, selected: false }],
-    multi,
-  };
-  templateSrv.init([test]);
-  return templateSrv;
-}

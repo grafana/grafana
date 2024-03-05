@@ -18,7 +18,6 @@ import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
 import { isAlertingRule } from '../../utils/rules';
-import { DetailsField } from '../DetailsField';
 
 import { AlertInstancesTable } from './AlertInstancesTable';
 import { getComponentsFromStats } from './RuleStats';
@@ -53,12 +52,8 @@ function ShowMoreInstances(props: { onClick: () => void; stats: ShowMoreStats })
 
 export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
   const history = useHistory();
-  const {
-    rule: { promRule, namespace, instanceTotals },
-    itemsDisplayLimit = Number.POSITIVE_INFINITY,
-    pagination,
-    enableFiltering = false,
-  } = props;
+  const { rule, itemsDisplayLimit = Number.POSITIVE_INFINITY, pagination, enableFiltering = false } = props;
+  const { promRule, namespace, instanceTotals } = rule;
 
   const [queryString, setQueryString] = useState<string>();
   const [alertState, setAlertState] = useState<InstanceStateFilter>();
@@ -87,7 +82,14 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
 
   // Count All By State is used only when filtering is enabled and we have access to all instances
   const countAllByState = countBy(promRule.alerts, (alert) => mapStateWithReasonToBaseState(alert.state));
-  const totalInstancesCount = sum(Object.values(instanceTotals));
+
+  // error state is not a separate state
+  const totalInstancesCount = sum([
+    instanceTotals.alerting,
+    instanceTotals.inactive,
+    instanceTotals.pending,
+    instanceTotals.nodata,
+  ]);
   const hiddenInstancesCount = totalInstancesCount - visibleInstances.length;
 
   const stats: ShowMoreStats = {
@@ -108,18 +110,16 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
   ) : undefined;
 
   return (
-    <DetailsField label="Matching instances" horizontal={true}>
+    <>
       {enableFiltering && (
         <div className={cx(styles.flexRow, styles.spaceBetween)}>
           <div className={styles.flexRow}>
             <MatcherFilter
-              className={styles.rowChild}
               key={queryStringKey}
               defaultQueryString={queryString}
               onFilterChange={(value) => setQueryString(value)}
             />
             <AlertInstanceStateFilter
-              className={styles.rowChild}
               filterType={stateFilterType}
               stateFilter={alertState}
               onStateFilterChange={setAlertState}
@@ -129,8 +129,8 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
         </div>
       )}
       {!enableFiltering && <div className={styles.stats}>{statsComponents}</div>}
-      <AlertInstancesTable instances={visibleInstances} pagination={pagination} footerRow={footerRow} />
-    </DetailsField>
+      <AlertInstancesTable rule={rule} instances={visibleInstances} pagination={pagination} footerRow={footerRow} />
+    </>
   );
 }
 
@@ -162,12 +162,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: 100%;
       flex-wrap: wrap;
       margin-bottom: ${theme.spacing(1)};
+      gap: ${theme.spacing(1)};
     `,
     spaceBetween: css`
       justify-content: space-between;
-    `,
-    rowChild: css`
-      margin-right: ${theme.spacing(1)};
     `,
     footerRow: css`
       display: flex;

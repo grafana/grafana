@@ -30,7 +30,7 @@ type Plugin struct {
 	Module  string
 	BaseURL string
 
-	AngularDetected bool
+	Angular plugins.AngularMeta
 
 	ExternalService *auth.ExternalService
 }
@@ -72,7 +72,8 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		SignatureError:    p.SignatureError,
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
-		AngularDetected:   p.AngularDetected,
 		ExternalService:   p.ExternalService,
+
+		Angular: p.Angular,
 	}
 }

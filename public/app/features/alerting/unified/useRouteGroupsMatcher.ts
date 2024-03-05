@@ -1,16 +1,12 @@
 import * as comlink from 'comlink';
 import { useCallback, useEffect } from 'react';
-import { useEnabled } from 'react-enable';
-
-import { logError } from '@grafana/runtime';
 
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../types/unified-alerting-dto';
 
-import { logInfo } from './Analytics';
+import { logError, logInfo } from './Analytics';
 import { createWorker } from './createRouteGroupsMatcherWorker';
-import { AlertingFeature } from './features';
-import type { RouteGroupsMatcher } from './routeGroupsMatcher';
+import type { MatchOptions, RouteGroupsMatcher } from './routeGroupsMatcher';
 
 let routeMatcher: comlink.Remote<RouteGroupsMatcher> | undefined;
 
@@ -45,38 +41,27 @@ function loadWorker() {
   return { disposeWorker };
 }
 
-function validateWorker(
-  toggleEnabled: boolean,
-  matcher: typeof routeMatcher
-): asserts matcher is comlink.Remote<RouteGroupsMatcher> {
-  if (!toggleEnabled) {
-    throw new Error('Matching routes preview is disabled');
-  }
-
+function validateWorker(matcher: typeof routeMatcher): asserts matcher is comlink.Remote<RouteGroupsMatcher> {
   if (!routeMatcher) {
     throw new Error('Route Matcher has not been initialized');
   }
 }
 
 export function useRouteGroupsMatcher() {
-  const workerPreviewEnabled = useEnabled(AlertingFeature.NotificationPoliciesV2MatchingInstances);
-
   useEffect(() => {
-    if (workerPreviewEnabled) {
-      const { disposeWorker } = loadWorker();
-      return disposeWorker;
-    }
+    const { disposeWorker } = loadWorker();
+    return disposeWorker;
 
     return () => null;
-  }, [workerPreviewEnabled]);
+  }, []);
 
   const getRouteGroupsMap = useCallback(
-    async (rootRoute: RouteWithID, alertGroups: AlertmanagerGroup[]) => {
-      validateWorker(workerPreviewEnabled, routeMatcher);
+    async (rootRoute: RouteWithID, alertGroups: AlertmanagerGroup[], options?: MatchOptions) => {
+      validateWorker(routeMatcher);
 
       const startTime = performance.now();
 
-      const result = await routeMatcher.getRouteGroupsMap(rootRoute, alertGroups);
+      const result = await routeMatcher.getRouteGroupsMap(rootRoute, alertGroups, options);
 
       const timeSpent = performance.now() - startTime;
 
@@ -89,16 +74,16 @@ export function useRouteGroupsMatcher() {
 
       return result;
     },
-    [workerPreviewEnabled]
+    []
   );
 
   const matchInstancesToRoute = useCallback(
-    async (rootRoute: RouteWithID, instancesToMatch: Labels[]) => {
-      validateWorker(workerPreviewEnabled, routeMatcher);
+    async (rootRoute: RouteWithID, instancesToMatch: Labels[], options?: MatchOptions) => {
+      validateWorker(routeMatcher);
 
       const startTime = performance.now();
 
-      const result = await routeMatcher.matchInstancesToRoute(rootRoute, instancesToMatch);
+      const result = await routeMatcher.matchInstancesToRoute(rootRoute, instancesToMatch, options);
 
       const timeSpent = performance.now() - startTime;
 
@@ -111,7 +96,7 @@ export function useRouteGroupsMatcher() {
 
       return result;
     },
-    [workerPreviewEnabled]
+    []
   );
 
   return { getRouteGroupsMap, matchInstancesToRoute };

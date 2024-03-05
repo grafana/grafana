@@ -177,7 +177,6 @@ func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, pluginDa
 			{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
 		}),
 		Path:      pluginDashInfo.Reference,
-		FolderId:  0, // nolint:staticcheck
 		Dashboard: resp.Dashboard.Data,
 		Overwrite: true,
 		Inputs:    nil,

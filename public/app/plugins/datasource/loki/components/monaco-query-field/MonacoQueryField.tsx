@@ -12,8 +12,8 @@ import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from 
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
-import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { CompletionDataProvider } from './monaco-completion-provider/CompletionDataProvider';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider/completionUtils';
 import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
@@ -100,7 +100,16 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   };
 };
 
-const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasource, placeholder, onChange }: Props) => {
+const MonacoQueryField = ({
+  history,
+  onBlur,
+  onRunQuery,
+  initialValue,
+  datasource,
+  placeholder,
+  onChange,
+  timeRange,
+}: Props) => {
   const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
@@ -157,7 +166,7 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
 
   return (
     <div
-      aria-label={selectors.components.QueryField.container}
+      data-testid={selectors.components.QueryField.container}
       className={styles.container}
       // NOTE: we will be setting inline-style-width/height on this element
       ref={containerRef}
@@ -203,7 +212,7 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
             onTypeDebounced(query);
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });
-          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);
+          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef, timeRange);
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

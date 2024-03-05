@@ -25,7 +25,7 @@ interface SimInfo {
 
 export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   const simQuery = query.sim ?? ({} as SimulationQuery);
-  const simKey = simQuery.key ?? ({} as typeof simQuery.key);
+  const simKey = simQuery.key ?? {};
   // keep track of updated config state to pass down to form
   const [cfgValue, setCfgValue] = useState<Record<string, any>>({});
 
@@ -90,7 +90,7 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
     if (simKey.uid) {
       path += '/' + simKey.uid;
     }
-    ds.postResource('sim/' + path, config).then((res) => {
+    ds.postResource<SimInfo>('sim/' + path, config).then((res) => {
       setCfgValue(res.config);
     });
   };

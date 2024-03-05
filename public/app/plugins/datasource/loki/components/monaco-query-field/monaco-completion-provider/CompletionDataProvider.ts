@@ -1,9 +1,9 @@
 import { chain } from 'lodash';
 
-import { HistoryItem } from '@grafana/data';
-import { escapeLabelValueInExactSelector } from 'app/plugins/datasource/prometheus/language_utils';
+import { HistoryItem, TimeRange } from '@grafana/data';
 
 import LanguageProvider from '../../../LanguageProvider';
+import { escapeLabelValueInExactSelector } from '../../../languageUtils';
 import { ParserAndLabelKeysResult, LokiQuery } from '../../../types';
 
 import { Label } from './situation';
@@ -15,7 +15,8 @@ interface HistoryRef {
 export class CompletionDataProvider {
   constructor(
     private languageProvider: LanguageProvider,
-    private historyRef: HistoryRef = { current: [] }
+    private historyRef: HistoryRef = { current: [] },
+    private timeRange: TimeRange | undefined
   ) {
     this.queryToLabelKeysCache = new Map();
   }
@@ -51,7 +52,7 @@ export class CompletionDataProvider {
   async getLabelValues(labelName: string, otherLabels: Label[]) {
     if (otherLabels.length === 0) {
       // if there is no filtering, we have to use a special endpoint
-      return await this.languageProvider.fetchLabelValues(labelName);
+      return await this.languageProvider.fetchLabelValues(labelName, { timeRange: this.timeRange });
     }
 
     const data = await this.getSeriesLabels(otherLabels);
@@ -82,7 +83,7 @@ export class CompletionDataProvider {
         this.queryToLabelKeysCache.delete(firstKey);
       }
       // Fetch a fresh result from the backend
-      const labelKeys = await this.languageProvider.getParserAndLabelKeys(logQuery);
+      const labelKeys = await this.languageProvider.getParserAndLabelKeys(logQuery, { timeRange: this.timeRange });
       // Add the result to the cache
       this.queryToLabelKeysCache.set(logQuery, labelKeys);
       return labelKeys;
@@ -90,6 +91,8 @@ export class CompletionDataProvider {
   }
 
   async getSeriesLabels(labels: Label[]) {
-    return await this.languageProvider.fetchSeriesLabels(this.buildSelector(labels)).then((data) => data ?? {});
+    return await this.languageProvider
+      .fetchSeriesLabels(this.buildSelector(labels), { timeRange: this.timeRange })
+      .then((data) => data ?? {});
   }
 }

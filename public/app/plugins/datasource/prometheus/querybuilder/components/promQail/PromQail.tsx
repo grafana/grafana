@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { Alert, Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { PrometheusDatasource } from '../../../datasource';
@@ -53,12 +54,7 @@ export const PromQail = (props: PromQailProps) => {
 
   useEffect(() => {
     const fetchLabels = async () => {
-      let labelsIndex: Record<string, string[]>;
-      if (datasource.hasLabelsMatchAPISupport()) {
-        labelsIndex = await datasource.languageProvider.fetchSeriesLabelsMatch(query.metric);
-      } else {
-        labelsIndex = await datasource.languageProvider.fetchSeriesLabels(query.metric);
-      }
+      let labelsIndex: Record<string, string[]> = await datasource.languageProvider.fetchLabelsWithMatch(query.metric);
       setLabelNames(Object.keys(labelsIndex));
     };
     fetchLabels();
@@ -82,24 +78,30 @@ export const PromQail = (props: PromQailProps) => {
         </div>
         {state.showStartingMessage ? (
           <>
-            <div className={styles.textPadding}>
-              This assistant can suggest queries based on your use case and the metric you want to query
-            </div>
-            <div className={styles.textPadding}>
-              The assistant will connect to OpenAI using your API key. The following information will be sent to OpenAI:
-            </div>
             <div className={styles.dataList}>
-              <ul>
-                <li>Metrics</li>
-                <li>Labels</li>
-                <li>Metrics metadata</li>
-              </ul>
+              <ol>
+                <li className={styles.textPadding}>
+                  Query Advisor suggests queries based on a metric and requests you type in.
+                </li>
+                <li className={styles.textPadding}>
+                  Query Advisor sends Prometheus metrics, labels and metadata to the LLM provider you&#39;ve configured.
+                  Be sure to align its usage with your company&#39;s internal policies.
+                </li>
+                <li className={styles.textPadding}>
+                  An AI-suggested query may not fully answer your question. Always take a moment to understand a query
+                  before you use it.
+                </li>
+              </ol>
             </div>
-            <div className={styles.textPadding}>Check with OpenAI to understand how your data is being used.</div>
-            <div>
-              AI-suggested queries may not always be the right one for your use case. Always take a moment to understand
-              the queries before using them.
-            </div>
+            <Alert
+              title={''}
+              severity={'info'}
+              key={'promqail-llm-app'}
+              className={cx(styles.textPadding, styles.noMargin)}
+            >
+              Query Advisor is currently in Private Preview. Feedback is appreciated and can be provided on explanations
+              and suggestions.
+            </Alert>
 
             {/* don't show this message again, store in localstorage */}
             <div className={styles.textPadding}>
@@ -184,7 +186,10 @@ export const PromQail = (props: PromQailProps) => {
                         const isLoading = true;
                         const suggestionType = SuggestionType.Historical;
                         dispatch(addInteraction({ suggestionType, isLoading }));
-                        //CHECK THIS???
+                        reportInteraction('grafana_prometheus_promqail_know_what_you_want_to_query', {
+                          promVisualQuery: query,
+                          doYouKnow: 'no',
+                        });
                         promQailSuggest(dispatch, 0, query, labelNames, datasource);
                       }}
                     >
@@ -195,6 +200,10 @@ export const PromQail = (props: PromQailProps) => {
                       variant="primary"
                       data-testid={testIds.clickForAi}
                       onClick={() => {
+                        reportInteraction('grafana_prometheus_promqail_know_what_you_want_to_query', {
+                          promVisualQuery: query,
+                          doYouKnow: 'yes',
+                        });
                         const isLoading = false;
                         const suggestionType = SuggestionType.AI;
                         dispatch(addInteraction({ suggestionType, isLoading }));
@@ -271,6 +280,10 @@ export const PromQail = (props: PromQailProps) => {
                                       interaction: newInteraction,
                                     };
 
+                                    reportInteraction('grafana_prometheus_promqail_suggest_query_instead', {
+                                      promVisualQuery: query,
+                                    });
+
                                     dispatch(updateInteraction(payload));
                                     promQailSuggest(dispatch, idx, query, labelNames, datasource, newInteraction);
                                   }}
@@ -291,6 +304,11 @@ export const PromQail = (props: PromQailProps) => {
                                       idx: idx,
                                       interaction: newInteraction,
                                     };
+
+                                    reportInteraction('grafana_prometheus_promqail_prompt_submitted', {
+                                      promVisualQuery: query,
+                                      prompt: interaction.prompt,
+                                    });
 
                                     dispatch(updateInteraction(payload));
                                     // add the suggestions in the API call
@@ -392,7 +410,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       marginRight: '10px',
     }),
     dataList: css({
-      padding: '0px 28px 28px 28px',
+      padding: '0px 28px 0px 28px',
     }),
     textPadding: css({
       paddingBottom: '12px',
@@ -520,6 +538,21 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     submitFeedback: css({
       padding: '16px 0',
+    }),
+    noMargin: css({
+      margin: 0,
+    }),
+    enableButtonTooltip: css({
+      padding: 8,
+    }),
+    enableButtonTooltipText: css({
+      color: `${theme.colors.text.secondary}`,
+      ul: {
+        marginLeft: 16,
+      },
+    }),
+    link: css({
+      color: `${theme.colors.text.link} !important`,
     }),
   };
 };

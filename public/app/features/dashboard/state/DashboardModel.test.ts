@@ -116,16 +116,10 @@ describe('DashboardModel', () => {
       expect(keys[1]).toBe('editable');
     });
 
-    it('should remove add panel panels', () => {
+    it('should have only 1 panel after adding panel to a new dashboard', () => {
       const model = createDashboardModelFixture();
       model.addPanel({
-        type: 'add-panel',
-      });
-      model.addPanel({
         type: 'graph',
-      });
-      model.addPanel({
-        type: 'add-panel',
       });
       const saveModel = model.getSaveModelClone();
       const panels = saveModel.panels;
@@ -188,6 +182,16 @@ describe('DashboardModel', () => {
 
       expect(dashboard.panels[1].repeat).toBe(undefined);
       expect(dashboard.panels[1].scopedVars).toBe(undefined);
+    });
+
+    it('remove panel should call destroy', () => {
+      dashboard.addPanel({ type: 'test', title: 'test' });
+      const panel = dashboard.panels[0];
+      panel.destroy = jest.fn();
+
+      dashboard.removePanel(panel);
+
+      expect(panel.destroy).toHaveBeenCalled();
     });
   });
 
@@ -900,8 +904,11 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       model = createDashboardModelFixture({
         panels: [
+          // @ts-expect-error
           { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 }, legend: { show: true } },
+          // @ts-expect-error
           { id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 }, legend: { show: false } },
+          // @ts-expect-error
           { id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 }, legend: { show: false } },
         ],
       });

@@ -1,9 +1,11 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -12,37 +14,53 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type Api struct {
 	PublicDashboardService publicdashboards.Service
-	RouteRegister          routing.RouteRegister
-	AccessControl          accesscontrol.AccessControl
-	Features               *featuremgmt.FeatureManager
-	Log                    log.Logger
+	Middleware             publicdashboards.Middleware
+
+	accessControl accesscontrol.AccessControl
+	cfg           *setting.Cfg
+	features      featuremgmt.FeatureToggles
+	license       licensing.Licensing
+	log           log.Logger
+	routeRegister routing.RouteRegister
 }
 
 func ProvideApi(
 	pd publicdashboards.Service,
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
+	md publicdashboards.Middleware,
+	cfg *setting.Cfg,
+	license licensing.Licensing,
 ) *Api {
 	api := &Api{
 		PublicDashboardService: pd,
-		RouteRegister:          rr,
-		AccessControl:          ac,
-		Features:               features,
-		Log:                    log.New("publicdashboards.api"),
+		Middleware:             md,
+		accessControl:          ac,
+		cfg:                    cfg,
+		features:               features,
+		license:                license,
+		log:                    log.New("publicdashboards.api"),
+		routeRegister:          rr,
 	}
 
-	// attach api if PublicDashboards feature flag is enabled
-	if features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+	// register endpoints if the feature is enabled
+	if features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) && cfg.PublicDashboardsEnabled {
 		api.RegisterAPIEndpoints()
+	}
+
+	if !features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) {
+		api.log.Warn("[Deprecated] The publicDashboards feature toggle will be removed in Grafana v11. To disable the public dashboards feature, use the public_dashboards.enabled setting.")
 	}
 
 	return api
@@ -54,36 +72,35 @@ func (api *Api) RegisterAPIEndpoints() {
 	// Anonymous access to public dashboard route is configured in pkg/api/api.go
 	// because it is deeply dependent on the HTTPServer.Index() method and would result in a
 	// circular dependency
-
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.ViewPublicDashboard))
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", routing.Wrap(api.GetPublicAnnotations))
-
-	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
+	api.routeRegister.Group("/api/public/dashboards/:accessToken", func(apiRoute routing.RouteRegister) {
+		apiRoute.Get("/", routing.Wrap(api.ViewPublicDashboard))
+		apiRoute.Get("/annotations", routing.Wrap(api.GetPublicAnnotations))
+		apiRoute.Post("/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
+	}, api.Middleware.HandleApi)
 
 	// Auth endpoints
-	auth := accesscontrol.Middleware(api.AccessControl)
+	auth := accesscontrol.Middleware(api.accessControl)
 	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":dashboardUid"))
 
 	// List public dashboards for org
-	api.RouteRegister.Get("/api/dashboards/public-dashboards", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
-
+	api.routeRegister.Get("/api/dashboards/public-dashboards", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
 	// Get public dashboard
-	api.RouteRegister.Get("/api/dashboards/uid/:dashboardUid/public-dashboards",
+	api.routeRegister.Get("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
 		routing.Wrap(api.GetPublicDashboard))
 
 	// Create Public Dashboard
-	api.RouteRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboards",
+	api.routeRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.CreatePublicDashboard))
 
 	// Update Public Dashboard
-	api.RouteRegister.Patch("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
+	api.routeRegister.Patch("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
 		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.UpdatePublicDashboard))
 
 	// Delete Public dashboard
-	api.RouteRegister.Delete("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
+	api.routeRegister.Delete("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
 		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.DeletePublicDashboard))
 }
@@ -145,8 +162,8 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 		return response.Err(err)
 	}
 
-	if pd == nil {
-		response.Err(ErrPublicDashboardNotFound.Errorf("GetPublicDashboard: public dashboard not found"))
+	if pd == nil || (!api.license.FeatureEnabled(FeaturePublicDashboardsEmailSharing) && pd.Share == EmailShareType) {
+		return response.Err(ErrPublicDashboardNotFound.Errorf("GetPublicDashboard: public dashboard not found"))
 	}
 
 	return response.JSON(http.StatusOK, pd)
@@ -284,9 +301,9 @@ func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Respo
 }
 
 // Copied from pkg/api/metrics.go
-func toJsonStreamingResponse(features *featuremgmt.FeatureManager, qdr *backend.QueryDataResponse) response.Response {
+func toJsonStreamingResponse(ctx context.Context, features featuremgmt.FeatureToggles, qdr *backend.QueryDataResponse) response.Response {
 	statusWhenError := http.StatusBadRequest
-	if features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
+	if features.IsEnabled(ctx, featuremgmt.FlagDatasourceQueryMultiStatus) {
 		statusWhenError = http.StatusMultiStatus
 	}
 

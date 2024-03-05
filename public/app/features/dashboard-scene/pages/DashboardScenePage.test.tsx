@@ -1,20 +1,24 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { cloneDeep } from 'lodash';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
+import { config, getPluginLinkExtensions, locationService, setPluginImportUtils } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-
-import { setupLoadDashboardMock } from '../utils/test-utils';
+import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 
 import { DashboardScenePage, Props } from './DashboardScenePage';
+import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  setPluginExtensionGetter: jest.fn(),
+  getPluginLinkExtensions: jest.fn(),
   getDataSourceSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({}),
@@ -23,12 +27,14 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
+
 function setup() {
   const context = getGrafanaContextMock();
   const props: Props = {
     ...getRouteComponentProps(),
   };
-  props.match.params.uid = 'd10';
+  props.match.params.uid = 'my-dash-uid';
 
   const renderResult = render(
     <TestProvider grafanaContext={context}>
@@ -36,12 +42,22 @@ function setup() {
     </TestProvider>
   );
 
-  return { renderResult, context };
+  const rerender = (newProps: Props) => {
+    renderResult.rerender(
+      <TestProvider grafanaContext={context}>
+        <DashboardScenePage {...newProps} />
+      </TestProvider>
+    );
+  };
+
+  return { rerender, context, props };
 }
 
-const simpleDashboard = {
+const simpleDashboard: Dashboard = {
   title: 'My cool dashboard',
-  uid: '10d',
+  uid: 'my-dash-uid',
+  schemaVersion: 30,
+  version: 1,
   panels: [
     {
       id: 1,
@@ -90,13 +106,25 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
+const loadDashboardMock = jest.fn();
+
+setDashboardLoaderSrv({
+  loadDashboard: loadDashboardMock,
+  // disabling type checks since this is a test util
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+} as unknown as DashboardLoaderSrv);
+
 describe('DashboardScenePage', () => {
   beforeEach(() => {
     locationService.push('/');
-    setupLoadDashboardMock({ dashboard: simpleDashboard, meta: {} });
+    getDashboardScenePageStateManager().clearDashboardCache();
+    loadDashboardMock.mockClear();
+    loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: {} });
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
+    getPluginLinkExtensionsMock.mockRestore();
+    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
   });
 
   it('Can render dashboard', async () => {
@@ -111,6 +139,27 @@ describe('DashboardScenePage', () => {
     expect(await screen.findByText('Content B')).toBeInTheDocument();
   });
 
+  it('routeReloadCounter should trigger reload', async () => {
+    const { rerender, props } = setup();
+
+    await waitForDashbordToRender();
+
+    expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
+
+    const updatedDashboard = cloneDeep(simpleDashboard);
+    updatedDashboard.version = 11;
+    updatedDashboard.panels![0].title = 'Updated title';
+
+    getDashboardScenePageStateManager().clearDashboardCache();
+    loadDashboardMock.mockResolvedValue({ dashboard: updatedDashboard, meta: {} });
+
+    props.history.location.state = { routeReloadCounter: 1 };
+
+    rerender(props);
+
+    expect(await screen.findByTitle('Updated title')).toBeInTheDocument();
+  });
+
   it('Can inspect panel', async () => {
     setup();
 
@@ -122,12 +171,9 @@ describe('DashboardScenePage', () => {
     // Somethig with Dropdown that is not working inside react-testing
     await userEvent.click(screen.getByLabelText('Menu for panel with title Panel B'));
 
-    const inspectLink = (await screen.findByRole('link', { name: /Inspect/ })).getAttribute('href')!;
-    act(() => locationService.push(inspectLink));
+    const inspectMenuItem = await screen.findAllByText('Inspect');
 
-    // I get not implemented exception here (from navigation / js-dom).
-    // Mocking window.location.assign did not help
-    //await userEvent.click(await screen.findByRole('link', { name: /Inspect/ }));
+    act(() => fireEvent.click(inspectMenuItem[0]));
 
     expect(await screen.findByText('Inspect: Panel B')).toBeInTheDocument();
 
@@ -147,6 +193,13 @@ describe('DashboardScenePage', () => {
 
     expect(screen.queryByTitle('Panel A')).not.toBeInTheDocument();
     expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
+  });
+
+  it('Shows empty state when dashboard is empty', async () => {
+    loadDashboardMock.mockResolvedValue({ dashboard: { panels: [] }, meta: {} });
+    setup();
+
+    expect(await screen.findByText('Start your new dashboard by adding a visualization')).toBeInTheDocument();
   });
 });
 

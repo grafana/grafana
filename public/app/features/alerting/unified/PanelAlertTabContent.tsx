@@ -20,8 +20,8 @@ interface Props {
 export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
   const styles = useStyles2(getStyles);
   const { errors, loading, rules } = usePanelCombinedRules({
-    dashboard,
-    panel,
+    dashboardUID: dashboard.uid,
+    panelId: panel.id,
     poll: true,
   });
   const permissions = getRulesPermissions('grafana');
@@ -59,7 +59,7 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
   }
 
   return (
-    <div aria-label={selectors.components.PanelAlertTabContent.content} className={styles.noRulesWrapper}>
+    <div data-testid={selectors.components.PanelAlertTabContent.content} className={styles.noRulesWrapper}>
       {alert}
       {!!dashboard.uid && (
         <>

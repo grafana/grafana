@@ -1,5 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
-import { VizOrientation } from '@grafana/schema';
+import { BarGaugeSizing, VizOrientation } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
@@ -39,19 +39,43 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
         description: 'Renders the thresholds as an outer bar',
         defaultValue: defaultOptions.showThresholdMarkers,
       })
-      .addNumberInput({
+      .addRadio({
+        path: 'sizing',
+        name: 'Gauge size',
+        settings: {
+          options: [
+            { value: BarGaugeSizing.Auto, label: 'Auto' },
+            { value: BarGaugeSizing.Manual, label: 'Manual' },
+          ],
+        },
+        defaultValue: defaultOptions.sizing,
+        showIf: (options: Options) => options.orientation !== VizOrientation.Auto,
+      })
+      .addSliderInput({
         path: 'minVizWidth',
         name: 'Min width',
-        description: 'Minimum column width',
+        description: 'Minimum column width (vertical orientation)',
         defaultValue: defaultOptions.minVizWidth,
-        showIf: (options: Options) => options.orientation === VizOrientation.Vertical,
+        settings: {
+          min: 0,
+          max: 600,
+          step: 1,
+        },
+        showIf: (options: Options) =>
+          options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Vertical,
       })
-      .addNumberInput({
+      .addSliderInput({
         path: 'minVizHeight',
         name: 'Min height',
-        description: 'Minimum row height',
+        description: 'Minimum row height (horizontal orientation)',
         defaultValue: defaultOptions.minVizHeight,
-        showIf: (options: Options) => options.orientation === VizOrientation.Horizontal,
+        settings: {
+          min: 0,
+          max: 600,
+          step: 1,
+        },
+        showIf: (options: Options) =>
+          options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Horizontal,
       });
 
     commonOptionsBuilder.addTextSizeOptions(builder);

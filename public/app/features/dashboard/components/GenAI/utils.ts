@@ -62,7 +62,7 @@ export function getDashboardChanges(dashboard: DashboardModel): {
 export async function isLLMPluginEnabled() {
   // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
-  return llms.openai.enabled().then((response) => response.ok);
+  return llms.openai.health().then((response) => response.ok);
 }
 
 /**
@@ -135,8 +135,7 @@ export function getFilteredPanelString(panel: PanelModel): string {
     'yaxes',
   ]);
 
-  // This cannot avoid the use of any because the type of panelObj is any
-  const panelObjFiltered = Object.keys(panelObj).reduce((obj: { [key: string]: any }, key) => {
+  const panelObjFiltered = Object.keys(panelObj).reduce((obj: { [key: string]: unknown }, key) => {
     if (keysToKeep.has(key)) {
       obj[key] = panelObj[key];
     }

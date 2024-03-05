@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -71,7 +72,7 @@ func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Respon
 		return response.Err(err)
 	}
 
-	return toJsonStreamingResponse(api.Features, resp)
+	return toJsonStreamingResponse(c.Req.Context(), api.features, resp)
 }
 
 // swagger:route GET /public/dashboards/{accessToken}/annotations dashboard_public getPublicAnnotations

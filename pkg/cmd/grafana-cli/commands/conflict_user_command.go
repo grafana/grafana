@@ -33,7 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
+func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, *featuremgmt.FeatureManager, error) {
 	configOptions := strings.Split(cmd.String("configOverrides"), " ")
 	configOptions = append(configOptions, cmd.Args().Slice()...)
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
@@ -43,17 +43,19 @@ func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return cfg, nil
+
+	features, err := featuremgmt.ProvideManagerService(cfg)
+	return cfg, features, err
 }
 
 func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx *cli.Context) (*ConflictResolver, error) {
-	cfg, err := initConflictCfg(cmd)
+	cfg, features, err := initConflictCfg(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to load configuration", err)
 	}
-	s, err := getSqlStore(cfg)
+	s, err := getSqlStore(cfg, features)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get to sql", err)
 	}
@@ -67,11 +69,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
 	}
 	routing := routing.ProvideRegister()
-	featMgmt, err := featuremgmt.ProvideManagerService(cfg, nil)
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to get feature management service", err)
-	}
-	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, featMgmt)
+	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, features)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get access control", err)
 	}
@@ -80,13 +78,13 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	return &resolver, nil
 }
 
-func getSqlStore(cfg *setting.Cfg) (*sqlstore.SQLStore, error) {
+func getSqlStore(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*sqlstore.SQLStore, error) {
 	tracer, err := tracing.ProvideService(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
 	}
 	bus := bus.ProvideBus(tracer)
-	return sqlstore.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
+	return sqlstore.ProvideService(cfg, features, &migrations.OSSMigrations{}, bus, tracer)
 }
 
 func runListConflictUsers() func(context *cli.Context) error {

@@ -6,17 +6,17 @@ import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafa
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
+import { AlertManagerDataSource } from '../../../utils/datasource';
 
 import { NotificationRoute } from './NotificationRoute';
 import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
-import { AlertManagerNameWithImage } from './useGetAlertManagersSourceNamesAndImage';
 
 function NotificationPreviewByAlertManager({
   alertManagerSource,
   potentialInstances,
   onlyOneAM,
 }: {
-  alertManagerSource: AlertManagerNameWithImage;
+  alertManagerSource: AlertManagerDataSource;
   potentialInstances: Labels[];
   onlyOneAM: boolean;
 }) {
@@ -49,7 +49,7 @@ function NotificationPreviewByAlertManager({
           <div className={styles.alertManagerName}>
             {' '}
             Alert manager:
-            <img src={alertManagerSource.img} alt="" className={styles.img} />
+            <img src={alertManagerSource.imgUrl} alt="" className={styles.img} />
             {alertManagerSource.name}
           </div>
           <div className={styles.secondAlertManagerLine}></div>

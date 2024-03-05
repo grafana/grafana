@@ -4,8 +4,8 @@ import { DataSourceSrv } from '@grafana/runtime';
 export const getDefaultCondition = () => ({
   type: 'query',
   query: { params: ['A', '5m', 'now'] },
-  reducer: { type: 'avg', params: [] as any[] },
-  evaluator: { type: 'gt', params: [null] as any[] },
+  reducer: { type: 'avg', params: [] },
+  evaluator: { type: 'gt', params: [null] },
   operator: { type: 'and' },
 });
 

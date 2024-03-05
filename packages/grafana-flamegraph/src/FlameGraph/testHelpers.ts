@@ -1,6 +1,6 @@
 import { arrayToDataFrame, FieldType } from '@grafana/data';
 
-import { FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { FlameGraphDataContainer, LevelItem, Options } from './dataTransform';
 
 // Convert text to a FlameGraphDataContainer for testing. The format representing the flamegraph for example:
 // [0///////]
@@ -9,7 +9,7 @@ import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 // [3]  [6]
 //      [7]
 // Each node starts with [ ends with ], single digit is used for label and the length of a node is it's value.
-export function textToDataContainer(text: string) {
+export function textToDataContainer(text: string, options?: Options) {
   const levels = text.split('\n');
 
   if (levels.length === 0) {
@@ -80,7 +80,7 @@ export function textToDataContainer(text: string) {
   const df = arrayToDataFrame(dfSorted);
   const labelField = df.fields.find((f) => f.name === 'label')!;
   labelField.type = FieldType.string;
-  return new FlameGraphDataContainer(df);
+  return new FlameGraphDataContainer(df, options || { collapsing: true });
 }
 
 export function trimLevelsString(s: string) {

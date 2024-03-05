@@ -45,6 +45,16 @@ To download your Grafana Enterprise license:
 
 ### Step 2. Add your license to a Grafana instance
 
+You must install a Grafana Enterprise build to use the enterprise features, which you can [download](https://grafana.com/grafana/download?edition=enterprise).
+
+{{% admonition type="note" %}}
+
+If you already use Grafana OSS, you can replace it with the same version of Grafana Enterprise.
+Ensure that you back up the configuration and database before proceeding.
+For more information, refer to [Back up Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/back-up-grafana/).
+
+{{% /admonition %}}
+
 There is more than one way to add the license to a Grafana instance:
 
 #### Upload the license file via the Grafana server administrator page
@@ -185,6 +195,13 @@ The active users limit is turned off immediately.
 #### Settings updates at runtime
 
 Settings updates at runtime are not affected by an expired license.
+
+#### Email sharing
+
+External users can't access dashboards shared via email anymore.
+These dashboards are now private but you can make them public and accessible to everyone if you want to.
+
+Grafana keeps your sharing configurations and restores them after you update your license.
 
 ## Grafana Enterprise license restrictions
 

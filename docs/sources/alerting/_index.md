@@ -4,17 +4,18 @@ aliases:
   - ./unified-alerting/alerting/
   - ./alerting/unified-alerting/
 canonical: https://grafana.com/docs/grafana/latest/alerting/
-description: Intro to key benefits and features of Grafana Alerting
+description: Learn about the key benefits and features of Grafana Alerting
 labels:
   products:
     - cloud
     - enterprise
     - oss
-title: Alerting
+menuTitle: Alerting
+title: Grafana Alerting
 weight: 114
 ---
 
-# Alerting
+# Grafana Alerting
 
 Grafana Alerting allows you to learn about problems in your systems moments after they occur.
 
@@ -25,8 +26,6 @@ In this way, you eliminate the need for manual monitoring and provide a first li
 Using Grafana Alerting, you create queries and expressions from multiple data sources — no matter where your data is stored — giving you the flexibility to combine your data and alert on your metrics and logs in new and unique ways. You can then create, manage, and take action on your alerts from a single, consolidated view, and improve your team’s ability to identify and resolve issues quickly.
 
 Grafana Alerting is available for Grafana OSS, Grafana Enterprise, or Grafana Cloud. With Mimir and Loki alert rules you can run alert expressions closer to your data and at massive scale, all managed by the Grafana UI you are already familiar with.
-
-Watch this video to learn more about Grafana Alerting: {{< vimeo 720001629 >}}
 
 _Refer to [Manage your alert rules][alerting-rules] for current instructions._
 
@@ -92,9 +91,9 @@ Here are some tips on how to create an effective alert management set up for you
 - [Introduction to Alerting][fundamentals]
 
 {{% docs/reference %}}
-[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"
+[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules"
 [alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
 
-[fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals"
+[fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals"
 [fundamentals]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals"
 {{% /docs/reference %}}

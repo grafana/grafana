@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
@@ -19,6 +19,7 @@ interface SaveDashboardErrorProxyProps {
   dashboardSaveModel: Dashboard;
   error: FetchError;
   onDismiss: () => void;
+  setErrorIsHandled: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const SaveDashboardErrorProxy = ({
@@ -26,14 +27,9 @@ export const SaveDashboardErrorProxy = ({
   dashboardSaveModel,
   error,
   onDismiss,
+  setErrorIsHandled,
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
-
-  useEffect(() => {
-    if (error.data && proxyHandlesError(error.data.status)) {
-      error.isHandled = true;
-    }
-  }, [error]);
 
   return (
     <>
@@ -73,7 +69,13 @@ export const SaveDashboardErrorProxy = ({
         />
       )}
       {error.data && error.data.status === 'plugin-dashboard' && (
-        <ConfirmPluginDashboardSaveModal dashboard={dashboard} onDismiss={onDismiss} />
+        <ConfirmPluginDashboardSaveModal
+          dashboard={dashboard}
+          onDismiss={() => {
+            setErrorIsHandled(true);
+            onDismiss();
+          }}
+        />
       )}
     </>
   );
@@ -96,7 +98,7 @@ const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboard
         <Button variant="secondary" onClick={onDismiss} fill="outline">
           Cancel
         </Button>
-        <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onDismiss} />
+        <SaveDashboardAsButton onClick={onDismiss} dashboard={dashboard} onSaveSuccess={onDismiss} />
         <Button
           variant="destructive"
           onClick={async () => {

@@ -1,11 +1,11 @@
 import { ComponentType } from 'react';
-import { DeepPartial, UnpackNestedValue } from 'react-hook-form';
+import { DefaultValues } from 'react-hook-form';
 
 export type WizardProps<T> = {
   /**
    * Initial values for the form
    */
-  defaultValues?: UnpackNestedValue<DeepPartial<T>>;
+  defaultValues?: DefaultValues<T>;
 
   /**
    * List of steps/pages in the wizard.

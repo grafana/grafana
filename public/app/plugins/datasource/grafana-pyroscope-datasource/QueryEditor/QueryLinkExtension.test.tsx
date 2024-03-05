@@ -17,6 +17,13 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   setPluginExtensionGetter: jest.fn(),
   getPluginLinkExtensions: jest.fn(),
+  getTemplateSrv: () => {
+    return {
+      replace: (query: string): string => {
+        return query.replace(/\$var/g, 'interpolated');
+      },
+    };
+  },
 }));
 
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);

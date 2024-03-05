@@ -38,12 +38,16 @@ func TestService_bundleCreate(t *testing.T) {
 	cfg := setting.NewCfg()
 
 	collector := basicCollector(cfg)
+	disabledCollector := settingsCollector(setting.ProvideProvider(cfg))
+	disabledCollector.EnabledFn = func() bool { return false }
+
 	s.bundleRegistry.RegisterSupportItemCollector(collector)
+	s.bundleRegistry.RegisterSupportItemCollector(disabledCollector)
 
 	createdBundle, err := s.store.Create(context.Background(), &user.SignedInUser{UserID: 1, Login: "bob"})
 	require.NoError(t, err)
 
-	s.startBundleWork(context.Background(), []string{collector.UID}, createdBundle.UID)
+	s.startBundleWork(context.Background(), []string{collector.UID, disabledCollector.UID}, createdBundle.UID)
 
 	bundle, err := s.get(context.Background(), createdBundle.UID)
 	require.NoError(t, err)

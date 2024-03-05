@@ -2,11 +2,9 @@ import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { Alert, InlineFormLabel, LinkButton, Themeable2, withTheme2 } from '@grafana/ui/src';
+import { SQLQuery, SqlQueryEditor, applyQueryDefaults } from '@grafana/sql';
+import { InlineFormLabel, LinkButton, Themeable2, withTheme2 } from '@grafana/ui/src';
 
-import { SQLQuery } from '../../../../../../../features/plugins/sql';
-import { SqlQueryEditor } from '../../../../../../../features/plugins/sql/components/QueryEditor';
-import { applyQueryDefaults } from '../../../../../../../features/plugins/sql/defaults';
 import InfluxDatasource from '../../../../datasource';
 import { FlightSQLDatasource } from '../../../../fsql/datasource.flightsql';
 import { InfluxQuery } from '../../../../types';
@@ -61,6 +59,7 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
     const defaultQuery = applyQueryDefaults(query);
     return {
       ...defaultQuery,
+      dataset: 'iox',
       sql: {
         ...defaultQuery.sql,
         limit: undefined,
@@ -90,14 +89,12 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
 
     return (
       <>
-        <Alert title="Warning" severity="warning">
-          InfluxDB SQL support is currently in alpha state. It does not have all the features.
-        </Alert>
         <SqlQueryEditor
           datasource={this.datasource}
           query={this.transformQuery(query)}
           onRunQuery={onRunSQLQuery}
           onChange={onSQLChange}
+          queryHeaderProps={{ dialect: 'influx' }}
         />
         <div className={cx('gf-form-inline', styles.editorActions)}>
           <LinkButton

@@ -6,17 +6,23 @@
 
 package featuremgmt
 
+import (
+	"embed"
+	"encoding/json"
+
+	featuretoggle "github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+)
+
 var (
-	falsePtr = boolPtr(false)
-	truePtr  = boolPtr(true)
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:           "disableEnvelopeEncryption",
-			Description:    "Disable envelope encryption (emergency only)",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaAsCodeSquad,
-			AllowSelfServe: falsePtr,
+			Name:              "disableEnvelopeEncryption",
+			Description:       "Disable envelope encryption (emergency only)",
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaAsCodeSquad,
+			HideFromAdminPage: true,
+			AllowSelfServe:    false,
 		},
 		{
 			Name:         "live-service-web-worker",
@@ -33,26 +39,27 @@ var (
 			Owner:        grafanaAppPlatformSquad,
 		},
 		{
-			Name:        "panelTitleSearch",
-			Description: "Search for dashboards using panel title",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAppPlatformSquad,
+			Name:              "panelTitleSearch",
+			Description:       "Search for dashboards using panel title",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaAppPlatformSquad,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:           "publicDashboards",
-			Description:    "Enables public access to dashboards",
+			Description:    "[Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.",
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaSharingSquad,
 			Expression:     "true", // enabled by default
-			AllowSelfServe: truePtr,
+			AllowSelfServe: true,
 		},
 		{
-			Name:            "publicDashboardsEmailSharing",
-			Description:     "Enables public dashboard sharing to be restricted to only allowed emails",
-			Stage:           FeatureStagePublicPreview,
-			RequiresLicense: true,
-			Owner:           grafanaSharingSquad,
-			HideFromDocs:    true,
+			Name:              "publicDashboardsEmailSharing",
+			Description:       "Enables public dashboard sharing to be restricted to only allowed emails",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaSharingSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:        "lokiExperimentalStreaming",
@@ -65,7 +72,7 @@ var (
 			Description:    "Highlight Grafana Enterprise features",
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaAsCodeSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:        "migrationLocking",
@@ -80,10 +87,11 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:        "correlations",
-			Description: "Correlations page",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaExploreSquad,
+			Name:           "correlations",
+			Description:    "Correlations page",
+			Stage:          FeatureStageGeneralAvailability,
+			Owner:          grafanaExploreSquad,
+			AllowSelfServe: true,
 		},
 		{
 			Name:           "exploreContentOutline",
@@ -92,26 +100,13 @@ var (
 			Owner:          grafanaExploreSquad,
 			Expression:     "true", // enabled by default
 			FrontendOnly:   true,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
 			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:         "traceToMetrics",
-			Description:  "Enable trace to metrics links",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-		},
-		{
-			Name:        "newDBLibrary",
-			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:         "autoMigrateOldPanels",
@@ -121,26 +116,63 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:         "disableAngular",
-			Description:  "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
+			Name:         "autoMigrateGraphPanel",
+			Description:  "Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:         "canvasPanelNesting",
-			Description:  "Allow elements nesting",
-			Stage:        FeatureStageExperimental,
+			Name:         "autoMigrateTablePanel",
+			Description:  "Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 		},
 		{
+			Name:         "autoMigratePiechartPanel",
+			Description:  "Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "autoMigrateWorldmapPanel",
+			Description:  "Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "autoMigrateStatPanel",
+			Description:  "Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:              "disableAngular",
+			Description:       "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
+			Stage:             FeatureStagePublicPreview,
+			FrontendOnly:      true,
+			Owner:             grafanaDatavizSquad,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "canvasPanelNesting",
+			Description:       "Allow elements nesting",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaDatavizSquad,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:           "newVizTooltips",
 			Description:    "New visualizations tooltips UX",
-			Stage:          FeatureStageGeneralAvailability,
+			Stage:          FeatureStagePublicPreview,
 			FrontendOnly:   true,
 			Owner:          grafanaDatavizSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
 		},
 		{
 			Name:         "scenes",
@@ -163,14 +195,6 @@ var (
 			Owner:       hostedGrafanaTeam,
 		},
 		{
-			Name:           "dataConnectionsConsole",
-			Description:    "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // turned on by default
-			Owner:          grafanaPluginsPlatformSquad,
-			AllowSelfServe: falsePtr,
-		},
-		{
 			// Some plugins rely on topnav feature flag being enabled, so we cannot remove this until we
 			// can afford the breaking change, or we've detemined no one else is relying on it
 			Name:        "topnav",
@@ -180,23 +204,25 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
-			Name:         "dockedMegaMenu",
-			Description:  "Enable support for a persistent (docked) navigation menu",
-			Stage:        FeatureStageExperimental,
+			Name:         "returnToPrevious",
+			Description:  "Enables the return to previous context functionality",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
-			Name:        "grpcServer",
-			Description: "Run the GRPC server",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAppPlatformSquad,
+			Name:              "grpcServer",
+			Description:       "Run the GRPC server",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaAppPlatformSquad,
+			HideFromAdminPage: true,
 		},
 		{
-			Name:            "entityStore",
-			Description:     "SQL-based entity store (requires storage flag also)",
+			Name:            "unifiedStorage",
+			Description:     "SQL-based k8s storage",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
+			RequiresRestart: true, // new SQL tables created
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
@@ -205,7 +231,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:           "redshiftAsyncQueryDataSupport",
@@ -213,7 +239,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
 		},
 		{
 			Name:           "athenaAsyncQueryDataSupport",
@@ -222,13 +248,7 @@ var (
 			Expression:     "true", // enabled by default
 			FrontendOnly:   true,
 			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: falsePtr,
-		},
-		{
-			Name:        "cloudwatchNewRegionsHandler",
-			Description: "Refactor of /regions endpoint, no user-facing changes",
-			Stage:       FeatureStageExperimental,
-			Owner:       awsDatasourcesSquad,
+			AllowSelfServe: false,
 		},
 		{
 			Name:        "showDashboardValidationWarnings",
@@ -243,10 +263,11 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
-			Name:        "accessControlOnCall",
-			Description: "Access control primitives for OnCall",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       identityAccessTeam,
+			Name:              "accessControlOnCall",
+			Description:       "Access control primitives for OnCall",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:        "nestedFolders",
@@ -261,30 +282,7 @@ var (
 			Owner:          grafanaFrontendPlatformSquad,
 			FrontendOnly:   true,
 			Expression:     "true", // enabled by default
-			AllowSelfServe: falsePtr,
-		},
-		{
-			Name:           "accessTokenExpirationCheck",
-			Description:    "Enable OAuth access_token expiration check and token refresh using the refresh_token",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          identityAccessTeam,
-			AllowSelfServe: falsePtr,
-		},
-		{
-			Name:           "emptyDashboardPage",
-			Description:    "Enable the redesigned user interface of a dashboard page that includes no panels",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true", // enabled by default
-			Owner:          grafanaDashboardsSquad,
-			AllowSelfServe: falsePtr,
-		},
-		{
-			Name:           "disablePrometheusExemplarSampling",
-			Description:    "Disable Prometheus exemplar sampling",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:        "alertingBacktesting",
@@ -297,14 +295,15 @@ var (
 			Description:  "Enables drag and drop for CSV and Excel files",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:            "alertingNoNormalState",
-			Description:     "Stop maintaining state of alerts that are not firing",
-			Stage:           FeatureStagePublicPreview,
-			RequiresRestart: false,
-			Owner:           grafanaAlertingSquad,
+			Name:              "alertingNoNormalState",
+			Description:       "Stop maintaining state of alerts that are not firing",
+			Stage:             FeatureStagePublicPreview,
+			RequiresRestart:   false,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:           "logsContextDatasourceUi",
@@ -313,7 +312,7 @@ var (
 			FrontendOnly:   true,
 			Owner:          grafanaObservabilityLogsSquad,
 			Expression:     "true", // turned on by default
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:           "lokiQuerySplitting",
@@ -322,7 +321,7 @@ var (
 			FrontendOnly:   true,
 			Owner:          grafanaObservabilityLogsSquad,
 			Expression:     "true", // turned on by default
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:         "lokiQuerySplittingConfig",
@@ -338,20 +337,13 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
-			Name:           "gcomOnlyExternalOrgRoleSync",
-			Description:    "Prohibits a user from changing organization roles synced with Grafana Cloud auth provider",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          identityAccessTeam,
-			AllowSelfServe: falsePtr,
-		},
-		{
 			Name:           "prometheusMetricEncyclopedia",
 			Description:    "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
 			Expression:     "true",
 			Stage:          FeatureStageGeneralAvailability,
 			FrontendOnly:   true,
 			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:           "influxdbBackendMigration",
@@ -360,13 +352,20 @@ var (
 			FrontendOnly:   true,
 			Owner:          grafanaObservabilityMetricsSquad,
 			Expression:     "true", // enabled by default
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
 		},
 		{
-			Name:        "clientTokenRotation",
-			Description: "Replaces the current in-request token rotation so that the client initiates the rotation",
+			Name:        "influxqlStreamingParser",
+			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
-			Owner:       identityAccessTeam,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "influxdbRunQueriesInParallel",
+			Description:  "Enables running InfluxDB Influxql queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:           "prometheusDataplane",
@@ -374,7 +373,7 @@ var (
 			Expression:     "true",
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:           "lokiMetricDataplane",
@@ -382,7 +381,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true",
 			Owner:          grafanaObservabilityLogsSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:        "lokiLogsDataplane",
@@ -397,7 +396,7 @@ var (
 			FrontendOnly:   true,
 			Expression:     "true",
 			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:        "disableSSEDataplane",
@@ -410,15 +409,6 @@ var (
 			Description: "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
-		},
-		{
-			Name:           "alertingNotificationsPoliciesMatchingInstances",
-			Description:    "Enables the preview of matching instances for notification policies",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true", // enabled by default
-			Owner:          grafanaAlertingSquad,
-			AllowSelfServe: falsePtr,
 		},
 		{
 			Name:        "alertStateHistoryLokiPrimary",
@@ -439,32 +429,18 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
-			Name:        "renderAuthJWT",
-			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAsCodeSquad,
+			Name:              "renderAuthJWT",
+			Description:       "Uses JWT-based auth for rendering instead of relying on remote cache",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaAsCodeSquad,
+			HideFromAdminPage: true,
 		},
 		{
-			Name:            "externalServiceAuth",
-			Description:     "Starts an OAuth2 authentication provider for external services",
-			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
-			Owner:           identityAccessTeam,
-		},
-		{
-			Name:        "refactorVariablesTimeRange",
-			Description: "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaDashboardsSquad,
-		},
-		{
-			Name:            "useCachingService",
-			Description:     "When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaOperatorExperienceSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
-			AllowSelfServe:  falsePtr,
+			Name:              "refactorVariablesTimeRange",
+			Description:       "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaDashboardsSquad,
+			HideFromAdminPage: true, // Non-feature, used to test out a bug fix that impacts the performance of template variables.
 		},
 		{
 			Name:           "enableElasticsearchBackendQuerying",
@@ -472,16 +448,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaObservabilityLogsSquad,
 			Expression:     "true", // enabled by default
-			AllowSelfServe: falsePtr,
-		},
-		{
-			Name:           "advancedDataSourcePicker",
-			Description:    "Enable a new data source picker with contextual information, recently used order and advanced mode",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true", // enabled by default
-			Owner:          grafanaDashboardsSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:         "faroDatasourceSelector",
@@ -495,7 +462,7 @@ var (
 			Description:  "Enables the edit functionality in the datagrid panel",
 			FrontendOnly: true,
 			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:         "extraThemes",
@@ -533,11 +500,12 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "sqlDatasourceDatabaseSelection",
-			Description:  "Enables previous SQL data source dataset dropdown behavior",
-			FrontendOnly: true,
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaBiSquad,
+			Name:              "sqlDatasourceDatabaseSelection",
+			Description:       "Enables previous SQL data source dataset dropdown behavior",
+			FrontendOnly:      true,
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaDatavizSquad,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:         "lokiFormatQuery",
@@ -553,7 +521,7 @@ var (
 			FrontendOnly:   true,
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:         "exploreScrollableLogsContainer",
@@ -568,7 +536,7 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true",
 			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
 		},
 		{
 			Name:         "pluginsDynamicAngularDetectionPatterns",
@@ -594,7 +562,8 @@ var (
 		{
 			Name:         "logsExploreTableVisualisation",
 			Description:  "A table visualisation for logs in Explore",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
@@ -611,7 +580,7 @@ var (
 			FrontendOnly:   true,
 			Expression:     "true", // enabled by default
 			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
 			Name:         "mlExpressions",
@@ -635,18 +604,20 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
-			Name:         "grafanaAPIServer",
-			Description:  "Enable Kubernetes API Server for Grafana resources",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaAppPlatformSquad,
+			Name:            "grafanaAPIServerWithExperimentalAPIs",
+			Description:     "Register experimental APIs with the k8s API server",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			RequiresDevMode: true,
+			Owner:           grafanaAppPlatformSquad,
 		},
 		{
-			Name:         "grafanaAPIServerWithExperimentalAPIs",
-			Description:  "Register experimental APIs with the k8s API server",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaAppPlatformSquad,
+			Name:            "grafanaAPIServerEnsureKubectlAccess",
+			Description:     "Start an additional https handler and write kubectl options",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
 		},
 		{
 			Name:            "featureToggleAdminPage",
@@ -658,24 +629,10 @@ var (
 		},
 		{
 			Name:        "awsAsyncQueryCaching",
-			Description: "Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled",
-			Stage:       FeatureStagePublicPreview,
+			Description: "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
-		},
-		{
-			Name:            "splitScopes",
-			Description:     "Support faster dashboard and folder search by splitting permission scopes into parts",
-			Stage:           FeatureStagePublicPreview,
-			FrontendOnly:    false,
-			Owner:           identityAccessTeam,
-			RequiresRestart: true,
-		},
-		{
-			Name:         "traceToProfiles",
-			Description:  "Enables linking between traces and profiles",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:        "permissionsFilterRemoveSubquery",
@@ -689,7 +646,7 @@ var (
 			Owner:          grafanaObservabilityMetricsSquad,
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true", // on by default
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: false,
 		},
 		{
 			Name:            "configurableSchedulerTick",
@@ -703,35 +660,43 @@ var (
 		{
 			Name:            "influxdbSqlSupport",
 			Description:     "Enable InfluxDB SQL query language support with new querying UI",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaObservabilityMetricsSquad,
-			RequiresRestart: false,
+			RequiresRestart: true,
+			AllowSelfServe:  true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "alertingNoDataErrorExecution",
 			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
-			Stage:           FeatureStagePrivatePreview,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
-			Enabled:         true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:         "angularDeprecationUI",
-			Description:  "Display new Angular deprecation-related UI features",
-			Stage:        FeatureStageExperimental,
+			Description:  "Display Angular warnings in dashboards and panels",
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "true", // Enabled by default
 		},
 		{
-			Name:           "dashgpt",
-			Description:    "Enable AI powered features in dashboards",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Owner:          grafanaDashboardsSquad,
-			Expression:     "true", // on by default
-			AllowSelfServe: falsePtr,
+			Name:         "dashgpt",
+			Description:  "Enable AI powered features in dashboards",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "aiGeneratedDashboardChanges",
+			Description:  "Enable AI powered features for dashboards to auto-summary changes when saving",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:            "reportingRetries",
@@ -742,26 +707,10 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:           "newBrowseDashboards",
-			Description:    "New browse/manage dashboards UI",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaFrontendPlatformSquad,
-			FrontendOnly:   true,
-			Expression:     "true", // on by default
-			AllowSelfServe: falsePtr,
-		},
-		{
 			Name:        "sseGroupByDatasource",
-			Description: "Send query to the same datasource in a single request when using server side expressions",
+			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
-		},
-		{
-			Name:         "requestInstrumentationStatusSource",
-			Description:  "Include a status source label for request metrics and logs",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:            "libraryPanelRBAC",
@@ -786,20 +735,14 @@ var (
 			Owner:        hostedGrafanaTeam,
 		},
 		{
-			Name:           "alertingInsights",
-			Description:    "Show the new alerting insights landing page",
-			FrontendOnly:   true,
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaAlertingSquad,
-			Expression:     "true", // enabled by default
-			AllowSelfServe: falsePtr,
-		},
-		{
-			Name:         "alertingContactPointsV2",
-			Description:  "Show the new contacpoints list view",
-			FrontendOnly: true,
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaAlertingSquad,
+			Name:              "alertingInsights",
+			Description:       "Show the new alerting insights landing page",
+			FrontendOnly:      true,
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaAlertingSquad,
+			Expression:        "true", // enabled by default
+			AllowSelfServe:    false,
+			HideFromAdminPage: true, // This is moving away from being a feature toggle.
 		},
 		{
 			Name:        "externalCorePlugins",
@@ -815,19 +758,10 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:            "httpSLOLevels",
-			Description:     "Adds SLO level to http request metrics",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           hostedGrafanaTeam,
-			RequiresRestart: true,
-		},
-		{
-			Name:            "idForwarding",
-			Description:     "Generate signed id token for identity that can be forwarded to plugins and external services",
-			Stage:           FeatureStageExperimental,
-			Owner:           identityAccessTeam,
-			RequiresDevMode: true,
+			Name:        "idForwarding",
+			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:           "cloudWatchWildCardDimensionValues",
@@ -835,19 +769,20 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: falsePtr,
+			AllowSelfServe: true,
 		},
 		{
-			Name:            "externalServiceAccounts",
-			Description:     "Automatic service account and token setup for plugins",
-			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
-			Owner:           identityAccessTeam,
+			Name:              "externalServiceAccounts",
+			Description:       "Automatic service account and token setup for plugins",
+			HideFromAdminPage: true,
+			Stage:             FeatureStagePublicPreview,
+			Owner:             identityAccessTeam,
 		},
 		{
 			Name:         "panelMonitoring",
 			Description:  "Enables panel monitoring through logs and measurements",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDatavizSquad,
 			FrontendOnly: true,
 		},
@@ -861,16 +796,16 @@ var (
 		{
 			Name:         "formatString",
 			Description:  "Enable format string transformer",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:         "transformationsVariableSupport",
 			Description:  "Allows using variables in transformations",
 			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaBiSquad,
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:            "kubernetesPlaylists",
@@ -880,37 +815,54 @@ var (
 			RequiresRestart: true, // changes the API routing
 		},
 		{
+			Name:            "kubernetesSnapshots",
+			Description:     "Routes snapshot requests from /api to the /apis endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
+			Name:            "kubernetesQueryServiceRewrite",
+			Description:     "Rewrite requests targeting /ds/query to the query service",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:         "navAdminSubsections",
-			Description:  "Splits the administration section of the nav tree into subsections",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:            "recoveryThreshold",
 			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Expression:      "true",
+		},
+		{
+			Name:         "lokiStructuredMetadata",
+			Description:  "Enables the loki data source to request structured metadata from the Loki server",
+			Stage:        FeatureStageGeneralAvailability,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true",
 		},
 		{
 			Name:         "teamHttpHeaders",
-			Description:  "Enables datasources to apply team headers to the client requests",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables Team LBAC for datasources to apply team headers to the client requests",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        identityAccessTeam,
 		},
 		{
 			Name:         "awsDatasourcesNewFormStyling",
 			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        awsDatasourcesSquad,
 		},
@@ -929,23 +881,9 @@ var (
 			Owner:           grafanaBackendPlatformSquad,
 		},
 		{
-			Name:         "pluginsInstrumentationStatusSource",
-			Description:  "Include a status source label for plugin request metrics and logs",
-			FrontendOnly: false,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:         "costManagementUi",
-			Description:  "Toggles the display of the cost management ui plugin",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaDatabasesFrontend,
-		},
-		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			RequiresDevMode: false,
 			Owner:           grafanaPluginsPlatformSquad,
 		},
@@ -959,9 +897,9 @@ var (
 		{
 			Name:         "addFieldFromCalculationStatFunctions",
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:        "alertmanagerRemoteSecondary",
@@ -993,11 +931,25 @@ var (
 			Description:  "Make sure extracted field names are unique in the dataframe",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:         "dashboardSceneForViewers",
 			Description:  "Enables dashboard rendering using Scenes for viewer roles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "dashboardSceneSolo",
+			Description:  "Enables rendering dashboards using scenes for solo panels",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "dashboardScene",
+			Description:  "Enables dashboard rendering using scenes for all roles",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -1013,21 +965,261 @@ var (
 		{
 			Name:         "pdfTables",
 			Description:  "Enables generating table data as PDF in reporting",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaSharingSquad,
 		},
 		{
-			Name:            "ssoSettingsApi",
-			Description:     "Enables the SSO settings API",
-			RequiresDevMode: true,
-			Stage:           FeatureStageExperimental,
+			Name:           "ssoSettingsApi",
+			Description:    "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
+			Stage:          FeatureStagePublicPreview,
+			AllowSelfServe: true,
+			FrontendOnly:   false,
+			Owner:          identityAccessTeam,
+		},
+		{
+			Name:         "canvasPanelPanZoom",
+			Description:  "Allow pan and zoom in canvas panel",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "logsInfiniteScrolling",
+			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "flameGraphItemCollapsing",
+			Description:  "Allow collapsing of flame graph items",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
+			Name:         "alertingDetailsViewV2",
+			Description:  "Enables the preview of the new alert details view",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "datatrails",
+			Description:  "Enables the new core app datatrails",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "alertingSimplifiedRouting",
+			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:         "logRowsPopoverMenu",
+			Description:  "Enable filtering menu displayed when text of a log line is selected",
+			Stage:        FeatureStageGeneralAvailability,
+			FrontendOnly: true,
+			Expression:   "true",
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "pluginsSkipHostEnvVars",
+			Description:  "Disables passing host environment variable to plugin processes",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "tableSharedCrosshair",
+			Description:  "Enables shared crosshair in table panel",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "regressionTransformation",
+			Description:  "Enables regression analysis transformation",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			// this is mainly used a a way to quickly disable query hints as a safe guard for our infrastructure
+			Name:           "lokiQueryHints",
+			Description:    "Enables query hints for Loki",
+			Stage:          FeatureStageGeneralAvailability,
+			FrontendOnly:   true,
+			Expression:     "true",
+			Owner:          grafanaObservabilityLogsSquad,
+			AllowSelfServe: false,
+		},
+		{
+			Name:              "kubernetesFeatureToggles",
+			Description:       "Use the kubernetes API for feature toggle management in the frontend",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaOperatorExperienceSquad,
+			AllowSelfServe:    false,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:            "alertingPreviewUpgrade",
+			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
 			FrontendOnly:    false,
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+			Expression:      "true", // enabled by default
+		},
+		{
+			Name:            "enablePluginsTracingByDefault",
+			Description:     "Enable plugin tracing for all external plugins",
+			FrontendOnly:    false,
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:            "cloudRBACRoles",
+			Description:     "Enabled grafana cloud specific RBAC roles",
+			Stage:           FeatureStageExperimental,
 			Owner:           identityAccessTeam,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+		},
+		{
+			Name:           "alertingQueryOptimization",
+			Description:    "Optimizes eligible queries in order to reduce load on datasources",
+			Stage:          FeatureStageGeneralAvailability,
+			Owner:          grafanaAlertingSquad,
+			AllowSelfServe: false,
+		},
+		{
+			Name:         "newFolderPicker",
+			Description:  "Enables the nested folder picker without having nested folders enabled",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:              "jitterAlertRulesWithinGroups",
+			Description:       "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group",
+			FrontendOnly:      false,
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: false,
+			RequiresRestart:   true,
+		},
+		{
+			Name:        "onPremToCloudMigrations",
+			Description: "In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+		},
+		{
+			Name:         "alertingSaveStatePeriodic",
+			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:        "promQLScope",
+			Description: "In-development feature that will allow injection of labels into prometheus queries.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "sqlExpressions",
+			Description:  "Enables using SQL and DuckDB functions as Expressions.",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAppPlatformSquad,
+		},
+		{
+			Name:         "nodeGraphDotLayout",
+			Description:  "Changed the layout algorithm for the node graph",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
+			Name:         "groupToNestedTableTransformation",
+			Description:  "Enables the group to nested table transformation",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:        "newPDFRendering",
+			Description: "New implementation for the dashboard to PDF rendering",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+		},
+		{
+			Name:            "kubernetesAggregator",
+			Description:     "Enable grafana aggregator",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:            "expressionParser",
+			Description:     "Enable new expression parser",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:              "groupByVariable",
+			Description:       "Enable groupBy variable support in scenes dashboards",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:            "alertingUpgradeDryrunOnStart",
+			Description:     "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
+			FrontendOnly:    false,
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+			Expression:      "true", // enabled by default
+		},
+		{
+			Name:              "scopeFilters",
+			Description:       "Enables the use of scope filters in Grafana",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 	}
 )
 
-func boolPtr(b bool) *bool {
-	return &b
+//go:embed toggles_gen.json
+var f embed.FS
+
+// Get the cached feature list (exposed as a k8s resource)
+func GetEmbeddedFeatureList() (featuretoggle.FeatureList, error) {
+	features := featuretoggle.FeatureList{}
+	body, err := f.ReadFile("toggles_gen.json")
+	if err == nil {
+		err = json.Unmarshal(body, &features)
+	}
+	return features, err
 }

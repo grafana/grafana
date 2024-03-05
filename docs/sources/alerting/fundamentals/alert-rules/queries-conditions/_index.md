@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/
-description: Introduction to queries and conditions
+description: Define queries to get the data you want to measure and conditions that need to be met before an alert rule fires
 keywords:
   - grafana
   - alerting
@@ -97,6 +97,27 @@ Checks if any time series data matches the alert condition.
 Classic condition expression queries always produce one alert instance only, no matter how many time series meet the condition.
 Classic conditions exist mainly for compatibility reasons and should be avoided if possible.
 
+## Aggregations
+
+Grafana Alerting provides the following aggregation functions to enable you to further refine your query.
+
+These functions are available for **Reduce** and **Classic condition** expressions only.
+
+| Function         | Expression       | What it does                                                                    |
+| ---------------- | ---------------- | ------------------------------------------------------------------------------- |
+| avg              | Reduce / Classic | Displays the average of the values                                              |
+| min              | Reduce / Classic | Displays the lowest value                                                       |
+| max              | Reduce / Classic | Displays the highest value                                                      |
+| sum              | Reduce / Classic | Displays the sum of all values                                                  |
+| count            | Reduce / Classic | Counts the number of values in the result                                       |
+| last             | Reduce / Classic | Displays the last value                                                         |
+| median           | Reduce / Classic | Displays the median value                                                       |
+| diff             | Classic          | Displays the difference between the newest and oldest value                     |
+| diff_abs         | Classic          | Displays the absolute value of diff                                             |
+| percent_diff     | Classic          | Displays the percentage value of the difference between newest and oldest value |
+| percent_diff_abs | Classic          | Displays the absolute value of percent_diff                                     |
+| count_non_null   | Classic          | Displays a count of values in the result set that aren't `null`                 |
+
 ## Alert condition
 
 An alert condition is the query or expression that determines whether the alert will fire or not depending on the value it yields. There can be only one condition which will determine the triggering of the alert.
@@ -107,10 +128,30 @@ When the queried data satisfies the defined condition, Grafana triggers the asso
 
 By default, the last expression added is used as the alert condition.
 
+## Recovery threshold
+
+{{% admonition type="note" %}}
+The recovery threshold feature is currently only available in OSS.
+{{% /admonition %}}
+
+To reduce the noise of flapping alerts, you can set a recovery threshold different to the alert threshold.
+
+Flapping alerts occur when a metric hovers around the alert threshold condition and may lead to frequent state changes, resulting in too many notifications being generated.
+
+Grafana-managed alert rules are evaluated for a specific interval of time. During each evaluation, the result of the query is checked against the threshold set in the alert rule. If the value of a metric is above the threshold, an alert rule fires and a notification is sent. When the value goes below the threshold and there is an active alert for this metric, the alert is resolved, and another notification is sent.
+
+It can be tricky to create an alert rule for a noisy metric. That is, when the value of a metric continually goes above and below a threshold. This is called flapping and results in a series of firing - resolved - firing notifications and a noisy alert state history.
+
+For example, if you have an alert for latency with a threshold of 1000ms and the number fluctuates around 1000 (say 980 ->1010 -> 990 -> 1020, and so on) then each of those will trigger a notification.
+
+To solve this problem, you can set a (custom) recovery threshold, which basically means having two thresholds instead of one. An alert is triggered when the first threshold is crossed and is resolved only when the second threshold is crossed.
+
+For example, you could set a threshold of 1000ms and a recovery threshold of 900ms. This way, an alert rule will only stop firing when it goes under 900ms and flapping is reduced.
+
 {{% docs/reference %}}
-[data-source-alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/data-source-alerting"
+[data-source-alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/data-source-alerting"
 [data-source-alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/data-source-alerting"
 
-[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data"
 {{% /docs/reference %}}

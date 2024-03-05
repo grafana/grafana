@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -28,14 +29,14 @@ func backendTypeDoesNotMatchPayloadTypeError(backendType apimodels.Backend, payl
 }
 
 func errorToResponse(err error) response.Response {
+	if errors.As(err, &errutil.Error{}) {
+		return response.Err(err)
+	}
 	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		return ErrResp(404, err, "")
 	}
 	if errors.Is(err, errUnexpectedDatasourceType) {
 		return ErrResp(400, err, "")
-	}
-	if errors.Is(err, ErrAuthorization) {
-		return ErrResp(401, err, "")
 	}
 	if errors.Is(err, errFolderAccess) {
 		return toNamespaceErrorResponse(err)

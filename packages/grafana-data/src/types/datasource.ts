@@ -287,7 +287,7 @@ abstract class DataSourceApi<
   /**
    * Get tag keys for adhoc filters
    */
-  getTagKeys?(options?: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]>;
+  getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<MetricFindValue[]>;
 
   /**
    * Get tag values for adhoc filters
@@ -367,7 +367,7 @@ abstract class DataSourceApi<
 /**
  * Options argument to DataSourceAPI.getTagKeys
  */
-export interface DataSourceGetTagKeysOptions {
+export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuery> {
   /**
    * The other existing filters or base filters. New in v10.3
    */
@@ -376,6 +376,7 @@ export interface DataSourceGetTagKeysOptions {
    * Context time range. New in v10.3
    */
   timeRange?: TimeRange;
+  queries?: TQuery[];
 }
 
 /**
@@ -428,7 +429,10 @@ export interface QueryEditorProps<
    */
   data?: PanelData;
   range?: TimeRange;
-  exploreId?: any;
+  /**
+   * @deprecated This is not used anymore and will be removed in a future release.
+   */
+  exploreId?: string;
   history?: Array<HistoryItem<TQuery>>;
   queries?: DataQuery[];
   app?: CoreApp;
@@ -547,13 +551,16 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   cacheTimeout?: string | null;
   queryCachingTTL?: number | null;
+  skipQueryCache?: boolean;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
+  panelPluginId?: string;
   dashboardUID?: string;
 
   /** Filters to dynamically apply to all queries */
   filters?: AdHocVariableFilter[];
+  groupByKeys?: string[];
 
   // Request Timing
   startTime: number;
@@ -579,11 +586,22 @@ export interface QueryFix {
   action?: QueryFixAction;
 }
 
+export type QueryFixType = 'ADD_FILTER' | 'ADD_FILTER_OUT' | 'ADD_STRING_FILTER' | 'ADD_STRING_FILTER_OUT';
 export interface QueryFixAction {
-  type: string;
   query?: string;
   preventSubmit?: boolean;
+  /**
+   * The type of action to perform. Will be passed to the data source to handle.
+   */
+  type: QueryFixType | string;
+  /**
+   * A key value map of options that will be passed. Usually used to pass e.g. the label and value.
+   */
   options?: KeyValue<string>;
+  /**
+   * An optional single row data frame containing the row that triggered the the QueryFixAction.
+   */
+  frame?: DataFrame;
 }
 
 export interface QueryHint {
@@ -604,6 +622,7 @@ export interface DataSourceJsonData {
   profile?: string;
   manageAlerts?: boolean;
   alertmanagerUid?: string;
+  disableGrafanaCache?: boolean;
 }
 
 /**
@@ -674,8 +693,6 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /** When the name+uid are based on template variables, maintain access to the real values */
   rawRef?: DataSourceRef;
-
-  angularDetected?: boolean;
 }
 
 /**

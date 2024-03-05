@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -36,7 +37,7 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 				}
 
 				if !c.IsSignedIn && forceLogin {
-					unauthorized(c, nil)
+					unauthorized(c)
 					return
 				}
 			}
@@ -48,7 +49,7 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 					return
 				}
 
-				unauthorized(c, c.LookupTokenErr)
+				unauthorized(c)
 				return
 			}
 
@@ -112,7 +113,7 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 	})
 }
 
-func unauthorized(c *contextmodel.ReqContext, err error) {
+func unauthorized(c *contextmodel.ReqContext) {
 	if c.IsApiRequest() {
 		c.WriteErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), c.LookupTokenErr)
 		return
@@ -179,58 +180,115 @@ type userCache interface {
 	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 }
 
-func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache) func(OrgIDGetter, Evaluator) web.Handler {
+type teamService interface {
+	GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error)
+}
+
+func AuthorizeInOrgMiddleware(ac AccessControl, service Service, userService userCache, teamService teamService) func(OrgIDGetter, Evaluator) web.Handler {
 	return func(getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
-			// We need to copy the user here because we're going to mutate it
-			userCopy := *(c.SignedInUser)
 			targetOrgID, err := getTargetOrg(c)
 			if err != nil {
 				deny(c, nil, fmt.Errorf("failed to get target org: %w", err))
 				return
 			}
 
-			if userCopy.OrgID != targetOrgID {
-				switch targetOrgID {
-				case GlobalOrgID:
-					userCopy.OrgID = GlobalOrgID
-					userCopy.OrgRole = org.RoleNone
-					userCopy.OrgName = ""
-				default:
-					query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: targetOrgID}
-					queryResult, err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
-					if err != nil {
-						deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
-						return
-					}
-					userCopy.OrgID = queryResult.OrgID
-					userCopy.OrgName = queryResult.OrgName
-					userCopy.OrgRole = queryResult.OrgRole
-				}
+			tmpUser, err := makeTmpUser(c.Req.Context(), service, userService, teamService, c.SignedInUser, targetOrgID)
+			if err != nil {
+				deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+				return
 			}
 
-			if userCopy.Permissions[targetOrgID] == nil {
-				permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
-				if err != nil {
-					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
-				}
-
-				// guard against nil map
-				if userCopy.Permissions == nil {
-					userCopy.Permissions = make(map[int64]map[string][]string)
-				}
-				userCopy.Permissions[targetOrgID] = GroupScopesByAction(permissions)
-			}
-
-			authorize(c, ac, &userCopy, evaluator)
+			authorize(c, ac, tmpUser, evaluator)
 
 			// guard against nil map
 			if c.SignedInUser.Permissions == nil {
 				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
 			}
-			c.SignedInUser.Permissions[targetOrgID] = userCopy.Permissions[targetOrgID]
+			c.SignedInUser.Permissions[tmpUser.GetOrgID()] = tmpUser.GetPermissions()
 		}
 	}
+}
+
+// makeTmpUser creates a temporary user that can be used to evaluate access across orgs.
+func makeTmpUser(ctx context.Context, service Service, cache userCache,
+	teamService teamService, reqUser identity.Requester, targetOrgID int64) (identity.Requester, error) {
+	tmpUser := &user.SignedInUser{
+		OrgID:          reqUser.GetOrgID(),
+		OrgName:        reqUser.GetOrgName(),
+		OrgRole:        reqUser.GetOrgRole(),
+		IsGrafanaAdmin: reqUser.GetIsGrafanaAdmin(),
+		Login:          reqUser.GetLogin(),
+		Teams:          reqUser.GetTeams(),
+		Permissions: map[int64]map[string][]string{
+			reqUser.GetOrgID(): reqUser.GetPermissions(),
+		},
+	}
+
+	namespace, identifier := reqUser.GetNamespacedID()
+	id, _ := identity.IntIdentifier(namespace, identifier)
+	switch namespace {
+	case identity.NamespaceUser:
+		tmpUser.UserID = id
+	case identity.NamespaceAPIKey:
+		tmpUser.ApiKeyID = id
+		if tmpUser.OrgID != targetOrgID {
+			return nil, errors.New("API key does not belong to target org")
+		}
+	case identity.NamespaceServiceAccount:
+		tmpUser.UserID = id
+		tmpUser.IsServiceAccount = true
+	}
+
+	if tmpUser.OrgID != targetOrgID {
+		switch targetOrgID {
+		case GlobalOrgID:
+			tmpUser.OrgID = GlobalOrgID
+			tmpUser.OrgRole = org.RoleNone
+			tmpUser.OrgName = ""
+			tmpUser.Teams = []int64{}
+		default:
+			if cache == nil {
+				return nil, errors.New("user cache is nil")
+			}
+			query := user.GetSignedInUserQuery{UserID: tmpUser.UserID, OrgID: targetOrgID}
+			queryResult, err := cache.GetSignedInUserWithCacheCtx(ctx, &query)
+			if err != nil {
+				return nil, err
+			}
+			tmpUser.OrgID = queryResult.OrgID
+			tmpUser.OrgName = queryResult.OrgName
+			tmpUser.OrgRole = queryResult.OrgRole
+
+			// Only fetch the team membership is the user is a member of the organization
+			if queryResult.OrgID == targetOrgID {
+				if teamService != nil {
+					teamIDs, err := teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{OrgID: targetOrgID, UserID: tmpUser.UserID})
+					if err != nil {
+						return nil, err
+					}
+					tmpUser.Teams = teamIDs
+				}
+			}
+		}
+	}
+
+	// If the user is not a member of the organization
+	// evaluation must happen based on global permissions.
+	evaluationOrg := targetOrgID
+	if tmpUser.OrgID == NoOrgID {
+		evaluationOrg = GlobalOrgID
+	}
+	if tmpUser.Permissions[evaluationOrg] == nil || len(tmpUser.Permissions[evaluationOrg]) == 0 {
+		permissions, err := service.GetUserPermissions(ctx, tmpUser, Options{})
+		if err != nil {
+			return nil, err
+		}
+
+		tmpUser.Permissions[evaluationOrg] = GroupScopesByAction(permissions)
+	}
+
+	return tmpUser, nil
 }
 
 func UseOrgFromContextParams(c *contextmodel.ReqContext) (int64, error) {
@@ -250,6 +308,16 @@ func UseOrgFromContextParams(c *contextmodel.ReqContext) (int64, error) {
 
 func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 	return GlobalOrgID, nil
+}
+
+// UseGlobalOrSingleOrg returns the global organization or the current organization in a single organization setup
+func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
+	return func(c *contextmodel.ReqContext) (int64, error) {
+		if cfg.RBACSingleOrganization {
+			return c.GetOrgID(), nil
+		}
+		return GlobalOrgID, nil
+	}
 }
 
 // scopeParams holds the parameters used to fill in scope templates

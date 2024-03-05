@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { dateTime } from '@grafana/data';
+import { Components } from '@grafana/e2e-selectors';
 
 import { DateTimePicker, Props } from './DateTimePicker';
 
@@ -33,7 +34,7 @@ describe('Date time picker', () => {
   it('should update date onblur', async () => {
     const onChangeInput = jest.fn();
     render(<DateTimePicker date={dateTime('2021-05-05 12:00:00')} onChange={onChangeInput} />);
-    const dateTimeInput = screen.getByTestId('date-time-input');
+    const dateTimeInput = screen.getByTestId(Components.DateTimePicker.input);
     await userEvent.clear(dateTimeInput);
     await userEvent.type(dateTimeInput, '2021-07-31 12:30:30');
     expect(dateTimeInput).toHaveDisplayValue('2021-07-31 12:30:30');
@@ -44,7 +45,7 @@ describe('Date time picker', () => {
   it('should not update onblur if invalid date', async () => {
     const onChangeInput = jest.fn();
     render(<DateTimePicker date={dateTime('2021-05-05 12:00:00')} onChange={onChangeInput} />);
-    const dateTimeInput = screen.getByTestId('date-time-input');
+    const dateTimeInput = screen.getByTestId(Components.DateTimePicker.input);
     await userEvent.clear(dateTimeInput);
     await userEvent.type(dateTimeInput, '2021:05:05 12-00-00');
     expect(dateTimeInput).toHaveDisplayValue('2021:05:05 12-00-00');

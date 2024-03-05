@@ -1,13 +1,14 @@
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
-import { OptionsWithLegend } from '@grafana/schema';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
 import { ShareModal } from '../sharing/ShareModal';
-import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
+import { removePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -16,7 +17,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'v',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      if (!scene.state.viewPanelKey) {
+      if (!scene.state.viewPanelScene) {
         locationService.push(getViewPanelUrl(vizPanel));
       }
     }),
@@ -29,13 +30,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       const sceneRoot = vizPanel.getRoot();
       if (sceneRoot instanceof DashboardScene) {
         const panelId = getPanelIdForVizPanel(vizPanel);
-        locationService.push(
-          getDashboardUrl({
-            uid: sceneRoot.state.uid,
-            subPath: `/panel-edit/${panelId}`,
-            currentQueryParams: location.search,
-          })
-        );
+        if (!scene.state.editPanel) {
+          locationService.push(getEditPanelUrl(panelId));
+        }
       }
     }),
   });
@@ -79,8 +76,62 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: () => sceneGraph.getTimeRange(scene).onRefresh(),
   });
 
+  // Zoom out
+  keybindings.addBinding({
+    key: 't z',
+    onTrigger: () => {
+      handleZoomOut(scene);
+    },
+  });
+  keybindings.addBinding({
+    key: 'ctrl+z',
+    onTrigger: () => {
+      handleZoomOut(scene);
+    },
+  });
+
+  keybindings.addBinding({
+    key: 't left',
+    onTrigger: () => {
+      handleTimeRangeShift(scene, 'left');
+    },
+  });
+
+  keybindings.addBinding({
+    key: 't right',
+    onTrigger: () => {
+      handleTimeRangeShift(scene, 'right');
+    },
+  });
+
+  // Dashboard settings
+  keybindings.addBinding({
+    key: 'd s',
+    onTrigger: scene.onOpenSettings,
+  });
+
+  keybindings.addBinding({
+    key: 'mod+s',
+    onTrigger: () => scene.openSaveDrawer({}),
+  });
+
   // toggle all panel legends (TODO)
-  // delete panel (TODO when we work on editing)
+  // delete panel
+  keybindings.addBinding({
+    key: 'p r',
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+      removePanel(scene, vizPanel, true);
+    }),
+  });
+
+  // duplicate panel
+  keybindings.addBinding({
+    key: 'p d',
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+      scene.duplicatePanel(vizPanel);
+    }),
+  });
+
   // toggle all exemplars (TODO)
   // collapse all rows (TODO)
   // expand all rows (TODO)
@@ -108,17 +159,22 @@ export function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel)
   };
 }
 
-export function toggleVizPanelLegend(vizPanel: VizPanel) {
-  const options = vizPanel.state.options;
-  if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
-    vizPanel.onOptionsChange({
-      legend: {
-        showLegend: options.legend.showLegend ? false : true,
-      },
-    });
-  }
+function handleZoomOut(scene: DashboardScene) {
+  const timePicker = dashboardSceneGraph.getTimePicker(scene);
+  timePicker?.onZoom();
 }
 
-function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
-  return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
+function handleTimeRangeShift(scene: DashboardScene, direction: 'left' | 'right') {
+  const timePicker = dashboardSceneGraph.getTimePicker(scene);
+
+  if (!timePicker) {
+    return;
+  }
+
+  if (direction === 'left') {
+    timePicker.onMoveBackward();
+  }
+  if (direction === 'right') {
+    timePicker.onMoveForward();
+  }
 }

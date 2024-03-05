@@ -1,5 +1,5 @@
 {
-  "_comment": "This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.",
+  "_comment": "This file is the source of truth for English strings. Edit this in the codebase to change plurals and other phrases for the UI.",
   "access-control": {
     "add-permission": {
       "role-label": "Role",
@@ -24,6 +24,9 @@
       "title": "Permissions",
       "user": "User"
     }
+  },
+  "bouncing-loader": {
+    "label": "Loading"
   },
   "browse-dashboards": {
     "action": {
@@ -73,6 +76,7 @@
     "folder-picker": {
       "accessible-label": "Select folder: {{ label }} currently selected",
       "button-label": "Select folder",
+      "clear-selection": "Clear selection",
       "empty-message": "No folders found",
       "error-title": "Error loading folders",
       "search-placeholder": "Search folders",
@@ -81,9 +85,7 @@
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
-      "panels": "Panels",
-      "permissions": "Permissions",
-      "settings": "Settings"
+      "panels": "Panels"
     },
     "new-folder-form": {
       "cancel-label": "Cancel",
@@ -105,6 +107,9 @@
       "change-theme": "Change theme...",
       "dark-theme": "Dark",
       "light-theme": "Light"
+    },
+    "empty-state": {
+      "title": "No results found"
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -138,6 +143,16 @@
       "error-message": "An unknown error occurred while fetching correlation data. Please try again.",
       "title": "Error fetching correlation data"
     },
+    "basic-info-form": {
+      "description-description": "Optional description with more information about the link",
+      "description-label": "Description",
+      "label-description": "This name will be used as the label for the correlation. This will show as button text, a menu item, or hover text on a link.",
+      "label-label": "Label",
+      "label-placeholder": "e.g. Tempo traces",
+      "label-required": "This field is required.",
+      "sub-text": "<0>Define text that will describe the correlation.</0>",
+      "title": "Define correlation label (Step 1 of 3)"
+    },
     "list": {
       "delete": "delete correlation",
       "label": "Label",
@@ -146,9 +161,73 @@
       "source": "Source",
       "target": "Target"
     },
+    "navigation-form": {
+      "add-button": "Add",
+      "back-button": "Back",
+      "next-button": "Next",
+      "save-button": "Save"
+    },
     "page-content": "To enable Correlations, add it in the Grafana config:",
     "page-heading": "Correlations are disabled",
-    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>"
+    "query-editor": {
+      "control-rules": "The selected target data source must export a query editor.",
+      "data-source-text": "Please select a target data source first.",
+      "data-source-title": "No data source selected",
+      "error-text": "The selected data source could not be loaded.",
+      "error-title": "Error loading data source",
+      "loading": "Loading query editor...",
+      "query-description": "Define the query that is run when the link is clicked. You can use <2>variables</2> to access specific field values.",
+      "query-editor-title": "Data source does not export a query editor.",
+      "query-label": "Query"
+    },
+    "source-form": {
+      "control-required": "This field is required.",
+      "description": "You have used following variables in the target query: <1></1><2></2>A data point needs to provide values to all variables as fields or as transformations output to make the correlation button appear in the visualization.<4></4>Note: Not every variable needs to be explicitly defined below. A transformation such as <7>logfmt</7> will create variables for every key/value pair.",
+      "heading": "Variables used in the target query",
+      "results-description": "The link will be shown next to the value of this field",
+      "results-label": "Results field",
+      "results-required": "This field is required.",
+      "source-description": "Results from selected source data source have links displayed in the panel",
+      "source-label": "Source",
+      "sub-text": "<0>Define what data source will display the correlation, and what data will replace previously defined variables.</0>",
+      "title": "Configure the data source that will link to {{dataSourceName}} (Step 3 of 3)"
+    },
+    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>",
+    "target-form": {
+      "control-rules": "This field is required.",
+      "sub-text": "<0>Define what data source the correlation will link to, and what query will run when the correlation is clicked.</0>",
+      "target-description": "Specify which data source is queried when the link is clicked",
+      "target-label": "Target",
+      "title": "Setup the target for the correlation (Step 2 of 3)"
+    },
+    "trans-details": {
+      "logfmt-description": "Parse provided field with logfmt to get variables",
+      "logfmt-label": "Logfmt",
+      "regex-description": "Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value. Regex is case insensitive.",
+      "regex-expression": "Use capture groups to extract a portion of the field.",
+      "regex-label": "Regular expression",
+      "regex-map-values": "Defines the name of the variable if the capture group is not named."
+    },
+    "transform": {
+      "add-button": "Add transformation",
+      "heading": "Transformations",
+      "no-transform": "No transformations defined."
+    },
+    "transform-row": {
+      "expression-label": "Expression",
+      "expression-required": "Please define an expression",
+      "expression-tooltip": "Required for regular expression. The expression the transformation will use. Logfmt does not use further specifications.",
+      "field-input": "field",
+      "field-label": "Field",
+      "field-tooltip": "Optional. The field to transform. If not specified, the transformation will be applied to the results field.",
+      "map-value-label": "Map value",
+      "map-value-tooltip": "Optional. Defines the name of the variable. This is currently only valid for regular expressions with a single, unnamed capture group.",
+      "remove-button": "Remove",
+      "remove-tooltip": "Remove transformation",
+      "transform-required": "Please select a transformation type",
+      "type-label": "Type",
+      "type-tooltip": "The type of transformation that will be applied to the source data."
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -157,6 +236,10 @@
       "row": "Row",
       "visualization": "Visualization",
       "widget": "Widget"
+    },
+    "alert-rules-drawer": {
+      "redirect-link": "List in Grafana Alerting",
+      "subtitle": "Alert rules related to this dashboard"
     },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
@@ -226,7 +309,7 @@
     },
     "toolbar": {
       "add": "Add",
-      "add-panel": "Add panel",
+      "alert-rules": "Alert rules",
       "mark-favorite": "Mark as favorite",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
@@ -236,6 +319,7 @@
       "save": "Save dashboard",
       "settings": "Dashboard settings",
       "share": "Share dashboard",
+      "share-button": "Share",
       "unmark-favorite": "Unmark as favorite"
     },
     "validation": {
@@ -285,6 +369,7 @@
       "title-label": "Title"
     },
     "json-editor": {
+      "apply-button": "Apply changes",
       "save-button": "Save changes",
       "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on.",
       "title": "JSON Model"
@@ -455,7 +540,13 @@
     },
     "toolbar": {
       "aria-label": "Explore toolbar",
-      "copy-shortened-link": "Copy shortened link",
+      "copy-link": "Copy URL",
+      "copy-link-abs-time": "Copy absolute URL",
+      "copy-links-absolute-category": "Time-sync URL links (share with time range intact)",
+      "copy-links-normal-category": "Normal URL links",
+      "copy-shortened-link": "Copy shortened URL",
+      "copy-shortened-link-abs-time": "Copy absolute shortened URL",
+      "copy-shortened-link-menu": "Open shortened link menu",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
       "split-close": "Close",
@@ -470,6 +561,9 @@
     "loading": "Loading folders..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": "Close"
+    },
     "modal": {
       "close-tooltip": "Close"
     },
@@ -501,6 +595,7 @@
     "shortcuts-description": {
       "change-theme": "Change theme",
       "collapse-all-rows": "Collapse all rows",
+      "copy-time-range": "Copy time range",
       "dashboard-settings": "Dashboard settings",
       "duplicate-panel": "Duplicate Panel",
       "exit-edit/setting-views": "Exit edit/setting views",
@@ -514,6 +609,7 @@
       "move-time-range-forward": "Move time range forward",
       "open-search": "Open search",
       "open-shared-modal": "Open Panel Share Modal",
+      "paste-time-range": "Paste time range",
       "refresh-all-panels": "Refresh all panels",
       "remove-panel": "Remove Panel",
       "save-dashboard": "Save dashboard",
@@ -577,6 +673,125 @@
       "invalid-user-or-password": "Invalid username or password",
       "title": "Login failed",
       "unknown": "Unknown error occurred"
+    },
+    "forgot-password": "Forgot your password?",
+    "form": {
+      "password-label": "Password",
+      "password-required": "Password is required",
+      "submit-label": "Log in",
+      "submit-loading-label": "Logging in...",
+      "username-label": "Email or username",
+      "username-required": "Email or username is required"
+    },
+    "services": {
+      "sing-in-with-prefix": "Sign in with {{serviceName}}"
+    },
+    "signup": {
+      "button-label": "Sign up",
+      "new-to-question": "New to Grafana?"
+    }
+  },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "Once you connect this installation to a cloud stack, you'll be able to upload data sources and dashboards.",
+      "link-title": "Learn about migrating other settings",
+      "title": "Can I move this installation to Grafana Cloud?"
+    },
+    "connect-modal": {
+      "body-cloud-stack": "You'll also need a cloud stack. If you just signed up, we'll automatically create your first stack. If you have an account, you'll need to select or create a stack.",
+      "body-get-started": "To get started, you'll need a Grafana.com account.",
+      "body-paste-stack": "Once you've decided on a stack, paste the URL below.",
+      "body-sign-up": "Sign up for a Grafana.com account",
+      "body-token": "Your self-managed Grafana installation needs special access to securely migrate content. You'll need to create a migration token on your chosen cloud stack.",
+      "body-token-field": "Migration token",
+      "body-token-field-placeholder": "Paste token here",
+      "body-token-instructions": "Log into your cloud stack and navigate to Administration, General, Migrate to Grafana Cloud. Create a migration token on that screen and paste the token here.",
+      "body-url-field": "Cloud stack URL",
+      "body-view-stacks": "View my cloud stacks",
+      "cancel": "Cancel",
+      "connect": "Connect to this stack",
+      "connecting": "Connecting to this stack...",
+      "stack-required-error": "Stack URL is required",
+      "title": "Connect to a cloud stack",
+      "token-required-error": "Migration token is required"
+    },
+    "cta": {
+      "button": "Migrate this instance to Cloud",
+      "header": "Let us manage your Grafana stack"
+    },
+    "disconnect-modal": {
+      "body": "This will remove the migration token from this installation. If you wish to upload more resources in the future, you will need to enter a new migration token.",
+      "cancel": "Cancel",
+      "disconnect": "Disconnect",
+      "disconnecting": "Disconnecting...",
+      "title": "Disconnect from cloud stack"
+    },
+    "get-started": {
+      "body": "The migration process must be started from your self-managed Grafana instance.",
+      "configure-pdc-link": "Configure PDC for this stack",
+      "link-title": "Learn more about Private Data Source Connect",
+      "step-1": "Log in to your self-managed instance and navigate to Administration, General, Migrate to Grafana Cloud.",
+      "step-2": "Select \"Migrate this instance to Cloud\".",
+      "step-3": "You'll be prompted for a migration token. Generate one from this screen.",
+      "step-4": "In your self-managed instance, select \"Upload everything\" to upload data sources and dashboards to this cloud stack.",
+      "step-5": "If some of your data sources will not work over the public internet, you’ll need to install Private Data Source Connect in your self-managed environment.",
+      "title": "How to get started"
+    },
+    "is-it-secure": {
+      "body": "Grafana Labs is committed to maintaining the highest standards of data privacy and security. By implementing industry-standard security technologies and procedures, we help protect our customers' data from unauthorized access, use, or disclosure.",
+      "link-title": "Grafana Labs Trust Center",
+      "title": "Is it secure?"
+    },
+    "migrate-to-this-stack": {
+      "body": "Some configuration from your self-managed Grafana instance can be automatically copied to this cloud stack.",
+      "link-title": "View the full migration guide",
+      "title": "Migrate configuration to this stack"
+    },
+    "migration-token": {
+      "body": "Your self-managed Grafana instance will require a special authentication token to securely connect to this cloud stack.",
+      "delete-button": "Delete this migration token",
+      "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
+      "delete-modal-cancel": "Cancel",
+      "delete-modal-confirm": "Delete",
+      "delete-modal-deleting": "Deleting...",
+      "delete-modal-title": "Delete migration token",
+      "generate-button": "Generate a migration token",
+      "generate-button-loading": "Generating a migration token...",
+      "modal-close": "Close",
+      "modal-copy-and-close": "Copy to clipboard and close",
+      "modal-copy-button": "Copy to clipboard",
+      "modal-field-description": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.",
+      "modal-field-label": "Token",
+      "modal-title": "Migration token created",
+      "status": "Current status: <2></2>",
+      "title": "Migration token"
+    },
+    "pdc": {
+      "body": "Exposing your data sources to the internet can raise security concerns. Private data source connect (PDC) allows Grafana Cloud to access your existing data sources over a secure network tunnel.",
+      "link-title": "Learn about PDC",
+      "title": "Not all my data sources are on the public internet"
+    },
+    "pricing": {
+      "body": "Grafana Cloud has a generous free plan and a 14 day unlimited usage trial. After your trial expires, you'll be billed based on usage over the free plan limits.",
+      "link-title": "Grafana Cloud pricing",
+      "title": "How much does it cost?"
+    },
+    "resources": {
+      "disconnect": "Disconnect"
+    },
+    "token-status": {
+      "active": "Token created and active",
+      "no-active": "No active token"
+    },
+    "what-is-cloud": {
+      "body": "Grafana cloud is a fully managed cloud-hosted observability platform ideal for cloud native environments. It's everything you love about Grafana without the overhead of maintaining, upgrading, and supporting an installation.",
+      "link-title": "Learn about cloud features",
+      "title": "What is Grafana Cloud?"
+    },
+    "why-host": {
+      "body": "In addition to the convenience of managed hosting, Grafana Cloud includes many cloud-exclusive features like SLOs, incident management, machine learning, and powerful observability integrations.",
+      "link-title": "More questions? Talk to an expert",
+      "title": "Why host with Grafana?"
     }
   },
   "nav": {
@@ -586,6 +801,9 @@
     "admin": {
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
+    },
+    "alert-list-legacy": {
+      "title": "Alert rules"
     },
     "alerting": {
       "subtitle": "Learn about problems in your systems moments after they occur",
@@ -623,6 +841,10 @@
       "subtitle": "Stop notifications from one or more alerting rules",
       "title": "Silences"
     },
+    "alerting-upgrade": {
+      "subtitle": "Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting",
+      "title": "Alerting upgrade"
+    },
     "alerts-and-incidents": {
       "subtitle": "Alerting and incident management apps",
       "title": "Alerts & IRM"
@@ -640,6 +862,9 @@
     },
     "authentication": {
       "title": "Authentication"
+    },
+    "collector": {
+      "title": "Collector"
     },
     "config": {
       "title": "Administration"
@@ -701,6 +926,10 @@
       "title": "Explore"
     },
     "frontend": {
+      "subtitle": "Gain real user monitoring insights",
+      "title": "Frontend"
+    },
+    "frontend-app": {
       "title": "Frontend"
     },
     "global-orgs": {
@@ -728,7 +957,14 @@
       "title": "Incidents"
     },
     "infrastructure": {
+      "subtitle": "Understand your infrastructure's health",
+      "title": "Infrastructure"
+    },
+    "integrations": {
       "title": "Integrations"
+    },
+    "k6": {
+      "title": "Performance"
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -742,6 +978,10 @@
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
+    },
+    "migrate-to-cloud": {
+      "subtitle": "Copy configuration from your self-managed installation to a cloud stack",
+      "title": "Migrate to Grafana Cloud"
     },
     "monitoring": {
       "subtitle": "Monitoring and infrastructure apps",
@@ -766,9 +1006,6 @@
       "subtitle": "Manage preferences across an organization",
       "title": "Default preferences"
     },
-    "performance-testing": {
-      "title": "Performance testing"
-    },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
       "title": "Playlists"
@@ -776,6 +1013,10 @@
     "plugins": {
       "subtitle": "Extend the Grafana experience with plugins",
       "title": "Plugins"
+    },
+    "private-data-source-connections": {
+      "subtitle": "Query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud. Learn more in our docs.",
+      "title": "Private data source connect"
     },
     "profile/notifications": {
       "title": "Notification history"
@@ -849,6 +1090,10 @@
       "subtitle": "Groups of users that have common dashboard and permission needs",
       "title": "Teams"
     },
+    "testing-and-synthetics": {
+      "subtitle": "Optimize performance with k6 and Synthetic Monitoring insights",
+      "title": "Testing & synthetics"
+    },
     "upgrading": {
       "title": "Stats and license"
     },
@@ -863,7 +1108,9 @@
     },
     "megamenu": {
       "close": "Close menu",
-      "dock": "Dock menu"
+      "dock": "Dock menu",
+      "list-label": "Navigation",
+      "undock": "Undock menu"
     },
     "toolbar": {
       "close-menu": "Close menu",
@@ -873,6 +1120,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": "Close Drawer"
+    },
     "title": "Latest from the blog"
   },
   "notifications": {
@@ -961,6 +1211,133 @@
       "passwords-must-match": "Passwords must match"
     }
   },
+  "public-dashboard": {
+    "acknowledgment-checkboxes": {
+      "ack-title": "Before you make the dashboard public, acknowledge the following:",
+      "data-src-ack-desc": "Publishing currently only works with a subset of data sources*",
+      "data-src-ack-tooltip": "Learn more about public datasources",
+      "public-ack-desc": "Your entire dashboard will be public*",
+      "public-ack-tooltip": "Learn more about public dashboards",
+      "usage-ack-desc": "Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*",
+      "usage-ack-desc-tooltip": "Learn more about query caching"
+    },
+    "config": {
+      "can-view-dashboard-radio-button-label": "Can view dashboard",
+      "copy-button": "Copy",
+      "dashboard-url-field-label": "Dashboard URL",
+      "email-share-type-option-label": "Only specified people",
+      "pause-sharing-dashboard-label": "Pause sharing dashboard",
+      "public-share-type-option-label": "Anyone with a link",
+      "revoke-public-URL-button": "Revoke public URL",
+      "revoke-public-URL-button-title": "Revoke public URL",
+      "settings-title": "Settings"
+    },
+    "create-page": {
+      "generate-public-url-button": "Generate public URL",
+      "unsupported-features-desc": "Currently, we don’t support template variables or frontend data sources",
+      "welcome-title": "Welcome to public dashboards!"
+    },
+    "delete-modal": {
+      "revoke-nonorphaned-body-text": "Are you sure you want to revoke this URL? The dashboard will no longer be public.",
+      "revoke-orphaned-body-text": "Orphaned public dashboard will no longer be public.",
+      "revoke-title": "Revoke public URL"
+    },
+    "email-sharing": {
+      "input-invalid-email-text": "Invalid email",
+      "input-required-email-text": "Email is required",
+      "invite-button": "Invite",
+      "invite-field-desc": "Invite people by email",
+      "invite-field-label": "Invite",
+      "resend-button": "Resend",
+      "resend-button-title": "Resend",
+      "revoke-button": "Revoke",
+      "revoke-button-title": "Revoke"
+    },
+    "modal-alerts": {
+      "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} public dashboards",
+      "no-upsert-perm-alert-title": "You don’t have permission to {{ mode }} a public dashboard",
+      "save-dashboard-changes-alert-title": "Please save your dashboard changes before updating the public configuration",
+      "unsupport-data-source-alert-readmore-link": "Read more about supported data sources",
+      "unsupported-data-source-alert-desc": "There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data sources may not function properly: {{unsupportedDataSources}}.",
+      "unsupported-data-source-alert-title": "Unsupported data sources",
+      "unsupported-template-variable-alert-desc": "This public dashboard may not work since it uses template variables",
+      "unsupported-template-variable-alert-title": "Template variables are not supported"
+    },
+    "settings-bar-header": {
+      "collapse-settings-tooltip": "Collapse settings",
+      "expand-settings-tooltip": "Expand settings"
+    },
+    "settings-configuration": {
+      "default-time-range-label": "Default time range",
+      "default-time-range-label-desc": "The public dashboard uses the default time range settings of the dashboard",
+      "show-annotations-label": "Show annotations",
+      "show-annotations-label-desc": "Show annotations on public dashboard",
+      "time-range-picker-label": "Time range picker enabled",
+      "time-range-picker-label-desc": "Allow viewers to change time range"
+    },
+    "settings-summary": {
+      "annotations-hide-text": "Annotations = hide",
+      "annotations-show-text": "Annotations = show",
+      "time-range-picker-disabled-text": "Time range picker = disabled",
+      "time-range-picker-enabled-text": "Time range picker = enabled",
+      "time-range-text": "Time range = "
+    }
+  },
+  "public-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "Configure public dashboard",
+      "revoke-button-text": "Revoke public URL",
+      "revoke-button-tooltip": "Revoke public dashboard URL",
+      "view-button-tooltip": "View public dashboard"
+    },
+    "dashboard-title": {
+      "orphaned-title": "<0>Orphaned public dashboard</0>",
+      "orphaned-tooltip": "The linked dashboard has already been deleted"
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": "Pause sharing"
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "loading-text": "Loading...",
+      "open-dashboard-list-text": "Open dashboards list",
+      "public-dashboard-link": "Public dashboard URL",
+      "public-dashboard-setting": "Public dashboard settings"
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "Delete user",
+      "delete-user-cancel-button": "Cancel",
+      "delete-user-revoke-access-button": "Revoke access",
+      "revoke-access-title": "Revoke access",
+      "revoke-user-access-modal-desc-line1": "Are you sure you want to revoke access for {{email}}?",
+      "revoke-user-access-modal-desc-line2": "This action will immediately revoke {{email}}&apos;s access to all public dashboards."
+    },
+    "modal": {
+      "dashboard-modal-title": "Public dashboards"
+    },
+    "table-header": {
+      "activated-label": "Activated",
+      "activated-tooltip": "Earliest time user has been an active user to a dashboard",
+      "email-label": "Email",
+      "last-active-label": "Last active",
+      "origin-label": "Origin",
+      "role-label": "Role"
+    }
+  },
+  "query-operation": {
+    "header": {
+      "collapse-row": "Collapse query row",
+      "datasource-help": "Show data source help",
+      "disable-query": "Disable query",
+      "drag-and-drop": "Drag and drop to reorder",
+      "duplicate-query": "Duplicate query",
+      "expand-row": "Expand query row",
+      "remove-query": "Remove query",
+      "toggle-edit-mode": "Toggle text edit mode"
+    },
+    "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -983,6 +1360,12 @@
       "turned-off": "Auto refresh off"
     }
   },
+  "return-to-previous": {
+    "button": {
+      "label": "Back to {{title}}"
+    },
+    "dismissable-button": "Close"
+  },
   "search": {
     "actions": {
       "include-panels": "Include panels",
@@ -998,15 +1381,6 @@
       "new-dashboard": "New dashboard",
       "new-folder": "New folder"
     },
-    "folder-view": {
-      "go-to-folder": "Go to folder",
-      "select-folder": "Select folder"
-    },
-    "result-kind": {
-      "dashboard": "Dashboard",
-      "folder": "Folder",
-      "panel": "Panel"
-    },
     "results-table": {
       "datasource-header": "Data source",
       "location-header": "Location",
@@ -1019,12 +1393,6 @@
     "search-input": {
       "include-panels-placeholder": "Search for dashboards, folders, and panels",
       "placeholder": "Search for dashboards and folders"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "Clear search and filters",
-      "text": "No results found for your query."
     }
   },
   "share-modal": {
@@ -1075,10 +1443,10 @@
       "expire-day": "1 Day",
       "expire-hour": "1 Hour",
       "expire-never": "Never",
-      "expire-week": "7 Days",
+      "expire-week": "1 Week",
       "info-text-1": "A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip sensitive data like queries (metric, template, and annotation) and panel links, leaving only the visible metric data and series names embedded in your dashboard.",
       "info-text-2": "Keep in mind, your snapshot <1>can be viewed by anyone</1> that has the link and can access the URL. Share wisely.",
-      "local-button": "Local Snapshot",
+      "local-button": "Publish Snapshot",
       "mistake-message": "Did you make a mistake? ",
       "name": "Snapshot name",
       "timeout": "Timeout (seconds)",
@@ -1091,6 +1459,8 @@
       "library-panel": "Library panel",
       "link": "Link",
       "panel-embed": "Embed",
+      "public-dashboard": "Publish Dashboard",
+      "public-dashboard-title": "Public dashboard",
       "snapshot": "Snapshot"
     },
     "theme-picker": {
@@ -1161,12 +1531,20 @@
     "calendar": {
       "apply-button": "Apply time range",
       "cancel-button": "Cancel",
+      "close": "Close calendar",
       "select-time": "Select a time range"
     },
     "content": {
       "empty-recent-list-docs": "<0><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></0>",
       "empty-recent-list-info": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
       "filter-placeholder": "Search quick ranges"
+    },
+    "copy-paste": {
+      "copy-success-message": "Time range copied to clipboard",
+      "default-error-message": "{{error}} is not a valid time range",
+      "default-error-title": "Invalid time range",
+      "tooltip-copy": "Copy time range to clipboard",
+      "tooltip-paste": "Paste time range"
     },
     "footer": {
       "change-settings-button": "Change time settings",
@@ -1180,6 +1558,7 @@
       "default-error": "Please enter a past date or \"now\"",
       "fiscal-year": "Fiscal year",
       "from-input": "From",
+      "open-input-calendar": "Open calendar",
       "range-error": "\"From\" can't be after \"To\"",
       "to-input": "To"
     },
@@ -1202,6 +1581,12 @@
       "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
+      "add-transformation-header": "Start transforming data"
+    }
+  },
   "user-orgs": {
     "current-org-button": "Current",
     "name-column": "Name",
@@ -1216,6 +1601,9 @@
       "name-error": "Name is required",
       "name-label": "Name",
       "username-label": "Username"
+    },
+    "tabs": {
+      "general": "General"
     }
   },
   "user-session": {
@@ -1227,6 +1615,11 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "users-access-list": {
+    "tabs": {
+      "public-dashboard-users-tab-title": "Public dashboard users"
+    }
   },
   "variable": {
     "adhoc": {

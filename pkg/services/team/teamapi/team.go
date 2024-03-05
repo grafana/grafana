@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
@@ -58,7 +58,7 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 			break
 		}
 		if err := addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, userID, c.SignedInUser.GetOrgID(),
-			t.ID, dashboards.PERMISSION_ADMIN.String()); err != nil {
+			t.ID, dashboardaccess.PERMISSION_ADMIN.String()); err != nil {
 			c.Logger.Error("Could not add creator to team", "error", err)
 		}
 	default:
@@ -127,6 +127,12 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to delete Team", err)
 	}
+
+	// Clear associated team assignments, managed role and permissions
+	if err := tapi.ac.DeleteTeamPermissions(c.Req.Context(), orgID, teamID); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete Team permissions", err)
+	}
+
 	return response.Success("Team deleted")
 }
 
@@ -182,7 +188,7 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 
 	teamIDs := map[string]bool{}
 	for _, team := range queryResult.Teams {
-		team.AvatarURL = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
+		team.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, team.Email, team.Name)
 		teamIDs[strconv.FormatInt(team.ID, 10)] = true
 	}
 
@@ -234,7 +240,7 @@ func (tapi *TeamAPI) getTeamByID(c *contextmodel.ReqContext) response.Response {
 	// Add accesscontrol metadata
 	queryResult.AccessControl = tapi.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "teams:id:", strconv.FormatInt(queryResult.ID, 10))
 
-	queryResult.AvatarURL = dtos.GetGravatarUrlWithDefault(queryResult.Email, queryResult.Name)
+	queryResult.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, queryResult.Email, queryResult.Name)
 	return response.JSON(http.StatusOK, &queryResult)
 }
 

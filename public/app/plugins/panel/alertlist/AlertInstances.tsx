@@ -8,7 +8,7 @@ import { Button, clearButtonStyles, Icon, useStyles2 } from '@grafana/ui';
 import { AlertInstancesTable } from 'app/features/alerting/unified/components/rules/AlertInstancesTable';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
-import { Alert } from 'app/types/unified-alerting';
+import { Alert, CombinedRule } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../core/constants';
 
@@ -16,6 +16,7 @@ import { GroupMode, UnifiedAlertListOptions } from './types';
 import { filterAlerts } from './util';
 
 interface Props {
+  rule?: CombinedRule;
   alerts: Alert[];
   options: PanelProps<UnifiedAlertListOptions>['options'];
   grafanaTotalInstances?: number;
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export const AlertInstances = ({
+  rule,
   alerts,
   options,
   grafanaTotalInstances,
@@ -125,6 +127,7 @@ export const AlertInstances = ({
       )}
       {displayInstances && (
         <AlertInstancesTable
+          rule={rule}
           instances={filteredAlerts}
           pagination={{ itemsPerPage: 2 * DEFAULT_PER_PAGE_PAGINATION }}
           footerRow={footerRow}

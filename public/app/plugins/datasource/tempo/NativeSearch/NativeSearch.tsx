@@ -2,11 +2,9 @@ import { css } from '@emotion/css';
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2, isValidGoDuration, SelectableValue, toOption } from '@grafana/data';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { FetchError, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
 import { InlineFieldRow, InlineField, Input, Alert, useStyles2, fuzzyMatch, Select } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
-import { dispatch } from 'app/store/store';
 
 import { DEFAULT_LIMIT, TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
@@ -26,6 +24,7 @@ const durationPlaceholder = 'e.g. 1.2s, 100ms';
 
 const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
   const styles = useStyles2(getStyles);
+  const [alertText, setAlertText] = useState<string>();
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [serviceOptions, setServiceOptions] = useState<Array<SelectableValue<string>>>();
   const [spanOptions, setSpanOptions] = useState<Array<SelectableValue<string>>>();
@@ -47,19 +46,21 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       try {
         const options = await languageProvider.getOptionsV1(lpName);
         const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
+        setAlertText(undefined);
+        setError(null);
         return filteredOptions;
       } catch (error) {
         if (isFetchError(error) && error?.status === 404) {
           setError(error);
         } else if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
+          setAlertText(`Error: ${error.message}`);
         }
         return [];
       } finally {
         setIsLoading((prevValue) => ({ ...prevValue, [name]: false }));
       }
     },
-    [languageProvider]
+    [languageProvider, setAlertText]
   );
 
   useEffect(() => {
@@ -74,17 +75,19 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           spans.push(toOption(query.spanName));
         }
         setSpanOptions(spans);
+        setAlertText(undefined);
+        setError(null);
       } catch (error) {
         // Display message if Tempo is connected but search 404's
         if (isFetchError(error) && error?.status === 404) {
           setError(error);
         } else if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
+          setAlertText(`Error: ${error.message}`);
         }
       }
     };
     fetchOptions();
-  }, [languageProvider, loadOptions, query.serviceName, query.spanName]);
+  }, [languageProvider, loadOptions, query.serviceName, query.spanName, setAlertText]);
 
   const onKeyDown = (keyEvent: React.KeyboardEvent) => {
     if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
@@ -255,6 +258,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           configure it in the <a href={`/datasources/edit/${datasource.uid}`}>datasource settings</a>.
         </Alert>
       ) : null}
+      {alertText && <TemporaryAlert severity="error" text={alertText} />}
     </>
   );
 };
@@ -262,11 +266,11 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
 export default NativeSearch;
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    max-width: 500px;
-  `,
-  alert: css`
-    max-width: 75ch;
-    margin-top: ${theme.spacing(2)};
-  `,
+  container: css({
+    maxWidth: '500px',
+  }),
+  alert: css({
+    maxWidth: '75ch',
+    marginTop: theme.spacing(2),
+  }),
 });

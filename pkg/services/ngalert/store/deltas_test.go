@@ -457,7 +457,6 @@ func withUIDs(uids map[string]*models.AlertRule) func(rule *models.AlertRule) {
 
 func randFolder() *folder.Folder {
 	return &folder.Folder{
-		ID:        rand.Int63(),
 		UID:       util.GenerateShortUID(),
 		Title:     "TEST-FOLDER-" + util.GenerateShortUID(),
 		URL:       "",

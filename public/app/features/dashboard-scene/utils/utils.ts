@@ -1,15 +1,27 @@
-import { IntervalVariableModel } from '@grafana/data';
+import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
+  CustomVariable,
   MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
+  SceneGridRow,
   SceneObject,
   SceneQueryRunner,
   VizPanel,
+  VizPanelMenu,
 } from '@grafana/scenes';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+
+import { dashboardSceneGraph } from './dashboardSceneGraph';
+
+export const NEW_PANEL_HEIGHT = 8;
+export const NEW_PANEL_WIDTH = 12;
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
@@ -19,8 +31,12 @@ export function getPanelIdForVizPanel(panel: SceneObject): number {
   return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 
+export function getPanelIdForLibraryVizPanel(panel: LibraryVizPanel): number {
+  return parseInt(panel.state.panelKey!.replace('panel-', ''), 10);
+}
+
 /**
- * This will also  try lookup based on panelId
+ * This will also try lookup based on panelId
  */
 export function findVizPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
   if (!key) {
@@ -78,7 +94,7 @@ export function forceRenderChildren(model: SceneObject, recursive?: boolean) {
   });
 }
 
-export function getMultiVariableValues(variable: MultiValueVariable) {
+export function getMultiVariableValues(variable: MultiValueVariable | CustomVariable) {
   const { value, text, options } = variable.state;
 
   if (variable.hasAllValue()) {
@@ -94,10 +110,10 @@ export function getMultiVariableValues(variable: MultiValueVariable) {
   };
 }
 
-// Transform old interval model to new interval model from scenes
-export function getIntervalsFromOldIntervalModel(variable: IntervalVariableModel): string[] {
+// used to transform old interval model to new interval model from scenes
+export function getIntervalsFromQueryString(query: string): string[] {
   // separate intervals by quotes either single or double
-  const matchIntervals = variable.query.match(/(["'])(.*?)\1|\w+/g);
+  const matchIntervals = query.match(/(["'])(.*?)\1|\w+/g);
 
   // If no intervals are found in query, return the initial state of the interval reducer.
   if (!matchIntervals) {
@@ -151,12 +167,14 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
     return undefined;
   }
 
-  if (sceneObject.state.$data instanceof SceneQueryRunner) {
-    return sceneObject.state.$data;
+  const dataProvider = sceneObject.state.$data ?? sceneObject.parent?.state.$data;
+
+  if (dataProvider instanceof SceneQueryRunner) {
+    return dataProvider;
   }
 
-  if (sceneObject.state.$data instanceof SceneDataTransformer) {
-    return getQueryRunnerFor(sceneObject.state.$data);
+  if (dataProvider instanceof SceneDataTransformer) {
+    return getQueryRunnerFor(dataProvider);
   }
 
   return undefined;
@@ -164,6 +182,7 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
 
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
+
   if (root instanceof DashboardScene) {
     return root;
   }
@@ -181,4 +200,43 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   }
 
   return null;
+}
+
+export function isPanelClone(key: string) {
+  return key.includes('clone');
+}
+
+export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
+  const panelId = dashboardSceneGraph.getNextPanelId(dashboard);
+
+  return new VizPanel({
+    title: 'Panel Title',
+    key: getVizPanelKeyForPanelId(panelId),
+    pluginId: 'timeseries',
+    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    menu: new VizPanelMenu({
+      $behaviors: [panelMenuBehavior],
+    }),
+    $data: new SceneDataTransformer({
+      $data: new SceneQueryRunner({
+        queries: [{ refId: 'A' }],
+        datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
+      }),
+      transformations: [],
+    }),
+  });
+}
+
+export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
+  const id = dashboardSceneGraph.getNextPanelId(dashboard);
+
+  return new SceneGridRow({
+    key: getVizPanelKeyForPanelId(id),
+    title: 'Row title',
+    y: 0,
+  });
+}
+
+export function isLibraryPanelChild(vizPanel: VizPanel) {
+  return vizPanel.parent instanceof LibraryVizPanel;
 }

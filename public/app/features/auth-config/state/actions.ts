@@ -1,24 +1,44 @@
 import { lastValueFrom } from 'rxjs';
 
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Settings, ThunkResult, UpdateSettingsQuery } from 'app/types';
 
-import { getAuthProviderStatus, getRegisteredAuthProviders } from '..';
+import { getAuthProviderStatus, getRegisteredAuthProviders, SSOProvider } from '..';
 import { AuthProviderStatus, SettingsError } from '../types';
 
-import { loadingBegin, loadingEnd, providerStatusesLoaded, resetError, setError, settingsUpdated } from './reducers';
+import {
+  loadingBegin,
+  loadingEnd,
+  providersLoaded,
+  providerStatusesLoaded,
+  resetError,
+  setError,
+  settingsUpdated,
+} from './reducers';
 
 export function loadSettings(): ThunkResult<Promise<Settings>> {
   return async (dispatch) => {
     if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
       dispatch(loadingBegin());
+      dispatch(loadProviders());
       const result = await getBackendSrv().get('/api/admin/settings');
       dispatch(settingsUpdated(result));
       await dispatch(loadProviderStatuses());
       dispatch(loadingEnd());
       return result;
     }
+  };
+}
+
+export function loadProviders(provider = ''): ThunkResult<Promise<SSOProvider[]>> {
+  return async (dispatch) => {
+    if (!config.featureToggles.ssoSettingsApi) {
+      return [];
+    }
+    const result = await getBackendSrv().get(`/api/v1/sso-settings${provider ? `/${provider}` : ''}`);
+    dispatch(providersLoaded(provider ? [result] : result));
+    return result;
   };
 }
 
@@ -33,8 +53,7 @@ export function loadProviderStatuses(): ThunkResult<void> {
     const statuses = await Promise.all(getStatusPromises);
     for (let i = 0; i < registeredProviders.length; i++) {
       const provider = registeredProviders[i];
-      const status = statuses[i];
-      providerStatuses[provider.id] = status;
+      providerStatuses[provider.id] = statuses[i];
     }
     dispatch(providerStatusesLoaded(providerStatuses));
   };

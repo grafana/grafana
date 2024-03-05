@@ -61,7 +61,7 @@ export interface BinaryOptions {
   right: string;
 }
 
-export interface IndexOptions {
+interface IndexOptions {
   asPercentile: boolean;
 }
 
@@ -277,7 +277,7 @@ function getTrailingWindowValues(frame: DataFrame, reducer: ReducerID, selectedF
   for (let i = 0; i < frame.length; i++) {
     if (reducer === ReducerID.mean) {
       const currentValue = selectedField.values[i];
-      if (currentValue !== null) {
+      if (currentValue !== null && currentValue !== undefined) {
         count++;
         sum += currentValue;
 
@@ -315,7 +315,7 @@ function getCenteredWindowValues(frame: DataFrame, reducer: ReducerID, selectedF
       if (i === 0) {
         // We're at the start and need to prime the leading part of the window
         for (let x = 0; x < leadingPartOfWindow + 1 && x < selectedField.values.length; x++) {
-          if (selectedField.values[x] !== null) {
+          if (selectedField.values[x] != null) {
             sum += selectedField.values[x];
             count++;
           }
@@ -323,14 +323,14 @@ function getCenteredWindowValues(frame: DataFrame, reducer: ReducerID, selectedF
       } else {
         if (last < selectedField.values.length) {
           // Last is inside the data and should be added.
-          if (selectedField.values[last] !== null) {
+          if (selectedField.values[last] != null) {
             sum += selectedField.values[last];
             count++;
           }
         }
         if (first > 0) {
           // Remove values that have fallen outside of the window, if the start of the window isn't outside of the data.
-          if (selectedField.values[first - 1] !== null) {
+          if (selectedField.values[first - 1] != null) {
             sum -= selectedField.values[first - 1];
             count--;
           }
@@ -363,7 +363,7 @@ function calculateVariance(vals: number[]): number {
   let nonNullCount = 0;
   for (let i = 0; i < vals.length; i++) {
     const currentValue = vals[i];
-    if (currentValue !== null) {
+    if (currentValue != null) {
       nonNullCount++;
       let _oldMean = runningMean;
       runningMean += (currentValue - _oldMean) / nonNullCount;
@@ -417,7 +417,7 @@ function getCumulativeCreator(options: CumulativeOptions, allFrames: DataFrame[]
 
     let total = 0;
     for (let i = 0; i < frame.length; i++) {
-      total += selectedField.values[i];
+      total += selectedField.values[i] ?? 0;
       if (options.reducer === ReducerID.sum) {
         vals.push(total);
       } else if (options.reducer === ReducerID.mean) {

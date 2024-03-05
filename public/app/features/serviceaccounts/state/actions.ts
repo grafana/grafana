@@ -54,7 +54,10 @@ export function fetchServiceAccounts(
           )}&accesscontrol=true`
         );
 
-        if (contextSrv.licensedAccessControlEnabled()) {
+        if (
+          contextSrv.licensedAccessControlEnabled() &&
+          contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)
+        ) {
           dispatch(rolesFetchBegin());
           const orgId = contextSrv.user.orgId;
           const userIds = result?.serviceAccounts.map((u: ServiceAccountDTO) => u.id);
@@ -114,6 +117,8 @@ const getStateFilter = (value: ServiceAccountStateFilter) => {
       return '&expiredTokens=true';
     case ServiceAccountStateFilter.Disabled:
       return '&disabled=true';
+    case ServiceAccountStateFilter.External:
+      return '&external=true';
     default:
       return '';
   }

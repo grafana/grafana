@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/build/golangutils"
 )
 
-var binaries = []string{"grafana", "grafana-example-apiserver", "grafana-server", "grafana-cli"}
+var binaries = []string{"grafana", "grafana-server", "grafana-cli"}
 
 const (
 	SuffixEnterprise2 = "-enterprise2"

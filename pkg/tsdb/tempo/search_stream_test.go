@@ -11,14 +11,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"google.golang.org/grpc/metadata"
 )
 
 func TestProcessStream_ValidInput_ReturnsNoError(t *testing.T) {
-	logger := log.New("tsdb.tempo.test")
+	logger := backend.NewLoggerWith("logger", "tsdb.tempo.test")
 	service := &Service{
 		logger: logger,
 	}
@@ -30,7 +29,7 @@ func TestProcessStream_ValidInput_ReturnsNoError(t *testing.T) {
 	}
 }
 func TestProcessStream_InvalidInput_ReturnsError(t *testing.T) {
-	logger := log.New("tsdb.tempo.test")
+	logger := backend.NewLoggerWith("logger", "tsdb.tempo.test")
 	service := &Service{
 		logger: logger,
 	}
@@ -44,7 +43,7 @@ func TestProcessStream_InvalidInput_ReturnsError(t *testing.T) {
 	}
 }
 func TestProcessStream_ValidInput_ReturnsExpectedOutput(t *testing.T) {
-	logger := log.New("tsdb.tempo.test")
+	logger := backend.NewLoggerWith("logger", "tsdb.tempo.test")
 	service := &Service{
 		logger: logger,
 	}

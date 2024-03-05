@@ -16,7 +16,7 @@ weight: 500
 If you manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration]({{< relref "../../../configure-grafana" >}}) and [Provisioning]({{< relref "../../../../administration/provisioning" >}}).
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}).
 {{% /admonition %}}
 
 {{% admonition type="note" %}}

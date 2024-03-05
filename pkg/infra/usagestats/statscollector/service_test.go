@@ -145,7 +145,7 @@ func TestCollectingUsageStats(t *testing.T) {
 		AnonymousEnabled:     true,
 		BasicAuthEnabled:     true,
 		LDAPAuthEnabled:      true,
-		AuthProxyEnabled:     true,
+		AuthProxy:            setting.AuthProxySettings{Enabled: true},
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
 		RemoteCacheOptions: &setting.RemoteCacheOptions{
@@ -382,9 +382,9 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 		store,
 		&mockSocial{},
 		&pluginstore.FakePluginStore{},
-		featuremgmt.WithFeatures("feature1", "feature2"),
+		featuremgmt.WithManager("feature1", "feature2"),
 		o.datasources,
-		httpclient.NewProvider(),
+		httpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{}}),
 	)
 }
 

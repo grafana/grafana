@@ -3,11 +3,13 @@ import { config, locationSearchToObject, locationService } from '@grafana/runtim
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { InspectTab } from 'app/features/inspector/types';
 
 import { getQueryRunnerFor } from './utils';
 
 export interface DashboardUrlOptions {
   uid?: string;
+  slug?: string;
   subPath?: string;
   updateQuery?: UrlQueryMap;
   /** Set to location.search to preserve current params */
@@ -20,18 +22,25 @@ export interface DashboardUrlOptions {
   absolute?: boolean;
   // Add tz to query params
   timeZone?: string;
-
-  // Add tz to query params
-  useExperimentalURL?: boolean;
 }
 
 export function getDashboardUrl(options: DashboardUrlOptions) {
-  let path = options.useExperimentalURL
-    ? `/scenes/dashboard/${options.uid}${options.subPath ?? ''}`
-    : `/d/${options.uid}${options.subPath ?? ''}`;
+  let path = `/d/${options.uid}`;
+
+  if (!options.uid) {
+    path = '/dashboard/new';
+  }
 
   if (options.soloRoute) {
-    path = `/d-solo/${options.uid}${options.subPath ?? ''}`;
+    path = `/d-solo/${options.uid}`;
+  }
+
+  if (options.slug) {
+    path += `/${options.slug}`;
+  }
+
+  if (options.subPath) {
+    path += options.subPath;
   }
 
   if (options.render) {
@@ -71,8 +80,14 @@ export function getViewPanelUrl(vizPanel: VizPanel) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { viewPanel: vizPanel.state.key });
 }
 
-export function getInspectUrl(vizPanel: VizPanel) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect: vizPanel.state.key });
+export function getEditPanelUrl(panelId: number) {
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId });
+}
+
+export function getInspectUrl(vizPanel: VizPanel, inspectTab?: InspectTab) {
+  const inspect = vizPanel.state.key?.replace('-view', '');
+
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect, inspectTab });
 }
 
 export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | undefined> {
@@ -91,5 +106,6 @@ export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | u
     dsRef: queryRunner.state.datasource,
     timeRange: timeRange.state.value,
     scopedVars: { __sceneObject: { value: vizPanel } },
+    adhocFilters: queryRunner.state.data?.request?.filters,
   });
 }

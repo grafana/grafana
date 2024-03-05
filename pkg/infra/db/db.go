@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DB interface {
@@ -34,6 +36,9 @@ type DB interface {
 	GetEngine() *xorm.Engine
 	// GetSqlxSession is an experimental extension to use sqlx instead of xorm to
 	// communicate with the database.
+	// NOTE: when using this session with mysql, the connection will *not* have:
+	// the expected parameters: "&sql_mode='ANSI_QUOTES" and "&parseTime=true"
+	// The sqlx session is useful, but be careful not to expect automagic date parsing
 	GetSqlxSession() *session.SessionDB
 	// InTransaction creates a new SQL transaction that is placed on the context.
 	// Use together with [DB.WithDbSession] to run database operations.
@@ -48,9 +53,15 @@ type DB interface {
 type Session = sqlstore.DBSession
 type InitTestDBOpt = sqlstore.InitTestDBOpt
 
+var SetupTestDB = sqlstore.SetupTestDB
 var InitTestDB = sqlstore.InitTestDB
-var InitTestDBwithCfg = sqlstore.InitTestDBWithCfg
+var CleanupTestDB = sqlstore.CleanupTestDB
 var ProvideService = sqlstore.ProvideService
+
+func InitTestDBwithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.SQLStore, *setting.Cfg) {
+	store := InitTestDB(t, opts...)
+	return store, store.Cfg
+}
 
 func IsTestDbSQLite() bool {
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); !present || db == "sqlite" {

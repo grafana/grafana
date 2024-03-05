@@ -31,7 +31,12 @@ import (
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 type dataSourceMockRetriever struct {
 	res []*datasources.DataSource
@@ -77,6 +82,85 @@ func TestService_AddDataSource(t *testing.T) {
 		_, err = dsService.AddDataSource(context.Background(), cmd)
 		require.EqualError(t, err, "[datasource.urlInvalid] max length is 255")
 	})
+}
+
+func TestService_getAvailableName(t *testing.T) {
+	type testCase struct {
+		desc       string
+		dsType     string
+		existingDs []*datasources.DataSource
+		expected   string
+	}
+
+	testCases := []testCase{
+		{
+			desc:     "should return type as the name if no DS are passed in",
+			dsType:   "prometheus",
+			expected: "prometheus",
+		},
+		{
+			desc:   "should return type as the name if no DS with that name exists",
+			dsType: "prometheus",
+			existingDs: []*datasources.DataSource{
+				{Name: "graphite"},
+				{Name: "loki"},
+			},
+			expected: "prometheus",
+		},
+		{
+			desc:   "should return type-1 as the name if one data source with that name exists",
+			dsType: "prometheus",
+			existingDs: []*datasources.DataSource{
+				{Name: "graphite"},
+				{Name: "prometheus"},
+			},
+			expected: "prometheus-1",
+		},
+		{
+			desc:   "should correctly increment the number suffix of the name",
+			dsType: "prometheus",
+			existingDs: []*datasources.DataSource{
+				{Name: "prometheus"},
+				{Name: "prometheus-1"},
+				{Name: "prometheus-3"},
+			},
+			expected: "prometheus-2",
+		},
+		{
+			desc:   "should correctly increment the number suffix for multidigit numbers",
+			dsType: "prometheus",
+			existingDs: []*datasources.DataSource{
+				{Name: "prometheus"},
+				{Name: "prometheus-1"},
+				{Name: "prometheus-2"},
+				{Name: "prometheus-3"},
+				{Name: "prometheus-4"},
+				{Name: "prometheus-5"},
+				{Name: "prometheus-6"},
+				{Name: "prometheus-7"},
+				{Name: "prometheus-8"},
+				{Name: "prometheus-9"},
+				{Name: "prometheus-10"},
+			},
+			expected: "prometheus-11",
+		},
+		{
+			desc:   "name comparison should be case insensitive",
+			dsType: "prometheus",
+			existingDs: []*datasources.DataSource{
+				{Name: "Prometheus"},
+				{Name: "PROMETHEUS"},
+			},
+			expected: "prometheus-1",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			name := getAvailableName(tc.dsType, tc.existingDs)
+			assert.Equal(t, tc.expected, name)
+		})
+	}
 }
 
 func TestService_UpdateDataSource(t *testing.T) {
@@ -529,7 +613,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		setting.SecretKey = "password"
+		cfg.SecretKey = "password"
 
 		sjson := simplejson.New()
 		sjson.Set("tlsAuthWithCACert", true)
@@ -580,7 +664,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		setting.SecretKey = "password"
+		cfg.SecretKey = "password"
 
 		sjson := simplejson.New()
 		sjson.Set("tlsAuth", true)
@@ -627,7 +711,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		setting.SecretKey = "password"
+		cfg.SecretKey = "password"
 
 		sjson := simplejson.New()
 		sjson.Set("tlsAuthWithCACert", true)
@@ -786,6 +870,75 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.Equal(t, "Ok", bodyStr)
 	})
 
+	t.Run("Should set request Host if it is configured in custom headers within JsonData", func(t *testing.T) {
+		provider := httpclient.NewProvider()
+
+		sjson := simplejson.NewFromAny(map[string]any{
+			"httpHeaderName1": "Host",
+		})
+
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		require.NoError(t, err)
+
+		ds := datasources.DataSource{
+			ID:       1,
+			OrgID:    1,
+			Name:     "kubernetes",
+			URL:      "http://k8s:8001",
+			Type:     "Kubernetes",
+			JsonData: sjson,
+		}
+
+		secureJsonData, err := json.Marshal(map[string]string{
+			"httpHeaderValue1": "example.com",
+		})
+		require.NoError(t, err)
+
+		err = secretsStore.Set(context.Background(), ds.OrgID, ds.Name, secretskvs.DataSourceSecretType, string(secureJsonData))
+		require.NoError(t, err)
+
+		headers := dsService.getCustomHeaders(sjson, map[string]string{"httpHeaderValue1": "example.com"})
+		require.Equal(t, "example.com", headers["Host"])
+
+		// 1. Start HTTP test server which checks the request headers
+		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Host == "example.com" {
+				w.WriteHeader(200)
+				_, err := w.Write([]byte("Ok"))
+				require.NoError(t, err)
+				return
+			}
+
+			w.WriteHeader(503)
+			_, err := w.Write([]byte("Server name mismatch"))
+			require.NoError(t, err)
+		}))
+		defer backend.Close()
+
+		// 2. Get HTTP transport from datasource which uses the test server as backend
+		ds.URL = backend.URL
+		rt, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
+		require.NoError(t, err)
+		require.NotNil(t, rt)
+
+		// 3. Send test request which should have the Authorization header set
+		req := httptest.NewRequest("GET", backend.URL+"/test-host", nil)
+		res, err := rt.RoundTrip(req)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := res.Body.Close()
+			require.NoError(t, err)
+		})
+		body, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+		bodyStr := string(body)
+		require.Equal(t, "Ok", bodyStr)
+	})
+
 	t.Run("Should use request timeout if configured in JsonData", func(t *testing.T) {
 		provider := httpclient.NewProvider()
 
@@ -820,10 +973,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		origSigV4Enabled := setting.SigV4AuthEnabled
-		setting.SigV4AuthEnabled = true
+		origSigV4Enabled := cfg.SigV4AuthEnabled
+		cfg.SigV4AuthEnabled = true
 		t.Cleanup(func() {
-			setting.SigV4AuthEnabled = origSigV4Enabled
+			cfg.SigV4AuthEnabled = origSigV4Enabled
 		})
 
 		sjson, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))

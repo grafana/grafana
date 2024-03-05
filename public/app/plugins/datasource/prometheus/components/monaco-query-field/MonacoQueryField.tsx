@@ -88,7 +88,7 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
       ::after {
         content: '${placeholder}';
         font-family: ${theme.typography.fontFamilyMonospace};
-        opacity: 0.3;
+        opacity: 0.6;
       }
     `,
   };
@@ -122,7 +122,7 @@ const MonacoQueryField = (props: Props) => {
 
   return (
     <div
-      aria-label={selectors.components.QueryField.container}
+      data-testid={selectors.components.QueryField.container}
       className={styles.container}
       // NOTE: we will be setting inline-style-width/height on this element
       ref={containerRef}

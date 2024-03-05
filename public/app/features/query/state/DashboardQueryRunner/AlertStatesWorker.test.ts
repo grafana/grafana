@@ -1,5 +1,6 @@
 import { AlertState, AlertStateInfo, getDefaultTimeRange, TimeRange } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as store from '../../../../store/store';
@@ -13,7 +14,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function getDefaultOptions(): DashboardQueryRunnerOptions {
-  const dashboard: any = { id: 'an id', panels: [{ alert: {} }] };
+  const dashboard = { id: 'an id', panels: [{ alert: {} }] } as DashboardModel;
   const range = getDefaultTimeRange();
 
   return { dashboard, range };
@@ -41,7 +42,7 @@ describe('AlertStatesWorker', () => {
 
   describe('when canWork is called with no dashboard id', () => {
     it('then it should return false', () => {
-      const dashboard: any = {};
+      const dashboard = {} as DashboardModel;
       const options = { ...getDefaultOptions(), dashboard };
 
       expect(worker.canWork(options)).toBe(false);
@@ -69,7 +70,7 @@ describe('AlertStatesWorker', () => {
   describe('when run is called with incorrect props', () => {
     it('then it should return the correct results', async () => {
       const { getMock, options } = getTestContext();
-      const dashboard: any = {};
+      const dashboard = {} as DashboardModel;
 
       await expect(worker.work({ ...options, dashboard })).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);

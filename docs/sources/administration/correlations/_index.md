@@ -28,12 +28,7 @@ Explore visualizations that currently support showing links based on correlation
 - [Logs Panel]({{< relref "./use-correlations-in-visualizations#correlations-in-logs-panel">}})
 - [Table]({{< relref "./use-correlations-in-visualizations#correlations-in-table">}})
 
-You can configure correlations using the **Administration > Correlation** page in Grafana or with [provisioning]({{< relref "../provisioning" >}}).
-
-{{% admonition type="note" %}}
-Correlations are available in Grafana 10.0+ as an opt-in beta feature.
-Modify the Grafana [configuration file]({{< relref "../../setup-grafana/configure-grafana#configuration-file-location" >}}) to enable the `correlations` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}) to use it.
-{{% /admonition %}}
+You can configure correlations using [provisioning]({{< relref "../provisioning" >}}), the **Administration > Plugins and data > Correlations** page in Grafana or directly in [Explore]({{< relref "../../explore/correlations-editor-in-explore" >}}).
 
 ## Example of how links work in Explore once set up
 

@@ -35,7 +35,7 @@ Only users with the organization administrator role can add data sources.
 
 Once you've added the Azure Monitor data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards][build-dashboards] and use [Explore][explore].
 
-The Azure Monitor data source supports visualizing data from three Azure services:
+The Azure Monitor data source supports visualizing data from four Azure services:
 
 - **Azure Monitor Metrics:** Collect numeric data from resources in your Azure account.
 - **Azure Monitor Logs:** Collect log and performance data from your Azure account, and query using the Kusto Query Language (KQL).
@@ -215,7 +215,7 @@ Grafana refers to such variables as template variables.
 
 For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
 
-## Application Insights and Insights Analytics (removed))
+## Application Insights and Insights Analytics (removed)
 
 Until Grafana v8.0, you could query the same Azure Application Insights data using Application Insights and Insights Analytics.
 

@@ -60,7 +60,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
             datasource = ref;
           }
         } else {
-          datasource = anno.datasource as DataSourceRef;
+          datasource = anno.datasource;
         }
 
         // Filter from streaming query conflicts with filter from annotations
@@ -188,7 +188,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     );
   }
 
-  metricFindQuery(options: any) {
+  metricFindQuery() {
     return Promise.resolve([]);
   }
 
@@ -216,7 +216,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
     if (target.type === GrafanaAnnotationType.Dashboard) {
       // if no dashboard id yet return
-      if (!options.dashboard.uid) {
+      if (!options.dashboard?.uid) {
         return Promise.resolve({ data: [] });
       }
       // filter by dashboard id
@@ -232,7 +232,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       const delimiter = '__delimiter__';
       const tags = [];
       for (const t of params.tags) {
-        const renderedValues = templateSrv.replace(t, {}, (value: any) => {
+        const renderedValues = templateSrv.replace(t, {}, (value: string | string[]) => {
           if (typeof value === 'string') {
             return value;
           }

@@ -1,20 +1,20 @@
+import 'whatwg-fetch';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
-import 'whatwg-fetch';
 import { BootData, DataQuery } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { setEchoSrv } from '@grafana/runtime';
+import { reportInteraction, setEchoSrv } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
-import { trackDashboardSharingTypeOpen, trackDashboardSharingActionPerType } from '../analytics';
 import { shareDashboardType } from '../utils';
 
 import * as sharePublicDashboardUtils from './SharePublicDashboardUtils';
@@ -30,12 +30,14 @@ const server = setupServer();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
+  reportInteraction: jest.fn(),
 }));
 
-jest.mock('../analytics', () => ({
-  ...jest.requireActual('../analytics'),
-  trackDashboardSharingTypeOpen: jest.fn(),
-  trackDashboardSharingActionPerType: jest.fn(),
+jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
+  DashboardInteractions: {
+    ...jest.requireActual('app/features/dashboard-scene/utils/interactions').DashboardInteractions,
+    sharingTabChanged: jest.fn(),
+  },
 }));
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
@@ -68,6 +70,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
+  config.publicDashboardsEnabled = true;
 
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
@@ -84,20 +87,27 @@ afterEach(() => {
 });
 
 const getNonExistentPublicDashboardResponse = () =>
-  rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
-    return res(
-      ctx.status(404),
-      ctx.json({
+  http.get('/api/dashboards/uid/:dashboardUid/public-dashboards', () => {
+    return HttpResponse.json(
+      {
         message: 'Public dashboard not found',
         messageId: 'publicdashboards.notFound',
         statusCode: 404,
         traceID: '',
-      })
+      },
+      {
+        status: 404,
+      }
     );
   });
 const getErrorPublicDashboardResponse = () =>
-  rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
-    return res(ctx.status(500));
+  http.get('/api/dashboards/uid/:dashboardUid/public-dashboards', () => {
+    return HttpResponse.json(
+      {},
+      {
+        status: 500,
+      }
+    );
   });
 
 const alertTests = () => {
@@ -135,7 +145,14 @@ describe('SharePublic', () => {
   beforeEach(() => {
     server.use(getExistentPublicDashboardResponse());
   });
-  it('does not render share panel when public dashboards feature is disabled', async () => {
+  it('does not render share panel when public dashboards feature is disabled using config setting', async () => {
+    config.publicDashboardsEnabled = false;
+    await renderSharePublicDashboard(undefined, false);
+
+    expect(screen.getByRole('tablist')).toHaveTextContent('Link');
+    expect(screen.getByRole('tablist')).not.toHaveTextContent('Public dashboard');
+  });
+  it('does not render share panel when public dashboards feature is disabled using feature toggle', async () => {
     config.featureToggles.publicDashboards = false;
     await renderSharePublicDashboard(undefined, false);
 
@@ -267,14 +284,11 @@ describe('SharePublic - Already persisted', () => {
   });
   it('when modal is opened, then time range switch is enabled and not checked when its not checked in the db', async () => {
     server.use(
-      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({
-            ...pubdashResponse,
-            timeSelectionEnabled: false,
-          })
-        );
+      http.get('/api/dashboards/uid/:dashboardUid/public-dashboards', () => {
+        return HttpResponse.json({
+          ...pubdashResponse,
+          timeSelectionEnabled: false,
+        });
       })
     );
 
@@ -293,17 +307,16 @@ describe('SharePublic - Already persisted', () => {
   });
   it('when pubdash is disabled in the db, then link url is not copyable and switch is checked', async () => {
     server.use(
-      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({
-            isEnabled: false,
-            annotationsEnabled: false,
-            uid: 'a-uid',
-            dashboardUid: req.params.dashboardUid,
-            accessToken: 'an-access-token',
-          })
-        );
+      http.get('/api/dashboards/uid/:dashboardUid/public-dashboards', ({ request }) => {
+        const url = new URL(request.url);
+        const dashboardUid = url.searchParams.get('dashboardUid');
+        return HttpResponse.json({
+          isEnabled: false,
+          annotationsEnabled: false,
+          uid: 'a-uid',
+          dashboardUid,
+          accessToken: 'an-access-token',
+        });
       })
     );
 
@@ -329,15 +342,14 @@ describe('SharePublic - Report interactions', () => {
     jest.clearAllMocks();
     server.use(getExistentPublicDashboardResponse());
     server.use(
-      rest.patch('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', (req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
-            ...pubdashResponse,
-            dashboardUid: req.params.dashboardUid,
-          })
-        )
-      )
+      http.patch('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', ({ request }) => {
+        const url = new URL(request.url);
+        const dashboardUid = url.searchParams.get('dashboardUid');
+        return HttpResponse.json({
+          ...pubdashResponse,
+          dashboardUid,
+        });
+      })
     );
   });
 
@@ -345,8 +357,8 @@ describe('SharePublic - Report interactions', () => {
     await renderSharePublicDashboard();
 
     await waitFor(() => {
-      expect(trackDashboardSharingTypeOpen).toHaveBeenCalledTimes(1);
-      expect(trackDashboardSharingTypeOpen).lastCalledWith(shareDashboardType.publicDashboard);
+      expect(DashboardInteractions.sharingTabChanged).toHaveBeenCalledTimes(1);
+      expect(DashboardInteractions.sharingTabChanged).lastCalledWith({ item: shareDashboardType.publicDashboard });
     });
   });
 
@@ -360,12 +372,10 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.EnableTimeRangeSwitch));
 
     await waitFor(() => {
-      expect(trackDashboardSharingActionPerType).toHaveBeenCalledTimes(1);
-      // if time range was enabled, then the item is now disable_time
-      expect(trackDashboardSharingActionPerType).toHaveBeenLastCalledWith(
-        pubdashResponse.timeSelectionEnabled ? 'disable_time' : 'enable_time',
-        shareDashboardType.publicDashboard
-      );
+      expect(reportInteraction).toHaveBeenCalledTimes(1);
+      expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_time_picker_clicked', {
+        enabled: !pubdashResponse.timeSelectionEnabled,
+      });
     });
   });
 
@@ -379,12 +389,10 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.EnableAnnotationsSwitch));
 
     await waitFor(() => {
-      expect(trackDashboardSharingActionPerType).toHaveBeenCalledTimes(1);
-      // if annotations was enabled, then the item is now disable_annotations
-      expect(trackDashboardSharingActionPerType).toHaveBeenCalledWith(
-        pubdashResponse.annotationsEnabled ? 'disable_annotations' : 'enable_annotations',
-        shareDashboardType.publicDashboard
-      );
+      expect(reportInteraction).toHaveBeenCalledTimes(1);
+      expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_annotations_clicked', {
+        enabled: !pubdashResponse.annotationsEnabled,
+      });
     });
   });
   it('reports interaction when pause is clicked', async () => {
@@ -395,12 +403,10 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.PauseSwitch));
 
     await waitFor(() => {
-      expect(trackDashboardSharingActionPerType).toHaveBeenCalledTimes(1);
-      // if sharing was enabled, then the item is now disable_sharing
-      expect(trackDashboardSharingActionPerType).toHaveBeenLastCalledWith(
-        pubdashResponse.isEnabled ? 'disable_sharing' : 'enable_sharing',
-        shareDashboardType.publicDashboard
-      );
+      expect(reportInteraction).toHaveBeenCalledTimes(1);
+      expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_pause_clicked', {
+        paused: pubdashResponse.isEnabled,
+      });
     });
   });
 });

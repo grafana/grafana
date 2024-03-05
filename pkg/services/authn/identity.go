@@ -31,6 +31,7 @@ const (
 
 const (
 	AnonymousNamespaceID = NamespaceAnonymous + ":0"
+	GlobalOrgID          = int64(0)
 )
 
 var _ identity.Requester = (*Identity)(nil)
@@ -164,6 +165,19 @@ func (i *Identity) GetPermissions() map[string][]string {
 	return i.Permissions[i.GetOrgID()]
 }
 
+// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations
+func (i *Identity) GetGlobalPermissions() map[string][]string {
+	if i.Permissions == nil {
+		return make(map[string][]string)
+	}
+
+	if i.Permissions[GlobalOrgID] == nil {
+		return make(map[string][]string)
+	}
+
+	return i.Permissions[GlobalOrgID]
+}
+
 func (i *Identity) GetTeams() []int64 {
 	return i.Teams
 }
@@ -183,23 +197,6 @@ func (i *Identity) HasUniqueId() bool {
 
 func (i *Identity) IsNil() bool {
 	return i == nil
-}
-
-// NamespacedID returns the namespace, e.g. "user" and the id for that namespace
-// FIXME(kalleep): Replace with GetNamespacedID
-func (i *Identity) NamespacedID() (string, int64) {
-	split := strings.Split(i.ID, ":")
-	if len(split) != 2 {
-		return "", -1
-	}
-
-	id, err := strconv.ParseInt(split[1], 10, 64)
-	if err != nil {
-		// FIXME (kalleep): Improve error handling
-		return "", -1
-	}
-
-	return split[0], id
 }
 
 // SignedInUser returns a SignedInUser from the identity.

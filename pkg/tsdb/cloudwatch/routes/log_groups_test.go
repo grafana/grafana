@@ -8,13 +8,13 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestLogGroupsRoute(t *testing.T) {
@@ -23,10 +23,8 @@ func TestLogGroupsRoute(t *testing.T) {
 		newLogGroupsService = origLogGroupsService
 	})
 
-	mockFeatures := mocks.MockFeatures{}
-	mockFeatures.On("IsEnabled", featuremgmt.FlagCloudWatchCrossAccountQuerying).Return(false)
 	reqCtxFunc := func(_ context.Context, pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
-		return models.RequestContext{Features: &mockFeatures}, err
+		return models.RequestContext{}, err
 	}
 
 	t.Run("successfully returns 1 log group with account id", func(t *testing.T) {

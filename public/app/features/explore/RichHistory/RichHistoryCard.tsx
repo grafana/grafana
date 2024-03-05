@@ -41,7 +41,7 @@ const mapDispatchToProps = {
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 interface OwnProps<T extends DataQuery = DataQuery> {
-  query: RichHistoryQuery<T>;
+  queryHistoryItem: RichHistoryQuery<T>;
 }
 
 export type Props<T extends DataQuery = DataQuery> = ConnectedProps<typeof connector> & OwnProps<T>;
@@ -142,7 +142,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 export function RichHistoryCard(props: Props) {
   const {
-    query,
+    queryHistoryItem,
     commentHistoryItem,
     starHistoryItem,
     deleteHistoryItem,
@@ -151,25 +151,26 @@ export function RichHistoryCard(props: Props) {
     datasourceInstance,
     setQueries,
   } = props;
+
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
-  const [comment, setComment] = useState<string | undefined>(query.comment);
-  const { value, loading } = useAsync(async () => {
-    let dsInstance: DataSourceApi | undefined;
+  const [comment, setComment] = useState<string | undefined>(queryHistoryItem.comment);
+  const { value: historyCardData, loading } = useAsync(async () => {
+    let datasourceInstance: DataSourceApi | undefined;
     try {
-      dsInstance = await getDataSourceSrv().get(query.datasourceUid);
+      datasourceInstance = await getDataSourceSrv().get(queryHistoryItem.datasourceUid);
     } catch (e) {}
 
     return {
-      dsInstance,
+      datasourceInstance,
       queries: await Promise.all(
-        query.queries.map(async (query) => {
+        queryHistoryItem.queries.map(async (query) => {
           let datasource;
-          if (dsInstance?.meta.mixed) {
+          if (datasourceInstance?.meta.mixed) {
             try {
               datasource = await getDataSourceSrv().get(query.datasource);
             } catch (e) {}
           } else {
-            datasource = dsInstance;
+            datasource = datasourceInstance;
           }
 
           return {
@@ -179,15 +180,15 @@ export function RichHistoryCard(props: Props) {
         })
       ),
     };
-  }, [query.datasourceUid, query.queries]);
+  }, [queryHistoryItem.datasourceUid, queryHistoryItem.queries]);
 
   const styles = useStyles2(getStyles);
 
   const onRunQuery = async () => {
-    const queriesToRun = query.queries;
-    const differentDataSource = query.datasourceUid !== datasourceInstance?.uid;
+    const queriesToRun = queryHistoryItem.queries;
+    const differentDataSource = queryHistoryItem.datasourceUid !== datasourceInstance?.uid;
     if (differentDataSource) {
-      await changeDatasource(exploreId, query.datasourceUid);
+      await changeDatasource({ exploreId, datasource: queryHistoryItem.datasourceUid });
     }
     setQueries(exploreId, queriesToRun);
 
@@ -198,19 +199,19 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onCopyQuery = async () => {
-    const datasources = [...query.queries.map((q) => q.datasource?.type || 'unknown')];
+    const datasources = [...queryHistoryItem.queries.map((query) => query.datasource?.type || 'unknown')];
     reportInteraction('grafana_explore_query_history_copy_query', {
       datasources,
-      mixed: Boolean(value?.dsInstance?.meta.mixed),
+      mixed: Boolean(historyCardData?.datasourceInstance?.meta.mixed),
     });
 
-    if (loading || !value) {
+    if (loading || !historyCardData) {
       return;
     }
 
-    const queriesText = value.queries
-      .map((q) => {
-        return createQueryText(q.query, q.datasource);
+    const queriesText = historyCardData.queries
+      .map((query) => {
+        return createQueryText(query.query, query.datasource);
       })
       .join('\n');
 
@@ -223,7 +224,7 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onCreateShortLink = async () => {
-    const link = createUrlFromRichHistory(query);
+    const link = createUrlFromRichHistory(queryHistoryItem);
     await createAndCopyShortLink(link);
   };
 
@@ -239,7 +240,7 @@ export function RichHistoryCard(props: Props) {
     };
 
     // For starred queries, we want confirmation. For non-starred, we don't.
-    if (query.starred) {
+    if (queryHistoryItem.starred) {
       getAppEvents().publish(
         new ShowConfirmModalEvent({
           title: t('explore.rich-history-card.delete-query-confirmation-title', 'Delete'),
@@ -249,26 +250,26 @@ export function RichHistoryCard(props: Props) {
           ),
           yesText: t('explore.rich-history-card.confirm-delete', 'Delete'),
           icon: 'trash-alt',
-          onConfirm: () => performDelete(query.id),
+          onConfirm: () => performDelete(queryHistoryItem.id),
         })
       );
     } else {
-      performDelete(query.id);
+      performDelete(queryHistoryItem.id);
     }
   };
 
   const onStarrQuery = () => {
-    starHistoryItem(query.id, !query.starred);
+    starHistoryItem(queryHistoryItem.id, !queryHistoryItem.starred);
     reportInteraction('grafana_explore_query_history_starred', {
       queryHistoryEnabled: config.queryHistoryEnabled,
-      newValue: !query.starred,
+      newValue: !queryHistoryItem.starred,
     });
   };
 
   const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
 
   const onUpdateComment = () => {
-    commentHistoryItem(query.id, comment);
+    commentHistoryItem(queryHistoryItem.id, comment);
     setActiveUpdateComment(false);
     reportInteraction('grafana_explore_query_history_commented', {
       queryHistoryEnabled: config.queryHistoryEnabled,
@@ -277,7 +278,7 @@ export function RichHistoryCard(props: Props) {
 
   const onCancelUpdateComment = () => {
     setActiveUpdateComment(false);
-    setComment(query.comment);
+    setComment(queryHistoryItem.comment);
   };
 
   const onKeyDown = (keyEvent: React.KeyboardEvent) => {
@@ -327,7 +328,7 @@ export function RichHistoryCard(props: Props) {
         name="comment-alt"
         onClick={toggleActiveUpdateComment}
         tooltip={
-          query.comment?.length > 0
+          queryHistoryItem.comment?.length > 0
             ? t('explore.rich-history-card.edit-comment-tooltip', 'Edit comment')
             : t('explore.rich-history-card.add-comment-tooltip', 'Add comment')
         }
@@ -337,7 +338,7 @@ export function RichHistoryCard(props: Props) {
         onClick={onCopyQuery}
         tooltip={t('explore.rich-history-card.copy-query-tooltip', 'Copy query to clipboard')}
       />
-      {value?.dsInstance && (
+      {historyCardData?.datasourceInstance && (
         <IconButton
           name="share-alt"
           onClick={onCreateShortLink}
@@ -355,11 +356,11 @@ export function RichHistoryCard(props: Props) {
         onClick={onDeleteQuery}
       />
       <IconButton
-        name={query.starred ? 'favorite' : 'star'}
-        iconType={query.starred ? 'mono' : 'default'}
+        name={queryHistoryItem.starred ? 'favorite' : 'star'}
+        iconType={queryHistoryItem.starred ? 'mono' : 'default'}
         onClick={onStarrQuery}
         tooltip={
-          query.starred
+          queryHistoryItem.starred
             ? t('explore.rich-history-card.unstar-query-tooltip', 'Unstar query')
             : t('explore.rich-history-card.star-query-tooltip', 'Star query')
         }
@@ -370,21 +371,21 @@ export function RichHistoryCard(props: Props) {
   return (
     <div className={styles.queryCard}>
       <div className={styles.cardRow}>
-        <DatasourceInfo dsApi={value?.dsInstance} size="sm" />
+        <DatasourceInfo dsApi={historyCardData?.datasourceInstance} size="sm" />
 
         {queryActionButtons}
       </div>
       <div className={cx(styles.cardRow)}>
         <div className={styles.queryContainer}>
-          {value?.queries.map((q, i) => {
-            return <Query query={q} key={`${q}-${i}`} showDsInfo={value?.dsInstance?.meta.mixed} />;
+          {historyCardData?.queries.map((q, i) => {
+            return <Query query={q} key={`${q}-${i}`} showDsInfo={historyCardData?.datasourceInstance?.meta.mixed} />;
           })}
-          {!activeUpdateComment && query.comment && (
+          {!activeUpdateComment && queryHistoryItem.comment && (
             <div
               aria-label={t('explore.rich-history-card.query-comment-label', 'Query comment')}
               className={styles.comment}
             >
-              {query.comment}
+              {queryHistoryItem.comment}
             </div>
           )}
           {activeUpdateComment && updateComment}
@@ -394,9 +395,11 @@ export function RichHistoryCard(props: Props) {
             <Button
               variant="secondary"
               onClick={onRunQuery}
-              disabled={!value?.dsInstance || value.queries.some((query) => !query.datasource)}
+              disabled={
+                !historyCardData?.datasourceInstance || historyCardData.queries.some((query) => !query.datasource)
+              }
             >
-              {datasourceInstance?.uid === query.datasourceUid ? (
+              {datasourceInstance?.uid === queryHistoryItem.datasourceUid ? (
                 <Trans i18nKey="explore.rich-history-card.run-query-button">Run query</Trans>
               ) : (
                 <Trans i18nKey="explore.rich-history-card.switch-datasource-button">

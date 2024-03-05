@@ -2,6 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 
+import { filterByKeyword } from '../helpers';
 import { RequestStatus, PluginCatalogStoreState } from '../types';
 
 import { pluginsAdapter } from './reducer';
@@ -23,9 +24,6 @@ export type PluginFilters = {
   type?: PluginType;
 
   // (Optional, only applied if set)
-  isCore?: boolean;
-
-  // (Optional, only applied if set)
   isInstalled?: boolean;
 
   // (Optional, only applied if set)
@@ -35,11 +33,14 @@ export type PluginFilters = {
 export const selectPlugins = (filters: PluginFilters) =>
   createSelector(selectAll, (plugins) => {
     const keyword = filters.keyword ? unEscapeStringFromRegex(filters.keyword.toLowerCase()) : '';
+    const filteredPluginIds = keyword !== '' ? filterByKeyword(plugins, keyword) : null;
 
     return plugins.filter((plugin) => {
-      const fieldsToSearchIn = [plugin.name, plugin.orgName].filter(Boolean).map((f) => f.toLowerCase());
+      if (keyword && filteredPluginIds == null) {
+        return false;
+      }
 
-      if (keyword && !fieldsToSearchIn.some((f) => f.includes(keyword))) {
+      if (keyword && !filteredPluginIds?.includes(plugin.id)) {
         return false;
       }
 
@@ -48,10 +49,6 @@ export const selectPlugins = (filters: PluginFilters) =>
       }
 
       if (filters.isInstalled !== undefined && plugin.isInstalled !== filters.isInstalled) {
-        return false;
-      }
-
-      if (filters.isCore !== undefined && plugin.isCore !== filters.isCore) {
         return false;
       }
 

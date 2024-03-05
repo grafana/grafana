@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/
-description: Introduction to notifications Policies
+description: Learn about how notification policies work
 keywords:
   - grafana
   - alerting
@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
 title: Notifications
-weight: 160
+weight: 110
 ---
 
 # Notifications

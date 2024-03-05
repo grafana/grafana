@@ -3,6 +3,9 @@ package extsvcaccounts
 import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/extsvcauth"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -22,6 +25,13 @@ var (
 	ErrCannotListTokens    = errutil.BadRequest("extsvcaccounts.ErrCannotListTokens", errutil.WithPublicMessage("cannot list external service account tokens"))
 	ErrCredentialsNotFound = errutil.NotFound("extsvcaccounts.credentials-not-found")
 	ErrInvalidName         = errutil.BadRequest("extsvcaccounts.ErrInvalidName", errutil.WithPublicMessage("only external service account names can be prefixed with 'extsvc-'"))
+
+	extsvcuser = &user.SignedInUser{
+		OrgID: extsvcauth.TmpOrgID,
+		Permissions: map[int64]map[string][]string{
+			extsvcauth.TmpOrgID: {serviceaccounts.ActionRead: {"serviceaccounts:id:*"}},
+		},
+	}
 )
 
 // Credentials represents the credentials associated to an external service

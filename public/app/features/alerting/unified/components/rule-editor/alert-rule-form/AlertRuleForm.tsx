@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
-import { DeepMap, FieldError, FormProvider, useForm, UseFormWatch } from 'react-hook-form';
+import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, useStyles2, Stack } from '@grafana/ui';
+import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -14,17 +14,24 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { logInfo, LogMessages, trackNewAlerRuleFormError } from '../../../Analytics';
+import {
+  LogMessages,
+  logInfo,
+  trackAlertRuleFormError,
+  trackAlertRuleFormCancelled,
+  trackAlertRuleFormSaved,
+} from '../../../Analytics';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { initialAsyncRequestState } from '../../../utils/redux';
 import {
+  MANUAL_ROUTING_KEY,
+  MINUTE,
   formValuesFromExistingRule,
   getDefaultFormValues,
   getDefaultQueries,
   ignoreHiddenQueries,
-  MINUTE,
   normalizeDefaultAnnotations,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
@@ -109,6 +116,17 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       return;
     }
 
+    trackAlertRuleFormSaved({ formAction: existing ? 'update' : 'create', ruleType: values.type });
+
+    // when creating a new rule, we save the manual routing setting in local storage
+    if (!existing) {
+      if (values.manualRouting) {
+        localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+      } else {
+        localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
+      }
+    }
+
     dispatch(
       saveRuleFormAction({
         values: {
@@ -144,21 +162,22 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     }
   };
 
-  const onInvalid = (errors: DeepMap<RuleFormValues, FieldError>): void => {
-    if (!existing) {
-      trackNewAlerRuleFormError({
-        grafana_version: config.buildInfo.version,
-        org_id: contextSrv.user.orgId,
-        user_id: contextSrv.user.id,
-        error: Object.keys(errors).toString(),
-      });
-    }
+  const onInvalid: SubmitErrorHandler<RuleFormValues> = (errors): void => {
+    trackAlertRuleFormError({
+      grafana_version: config.buildInfo.version,
+      org_id: contextSrv.user.orgId,
+      user_id: contextSrv.user.id,
+      error: Object.keys(errors).toString(),
+      formAction: existing ? 'update' : 'create',
+    });
     notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
   const cancelRuleCreation = () => {
     logInfo(LogMessages.cancelSavingAlertRule);
+    trackAlertRuleFormCancelled({ formAction: existing ? 'update' : 'create' });
   };
+
   const evaluateEveryInForm = watch('evaluateEvery');
   useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
@@ -240,10 +259,10 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                   {type === RuleFormType.cloudRecording && <RecordingRulesNameSpaceAndGroupStep />}
 
                   {/* Step 4 & 5 */}
-                  {/* Annotations only for cloud and Grafana */}
-                  {type !== RuleFormType.cloudRecording && <AnnotationsStep />}
                   {/* Notifications step*/}
                   <NotificationsStep alertUid={uidFromParams} />
+                  {/* Annotations only for cloud and Grafana */}
+                  {type !== RuleFormType.cloudRecording && <AnnotationsStep />}
                 </>
               )}
             </Stack>

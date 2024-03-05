@@ -8,7 +8,7 @@ import {
   LoadingState,
   StreamingDataFrame,
 } from '@grafana/data';
-import { getGrafanaLiveSrv } from '@grafana/runtime';
+import { getGrafanaLiveSrv, config } from '@grafana/runtime';
 
 import { LokiDatasource } from './datasource';
 import { LokiQuery } from './types';
@@ -86,3 +86,12 @@ export function doLokiChannelStream(
     })
   );
 }
+
+export const convertToWebSocketUrl = (url: string) => {
+  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
+  if (backend.endsWith('/')) {
+    backend = backend.slice(0, -1);
+  }
+  return `${backend}${url}`;
+};

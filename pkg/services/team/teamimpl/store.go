@@ -10,7 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -23,8 +24,9 @@ type store interface {
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
 	GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error)
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
+	GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error)
 	RemoveUsersMemberships(ctx context.Context, userID int64) error
-	AddMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error
+	AddMember(ctx context.Context, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error
 	UpdateMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error
 	IsMember(orgId int64, teamId int64, userId int64) (bool, error)
 	RemoveMember(ctx context.Context, cmd *team.RemoveTeamMemberCommand) error
@@ -141,7 +143,6 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 			"DELETE FROM team_member WHERE org_id=? and team_id = ?",
 			"DELETE FROM team WHERE org_id=? and id = ?",
 			"DELETE FROM dashboard_acl WHERE org_id=? and team_id = ?",
-			"DELETE FROM team_role WHERE org_id=? and team_id = ?",
 		}
 
 		deletes = append(deletes, ss.deletes...)
@@ -152,10 +153,7 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 				return err
 			}
 		}
-
-		_, err := sess.Exec("DELETE FROM permission WHERE scope=?", ac.Scope("teams", "id", fmt.Sprint(cmd.ID)))
-
-		return err
+		return nil
 	})
 }
 
@@ -336,9 +334,25 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 	return queryResult, nil
 }
 
+// GetIDsByUser returns a list of team IDs for the given user
+func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
+	queryResult := make([]int64, 0)
+
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(`SELECT tm.team_id
+FROM team_member as tm
+WHERE tm.user_id=? AND tm.org_id=?;`, query.UserID, query.OrgID).Find(&queryResult)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get team IDs by user: %w", err)
+	}
+
+	return queryResult, nil
+}
+
 // AddTeamMember adds a user to a team
-func (ss *xormStore) AddMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error {
-	return ss.db.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+func (ss *xormStore) AddMember(ctx context.Context, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if isMember, err := isTeamMember(sess, orgID, teamID, userID); err != nil {
 			return err
 		} else if isMember {
@@ -395,7 +409,7 @@ func isTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (bo
 
 // AddOrUpdateTeamMemberHook is called from team resource permission service
 // it adds user to a team or updates user permissions in a team within the given transaction session
-func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error {
+func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
 	isMember, err := isTeamMember(sess, orgID, teamID, userID)
 	if err != nil {
 		return err
@@ -410,7 +424,7 @@ func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, is
 	return err
 }
 
-func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal bool, permission dashboards.PermissionType) error {
+func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
 	if _, err := teamExists(orgID, teamID, sess); err != nil {
 		return err
 	}
@@ -429,13 +443,13 @@ func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal boo
 	return err
 }
 
-func updateTeamMember(sess *db.Session, orgID, teamID, userID int64, permission dashboards.PermissionType) error {
+func updateTeamMember(sess *db.Session, orgID, teamID, userID int64, permission dashboardaccess.PermissionType) error {
 	member, err := getTeamMember(sess, orgID, teamID, userID)
 	if err != nil {
 		return err
 	}
 
-	if permission != dashboards.PERMISSION_ADMIN {
+	if permission != dashboardaccess.PERMISSION_ADMIN {
 		permission = 0 // make sure we don't get invalid permission levels in store
 	}
 
@@ -582,4 +596,26 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 // RegisterDelete registers a delete query to be executed when the transaction is committed
 func (ss *xormStore) RegisterDelete(query string) {
 	ss.deletes = append(ss.deletes, query)
+}
+
+// This is just to ensure that all teams have a valid uid.
+// To protect against upgrade / downgrade we need to run this for a couple of releases.
+// FIXME: Remove this migration and make uid field required https://github.com/grafana/identity-access-team/issues/552
+func (ss *xormStore) uidMigration() error {
+	return ss.db.WithDbSession(context.Background(), func(sess *db.Session) error {
+		switch ss.db.GetDBType() {
+		case migrator.SQLite:
+			_, err := sess.Exec("UPDATE team SET uid=printf('t%09d',id) WHERE uid IS NULL;")
+			return err
+		case migrator.Postgres:
+			_, err := sess.Exec("UPDATE team SET uid='t' || lpad('' || id::text,9,'0') WHERE uid IS NULL;")
+			return err
+		case migrator.MySQL:
+			_, err := sess.Exec("UPDATE team SET uid=concat('t',lpad(id,9,'0')) WHERE uid IS NULL;")
+			return err
+		default:
+			// this branch should be unreachable
+			return nil
+		}
+	})
 }

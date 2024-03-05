@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -391,8 +392,19 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 		if err != nil {
 			return nil, err
 		}
-		userQuery += " AND " + userFilter.Where
+
+		filter := "((" + userFilter.Where + " AND NOT u.is_service_account)"
+
+		saFilter, err := accesscontrol.Filter(query.User, "u.id", "serviceaccounts:id:", serviceaccounts.ActionRead)
+		if err != nil {
+			return nil, err
+		}
+
+		filter += " OR (" + saFilter.Where + " AND u.is_service_account))"
+
+		userQuery += " AND " + filter
 		args = append(args, userFilter.Args...)
+		args = append(args, saFilter.Args...)
 	}
 
 	teamFilter, err := accesscontrol.Filter(query.User, "t.id", "teams:id:", accesscontrol.ActionTeamsRead)
@@ -655,9 +667,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
-		if s.features.IsEnabled(featuremgmt.FlagSplitScopes) {
-			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
-		}
+		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
 		permissions = append(permissions, p)
 	}
 

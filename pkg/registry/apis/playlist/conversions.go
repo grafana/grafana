@@ -11,8 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	"github.com/grafana/grafana/pkg/kinds"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 )
 
@@ -77,25 +77,29 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 		})
 	}
 
-	meta := kinds.GrafanaResourceMetadata{}
-	meta.SetUpdatedTimestampMillis(v.UpdatedAt)
-	if v.Id > 0 {
-		meta.SetOriginInfo(&kinds.ResourceOriginInfo{
-			Name: "SQL",
-			Key:  fmt.Sprintf("%d", v.Id),
-		})
-	}
-	return &playlist.Playlist{
+	p := &playlist.Playlist{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Uid,
 			UID:               types.UID(v.Uid),
 			ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt),
 			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
 			Namespace:         namespacer(v.OrgID),
-			Annotations:       meta.Annotations,
 		},
 		Spec: spec,
 	}
+	meta, err := utils.MetaAccessor(p)
+	if err == nil {
+		meta.SetUpdatedTimestampMillis(v.UpdatedAt)
+		if v.Id > 0 {
+			meta.SetOriginInfo(&utils.ResourceOriginInfo{
+				Name: "SQL",
+				Key:  fmt.Sprintf("%d", v.Id),
+			})
+		}
+	}
+
+	p.UID = utils.CalculateClusterWideUID(p)
+	return p
 }
 
 func convertToLegacyUpdateCommand(p *playlist.Playlist, orgId int64) (*playlistsvc.UpdatePlaylistCommand, error) {
@@ -120,10 +124,11 @@ func convertToLegacyUpdateCommand(p *playlist.Playlist, orgId int64) (*playlists
 
 // Read legacy ID from metadata annotations
 func getLegacyID(item *unstructured.Unstructured) int64 {
-	meta := kinds.GrafanaResourceMetadata{
-		Annotations: item.GetAnnotations(),
+	meta, err := utils.MetaAccessor(item)
+	if err != nil {
+		return 0
 	}
-	info := meta.GetOriginInfo()
+	info, _ := meta.GetOriginInfo()
 	if info != nil && info.Name == "SQL" {
 		i, err := strconv.ParseInt(info.Key, 10, 64)
 		if err == nil {

@@ -1,4 +1,5 @@
 import { e2e } from '../utils';
+import { waitForMonacoToLoad } from '../utils/support/monaco';
 
 const dataSourceName = 'LokiEditor';
 const addDataSource = () => {
@@ -37,13 +38,9 @@ describe('Loki Query Editor', () => {
     e2e.components.DataSourcePicker.container().should('be.visible').click();
     cy.contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
-    cy.contains('Code').click();
+    e2e.components.RadioButton.container().filter(':contains("Code")').click();
 
-    // Wait for lazy loading
-    const monacoLoadingText = 'Loading...';
-
-    e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
-    e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
+    waitForMonacoToLoad();
 
     // adds closing braces around empty value
     e2e.components.QueryField.container().type('time(');

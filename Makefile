@@ -7,10 +7,10 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-backend build-example-apiserver build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
+.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
 
 GO = go
-GO_FILES ?= ./pkg/...
+GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
@@ -106,7 +106,6 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./pkg/plugins/plugindef
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
-	go generate ./pkg/kindsysreport/codegen/report.go
 
 gen-go: $(WIRE)
 	@echo "generate go files"
@@ -132,10 +131,6 @@ build-server: ## Build Grafana server.
 	@echo "build server"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-server
 
-build-example-apiserver: ## Build Grafana example-apiserver application.
-	@echo "build grafana-cli"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build-example-apiserver
-
 build-cli: ## Build Grafana CLI application.
 	@echo "build grafana-cli"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-cli
@@ -144,11 +139,6 @@ build-js: ## Build frontend assets.
 	@echo "build frontend"
 	yarn run build
 	yarn run plugins:build-bundled
-
-build-plugins-go: ## Build decoupled plugins
-	@echo "build plugins"
-	@cd pkg/tsdb; \
-	mage -v
 
 PLUGIN_ID ?=
 
@@ -177,7 +167,8 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	$(GO) test -short -covermode=atomic -timeout=30m ./pkg/...
+	go list -f '{{.Dir}}/...' -m | xargs \
+	$(GO) test -short -covermode=atomic -timeout=30m 
 
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
@@ -188,8 +179,8 @@ test-go-integration: ## Run integration tests for backend with flags.
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
 	@echo "test remote alertmanager integration tests"
 	$(GO) clean -testcache
-	AM_URL=http://localhost:8080 AM_TENANT_ID=test AM_PASSWORD=test \
-	$(GO) test -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/notifier/...
+	AM_URL=http://localhost:8080 AM_TENANT_ID=test \
+	$(GO) test -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/...
 
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
@@ -265,7 +256,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg BASE_IMAGE=ubuntu:22.04 \
-	--build-arg GO_IMAGE=golang:1.21.3 \
+	--build-arg GO_IMAGE=golang:1.21.8 \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 
@@ -312,7 +303,6 @@ protobuf: ## Compile protobuf definitions
 	bash pkg/plugins/backendplugin/pluginextensionv2/generate.sh
 	bash pkg/plugins/backendplugin/secretsmanagerplugin/generate.sh
 	bash pkg/services/store/entity/generate.sh
-	bash pkg/infra/grn/generate.sh
 
 clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
@@ -329,6 +319,7 @@ gen-ts:
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
 drone: $(DRONE)
+	bash scripts/drone/env-var-check.sh
 	$(DRONE) starlark --format
 	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana

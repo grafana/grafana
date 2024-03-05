@@ -16,21 +16,13 @@ import * as React from 'react';
 
 import { IconButton, Input } from '@grafana/ui';
 
-import { TNil } from '../types';
-
 type Props = {
-  allowClear?: boolean;
-  inputProps: Record<string, unknown>;
-  location: Location;
-  trackFindFunction?: (str: string | TNil) => void;
   value: string | undefined;
   onChange: (value: string) => void;
 };
 
 export default class SearchBarInput extends React.PureComponent<Props> {
   static defaultProps: Partial<Props> = {
-    inputProps: {},
-    trackFindFunction: undefined,
     value: undefined,
   };
 
@@ -39,25 +31,21 @@ export default class SearchBarInput extends React.PureComponent<Props> {
   };
 
   render() {
-    const { allowClear, inputProps, value } = this.props;
+    const { value } = this.props;
 
     const suffix = (
-      <>
-        {inputProps.suffix}
-        {allowClear && value && value.length && (
-          <IconButton name="times" onClick={this.clearUiFind} tooltip="Clear input" />
-        )}
-      </>
+      <>{value && value.length && <IconButton name="times" onClick={this.clearUiFind} tooltip="Clear input" />}</>
     );
 
     return (
-      <Input
-        placeholder="Find..."
-        {...inputProps}
-        onChange={(e) => this.props.onChange(e.currentTarget.value)}
-        suffix={suffix}
-        value={value}
-      />
+      <div style={{ width: '200px' }}>
+        <Input
+          placeholder="Find..."
+          onChange={(e) => this.props.onChange(e.currentTarget.value)}
+          suffix={suffix}
+          value={value}
+        />
+      </div>
     );
   }
 }

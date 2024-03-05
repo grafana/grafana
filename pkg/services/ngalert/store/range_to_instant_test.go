@@ -21,25 +21,25 @@ func TestCanBeInstant(t *testing.T) {
 	tcs := []struct {
 		name                  string
 		expected              bool
-		expectedOptimizations []optimization
+		expectedOptimizations []Optimization
 		rule                  *models.AlertRule
 	}{
 		{
 			name:                  "valid loki rule that can be migrated from range to instant",
 			expected:              true,
-			expectedOptimizations: []optimization{{i: 0, t: datasources.DS_LOKI}},
+			expectedOptimizations: []Optimization{{i: 0, t: datasources.DS_LOKI, RefID: "A"}},
 			rule:                  createMigrateableLokiRule(t),
 		},
 		{
 			name:                  "valid prom rule that can be migrated from range to instant",
 			expected:              true,
-			expectedOptimizations: []optimization{{i: 0, t: datasources.DS_PROMETHEUS}},
+			expectedOptimizations: []Optimization{{i: 0, t: datasources.DS_PROMETHEUS, RefID: "A"}},
 			rule:                  createMigratablePromRule(t),
 		},
 		{
 			name:                  "valid loki rule with external loki datasource",
 			expected:              true,
-			expectedOptimizations: []optimization{{i: 0, t: datasources.DS_LOKI}},
+			expectedOptimizations: []Optimization{{i: 0, t: datasources.DS_LOKI, RefID: "A"}},
 			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
 				r.Data[0].DatasourceUID = "something-external"
 			}),
@@ -47,7 +47,7 @@ func TestCanBeInstant(t *testing.T) {
 		{
 			name:                  "valid prom rule with external prometheus datasource",
 			expected:              true,
-			expectedOptimizations: []optimization{{i: 0, t: datasources.DS_PROMETHEUS}},
+			expectedOptimizations: []Optimization{{i: 0, t: datasources.DS_PROMETHEUS, RefID: "A"}},
 			rule: createMigratablePromRule(t, func(r *models.AlertRule) {
 				r.Data[0].DatasourceUID = "something-external"
 			}),
@@ -55,7 +55,7 @@ func TestCanBeInstant(t *testing.T) {
 		{
 			name:                  "valid prom rule with missing datasource",
 			expected:              true,
-			expectedOptimizations: []optimization{{i: 0, t: datasources.DS_PROMETHEUS}},
+			expectedOptimizations: []Optimization{{i: 0, t: datasources.DS_PROMETHEUS, RefID: "A"}},
 			rule:                  createMigratablePromRuleWithDefaultDS(t),
 		},
 		{
@@ -73,18 +73,18 @@ func TestCanBeInstant(t *testing.T) {
 		{
 			name:     "valid loki multi query rule with loki datasources",
 			expected: true,
-			expectedOptimizations: []optimization{
-				{i: 0, t: datasources.DS_LOKI},
-				{i: 1, t: datasources.DS_LOKI},
+			expectedOptimizations: []Optimization{
+				{i: 0, t: datasources.DS_LOKI, RefID: "TotalRequests"},
+				{i: 1, t: datasources.DS_LOKI, RefID: "TotalErrors"},
 			},
 			rule: createMultiQueryMigratableLokiRule(t),
 		},
 		{
 			name:     "valid prom multi query rule with prom datasources",
 			expected: true,
-			expectedOptimizations: []optimization{
-				{i: 0, t: datasources.DS_PROMETHEUS},
-				{i: 1, t: datasources.DS_PROMETHEUS},
+			expectedOptimizations: []Optimization{
+				{i: 0, t: datasources.DS_PROMETHEUS, RefID: "TotalRequests"},
+				{i: 1, t: datasources.DS_PROMETHEUS, RefID: "TotalErrors"},
 			},
 			rule: createMultiQueryMigratablePromRule(t),
 		},
@@ -138,7 +138,7 @@ func TestCanBeInstant(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			optimizations, canBe := canBeInstant(tc.rule)
+			optimizations, canBe := canBeInstant(tc.rule.Data)
 			require.Equal(t, tc.expected, canBe)
 			require.Equal(t, tc.expectedOptimizations, optimizations)
 		})
@@ -147,106 +147,116 @@ func TestCanBeInstant(t *testing.T) {
 
 func TestMigrateLokiQueryToInstant(t *testing.T) {
 	original := createMigrateableLokiRule(t)
-	mirgrated := createMigrateableLokiRule(t, func(r *models.AlertRule) {
+	migrated := createMigrateableLokiRule(t, func(r *models.AlertRule) {
 		r.Data[0] = lokiQuery(t, "A", "instant", "grafanacloud-logs")
 	})
 
-	optimizableIndices, canBeOptimized := canBeInstant(original)
+	optimizableIndices, canBeOptimized := canBeInstant(original.Data)
 	require.True(t, canBeOptimized)
-	require.NoError(t, migrateToInstant(original, optimizableIndices))
+	require.NoError(t, migrateToInstant(original.Data, optimizableIndices))
 
-	require.Equal(t, mirgrated.Data[0].QueryType, original.Data[0].QueryType)
+	require.Equal(t, migrated.Data[0].QueryType, original.Data[0].QueryType)
 
 	originalModel := make(map[string]any)
 	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
 	migratedModel := make(map[string]any)
-	require.NoError(t, json.Unmarshal(mirgrated.Data[0].Model, &migratedModel))
+	require.NoError(t, json.Unmarshal(migrated.Data[0].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 
-	_, canBeOptimized = canBeInstant(original)
+	_, canBeOptimized = canBeInstant(original.Data)
 	require.False(t, canBeOptimized)
 }
 
 func TestMigrateMultiLokiQueryToInstant(t *testing.T) {
 	original := createMultiQueryMigratableLokiRule(t)
-	mirgrated := createMultiQueryMigratableLokiRule(t, func(r *models.AlertRule) {
+	migrated := createMultiQueryMigratableLokiRule(t, func(r *models.AlertRule) {
 		r.Data[0] = lokiQuery(t, "TotalRequests", "instant", "grafanacloud-logs")
 		r.Data[1] = lokiQuery(t, "TotalErrors", "instant", "grafanacloud-logs")
 	})
 
-	optimizableIndices, canBeOptimized := canBeInstant(original)
+	_, canBeOptimized := canBeInstant(original.Data)
 	require.True(t, canBeOptimized)
-	require.NoError(t, migrateToInstant(original, optimizableIndices))
 
-	require.Equal(t, mirgrated.Data[0].QueryType, original.Data[0].QueryType)
-	require.Equal(t, mirgrated.Data[1].QueryType, original.Data[1].QueryType)
+	optimizations, err := OptimizeAlertQueries(original.Data)
+	require.NoError(t, err)
+
+	require.Equal(t, optimizations[0].RefID, original.Data[0].RefID)
+	require.Equal(t, optimizations[1].RefID, original.Data[1].RefID)
+
+	require.Equal(t, migrated.Data[0].QueryType, original.Data[0].QueryType)
+	require.Equal(t, migrated.Data[1].QueryType, original.Data[1].QueryType)
 
 	originalModel := make(map[string]any)
 	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
 	migratedModel := make(map[string]any)
-	require.NoError(t, json.Unmarshal(mirgrated.Data[0].Model, &migratedModel))
+	require.NoError(t, json.Unmarshal(migrated.Data[0].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 
 	originalModel = make(map[string]any)
 	require.NoError(t, json.Unmarshal(original.Data[1].Model, &originalModel))
 	migratedModel = make(map[string]any)
-	require.NoError(t, json.Unmarshal(mirgrated.Data[1].Model, &migratedModel))
+	require.NoError(t, json.Unmarshal(migrated.Data[1].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 
-	_, canBeOptimized = canBeInstant(original)
+	_, canBeOptimized = canBeInstant(original.Data)
 	require.False(t, canBeOptimized)
 }
 
 func TestMigratePromQueryToInstant(t *testing.T) {
 	original := createMigratablePromRule(t)
-	mirgrated := createMigratablePromRule(t, func(r *models.AlertRule) {
+	migrated := createMigratablePromRule(t, func(r *models.AlertRule) {
 		r.Data[0] = prometheusQuery(t, "A", promExternalDS, promIsInstant)
 	})
 
-	optimizableIndices, canBeOptimized := canBeInstant(original)
+	optimizableIndices, canBeOptimized := canBeInstant(original.Data)
 	require.True(t, canBeOptimized)
-	require.NoError(t, migrateToInstant(original, optimizableIndices))
+	require.NoError(t, migrateToInstant(original.Data, optimizableIndices))
 
 	originalModel := make(map[string]any)
 	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
 	migratedModel := make(map[string]any)
-	require.NoError(t, json.Unmarshal(mirgrated.Data[0].Model, &migratedModel))
+	require.NoError(t, json.Unmarshal(migrated.Data[0].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 
-	_, canBeOptimized = canBeInstant(original)
+	_, canBeOptimized = canBeInstant(original.Data)
 	require.False(t, canBeOptimized)
 }
 
 func TestMigrateMultiPromQueryToInstant(t *testing.T) {
 	original := createMultiQueryMigratablePromRule(t)
-	mirgrated := createMultiQueryMigratablePromRule(t, func(r *models.AlertRule) {
+	migrated := createMultiQueryMigratablePromRule(t, func(r *models.AlertRule) {
 		r.Data[0] = prometheusQuery(t, "TotalRequests", promExternalDS, promIsInstant)
 		r.Data[1] = prometheusQuery(t, "TotalErrors", promExternalDS, promIsInstant)
 	})
 
-	optimizableIndices, canBeOptimized := canBeInstant(original)
+	_, canBeOptimized := canBeInstant(original.Data)
 	require.True(t, canBeOptimized)
-	require.NoError(t, migrateToInstant(original, optimizableIndices))
+
+	optimizations, err := OptimizeAlertQueries(original.Data)
+	require.NoError(t, err)
+
+	require.Equal(t, optimizations[0].RefID, original.Data[0].RefID)
+	require.Equal(t, optimizations[1].RefID, original.Data[1].RefID)
 
 	originalModel := make(map[string]any)
 	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
 	migratedModel := make(map[string]any)
-	require.NoError(t, json.Unmarshal(mirgrated.Data[0].Model, &migratedModel))
+	require.NoError(t, json.Unmarshal(migrated.Data[0].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 
 	originalModel = make(map[string]any)
 	require.NoError(t, json.Unmarshal(original.Data[1].Model, &originalModel))
 	migratedModel = make(map[string]any)
-	require.NoError(t, json.Unmarshal(mirgrated.Data[1].Model, &migratedModel))
+	require.NoError(t, json.Unmarshal(migrated.Data[1].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 
-	_, canBeOptimized = canBeInstant(original)
+	_, canBeOptimized = canBeInstant(original.Data)
 	require.False(t, canBeOptimized)
 }
 
@@ -326,44 +336,12 @@ func createMultiQueryMigratablePromRule(t *testing.T, muts ...func(*models.Alert
 
 func lokiQuery(t *testing.T, refID, queryType, datasourceUID string) models.AlertQuery {
 	t.Helper()
-	return models.AlertQuery{
-		RefID:         refID,
-		QueryType:     queryType,
-		DatasourceUID: datasourceUID,
-		Model: []byte(fmt.Sprintf(`{
-					"datasource": {
-						"type": "loki",
-						"uid": "%s"
-					},
-					"editorMode": "code",
-					"expr": "1",
-					"intervalMs": 1000,
-					"maxDataPoints": 43200,
-					"queryType": "%s",
-					"refId": "%s"
-				}`, datasourceUID, queryType, refID)),
-	}
+	return models.CreateLokiQuery(refID, "1", 1000, 43200, queryType, datasourceUID)
 }
 
 func prometheusQuery(t *testing.T, refID, datasourceUID string, isInstant bool) models.AlertQuery {
 	t.Helper()
-	return models.AlertQuery{
-		RefID:         refID,
-		DatasourceUID: datasourceUID,
-		Model: []byte(fmt.Sprintf(`{
-					"datasource": {
-						"type": "prometheus",
-						"uid": "%s"
-					},
-					"instant": %t,
-					"range": %t,
-					"editorMode": "code",
-					"expr": "1",
-					"intervalMs": 1000,
-					"maxDataPoints": 43200,
-					"refId": "%s"
-				}`, datasourceUID, isInstant, !isInstant, refID)),
-	}
+	return models.CreatePrometheusQuery(refID, "1", 1000, 43200, isInstant, datasourceUID)
 }
 
 func prometheusQueryWithoutDS(t *testing.T, refID, datasourceUID string, isInstant bool) models.AlertQuery {
@@ -385,42 +363,5 @@ func prometheusQueryWithoutDS(t *testing.T, refID, datasourceUID string, isInsta
 
 func reducer(t *testing.T, refID, exp, op string) models.AlertQuery {
 	t.Helper()
-	return models.AlertQuery{
-		RefID:         refID,
-		DatasourceUID: "__expr__",
-		Model: []byte(fmt.Sprintf(`{
-					"conditions": [
-						{
-							"evaluator": {
-								"params": [],
-								"type": "gt"
-							},
-							"operator": {
-								"type": "and"
-							},
-							"query": {
-								"params": [
-									"B"
-								]
-							},
-							"reducer": {
-								"params": [],
-								"type": "%s"
-							},
-							"type": "query"
-						}
-					],
-					"datasource": {
-						"type": "__expr__",
-						"uid": "__expr__"
-					},
-					"expression": "%s",
-					"hide": false,
-					"intervalMs": 1000,
-					"maxDataPoints": 43200,
-					"reducer": "%s",
-					"refId": "%s",
-					"type": "reduce"
-				}`, op, exp, op, refID)),
-	}
+	return models.CreateReduceExpression(refID, exp, op)
 }

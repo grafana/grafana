@@ -1,4 +1,5 @@
 {
-  "stable": "10.2.0",
-  "testing": "10.2.0"
+  "__message": "This file is now deprecated, and will be removed in a future release. No further updates should be made to this file",
+  "stable": "10.2.3",
+  "testing": "10.2.3"
 }

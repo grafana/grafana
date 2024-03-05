@@ -11,25 +11,28 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+	"syscall"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/loki/instrumentation"
-	"github.com/grafana/grafana/pkg/util/converter"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/converter"
 )
 
 type LokiAPI struct {
-	client *http.Client
-	url    string
-	log    log.Logger
-	tracer tracing.Tracer
+	client                    *http.Client
+	url                       string
+	log                       log.Logger
+	tracer                    tracing.Tracer
+	requestStructuredMetadata bool
 }
 
 type RawLokiResponse struct {
@@ -38,11 +41,11 @@ type RawLokiResponse struct {
 	Encoding string
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.Tracer) *LokiAPI {
-	return &LokiAPI{client: client, url: url, log: log, tracer: tracer}
+func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.Tracer, requestStructuredMetadata bool) *LokiAPI {
+	return &LokiAPI{client: client, url: url, log: log, tracer: tracer, requestStructuredMetadata: requestStructuredMetadata}
 }
 
-func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, categorizeLabels bool) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
@@ -102,6 +105,10 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 		}
 	}
 
+	if categorizeLabels {
+		req.Header.Set("X-Loki-Response-Encoding-Flags", "categorize-labels")
+	}
+
 	return req, nil
 }
 
@@ -155,8 +162,8 @@ func readLokiError(body io.ReadCloser) error {
 	return makeLokiError(bytes)
 }
 
-func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
-	req, err := makeDataRequest(ctx, api.url, query)
+func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) (*backend.DataResponse, error) {
+	req, err := makeDataRequest(ctx, api.url, query, api.requestStructuredMetadata)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +183,13 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 			lp = append(lp, "statusCode", resp.StatusCode)
 		}
 		api.log.Error("Error received from Loki", lp...)
-		return nil, err
+		res := backend.DataResponse{
+			Error: err,
+		}
+		if errors.Is(err, syscall.ECONNREFUSED) {
+			res.ErrorSource = backend.ErrorSourceDownstream
+		}
+		return &res, nil
 	}
 
 	defer func() {
@@ -189,9 +202,13 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 	lp = append(lp, queryAttrs...)
 	if resp.StatusCode/100 != 2 {
 		err := readLokiError(resp.Body)
-		lp = append(lp, "status", "error", "error", err)
+		res := backend.DataResponse{
+			Error:       err,
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(resp.StatusCode),
+		}
+		lp = append(lp, "status", "error", "error", err, "statusSource", res.ErrorSource)
 		api.log.Error("Error received from Loki", lp...)
-		return nil, err
+		return &res, nil
 	} else {
 		lp = append(lp, "status", "ok")
 		api.log.Info("Response received from loki", lp...)
@@ -208,7 +225,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 
 	if res.Error != nil {
 		span.RecordError(res.Error)
-		span.SetStatus(codes.Error, err.Error())
+		span.SetStatus(codes.Error, res.Error.Error())
 		instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "error")
 		api.log.Error("Error parsing response from loki", "error", res.Error, "metricDataplane", responseOpts.metricDataplane, "duration", time.Since(start), "stage", stageParseResponse)
 		return nil, res.Error
@@ -216,7 +233,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 	instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "ok")
 	api.log.Info("Response parsed from loki", "duration", time.Since(start), "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames), "stage", stageParseResponse)
 
-	return res.Frames, nil
+	return &res, nil
 }
 
 func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) (*http.Request, error) {
@@ -316,7 +333,9 @@ func getSupportingQueryHeaderValue(req *http.Request, supportingQueryType Suppor
 		value = "logsample"
 	case SupportingQueryDataSample:
 		value = "datasample"
-	default: //ignore
+	case SupportingQueryInfiniteScroll:
+		value = "infinitescroll"
+	default: // ignore
 	}
 
 	return value

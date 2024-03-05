@@ -465,6 +465,11 @@ describe('filterSpans', () => {
         spans
       )
     ).toEqual(new Set());
+
+    // query
+    expect(filterSpans({ ...defaultFilters, query: 'serviceName0' }, spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans({ ...defaultFilters, query: 'tagKey1' }, spans)).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans({ ...defaultFilters, query: 'does_not_exist' }, spans)).toEqual(new Set([]));
   });
 
   // Multiple
@@ -540,6 +545,38 @@ describe('filterSpans', () => {
         spans
       )
     ).toEqual(new Set([spanID2]));
+
+    // query + other
+    expect(filterSpans({ ...defaultFilters, serviceName: 'serviceName0', query: 'tag' }, spans)).toEqual(
+      new Set([spanID0])
+    );
+    expect(filterSpans({ ...defaultFilters, serviceName: 'serviceName0', query: 'tagKey2' }, spans)).toEqual(
+      new Set([])
+    );
+    expect(
+      filterSpans(
+        { ...defaultFilters, serviceName: 'serviceName2', spanName: 'operationName2', query: 'tagKey1' },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpans(
+        { ...defaultFilters, serviceName: 'serviceName2', spanName: 'operationName2', to: '6ms', query: 'kind2' },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpans(
+        {
+          ...defaultFilters,
+          serviceName: 'serviceName0',
+          spanName: 'operationName0',
+          from: '2ms',
+          query: 'logFieldKey1',
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
 
     // all
     expect(

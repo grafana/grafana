@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Button, Modal, stylesFactory, useStyles2 } from '@grafana/ui';
+import { Button, Modal, useStyles2 } from '@grafana/ui';
 
 import { dashboardWatcher } from './dashboardWatcher';
 import { DashboardEvent, DashboardEventAction } from './types';
@@ -50,12 +50,10 @@ export function DashboardChangedModal({ onDismiss, event }: Props) {
   );
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    modal: css({ width: '600px' }),
-    description: css({
-      color: theme.colors.text.secondary,
-      paddingBottom: theme.spacing(1),
-    }),
-  };
+const getStyles = (theme: GrafanaTheme2) => ({
+  modal: css({ width: '600px' }),
+  description: css({
+    color: theme.colors.text.secondary,
+    paddingBottom: theme.spacing(1),
+  }),
 });

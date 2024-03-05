@@ -9,10 +9,13 @@ labels:
     - enterprise
     - oss
 title: Variables
+description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards
 weight: 130
 ---
 
 # Variables
+
+{{< youtube id="mMUJ3iwIYwc" >}}
 
 The following topics describe how to add and manage variables in your dashboards:
 
@@ -24,7 +27,8 @@ the value, using the dropdown at the top of the dashboard, your panel's metric q
 Variables allow you to create more interactive and dynamic dashboards. Instead of hard-coding things like server, application,
 and sensor names in your metric queries, you can use variables in their place. Variables are displayed as dropdown lists at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
-{{< figure src="/static/img/docs/v50/variables_dashboard.png" >}}
+
+{{< figure src="/static/img/docs/v50/variables_dashboard.png" alt="Variable drop-down open and two values selected" >}}
 
 These can be especially useful for administrators who want to allow Grafana viewers to quickly adjust visualizations but do not want to give them full editing permissions. Grafana Viewers can use variables.
 

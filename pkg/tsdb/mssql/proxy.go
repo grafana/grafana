@@ -2,45 +2,37 @@ package mssql
 
 import (
 	"context"
+	"crypto/md5"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"net"
+	"slices"
 
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/util"
 	mssql "github.com/microsoft/go-mssqldb"
 	"golang.org/x/net/proxy"
-	"xorm.io/core"
 )
 
 // createMSSQLProxyDriver creates and registers a new sql driver that uses a mssql connector and updates the dialer to
 // route connections through the secure socks proxy
-func createMSSQLProxyDriver(cnnstr string, hostName string, opts *sdkproxy.Options) (string, error) {
-	sqleng.XormDriverMu.Lock()
-	defer sqleng.XormDriverMu.Unlock()
-
+func createMSSQLProxyDriver(cnnstr string, hostName string, dialer proxy.Dialer) (string, error) {
 	// create a unique driver per connection string
-	hash, err := util.Md5SumString(cnnstr)
-	if err != nil {
-		return "", err
-	}
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(cnnstr)))
 	driverName := "mssql-proxy-" + hash
 
 	// only register the driver once
-	if core.QueryDriver(driverName) == nil {
+	if !slices.Contains(sql.Drivers(), driverName) {
 		connector, err := mssql.NewConnector(cnnstr)
 		if err != nil {
 			return "", err
 		}
 
-		driver, err := newMSSQLProxyDriver(connector, hostName, opts)
+		driver, err := newMSSQLProxyDriver(connector, hostName, dialer)
 		if err != nil {
 			return "", err
 		}
 		sql.Register(driverName, driver)
-		core.RegisterDriver(driverName, driver)
 	}
 
 	return driverName, nil
@@ -66,16 +58,10 @@ type mssqlProxyDriver struct {
 }
 
 var _ driver.DriverContext = (*mssqlProxyDriver)(nil)
-var _ core.Driver = (*mssqlProxyDriver)(nil)
 
 // newMSSQLProxyDriver updates the dialer for a mssql connector with a dialer that proxys connections through the secure socks proxy
 // and returns a new mssql driver to register
-func newMSSQLProxyDriver(connector *mssql.Connector, hostName string, opts *sdkproxy.Options) (*mssqlProxyDriver, error) {
-	dialer, err := sdkproxy.New(opts).NewSecureSocksProxyContextDialer()
-	if err != nil {
-		return nil, err
-	}
-
+func newMSSQLProxyDriver(connector *mssql.Connector, hostName string, dialer proxy.Dialer) (*mssqlProxyDriver, error) {
 	contextDialer, ok := dialer.(proxy.ContextDialer)
 	if !ok {
 		return nil, errors.New("unable to cast socks proxy dialer to context proxy dialer")
@@ -83,14 +69,6 @@ func newMSSQLProxyDriver(connector *mssql.Connector, hostName string, opts *sdkp
 
 	connector.Dialer = HostTransportDialer{contextDialer, hostName}
 	return &mssqlProxyDriver{c: connector}, nil
-}
-
-// Parse uses the xorm mssql dialect for the driver (this has to be implemented to register the driver with xorm)
-func (d *mssqlProxyDriver) Parse(a string, b string) (*core.Uri, error) {
-	sqleng.XormDriverMu.RLock()
-	defer sqleng.XormDriverMu.RUnlock()
-
-	return core.QueryDriver("mssql").Parse(a, b)
 }
 
 // OpenConnector returns the normal mssql connector that has the updated dialer context

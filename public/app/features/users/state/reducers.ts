@@ -4,7 +4,7 @@ import config from 'app/core/config';
 import { OrgUser, UsersState } from 'app/types';
 
 export const initialState: UsersState = {
-  users: [] as OrgUser[],
+  users: [],
   searchQuery: '',
   page: 0,
   perPage: 30,

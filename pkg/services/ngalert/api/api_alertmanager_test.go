@@ -10,8 +10,11 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	alertingNotify "github.com/grafana/alerting/notify"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
@@ -20,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -325,6 +329,84 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 }
 
+func TestAlertmanagerAutogenConfig(t *testing.T) {
+	createSutForAutogen := func(t *testing.T) (AlertmanagerSrv, map[int64]*ngmodels.AlertConfiguration) {
+		sut := createSut(t)
+		configs := map[int64]*ngmodels.AlertConfiguration{
+			1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
+			2: {AlertmanagerConfiguration: validConfigWithoutAutogen, OrgID: 2},
+		}
+		sut.mam = createMultiOrgAlertmanager(t, configs)
+		return sut, configs
+	}
+
+	compare := func(t *testing.T, expectedAm string, testAm string) {
+		test, err := notifier.Load([]byte(testAm))
+		require.NoError(t, err)
+
+		exp, err := notifier.Load([]byte(expectedAm))
+		require.NoError(t, err)
+
+		cOpt := []cmp.Option{
+			cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}),
+			cmpopts.IgnoreFields(apimodels.PostableGrafanaReceiver{}, "UID", "Settings"),
+		}
+		if !cmp.Equal(test, exp, cOpt...) {
+			t.Errorf("Unexpected AM Config: %v", cmp.Diff(test, exp, cOpt...))
+		}
+	}
+
+	t.Run("route POST config", func(t *testing.T) {
+		t.Run("does not save autogen routes", func(t *testing.T) {
+			sut, configs := createSutForAutogen(t)
+			rc := createRequestCtxInOrg(1)
+			request := createAmConfigRequest(t, validConfigWithAutogen)
+			response := sut.RoutePostAlertingConfig(rc, request)
+			require.Equal(t, 202, response.Status())
+
+			compare(t, validConfigWithoutAutogen, configs[1].AlertmanagerConfiguration)
+		})
+
+		t.Run("provenance guard ignores autogen routes", func(t *testing.T) {
+			sut := createSut(t)
+			rc := createRequestCtxInOrg(1)
+			request := createAmConfigRequest(t, validConfigWithoutAutogen)
+			_ = sut.RoutePostAlertingConfig(rc, request)
+
+			setRouteProvenance(t, 1, sut.mam.ProvStore)
+			request = createAmConfigRequest(t, validConfigWithAutogen)
+			request.AlertmanagerConfig.Route.Provenance = apimodels.Provenance(ngmodels.ProvenanceAPI)
+			response := sut.RoutePostAlertingConfig(rc, request)
+			require.Equal(t, 202, response.Status())
+		})
+	})
+
+	t.Run("route GET config", func(t *testing.T) {
+		t.Run("when admin return autogen routes", func(t *testing.T) {
+			sut, _ := createSutForAutogen(t)
+
+			rc := createRequestCtxInOrg(2)
+			rc.SignedInUser.OrgRole = org.RoleAdmin
+
+			response := sut.RouteGetAlertingConfig(rc)
+			require.Equal(t, 200, response.Status())
+
+			compare(t, validConfigWithAutogen, string(response.Body()))
+		})
+
+		t.Run("when not admin return no autogen routes", func(t *testing.T) {
+			sut, _ := createSutForAutogen(t)
+
+			rc := createRequestCtxInOrg(2)
+
+			response := sut.RouteGetAlertingConfig(rc)
+			require.Equal(t, 200, response.Status())
+
+			compare(t, validConfigWithoutAutogen, string(response.Body()))
+		})
+	})
+}
+
 func TestRouteGetAlertingConfigHistory(t *testing.T) {
 	sut := createSut(t)
 
@@ -571,7 +653,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			permissions: map[int64]map[string][]string{
 				1: {},
 			},
-			expectedStatus: http.StatusUnauthorized,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name:    "new silence, role-based access control is enabled, authorized",
@@ -587,7 +669,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			permissions: map[int64]map[string][]string{
 				1: {accesscontrol.ActionAlertingInstanceCreate: {}},
 			},
-			expectedStatus: http.StatusUnauthorized,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name:    "update silence, role-based access control is enabled, authorized",
@@ -633,7 +715,12 @@ func TestRouteCreateSilence(t *testing.T) {
 func createSut(t *testing.T) AlertmanagerSrv {
 	t.Helper()
 
-	mam := createMultiOrgAlertmanager(t)
+	configs := map[int64]*ngmodels.AlertConfiguration{
+		1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
+		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
+		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
+	}
+	mam := createMultiOrgAlertmanager(t, configs)
 	log := log.NewNopLogger()
 	return AlertmanagerSrv{
 		mam:    mam,
@@ -653,17 +740,12 @@ func createAmConfigRequest(t *testing.T, config string) apimodels.PostableUserCo
 	return request
 }
 
-func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
+func createMultiOrgAlertmanager(t *testing.T, configs map[int64]*ngmodels.AlertConfiguration) *notifier.MultiOrgAlertmanager {
 	t.Helper()
 
-	configs := map[int64]*ngmodels.AlertConfiguration{
-		1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
-		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
-		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
-	}
 	configStore := notifier.NewFakeConfigStore(t, configs)
 	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
-	provStore := provisioning.NewFakeProvisioningStore()
+	provStore := ngfakes.NewFakeProvisioningStore()
 	tmpDir := t.TempDir()
 	kvStore := ngfakes.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -679,7 +761,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 		}, // do not poll in tests.
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, featuremgmt.WithManager(featuremgmt.FlagAlertingSimplifiedRouting))
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
@@ -703,6 +785,90 @@ var validConfig = `{
 				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
+
+var validConfigWithoutAutogen = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "some email",
+			"routes": [{
+				"receiver": "other email",
+				"object_matchers": [["a", "=", "b"]]
+			}]
+		},
+		"receivers": [{
+			"name": "some email",
+			"grafana_managed_receiver_configs": [{
+				"name": "some email",
+				"type": "email",
+				"settings": {
+					"addresses": "<some@email.com>"
+				}
+			}]
+		},{
+			"name": "other email",
+			"grafana_managed_receiver_configs": [{
+				"name": "other email",
+				"type": "email",
+				"settings": {
+					"addresses": "<other@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
+
+var validConfigWithAutogen = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "some email",
+			"routes": [{
+				"receiver": "some email",
+				"object_matchers": [["__grafana_autogenerated__", "=", "true"]],
+				"routes": [{
+					"receiver": "some email",
+					"group_by": ["grafana_folder", "alertname"],
+					"object_matchers": [["__grafana_receiver__", "=", "some email"]],
+					"continue": false
+				},{
+					"receiver": "other email",
+					"group_by": ["grafana_folder", "alertname"],
+					"object_matchers": [["__grafana_receiver__", "=", "other email"]],
+					"continue": false
+				}]
+			},{
+				"receiver": "other email",
+				"object_matchers": [["a", "=", "b"]]
+			}]
+		},
+		"receivers": [{
+			"name": "some email",
+			"grafana_managed_receiver_configs": [{
+				"name": "some email",
+				"type": "email",
+				"settings": {
+					"addresses": "<some@email.com>"
+				}
+			}]
+		},{
+			"name": "other email",
+			"grafana_managed_receiver_configs": [{
+				"name": "other email",
+				"type": "email",
+				"settings": {
+					"addresses": "<other@email.com>"
 				}
 			}]
 		}]

@@ -1,6 +1,7 @@
 package example
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -19,53 +21,80 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
-// GroupName is the group name for this API.
-const GroupName = "example.grafana.app"
-const VersionID = "v0alpha1" //
-const APIVersion = GroupName + "/" + VersionID
-
-var _ grafanaapiserver.APIGroupBuilder = (*TestingAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*TestingAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type TestingAPIBuilder struct {
 	codecs serializer.CodecFactory
+	gv     schema.GroupVersion
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *TestingAPIBuilder {
-	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+func NewTestingAPIBuilder() *TestingAPIBuilder {
+	return &TestingAPIBuilder{
+		gv: schema.GroupVersion{Group: example.GROUP, Version: example.VERSION},
+	}
+}
+
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *TestingAPIBuilder {
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := &TestingAPIBuilder{}
+	builder := NewTestingAPIBuilder()
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
 func (b *TestingAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return SchemeGroupVersion
+	return b.gv
+}
+
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+	scheme.AddKnownTypes(gv,
+		&example.RuntimeInfo{},
+		&example.DummyResource{},
+		&example.DummyResourceList{},
+		&example.DummySubresource{},
+	)
 }
 
 func (b *TestingAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	err := AddToScheme(scheme)
-	if err != nil {
-		return err
-	}
-	return scheme.SetVersionPriority(SchemeGroupVersion)
+	addKnownTypes(scheme, b.gv)
+
+	// Link this version to the internal representation.
+	// This is used for server-side-apply (PATCH), and avoids the error:
+	//   "no kind is registered for the type"
+	addKnownTypes(scheme, schema.GroupVersion{
+		Group:   b.gv.Group,
+		Version: runtime.APIVersionInternal,
+	})
+
+	// If multiple versions exist, then register conversions from zz_generated.conversion.go
+	// if err := playlist.RegisterConversions(scheme); err != nil {
+	//   return err
+	// }
+	metav1.AddToGroupVersion(scheme, b.gv)
+	return scheme.SetVersionPriority(b.gv)
 }
 
 func (b *TestingAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
+	_ generic.RESTOptionsGetter,
+	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
-	storage := map[string]rest.Storage{}
-	storage["runtime"] = newDeploymentInfoStorage()
-	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	b.codecs = codecs
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(b.gv.Group, scheme, metav1.ParameterCodec, codecs)
+
+	storage := map[string]rest.Storage{}
+	storage[example.RuntimeResourceInfo.StoragePath()] = newDeploymentInfoStorage(b.gv, scheme)
+	storage[example.DummyResourceInfo.StoragePath()] = newDummyStorage(b.gv, scheme, "test1", "test2", "test3")
+	storage[example.DummyResourceInfo.StoragePath("sub")] = &dummySubresourceREST{}
+	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return &apiGroupInfo, nil
 }
 
@@ -74,11 +103,11 @@ func (b *TestingAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server
-func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
-	return &grafanaapiserver.APIRoutes{
-		Root: []grafanaapiserver.APIRouteHandler{
+func (b *TestingAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+	return &builder.APIRoutes{
+		Root: []builder.APIRouteHandler{
 			{
-				Path: "/aaa",
+				Path: "aaa",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -119,7 +148,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				},
 			},
 			{
-				Path: "/bbb",
+				Path: "bbb",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -138,9 +167,9 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				},
 			},
 		},
-		Namespace: []grafanaapiserver.APIRouteHandler{
+		Namespace: []builder.APIRouteHandler{
 			{
-				Path: "/ccc",
+				Path: "ccc",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -171,28 +200,19 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	}
 }
 
-// SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: VersionID}
+func (b *TestingAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+			if !attr.IsResourceRequest() {
+				return authorizer.DecisionNoOpinion, "", nil
+			}
 
-// Resource takes an unqualified resource and returns a Group qualified GroupResource
-func Resource(resource string) schema.GroupResource {
-	return SchemeGroupVersion.WithResource(resource).GroupResource()
-}
+			// require a user
+			_, err = appcontext.User(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "valid user is required", err
+			}
 
-var (
-	// SchemeBuilder points to a list of functions added to Scheme.
-	SchemeBuilder      = runtime.NewSchemeBuilder(addKnownTypes)
-	localSchemeBuilder = &SchemeBuilder
-	// AddToScheme is a common registration function for mapping packaged scoped group & version keys to a scheme.
-	AddToScheme = localSchemeBuilder.AddToScheme
-)
-
-// Adds the list of known types to the given scheme.
-func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion,
-		&example.RuntimeInfo{},
-	)
-
-	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
-	return scheme.SetVersionPriority(SchemeGroupVersion)
+			return authorizer.DecisionNoOpinion, "", err // fallback to org/role logic
+		})
 }

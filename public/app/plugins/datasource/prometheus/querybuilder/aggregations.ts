@@ -1,10 +1,10 @@
-import { addOperationWithRangeVector } from './operations';
 import {
   createAggregationOperation,
   createAggregationOperationWithParam,
-  getPromAndLokiOperationDisplayName,
+  getPromOperationDisplayName,
   getRangeVectorParamDef,
-} from './shared/operationUtils';
+} from './operationUtils';
+import { addOperationWithRangeVector } from './operations';
 import { QueryBuilderOperation, QueryBuilderOperationDef } from './shared/types';
 import { PromVisualQueryOperationCategory, PromOperationId } from './types';
 
@@ -42,7 +42,7 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
 function createAggregationOverTime(name: string): QueryBuilderOperationDef {
   return {
     id: name,
-    name: getPromAndLokiOperationDisplayName(name),
+    name: getPromOperationDisplayName(name),
     params: [getRangeVectorParamDef()],
     defaultParams: ['$__interval'],
     alternativesKey: 'overtime function',

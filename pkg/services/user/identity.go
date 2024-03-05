@@ -8,9 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
+const (
+	GlobalOrgID = int64(0)
+)
+
 type SignedInUser struct {
-	UserID           int64 `xorm:"user_id"`
-	OrgID            int64 `xorm:"org_id"`
+	UserID           int64  `xorm:"user_id"`
+	UserUID          string `xorm:"user_uid"`
+	OrgID            int64  `xorm:"org_id"`
 	OrgName          string
 	OrgRole          roletype.RoleType
 	Login            string
@@ -54,6 +59,7 @@ func (u *SignedInUser) NameOrFallback() string {
 func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	return &UserDisplayDTO{
 		ID:    u.UserID,
+		UID:   u.UserUID,
 		Login: u.Login,
 		Name:  u.Name,
 		// AvatarURL: dtos.GetGravatarUrl(u.GetEmail()),
@@ -113,7 +119,12 @@ func (u *SignedInUser) GetCacheKey() string {
 	if !u.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
-		id = string(u.GetOrgRole())
+		orgRole := u.GetOrgRole()
+		if orgRole == "" {
+			orgRole = roletype.RoleNone
+		}
+
+		id = string(orgRole)
 	}
 
 	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), namespace, id)
@@ -154,6 +165,19 @@ func (u *SignedInUser) GetPermissions() map[string][]string {
 	return u.Permissions[u.GetOrgID()]
 }
 
+// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations
+func (u *SignedInUser) GetGlobalPermissions() map[string][]string {
+	if u.Permissions == nil {
+		return make(map[string][]string)
+	}
+
+	if u.Permissions[GlobalOrgID] == nil {
+		return make(map[string][]string)
+	}
+
+	return u.Permissions[GlobalOrgID]
+}
+
 // DEPRECATED: GetTeams returns the teams the entity is a member of
 // Retrieve the teams from the team service instead of using this method.
 func (u *SignedInUser) GetTeams() []int64 {
@@ -162,9 +186,6 @@ func (u *SignedInUser) GetTeams() []int64 {
 
 // GetOrgRole returns the role of the active entity in the active organization
 func (u *SignedInUser) GetOrgRole() roletype.RoleType {
-	if u.OrgRole == "" {
-		return roletype.RoleNone
-	}
 	return u.OrgRole
 }
 

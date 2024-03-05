@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.3.0-pre";
+export const pluginVersion = "%VERSION%";
 
 export interface TempoQuery extends common.DataQuery {
   filters: Array<TraceqlFilter>;
@@ -44,9 +44,9 @@ export interface TempoQuery extends common.DataQuery {
    */
   serviceMapIncludeNamespace?: boolean;
   /**
-   * Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
+   * Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}. Providing multiple values will produce union of results for each filter, using PromQL OR operator internally.
    */
-  serviceMapQuery?: string;
+  serviceMapQuery?: (string | Array<string>);
   /**
    * @deprecated Query traces by service name
    */

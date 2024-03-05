@@ -41,7 +41,20 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
       return navModelChildren;
     }
 
-    if (config.featureToggles.panelTitleSearch && pluginConfig.meta.type === PluginType.panel) {
+    if (config.featureToggles.externalServiceAccounts && (plugin?.iam || plugin?.details?.iam)) {
+      navModelChildren.push({
+        text: PluginTabLabels.IAM,
+        icon: 'shield',
+        id: PluginTabIds.IAM,
+        url: `${pathname}?page=${PluginTabIds.IAM}`,
+        active: PluginTabIds.IAM === currentPageId,
+      });
+    }
+
+    if (
+      config.featureToggles.panelTitleSearch &&
+      (pluginConfig.meta.type === PluginType.panel || pluginConfig.meta.type === PluginType.datasource)
+    ) {
       navModelChildren.push({
         text: PluginTabLabels.USAGE,
         icon: 'list-ul',

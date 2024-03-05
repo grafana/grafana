@@ -7,6 +7,11 @@
     { "type": "dashboard", "name": "Azure / Alert Consumption", "path": "dashboards/v1Alerts.json" },
     {
       "type": "dashboard",
+      "name": "Azure / Infrastructure / Infrastructure Monitoring",
+      "path": "dashboards/infrastructureMonitoring.json"
+    },
+    {
+      "type": "dashboard",
       "name": "Azure / Azure PostgreSQL / Flexible Server Monitoring",
       "path": "dashboards/postgresFlexibleServer.json"
     },
@@ -72,7 +77,7 @@
     },
     { "type": "dashboard", "name": "Azure / Resources Overview", "path": "dashboards/arg.json" }
   ],
-
+  "executable": "gpx_azuremonitor",
   "info": {
     "description": "Data source for Microsoft Azure Monitor & Application Insights",
     "author": {
@@ -93,11 +98,11 @@
       { "name": "Azure Monitor Network", "path": "img/azure_monitor_network.png" },
       { "name": "Azure Monitor CPU", "path": "img/azure_monitor_cpu.png" }
     ],
-    "version": "1.0.0"
+    "version": "%VERSION%"
   },
 
   "dependencies": {
-    "grafanaVersion": "5.2.x",
+    "grafanaDependency": ">=10.3.0",
     "plugins": []
   },
 

@@ -7,7 +7,6 @@ import (
 )
 
 const (
-	OAuth2Server    AuthProvider = "OAuth2Server"
 	ServiceAccounts AuthProvider = "ServiceAccounts"
 
 	// TmpOrgID is the orgID we use while global service accounts are not supported.
@@ -16,7 +15,17 @@ const (
 
 type AuthProvider string
 
+//go:generate mockery --name ExternalServiceRegistry --structname ExternalServiceRegistryMock --output tests --outpkg tests --filename extsvcregmock.go
 type ExternalServiceRegistry interface {
+	// HasExternalService returns whether an external service has been saved with that name.
+	HasExternalService(ctx context.Context, name string) (bool, error)
+
+	// GetExternalServiceNames returns the names of external services registered in store.
+	GetExternalServiceNames(ctx context.Context) ([]string, error)
+
+	// RemoveExternalService removes an external service and its associated resources from the database (ex: service account, token).
+	RemoveExternalService(ctx context.Context, name string) error
+
 	// SaveExternalService creates or updates an external service in the database. Based on the requested auth provider,
 	// it generates client_id, secrets and any additional provider specificities (ex: rsa keys). It also ensures that the
 	// associated service account has the correct permissions.
@@ -30,23 +39,9 @@ type SelfCfg struct {
 	Permissions []accesscontrol.Permission
 }
 
-type ImpersonationCfg struct {
-	// Enabled allows the service to request access tokens to impersonate users
-	Enabled bool
-	// Groups allows the service to list the impersonated user's teams
-	Groups bool
-	// Permissions are the permissions that the external service needs when impersonating a user.
-	// The intersection of this set with the impersonated user's permission guarantees that the client will not
-	// gain more privileges than the impersonated user has and vice versa.
-	Permissions []accesscontrol.Permission
-}
-
 // ExternalServiceRegistration represents the registration form to save new client.
 type ExternalServiceRegistration struct {
 	Name string
-	// Impersonation access configuration
-	// (this is not available on all auth providers)
-	Impersonation ImpersonationCfg
 	// Self access configuration
 	Self SelfCfg
 	// Auth Provider that the client will use to connect to Grafana

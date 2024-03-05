@@ -1,13 +1,14 @@
 import { css, cx } from '@emotion/css';
+import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import React, { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import Calendar from 'react-calendar';
-import { usePopper } from 'react-popper';
 import { useMedia } from 'react-use';
 
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
+import { Components } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { Button } from '../../Button/Button';
@@ -71,15 +72,28 @@ export const DateTimePicker = ({
   const { dialogProps } = useDialog({}, ref);
 
   const theme = useTheme2();
-  const { modalBackdrop } = getModalStyles(theme);
+  const { modalBackdrop } = useStyles2(getModalStyles);
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
   const styles = useStyles2(getStyles);
 
-  const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
-  const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
+  // the order of middleware is important!
+  // see https://floating-ui.com/docs/arrow#order
+  const middleware = [
+    flip({
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+    shift(),
+  ];
 
-  const popper = usePopper(markerElement, selectorElement, {
+  const { refs, floatingStyles } = useFloating({
+    open: isOpen,
     placement: 'bottom-start',
+    onOpenChange: setOpen,
+    middleware,
+    whileElementsMounted: autoUpdate,
+    strategy: 'fixed',
   });
 
   const onApply = useCallback(
@@ -106,7 +120,7 @@ export const DateTimePicker = ({
         isFullscreen={isFullscreen}
         onOpen={onOpen}
         label={label}
-        ref={setMarkerElement}
+        ref={refs.setReference}
         showSeconds={showSeconds}
       />
       {isOpen ? (
@@ -121,8 +135,8 @@ export const DateTimePicker = ({
                   onClose={() => setOpen(false)}
                   maxDate={maxDate}
                   minDate={minDate}
-                  ref={setSelectorElement}
-                  style={popper.styles.popper}
+                  ref={refs.setFloating}
+                  style={floatingStyles}
                   showSeconds={showSeconds}
                   disabledHours={disabledHours}
                   disabledMinutes={disabledMinutes}
@@ -232,7 +246,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
           addonAfter={icon}
           value={internalDate.value}
           onBlur={onBlur}
-          data-testid="date-time-input"
+          data-testid={Components.DateTimePicker.input}
           placeholder="Select date/time"
           ref={ref}
         />

@@ -1,6 +1,16 @@
-import { dateTime, TimeRange, TypedVariableModel } from '@grafana/data';
+import { dateTime, QueryVariableModel, TimeRange, TypedVariableModel } from '@grafana/data';
 import { setDataSourceSrv, VariableInterpolation } from '@grafana/runtime';
-import { ConstantVariable, EmbeddedScene, SceneCanvasText, SceneVariableSet, TestVariable } from '@grafana/scenes';
+import {
+  ConstantVariable,
+  CustomVariable,
+  DataSourceVariable,
+  EmbeddedScene,
+  IntervalVariable,
+  QueryVariable,
+  SceneCanvasText,
+  SceneVariableSet,
+  TestVariable,
+} from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
@@ -24,6 +34,7 @@ const interpolateMock = jest.fn();
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
   sceneGraph: {
+    ...jest.requireActual('@grafana/scenes').sceneGraph,
     interpolate: (...args: unknown[]) => interpolateMock(...args),
   },
 }));
@@ -843,6 +854,40 @@ describe('templateSrv', () => {
       expect(interpolateMock).toHaveBeenCalledTimes(1);
       expect(interpolateMock.mock.calls[0][0]).toEqual(window.__grafanaSceneContext);
       expect(interpolateMock.mock.calls[0][1]).toEqual('test ${sceneVar}');
+    });
+
+    it('Can use getVariables to access scene variables', () => {
+      window.__grafanaSceneContext = new EmbeddedScene({
+        $variables: new SceneVariableSet({
+          variables: [
+            new QueryVariable({ name: 'server', value: 'serverA', text: 'Server A' }),
+            new QueryVariable({ name: 'pods', value: ['pA', 'pB'], text: ['podA', 'podB'] }),
+            new DataSourceVariable({ name: 'ds', value: 'dsA', text: 'dsA', pluginId: 'prometheus' }),
+            new CustomVariable({ name: 'custom', value: 'A', text: 'A', query: 'A, B, C' }),
+            new IntervalVariable({ name: 'interval', value: '1m', intervals: ['1m', '2m'] }),
+          ],
+        }),
+        body: new SceneCanvasText({ text: 'hello' }),
+      });
+
+      window.__grafanaSceneContext.activate();
+
+      const vars = _templateSrv.getVariables();
+      expect(vars.length).toBe(5);
+
+      const serverVar = vars[0] as QueryVariableModel;
+
+      expect(serverVar.name).toBe('server');
+      expect(serverVar.type).toBe('query');
+      expect(serverVar.current.value).toBe('serverA');
+      expect(serverVar.current.text).toBe('Server A');
+
+      const podVar = vars[1] as QueryVariableModel;
+
+      expect(podVar.name).toBe('pods');
+      expect(podVar.type).toBe('query');
+      expect(podVar.current.value).toEqual(['pA', 'pB']);
+      expect(podVar.current.text).toEqual(['podA', 'podB']);
     });
   });
 });

@@ -229,7 +229,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
       <>
         <CustomScrollbar autoHeightMin="100%">
           <Container padding="md">
-            <div aria-label={selectors.components.AlertTab.content}>
+            <div data-testid={selectors.components.AlertTab.content}>
               {alert && hasTransformations && (
                 <Alert
                   severity={AppNotificationSeverity.Error}

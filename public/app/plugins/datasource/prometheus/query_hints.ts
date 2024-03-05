@@ -32,7 +32,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
   // Check for need of rate()
   if (query.indexOf('rate(') === -1 && query.indexOf('increase(') === -1) {
     // Use metric metadata for exact types
-    const nameMatch = query.match(/\b(\w+_(total|sum|count))\b/);
+    const nameMatch = query.match(/\b((?<!:)\w+_(total|sum|count)(?!:))\b/);
     let counterNameMetric = nameMatch ? nameMatch[1] : '';
     const metricsMetadata = datasource?.languageProvider?.metricsMetadata;
     let certain = false;

@@ -1,7 +1,9 @@
 import React from 'react';
+import { Props } from 'react-virtualized-auto-sizer';
 
-import { DataQuery, EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
+import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 
@@ -72,8 +74,8 @@ jest.mock('app/core/services/PreferencesService', () => ({
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
-    default(props: any) {
-      return <div>{props.children({ width: 1000 })}</div>;
+    default(props: Props) {
+      return <div>{props.children({ height: 1, scaledHeight: 1, scaledWidth: 1000, width: 1000 })}</div>;
     },
   };
 });
@@ -205,7 +207,6 @@ describe('Explore: Query History', () => {
     await waitForExplore();
     await openQueryHistory();
     await assertQueryHistory(['{"expr":"query #1"}'], 'left');
-
     await commentQueryHistory(0, 'test comment');
     await assertQueryHistoryComment(['test comment'], 'left');
   });

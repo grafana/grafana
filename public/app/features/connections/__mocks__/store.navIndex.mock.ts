@@ -490,7 +490,7 @@ export const navIndex: NavIndex = {
   monitoring: {
     id: 'monitoring',
     text: 'Observability',
-    subTitle: 'Monitoring and infrastructure apps',
+    subTitle: 'Out-of-the-box observability solutions',
     icon: 'heart-rate',
     url: '/monitoring',
     sortWeight: -900,

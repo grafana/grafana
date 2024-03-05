@@ -1,103 +1,100 @@
 {
-  "_comment": "",
+  "_comment": "Este archivo es la fuente original para las cadenas en inglés. Edita la base del código para cambiar los plurales y otras frases de la interfaz de usuario.",
   "access-control": {
     "add-permission": {
-      "role-label": "",
-      "serviceaccount-label": "",
-      "team-label": "",
-      "title": "",
-      "user-label": ""
+      "role-label": "Rol",
+      "serviceaccount-label": "Cuenta de servicio",
+      "team-label": "Equipo",
+      "title": "Añadir permiso para",
+      "user-label": "Usuario"
     },
     "add-permissions": {
-      "save": ""
+      "save": "Guardar"
     },
     "permission-list": {
-      "permission": ""
+      "permission": "Permiso"
     },
     "permissions": {
-      "add-label": "",
-      "no-permissions": "",
-      "permissions-change-warning": "",
-      "role": "",
-      "serviceaccount": "",
-      "team": "",
-      "title": "",
-      "user": ""
+      "add-label": "Añadir un permiso",
+      "no-permissions": "No hay ningún permiso",
+      "permissions-change-warning": "Esto cambiará los permisos para esta carpeta y todos sus descendientes. En total, esto afectará:",
+      "role": "Rol",
+      "serviceaccount": "Cuenta de servicio",
+      "team": "Equipo",
+      "title": "Permisos",
+      "user": "Usuario"
     }
+  },
+  "bouncing-loader": {
+    "label": "Cargando"
   },
   "browse-dashboards": {
     "action": {
-      "cancel-button": "",
-      "cannot-move-folders": "",
-      "delete-button": "",
-      "delete-modal-invalid-text": "",
-      "delete-modal-invalid-title": "",
-      "delete-modal-text": "",
-      "delete-modal-title": "",
-      "deleting": "",
-      "manage-permissions-button": "",
-      "move-button": "",
-      "move-modal-alert": "",
-      "move-modal-field-label": "",
-      "move-modal-text": "",
-      "move-modal-title": "",
-      "moving": "",
-      "new-folder-name-required-phrase": ""
+      "cancel-button": "Cancelar",
+      "cannot-move-folders": "Las carpetas no se pueden mover",
+      "delete-button": "Eliminar",
+      "delete-modal-invalid-text": "Una o más carpetas contienen paneles de biblioteca o reglas de alerta. Para continuar, primero elimínelas.",
+      "delete-modal-invalid-title": "No se puede eliminar la carpeta",
+      "delete-modal-text": "Esta acción eliminará el siguiente contenido:",
+      "delete-modal-title": "Eliminar",
+      "deleting": "Eliminando...",
+      "manage-permissions-button": "Gestionar permisos",
+      "move-button": "Mover",
+      "move-modal-alert": "Al mover este elemento puede cambiar sus permisos.",
+      "move-modal-field-label": "Nombre de la carpeta",
+      "move-modal-text": "Esta acción moverá el siguiente contenido:",
+      "move-modal-title": "Mover",
+      "moving": "Moviendo...",
+      "new-folder-name-required-phrase": "Se requiere el nombre de la carpeta."
     },
     "counts": {
-      "alertRule_one": "",
-      "alertRule_many": "",
-      "alertRule_other": "",
-      "dashboard_one": "",
-      "dashboard_many": "",
-      "dashboard_other": "",
-      "folder_one": "",
-      "folder_many": "",
-      "folder_other": "",
-      "libraryPanel_one": "",
-      "libraryPanel_many": "",
-      "libraryPanel_other": "",
-      "total_one": "",
-      "total_many": "",
-      "total_other": ""
+      "alertRule_one": "{{count}} regla de alerta",
+      "alertRule_other": "{{count}} reglas de alerta",
+      "dashboard_one": "{{count}} panel de control",
+      "dashboard_other": "{{count}} paneles de control",
+      "folder_one": "{{count}} carpeta",
+      "folder_other": "{{count}} carpetas",
+      "libraryPanel_one": "{{count}} panel de librería",
+      "libraryPanel_other": "{{count}} paneles de librería",
+      "total_one": "{{count}} elemento",
+      "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
-      "collapse-folder-button": "",
-      "expand-folder-button": "",
-      "name-column": "",
-      "select-all-header-checkbox": "",
-      "select-checkbox": "",
-      "tags-column": ""
+      "collapse-folder-button": "Contraer la carpeta {{title}}",
+      "expand-folder-button": "Expandir la carpeta {{title}}",
+      "name-column": "Nombre",
+      "select-all-header-checkbox": "Seleccionar todo",
+      "select-checkbox": "Seleccionar",
+      "tags-column": "Etiquetas"
     },
     "folder-actions-button": {
-      "delete": "",
-      "folder-actions": "",
-      "manage-permissions": "",
-      "move": ""
+      "delete": "Eliminar",
+      "folder-actions": "Acciones de la carpeta",
+      "manage-permissions": "Gestionar permisos",
+      "move": "Mover"
     },
     "folder-picker": {
-      "accessible-label": "",
-      "button-label": "",
-      "empty-message": "",
-      "error-title": "",
-      "search-placeholder": "",
-      "unknown-error": ""
+      "accessible-label": "Seleccionar carpeta: {{ label }} seleccionada actualmente",
+      "button-label": "Seleccionar carpeta",
+      "clear-selection": "Eliminar selección",
+      "empty-message": "No se ha encontrado ninguna carpeta",
+      "error-title": "Error al cargar las carpetas",
+      "search-placeholder": "Buscar carpetas",
+      "unknown-error": "Error desconocido"
     },
     "manage-folder-nav": {
-      "alert-rules": "",
-      "dashboards": "",
-      "panels": "",
-      "permissions": "",
-      "settings": ""
+      "alert-rules": "Reglas de alerta",
+      "dashboards": "Paneles de control",
+      "panels": "Paneles"
     },
     "new-folder-form": {
-      "cancel-label": "",
-      "create-label": "",
-      "name-label": ""
+      "cancel-label": "Cancelar",
+      "create-label": "Crear",
+      "name-label": "Nombre de la carpeta"
     },
     "no-results": {
-      "clear": "",
-      "text": ""
+      "clear": "Borrar la búsqueda y los filtros",
+      "text": "No se ha encontrado ningún resultado para su consulta."
     }
   },
   "clipboard-button": {
@@ -110,6 +107,9 @@
       "change-theme": "Cambiar tema...",
       "dark-theme": "Oscuro",
       "light-theme": "Claro"
+    },
+    "empty-state": {
+      "title": ""
     },
     "search-box": {
       "placeholder": "Buscar o saltar a..."
@@ -131,29 +131,103 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": ""
+      "category-header-label": "Orígenes de datos"
     },
     "search": {
-      "placeholder": ""
+      "placeholder": "Buscar todo"
     }
   },
   "correlations": {
-    "add-new": "",
+    "add-new": "Añadir nuevo",
     "alert": {
-      "error-message": "",
-      "title": ""
+      "error-message": "Se ha producido un error desconocido al recuperar los datos de correlación. Por favor, inténtelo de nuevo.",
+      "title": "Error al recuperar los datos de correlación"
+    },
+    "basic-info-form": {
+      "description-description": "Descripción opcional con más información sobre el enlace",
+      "description-label": "Descripción",
+      "label-description": "Este nombre se utilizará como etiqueta para la correlación. Esta se mostrará como el texto del botón, un elemento del menú o el texto del cursor en un enlace.",
+      "label-label": "Etiqueta",
+      "label-placeholder": "p. ej. seguimiento de Tempo",
+      "label-required": "Este campo es obligatorio.",
+      "sub-text": "<0>Defina el texto que describirá la correlación.</0>",
+      "title": "Definir la etiqueta de correlación (paso 1 de 3)"
     },
     "list": {
-      "delete": "",
-      "label": "",
-      "loading": "",
-      "read-only": "",
-      "source": "",
-      "target": ""
+      "delete": "eliminar correlación",
+      "label": "Etiqueta",
+      "loading": "cargando...",
+      "read-only": "Solo lectura",
+      "source": "Fuente",
+      "target": "Destino"
     },
-    "page-content": "",
-    "page-heading": "",
-    "sub-title": ""
+    "navigation-form": {
+      "add-button": "Añadir",
+      "back-button": "Atrás",
+      "next-button": "Siguiente",
+      "save-button": "Guardar"
+    },
+    "page-content": "Para habilitar las correlaciones, añádala en la configuración de Grafana:",
+    "page-heading": "Las correlaciones están deshabilitadas",
+    "query-editor": {
+      "control-rules": "La fuente de datos de destino seleccionada debe exportar un editor de consultas.",
+      "data-source-text": "Seleccione primero una fuente de datos de destino.",
+      "data-source-title": "No se ha seleccionado ninguna fuente de datos",
+      "error-text": "No se ha podido cargar la fuente de datos seleccionada.",
+      "error-title": "Error al cargar la fuente de datos",
+      "loading": "Cargando el editor de consultas...",
+      "query-description": "Defina la consulta que se ejecuta cuando se hace clic en el enlace. Puede usar <2>variables</2> para acceder a los valores de campo específicos.",
+      "query-editor-title": "La fuente de datos no exporta un editor de consultas.",
+      "query-label": "Consulta"
+    },
+    "source-form": {
+      "control-required": "Este campo es obligatorio.",
+      "description": "Ha utilizado las siguientes variables en la consulta de destino: <1></1><2></2>Un punto de datos necesita proporcionar valores a todas las variables como campos o como salida de transformaciones para hacer que el botón de correlación aparezca en la visualización. 4></4>Nota: No todas las variables deben definirse explícitamente a continuación. Una transformación como <7>logfmt</7> creará variables para cada par clave/valor.",
+      "heading": "Variables utilizadas en la consulta de destino",
+      "results-description": "El enlace se mostrará junto al valor de este campo",
+      "results-label": "Campo de resultados",
+      "results-required": "Este campo es obligatorio.",
+      "source-description": "Los resultados de la fuente de datos seleccionada tienen enlaces que se muestran en el panel",
+      "source-label": "Fuente",
+      "sub-text": "<0>Defina qué fuente de datos mostrará la correlación y qué datos reemplazarán a las variables previamente definidas.</0>",
+      "title": "Configurar la fuente de datos que se vinculará a {{dataSourceName}} (paso 3 de 3)"
+    },
+    "sub-title": "Defina cómo se relacionan los datos que se encuentran en diferentes fuentes de datos. Más información en la <2>documentación<1></1></2>",
+    "target-form": {
+      "control-rules": "Este campo es obligatorio.",
+      "sub-text": "<0>Defina a qué fuente de datos enlazará la correlación y qué consulta se ejecutará cuando se haga clic en la correlación.</0>",
+      "target-description": "Especifique qué fuente de datos se consulta cuando se hace clic en el enlace",
+      "target-label": "Destino",
+      "title": "Configurar el destino de la correlación (paso 2 de 3)"
+    },
+    "trans-details": {
+      "logfmt-description": "Analice el campo proporcionado con logfmt para obtener variables",
+      "logfmt-label": "Logfm",
+      "regex-description": "El campo se analizará con regex. Utilice grupos de captura con nombre para devolver múltiples variables o un solo grupo de captura sin nombre para agregar una variable al valor de mapa con nombre. Regex no distingue entre mayúsculas y minúsculas.",
+      "regex-expression": "Utilice los grupos de captura para extraer una porción del campo.",
+      "regex-label": "Expresión regular",
+      "regex-map-values": "Define el nombre de la variable si el grupo de captura no tiene nombre."
+    },
+    "transform": {
+      "add-button": "Añadir transformación",
+      "heading": "Transformaciones",
+      "no-transform": "No se ha definido ninguna transformación."
+    },
+    "transform-row": {
+      "expression-label": "Expresión",
+      "expression-required": "Por favor, defina una expresión",
+      "expression-tooltip": "Se requiere para la expresión regular. La expresión que usará la transformación. Logfmt no utiliza más especificaciones.",
+      "field-input": "campo",
+      "field-label": "Campo",
+      "field-tooltip": "Opcional. El campo a transformar. Si no se especifica, la transformación se aplicará al campo de resultados.",
+      "map-value-label": "Valor del mapa",
+      "map-value-tooltip": "Opcional. Define el nombre de la variable. Actualmente solo es válido para expresiones regulares con un único grupo de captura sin nombre.",
+      "remove-button": "Eliminar",
+      "remove-tooltip": "Eliminar transformación",
+      "transform-required": "Por favor, seleccione un tipo de transformación",
+      "type-label": "Tipo",
+      "type-tooltip": "El tipo de transformación que se aplicará a los datos de origen."
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -161,21 +235,25 @@
       "paste-panel": "Pegar panel",
       "row": "Fila",
       "visualization": "Visualización",
-      "widget": ""
+      "widget": "«Widget»"
+    },
+    "alert-rules-drawer": {
+      "redirect-link": "Lista en Alertas de Grafana",
+      "subtitle": "Reglas de alerta relacionadas con este tablero"
     },
     "empty": {
-      "add-library-panel-body": "",
-      "add-library-panel-button": "",
-      "add-library-panel-header": "",
+      "add-library-panel-body": "Añadir las visualizaciones que se comparten con otros tableros.",
+      "add-library-panel-button": "Añadir panel de biblioteca",
+      "add-library-panel-header": "Añadir un panel de biblioteca",
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
-      "add-widget-body": "",
-      "add-widget-button": "",
-      "add-widget-header": "",
-      "import-a-dashboard-body": "",
-      "import-a-dashboard-header": "",
-      "import-dashboard-button": ""
+      "add-widget-body": "Crear listas, reducciones y otros «widgets»",
+      "add-widget-button": "Añadir widget",
+      "add-widget-header": "Añadir un «widget»",
+      "import-a-dashboard-body": "Importar el tablero desde el archivo o <1>grafana.com</1>.",
+      "import-a-dashboard-header": "Importar un tablero",
+      "import-dashboard-button": "Importar panel de control"
     },
     "inspect": {
       "data-tab": "Datos",
@@ -231,7 +309,7 @@
     },
     "toolbar": {
       "add": "Añadir",
-      "add-panel": "Añadir panel",
+      "alert-rules": "Reglas de alerta",
       "mark-favorite": "Marcar como favorito",
       "open-original": "Abrir el panel de control original",
       "playlist-next": "Ir al siguiente panel de control",
@@ -241,242 +319,253 @@
       "save": "Guardar panel de control",
       "settings": "Ajustes del panel de control",
       "share": "Compartir panel o panel de control",
+      "share-button": "Compartir",
       "unmark-favorite": "Deshacer marca como favorito"
     },
     "validation": {
-      "invalid-dashboard-id": "",
-      "invalid-json": "",
-      "tags-expected-array": "",
-      "tags-expected-strings": ""
+      "invalid-dashboard-id": "No se ha podido encontrar un ID de Grafana.com válido",
+      "invalid-json": "JSON no válido",
+      "tags-expected-array": "etiquetas: matriz prevista",
+      "tags-expected-strings": "etiquetas: matriz de cadenas prevista"
     }
   },
   "dashboard-import": {
     "file-dropzone": {
-      "primary-text": "",
-      "secondary-text": ""
+      "primary-text": "Subir archivo JSON del tablero",
+      "secondary-text": "Arrastrar y soltar aquí o hacer clic para navegar"
     },
     "form-actions": {
-      "cancel": "",
-      "load": ""
+      "cancel": "Cancelar",
+      "load": "Cargar"
     },
     "gcom-field": {
-      "label": "",
-      "load-button": "",
-      "placeholder": "",
-      "validation-required": ""
+      "label": "Buscar e importar tableros para las aplicaciones comunes en <1></1>",
+      "load-button": "Cargar",
+      "placeholder": "URL o ID del tablero de Grafana.com",
+      "validation-required": "Se requiere una URL o ID del tablero de Grafana"
     },
     "json-field": {
-      "label": "",
-      "validation-required": ""
+      "label": "Importar a través del modelo JSON del tablero",
+      "validation-required": "Se necesita un modelo JSON del tablero"
     }
   },
   "dashboard-settings": {
     "annotations": {
-      "title": ""
+      "title": "Anotaciones"
     },
-    "dashboard-delete-button": "",
+    "dashboard-delete-button": "Eliminar tablero",
     "general": {
-      "auto-refresh-description": "",
-      "auto-refresh-label": "",
-      "description-label": "",
-      "editable-description": "",
-      "editable-label": "",
-      "folder-label": "",
-      "panel-options-graph-tooltip-description": "",
-      "panel-options-graph-tooltip-label": "",
-      "panel-options-label": "",
-      "tags-label": "",
-      "title": "",
-      "title-label": ""
+      "auto-refresh-description": "Definir los intervalos de actualización automática que deberían estar disponibles en la lista de actualización automática.",
+      "auto-refresh-label": "Actualización automática",
+      "description-label": "Descripción",
+      "editable-description": "Establecer como de solo lectura para desactivar toda la edición. Recargar el tablero para que los cambios surtan efecto",
+      "editable-label": "Editable",
+      "folder-label": "Carpeta",
+      "panel-options-graph-tooltip-description": "Controla la descripción y el comportamiento de resaltado en diferentes paneles. Recargar el tablero para que los cambios surtan efecto",
+      "panel-options-graph-tooltip-label": "Descripción gráfica",
+      "panel-options-label": "Opciones del panel",
+      "tags-label": "Etiquetas",
+      "title": "General",
+      "title-label": "Título"
     },
     "json-editor": {
-      "save-button": "",
-      "subtitle": "",
-      "title": ""
+      "apply-button": "Aplicar cambios",
+      "save-button": "Guardar cambios",
+      "subtitle": "El siguiente modelo JSON es la estructura de datos que define el tablero. Incluye ajustes del tablero, ajustes del panel, diseño, consultas, etc.",
+      "title": "Modelo JSON"
     },
     "links": {
-      "title": ""
+      "title": "Enlaces"
     },
     "permissions": {
-      "title": ""
+      "title": "Permisos"
     },
     "settings": {
-      "title": ""
+      "title": "Configuración"
     },
     "time-picker": {
-      "hide-time-picker": "",
-      "now-delay-description": "",
-      "now-delay-label": "",
-      "refresh-live-dashboards-description": "",
-      "refresh-live-dashboards-label": "",
-      "time-options-label": "",
-      "time-zone-label": "",
-      "week-start-label": ""
+      "hide-time-picker": "Ocultar el selector de tiempo",
+      "now-delay-description": "Excluir los datos recientes que puedan estar incompletos.",
+      "now-delay-label": "Retraso ahora",
+      "refresh-live-dashboards-description": "Redibujar continuamente los paneles en los que el rango de tiempo hace referencia a «ahora»",
+      "refresh-live-dashboards-label": "Actualizar paneles de control activos",
+      "time-options-label": "Opciones de tiempo",
+      "time-zone-label": "Huso horario",
+      "week-start-label": "Inicio de la semana"
     },
     "variables": {
-      "title": ""
+      "title": "Variables"
     },
     "versions": {
-      "title": ""
+      "title": "Versiones"
     }
   },
   "data-source-picker": {
-    "add-new-data-source": "",
+    "add-new-data-source": "Configurar una nueva fuente de datos",
     "built-in-list": {
-      "description-dashboard": "",
-      "description-grafana": "",
-      "description-mixed": ""
+      "description-dashboard": "Reutilizar los resultados de la consulta de otras visualizaciones",
+      "description-grafana": "Descubrir las visualizaciones usando datos simulados",
+      "description-mixed": "Usar múltiples fuentes de datos"
     },
     "list": {
-      "no-data-source-message": ""
+      "no-data-source-message": "No se ha encontrado ninguna fuente de datos"
     },
     "modal": {
-      "configure-new-data-source": "",
-      "input-placeholder": "",
-      "title": ""
+      "configure-new-data-source": "Abrir una nueva pestaña y configurar una fuente de datos",
+      "input-placeholder": "Seleccionar fuente de datos",
+      "title": "Seleccionar fuente de datos"
     },
-    "open-advanced-button": ""
+    "open-advanced-button": "Abrir selector avanzado de fuentes de datos"
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": ""
+      "label": "Añadir nueva fuente de datos"
     }
   },
   "explore": {
-    "add-to-dashboard": "",
+    "add-to-dashboard": "Añadir al tablero",
     "rich-history": {
-      "close-tooltip": "",
-      "datasource-a-z": "",
-      "datasource-z-a": "",
-      "newest-first": "",
-      "oldest-first": "",
-      "query-history": "",
-      "settings": "",
-      "starred": ""
+      "close-tooltip": "Cerrar el historial de consultas",
+      "datasource-a-z": "Fuente de datos A-Z",
+      "datasource-z-a": "Fuente de datos Z-A",
+      "newest-first": "El más reciente primero",
+      "oldest-first": "El más antiguo primero",
+      "query-history": "Historial de consultas",
+      "settings": "Configuración",
+      "starred": "Destacado"
     },
     "rich-history-card": {
-      "add-comment-form": "",
-      "add-comment-tooltip": "",
-      "cancel": "",
-      "confirm-delete": "",
-      "copy-query-tooltip": "",
-      "copy-shortened-link-tooltip": "",
-      "datasource-icon-label": "",
-      "datasource-name-label": "",
-      "datasource-not-exist": "",
-      "delete-query-confirmation-title": "",
-      "delete-query-title": "",
-      "delete-query-tooltip": "",
-      "delete-starred-query-confirmation-text": "",
-      "edit-comment-tooltip": "",
-      "loading-text": "",
-      "optional-description": "",
-      "query-comment-label": "",
-      "query-text-label": "",
-      "run-query-button": "",
-      "save-comment": "",
-      "star-query-tooltip": "",
-      "switch-datasource-button": "",
-      "unstar-query-tooltip": "",
-      "update-comment-form": ""
+      "add-comment-form": "Añadir formulario de comentarios",
+      "add-comment-tooltip": "Añadir comentario",
+      "cancel": "Cancelar",
+      "confirm-delete": "Eliminar",
+      "copy-query-tooltip": "Copiar consulta al portapapeles",
+      "copy-shortened-link-tooltip": "Copiar enlace acortado al portapapeles",
+      "datasource-icon-label": "Icono de fuente de datos",
+      "datasource-name-label": "Nombre de fuente de datos",
+      "datasource-not-exist": "La fuente de datos ya no existe",
+      "delete-query-confirmation-title": "Eliminar",
+      "delete-query-title": "Eliminar consulta",
+      "delete-query-tooltip": "Eliminar consulta",
+      "delete-starred-query-confirmation-text": "¿Seguro que desea eliminar permanentemente su consulta destacada?",
+      "edit-comment-tooltip": "Editar comentario",
+      "loading-text": "cargando...",
+      "optional-description": "Una descripción opcional de lo que hace la consulta.",
+      "query-comment-label": "Comentario de la consulta",
+      "query-text-label": "Texto de la consulta",
+      "run-query-button": "Ejecutar consulta",
+      "save-comment": "Guardar comentario",
+      "star-query-tooltip": "Consulta destacada",
+      "switch-datasource-button": "Cambiar la fuente de datos y ejecutar la consulta",
+      "unstar-query-tooltip": "Desmarcar consulta",
+      "update-comment-form": "Actualizar el formulario de comentarios"
     },
     "rich-history-container": {
-      "loading": ""
+      "loading": "Cargando..."
     },
     "rich-history-notification": {
-      "query-copied": "",
-      "query-deleted": ""
+      "query-copied": "Consulta copiada al portapapeles",
+      "query-deleted": "Consulta eliminada"
     },
     "rich-history-queries-tab": {
-      "displaying-partial-queries": "",
-      "displaying-queries": "",
-      "filter-aria-label": "",
-      "filter-history": "",
-      "filter-placeholder": "",
-      "history-local": "",
-      "loading": "",
-      "loading-results": "",
-      "search-placeholder": "",
-      "showing-queries": "",
-      "sort-aria-label": "",
-      "sort-placeholder": ""
+      "displaying-partial-queries": "Mostrando {{ count }} consultas",
+      "displaying-queries": "{{ count }} consultas",
+      "filter-aria-label": "Filtrar consultas para la(s) fuente(s) de datos",
+      "filter-history": "Filtrar historial",
+      "filter-placeholder": "Filtrar consultas para la(s) fuente(s) de datos",
+      "history-local": "El historial se almacena en su navegador y no se comparte con otras personas.",
+      "loading": "Cargando...",
+      "loading-results": "Cargando resultados...",
+      "search-placeholder": "Buscar consultas",
+      "showing-queries": "Mostrando {{ shown }} de {{ total }} <0>Cargar más</0>",
+      "sort-aria-label": "Ordenar consultas",
+      "sort-placeholder": "Ordenar consultas por"
     },
     "rich-history-settings-tab": {
-      "alert-info": "",
-      "change-default-tab": "",
-      "clear-history-info": "",
-      "clear-query-history": "",
-      "clear-query-history-button": "",
-      "delete-confirm": "",
-      "delete-confirm-text": "",
-      "delete-title": "",
-      "history-time-span": "",
-      "history-time-span-description": "",
-      "only-show-active-datasource": "",
-      "query-history-deleted": "",
+      "alert-info": "Grafana mantendrá las entradas hasta {{optionLabel}}. Las entradas destacadas no se eliminarán.",
+      "change-default-tab": "Cambiar la pestaña activa por defecto de «Historial de consultas» a «Destacadas»",
+      "clear-history-info": "Eliminar todo su historial de consultas de forma permanente.",
+      "clear-query-history": "Borrar historial de consultas",
+      "clear-query-history-button": "Borrar historial de consultas",
+      "delete-confirm": "Eliminar",
+      "delete-confirm-text": "¿Seguro que desea eliminar permanentemente su historial de consultas?",
+      "delete-title": "Eliminar",
+      "history-time-span": "Rango de tiempo del historial",
+      "history-time-span-description": "Seleccione el periodo de tiempo durante el cual Grafana guardará su historial de búsquedas. Se almacenarán hasta {{MAX_HISTORY_ITEMS}} entradas.",
+      "only-show-active-datasource": "Mostrar solo las consultas para la fuente de datos actualmente activa en Explorar",
+      "query-history-deleted": "Historial de consultas borrado",
       "retention-period": {
-        "1-week": "",
-        "2-days": "",
-        "2-weeks": "",
-        "5-days": ""
+        "1-week": "1 semana",
+        "2-days": "2 días",
+        "2-weeks": "2 semanas",
+        "5-days": "5 días"
       }
     },
     "rich-history-starred-tab": {
-      "filter-queries-aria-label": "",
-      "filter-queries-placeholder": "",
-      "loading": "",
-      "loading-results": "",
-      "local-history-message": "",
-      "search-queries-placeholder": "",
-      "showing-queries": "",
-      "sort-queries-aria-label": "",
-      "sort-queries-placeholder": ""
+      "filter-queries-aria-label": "Filtrar consultas para la(s) fuente(s) de datos",
+      "filter-queries-placeholder": "Filtrar consultas para la(s) fuente(s) de datos",
+      "loading": "Cargando...",
+      "loading-results": "Cargando resultados...",
+      "local-history-message": "El historial se almacena en su navegador y no se comparte con otras personas.",
+      "search-queries-placeholder": "Buscar consultas",
+      "showing-queries": "Mostrando {{ shown }} de {{ total }} <0>Cargar más</0>",
+      "sort-queries-aria-label": "Ordenar consultas",
+      "sort-queries-placeholder": "Ordenar consultas por"
     },
     "rich-history-utils": {
-      "a-week-ago": "",
-      "days-ago": "",
-      "default-from": "",
-      "default-to": "",
-      "today": "",
-      "two-weeks-ago": "",
-      "yesterday": ""
+      "a-week-ago": "hace una semana",
+      "days-ago": "hace {{num}} días",
+      "default-from": "ahora-1 h",
+      "default-to": "ahora",
+      "today": "hoy",
+      "two-weeks-ago": "hace dos semanas",
+      "yesterday": "ayer"
     },
     "rich-history-utils-notification": {
-      "saving-failed": "",
-      "update-failed": ""
+      "saving-failed": "Error al guardar el historial enriquecido",
+      "update-failed": "Error al actualizar el extenso historial"
     },
     "secondary-actions": {
-      "query-add-button": "",
-      "query-add-button-aria-label": "",
-      "query-history-button": "",
-      "query-history-button-aria-label": "",
-      "query-inspector-button": "",
-      "query-inspector-button-aria-label": ""
+      "query-add-button": "Añadir consulta",
+      "query-add-button-aria-label": "Añadir consulta",
+      "query-history-button": "Historial de consultas",
+      "query-history-button-aria-label": "Historial de consultas",
+      "query-inspector-button": "Inspector de consultas",
+      "query-inspector-button-aria-label": "Inspector de consultas"
     },
     "table": {
-      "no-data": "",
-      "title": "",
-      "title-with-name": ""
+      "no-data": "0 series devueltas",
+      "title": "Tabla",
+      "title-with-name": "Tabla - {{name}}"
     },
     "toolbar": {
-      "aria-label": "",
-      "copy-shortened-link": "",
-      "refresh-picker-cancel": "",
-      "refresh-picker-run": "",
-      "split-close": "",
-      "split-close-tooltip": "",
-      "split-narrow": "",
-      "split-title": "",
-      "split-tooltip": "",
-      "split-widen": ""
+      "aria-label": "Barra de herramientas de Explore",
+      "copy-link": "Copiar URL",
+      "copy-link-abs-time": "Copiar URL absoluta",
+      "copy-links-absolute-category": "Enlaces URL de sincronización temporal (compartir con intervalo de tiempo intacto)",
+      "copy-links-normal-category": "Enlaces URL normales",
+      "copy-shortened-link": "Copiar URL acortada",
+      "copy-shortened-link-abs-time": "Copiar URL absoluta acortada",
+      "copy-shortened-link-menu": "Abrir menú de enlace acortado",
+      "refresh-picker-cancel": "Cancelar",
+      "refresh-picker-run": "Ejecutar consulta",
+      "split-close": "Cerrar",
+      "split-close-tooltip": "Cerrar panel dividido",
+      "split-narrow": "Reducir panel",
+      "split-title": "Dividir",
+      "split-tooltip": "Dividir el panel",
+      "split-widen": "Agrandar panel"
     }
   },
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": "Cerrar"
+    },
     "modal": {
-      "close-tooltip": ""
+      "close-tooltip": "Cerrar"
     },
     "segment-async": {
       "error": "No se han podido cargar las opciones",
@@ -484,66 +573,68 @@
       "no-options": "No se ha encontrado ninguna opción"
     },
     "select": {
-      "no-options-label": "",
-      "placeholder": ""
+      "no-options-label": "No se ha encontrado ninguna opción",
+      "placeholder": "Elegir"
     }
   },
   "graph": {
     "container": {
-      "content": "",
-      "show-all-series": "",
-      "show-only-series": "",
-      "title": ""
+      "content": "Renderizar demasiadas series en un solo panel puede afectar al rendimiento y hacer que los datos sean más difíciles de leer. Considere refinar sus consultas.",
+      "show-all-series": "Mostrar todo {{length}}",
+      "show-only-series": "Mostrando solo la serie {{MAX_NUMBER_OF_TIME_SERIES}}",
+      "title": "Gráfico"
     }
   },
   "help-modal": {
     "shortcuts-category": {
-      "dashboard": "",
-      "focused-panel": "",
-      "global": "",
-      "time-range": ""
+      "dashboard": "Panel de control",
+      "focused-panel": "Panel focalizado",
+      "global": "Global",
+      "time-range": "Rango de tiempo"
     },
     "shortcuts-description": {
-      "change-theme": "",
-      "collapse-all-rows": "",
-      "dashboard-settings": "",
-      "duplicate-panel": "",
-      "exit-edit/setting-views": "",
-      "expand-all-rows": "",
-      "go-to-dashboards": "",
-      "go-to-explore": "",
-      "go-to-home-dashboard": "",
-      "go-to-profile": "",
-      "make-time-range-permanent": "",
-      "move-time-range-back": "",
-      "move-time-range-forward": "",
-      "open-search": "",
-      "open-shared-modal": "",
-      "refresh-all-panels": "",
-      "remove-panel": "",
-      "save-dashboard": "",
-      "show-all-shortcuts": "",
-      "toggle-active-mode": "",
-      "toggle-all-panel-legends": "",
-      "toggle-auto-fit": "",
-      "toggle-exemplars": "",
-      "toggle-graph-crosshair": "",
-      "toggle-kiosk": "",
-      "toggle-panel-edit": "",
-      "toggle-panel-fullscreen": "",
-      "toggle-panel-legend": "",
-      "zoom-out-time-range": ""
+      "change-theme": "Cambiar tema",
+      "collapse-all-rows": "Contraer todas las filas",
+      "copy-time-range": "Copiar rango de tiempo",
+      "dashboard-settings": "Ajustes del panel de control",
+      "duplicate-panel": "Duplicar panel",
+      "exit-edit/setting-views": "Salir de las opciones de edición/ajustes",
+      "expand-all-rows": "Expandir todas las filas",
+      "go-to-dashboards": "Ir a paneles de control",
+      "go-to-explore": "Ir a Explorar",
+      "go-to-home-dashboard": "Ir al panel de control de inicio",
+      "go-to-profile": "Ir al perfil",
+      "make-time-range-permanent": "Hacer que el rango de tiempo sea absoluto/permanente",
+      "move-time-range-back": "Retrasar el rango de tiempo",
+      "move-time-range-forward": "Mover el rango de tiempo hacia delante",
+      "open-search": "Abrir búsqueda",
+      "open-shared-modal": "Abrir el modo de panel compartido",
+      "paste-time-range": "Pegar rango de tiempo",
+      "refresh-all-panels": "Actualizar todos los paneles",
+      "remove-panel": "Eliminar panel",
+      "save-dashboard": "Guardar panel de control",
+      "show-all-shortcuts": "Mostrar todos los accesos directos del teclado",
+      "toggle-active-mode": "Alternar el modo activo/vista",
+      "toggle-all-panel-legends": "Cambiar todas las leyendas del panel",
+      "toggle-auto-fit": "Cambiar los paneles de ajuste automático (característica experimental)",
+      "toggle-exemplars": "Alternar los ejemplares en todo el panel",
+      "toggle-graph-crosshair": "Alternar la retícula del gráfico compartido",
+      "toggle-kiosk": "Alternar el modo quiosco (oculta la navegación superior)",
+      "toggle-panel-edit": "Cambiar la vista de edición del panel",
+      "toggle-panel-fullscreen": "Cambiar la vista de pantalla completa del panel",
+      "toggle-panel-legend": "Cambiar leyenda del panel",
+      "zoom-out-time-range": "Reducir el intervalo de tiempo"
     },
-    "title": ""
+    "title": "Accesos directos"
   },
   "inspector": {
     "query": {
-      "collapse-all": "",
-      "copy-to-clipboard": "",
-      "description": "",
-      "expand-all": "",
-      "no-data": "",
-      "refresh": ""
+      "collapse-all": "Contraer todo",
+      "copy-to-clipboard": "Copiar al portapapeles",
+      "description": "El inspector de consultas le permite ver la solicitud y la respuesta sin procesar. Para recopilar estos datos, Grafana necesita emitir una nueva consulta. Haga clic en el botón actualizar situado debajo para activar una nueva consulta.",
+      "expand-all": "Expandir todo",
+      "no-data": "Aún no se ha recogido ninguna solicitud o respuesta. Pulse el botón de actualizar",
+      "refresh": "Actualizar"
     }
   },
   "library-panel": {
@@ -561,16 +652,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "",
-      "body_many": "",
-      "body_other": "",
-      "button-cancel": "",
-      "button-view-panel1": "",
-      "button-view-panel2": "",
-      "panel-not-linked": "",
-      "select-no-options-message": "",
-      "select-placeholder": "",
-      "title": ""
+      "button-cancel": "<0>Cancelar</0>",
+      "button-view-panel1": "Ver panel en {{label}}...",
+      "button-view-panel2": "Ver panel en el panel de control...",
+      "panel-not-linked": "El panel no está vinculado a un panel de control. Añádalo a un panel de control y vuelva a intentarlo.",
+      "select-no-options-message": "No se ha encontrado ningún tablero",
+      "select-placeholder": "Empezar a escribir para buscar el panel de control",
+      "title": "Ver el panel en el tablero",
+      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
+      "body_other": "Este panel se está utilizando en {{count}} paneles de control. Elija qué panel quiere ver en el panel de control:"
     },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
@@ -579,19 +669,141 @@
   },
   "login": {
     "error": {
-      "blocked": "",
-      "invalid-user-or-password": "",
+      "blocked": "Ha excedido el número de intentos de inicio de sesión para este usuario. Inténtelo de nuevo más tarde.",
+      "invalid-user-or-password": "Nombre de usuario o contraseña no válidos",
+      "title": "Error al iniciar sesión",
+      "unknown": "Se ha producido un error desconocido"
+    },
+    "forgot-password": "",
+    "form": {
+      "password-label": "",
+      "password-required": "",
+      "submit-label": "",
+      "submit-loading-label": "",
+      "username-label": "",
+      "username-required": ""
+    },
+    "services": {
+      "sing-in-with-prefix": ""
+    },
+    "signup": {
+      "button-label": "",
+      "new-to-question": ""
+    }
+  },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "connect-modal": {
+      "body-cloud-stack": "",
+      "body-get-started": "",
+      "body-paste-stack": "",
+      "body-sign-up": "",
+      "body-token": "",
+      "body-token-field": "",
+      "body-token-field-placeholder": "",
+      "body-token-instructions": "",
+      "body-url-field": "",
+      "body-view-stacks": "",
+      "cancel": "",
+      "connect": "",
+      "connecting": "",
+      "stack-required-error": "",
       "title": "",
-      "unknown": ""
+      "token-required-error": ""
+    },
+    "cta": {
+      "button": "",
+      "header": ""
+    },
+    "disconnect-modal": {
+      "body": "",
+      "cancel": "",
+      "disconnect": "",
+      "disconnecting": "",
+      "title": ""
+    },
+    "get-started": {
+      "body": "",
+      "configure-pdc-link": "",
+      "link-title": "",
+      "step-1": "",
+      "step-2": "",
+      "step-3": "",
+      "step-4": "",
+      "step-5": "",
+      "title": ""
+    },
+    "is-it-secure": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "migrate-to-this-stack": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "migration-token": {
+      "body": "",
+      "delete-button": "",
+      "delete-modal-body": "",
+      "delete-modal-cancel": "",
+      "delete-modal-confirm": "",
+      "delete-modal-deleting": "",
+      "delete-modal-title": "",
+      "generate-button": "",
+      "generate-button-loading": "",
+      "modal-close": "",
+      "modal-copy-and-close": "",
+      "modal-copy-button": "",
+      "modal-field-description": "",
+      "modal-field-label": "",
+      "modal-title": "",
+      "status": "",
+      "title": ""
+    },
+    "pdc": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "pricing": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "resources": {
+      "disconnect": ""
+    },
+    "token-status": {
+      "active": "",
+      "no-active": ""
+    },
+    "what-is-cloud": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "why-host": {
+      "body": "",
+      "link-title": "",
+      "title": ""
     }
   },
   "nav": {
     "add-new-connections": {
-      "title": ""
+      "title": "Añadir nueva conexión"
     },
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
+    },
+    "alert-list-legacy": {
+      "title": "Reglas de alerta"
     },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
@@ -629,6 +841,10 @@
       "subtitle": "Detener notificaciones de una o más reglas de alerta",
       "title": "Silencios"
     },
+    "alerting-upgrade": {
+      "subtitle": "Actualiza tus alertas y canales de notificación existentes a la nueva alerta de Grafana",
+      "title": "Actualización de alertas"
+    },
     "alerts-and-incidents": {
       "subtitle": "Aplicaciones de gestión de alertas e incidentes",
       "title": "Alertas e IRM"
@@ -638,36 +854,39 @@
       "title": "Claves API"
     },
     "application": {
-      "title": ""
+      "title": "Aplicación"
     },
     "apps": {
       "subtitle": "Complementos de aplicaciones que amplían la experiencia de Grafana",
       "title": "Aplicaciones"
     },
     "authentication": {
-      "title": ""
+      "title": "Autenticación"
+    },
+    "collector": {
+      "title": "Colector"
     },
     "config": {
       "title": "Administración"
     },
     "config-access": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Configurar el acceso para usuarios individuales, equipos y cuentas de servicio",
+      "title": "Usuarios y acceso"
     },
     "config-general": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Gestionar las preferencias y ajustes por defecto en Grafana",
+      "title": "General"
     },
     "config-plugins": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Instalar complementos y definir las relaciones entre los datos",
+      "title": "Complementos y datos"
     },
     "connect-data": {
-      "title": ""
+      "title": "Conectar datos"
     },
     "connections": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Navegar y crear nuevas conexiones",
+      "title": "Conexiones"
     },
     "correlations": {
       "subtitle": "Añadir y configurar correlaciones",
@@ -693,21 +912,25 @@
       "title": "Paneles de control"
     },
     "data-sources": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Vea y gestione las conexiones de sus fuentes de datos",
+      "title": "Orígenes de datos"
     },
     "datasources": {
       "subtitle": "Añadir y configurar orígenes de datos",
       "title": "Orígenes de datos"
     },
     "detect": {
-      "title": ""
+      "title": "Detectar"
     },
     "explore": {
       "title": "Explorar"
     },
     "frontend": {
-      "title": ""
+      "subtitle": "Obtén información de seguimiento real del usuario",
+      "title": "Interfaz"
+    },
+    "frontend-app": {
+      "title": "Interfaz"
     },
     "global-orgs": {
       "subtitle": "Instancias aisladas de Grafana ejecutándose en el mismo servidor",
@@ -718,7 +941,7 @@
       "title": "Usuarios"
     },
     "grafana-quaderno": {
-      "title": ""
+      "title": "Grafana Quaderno"
     },
     "help": {
       "title": "Ayuda"
@@ -731,23 +954,34 @@
       "title": "Inicio"
     },
     "incidents": {
-      "title": ""
+      "title": "Incidentes"
     },
     "infrastructure": {
-      "title": ""
+      "subtitle": "Mantente al tanto de la salud de tu infraestructura",
+      "title": "Infraestructura"
+    },
+    "integrations": {
+      "title": "Integraciones"
+    },
+    "k6": {
+      "title": "Rendimiento"
     },
     "kubernetes": {
-      "title": ""
+      "title": "Kubernetes"
     },
     "library-panels": {
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
       "title": "Paneles de librería"
     },
     "machine-learning": {
-      "title": ""
+      "title": "Aprendizaje automático"
     },
     "manage-folder": {
       "subtitle": "Gestionar paneles de control de carpetas y permisos"
+    },
+    "migrate-to-cloud": {
+      "subtitle": "",
+      "title": ""
     },
     "monitoring": {
       "subtitle": "Aplicaciones de supervisión e infraestructura",
@@ -763,17 +997,14 @@
       "title": "Nueva carpeta"
     },
     "observability": {
-      "title": ""
+      "title": "Observabilidad"
     },
     "oncall": {
-      "title": ""
+      "title": "OnCall"
     },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
       "title": "Preferencias por defecto"
-    },
-    "performance-testing": {
-      "title": ""
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -782,6 +1013,10 @@
     "plugins": {
       "subtitle": "Amplíe la experiencia de Grafana con los complementos",
       "title": "Complementos"
+    },
+    "private-data-source-connections": {
+      "subtitle": "Consulta los datos existentes en una red segura sin abrirla al tráfico entrante de Grafana Cloud. Tienes más información en nuestros documentos.",
+      "title": "Conexión a la fuente de datos privada"
     },
     "profile/notifications": {
       "title": "Historial de notificaciones"
@@ -793,16 +1028,16 @@
       "title": "Perfil"
     },
     "profiles": {
-      "title": ""
+      "title": "Perfiles"
     },
     "public": {
       "title": "Paneles de control públicos"
     },
     "recorded-queries": {
-      "title": ""
+      "title": "Consultas grabadas"
     },
     "reporting": {
-      "title": ""
+      "title": "Creación de informes"
     },
     "scenes": {
       "title": "Escenas"
@@ -825,7 +1060,7 @@
       "title": "Cerrar sesión"
     },
     "slo": {
-      "title": ""
+      "title": "SLO"
     },
     "snapshots": {
       "subtitle": "Representaciones interactivas, públicamente disponibles y puntuales de los paneles de control",
@@ -838,7 +1073,7 @@
       "title": "Tus paneles de control destacados aparecerán aquí"
     },
     "statistics-and-licensing": {
-      "title": ""
+      "title": "Estadísticas y licencias"
     },
     "storage": {
       "subtitle": "Gestionar el almacenamiento de archivos",
@@ -849,11 +1084,15 @@
       "title": "Paquetes de apoyo"
     },
     "synthetics": {
-      "title": ""
+      "title": "Sintéticos"
     },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
       "title": "Equipos"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "Optimiza el rendimiento con información de seguimiento k6 y sintética",
+      "title": "Pruebas y síntesis"
     },
     "upgrading": {
       "title": "Estadísticas y licencia"
@@ -868,17 +1107,22 @@
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
     },
     "megamenu": {
-      "close": "",
-      "dock": ""
+      "close": "Cerrar menú",
+      "dock": "Anclar el menú",
+      "list-label": "Navegación",
+      "undock": "Desanclar el menú"
     },
     "toolbar": {
-      "close-menu": "",
+      "close-menu": "Cerrar menú",
       "enable-kiosk": "Activar el modo de quiosco",
-      "open-menu": "",
+      "open-menu": "Abrir menú",
       "toggle-search-bar": "Activar o desactivar la barra de búsqueda superior"
     }
   },
   "news": {
+    "drawer": {
+      "close": "Cerrar Drawer"
+    },
     "title": "Últimas entradas del blog"
   },
   "notifications": {
@@ -898,7 +1142,7 @@
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
-      "new-alert-rule": "",
+      "new-alert-rule": "Nueva regla de alerta",
       "query": "Consulta",
       "remove": "Eliminar",
       "share": "Compartir",
@@ -908,64 +1152,191 @@
     }
   },
   "playlist-edit": {
-    "error-prefix": "",
+    "error-prefix": "Error al cargar la lista de reproducción:",
     "form": {
-      "add-tag-label": "",
-      "add-tag-placeholder": "",
-      "add-title-label": "",
-      "cancel": "",
-      "heading": "",
-      "interval-label": "",
-      "interval-placeholder": "",
-      "interval-required": "",
-      "name-label": "",
-      "name-placeholder": "",
-      "name-required": "",
-      "save": "",
-      "table-delete": "",
-      "table-drag": "",
-      "table-empty": "",
-      "table-heading": ""
+      "add-tag-label": "Añadir por etiqueta",
+      "add-tag-placeholder": "Seleccionar una etiqueta",
+      "add-title-label": "Añadir por título",
+      "cancel": "Cancelar",
+      "heading": "Añadir paneles de control",
+      "interval-label": "Intervalo",
+      "interval-placeholder": "5 min",
+      "interval-required": "El intervalo es obligatorio",
+      "name-label": "Nombre",
+      "name-placeholder": "Nombre",
+      "name-required": "El nombre es obligatorio",
+      "save": "Guardar",
+      "table-delete": "Eliminar elemento de la lista de reproducción",
+      "table-drag": "Arrastrar y soltar para reordenar",
+      "table-empty": "La lista de reproducción está vacía. Añadir tableros a continuación.",
+      "table-heading": "Paneles de control"
     },
-    "sub-title": "",
-    "title": ""
+    "sub-title": "Una lista de reproducción rota a través de una lista de paneles de control preseleccionada. Una lista de reproducción puede ser una buena manera de crear conciencia sobre una situación, o simplemente una forma de mostrar sus métricas a su equipo o a demás visitantes.",
+    "title": "Editar lista de reproducción"
   },
   "playlist-page": {
     "card": {
-      "delete": "",
-      "edit": "",
-      "start": "",
-      "tooltip": ""
+      "delete": "Eliminar lista de reproducción",
+      "edit": "Editar lista de reproducción",
+      "start": "Iniciar lista de reproducción",
+      "tooltip": "Compartir lista de reproducción"
     },
     "create-button": {
-      "title": ""
+      "title": "Nueva lista de reproducción"
     },
     "delete-modal": {
-      "body": "",
-      "confirm-text": ""
+      "body": "¿Seguro que desea eliminar la lista de reproducción {{name}}?",
+      "confirm-text": "Eliminar"
     },
     "empty": {
-      "button": "",
-      "pro-tip": "",
-      "pro-tip-link-title": "",
-      "title": ""
+      "button": "Crear lista de reproducción",
+      "pro-tip": "Puede usar las listas de reproducción para crear ciclos de tableros en televisiones sin control de usuario",
+      "pro-tip-link-title": "Más información",
+      "title": "Aún no se ha creado ninguna lista de reproducción"
     }
   },
   "profile": {
     "change-password": {
-      "cancel-button": "",
-      "cannot-change-password-message": "",
-      "change-password-button": "",
-      "confirm-password-label": "",
-      "confirm-password-required": "",
-      "ldap-auth-proxy-message": "",
-      "new-password-label": "",
-      "new-password-required": "",
-      "new-password-same-as-old": "",
-      "old-password-label": "",
-      "old-password-required": "",
-      "passwords-must-match": ""
+      "cancel-button": "Cancelar",
+      "cannot-change-password-message": "La contraseña no se puede cambiar aquí.",
+      "change-password-button": "Cambiar contraseña",
+      "confirm-password-label": "Confirmar contraseña",
+      "confirm-password-required": "Se requiere confirmación de la nueva contraseña",
+      "ldap-auth-proxy-message": "No puede cambiar la contraseña al iniciar sesión con un LDAP o con un proxy de autenticación.",
+      "new-password-label": "Nueva contraseña",
+      "new-password-required": "Se requiere una nueva contraseña",
+      "new-password-same-as-old": "La nueva contraseña no puede ser la misma que la antigua.",
+      "old-password-label": "Contraseña antigua",
+      "old-password-required": "Se requiere la contraseña antigua",
+      "passwords-must-match": "Las contraseñas deben coincidir"
     }
+  },
+  "public-dashboard": {
+    "acknowledgment-checkboxes": {
+      "ack-title": "Antes de hacer público el tablero, ten en cuenta lo siguiente:",
+      "data-src-ack-desc": "Actualmente, la publicación solo funciona con un subconjunto de fuentes de datos*",
+      "data-src-ack-tooltip": "Más información sobre las fuentes de datos públicas",
+      "public-ack-desc": "Tu tablero será totalmente público*",
+      "public-ack-tooltip": "Más información sobre los tableros públicos",
+      "usage-ack-desc": "Convertir un tablero en público hará que las consultas se ejecuten cada vez que se visualice, lo que puede aumentar los costes*",
+      "usage-ack-desc-tooltip": "Más información sobre la caché de consultas"
+    },
+    "config": {
+      "can-view-dashboard-radio-button-label": "Puedes ver el tablero",
+      "copy-button": "Copiar",
+      "dashboard-url-field-label": "URL del tablero",
+      "email-share-type-option-label": "Solo personas especificadas",
+      "pause-sharing-dashboard-label": "Pausar el panel compartido",
+      "public-share-type-option-label": "Cualquiera con un enlace",
+      "revoke-public-URL-button": "Revocar la URL pública",
+      "revoke-public-URL-button-title": "Revocar URL pública",
+      "settings-title": "Configuración"
+    },
+    "create-page": {
+      "generate-public-url-button": "Generar URL pública",
+      "unsupported-features-desc": "Actualmente, no son compatibles las variables de plantillas o las fuentes de datos de la interfaz",
+      "welcome-title": "¡Bienvenidos al tablero público!"
+    },
+    "delete-modal": {
+      "revoke-nonorphaned-body-text": "¿Seguro que quieres revocar esta URL? El tablero dejará de ser público.",
+      "revoke-orphaned-body-text": "El tablero público huérfano ya no será público.",
+      "revoke-title": "Revocar URL pública"
+    },
+    "email-sharing": {
+      "input-invalid-email-text": "Correo no válido",
+      "input-required-email-text": "El correo electrónico es obligatorio",
+      "invite-button": "Invitar",
+      "invite-field-desc": "Invitar a otras personas por correo electrónico",
+      "invite-field-label": "Invitar",
+      "resend-button": "Reenviar",
+      "resend-button-title": "Reenviar",
+      "revoke-button": "Revocar",
+      "revoke-button-title": "Revocar"
+    },
+    "modal-alerts": {
+      "no-upsert-perm-alert-desc": "Ponte en contacto con tu administrador para obtener permiso para {{mode}} los tableros públicos",
+      "no-upsert-perm-alert-title": "No tienes permiso para {{ mode }} un tablero público",
+      "save-dashboard-changes-alert-title": "Guarda los cambios realizados en el tablero antes de actualizar la configuración pública",
+      "unsupport-data-source-alert-readmore-link": "Leer más sobre las fuentes de datos compatibles",
+      "unsupported-data-source-alert-desc": "Hay fuentes de datos en este tablero que no son compatibles con los tableros públicos. Los paneles que utilizan estas fuentes de datos puede que no funcionen correctamente: {{unsupportedDataSources}}.",
+      "unsupported-data-source-alert-title": "Fuentes de datos no compatibles",
+      "unsupported-template-variable-alert-desc": "Este tablero público puede que no funcione, ya que utiliza variables de plantillas",
+      "unsupported-template-variable-alert-title": "Las variables de plantillas no son compatibles"
+    },
+    "settings-bar-header": {
+      "collapse-settings-tooltip": "Contraer ajustes",
+      "expand-settings-tooltip": "Expandir ajustes"
+    },
+    "settings-configuration": {
+      "default-time-range-label": "Rango de tiempo predeterminado",
+      "default-time-range-label-desc": "El tablero público utiliza la configuración predeterminada del rango de tiempo del tablero",
+      "show-annotations-label": "Mostrar anotaciones",
+      "show-annotations-label-desc": "Mostrar anotaciones en el tablero público",
+      "time-range-picker-label": "Selector de rango de tiempo activado",
+      "time-range-picker-label-desc": "Permitir que los usuarios cambien el rango de tiempo"
+    },
+    "settings-summary": {
+      "annotations-hide-text": "Anotaciones = ocultar",
+      "annotations-show-text": "Anotaciones = mostrar",
+      "time-range-picker-disabled-text": "Selector de rango de tiempo = desactivado",
+      "time-range-picker-enabled-text": "Selector de rango de tiempo = activado",
+      "time-range-text": "Rango de tiempo = "
+    }
+  },
+  "public-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "Configurar tablero público",
+      "revoke-button-text": "Revocar URL pública",
+      "revoke-button-tooltip": "Revocar URL del tablero público",
+      "view-button-tooltip": "Ver tablero público"
+    },
+    "dashboard-title": {
+      "orphaned-title": "<0>Tablero público huérfano</0>",
+      "orphaned-tooltip": "El tablero vinculado ya se ha eliminado"
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": "Pausar el uso compartido"
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "loading-text": "Cargando...",
+      "open-dashboard-list-text": "Abrir lista de tableros",
+      "public-dashboard-link": "URL del tablero público",
+      "public-dashboard-setting": "Ajustes del tablero público"
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "Eliminar usuario",
+      "delete-user-cancel-button": "Cancelar",
+      "delete-user-revoke-access-button": "Revocar acceso",
+      "revoke-access-title": "Revocar acceso",
+      "revoke-user-access-modal-desc-line1": "¿Seguro que quieres revocar el acceso para {{email}}?",
+      "revoke-user-access-modal-desc-line2": "Esta acción revocará inmediatamente el acceso de {{email}} a todos los tableros públicos."
+    },
+    "modal": {
+      "dashboard-modal-title": "Paneles de control públicos"
+    },
+    "table-header": {
+      "activated-label": "Activado",
+      "activated-tooltip": "El usuario más antiguo ha estado activo en un tablero de control",
+      "email-label": "Correo electrónico",
+      "last-active-label": "Último activo",
+      "origin-label": "Origen",
+      "role-label": "Rol"
+    }
+  },
+  "query-operation": {
+    "header": {
+      "collapse-row": "Contraer la fila de la consulta",
+      "datasource-help": "Mostrar la ayuda de la fuente de datos",
+      "disable-query": "Deshabilitar consulta",
+      "drag-and-drop": "Arrastrar y soltar para reordenar",
+      "duplicate-query": "Duplicar consulta",
+      "expand-row": "Expandir la fila de la consulta",
+      "remove-query": "Eliminar consulta",
+      "toggle-edit-mode": "Alternar el modo de edición de texto"
+    },
+    "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
   },
   "refresh-picker": {
     "aria-label": {
@@ -985,9 +1356,15 @@
       "label": "Apagado"
     },
     "tooltip": {
-      "interval-selected": "",
-      "turned-off": ""
+      "interval-selected": "Establecer intervalo de actualización automática",
+      "turned-off": "Actualización automática desactivada"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": "Volver a {{title}}"
+    },
+    "dismissable-button": "Cerrar"
   },
   "search": {
     "actions": {
@@ -1004,15 +1381,6 @@
       "new-dashboard": "Nuevo panel de control",
       "new-folder": "Nueva carpeta"
     },
-    "folder-view": {
-      "go-to-folder": "Ir a la carpeta",
-      "select-folder": "Seleccionar carpeta"
-    },
-    "result-kind": {
-      "dashboard": "Panel de control",
-      "folder": "Carpeta",
-      "panel": "Panel"
-    },
     "results-table": {
       "datasource-header": "Fuente de datos",
       "location-header": "Ubicación",
@@ -1025,12 +1393,6 @@
     "search-input": {
       "include-panels-placeholder": "Buscar paneles de control y paneles",
       "placeholder": "Buscar paneles de control"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "",
-      "text": ""
     }
   },
   "share-modal": {
@@ -1046,7 +1408,7 @@
       "time-range-description": "Transforma el intervalo de tiempo relativo actual en un intervalo de tiempo absoluto"
     },
     "export": {
-      "back-button": "",
+      "back-button": "Volver a la configuración de exportación",
       "cancel-button": "Cancelar",
       "info-text": "Exporte este panel de control.",
       "save-button": "Guardar en archivo",
@@ -1081,10 +1443,10 @@
       "expire-day": "1 día",
       "expire-hour": "1 hora",
       "expire-never": "Nunca",
-      "expire-week": "7 días",
+      "expire-week": "",
       "info-text-1": "Una instantánea es una forma inmediata de compartir un panel interactivo públicamente. Cuando se crean, eliminamos datos confidenciales como consultas (métricas, plantilla y anotación) y enlaces de panel, dejando solo los datos de métricas visibles y los nombres de serie incrustados en el panel.",
       "info-text-2": "Tenga en cuenta que su instantánea <1>puede ser vista por cualquiera</1> que tenga el enlace y pueda acceder a la URL. Comparta sus instantáneas con cautela.",
-      "local-button": "Instantánea local",
+      "local-button": "",
       "mistake-message": "¿Ha cometido un error? ",
       "name": "Nombre de la instantánea",
       "timeout": "Tiempo de espera (segundos)",
@@ -1096,7 +1458,9 @@
       "export": "Exportar",
       "library-panel": "Panel de librería",
       "link": "Enlace",
-      "panel-embed": "",
+      "panel-embed": "Incrustar",
+      "public-dashboard": "",
+      "public-dashboard-title": "Tablero público",
       "snapshot": "Instantánea"
     },
     "theme-picker": {
@@ -1110,22 +1474,22 @@
     }
   },
   "share-playlist": {
-    "checkbox-description": "",
-    "checkbox-label": "",
-    "copy-link-button": "",
-    "link-url-label": "",
-    "mode": "",
-    "mode-kiosk": "",
-    "mode-normal": "",
-    "mode-tv": "",
-    "title": ""
+    "checkbox-description": "La altura del panel se ajustará para adecuarse al tamaño de la pantalla",
+    "checkbox-label": "Ajuste automático",
+    "copy-link-button": "Copiar",
+    "link-url-label": "URL del enlace",
+    "mode": "Modo",
+    "mode-kiosk": "Quiosco",
+    "mode-normal": "Normal",
+    "mode-tv": "TV",
+    "title": "Compartir lista de reproducción"
   },
   "shared": {
     "preferences": {
       "theme": {
-        "dark-label": "",
-        "light-label": "",
-        "system-label": ""
+        "dark-label": "Oscuro",
+        "light-label": "Claro",
+        "system-label": "Preferencias del sistema"
       }
     }
   },
@@ -1149,10 +1513,10 @@
     "title": "Preferencias"
   },
   "snapshot": {
-    "external-badge": "",
-    "name-column-header": "",
-    "url-column-header": "",
-    "view-button": ""
+    "external-badge": "Externo",
+    "name-column-header": "Nombre",
+    "url-column-header": "URL de la instantánea",
+    "view-button": "Vista"
   },
   "tag-filter": {
     "loading": "Cargando...",
@@ -1167,12 +1531,20 @@
     "calendar": {
       "apply-button": "Aplicar intervalo de tiempo",
       "cancel-button": "Cancelar",
+      "close": "Cerrar calendario",
       "select-time": "Seleccionar un intervalo de tiempo"
     },
     "content": {
       "empty-recent-list-docs": "<0><0>Lea la documentación</0><1> para saber más sobre cómo introducir intervalos de tiempo personalizados.</1></0>",
       "empty-recent-list-info": "Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí.",
       "filter-placeholder": "Buscar intervalos rápidos"
+    },
+    "copy-paste": {
+      "copy-success-message": "Rango de tiempo copiado al portapapeles",
+      "default-error-message": "{{error}} no es un rango de tiempo válido",
+      "default-error-title": "Rango de tiempo no válido",
+      "tooltip-copy": "Copiar rango de tiempo al portapapeles",
+      "tooltip-paste": "Pegar rango de tiempo"
     },
     "footer": {
       "change-settings-button": "Cambiar ajustes de tiempo",
@@ -1186,6 +1558,7 @@
       "default-error": "Introducir una fecha anterior o «ahora»",
       "fiscal-year": "Ejercicio fiscal",
       "from-input": "Desde",
+      "open-input-calendar": "Abrir calendario",
       "range-error": "«Desde» no puede ser posterior a «hasta»",
       "to-input": "Hasta"
     },
@@ -1208,6 +1581,12 @@
       "select-search-input": "Escribir para buscar (país, ciudad, abreviatura)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "Las transformaciones permiten cambiar los datos de varias maneras antes de que se muestre su visualización.<1></1>Aquí se incluyen acciones como unir datos, renombrar campos, hacer cálculos, dar formato a los datos para mostrarlos, etc.",
+      "add-transformation-header": "Empezar a transformar datos"
+    }
+  },
   "user-orgs": {
     "current-org-button": "Actual",
     "name-column": "Nombre",
@@ -1222,6 +1601,9 @@
       "name-error": "El nombre es obligatorio",
       "name-label": "Nombre",
       "username-label": "Nombre de usuario"
+    },
+    "tabs": {
+      "general": "General"
     }
   },
   "user-session": {
@@ -1233,6 +1615,11 @@
   },
   "user-sessions": {
     "loading": "Cargando sesiones..."
+  },
+  "users-access-list": {
+    "tabs": {
+      "public-dashboard-users-tab-title": "Usuarios del tablero público"
+    }
   },
   "variable": {
     "adhoc": {

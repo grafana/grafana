@@ -5,24 +5,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-var timeNow = time.Now
 
 // Update the item so that EpochEnd >= Epoch
 func validateTimeRange(item *annotations.Item) error {
@@ -42,12 +39,23 @@ func validateTimeRange(item *annotations.Item) error {
 }
 
 type xormRepositoryImpl struct {
-	cfg               *setting.Cfg
-	features          featuremgmt.FeatureToggles
-	db                db.DB
-	log               log.Logger
-	maximumTagsLength int64
-	tagService        tag.Service
+	cfg        *setting.Cfg
+	db         db.DB
+	log        log.Logger
+	tagService tag.Service
+}
+
+func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service) *xormRepositoryImpl {
+	return &xormRepositoryImpl{
+		cfg:        cfg,
+		db:         db,
+		log:        l,
+		tagService: tagService,
+	}
+}
+
+func (r *xormRepositoryImpl) Type() string {
+	return "sql"
 }
 
 func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) error {
@@ -237,7 +245,7 @@ func tagSet[T any](fn func(T) int64, list []T) map[int64]struct{} {
 	return set
 }
 
-func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 	items := make([]*annotations.ItemDTO, 0)
@@ -339,12 +347,11 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 			}
 		}
 
-		acFilter, err := r.getAccessControlFilter(query.SignedInUser)
+		acFilter, err := r.getAccessControlFilter(query.SignedInUser, accessResources)
 		if err != nil {
 			return err
 		}
-		sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter.where))
-		params = append(params, acFilter.whereParams...)
+		sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
 
 		if query.Limit == 0 {
 			query.Limit = 100
@@ -352,13 +359,6 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 
 		// order of ORDER BY arguments match the order of a sql index for performance
 		sql.WriteString(" ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC" + r.db.GetDialect().Limit(query.Limit) + " ) dt on dt.id = annotation.id")
-		if acFilter.recQueries != "" {
-			var sb bytes.Buffer
-			sb.WriteString(acFilter.recQueries)
-			sb.WriteString(sql.String())
-			sql = sb
-			params = append(acFilter.recParams, params...)
-		}
 
 		if err := sess.SQL(sql.String(), params...).Find(&items); err != nil {
 			items = nil
@@ -371,64 +371,37 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-type acFilter struct {
-	where       string
-	whereParams []interface{}
-	recQueries  string
-	recParams   []interface{}
-}
-
-func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester) (acFilter, error) {
-	var recQueries string
-	var recQueriesParams []interface{}
-
-	if user == nil || user.IsNil() {
-		return acFilter{}, errors.New("missing permissions")
-	}
-
-	scopes, has := user.GetPermissions()[ac.ActionAnnotationsRead]
-	if !has {
-		return acFilter{}, errors.New("missing permissions")
-	}
-	types, hasWildcardScope := ac.ParseScopes(ac.ScopeAnnotationsProvider.GetResourceScopeType(""), scopes)
-	if hasWildcardScope {
-		types = map[interface{}]struct{}{annotations.Dashboard.String(): {}, annotations.Organization.String(): {}}
-	}
-
+func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources *accesscontrol.AccessResources) (string, error) {
 	var filters []string
-	var params []interface{}
-	for t := range types {
-		// annotation read permission with scope annotations:type:organization allows listing annotations that are not associated with a dashboard
-		if t == annotations.Organization.String() {
-			filters = append(filters, "a.dashboard_id = 0")
-		}
-		// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
-		if t == annotations.Dashboard.String() {
-			recursiveQueriesAreSupported, err := r.db.RecursiveQueriesAreSupported()
-			if err != nil {
-				return acFilter{}, err
-			}
 
-			filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features, recursiveQueriesAreSupported)
-			dashboardFilter, dashboardParams := filterRBAC.Where()
-			recQueries, recQueriesParams = filterRBAC.With()
-			leftJoin := filterRBAC.LeftJoin()
-			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
-			if leftJoin != "" {
-				filter = fmt.Sprintf("a.dashboard_id IN(SELECT dashboard.id FROM dashboard LEFT OUTER JOIN %s WHERE %s)", leftJoin, dashboardFilter)
-			}
-			filters = append(filters, filter)
-			params = dashboardParams
-		}
+	if accessResources.CanAccessOrgAnnotations {
+		filters = append(filters, "a.dashboard_id = 0")
 	}
 
-	f := acFilter{
-		where:       strings.Join(filters, " OR "),
-		whereParams: params,
-		recQueries:  recQueries,
-		recParams:   recQueriesParams,
+	if accessResources.CanAccessDashAnnotations {
+		var dashboardIDs []int64
+		for _, id := range accessResources.Dashboards {
+			dashboardIDs = append(dashboardIDs, id)
+		}
+
+		var inClause string
+		if len(dashboardIDs) == 0 {
+			inClause = "SELECT * FROM (SELECT 0 LIMIT 0) tt" // empty set
+		} else {
+			b := make([]byte, 0, 3*len(dashboardIDs))
+
+			b = strconv.AppendInt(b, dashboardIDs[0], 10)
+			for _, num := range dashboardIDs[1:] {
+				b = append(b, ',')
+				b = strconv.AppendInt(b, num, 10)
+			}
+
+			inClause = string(b)
+		}
+		filters = append(filters, fmt.Sprintf("a.dashboard_id IN (%s)", inClause))
 	}
-	return f, nil
+
+	return strings.Join(filters, " OR "), nil
 }
 
 func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteParams) error {
@@ -541,8 +514,8 @@ func (r *xormRepositoryImpl) validateTagsLength(item *annotations.Item) error {
 		}
 	}
 	estimatedTagsLength += 1 // trailing: ]
-	if estimatedTagsLength > int(r.maximumTagsLength) {
-		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length (%d) exceeds the maximum allowed (%d): modify the configuration to increase it", estimatedTagsLength, r.maximumTagsLength)
+	if estimatedTagsLength > int(r.cfg.AnnotationMaximumTagsLength) {
+		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length (%d) exceeds the maximum allowed (%d): modify the configuration to increase it", estimatedTagsLength, r.cfg.AnnotationMaximumTagsLength)
 	}
 	return nil
 }
@@ -550,11 +523,21 @@ func (r *xormRepositoryImpl) validateTagsLength(item *annotations.Item) error {
 func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) (int64, error) {
 	var totalAffected int64
 	if cfg.MaxAge > 0 {
-		cutoffDate := time.Now().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
-		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s AND created < %v ORDER BY id DESC %s) a)`
-		sql := fmt.Sprintf(deleteQuery, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+		cutoffDate := timeNow().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
+		// Single-statement approaches, specifically ones using batched sub-queries, seem to deadlock with concurrent inserts on MySQL.
+		// We have a bounded batch size, so work around this by first loading the IDs into memory and allowing any locks to flush inside each batch.
+		// This may under-delete when concurrent inserts happen, but any such annotations will simply be cleaned on the next cycle.
+		//
+		// We execute the following batched operation repeatedly until either we run out of objects, the context is cancelled, or there is an error.
+		affected, err := untilDoneOrCancelled(ctx, func() (int64, error) {
+			cond := fmt.Sprintf(`%s AND created < %v ORDER BY id DESC %s`, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+			ids, err := r.fetchIDs(ctx, "annotation", cond)
+			if err != nil {
+				return 0, err
+			}
 
-		affected, err := r.executeUntilDoneOrCancelled(ctx, sql)
+			return r.deleteByIDs(ctx, "annotation", ids)
+		})
 		totalAffected += affected
 		if err != nil {
 			return totalAffected, err
@@ -562,41 +545,105 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 	}
 
 	if cfg.MaxCount > 0 {
-		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s ORDER BY id DESC %s) a)`
-		sql := fmt.Sprintf(deleteQuery, annotationType, r.db.GetDialect().LimitOffset(r.cfg.AnnotationCleanupJobBatchSize, cfg.MaxCount))
-		affected, err := r.executeUntilDoneOrCancelled(ctx, sql)
+		// Similar strategy as the above cleanup process, to avoid deadlocks.
+		affected, err := untilDoneOrCancelled(ctx, func() (int64, error) {
+			cond := fmt.Sprintf(`%s ORDER BY id DESC %s`, annotationType, r.db.GetDialect().LimitOffset(r.cfg.AnnotationCleanupJobBatchSize, cfg.MaxCount))
+			ids, err := r.fetchIDs(ctx, "annotation", cond)
+			if err != nil {
+				return 0, err
+			}
+
+			return r.deleteByIDs(ctx, "annotation", ids)
+		})
 		totalAffected += affected
-		return totalAffected, err
+		if err != nil {
+			return totalAffected, err
+		}
 	}
 
 	return totalAffected, nil
 }
 
 func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (int64, error) {
-	deleteQuery := `DELETE FROM annotation_tag WHERE id IN ( SELECT id FROM (SELECT id FROM annotation_tag WHERE NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s) a)`
-	sql := fmt.Sprintf(deleteQuery, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
-	return r.executeUntilDoneOrCancelled(ctx, sql)
+	return untilDoneOrCancelled(ctx, func() (int64, error) {
+		cond := fmt.Sprintf(`NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s`, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+		ids, err := r.fetchIDs(ctx, "annotation_tag", cond)
+		if err != nil {
+			return 0, err
+		}
+
+		return r.deleteByIDs(ctx, "annotation_tag", ids)
+	})
 }
 
-func (r *xormRepositoryImpl) executeUntilDoneOrCancelled(ctx context.Context, sql string) (int64, error) {
+func (r *xormRepositoryImpl) fetchIDs(ctx context.Context, table, condition string) ([]int64, error) {
+	sql := fmt.Sprintf(`SELECT id FROM %s`, table)
+	if condition == "" {
+		return nil, fmt.Errorf("condition must be supplied; cannot fetch IDs from entire table")
+	}
+	sql += fmt.Sprintf(` WHERE %s`, condition)
+	ids := make([]int64, 0)
+	err := r.db.WithDbSession(ctx, func(session *db.Session) error {
+		return session.SQL(sql).Find(&ids)
+	})
+	return ids, err
+}
+
+func (r *xormRepositoryImpl) deleteByIDs(ctx context.Context, table string, ids []int64) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+
+	sql := ""
+	args := make([]any, 0)
+
+	// SQLite has a parameter limit of 999.
+	// If the batch size is bigger than that, and we're on SQLite, we have to put the IDs directly into the statement.
+	const sqliteParameterLimit = 999
+	if r.db.GetDBType() == migrator.SQLite && r.cfg.AnnotationCleanupJobBatchSize > sqliteParameterLimit {
+		values := fmt.Sprint(ids[0])
+		for _, v := range ids[1:] {
+			values = fmt.Sprintf("%s, %d", values, v)
+		}
+		sql = fmt.Sprintf(`DELETE FROM %s WHERE id IN (%s)`, table, values)
+	} else {
+		placeholders := "?" + strings.Repeat(",?", len(ids)-1)
+		sql = fmt.Sprintf(`DELETE FROM %s WHERE id IN (%s)`, table, placeholders)
+		args = asAny(ids)
+	}
+
+	var affected int64
+	err := r.db.WithDbSession(ctx, func(session *db.Session) error {
+		res, err := session.Exec(append([]any{sql}, args...)...)
+		if err != nil {
+			return err
+		}
+		affected, err = res.RowsAffected()
+		return err
+	})
+	return affected, err
+}
+
+func asAny(vs []int64) []any {
+	r := make([]any, len(vs))
+	for i, v := range vs {
+		r[i] = v
+	}
+	return r
+}
+
+// untilDoneOrCancelled repeatedly executes batched work until that work is either done (i.e., returns zero affected objects),
+// a batch produces an error, or the provided context is cancelled.
+// The work to be done is given as a callback that returns the number of affected objects for each batch, plus that batch's errors.
+func untilDoneOrCancelled(ctx context.Context, batchWork func() (int64, error)) (int64, error) {
 	var totalAffected int64
 	for {
 		select {
 		case <-ctx.Done():
 			return totalAffected, ctx.Err()
 		default:
-			var affected int64
-			err := r.db.WithDbSession(ctx, func(session *db.Session) error {
-				res, err := session.Exec(sql)
-				if err != nil {
-					return err
-				}
-
-				affected, err = res.RowsAffected()
-				totalAffected += affected
-
-				return err
-			})
+			affected, err := batchWork()
+			totalAffected += affected
 			if err != nil {
 				return totalAffected, err
 			}

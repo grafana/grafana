@@ -18,6 +18,7 @@ import {
   generateExtensionId,
   getEventHelpers,
   isPluginExtensionComponentConfig,
+  wrapWithPluginContext,
 } from './utils';
 import {
   assertIsReactComponent,
@@ -101,7 +102,7 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
 
           title: extensionConfig.title,
           description: extensionConfig.description,
-          component: extensionConfig.component,
+          component: wrapWithPluginContext(pluginId, extensionConfig.component),
         };
 
         extensions.push(extension);
@@ -189,7 +190,7 @@ function getLinkExtensionOnClick(
         category: config.category,
       });
 
-      const result = onClick(event, getEventHelpers(context));
+      const result = onClick(event, getEventHelpers(pluginId, context));
 
       if (isPromise(result)) {
         result.catch((e) => {

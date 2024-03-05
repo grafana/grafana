@@ -2,10 +2,12 @@ package notifier
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/prometheus/alertmanager/cluster/clusterpb"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -72,6 +74,52 @@ func TestFileStore_FilepathFor(t *testing.T) {
 		_, err = os.ReadFile(filepath.Clean(filePath))
 		require.Error(t, err)
 	}
+}
+
+func TestFileStore_GetFullState(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("empty store", func(tt *testing.T) {
+		store := fakes.NewFakeKVStore(t)
+		fs := NewFileStore(1, store, workingDir)
+		_, err := fs.GetFullState(ctx, "silences", "notifications")
+		require.NotNil(tt, err)
+		require.Equal(tt, "no values for org 1", err.Error())
+	})
+
+	t.Run("no values for key", func(tt *testing.T) {
+		store := fakes.NewFakeKVStore(t)
+		require.NoError(t, store.Set(ctx, 1, "alertmanager", "test-key", "test-value"))
+		fs := NewFileStore(1, store, workingDir)
+		_, err := fs.GetFullState(ctx, "silences")
+		require.NotNil(tt, err)
+		require.Equal(tt, "no value found for key \"silences\"", err.Error())
+	})
+
+	t.Run("non-empty values", func(tt *testing.T) {
+		store := fakes.NewFakeKVStore(t)
+		silences := []byte("test-silences")
+		nflog := []byte("test-notifications")
+		require.NoError(t, store.Set(ctx, 1, "alertmanager", "silences", base64.StdEncoding.EncodeToString(silences)))
+		require.NoError(t, store.Set(ctx, 1, "alertmanager", "notifications", base64.StdEncoding.EncodeToString(nflog)))
+
+		state := clusterpb.FullState{
+			Parts: []clusterpb.Part{
+				{Key: "silences", Data: silences},
+				{Key: "notifications", Data: nflog},
+			},
+		}
+		b, err := state.Marshal()
+		require.NoError(t, err)
+
+		encodedFullState := base64.StdEncoding.EncodeToString(b)
+
+		fs := NewFileStore(1, store, workingDir)
+
+		got, err := fs.GetFullState(ctx, "silences", "notifications")
+		require.NoError(t, err)
+		require.Equal(t, encodedFullState, got)
+	})
 }
 
 func TestFileStore_Persist(t *testing.T) {

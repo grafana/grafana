@@ -1,9 +1,10 @@
 import { identity, isEmpty, isEqual, isObject, mapValues, omitBy } from 'lodash';
 import { useEffect, useRef } from 'react';
 
-import { CoreApp, ExploreUrlState, DataSourceApi, toURLRange, EventBusSrv } from '@grafana/data';
+import { CoreApp, ExploreUrlState, DataSourceApi, toURLRange, EventBusSrv, isTruthy } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { clearQueryKeys, getLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -12,7 +13,7 @@ import { addListener, ExploreItemState, ExploreQueryParams, useDispatch, useSele
 import { changeDatasource } from '../../state/datasource';
 import { changePanelsStateAction, initializeExplore } from '../../state/explorePane';
 import { clearPanes, splitClose, splitOpen, syncTimesAction } from '../../state/main';
-import { runQueries, setQueriesAction } from '../../state/query';
+import { cancelQueries, runQueries, setQueriesAction } from '../../state/query';
 import { selectPanes } from '../../state/selectors';
 import { changeRangeAction, updateTime } from '../../state/time';
 import { DEFAULT_RANGE, fromURLRange } from '../../state/utils';
@@ -31,6 +32,8 @@ export function useStateSync(params: ExploreQueryParams) {
   const orgId = useSelector((state) => state.user.orgId);
   const prevParams = useRef(params);
   const initState = useRef<'notstarted' | 'pending' | 'done'>('notstarted');
+  const paused = useRef(false);
+  const { warning } = useAppNotification();
 
   useEffect(() => {
     // This happens when the user navigates to an explore "empty page" while within Explore.
@@ -45,20 +48,35 @@ export function useStateSync(params: ExploreQueryParams) {
     const unsubscribe = dispatch(
       addListener({
         predicate: (action) =>
-          // We want to update the URL when:
-          // - a pane is opened or closed
-          // - a query is run
-          // - range is changed
-          // - panel state is updated
-          [
-            splitClose.type,
-            splitOpen.fulfilled.type,
-            runQueries.pending.type,
-            changeRangeAction.type,
-            changePanelsStateAction.type,
-          ].includes(action.type),
+          /*
+          We want to update the URL when:
+           - a pane is opened or closed
+           - a query is run
+           - range is changed
+           - panel state is updated
+           - a datasource change has completed.
+
+          Note: Changing datasource causes a bunch of actions to be dispatched, we want to update the URL 
+          only when the change set has completed. This is done by checking if the changeDatasource.pending action
+          has been dispatched and pausing the listener until the changeDatasource.fulfilled action is dispatched.
+        */
+
+          {
+            paused.current = changeDatasource.pending.type === action.type;
+
+            return (
+              [
+                splitClose.type,
+                splitOpen.fulfilled.type,
+                runQueries.pending.type,
+                changeRangeAction.type,
+                changePanelsStateAction.type,
+                changeDatasource.fulfilled.type,
+              ].includes(action.type) && !paused.current
+            );
+          },
         effect: async (_, { cancelActiveListeners, delay, getState }) => {
-          // The following 2 lines will throttle updates to avoid creating history entries when rapid changes
+          // The following 2 lines will debounce updates to avoid creating history entries when rapid changes
           // are committed to the store.
           cancelActiveListeners();
           await delay(200);
@@ -76,8 +94,11 @@ export function useStateSync(params: ExploreQueryParams) {
           if (!isEqual(prevParams.current.panes, JSON.stringify(panesQueryParams))) {
             // If there's no previous state it means we are mounting explore for the first time,
             // in this case we want to replace the URL instead of pushing a new entry to the history.
+            // If the init state is 'pending' it means explore still hasn't finished initializing. in that case we skip
+            // pushing a new entry in the history as the first entry will be pushed after initialization.
             const replace =
-              !!prevParams.current.panes && Object.values(prevParams.current.panes).filter(Boolean).length === 0;
+              (!!prevParams.current.panes && Object.values(prevParams.current.panes).filter(Boolean).length === 0) ||
+              initState.current === 'pending';
 
             prevParams.current = {
               panes: JSON.stringify(panesQueryParams),
@@ -96,17 +117,24 @@ export function useStateSync(params: ExploreQueryParams) {
   useEffect(() => {
     const isURLOutOfSync = prevParams.current?.panes !== params.panes;
 
-    const urlState = parseURL(params);
+    const [urlState, hasParseError] = parseURL(params);
+    hasParseError &&
+      warning(
+        'Could not parse Explore URL',
+        'The requested URL contains invalid parameters, a default Explore state has been loaded.'
+      );
 
     async function sync() {
       // if navigating the history causes one of the time range to not being equal to all the other ones,
       // we set syncedTimes to false to avoid inconsistent UI state.
       // Ideally `syncedTimes` should be saved in the URL.
-      if (Object.values(urlState.panes).some(({ range }, _, [{ range: firstRange }]) => !isEqual(range, firstRange))) {
-        dispatch(syncTimesAction({ syncedTimes: false }));
+      const paneArray = Object.values(urlState.panes);
+      if (paneArray.length > 1) {
+        const paneTimesUnequal = paneArray.some(({ range }, _, [{ range: firstRange }]) => !isEqual(range, firstRange));
+        dispatch(syncTimesAction({ syncedTimes: !paneTimesUnequal })); // if all time ranges are equal, keep them synced
       }
 
-      Object.entries(urlState.panes).forEach(([exploreId, urlPane], i) => {
+      Object.entries(urlState.panes).forEach(async ([exploreId, urlPane], i) => {
         const { datasource, queries, range, panelsState } = urlPane;
 
         const paneState = panesState[exploreId];
@@ -117,11 +145,11 @@ export function useStateSync(params: ExploreQueryParams) {
           Promise.resolve()
             .then(async () => {
               if (update.datasource && datasource) {
-                await dispatch(changeDatasource(exploreId, datasource));
+                await dispatch(changeDatasource({ exploreId, datasource }));
               }
               return;
             })
-            .then(() => {
+            .then(async () => {
               if (update.range) {
                 dispatch(updateTime({ exploreId, rawRange: fromURLRange(range) }));
               }
@@ -131,6 +159,7 @@ export function useStateSync(params: ExploreQueryParams) {
               }
 
               if (update.queries || update.range) {
+                await dispatch(cancelQueries(exploreId));
                 dispatch(runQueries({ exploreId }));
               }
 
@@ -225,42 +254,54 @@ export function useStateSync(params: ExploreQueryParams) {
           })
         );
 
-        const newParams = initializedPanes.reduce(
-          (acc, { exploreId, state }) => {
-            return {
-              ...acc,
-              panes: {
-                ...acc.panes,
-                [exploreId]: getUrlStateFromPaneState(state),
-              },
-            };
-          },
-          {
-            panes: {},
-          }
-        );
-        initState.current = 'done';
+        if (initializedPanes.length > 1) {
+          const paneTimesUnequal = initializedPanes.some(
+            ({ state }, _, [{ state: firstState }]) => !isEqual(state.range.raw, firstState.range.raw)
+          );
+          dispatch(syncTimesAction({ syncedTimes: !paneTimesUnequal })); // if all time ranges are equal, keep them synced
+        }
+
+        const panesObj = initializedPanes.reduce((acc, { exploreId, state }) => {
+          return {
+            ...acc,
+            [exploreId]: getUrlStateFromPaneState(state),
+          };
+        }, {});
+
         // we need to use partial here beacuse replace doesn't encode the query params.
-        location.partial(
-          {
-            // partial doesn't remove other parameters, so we delete (by setting them to undefined) all the current one before adding the new ones.
-            ...Object.keys(location.getSearchObject()).reduce<Record<string, unknown>>((acc, key) => {
-              acc[key] = undefined;
-              return acc;
-            }, {}),
-            panes: JSON.stringify(newParams.panes),
-            schemaVersion: urlState.schemaVersion,
-            orgId,
-          },
-          true
-        );
+        const oldQuery = location.getSearchObject();
+
+        // we create the default query params from the current URL, omitting all the properties we know should be in the final url.
+        // This includes params from previous schema versions and 'schemaVersion', 'panes', 'orgId' as we want to replace those.
+        let defaults: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(oldQuery).filter(
+          ([key]) => !['schemaVersion', 'panes', 'orgId', 'left', 'right'].includes(key)
+        )) {
+          defaults[key] = value;
+        }
+
+        const searchParams = new URLSearchParams({
+          // we set the schemaVersion as the first parameter so that when URLs are truncated the schemaVersion is more likely to be present.
+          schemaVersion: `${urlState.schemaVersion}`,
+          panes: JSON.stringify(panesObj),
+          orgId: `${orgId}`,
+          ...defaults,
+        });
+
+        location.replace({
+          pathname: location.getLocation().pathname,
+          search: searchParams.toString(),
+        });
+        initState.current = 'done';
       });
     }
 
     prevParams.current = params;
 
-    isURLOutOfSync && initState.current === 'done' && sync();
-  }, [dispatch, panesState, orgId, location, params]);
+    if (isURLOutOfSync && initState.current === 'done') {
+      sync();
+    }
+  }, [dispatch, panesState, orgId, location, params, warning]);
 }
 
 function getDefaultQuery(ds: DataSourceApi) {
@@ -333,21 +374,38 @@ async function getPaneDatasource(
     } catch (_) {}
   }
 
-  // TODO: if queries have multiple datasources we should return mixed datasource
-  // Else we try to find a datasource in the queries, returning the first one that exists
-  const queriesWithDS = queries.filter((q) => q.datasource);
-  for (const query of queriesWithDS) {
-    try {
-      return await getDatasourceSrv().get(query.datasource);
-    } catch (_) {}
-  }
+  // Else we try to find a datasource in the queries
+  const queriesDatasources = [
+    ...new Set(
+      queries
+        .map((q) => q.datasource)
+        .filter(isTruthy)
+        .map((ds) => (typeof ds === 'string' ? ds : ds.uid))
+    ),
+  ];
 
-  // If none of the queries specify a avalid datasource, we use the last used one
-  const lastUsedDSUID = getLastUsedDatasourceUID(orgId);
+  try {
+    if (queriesDatasources.length >= 1) {
+      const datasources = (await Promise.allSettled(queriesDatasources.map((ds) => getDatasourceSrv().get(ds)))).filter(
+        isFulfilled
+      );
 
+      // if queries have multiple (valid) datasources, we return the mixed datasource
+      if (datasources.length > 1) {
+        return await getDatasourceSrv().get(MIXED_DATASOURCE_NAME);
+      }
+
+      // otherwise we return the first datasource.
+      if (datasources.length === 1) {
+        return await getDatasourceSrv().get(queriesDatasources[0]);
+      }
+    }
+  } catch (_) {}
+
+  // If none of the queries specify a valid datasource, we use the last used one
   return (
     getDatasourceSrv()
-      .get(lastUsedDSUID)
+      .get(getLastUsedDatasourceUID(orgId))
       // Or the default one
       .catch(() => getDatasourceSrv().get())
       .catch(() => undefined)

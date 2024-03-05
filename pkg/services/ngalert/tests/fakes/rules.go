@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -68,8 +68,9 @@ mainloop:
 			}
 		}
 		if existing == nil {
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
 			folders = append(folders, &folder.Folder{
-				ID:    rand.Int63(),
+				ID:    rand.Int63(), // nolint:staticcheck
 				UID:   r.NamespaceUID,
 				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
 			})
@@ -229,7 +230,7 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 	return ruleList, nil
 }
 
-func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *user.SignedInUser) (map[string]*folder.Folder, error) {
+func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ identity.Requester) (map[string]*folder.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -246,22 +247,18 @@ func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *
 	return namespacesMap, nil
 }
 
-func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *user.SignedInUser) (*folder.Folder, error) {
-	folders := f.Folders[orgID]
-	for _, folder := range folders {
-		if folder.Title == title {
-			return folder, nil
-		}
-	}
-	return nil, fmt.Errorf("not found")
-}
-
-func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *user.SignedInUser) (*folder.Folder, error) {
-	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	q := GenericRecordedQuery{
 		Name:   "GetNamespaceByUID",
-		Params: []any{orgID, uid},
-	})
-
+		Params: []any{orgID, uid, user},
+	}
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, q)
+	}()
+	err := f.Hook(q)
+	if err != nil {
+		return nil, err
+	}
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.UID == uid {
@@ -318,7 +315,7 @@ func (f *RuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceU
 	return nil
 }
 
-func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersionAndPauseStatus, error) {
+func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersion, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -327,28 +324,21 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 		Params: []any{orgID, namespaceUID},
 	})
 
-	var result []models.AlertRuleKeyWithVersionAndPauseStatus
+	var result []models.AlertRuleKeyWithVersion
 
 	for _, rule := range f.Rules[orgID] {
 		if rule.NamespaceUID == namespaceUID && rule.OrgID == orgID {
 			rule.Version++
 			rule.Updated = time.Now()
-			result = append(result, models.AlertRuleKeyWithVersionAndPauseStatus{
-				IsPaused: rule.IsPaused,
-				AlertRuleKeyWithVersion: models.AlertRuleKeyWithVersion{
-					Version:      rule.Version,
-					AlertRuleKey: rule.GetKey(),
-				},
+			result = append(result, models.AlertRuleKeyWithVersion{
+				Version:      rule.Version,
+				AlertRuleKey: rule.GetKey(),
 			})
 		}
 	}
 	return result, nil
 }
 
-func (f *RuleStore) Count(ctx context.Context, orgID int64) (int64, error) {
-	return 0, nil
-}
-
-func (f *RuleStore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
+func (f *RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
 	return 0, nil
 }

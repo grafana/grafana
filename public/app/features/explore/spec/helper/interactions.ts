@@ -1,15 +1,15 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { withinExplore } from './setup';
+import { getAllByRoleInQueryHistoryTab, withinExplore } from './setup';
 
 export const changeDatasource = async (name: string) => {
   const datasourcePicker = (await screen.findByTestId(selectors.components.DataSourcePicker.container)).children[0];
-  fireEvent.keyDown(datasourcePicker, { keyCode: 40 });
-  const option = screen.getByText(name);
-  fireEvent.click(option);
+  await userEvent.click(datasourcePicker);
+  const option = within(screen.getByTestId(selectors.components.DataSourcePicker.dataSourceList)).getAllByText(name)[0];
+  await userEvent.click(option);
 };
 
 export const inputQuery = async (query: string, exploreId = 'left') => {
@@ -74,8 +74,7 @@ export const loadMoreQueryHistory = async (exploreId = 'left') => {
   await userEvent.click(button);
 };
 
-const invokeAction = async (queryIndex: number, actionAccessibleName: string, exploreId: string) => {
-  const selector = withinExplore(exploreId);
-  const buttons = selector.getAllByRole('button', { name: actionAccessibleName });
+const invokeAction = async (queryIndex: number, actionAccessibleName: string | RegExp, exploreId: string) => {
+  const buttons = getAllByRoleInQueryHistoryTab(exploreId, 'button', actionAccessibleName);
   await userEvent.click(buttons[queryIndex]);
 };

@@ -96,6 +96,7 @@ def pr_pipelines():
         test_backend(
             get_pr_trigger(
                 include_paths = [
+                    "Makefile",
                     "pkg/**",
                     "packaging/**",
                     ".drone.yml",
@@ -103,6 +104,7 @@ def pr_pipelines():
                     "go.sum",
                     "go.mod",
                     "public/app/plugins/**/plugin.json",
+                    "docs/sources/setup-grafana/configure-grafana/feature-toggles/**",
                     "devenv/**",
                 ],
             ),
@@ -111,6 +113,7 @@ def pr_pipelines():
         lint_backend_pipeline(
             get_pr_trigger(
                 include_paths = [
+                    "Makefile",
                     "pkg/**",
                     "packaging/**",
                     ".drone.yml",

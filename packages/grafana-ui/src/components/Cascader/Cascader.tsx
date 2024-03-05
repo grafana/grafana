@@ -37,6 +37,7 @@ export interface CascaderProps {
   /** Don't show what is selected in the cascader input/search. Useful when input is used just as search and the
       cascader is hidden after selection. */
   hideActiveLevelLabel?: boolean;
+  disabled?: boolean;
 }
 
 interface CascaderState {
@@ -93,7 +94,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
     for (const option of options) {
       const cpy = [...optionPath];
       cpy.push(option);
-      if (!option.items) {
+      if (!option.items || option.items.length === 0) {
         selectOptions.push({
           singleLabel: cpy[cpy.length - 1].label,
           label: cpy.map((o) => o.label).join(this.props.separator || DEFAULT_SEPARATOR),
@@ -133,25 +134,29 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
     const activeLabel = this.props.hideActiveLevelLabel
       ? ''
       : this.props.displayAllSelectedLevels
-      ? selectedOptions.map((option) => option.label).join(this.props.separator || DEFAULT_SEPARATOR)
-      : selectedOptions[selectedOptions.length - 1].label;
-    this.setState({
-      rcValue: value,
+        ? selectedOptions.map((option) => option.label).join(this.props.separator || DEFAULT_SEPARATOR)
+        : selectedOptions[selectedOptions.length - 1].label;
+    const state: CascaderState = {
+      rcValue: { value, label: activeLabel },
       focusCascade: true,
       activeLabel,
-    });
-
+      isSearching: false,
+    };
+    this.setState(state);
     this.props.onSelect(selectedOptions[selectedOptions.length - 1].value);
   };
 
   //For select
   onSelect = (obj: SelectableValue<string[]>) => {
     const valueArray = obj.value || [];
-    this.setState({
-      activeLabel: this.props.displayAllSelectedLevels ? obj.label : obj.singleLabel || '',
-      rcValue: valueArray,
+    const activeLabel = this.props.displayAllSelectedLevels ? obj.label : obj.singleLabel || '';
+    const state: CascaderState = {
+      activeLabel: activeLabel,
+      rcValue: { value: valueArray, label: activeLabel },
       isSearching: false,
-    });
+      focusCascade: false,
+    };
+    this.setState(state);
     this.props.onSelect(valueArray[valueArray.length - 1]);
   };
 
@@ -205,7 +210,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
   };
 
   render() {
-    const { allowCustomValue, formatCreateLabel, placeholder, width, changeOnSelect, options } = this.props;
+    const { allowCustomValue, formatCreateLabel, placeholder, width, changeOnSelect, options, disabled } = this.props;
     const { focusCascade, isSearching, rcValue, activeLabel } = this.state;
 
     const searchableOptions = this.getSearchableOptions(options);
@@ -224,6 +229,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
             formatCreateLabel={formatCreateLabel}
             width={width}
             onInputChange={this.onSelectInputChange}
+            disabled={disabled}
           />
         ) : (
           <RCCascader
@@ -234,6 +240,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
             expandIcon={null}
             open={this.props.alwaysOpen}
+            disabled={disabled}
           >
             <div className={disableDivFocus}>
               <Input
@@ -251,6 +258,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
                     <Icon name="angle-down" style={{ marginBottom: 0, marginLeft: '4px' }} />
                   )
                 }
+                disabled={disabled}
               />
             </div>
           </RCCascader>

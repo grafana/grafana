@@ -34,6 +34,9 @@ func ValidatePluginRole(pluginID string, role ac.RoleDTO) error {
 	if pluginID == "" {
 		return ac.ErrPluginIDRequired
 	}
+	if role.DisplayName == "" {
+		return &ac.ErrorRoleNameMissing{}
+	}
 	if !strings.HasPrefix(role.Name, ac.PluginRolePrefix+pluginID+":") {
 		return &ac.ErrorRolePrefixMissing{Role: role.Name, Prefixes: []string{ac.PluginRolePrefix + pluginID + ":"}}
 	}
@@ -58,6 +61,22 @@ func ToRegistrations(pluginID, pluginName string, regs []plugins.RoleRegistratio
 		})
 	}
 	return res
+}
+
+// PluginIDFromName extracts the plugin ID from the role name
+func PluginIDFromName(roleName string) string {
+	if !strings.HasPrefix(roleName, ac.PluginRolePrefix) {
+		return ""
+	}
+
+	pluginID := strings.Builder{}
+	for _, c := range roleName[len(ac.PluginRolePrefix):] {
+		if c == ':' {
+			break
+		}
+		pluginID.WriteRune(c)
+	}
+	return pluginID.String()
 }
 
 func roleName(pluginID, roleName string) string {

@@ -87,7 +87,7 @@ describe('dashboardActions', () => {
           {
             id: 'recent-dashboards/my-dashboard-1',
             name: 'My dashboard 1',
-            priority: 5,
+            priority: 6,
             section: 'Recent dashboards',
             url: '/my-dashboard-1',
           },

@@ -14,10 +14,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
-type getStore func(db.DB, *setting.Cfg) store
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+type getStore func(db.DB) store
 
 type getApiKeysTestCase struct {
 	desc               string
@@ -61,7 +65,7 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 
 	t.Run("Testing API Key data access", func(t *testing.T) {
 		db := db.InitTestDB(t)
-		ss := fn(db, db.Cfg)
+		ss := fn(db)
 
 		t.Run("Given saved api key", func(t *testing.T) {
 			cmd := apikey.AddCommand{OrgID: 1, Name: "hello", Key: "asd"}
@@ -200,7 +204,7 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 
 	t.Run("Testing API Key errors", func(t *testing.T) {
 		db := db.InitTestDB(t)
-		ss := fn(db, db.Cfg)
+		ss := fn(db)
 
 		t.Run("Delete non-existing key should return error", func(t *testing.T) {
 			cmd := apikey.DeleteCommand{ID: 1}
@@ -255,7 +259,7 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 		for _, tt := range tests {
 			t.Run(tt.desc, func(t *testing.T) {
 				db := db.InitTestDB(t, db.InitTestDBOpt{})
-				store := fn(db, db.Cfg)
+				store := fn(db)
 				seedApiKeys(t, store, 10)
 
 				query := &apikey.GetApiKeysQuery{OrgID: 1, User: tt.user}

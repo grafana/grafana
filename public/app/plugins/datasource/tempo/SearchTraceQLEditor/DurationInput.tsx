@@ -18,12 +18,12 @@ interface Props {
 const validationRegex = /^(\$\w+)|(\d+(?:\.\d)?\d*(?:us|µs|ns|ms|s|m|h))$/;
 
 const getStyles = () => ({
-  noBoxShadow: css`
-    box-shadow: none;
-    *:focus {
-      box-shadow: none;
-    }
-  `,
+  noBoxShadow: css({
+    boxShadow: 'none',
+    '*:focus': {
+      boxShadow: 'none',
+    },
+  }),
 });
 
 const DurationInput = ({ filter, operators, updateFilter }: Props) => {

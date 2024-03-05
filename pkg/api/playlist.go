@@ -12,12 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/middleware"
 	internalplaylist "github.com/grafana/grafana/pkg/registry/apis/playlist"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -26,7 +27,7 @@ import (
 func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 	// Register the actual handlers
 	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
-		if hs.Features.IsEnabled(featuremgmt.FlagKubernetesPlaylists) {
+		if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesPlaylists) {
 			// Use k8s client to implement legacy API
 			handler := newPlaylistK8sHandler(hs)
 			playlistRoute.Get("/", handler.searchPlaylists)
@@ -91,7 +92,7 @@ func (hs *HTTPServer) SearchPlaylists(c *contextmodel.ReqContext) response.Respo
 
 	playlists, err := hs.playlistService.Search(c.Req.Context(), &searchQuery)
 	if err != nil {
-		return response.Error(500, "Search failed", err)
+		return response.Error(http.StatusInternalServerError, "Search failed", err)
 	}
 
 	return response.JSON(http.StatusOK, playlists)
@@ -113,7 +114,7 @@ func (hs *HTTPServer) GetPlaylist(c *contextmodel.ReqContext) response.Response 
 
 	dto, err := hs.playlistService.Get(c.Req.Context(), &cmd)
 	if err != nil {
-		return response.Error(500, "Playlist not found", err)
+		return response.Error(http.StatusInternalServerError, "Playlist not found", err)
 	}
 
 	return response.JSON(http.StatusOK, dto)
@@ -135,7 +136,7 @@ func (hs *HTTPServer) GetPlaylistItems(c *contextmodel.ReqContext) response.Resp
 
 	dto, err := hs.playlistService.Get(c.Req.Context(), &cmd)
 	if err != nil {
-		return response.Error(500, "Playlist not found", err)
+		return response.Error(http.StatusInternalServerError, "Playlist not found", err)
 	}
 
 	return response.JSON(http.StatusOK, dto.Items)
@@ -156,7 +157,7 @@ func (hs *HTTPServer) DeletePlaylist(c *contextmodel.ReqContext) response.Respon
 
 	cmd := playlist.DeletePlaylistCommand{UID: uid, OrgId: c.SignedInUser.GetOrgID()}
 	if err := hs.playlistService.Delete(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to delete playlist", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete playlist", err)
 	}
 
 	return response.JSON(http.StatusOK, "")
@@ -181,7 +182,7 @@ func (hs *HTTPServer) CreatePlaylist(c *contextmodel.ReqContext) response.Respon
 
 	p, err := hs.playlistService.Create(c.Req.Context(), &cmd)
 	if err != nil {
-		return response.Error(500, "Failed to create playlist", err)
+		return response.Error(http.StatusInternalServerError, "Failed to create playlist", err)
 	}
 
 	return response.JSON(http.StatusOK, p)
@@ -207,7 +208,7 @@ func (hs *HTTPServer) UpdatePlaylist(c *contextmodel.ReqContext) response.Respon
 
 	_, err := hs.playlistService.Update(c.Req.Context(), &cmd)
 	if err != nil {
-		return response.Error(500, "Failed to save playlist", err)
+		return response.Error(http.StatusInternalServerError, "Failed to save playlist", err)
 	}
 
 	dto, err := hs.playlistService.Get(c.Req.Context(), &playlist.GetPlaylistByUidQuery{
@@ -215,7 +216,7 @@ func (hs *HTTPServer) UpdatePlaylist(c *contextmodel.ReqContext) response.Respon
 		OrgId: c.SignedInUser.GetOrgID(),
 	})
 	if err != nil {
-		return response.Error(500, "Failed to load playlist", err)
+		return response.Error(http.StatusInternalServerError, "Failed to load playlist", err)
 	}
 	return response.JSON(http.StatusOK, dto)
 }
@@ -329,11 +330,7 @@ type playlistK8sHandler struct {
 
 func newPlaylistK8sHandler(hs *HTTPServer) *playlistK8sHandler {
 	return &playlistK8sHandler{
-		gvr: schema.GroupVersionResource{
-			Group:    internalplaylist.GroupName,
-			Version:  "v0alpha1",
-			Resource: "playlists",
-		},
+		gvr:                  v0alpha1.PlaylistResourceInfo.GroupVersionResource(),
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 	}

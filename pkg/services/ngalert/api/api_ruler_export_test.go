@@ -52,7 +52,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 
 		response.WriteTo(rc)
 
@@ -64,7 +64,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Form.Set("format", "yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -75,7 +75,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Form.Set("format", "foo")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -86,7 +86,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/json")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -97,7 +97,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -108,7 +108,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Form.Set("download", "true")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -119,7 +119,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Form.Set("download", "false")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -129,7 +129,7 @@ func TestExportFromPayload(t *testing.T) {
 	t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
 		rc := createRequest()
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -143,7 +143,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/json")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 		t.Log(string(response.Body()))
 
@@ -158,7 +158,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 		require.Equal(t, 200, response.Status())
 		require.Equal(t, string(expectedResponse), string(response.Body()))
@@ -172,7 +172,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc.Context.Req.Form.Set("format", "hcl")
 		rc.Context.Req.Form.Set("download", "false")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -184,7 +184,7 @@ func TestExportFromPayload(t *testing.T) {
 			rc.Context.Req.Form.Set("format", "hcl")
 			rc.Context.Req.Form.Set("download", "true")
 
-			response := srv.ExportFromPayload(rc, body, folder.Title)
+			response := srv.ExportFromPayload(rc, body, folder.UID)
 			response.WriteTo(rc)
 
 			require.Equal(t, 200, response.Status())
@@ -352,27 +352,27 @@ func TestExportRules(t *testing.T) {
 			expectedStatus: 400,
 		},
 		{
-			title: "unauthorized if folders are not accessible",
+			title: "forbidden if folders are not accessible",
 			params: url.Values{
 				"folderUid": []string{noAccessByFolder[0].NamespaceUID},
 			},
-			expectedStatus: 401,
+			expectedStatus: http.StatusForbidden,
 			expectedRules:  nil,
 		},
 		{
-			title: "unauthorized if group is not accessible",
+			title: "forbidden if group is not accessible",
 			params: url.Values{
 				"folderUid": []string{noAccessKey1.NamespaceUID},
 				"group":     []string{noAccessKey1.RuleGroup},
 			},
-			expectedStatus: 401,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
-			title: "unauthorized if rule's group is not accessible",
+			title: "forbidden if rule's group is not accessible",
 			params: url.Values{
 				"ruleUid": []string{noAccessRule.UID},
 			},
-			expectedStatus: 401,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			title: "return in JSON if header is specified",

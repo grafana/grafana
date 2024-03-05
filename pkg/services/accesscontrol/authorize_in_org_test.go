@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,6 +34,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 		acService       accesscontrol.Service
 		userCache       user.Service
 		ctxSignedInUser *user.SignedInUser
+		teamService     team.Service
 		expectedStatus  int
 	}{
 		{
@@ -46,6 +49,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			acService: &actest.FakeService{
 				ExpectedPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			},
+			teamService:    &teamtest.FakeService{},
 			expectedStatus: http.StatusOK,
 		},
 		{
@@ -58,6 +62,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			acService:       &actest.FakeService{},
 			userCache:       &usertest.FakeUserService{},
 			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			teamService:     &teamtest.FakeService{},
 			expectedStatus:  http.StatusOK,
 		},
 		{
@@ -69,6 +74,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			accessControl:   ac,
 			userCache:       &usertest.FakeUserService{},
 			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{}},
+			teamService:     &teamtest.FakeService{},
 			acService:       &actest.FakeService{},
 			expectedStatus:  http.StatusForbidden,
 		},
@@ -80,9 +86,12 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
 			accessControl:   ac,
 			userCache:       &usertest.FakeUserService{},
-			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{accesscontrol.GlobalOrgID: {"users:read": {"users:*"}}}},
-			acService:       &actest.FakeService{},
-			expectedStatus:  http.StatusOK,
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			teamService:     &teamtest.FakeService{},
+			acService: &actest.FakeService{
+				ExpectedPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			},
+			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "should return 403 when user has no permissions for a global org",
@@ -93,6 +102,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			accessControl:   ac,
 			userCache:       &usertest.FakeUserService{},
 			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			teamService:     &teamtest.FakeService{},
 			acService:       &actest.FakeService{},
 			expectedStatus:  http.StatusForbidden,
 		},
@@ -106,6 +116,20 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			userCache:       &usertest.FakeUserService{ExpectedError: fmt.Errorf("user not found")},
 			acService:       &actest.FakeService{},
 			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			teamService:     &teamtest.FakeService{},
+			expectedStatus:  http.StatusForbidden,
+		},
+		{
+			name: "should return 403 early when api key org ID doesn't match",
+			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
+				return 2, nil
+			},
+			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl:   ac,
+			userCache:       &usertest.FakeUserService{},
+			acService:       &actest.FakeService{},
+			ctxSignedInUser: &user.SignedInUser{ApiKeyID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			teamService:     &teamtest.FakeService{},
 			expectedStatus:  http.StatusForbidden,
 		},
 		{
@@ -118,6 +142,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			acService: &actest.FakeService{
 				ExpectedPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			},
+			teamService: &teamtest.FakeService{},
 			userCache: &usertest.FakeUserService{
 				GetSignedInUserFn: func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 					return &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: nil}, nil
@@ -133,6 +158,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			},
 			evaluator:     accesscontrol.EvalPermission("users:read", "users:*"),
 			accessControl: ac,
+			teamService:   &teamtest.FakeService{},
 			acService: &actest.FakeService{
 				ExpectedPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			},
@@ -151,6 +177,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			},
 			evaluator:     accesscontrol.EvalPermission("users:read", "users:*"),
 			accessControl: ac,
+			teamService:   &teamtest.FakeService{},
 			acService: &actest.FakeService{
 				ExpectedErr: fmt.Errorf("failed to get user permissions"),
 			},
@@ -172,7 +199,26 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			acService:       &actest.FakeService{},
 			userCache:       &usertest.FakeUserService{},
 			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			teamService:     &teamtest.FakeService{},
 			expectedStatus:  http.StatusForbidden,
+		},
+		{
+			name: "should fetch global user permissions when user is not a member of the target org",
+			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
+				return 2, nil
+			},
+			evaluator:     accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl: ac,
+			acService: &actest.FakeService{
+				ExpectedPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			},
+			userCache: &usertest.FakeUserService{
+				GetSignedInUserFn: func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+					return &user.SignedInUser{UserID: 1, OrgID: -1, Permissions: map[int64]map[string][]string{}}, nil
+				},
+			},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:write": {"users:*"}}}},
+			expectedStatus:  http.StatusOK,
 		},
 	}
 
@@ -189,6 +235,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 				tc.accessControl,
 				service,
 				tc.userCache,
+				tc.teamService,
 			)(tc.orgIDGetter, tc.evaluator)
 
 			// Create test server

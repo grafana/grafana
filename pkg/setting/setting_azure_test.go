@@ -215,4 +215,34 @@ func TestAzureSettings(t *testing.T) {
 			assert.Empty(t, cfg.Azure.UserIdentityTokenEndpoint.ClientSecret)
 		})
 	})
+
+	t.Run("forward settings to plugins", func(t *testing.T) {
+		testCases := []struct {
+			name            string
+			configuredValue string
+			resolvedValue   []string
+		}{
+			{
+				name:            "should be set to user plugins if set",
+				configuredValue: "test-datasource",
+				resolvedValue:   []string{"test-datasource"},
+			},
+		}
+
+		for _, c := range testCases {
+			t.Run(c.name, func(t *testing.T) {
+				cfg := NewCfg()
+
+				azureSection, err := cfg.Raw.NewSection("azure")
+				require.NoError(t, err)
+				_, err = azureSection.NewKey("forward_settings_to_plugins", c.configuredValue)
+				require.NoError(t, err)
+
+				cfg.readAzureSettings()
+				require.NotNil(t, cfg.Azure)
+
+				assert.Equal(t, c.resolvedValue, cfg.Azure.ForwardSettingsPlugins)
+			})
+		}
+	})
 }

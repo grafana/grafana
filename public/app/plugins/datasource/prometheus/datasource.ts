@@ -1,4 +1,4 @@
-import { cloneDeep, defaults } from 'lodash';
+import { defaults } from 'lodash';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import semver from 'semver/preload';
@@ -668,7 +668,7 @@ export class PrometheusDatasource
   // this is used to get label keys, a.k.a label names
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
-  async getTagKeys(options: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]> {
+  async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
     if (!options || options.filters.length === 0) {
       await this.languageProvider.fetchLabels(options.timeRange);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
@@ -681,13 +681,7 @@ export class PrometheusDatasource
     }));
     const expr = promQueryModeller.renderLabels(labelFilters);
 
-    let labelsIndex: Record<string, string[]>;
-
-    if (this.hasLabelsMatchAPISupport()) {
-      labelsIndex = await this.languageProvider.fetchSeriesLabelsMatch(expr);
-    } else {
-      labelsIndex = await this.languageProvider.fetchSeriesLabels(expr);
-    }
+    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(expr);
 
     // filter out already used labels
     return Object.keys(labelsIndex)
@@ -706,10 +700,12 @@ export class PrometheusDatasource
     const expr = promQueryModeller.renderLabels(labelFilters);
 
     if (this.hasLabelsMatchAPISupport()) {
-      return (await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr)).map((v) => ({
-        value: v,
-        text: v,
-      }));
+      return (await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, options.timeRange)).map(
+        (v) => ({
+          value: v,
+          text: v,
+        })
+      );
     }
 
     const params = this.getTimeRangeParams(options.timeRange ?? getDefaultTimeRange());
@@ -881,11 +877,16 @@ export class PrometheusDatasource
 
   // Used when running queries through backend
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
-    const variables = cloneDeep(scopedVars);
+    const variables = { ...scopedVars };
 
-    // We want to interpolate these variables on backend
-    delete variables.__interval;
-    delete variables.__interval_ms;
+    // We want to interpolate these variables on backend.
+    // The pre-calculated values are replaced withe the variable strings.
+    variables.__interval = {
+      value: '$__interval',
+    };
+    variables.__interval_ms = {
+      value: '$__interval_ms',
+    };
 
     // interpolate expression
     const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);

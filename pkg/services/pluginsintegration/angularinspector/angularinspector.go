@@ -12,11 +12,11 @@ type Service struct {
 	angularinspector.Inspector
 }
 
-func ProvideService(cfg *config.Cfg, dynamic *angulardetectorsprovider.Dynamic) (*Service, error) {
+func ProvideService(cfg *config.PluginManagementCfg, dynamic *angulardetectorsprovider.Dynamic) (*Service, error) {
 	var detectorsProvider angulardetector.DetectorsProvider
 	var err error
 	static := angularinspector.NewDefaultStaticDetectorsProvider()
-	if cfg.Features != nil && cfg.Features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
+	if cfg.Features != nil && cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
 		detectorsProvider = angulardetector.SequenceDetectorsProvider{dynamic, static}
 	} else {
 		detectorsProvider = static

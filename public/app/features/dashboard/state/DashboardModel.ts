@@ -18,12 +18,12 @@ import {
   UrlQueryValue,
 } from '@grafana/data';
 import { RefreshEvent, TimeRangeUpdatedEvent, config } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { Dashboard, DashboardLink } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
-import { isAngularDatasourcePlugin } from 'app/features/plugins/angularDeprecation/utils';
+import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
@@ -44,7 +44,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { PanelModel, autoMigrateAngular } from './PanelModel';
+import { PanelModel } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -55,20 +55,6 @@ export interface CloneOptions {
 }
 
 export type DashboardLinkType = 'link' | 'dashboards';
-
-export interface DashboardLink {
-  icon: string;
-  title: string;
-  tooltip: string;
-  type: DashboardLinkType;
-  url: string;
-  asDropdown: boolean;
-  tags: any[];
-  searchHits?: any[];
-  targetBlank: boolean;
-  keepTime: boolean;
-  includeVars: boolean;
-}
 
 export class DashboardModel implements TimeModel {
   /** @deprecated use UID */
@@ -84,13 +70,13 @@ export class DashboardModel implements TimeModel {
   editable: any;
   graphTooltip: DashboardCursorSync;
   time: any;
-  liveNow: boolean;
+  liveNow?: boolean;
   private originalTime: any;
   timepicker: any;
   templating: { list: any[] };
   private originalTemplating: any;
   annotations: { list: AnnotationQuery[] };
-  refresh: string;
+  refresh?: string;
   snapshot: any;
   schemaVersion: number;
   version: number;
@@ -104,7 +90,7 @@ export class DashboardModel implements TimeModel {
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
-  private timeRangeUpdatedDuringEdit = false;
+  private timeRangeUpdatedDuringEditOrView = false;
   private originalDashboard: Dashboard | null = null;
 
   // ------------------
@@ -161,17 +147,17 @@ export class DashboardModel implements TimeModel {
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker ?? {};
-    this.liveNow = Boolean(data.liveNow);
+    this.liveNow = data.liveNow;
     this.templating = this.ensureListExist(data.templating);
     this.annotations = this.ensureListExist(data.annotations);
-    this.refresh = data.refresh || '';
+    this.refresh = data.refresh;
     this.snapshot = data.snapshot;
     this.schemaVersion = data.schemaVersion ?? 0;
     this.fiscalYearStartMonth = data.fiscalYearStartMonth ?? 0;
     this.version = data.version ?? 0;
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
-    this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
+    this.panels = map(data.panels ?? [], (panelData) => new PanelModel(panelData));
     // Deep clone original dashboard to avoid mutations by object reference
     this.originalDashboard = cloneDeep(data);
     this.originalTemplating = cloneDeep(this.templating);
@@ -184,12 +170,54 @@ export class DashboardModel implements TimeModel {
     this.updateSchema(data);
 
     // Auto-migrate old angular panels
-    if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
-      for (const p of this.panelIterator()) {
-        const newType = autoMigrateAngular[p.type];
-        if (!p.autoMigrateFrom && newType) {
-          p.autoMigrateFrom = p.type;
-          p.type = newType;
+    const shouldMigrateAllAngularPanels =
+      options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels;
+
+    const shouldMigrateExplicitAngularPanels =
+      config.featureToggles.autoMigrateGraphPanel ||
+      config.featureToggles.autoMigrateTablePanel ||
+      config.featureToggles.autoMigratePiechartPanel ||
+      config.featureToggles.autoMigrateWorldmapPanel ||
+      config.featureToggles.autoMigrateStatPanel;
+
+    // Handles both granular and all angular panel migration
+    if (shouldMigrateAllAngularPanels || shouldMigrateExplicitAngularPanels) {
+      for (const panel of this.panelIterator()) {
+        if (
+          !panel.autoMigrateFrom &&
+          panel.type === 'graph' &&
+          (config.featureToggles.autoMigrateGraphPanel || shouldMigrateAllAngularPanels)
+        ) {
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'timeseries';
+        } else if (
+          !panel.autoMigrateFrom &&
+          panel.type === 'table-old' &&
+          (config.featureToggles.autoMigrateTablePanel || shouldMigrateAllAngularPanels)
+        ) {
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'table';
+        } else if (
+          !panel.autoMigrateFrom &&
+          panel.type === 'grafana-piechart-panel' &&
+          (config.featureToggles.autoMigratePiechartPanel || shouldMigrateAllAngularPanels)
+        ) {
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'piechart';
+        } else if (
+          !panel.autoMigrateFrom &&
+          panel.type === 'grafana-worldmap-panel' &&
+          (config.featureToggles.autoMigrateWorldmapPanel || shouldMigrateAllAngularPanels)
+        ) {
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'geomap';
+        } else if (
+          !panel.autoMigrateFrom &&
+          (panel.type === 'singlestat' || panel.type === 'grafana-singlestat-panel') &&
+          (config.featureToggles.autoMigrateStatPanel || shouldMigrateAllAngularPanels)
+        ) {
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'stat';
         }
       }
     }
@@ -316,12 +344,8 @@ export class DashboardModel implements TimeModel {
   }
 
   private getPanelSaveModels() {
-    // Todo: Remove panel.type === 'add-panel' when we remove the emptyDashboardPage toggle
     return this.panels
-      .filter(
-        (panel) =>
-          this.isSnapshotTruthy() || !(panel.type === 'add-panel' || panel.repeatPanelId || panel.repeatedByRow)
-      )
+      .filter((panel) => this.isSnapshotTruthy() || !(panel.repeatPanelId || panel.repeatedByRow))
       .map((panel) => {
         // Clean libarary panels on save
         if (panel.libraryPanel) {
@@ -345,7 +369,7 @@ export class DashboardModel implements TimeModel {
 
         return panel.getSaveModel();
       })
-      .map((model: any) => {
+      .map((model) => {
         if (this.isSnapshotTruthy()) {
           return model;
         }
@@ -402,8 +426,8 @@ export class DashboardModel implements TimeModel {
     this.events.publish(new TimeRangeUpdatedEvent(timeRange));
     dispatch(onTimeRangeUpdated(this.uid, timeRange));
 
-    if (this.panelInEdit) {
-      this.timeRangeUpdatedDuringEdit = true;
+    if (this.panelInEdit || this.panelInView) {
+      this.timeRangeUpdatedDuringEditOrView = true;
     }
   }
 
@@ -445,7 +469,7 @@ export class DashboardModel implements TimeModel {
   initEditPanel(sourcePanel: PanelModel): PanelModel {
     getTimeSrv().stopAutoRefresh();
     this.panelInEdit = sourcePanel.getEditClone();
-    this.timeRangeUpdatedDuringEdit = false;
+    this.timeRangeUpdatedDuringEditOrView = false;
     return this.panelInEdit;
   }
 
@@ -455,34 +479,30 @@ export class DashboardModel implements TimeModel {
 
     getTimeSrv().resumeAutoRefresh();
 
-    if (this.panelsAffectedByVariableChange || this.timeRangeUpdatedDuringEdit) {
-      this.startRefresh({
-        panelIds: this.panelsAffectedByVariableChange ?? [],
-        refreshAll: this.timeRangeUpdatedDuringEdit,
-      });
-      this.panelsAffectedByVariableChange = null;
-      this.timeRangeUpdatedDuringEdit = false;
-    }
+    this.refreshIfPanelsAffectedByVariableChangeOrTimeRangeChanged();
   }
 
   initViewPanel(panel: PanelModel) {
     this.panelInView = panel;
+    this.timeRangeUpdatedDuringEditOrView = false;
     panel.setIsViewing(true);
   }
 
   exitViewPanel(panel: PanelModel) {
     this.panelInView = undefined;
     panel.setIsViewing(false);
-    this.refreshIfPanelsAffectedByVariableChange();
+    this.refreshIfPanelsAffectedByVariableChangeOrTimeRangeChanged();
   }
 
-  private refreshIfPanelsAffectedByVariableChange() {
-    if (!this.panelsAffectedByVariableChange) {
-      return;
+  private refreshIfPanelsAffectedByVariableChangeOrTimeRangeChanged() {
+    if (this.panelsAffectedByVariableChange || this.timeRangeUpdatedDuringEditOrView) {
+      this.startRefresh({
+        panelIds: this.panelsAffectedByVariableChange ?? [],
+        refreshAll: this.timeRangeUpdatedDuringEditOrView,
+      });
+      this.panelsAffectedByVariableChange = null;
+      this.timeRangeUpdatedDuringEditOrView = false;
     }
-
-    this.startRefresh({ panelIds: this.panelsAffectedByVariableChange, refreshAll: false });
-    this.panelsAffectedByVariableChange = null;
   }
 
   private ensurePanelsHaveUniqueIds() {
@@ -530,12 +550,22 @@ export class DashboardModel implements TimeModel {
     }
   }
 
-  getPanelById(id: number): PanelModel | null {
+  getPanelById(id: number, includeCollapsed = false): PanelModel | null {
     if (this.panelInEdit && this.panelInEdit.id === id) {
       return this.panelInEdit;
     }
 
-    return this.panels.find((p) => p.id === id) ?? null;
+    if (includeCollapsed) {
+      for (const panel of this.panelIterator()) {
+        if (panel.id === id) {
+          return panel;
+        }
+      }
+
+      return null;
+    } else {
+      return this.panels.find((p) => p.id === id) ?? null;
+    }
   }
 
   canEditPanel(panel?: PanelModel | null): boolean | undefined | null {
@@ -878,6 +908,7 @@ export class DashboardModel implements TimeModel {
 
   removePanel(panel: PanelModel) {
     this.panels = this.panels.filter((item) => item !== panel);
+    panel.destroy();
     this.events.publish(new DashboardPanelsChangedEvent());
   }
 
@@ -1195,6 +1226,10 @@ export class DashboardModel implements TimeModel {
     } else {
       canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
     }
+
+    if (config.featureToggles.annotationPermissionUpdate) {
+      return canEdit;
+    }
     return this.canEditDashboard() && canEdit;
   }
 
@@ -1207,18 +1242,26 @@ export class DashboardModel implements TimeModel {
     } else {
       canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
     }
+
+    if (config.featureToggles.annotationPermissionUpdate) {
+      return canDelete;
+    }
     return canDelete && this.canEditDashboard();
   }
 
   canAddAnnotations() {
     // When the builtin annotations are disabled, we should not add any in the UI
     const found = this.annotations.list.find((item) => item.builtIn === 1);
-    if (found?.enable === false || !this.canEditDashboard()) {
+    if (found?.enable === false) {
       return false;
     }
 
     // If RBAC is enabled there are additional conditions to check.
-    return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
+    if (config.featureToggles.annotationPermissionUpdate) {
+      return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
+    }
+
+    return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd) && this.canEditDashboard();
   }
 
   canEditDashboard() {
@@ -1293,10 +1336,17 @@ export class DashboardModel implements TimeModel {
   }
 
   hasAngularPlugins(): boolean {
-    return this.panels.some(
-      (panel) =>
-        panel.isAngularPlugin() || (panel.datasource?.uid ? isAngularDatasourcePlugin(panel.datasource?.uid) : false)
-    );
+    return this.panels.some((panel) => {
+      // Return false for plugins that are angular but have angular.hideDeprecation = false
+      // We cannot use panel.plugin.isAngularPlugin() because panel.plugin may not be initialized at this stage.
+      const isAngularPanel =
+        config.panels[panel.type]?.angular?.detected && !config.panels[panel.type]?.angular?.hideDeprecation;
+      let isAngularDs = false;
+      if (panel.datasource?.uid) {
+        isAngularDs = isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid);
+      }
+      return isAngularPanel || isAngularDs;
+    });
   }
 }
 

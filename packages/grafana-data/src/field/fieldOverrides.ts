@@ -206,6 +206,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         for (const nestedFrames of field.values) {
           for (let nfIndex = 0; nfIndex < nestedFrames.length; nfIndex++) {
             for (const valueField of nestedFrames[nfIndex].fields) {
+              // Get display processor for nested fields
+              valueField.display = getDisplayProcessor({
+                field: valueField,
+                theme: options.theme,
+                timeZone: options.timeZone,
+              });
+
               valueField.state = {
                 scopedVars: {
                   __dataContext: {
@@ -238,7 +245,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 }
 
 function calculateRange(
-  config: FieldConfig<any>,
+  config: FieldConfig,
   field: Field,
   globalRange: NumericRange | undefined,
   data: DataFrame[]
@@ -269,7 +276,7 @@ function calculateRange(
 // 2. have the ability to selectively get display color or text (but not always both, which are each quite expensive)
 // 3. sufficently optimize text formatting and threshold color determinitation
 function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): DisplayProcessor {
-  type dispCache = Map<any, DisplayValue>;
+  type dispCache = Map<unknown, DisplayValue>;
   // decimals -> cache mapping, -1 is unspecified decimals
   const caches = new Map<number, dispCache>();
 

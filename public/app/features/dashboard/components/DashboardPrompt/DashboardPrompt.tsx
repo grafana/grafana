@@ -183,7 +183,7 @@ function cleanDashboardFromIgnoredChanges(dashData: Dashboard) {
 
   // ignore time and refresh
   delete dash.time;
-  dash.refresh = '';
+  delete dash.refresh;
   dash.schemaVersion = 0;
   delete dash.timezone;
 
@@ -207,6 +207,7 @@ export function hasChanges(current: DashboardModel, original: unknown) {
   if (current.hasUnsavedChanges()) {
     return true;
   }
+
   // TODO: Make getSaveModelClone return Dashboard type instead
   const currentClean = cleanDashboardFromIgnoredChanges(current.getSaveModelCloneOld() as unknown as Dashboard);
   const originalClean = cleanDashboardFromIgnoredChanges(original as Dashboard);

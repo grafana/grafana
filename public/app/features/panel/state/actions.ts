@@ -46,7 +46,7 @@ export function cleanUpPanelState(panelKey: string): ThunkResult<void> {
 export interface ChangePanelPluginAndOptionsArgs {
   panel: PanelModel;
   pluginId: string;
-  options?: any;
+  options?: Record<string, unknown>;
   fieldConfig?: FieldConfigSource;
   transformations?: DataTransformerConfig[];
 }
@@ -147,15 +147,16 @@ export function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> 
     try {
       const libPanel = await getLibraryPanel(uid, true);
       panel.initLibraryPanel(libPanel);
-      await dispatch(initPanelState(panel));
-      const dashboard = getStore().dashboard.getModel();
 
+      const dashboard = getStore().dashboard.getModel();
       if (panel.repeat && dashboard) {
         const panelIndex = dashboard.panels.findIndex((p) => p.id === panel.id);
         dashboard.repeatPanel(panel, panelIndex);
         dashboard.sortPanelsByGridPos();
         dashboard.events.publish(new DashboardPanelsChangedEvent());
       }
+
+      await dispatch(initPanelState(panel));
     } catch (ex) {
       console.log('ERROR: ', ex);
       dispatch(

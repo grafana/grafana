@@ -13,7 +13,15 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ErrInternal = errutil.Internal("accesscontrol.internal")
+const (
+	CacheHit  = "hit"
+	CacheMiss = "miss"
+)
+
+var (
+	ErrInternal        = errutil.Internal("accesscontrol.internal")
+	CacheUsageStatuses = []string{CacheHit, CacheMiss}
+)
 
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
@@ -62,6 +70,7 @@ func (r Role) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// swagger:ignore
 type RoleDTO struct {
 	Version     int64        `json:"version"`
 	UID         string       `xorm:"uid" json:"uid"`
@@ -133,6 +142,12 @@ func (r *RoleDTO) IsBasic() bool {
 
 func (r *RoleDTO) IsExternalService() bool {
 	return strings.HasPrefix(r.Name, ExternalServiceRolePrefix) || strings.HasPrefix(r.UID, ExternalServiceRoleUIDPrefix)
+}
+
+// swagger:model RoleDTO
+type RoleDTOStatic struct {
+	RoleDTO
+	Global bool `json:"global" xorm:"-"`
 }
 
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
@@ -274,8 +289,7 @@ type SetResourcePermissionCommand struct {
 }
 
 type SaveExternalServiceRoleCommand struct {
-	OrgID             int64
-	Global            bool
+	AssignmentOrgID   int64
 	ExternalServiceID string
 	ServiceAccountID  int64
 	Permissions       []Permission
@@ -288,10 +302,6 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 
 	// slugify the external service id ID for the role to have correct name and uid
 	cmd.ExternalServiceID = slugify.Slugify(cmd.ExternalServiceID)
-
-	if (cmd.OrgID == GlobalOrgID) != cmd.Global {
-		return fmt.Errorf("invalid org id %d for global role %t", cmd.OrgID, cmd.Global)
-	}
 
 	// Check and deduplicate permissions
 	if cmd.Permissions == nil || len(cmd.Permissions) == 0 {
@@ -320,6 +330,7 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 
 const (
 	GlobalOrgID      = 0
+	NoOrgID          = int64(-1)
 	GeneralFolderUID = "general"
 	RoleGrafanaAdmin = "Grafana Admin"
 
@@ -330,9 +341,8 @@ const (
 	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
-	ActionUsersRead        = "users:read"
-	ActionUsersWrite       = "users:write"
-	ActionUsersImpersonate = "users:impersonate"
+	ActionUsersRead  = "users:read"
+	ActionUsersWrite = "users:write"
 
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
@@ -396,7 +406,6 @@ const (
 
 	// Settings scope
 	ScopeSettingsAll  = "settings:*"
-	ScopeSettingsAuth = "settings:auth:*"
 	ScopeSettingsSAML = "settings:auth.saml:*"
 
 	// Team related actions
@@ -435,6 +444,15 @@ const (
 	ActionAlertingNotificationsRead  = "alert.notifications:read"
 	ActionAlertingNotificationsWrite = "alert.notifications:write"
 
+	// Alerting notifications time interval actions
+	ActionAlertingNotificationsTimeIntervalsRead  = "alert.notifications.time-intervals:read"
+	ActionAlertingNotificationsTimeIntervalsWrite = "alert.notifications.time-intervals:write"
+
+	// Alerting receiver actions
+	ActionAlertingReceiversList        = "alert.notifications.receivers:list"
+	ActionAlertingReceiversRead        = "alert.notifications.receivers:read"
+	ActionAlertingReceiversReadSecrets = "alert.notifications.receivers.secrets:read"
+
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
 	ActionAlertingRuleExternalRead  = "alert.rules.external:read"
@@ -466,6 +484,10 @@ const (
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
+
+	ScopeSettingsOAuth = func(provider string) string {
+		return Scope("settings", "auth."+provider, "*")
+	}
 
 	// Annotation scopes
 	ScopeAnnotationsRoot             = "annotations"

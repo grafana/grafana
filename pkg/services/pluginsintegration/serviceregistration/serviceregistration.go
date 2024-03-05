@@ -5,50 +5,59 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/plugins/auth"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
 
 type Service struct {
-	reg         extsvcauth.ExternalServiceRegistry
-	settingsSvc pluginsettings.Service
+	featureEnabled bool
+	log            log.Logger
+	reg            extsvcauth.ExternalServiceRegistry
+	settingsSvc    pluginsettings.Service
 }
 
-func ProvideService(reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
+func ProvideService(cfg *config.PluginManagementCfg, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
 	s := &Service{
-		reg:         reg,
-		settingsSvc: settingsSvc,
+		featureEnabled: cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
+		log:            log.New("plugins.external.registration"),
+		reg:            reg,
+		settingsSvc:    settingsSvc,
 	}
 	return s
 }
 
+func (s *Service) HasExternalService(ctx context.Context, pluginID string) (bool, error) {
+	if !s.featureEnabled {
+		s.log.Debug("Skipping HasExternalService call. The feature is behind a feature toggle and needs to be enabled.")
+		return false, nil
+	}
+
+	return s.reg.HasExternalService(ctx, pluginID)
+}
+
 // RegisterExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
-func (s *Service) RegisterExternalService(ctx context.Context, svcName string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.IAM) (*auth.ExternalService, error) {
+	if !s.featureEnabled {
+		s.log.Warn("Skipping External Service Registration. The feature is behind a feature toggle and needs to be enabled.")
+		return nil, nil
+	}
+
 	// Datasource plugins can only be enabled
 	enabled := true
 	// App plugins can be disabled
 	if pType == plugindef.TypeApp {
-		settings, err := s.settingsSvc.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{PluginID: svcName})
+		settings, err := s.settingsSvc.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{PluginID: pluginID})
 		if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
 			return nil, err
 		}
 
 		enabled = (settings != nil) && settings.Enabled
 	}
-
-	impersonation := extsvcauth.ImpersonationCfg{}
-	if svc.Impersonation != nil {
-		impersonation.Permissions = toAccessControlPermissions(svc.Impersonation.Permissions)
-		impersonation.Enabled = enabled
-		if svc.Impersonation.Groups != nil {
-			impersonation.Groups = *svc.Impersonation.Groups
-		} else {
-			impersonation.Groups = true
-		}
-	}
-
 	self := extsvcauth.SelfCfg{}
 	self.Enabled = enabled
 	if len(svc.Permissions) > 0 {
@@ -56,16 +65,9 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, p
 	}
 
 	registration := &extsvcauth.ExternalServiceRegistration{
-		Name:          svcName,
-		Impersonation: impersonation,
-		Self:          self,
-	}
-
-	// Default authProvider now is ServiceAccounts
-	registration.AuthProvider = extsvcauth.ServiceAccounts
-	if svc.Impersonation != nil {
-		registration.AuthProvider = extsvcauth.OAuth2Server
-		registration.OAuthProviderCfg = &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}}
+		Name:         pluginID,
+		Self:         self,
+		AuthProvider: extsvcauth.ServiceAccounts,
 	}
 
 	extSvc, err := s.reg.SaveExternalService(ctx, registration)
@@ -97,4 +99,14 @@ func toAccessControlPermissions(ps []plugindef.Permission) []accesscontrol.Permi
 		})
 	}
 	return res
+}
+
+// RemoveExternalService removes the external service account associated to a plugin
+func (s *Service) RemoveExternalService(ctx context.Context, pluginID string) error {
+	if !s.featureEnabled {
+		s.log.Debug("Skipping External Service Removal. The feature is behind a feature toggle and needs to be enabled.")
+		return nil
+	}
+
+	return s.reg.RemoveExternalService(ctx, pluginID)
 }

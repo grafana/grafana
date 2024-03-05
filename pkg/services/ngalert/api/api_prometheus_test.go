@@ -15,13 +15,14 @@ import (
 
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -502,7 +503,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				log:     log.NewNopLogger(),
 				manager: fakeAIM,
 				store:   ruleStore,
-				ac:      acmock.New(),
+				authz:   &fakeRuleAccessControlService{},
 			}
 
 			response := api.RouteGetRuleStatuses(c)
@@ -546,7 +547,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				log:     log.NewNopLogger(),
 				manager: fakeAIM,
 				store:   ruleStore,
-				ac:      acimpl.ProvideAccessControl(setting.NewCfg()),
+				authz:   &fakeRuleAccessControlService{},
 			}
 
 			c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: createPermissionsForRules(rules, orgID)}}
@@ -1259,7 +1260,7 @@ func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, Promet
 		log:     log.NewNopLogger(),
 		manager: fakeAIM,
 		store:   fakeStore,
-		ac:      acimpl.ProvideAccessControl(setting.NewCfg()),
+		authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
 	}
 
 	return fakeStore, fakeAIM, api

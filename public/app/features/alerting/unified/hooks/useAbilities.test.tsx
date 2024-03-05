@@ -1,12 +1,13 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { createBrowserHistory } from 'history';
 import React, { PropsWithChildren } from 'react';
 import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
-import { grantUserPermissions, mockDataSource } from '../mocks';
+import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../mocks';
 import { AlertmanagerProvider } from '../state/AlertmanagerContext';
 import { setupDataSources } from '../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -15,6 +16,7 @@ import {
   AlertmanagerAction,
   useAlertmanagerAbilities,
   useAlertmanagerAbility,
+  useAllAlertRuleAbilities,
   useAllAlertmanagerAbilities,
 } from './useAbilities';
 
@@ -32,7 +34,9 @@ describe('alertmanager abilities', () => {
       })
     );
 
-    const abilities = renderHook(() => useAllAlertmanagerAbilities(), { wrapper: createWrapper('does-not-exist') });
+    const abilities = renderHook(() => useAllAlertmanagerAbilities(), {
+      wrapper: createAlertmanagerWrapper('does-not-exist'),
+    });
     expect(abilities.result.current).toMatchSnapshot();
   });
 
@@ -47,7 +51,7 @@ describe('alertmanager abilities', () => {
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
 
     const abilities = renderHook(() => useAllAlertmanagerAbilities(), {
-      wrapper: createWrapper(GRAFANA_RULES_SOURCE_NAME),
+      wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME),
     });
 
     Object.values(abilities.result.current).forEach(([supported]) => {
@@ -56,7 +60,7 @@ describe('alertmanager abilities', () => {
 
     // since we only granted "read" permissions, only those should be allowed
     const viewAbility = renderHook(() => useAlertmanagerAbility(AlertmanagerAction.ViewSilence), {
-      wrapper: createWrapper(GRAFANA_RULES_SOURCE_NAME),
+      wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME),
     });
 
     const [viewSupported, viewAllowed] = viewAbility.result.current;
@@ -66,7 +70,7 @@ describe('alertmanager abilities', () => {
 
     // editing should not be allowed, but supported
     const editAbility = renderHook(() => useAlertmanagerAbility(AlertmanagerAction.ViewSilence), {
-      wrapper: createWrapper(GRAFANA_RULES_SOURCE_NAME),
+      wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME),
     });
 
     const [editSupported, editAllowed] = editAbility.result.current;
@@ -97,7 +101,7 @@ describe('alertmanager abilities', () => {
     ]);
 
     const abilities = renderHook(() => useAllAlertmanagerAbilities(), {
-      wrapper: createWrapper('mimir'),
+      wrapper: createAlertmanagerWrapper('mimir'),
     });
 
     expect(abilities.result.current).toMatchSnapshot();
@@ -121,7 +125,7 @@ describe('alertmanager abilities', () => {
           AlertmanagerAction.ExportContactPoint,
         ]),
       {
-        wrapper: createWrapper(GRAFANA_RULES_SOURCE_NAME),
+        wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME),
       }
     );
 
@@ -132,7 +136,41 @@ describe('alertmanager abilities', () => {
   });
 });
 
-function createWrapper(alertmanagerSourceName: string) {
+describe('AlertRule abilities', () => {
+  it('should report that all actions are supported for a Grafana Managed alert rule', async () => {
+    const rule = getGrafanaRule();
+
+    const abilities = renderHook(() => useAllAlertRuleAbilities(rule), { wrapper: TestProvider });
+
+    await waitFor(() => {
+      const results = Object.values(abilities.result.current);
+
+      for (const [supported, _allowed] of results) {
+        expect(supported).toBe(true);
+      }
+    });
+
+    expect(abilities.result.current).toMatchSnapshot();
+  });
+
+  it('should report no permissions while we are loading data for cloud rule', async () => {
+    const rule = getCloudRule();
+
+    const abilities = renderHook(() => useAllAlertRuleAbilities(rule), { wrapper: TestProvider });
+
+    await waitFor(() => {
+      expect(abilities.result.current).not.toBeUndefined();
+    });
+
+    expect(abilities.result.current).toMatchSnapshot();
+  });
+
+  it('should not allow certain actions for provisioned rules', () => {});
+
+  it('should not allow certain actions for federated rules', () => {});
+});
+
+function createAlertmanagerWrapper(alertmanagerSourceName: string) {
   const wrapper = (props: PropsWithChildren) => (
     <Router history={createBrowserHistory()}>
       <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertmanagerSourceName}>

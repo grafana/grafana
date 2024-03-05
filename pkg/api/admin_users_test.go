@@ -15,12 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/login/socialtest"
+	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -312,19 +312,17 @@ func Test_AdminUpdateUserPermissions(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			userAuth := &login.UserAuth{AuthModule: tc.authModule}
-			authInfoService := &logintest.AuthInfoServiceFake{ExpectedUserAuth: userAuth}
+			authInfoService := &authinfotest.FakeService{ExpectedUserAuth: userAuth}
 			socialService := &socialtest.FakeSocialService{}
 			cfg := setting.NewCfg()
 
 			switch tc.authModule {
 			case login.GenericOAuthModule:
-				socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{AllowAssignGrafanaAdmin: tc.allowAssignGrafanaAdmin, Enabled: tc.authEnabled}
-				cfg.GenericOAuthAuthEnabled = tc.authEnabled
-				cfg.GenericOAuthSkipOrgRoleSync = tc.skipOrgRoleSync
+				socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{AllowAssignGrafanaAdmin: tc.allowAssignGrafanaAdmin, Enabled: tc.authEnabled, SkipOrgRoleSync: tc.skipOrgRoleSync}
 			case login.JWTModule:
-				cfg.JWTAuthEnabled = tc.authEnabled
-				cfg.JWTAuthSkipOrgRoleSync = tc.skipOrgRoleSync
-				cfg.JWTAuthAllowAssignGrafanaAdmin = tc.allowAssignGrafanaAdmin
+				cfg.JWTAuth.Enabled = tc.authEnabled
+				cfg.JWTAuth.SkipOrgRoleSync = tc.skipOrgRoleSync
+				cfg.JWTAuth.AllowAssignGrafanaAdmin = tc.allowAssignGrafanaAdmin
 			}
 
 			hs := &HTTPServer{
@@ -357,7 +355,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 		hs := &HTTPServer{
 			Cfg:             setting.NewCfg(),
 			SQLStore:        sqlStore,
-			authInfoService: &logintest.AuthInfoServiceFake{},
+			authInfoService: &authinfotest.FakeService{},
 			userService:     userSvc,
 		}
 
@@ -462,7 +460,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
-		authInfoService := &logintest.AuthInfoServiceFake{}
+		authInfoService := &authinfotest.FakeService{}
 
 		hs := HTTPServer{
 			SQLStore:         dbtest.NewFakeDB(),
@@ -500,7 +498,7 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = hs.SQLStore
-		sc.authInfoService = &logintest.AuthInfoServiceFake{}
+		sc.authInfoService = &authinfotest.FakeService{}
 		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserID = testUserID

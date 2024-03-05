@@ -64,5 +64,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexGrow: 3,
     whiteSpace: 'pre-wrap',
     marginTop: 20,
+    height: 110,
+    overflowY: 'scroll',
   }),
 });

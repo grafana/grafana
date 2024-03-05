@@ -5,7 +5,8 @@ import React from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, RelativeTimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Badge, useStyles2, Stack } from '@grafana/ui';
+import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
+import { Badge, Stack, useStyles2 } from '@grafana/ui';
 import { mapRelativeTimeRangeToOption } from '@grafana/ui/src/components/DateTimePickers/RelativeTimeRangePicker/utils';
 
 import { AlertQuery } from '../../../types/unified-alerting-dto';
@@ -14,8 +15,8 @@ import {
   downsamplingTypes,
   ExpressionQuery,
   ExpressionQueryType,
-  reducerModes,
   ReducerMode,
+  reducerModes,
   reducerTypes,
   thresholdFunctions,
   upsamplingTypes,
@@ -46,12 +47,12 @@ export function GrafanaRuleQueryViewer({
   const expressions = queries.filter((q) => isExpressionQuery(q.model));
   const styles = useStyles2(getExpressionViewerStyles);
 
-  const thresholds = getThresholdsForQueries(queries);
+  const thresholds = getThresholdsForQueries(queries, condition);
 
   return (
     <Stack gap={2} direction="column">
       <div className={styles.maxWidthContainer}>
-        <Stack gap={2}>
+        <Stack gap={2} wrap="wrap" data-testid="queries-container">
           {dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
             const dataSource = dsByUid[datasourceUid];
 
@@ -73,7 +74,7 @@ export function GrafanaRuleQueryViewer({
         </Stack>
       </div>
       <div className={styles.maxWidthContainer}>
-        <Stack gap={1}>
+        <Stack gap={1} wrap="wrap" data-testid="expressions-container">
           {expressions.map(({ model, refId, datasourceUid }, index) => {
             const dataSource = dsByUid[datasourceUid];
 
@@ -181,6 +182,9 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
 
       case ExpressionQueryType.threshold:
         return <ThresholdExpressionViewer model={model} />;
+
+      case ExpressionQueryType.sql:
+        return <Preview rawSql={model.expression || ''} datasourceType={model.datasource?.type} />;
 
       default:
         return <>Expression not supported: {model.type}</>;
@@ -377,20 +381,44 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
 
   const isRange = evaluator ? isRangeEvaluator(evaluator) : false;
 
-  return (
-    <div className={styles.container}>
-      <div className={styles.label}>Input</div>
-      <div className={styles.value}>{expression}</div>
+  const unloadEvaluator = conditions && conditions[0]?.unloadEvaluator;
+  const unloadThresholdFunction = thresholdFunctions.find((tf) => tf.value === unloadEvaluator?.type);
 
-      {evaluator && (
-        <>
-          <div className={styles.blue}>{thresholdFunction?.label}</div>
-          <div className={styles.bold}>
-            {isRange ? `(${evaluator.params[0]}; ${evaluator.params[1]})` : evaluator.params[0]}
-          </div>
-        </>
-      )}
-    </div>
+  const unloadIsRange = unloadEvaluator ? isRangeEvaluator(unloadEvaluator) : false;
+
+  return (
+    <>
+      <div className={styles.container}>
+        <div className={styles.label}>Input</div>
+        <div className={styles.value}>{expression}</div>
+
+        {evaluator && (
+          <>
+            <div className={styles.blue}>{thresholdFunction?.label}</div>
+            <div className={styles.bold}>
+              {isRange ? `(${evaluator.params[0]}; ${evaluator.params[1]})` : evaluator.params[0]}
+            </div>
+          </>
+        )}
+      </div>
+      <div className={styles.container}>
+        {unloadEvaluator && (
+          <>
+            <div className={styles.label}>Stop alerting when </div>
+            <div className={styles.value}>{expression}</div>
+
+            <>
+              <div className={styles.blue}>{unloadThresholdFunction?.label}</div>
+              <div className={styles.bold}>
+                {unloadIsRange
+                  ? `(${unloadEvaluator.params[0]}; ${unloadEvaluator.params[1]})`
+                  : unloadEvaluator.params[0]}
+              </div>
+            </>
+          </>
+        )}
+      </div>
+    </>
   );
 }
 

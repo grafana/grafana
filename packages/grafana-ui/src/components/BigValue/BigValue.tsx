@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline, VizOrientation } from '@grafana/data';
+import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline } from '@grafana/data';
 import { VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable2 } from '../../types';
@@ -9,6 +9,7 @@ import { clearButtonStyles } from '../Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 import { buildLayout } from './BigValueLayout';
+import { PercentChange } from './PercentChange';
 
 export enum BigValueColorMode {
   Background = 'background',
@@ -66,8 +67,6 @@ export interface Props extends Themeable2 {
   textMode?: BigValueTextMode;
   /** If true disables the tooltip */
   hasLinks?: boolean;
-  /** The orientation of the parent container */
-  parentOrientation?: VizOrientation;
 
   /**
    * If part of a series of stat panes, this is the total number.
@@ -94,6 +93,8 @@ export class BigValue extends PureComponent<Props> {
     const valueStyles = layout.getValueStyles();
     const titleStyles = layout.getTitleStyles();
     const textValues = layout.textValues;
+    const percentChange = this.props.value.percentChange;
+    const showPercentChange = percentChange != null && !Number.isNaN(percentChange);
 
     // When there is an outer data link this tooltip will override the outer native tooltip
     const tooltip = hasLinks ? undefined : textValues.tooltip;
@@ -104,6 +105,9 @@ export class BigValue extends PureComponent<Props> {
           <div style={valueAndTitleContainerStyles}>
             {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
             <FormattedValueDisplay value={textValues} style={valueStyles} />
+            {showPercentChange && (
+              <PercentChange percentChange={percentChange} styles={layout.getPercentChangeStyles(percentChange)} />
+            )}
           </div>
           {layout.renderChart()}
         </div>

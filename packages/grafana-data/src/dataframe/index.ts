@@ -7,5 +7,13 @@ export * from './dimensions';
 export * from './ArrayDataFrame';
 export * from './DataFrameJSON';
 export * from './frameComparisons';
-export { anySeriesWithTimeField, isTimeSeriesFrame, isTimeSeriesFrames } from './utils';
+export {
+  anySeriesWithTimeField,
+  hasTimeField,
+  isTimeSeriesFrame,
+  isTimeSeriesFrames,
+  isTimeSeriesField,
+  getRowUniqueId,
+  addRow,
+} from './utils';
 export { StreamingDataFrame, StreamingFrameAction, type StreamingFrameOptions, closestIdx } from './StreamingDataFrame';

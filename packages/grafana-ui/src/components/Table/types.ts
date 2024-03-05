@@ -2,7 +2,7 @@ import { Property } from 'csstype';
 import { FC } from 'react';
 import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
-import { DataFrame, Field, KeyValue, SelectableValue, TimeRange } from '@grafana/data';
+import { DataFrame, Field, KeyValue, SelectableValue, TimeRange, FieldConfigSource } from '@grafana/data';
 import * as schema from '@grafana/schema';
 
 import { TableStyles } from './styles';
@@ -67,8 +67,10 @@ export interface TableFooterCalc {
 }
 
 export interface GrafanaTableState extends TableState {
-  lastExpandedIndex?: number;
-  toggleRowExpandedCounter: number;
+  // We manually track this to know where to reset the row heights. This is needed because react-table removed the
+  // collapsed IDs/indexes from the state.expanded map so when collapsing we would have to do a diff of current and
+  // previous state.expanded to know what changed.
+  lastExpandedOrCollapsedIndex?: number;
 }
 
 export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
@@ -94,6 +96,10 @@ export interface Props {
   cellHeight?: schema.TableCellHeight;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
+  enableSharedCrosshair?: boolean;
+  // The index of the field value that the table will initialize scrolled to
+  initialRowIndex?: number;
+  fieldConfig?: FieldConfigSource;
 }
 
 /**
@@ -118,9 +124,19 @@ export interface TableCustomCellOptions {
   type: schema.TableCellDisplayMode.Custom;
 }
 
+/**
+ * @alpha
+ * Props that will be passed to the TableCustomCellOptions.cellComponent when rendered.
+ */
+export interface CustomHeaderRendererProps {
+  field: Field;
+  defaultContent: React.ReactNode;
+}
+
 // As cue/schema cannot define function types (as main point of schema is to be serializable) we have to extend the
 // types here with the dynamic API. This means right now this is not usable as a table panel option for example.
 export type TableCellOptions = schema.TableCellOptions | TableCustomCellOptions;
 export type TableFieldOptions = Omit<schema.TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
+  headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
 };

@@ -28,7 +28,6 @@ export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButt
     <GenAIButton
       messages={messages}
       onGenerate={onGenerate}
-      loadingText={'Generating title'}
       eventTrackingSrc={EventTrackingSrc.panelTitle}
       toggleTipTitle={'Improve your panel title'}
     />

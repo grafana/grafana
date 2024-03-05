@@ -5,6 +5,7 @@ import { BackendSrvRequest } from '@grafana/runtime/';
 import config from 'app/core/config';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
+import { queryBuilder } from '../../../features/variables/shared/testing/builders';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import InfluxDatasource from './datasource';
@@ -258,6 +259,7 @@ describe('InfluxDataSource Frontend Mode', () => {
     const text2 = 'interpolationText2';
     const textWithoutFormatRegex = 'interpolationText,interpolationText2';
     const textWithFormatRegex = 'interpolationText,interpolationText2';
+    const justText = 'interpolationText';
     const variableMap: Record<string, string> = {
       $interpolationVar: text,
       $interpolationVar2: text2,
@@ -285,16 +287,16 @@ describe('InfluxDataSource Frontend Mode', () => {
     const ds = new InfluxDatasource(getMockDSInstanceSettings(), templateSrv);
 
     function influxChecks(query: InfluxQuery) {
-      expect(templateSrv.replace).toBeCalledTimes(11);
+      expect(templateSrv.replace).toBeCalledTimes(12);
       expect(query.alias).toBe(text);
-      expect(query.measurement).toBe(textWithFormatRegex);
-      expect(query.policy).toBe(textWithFormatRegex);
-      expect(query.limit).toBe(textWithFormatRegex);
-      expect(query.slimit).toBe(textWithFormatRegex);
+      expect(query.measurement).toBe(justText);
+      expect(query.policy).toBe(justText);
+      expect(query.limit).toBe(justText);
+      expect(query.slimit).toBe(justText);
       expect(query.tz).toBe(text);
       expect(query.tags![0].value).toBe(textWithFormatRegex);
-      expect(query.groupBy![0].params![0]).toBe(textWithFormatRegex);
-      expect(query.select![0][0].params![0]).toBe(textWithFormatRegex);
+      expect(query.groupBy![0].params![0]).toBe(justText);
+      expect(query.select![0][0].params![0]).toBe(justText);
       expect(query.adhocFilters?.[0].key).toBe(adhocFilters[0].key);
     }
 
@@ -342,7 +344,12 @@ describe('InfluxDataSource Frontend Mode', () => {
     });
 
     describe('variable interpolation with chained variables with frontend mode', () => {
-      const mockTemplateService = new TemplateSrv();
+      const variablesMock = [queryBuilder().withId('var1').withName('var1').withCurrent('var1').build()];
+      const mockTemplateService = new TemplateSrv({
+        getVariables: () => variablesMock,
+        getVariableWithName: (name: string) => variablesMock.filter((v) => v.name === name)[0],
+        getFilteredVariables: jest.fn(),
+      });
       mockTemplateService.getAdhocFilters = jest.fn((_: string) => []);
       let ds = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
       const fetchMockImpl = () =>
@@ -407,6 +414,99 @@ describe('InfluxDataSource Frontend Mode', () => {
         const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1 AND agent_url =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/`;
         const qData = decodeURIComponent(fetchMock.mock.calls[0][0].data.substring(2));
         expect(qData).toBe(qe);
+      });
+    });
+
+    describe('interpolateQueryExpr', () => {
+      let ds = getMockInfluxDS(getMockDSInstanceSettings(), new TemplateSrv());
+      it('should return the value as it is', () => {
+        const value = 'normalValue';
+        const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+        const result = ds.interpolateQueryExpr(value, variableMock, 'my query $tempVar');
+        const expectation = 'normalValue';
+        expect(result).toBe(expectation);
+      });
+
+      it('should return the escaped value if the value wrapped in regex', () => {
+        const value = '/special/path';
+        const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+        const result = ds.interpolateQueryExpr(value, variableMock, 'select that where path = /$tempVar/');
+        const expectation = `\\/special\\/path`;
+        expect(result).toBe(expectation);
+      });
+
+      it('should return the escaped value if the value wrapped in regex 2', () => {
+        const value = '/special/path';
+        const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+        const result = ds.interpolateQueryExpr(value, variableMock, 'select that where path = /^$tempVar$/');
+        const expectation = `\\/special\\/path`;
+        expect(result).toBe(expectation);
+      });
+
+      it('should return the escaped value if the value wrapped in regex 3', () => {
+        const value = ['env', 'env2', 'env3'];
+        const variableMock = queryBuilder()
+          .withId('tempVar')
+          .withName('tempVar')
+          .withMulti(false)
+          .withIncludeAll(true)
+          .build();
+        const result = ds.interpolateQueryExpr(value, variableMock, 'select from /^($tempVar)$/');
+        const expectation = `(env|env2|env3)`;
+        expect(result).toBe(expectation);
+      });
+
+      it('should **not** return the escaped value if the value **is not** wrapped in regex', () => {
+        const value = '/special/path';
+        const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+        const result = ds.interpolateQueryExpr(value, variableMock, `select that where path = '$tempVar'`);
+        const expectation = `/special/path`;
+        expect(result).toBe(expectation);
+      });
+
+      it('should **not** return the escaped value if the value **is not** wrapped in regex 2', () => {
+        const value = '12.2';
+        const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+        const result = ds.interpolateQueryExpr(value, variableMock, `select that where path = '$tempVar'`);
+        const expectation = `12.2`;
+        expect(result).toBe(expectation);
+      });
+
+      it('should escape the value **always** if the variable is a multi-value variable', () => {
+        const value = [`/special/path`, `/some/other/path`];
+        const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti().build();
+        const result = ds.interpolateQueryExpr(value, variableMock, `select that where path = '$tempVar'`);
+        const expectation = `(\\/special\\/path|\\/some\\/other\\/path)`;
+        expect(result).toBe(expectation);
+      });
+
+      it('should escape and join with the pipe even the variable is not multi-value', () => {
+        const variableMock = queryBuilder()
+          .withId('tempVar')
+          .withName('tempVar')
+          .withCurrent('All', '$__all')
+          .withMulti(false)
+          .withAllValue('')
+          .withIncludeAll()
+          .withOptions(
+            {
+              text: 'All',
+              value: '$__all',
+            },
+            {
+              text: `/special/path`,
+              value: `/special/path`,
+            },
+            {
+              text: `/some/other/path`,
+              value: `/some/other/path`,
+            }
+          )
+          .build();
+        const value = [`/special/path`, `/some/other/path`];
+        const result = ds.interpolateQueryExpr(value, variableMock, `select that where path = /$tempVar/`);
+        const expectation = `(\\/special\\/path|\\/some\\/other\\/path)`;
+        expect(result).toBe(expectation);
       });
     });
   });

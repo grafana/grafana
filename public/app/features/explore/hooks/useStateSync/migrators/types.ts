@@ -4,7 +4,7 @@ export interface MigrationHandler<From extends BaseExploreURL | never, To> {
   /**
    * The parse function is used to parse the URL parameters into the state object.
    */
-  parse: (params: UrlQueryMap) => To;
+  parse: (params: UrlQueryMap) => { to: To; error: boolean };
   /**
    *  the migrate function takes a state object from the previous schema version and returns a new state object
    */

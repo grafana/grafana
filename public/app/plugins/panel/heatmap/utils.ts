@@ -64,7 +64,7 @@ interface PrepConfigOpts {
   onhover?: null | ((evt?: HeatmapHoverEvent | null) => void);
   onclick?: null | ((evt?: Object) => void);
   onzoom?: null | ((evt: HeatmapZoomEvent) => void);
-  isToolTipOpen: MutableRefObject<boolean>;
+  isToolTipOpen?: MutableRefObject<boolean>;
   timeZone: string;
   getTimeRange: () => TimeRange;
   exemplarColor: string;
@@ -85,7 +85,6 @@ export function prepConfig(opts: PrepConfigOpts) {
     eventBus,
     onhover,
     onclick,
-    onzoom,
     isToolTipOpen,
     timeZone,
     getTimeRange,
@@ -143,15 +142,6 @@ export function prepConfig(opts: PrepConfigOpts) {
       );
   });
 
-  onzoom &&
-    builder.addHook('setSelect', (u) => {
-      onzoom({
-        xMin: u.posToVal(u.select.left, xScaleKey),
-        xMax: u.posToVal(u.select.left + u.select.width, xScaleKey),
-      });
-      u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
-    });
-
   if (isTime) {
     // this is a tmp hack because in mode: 2, uplot does not currently call scales.x.range() for setData() calls
     // scales.x.range() typically reads back from drilled-down panelProps.timeRange via getTimeRange()
@@ -182,7 +172,9 @@ export function prepConfig(opts: PrepConfigOpts) {
     },
     data: dataRef.current?.heatmap,
   };
-  const hoverEvent = new DataHoverEvent(payload);
+
+  const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
+  const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
 
   let pendingOnleave: ReturnType<typeof setTimeout> | 0;
 
@@ -197,7 +189,7 @@ export function prepConfig(opts: PrepConfigOpts) {
             payload.point[xScaleUnit] = u.posToVal(left!, xScaleKey);
             eventBus.publish(hoverEvent);
 
-            if (!isToolTipOpen.current) {
+            if (!isToolTipOpen?.current) {
               if (pendingOnleave) {
                 clearTimeout(pendingOnleave);
                 pendingOnleave = 0;
@@ -214,14 +206,12 @@ export function prepConfig(opts: PrepConfigOpts) {
         }
       }
 
-      if (!isToolTipOpen.current) {
+      if (!isToolTipOpen?.current) {
         // if tiles have gaps, reduce flashing / re-render (debounce onleave by 100ms)
         if (!pendingOnleave) {
           pendingOnleave = setTimeout(() => {
             onhover(null);
-            payload.rowIndex = undefined;
-            payload.point[xScaleUnit] = null;
-            eventBus.publish(hoverEvent);
+            eventBus.publish(clearEvent);
           }, 100);
         }
       }
@@ -522,13 +512,13 @@ export function prepConfig(opts: PrepConfigOpts) {
         dataRef.current?.xLayout === HeatmapCellLayout.le
           ? -1
           : dataRef.current?.xLayout === HeatmapCellLayout.ge
-          ? 1
-          : 0,
+            ? 1
+            : 0,
       yAlign: ((dataRef.current?.yLayout === HeatmapCellLayout.le
         ? -1
         : dataRef.current?.yLayout === HeatmapCellLayout.ge
-        ? 1
-        : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
+          ? 1
+          : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
       ySizeDivisor,
       disp: {
         fill: {
@@ -613,7 +603,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   if (sync && sync() !== DashboardCursorSync.Off) {
     cursor.sync = {
       key: eventsScope,
-      scales: [xScaleKey, yScaleKey],
+      scales: [xScaleKey, null],
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
           if (x < 0) {
@@ -985,8 +975,8 @@ export const valuesToFills = (values: number[], palette: string[], minValue: num
       values[i] < minValue
         ? 0
         : values[i] > maxValue
-        ? paletteSize - 1
-        : Math.min(paletteSize - 1, Math.floor((paletteSize * (values[i] - minValue)) / range));
+          ? paletteSize - 1
+          : Math.min(paletteSize - 1, Math.floor((paletteSize * (values[i] - minValue)) / range));
   }
 
   return indexedFills;

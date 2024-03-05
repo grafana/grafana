@@ -129,7 +129,7 @@ func TestProcessLogsResponse(t *testing.T) {
 			require.Equal(t, data.FieldTypeNullableFloat64, logsFieldMap["number"].Type())
 
 			require.Contains(t, logsFieldMap, "_source")
-			require.Equal(t, data.FieldTypeNullableJSON, logsFieldMap["_source"].Type())
+			require.Equal(t, data.FieldTypeNullableString, logsFieldMap["_source"].Type())
 
 			requireStringAt(t, "fdsfs", logsFieldMap["_id"], 0)
 			requireStringAt(t, "kdospaidopa", logsFieldMap["_id"], 1)
@@ -138,10 +138,8 @@ func TestProcessLogsResponse(t *testing.T) {
 			requireStringAt(t, "mock-index", logsFieldMap["_index"], 0)
 			requireStringAt(t, "mock-index", logsFieldMap["_index"], 1)
 
-			actualJson1, err := json.Marshal(logsFieldMap["_source"].At(0).(*json.RawMessage))
-			require.NoError(t, err)
-			actualJson2, err := json.Marshal(logsFieldMap["_source"].At(1).(*json.RawMessage))
-			require.NoError(t, err)
+			actualJson1 := logsFieldMap["_source"].At(0).(*string)
+			actualJson2 := logsFieldMap["_source"].At(1).(*string)
 
 			expectedJson1 := `
 					{
@@ -165,8 +163,8 @@ func TestProcessLogsResponse(t *testing.T) {
 						"fields.lvl": "info"
 					}`
 
-			require.JSONEq(t, expectedJson1, string(actualJson1))
-			require.JSONEq(t, expectedJson2, string(actualJson2))
+			require.JSONEq(t, expectedJson1, *actualJson1)
+			require.JSONEq(t, expectedJson2, *actualJson2)
 		})
 
 		t.Run("creates correct level field", func(t *testing.T) {
@@ -601,6 +599,92 @@ func TestProcessRawDataResponse(t *testing.T) {
 			require.Equal(t, filterableConfig, *field.Config)
 		}
 	})
+
+	t.Run("gets correct time field from fields", func(t *testing.T) {
+		query := []byte(`
+			[
+				{
+				  "refId": "A",
+				  "metrics": [{ "type": "raw_data", "id": "1" }]
+				}
+			]
+		`)
+
+		response := []byte(`
+			{
+				"responses": [
+				  {
+					"aggregations": {},
+					"hits": {
+					  "hits": [
+						{
+						  "_id": "fdsfs",
+						  "_type": "_doc",
+						  "_index": "mock-index",
+						  "_source": {
+							"testtime": "06/24/2019",
+							"host": "djisaodjsoad",
+							"number": 1,
+							"line": "hello, i am a message",
+							"level": "debug",
+							"fields": { "lvl": "debug" }
+						  },
+						  "highlight": {
+								"message": [
+							  	"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
+								]
+						  },
+							"fields": {
+								"testtime": [ "2019-06-24T09:51:19.765Z" ]
+							}
+						},
+						{
+						  "_id": "kdospaidopa",
+						  "_type": "_doc",
+						  "_index": "mock-index",
+						  "_source": {
+							"testtime": "06/24/2019",
+							"host": "dsalkdakdop",
+							"number": 2,
+							"line": "hello, i am also message",
+							"level": "error",
+							"fields": { "lvl": "info" }
+						  },
+						  "highlight": {
+								"message": [
+							  	"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
+								]
+						  },
+							"fields": {
+								"testtime": [ "2019-06-24T09:52:19.765Z" ]
+							}
+						}
+					  ]
+					}
+				  }
+				]
+			}
+			`)
+		result, err := queryDataTest(query, response)
+		require.NoError(t, err)
+
+		require.Len(t, result.response.Responses, 1)
+		frames := result.response.Responses["A"].Frames
+		require.Len(t, frames, 1)
+
+		logsFrame := frames[0]
+
+		logsFieldMap := make(map[string]*data.Field)
+		for _, field := range logsFrame.Fields {
+			logsFieldMap[field.Name] = field
+		}
+		t0 := time.Date(2019, time.June, 24, 9, 51, 19, 765000000, time.UTC)
+		t1 := time.Date(2019, time.June, 24, 9, 52, 19, 765000000, time.UTC)
+		require.Contains(t, logsFieldMap, "testtime")
+		require.Equal(t, data.FieldTypeNullableTime, logsFieldMap["testtime"].Type())
+		require.Equal(t, &t0, logsFieldMap["testtime"].At(0))
+		require.Equal(t, &t1, logsFieldMap["testtime"].At(1))
+	})
 }
 
 func TestProcessRawDocumentResponse(t *testing.T) {
@@ -927,7 +1011,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "p75")
+			assert.Equal(t, frame.Name, "p75")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
@@ -935,7 +1019,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "p90")
+			assert.Equal(t, frame.Name, "p90")
 		})
 	})
 
@@ -1394,7 +1478,7 @@ func TestProcessBuckets(t *testing.T) {
 			assert.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Top Metrics @value")
+			assert.Equal(t, frame.Name, "Top Metrics @value")
 			v, _ := frame.FloatAt(0, 0)
 			assert.Equal(t, 1609459200000., v)
 			v, _ = frame.FloatAt(1, 0)
@@ -1411,7 +1495,7 @@ func TestProcessBuckets(t *testing.T) {
 			assert.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Top Metrics @anotherValue")
+			assert.Equal(t, frame.Name, "Top Metrics @anotherValue")
 			v, _ = frame.FloatAt(0, 0)
 			assert.Equal(t, 1609459200000., v)
 			v, _ = frame.FloatAt(1, 0)
@@ -1680,7 +1764,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1")
+			assert.Equal(t, frame.Name, "server1")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
@@ -1688,7 +1772,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2")
+			assert.Equal(t, frame.Name, "server2")
 		})
 
 		t.Run("Single group by query two metrics", func(t *testing.T) {
@@ -1749,7 +1833,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Count")
+			assert.Equal(t, frame.Name, "server1 Count")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
@@ -1757,7 +1841,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Average @value")
+			assert.Equal(t, frame.Name, "server1 Average @value")
 
 			frame = dataframes[2]
 			require.Len(t, frame.Fields, 2)
@@ -1765,7 +1849,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Count")
+			assert.Equal(t, frame.Name, "server2 Count")
 
 			frame = dataframes[3]
 			require.Len(t, frame.Fields, 2)
@@ -1773,7 +1857,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Average @value")
+			assert.Equal(t, frame.Name, "server2 Average @value")
 		})
 
 		t.Run("Simple group by 2 metrics 4 frames", func(t *testing.T) {
@@ -1901,7 +1985,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Count and {{not_exist}} server1")
+			assert.Equal(t, frame.Name, "server1 Count and {{not_exist}} server1")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
@@ -1909,7 +1993,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Count and {{not_exist}} server2")
+			assert.Equal(t, frame.Name, "server2 Count and {{not_exist}} server2")
 
 			frame = dataframes[2]
 			require.Len(t, frame.Fields, 2)
@@ -1917,7 +2001,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "0 Count and {{not_exist}} 0")
+			assert.Equal(t, frame.Name, "0 Count and {{not_exist}} 0")
 		})
 	})
 
@@ -2074,7 +2158,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 1)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Max")
+			assert.Equal(t, frame.Name, "server1 Max")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
@@ -2082,7 +2166,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 1)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Std Dev Lower")
+			assert.Equal(t, frame.Name, "server1 Std Dev Lower")
 
 			frame = dataframes[2]
 			require.Len(t, frame.Fields, 2)
@@ -2090,7 +2174,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 1)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Std Dev Upper")
+			assert.Equal(t, frame.Name, "server1 Std Dev Upper")
 
 			frame = dataframes[3]
 			require.Len(t, frame.Fields, 2)
@@ -2098,7 +2182,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 1)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Max")
+			assert.Equal(t, frame.Name, "server2 Max")
 
 			frame = dataframes[4]
 			require.Len(t, frame.Fields, 2)
@@ -2106,7 +2190,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 1)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Std Dev Lower")
+			assert.Equal(t, frame.Name, "server2 Std Dev Lower")
 
 			frame = dataframes[5]
 			require.Len(t, frame.Fields, 2)
@@ -2114,7 +2198,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 1)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Std Dev Upper")
+			assert.Equal(t, frame.Name, "server2 Std Dev Upper")
 		})
 	})
 
@@ -2206,7 +2290,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
+			assert.Equal(t, frame.Name, "Count")
 		})
 
 		t.Run("Simple query count & avg aggregation", func(t *testing.T) {
@@ -2255,7 +2339,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
+			assert.Equal(t, frame.Name, "Count")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
@@ -2264,7 +2348,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Average value")
+			assert.Equal(t, frame.Name, "Average value")
 		})
 	})
 
@@ -2438,7 +2522,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "@metric:cpu")
+			assert.Equal(t, frame.Name, "@metric:cpu")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
@@ -2446,7 +2530,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "@metric:logins.count")
+			assert.Equal(t, frame.Name, "@metric:logins.count")
 		})
 	})
 
@@ -2653,7 +2737,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 1)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Average")
+			assert.Equal(t, frame.Name, "Average")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
@@ -2661,7 +2745,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 1)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
+			assert.Equal(t, frame.Name, "Count")
 		})
 
 		t.Run("With drop first and last aggregation (string)", func(t *testing.T) {
@@ -2721,7 +2805,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 1)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Average")
+			assert.Equal(t, frame.Name, "Average")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
@@ -2729,7 +2813,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 1)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
+			assert.Equal(t, frame.Name, "Count")
 		})
 	})
 
@@ -2839,7 +2923,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Sum @value")
+			assert.Equal(t, frame.Name, "Sum @value")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
@@ -2847,7 +2931,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Max @value")
+			assert.Equal(t, frame.Name, "Max @value")
 
 			frame = dataframes[2]
 			require.Len(t, frame.Fields, 2)
@@ -2855,7 +2939,7 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, data.TimeSeriesValueFieldName)
 			require.Equal(t, frame.Fields[1].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Sum @value * Max @value")
+			assert.Equal(t, frame.Name, "Sum @value * Max @value")
 		})
 
 		t.Run("Two bucket_script", func(t *testing.T) {
@@ -3588,16 +3672,5 @@ func requireFloatAt(t *testing.T, expected float64, field *data.Field, index int
 }
 
 func requireTimeSeriesName(t *testing.T, expected string, frame *data.Frame) {
-	getField := func() *data.Field {
-		for _, field := range frame.Fields {
-			if field.Type() != data.FieldTypeTime {
-				return field
-			}
-		}
-		return nil
-	}
-
-	field := getField()
-	require.NotNil(t, expected, field.Config)
-	require.Equal(t, expected, field.Config.DisplayNameFromDS)
+	require.Equal(t, expected, frame.Name)
 }

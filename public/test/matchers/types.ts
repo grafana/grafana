@@ -2,12 +2,10 @@ import { Observable } from 'rxjs';
 
 export const OBSERVABLE_TEST_TIMEOUT_IN_MS = 1000;
 
-export type ObservableType<T> = T extends Observable<infer V> ? V : never;
-
 export interface ObservableMatchers<R, T = {}> extends jest.ExpectExtendMap {
-  toEmitValues<E = ObservableType<T>>(received: T, expected: E[]): Promise<jest.CustomMatcherResult>;
-  toEmitValuesWith<E = ObservableType<T>>(
-    received: T,
-    expectations: (received: E[]) => void
+  toEmitValues<T>(received: Observable<T>, expected: T[]): Promise<jest.CustomMatcherResult>;
+  toEmitValuesWith<T>(
+    received: Observable<T>,
+    expectations: (received: T[]) => void
   ): Promise<jest.CustomMatcherResult>;
 }

@@ -54,9 +54,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     footer: css`
       height: 60px;
-      margin-top: ${theme.spacing(3)};
       display: flex;
       justify-content: center;
+      align-items: center;
       font-weight: ${theme.typography.fontWeightLight};
       font-size: ${theme.typography.bodySmall.fontSize};
       a {
@@ -166,7 +166,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
         )}
         {!loading &&
           queries.map((q) => {
-            return <RichHistoryCard query={q} key={q.id} exploreId={exploreId} />;
+            return <RichHistoryCard queryHistoryItem={q} key={q.id} exploreId={exploreId} />;
           })}
         {queries.length && queries.length !== totalQueries ? (
           <div>

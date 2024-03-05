@@ -53,7 +53,6 @@ func newFlowTestDsInfo(body []byte, statusCode int, requestCallback func(req *ht
 		Interval:                   "Daily",
 		Database:                   "[testdb-]YYYY.MM.DD",
 		ConfiguredFields:           configuredFields,
-		TimeInterval:               "1s",
 		URL:                        "http://localhost:9200",
 		HTTPClient:                 &client,
 		MaxConcurrentShardRequests: 42,

@@ -39,6 +39,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it to the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolder(t, sc, "Folder")
+				// nolint:staticcheck
 				command := getCreatePanelCommand(folder.ID, "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
@@ -181,6 +182,7 @@ func TestLibraryElementCreatePermissions(t *testing.T) {
 					1: testCase.permissions,
 				}
 
+				// nolint:staticcheck
 				command := getCreatePanelCommand(folder.ID, "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
@@ -233,6 +235,7 @@ func TestLibraryElementPatchPermissions(t *testing.T) {
 		testScenario(t, testCase.desc,
 			func(t *testing.T, sc scenarioContext) {
 				fromFolder := createFolder(t, sc, "FromFolder")
+				// nolint:staticcheck
 				command := getCreatePanelCommand(fromFolder.ID, "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
@@ -294,6 +297,7 @@ func TestLibraryElementDeletePermissions(t *testing.T) {
 		testScenario(t, testCase.desc,
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolder(t, sc, "Folder")
+				// nolint:staticcheck
 				command := getCreatePanelCommand(folder.ID, "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
@@ -322,6 +326,7 @@ func TestLibraryElementsWithMissingFolders(t *testing.T) {
 	testScenario(t, "When a user tries to patch a library panel by moving it to a folder that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			folder := createFolder(t, sc, "Folder")
+			// nolint:staticcheck
 			command := getCreatePanelCommand(folder.ID, "Library Panel Name")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -361,6 +366,7 @@ func TestLibraryElementsGetPermissions(t *testing.T) {
 		testScenario(t, testCase.desc,
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolder(t, sc, "Folder")
+				// nolint:staticcheck
 				cmd := getCreatePanelCommand(folder.ID, "Library Panel")
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp := sc.service.createHandler(sc.reqContext)
@@ -411,6 +417,7 @@ func TestLibraryElementsGetAllPermissions(t *testing.T) {
 			func(t *testing.T, sc scenarioContext) {
 				for i := 1; i <= 2; i++ {
 					folder := createFolder(t, sc, fmt.Sprintf("Folder%d", i))
+					// nolint:staticcheck
 					cmd := getCreatePanelCommand(folder.ID, fmt.Sprintf("Library Panel %d", i))
 					sc.reqContext.Req.Body = mockRequestBody(cmd)
 					resp := sc.service.createHandler(sc.reqContext)

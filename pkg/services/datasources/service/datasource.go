@@ -188,17 +188,30 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 }
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
-	var dataSource *datasources.DataSource
-
-	if err := validateFields(cmd.Name, cmd.URL); err != nil {
-		return dataSource, err
+	dataSources, err := s.SQLStore.GetDataSources(ctx, &datasources.GetDataSourcesQuery{OrgID: cmd.OrgID})
+	if err != nil {
+		return nil, err
 	}
 
+	// Set the first created data source as default
+	if len(dataSources) == 0 {
+		cmd.IsDefault = true
+	}
+
+	if cmd.Name == "" {
+		cmd.Name = getAvailableName(cmd.Type, dataSources)
+	}
+
+	if err := validateFields(cmd.Name, cmd.URL); err != nil {
+		return nil, err
+	}
+
+	var dataSource *datasources.DataSource
 	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
-		if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
+		if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableSecretsCompatibility) {
 			cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 			if err != nil {
 				return err
@@ -236,13 +249,35 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	})
 }
 
+// getAvailableName finds the first available name for a datasource of the given type.
+func getAvailableName(dsType string, dataSources []*datasources.DataSource) string {
+	dsNames := make(map[string]bool)
+	for _, ds := range dataSources {
+		dsNames[strings.ToLower(ds.Name)] = true
+	}
+
+	name := dsType
+	currentDigit := 0
+
+	for dsNames[strings.ToLower(name)] {
+		currentDigit++
+		name = fmt.Sprintf("%s-%d", dsType, currentDigit)
+	}
+
+	return name
+}
+
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	return s.db.InTransaction(ctx, func(ctx context.Context) error {
 		cmd.UpdateSecretFn = func() error {
 			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType)
 		}
 
-		return s.SQLStore.DeleteDataSource(ctx, cmd)
+		if err := s.SQLStore.DeleteDataSource(ctx, cmd); err != nil {
+			return err
+		}
+
+		return s.permissionsService.DeleteResourcePermissions(ctx, cmd.OrgID, cmd.UID)
 	})
 }
 
@@ -497,11 +532,12 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 			},
 			Timeouts: &sdkproxy.DefaultTimeoutOptions,
 			ClientCfg: &sdkproxy.ClientCfg{
-				ClientCert:   s.cfg.SecureSocksDSProxy.ClientCert,
-				ClientKey:    s.cfg.SecureSocksDSProxy.ClientKey,
-				RootCA:       s.cfg.SecureSocksDSProxy.RootCA,
-				ProxyAddress: s.cfg.SecureSocksDSProxy.ProxyAddress,
-				ServerName:   s.cfg.SecureSocksDSProxy.ServerName,
+				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCert,
+				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKey,
+				RootCA:        s.cfg.SecureSocksDSProxy.RootCA,
+				ProxyAddress:  s.cfg.SecureSocksDSProxy.ProxyAddress,
+				ServerName:    s.cfg.SecureSocksDSProxy.ServerName,
+				AllowInsecure: s.cfg.SecureSocksDSProxy.AllowInsecure,
 			},
 		}
 
@@ -518,7 +554,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		opts.ProxyOptions = proxyOpts
 	}
 
-	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) && setting.SigV4AuthEnabled {
+	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) && s.cfg.SigV4AuthEnabled {
 		opts.SigV4 = &sdkhttpclient.SigV4Config{
 			Service:       awsServiceNamespace(ds.Type, ds.JsonData),
 			Region:        ds.JsonData.Get("sigV4Region").MustString(),
@@ -639,7 +675,7 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 		// skip a header with name that corresponds to auth proxy header's name
 		// to make sure that data source proxy isn't used to circumvent auth proxy.
 		// For more context take a look at CVE-2022-35957
-		if s.cfg.AuthProxyEnabled && http.CanonicalHeaderKey(key) == http.CanonicalHeaderKey(s.cfg.AuthProxyHeaderName) {
+		if s.cfg.AuthProxy.Enabled && http.CanonicalHeaderKey(key) == http.CanonicalHeaderKey(s.cfg.AuthProxy.HeaderName) {
 			continue
 		}
 
@@ -689,7 +725,7 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 	}
 
 	cmd.EncryptedSecureJsonData = make(map[string][]byte)
-	if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableSecretsCompatibility) {
 		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 		if err != nil {
 			return err

@@ -32,7 +32,6 @@ export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDes
     <GenAIButton
       messages={messages}
       onGenerate={onGenerate}
-      loadingText={'Generating description'}
       eventTrackingSrc={EventTrackingSrc.panelDescription}
       toggleTipTitle={'Improve your panel description'}
     />

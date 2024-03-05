@@ -11,8 +11,17 @@ import {
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
-import { setRunRequest } from '@grafana/runtime';
-import { ConstantVariable, CustomVariable, DataSourceVariable, QueryVariable, SceneVariableSet } from '@grafana/scenes';
+import { config, setRunRequest } from '@grafana/runtime';
+import {
+  AdHocFiltersVariable,
+  ConstantVariable,
+  CustomVariable,
+  DataSourceVariable,
+  GroupByVariable,
+  QueryVariable,
+  SceneVariableSet,
+  TextBoxVariable,
+} from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
@@ -91,6 +100,7 @@ describe('sceneVariablesSetToVariables', () => {
       allValue: 'test-all',
       isMulti: true,
     });
+
     const set = new SceneVariableSet({
       variables: [variable],
     });
@@ -113,6 +123,58 @@ describe('sceneVariablesSetToVariables', () => {
         "type": "fake-std",
         "uid": "fake-std",
       },
+      "definition": undefined,
+      "description": "test-desc",
+      "includeAll": true,
+      "label": "test-label",
+      "multi": true,
+      "name": "test",
+      "options": [],
+      "query": "query",
+      "refresh": 1,
+      "regex": "",
+      "type": "query",
+    }
+    `);
+  });
+
+  it('should handle QueryVariable with definition set', () => {
+    const variable = new QueryVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      value: ['selected-value'],
+      text: ['selected-value-text'],
+      datasource: { uid: 'fake-std', type: 'fake-std' },
+      query: 'query',
+      definition: 'query',
+      includeAll: true,
+      allValue: 'test-all',
+      isMulti: true,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "allValue": "test-all",
+      "current": {
+        "text": [
+          "selected-value-text",
+        ],
+        "value": [
+          "selected-value",
+        ],
+      },
+      "datasource": {
+        "type": "fake-std",
+        "uid": "fake-std",
+      },
+      "definition": "query",
       "description": "test-desc",
       "includeAll": true,
       "label": "test-label",
@@ -252,5 +314,180 @@ describe('sceneVariablesSetToVariables', () => {
       "type": "constant",
     }
     `);
+  });
+
+  it('should handle TextBoxVariable', () => {
+    const variable = new TextBoxVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      value: 'text value',
+      skipUrlSync: true,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "current": {
+        "text": "text value",
+        "value": "text value",
+      },
+      "description": "test-desc",
+      "label": "test-label",
+      "name": "test",
+      "query": "text value",
+      "skipUrlSync": true,
+      "type": "textbox",
+    }
+    `);
+  });
+
+  it('should handle AdHocFiltersVariable', () => {
+    const variable = new AdHocFiltersVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      datasource: { uid: 'fake-std', type: 'fake-std' },
+      filters: [
+        {
+          key: 'filterTest',
+          operator: '=',
+          value: 'test',
+        },
+      ],
+      baseFilters: [
+        {
+          key: 'baseFilterTest',
+          operator: '=',
+          value: 'test',
+        },
+      ],
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "baseFilters": [
+        {
+          "key": "baseFilterTest",
+          "operator": "=",
+          "value": "test",
+        },
+      ],
+      "datasource": {
+        "type": "fake-std",
+        "uid": "fake-std",
+      },
+      "description": "test-desc",
+      "filters": [
+        {
+          "key": "filterTest",
+          "operator": "=",
+          "value": "test",
+        },
+      ],
+      "label": "test-label",
+      "name": "test",
+      "type": "adhoc",
+    }
+    `);
+  });
+
+  describe('when the groupByVariable feature toggle is enabled', () => {
+    beforeAll(() => {
+      config.featureToggles.groupByVariable = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.groupByVariable = false;
+    });
+
+    it('should handle GroupByVariable', () => {
+      const variable = new GroupByVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        datasource: { uid: 'fake-std', type: 'fake-std' },
+        defaultOptions: [
+          {
+            text: 'Foo',
+            value: 'foo',
+          },
+          {
+            text: 'Bar',
+            value: 'bar',
+          },
+        ],
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToVariables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchInlineSnapshot(`
+      {
+        "current": {
+          "text": [],
+          "value": [],
+        },
+        "datasource": {
+          "type": "fake-std",
+          "uid": "fake-std",
+        },
+        "description": "test-desc",
+        "label": "test-label",
+        "name": "test",
+        "options": [
+          {
+            "text": "Foo",
+            "value": "foo",
+          },
+          {
+            "text": "Bar",
+            "value": "bar",
+          },
+        ],
+        "type": "groupby",
+      }
+      `);
+    });
+  });
+
+  describe('when the groupByVariable feature toggle is disabled', () => {
+    it('should not handle GroupByVariable and throw an error', () => {
+      const variable = new GroupByVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        datasource: { uid: 'fake-std', type: 'fake-std' },
+        defaultOptions: [
+          {
+            text: 'Foo',
+            value: 'foo',
+          },
+          {
+            text: 'Bar',
+            value: 'bar',
+          },
+        ],
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      expect(() => sceneVariablesSetToVariables(set)).toThrow('Unsupported variable type');
+    });
   });
 });
