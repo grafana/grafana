@@ -28,6 +28,12 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			SubTitle: "Extend the Grafana experience with plugins",
 			Icon:     "plug",
 			Url:      s.cfg.AppSubURL + "/plugins",
+		}, &navtree.NavLink{
+			Text:     "Extensions",
+			Id:       "extensions",
+			SubTitle: "Extend the Grafana UI or other plugins using extensions",
+			Icon:     "plug",
+			Url:      s.cfg.AppSubURL + "/extensions",
 		})
 	}
 
