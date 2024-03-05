@@ -65,7 +65,7 @@ func TestService(t *testing.T) {
 			t.Run("creates correct request", func(t *testing.T) {
 				f := &fakeHTTPClientProvider{}
 				httpProvider := getMockPromTestSDKProvider(f)
-				service := NewService(httpProvider, backend.NewLoggerWith("logger", "test"))
+				service := NewService(httpProvider, backend.NewLoggerWith("logger", "test"), []httpclient.Middleware{})
 
 				req := &backend.CallResourceRequest{
 					PluginContext: backend.PluginContext{

@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	prometheuslibrary "github.com/grafana/grafana/pkg/prometheus-library"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/azureauth"
 )
 
 type Service struct {
@@ -17,7 +18,7 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	plog := backend.NewLoggerWith("logger", "tsdb.prometheus")
 	plog.Debug("Initializing")
 	return &Service{
-		lib: prometheuslibrary.NewService(httpClientProvider, plog),
+		lib: prometheuslibrary.NewService(httpClientProvider, plog, azureauth.ExtendClientOpts),
 	}
 }
 

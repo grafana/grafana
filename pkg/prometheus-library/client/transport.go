@@ -11,13 +11,11 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
-	// "github.com/grafana/grafana/pkg/prometheus-library/azureauth"
 	"github.com/grafana/grafana/pkg/prometheus-library/middleware"
 	"github.com/grafana/grafana/pkg/prometheus-library/utils"
 )
 
-// CreateTransportOptions creates options for the http client. Probably should be shared and should not live in the
-// buffered package.
+// CreateTransportOptions creates options for the http client.
 func CreateTransportOptions(ctx context.Context, settings backend.DataSourceInstanceSettings, logger log.Logger) (*sdkhttpclient.Options, error) {
 	opts, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
@@ -31,25 +29,6 @@ func CreateTransportOptions(ctx context.Context, settings backend.DataSourceInst
 	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
 
 	opts.Middlewares = middlewares(logger, httpMethod)
-
-	// // Set SigV4 service namespace
-	// if opts.SigV4 != nil {
-	// 	opts.SigV4.Service = "aps"
-	// }
-	//
-	// azureSettings, err := azsettings.ReadSettings(ctx)
-	// if err != nil {
-	// 	logger.Error("failed to read Azure settings from Grafana", "error", err.Error())
-	// 	return nil, fmt.Errorf("failed to read Azure settings from Grafana: %v", err)
-	// }
-	//
-	// // Set Azure authentication
-	// if azureSettings.AzureAuthEnabled {
-	// 	err = azureauth.ConfigureAzureAuthentication(settings, azureSettings, &opts)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("error configuring Azure auth: %v", err)
-	// 	}
-	// }
 
 	return &opts, nil
 }

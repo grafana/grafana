@@ -26,7 +26,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
+		err := configureAzureAuthentication(settings, azureSettings, opts)
 		require.NoError(t, err)
 
 		require.NotNil(t, opts.Middlewares)
@@ -40,7 +40,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
+		err := configureAzureAuthentication(settings, azureSettings, opts)
 		require.NoError(t, err)
 
 		assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
@@ -55,7 +55,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 		}
 
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
-		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
+		err := configureAzureAuthentication(settings, azureSettings, opts)
 		assert.Error(t, err)
 	})
 
@@ -71,7 +71,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 		}
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
+		err := configureAzureAuthentication(settings, azureSettings, opts)
 		require.NoError(t, err)
 
 		require.NotNil(t, opts.Middlewares)
@@ -87,7 +87,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 		}
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
+		err := configureAzureAuthentication(settings, azureSettings, opts)
 		require.NoError(t, err)
 
 		if opts.Middlewares != nil {
@@ -108,7 +108,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
+		err := configureAzureAuthentication(settings, azureSettings, opts)
 		assert.Error(t, err)
 	})
 }
