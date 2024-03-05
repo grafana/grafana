@@ -29,26 +29,21 @@ import (
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
 func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
-	snode, err := snowflake.NewNode(rand.Int63n(1024))
-	if err != nil {
-		return nil, err
-	}
-
 	entityServer := &sqlEntityServer{
-		db:        db,
-		log:       log.New("sql-entity-server"),
-		snowflake: snode,
+		db:  db,
+		log: log.New("sql-entity-server"),
 	}
 
 	return entityServer, nil
 }
 
 type sqlEntityServer struct {
-	log       log.Logger
-	db        db.EntityDBInterface // needed to keep xorm engine in scope
-	sess      *session.SessionDB
-	dialect   migrator.Dialect
-	snowflake *snowflake.Node
+	log         log.Logger
+	db          db.EntityDBInterface // needed to keep xorm engine in scope
+	sess        *session.SessionDB
+	dialect     migrator.Dialect
+	snowflake   *snowflake.Node
+	broadcaster Broadcaster[*entity.Entity]
 }
 
 func (s *sqlEntityServer) Init() error {
@@ -77,6 +72,24 @@ func (s *sqlEntityServer) Init() error {
 
 	s.sess = sess
 	s.dialect = migrator.NewDialect(engine.DriverName())
+
+	// initialize snowflake generator
+	s.snowflake, err = snowflake.NewNode(rand.Int63n(1024))
+	if err != nil {
+		return err
+	}
+
+	// set up the broadcaster
+	s.broadcaster, err = NewBroadcaster(context.Background(), func(stream chan *entity.Entity) error {
+		// start the poller
+		go s.poller(stream)
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -92,6 +105,7 @@ func (s *sqlEntityServer) getReadFields(r *entity.ReadEntityRequest) []string {
 		"meta",
 		"title", "slug", "description", "labels", "fields",
 		"message",
+		"action",
 	}
 
 	if r.WithBody {
@@ -138,6 +152,7 @@ func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *en
 		&raw.Meta,
 		&raw.Title, &raw.Slug, &raw.Description, &labels, &fields,
 		&raw.Message,
+		&raw.Action,
 	}
 	if r.WithBody {
 		args = append(args, &raw.Body)
@@ -423,7 +438,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			current.Message = r.Entity.Message
 		}
 
-		// Update version
+		// Update resource version
 		current.ResourceVersion = s.snowflake.Generate().Int64()
 
 		values := map[string]any{
@@ -455,6 +470,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			"origin_key":       current.Origin.Key,
 			"origin_ts":        current.Origin.Time,
 			"message":          current.Message,
+			"action":           entity.Entity_CREATED,
 		}
 
 		// 1. Add row to the `entity_history` values
@@ -627,7 +643,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			current.Message = r.Entity.Message
 		}
 
-		// Update version
+		// Update resource version
 		current.ResourceVersion = s.snowflake.Generate().Int64()
 
 		values := map[string]any{
@@ -661,6 +677,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			"origin_key":       current.Origin.Key,
 			"origin_ts":        current.Origin.Time,
 			"message":          current.Message,
+			"action":           entity.Entity_UPDATED,
 		}
 
 		// 1. Add the `entity_history` values
@@ -680,6 +697,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		delete(values, "name")
 		delete(values, "created_at")
 		delete(values, "created_by")
+		delete(values, "action")
 
 		err = s.dialect.Update(
 			ctx,
@@ -792,13 +810,68 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 }
 
 func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, ent *entity.Entity) error {
-	_, err := tx.Exec(ctx, "DELETE FROM entity WHERE guid=?", ent.Guid)
+	// Update resource version
+	ent.ResourceVersion = s.snowflake.Generate().Int64()
+
+	labels, err := json.Marshal(ent.Labels)
 	if err != nil {
+		s.log.Error("error marshalling labels", "msg", err.Error())
 		return err
 	}
 
-	// TODO: keep history? would need current version bump, and the "write" would have to get from history
-	_, err = tx.Exec(ctx, "DELETE FROM entity_history WHERE guid=?", ent.Guid)
+	fields, err := json.Marshal(ent.Fields)
+	if err != nil {
+		s.log.Error("error marshalling fields", "msg", err.Error())
+		return err
+	}
+
+	errors, err := json.Marshal(ent.Errors)
+	if err != nil {
+		s.log.Error("error marshalling errors", "msg", err.Error())
+		return err
+	}
+
+	values := map[string]any{
+		// below are only set in history table
+		"guid":       ent.Guid,
+		"key":        ent.Key,
+		"namespace":  ent.Namespace,
+		"group":      ent.Group,
+		"resource":   ent.Resource,
+		"name":       ent.Name,
+		"created_at": ent.CreatedAt,
+		"created_by": ent.CreatedBy,
+		// below are updated
+		"group_version":    ent.GroupVersion,
+		"folder":           ent.Folder,
+		"slug":             ent.Slug,
+		"updated_at":       ent.UpdatedAt,
+		"updated_by":       ent.UpdatedBy,
+		"body":             ent.Body,
+		"meta":             ent.Meta,
+		"status":           ent.Status,
+		"size":             ent.Size,
+		"etag":             ent.ETag,
+		"resource_version": ent.ResourceVersion,
+		"title":            ent.Title,
+		"description":      ent.Description,
+		"labels":           labels,
+		"fields":           fields,
+		"errors":           errors,
+		"origin":           ent.Origin.Source,
+		"origin_key":       ent.Origin.Key,
+		"origin_ts":        ent.Origin.Time,
+		"message":          ent.Message,
+		"action":           entity.Entity_DELETED,
+	}
+
+	// 1. Add the `entity_history` values
+	if err := s.dialect.Insert(ctx, tx, "entity_history", values); err != nil {
+		s.log.Error("error inserting entity history", "msg", err.Error())
+		return err
+	}
+
+	_, err = tx.Exec(ctx, "DELETE FROM entity WHERE guid=?", ent.Guid)
 	if err != nil {
 		return err
 	}
@@ -1106,12 +1179,356 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	return rsp, err
 }
 
-func (s *sqlEntityServer) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
+func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
 	if err := s.Init(); err != nil {
 		return err
 	}
 
-	return fmt.Errorf("unimplemented")
+	user, err := appcontext.User(w.Context())
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("missing user in context")
+	}
+
+	// collect and send any historical events
+	err = s.watchInit(w.Context(), r, w)
+	if err != nil {
+		return err
+	}
+
+	// subscribe to new events
+	err = s.watch(w.Context(), r, w)
+	if err != nil {
+		s.log.Error("watch error", "err", err)
+		return err
+	}
+
+	return nil
+}
+
+// watchInit is a helper function to send the initial set of entities to the client
+func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+	rr := &entity.ReadEntityRequest{
+		WithBody:   r.WithBody,
+		WithStatus: r.WithStatus,
+	}
+
+	fields := s.getReadFields(rr)
+
+	entityQuery := selectQuery{
+		dialect:  s.dialect,
+		fields:   fields,
+		from:     "entity", // the table
+		args:     []any{},
+		limit:    100,  // r.Limit,
+		oneExtra: true, // request one more than the limit (and show next token if it exists)
+	}
+
+	// if we got an initial resource version, start from that location in the history
+	fromZero := true
+	if r.Since > 0 {
+		entityQuery.from = "entity_history"
+		entityQuery.addWhere("resource_version > ?", r.Since)
+		fromZero = false
+	}
+
+	// TODO fix this
+	// entityQuery.addWhere("namespace", user.OrgID)
+
+	if len(r.Resource) > 0 {
+		entityQuery.addWhereIn("resource", r.Resource)
+	}
+
+	if len(r.Key) > 0 {
+		where := []string{}
+		args := []any{}
+		for _, k := range r.Key {
+			key, err := entity.ParseKey(k)
+			if err != nil {
+				return err
+			}
+
+			args = append(args, key.Namespace, key.Group, key.Resource)
+			whereclause := "(" + s.dialect.Quote("namespace") + "=? AND " + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
+			if key.Name != "" {
+				args = append(args, key.Name)
+				whereclause += " AND " + s.dialect.Quote("name") + "=?"
+			}
+			whereclause += ")"
+
+			where = append(where, whereclause)
+		}
+
+		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)
+	}
+
+	// Folder guid
+	if r.Folder != "" {
+		entityQuery.addWhere("folder", r.Folder)
+	}
+
+	if len(r.Labels) > 0 {
+		var args []any
+		var conditions []string
+		for labelKey, labelValue := range r.Labels {
+			args = append(args, labelKey)
+			args = append(args, labelValue)
+			conditions = append(conditions, "(label = ? AND value = ?)")
+		}
+		query := "SELECT guid FROM entity_labels" +
+			" WHERE (" + strings.Join(conditions, " OR ") + ")" +
+			" GROUP BY guid" +
+			" HAVING COUNT(label) = ?"
+		args = append(args, len(r.Labels))
+
+		entityQuery.addWhereInSubquery("guid", query, args)
+	}
+
+	entityQuery.addOrderBy("resource_version", Ascending)
+
+	var err error
+
+	s.log.Debug("watch init", "since", r.Since)
+
+	for hasmore := true; hasmore; {
+		err = func() error {
+			query, args := entityQuery.toQuery()
+
+			rows, err := s.sess.Query(ctx, query, args...)
+			if err != nil {
+				return err
+			}
+			defer func() { _ = rows.Close() }()
+
+			found := int64(0)
+
+			for rows.Next() {
+				found++
+				if found > entityQuery.limit {
+					entityQuery.offset += entityQuery.limit
+					return nil
+				}
+
+				result, err := s.rowToEntity(ctx, rows, rr)
+				if err != nil {
+					return err
+				}
+
+				if result.ResourceVersion > r.Since {
+					r.Since = result.ResourceVersion
+				}
+
+				if fromZero {
+					result.Action = entity.Entity_CREATED
+				}
+
+				s.log.Debug("sending init event", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
+				err = w.Send(&entity.EntityWatchResponse{
+					Timestamp: time.Now().UnixMilli(),
+					Entity:    result,
+				})
+				if err != nil {
+					return err
+				}
+			}
+
+			hasmore = false
+			return nil
+		}()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *sqlEntityServer) poller(stream chan *entity.Entity) {
+	var err error
+	since := s.snowflake.Generate().Int64()
+
+	t := time.NewTicker(5 * time.Second)
+	defer t.Stop()
+
+	for range t.C {
+		since, err = s.poll(context.Background(), since, stream)
+		if err != nil {
+			s.log.Error("watch error", "err", err)
+		}
+	}
+}
+
+func (s *sqlEntityServer) poll(ctx context.Context, since int64, out chan *entity.Entity) (int64, error) {
+	s.log.Debug("watch poll", "since", since)
+
+	rr := &entity.ReadEntityRequest{
+		WithBody:   true,
+		WithStatus: true,
+	}
+
+	fields := s.getReadFields(rr)
+
+	for hasmore := true; hasmore; {
+		err := func() error {
+			entityQuery := selectQuery{
+				dialect: s.dialect,
+				fields:  fields,
+				from:    "entity_history", // the table
+				args:    []any{},
+				limit:   100, // r.Limit,
+				// offset:   0,
+				oneExtra: true, // request one more than the limit (and show next token if it exists)
+				orderBy:  []string{"resource_version"},
+			}
+
+			entityQuery.addWhere("resource_version > ?", since)
+
+			query, args := entityQuery.toQuery()
+
+			rows, err := s.sess.Query(ctx, query, args...)
+			if err != nil {
+				return err
+			}
+			defer func() { _ = rows.Close() }()
+
+			found := int64(0)
+			for rows.Next() {
+				found++
+				if found > entityQuery.limit {
+					return nil
+				}
+
+				result, err := s.rowToEntity(ctx, rows, rr)
+				if err != nil {
+					return err
+				}
+
+				if result.ResourceVersion > since {
+					since = result.ResourceVersion
+				}
+
+				s.log.Debug("sending poll result", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
+				out <- result
+			}
+
+			hasmore = false
+			return nil
+		}()
+		if err != nil {
+			return since, err
+		}
+	}
+
+	return since, nil
+}
+
+func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
+	// Resource version too old
+	if result.ResourceVersion <= r.Since {
+		return false
+	}
+
+	// Folder guid
+	if r.Folder != "" && r.Folder != result.Folder {
+		return false
+	}
+
+	// must match at least one resource if specified
+	if len(r.Resource) > 0 {
+		matched := false
+		for _, res := range r.Resource {
+			if res == result.Resource {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	// must match at least one key if specified
+	if len(r.Key) > 0 {
+		matched := false
+		for _, k := range r.Key {
+			key, err := entity.ParseKey(k)
+			if err != nil {
+				return false
+			}
+
+			if key.Namespace == result.Namespace && key.Group == result.Group && key.Resource == result.Resource && (key.Name == "" || key.Name == result.Name) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	// must match at least one label/value pair if specified
+	// TODO should this require matching all label conditions?
+	if len(r.Labels) > 0 {
+		matched := false
+		for labelKey, labelValue := range r.Labels {
+			if result.Labels[labelKey] == labelValue {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	return true
+}
+
+// watch is a helper to get the next set of entities and send them to the client
+func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+	s.log.Debug("watch started", "since", r.Since)
+
+	evts, err := s.broadcaster.Subscribe(w.Context())
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		// user closed the connection
+		case <-w.Context().Done():
+			return nil
+		// got a raw result from the broadcaster
+		case result := <-evts:
+			// result doesn't match our watch params, skip it
+			if !watchMatches(r, result) {
+				s.log.Debug("watch result not matched", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
+				break
+			}
+
+			// remove the body and status if not requested
+			if !r.WithBody {
+				result.Body = nil
+			}
+			if !r.WithStatus {
+				result.Status = nil
+			}
+
+			// update r.Since value so we don't send earlier results again
+			r.Since = result.ResourceVersion
+
+			s.log.Debug("sending watch result", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
+			err = w.Send(&entity.EntityWatchResponse{
+				Timestamp: time.Now().UnixMilli(),
+				Entity:    result,
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
 }
 
 func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntityListResponse, error) {
