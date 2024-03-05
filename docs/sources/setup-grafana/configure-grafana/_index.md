@@ -290,7 +290,7 @@ Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
 Controls whether `cert_key` and `cert_file` are periodically watched for changes.
 Disabled, by default. When enabled, `cert_key` and `cert_file`
-are watched for changes, if there is change seen then those are loaded automatically.
+are watched for changes. If there is change, the new certificates are loaded automatically.
 
 {{% admonition type="warning" %}}
 After the new certificates are loaded, connections with old certificates
