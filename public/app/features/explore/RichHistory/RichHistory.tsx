@@ -1,7 +1,7 @@
 import { debounce } from 'lodash';
 import React, { useState, useEffect } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { DataSourceApi, SelectableValue } from '@grafana/data';
 import { DataSourceRef } from '@grafana/schema';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -29,8 +29,8 @@ export const getSortOrderOptions = () =>
   ].filter((option) => supportedFeatures().availableFilters.includes(option.value));
 
 export interface DataSourceData {
-  ref: DataSourceRef;
-  name: string;
+  datasource: DataSourceApi;
+  exploreIds: string[];
 }
 
 export interface RichHistoryProps {

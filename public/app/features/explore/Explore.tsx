@@ -93,11 +93,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing(2),
     }),
     highlighted: css({
-      content: '""',
-      width: '100%',
-      height: '100%',
-      backgroundColor: theme.colors.warning.main,
-      opacity: '.5',
+      '&::before, &::after': {
+        content: "''",
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        right: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: theme.colors.warning.main,
+        opacity: '.5',
+      },
     }),
     left: css({
       marginBottom: theme.spacing(2),

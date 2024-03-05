@@ -87,7 +87,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
     const datasourceFilters =
       richHistorySettings.activeDatasourcesOnly && richHistorySettings.lastUsedDatasourceFilters
         ? richHistorySettings.lastUsedDatasourceFilters
-        : datasourceInstances.map((di) => di.name).filter((s): s is string => !!s);
+        : datasourceInstances.map((di) => di.datasource.name).filter((s): s is string => !!s);
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,
