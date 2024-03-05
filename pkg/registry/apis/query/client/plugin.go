@@ -84,9 +84,6 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest,
 	if err != nil {
 		return http.StatusBadRequest, nil, err
 	}
-	if len(headers) > 0 {
-
-	}
 
 	code := http.StatusOK
 	rsp, err := d.pluginClient.QueryData(ctx, qdr)
@@ -186,7 +183,7 @@ func (d *pluginRegistry) updatePlugins() error {
 }
 
 func getHeaders(headers []string) (map[string]string, error) {
-	if headers == nil || len(headers) == 0 {
+	if len(headers) == 0 {
 		return nil, nil
 	}
 	count := len(headers)
