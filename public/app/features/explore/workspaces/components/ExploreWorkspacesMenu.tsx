@@ -119,8 +119,8 @@ export const ExploreWorkspacesMenu = (props: Props) => {
         )}
         {isDialogOpen && (
           <NewExploreWorkspaceFormModal
-            isOpen={isOpen}
-            onCancel={() => setIsOpen(false)}
+            isOpen={isDialogOpen}
+            onCancel={() => setIsDialogOpen(false)}
             onSave={(data) => {
               setIsOpen(false);
               createExploreWorkspaceHandler(data);
