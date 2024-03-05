@@ -261,11 +261,8 @@ type FrontendSettingsDTO struct {
 	Licensing     *FrontendSettingsLicensingDTO     `json:"licensing,omitempty"`
 	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
 
-<<<<<<< HEAD
 	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
-=======
 	// Experimental Scope settings
 	ListScopesEndpoint          string `json:"listScopesEndpoint"`
 	ListDashboardScopesEndpoint string `json:"listDashboardScopesEndpoint"`
->>>>>>> a2ad94fdc8 (cfg: adds experimental scope grafana.ini settings)
 }
