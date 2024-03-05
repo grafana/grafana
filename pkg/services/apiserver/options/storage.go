@@ -8,15 +8,19 @@ import (
 	"k8s.io/apiserver/pkg/server/options"
 )
 
+// +enum
 type StorageType string
 
 const (
 	StorageTypeFile        StorageType = "file"
+	StorageTypeMemory      StorageType = "memory"
 	StorageTypeEtcd        StorageType = "etcd"
 	StorageTypeLegacy      StorageType = "legacy"
 	StorageTypeUnified     StorageType = "unified"
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
 )
+
+var StorageTypes = []StorageType{StorageTypeFile, StorageTypeMemory, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc}
 
 type StorageOptions struct {
 	StorageType StorageType
@@ -37,10 +41,10 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 func (o *StorageOptions) Validate() []error {
 	errs := []error{}
 	switch o.StorageType {
-	case StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc:
+	case StorageTypeFile, StorageTypeMemory, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc:
 		// no-op
 	default:
-		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc))
+		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeMemory, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc))
 	}
 	return errs
 }

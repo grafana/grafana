@@ -1,6 +1,7 @@
 package options
 
 import (
+	"github.com/hack-pad/hackpadfs/mem"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -88,8 +89,12 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 	if err := etcdOptions.ApplyTo(&genericConfig.Config); err != nil {
 		return err
 	}
-	// override the RESTOptionsGetter to use the file storage options getter
-	aggregatorConfig.GenericConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(dataPath, etcdOptions.StorageConfig)
+	// override the RESTOptionsGetter to use an in memory storage engine
+	fs, err := mem.NewFS()
+	if err != nil {
+		return err
+	}
+	aggregatorConfig.GenericConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(fs, etcdOptions.StorageConfig)
 
 	// prevent generic API server from installing the OpenAPI handler. Aggregator server has its own customized OpenAPI handler.
 	genericConfig.SkipOpenAPIInstallation = true

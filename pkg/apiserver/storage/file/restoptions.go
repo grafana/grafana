@@ -3,10 +3,9 @@
 package file
 
 import (
-	"os"
-	"path/filepath"
 	"time"
 
+	"github.com/hack-pad/hackpadfs"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -16,23 +15,18 @@ import (
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
 type RESTOptionsGetter struct {
-	path     string
+	fs       hackpadfs.FS
 	original storagebackend.Config
 }
 
-func NewRESTOptionsGetter(path string, originalStorageConfig storagebackend.Config) *RESTOptionsGetter {
-	if path == "" {
-		path = filepath.Join(os.TempDir(), "grafana-apiserver")
-	}
-
-	return &RESTOptionsGetter{path: path, original: originalStorageConfig}
+func NewRESTOptionsGetter(fs hackpadfs.FS, originalStorageConfig storagebackend.Config) *RESTOptionsGetter {
+	return &RESTOptionsGetter{fs: fs, original: originalStorageConfig}
 }
 
 func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
 	storageConfig := &storagebackend.ConfigForResource{
 		Config: storagebackend.Config{
 			Type:                      "file",
-			Prefix:                    r.path,
 			Transport:                 storagebackend.TransportConfig{},
 			Codec:                     r.original.Codec,
 			EncodeVersioner:           r.original.EncodeVersioner,
@@ -49,7 +43,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 
 	ret := generic.RESTOptions{
 		StorageConfig:           storageConfig,
-		Decorator:               NewStorage,
+		Decorator:               r.NewStorage,
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,
 		// k8s expects forward slashes here, we'll convert them to os path separators in the storage

@@ -4,9 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	goos "os"
 	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/grafana/dskit/services"
+	"github.com/hack-pad/hackpadfs/mem"
+	"github.com/hack-pad/hackpadfs/os"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -276,7 +281,28 @@ func (s *service) start(ctx context.Context) error {
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
 	case grafanaapiserveroptions.StorageTypeFile:
-		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
+		path := o.StorageOptions.DataPath
+		if path == "" {
+			path = filepath.Join(goos.TempDir(), "grafana-apiserver")
+		}
+		_, err := goos.Stat(path)
+		if err != nil {
+			err = goos.MkdirAll(path, 0700)
+		}
+		if err != nil {
+			return fmt.Errorf("could not establish a writable directory at path=%s", path)
+		}
+		fs, err := os.NewFS().Sub(strings.TrimPrefix(path, "/")) // windows?
+		if err != nil {
+			return err
+		}
+		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(fs, o.RecommendedOptions.Etcd.StorageConfig)
+	case grafanaapiserveroptions.StorageTypeMemory:
+		fs, err := mem.NewFS()
+		if err != nil {
+			return err
+		}
+		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(fs, o.RecommendedOptions.Etcd.StorageConfig)
 	}
 
 	// Add OpenAPI specs for each group+version

@@ -8,37 +8,37 @@ package file
 import (
 	"bytes"
 	"errors"
-	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/hack-pad/hackpadfs"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func (s *Storage) filePath(key string) string {
+func filePath(key string) string {
 	// Replace backslashes with underscores to avoid creating bogus subdirectories
 	key = strings.Replace(key, "\\", "_", -1)
-	fileName := filepath.Join(s.root, filepath.Clean(key+".json"))
+	fileName := filepath.Clean(key + ".json")
 	return fileName
 }
 
-func (s *Storage) dirPath(key string) string {
+func dirPath(key string) string {
 	// Replace backslashes with underscores to avoid creating bogus subdirectories
 	key = strings.Replace(key, "\\", "_", -1)
-	dirName := filepath.Join(s.root, filepath.Clean(key))
+	dirName := filepath.Clean(key)
 	return dirName
 }
 
-func writeFile(codec runtime.Codec, path string, obj runtime.Object) error {
+func writeFile(fs hackpadfs.FS, codec runtime.Codec, path string, obj runtime.Object) error {
 	buf := new(bytes.Buffer)
 	if err := codec.Encode(obj, buf); err != nil {
 		return err
 	}
-	return os.WriteFile(path, buf.Bytes(), 0600)
+	return hackpadfs.WriteFullFile(fs, path, buf.Bytes(), 0600)
 }
 
-func readFile(codec runtime.Codec, path string, newFunc func() runtime.Object) (runtime.Object, error) {
-	content, err := os.ReadFile(filepath.Clean(path))
+func readFile(fs hackpadfs.FS, codec runtime.Codec, path string, newFunc func() runtime.Object) (runtime.Object, error) {
+	content, err := hackpadfs.ReadFile(fs, filepath.Clean(path))
 	if err != nil {
 		return nil, err
 	}
@@ -50,16 +50,16 @@ func readFile(codec runtime.Codec, path string, newFunc func() runtime.Object) (
 	return decodedObj, nil
 }
 
-func readDirRecursive(codec runtime.Codec, path string, newFunc func() runtime.Object) ([]runtime.Object, error) {
+func readDirRecursive(hfs hackpadfs.FS, codec runtime.Codec, path string, newFunc func() runtime.Object) ([]runtime.Object, error) {
 	var objs []runtime.Object
-	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+	err := hackpadfs.WalkDir(hfs, path, func(path string, info hackpadfs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if info.IsDir() || filepath.Ext(path) != ".json" {
 			return nil
 		}
-		obj, err := readFile(codec, path, newFunc)
+		obj, err := readFile(hfs, codec, path, newFunc)
 		if err != nil {
 			return err
 		}
@@ -67,7 +67,7 @@ func readDirRecursive(codec runtime.Codec, path string, newFunc func() runtime.O
 		return nil
 	})
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
+		if errors.Is(err, hackpadfs.ErrNotExist) {
 			return objs, nil
 		}
 		return nil, err
@@ -75,18 +75,14 @@ func readDirRecursive(codec runtime.Codec, path string, newFunc func() runtime.O
 	return objs, nil
 }
 
-func deleteFile(path string) error {
-	return os.Remove(path)
-}
-
-func exists(filepath string) bool {
-	_, err := os.Stat(filepath)
+func exists(fs hackpadfs.FS, filepath string) bool {
+	_, err := hackpadfs.Stat(fs, filepath)
 	return err == nil
 }
 
-func ensureDir(dirname string) error {
-	if !exists(dirname) {
-		return os.MkdirAll(dirname, 0700)
+func ensureDir(fs hackpadfs.FS, dirname string) error {
+	if !exists(fs, dirname) {
+		return hackpadfs.MkdirAll(fs, dirname, 0700)
 	}
 	return nil
 }

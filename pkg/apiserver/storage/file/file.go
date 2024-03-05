@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/hack-pad/hackpadfs"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/conversion"
@@ -38,16 +39,18 @@ var errResourceVersionSetOnCreate = errors.New("resourceVersion should not be se
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
-	root           string
+	// The FS abstraction includes the root folder
+	fs             hackpadfs.FS
 	resourcePrefix string
-	gr             schema.GroupResource
-	codec          runtime.Codec
-	keyFunc        func(obj runtime.Object) (string, error)
-	newFunc        func() runtime.Object
-	newListFunc    func() runtime.Object
-	getAttrsFunc   storage.AttrFunc
-	trigger        storage.IndexerFuncs
-	indexers       *cache.Indexers
+
+	gr           schema.GroupResource
+	codec        runtime.Codec
+	keyFunc      func(obj runtime.Object) (string, error)
+	newFunc      func() runtime.Object
+	newListFunc  func() runtime.Object
+	getAttrsFunc storage.AttrFunc
+	trigger      storage.IndexerFuncs
+	indexers     *cache.Indexers
 
 	watchSet *WatchSet
 }
@@ -78,7 +81,7 @@ func getResourceVersion() (*uint64, error) {
 }
 
 // NewStorage instantiates a new Storage.
-func NewStorage(
+func (r *RESTOptionsGetter) NewStorage(
 	config *storagebackend.ConfigForResource,
 	resourcePrefix string,
 	keyFunc func(obj runtime.Object) (string, error),
@@ -88,13 +91,12 @@ func NewStorage(
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
 ) (storage.Interface, factory.DestroyFunc, error) {
-	root := config.Prefix
-	if err := ensureDir(root); err != nil {
-		return nil, func() {}, fmt.Errorf("could not establish a writable directory at path=%s", root)
+	if r.fs == nil {
+		return nil, func() {}, fmt.Errorf("fs is not defined")
 	}
 	ws := NewWatchSet()
 	return &Storage{
-			root:           root,
+			fs:             r.fs,
 			resourcePrefix: resourcePrefix,
 			gr:             config.GroupResource,
 			codec:          config.Codec,
@@ -120,13 +122,13 @@ func (s *Storage) Versioner() storage.Versioner {
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	filename := s.filePath(key)
-	if exists(filename) {
+	filename := filePath(key)
+	if exists(s.fs, filename) {
 		return storage.NewKeyExistsError(key, 0)
 	}
 
 	dirname := filepath.Dir(filename)
-	if err := ensureDir(dirname); err != nil {
+	if err := ensureDir(s.fs, dirname); err != nil {
 		return err
 	}
 
@@ -148,7 +150,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	if err := writeFile(s.codec, filename, obj); err != nil {
+	if err := writeFile(s.fs, s.codec, filename, obj); err != nil {
 		return err
 	}
 
@@ -186,7 +188,7 @@ func (s *Storage) Delete(
 	validateDeletion storage.ValidateObjectFunc,
 	cachedExistingObject runtime.Object,
 ) error {
-	filename := s.filePath(key)
+	filename := filePath(key)
 	var currentState runtime.Object
 	var stateIsCurrent bool
 	if cachedExistingObject != nil {
@@ -241,7 +243,7 @@ func (s *Storage) Delete(
 			return err
 		}
 
-		if err := deleteFile(filename); err != nil {
+		if err := hackpadfs.Remove(s.fs, filename); err != nil {
 			return err
 		}
 
@@ -305,8 +307,8 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
-	filename := s.filePath(key)
-	obj, err := readFile(s.codec, filename, func() runtime.Object {
+	filename := filePath(key)
+	obj, err := readFile(s.fs, s.codec, filename, func() runtime.Object {
 		return objPtr
 	})
 	if err != nil {
@@ -364,9 +366,9 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		}
 	}
 
-	dirname := s.dirPath(key)
+	dirname := dirPath(key)
 
-	objs, err := readDirRecursive(s.codec, dirname, s.newFunc)
+	objs, err := readDirRecursive(s.fs, s.codec, dirname, s.newFunc)
 	if err != nil {
 		return err
 	}
@@ -424,18 +426,18 @@ func (s *Storage) GuaranteedUpdate(
 	var res storage.ResponseMeta
 	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
 		var (
-			filename = s.filePath(key)
+			filename = filePath(key)
 
 			obj     runtime.Object
 			err     error
 			created bool
 		)
 
-		if !exists(filename) && !ignoreNotFound {
+		if !exists(s.fs, filename) && !ignoreNotFound {
 			return apierrors.NewNotFound(s.gr, s.nameFromKey(key))
 		}
 
-		obj, err = readFile(s.codec, filename, s.newFunc)
+		obj, err = readFile(s.fs, s.codec, filename, s.newFunc)
 		if err != nil {
 			// fallback to new object if the file is not found
 			obj = s.newFunc()
@@ -482,7 +484,7 @@ func (s *Storage) GuaranteedUpdate(
 		if err := s.Versioner().UpdateObject(updatedObj, *generatedRV); err != nil {
 			return err
 		}
-		if err := writeFile(s.codec, filename, updatedObj); err != nil {
+		if err := writeFile(s.fs, s.codec, filename, updatedObj); err != nil {
 			return err
 		}
 		eventType := watch.Modified
