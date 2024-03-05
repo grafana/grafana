@@ -160,6 +160,24 @@ Users looking to migrate to the new Grafana Alerting product can do so with conf
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/migrating-alerts/#upgrade-with-preview-recommended)
 
+### Return to previous
+
+<!--#grafana-frontend-platform-->
+
+_Available in public preview in all editions of Grafana_
+
+When you're browsing Grafana - for example, exploring the dashboard and metrics related to an alert - it's easy to end up far from where you started and hard get back to where you came from. The ‘Return to previous’ button is an easy way to go back to the previous context, like the alert rule that kicked off your exploration. This first release works for Alerts, and we plan to expand to other apps and features in Grafana in future releases to make it easier to navigate around.
+
+Return to Previous is rolling out across Grafana Cloud now. To try Return to Previous in self-managed Grafana, turn on the `returnToPrevious` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana v10.4 or newer.
+
+{{< video-embed src="/media/docs/grafana/2024-01-30-Return-to-previous-Enablement-Video.mp4" >}}
+
+{{< admonition type="note" >}}
+The term **context** refers to applications in Grafana like Incident and OnCall, as well as core features like Explore and Dashboards.
+
+To notice a change in your context, look at Grafana's breadcrumbs. If you go from _Home > **Dashboards**_ to _Home > **Explore**_, you've changed context. If you go from _Home > **Dashboards** > Playlist > Edit playlist_ to _Home > **Dashboards** > Reporting > Settings_, you are in the same context.
+{{< /admonition >}}
+
 ### Rule evaluation spread over the entire evaluation interval
 
 <!-- #alerting -->
@@ -197,26 +215,9 @@ We are working on adding complete support for configuring all other supported OA
 
 [Documentation](https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/)
 
-### Team LBAC for Loki
-
-<!--#identity-access-->
-
-_Available in public preview in Grafana Enterprise and Grafana Cloud_
-
-Do you need better access control over your Loki logs? Introducing Team LBAC (Label Based Access Control), a major improvement to Loki that streamlines and simplifies data source access control according to team memberships.
-
-LBAC restricts access to data by label. Within Loki, this restricts access to **logs** by label. Users who want fine-grained access to their logs within Loki can now configure user access based on team memberships through **LogQL.**
-
-This feature addresses a common challenge faced by Grafana users: managing Loki data source access for different teams. Previously, this led to the creation of numerous connections and duplicate dashboards across your Grafana instance. With Team LBAC, you can minimize the amount of data sources you have by configuring access to particular labels based only on team memberships
-
-Team LBAC rules are added to the HTTP request to the Loki data source. Setting up Team LBAC rules for any team applies those rules to teams.
-Users who want teams with a specific set of label selectors can add rules for each team.
-
-Grafana recommends you only add Team LBAC permissions for teams that should use a specific data source, and remove default `Viewer` and `Editor` query permissions. As an initial setup, we recommend defining as few rules as possible for each team, making sure that they are additive rather than negating one another. For validating rules, we recommend testing each rule in Loki Explore view. This allows you to see the logs that would be returned for the rule.
-
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/)
-
 ## Data sources
+
+> Note: the following data sources are released separately from Grafana itself. They are included here for extra visibility.
 
 ### PagerDuty enterprise data source for Grafana
 
@@ -253,21 +254,3 @@ You can find more information and how to configure the plugin [on Github](https:
 {{< figure src="/media/images/dashboards/surrealdb-dashboard-example.png" >}}
 
 [Documentation](https://grafana.com/grafana/plugins/grafana-surrealdb-datasource/)
-
-## Return to previous
-
-<!--#grafana-frontend-platform-->
-
-_Available in public preview in all editions of Grafana_
-
-When you're browsing Grafana - for example, exploring the dashboard and metrics related to an alert - it's easy to end up far from where you started and hard get back to where you came from. The ‘Return to previous’ button is an easy way to go back to the previous context, like the alert rule that kicked off your exploration. This first release works for Alerts, and we plan to expand to other apps and features in Grafana in future releases to make it easier to navigate around.
-
-Return to Previous is rolling out across Grafana Cloud now. To try Return to Previous in self-managed Grafana, turn on the `returnToPrevious` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana v10.4 or newer.
-
-{{< video-embed src="/media/docs/grafana/2024-01-30-Return-to-previous-Enablement-Video.mp4" >}}
-
-{{< admonition type="note" >}}
-The term **context** refers to applications in Grafana like Incident and OnCall, as well as core features like Explore and Dashboards.
-
-To notice a change in your context, look at Grafana's breadcrumbs. If you go from _Home > **Dashboards**_ to _Home > **Explore**_, you've changed context. If you go from _Home > **Dashboards** > Playlist > Edit playlist_ to _Home > **Dashboards** > Reporting > Settings_, you are in the same context.
-{{< /admonition >}}
