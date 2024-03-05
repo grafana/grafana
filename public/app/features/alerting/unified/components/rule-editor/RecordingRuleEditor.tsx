@@ -68,8 +68,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
         datasource: changedQuery.datasource,
         refId: changedQuery.refId,
         editorMode: changedQuery.editorMode,
-        instant: Boolean(changedQuery.instant),
-        range: Boolean(changedQuery.range),
+        queryType: changedQuery.queryType,
         legendFormat: changedQuery.legendFormat,
       },
     };
