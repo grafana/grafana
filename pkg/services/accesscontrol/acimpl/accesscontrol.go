@@ -62,7 +62,7 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 		return false, err
 	}
 
-	a.debug(ctx, user, "Evaluating resolved permissions", evaluator)
+	a.debug(ctx, user, "Evaluating resolved permissions", resolvedEvaluator)
 	return resolvedEvaluator.Evaluate(permissions), nil
 }
 
