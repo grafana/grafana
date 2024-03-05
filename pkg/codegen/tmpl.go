@@ -32,7 +32,7 @@ type (
 		From          string
 		Leader        string
 	}
-	
+
 	tvars_resource struct {
 		PackageName string
 		KindName    string
