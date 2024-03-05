@@ -56,7 +56,7 @@ export function getDefaultCredentials(): AzureCredentials {
 }
 
 export function getCredentials(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): AzureCredentials {
-  const credentials = options.jsonData.azureCredentials as AzureCredentials | undefined;
+  const credentials = options.jsonData.azureCredentials;
 
   // If no credentials saved then try to restore legacy credentials, otherwise return default credentials
   if (!credentials) {
@@ -180,9 +180,6 @@ export function updateCredentials(options: AzureDataSourceSettings, credentials:
       cloudName: undefined,
       tenantId: undefined,
       clientId: undefined,
-      logAnalyticsTenantId: undefined,
-      logAnalyticsClientId: undefined,
-      logAnalyticsSubscriptionId: undefined,
     },
   };
 

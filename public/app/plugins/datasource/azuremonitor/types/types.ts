@@ -14,21 +14,24 @@ import Datasource from '../datasource';
 import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
 import { AzureMonitorQuery, ResultFormat } from './query';
 
-type DataSourceJsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | { [x: string]: DataSourceJsonValue }
-  | DataSourceJsonValue[];
-
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
-  [field: string]: DataSourceJsonValue;
+  // Azure credentials stored in datasource settings
+  azureCredentials?: {
+    authType?: string,
+    azureCloud?: string,
+    tenantId?: string,
+    clientId?: string,
+  },
+  // Legacy Azure credentials
+  cloudName?: string;
+  azureAuthType?: 'msi' | 'clientsecret' | 'workloadidentity';
+  tenantId?: string;
+  clientId?: string;
 }
 
 export interface AzureDataSourceSecureJsonData {
-  [field: string]: string | undefined;
+  clientSecret?: string;
+  azureClientSecret?: string;
 }
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
@@ -40,6 +43,14 @@ export type AzureMonitorDataSourceInstanceSettings = DataSourceInstanceSettings<
 export interface AzureMonitorDataSourceJsonData extends AzureDataSourceJsonData {
   /** @deprecated Legacy Azure credentials */
   subscriptionId?: string;
+  /** @deprecated Legacy Azure Logs Analytics setting */
+  azureLogAnalyticsSameAs?: boolean;
+  /** @deprecated Legacy Azure Logs Analytics setting */
+  logAnalyticsTenantId?: string;
+  /** @deprecated Legacy Azure Logs Analytics setting */
+  logAnalyticsClientId?: string;
+  /** @deprecated Legacy Azure Logs Analytics setting */
+  logAnalyticsSubscriptionId?: string;
   /** @deprecated Legacy Azure Logs Analytics setting */
   logAnalyticsDefaultWorkspace?: string;
 

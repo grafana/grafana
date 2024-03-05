@@ -26,9 +26,16 @@ export const MonitorConfig = (props: Props) => {
     if (!subscriptionId) {
       setSubscriptions([]);
     }
-    updateOptions((options) =>
-      updateCredentials({ ...options, jsonData: { ...options.jsonData, subscriptionId } }, credentials)
-    );
+    updateOptions((options) => {
+      const opt = {...options, jsonData: {
+        ...options.jsonData,
+        subscriptionId: subscriptionId,
+        logAnalyticsTenantId: undefined,
+        logAnalyticsClientId: undefined,
+        logAnalyticsSubscriptionId: undefined,
+      }}
+      return updateCredentials(opt, credentials)
+    });
   };
 
   const onSubscriptionsChange = (receivedSubscriptions: Array<SelectableValue<string>>) =>
