@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -54,7 +54,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		dqr := sdkapi.DataQueryRequest{}
+		dqr := data.QueryDataRequest{}
 		err := web.Bind(req, &dqr)
 		if err != nil {
 			responder.Error(err)

@@ -79,7 +79,7 @@ func (in *DataSourceApiServerList) DeepCopyObject() runtime.Object {
 func (in *QueryDataRequest) DeepCopyInto(out *QueryDataRequest) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	in.DataQueryRequest.DeepCopyInto(&out.DataQueryRequest)
+	in.QueryDataRequest.DeepCopyInto(&out.QueryDataRequest)
 	return
 }
 

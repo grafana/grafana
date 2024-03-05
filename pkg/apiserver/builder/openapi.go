@@ -4,7 +4,7 @@ import (
 	"maps"
 	"strings"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"

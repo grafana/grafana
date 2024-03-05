@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
+	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
@@ -45,14 +45,14 @@ type QueryAPIBuilder struct {
 	tracer    tracing.Tracer
 	metrics   *metrics
 	parser    *queryParser
-	runner    v0alpha1.QueryRunner
+	client    DataSourceClientSupplier
 	registry  v0alpha1.DataSourceApiServerRegistry
 	expr      *exprStorage
 	converter *expr.ResultConverter
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
-	runner v0alpha1.QueryRunner,
+	client DataSourceClientSupplier,
 	registry v0alpha1.DataSourceApiServerRegistry,
 	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
@@ -64,7 +64,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
 		returnMultiStatus:    features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryMultiStatus),
-		runner:               runner,
+		client:               client,
 		registry:             registry,
 		expr:                 expressions,
 		parser:               newQueryParser(reader, legacy, tracer),
@@ -95,21 +95,12 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 
 	builder, err := NewQueryAPIBuilder(
 		features,
-		runner.NewDirectQueryRunner(pluginClient, pCtxProvider),
-		runner.NewDirectRegistry(pluginStore, dataSourcesService),
+		&CommonDataSourceClientSupplier{
+			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider),
+		},
+		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
 		legacy, registerer, tracer,
 	)
-
-	// ONLY testdata...
-	if false {
-		builder, err = NewQueryAPIBuilder(
-			features,
-			runner.NewDummyTestRunner(),
-			runner.NewDummyRegistry(),
-			legacy, registerer, tracer,
-		)
-	}
-
 	apiregistration.RegisterAPI(builder)
 	return builder, err
 }

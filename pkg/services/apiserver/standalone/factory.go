@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
-	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
+	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -75,8 +75,10 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 	case "query.grafana.app":
 		return query.NewQueryAPIBuilder(
 			featuremgmt.WithFeatures(),
-			runner.NewDummyTestRunner(),
-			runner.NewDummyRegistry(),
+			&query.CommonDataSourceClientSupplier{
+				Client: client.NewTestDataClient(),
+			},
+			client.NewTestDataRegistry(),
 			nil,                               // legacy lookup
 			prometheus.NewRegistry(),          // ???
 			tracing.InitializeTracerForTest(), // ???

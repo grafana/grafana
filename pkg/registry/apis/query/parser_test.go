@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -33,9 +33,9 @@ func TestQuerySplitting(t *testing.T) {
 
 	t.Run("missing datasource flavors", func(t *testing.T) {
 		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
-			DataQueryRequest: sdkapi.DataQueryRequest{
-				Queries: []sdkapi.DataQuery{{
-					CommonQueryProperties: sdkapi.CommonQueryProperties{
+			QueryDataRequest: data.QueryDataRequest{
+				Queries: []data.DataQuery{{
+					CommonQueryProperties: data.CommonQueryProperties{
 						RefID: "A",
 					},
 				}},
@@ -93,15 +93,15 @@ func TestQuerySplitting(t *testing.T) {
 
 type legacyDataSourceRetriever struct{}
 
-func (s *legacyDataSourceRetriever) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*sdkapi.DataSourceRef, error) {
+func (s *legacyDataSourceRetriever) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*data.DataSourceRef, error) {
 	if id == 100 {
-		return &sdkapi.DataSourceRef{
+		return &data.DataSourceRef{
 			Type: "plugin-aaaa",
 			UID:  "AAA",
 		}, nil
 	}
 	if name != "" {
-		return &sdkapi.DataSourceRef{
+		return &data.DataSourceRef{
 			Type: "plugin-bbb",
 			UID:  name,
 		}, nil

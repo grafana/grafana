@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/spyzhov/ajson"
 )
 

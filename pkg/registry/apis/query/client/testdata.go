@@ -1,11 +1,12 @@
-package runner
+package client
 
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,41 +18,45 @@ import (
 
 type testdataDummy struct{}
 
-var _ query.QueryRunner = (*testdataDummy)(nil)
+var _ data.QueryDataClient = (*testdataDummy)(nil)
 var _ query.DataSourceApiServerRegistry = (*testdataDummy)(nil)
 
-// NewDummyTestRunner creates a runner that only works with testdata
-func NewDummyTestRunner() query.QueryRunner {
+// NewTestDataClient creates a runner that only works with testdata
+func NewTestDataClient() data.QueryDataClient {
 	return &testdataDummy{}
 }
 
-func NewDummyRegistry() query.DataSourceApiServerRegistry {
+// NewTestDataRegistry returns a registry that only knows about testdata
+func NewTestDataRegistry() query.DataSourceApiServerRegistry {
 	return &testdataDummy{}
 }
 
 // ExecuteQueryData implements QueryHelper.
-func (d *testdataDummy) ExecuteQueryData(ctx context.Context,
-	// The k8s group for the datasource (pluginId)
-	datasource schema.GroupVersion,
-
-	// The datasource name/uid
-	name string,
-
-	// The raw backend query objects
-	request sdkapi.DataQueryRequest,
-) (*backend.QueryDataResponse, error) {
-	if datasource.Group != "testdata.datasource.grafana.app" {
-		return nil, fmt.Errorf("expecting testdata requests")
-	}
-
-	queries, _, err := legacydata.ToDataSourceQueries(request)
+func (d *testdataDummy) QueryData(ctx context.Context, req data.QueryDataRequest, headers ...string) (int, *backend.QueryDataResponse, error) {
+	queries, _, err := legacydata.ToDataSourceQueries(req)
 	if err != nil {
-		return nil, err
+		return http.StatusBadRequest, nil, err
 	}
 
-	return testdata.ProvideService().QueryData(ctx, &backend.QueryDataRequest{
-		Queries: queries,
-	})
+	qdr := &backend.QueryDataRequest{Queries: queries}
+	qdr.Headers, err = getHeaders(headers)
+	if err != nil {
+		return http.StatusBadRequest, nil, err
+	}
+
+	code := http.StatusOK
+	rsp, err := testdata.ProvideService().QueryData(ctx, qdr)
+	if err == nil {
+		for _, v := range rsp.Responses {
+			if v.Error != nil {
+				code = http.StatusMultiStatus
+				break
+			}
+		}
+	} else {
+		code = http.StatusInternalServerError
+	}
+	return code, rsp, err
 }
 
 // GetDatasourceAPI implements DataSourceRegistry.

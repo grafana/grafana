@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
@@ -24,7 +24,10 @@ type datasourceRequest struct {
 	UID string `json:"uid"`
 
 	// Optionally show the additional query properties
-	Request *query.QueryDataRequest `json:"request"`
+	Request *data.QueryDataRequest `json:"request"`
+
+	// Headers that should be forwarded to the next request
+	Headers map[string]string `json:"headers,omitempty"`
 }
 
 type parsedRequestInfo struct {
@@ -60,7 +63,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 	ctx, span := p.tracer.Start(ctx, "QueryService.parseRequest")
 	defer span.End()
 
-	queryRefIDs := make(map[string]*sdkapi.DataQuery, len(input.Queries))
+	queryRefIDs := make(map[string]*data.DataQuery, len(input.Queries))
 	expressions := make(map[string]*expr.ExpressionQuery)
 	index := make(map[string]int) // index lookup
 	rsp := parsedRequestInfo{
@@ -115,13 +118,10 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 				rsp.Requests = append(rsp.Requests, datasourceRequest{
 					PluginId: ds.Type,
 					UID:      ds.UID,
-					Request: &query.QueryDataRequest{
-						TypeMeta: input.TypeMeta,
-						DataQueryRequest: sdkapi.DataQueryRequest{
-							TimeRange: input.TimeRange,
-							Debug:     input.Debug,
-							// no queries
-						},
+					Request: &data.QueryDataRequest{
+						TimeRange: input.TimeRange,
+						Debug:     input.Debug,
+						// no queries
 					},
 				})
 			}
@@ -186,7 +186,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 	return rsp, nil
 }
 
-func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *sdkapi.DataSourceRef, id int64) (*sdkapi.DataSourceRef, error) {
+func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *data.DataSourceRef, id int64) (*data.DataSourceRef, error) {
 	if ds == nil {
 		if id == 0 {
 			return nil, fmt.Errorf("missing datasource reference or id")

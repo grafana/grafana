@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	data "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,8 +22,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 	"k8s.io/utils/strings/slices"
-
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/sdkapi/v0alpha1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -278,7 +277,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	var err error
 	opts := schemabuilder.QuerySchemaOptions{
 		PluginID:   []string{b.pluginJSON.ID},
-		QueryTypes: []sdkapi.QueryTypeDefinition{},
+		QueryTypes: []data.QueryTypeDefinition{},
 		Mode:       schemabuilder.SchemaTypeQueryPayload,
 	}
 	if b.pluginJSON.AliasIDs != nil {
@@ -286,8 +285,8 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	}
 	for _, qt := range b.queryTypes.Items {
 		// The SDK type and api type are not the same so we recreate it here
-		opts.QueryTypes = append(opts.QueryTypes, sdkapi.QueryTypeDefinition{
-			ObjectMeta: sdkapi.ObjectMeta{
+		opts.QueryTypes = append(opts.QueryTypes, data.QueryTypeDefinition{
+			ObjectMeta: data.ObjectMeta{
 				Name: qt.Name,
 			},
 			Spec: qt.Spec,
@@ -345,11 +344,11 @@ func (b *DataSourceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 }
 
 func getExamples(queryTypes *query.QueryTypeDefinitionList) map[string]*spec3.Example {
-	tr := sdkapi.TimeRange{From: "now-1h", To: "now"}
+	tr := data.TimeRange{From: "now-1h", To: "now"}
 	examples := map[string]*spec3.Example{}
 	for _, queryType := range queryTypes.Items {
 		for idx, example := range queryType.Spec.Examples {
-			q := sdkapi.NewDataQuery(example.SaveModel.Object)
+			q := data.NewDataQuery(example.SaveModel.Object)
 			q.RefID = "A"
 			for _, dis := range queryType.Spec.Discriminators {
 				_ = q.Set(dis.Field, dis.Value)
@@ -364,9 +363,9 @@ func getExamples(queryTypes *query.QueryTypeDefinitionList) map[string]*spec3.Ex
 				ExampleProps: spec3.ExampleProps{
 					Summary:     example.Name,
 					Description: example.Description,
-					Value: sdkapi.DataQueryRequest{
+					Value: data.QueryDataRequest{
 						TimeRange: tr,
-						Queries:   []sdkapi.DataQuery{q},
+						Queries:   []data.DataQuery{q},
 					},
 				},
 			}
