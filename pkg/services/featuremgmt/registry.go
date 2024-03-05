@@ -1199,7 +1199,7 @@ var (
 		},
 		{
 			Name:              "scopeFilters",
-			Description:       "enables scope filters",
+			Description:       "Enables the use of scope filters in Grafana",
 			FrontendOnly:      false,
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaDashboardsSquad,

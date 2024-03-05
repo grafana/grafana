@@ -317,11 +317,14 @@
     {
       "metadata": {
         "name": "scopeFilters",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1709648534592",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-05 14:22:14.592841 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "enables scope filters",
+        "description": "Enables the use of scope filters in Grafana",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,

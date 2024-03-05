@@ -652,6 +652,6 @@ const (
 	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
 
 	// FlagScopeFilters
-	// enables scope filters
+	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
 )
