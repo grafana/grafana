@@ -136,6 +136,24 @@ We've added a tooltip hover proximity limit option (in pixels), which makes it p
 
 ![Time Series hover proximity](/media/docs/grafana/gif-grafana-10-4-hover-proximity.gif)
 
+## Return to previous
+
+<!--#grafana-frontend-platform-->
+
+_Available in public preview in all editions of Grafana_
+
+When you're browsing Grafana - for example, exploring the dashboard and metrics related to an alert - it's easy to end up far from where you started and hard get back to where you came from. The ‘Return to previous’ button is an easy way to go back to the previous context, like the alert rule that kicked off your exploration. This first release works for Alerts, and we plan to expand to other apps and features in Grafana in future releases to make it easier to navigate around.
+
+Return to Previous is rolling out across Grafana Cloud now. To try Return to Previous in self-managed Grafana, turn on the `returnToPrevious` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana v10.4 or newer.
+
+{{< video-embed src="/media/docs/grafana/2024-01-30-Return-to-previous-Enablement-Video.mp4" >}}
+
+{{< admonition type="note" >}}
+The term **context** refers to applications in Grafana like Incident and OnCall, as well as core features like Explore and Dashboards.
+
+To notice a change in your context, look at Grafana's breadcrumbs. If you go from _Home > **Dashboards**_ to _Home > **Explore**_, you've changed context. If you go from _Home > **Dashboards** > Playlist > Edit playlist_ to _Home > **Dashboards** > Reporting > Settings_, you are in the same context.
+{{< /admonition >}}
+
 ## Alerting
 
 ### Simplified Alert Notification Routing
@@ -159,24 +177,6 @@ _Generally available in all editions of Grafana_
 Users looking to migrate to the new Grafana Alerting product can do so with confidence with the Grafana Alerting migration preview tool. The migration preview tool allows users to view, edit, and delete migrated rules prior cutting over, with the option to roll back to Legacy Alerting.
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/migrating-alerts/#upgrade-with-preview-recommended)
-
-### Return to previous
-
-<!--#grafana-frontend-platform-->
-
-_Available in public preview in all editions of Grafana_
-
-When you're browsing Grafana - for example, exploring the dashboard and metrics related to an alert - it's easy to end up far from where you started and hard get back to where you came from. The ‘Return to previous’ button is an easy way to go back to the previous context, like the alert rule that kicked off your exploration. This first release works for Alerts, and we plan to expand to other apps and features in Grafana in future releases to make it easier to navigate around.
-
-Return to Previous is rolling out across Grafana Cloud now. To try Return to Previous in self-managed Grafana, turn on the `returnToPrevious` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana v10.4 or newer.
-
-{{< video-embed src="/media/docs/grafana/2024-01-30-Return-to-previous-Enablement-Video.mp4" >}}
-
-{{< admonition type="note" >}}
-The term **context** refers to applications in Grafana like Incident and OnCall, as well as core features like Explore and Dashboards.
-
-To notice a change in your context, look at Grafana's breadcrumbs. If you go from _Home > **Dashboards**_ to _Home > **Explore**_, you've changed context. If you go from _Home > **Dashboards** > Playlist > Edit playlist_ to _Home > **Dashboards** > Reporting > Settings_, you are in the same context.
-{{< /admonition >}}
 
 ### Rule evaluation spread over the entire evaluation interval
 
