@@ -278,10 +278,20 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
+	resourceVersion := int64(0)
+	var err error
+	if opts.ResourceVersion != "" {
+		resourceVersion, err = strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+	}
+
 	rsp, err := s.store.Read(ctx, &entityStore.ReadEntityRequest{
-		Key:        key,
-		WithBody:   true,
-		WithStatus: true,
+		Key:             key,
+		WithBody:        true,
+		WithStatus:      true,
+		ResourceVersion: resourceVersion,
 	})
 	if err != nil {
 		return err
@@ -360,14 +370,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return apierrors.NewInternalError(err)
 	}
 
-	maxResourceVersion := int64(0)
-
 	for _, r := range rsp.Results {
 		res := s.newFunc()
-
-		if r.ResourceVersion > maxResourceVersion {
-			maxResourceVersion = r.ResourceVersion
-		}
 
 		err := entityToResource(r, res, s.codec)
 		if err != nil {
@@ -395,7 +399,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		listAccessor.SetContinue(rsp.NextPageToken)
 	}
 
-	listAccessor.SetResourceVersion(strconv.FormatInt(maxResourceVersion, 10))
+	listAccessor.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
 
 	return nil
 }
