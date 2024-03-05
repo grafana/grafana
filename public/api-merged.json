@@ -18913,6 +18913,9 @@
         "templateVars": {
           "type": "object"
         },
+        "uid": {
+          "type": "string"
+        },
         "updated": {
           "type": "string",
           "format": "date-time"
@@ -18975,9 +18978,6 @@
     "ReportEmail": {
       "type": "object",
       "properties": {
-        "email": {
-          "type": "string"
-        },
         "emails": {
           "description": "Comma-separated list of emails to which to send the report to.",
           "type": "string"
