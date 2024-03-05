@@ -7,17 +7,27 @@ import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
 
-import { CatalogPlugin, InstancePlugin, LocalPlugin, RemotePlugin, RemotePluginStatus, Version } from './types';
+import {
+  CatalogPlugin,
+  InstancePlugin,
+  LocalPlugin,
+  ProvisionedPlugin,
+  RemotePlugin,
+  RemotePluginStatus,
+  Version,
+} from './types';
 
 export function mergeLocalsAndRemotes({
   local = [],
   remote = [],
   instance = [],
+  provisioned = [],
   pluginErrors: errors,
 }: {
   local: LocalPlugin[];
   remote?: RemotePlugin[];
   instance?: InstancePlugin[];
+  provisioned?: ProvisionedPlugin[];
   pluginErrors?: PluginError[];
 }): CatalogPlugin[] {
   const catalogPlugins: CatalogPlugin[] = [];
@@ -27,6 +37,11 @@ export function mergeLocalsAndRemotes({
     map.set(instancePlugin.pluginSlug, instancePlugin);
     return map;
   }, new Map<string, InstancePlugin>());
+
+  const provisionedSet = provisioned.reduce((map, provisionedPlugin) => {
+    map.add(provisionedPlugin.slug);
+    return map;
+  }, new Set<string>());
 
   // add locals
   local.forEach((localPlugin) => {
@@ -51,7 +66,7 @@ export function mergeLocalsAndRemotes({
       if (configCore.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled) {
         catalogPlugin.isFullyInstalled = catalogPlugin.isCore
           ? true
-          : instancesMap.has(remotePlugin.slug) && catalogPlugin.isInstalled;
+          : (instancesMap.has(remotePlugin.slug) || provisionedSet.has(remotePlugin.slug)) && catalogPlugin.isInstalled;
 
         catalogPlugin.isInstalled = instancesMap.has(remotePlugin.slug) || catalogPlugin.isInstalled;
 
