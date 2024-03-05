@@ -19,6 +19,9 @@ export function EntityLink(props: Props) {
     <>
       <span
         role={'button'}
+        style={{
+          borderBottom: '3px solid orange',
+        }}
         onClick={() => {
           setDrawerVisible(true);
         }}

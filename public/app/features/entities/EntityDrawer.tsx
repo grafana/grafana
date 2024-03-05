@@ -90,6 +90,12 @@ const entitiesMap: Record<string, Entity> = {
     dashboardUid: 'bdecitbzna96od',
     parents: ['service:db'],
   },
+
+  trace: {
+    type: 'trace',
+    id: 'ca37a2a47c6505d',
+    dashboardUid: 'ddepip8sry6f4f',
+  },
 };
 
 type Props = {
@@ -117,6 +123,17 @@ export function EntityDrawer(props: Props) {
     [navStack]
   );
 
+  useEffect(() => {
+    const timeout = overrideLinks(() => {
+      setNavStack([...navStack, entitiesMap['trace']]);
+    });
+    return () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    };
+  }, [navStack]);
+
   return (
     <Drawer closeOnMaskClick={true} onClose={props.onClose}>
       <Stack direction={'column'} gap={1}>
@@ -130,7 +147,7 @@ export function EntityDrawer(props: Props) {
           />
         </Stack>
         {/*<EntityMap entity={currentEntity} onEntityChange={onEntityChange} />*/}
-        <EntityMapAsserts entity={currentEntity} onEntityChange={onEntityChange} />
+        {currentEntity.type !== 'trace' && <EntityMapAsserts entity={currentEntity} onEntityChange={onEntityChange} />}
         <div style={{ flex: '1', overflow: 'scroll' }}>
           <EmbeddedDashboard
             uid={currentEntity.dashboardUid}
@@ -142,6 +159,23 @@ export function EntityDrawer(props: Props) {
       </Stack>
     </Drawer>
   );
+}
+
+function overrideLinks(tracelink: () => void): NodeJS.Timeout | undefined {
+  // big hack as we cannot right now override how links are handled in the embedded dashboard so we just override
+  // links in the dom. Silly but works.
+  const nodes = document.querySelectorAll<HTMLAnchorElement>('a[href^="/explore" i]');
+  if (nodes.length < 5) {
+    return setTimeout(() => overrideLinks(tracelink), 1000);
+  }
+
+  for (const node of nodes) {
+    node.onclick = (e) => {
+      e.preventDefault();
+      tracelink();
+    };
+  }
+  return;
 }
 
 type EntityMapProps = {
