@@ -89,7 +89,14 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 		return err
 	}
 	// override the RESTOptionsGetter to use the file storage options getter
-	aggregatorConfig.GenericConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(dataPath, etcdOptions.StorageConfig)
+	restOptionsGetter, err := filestorage.NewRESTOptionsGetter(dataPath, etcdOptions.StorageConfig,
+		"apiregistration.k8s.io/apiservices",
+		"service.grafana.app/externalnames",
+	)
+	if err != nil {
+		return err
+	}
+	aggregatorConfig.GenericConfig.RESTOptionsGetter = restOptionsGetter
 
 	// prevent generic API server from installing the OpenAPI handler. Aggregator server has its own customized OpenAPI handler.
 	genericConfig.SkipOpenAPIInstallation = true

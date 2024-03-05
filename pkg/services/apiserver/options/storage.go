@@ -31,7 +31,7 @@ func NewStorageOptions() *StorageOptions {
 
 func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar((*string)(&o.StorageType), "grafana-apiserver-storage-type", string(o.StorageType), "Storage type")
-	fs.StringVar((*string)(&o.StorageType), "grafana-apiserver-storage-path", string(o.StorageType), "Storage path for file storage")
+	fs.StringVar(&o.DataPath, "grafana-apiserver-storage-path", o.DataPath, "Storage path for file storage")
 }
 
 func (o *StorageOptions) Validate() []error {

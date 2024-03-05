@@ -20,12 +20,30 @@ type RESTOptionsGetter struct {
 	original storagebackend.Config
 }
 
-func NewRESTOptionsGetter(path string, originalStorageConfig storagebackend.Config) *RESTOptionsGetter {
+// Optionally, this constructor allows specifying directories
+// for resources that are required to be read/watched on startup and there
+// won't be any write operations that initially bootstrap their directories
+func NewRESTOptionsGetter(path string,
+	originalStorageConfig storagebackend.Config,
+	createResourceDirs ...string) (*RESTOptionsGetter, error) {
 	if path == "" {
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
 
-	return &RESTOptionsGetter{path: path, original: originalStorageConfig}
+	if err := initializeDirs(path, createResourceDirs); err != nil {
+		return nil, err
+	}
+
+	return &RESTOptionsGetter{path: path, original: originalStorageConfig}, nil
+}
+
+func initializeDirs(root string, createResourceDirs []string) error {
+	for _, dir := range createResourceDirs {
+		if err := ensureDir(filepath.Join(root, dir)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
