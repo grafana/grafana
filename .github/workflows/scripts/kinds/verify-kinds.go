@@ -32,6 +32,13 @@ func main() {
 	corekinds, err := schemas.GetCoreKinds()
 	die(err)
 
+	composableKinds, err := schemas.GetComposableKinds()
+	die(err)
+
+	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
+		os.Exit(0)
+	}
+
 	coreJennies := codejen.JennyList[schemas.CoreKind]{}
 	coreJennies.Append(
 		CoreKindRegistryJenny(outputPath),
@@ -39,9 +46,6 @@ func main() {
 	corefs, err := coreJennies.GenerateFS(corekinds...)
 	die(err)
 	die(jfs.Merge(corefs))
-
-	composableKinds, err := schemas.GetComposableKinds()
-	die(err)
 
 	composableJennies := codejen.JennyList[schemas.ComposableKind]{}
 	composableJennies.Append(
