@@ -374,7 +374,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	dirpath := s.dirPath(key)
 	// Since it's a get, check if the dir exists and return early as needed
 	if !exists(dirpath) {
-		return apierrors.NewNotFound(s.gr, s.nameFromKey(key))
+		// ensure we return empty list in listObj insted of a not found error
+		return nil
 	}
 
 	objs, err := readDirRecursive(s.codec, dirpath, s.newFunc)
