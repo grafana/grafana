@@ -9,12 +9,12 @@ import { RowOptionsModal } from './RowOptionsModal';
 export interface RowOptionsButtonProps {
   title: string;
   repeat?: string;
-  obj: SceneObject;
+  parent: SceneObject;
   onUpdate: OnRowOptionsUpdate;
   warning?: React.ReactNode;
 }
 
-export const RowOptionsButton = ({ repeat, title, obj, onUpdate, warning }: RowOptionsButtonProps) => {
+export const RowOptionsButton = ({ repeat, title, parent, onUpdate, warning }: RowOptionsButtonProps) => {
   const onUpdateChange = (hideModal: () => void) => (title: string, repeat?: string | null) => {
     onUpdate(title, repeat);
     hideModal();
@@ -32,7 +32,7 @@ export const RowOptionsButton = ({ repeat, title, obj, onUpdate, warning }: RowO
               showModal(RowOptionsModal, {
                 title,
                 repeat,
-                obj,
+                parent,
                 onDismiss: hideModal,
                 onUpdate: onUpdateChange(hideModal),
                 warning,

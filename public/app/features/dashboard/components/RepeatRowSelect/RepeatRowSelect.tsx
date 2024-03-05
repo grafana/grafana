@@ -44,14 +44,14 @@ export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
 };
 
 interface Props2 {
-  sceneObject: SceneObject;
+  parent: SceneObject;
   repeat: string | undefined;
   id?: string;
   onChange: (name?: string) => void;
 }
 
-export const RepeatRowSelect2 = ({ sceneObject, repeat, id, onChange }: Props2) => {
-  const sceneVars = useMemo(() => sceneGraph.getVariables(sceneObject), [sceneObject]);
+export const RepeatRowSelect2 = ({ parent, repeat, id, onChange }: Props2) => {
+  const sceneVars = useMemo(() => sceneGraph.getVariables(parent), [parent]);
   const variables = sceneVars.useState().variables;
 
   const variableOptions = useMemo(() => {

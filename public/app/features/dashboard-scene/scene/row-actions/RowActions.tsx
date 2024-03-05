@@ -183,7 +183,7 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
               <RowOptionsButton
                 title={title}
                 repeat={behaviour instanceof RowRepeaterBehavior ? behaviour.state.variableName : undefined}
-                obj={dashboard}
+                parent={dashboard}
                 onUpdate={model.onUpdate}
                 warning={model.getWarning()}
               />

@@ -270,7 +270,7 @@ export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPa
               return (
                 <RepeatRowSelect2
                   id="repeat-by-variable-select"
-                  sceneObject={panel}
+                  parent={panel}
                   repeat={repeat}
                   onChange={(value?: string) => {
                     const stateUpdate: Partial<VizPanelManagerState> = { repeat: value };

@@ -9,19 +9,19 @@ import { OnRowOptionsUpdate, RowOptionsForm } from './RowOptionsForm';
 export interface RowOptionsModalProps {
   title: string;
   repeat?: string;
-  obj: SceneObject;
+  parent: SceneObject;
   warning?: React.ReactNode;
   onDismiss: () => void;
   onUpdate: OnRowOptionsUpdate;
 }
 
-export const RowOptionsModal = ({ repeat, title, obj, onDismiss, onUpdate, warning }: RowOptionsModalProps) => {
+export const RowOptionsModal = ({ repeat, title, parent, onDismiss, onUpdate, warning }: RowOptionsModalProps) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <Modal isOpen={true} title="Row options" icon="copy" onDismiss={onDismiss} className={styles.modal}>
+    <Modal isOpen={true} title="Row options" onDismiss={onDismiss} className={styles.modal}>
       <RowOptionsForm
-        obj={obj}
+        parent={parent}
         repeat={repeat}
         title={title}
         onCancel={onDismiss}
