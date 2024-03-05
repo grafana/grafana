@@ -1,3 +1,4 @@
+import debounce from 'debounce-promise';
 import React from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
@@ -29,7 +30,7 @@ export interface Props {
 export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
 
-  const { register, handleSubmit, setValue, formState, getValues, watch } = useForm<SaveDashboardAsFormDTO>({
+  const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
     defaultValues: {
       title: changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`,
@@ -98,6 +99,9 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
         <Input
           {...register('title', { required: 'Required', validate: validateDashboardName })}
           aria-label="Save dashboard title field"
+          onChange={debounce(async () => {
+            trigger('title');
+          }, 400)}
           autoFocus
         />
       </Field>
