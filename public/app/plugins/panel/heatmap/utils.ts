@@ -749,7 +749,7 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
   };
 }
 
-export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: string, yLayout: HeatmapCellLayout) {
+export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: string, yLayout?: HeatmapCellLayout) {
   return (u: uPlot, seriesIdx: number) => {
     uPlot.orient(
       u,
