@@ -15,7 +15,7 @@ export default defineConfig({
       input: ['./public/app/index.ts', './public/sass/grafana.dark.scss', './public/sass/grafana.light.scss'],
     },
     outDir: './build',
-    assetsDir: './',
+    assetsDir: './assets',
   },
   server: {
     // vite binds to ipv6 by default... and that doesn't work for me locally on mac...
@@ -61,14 +61,13 @@ export default defineConfig({
         replacement: '@grafana/schema/src/$1',
       },
     ],
-    extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.json'],
   },
 });
 
 /**
 This is a Vite plugin for handling angular templates.
 https://vitejs.dev/guide/api-plugin.html#simple-examples
-
+ 
 The webpack output from https://github.com/WearyMonkey/ngtemplate-loader looks like this:
 var code = "\n<div class=\"graph-annotation\">\n\t<div class=\"graph-annotation__header\">\n\t\t</div></div>\n";
 Exports
