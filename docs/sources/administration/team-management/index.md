@@ -38,9 +38,7 @@ This topic describes how to:
 
 ## Create a team
 
-A team is a group of users within an organization that have common dashboard and data source permission needs. Use teams to help make user-permission management more efficient.
-
-A user can belong to multiple teams.
+A team is a group of users within an organization that have common dashboard and data source permission needs. Use teams to help make user-permission management more efficient. A user can belong to multiple teams.
 
 To create a team:
 
