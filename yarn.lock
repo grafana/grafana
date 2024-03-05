@@ -3529,6 +3529,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/azure-sdk@npm:0.0.1":
+  version: 0.0.1
+  resolution: "@grafana/azure-sdk@npm:0.0.1"
+  dependencies:
+    ts-jest: "npm:29.1.1"
+  checksum: 10/17d435b13213894868276a40494bb9d3cb78adf69501966f6411c40ea7e2563f5d3800f603c8f6ee9c96a69f137e83eafa5cb3b71ffa3c34c31cf8f45a695efd
+  languageName: node
+  linkType: hard
+
 "@grafana/data@npm:11.0.0-pre, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
@@ -18334,6 +18343,7 @@ __metadata:
     "@grafana-plugins/tempo": "workspace:*"
     "@grafana-plugins/zipkin": "workspace:*"
     "@grafana/aws-sdk": "npm:0.3.2"
+    "@grafana/azure-sdk": "npm:0.0.1"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:7.0.0"
@@ -30018,6 +30028,39 @@ __metadata:
   bin:
     ts-jest: cli.js
   checksum: 10/59d7122ea1a861aec510b19d30517df81c09ce89b9c2e6d40425c97bd2006a437f169bd6ec965b5b239b82a0ad773ca8fc40cc51f956b380ffc3a964682e9260
+  languageName: node
+  linkType: hard
+
+"ts-jest@npm:29.1.1":
+  version: 29.1.1
+  resolution: "ts-jest@npm:29.1.1"
+  dependencies:
+    bs-logger: "npm:0.x"
+    fast-json-stable-stringify: "npm:2.x"
+    jest-util: "npm:^29.0.0"
+    json5: "npm:^2.2.3"
+    lodash.memoize: "npm:4.x"
+    make-error: "npm:1.x"
+    semver: "npm:^7.5.3"
+    yargs-parser: "npm:^21.0.1"
+  peerDependencies:
+    "@babel/core": ">=7.0.0-beta.0 <8"
+    "@jest/types": ^29.0.0
+    babel-jest: ^29.0.0
+    jest: ^29.0.0
+    typescript: ">=4.3 <6"
+  peerDependenciesMeta:
+    "@babel/core":
+      optional: true
+    "@jest/types":
+      optional: true
+    babel-jest:
+      optional: true
+    esbuild:
+      optional: true
+  bin:
+    ts-jest: cli.js
+  checksum: 10/30e8259baba95dd786e64f7c18b864e904598f3ba07911be4d9bd29ca9c3c0024bad4ccf8ec0abd2a2fa14b06622cbbadff1b3be822189c657196442d33ee6ca
   languageName: node
   linkType: hard
 
