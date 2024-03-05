@@ -587,9 +587,6 @@ func (hs *HTTPServer) configureHttps() error {
 	}
 
 	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(setting.HTTPSScheme))
-	if err != nil {
-		return err
-	}
 
 	hs.log.Info("HTTP Server TLS settings", "Min TLS Version", hs.Cfg.MinTLSVersion,
 		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
@@ -13,6 +13,10 @@ interface Props {
   onChange: (options: SelectableValue[]) => void;
   caseSensitive?: boolean;
   showOperators?: boolean;
+  searchFilter: string;
+  setSearchFilter: (value: string) => void;
+  operator: SelectableValue<string>;
+  setOperator: (item: SelectableValue<string>) => void;
 }
 
 const ITEM_HEIGHT = 28;
@@ -33,7 +37,7 @@ const operatorSelectableValues: { [key: string]: SelectableValue<string> } = {
   },
 };
 const OPERATORS = Object.values(operatorSelectableValues);
-const REGEX_OPERATOR = operatorSelectableValues['Contains'];
+export const REGEX_OPERATOR = operatorSelectableValues['Contains'];
 const XPR_OPERATOR = operatorSelectableValues['Expression'];
 
 const comparableValue = (value: string): string | number | Date | boolean => {
@@ -61,9 +65,17 @@ const comparableValue = (value: string): string | number | Date | boolean => {
   return value;
 };
 
-export const FilterList = ({ options, values, caseSensitive, showOperators, onChange }: Props) => {
-  const [operator, setOperator] = useState<SelectableValue<string>>(REGEX_OPERATOR);
-  const [searchFilter, setSearchFilter] = useState('');
+export const FilterList = ({
+  options,
+  values,
+  caseSensitive,
+  showOperators,
+  onChange,
+  searchFilter,
+  setSearchFilter,
+  operator,
+  setOperator,
+}: Props) => {
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
     () =>

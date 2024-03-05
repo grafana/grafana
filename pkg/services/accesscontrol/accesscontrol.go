@@ -26,6 +26,8 @@ type Service interface {
 	registry.ProvidesUsageStats
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
+	// GetUserPermissionsInOrg return user permission in a specific organization
+	GetUserPermissionsInOrg(ctx context.Context, user identity.Requester, orgID int64) ([]Permission, error)
 	// SearchUsersPermissions returns all users' permissions filtered by an action prefix
 	SearchUsersPermissions(ctx context.Context, user identity.Requester, options SearchOptions) (map[int64][]Permission, error)
 	// ClearUserPermissionCache removes the permission cache entry for the given user
@@ -75,6 +77,7 @@ type SearchOptions struct {
 	Scope        string
 	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
 	wildcards    Wildcards // private field computed based on the Scope
+	RolePrefixes []string
 }
 
 // Wildcards computes the wildcard scopes that include the scope
