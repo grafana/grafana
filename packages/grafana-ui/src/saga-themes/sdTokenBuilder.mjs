@@ -1,4 +1,5 @@
 import { registerTransforms } from '@tokens-studio/sd-transforms';
+import JsonToTs from 'json-to-ts';
 import StyleDictionary from 'style-dictionary';
 
 registerTransforms(StyleDictionary);
@@ -11,25 +12,33 @@ StyleDictionary.registerFormat({
   },
 });
 
+StyleDictionary.registerFormat({
+  name: 'typescript/nested',
+  formatter: function (dictionary) {
+    console.info(JsonToTs(minifyDictionary(dictionary.tokens)).join('\n'));
+    return `export default ${JsonToTs(minifyDictionary(dictionary.tokens)).join('\n')}\n`;
+  },
+});
+
 const coreTokens = [
   {
-    destination: 'code/core/color.js',
+    destination: 'code/core/color.ts',
     tokens: ['color'],
   },
   {
-    destination: 'code/core/border.js',
+    destination: 'code/core/border.ts',
     tokens: ['borderWidth', 'borderRadius'],
   },
   {
-    destination: 'code/core/opacity.js',
+    destination: 'code/core/opacity.ts',
     tokens: ['opacity'],
   },
   {
-    destination: 'code/core/zIndex.js',
+    destination: 'code/core/zIndex.ts',
     tokens: ['other'],
   },
   {
-    destination: 'code/core/typography.js',
+    destination: 'code/core/typography.ts',
     tokens: [
       'paragraphSpacing',
       'textCase',
@@ -42,22 +51,22 @@ const coreTokens = [
     ],
   },
   {
-    destination: 'code/core/spacing.js',
+    destination: 'code/core/spacing.ts',
     tokens: ['spacing', 'dimension'],
   },
   {
-    destination: 'code/core/breakpoint.js',
+    destination: 'code/core/breakpoint.ts',
     tokens: ['sizing'],
   },
 ];
 
 const semanticTokens = [
   {
-    destination: 'code/semantic/zIndex.js',
+    destination: 'code/semantic/zIndex.ts',
     tokens: ['other'],
   },
   {
-    destination: 'code/semantic/typography.js',
+    destination: 'code/semantic/typography.ts',
     tokens: ['typography'],
   },
 ];
@@ -88,17 +97,24 @@ const sd = StyleDictionary.extend({
           };
         }),
         {
-          destination: 'code/themes/dark.js',
+          destination: 'code/themes/dark.ts',
           format: 'javascript/nested',
           filter: (token) => {
-            return token.filePath === 'tokens/Theming/dark.json';
+            return token.filePath === 'tokens/Themes/dark.json';
           },
         },
         {
-          destination: 'code/themes/light.js',
+          destination: 'code/themes/theme.d.ts',
+          format: 'typescript/nested',
+          filter: (token) => {
+            return token.filePath === 'tokens/Themes/dark.json';
+          },
+        },
+        {
+          destination: 'code/themes/light.ts',
           format: 'javascript/nested',
           filter: (token) => {
-            return token.filePath === 'tokens/Theming/light.json';
+            return token.filePath === 'tokens/Themes/light.json';
           },
         },
       ],
