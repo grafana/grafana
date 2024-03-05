@@ -162,6 +162,8 @@ func ProvideService(
 
 	s.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 
+	s.RegisterPostLoginHook(NewDefaultOrgHook(cfg, userService, orgService).SetDefaultOrg, 10)
+
 	return s
 }
 
