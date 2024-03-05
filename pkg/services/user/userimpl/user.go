@@ -406,6 +406,7 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 	cmd.Email = cmd.Login
 	err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
 	if err != nil {
+		fmt.Printf("error %e", err)
 		return nil, serviceaccounts.ErrServiceAccountAlreadyExists.Errorf("service account with login %s already exists", cmd.Login)
 	}
 

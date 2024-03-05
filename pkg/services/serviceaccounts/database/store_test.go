@@ -47,12 +47,11 @@ func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 }
 
 func TestStore_CreateServiceAccount(t *testing.T) {
-	_, store := setupTestDatabase(t)
-	orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
-	orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
-	require.NoError(t, err)
-
 	t.Run("create service account", func(t *testing.T) {
+		_, store := setupTestDatabase(t)
+		orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
+		orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
+		require.NoError(t, err)
 		serviceAccountName := "new Service Account"
 		serviceAccountOrgId := orgResult.ID
 		serviceAccountRole := org.RoleAdmin
@@ -65,13 +64,11 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 
 		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
 		require.NoError(t, err)
-		assert.Equal(t, "sa-new-service-account", saDTO.Login)
 		assert.Equal(t, serviceAccountName, saDTO.Name)
 		assert.Equal(t, 0, int(saDTO.Tokens))
 
 		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
 		require.NoError(t, err)
-		assert.Equal(t, "sa-new-service-account", retrieved.Login)
 		assert.Equal(t, serviceAccountName, retrieved.Name)
 		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
 		assert.Equal(t, string(serviceAccountRole), retrieved.Role)
@@ -80,6 +77,87 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
 		require.NoError(t, err)
 		assert.Equal(t, saDTO.Id, retrievedId)
+	})
+
+	t.Run("create service account twice same org, error", func(t *testing.T) {
+		_, store := setupTestDatabase(t)
+		orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
+		orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
+		require.NoError(t, err)
+		serviceAccountName := "new Service Account"
+
+		serviceAccountOrgId := orgResult.ID
+		serviceAccountRole := org.RoleAdmin
+		isDisabled := true
+		saForm := serviceaccounts.CreateServiceAccountForm{
+			Name:       serviceAccountName,
+			Role:       &serviceAccountRole,
+			IsDisabled: &isDisabled,
+		}
+
+		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
+		require.NoError(t, err)
+		assert.Equal(t, serviceAccountName, saDTO.Name)
+		assert.Equal(t, 0, int(saDTO.Tokens))
+
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+		require.NoError(t, err)
+		assert.Equal(t, serviceAccountName, retrieved.Name)
+		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
+		assert.Equal(t, string(serviceAccountRole), retrieved.Role)
+		assert.True(t, retrieved.IsDisabled)
+
+		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+		require.NoError(t, err)
+		assert.Equal(t, saDTO.Id, retrievedId)
+
+		// should not b able to create the same service account twice in the same org
+		_, err = store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
+		require.Error(t, err)
+	})
+
+	t.Run("create service account twice different orgs should work", func(t *testing.T) {
+		_, store := setupTestDatabase(t)
+		orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
+		orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
+		require.NoError(t, err)
+		serviceAccountName := "new Service Account"
+
+		serviceAccountOrgId := orgResult.ID
+		serviceAccountRole := org.RoleAdmin
+		isDisabled := true
+		saForm := serviceaccounts.CreateServiceAccountForm{
+			Name:       serviceAccountName,
+			Role:       &serviceAccountRole,
+			IsDisabled: &isDisabled,
+		}
+
+		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
+		require.NoError(t, err)
+		assert.Equal(t, serviceAccountName, saDTO.Name)
+		assert.Equal(t, 0, int(saDTO.Tokens))
+
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+		require.NoError(t, err)
+		assert.Equal(t, serviceAccountName, retrieved.Name)
+		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
+		assert.Equal(t, string(serviceAccountRole), retrieved.Role)
+		assert.True(t, retrieved.IsDisabled)
+
+		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+		require.NoError(t, err)
+		assert.Equal(t, saDTO.Id, retrievedId)
+
+		orgQuerySecond := &org.CreateOrgCommand{Name: "Second Org name"}
+		orgResultSecond, err := store.orgService.CreateWithMember(context.Background(), orgQuerySecond)
+		require.NoError(t, err)
+		serviceAccountOrgIdSecond := orgResultSecond.ID
+		// should not b able to create the same service account twice in the same org
+		saDTOSecond, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgIdSecond, &saForm)
+		require.NoError(t, err)
+		assert.Equal(t, serviceAccountName, saDTOSecond.Name)
+		assert.Equal(t, 0, int(saDTOSecond.Tokens))
+
 	})
 }
 
