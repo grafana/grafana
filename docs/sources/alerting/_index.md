@@ -40,7 +40,7 @@ cards:
       description: Choose how, when, and where to send your alert notifications.
       height: 24
     - title: Detect and respond
-      href: /docs/grafana/next/alerting/manage-notifications/
+      href: ./manage-notifications/
       description: Monitor, respond to, and triage issues within your services.
       height: 24
     - title: Monitor
