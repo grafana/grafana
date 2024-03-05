@@ -1,23 +1,20 @@
-package prometheus
+package prometheus_library
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/patrickmn/go-cache"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
 	"github.com/grafana/grafana/pkg/prometheus-library/client"
-	"github.com/grafana/grafana/pkg/prometheus-library/instrumentation"
 	"github.com/grafana/grafana/pkg/prometheus-library/querydata"
 	"github.com/grafana/grafana/pkg/prometheus-library/resource"
 )
@@ -33,23 +30,22 @@ type instance struct {
 	versionCache *cache.Cache
 }
 
-func ProvideService(httpClientProvider *httpclient.Provider) *Service {
-	plog := backend.NewLoggerWith("logger", "tsdb.prometheus")
+func NewService(plog log.Logger) *Service {
 	plog.Debug("Initializing")
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, plog)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(plog)),
 		logger: plog,
 	}
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider, log log.Logger) datasource.InstanceFactoryFunc {
+func newInstanceSettings(log log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper.
 		opts, err := client.CreateTransportOptions(ctx, settings, log)
 		if err != nil {
 			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}
-		httpClient, err := httpClientProvider.New(*opts)
+		httpClient, err := httpclient.New(*opts)
 		if err != nil {
 			return nil, fmt.Errorf("error creating http client: %v", err)
 		}
@@ -72,53 +68,6 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider, log log.Logger
 			versionCache: cache.New(time.Minute*1, time.Minute*5),
 		}, nil
 	}
-}
-
-func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if len(req.Queries) == 0 {
-		err := fmt.Errorf("query contains no queries")
-		instrumentation.UpdateQueryDataMetrics(err, nil)
-		return &backend.QueryDataResponse{}, err
-	}
-
-	i, err := s.getInstance(ctx, req.PluginContext)
-	if err != nil {
-		instrumentation.UpdateQueryDataMetrics(err, nil)
-		return nil, err
-	}
-
-	qd, err := i.queryData.Execute(ctx, req)
-	instrumentation.UpdateQueryDataMetrics(err, qd)
-
-	return qd, err
-}
-
-func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	i, err := s.getInstance(ctx, req.PluginContext)
-	if err != nil {
-		return err
-	}
-
-	if strings.EqualFold(req.Path, "version-detect") {
-		versionObj, found := i.versionCache.Get("version")
-		if found {
-			return sender.Send(versionObj.(*backend.CallResourceResponse))
-		}
-
-		vResp, err := i.resource.DetectVersion(ctx, req)
-		if err != nil {
-			return err
-		}
-		i.versionCache.Set("version", vResp, cache.DefaultExpiration)
-		return sender.Send(vResp)
-	}
-
-	resp, err := i.resource.Execute(ctx, req)
-	if err != nil {
-		return err
-	}
-
-	return sender.Send(resp)
 }
 
 func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*instance, error) {
