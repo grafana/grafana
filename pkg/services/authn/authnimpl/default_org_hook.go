@@ -2,8 +2,8 @@ package authnimpl
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -13,6 +13,7 @@ import (
 
 type DefaultOrgHook struct {
 	cfg         *setting.Cfg
+	logger      log.Logger
 	userService user.Service
 	orgService  org.Service
 }
@@ -20,6 +21,7 @@ type DefaultOrgHook struct {
 func NewDefaultOrgHook(cfg *setting.Cfg, userService user.Service, orgService org.Service) *DefaultOrgHook {
 	return &DefaultOrgHook{
 		cfg:         cfg,
+		logger:      log.New("authn.default_org_hook"),
 		userService: userService,
 		orgService:  orgService,
 	}
@@ -42,13 +44,12 @@ func (h *DefaultOrgHook) SetDefaultOrg(ctx context.Context,
 	}
 
 	if !h.validateUsingOrg(ctx, userID, int64(h.cfg.LoginDefaultOrgId)) {
-		err = fmt.Errorf("user does not have access to default org")
+		return
 	}
 
 	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: int64(h.cfg.LoginDefaultOrgId)}
-
 	if err := h.userService.SetUsingOrg(ctx, &cmd); err != nil {
-		err = fmt.Errorf("failed to set default org: %v", err)
+		h.logger.Warn("failed to set default org", "err", err)
 	}
 }
 
