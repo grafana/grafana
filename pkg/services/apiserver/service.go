@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	entitystorage "github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -277,7 +278,11 @@ func (s *service) start(ctx context.Context) error {
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
 	case grafanaapiserveroptions.StorageTypeFile:
-		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
+		restOptionsGetter, err := filestorage.NewRESTOptionsGetter(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
+		if err != nil {
+			return err
+		}
+		serverConfig.RESTOptionsGetter = restOptionsGetter
 	}
 
 	// Add OpenAPI specs for each group+version
@@ -367,11 +372,9 @@ func (s *service) startAggregator(
 	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
-	externalNamesNamespace := "default"
-	if s.cfg.StackID != "" {
-		externalNamesNamespace = s.cfg.StackID
-	}
-	aggregatorConfig, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig, externalNamesNamespace)
+	namespaceMapper := request.GetNamespaceMapper(s.cfg)
+
+	aggregatorConfig, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig, namespaceMapper(1))
 	if err != nil {
 		return nil, err
 	}
