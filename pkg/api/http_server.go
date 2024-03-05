@@ -409,6 +409,15 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		if err := hs.configureTLS(); err != nil {
 			return err
 		}
+		if hs.Cfg.CertFile != "" && hs.Cfg.KeyFile != "" {
+			if hs.Cfg.CertWatchInterval != 0 {
+				hs.httpSrv.TLSConfig.GetCertificate = hs.GetCertificate
+				go hs.WatchAndUpdateCerts(ctx)
+				hs.log.Debug("HTTP Server certificates reload feature is enabled")
+			} else {
+				hs.log.Debug("HTTP Server certificates reload feature is NOT enabled")
+			}
+		}
 	default:
 	}
 
@@ -835,24 +844,14 @@ func (hs *HTTPServer) configureTLS() error {
 		hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 	}
 
-	if hs.Cfg.CertFile != "" && hs.Cfg.KeyFile != "" {
-		if hs.Cfg.CertWatchInterval != 0 {
-			hs.httpSrv.TLSConfig.GetCertificate = hs.GetCertificate
-			go hs.WatchAndUpdateCerts()
-			hs.log.Info("HTTP Server certificates reload feature is enabled")
-		} else {
-			hs.log.Info("HTTP Server certificates reload feature is NOT enabled")
-		}
-	}
-
 	return nil
 }
 
 func (hs *HTTPServer) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error) {
 	hs.tlsCerts.certLock.RLock()
-	tlsCerts := hs.tlsCerts.certs
-	hs.tlsCerts.certLock.RUnlock()
+	defer hs.tlsCerts.certLock.RUnlock()
 
+	tlsCerts := hs.tlsCerts.certs
 	return tlsCerts, nil
 }
 
@@ -860,14 +859,19 @@ func (hs *HTTPServer) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, er
 // since it adds a direct dependency for the optional feature. So that is the reason periodic watching
 // of cert files is chosen. If fsnotify is added as direct dependency in future, then the implementation
 // can be revisited to align to fsnotify.
-func (hs *HTTPServer) WatchAndUpdateCerts() {
+func (hs *HTTPServer) WatchAndUpdateCerts(ctx context.Context) {
 	ticker := time.NewTicker(hs.Cfg.CertWatchInterval)
-	defer ticker.Stop()
 
 	for {
-		<-ticker.C
-		if err := hs.updateCerts(); err != nil {
-			hs.log.Error("Not able to reload certificates", "error", err)
+		select {
+		case <-ticker.C:
+			if err := hs.updateCerts(); err != nil {
+				hs.log.Error("Not able to reload certificates", "error", err)
+			}
+		case <-ctx.Done():
+			hs.log.Debug("Stopping the CertWatchInterval ticker")
+			ticker.Stop()
+			return
 		}
 	}
 }
@@ -889,13 +893,13 @@ func (hs *HTTPServer) updateCerts() error {
 			return err
 		}
 		tlsInfo.certLock.Lock()
+		defer tlsInfo.certLock.Unlock()
+
 		tlsInfo.certs = certs
 		tlsInfo.certMtime = cMtime
 		tlsInfo.keyMtime = kMtime
 		hs.log.Info("Server certificates updated", "cMtime", tlsInfo.certMtime, "kMtime", tlsInfo.keyMtime)
-		tlsInfo.certLock.Unlock()
 	}
-
 	return nil
 }
 
