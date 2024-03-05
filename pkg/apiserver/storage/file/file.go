@@ -447,7 +447,6 @@ func (s *Storage) GuaranteedUpdate(
 			if err := ensureDir(dirpath); err != nil {
 				return err
 			}
-
 		}
 
 		if !exists(fpath) && !ignoreNotFound {
