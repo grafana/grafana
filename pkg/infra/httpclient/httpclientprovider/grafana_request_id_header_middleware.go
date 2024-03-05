@@ -49,8 +49,9 @@ func GrafanaRequestIDHeaderMiddleware(cfg *setting.Cfg) sdkhttpclient.Middleware
 			remoteAddress := web.RemoteAddr(req)
 			if remoteAddress != "" {
 				req.Header.Set(clientmiddleware.XRealIPHeader, remoteAddress)
+			} else {
+				req.Header.Set(clientmiddleware.GrafanaInternalRequest, "true")
 			}
-			req.Header.Set(clientmiddleware.GrafanaInternalRequest, "true")
 
 			return next.RoundTrip(req)
 		})
