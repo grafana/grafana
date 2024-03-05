@@ -157,6 +157,7 @@ export type AlertmanagerConfig = {
   inhibit_rules?: InhibitRule[];
   receivers?: Receiver[];
   mute_time_intervals?: MuteTimeInterval[];
+  time_intervals?: MuteTimeInterval[];
   /** { [name]: provenance } */
   muteTimeProvenances?: Record<string, string>;
   last_applied?: boolean;

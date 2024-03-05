@@ -23,9 +23,11 @@ import (
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
 type AggregatorServerOptions struct {
-	AlternateDNS        []string
-	ProxyClientCertFile string
-	ProxyClientKeyFile  string
+	AlternateDNS           []string
+	ProxyClientCertFile    string
+	ProxyClientKeyFile     string
+	RemoteServicesFile     string
+	APIServiceCABundleFile string
 }
 
 func NewAggregatorServerOptions() *AggregatorServerOptions {

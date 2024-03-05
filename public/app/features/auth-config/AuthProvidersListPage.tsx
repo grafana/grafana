@@ -46,8 +46,8 @@ export const AuthConfigPageUnconnected = ({
 
   const authProviders = getRegisteredAuthProviders();
   const availableProviders = authProviders.filter((p) => !providerStatuses[p.id]?.hide);
-  const onProviderCardClick = (providerType: string) => {
-    reportInteraction('authentication_ui_provider_clicked', { provider: providerType });
+  const onProviderCardClick = (providerType: string, enabled: boolean) => {
+    reportInteraction('authentication_ui_provider_clicked', { provider: providerType, enabled });
   };
 
   const providerList = availableProviders.length
@@ -94,7 +94,7 @@ export const AuthConfigPageUnconnected = ({
                   authType={settings.type || 'OAuth'}
                   providerId={provider}
                   enabled={settings.enabled}
-                  onClick={() => onProviderCardClick(provider)}
+                  onClick={() => onProviderCardClick(provider, settings.enabled)}
                   //@ts-expect-error Remove legacy types
                   configPath={settings.configPath}
                 />

@@ -13,11 +13,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/osutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
 const (
@@ -274,7 +275,7 @@ func TestLoadingSettings(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		require.Equal(t, 2, cfg.AuthProxySyncTTL)
+		require.Equal(t, 2, cfg.AuthProxy.SyncTTL)
 	})
 
 	t.Run("Test reading string values from .ini file", func(t *testing.T) {
