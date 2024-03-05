@@ -28,7 +28,7 @@ cards:
       description: Learn more about the fundamentals and available features that help you create, manage, and respond to alerts; and improve your team’s ability to resolve issues quickly.
       height: 24
     - title: Set up
-      href: /docs/grafana/next/alerting/set-up/
+      href: ./set-up/
       description: Set up your implementation of Grafana Alerting.
       height: 24
     - title: Configure alert rules
