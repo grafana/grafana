@@ -2161,8 +2161,8 @@ github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20240304175322-e81931acc11b h1:rYx9ds94ZrueuXioEnoSqL737UYPSngPkMwBFl1guJE=
-github.com/grafana/alerting v0.0.0-20240304175322-e81931acc11b/go.mod h1:brTFeACal/cSZAR8XO/4LPKs7rzNfS86okl6QjSP1eY=
+github.com/grafana/alerting v0.0.0-20240305140936-f98f1e25cb89 h1:apYkeD3iV2J4eCMSrOb6oShHlOeKsEV/w/enHFpRLEM=
+github.com/grafana/alerting v0.0.0-20240305140936-f98f1e25cb89/go.mod h1:0nHKO0w8OTemvZ3eh7+s1EqGGhgbs0kvkTeLU1FrbTw=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cue v0.0.0-20230926092038-971951014e3f h1:TmYAMnqg3d5KYEAaT6PtTguL2GjLfvr6wnAX8Azw6tQ=
@@ -2177,8 +2177,6 @@ github.com/grafana/dskit v0.0.0-20240104111617-ea101a3b86eb h1:AWE6+kvtE18HP+lRW
 github.com/grafana/dskit v0.0.0-20240104111617-ea101a3b86eb/go.mod h1:kkWM4WUV230bNG3urVRWPBnSJHs64y/0RmWjftnnn0c=
 github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 h1:jxJJ5z0GxqhWFbQUsys3BHG8jnmniJ2Q74tXAG1NaDo=
 github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447/go.mod h1:IxsY6mns6Q5sAnWcrptrgUrSglTZJXH/kXr9nbpb/9I=
-github.com/grafana/grafana-aws-sdk v0.23.1 h1:YP6DqzB36fp8fXno0r+X9BxNB3apNfJnQxu8tdhYMH8=
-github.com/grafana/grafana-aws-sdk v0.23.1/go.mod h1:iTbW395xv26qy6L17SjtZlVwxQTIZbmupBTe0sPHv7k=
 github.com/grafana/grafana-aws-sdk v0.24.0 h1:0RKCJTeIkpEUvLCTjGOK1+jYZpaE2nJaGghGLvtUsFs=
 github.com/grafana/grafana-aws-sdk v0.24.0/go.mod h1:3zghFF6edrxn0d6k6X9HpGZXDH+VfA+MwD2Pc/9X0ec=
 github.com/grafana/grafana-azure-sdk-go v1.12.0 h1:q71M2QxMlBqRZOXc5mFAycJWuZqQ3hPTzVEo1r3CUTY=
@@ -2937,8 +2935,7 @@ github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdh
 github.com/scaleway/scaleway-sdk-go v1.0.0-beta.21 h1:yWfiTPwYxB0l5fGMhl/G+liULugVIHD9AU77iNLrURQ=
 github.com/scaleway/scaleway-sdk-go v1.0.0-beta.21/go.mod h1:fCa7OJZ/9DRTnOKmxvT6pn+LPWUptQAmHF/SBJUGEcg=
 github.com/schollz/closestmatch v2.1.0+incompatible/go.mod h1:RtP1ddjLong6gTkbtmuhtR2uUrrJOpYzYRvbcPAid+g=
-github.com/scottlepp/go-duck v0.0.14 h1:fKrhE31OiwMJkS8byu0CWUfuWMfdxZYJNp5FUgHil4M=
-github.com/scottlepp/go-duck v0.0.14/go.mod h1:GL+hHuKdueJRrFCduwBc7A7TQk+Tetc5BPXPVtduihY=
+github.com/scottlepp/go-duck v0.0.15 h1:qrSF3pXlXAA4a7uxAfLYajqXLkeBjv8iW1wPdSfkMj0=
 github.com/scottlepp/go-duck v0.0.15/go.mod h1:GL+hHuKdueJRrFCduwBc7A7TQk+Tetc5BPXPVtduihY=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 h1:nn5Wsu0esKSJiIVhscUtVbo7ada43DJhG55ua/hjS5I=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
