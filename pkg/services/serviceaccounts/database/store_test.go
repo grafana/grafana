@@ -30,8 +30,8 @@ func TestMain(m *testing.M) {
 // Service Account should not create an org on its own
 func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 	_, store := setupTestDatabase(t)
+	serviceAccountName := "new Service Account"
 	t.Run("create service account", func(t *testing.T) {
-		serviceAccountName := "new Service Account"
 		serviceAccountOrgId := int64(1)
 		serviceAccountRole := org.RoleAdmin
 		isDisabled := true
@@ -47,12 +47,12 @@ func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 }
 
 func TestStore_CreateServiceAccount(t *testing.T) {
+	serviceAccountName := "new Service Account"
 	t.Run("create service account", func(t *testing.T) {
 		_, store := setupTestDatabase(t)
 		orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
 		orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
 		require.NoError(t, err)
-		serviceAccountName := "new Service Account"
 		serviceAccountOrgId := orgResult.ID
 		serviceAccountRole := org.RoleAdmin
 		isDisabled := true
@@ -84,8 +84,6 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
 		orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
 		require.NoError(t, err)
-		serviceAccountName := "new Service Account"
-
 		serviceAccountOrgId := orgResult.ID
 		serviceAccountRole := org.RoleAdmin
 		isDisabled := true
@@ -121,8 +119,6 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
 		orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
 		require.NoError(t, err)
-		serviceAccountName := "new Service Account"
-
 		serviceAccountOrgId := orgResult.ID
 		serviceAccountRole := org.RoleAdmin
 		isDisabled := true
