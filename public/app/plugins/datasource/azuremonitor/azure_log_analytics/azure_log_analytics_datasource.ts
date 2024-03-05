@@ -8,7 +8,7 @@ import ResponseParser from '../azure_monitor/response_parser';
 import { getCredentials } from '../components/AzureCredentialsConfig';
 import {
   AzureAPIResponse,
-  AzureDataSourceJsonData,
+  AzureMonitorDataSourceJsonData,
   AzureLogsVariable,
   AzureMonitorQuery,
   AzureQueryType,
@@ -22,7 +22,7 @@ import { transformMetadataToKustoSchema } from './utils';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
-  AzureDataSourceJsonData
+  AzureMonitorDataSourceJsonData
 > {
   private readonly credentials: AzureCredentials;
 
@@ -35,7 +35,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   firstWorkspace?: string;
 
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    private instanceSettings: DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);

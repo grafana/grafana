@@ -8,7 +8,7 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 import { getCredentials } from '../components/AzureCredentialsConfig';
 import TimegrainConverter from '../time_grain_converter';
 import {
-  AzureDataSourceJsonData,
+  AzureMonitorDataSourceJsonData,
   AzureMonitorMetricsMetadataResponse,
   AzureMonitorQuery,
   AzureQueryType,
@@ -38,7 +38,7 @@ function hasValue(item?: string) {
   return !!(item && item !== defaultDropdownValue);
 }
 
-export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
+export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureMonitorDataSourceJsonData> {
   private readonly credentials: AzureCredentials;
 
   apiVersion = '2018-01-01';
@@ -52,7 +52,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   declare resourceName: string;
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    instanceSettings: DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);

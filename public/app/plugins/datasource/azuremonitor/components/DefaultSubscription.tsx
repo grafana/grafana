@@ -5,12 +5,12 @@ import { SelectableValue } from '@grafana/data';
 import { Select, Button, Field } from '@grafana/ui';
 
 import { selectors } from '../e2e/selectors';
-import { AzureDataSourceJsonData } from '../types';
+import { AzureMonitorDataSourceJsonData } from '../types';
 
 import { isCredentialsComplete } from './AzureCredentialsConfig';
 
 export interface Props {
-  options: AzureDataSourceJsonData;
+  options: AzureMonitorDataSourceJsonData;
   credentials: AzureCredentials;
   getSubscriptions?: () => Promise<SelectableValue[]>;
   subscriptions: Array<SelectableValue<string>>;

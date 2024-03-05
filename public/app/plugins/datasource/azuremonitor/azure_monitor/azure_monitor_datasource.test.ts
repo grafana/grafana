@@ -6,7 +6,7 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { multiVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureAPIResponse, AzureDataSourceJsonData, Location } from '../types';
+import { AzureAPIResponse, AzureMonitorDataSourceJsonData, Location } from '../types';
 
 let replace = () => '';
 
@@ -24,7 +24,7 @@ jest.mock('@grafana/runtime', () => {
 });
 
 interface TestContext {
-  instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>;
+  instanceSettings: DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>;
   ds: AzureMonitorDatasource;
 }
 
@@ -44,7 +44,7 @@ describe('AzureMonitorDatasource', () => {
         },
         subscriptionId: 'mock-subscription-id'
       },
-    } as unknown as DataSourceInstanceSettings<AzureDataSourceJsonData>;
+    } as unknown as DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>;
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
 

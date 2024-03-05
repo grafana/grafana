@@ -31,10 +31,10 @@ export interface DataSourceSecureJsonData2 {
   [field: string]: string | undefined;
 }
 
-export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
-export type AzureDataSourceInstanceSettings = DataSourceInstanceSettings<AzureDataSourceJsonData>;
+export type AzureMonitorDataSourceSettings = DataSourceSettings<AzureMonitorDataSourceJsonData, AzureMonitorDataSourceSecureJsonData>;
+export type AzureMonitorDataSourceInstanceSettings = DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>;
 
-export interface AzureDataSourceJsonData extends DataSourceJsonData2 {
+export interface AzureMonitorDataSourceJsonData extends DataSourceJsonData2 {
   /** @deprecated Legacy Azure credentials */
   subscriptionId?: string;
   /** @deprecated Legacy Azure Logs Analytics setting */
@@ -43,7 +43,7 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData2 {
   enableSecureSocksProxy?: boolean;
 }
 
-export interface AzureDataSourceSecureJsonData extends DataSourceSecureJsonData2 {
+export interface AzureMonitorDataSourceSecureJsonData extends DataSourceSecureJsonData2 {
   appInsightsApiKey?: string;
 }
 

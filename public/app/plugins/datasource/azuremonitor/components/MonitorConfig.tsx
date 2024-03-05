@@ -4,7 +4,7 @@ import { AzureCredentials } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { AzureDataSourceSettings } from '../types';
+import { AzureMonitorDataSourceSettings } from '../types';
 
 import { KnownAzureClouds } from './AzureCredentials';
 import { getCredentials, getDefaultCredentials, hasCredentials, updateCredentials } from './AzureCredentialsConfig';
@@ -12,8 +12,8 @@ import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { DefaultSubscription } from './DefaultSubscription';
 
 export interface Props {
-  options: AzureDataSourceSettings;
-  updateOptions: (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings) => void;
+  options: AzureMonitorDataSourceSettings;
+  updateOptions: (optionsFunc: (options: AzureMonitorDataSourceSettings) => AzureMonitorDataSourceSettings) => void;
   getSubscriptions: () => Promise<Array<SelectableValue<string>>>;
 }
 
