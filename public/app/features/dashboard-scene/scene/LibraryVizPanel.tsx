@@ -110,30 +110,3 @@ function LibraryPanelRenderer({ model }: SceneComponentProps<LibraryVizPanel>) {
 
   return <panel.Component model={panel} />;
 }
-
-//TODO: move this
-function libraryPanelToSaveModel(libraryPanel: LibraryVizPanel) {
-  const { panel, uid, folderUID, name, _loadedVersion: version } = libraryPanel.state;
-  const saveModel = {
-    uid,
-    folderUID,
-    name,
-    version,
-    model: vizPanelToPanel(panel!),
-    kind: LibraryElementKind.Panel,
-  };
-  return saveModel;
-}
-
-//TODO: move this
-export async function updateLibraryPanel(libraryPanel: LibraryVizPanel): Promise<LibraryElementDTO> {
-  const { uid, folderUID, name, model, version, kind } = libraryPanelToSaveModel(libraryPanel);
-  const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
-    folderUID,
-    name,
-    model,
-    version,
-    kind,
-  });
-  return result;
-}

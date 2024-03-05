@@ -2,6 +2,8 @@ import { lastValueFrom } from 'rxjs';
 
 import { defaultDashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { LibraryVizPanel } from 'app/features/dashboard-scene/scene/LibraryVizPanel';
+import { vizPanelToPanel } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';
 
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { DashboardSearchItem } from '../../search/types';
@@ -126,4 +128,29 @@ export async function getConnectedDashboards(uid: string): Promise<DashboardSear
   const searchHits = await getBackendSrv().search({ dashboardUIDs: connections.map((c) => c.connectionUid) });
 
   return searchHits;
+}
+
+function libraryVizPanelToSaveModel(libraryPanel: LibraryVizPanel) {
+  const { panel, uid, folderUID, name, _loadedVersion: version } = libraryPanel.state;
+  const saveModel = {
+    uid,
+    folderUID,
+    name,
+    version,
+    model: vizPanelToPanel(panel!),
+    kind: LibraryElementKind.Panel,
+  };
+  return saveModel;
+}
+
+export async function updateLibraryVizPanel(libraryPanel: LibraryVizPanel): Promise<LibraryElementDTO> {
+  const { uid, folderUID, name, model, version, kind } = libraryVizPanelToSaveModel(libraryPanel);
+  const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
+    folderUID,
+    name,
+    model,
+    version,
+    kind,
+  });
+  return result;
 }

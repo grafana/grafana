@@ -31,11 +31,12 @@ import { useStyles2 } from '@grafana/ui';
 import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
+import { updateLibraryVizPanel } from 'app/features/library-panels/state/api';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
-import { LibraryVizPanel, updateLibraryPanel } from '../scene/LibraryVizPanel';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem, RepeatDirection } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
@@ -350,9 +351,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       });
     }
 
-    if (sourcePanel.parent instanceof LibraryVizPanel) {
+    if (sourcePanel.parent instanceof LibraryVizPanel && this.state.libraryPanel) {
       if (sourcePanel.parent.parent instanceof SceneGridItem) {
-        const newLibPanel = this.state.libraryPanel?.clone({
+        const newLibPanel = this.state.libraryPanel.clone({
           panel: this.state.panel.clone({
             $data: this.state.$data?.clone(),
           }),
@@ -360,7 +361,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         sourcePanel.parent.parent.setState({
           body: newLibPanel,
         });
-        updateLibraryPanel(newLibPanel!);
+        updateLibraryVizPanel(newLibPanel!);
       }
     }
   }
