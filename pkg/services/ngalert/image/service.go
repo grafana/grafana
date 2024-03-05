@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -139,6 +140,10 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		DashboardUID: dashboardUID,
 		PanelID:      panelID,
 		Timeout:      s.screenshotTimeout,
+		AuthOptions: rendering.AuthOpts{
+			OrgID:   r.OrgID,
+			OrgRole: org.RoleAdmin,
+		},
 	}
 
 	// To prevent concurrent screenshots of the same dashboard panel we use singleflight,

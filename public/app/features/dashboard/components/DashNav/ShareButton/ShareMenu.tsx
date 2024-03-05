@@ -34,6 +34,7 @@ export function ShareMenu({ dashboard }: { dashboard: DashboardModel }) {
               resourceType: 'dashboard',
               resourcePath: `${location.pathname}${location.search}${location.hash}`.substring(1),
               title: dashboard.title,
+              dashboardUid: dashboard.uid,
             });
           }}
         />

@@ -8,8 +8,8 @@ package server
 
 import (
 	"github.com/google/wire"
-
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/services/screenshot"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
@@ -129,6 +129,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeysimpl"
 	"github.com/grafana/grafana/pkg/services/slack"
+	slackApi "github.com/grafana/grafana/pkg/services/slack/api"
+	slackService "github.com/grafana/grafana/pkg/services/slack/service"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -184,6 +186,7 @@ var wireBasicSet = wire.NewSet(
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
 	New,
+	screenshot.NewHeadlessScreenshotService,
 	api.ProvideHTTPServer,
 	query.ProvideService,
 	wire.Bind(new(query.Service), new(*query.ServiceImpl)),
@@ -376,6 +379,9 @@ var wireBasicSet = wire.NewSet(
 	anonstore.ProvideAnonDBStore,
 	wire.Bind(new(anonstore.AnonStore), new(*anonstore.AnonDBStore)),
 	loggermw.Provide,
+	slackService.ProvideService,
+	wire.Bind(new(slack.Service), new(*slackService.SlackService)),
+	slackApi.ProvideApi,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
 	ssoSettingsImpl.ProvideService,
@@ -384,8 +390,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
 	cloudmigrationimpl.ProvideService,
 	// Kubernetes API server
-	slack.ProvideService,
-	wire.Bind(new(slack.Service), new(*slack.SlackService)),
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
 )

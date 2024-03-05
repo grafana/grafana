@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"strings"
 	"time"
 
@@ -50,6 +51,7 @@ type DashboardServiceImpl struct {
 	dashboardStore       dashboards.Store
 	folderStore          folder.FolderStore
 	folderService        folder.Service
+	renderService        rendering.Service
 	dashAlertExtractor   alerting.DashAlertExtractor
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.FolderPermissionsService
@@ -64,6 +66,7 @@ func ProvideDashboardServiceImpl(
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 	folderSvc folder.Service, r prometheus.Registerer,
+	renderService rendering.Service,
 ) (*DashboardServiceImpl, error) {
 	dashSvc := &DashboardServiceImpl{
 		cfg:                  cfg,
@@ -77,6 +80,7 @@ func ProvideDashboardServiceImpl(
 		folderStore:          folderStore,
 		folderService:        folderSvc,
 		metrics:              newDashboardsMetrics(r),
+		renderService:        renderService,
 	}
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc))

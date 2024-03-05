@@ -5,11 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/screenshot"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -1028,6 +1032,56 @@ func (hs *HTTPServer) GetDashboardUIDs(c *contextmodel.ReqContext) {
 		uids = append(uids, qResult.UID)
 	}
 	c.JSON(http.StatusOK, uids)
+}
+
+func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Response {
+	var previewRequest PreviewRequest
+	if err := web.Bind(c.Req, &previewRequest); err != nil {
+		return response.Error(http.StatusBadRequest, "error parsing body", err)
+	}
+
+	hs.log.Info("Generating preview", "resourcePath", previewRequest.ResourcePath)
+
+	opts := screenshot.ScreenshotOptions{
+		OrgID:        c.SignedInUser.GetOrgID(),
+		DashboardUID: web.Params(c.Req)[":uid"],
+		PanelID:      c.QueryInt64("panelId"),
+		From:         c.Query("from"),
+		To:           c.Query("to"),
+		Width:        1600,
+		Height:       800,
+		Theme:        models.ThemeDark,
+		Timeout:      time.Duration(60) * time.Second,
+		AuthOptions: rendering.AuthOpts{
+			OrgID:   c.SignedInUser.GetOrgID(),
+			UserID:  c.SignedInUser.UserID,
+			OrgRole: c.SignedInUser.OrgRole,
+		},
+	}
+	filePath, err := hs.screenshotService.Take(c.Req.Context(), opts)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
+	}
+
+	imageFileName := filepath.Base(filePath.Path)
+	imageURL := hs.getImageURL(imageFileName)
+
+	return response.JSON(http.StatusOK, &PreviewResponse{
+		PreviewURL: imageURL,
+	})
+}
+
+func (hs *HTTPServer) getImageURL(imageName string) string {
+	grafanaURL := hs.getGrafanaURL()
+	return fmt.Sprintf("%s%s/%s", grafanaURL, "public/img/attachments", imageName)
+}
+
+type PreviewRequest struct {
+	ResourcePath string `json:"resourcePath"`
+}
+
+type PreviewResponse struct {
+	PreviewURL string `json:"previewUrl"`
 }
 
 // swagger:parameters restoreDashboardVersionByID

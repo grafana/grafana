@@ -53,9 +53,9 @@ export const shareToSlackApi = createApi({
         return response.map((c) => ({ value: c.id, label: `#${c.name}` }));
       },
     }),
-    createPreview: builder.query<{ previewUrl: string }, { resourcePath: string }>({
-      query: ({ resourcePath }) => ({
-        url: `/dashboards/preview`,
+    createPreview: builder.query<{ previewUrl: string }, { dashboardUid: string; resourcePath: string }>({
+      query: ({ dashboardUid, resourcePath }) => ({
+        url: `/dashboards/uid/${dashboardUid}/preview`,
         method: 'POST',
         data: { resourcePath },
       }),

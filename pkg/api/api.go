@@ -469,10 +469,10 @@ func (hs *HTTPServer) registerRoutes() {
 					dashboardPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
 					dashboardPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
 				})
+				dashUidRoute.Post("/preview", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GeneratePreview))
 			})
 
 			dashboardRoute.Post("/calculate-diff", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.CalculateDashboardDiff))
-			dashboardRoute.Post("/preview", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GeneratePreview))
 
 			dashboardRoute.Post("/db", authorize(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionDashboardsWrite))), routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
@@ -577,12 +577,6 @@ func (hs *HTTPServer) registerRoutes() {
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
 
-		// Share to Slack
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagSlackSharePreview) {
-			apiRoute.Get("/share/slack/channels", hs.GetSlackChannels)
-			apiRoute.Post("/share/slack", hs.ShareToSlack)
-		}
-
 	}, reqSignedIn)
 
 	// admin api
@@ -641,8 +635,4 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))
-
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSlackUnfurling) {
-		r.Post("/api/share/slack/unfurl", routing.Wrap(hs.SlackUnfurl))
-	}
 }

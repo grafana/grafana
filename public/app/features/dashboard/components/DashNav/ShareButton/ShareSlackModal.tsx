@@ -21,10 +21,12 @@ export function ShareSlackModal({
   resourceType,
   resourcePath,
   title,
+  dashboardUid,
 }: {
   resourceType: string;
   resourcePath: string;
   title?: string;
+  dashboardUid: string;
 }) {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
   const [description, setDescription] = useState<string>();
@@ -39,7 +41,7 @@ export function ShareSlackModal({
     refetch,
     isFetching: isPreviewFetching,
     isError,
-  } = useCreatePreviewQuery({ resourcePath }, { refetchOnMountOrArgChange: false });
+  } = useCreatePreviewQuery({ dashboardUid, resourcePath }, { refetchOnMountOrArgChange: false });
   const [share, { isLoading: isShareLoading, isSuccess: isShareSuccess }] = useShareMutation();
 
   const disableShareButton = isChannelsLoading || isChannelsFetching || isPreviewLoading || isPreviewFetching;

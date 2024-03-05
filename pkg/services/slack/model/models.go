@@ -1,18 +1,6 @@
-package slack
+package model
 
-import (
-	"context"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-
-	"github.com/grafana/grafana/pkg/api/dtos"
-)
-
-type Service interface {
-	GetUserConversations(ctx context.Context) (*dtos.SlackChannels, error)
-	PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, dashboardLink string) error
-	PostUnfurl(ctx context.Context, linkEvent EventPayload, imageURL string, dashboardTitle string) error
-	ValidateSignatureRequest(c *contextmodel.ReqContext, body string) bool
-}
+import "github.com/grafana/grafana/pkg/services/rendering"
 
 type PreviewRequest struct {
 	DashboardURL string `json:"dashboardUrl"`
@@ -116,4 +104,12 @@ type PostMessageRequest struct {
 
 type PostMessageResponse struct {
 	Ok bool `json:"ok"`
+}
+
+type ScreenshotOptions struct {
+	AuthOptions  rendering.AuthOpts
+	DashboardUID string
+	PanelID      int64
+	From         string
+	To           string
 }

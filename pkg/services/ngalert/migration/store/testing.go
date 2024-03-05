@@ -86,7 +86,7 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 		cfg, dashboardStore, folderStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 		folderService,
-		nil,
+		nil, nil,
 	)
 	require.NoError(t, err)
 	guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashboardService)
