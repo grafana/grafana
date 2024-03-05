@@ -2,6 +2,7 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { VizPanelManager, VizPanelManagerState } from 'app/features/dashboard-scene/panel-edit/VizPanelManager';
 import { VizPanelLinks } from 'app/features/dashboard-scene/scene/PanelLinks';
@@ -176,8 +177,11 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     );
 }
 
-export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPaneCategoryDescriptor {
-  const { panel, repeat } = panelManager.state;
+export function getPanelFrameCategory2(
+  panelManager: VizPanelManager,
+  panel: VizPanel,
+  repeat?: string
+): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',
