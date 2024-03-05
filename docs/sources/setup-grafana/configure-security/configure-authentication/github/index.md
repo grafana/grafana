@@ -24,7 +24,7 @@ weight: 900
 This topic describes how to configure GitHub OAuth2 authentication.
 
 {{% admonition type="note" %}}
-If Users use the same email address in GitHub that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../configure-authentication/#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
+If Users use the same email address in GitHub that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
 {{% /admonition %}}
 
 ## Before you begin
