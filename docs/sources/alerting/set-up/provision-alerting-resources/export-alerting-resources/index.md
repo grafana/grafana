@@ -20,7 +20,19 @@ weight: 300
 
 # Export alerting resources
 
-Export your alerting resources, such as alert rules, contact points, and notification policies for provisioning, automatically importing single folders and single groups. Use the [Grafana UI](#export-from-the-grafana-ui) or the [HTTP Alerting API](#http-alerting-api) to export these resources.
+Export your alerting resources, such as alert rules, contact points, and notification policies for provisioning, automatically importing single folders and single groups.
+
+There are distinct methods to export your alerting resources:
+
+- [Grafana UI](#export-from-the-grafana-ui) exports in Terraform format and YAML or JSON formats for file provisioning.
+- [HTTP Alerting API](#http-alerting-api) exports in JSON API format used by the HTTP Alerting API.
+- [HTTP Alerting API - Export endpoints](#export-api-endpoints) exports in YAML or JSON formats for file provisioning.
+
+{{< admonition type="note" >}}
+Alerting resources imported through [file provisioning](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning) cannot be edited in the Grafana UI. This prevents changes made in the UI from being overridden by file provisioning during Grafana restarts.
+
+If you need to modify provisioned alerting resources in Grafana, refer to [edit HTTP API alerting resources in the Grafana UI](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning#edit-resources-in-the-grafana-ui) or to [edit Terraform alerting resources in the Grafana UI](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning#enable-editing-resources-in-the-grafana-ui).
+{{< /admonition >}}
 
 ## Export from the Grafana UI
 
