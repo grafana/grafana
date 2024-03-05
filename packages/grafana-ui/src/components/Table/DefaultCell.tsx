@@ -132,8 +132,13 @@ function getCellStyle(
 
   // If we have definied colors return those styles
   // Otherwise we return default styles
- 
-  return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover, isStringValue, shouldWrapText);
+  return tableStyles.buildCellContainerStyle(
+    textColor,
+    bgColor,
+    !disableOverflowOnHover,
+    isStringValue,
+    shouldWrapText
+  );
 }
 
 function getLinkStyle(tableStyles: TableStyles, cellOptions: TableCellOptions, targetClassName: string | undefined) {
