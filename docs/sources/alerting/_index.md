@@ -24,7 +24,7 @@ cards:
   title_class: pt-0 lh-1
   items:
     - title: Introduction
-      href: /docs/grafana-cloud/alerting-and-irm/alerting/
+      href: ./fundamentals/
       description: Learn more about the fundamentals and available features that help you create, manage, and respond to alerts; and improve your team’s ability to resolve issues quickly.
       height: 24
     - title: Set up
