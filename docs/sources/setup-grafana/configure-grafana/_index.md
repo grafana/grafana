@@ -835,6 +835,10 @@ The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For
 
 Require email validation before sign up completes. Default is `false`.
 
+### login_default_org_id
+
+Set the default organization for users when they log in. The default is `-1`.
+
 ### login_hint
 
 Text used as placeholder text on login page for login/username input.
