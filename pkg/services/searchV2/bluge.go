@@ -435,7 +435,7 @@ func doSearchQuery(
 		hasConstraints = true
 	}
 
-	// Datasource
+	// DatasourceType
 	if q.DatasourceType != "" {
 		fullQuery.AddMust(bluge.NewTermQuery(q.DatasourceType).SetField(documentFieldDSType))
 		hasConstraints = true
