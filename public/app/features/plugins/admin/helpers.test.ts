@@ -112,6 +112,30 @@ describe('Plugins/Helpers', () => {
       config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
       config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
     });
+
+    test('plugins should be fully installed if they are installed and it is provisioned', () => {
+      const pluginId = 'plugin-1';
+
+      const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
+      const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+
+      config.featureToggles.managedPluginsInstall = true;
+      config.pluginAdminExternalManageEnabled = true;
+
+      const merged = mergeLocalsAndRemotes({
+        local: [...localPlugins, getLocalPluginMock({ id: pluginId })],
+        remote: [...remotePlugins, getRemotePluginMock({ slug: pluginId })],
+        provisioned: [{ slug: pluginId }],
+      });
+      const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
+
+      expect(merged).toHaveLength(5);
+      expect(findMerged(pluginId)).not.toBeUndefined();
+      expect(findMerged(pluginId)?.isFullyInstalled).toBe(true);
+
+      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
+      config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+    });
   });
 
   describe('mergeLocalAndRemote()', () => {

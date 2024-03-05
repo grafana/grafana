@@ -16,10 +16,11 @@ import {
   installPlugin,
   uninstallPlugin,
   getInstancePlugins,
+  getProvisionedPlugins,
 } from '../api';
 import { STATE_PREFIX } from '../constants';
 import { mapLocalToCatalog, mergeLocalsAndRemotes, updatePanels } from '../helpers';
-import { CatalogPlugin, RemotePlugin, LocalPlugin, InstancePlugin } from '../types';
+import { CatalogPlugin, RemotePlugin, LocalPlugin, InstancePlugin, ProvisionedPlugin } from '../types';
 
 // Fetches
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
@@ -30,6 +31,10 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
     const instance$ =
       config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
         ? from(getInstancePlugins())
+        : of(undefined);
+    const provisioned$ =
+      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
+        ? from(getProvisionedPlugins())
         : of(undefined);
     const TIMEOUT = 500;
     const pluginErrors$ = from(getPluginErrors());
@@ -48,6 +53,7 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
       local: local$,
       remote: remote$,
       instance: instance$,
+      provisioned: provisioned$,
       pluginErrors: pluginErrors$,
     })
       .pipe(
@@ -66,13 +72,21 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
                 if (remote.length > 0) {
                   const local = await lastValueFrom(local$);
                   const instance = await lastValueFrom(instance$);
+                  const provisioned = await lastValueFrom(provisioned$);
                   const pluginErrors = await lastValueFrom(pluginErrors$);
 
-                  thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes({ local, remote, instance, pluginErrors })));
+                  thunkApi.dispatch(
+                    addPlugins(mergeLocalsAndRemotes({ local, remote, instance, provisioned, pluginErrors }))
+                  );
                 }
               });
 
-            return forkJoin({ local: local$, instance: instance$, pluginErrors: pluginErrors$ });
+            return forkJoin({
+              local: local$,
+              instance: instance$,
+              provisioned: provisioned$,
+              pluginErrors: pluginErrors$,
+            });
           },
         })
       )
@@ -81,18 +95,22 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
           local,
           remote,
           instance,
+          provisioned,
           pluginErrors,
         }: {
           local: LocalPlugin[];
           remote?: RemotePlugin[];
           instance?: InstancePlugin[];
+          provisioned?: ProvisionedPlugin[];
           pluginErrors: PluginError[];
         }) => {
           // Both local and remote plugins are loaded
           if (local && remote) {
             thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/fulfilled` });
             thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/fulfilled` });
-            thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes({ local, remote, instance, pluginErrors })));
+            thunkApi.dispatch(
+              addPlugins(mergeLocalsAndRemotes({ local, remote, instance, provisioned, pluginErrors }))
+            );
 
             // Only remote plugins are loaded (remote timed out)
           } else if (local) {

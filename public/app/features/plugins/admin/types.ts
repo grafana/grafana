@@ -322,3 +322,7 @@ export type InstancePlugin = {
   pluginSlug: string;
   version: string;
 };
+
+export type ProvisionedPlugin = {
+  slug: string;
+};
