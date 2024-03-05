@@ -93,7 +93,7 @@ describe('QueryVariableEditor', () => {
 
   it('should render the component with initializing the components correctly', async () => {
     const { renderer } = await setup();
-    const dataSourcePicker = renderer.getByTestId(selectors.components.DataSourcePicker.container);
+    const dataSourcePicker = renderer.getByTestId(selectors.components.DataSourcePicker.inputV2);
     const queryEditor = renderer.getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
     );
@@ -118,7 +118,7 @@ describe('QueryVariableEditor', () => {
     );
 
     expect(dataSourcePicker).toBeInTheDocument();
-    expect(dataSourcePicker).toHaveTextContent('Default Test Data Source');
+    expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(queryEditor).toBeInTheDocument();
     expect(queryEditor).toHaveValue('my-query');
     expect(regexInput).toBeInTheDocument();
@@ -138,18 +138,20 @@ describe('QueryVariableEditor', () => {
   it('should update variable state when changing the datasource', async () => {
     const {
       variable,
-      renderer: { getByTestId },
+      renderer: { getByTestId, getByText },
       user,
     } = await setup();
-    const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.container).getElementsByTagName('input');
+
+    expect(variable.state.datasource).toEqual({ uid: 'mock-ds-2', type: 'test' });
+
+    await user.click(getByTestId(selectors.components.DataSourcePicker.inputV2));
+    await user.click(getByText(/prom/i));
 
     await waitFor(async () => {
-      await user.type(dataSourcePicker[0], 'm');
-      await user.tab();
       await lastValueFrom(variable.validateAndUpdate());
     });
 
-    expect(variable.state.datasource).toEqual({ uid: 'mock-ds-2', type: 'test' });
+    expect(variable.state.datasource).toEqual({ uid: 'mock-ds-3', type: 'prometheus' });
   });
 
   it('should update the variable state when changing the query', async () => {
@@ -209,6 +211,46 @@ describe('QueryVariableEditor', () => {
     });
 
     expect(variable.state.sort).toBe(VariableSort.alphabeticalDesc);
+  });
+
+  it('should update the variable query definition when changing the query', async () => {
+    const {
+      variable,
+      renderer: { getByTestId },
+      user,
+    } = await setup();
+    const queryEditor = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
+    );
+
+    await user.type(queryEditor, '-new');
+    await user.tab();
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.definition).toEqual('my-query-new');
+
+    await user.clear(queryEditor);
+
+    await user.type(queryEditor, 'new definition');
+    await user.tab();
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.definition).toEqual('new definition');
+
+    await user.clear(queryEditor);
+    await user.tab();
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.definition).toEqual('');
   });
 
   it('should update the variable state when changing the refresh', async () => {

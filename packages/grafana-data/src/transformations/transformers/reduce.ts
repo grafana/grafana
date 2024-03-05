@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { guessFieldTypeForField, guessFieldTypeFromValue } from '../../dataframe/processDataFrame';
+import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';
 import { KeyValue } from '../../types/data';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
@@ -64,7 +64,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 /**
  * @internal only exported for testing
  */
-export function reduceSeriesToRows(
+function reduceSeriesToRows(
   data: DataFrame[],
   matcher: FieldMatcher,
   reducerId: ReducerID[],
@@ -156,7 +156,7 @@ export function reduceSeriesToRows(
   return mergeResults(processed);
 }
 
-export function getDistinctLabelKeys(frames: DataFrame[]): string[] {
+function getDistinctLabelKeys(frames: DataFrame[]): string[] {
   const keys = new Set<string>();
   for (const frame of frames) {
     for (const field of frame.fields) {
@@ -173,7 +173,7 @@ export function getDistinctLabelKeys(frames: DataFrame[]): string[] {
 /**
  * @internal only exported for testing
  */
-export function mergeResults(data: DataFrame[]): DataFrame | undefined {
+function mergeResults(data: DataFrame[]): DataFrame | undefined {
   if (!data?.length) {
     return undefined;
   }
@@ -211,7 +211,6 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
   const calculators = fieldReducers.list(reducerId);
   const reducers = calculators.map((c) => c.id);
   const processed: DataFrame[] = [];
-
   for (const series of data) {
     const fields: Field[] = [];
     for (const field of series.fields) {
@@ -224,7 +223,7 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
           const value = results[reducer];
           const copy = {
             ...field,
-            type: guessFieldTypeFromValue(value),
+            type: getFieldType(reducer, field),
             values: [value],
           };
           copy.state = undefined;
@@ -248,4 +247,19 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
   }
 
   return processed;
+}
+
+function getFieldType(reducer: string, field: Field) {
+  switch (reducer) {
+    case ReducerID.allValues:
+    case ReducerID.uniqueValues:
+      return FieldType.other;
+    case ReducerID.first:
+    case ReducerID.firstNotNull:
+    case ReducerID.last:
+    case ReducerID.lastNotNull:
+      return field.type;
+    default:
+      return FieldType.number;
+  }
 }

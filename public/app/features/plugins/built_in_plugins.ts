@@ -15,8 +15,7 @@ const influxdbPlugin = async () =>
 const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */ 'app/plugins/datasource/loki/module');
 const jaegerPlugin = async () =>
   await import(/* webpackChunkName: "jaegerPlugin" */ 'app/plugins/datasource/jaeger/module');
-const zipkinPlugin = async () =>
-  await import(/* webpackChunkName: "zipkinPlugin" */ 'app/plugins/datasource/zipkin/module');
+const zipkinPlugin = async () => await import(/* webpackChunkName: "zipkinPlugin" */ '@grafana-plugins/zipkin/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
 const mysqlPlugin = async () =>
@@ -30,9 +29,7 @@ const mssqlPlugin = async () =>
 const testDataDSPlugin = async () =>
   await import(/* webpackChunkName: "testDataDSPlugin" */ '@grafana-plugins/grafana-testdata-datasource/module');
 const cloudMonitoringPlugin = async () =>
-  await import(
-    /* webpackChunkName: "cloudMonitoringPlugin" */ '@grafana-plugins/grafana-cloud-monitoring-datasource/module'
-  );
+  await import(/* webpackChunkName: "cloudMonitoringPlugin" */ '@grafana-plugins/stackdriver/module');
 const azureMonitorPlugin = async () =>
   await import(/* webpackChunkName: "azureMonitorPlugin" */ '@grafana-plugins/grafana-azure-monitor-datasource/module');
 const tempoPlugin = async () => await import(/* webpackChunkName: "tempoPlugin" */ '@grafana-plugins/tempo/module');

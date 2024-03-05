@@ -53,7 +53,7 @@ export function RuleListErrors(): ReactElement {
       result.push(
         <>
           Failed to load the data source configuration for{' '}
-          <a href={makeDataSourceLink(dataSource)} className={styles.dsLink}>
+          <a href={makeDataSourceLink(dataSource.uid)} className={styles.dsLink}>
             {dataSource.name}
           </a>
           : {error.message || 'Unknown error.'}
@@ -65,7 +65,7 @@ export function RuleListErrors(): ReactElement {
       result.push(
         <>
           Failed to load rules state from{' '}
-          <a href={makeDataSourceLink(dataSource)} className={styles.dsLink}>
+          <a href={makeDataSourceLink(dataSource.uid)} className={styles.dsLink}>
             {dataSource.name}
           </a>
           : {error.message || 'Unknown error.'}
@@ -77,7 +77,7 @@ export function RuleListErrors(): ReactElement {
       result.push(
         <>
           Failed to load rules config from{' '}
-          <a href={makeDataSourceLink(dataSource)} className={styles.dsLink}>
+          <a href={makeDataSourceLink(dataSource.uid)} className={styles.dsLink}>
             {dataSource.name}
           </a>
           : {error.message || 'Unknown error.'}

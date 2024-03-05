@@ -643,6 +643,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 					for i := 1; i < 3; i++ {
 						_, err := x.Insert(user.User{
 							ID:      int64(i),
+							UID:     fmt.Sprintf("u%d", i),
 							OrgID:   1,
 							Name:    fmt.Sprintf("user%v", i),
 							Login:   fmt.Sprintf("user%v", i),

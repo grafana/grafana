@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -86,7 +86,7 @@ describe('PanelDataTransformationsTab', () => {
     const modelMock = createModelMock(mockData);
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-    userEvent.click(addButton);
+    await userEvent.click(addButton);
     await screen.findByTestId(selectors.components.Transforms.searchInput);
   });
 
@@ -95,16 +95,12 @@ describe('PanelDataTransformationsTab', () => {
     const modelMock = createModelMock(mockData, [], onChangeTransformation);
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-    await act(async () => {
-      userEvent.click(addButton);
-    });
+    await userEvent.click(addButton);
     const transformationCard = await screen.findByTestId(
       selectors.components.TransformTab.newTransform('Add field from calculation')
     );
     const button = transformationCard.getElementsByTagName('button').item(0);
-    await act(async () => {
-      await userEvent.click(button!);
-    });
+    await userEvent.click(button!);
 
     expect(onChangeTransformation).toHaveBeenCalledWith([{ id: 'calculateField', options: {} }]);
   });
@@ -123,16 +119,12 @@ describe('PanelDataTransformationsTab', () => {
     );
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-    await act(async () => {
-      userEvent.click(addButton);
-    });
+    await userEvent.click(addButton);
     const transformationCard = await screen.findByTestId(
       selectors.components.TransformTab.newTransform('Add field from calculation')
     );
     const button = transformationCard.getElementsByTagName('button').item(0);
-    await act(async () => {
-      await userEvent.click(button!);
-    });
+    await userEvent.click(button!);
     expect(onChangeTransformation).toHaveBeenCalledWith([
       { id: 'calculateField', options: {} },
       { id: 'calculateField', options: {} },
@@ -153,13 +145,9 @@ describe('PanelDataTransformationsTab', () => {
     );
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const removeButton = await screen.findByTestId(selectors.components.Transforms.removeAllTransformationsButton);
-    await act(async () => {
-      userEvent.click(removeButton);
-    });
+    await userEvent.click(removeButton);
     const confirmButton = await screen.findByTestId(selectors.pages.ConfirmModal.delete);
-    await act(async () => {
-      await userEvent.click(confirmButton);
-    });
+    await userEvent.click(confirmButton);
 
     expect(onChangeTransformation).toHaveBeenCalledWith([]);
   });
@@ -168,9 +156,7 @@ describe('PanelDataTransformationsTab', () => {
     const modelMock = createModelMock(mockData);
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-    await act(async () => {
-      await userEvent.click(addButton);
-    });
+    await userEvent.click(addButton);
 
     const searchInput = await screen.findByTestId(selectors.components.Transforms.searchInput);
 
@@ -179,7 +165,7 @@ describe('PanelDataTransformationsTab', () => {
     await userEvent.type(searchInput, 'add field');
 
     await screen.findByTestId(selectors.components.TransformTab.newTransform('Add field from calculation'));
-    const reduce = await screen.queryByTestId(selectors.components.TransformTab.newTransform('Reduce'));
+    const reduce = screen.queryByTestId(selectors.components.TransformTab.newTransform('Reduce'));
     expect(reduce).toBeNull();
   });
 });
@@ -188,7 +174,7 @@ const setupVizPanelManger = (panelId: string) => {
   const scene = transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
-  const vizPanelManager = new VizPanelManager(panel.clone());
+  const vizPanelManager = VizPanelManager.createFor(panel);
 
   // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
   // @ts-expect-error

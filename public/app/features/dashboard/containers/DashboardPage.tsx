@@ -31,6 +31,7 @@ import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
+import { ShareModal } from '../components/ShareModal';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
@@ -287,6 +288,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return inspectPanel;
   }
 
+  onCloseShareModal = () => {
+    locationService.partial({ shareView: null });
+  };
+
   render() {
     const { dashboard, initError, queryParams } = this.props;
     const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
@@ -354,6 +359,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+          {queryParams.shareView && <ShareModal dashboard={dashboard} onDismiss={this.onCloseShareModal} />}
         </Page>
         {editPanel && (
           <PanelEditor

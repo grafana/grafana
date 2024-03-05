@@ -3,6 +3,7 @@ import React from 'react';
 import { catchError, map, Observable, of } from 'rxjs';
 
 import {
+  AppEvents,
   DataFrame,
   DataQueryError,
   DataQueryRequest,
@@ -13,11 +14,7 @@ import {
   rangeUtil,
   ScopedVars,
 } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
-import { store } from 'app/store/store';
-import { AppNotificationTimeout } from 'app/types';
+import { TemplateSrv, getAppEvents } from '@grafana/runtime';
 
 import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';
 import memoizedDebounce from '../memoizedDebounce';
@@ -27,24 +24,23 @@ import { filterMetricsQuery } from '../utils/utils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
 
+const getThrottlingErrorMessage = (region: string, message: string) =>
+  `Please visit the AWS Service Quotas console at https://${region}.console.aws.amazon.com/servicequotas/home?region=${region}#!/services/monitoring/quotas/L-5E141212 to request a quota increase or see our documentation at https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#manage-service-quotas to learn more. ${message}`;
+
 const displayAlert = (datasourceName: string, region: string) =>
-  store.dispatch(
-    notifyApp(
-      createErrorNotification(
-        `CloudWatch request limit reached in ${region} for data source ${datasourceName}`,
-        '',
-        undefined,
-        React.createElement(ThrottlingErrorMessage, { region }, null)
-      )
-    )
-  );
+  getAppEvents().publish({
+    type: AppEvents.alertError.name,
+    payload: [
+      `CloudWatch request limit reached in ${region} for data source ${datasourceName}`,
+      '',
+      undefined,
+      React.createElement(ThrottlingErrorMessage, { region }, null),
+    ],
+  });
 
 // This class handles execution of CloudWatch metrics query data queries
 export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
-  debouncedThrottlingAlert: (datasourceName: string, region: string) => void = memoizedDebounce(
-    displayAlert,
-    AppNotificationTimeout.Error
-  );
+  debouncedThrottlingAlert: (datasourceName: string, region: string) => void = memoizedDebounce(displayAlert);
 
   constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
     super(instanceSettings, templateSrv);
@@ -123,13 +119,13 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
         });
 
         if (res.errors?.length) {
-          this.alertOnErrors(res.errors, request);
+          this.alertOnThrottlingErrors(res.errors, request);
         }
 
         return {
           data: dataframes,
           // DataSourceWithBackend will not throw an error, instead it will return "errors" field along with the response
-          errors: res.errors,
+          errors: this.enrichThrottlingErrorMessages(request, res.errors),
         };
       }),
       catchError((err: unknown) => {
@@ -142,7 +138,23 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
     );
   }
 
-  alertOnErrors(errors: DataQueryError[], request: DataQueryRequest<CloudWatchQuery>) {
+  enrichThrottlingErrorMessages(request: DataQueryRequest<CloudWatchQuery>, errors?: DataQueryError[]) {
+    if (!errors || errors.length === 0) {
+      return errors;
+    }
+    const result: DataQueryError[] = [];
+    errors.forEach((error) => {
+      if (error.message && (/^Throttling:.*/.test(error.message) || /^Rate exceeded.*/.test(error.message))) {
+        const region = this.getActualRegion(request.targets.find((target) => target.refId === error.refId)?.region);
+        result.push({ ...error, message: getThrottlingErrorMessage(region, error.message) });
+      } else {
+        result.push(error);
+      }
+    });
+    return result;
+  }
+
+  alertOnThrottlingErrors(errors: DataQueryError[], request: DataQueryRequest<CloudWatchQuery>) {
     const hasThrottlingError = errors.some(
       (err) => err.message && (/^Throttling:.*/.test(err.message) || /^Rate exceeded.*/.test(err.message))
     );

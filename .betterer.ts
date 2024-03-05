@@ -5,11 +5,12 @@ import path from 'path';
 import { glob } from 'glob';
 
 // Why are we ignoring these?
-// They're all deprecated/being removed soon so doesn't make sense to fix types
+// They're all deprecated/being removed so doesn't make sense to fix types
 const eslintPathsToIgnore = [
   'packages/grafana-e2e', // deprecated.
   'public/app/angular', // will be removed in Grafana 11
   'public/app/plugins/panel/graph', // will be removed alongside angular
+  'public/app/plugins/panel/table-old', // will be removed alongside angular
 ];
 
 // Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
@@ -31,9 +32,16 @@ function countUndocumentedStories() {
     await Promise.all(
       filePaths.map(async (filePath) => {
         // look for .mdx import in the story file
-        const regex = new RegExp("^import.*.mdx';$", 'gm');
+        const mdxImportRegex = new RegExp("^import.*\\.mdx';$", 'gm');
+        // Looks for the "autodocs" string in the file
+        const autodocsStringRegex = /autodocs/;
+
         const fileText = await fs.readFile(filePath, 'utf8');
-        if (!regex.test(fileText)) {
+
+        const hasMdxImport = mdxImportRegex.test(fileText);
+        const hasAutodocsString = autodocsStringRegex.test(fileText);
+        // If both .mdx import and autodocs string are missing, add an issue
+        if (!hasMdxImport && !hasAutodocsString) {
           // In this case the file contents don't matter:
           const file = fileTestResult.addFile(filePath, '');
           // Add the issue to the first character of the file:

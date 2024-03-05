@@ -205,9 +205,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   // ungrouped rules are rules that are in the "default" group name
   const groupName = isListView ? (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace)} />
+    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />
   ) : (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace)} group={group.name} />
+    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />
   );
 
   const closeEditModal = (saved = false) => {

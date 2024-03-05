@@ -41,6 +41,7 @@ import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
 import snapshotableWithRowsDashboardJson from './testfiles/snapshotable_with_rows.json';
 import {
   buildGridItemForLibPanel,
+  buildGridItemForLibraryPanelWidget,
   buildGridItemForPanel,
   transformSaveModelToScene,
 } from './transformSaveModelToScene';
@@ -351,6 +352,30 @@ describe('transformSceneToSaveModel', () => {
       expect(result.transformations).toBeUndefined();
       expect(result.fieldConfig).toBeUndefined();
     });
+
+    it('given a library panel widget', () => {
+      const panel = buildGridItemFromPanelSchema({
+        id: 4,
+        gridPos: {
+          h: 8,
+          w: 12,
+          x: 0,
+          y: 0,
+        },
+        type: 'add-library-panel',
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.id).toBe(4);
+      expect(result.gridPos).toEqual({
+        h: 8,
+        w: 12,
+        x: 0,
+        y: 0,
+      });
+      expect(result.type).toBe('add-library-panel');
+    });
   });
 
   describe('Annotations', () => {
@@ -563,6 +588,37 @@ describe('transformSceneToSaveModel', () => {
         type: 'datasource',
         uid: SHARED_DASHBOARD_QUERY,
       });
+    });
+
+    it('Given panel with query caching options', () => {
+      const panel = buildGridItemFromPanelSchema({
+        datasource: {
+          type: 'grafana-testdata',
+          uid: 'abc',
+        },
+        cacheTimeout: '10',
+        queryCachingTTL: 200000,
+        maxDataPoints: 100,
+        targets: [
+          {
+            refId: 'A',
+            expr: 'A',
+            datasource: {
+              type: 'grafana-testdata',
+              uid: 'abc',
+            },
+          },
+          {
+            refId: 'B',
+            expr: 'B',
+          },
+        ],
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.cacheTimeout).toBe('10');
+      expect(result.queryCachingTTL).toBe(200000);
     });
   });
 
@@ -866,6 +922,9 @@ describe('transformSceneToSaveModel', () => {
 export function buildGridItemFromPanelSchema(panel: Partial<Panel>): SceneGridItemLike {
   if (panel.libraryPanel) {
     return buildGridItemForLibPanel(new PanelModel(panel))!;
+  } else if (panel.type === 'add-library-panel') {
+    return buildGridItemForLibraryPanelWidget(new PanelModel(panel))!;
   }
+
   return buildGridItemForPanel(new PanelModel(panel));
 }

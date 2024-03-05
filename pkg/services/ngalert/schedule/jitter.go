@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // JitterStrategy represents a modifier to alert rule timing that affects how evaluations are distributed.
@@ -19,13 +20,13 @@ const (
 )
 
 // JitterStrategyFrom returns the JitterStrategy indicated by the current Grafana feature toggles.
-func JitterStrategyFrom(toggles featuremgmt.FeatureToggles) JitterStrategy {
-	strategy := JitterNever
+func JitterStrategyFrom(cfg setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) JitterStrategy {
+	strategy := JitterByGroup
+	if cfg.DisableJitter {
+		return JitterNever
+	}
 	if toggles == nil {
 		return strategy
-	}
-	if toggles.IsEnabledGlobally(featuremgmt.FlagJitterAlertRules) {
-		strategy = JitterByGroup
 	}
 	if toggles.IsEnabledGlobally(featuremgmt.FlagJitterAlertRulesWithinGroups) {
 		strategy = JitterByRule

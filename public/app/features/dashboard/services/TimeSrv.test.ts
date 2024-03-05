@@ -24,7 +24,7 @@ describe('timeSrv', () => {
     _dashboard = {
       time: { from: 'now-6h', to: 'now' },
       getTimezone: jest.fn(() => 'browser'),
-      refresh: false,
+      refresh: '',
       timeRangeUpdated: jest.fn(() => {}),
       timepicker: {},
     };
@@ -94,7 +94,7 @@ describe('timeSrv', () => {
         _dashboard = {
           time: { from: 'now-6h', to: 'now' },
           getTimezone: jest.fn(() => 'browser'),
-          refresh: false,
+          refresh: '',
           timeRangeUpdated: jest.fn(() => {}),
           timepicker: {},
         };
@@ -236,10 +236,10 @@ describe('timeSrv', () => {
 
   describe('setTime', () => {
     it('should return disable refresh if refresh is disabled for any range', () => {
-      _dashboard.refresh = false;
+      _dashboard.refresh = '';
 
       timeSrv.setTime({ from: '2011-01-01', to: '2015-01-01' });
-      expect(_dashboard.refresh).toBe(false);
+      expect(_dashboard.refresh).toBe('');
     });
 
     it('should restore refresh for absolute time range', () => {
@@ -255,7 +255,7 @@ describe('timeSrv', () => {
         from: dateTime([2011, 1, 1]),
         to: dateTime([2015, 1, 1]),
       });
-      expect(_dashboard.refresh).toBe(false);
+      expect(_dashboard.refresh).toBe('');
       timeSrv.setTime({ from: '2011-01-01', to: 'now' });
       expect(_dashboard.refresh).toBe('10s');
     });

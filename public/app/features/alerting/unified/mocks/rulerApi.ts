@@ -1,14 +1,11 @@
-import { rest } from 'msw';
+import 'whatwg-fetch';
+import { http, HttpResponse } from 'msw';
 import { SetupServer } from 'msw/node';
 
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from '../../../../types/unified-alerting-dto';
 
 export function mockRulerRulesApiResponse(server: SetupServer, rulesSourceName: string, response: RulerRulesConfigDTO) {
-  server.use(
-    rest.get(`/api/ruler/${rulesSourceName}/api/v1/rules`, (req, res, ctx) =>
-      res(ctx.json<RulerRulesConfigDTO>(response))
-    )
-  );
+  server.use(http.get(`/api/ruler/${rulesSourceName}/api/v1/rules`, () => HttpResponse.json(response)));
 }
 
 export function mockRulerRulesGroupApiResponse(
@@ -19,8 +16,6 @@ export function mockRulerRulesGroupApiResponse(
   response: RulerRuleGroupDTO
 ) {
   server.use(
-    rest.get(`/api/ruler/${rulesSourceName}/api/v1/rules/${namespace}/${group}`, (req, res, ctx) =>
-      res(ctx.json(response))
-    )
+    http.get(`/api/ruler/${rulesSourceName}/api/v1/rules/${namespace}/${group}`, () => HttpResponse.json(response))
   );
 }

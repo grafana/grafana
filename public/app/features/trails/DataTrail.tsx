@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { AdHocVariableFilter, GrafanaTheme2 } from '@grafana/data';
+import { AdHocVariableFilter, GrafanaTheme2, VariableHide } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -27,8 +27,9 @@ import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
+import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { MetricSelectedEvent, trailDS, LOGS_METRIC, VAR_DATASOURCE, VAR_FILTERS } from './shared';
+import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
@@ -85,6 +86,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const newStepWasAppended = newNumberOfSteps > oldNumberOfSteps;
 
       if (newStepWasAppended) {
+        // In order for the `useBookmarkState` to re-evaluate after a new step was made:
+        this.forceRender();
         // Do nothing because the state is already up to date -- it created a new step!
         return;
       }
@@ -136,7 +139,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // Add metric to adhoc filters baseFilter
     const filterVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
     if (filterVar instanceof AdHocFiltersVariable) {
-      filterVar.state.set.setState({
+      filterVar.setState({
         baseFilters: getBaseFiltersForMetric(evt.payload),
       });
     }
@@ -162,7 +165,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       }
     } else if (values.metric === null) {
       stateUpdate.metric = undefined;
-      stateUpdate.topScene = new MetricSelectScene({ showHeading: true });
+      stateUpdate.topScene = new MetricSelectScene({});
     }
 
     this.setState(stateUpdate);
@@ -171,9 +174,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
     const { controls, topScene, history } = model.useState();
     const styles = useStyles2(getStyles);
+    const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     return (
       <div className={styles.container}>
+        {showHeaderForFirstTimeUsers && <MetricsHeader />}
         <history.Component model={history} />
         {controls && (
           <div className={styles.controls}>
@@ -188,11 +193,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   };
 }
 
-function getTopSceneFor(metric?: string) {
+export function getTopSceneFor(metric?: string) {
   if (metric) {
     return new MetricScene({ metric: metric });
   } else {
-    return new MetricSelectScene({ showHeading: true });
+    return new MetricSelectScene({});
   }
 }
 
@@ -201,13 +206,15 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
     variables: [
       new DataSourceVariable({
         name: VAR_DATASOURCE,
-        label: 'Data source',
+        label: 'Prometheus data source',
         value: initialDS,
-        pluginId: metric === LOGS_METRIC ? 'loki' : 'prometheus',
+        pluginId: 'prometheus',
       }),
-      AdHocFiltersVariable.create({
+      new AdHocFiltersVariable({
         name: VAR_FILTERS,
+        addFilterButtonText: 'Add label',
         datasource: trailDS,
+        hide: VariableHide.hideLabel,
         layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
@@ -221,7 +228,7 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       flexGrow: 1,
       display: 'flex',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       minHeight: '100%',
       flexDirection: 'column',
     }),
@@ -229,13 +236,17 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
     }),
     controls: css({
       display: 'flex',
       gap: theme.spacing(1),
+      padding: theme.spacing(1, 0),
       alignItems: 'flex-end',
       flexWrap: 'wrap',
+      position: 'sticky',
+      background: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
+      zIndex: theme.zIndex.activePanel + 1,
+      top: 0,
     }),
   };
 }

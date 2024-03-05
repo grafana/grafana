@@ -81,10 +81,6 @@ You can also paste a native emoji in the unit picker and pick it as a custom uni
 
 Grafana can sometimes be too aggressive in parsing strings and displaying them as numbers. To configure Grafana to show the original string value, create a field override and add a unit property with the `String` unit.
 
-### Scale units
-
-By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have a value of 0.14 kW, Grafana will display it as 140 W. Another example is that 3000 kW will be displayed at 3 MW. If you want to disable this behavior, you can toggle off the **Scale units** switch.
-
 ### Min
 
 Lets you set the minimum value used in percentage threshold calculations. Leave blank to automatically calculate the minimum.

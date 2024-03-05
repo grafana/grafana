@@ -218,6 +218,7 @@ func (proxy PluginProxy) logRequest() {
 }
 
 type templateData struct {
+	URL            string
 	JsonData       map[string]any
 	SecureJsonData map[string]string
 }

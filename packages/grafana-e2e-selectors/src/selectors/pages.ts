@@ -95,6 +95,7 @@ export const Pages = {
            */
           addAnnotationCTA: Components.CallToActionCard.button('Add annotation query'),
           addAnnotationCTAV2: Components.CallToActionCard.buttonV2('Add annotation query'),
+          annotations: 'data-testid list-annotations',
         },
         Settings: {
           name: 'Annotations settings name input',
@@ -103,6 +104,10 @@ export const Pages = {
           panelFilterSelect: 'data-testid annotations-panel-filter',
           showInLabel: 'show-in-label',
           previewInDashboard: 'data-testid annotations-preview',
+          delete: 'data-testid annotations-delete',
+          apply: 'data-testid annotations-apply',
+          enable: 'data-testid annotation-enable',
+          hide: 'data-testid annotation-hide',
         },
       },
       Variables: {
@@ -176,6 +181,15 @@ export const Pages = {
             autoEnabledCheckbox: 'data-testid interval variable auto value checkbox',
             stepCountIntervalSelect: 'data-testid interval variable step count input',
             minIntervalInput: 'data-testid interval variable mininum interval input',
+          },
+          GroupByVariable: {
+            dataSourceSelect: Components.DataSourcePicker.inputV2,
+            infoText: 'data-testid group by variable info text',
+            modeToggle: 'data-testid group by variable mode toggle',
+          },
+          AdHocFiltersVariable: {
+            datasourceSelect: Components.DataSourcePicker.inputV2,
+            infoText: 'data-testid ad-hoc filters variable info text',
           },
         },
       },

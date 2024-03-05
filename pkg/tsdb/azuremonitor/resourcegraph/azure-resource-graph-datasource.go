@@ -190,12 +190,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return &dataResponse, nil
 	}
 
-	azurePortalUrl, err := loganalytics.GetAzurePortalUrl(dsInfo.Cloud)
-	if err != nil {
-		return nil, err
-	}
-
-	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + url.PathEscape(query.InterpolatedQuery)
+	url := dsInfo.Routes["Azure Portal"].URL + "/#blade/HubsExtension/ArgQueryBlade/query/" + url.PathEscape(query.InterpolatedQuery)
 	frameWithLink := loganalytics.AddConfigLinks(*frame, url, nil)
 	if frameWithLink.Meta == nil {
 		frameWithLink.Meta = &data.FrameMeta{}

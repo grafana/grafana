@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -98,6 +99,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		nil,
 		nopLogger,
 		secretsService,
+		&featuremgmt.FeatureManager{},
 		override,
 	)
 	require.NoError(t, err)

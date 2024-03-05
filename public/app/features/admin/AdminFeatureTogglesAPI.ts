@@ -1,62 +1,77 @@
-import { createApi, BaseQueryFn } from '@reduxjs/toolkit/query/react';
-import { lastValueFrom } from 'rxjs';
-
 import { getBackendSrv } from '@grafana/runtime';
 
-type QueryArgs = {
-  url: string;
-  method?: string;
-  body?: { featureToggles: FeatureToggle[] };
-};
-
-const backendSrvBaseQuery =
-  ({ baseUrl }: { baseUrl: string }): BaseQueryFn<QueryArgs> =>
-  async ({ url, method = 'GET', body }) => {
-    try {
-      const { data } = await lastValueFrom(
-        getBackendSrv().fetch({
-          url: baseUrl + url,
-          method,
-          data: body,
-        })
-      );
-      return { data };
-    } catch (error) {
-      return { error };
-    }
-  };
-
-export const togglesApi = createApi({
-  reducerPath: 'togglesApi',
-  baseQuery: backendSrvBaseQuery({ baseUrl: '/api' }),
-  endpoints: (builder) => ({
-    getManagerState: builder.query<FeatureMgmtState, void>({
-      query: () => ({ url: '/featuremgmt/state' }),
-    }),
-    getFeatureToggles: builder.query<FeatureToggle[], void>({
-      query: () => ({ url: '/featuremgmt' }),
-    }),
-    updateFeatureToggles: builder.mutation<void, FeatureToggle[]>({
-      query: (updatedToggles) => ({
-        url: '/featuremgmt',
-        method: 'POST',
-        body: { featureToggles: updatedToggles },
-      }),
-    }),
-  }),
-});
-
-type FeatureToggle = {
+export type FeatureToggle = {
   name: string;
   description?: string;
   enabled: boolean;
+  stage: string;
   readOnly?: boolean;
+  hidden?: boolean;
 };
 
-type FeatureMgmtState = {
+export type CurrentTogglesState = {
   restartRequired: boolean;
   allowEditing: boolean;
+  toggles: FeatureToggle[];
 };
 
-export const { useGetManagerStateQuery, useGetFeatureTogglesQuery, useUpdateFeatureTogglesMutation } = togglesApi;
-export type { FeatureToggle, FeatureMgmtState };
+interface ResolvedToggleState {
+  kind: 'ResolvedToggleState';
+  restartRequired?: boolean;
+  allowEditing?: boolean;
+  toggles?: K8sToggleSpec[]; // not used in patch
+  enabled: { [key: string]: boolean };
+}
+
+interface K8sToggleSpec {
+  name: string;
+  description: string;
+  enabled: boolean;
+  writeable: boolean;
+  source: K8sToggleSource;
+  stage: string;
+}
+
+interface K8sToggleSource {
+  namespace: string;
+  name: string;
+}
+
+interface FeatureTogglesAPI {
+  getFeatureToggles(): Promise<CurrentTogglesState>;
+  updateFeatureToggles(toggles: FeatureToggle[]): Promise<void>;
+}
+
+class K8sAPI implements FeatureTogglesAPI {
+  baseURL = '/apis/featuretoggle.grafana.app/v0alpha1';
+
+  async getFeatureToggles(): Promise<CurrentTogglesState> {
+    const current = await getBackendSrv().get<ResolvedToggleState>(this.baseURL + '/current');
+    return {
+      restartRequired: Boolean(current.restartRequired),
+      allowEditing: Boolean(current.allowEditing),
+      toggles: current.toggles!.map((t) => ({
+        name: t.name,
+        description: t.description!,
+        enabled: t.enabled,
+        readOnly: !Boolean(t.writeable),
+        stage: t.stage,
+        hidden: false, // only return visible things
+      })),
+    };
+  }
+  updateFeatureToggles(toggles: FeatureToggle[]): Promise<void> {
+    const patchBody: ResolvedToggleState = {
+      kind: 'ResolvedToggleState',
+      enabled: {},
+    };
+    toggles.forEach((t) => {
+      patchBody.enabled[t.name] = t.enabled;
+    });
+    return getBackendSrv().patch(this.baseURL + '/current', patchBody);
+  }
+}
+
+export const getTogglesAPI = (): FeatureTogglesAPI => {
+  return new K8sAPI();
+};

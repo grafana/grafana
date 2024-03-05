@@ -29,19 +29,21 @@ export const enrichHelpItem = (helpItem: NavModelItem) => {
   return helpItem;
 };
 
-export const enrichWithInteractionTracking = (item: NavModelItem, expandedState: boolean) => {
-  const onClick = item.onClick;
-  item.onClick = () => {
+export const enrichWithInteractionTracking = (item: NavModelItem, megaMenuDockedState: boolean) => {
+  // creating a new object here to not mutate the original item object
+  const newItem = { ...item };
+  const onClick = newItem.onClick;
+  newItem.onClick = () => {
     reportInteraction('grafana_navigation_item_clicked', {
-      path: item.url ?? item.id,
-      state: expandedState ? 'expanded' : 'collapsed',
+      path: newItem.url ?? newItem.id,
+      menuIsDocked: megaMenuDockedState,
     });
     onClick?.();
   };
-  if (item.children) {
-    item.children = item.children.map((item) => enrichWithInteractionTracking(item, expandedState));
+  if (newItem.children) {
+    newItem.children = newItem.children.map((item) => enrichWithInteractionTracking(item, megaMenuDockedState));
   }
-  return item;
+  return newItem;
 };
 
 export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {

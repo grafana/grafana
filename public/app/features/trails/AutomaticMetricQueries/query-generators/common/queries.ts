@@ -1,6 +1,6 @@
 import { VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../../shared';
-import { simpleGraphBuilder } from '../../graph-builders/simple';
 import { AutoQueryInfo } from '../../types';
+import { generateCommonAutoQueryInfo } from '../common/generator';
 
 import { AutoQueryParameters } from './types';
 
@@ -11,32 +11,29 @@ export function getGeneralBaseQuery(rate: boolean) {
   return rate ? GENERAL_RATE_BASE_QUERY : GENERAL_BASE_QUERY;
 }
 
+const aggLabels: Record<string, string> = {
+  avg: 'average',
+  sum: 'overall',
+};
+
+function getAggLabel(agg: string) {
+  return aggLabels[agg] || agg;
+}
+
 export function generateQueries({ agg, rate, unit }: AutoQueryParameters): AutoQueryInfo {
   const baseQuery = getGeneralBaseQuery(rate);
 
-  const common = {
-    title: `${VAR_METRIC_EXPR}`,
+  const aggregationDescription = rate ? `${getAggLabel(agg)} per-second rate` : `${getAggLabel(agg)}`;
+
+  const description = `${VAR_METRIC_EXPR} (${aggregationDescription})`;
+
+  const mainQueryExpr = `${agg}(${baseQuery})`;
+  const breakdownQueryExpr = `${agg}(${baseQuery})by(${VAR_GROUP_BY_EXP})`;
+
+  return generateCommonAutoQueryInfo({
+    description,
+    mainQueryExpr,
+    breakdownQueryExpr,
     unit,
-    variant: 'graph',
-  };
-
-  const main = {
-    ...common,
-    queries: [{ refId: 'A', expr: `${agg}(${baseQuery})` }],
-    vizBuilder: () => simpleGraphBuilder(main),
-  };
-
-  const breakdown = {
-    ...common,
-    queries: [
-      {
-        refId: 'A',
-        expr: `${agg}(${baseQuery}) by(${VAR_GROUP_BY_EXP})`,
-        legendFormat: `{{${VAR_GROUP_BY_EXP}}}`,
-      },
-    ],
-    vizBuilder: () => simpleGraphBuilder(breakdown),
-  };
-
-  return { preview: main, main: main, breakdown: breakdown, variants: [] };
+  });
 }
