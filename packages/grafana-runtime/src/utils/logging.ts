@@ -66,7 +66,10 @@ export function logError(err: Error, contexts?: LogContext) {
 export function logMeasurement(measurement: Omit<MeasurementEvent, 'timestamp'>, context?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
     faro.api.pushMeasurement(measurement, {
-      context,
+      context: {
+        ...context,
+        ...measurement.context,
+      },
     });
   }
 }
@@ -87,11 +90,13 @@ export function logMeasurement(measurement: Omit<MeasurementEvent, 'timestamp'>,
  * Each method combines the `defaultContext` (if provided), the `source`, and an optional `LogContext` parameter into a full context that is included with the log message.
  */
 export function createMonitoringLogger(source: string, defaultContext?: LogContext) {
-  const createFullContext = (contexts?: LogContext) => ({
-    source: source,
-    ...defaultContext,
-    ...contexts,
-  });
+  const createFullContext = (contexts?: LogContext) => {
+    return {
+      source: source,
+      ...defaultContext,
+      ...contexts,
+    };
+  };
 
   return {
     /**
@@ -121,5 +126,13 @@ export function createMonitoringLogger(source: string, defaultContext?: LogConte
      * @param {LogContext} [contexts] - Optional additional context to be included.
      */
     logError: (error: Error, contexts?: LogContext) => logError(error, createFullContext(contexts)),
+
+    /**
+     * Logs an measurement with optional additional context.
+     * @param {MeasurementEvent} measurement - The measurement object to be recorded.
+     * @param {LogContext} [contexts] - Optional additional context to be included.
+     */
+    logMeasurement: (measurement: Omit<MeasurementEvent, 'timestamp'>, contexts?: LogContext) =>
+      logMeasurement(measurement, createFullContext(contexts)),
   };
 }

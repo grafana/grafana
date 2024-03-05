@@ -3,7 +3,6 @@ import { isEmpty } from 'lodash';
 import { dateTime } from '@grafana/data';
 import { createMonitoringLogger, getBackendSrv } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
-import { logMeasurement } from '@grafana/runtime/src/utils/logging';
 import { contextSrv } from 'app/core/core';
 
 import { RuleNamespace } from '../../../types/unified-alerting';
@@ -27,15 +26,9 @@ export const LogMessages = {
   unknownMessageFromError: 'unknown messageFromError',
 };
 
-const alertingLogger = createMonitoringLogger('features.alerting', { module: 'Alerting' });
+const { logInfo, logError, logMeasurement } = createMonitoringLogger('features.alerting', { module: 'Alerting' });
 
-export function logInfo(message: string, context?: Record<string, string>) {
-  alertingLogger.logInfo(message, context);
-}
-
-export function logError(error: Error, context?: Record<string, string>) {
-  alertingLogger.logError(error, context);
-}
+export { logInfo, logError, logMeasurement };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPerformanceLogging<TFunc extends (type: string, ...args: any[]) => Promise<any>>(
@@ -64,8 +57,8 @@ export function withPerformanceLogging<TFunc extends (type: string, ...args: any
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RuleNamespace[]>>(
+  type: string,
   func: TFunc,
-  message: string,
   context: Record<string, string>
 ) {
   return async (...args: Parameters<TFunc>) => {
@@ -74,12 +67,15 @@ export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => P
 
     const { namespacesCount, groupsCount, rulesCount } = getPromRulesMetadata(response);
 
-    logInfo(message, {
-      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
-      namespacesCount,
-      groupsCount,
-      rulesCount,
-      ...context,
+    logMeasurement({
+      type,
+      values: {
+        loadTimeMs: performance.now() - startLoadingTs,
+        namespacesCount,
+        groupsCount,
+        rulesCount,
+      },
+      context,
     });
     return response;
   };
@@ -91,9 +87,9 @@ function getPromRulesMetadata(promRules: RuleNamespace[]) {
   const rulesCount = promRules.flatMap((ns) => ns.groups).flatMap((g) => g.rules).length;
 
   const metadata = {
-    namespacesCount: namespacesCount.toFixed(0),
-    groupsCount: groupsCount.toFixed(0),
-    rulesCount: rulesCount.toFixed(0),
+    namespacesCount: namespacesCount,
+    groupsCount: groupsCount,
+    rulesCount: rulesCount,
   };
 
   return metadata;
@@ -101,8 +97,8 @@ function getPromRulesMetadata(promRules: RuleNamespace[]) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withRulerRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RulerRulesConfigDTO>>(
+  type: string,
   func: TFunc,
-  message: string,
   context: Record<string, string>
 ) {
   return async (...args: Parameters<TFunc>) => {
@@ -111,12 +107,17 @@ export function withRulerRulesMetadataLogging<TFunc extends (...args: any[]) => 
 
     const { namespacesCount, groupsCount, rulesCount } = getRulerRulesMetadata(response);
 
-    logInfo(message, {
-      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
-      namespacesCount,
-      groupsCount,
-      rulesCount,
-      ...context,
+    logMeasurement({
+      type,
+      values: {
+        loadTimeMs: performance.now() - startLoadingTs,
+      },
+      context: {
+        namespacesCount,
+        groupsCount,
+        rulesCount,
+        ...context,
+      },
     });
     return response;
   };

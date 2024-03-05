@@ -2,6 +2,7 @@ import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
+import { logMeasurement } from '@grafana/runtime/src/utils/logging';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -122,11 +123,10 @@ export const fetchPromRulesAction = createAsyncThunk(
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
-    const fetchRulesWithLogging = withPromRulesMetadataLogging(
-      fetchRules,
-      `[${rulesSourceName}] Prometheus rules loaded`,
-      { dataSourceName: rulesSourceName, thunk: 'unifiedalerting/fetchPromRules' }
-    );
+    const fetchRulesWithLogging = withPromRulesMetadataLogging('unifiedalerting/fetchPromRules', fetchRules, {
+      dataSourceName: rulesSourceName,
+      thunk: 'unifiedalerting/fetchPromRules',
+    });
 
     return await withSerializedError(
       fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state, identifier)
@@ -164,8 +164,8 @@ export const fetchRulerRulesAction = createAsyncThunk(
     const rulerConfig = getDataSourceRulerConfig(getState, rulesSourceName);
 
     const fetchRulerRulesWithLogging = withRulerRulesMetadataLogging(
+      'unifiedalerting/fetchRulerRules',
       fetchRulerRules,
-      `[${rulesSourceName}] Ruler rules loaded`,
       {
         dataSourceName: rulesSourceName,
         thunk: 'unifiedalerting/fetchRulerRules',
@@ -333,8 +333,11 @@ export function fetchAllPromAndRulerRulesAction(
       })
     );
 
-    logInfo('All Prom and Ruler rules loaded', {
-      loadTimeMs: (performance.now() - allStartLoadingTs).toFixed(0),
+    logMeasurement({
+      type: 'unifiedalerting/fetchAllPromAndRulerRulesAction',
+      values: {
+        loadTimeMs: performance.now() - allStartLoadingTs,
+      },
     });
   };
 }
