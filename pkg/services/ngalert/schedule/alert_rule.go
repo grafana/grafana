@@ -28,11 +28,14 @@ func (f ruleFactoryFunc) new(ctx context.Context) *alertRuleInfo {
 	return f(ctx)
 }
 
-func newRuleFactory(sender AlertsSender, stateManager *state.Manager, evalFactory eval.EvaluatorFactory, clock clock.Clock, met *metrics.Scheduler, logger log.Logger, tracer tracing.Tracer) ruleFactoryFunc {
+func newRuleFactory(sender AlertsSender, stateManager *state.Manager, evalFactory eval.EvaluatorFactory, clock clock.Clock, met *metrics.Scheduler, logger log.Logger, tracer tracing.Tracer, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) ruleFactoryFunc {
 	return func(ctx context.Context) *alertRuleInfo {
-		return newAlertRuleInfo(ctx, sender, stateManager, evalFactory, clock, met, logger, tracer)
+		return newAlertRuleInfo(ctx, sender, stateManager, evalFactory, clock, met, logger, tracer, evalAppliedHook, stopAppliedHook)
 	}
 }
+
+type evalAppliedFunc = func(ngmodels.AlertRuleKey, time.Time)
+type stopAppliedFunc = func(ngmodels.AlertRuleKey)
 
 type alertRuleInfo struct {
 	evalCh   chan *evaluation
@@ -45,25 +48,42 @@ type alertRuleInfo struct {
 	stateManager *state.Manager
 	evalFactory  eval.EvaluatorFactory
 
+	// Event hooks that are only used in tests.
+	evalAppliedHook evalAppliedFunc
+	stopAppliedHook stopAppliedFunc
+
 	metrics *metrics.Scheduler
 	logger  log.Logger
 	tracer  tracing.Tracer
 }
 
-func newAlertRuleInfo(parent context.Context, sender AlertsSender, stateManager *state.Manager, evalFactory eval.EvaluatorFactory, clock clock.Clock, met *metrics.Scheduler, logger log.Logger, tracer tracing.Tracer) *alertRuleInfo {
+func newAlertRuleInfo(
+	parent context.Context,
+	sender AlertsSender,
+	stateManager *state.Manager,
+	evalFactory eval.EvaluatorFactory,
+	clock clock.Clock,
+	met *metrics.Scheduler,
+	logger log.Logger,
+	tracer tracing.Tracer,
+	evalAppliedHook func(ngmodels.AlertRuleKey, time.Time),
+	stopAppliedHook func(ngmodels.AlertRuleKey),
+) *alertRuleInfo {
 	ctx, stop := util.WithCancelCause(parent)
 	return &alertRuleInfo{
-		evalCh:       make(chan *evaluation),
-		updateCh:     make(chan ruleVersionAndPauseStatus),
-		ctx:          ctx,
-		stopFn:       stop,
-		clock:        clock,
-		sender:       sender,
-		stateManager: stateManager,
-		evalFactory:  evalFactory,
-		metrics:      met,
-		logger:       logger,
-		tracer:       tracer,
+		evalCh:          make(chan *evaluation),
+		updateCh:        make(chan ruleVersionAndPauseStatus),
+		ctx:             ctx,
+		stopFn:          stop,
+		clock:           clock,
+		sender:          sender,
+		stateManager:    stateManager,
+		evalFactory:     evalFactory,
+		evalAppliedHook: evalAppliedHook,
+		stopAppliedHook: stopAppliedHook,
+		metrics:         met,
+		logger:          logger,
+		tracer:          tracer,
 	}
 }
 
@@ -239,7 +259,7 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 
 	evalRunning := false
 	var currentFingerprint fingerprint
-	defer sch.stopApplied(key)
+	defer a.stopApplied(key)
 	for {
 		select {
 		// used by external services (API) to notify that rule is updated.
@@ -267,7 +287,7 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 				evalRunning = true
 				defer func() {
 					evalRunning = false
-					sch.evalApplied(key, ctx.scheduledAt)
+					a.evalApplied(key, ctx.scheduledAt)
 				}()
 
 				for attempt := int64(1); attempt <= sch.maxAttempts; attempt++ {
@@ -348,21 +368,21 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 }
 
 // evalApplied is only used on tests.
-func (sch *schedule) evalApplied(alertDefKey ngmodels.AlertRuleKey, now time.Time) {
-	if sch.evalAppliedFunc == nil {
+func (a *alertRuleInfo) evalApplied(alertDefKey ngmodels.AlertRuleKey, now time.Time) {
+	if a.evalAppliedHook == nil {
 		return
 	}
 
-	sch.evalAppliedFunc(alertDefKey, now)
+	a.evalAppliedHook(alertDefKey, now)
 }
 
 // stopApplied is only used on tests.
-func (sch *schedule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
-	if sch.stopAppliedFunc == nil {
+func (a *alertRuleInfo) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
+	if a.stopAppliedHook == nil {
 		return
 	}
 
-	sch.stopAppliedFunc(alertDefKey)
+	a.stopAppliedHook(alertDefKey)
 }
 
 func SchedulerUserFor(orgID int64) *user.SignedInUser {
