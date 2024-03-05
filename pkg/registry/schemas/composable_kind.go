@@ -118,16 +118,6 @@ func GetComposableKinds() ([]ComposableKind, error) {
 		CueFile:  parcaCue,
 	})
 
-	prometheusCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/prometheus/dataquery.cue"))
-	if err != nil {
-		return nil, err
-	}
-	kinds = append(kinds, ComposableKind{
-		Name:     "prometheus",
-		Filename: "dataquery.cue",
-		CueFile:  prometheusCue,
-	})
-
 	tempoCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/tempo/dataquery.cue"))
 	if err != nil {
 		return nil, err
