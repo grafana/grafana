@@ -2,7 +2,7 @@ import { LayoutConfig } from '@antv/g6';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { EmbeddedDashboard } from '@grafana/runtime';
-import { Drawer, FilterPill, Stack } from '@grafana/ui';
+import { Drawer, FilterPill, Stack, LinkButton } from '@grafana/ui';
 import { IconButton } from '@grafana/ui/';
 
 import GraphinGraph from './GraphinGraph/GraphinGraph.component';
@@ -148,12 +148,19 @@ export function EntityDrawer(props: Props) {
         </Stack>
         {/*<EntityMap entity={currentEntity} onEntityChange={onEntityChange} />*/}
         {currentEntity.type !== 'trace' && <EntityMapAsserts entity={currentEntity} onEntityChange={onEntityChange} />}
-        <div style={{ flex: '1', overflow: 'scroll' }}>
+        <div style={{ flex: '1', overflow: 'scroll', position: 'relative' }}>
           <EmbeddedDashboard
             uid={currentEntity.dashboardUid}
             // This should rather be synchrnoized with the current time range of the parent view
             // but for testing this makes sense as default
             initialState={'?from=now-15m&to=now'}
+          />
+          <LinkButton
+            style={{ position: 'absolute', top: 0, zIndex: 1000 }}
+            icon={'external-link-alt'}
+            variant={'secondary'}
+            aria-label={'button'}
+            href={`/d/${currentEntity.dashboardUid}`}
           />
         </div>
       </Stack>
