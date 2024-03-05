@@ -34,7 +34,7 @@ func TestCreate(t *testing.T) {
 				Resource:  "playlists",
 				Namespace: "default",
 				Name:      "set-minimum-uid",
-				Key:       "/playlist.grafana.app/playlists/default/set-minimum-uid",
+				Key:       "/playlist.grafana.app/playlists/namespaces/default/set-minimum-uid",
 				CreatedBy: "set-minimum-creator",
 				Origin:    &entity.EntityOriginInfo{},
 			},
@@ -44,7 +44,7 @@ func TestCreate(t *testing.T) {
 		{
 			"request with no entity creator",
 			&entity.Entity{
-				Key: "/playlist.grafana.app/playlists/default/set-only-key",
+				Key: "/playlist.grafana.app/playlists/namespaces/default/set-only-key",
 			},
 			true,
 			false,

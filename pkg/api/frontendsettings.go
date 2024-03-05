@@ -356,6 +356,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	// Set the kubernetes namespace
 	frontendSettings.Namespace = hs.namespacer(c.SignedInUser.OrgID)
 
+	// experimental scope features
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagScopeFilters) {
+		frontendSettings.ListScopesEndpoint = hs.Cfg.ScopesListScopesURL
+		frontendSettings.ListDashboardScopesEndpoint = hs.Cfg.ScopesListDashboardsURL
+	}
+
 	return frontendSettings, nil
 }
 
