@@ -132,7 +132,6 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
         return false;
       }
 
-      //todo does it apply to libraryVizPanels as well??
       if (gridItem.state.body instanceof VizPanel && gridItem.state.body.state.$data instanceof SceneQueryRunner) {
         return gridItem.state.body.state.$data?.state.datasource?.uid === SHARED_DASHBOARD_QUERY;
       }
