@@ -265,6 +265,7 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 		}
 	}
 }
+
 func resultError(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
 	switch rule.ExecErrState {
 	case models.AlertingErrState:

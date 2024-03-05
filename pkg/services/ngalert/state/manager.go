@@ -352,6 +352,12 @@ func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.A
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, currentState *State, result eval.Result, logger log.Logger) StateTransition {
 	start := st.clock.Now()
+
+	// If either no data or error state is set to keep last state, don't update the state
+	if result.State == eval.NoData && alertRule.NoDataState == ngModels.KeepLast || result.State == eval.Error && alertRule.ExecErrState == ngModels.KeepLastErrState {
+		result.State = currentState.State
+	}
+
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.Results = append(currentState.Results, Evaluation{
