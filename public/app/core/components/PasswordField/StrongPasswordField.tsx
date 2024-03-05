@@ -9,7 +9,7 @@ import { PasswordField } from './PasswordField';
 
 interface Props extends Omit<InputProps, 'type'> {}
 
-export const StrongPasswordField = React.forwardRef<HTMLInputElement, Props>((_props, _ref) => {
+export const StrongPasswordField = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [displayValidationLabels, setDisplayValidationLabels] = useState(false);
   const [pristine, setPristine] = useState(true);
   const [fieldValue, setFieldValue] = useState('');
@@ -18,16 +18,10 @@ export const StrongPasswordField = React.forwardRef<HTMLInputElement, Props>((_p
     return {
       label: css({
         display: displayValidationLabels ? 'flex' : 'none',
-        maginBottom: theme.spacing(2),
+        marginTop: theme.spacing(1),
       }),
       hidden: css({
         display: 'none',
-      }),
-      area: css({
-        marginBottom: theme.spacing(4),
-      }),
-      field: css({
-        marginBottom: theme.spacing(2),
       }),
       icon: {
         style: css({
@@ -75,7 +69,8 @@ export const StrongPasswordField = React.forwardRef<HTMLInputElement, Props>((_p
   return (
     <>
       <PasswordField
-        className={styles.field}
+        {...props}
+        ref={ref}
         onFocus={onFocus}
         onChange={(e) => setFieldValue(e.currentTarget.value)}
         onBlur={() => setPristine(false)}
@@ -85,7 +80,6 @@ export const StrongPasswordField = React.forwardRef<HTMLInputElement, Props>((_p
       {validationLabel('One lowercase letter', () => /[a-z]+/.test(fieldValue))}
       {validationLabel('One number', () => /[0-9]+/.test(fieldValue))}
       {validationLabel('One symbol', () => /[\W]/.test(fieldValue))}
-      <div className={styles.area} />
     </>
   );
 });
