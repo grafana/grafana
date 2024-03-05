@@ -99,6 +99,9 @@ lineage: schemas: [{
 
 			// Snapshot options. They are present only if the dashboard is a snapshot.
 			snapshot?: #Snapshot @grafanamaturity(NeedsExpertReview)
+
+			entityType?:    string
+			entityIdRegex?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		///////////////////////////////////////

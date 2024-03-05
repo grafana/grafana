@@ -92,6 +92,8 @@ export class DashboardModel implements TimeModel {
   private lastRefresh: number;
   private timeRangeUpdatedDuringEdit = false;
   private originalDashboard: Dashboard | null = null;
+  entityType?: string;
+  entityIdRegex?: string;
 
   // ------------------
   // not persisted
@@ -162,6 +164,8 @@ export class DashboardModel implements TimeModel {
     this.originalDashboard = cloneDeep(data);
     this.originalTemplating = cloneDeep(this.templating);
     this.originalTime = cloneDeep(this.time);
+    this.entityType = data.entityType;
+    this.entityIdRegex = data.entityIdRegex;
 
     this.ensurePanelsHaveUniqueIds();
     this.formatDate = this.formatDate.bind(this);

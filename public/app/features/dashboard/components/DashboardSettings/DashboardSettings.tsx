@@ -16,6 +16,7 @@ import { DashboardMetaChangedEvent } from 'app/types/events';
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
 import { DashboardModel } from '../../state/DashboardModel';
 import { AccessControlDashboardPermissions } from '../DashboardPermissions/AccessControlDashboardPermissions';
+import { EntitySettings } from '../EntitySettings';
 import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
@@ -161,6 +162,13 @@ function getSettingsPages(dashboard: DashboardModel) {
     id: 'dashboard_json',
     icon: 'arrow',
     component: JsonEditorSettings,
+  });
+
+  pages.push({
+    title: 'Entity',
+    id: 'entity',
+    icon: 'link',
+    component: EntitySettings,
   });
 
   return pages;

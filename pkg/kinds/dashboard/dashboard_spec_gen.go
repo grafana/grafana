@@ -725,7 +725,9 @@ type Spec struct {
 	Description *string `json:"description,omitempty"`
 
 	// Whether a dashboard is editable or not.
-	Editable *bool `json:"editable,omitempty"`
+	Editable      *bool   `json:"editable,omitempty"`
+	EntityIdRegex *string `json:"entityIdRegex,omitempty"`
+	EntityType    *string `json:"entityType,omitempty"`
 
 	// The month that the fiscal year starts on.  0 = January, 11 = December
 	FiscalYearStartMonth *int `json:"fiscalYearStartMonth,omitempty"`

@@ -1030,6 +1030,8 @@ export interface Dashboard {
    * Whether a dashboard is editable or not.
    */
   editable?: boolean;
+  entityIdRegex?: string;
+  entityType?: string;
   /**
    * The month that the fiscal year starts on.  0 = January, 11 = December
    */
