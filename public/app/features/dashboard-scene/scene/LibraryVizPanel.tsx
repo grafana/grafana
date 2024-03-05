@@ -57,7 +57,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
       const libPanelModel = new PanelModel(libPanel.model);
 
       const panel = new VizPanel({
-        title: this.state.title,
+        title: libPanelModel.title,
         key: this.state.panelKey,
         options: libPanelModel.options ?? {},
         fieldConfig: libPanelModel.fieldConfig,
