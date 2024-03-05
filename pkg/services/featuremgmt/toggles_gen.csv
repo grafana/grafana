@@ -91,6 +91,7 @@ influxdbSqlSupport,GA,@grafana/observability-metrics,false,true,false
 alertingNoDataErrorExecution,GA,@grafana/alerting-squad,false,true,false
 angularDeprecationUI,GA,@grafana/plugins-platform-backend,false,false,true
 dashgpt,preview,@grafana/dashboards-squad,false,false,true
+aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,false,true,false
 sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false
 libraryPanelRBAC,experimental,@grafana/dashboards-squad,false,true,false

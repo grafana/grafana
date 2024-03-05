@@ -86,7 +86,7 @@
         "name": "pluginsInstrumentationStatusSource",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-29T08:27:47Z"
+        "deletionTimestamp": "2024-03-05T11:44:12Z"
       },
       "spec": {
         "description": "Include a status source label for plugin request metrics and logs",
@@ -514,7 +514,7 @@
         "name": "displayAnonymousStats",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-29T08:27:47Z"
+        "deletionTimestamp": "2024-03-05T11:44:12Z"
       },
       "spec": {
         "description": "Enables anonymous stats to be shown in the UI for Grafana",
@@ -1390,7 +1390,7 @@
         "name": "traceToMetrics",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-29T08:27:47Z"
+        "deletionTimestamp": "2024-03-05T11:44:12Z"
       },
       "spec": {
         "description": "Enable trace to metrics links",
@@ -1519,7 +1519,7 @@
         "name": "splitScopes",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-29T08:27:47Z"
+        "deletionTimestamp": "2024-03-05T11:44:12Z"
       },
       "spec": {
         "description": "Support faster dashboard and folder search by splitting permission scopes into parts",
@@ -1560,7 +1560,7 @@
         "name": "externalServiceAuth",
         "resourceVersion": "1708108588074",
         "creationTimestamp": "2024-02-16T18:36:28Z",
-        "deletionTimestamp": "2024-02-29T08:27:47Z"
+        "deletionTimestamp": "2024-03-05T11:44:12Z"
       },
       "spec": {
         "description": "Starts an OAuth2 authentication provider for external services",
@@ -2135,6 +2135,19 @@
         "description": "Enables using SQL and DuckDB functions as Expressions.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "aiGeneratedDashboardChanges",
+        "resourceVersion": "1709639042582",
+        "creationTimestamp": "2024-03-05T11:44:02Z"
+      },
+      "spec": {
+        "description": "Enable AI powered features for dashboards to auto-summary changes when saving",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     }
   ]

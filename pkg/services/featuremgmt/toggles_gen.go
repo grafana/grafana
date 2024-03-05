@@ -375,6 +375,10 @@ const (
 	// Enable AI powered features in dashboards
 	FlagDashgpt = "dashgpt"
 
+	// FlagAiGeneratedDashboardChanges
+	// Enable AI powered features for dashboards to auto-summary changes when saving
+	FlagAiGeneratedDashboardChanges = "aiGeneratedDashboardChanges"
+
 	// FlagReportingRetries
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
