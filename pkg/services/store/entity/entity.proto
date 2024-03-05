@@ -325,6 +325,9 @@ message EntityListResponse {
 
   // More results exist... pass this in the next request
   string next_page_token = 2;
+
+  // ResourceVersion of the list response
+  int64 resource_version = 3;
 }
 
 //-----------------------------------------------

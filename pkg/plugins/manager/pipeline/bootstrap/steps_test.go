@@ -144,7 +144,7 @@ func TestSkipEnvVarsDecorateFunc(t *testing.T) {
 	const pluginID = "plugin-id"
 
 	t.Run("feature flag is not present", func(t *testing.T) {
-		f := SkipHostEnvVarsDecorateFunc(&config.Cfg{Features: featuremgmt.WithFeatures()})
+		f := SkipHostEnvVarsDecorateFunc(&config.PluginManagementCfg{Features: featuremgmt.WithFeatures()})
 		p, err := f(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}})
 		require.NoError(t, err)
 		require.False(t, p.SkipHostEnvVars)
@@ -152,7 +152,7 @@ func TestSkipEnvVarsDecorateFunc(t *testing.T) {
 
 	t.Run("feature flag is present", func(t *testing.T) {
 		t.Run("no plugin settings should set SkipHostEnvVars to true", func(t *testing.T) {
-			f := SkipHostEnvVarsDecorateFunc(&config.Cfg{
+			f := SkipHostEnvVarsDecorateFunc(&config.PluginManagementCfg{
 				Features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsSkipHostEnvVars),
 			})
 			p, err := f(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}})
@@ -188,7 +188,7 @@ func TestSkipEnvVarsDecorateFunc(t *testing.T) {
 				},
 			} {
 				t.Run(tc.name, func(t *testing.T) {
-					f := SkipHostEnvVarsDecorateFunc(&config.Cfg{
+					f := SkipHostEnvVarsDecorateFunc(&config.PluginManagementCfg{
 						Features:           featuremgmt.WithFeatures(featuremgmt.FlagPluginsSkipHostEnvVars),
 						ForwardHostEnvVars: tc.forwardHostEnvVars,
 					})
