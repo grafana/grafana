@@ -15,6 +15,7 @@ import {
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
+import { EntityLink } from 'app/features/entities/EntityLink';
 
 import { logRowToSingleRowDataFrame } from '../logsModel';
 
@@ -313,22 +314,23 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               )}
             </div>
           </td>
-
           {/* Key - value columns */}
           <td className={rowStyles.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
-          <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
-            <div className={styles.logDetailsValue}>
-              {singleVal ? parsedValues[0] : this.generateMultiVal(parsedValues, true)}
-              {singleVal && this.generateClipboardButton(parsedValues[0])}
-              <div className={cx((singleVal || isMultiParsedValueWithNoContent) && styles.adjoiningLinkButton)}>
-                {links?.map((link, i) => (
-                  <span key={`${link.title}-${i}`}>
-                    <DataLinkButton link={link} />
-                  </span>
-                ))}
+          <EntityLink context={{ key: 'service.name', value: 'app' }}>
+            <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
+              <div className={styles.logDetailsValue}>
+                {singleVal ? parsedValues[0] : this.generateMultiVal(parsedValues, true)}
+                {singleVal && this.generateClipboardButton(parsedValues[0])}
+                <div className={cx((singleVal || isMultiParsedValueWithNoContent) && styles.adjoiningLinkButton)}>
+                  {links?.map((link, i) => (
+                    <span key={`${link.title}-${i}`}>
+                      <DataLinkButton link={link} />
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          </td>
+            </td>
+          </EntityLink>
         </tr>
         {showFieldsStats && singleKey && singleVal && (
           <tr>
