@@ -59,11 +59,11 @@ describe('ReturnToPrevious', () => {
     /* The report is called 'grafana_return_to_previous_button_dismissed' but the action is 'clicked' */
     const mockReturn = mockCalls.filter((call) => call[0] === 'grafana_return_to_previous_button_dismissed');
     expect(mockReturn).toHaveLength(1);
+    expect(mockReturn[0][1]).toEqual({ action: 'clicked', page: '/dashboards' });
   });
 
   it('should trigger event once when clicking on the Close button', async () => {
     setup();
-
     const closeBtn = await screen.findByRole('button', { name: 'Close' });
     expect(closeBtn).toBeInTheDocument();
     await userEvent.click(closeBtn);
@@ -71,5 +71,6 @@ describe('ReturnToPrevious', () => {
     /* The report is called 'grafana_return_to_previous_button_dismissed' but the action is 'dismissed' */
     const mockDismissed = mockCalls.filter((call) => call[0] === 'grafana_return_to_previous_button_dismissed');
     expect(mockDismissed).toHaveLength(1);
+    expect(mockDismissed[0][1]).toEqual({ action: 'dismissed', page: '/dashboards' });
   });
 });
