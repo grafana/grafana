@@ -2147,7 +2147,7 @@
           "format": "int64"
         },
         "password": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -2268,7 +2268,7 @@
       "type": "object",
       "properties": {
         "password": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -3020,10 +3020,10 @@
       "type": "object",
       "properties": {
         "newPassword": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         },
         "oldPassword": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -5440,6 +5440,9 @@
         }
       }
     },
+    "Password": {
+      "type": "string"
+    },
     "PatchAnnotationsCmd": {
       "type": "object",
       "properties": {
@@ -6277,6 +6280,9 @@
         "templateVars": {
           "type": "object"
         },
+        "uid": {
+          "type": "string"
+        },
         "updated": {
           "type": "string",
           "format": "date-time"
@@ -6339,9 +6345,6 @@
     "ReportEmail": {
       "type": "object",
       "properties": {
-        "email": {
-          "type": "string"
-        },
         "emails": {
           "description": "Comma-separated list of emails to which to send the report to.",
           "type": "string"

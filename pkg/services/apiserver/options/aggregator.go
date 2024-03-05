@@ -18,14 +18,16 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	filestorage "github.com/grafana/grafana/pkg/services/apiserver/storage/file"
+	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
 type AggregatorServerOptions struct {
-	AlternateDNS        []string
-	ProxyClientCertFile string
-	ProxyClientKeyFile  string
+	AlternateDNS           []string
+	ProxyClientCertFile    string
+	ProxyClientKeyFile     string
+	RemoteServicesFile     string
+	APIServiceCABundleFile string
 }
 
 func NewAggregatorServerOptions() *AggregatorServerOptions {

@@ -682,6 +682,9 @@ func TestSocialGoogle_Validate(t *testing.T) {
 				Settings: map[string]any{
 					"client_id":                  "client-id",
 					"allow_assign_grafana_admin": "true",
+					"auth_url":                   "",
+					"token_url":                  "",
+					"api_url":                    "",
 				},
 			},
 			requester: &user.SignedInUser{IsGrafanaAdmin: true},
@@ -719,9 +722,12 @@ func TestSocialGoogle_Validate(t *testing.T) {
 					"client_id":                  "client-id",
 					"allow_assign_grafana_admin": "true",
 					"skip_org_role_sync":         "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
 				},
 			},
-			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
+			wantErr:   ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 		{
 			name: "fails if the user is not allowed to update allow assign grafana admin",
@@ -732,7 +738,55 @@ func TestSocialGoogle_Validate(t *testing.T) {
 				Settings: map[string]any{
 					"client_id":                  "client-id",
 					"allow_assign_grafana_admin": "true",
-					"skip_org_role_sync":         "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if api url is not empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "",
+					"token_url": "",
+					"api_url":   "https://example.com/api",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if token url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if auth url is not empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "",
+					"api_url":   "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if api token url is not empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "",
+					"token_url": "https://example.com/token",
+					"api_url":   "",
 				},
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
@@ -833,6 +887,58 @@ func TestSocialGoogle_Reload(t *testing.T) {
 
 			require.EqualValues(t, tc.expectedInfo, s.info)
 			require.EqualValues(t, tc.expectedConfig, s.Config)
+		})
+	}
+}
+
+func TestIsHDAllowed(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		email                string
+		allowedDomains       []string
+		expectedErrorMessage string
+		validateHD           bool
+	}{
+		{
+			name:                 "should not fail if no allowed domains are set",
+			email:                "mycompany.com",
+			allowedDomains:       []string{},
+			expectedErrorMessage: "",
+		},
+		{
+			name:                 "should not fail if email is from allowed domain",
+			email:                "mycompany.com",
+			allowedDomains:       []string{"grafana.com", "mycompany.com", "example.com"},
+			expectedErrorMessage: "",
+		},
+		{
+			name:                 "should fail if email is not from allowed domain",
+			email:                "mycompany.com",
+			allowedDomains:       []string{"grafana.com", "example.com"},
+			expectedErrorMessage: "the hd claim found in the ID token is not present in the allowed domains",
+		},
+		{
+			name:           "should not fail if the HD validation is disabled and the email not being from an allowed domain",
+			email:          "mycompany.com",
+			allowedDomains: []string{"grafana.com", "example.com"},
+			validateHD:     true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			info := &social.OAuthInfo{}
+			info.AllowedDomains = tc.allowedDomains
+			s := NewGoogleProvider(info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s.validateHD = tc.validateHD
+			err := s.isHDAllowed(tc.email, info)
+
+			if tc.expectedErrorMessage != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedErrorMessage)
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }

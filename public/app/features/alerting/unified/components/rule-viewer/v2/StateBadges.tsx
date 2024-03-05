@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 import { Stack, Text } from '@grafana/ui';
 import { RuleHealth } from 'app/types/unified-alerting';
@@ -18,14 +18,7 @@ export const RecordingBadge = ({ health }: RecordingBadgeProps) => {
   const color = hasError ? 'error' : 'success';
   const text = hasError ? 'Recording error' : 'Recording';
 
-  return (
-    <Stack direction="row" gap={0.5}>
-      <AlertStateDot color={color} />
-      <Text variant="bodySmall" color={color}>
-        {text}
-      </Text>
-    </Stack>
-  );
+  return <Badge color={color} text={text} />;
 };
 
 // we're making a distinction here between the "state" of the rule and its "health".
@@ -36,7 +29,7 @@ interface StateBadgeProps {
 
 export const StateBadge = ({ state, health }: StateBadgeProps) => {
   let stateLabel: string;
-  let color: 'success' | 'error' | 'warning';
+  let color: BadgeColor;
 
   switch (state) {
     case PromAlertingRuleState.Inactive:
@@ -64,12 +57,24 @@ export const StateBadge = ({ state, health }: StateBadgeProps) => {
     stateLabel = 'No data';
   }
 
+  return <Badge color={color} text={stateLabel} />;
+};
+
+// the generic badge component
+type BadgeColor = 'success' | 'error' | 'warning';
+
+interface BadgeProps {
+  color: BadgeColor;
+  text: NonNullable<ReactNode>;
+}
+
+function Badge({ color, text }: BadgeProps) {
   return (
-    <Stack direction="row" gap={0.5}>
+    <Stack direction="row" gap={0.5} wrap={'nowrap'} flex={'0 0 auto'}>
       <AlertStateDot color={color} />
       <Text variant="bodySmall" color={color}>
-        {stateLabel}
+        {text}
       </Text>
     </Stack>
   );
-};
+}

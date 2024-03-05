@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -40,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -57,7 +59,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
 		db := sqlstore.InitTestDB(t)
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, db, &featuremgmt.FeatureManager{}, nil)
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, db, &featuremgmt.FeatureManager{}, supportbundlestest.NewFakeBundleService(), nil)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
@@ -296,6 +298,17 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				actual, err := service.getFolderByUID(context.Background(), orgID, expected.UID)
 				require.Equal(t, expected, actual)
+				require.NoError(t, err)
+			})
+
+			t.Run("When get folder by uid and uid is general should return the root folder object", func(t *testing.T) {
+				uid := accesscontrol.GeneralFolderUID
+				query := &folder.GetFolderQuery{
+					UID:          &uid,
+					SignedInUser: usr,
+				}
+				actual, err := service.Get(context.Background(), query)
+				require.Equal(t, folder.RootFolder, actual)
 				require.NoError(t, err)
 			})
 
@@ -1611,6 +1624,106 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	})
 }
 
+func TestFolderServiceGetFolder(t *testing.T) {
+	db := sqlstore.InitTestDB(t)
+
+	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
+		orgID: {
+			dashboards.ActionFoldersCreate: {},
+			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll},
+			dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
+		},
+	}}
+
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanViewValue: true,
+	})
+
+	getSvc := func(features featuremgmt.FeatureToggles) Service {
+		quotaService := quotatest.New(false, nil)
+		folderStore := ProvideDashboardFolderStore(db)
+
+		cfg := setting.NewCfg()
+
+		featuresFlagOff := featuremgmt.WithFeatures()
+		dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
+		require.NoError(t, err)
+		nestedFolderStore := ProvideStore(db, db.Cfg)
+
+		b := bus.ProvideBus(tracing.InitializeTracerForTest())
+		ac := acimpl.ProvideAccessControl(cfg)
+
+		return Service{
+			cfg:                  cfg,
+			log:                  log.New("test-folder-service"),
+			dashboardStore:       dashStore,
+			dashboardFolderStore: folderStore,
+			store:                nestedFolderStore,
+			features:             features,
+			bus:                  b,
+			db:                   db,
+			accessControl:        ac,
+			registry:             make(map[string]folder.RegistryService),
+			metrics:              newFoldersMetrics(nil),
+		}
+	}
+
+	folderSvcOn := getSvc(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderSvcOff := getSvc(featuremgmt.WithFeatures())
+
+	createCmd := folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    "",
+		SignedInUser: &signedInAdminUser,
+	}
+
+	depth := 3
+	folders := CreateSubtreeInStore(t, folderSvcOn.store, &folderSvcOn, depth, "get/folder-", createCmd)
+	f := folders[1]
+
+	testCases := []struct {
+		name             string
+		svc              *Service
+		WithFullpath     bool
+		expectedFullpath string
+	}{
+		{
+			name:             "when flag is off",
+			svc:              &folderSvcOff,
+			expectedFullpath: f.Title,
+		},
+		{
+			name:             "when flag is on and WithFullpath is false",
+			svc:              &folderSvcOn,
+			WithFullpath:     false,
+			expectedFullpath: "",
+		},
+		{
+			name:             "when flag is on and WithFullpath is true",
+			svc:              &folderSvcOn,
+			WithFullpath:     true,
+			expectedFullpath: "get\\/folder-folder-0/get\\/folder-folder-1",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			q := folder.GetFolderQuery{
+				OrgID:        orgID,
+				UID:          &f.UID,
+				WithFullpath: tc.WithFullpath,
+				SignedInUser: &signedInAdminUser,
+			}
+			fldr, err := tc.svc.Get(context.Background(), &q)
+			require.NoError(t, err)
+			require.Equal(t, f.UID, fldr.UID)
+
+			require.Equal(t, tc.expectedFullpath, fldr.Fullpath)
+		})
+	}
+}
+
 func TestFolderServiceGetFolders(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
@@ -1687,7 +1800,71 @@ func TestFolderServiceGetFolders(t *testing.T) {
 	})
 }
 
-func CreateSubtreeInStore(t *testing.T, store *sqlStore, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []*folder.Folder {
+func TestSupportBundle(t *testing.T) {
+	f := func(uid, parent string) *folder.Folder { return &folder.Folder{UID: uid, ParentUID: parent} }
+	for _, tc := range []struct {
+		Folders          []*folder.Folder
+		ExpectedTotal    int
+		ExpectedDepths   map[int]int
+		ExpectedChildren map[int]int
+	}{
+		// Empty folder list
+		{
+			Folders:          []*folder.Folder{},
+			ExpectedTotal:    0,
+			ExpectedDepths:   map[int]int{},
+			ExpectedChildren: map[int]int{},
+		},
+		// Single folder
+		{
+			Folders:          []*folder.Folder{f("a", "")},
+			ExpectedTotal:    1,
+			ExpectedDepths:   map[int]int{1: 1},
+			ExpectedChildren: map[int]int{0: 1},
+		},
+		// Flat folders
+		{
+			Folders:          []*folder.Folder{f("a", ""), f("b", ""), f("c", "")},
+			ExpectedTotal:    3,
+			ExpectedDepths:   map[int]int{1: 3},
+			ExpectedChildren: map[int]int{0: 3},
+		},
+		// Nested folders
+		{
+			Folders:          []*folder.Folder{f("a", ""), f("ab", "a"), f("ac", "a"), f("x", ""), f("xy", "x"), f("xyz", "xy")},
+			ExpectedTotal:    6,
+			ExpectedDepths:   map[int]int{1: 2, 2: 3, 3: 1},
+			ExpectedChildren: map[int]int{0: 3, 1: 2, 2: 1},
+		},
+	} {
+		svc := &Service{}
+		supportItem, err := svc.supportItemFromFolders(tc.Folders)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		stats := struct {
+			Total    int         `json:"total"`
+			Depths   map[int]int `json:"depths"`
+			Children map[int]int `json:"children"`
+		}{}
+		if err := json.Unmarshal(supportItem.FileBytes, &stats); err != nil {
+			t.Fatal(err)
+		}
+
+		if stats.Total != tc.ExpectedTotal {
+			t.Error("Total mismatch", stats, tc)
+		}
+		if fmt.Sprint(stats.Depths) != fmt.Sprint(tc.ExpectedDepths) {
+			t.Error("Depths mismatch", stats, tc.ExpectedDepths)
+		}
+		if fmt.Sprint(stats.Children) != fmt.Sprint(tc.ExpectedChildren) {
+			t.Error("Depths mismatch", stats, tc.ExpectedChildren)
+		}
+	}
+}
+
+func CreateSubtreeInStore(t *testing.T, store store, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []*folder.Folder {
 	t.Helper()
 
 	folders := make([]*folder.Folder, 0, depth)

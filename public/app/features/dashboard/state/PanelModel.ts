@@ -130,7 +130,14 @@ const defaults: any = {
   title: '',
 };
 
-export const explicitlyControlledMigrationPanels = ['graph'];
+export const explicitlyControlledMigrationPanels = [
+  'graph',
+  'table-old',
+  'grafana-piechart-panel',
+  'grafana-worldmap-panel',
+  'singlestat',
+  'grafana-singlestat-panel',
+];
 
 export const autoMigrateAngular: Record<string, string> = {
   graph: 'timeseries',
@@ -370,7 +377,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
-      panelPluginType: this.type,
+      panelPluginId: this.type,
       dashboardUID: dashboardUID,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,

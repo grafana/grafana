@@ -9,9 +9,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"reflect"
 	"strconv"
 
+	grpcCodes "google.golang.org/grpc/codes"
+	grpcStatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -161,6 +165,72 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 	return nil
 }
 
+type Decoder struct {
+	client  entityStore.EntityStore_WatchClient
+	newFunc func() runtime.Object
+	opts    storage.ListOptions
+	codec   runtime.Codec
+}
+
+func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err error) {
+	for {
+		resp, err := d.client.Recv()
+		if errors.Is(err, io.EOF) {
+			log.Printf("watch is done")
+			return watch.Error, nil, err
+		}
+
+		if grpcStatus.Code(err) == grpcCodes.Canceled {
+			log.Printf("watch was canceled")
+			return watch.Error, nil, err
+		}
+
+		if err != nil {
+			log.Printf("error receiving result: %s", err)
+			return watch.Error, nil, err
+		}
+
+		obj := d.newFunc()
+
+		err = entityToResource(resp.Entity, obj, d.codec)
+		if err != nil {
+			log.Printf("error decoding entity: %s", err)
+			return watch.Error, nil, err
+		}
+
+		// apply any predicates not handled in storage
+		var matches bool
+		matches, err = d.opts.Predicate.Matches(obj)
+		if err != nil {
+			log.Printf("error matching object: %s", err)
+			return watch.Error, nil, err
+		}
+		if !matches {
+			continue
+		}
+
+		var watchAction watch.EventType
+		switch resp.Entity.Action {
+		case entityStore.Entity_CREATED:
+			watchAction = watch.Added
+		case entityStore.Entity_UPDATED:
+			watchAction = watch.Modified
+		case entityStore.Entity_DELETED:
+			watchAction = watch.Deleted
+		default:
+			watchAction = watch.Error
+		}
+
+		return watchAction, obj, nil
+	}
+}
+
+func (d *Decoder) Close() {
+	_ = d.client.CloseSend()
+}
+
+var _ watch.Decoder = (*Decoder)(nil)
+
 // Watch begins watching the specified key. Events are decoded into API objects,
 // and any items selected by 'p' are sent down to returned watch.Interface.
 // resourceVersion may be used to specify what version to begin watching,
@@ -169,7 +239,37 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 // If resource version is "0", this interface will get current object at given key
 // and send it in an "ADDED" event, before watch starts.
 func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
-	return nil, apierrors.NewMethodNotSupported(schema.GroupResource{}, "watch")
+	req := &entityStore.EntityWatchRequest{
+		Key:      []string{key},
+		WithBody: true,
+	}
+
+	if opts.ResourceVersion != "" {
+		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+
+		req.Since = rv
+	}
+
+	result, err := s.store.Watch(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
+
+	decoder := &Decoder{
+		client:  result,
+		newFunc: s.newFunc,
+		opts:    opts,
+		codec:   s.codec,
+	}
+
+	w := watch.NewStreamWatcher(decoder, reporter)
+
+	return w, nil
 }
 
 // Get unmarshals object found at key into objPtr. On a not found error, will either
@@ -178,10 +278,20 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
+	resourceVersion := int64(0)
+	var err error
+	if opts.ResourceVersion != "" {
+		resourceVersion, err = strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+	}
+
 	rsp, err := s.store.Read(ctx, &entityStore.ReadEntityRequest{
-		Key:        key,
-		WithBody:   true,
-		WithStatus: true,
+		Key:             key,
+		WithBody:        true,
+		WithStatus:      true,
+		ResourceVersion: resourceVersion,
 	})
 	if err != nil {
 		return err
@@ -288,6 +398,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if rsp.NextPageToken != "" {
 		listAccessor.SetContinue(rsp.NextPageToken)
 	}
+
+	listAccessor.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
 
 	return nil
 }

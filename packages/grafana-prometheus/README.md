@@ -8,6 +8,6 @@ See [package source](https://github.com/grafana/grafana/tree/main/packages/grafa
 
 ## Installation
 
-`yarn add @grafana/ui`
+`yarn add @grafana/prometheus`
 
-`npm install @grafana/ui`
+`npm install @grafana/prometheus`

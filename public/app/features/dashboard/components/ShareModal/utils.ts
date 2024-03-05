@@ -121,7 +121,12 @@ export function buildImageUrl(
   let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel);
   let imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
   imageUrl = imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
-  imageUrl += '&width=1000&height=500' + getLocalTimeZone();
+  imageUrl +=
+    `&width=${config.rendererDefaultImageWidth}` +
+    `&height=${config.rendererDefaultImageHeight}` +
+    `&scale=${config.rendererDefaultImageScale}` +
+    getLocalTimeZone();
+
   return imageUrl;
 }
 

@@ -15,6 +15,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardScene } from './DashboardScene';
+import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 
 interface Props {
   dashboard: DashboardScene;
@@ -33,17 +34,95 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
 NavToolbarActions.displayName = 'NavToolbarActions';
 
 /**
- * This part is split into a separate componet to help test this
+ * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview } = dashboard.useState();
+  const {
+    isEditing,
+    viewPanelScene,
+    isDirty,
+    uid,
+    meta,
+    editview,
+    editPanel,
+    hasCopiedPanel: copiedPanel,
+  } = dashboard.useState();
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
   const buttonWithExtraMargin = useStyles2(getStyles);
+  const isEditingPanel = Boolean(editPanel);
+  const isViewingPanel = Boolean(viewPanelScene);
+  const hasCopiedPanel = Boolean(copiedPanel);
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && !editview && Boolean(meta.canStar),
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="add-visualization"
+        tooltip={'Add visualization'}
+        icon="graph-bar"
+        onClick={() => {
+          const id = dashboard.onCreateNewPanel();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+          locationService.partial({ editPanel: id });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="add-library-panel"
+        tooltip={'Add library panel'}
+        icon="library-panel"
+        onClick={() => {
+          dashboard.onCreateLibPanelWidget();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="add-row"
+        tooltip={'Add row'}
+        icon="wrap-text"
+        onClick={() => {
+          dashboard.onCreateNewRow();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="paste-panel"
+        disabled={!hasCopiedPanel}
+        tooltip={'Paste panel'}
+        icon="copy"
+        onClick={() => {
+          dashboard.pastePanel();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: uid && !editview && Boolean(meta.canStar) && !isEditingPanel && !isEditing,
     render: () => {
       let desc = meta.isStarred
         ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
@@ -66,7 +145,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && !editview,
+    condition: uid && !editview && !isEditingPanel,
     render: () => (
       <ToolbarButton
         key="view-in-old-dashboard-button"
@@ -87,18 +166,11 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: meta.isSnapshot && !isEditing,
     render: () => (
-      <ToolbarButton
-        key="button-snapshot"
-        tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
-        icon="link"
-        onClick={() => {
-          dashboard.onOpenSnapshotOriginalDashboard();
-        }}
-      />
+      <GoToSnapshotOriginButton originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''} />
     ),
   });
 
-  if (dynamicDashNavActions.left.length > 0) {
+  if (dynamicDashNavActions.left.length > 0 && !isEditingPanel) {
     dynamicDashNavActions.left.map((action, index) => {
       const props = { dashboard: getDashboardSrv().getCurrent()! };
       if (action.show(props)) {
@@ -114,11 +186,11 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'back-button',
-    condition: Boolean(viewPanelScene),
+    condition: isViewingPanel || isEditingPanel,
     render: () => (
       <Button
         onClick={() => {
-          locationService.partial({ viewPanel: null });
+          locationService.partial({ viewPanel: null, editPanel: null });
         }}
         tooltip=""
         key="back"
@@ -173,7 +245,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !viewPanelScene,
+    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditingPanel,
     render: () => (
       <Button
         onClick={() => {
@@ -192,7 +264,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'settings',
-    condition: isEditing && dashboard.canEditDashboard() && !viewPanelScene && !editview,
+    condition: isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditingPanel && !editview,
     render: () => (
       <Button
         onClick={() => {
@@ -211,7 +283,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && !editview && !meta.isNew,
+    condition: isEditing && !editview && !meta.isNew && !isViewingPanel && !isEditingPanel,
     render: () => (
       <Button
         onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
@@ -222,6 +294,23 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="primary"
       >
         Exit edit
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: isEditingPanel && !editview && !meta.isNew && !isViewingPanel,
+    render: () => (
+      <Button
+        onClick={editPanel?.onDiscard}
+        tooltip="Discard panel changes"
+        size="sm"
+        key="discard"
+        fill="outline"
+        variant="destructive"
+      >
+        Discard panel changes
       </Button>
     ),
   });

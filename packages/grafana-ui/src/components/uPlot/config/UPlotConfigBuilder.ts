@@ -11,7 +11,7 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { AxisPlacement } from '@grafana/schema';
+import { AxisPlacement, VizOrientation } from '@grafana/schema';
 
 import { FacetedData, PlotConfig, PlotTooltipInterpolator } from '../types';
 import { DEFAULT_PLOT_CONFIG, getStackingBands, pluginLog, StackingGroup } from '../utils';
@@ -313,6 +313,8 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
   // Identifies the shared key for uPlot cursor sync
   eventsScope?: string;
+  hoverProximity?: number;
+  orientation?: VizOrientation;
 } & T;
 
 /** @alpha */
