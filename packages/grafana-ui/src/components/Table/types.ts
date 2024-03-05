@@ -129,3 +129,10 @@ export type TableCellOptions = schema.TableCellOptions | TableCustomCellOptions;
 export type TableFieldOptions = Omit<schema.TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
 };
+
+// Cell background and text colors
+// Can also be used for table rows
+export interface CellColors {
+  textColor?: string;
+  bgColor?: string;
+}

@@ -47,6 +47,7 @@ import {
   FooterItem,
   GrafanaTableColumn,
   TableFooterCalc,
+  CellColors
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
@@ -571,9 +572,19 @@ export function calculateAroundPointThreshold(timeField: Field): number {
   return (max - min) / timeField.values.length;
 }
 
-export function getCellColors(tableStyles: TableStyles,
+/**
+ * Retrieve colors for a table cell (or table row).
+ * 
+ * @param tableStyles 
+ * @param cellOptions 
+ * @param displayValue 
+ * @returns 
+ */
+export function getCellColors(
+  tableStyles: TableStyles,
   cellOptions: TableCellOptions,
-  displayValue: DisplayValue,) {
+  displayValue: DisplayValue
+): CellColors {
 // How much to darken elements depends upon if we're in dark mode
 const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
 

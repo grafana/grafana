@@ -13,17 +13,16 @@ import {
   TimeRange,
   hasTimeField,
 } from '@grafana/data';
-import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
+import { TableCellBackgroundDisplayMode, TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
-import { getTextColorForAlphaBackground } from '../../utils';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { usePanelContext } from '../PanelChrome';
 
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
 import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
-import { TableFieldOptions, TableFilterActionCallback } from './types';
+import { CellColors, TableFieldOptions, TableFilterActionCallback } from './types';
 import { calculateAroundPointThreshold, getCellColors, isPointTimeValAroundTableTimeVal } from './utils';
 
 interface RowsListProps {
@@ -202,16 +201,23 @@ export const RowsList = (props: RowsListProps) => {
     [tableState.pageIndex, tableState.pageSize]
   );
 
-  let rowBg: (rowIndex: number) => { textColor: string | undefined, bgColor: string | undefined } | undefined;
 
+  let rowBg: Function | undefined = undefined;
   for (const field of data.fields) {
     const fieldOptions = field.config.custom as TableFieldOptions;
 
-    if (fieldOptions.cellOptions?.type === TableCellDisplayMode.ColorBackground &&
-        fieldOptions.cellOptions.applyToRow) {
-      rowBg = (rowIndex: number) => {
-        const display = field.display!(field.values.get(rowIndex));
-        return getCellColors(tableStyles, fieldOptions.cellOptions, display);
+    if (
+        fieldOptions.cellOptions?.type === TableCellDisplayMode.ColorBackground &&
+        fieldOptions.cellOptions.applyToRow
+    ) {
+      const isGradient =
+        fieldOptions.cellOptions.mode === undefined ||
+        TableCellBackgroundDisplayMode.Gradient === fieldOptions.cellOptions.mode;
+
+      rowBg = (rowIndex: number):  {colors: CellColors, isGradient: boolean} => {
+          const display = field.display!(field.values.get(rowIndex));
+          const colors = getCellColors(tableStyles, fieldOptions.cellOptions, display);
+          return {colors, isGradient};
       };
     }
   }
@@ -221,7 +227,6 @@ export const RowsList = (props: RowsListProps) => {
       const indexForPagination = rowIndexForPagination(index);
       const row = rows[indexForPagination];
       let additionalProps: React.HTMLAttributes<HTMLDivElement> = {};
-
       prepareRow(row);
 
       const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
@@ -234,9 +239,15 @@ export const RowsList = (props: RowsListProps) => {
       }
 
       if (rowBg) {
-        const { textColor, bgColor } = rowBg(index);
-        style.backgroundColor = bgColor;
-        style.color = textColor;
+        const { colors, isGradient } = rowBg(index);
+        style.color = colors.textColor;
+        
+        if (isGradient) {
+          style.backgroundImage = colors.bgColor;
+        }
+        else {
+          style.backgroundColor = colors.bgColor;
+        }        
       }
 
       return (
