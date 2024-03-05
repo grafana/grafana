@@ -82,5 +82,6 @@ export const useExploreWorkspaces = () => {
     deleteExploreWorkspace,
     deleteExploreWorkspaceSnapshot,
     workspaces,
+    reload,
   };
 };

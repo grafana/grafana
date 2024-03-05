@@ -5,7 +5,6 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { useAppNotification } from '../../../../core/copy/appNotification';
 import { ExploreWorkspace, ExploreWorkspaceSnapshot } from '../types';
-import { getExploreWorkspaceSnapshots } from '../utils/api';
 import { useExploreWorkspaces } from '../utils/hooks';
 
 import { ExploreWorkspaceSnapshotsList } from './ExploreWorkspaceSnapshotsList';
@@ -28,6 +27,8 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     createExploreWorkspaceSnapshot,
     deleteExploreWorkspace,
     deleteExploreWorkspaceSnapshot,
+    getExploreWorkspaceSnapshots,
+    reload,
   } = useExploreWorkspaces();
   const { location } = useGrafana();
   const notifyApp = useAppNotification();
@@ -79,13 +80,14 @@ export const ExploreWorkspacesMenu = (props: Props) => {
 
   const loadWorkspacesAndSnapshotsHandler = async () => {
     setIsOpen(true);
+    await reload();
     await reloadSnapshots();
   };
 
   const loadSnapshotHandler = async (snapshot: ExploreWorkspaceSnapshot) => {
     if (loadedWorkspace) {
+      setIsOpen(false);
       location.push('/explore/' + loadedWorkspace.uid + '/' + snapshot.uid);
-      window.location.reload();
     }
   };
 
@@ -100,19 +102,27 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     await reloadSnapshots();
   };
 
-  const CreateWorkspace = () => {
-    const [isOpen, setIsOpen] = useState<boolean>(false);
+  const CreateWorkspace = ({ nav }: { nav: boolean }) => {
+    const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 
     return (
       <>
-        <Button size="sm" fill="outline" variant={'primary'} icon="plus" onClick={() => setIsOpen(true)}>
-          workspace
-        </Button>
-        {isOpen && (
+        {nav && (
+          <Button size="sm" fill="outline" variant={'primary'} icon="plus" onClick={() => setIsDialogOpen(true)}>
+            workspace
+          </Button>
+        )}
+        {!nav && (
+          <Button variant={'secondary'} onClick={() => setIsDialogOpen(true)}>
+            Fork to a new workspace
+          </Button>
+        )}
+        {isDialogOpen && (
           <NewExploreWorkspaceFormModal
             isOpen={isOpen}
             onCancel={() => setIsOpen(false)}
             onSave={(data) => {
+              setIsOpen(false);
               createExploreWorkspaceHandler(data);
             }}
           />
@@ -121,8 +131,7 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     );
   };
 
-  const ForkWorkspace = () => {
-    const [isOpen, setIsOpen] = useState<boolean>(false);
+  const WorkspaceInfo = () => {
     let name = '';
     if (loadedSnapshot && loadedWorkspace) {
       name = `${loadedSnapshot.name} (${loadedWorkspace.name})`;
@@ -131,21 +140,14 @@ export const ExploreWorkspacesMenu = (props: Props) => {
     }
 
     return loadedWorkspace ? (
-      <>
+      <div>
         <span>
           <em>{name}</em>
         </span>
-        <Button size="sm" variant="secondary" icon="plus" onClick={() => setIsOpen(true)}></Button>
-        {isOpen && (
-          <NewExploreWorkspaceFormModal
-            isOpen={isOpen}
-            onCancel={() => setIsOpen(false)}
-            onSave={(data) => {
-              createExploreWorkspaceHandler(data);
-            }}
-          />
-        )}
-      </>
+        <span style={{ opacity: 0.5 }}>
+          <em> ({new Date(loadedWorkspace.activeSnapshot.updated).toLocaleString()})</em>
+        </span>
+      </div>
     ) : undefined;
   };
 
@@ -197,8 +199,16 @@ export const ExploreWorkspacesMenu = (props: Props) => {
                       </span>
                     </Card.Meta>
                     <Card.Actions>
-                      <Button variant="secondary">Reload workspace</Button>
-                      <Button variant="secondary">Fork current to new workspace</Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          setIsOpen(false);
+                          location.push('/explore/' + loadedWorkspace.uid);
+                        }}
+                      >
+                        Reload workspace
+                      </Button>
+                      <CreateWorkspace nav={false} />
                     </Card.Actions>
                   </Card>
                   {loadedSnapshot && (
@@ -246,8 +256,8 @@ export const ExploreWorkspacesMenu = (props: Props) => {
                     deleteWorkspaceHandler(workspace);
                   }}
                   selected={(workspace) => {
+                    setIsOpen(false);
                     location.push('/explore/' + workspace.uid);
-                    window.location.reload();
                   }}
                 />
               )}
@@ -280,9 +290,8 @@ export const ExploreWorkspacesMenu = (props: Props) => {
 
   return (
     <ToolbarButtonRow>
-      {!loadedWorkspace ? <CreateWorkspace /> : undefined}
-      {loadedWorkspace ? <ForkWorkspace /> : undefined}
-      {/*{loadedSnapshot ? <ShowLatest /> : undefined}*/}
+      {!loadedWorkspace ? <CreateWorkspace nav={true} /> : undefined}
+      {loadedWorkspace ? <WorkspaceInfo /> : undefined}
       {loadedWorkspace ? <TakeSnapshot /> : undefined}
       <ListWorkspacesAndSnapshots />
     </ToolbarButtonRow>
