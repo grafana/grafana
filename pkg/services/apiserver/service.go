@@ -368,7 +368,7 @@ func (s *service) startAggregator(
 ) (*genericapiserver.GenericAPIServer, error) {
 	externalNamesNamespace := "default"
 	if s.cfg.StackID != "" {
-		externalNamesNamespace = s.cfg.StackID
+		externalNamesNamespace = fmt.Sprintf("stack-%s", s.cfg.StackID)
 	}
 	aggregatorConfig, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig, externalNamesNamespace)
 	if err != nil {

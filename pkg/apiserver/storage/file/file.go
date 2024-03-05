@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -306,6 +307,13 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
 	filename := s.filePath(key)
+
+	// Since it's a get, check if the dir exists and return early as needed
+	dirname := filepath.Dir(filename)
+	if _, err := os.Stat(dirname); err != nil {
+		return apierrors.NewNotFound(s.gr, s.nameFromKey(key))
+	}
+
 	obj, err := readFile(s.codec, filename, func() runtime.Object {
 		return objPtr
 	})
@@ -365,6 +373,10 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	dirname := s.dirPath(key)
+	// Since it's a get, check if the dir exists and return early as needed
+	if _, err := os.Stat(dirname); err != nil {
+		return apierrors.NewNotFound(s.gr, s.nameFromKey(key))
+	}
 
 	objs, err := readDirRecursive(s.codec, dirname, s.newFunc)
 	if err != nil {
