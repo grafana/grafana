@@ -6,7 +6,8 @@ import { useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { ConnectionState, Vertex } from '../../types';
+import { ConnectionCoordinates } from '../../panelcfg.gen';
+import { ConnectionState } from '../../types';
 import {
   calculateAbsoluteCoords,
   calculateCoordinates,
@@ -65,6 +66,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
           selectedConnectionRef.current.source.options.connections?.filter(
             (connection) => connection !== selectedConnectionRef.current?.info
           );
+        //console.log(selectedConnectionRef.current.source.options);
         selectedConnectionRef.current.source.onChange(selectedConnectionRef.current.source.options);
 
         setSelectedConnection(undefined);
@@ -107,8 +109,9 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
     return scene.connections.state.map((v, idx) => {
-      console.log(v);
-      const { source, target, info } = v;
+      //console.log(v);
+      const { source, target, info, vertices } = v;
+      console.log(vertices);
       const sourceRect = source.div?.getBoundingClientRect();
       const parent = source.div?.parentElement;
       const transformScale = scene.scale;
@@ -131,13 +134,14 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const futureVertexStyles = { fill: '#44aaff', opacity: 0.6, strokeWidth: 1 };
 
       const CONNECTION_HEAD_ID = `connectionHead-${headId + Math.random()}`;
-      const vertices: Vertex[] = [];
-      const futureVertices: Vertex[] = [];
-      vertices.push({ x: 0.25, y: 0 });
-      vertices.push({ x: 0.5, y: 1 });
+      //const vertices: Vertex[] = [];
+      const futureVertices: ConnectionCoordinates[] = [];
+
+      //vertices.push({ x: 0.25, y: 0 });
+      //vertices.push({ x: 0.5, y: 1 });
       //vertices.length = 0;
       let pathString = `M${x1} ${y1} `;
-      if (vertices.length) {
+      if (vertices?.length) {
         vertices.map((value, index) => {
           const x = value.x;
           const y = value.y;
@@ -171,7 +175,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
                 <polygon points="0 0, 10 3.5, 0 7" fill={strokeColor} />
               </marker>
             </defs>
-            {vertices.length ? (
+            {vertices?.length ? (
               <g>
                 <path
                   id={`${CONNECTION_LINE_ID}_transparent`}
@@ -204,6 +208,9 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
                           style={vertexStyles}
                           cursor={'crosshair'}
                           pointerEvents="auto"
+                          onMouseDown={(e) => {
+                            console.log(e);
+                          }}
                         />
                       );
                     })}

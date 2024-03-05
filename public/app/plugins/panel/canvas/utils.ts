@@ -164,6 +164,7 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
             source: v,
             target,
             info: c,
+            vertices: c.vertices ?? undefined,
           });
         }
       });
