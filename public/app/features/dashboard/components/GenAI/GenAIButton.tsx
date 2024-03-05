@@ -54,7 +54,7 @@ export const GenAIButton = ({
   } = useOpenAIStream(model, temperature);
 
   const [history, setHistory] = useState<string[]>([]);
-  const [showHistory, setShowHistory] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
 
   const hasHistory = history.length > 0;
   const isGenerating = streamStatus === StreamStatus.GENERATING;
@@ -70,9 +70,7 @@ export const GenAIButton = ({
         onClickProp?.(e);
         setMessages(typeof messages === 'function' ? messages() : messages);
       } else {
-        if (setShowHistory) {
-          setShowHistory(true);
-        }
+        setShowHistory(true);
       }
     }
 
@@ -178,7 +176,9 @@ export const GenAIButton = ({
           }
           placement="bottom-start"
           fitContent={true}
-          show={showHistory ? undefined : false}
+          show={showHistory}
+          onClose={() => setShowHistory(false)}
+          onOpen={() => setShowHistory(true)}
         >
           {button}
         </Toggletip>
