@@ -76,7 +76,13 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
         ],
       });
 
-      this.setState({ panel, _loadedVersion: libPanel.version, isLoaded: true, folderUID: libPanel.folderUid });
+      this.setState({
+        panel,
+        _loadedVersion: libPanel.version,
+        isLoaded: true,
+        folderUID: libPanel.folderUid,
+        name: libPanel.name,
+      });
     } catch (err) {
       vizPanel.setState({
         _pluginLoadError: 'Unable to load library panel: ' + this.state.uid,
@@ -105,19 +111,21 @@ function LibraryPanelRenderer({ model }: SceneComponentProps<LibraryVizPanel>) {
   return <panel.Component model={panel} />;
 }
 
+//TODO: move this
 function libraryPanelToSaveModel(libraryPanel: LibraryVizPanel) {
   const { panel, uid, folderUID, name, _loadedVersion: version } = libraryPanel.state;
   const saveModel = {
     uid,
     folderUID,
     name,
-    version: (version || 0) + 1,
+    version,
     model: vizPanelToPanel(panel!),
     kind: LibraryElementKind.Panel,
   };
   return saveModel;
 }
 
+//TODO: move this
 export async function updateLibraryPanel(libraryPanel: LibraryVizPanel): Promise<LibraryElementDTO> {
   const { uid, folderUID, name, model, version, kind } = libraryPanelToSaveModel(libraryPanel);
   const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {

@@ -349,17 +349,19 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         }),
       });
     }
+
     if (sourcePanel.parent instanceof LibraryVizPanel) {
       if (sourcePanel.parent.parent instanceof SceneGridItem) {
-        sourcePanel.parent.parent.setState({
-          body: this.state.libraryPanel?.clone({
-            panel: this.state.panel.clone({
-              $data: this.state.$data?.clone(),
-            }),
+        const newLibPanel = this.state.libraryPanel?.clone({
+          panel: this.state.panel.clone({
+            $data: this.state.$data?.clone(),
           }),
         });
+        sourcePanel.parent.parent.setState({
+          body: newLibPanel,
+        });
+        updateLibraryPanel(newLibPanel!);
       }
-      updateLibraryPanel(sourcePanel.parent);
     }
   }
 
