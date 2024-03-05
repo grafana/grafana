@@ -36,7 +36,7 @@ cards:
       description: Create, manage, view, and adjust alert rules to alert on your metrics data or log entries from multiple data sources — no matter where your data is stored.
       height: 24
     - title: Configure notifications
-      href: /docs/grafana/next/alerting/configure-notifications/
+      href: ./configure-notifications/
       description: Choose how, when, and where to send your alert notifications.
       height: 24
     - title: Detect and respond
