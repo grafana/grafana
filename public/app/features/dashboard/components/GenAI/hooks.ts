@@ -71,6 +71,12 @@ export function useOpenAIStream(
     [messages, model, temperature, notifyError]
   );
 
+  useEffect(() => {
+    if (messages.length > 0) {
+      setReply('');
+    }
+  }, [messages]);
+
   const { error: enabledError, value: enabled } = useAsync(
     async () => await isLLMPluginEnabled(),
     [isLLMPluginEnabled]

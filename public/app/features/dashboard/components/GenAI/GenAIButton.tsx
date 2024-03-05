@@ -174,7 +174,7 @@ export const GenAIButton = ({
               eventTrackingSrc={eventTrackingSrc}
             />
           }
-          placement="bottom-start"
+          placement="left-start"
           fitContent={true}
           show={showHistory}
           onClose={() => setShowHistory(false)}
