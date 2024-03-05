@@ -44,7 +44,7 @@ cards:
       description: Monitor, respond to, and triage issues within your services.
       height: 24
     - title: Monitor
-      href: /docs/grafana/next/alerting/monitor/
+      href: ./monitor/
       description: Monitor your alerting metrics to ensure you identify potential issues before they become critical.
       height: 24
 ---
