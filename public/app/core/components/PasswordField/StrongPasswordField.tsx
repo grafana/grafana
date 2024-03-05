@@ -11,39 +11,59 @@ interface Props extends Omit<InputProps, 'type'> {}
 
 export const StrongPasswordField = React.forwardRef<HTMLInputElement, Props>((_props, _ref) => {
   const [displayValidationLabels, setDisplayValidationLabels] = useState(false);
+  const [pristine, setPristine] = useState(true);
   const [fieldValue, setFieldValue] = useState('');
 
   const styles = useStyles2((theme: GrafanaTheme2) => {
     return {
-      validation: {
-        label: css({
-          display: displayValidationLabels ? 'flex' : 'none',
-          maginBottom: theme.spacing(2),
+      label: css({
+        display: displayValidationLabels ? 'flex' : 'none',
+        maginBottom: theme.spacing(2),
+      }),
+      hidden: css({
+        display: 'none',
+      }),
+      area: css({
+        marginBottom: theme.spacing(4),
+      }),
+      field: css({
+        marginBottom: theme.spacing(2),
+      }),
+      icon: {
+        style: css({
+          marginRight: theme.spacing(1),
         }),
-        hidden: css({
-          display: 'none',
+        valid: css({
+          color: theme.colors.success.text,
         }),
-        area: css({
-          marginBottom: theme.spacing(4),
+        pending: css({
+          color: theme.colors.secondary.text,
         }),
-        field: css({
-          marginBottom: theme.spacing(2),
+        error: css({
+          color: theme.colors.error.text,
         }),
       },
     };
   });
 
-  // const errorColor = '#FF5286';
-  const successColor = '#6CCF8E';
-
-  const check = 'check';
-
   const validationLabel = (message: string, validation: () => {}) => {
     const result = fieldValue.length > 0 && validation();
+
+    const iconName = result || pristine ? 'check' : 'exclamation-triangle';
+    const textColor = result ? 'secondary' : pristine ? 'primary' : 'error';
+    let iconClassName = undefined;
+    if (result) {
+      iconClassName = styles.icon.valid;
+    } else if (pristine) {
+      iconClassName = styles.icon.pending;
+    } else {
+      iconClassName = styles.icon.error;
+    }
+
     return (
-      <div className={styles.validation.label}>
-        <Icon name={check} color={result ? successColor : 'primary'} />
-        <Text color={result ? 'secondary' : 'primary'}>{message}</Text>
+      <div className={styles.label}>
+        <Icon className={styles.icon.style + ' ' + iconClassName} name={iconName} />
+        <Text color={textColor}>{message}</Text>
       </div>
     );
   };
@@ -55,16 +75,17 @@ export const StrongPasswordField = React.forwardRef<HTMLInputElement, Props>((_p
   return (
     <>
       <PasswordField
-        className={styles.validation.field}
+        className={styles.field}
         onFocus={onFocus}
         onChange={(e) => setFieldValue(e.currentTarget.value)}
-      ></PasswordField>
+        onBlur={() => setPristine(false)}
+      />
       {validationLabel('At least 12 characters', () => fieldValue.length >= 12)}
       {validationLabel('One uppercase letter', () => /[A-Z]+/.test(fieldValue))}
       {validationLabel('One lowercase letter', () => /[a-z]+/.test(fieldValue))}
       {validationLabel('One number', () => /[0-9]+/.test(fieldValue))}
       {validationLabel('One symbol', () => /[\W]/.test(fieldValue))}
-      <div className={styles.validation.area} />
+      <div className={styles.area} />
     </>
   );
 });
