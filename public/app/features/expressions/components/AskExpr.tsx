@@ -23,5 +23,5 @@ export const AskExpr = ({ onChange, refIds, query }: Props) => {
     });
   };
 
-  return <SQLEditor query={query.expression || initialQuery} onChange={onEditorChange}></SQLEditor>;
+  return <SQLEditor language={{ id: 'txt' }} query={query.expression || initialQuery} onChange={onEditorChange} />;
 };
