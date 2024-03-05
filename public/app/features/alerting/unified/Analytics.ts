@@ -43,13 +43,13 @@ export function withPerformanceLogging<TFunc extends (type: string, ...args: any
     const response = await func(...args);
     const loadTimesMs = Number((performance.now() - startLoadingTs).toFixed(0));
 
-    logMeasurement({
+    logMeasurement(
       type,
-      context,
-      values: {
+      {
         loadTimesMs,
       },
-    });
+      context
+    );
 
     return response;
   };
@@ -67,16 +67,16 @@ export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => P
 
     const { namespacesCount, groupsCount, rulesCount } = getPromRulesMetadata(response);
 
-    logMeasurement({
+    logMeasurement(
       type,
-      values: {
+      {
         loadTimeMs: performance.now() - startLoadingTs,
         namespacesCount,
         groupsCount,
         rulesCount,
       },
-      context,
-    });
+      context
+    );
     return response;
   };
 }
@@ -107,31 +107,31 @@ export function withRulerRulesMetadataLogging<TFunc extends (...args: any[]) => 
 
     const { namespacesCount, groupsCount, rulesCount } = getRulerRulesMetadata(response);
 
-    logMeasurement({
+    logMeasurement(
       type,
-      values: {
-        loadTimeMs: performance.now() - startLoadingTs,
-      },
-      context: {
+      {
         namespacesCount,
         groupsCount,
         rulesCount,
-        ...context,
+        loadTimeMs: performance.now() - startLoadingTs,
       },
-    });
+      {
+        ...context,
+      }
+    );
     return response;
   };
 }
 
 function getRulerRulesMetadata(rulerRules: RulerRulesConfigDTO) {
-  const namespacesCount = Object.keys(rulerRules).length;
+  const namespaces = Object.keys(rulerRules);
   const groups = Object.values(rulerRules).flatMap((groups) => groups);
   const rules = groups.flatMap((group) => group.rules);
 
   return {
-    namespacesCount: namespacesCount.toFixed(0),
-    groupsCount: groups.length.toFixed(0),
-    rulesCount: rules.length.toFixed(0),
+    namespacesCount: namespaces.length,
+    groupsCount: groups.length,
+    rulesCount: rules.length,
   };
 }
 

@@ -333,11 +333,8 @@ export function fetchAllPromAndRulerRulesAction(
       })
     );
 
-    logMeasurement({
-      type: 'unifiedalerting/fetchAllPromAndRulerRulesAction',
-      values: {
-        loadTimeMs: performance.now() - allStartLoadingTs,
-      },
+    logMeasurement('unifiedalerting/fetchAllPromAndRulerRulesAction', {
+      loadTimeMs: performance.now() - allStartLoadingTs,
     });
   };
 }

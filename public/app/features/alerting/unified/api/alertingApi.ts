@@ -11,17 +11,17 @@ export const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (
 
     const { data, ...meta } = await lastValueFrom(getBackendSrv().fetch(requestOptions));
 
-    logMeasurement({
-      type: 'backendSrvBaseQuery',
-      values: {
+    logMeasurement(
+      'backendSrvBaseQuery',
+      {
         loadTimeMs: performance.now() - requestStartTs,
       },
-      context: {
+      {
         url: requestOptions.url,
         method: requestOptions.method ?? 'GET',
         responseStatus: meta.statusText,
-      },
-    });
+      }
+    );
 
     return { data, meta };
   } catch (error) {

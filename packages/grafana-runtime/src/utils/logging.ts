@@ -1,4 +1,4 @@
-import { faro, LogContext, LogLevel, MeasurementEvent } from '@grafana/faro-web-sdk';
+import { faro, LogContext, LogLevel } from '@grafana/faro-web-sdk';
 
 import { config } from '../config';
 
@@ -63,13 +63,13 @@ export function logError(err: Error, contexts?: LogContext) {
  *
  * @public
  */
-export function logMeasurement(measurement: Omit<MeasurementEvent, 'timestamp'>, context?: LogContext) {
+export type MeasurementValues = Record<string, number>;
+export function logMeasurement(type: string, values: MeasurementValues, context?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
-    faro.api.pushMeasurement(measurement, {
-      context: {
-        ...context,
-        ...measurement.context,
-      },
+    faro.api.pushMeasurement({
+      type,
+      values,
+      context,
     });
   }
 }
@@ -132,7 +132,7 @@ export function createMonitoringLogger(source: string, defaultContext?: LogConte
      * @param {MeasurementEvent} measurement - The measurement object to be recorded.
      * @param {LogContext} [contexts] - Optional additional context to be included.
      */
-    logMeasurement: (measurement: Omit<MeasurementEvent, 'timestamp'>, contexts?: LogContext) =>
-      logMeasurement(measurement, createFullContext(contexts)),
+    logMeasurement: (type: string, measurement: MeasurementValues, contexts?: LogContext) =>
+      logMeasurement(type, measurement, createFullContext(contexts)),
   };
 }
