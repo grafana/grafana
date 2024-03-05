@@ -37,6 +37,9 @@ import (
 	kinds_prometheus "github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
+const QueryRequestSchemaKey = "QueryRequestSchema"
+const QueryPayloadSchemaKey = "QueryPayloadSchema"
+
 var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -272,9 +275,6 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	// Hide the ability to list all connections across tenants
 	delete(oas.Paths.Paths, root+b.connectionResourceInfo.GroupResource().Resource)
 
-	// Add the typed query models
-	queryPayloadSchemaKey := b.pluginJSON.ID + "-query"
-	queryRequestSchemaKey := b.pluginJSON.ID + "-query-request"
 	var err error
 	opts := schemabuilder.QuerySchemaOptions{
 		PluginID:   []string{b.pluginJSON.ID},
@@ -293,12 +293,12 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 			Spec: qt.Spec,
 		})
 	}
-	oas.Components.Schemas[queryPayloadSchemaKey], err = schemabuilder.GetQuerySchema(opts)
+	oas.Components.Schemas[QueryPayloadSchemaKey], err = schemabuilder.GetQuerySchema(opts)
 	if err != nil {
 		return oas, err
 	}
 	opts.Mode = schemabuilder.SchemaTypeQueryRequest
-	oas.Components.Schemas[queryRequestSchemaKey], err = schemabuilder.GetQuerySchema(opts)
+	oas.Components.Schemas[QueryRequestSchemaKey], err = schemabuilder.GetQuerySchema(opts)
 	if err != nil {
 		return oas, err
 	}
@@ -313,7 +313,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 				Content: map[string]*spec3.MediaType{
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
-							Schema:   spec.RefSchema("#/components/schemas/" + queryRequestSchemaKey),
+							Schema:   spec.RefSchema("#/components/schemas/" + QueryRequestSchemaKey),
 							Examples: getExamples(b.queryTypes),
 						},
 					},
@@ -322,15 +322,9 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		}
 		okrsp, ok := sub.Post.Responses.StatusCodeResponses[200]
 		if ok {
-			sub.Post.Responses.StatusCodeResponses[http.StatusBadRequest] = &spec3.Response{
-				ResponseProps: spec3.ResponseProps{
-					Description: "Bad request",
-					Content:     okrsp.Content,
-				},
-			}
 			sub.Post.Responses.StatusCodeResponses[http.StatusMultiStatus] = &spec3.Response{
 				ResponseProps: spec3.ResponseProps{
-					Description: "Error exists, see the payload for more details",
+					Description: "Query executed, but errors may exist in the datasource.  See the payload for more details.",
 					Content:     okrsp.Content,
 				},
 			}
