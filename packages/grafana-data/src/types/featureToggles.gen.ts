@@ -110,6 +110,7 @@ export interface FeatureToggles {
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
+  aiGeneratedDashboardChanges?: boolean;
   reportingRetries?: boolean;
   sseGroupByDatasource?: boolean;
   libraryPanelRBAC?: boolean;
