@@ -45,6 +45,19 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     this._performRepeat();
   }
 
+  private updateSources() {
+    const row = this.parent;
+
+    if (!(row instanceof SceneGridRow)) {
+      console.error('RepeatedRowBehavior: Parent is not a SceneGridRow');
+      return;
+    }
+
+    if (row.state.children.length) {
+      this.setState({ sources: row.state.children });
+    }
+  }
+
   private _performRepeat() {
     if (this._variableDependency.hasDependencyInLoadingState()) {
       return;
@@ -73,6 +86,8 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       console.error('RepeatedRowBehavior: Layout is not a SceneGridLayout');
       return;
     }
+
+    this.updateSources();
 
     const rowToRepeat = this.parent;
     const { values, texts } = getMultiVariableValues(variable);
