@@ -27,6 +27,9 @@ const (
 
 	// SQL query via DuckDB
 	QueryTypeSQL QueryType = "sql"
+
+	// Ask query via Natural Language to DuckDB
+	QueryTypeAsk QueryType = "ask"
 )
 
 type MathQuery struct {
@@ -74,6 +77,10 @@ type ClassicQuery struct {
 
 // SQLQuery requires the sqlExpression feature flag
 type SQLExpression struct {
+	Expression string `json:"expression" jsonschema:"minLength=1,example=SELECT * FROM A LIMIT 1"`
+}
+
+type TextToSQLExpression struct {
 	Expression string `json:"expression" jsonschema:"minLength=1,example=SELECT * FROM A LIMIT 1"`
 }
 

@@ -157,6 +157,8 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		node.Command, err = UnmarshalThresholdCommand(rn, toggles)
 	case TypeSQL:
 		node.Command, err = UnmarshalSQLCommand(rn)
+	case TypeAsk:
+		node.Command, err = UnmarshalTextToSQLCommand(rn)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
