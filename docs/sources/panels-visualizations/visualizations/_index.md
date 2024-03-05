@@ -20,9 +20,13 @@ weight: 10
 
 Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in visualizations, their options and typical usage.
 
+{{< youtube id="JwF6FgeotaU" >}}
+
 {{% admonition type="note" %}}
 If you are unsure which visualization to pick, Grafana can provide visualization suggestions based on the panel query. When you select a visualization, Grafana will show a preview with that visualization applied.
 {{% /admonition %}}
+
+{{< youtube id="yNRnLyVntUw" >}}
 
 - Graphs & charts
   - [Time series][] is the default and main Graph visualization.
