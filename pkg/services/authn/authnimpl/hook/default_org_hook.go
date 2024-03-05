@@ -30,7 +30,7 @@ func ProvideDefaultOrgHook(cfg *setting.Cfg, userService user.Service, orgServic
 
 func (h *DefaultOrgHook) SetDefaultOrg(ctx context.Context,
 	currentIdentity *authn.Identity, r *authn.Request, err error) {
-	if err != nil || h.cfg.LoginDefaultOrgId == -1 || currentIdentity == nil {
+	if err != nil || h.cfg.LoginDefaultOrgId < 1 || currentIdentity == nil {
 		return
 	}
 
