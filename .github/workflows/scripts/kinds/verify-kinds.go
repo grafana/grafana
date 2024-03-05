@@ -164,7 +164,7 @@ func (j *ckrJenny) JennyName() string {
 func (j *ckrJenny) Generate(k schemas.ComposableKind) (*codejen.File, error) {
 	name := strings.ToLower(fmt.Sprintf("%s/%s", k.Name, k.Filename))
 
-	v := addMissingComposableInformation(k)
+	v := fixComposableKindFormat(k)
 
 	newKindBytes, err := kindToBytes(v)
 	if err != nil {
@@ -187,16 +187,20 @@ func kindToBytes(kind cue.Value) ([]byte, error) {
 	return cueformat.Node(node)
 }
 
-func addMissingComposableInformation(schema schemas.ComposableKind) cue.Value {
+func fixComposableKindFormat(schema schemas.ComposableKind) cue.Value {
 	variant := "PanelCfg"
 	if schema.CueFile.LookupPath(cue.ParsePath("composableKinds.DataQuery")).Exists() {
 		variant = "DataQuery"
 	}
 
-	v := schema.CueFile.FillPath(cue.MakePath(cue.Str("schemaInterface")), variant)
-	v = v.FillPath(cue.MakePath(cue.Str("name")), fmt.Sprintf("%s%s", UpperCamelCase(schema.Name), variant))
+	newCue := schema.CueFile.Context().CompileString(
+		fmt.Sprintf("schemaInterface: %q\n", variant) +
+			fmt.Sprintf("name: %q + %q\n\n", UpperCamelCase(schema.Name), variant) +
+			"lineage: _",
+	)
 
-	return v
+	lineagePath := cue.MakePath(cue.Str("composableKinds"), cue.Str(variant), cue.Str("lineage"))
+	return newCue.FillPath(cue.MakePath(cue.Str("lineage")), schema.CueFile.LookupPath(lineagePath))
 }
 
 func UpperCamelCase(s string) string {
