@@ -407,7 +407,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     });
   }
 
-  public removeRow(row: SceneGridRow, removePanels: boolean) {
+  public removeRow(row: SceneGridRow, removePanels = false) {
     if (!(this.state.body instanceof SceneGridLayout)) {
       throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
     }

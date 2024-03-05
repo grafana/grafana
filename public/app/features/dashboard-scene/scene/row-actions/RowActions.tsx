@@ -32,14 +32,10 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
     });
   }
 
-  private get _dashboard(): DashboardScene {
-    return getDashboardSceneFor(this);
-  }
-
   private updateLayout(rowClone: SceneGridRow): void {
     const row = this.getParent();
 
-    const layout = this._dashboard.state.body;
+    const layout = this.getDashboard().state.body;
 
     if (!(layout instanceof SceneGridLayout)) {
       throw new Error('Layout is not a SceneGridLayout');
@@ -70,7 +66,7 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
   }
 
   public getDashboard(): DashboardScene {
-    return this._dashboard;
+    return getDashboardSceneFor(this);
   }
 
   public onUpdate = (title: string, repeat?: string | null): void => {
@@ -118,10 +114,10 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
         altActionText: 'Delete row only',
         icon: 'trash-alt',
         onConfirm: () => {
-          this._dashboard.removeRow(this.getParent(), true);
+          this.getDashboard().removeRow(this.getParent(), true);
         },
         onAltAction: () => {
-          this._dashboard.removeRow(this.getParent(), false);
+          this.getDashboard().removeRow(this.getParent());
         },
       })
     );
