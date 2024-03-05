@@ -15,7 +15,7 @@ export default defineConfig({
       input: ['./public/app/index.ts', './public/sass/grafana.dark.scss', './public/sass/grafana.light.scss'],
     },
     outDir: './build',
-    assetsDir: './assets',
+    assetsDir: './',
   },
   server: {
     // vite binds to ipv6 by default... and that doesn't work for me locally on mac...
