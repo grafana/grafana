@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Text, useStyles2 } from '@grafana/ui';
@@ -62,19 +62,33 @@ export const StrongPasswordField = React.forwardRef<HTMLInputElement, Props>((pr
     );
   };
 
-  const onFocus = () => {
-    setDisplayValidationLabels(true);
-  };
+  const onFocus = useCallback(
+    (event: React.FocusEvent<HTMLInputElement, Element>) => {
+      setDisplayValidationLabels(true);
+      props.onFocus && props.onFocus(event);
+    },
+    [props.onFocus]
+  );
 
+  const onChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setFieldValue(event.currentTarget.value);
+      props.onChange && props.onChange(event);
+    },
+    [props.onChange]
+  );
+
+  const onBlur = useCallback(
+    (event: React.FocusEvent<HTMLInputElement, Element>) => {
+      setPristine(false);
+      props.onBlur && props.onBlur(event);
+    },
+    [props.onBlur]
+  );
+  console.log(props);
   return (
     <>
-      <PasswordField
-        {...props}
-        ref={ref}
-        onFocus={onFocus}
-        onChange={(e) => setFieldValue(e.currentTarget.value)}
-        onBlur={() => setPristine(false)}
-      />
+      <PasswordField {...props} ref={ref} onFocus={onFocus} onChange={onChange} onBlur={onBlur} />
       {validationLabel('At least 12 characters', () => fieldValue.length >= 12)}
       {validationLabel('One uppercase letter', () => /[A-Z]+/.test(fieldValue))}
       {validationLabel('One lowercase letter', () => /[a-z]+/.test(fieldValue))}
