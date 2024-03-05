@@ -1,4 +1,4 @@
-package authnimpl
+package hook
 
 import (
 	"context"
@@ -18,7 +18,8 @@ type DefaultOrgHook struct {
 	orgService  org.Service
 }
 
-func NewDefaultOrgHook(cfg *setting.Cfg, userService user.Service, orgService org.Service) *DefaultOrgHook {
+// ProvideDefaultOrgHook sets the default org for a user after login.
+func ProvideDefaultOrgHook(cfg *setting.Cfg, userService user.Service, orgService org.Service) *DefaultOrgHook {
 	return &DefaultOrgHook{
 		cfg:         cfg,
 		logger:      log.New("authn.default_org_hook"),
@@ -29,7 +30,7 @@ func NewDefaultOrgHook(cfg *setting.Cfg, userService user.Service, orgService or
 
 func (h *DefaultOrgHook) SetDefaultOrg(ctx context.Context,
 	currentIdentity *authn.Identity, r *authn.Request, err error) {
-	if err != nil || h.cfg.LoginDefaultOrgId == -1 {
+	if err != nil || h.cfg.LoginDefaultOrgId == -1 || currentIdentity == nil {
 		return
 	}
 
@@ -43,11 +44,11 @@ func (h *DefaultOrgHook) SetDefaultOrg(ctx context.Context,
 		return
 	}
 
-	if !h.validateUsingOrg(ctx, userID, int64(h.cfg.LoginDefaultOrgId)) {
+	if !h.validateUsingOrg(ctx, userID, h.cfg.LoginDefaultOrgId) {
 		return
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: int64(h.cfg.LoginDefaultOrgId)}
+	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: h.cfg.LoginDefaultOrgId}
 	if err := h.userService.SetUsingOrg(ctx, &cmd); err != nil {
 		h.logger.Warn("failed to set default org", "err", err)
 	}

@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authnimpl/hook"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -162,7 +163,7 @@ func ProvideService(
 
 	s.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 
-	s.RegisterPostLoginHook(NewDefaultOrgHook(cfg, userService, orgService).SetDefaultOrg, 10)
+	s.RegisterPostLoginHook(hook.ProvideDefaultOrgHook(cfg, userService, orgService).SetDefaultOrg, 10)
 
 	return s
 }
