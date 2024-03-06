@@ -536,12 +536,12 @@ loop:
 				ident[0] = fields[i]
 				fields[i] = ident.Sanitize()
 			}
-			query := "SELECT " + strings.Join(fields, ",") + " FROM entity_history WHERE guid = ?"
+			query := "SELECT " + strings.Join(fields, ",") + " FROM entity_history WHERE guid = ? AND resource_version = ?"
 
 			// retrieve the full row from the database. We are using Query instead of Get method to reuse rowToEntity
 			// for max consistency, but we are sure we cannot get more than one row since the `guid` field is the
 			// primary key of the table
-			rows, err := s.sess.Query(ctx, query, ne.GUID)
+			rows, err := s.sess.Query(ctx, query, partialEntity.GUID, partialEntity.ResourceVersion)
 			if err != nil {
 				return fmt.Errorf("get from entity history by GUID %q: %w", ne.GUID, err)
 			}
