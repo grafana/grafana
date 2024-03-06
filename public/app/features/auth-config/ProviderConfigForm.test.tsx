@@ -77,7 +77,7 @@ describe('ProviderConfigForm', () => {
     jest.clearAllMocks();
   });
 
-  it('renders all fields correctly', async () => {
+  it('renders all general settings fields correctly', async () => {
     setup(<ProviderConfigForm config={testConfig} provider={testConfig.provider} />);
     expect(screen.getByRole('textbox', { name: /Client ID/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /Client secret/i })).toBeInTheDocument();
@@ -89,13 +89,42 @@ describe('ProviderConfigForm', () => {
     expect(screen.getByRole('link', { name: /Discard/i })).toBeInTheDocument();
   });
 
+  it('renders all user mapping fields correctly', async () => {
+    const { user } = setup(<ProviderConfigForm config={testConfig} provider={testConfig.provider} />);
+    await user.click(screen.getByText('User mapping'));
+    expect(screen.getByRole('textbox', { name: /Role attribute path/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Role attribute strict mode/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Skip organization role sync/i })).toBeInTheDocument();
+  });
+
+  it('renders all extra security fields correctly', async () => {
+    const { user } = setup(<ProviderConfigForm config={testConfig} provider={testConfig.provider} />);
+    await user.click(screen.getByText('Extra security measures'));
+    expect(screen.getByRole('combobox', { name: /Allowed organizations/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /Allowed domains/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /Team Ids/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Use PKCE/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Use refresh token/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /TLS skip verify/i })).toBeInTheDocument();
+  });
+
   it('should save and enable on form submit', async () => {
     const { user } = setup(<ProviderConfigForm config={emptyConfig} provider={emptyConfig.provider} />);
+
     await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
     await user.type(screen.getByLabelText(/Client secret/i), 'test-client-secret');
     // Type a scope and press enter to select it
     await user.type(screen.getByRole('combobox', { name: /Scopes/i }), 'user:email{enter}');
     await user.click(screen.getByRole('checkbox', { name: /Auto login/i }));
+
+    await user.click(screen.getByText('User mapping'));
+    await user.type(screen.getByRole('textbox', { name: /Role attribute path/i }), 'new-attribute-path');
+    await user.click(screen.getByRole('checkbox', { name: /Role attribute strict mode/i }));
+
+    await user.click(screen.getByText('Extra security measures'));
+    await user.type(screen.getByRole('combobox', { name: /Allowed domains/i }), 'grafana.com{enter}');
+    await user.click(screen.getByRole('checkbox', { name: /Use PKCE/i }));
+
     await user.click(screen.getByRole('button', { name: /Save and enable/i }));
 
     await waitFor(() => {
@@ -107,15 +136,15 @@ describe('ProviderConfigForm', () => {
           settings: {
             allowAssignGrafanaAdmin: false,
             allowSignUp: false,
-            allowedDomains: '',
+            allowedDomains: 'grafana.com',
             allowedOrganizations: '',
             autoLogin: true,
             clientId: 'test-client-id',
             clientSecret: 'test-client-secret',
             enabled: true,
             name: 'GitHub',
-            roleAttributePath: '',
-            roleAttributeStrict: false,
+            roleAttributePath: 'new-attribute-path',
+            roleAttributeStrict: true,
             scopes: 'user:email',
             signoutRedirectUrl: '',
             skipOrgRoleSync: false,
@@ -123,7 +152,8 @@ describe('ProviderConfigForm', () => {
             tlsClientCa: '',
             tlsClientCert: '',
             tlsClientKey: '',
-            usePkce: false,
+            tlsSkipVerifyInsecure: false,
+            usePkce: true,
             useRefreshToken: false,
           },
         },
