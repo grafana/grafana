@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 
 import { Button } from '@grafana/ui';
@@ -6,12 +7,6 @@ interface SpeechRecognitionProps {
   onResult: (result: string) => void;
   debug?: boolean;
   className?: string;
-}
-
-// TODO: Why is this type not available?
-interface SpeechRecognitionEvent extends Event {
-  readonly resultIndex: number;
-  readonly results: SpeechRecognitionResultList;
 }
 
 export const SpeechRecognitionButton: React.FC<SpeechRecognitionProps> = ({ onResult, debug, className }) => {
@@ -73,11 +68,17 @@ export const SpeechRecognitionButton: React.FC<SpeechRecognitionProps> = ({ onRe
   }
 
   return (
-    <div className={className}>
+    <div className={className || styles.container}>
       {debug && <span>{transcript}</span>}
       <Button icon="record-audio" onClick={toggleListening} variant={isListening ? 'destructive' : 'primary'}>
-        {isListening ? 'Stop Listening' : 'Ask Away'}
+        {isListening ? 'Stop listening' : 'Ask your question'}
       </Button>
     </div>
   );
+};
+
+const styles = {
+  container: css({
+    margin: '1em 0',
+  }),
 };
