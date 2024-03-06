@@ -61,7 +61,12 @@ export const ValidationLabels = ({ strongPasswordValidations, password, pristine
   return (
     <Box marginBottom={2}>
       {strongPasswordValidations.map((validation) => (
-        <ValidationLabel strongPasswordValidation={validation} password={password} pristine={pristine} />
+        <ValidationLabel
+          key={validation.message}
+          strongPasswordValidation={validation}
+          password={password}
+          pristine={pristine}
+        />
       ))}
     </Box>
   );
