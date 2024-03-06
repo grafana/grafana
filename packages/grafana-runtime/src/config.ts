@@ -203,10 +203,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    if (this.buildInfo.env === 'development') {
-      overrideFeatureTogglesFromUrl(this);
-    }
-
+    overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
     if (this.featureToggles.disableAngular) {
@@ -238,16 +235,32 @@ function overrideFeatureTogglesFromLocalStorage(config: GrafanaBootConfig) {
   }
 }
 
-function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
+const prodUrlAllowedFeatureFlags = new Set([
+  'autoMigrateOldPanels',
+  'autoMigrateGraphPanel',
+  'autoMigrateTablePanel',
+  'autoMigratePiechartPanel',
+  'autoMigrateWorldmapPanel',
+  'autoMigrateStatPanel, disableAngular',
+]);
+
+function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig, allowWhiteListed = false) {
   if (window.location.href.indexOf('__feature') === -1) {
     return;
   }
+
+  const isLocalDevEnv = config.buildInfo.env === 'development';
 
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
+
+      if (!isLocalDevEnv && !prodUrlAllowedFeatureFlags.has(featureName)) {
+        return;
+      }
+
       const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
       if (toggleState !== featureToggles[key]) {
         featureToggles[featureName] = toggleState;
