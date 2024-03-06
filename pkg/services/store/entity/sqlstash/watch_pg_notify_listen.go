@@ -332,7 +332,7 @@ func (s *sqlEntityServer) pgAddNotifyChan(ctx context.Context, pgChannelName str
 
 	// we need to properly escape the postgres channel name as a postgres identifier
 	if pgChannelName == "" {
-		return nil, fmt.Errorf("empty postgres channel name %q: %w", pgChannelName, ErrPgInvalidChanName)
+		return nil, ErrPgInvalidChanName
 	}
 
 	if s.pgNotifyMap == nil {
@@ -349,6 +349,7 @@ func (s *sqlEntityServer) pgAddNotifyChan(ctx context.Context, pgChannelName str
 		if err != nil {
 			return nil, fmt.Errorf("pg listen on channel %q: %w", pgChannelName, err)
 		}
+		s.log.Info("watch: postgres LISTEN", "channel", pgChannelName)
 	}
 
 	watcherKey := new(byte)
@@ -360,20 +361,9 @@ func (s *sqlEntityServer) pgAddNotifyChan(ctx context.Context, pgChannelName str
 // pgRemoveNotifyChan removes the channel associated with the given id (or handle). If either the pgChannelName or
 // watcherKey are registered it becomes a nop.
 func (s *sqlEntityServer) pgRemoveNotifyChan(ctx context.Context, pgChannelName string, watcherKey pgWatcherChannelMapKey) error {
-	defer func() {
-		// close the connection after the last watch was removed
-		s.pgNotifyMapMu.Lock()
-		defer s.pgNotifyMapMu.Unlock()
-		s.pgListenerConnMu.Lock()
-		defer s.pgListenerConnMu.Unlock()
-		if s.pgNotifyMap == nil || len(s.pgNotifyMap) > 0 {
-			return
-		}
-		if err := s.pgTerminateWatch(ctx); err != nil {
-			s.log.Error("terminate postgres watcher after last removed", "error", err)
-		}
-		s.log.Info("terminate postgres watcher after last removed success")
-	}()
+	if pgChannelName == "" {
+		return ErrPgInvalidChanName
+	}
 
 	s.pgNotifyMapMu.Lock()
 	defer s.pgNotifyMapMu.Unlock()
@@ -384,15 +374,11 @@ func (s *sqlEntityServer) pgRemoveNotifyChan(ctx context.Context, pgChannelName 
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	if pgChannelName == "" {
-		return nil
-	}
-
 	return s.pgRemoveNotifyChanLocked(ctx, pgChannelName, watcherKey)
 }
 
 func (s *sqlEntityServer) pgRemoveNotifyChanLocked(ctx context.Context, pgChannelName string, watcherKey pgWatcherChannelMapKey) error {
-	if s.pgNotifyMap == nil {
+	if len(s.pgNotifyMap) == 0 {
 		return nil
 	}
 
@@ -412,7 +398,6 @@ func (s *sqlEntityServer) pgRemoveNotifyChanLocked(ctx context.Context, pgChanne
 	// if the watcher channel map no longer has items, unlisten from that postgres channel and remove the entry from the
 	// postgres channel map
 	if len(m) == 0 {
-		delete(s.pgNotifyMap, pgChannelName)
 		err := s.pgExecListenerConn(ctx, func(conn *pgx.Conn) error {
 			escapedPgChannelName := ((pgx.Identifier)([]string{pgChannelName})).Sanitize()
 			_, err := conn.Exec(ctx, "UNLISTEN "+escapedPgChannelName)
@@ -420,6 +405,18 @@ func (s *sqlEntityServer) pgRemoveNotifyChanLocked(ctx context.Context, pgChanne
 		})
 		if err != nil {
 			return fmt.Errorf("pg unlisten on channel %q: %w", pgChannelName, err)
+		}
+		s.log.Info("watch: postgres UNLISTEN", "channel", pgChannelName)
+		delete(s.pgNotifyMap, pgChannelName)
+
+		// close the connection after the last watch was removed
+		if len(s.pgNotifyMap) == 0 {
+			s.pgListenerConnMu.Lock()
+			defer s.pgListenerConnMu.Unlock()
+			if err := s.pgTerminateWatchLocked(ctx); err != nil {
+				s.log.Error("terminate postgres watcher after last removed", "error", err)
+			}
+			s.log.Info("terminate postgres watcher after last removed success")
 		}
 	}
 
