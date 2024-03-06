@@ -56,7 +56,10 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({
   }
 
   if (type === Databases.postgresql) {
-    initialValues.tracking = TrackingOptions.pgStatements;
+    initialValues.tracking =
+      remoteInstanceCredentials.isAzure || remoteInstanceCredentials.isRDS
+        ? TrackingOptions.pgStatements
+        : TrackingOptions.pgMonitor;
     initialValues.disable_comments_parsing = true;
   }
 

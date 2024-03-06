@@ -3,7 +3,7 @@ import { RemoteInstanceCredentials, InstanceAvailable, SelectInstance } from 'ap
 export interface FormValues extends RemoteInstanceCredentials {
   qan_mysql_perfschema?: boolean;
   disable_comments_parsing?: boolean;
-  tracking?: 'qan_postgresql_pgstatements_agent';
+  tracking?: TrackingOptions;
 }
 
 export enum TrackingOptions {
