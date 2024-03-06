@@ -60,7 +60,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 }
 
 func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]any) {
-	ctxTracer, span := uss.tracer.Start(context.Background(), "UsageStats.GatherLoop")
+	ctxTracer, span := uss.tracer.Start(ctx, "UsageStats.GatherLoop")
 	defer span.End()
 	totC, errC := 0, 0
 
