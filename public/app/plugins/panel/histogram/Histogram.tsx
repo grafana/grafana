@@ -50,12 +50,16 @@ export interface HistogramProps extends Themeable2 {
 
 export function getBucketSize(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  return frame.fields[0].type === FieldType.string ? 1 : roundDecimals(frame.fields[1].values[0] - frame.fields[0].values[0], 9);
+  return frame.fields[0].type === FieldType.string
+    ? 1
+    : roundDecimals(frame.fields[1].values[0] - frame.fields[0].values[0], 9);
 }
 
 export function getBucketSize1(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  return frame.fields[0].type === FieldType.string ? 1 : roundDecimals(frame.fields[1].values[1] - frame.fields[0].values[1], 9);
+  return frame.fields[0].type === FieldType.string
+    ? 1
+    : roundDecimals(frame.fields[1].values[1] - frame.fields[0].values[1], 9);
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
