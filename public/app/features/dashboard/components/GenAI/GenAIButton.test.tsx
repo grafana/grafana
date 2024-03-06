@@ -173,13 +173,11 @@ describe('GenAIButton', () => {
       await waitFor(() => expect(getByRole('button')).toBeEnabled());
     });
 
-    it('should call onGenerate when the text is generating', async () => {
+    it('should not call onGenerate when the text is generating', async () => {
       const onGenerate = jest.fn();
       setup({ onGenerate, messages: [], eventTrackingSrc: eventTrackingSrc });
 
-      await waitFor(() => expect(onGenerate).toHaveBeenCalledTimes(1));
-
-      expect(onGenerate).toHaveBeenCalledWith('Some incomplete generated text');
+      await waitFor(() => expect(onGenerate).not.toHaveBeenCalledTimes(1));
     });
 
     it('should stop generating when clicking the button', async () => {
@@ -191,6 +189,45 @@ describe('GenAIButton', () => {
 
       expect(setShouldStopMock).toHaveBeenCalledTimes(1);
       expect(setShouldStopMock).toHaveBeenCalledWith(true);
+      expect(onGenerate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when it is completed from generating data', () => {
+    const setShouldStopMock = jest.fn();
+
+    beforeEach(() => {
+      jest.mocked(useOpenAIStream).mockReturnValue({
+        messages: [],
+        error: undefined,
+        streamStatus: StreamStatus.COMPLETED,
+        reply: 'Some completed generated text',
+        setMessages: jest.fn(),
+        setStopGeneration: setShouldStopMock,
+        value: {
+          enabled: true,
+          stream: new Observable().subscribe(),
+        },
+      });
+    });
+
+    it('should render improve text ', async () => {
+      setup();
+
+      waitFor(async () => expect(await screen.findByText('Improve')).toBeInTheDocument());
+    });
+
+    it('should enable the button', async () => {
+      setup();
+      waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
+    });
+
+    it('should call onGenerate when the text is completed', async () => {
+      const onGenerate = jest.fn();
+      setup({ onGenerate, messages: [], eventTrackingSrc: eventTrackingSrc });
+
+      await waitFor(() => expect(onGenerate).toHaveBeenCalledTimes(1));
+      expect(onGenerate).toHaveBeenCalledWith('Some completed generated text');
     });
   });
 

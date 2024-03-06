@@ -96,7 +96,7 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	defer s.reloadMutex.Unlock()
 
 	s.updateInfo(social.GoogleProviderName, newInfo)
-	s.validateHD = MustBool(newInfo.Extra[validateHDKey], false)
+	s.validateHD = MustBool(newInfo.Extra[validateHDKey], true)
 
 	return nil
 }
