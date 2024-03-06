@@ -124,8 +124,12 @@ export function EntityDrawer(props: Props) {
   );
 
   useEffect(() => {
-    const timeout = overrideLinks(() => {
-      setNavStack([...navStack, entitiesMap['trace']]);
+    const timeout = overrideLinks((id: string) => {
+      const traceEntity = {
+        ...entitiesMap['trace'],
+        id,
+      };
+      setNavStack([...navStack, traceEntity]);
     });
     return () => {
       if (timeout) {
@@ -134,6 +138,9 @@ export function EntityDrawer(props: Props) {
     };
   }, [navStack]);
 
+  // This should rather be synchrnoized with the current time range of the parent view
+  // but for testing this makes sense as default
+  const dashInitialState = currentEntity.type === 'trace' ? '?var-traceid=' + currentEntity.id : '?from=now-15m&to=now';
   return (
     <Drawer closeOnMaskClick={true} onClose={props.onClose}>
       <Stack direction={'column'} gap={1}>
@@ -149,26 +156,14 @@ export function EntityDrawer(props: Props) {
         {/*<EntityMap entity={currentEntity} onEntityChange={onEntityChange} />*/}
         {currentEntity.type !== 'trace' && <EntityMapAsserts entity={currentEntity} onEntityChange={onEntityChange} />}
         <div style={{ flex: '1', overflow: 'scroll', position: 'relative' }}>
-          <EmbeddedDashboard
-            uid={currentEntity.dashboardUid}
-            // This should rather be synchrnoized with the current time range of the parent view
-            // but for testing this makes sense as default
-            initialState={'?from=now-15m&to=now'}
-          />
-          <LinkButton
-            style={{ position: 'absolute', top: 0, zIndex: 1000 }}
-            icon={'external-link-alt'}
-            variant={'secondary'}
-            aria-label={'button'}
-            href={`/d/${currentEntity.dashboardUid}`}
-          />
+          <EmbeddedDashboard uid={currentEntity.dashboardUid} initialState={dashInitialState} />
         </div>
       </Stack>
     </Drawer>
   );
 }
 
-function overrideLinks(tracelink: () => void): NodeJS.Timeout | undefined {
+function overrideLinks(tracelink: (id: string) => void): NodeJS.Timeout | undefined {
   // big hack as we cannot right now override how links are handled in the embedded dashboard so we just override
   // links in the dom. Silly but works.
   const nodes = document.querySelectorAll<HTMLAnchorElement>('a[href^="/explore" i]');
@@ -179,7 +174,7 @@ function overrideLinks(tracelink: () => void): NodeJS.Timeout | undefined {
   for (const node of nodes) {
     node.onclick = (e) => {
       e.preventDefault();
-      tracelink();
+      tracelink(node.innerText);
     };
   }
   return;
@@ -302,7 +297,14 @@ function Header(props: { stack: Entity[]; onBack: () => void; onClose: () => voi
           )}
         </div>
         <span>
-          {current?.type}: {current?.id}
+          {current?.type}: {current?.id}{' '}
+          <LinkButton
+            icon={'external-link-alt'}
+            variant={'secondary'}
+            fill={'text'}
+            aria-label={'button'}
+            href={`/d/${current.dashboardUid}`}
+          />
         </span>
         <IconButton name={'times'} onClick={props.onClose} aria-label={'close'} size={'xl'} />
       </Stack>
