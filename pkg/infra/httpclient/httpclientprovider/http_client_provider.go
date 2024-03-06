@@ -39,6 +39,10 @@ func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer 
 		middlewares = append(middlewares, HTTPLoggerMiddleware(cfg.PluginSettings))
 	}
 
+	if cfg.IPRangeACEnabled {
+		middlewares = append(middlewares, GrafanaRequestIDHeaderMiddleware(cfg, logger))
+	}
+
 	setDefaultTimeoutOptions(cfg)
 
 	return newProviderFunc(sdkhttpclient.ProviderOptions{

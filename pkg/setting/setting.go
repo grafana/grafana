@@ -1944,6 +1944,9 @@ func (cfg *Cfg) readDataSourceSecuritySettings() {
 	datasources := cfg.Raw.Section("datasources.ip_range_security")
 	cfg.IPRangeACEnabled = datasources.Key("enabled").MustBool(false)
 	cfg.IPRangeACSecretKey = datasources.Key("secret_key").MustString("")
+	if cfg.IPRangeACEnabled && cfg.IPRangeACSecretKey == "" {
+		cfg.Logger.Error("IP range access control is enabled but no secret key is set")
+	}
 	allowedURLString := datasources.Key("allow_list").MustString("")
 	for _, urlString := range util.SplitString(allowedURLString) {
 		allowedURL, err := url.Parse(urlString)
