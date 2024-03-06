@@ -37,30 +37,30 @@ export const Step = ({ step }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    setup: css`
-      display: flex;
-      width: 95%;
-    `,
-    info: css`
-      width: 172px;
-      margin-right: 5%;
+    setup: css({
+      display: 'flex',
+      width: '95%',
+    }),
+    info: css({
+      width: '172px',
+      marginRight: '5%',
 
-      ${theme.breakpoints.down('xxl')} {
-        margin-right: ${theme.spacing(4)};
-      }
-      ${theme.breakpoints.down('sm')} {
-        display: none;
-      }
-    `,
-    title: css`
-      color: ${theme.v1.palette.blue95};
-    `,
-    cards: css`
-      overflow-x: scroll;
-      overflow-y: hidden;
-      width: 100%;
-      display: flex;
-      justify-content: flex-start;
-    `,
+      [theme.breakpoints.down('xxl')]: {
+        marginRight: theme.spacing(4),
+      },
+      [theme.breakpoints.down('sm')]: {
+        display: 'none',
+      },
+    }),
+    title: css({
+      color: theme.v1.palette.blue95,
+    }),
+    cards: css({
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'flex-start',
+    }),
   };
 };

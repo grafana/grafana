@@ -2087,6 +2087,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad"
       }
+    },
+    {
+      "metadata": {
+        "name": "betterPageScrolling",
+        "resourceVersion": "1709583501630",
+        "creationTimestamp": "2024-03-04T20:18:21Z"
+      },
+      "spec": {
+        "description": "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
     }
   ]
 }
