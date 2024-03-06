@@ -5,7 +5,7 @@ import { OptionFilter, renderSearchHits } from 'app/features/dashboard/component
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
 import {
-  getLibraryPanelOptionsCategory2,
+  getLibraryVizPanelOptionsCategory,
   getVisualizationOptions2,
 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
@@ -42,7 +42,7 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
 
   const libraryPanelOptions = useMemo(() => {
     if (libraryPanel) {
-      return getLibraryPanelOptionsCategory2(libraryPanel); // TODO: fix this name
+      return getLibraryVizPanelOptionsCategory(libraryPanel);
     }
     return;
   }, [libraryPanel]);

@@ -151,9 +151,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
   return Object.values(categoryIndex);
 }
 
-export function getLibraryPanelOptionsCategory2(libraryPanel: LibraryVizPanel): OptionsPaneCategoryDescriptor {
-  //TODO: Clean this up
-
+export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryVizPanel): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Library panel options',
     id: 'Library panel options',
