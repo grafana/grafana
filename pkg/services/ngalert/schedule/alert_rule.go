@@ -29,9 +29,38 @@ func (f ruleFactoryFunc) new(ctx context.Context) *alertRuleInfo {
 	return f(ctx)
 }
 
-func newRuleFactory(appURL *url.URL, disableGrafanaFolder bool, maxAttempts int64, sender AlertsSender, stateManager *state.Manager, evalFactory eval.EvaluatorFactory, ruleProvider ruleProvider, clock clock.Clock, met *metrics.Scheduler, logger log.Logger, tracer tracing.Tracer, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) ruleFactoryFunc {
+func newRuleFactory(
+	appURL *url.URL,
+	disableGrafanaFolder bool,
+	maxAttempts int64,
+	sender AlertsSender,
+	stateManager *state.Manager,
+	evalFactory eval.EvaluatorFactory,
+	ruleProvider ruleProvider,
+	clock clock.Clock,
+	met *metrics.Scheduler,
+	logger log.Logger,
+	tracer tracing.Tracer,
+	evalAppliedHook evalAppliedFunc,
+	stopAppliedHook stopAppliedFunc,
+) ruleFactoryFunc {
 	return func(ctx context.Context) *alertRuleInfo {
-		return newAlertRuleInfo(ctx, appURL, disableGrafanaFolder, maxAttempts, sender, stateManager, evalFactory, ruleProvider, clock, met, logger, tracer, evalAppliedHook, stopAppliedHook)
+		return newAlertRuleInfo(
+			ctx,
+			appURL,
+			disableGrafanaFolder,
+			maxAttempts,
+			sender,
+			stateManager,
+			evalFactory,
+			ruleProvider,
+			clock,
+			met,
+			logger,
+			tracer,
+			evalAppliedHook,
+			stopAppliedHook,
+		)
 	}
 }
 

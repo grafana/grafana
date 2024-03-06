@@ -235,7 +235,21 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	readyToRun := make([]readyToRunItem, 0)
 	updatedRules := make([]ngmodels.AlertRuleKeyWithVersion, 0, len(updated)) // this is needed for tests only
 	missingFolder := make(map[string][]string)
-	ruleFactory := newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, &sch.schedulableAlertRules, sch.clock, sch.metrics, sch.log, sch.tracer, sch.evalAppliedFunc, sch.stopAppliedFunc)
+	ruleFactory := newRuleFactory(
+		sch.appURL,
+		sch.disableGrafanaFolder,
+		sch.maxAttempts,
+		sch.alertsSender,
+		sch.stateManager,
+		sch.evaluatorFactory,
+		&sch.schedulableAlertRules,
+		sch.clock,
+		sch.metrics,
+		sch.log,
+		sch.tracer,
+		sch.evalAppliedFunc,
+		sch.stopAppliedFunc,
+	)
 	for _, item := range alertRules {
 		key := item.GetKey()
 		ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key, ruleFactory)
