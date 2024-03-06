@@ -115,7 +115,7 @@ func (s *ExtendedJWT) authenticateAsUser(idTokenClaims,
 func (s *ExtendedJWT) authenticateService(ctx context.Context,
 	claims *ExtendedJWTClaims, r *authn.Request) (*authn.Identity, error) {
 	userID, err := strconv.ParseInt(strings.TrimPrefix(claims.Subject,
-		fmt.Sprintf("%s:id:", authn.NamespaceServiceAccount)), 10, 64)
+		fmt.Sprintf("%s:uid:", authn.NamespaceAccessPolicy)), 10, 64)
 	if err != nil {
 		s.log.Error("Failed to parse sub", "error", err)
 		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
