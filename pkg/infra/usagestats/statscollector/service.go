@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	MIN_DELAY = 30
-	MAX_DELAY = 120
+	minDelay = 30
+	maxDelay = 120
 )
 
 type Service struct {
@@ -111,7 +111,7 @@ func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageS
 
 func (s *Service) Run(ctx context.Context) error {
 	sendInterval := time.Second * time.Duration(s.cfg.MetricsTotalStatsIntervalSeconds)
-	nextSendInterval := time.Duration(rand.Intn(MAX_DELAY-MIN_DELAY)+MIN_DELAY) * time.Second
+	nextSendInterval := time.Duration(rand.Intn(maxDelay-minDelay)+minDelay) * time.Second
 	s.log.Debug("usage stats collector started", "sendInterval", sendInterval, "nextSendInterval", nextSendInterval)
 	updateStatsTicker := time.NewTicker(nextSendInterval)
 	defer updateStatsTicker.Stop()

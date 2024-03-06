@@ -20,6 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 )
 
+const (
+	maxConcurrentCollectors  = 5
+	collectorTimeoutDuration = 5 * time.Minute
+)
+
 var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
 
 func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, error) {
@@ -59,7 +64,7 @@ func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]any
 	defer span.End()
 	totC, errC := 0, 0
 
-	sem := make(chan struct{}, 5) // create a semaphore with a capacity of 5
+	sem := make(chan struct{}, maxConcurrentCollectors) // create a semaphore with a capacity of 5
 	var wg sync.WaitGroup
 
 	for _, fn := range uss.externalMetrics {
@@ -70,7 +75,7 @@ func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]any
 			sem <- struct{}{}        // acquire a token
 			defer func() { <-sem }() // release the token when done
 
-			ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Minute*5)
+			ctxWithTimeout, cancel := context.WithTimeout(ctx, collectorTimeoutDuration)
 			defer cancel()
 
 			fnMetrics, err := fn(ctxWithTimeout)
