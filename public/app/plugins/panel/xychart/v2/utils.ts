@@ -42,7 +42,10 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
   const { palette, getColorByName } = config.theme2.visualization;
 
   mappedSeries.forEach((seriesCfg) => {
-    let xMatcher = getFieldMatcher(seriesCfg.x.matcher);
+    let xMatcher = getFieldMatcher(seriesCfg.x?.matcher ?? {
+      id: FieldMatcherID.byType,
+      options: 'number',
+    });
     let yMatcher = getFieldMatcher(
       seriesCfg.y?.matcher ?? {
         id: FieldMatcherID.byType,

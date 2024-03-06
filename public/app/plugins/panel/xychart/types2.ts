@@ -11,7 +11,7 @@ export interface XYSeriesConfig {
   frame?: {
     matcher: common.MatcherConfig;
   };
-  x: {
+  x?: {
     matcher: common.MatcherConfig;
   };
   y?: {

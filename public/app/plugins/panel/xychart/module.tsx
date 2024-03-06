@@ -1,12 +1,12 @@
 import { PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 
-import { AutoEditor } from './AutoEditor';
 import { ManualEditor } from './ManualEditor';
 import { getScatterFieldConfig } from './config';
 import { xyChartMigrationHandler } from './migrations';
 import { FieldConfig, defaultFieldConfig } from './panelcfg.gen';
 import { Options } from './types2';
+import { AutoEditor } from './v2/AutoEditor';
 import { XYChartPanel2 } from './v2/XYChartPanel';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
