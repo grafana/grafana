@@ -160,7 +160,9 @@ datasources:
 | **Microsoft Chinese national cloud** | `chinaazuremonitor`        |
 | **US Government cloud**              | `govazuremonitor`          |
 
-**Note: Cloud names for current user authentication differ from the above. The public cloud name is `AzureCloud`, the Chinese national cloud name is `AzureChinaCloud`, and the US Government cloud name is `AzureUSGovernment`.**
+{{< admonition type="note" >}}
+Cloud names for current user authentication differ from the above. The public cloud name is `AzureCloud`, the Chinese national cloud name is `AzureChinaCloud`, and the US Government cloud name is `AzureUSGovernment`.
+{{< /admonition >}}
 
 ### Configure Managed Identity
 
