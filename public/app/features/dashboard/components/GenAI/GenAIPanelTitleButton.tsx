@@ -36,8 +36,6 @@ function getMessages(panel: PanelModel): Message[] {
   const dashboard = getDashboardSrv().getCurrent()!;
   const panelString = getFilteredPanelString(panel);
 
-  console.log(panel.type, 'hm');
-
   return [
     {
       content: TITLE_GENERATION_STANDARD_PROMPT,

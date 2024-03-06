@@ -20,7 +20,6 @@ export interface OptionsPaneItemProps {
   showIf?: () => boolean;
   overrides?: OptionPaneItemOverrideInfo[];
   addon?: ReactNode;
-  panelType?: string;
 }
 
 /**
