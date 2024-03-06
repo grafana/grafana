@@ -279,7 +279,7 @@ func TestRuleRoutine(t *testing.T) {
 			t.Cleanup(cancel)
 			ruleInfo := factory.new(ctx)
 			go func() {
-				_ = ruleInfo.ruleRoutine(rule.GetKey())
+				_ = ruleInfo.run(rule.GetKey())
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
@@ -428,7 +428,7 @@ func TestRuleRoutine(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			ruleInfo := factory.new(ctx)
 			go func() {
-				err := ruleInfo.ruleRoutine(models.AlertRuleKey{})
+				err := ruleInfo.run(models.AlertRuleKey{})
 				stoppedChan <- err
 			}()
 
@@ -448,7 +448,7 @@ func TestRuleRoutine(t *testing.T) {
 			factory := newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, &sch.schedulableAlertRules, sch.clock, sch.metrics, sch.log, sch.tracer, sch.evalAppliedFunc, sch.stopAppliedFunc)
 			ruleInfo := factory.new(context.Background())
 			go func() {
-				err := ruleInfo.ruleRoutine(rule.GetKey())
+				err := ruleInfo.run(rule.GetKey())
 				stoppedChan <- err
 			}()
 
@@ -479,7 +479,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := factory.new(ctx)
 
 		go func() {
-			_ = ruleInfo.ruleRoutine(rule.GetKey())
+			_ = ruleInfo.run(rule.GetKey())
 		}()
 
 		// init evaluation loop so it got the rule version
@@ -561,7 +561,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := factory.new(ctx)
 
 		go func() {
-			_ = ruleInfo.ruleRoutine(rule.GetKey())
+			_ = ruleInfo.run(rule.GetKey())
 		}()
 
 		ruleInfo.evalCh <- &evaluation{
@@ -667,7 +667,7 @@ func TestRuleRoutine(t *testing.T) {
 			ruleInfo := factory.new(ctx)
 
 			go func() {
-				_ = ruleInfo.ruleRoutine(rule.GetKey())
+				_ = ruleInfo.run(rule.GetKey())
 			}()
 
 			ruleInfo.evalCh <- &evaluation{
@@ -701,7 +701,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := factory.new(ctx)
 
 		go func() {
-			_ = ruleInfo.ruleRoutine(rule.GetKey())
+			_ = ruleInfo.run(rule.GetKey())
 		}()
 
 		ruleInfo.evalCh <- &evaluation{

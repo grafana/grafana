@@ -152,7 +152,7 @@ func (a *alertRuleInfo) stop(reason error) {
 }
 
 //nolint:gocyclo
-func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey) error {
+func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 	grafanaCtx := ngmodels.WithRuleKey(a.ctx, key)
 	logger := a.logger.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
