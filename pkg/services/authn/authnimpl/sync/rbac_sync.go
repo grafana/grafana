@@ -63,7 +63,7 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 }
 
 func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) ([]accesscontrol.Permission, error) {
-	var permissions []accesscontrol.Permission
+	permissions := make([]accesscontrol.Permission, 0, 8)
 	roles := ident.ClientParams.FetchPermissionsParams.Roles
 	if len(roles) > 0 {
 		for _, role := range roles {
