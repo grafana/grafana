@@ -526,12 +526,16 @@ func ParseFormattedState(stateStr string) (eval.State, string, error) {
 		}
 	}
 	if p == 0 {
-		return -1, "", errors.New("invalid state format")
+		p = len(stateStr)
 	}
 
 	state, err := eval.ParseStateString(stateStr[:p])
 	if err != nil {
 		return -1, "", err
+	}
+
+	if p == len(stateStr) {
+		return state, "", nil
 	}
 
 	reason := strings.Trim(stateStr[p+1:], "()")
