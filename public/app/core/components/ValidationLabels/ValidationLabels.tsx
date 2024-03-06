@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Text, useStyles2 } from '@grafana/ui';
+import { Box, Icon, Text, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
 
@@ -11,8 +11,14 @@ interface StrongPasswordValidation {
   validation: (value: string) => boolean;
 }
 
-export interface Props {
+export interface ValidationLabelsProps {
   strongPasswordValidations: StrongPasswordValidation[];
+  password: string;
+  pristine: boolean;
+}
+
+export interface ValidationLabelProps {
+  strongPasswordValidation: StrongPasswordValidation;
   password: string;
   pristine: boolean;
 }
@@ -51,21 +57,19 @@ export const strongPasswordValidationRegister = (value: string) => {
   );
 };
 
-export const ValidationLabels = ({ strongPasswordValidations, password, pristine }: Props) => {
-  const styles = useStyles2(getStyles);
+export const ValidationLabels = ({ strongPasswordValidations, password, pristine }: ValidationLabelsProps) => {
   return (
-    <div className={styles.labelContainer}>
-      {strongPasswordValidations.map((validation) => renderValidationLabel(validation, password, pristine, styles))}
-    </div>
+    <Box marginBottom={2}>
+      {strongPasswordValidations.map((validation) => (
+        <ValidationLabel strongPasswordValidation={validation} password={password} pristine={pristine} />
+      ))}
+    </Box>
   );
 };
 
-const renderValidationLabel = (
-  strongPasswordValidation: StrongPasswordValidation,
-  password: string,
-  pristine: boolean,
-  styles: { [key: string]: string }
-) => {
+export const ValidationLabel = ({ strongPasswordValidation, password, pristine }: ValidationLabelProps) => {
+  const styles = useStyles2(getStyles);
+
   const { basicAuthStrongPasswordPolicy } = config.auth;
   if (!basicAuthStrongPasswordPolicy) {
     return null;
@@ -79,45 +83,36 @@ const renderValidationLabel = (
 
   let iconClassName = undefined;
   if (result) {
-    iconClassName = styles.iconValid;
+    iconClassName = styles.icon.valid;
   } else if (pristine) {
-    iconClassName = styles.iconPending;
+    iconClassName = styles.icon.pending;
   } else {
-    iconClassName = styles.iconError;
+    iconClassName = styles.icon.error;
   }
 
   return (
-    <div key={message} className={styles.label}>
-      <Icon className={cx(styles.iconStyle, iconClassName)} name={iconName} />
+    <Box key={message} display={'flex'} alignItems={'center'} marginTop={1}>
+      <Icon className={cx(styles.icon.style, iconClassName)} name={iconName} />
       <Text color={textColor}>{message}</Text>
-    </div>
+    </Box>
   );
 };
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    label: css({
-      display: 'flex',
-      alignItems: 'flex',
-      marginTop: theme.spacing(1),
-    }),
-    labelContainer: css({
-      marginBottom: theme.spacing(2),
-    }),
-    hidden: css({
-      display: 'none',
-    }),
-    iconStyle: css({
-      marginRight: theme.spacing(1),
-    }),
-    iconValid: css({
-      color: theme.colors.success.text,
-    }),
-    iconPending: css({
-      color: theme.colors.secondary.text,
-    }),
-    iconError: css({
-      color: theme.colors.error.text,
-    }),
+    icon: {
+      style: css({
+        marginRight: theme.spacing(1),
+      }),
+      valid: css({
+        color: theme.colors.success.text,
+      }),
+      pending: css({
+        color: theme.colors.secondary.text,
+      }),
+      error: css({
+        color: theme.colors.error.text,
+      }),
+    },
   };
 };
