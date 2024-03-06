@@ -74,18 +74,18 @@ func (r *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator
 		return nil, fmt.Errorf("error reading request")
 	}
 
-	// Parses and does basic validation
+	// Parses the request and splits it into multiple sub queries (if necessary)
 	req, err := r.builder.parser.parseRequest(ctx, raw)
 	if err != nil {
 		return nil, err
 	}
 
+	// Actually run the query
 	rsp, err := r.execute(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO? does this request make it though?
 	statusCode := http.StatusOK
 	for _, res := range rsp.Responses {
 		if res.Error != nil {
