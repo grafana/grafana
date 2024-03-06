@@ -227,7 +227,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		var node Node
 		switch NodeTypeFromDatasourceUID(query.DataSource.UID) {
 		case TypeDatasourceNode:
-			node, err = s.buildDSNode(dp, rn, req)
+			node, err = s.buildDSNode(rn, req)
 		case TypeCMDNode:
 			node, err = buildCMDNode(rn, s.features)
 		case TypeMLNode:
