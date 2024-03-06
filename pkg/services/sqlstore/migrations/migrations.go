@@ -116,6 +116,10 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 		accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
 	}
 
+	if oss.features != nil && oss.features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
+		addCloudMigrationsMigrations(mg)
+	}
+
 	addKVStoreMySQLValueTypeLongTextMigration(mg)
 }
 
