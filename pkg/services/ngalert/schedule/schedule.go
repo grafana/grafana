@@ -116,7 +116,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	}
 
 	sch := schedule{
-		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
+		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]Rule)},
 		maxAttempts:           cfg.MaxAttempts,
 		clock:                 cfg.C,
 		baseInterval:          cfg.BaseInterval,
@@ -202,7 +202,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 }
 
 type readyToRunItem struct {
-	ruleInfo *alertRuleInfo
+	ruleInfo Rule
 	Evaluation
 }
 
@@ -300,7 +300,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		if _, isUpdated := updated[key]; isUpdated && !isReadyToRun {
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
 			sch.log.Debug("Rule has been updated. Notifying evaluation routine", key.LogContext()...)
-			go func(ri *alertRuleInfo, rule *ngmodels.AlertRule) {
+			go func(ri Rule, rule *ngmodels.AlertRule) {
 				ri.Update(RuleVersionAndPauseStatus{
 					Fingerprint: ruleWithFolder{rule: rule, folderTitle: folderTitle}.Fingerprint(),
 					IsPaused:    rule.IsPaused,
