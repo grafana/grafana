@@ -40,7 +40,7 @@ func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer 
 	}
 
 	if cfg.IPRangeACEnabled {
-		middlewares = append(middlewares, GrafanaRequestIDHeaderMiddleware(cfg))
+		middlewares = append(middlewares, GrafanaRequestIDHeaderMiddleware(cfg, logger))
 	}
 
 	setDefaultTimeoutOptions(cfg)

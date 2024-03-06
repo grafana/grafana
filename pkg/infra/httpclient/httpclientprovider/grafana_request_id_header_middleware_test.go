@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -63,7 +64,7 @@ func TestGrafanaRequestIDHeaderMiddleware(t *testing.T) {
 			cfg.IPRangeACEnabled = false
 			cfg.IPRangeACAllowedURLs = tc.allowedURLs
 			cfg.IPRangeACSecretKey = "secret"
-			mw := GrafanaRequestIDHeaderMiddleware(cfg)
+			mw := GrafanaRequestIDHeaderMiddleware(cfg, log.New("test"))
 			rt := mw.CreateMiddleware(httpclient.Options{}, finalRoundTripper)
 			require.NotNil(t, rt)
 			middlewareName, ok := mw.(httpclient.MiddlewareName)
