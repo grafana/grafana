@@ -66,8 +66,8 @@ func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(ctx contex
 	if reqCtx != nil {
 		req = reqCtx.Req
 	}
-	for headerName, headerValue := range GetGrafanaRequestIDHeaders(req, m.cfg, m.log) {
-		h.SetHTTPHeader(headerName, headerValue)
+	for k, v := range GetGrafanaRequestIDHeaders(req, m.cfg, m.log) {
+		h.SetHTTPHeader(k, v)
 	}
 }
 

@@ -19,8 +19,8 @@ func GrafanaRequestIDHeaderMiddleware(cfg *setting.Cfg, logger log.Logger) sdkht
 				return next.RoundTrip(req)
 			}
 
-			for headerName, headerValue := range clientmiddleware.GetGrafanaRequestIDHeaders(req, cfg, logger) {
-				req.Header.Set(headerName, headerValue)
+			for k, v := range clientmiddleware.GetGrafanaRequestIDHeaders(req, cfg, logger) {
+				req.Header.Set(k, v)
 			}
 
 			return next.RoundTrip(req)
