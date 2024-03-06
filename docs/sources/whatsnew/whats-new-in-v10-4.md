@@ -42,7 +42,7 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 
 ### AngularJS plugin warnings in dashboards
 
-<!--#grafana-deprecate-angularjs-->
+<!-- #grafana-deprecate-angularjs-->
 
 _Generally available in all editions of Grafana_
 
@@ -100,7 +100,7 @@ You can now create subtables out of your data using the new **Group to nested ta
 
 ### Set library panel permissions with RBAC
 
-<!--#grafana-dashboards -->
+<!-- #grafana-dashboards -->
 
 _Generally available in Grafana Enterprise and Grafana Cloud_
 
@@ -140,7 +140,7 @@ We've added a tooltip hover proximity limit option (in pixels), which makes it p
 
 ## Return to previous
 
-<!--#grafana-frontend-platform-->
+<!-- #grafana-frontend-platform-->
 
 _Available in public preview in all editions of Grafana_
 
@@ -160,7 +160,7 @@ To notice a change in your context, look at Grafana's breadcrumbs. If you go fro
 
 ### Simplified Alert Notification Routing
 
-<!--#alerting -->
+<!-- #alerting -->
 
 _Generally available in all editions of Grafana_
 
@@ -251,7 +251,7 @@ Screenshots:
 
 ### SurrealDB Data Source
 
-<!--#grafana-partner-datasources, @adamyeats-->
+<!-- #grafana-partner-datasources, @adamyeats-->
 
 _Experimental in all editions of Grafana_
 
