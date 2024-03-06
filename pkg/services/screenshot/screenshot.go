@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -96,11 +97,7 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 	opts = opts.SetDefaults()
 
 	u := url.URL{}
-	urlPath := "d-solo"
-	if opts.PanelID == 0 {
-		urlPath = "d"
-	}
-	u.Path = path.Join(urlPath, dashboard.UID, dashboard.Slug)
+	u.Path = path.Join("d-solo", dashboard.UID, dashboard.Slug)
 	p := u.Query()
 	p.Add("orgId", strconv.FormatInt(dashboard.OrgID, 10))
 	p.Add("panelId", strconv.FormatInt(opts.PanelID, 10))
@@ -108,14 +105,13 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 		p.Add("from", opts.From)
 		p.Add("to", opts.To)
 	}
-	if opts.PanelID == 0 {
-		p.Add("fullPageImage", "true")
-		p.Add("kiosk", "true")
-	}
 	u.RawQuery = p.Encode()
 
 	renderOpts := rendering.Opts{
-		AuthOpts: opts.AuthOptions,
+		AuthOpts: rendering.AuthOpts{
+			OrgID:   dashboard.OrgID,
+			OrgRole: org.RoleAdmin,
+		},
 		ErrorOpts: rendering.ErrorOpts{
 			ErrorConcurrentLimitReached: true,
 			ErrorRenderUnavailable:      true,
