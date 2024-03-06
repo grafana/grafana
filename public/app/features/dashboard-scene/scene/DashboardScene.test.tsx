@@ -338,6 +338,36 @@ describe('DashboardScene', () => {
         expect(gridRow.state.children.length).toBe(0);
       });
 
+      it('Should fail to copy a panel if it does not have a grid item parent', () => {
+        const vizPanel = new VizPanel({
+          title: 'Panel Title',
+          key: 'panel-5',
+          pluginId: 'timeseries',
+        });
+
+        scene.copyPanel(vizPanel);
+
+        expect(scene.state.hasCopiedPanel).toBe(false);
+      });
+
+      it('Should fail to copy a library panel if it does not have a grid item parent', () => {
+        const libVizPanel = new LibraryVizPanel({
+          uid: 'uid',
+          name: 'libraryPanel',
+          panelKey: 'panel-4',
+          title: 'Library Panel',
+          panel: new VizPanel({
+            title: 'Library Panel',
+            key: 'panel-4',
+            pluginId: 'table',
+          }),
+        });
+
+        scene.copyPanel(libVizPanel.state.panel as VizPanel);
+
+        expect(scene.state.hasCopiedPanel).toBe(false);
+      });
+
       it('Should copy a panel', () => {
         const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as SceneGridItem).state.body;
         scene.copyPanel(vizPanel as VizPanel);
