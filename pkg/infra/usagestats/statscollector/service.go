@@ -88,8 +88,6 @@ func ProvideService(
 		us.RegisterMetricsFunc(c)
 	}
 
-	s.registerUsageStatProviders()
-
 	return s
 }
 
@@ -115,6 +113,8 @@ func (s *Service) Run(ctx context.Context) error {
 	s.log.Debug("usage stats collector started", "sendInterval", sendInterval, "nextSendInterval", nextSendInterval)
 	updateStatsTicker := time.NewTicker(nextSendInterval)
 	defer updateStatsTicker.Stop()
+
+	s.registerUsageStatProviders()
 
 	for {
 		select {
