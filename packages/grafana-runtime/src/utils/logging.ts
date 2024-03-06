@@ -90,13 +90,11 @@ export function logMeasurement(type: string, values: MeasurementValues, context?
  * Each method combines the `defaultContext` (if provided), the `source`, and an optional `LogContext` parameter into a full context that is included with the log message.
  */
 export function createMonitoringLogger(source: string, defaultContext?: LogContext) {
-  const createFullContext = (contexts?: LogContext) => {
-    return {
-      source: source,
-      ...defaultContext,
-      ...contexts,
-    };
-  };
+  const createFullContext = (contexts?: LogContext) => ({
+    source: source,
+    ...defaultContext,
+    ...contexts,
+  });
 
   return {
     /**
