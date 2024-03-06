@@ -285,9 +285,10 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		textToSqlCmd, ok := cmdNode.Command.(*TextToSQLCommand)
 		if ok {
 			refs := []string{}
+			// TODO: can't guarantee order so just add all other queries as refs
 			for _, ref := range nodeList {
 				if ref.RefID() == node.RefID() {
-					break
+					continue
 				}
 				refs = append(refs, ref.RefID())
 			}
