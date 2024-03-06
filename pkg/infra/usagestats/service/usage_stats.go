@@ -75,7 +75,7 @@ func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]any
 			sem <- struct{}{}        // acquire a token
 			defer func() { <-sem }() // release the token when done
 
-			ctxWithTimeout, cancel := context.WithTimeout(ctx, collectorTimeoutDuration)
+			ctxWithTimeout, cancel := context.WithTimeout(context.Background(), collectorTimeoutDuration)
 			defer cancel()
 
 			fnMetrics, err := fn(ctxWithTimeout)
