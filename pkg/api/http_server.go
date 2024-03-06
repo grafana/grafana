@@ -564,16 +564,15 @@ func (hs *HTTPServer) tlsCertificates() ([]tls.Certificate, error) {
 		return hs.selfSignedCert()
 	}
 
-	if err := hs.updateMtimeOfServerCerts(); err != nil {
-		return nil, err
-	}
-
 	tlsCert, err := hs.readCertificates()
 	if err != nil {
 		return nil, err
 	}
 	hs.tlsCerts.certs = tlsCert
 
+	if err := hs.updateMtimeOfServerCerts(); err != nil {
+		return nil, err
+	}
 	return []tls.Certificate{*tlsCert}, nil
 }
 
