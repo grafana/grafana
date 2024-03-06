@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
 
@@ -12,13 +12,14 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
+    // Todo: standard vite config uses react-jsx but it causes typechecks to fail
+    "jsx": "react",
 
     /* Linting */
     "strict": true,
-    // "noUnusedLocals": true, // Disabled because of React being imported everywhere
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
+    // "noUnusedLocals": true, // Standard vite config but disabled because of typecheck errors
+    // "noUnusedParameters": true, // Standard vite config but disabled because typecheck errors
+    // "noFallthroughCasesInSwitch": true, // Standard vite config but disabled because of typecheck errors
 
     "baseUrl": "public/",
     "outDir": "public/dist",
@@ -31,9 +32,7 @@
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
       "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
-    },
-
-    "types": ["vite/client"]
+    }
   },
   "ts-node": {
     "compilerOptions": {
