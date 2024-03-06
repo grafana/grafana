@@ -148,7 +148,7 @@ export const autoMigrateAngular: Record<string, string> = {
   'grafana-worldmap-panel': 'geomap',
 };
 
-const autoMigratePanelType: Record<string, string> = {
+const autoMigrateRemovedPanelPlugins: Record<string, string> = {
   'heatmap-new': 'heatmap', // this was a temporary development panel that is now standard
 };
 
@@ -257,7 +257,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       (this as any)[property] = model[property];
     }
 
-    const newType = autoMigratePanelType[this.type];
+    const newType = getPluginToMigrateTo(this);
     if (newType) {
       this.autoMigrateFrom = this.type;
       this.type = newType;
@@ -728,4 +728,48 @@ export function stringifyPanelModel(panel: PanelModel) {
     });
 
   return safeStringifyValue(model);
+}
+
+function getPluginToMigrateTo(panel: any): string | undefined {
+  if (autoMigrateRemovedPanelPlugins[panel.type]) {
+    return autoMigrateRemovedPanelPlugins[panel.type];
+  }
+
+  // Auto-migrate old angular panels
+  const shouldMigrateAllAngularPanels = !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels;
+
+  // Graph needs special logic as it can be migrated to multiple panels
+  if (panel.type === 'graph' && (shouldMigrateAllAngularPanels || config.featureToggles.autoMigrateGraphPanel)) {
+    if (panel.xaxis?.mode === 'series') {
+      return 'barchart';
+    }
+
+    if (panel.xaxis === 'histogram') {
+      return 'histogram';
+    }
+
+    return 'timeseries';
+  }
+
+  if (shouldMigrateAllAngularPanels) {
+    return autoMigrateAngular[panel.type];
+  }
+
+  if (panel.type === 'table-old' && config.featureToggles.autoMigrateTablePanel) {
+    return 'table';
+  }
+
+  if (panel.type === 'grafana-piechart-panel' && config.featureToggles.autoMigratePiechartPanel) {
+    return 'piechart';
+  }
+
+  if (panel.type === 'grafana-worldmap-panel' && config.featureToggles.autoMigrateWorldmapPanel) {
+    return 'geomap';
+  }
+
+  if (panel.type === 'singlestat' || config.featureToggles.autoMigrateStatPanel) {
+    return 'stat';
+  }
+
+  return undefined;
 }

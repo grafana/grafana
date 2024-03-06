@@ -71,9 +71,7 @@ export interface SaveModelToSceneOptions {
 
 export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
-  const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
-    autoMigrateOldPanels: false,
-  });
+  const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
   const scene = createDashboardSceneFromDashboardModel(oldModel);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
