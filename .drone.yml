@@ -4930,6 +4930,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 32b6ed2f5819225842aa94379423bcf4354dde154e91af3e293bc919594c10b9
+hmac: 7c1e25cbec53885823c6e168d4c44de626b50d59625841f8313132f0479c94cc
 
 ...
