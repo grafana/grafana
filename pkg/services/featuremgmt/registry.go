@@ -692,6 +692,13 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
+			Name:         "aiGeneratedDashboardChanges",
+			Description:  "Enable AI powered features for dashboards to auto-summary changes when saving",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:            "reportingRetries",
 			Description:     "Enables rendering retries for the reporting feature",
 			Stage:           FeatureStagePublicPreview,
@@ -847,8 +854,8 @@ var (
 		},
 		{
 			Name:         "teamHttpHeaders",
-			Description:  "Enables datasources to apply team headers to the client requests",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables Team LBAC for datasources to apply team headers to the client requests",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        identityAccessTeam,
 		},
@@ -1189,6 +1196,17 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Expression:      "true", // enabled by default
+		},
+		{
+			Name:              "scopeFilters",
+			Description:       "Enables the use of scope filters in Grafana",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:            "slackSharePreview",

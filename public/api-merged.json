@@ -19170,9 +19170,6 @@
     "ReportEmail": {
       "type": "object",
       "properties": {
-        "email": {
-          "type": "string"
-        },
         "emails": {
           "description": "Comma-separated list of emails to which to send the report to.",
           "type": "string"

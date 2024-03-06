@@ -375,6 +375,10 @@ const (
 	// Enable AI powered features in dashboards
 	FlagDashgpt = "dashgpt"
 
+	// FlagAiGeneratedDashboardChanges
+	// Enable AI powered features for dashboards to auto-summary changes when saving
+	FlagAiGeneratedDashboardChanges = "aiGeneratedDashboardChanges"
+
 	// FlagReportingRetries
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
@@ -460,7 +464,7 @@ const (
 	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
 
 	// FlagTeamHttpHeaders
-	// Enables datasources to apply team headers to the client requests
+	// Enables Team LBAC for datasources to apply team headers to the client requests
 	FlagTeamHttpHeaders = "teamHttpHeaders"
 
 	// FlagAwsDatasourcesNewFormStyling
@@ -646,6 +650,10 @@ const (
 	// FlagAlertingUpgradeDryrunOnStart
 	// When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.
 	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
+
+	// FlagScopeFilters
+	// Enables the use of scope filters in Grafana
+	FlagScopeFilters = "scopeFilters"
 
 	// FlagSlackSharePreview
 	// Share dashboards preview to Slack
