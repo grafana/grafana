@@ -25,7 +25,7 @@ export function ShareSlackModal({
 }: {
   resourceType: string;
   resourcePath: string;
-  title?: string;
+  title: string;
   dashboardUid: string;
 }) {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);

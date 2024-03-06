@@ -104,11 +104,11 @@ func (api *Api) ShareToSlack(c *contextmodel.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &shareRequest); err != nil {
 		return response.Error(http.StatusBadRequest, "error parsing body", err)
 	}
+	//
+	//grafanaURL := api.getGrafanaURL()
+	//resourceLink := fmt.Sprintf("%s%s", grafanaURL, shareRequest.ResourcePath)
 
-	grafanaURL := api.getGrafanaURL()
-	resourceLink := fmt.Sprintf("%s%s", grafanaURL, shareRequest.ResourcePath)
-
-	err := api.slackService.PostMessage(c.Req.Context(), shareRequest, resourceLink)
+	err := api.slackService.PostMessage(c.Req.Context(), shareRequest, shareRequest.ResourcePath)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error posting message to Slack", err)
 	}
@@ -243,11 +243,6 @@ func (api *Api) getGrafanaURL() string {
 		domain = api.cfg.HTTPAddr
 	}
 	return fmt.Sprintf("%s://%s:%s%s/", protocol, domain, api.cfg.HTTPPort, subPath)
-}
-
-func (api *Api) getImageURL(imageName string) string {
-	grafanaURL := api.getGrafanaURL()
-	return fmt.Sprintf("%s%s/%s", grafanaURL, "public/img/attachments", imageName)
 }
 
 type EventChallengeAck struct {

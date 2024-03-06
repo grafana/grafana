@@ -78,7 +78,7 @@ export const shareToSlack = async (dashboard: DashboardModel, panel: PanelModel)
       props: {
         resourceType: 'panel',
         resourcePath: await buildShareUrl(true, 'current', panel, false),
-        panelTitle: panel.title,
+        title: panel.title,
         dashboardUid: dashboard.uid,
       },
     })

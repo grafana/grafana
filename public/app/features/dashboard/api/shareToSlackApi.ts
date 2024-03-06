@@ -67,7 +67,7 @@ export const shareToSlackApi = createApi({
         resourceType: string;
         resourcePath: string;
         imagePreviewUrl: string;
-        title?: string;
+        title: string;
         message?: string;
       }
     >({
