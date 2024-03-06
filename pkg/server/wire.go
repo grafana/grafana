@@ -36,6 +36,7 @@ import (
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/embedserver"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
@@ -176,6 +177,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(legacydata.RequestHandler), new(*legacydataservice.Service)),
 	annotationsimpl.ProvideService,
 	wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)),
+	embedserver.ProvideService,
 	New,
 	api.ProvideHTTPServer,
 	query.ProvideService,

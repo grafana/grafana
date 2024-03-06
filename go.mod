@@ -1,11 +1,13 @@
 module github.com/grafana/grafana
 
-go 1.21.0
+go 1.21.8
+
+toolchain go1.22.1
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
+replace github.com/docker/docker => github.com/moby/moby v25.0.5+incompatible
 
 // contains openapi encoder fixes. remove ASAP
 replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
@@ -36,7 +38,7 @@ require (
 	github.com/go-openapi/strfmt v0.22.0 // @grafana/alerting-squad-backend
 	github.com/go-redis/redis/v8 v8.11.5 // @grafana/backend-platform
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // @grafana/backend-platform
-	github.com/go-sql-driver/mysql v1.7.1 // @grafana/backend-platform
+	github.com/go-sql-driver/mysql v1.8.1-0.20240317050433-65395d853d2c // @grafana/backend-platform
 	github.com/go-stack/stack v1.8.1 // @grafana/backend-platform
 	github.com/gobwas/glob v0.2.3 // @grafana/backend-platform
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
@@ -69,14 +71,15 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.19 // @grafana/backend-platform
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-squad-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
+	github.com/openfga/openfga v1.5.1 // @grafana/grafana-authnz-team
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-squad-backend
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/alertmanager v0.26.0 // @grafana/alerting-squad-backend
-	github.com/prometheus/client_golang v1.18.0 // @grafana/alerting-squad-backend
+	github.com/prometheus/client_golang v1.19.0 // @grafana/alerting-squad-backend
 	github.com/prometheus/client_model v0.5.0 // @grafana/backend-platform
-	github.com/prometheus/common v0.46.0 // @grafana/alerting-squad-backend
+	github.com/prometheus/common v0.48.0 // @grafana/alerting-squad-backend
 	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3 // @grafana/alerting-squad-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/backend-platform
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/backend-platform
@@ -94,14 +97,14 @@ require (
 	go.opentelemetry.io/otel/sdk v1.24.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/trace v1.24.0 // @grafana/backend-platform
 	golang.org/x/crypto v0.21.0 // @grafana/backend-platform
-	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // @grafana/alerting-squad-backend
+	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // @grafana/alerting-squad-backend
 	golang.org/x/net v0.22.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.18.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.6.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/backend-platform
-	golang.org/x/tools v0.17.0 // @grafana/grafana-as-code
+	golang.org/x/tools v0.18.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
-	google.golang.org/api v0.155.0 // @grafana/backend-platform
+	google.golang.org/api v0.160.0 // @grafana/backend-platform
 	google.golang.org/grpc v1.62.1 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.33.0 // @grafana/plugins-platform-backend
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
@@ -109,7 +112,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/backend-platform
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-squad-backend
-	xorm.io/builder v0.3.6 // indirect; @grafana/backend-platform
+	xorm.io/builder v0.3.6 // @grafana/backend-platform
 	xorm.io/core v0.7.3 // @grafana/backend-platform
 	xorm.io/xorm v0.8.2 // @grafana/alerting-squad-backend
 )
@@ -152,7 +155,7 @@ require (
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang/glog v1.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.3 // @grafana/backend-platform
+	github.com/golang/protobuf v1.5.4 // @grafana/backend-platform
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/flatbuffers v23.5.26+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // @grafana/backend-platform
@@ -161,7 +164,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect; @grafana/alerting-squad
+	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
 	github.com/hashicorp/go-sockaddr v1.0.6 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/igm/sockjs-go/v3 v3.0.2 // indirect
@@ -248,7 +251,7 @@ require (
 	github.com/microsoft/go-mssqldb v1.6.1-0.20240214161942-b65008136246 // @grafana/grafana-bi-squad
 	github.com/redis/go-redis/v9 v9.1.0 // @grafana/alerting-squad-backend
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.18.0 // @grafana/backend-platform
-	golang.org/x/mod v0.14.0 // @grafana/backend-platform
+	golang.org/x/mod v0.16.0 // @grafana/backend-platform
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // @grafana/partner-datasources
 )
 
@@ -293,8 +296,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/docker/distribution v2.8.2+incompatible // indirect
-	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/drone-runners/drone-runner-docker v1.8.2 // indirect
 	github.com/drone/drone-go v1.7.1 // indirect
 	github.com/drone/envsubst v1.0.3 // indirect
@@ -309,14 +311,14 @@ require (
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/status v1.1.1 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
-	github.com/google/cel-go v0.17.7 // indirect
+	github.com/google/cel-go v0.20.1 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/grafana/regexp v0.0.0-20221123153739-15dc172cd2db // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect; @grafana/alerting-squad-backend
+	github.com/hashicorp/golang-lru/v2 v2.0.7 // @grafana/alerting-squad-backend
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
@@ -331,7 +333,7 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // @grafana/alerting-squad-backend
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.3-0.20220512140940-7b36cea86235 // indirect
+	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/redis/rueidis v1.0.16 // indirect
@@ -340,7 +342,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
-	github.com/spf13/cast v1.5.0 // indirect
+	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // @grafana-app-platform-squad
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
@@ -357,10 +359,10 @@ require (
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.26.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/term v0.18.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240304212257-790db918fca8 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240304212257-790db918fca8 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
@@ -378,11 +380,11 @@ require (
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.28.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // @grafana-app-platform-squad
-	sigs.k8s.io/yaml v1.3.0 // indirect; @grafana-app-platform-squad
+	sigs.k8s.io/yaml v1.4.0 // indirect; @grafana-app-platform-squad
 )
 
 require (
-	cloud.google.com/go/compute v1.23.3 // indirect
+	cloud.google.com/go/compute v1.23.4 // indirect
 	cloud.google.com/go/iam v1.1.5 // indirect
 	filippo.io/age v1.1.1 // @grafana/grafana-authnz-team
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.10.0 // indirect
@@ -404,12 +406,12 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20230802225258-3cf4e6d46a89 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
-	github.com/docker/docker v24.0.7+incompatible // @grafana/grafana-release-guild
+	github.com/docker/docker v25.0.5+incompatible // @grafana/grafana-release-guild
 	github.com/elazarl/goproxy v0.0.0-20230731152917-f99041a5c027 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/go-logr/logr v1.4.1 // @grafana/grafana-app-platform-squad
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
@@ -425,7 +427,6 @@ require (
 )
 
 require (
-	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/backend-platform
@@ -475,22 +476,29 @@ require github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-as-code
 
 require github.com/grafana/authlib v0.0.0-20240319083410-9d4a6e3861e5 // @grafana/grafana-app-platform-squad
 
+require github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
+
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230512164433-5d1fd1a340c9 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
+	github.com/distribution/reference v0.5.0 // indirect
+	github.com/envoyproxy/protoc-gen-validate v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.9.1 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/invopop/jsonschema v0.12.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
@@ -498,12 +506,20 @@ require (
 	github.com/jcmturner/goidentity/v6 v6.0.1 // indirect
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
+	github.com/karlseguin/ccache/v3 v3.0.5 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
-	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
+	github.com/natefinch/wrap v0.2.0 // indirect
+	github.com/oklog/ulid/v2 v2.1.0 // indirect
+	github.com/openfga/api/proto v0.0.0-20240318145204-66b9e5cb403c // indirect
+	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
+	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
+	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 )
 
@@ -525,3 +541,10 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 // Use our fork xorm. go.work currently overrides this and points to the local ./pkg/util/xorm directory.
 replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
+
+// locks for compat k8s api server compat
+replace github.com/prometheus/common => github.com/prometheus/common v0.46.0
+
+replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.18.0
+
+replace github.com/google/cel-go => github.com/google/cel-go v0.17.7
