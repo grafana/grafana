@@ -69,10 +69,6 @@ func makeUnboundedQueuedChans[T any](initBuf int) (in chan<- T, out <-chan T) {
 		var zero T
 		var q []T
 
-		if initBuf != 0 {
-			q = make([]T, 0, initBuf)
-		}
-
 		getOutChan := func() chan T {
 			if len(q) == 0 {
 				return nil // block forever in the select, hence wait for inChan
@@ -93,12 +89,24 @@ func makeUnboundedQueuedChans[T any](initBuf int) (in chan<- T, out <-chan T) {
 				if !ok {
 					inChan = nil
 				} else {
+					if q == nil && initBuf != 0 {
+						q = make([]T, 0, initBuf)
+					}
 					q = append(q, v)
 				}
 			case getOutChan() <- getCurVal():
+				// exchange a bit of copying for space
+				// TODO: this could be improved if we used a list similar to container/list but based on a slices
+				// instead
 				copy(q, q[1:])     // shift queue left
 				q[len(q)-1] = zero // zero-out last value (necessary por pointer types)
 				q = q[:len(q)-1]   // remove last element, allowing reuse of allocated space
+
+				// if we go down below half the initial buffered size and we have allocated more than necessary, then
+				// allocate a new buffer and transfer the elements to recover from spiky behaviour
+				if initBuf != 0 && len(q) < initBuf/2 && cap(q) > initBuf {
+					q = append(make([]T, 0, initBuf), q...)
+				}
 			}
 		}
 
@@ -152,16 +160,21 @@ func (ne pgNotifiedEntity) toEntity(namespace string) (*entity.Entity, error) {
 }
 
 // pgTerminateWatch closes the connection used for postgres notifications, terminates all watchers and resets the
-// state to be ready again for new watchers. Current watchers will return ErrPgWatchTerminated error.
+// state to be ready again for new watchers. Current watchers will return ErrPgWatchTerminated error. It returns
+// ErrPgListenerNotInit error if there wasn't an active connection (and no watchers either, of course).
 func (s *sqlEntityServer) pgTerminateWatch(ctx context.Context) error {
 	s.pgListenerConnMu.Lock()
 	defer s.pgListenerConnMu.Unlock()
+	return s.pgTerminateWatchLocked(ctx)
+}
+
+func (s *sqlEntityServer) pgTerminateWatchLocked(ctx context.Context) error {
 	if s.pgListenerConn == nil {
 		return ErrPgListenerNotInit
 	}
 
 	// terminate all watchers and the connection
-	s.pgTerminateWatchers(ctx)
+	s.pgTerminateWatchersLocked(ctx)
 	err := s.pgListenerConn.Close(ctx)
 
 	// terminate and wait until the broker goroutine has completed
@@ -272,6 +285,7 @@ func (s *sqlEntityServer) pgExecListenerConn(ctx context.Context, f func(*pgx.Co
 	if err != nil {
 		return fmt.Errorf("get new postgres listener connection: %w", err)
 	}
+	s.log.Info("watch: postgres LISTEN/NOTIFY connection created successfylly")
 
 	pgBrokerDone := make(chan struct{})
 	s.pgListenerConn = conn
@@ -346,8 +360,29 @@ func (s *sqlEntityServer) pgAddNotifyChan(ctx context.Context, pgChannelName str
 // pgRemoveNotifyChan removes the channel associated with the given id (or handle). If either the pgChannelName or
 // watcherKey are registered it becomes a nop.
 func (s *sqlEntityServer) pgRemoveNotifyChan(ctx context.Context, pgChannelName string, watcherKey pgWatcherChannelMapKey) error {
+	defer func() {
+		// close the connection after the last watch was removed
+		s.pgNotifyMapMu.Lock()
+		defer s.pgNotifyMapMu.Unlock()
+		s.pgListenerConnMu.Lock()
+		defer s.pgListenerConnMu.Unlock()
+		if s.pgNotifyMap == nil && len(s.pgNotifyMap) > 0 {
+			return
+		}
+		if err := s.pgTerminateWatch(ctx); err != nil {
+			s.log.Error("terminate postgres watcher after last removed", "error", err)
+		}
+		s.log.Info("terminate postgres watcher after last removed success")
+	}()
+
 	s.pgNotifyMapMu.Lock()
 	defer s.pgNotifyMapMu.Unlock()
+
+	// if the client closed the connection (i.e. CTRL-C) then the context will already be done by now, so we create a
+	// new sensitive deadline for the current context
+	ctx = context.WithoutCancel(ctx)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
 
 	if pgChannelName == "" {
 		return nil
@@ -391,12 +426,10 @@ func (s *sqlEntityServer) pgRemoveNotifyChanLocked(ctx context.Context, pgChanne
 	return nil
 }
 
-// pgTerminateWatchers manually terminates all watchers, unlistens from all postgres channels and performs local state
-// cleanup, but doesn't terminate the dedicated postgres listener connection. Current watchers will return
+// pgTerminateWatchersLocked manually terminates all watchers, unlistens from all postgres channels and performs local
+// state cleanup, but doesn't terminate the dedicated postgres listener connection. Current watchers will return
 // ErrPgWatchTerminated error.
-func (s *sqlEntityServer) pgTerminateWatchers(ctx context.Context) {
-	s.pgNotifyMapMu.Lock()
-	defer s.pgNotifyMapMu.Unlock()
+func (s *sqlEntityServer) pgTerminateWatchersLocked(ctx context.Context) {
 	for pgChannelName, m := range s.pgNotifyMap {
 		for k := range m {
 			if err := s.pgRemoveNotifyChanLocked(ctx, pgChannelName, k); err != nil {
@@ -479,7 +512,7 @@ loop:
 
 		case n, ok := <-out:
 			if !ok {
-				// we were terminated by pgTerminateWatchers
+				// we were terminated by pgTerminateWatchersLocked
 				return ErrPgWatchTerminated
 			}
 
