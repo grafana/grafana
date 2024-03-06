@@ -167,6 +167,7 @@ func (s *Service) buildDependencyGraph(req *Request) (*simple.DirectedGraph, err
 func buildExecutionOrder(graph *simple.DirectedGraph) ([]Node, error) {
 	sortedNodes, err := topo.SortStabilized(graph, nil)
 	if err != nil {
+		fmt.Println(err.Error())
 		return nil, err
 	}
 
@@ -285,13 +286,41 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		textToSqlCmd, ok := cmdNode.Command.(*TextToSQLCommand)
 		if ok {
 			refs := []string{}
-			// TODO: can't guarantee order so just add all other queries as refs
-			for _, ref := range nodeList {
-				if ref.RefID() == node.RefID() {
-					continue
+
+			// convention - if the name has a suffix that matches another ref, just use that as the ref
+			match := false
+			if strings.Contains(textToSqlCmd.refID, "-") {
+				for _, ref := range nodeList {
+					if strings.HasSuffix(textToSqlCmd.refID, fmt.Sprintf("-%s", ref.RefID())) {
+						match = true
+						refs = append(refs, ref.RefID())
+						break
+					}
 				}
-				refs = append(refs, ref.RefID())
 			}
+
+			if !match {
+				// TODO: can't guarantee order so just add all other queries as refs
+				for _, ref := range nodeList {
+					if ref.RefID() == node.RefID() || strings.HasSuffix(ref.RefID(), "-"+node.RefID()) {
+						continue
+					}
+					circular := false
+					for _, v := range ref.NeedsVars() {
+						if v == textToSqlCmd.refID {
+							circular = true
+							break
+						}
+					}
+
+					if circular {
+						continue
+					}
+
+					refs = append(refs, ref.RefID())
+				}
+			}
+
 			fmt.Println(strings.Join(refs, ", "))
 			if len(refs) == 0 {
 				// return errors.New("no refs")
