@@ -1,6 +1,7 @@
 package v0alpha1
 
 import (
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -13,4 +14,31 @@ type QueryDataRequest struct {
 
 	// The time range used when not included on each query
 	data.QueryDataRequest `json:",inline"`
+}
+
+// Wraps backend.QueryDataResponse, however it includes TypeMeta and implements runtime.Object
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type QueryDataResponse struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Backend wrapper (external dependency)
+	backend.QueryDataResponse `json:",inline"`
+}
+
+// Defines a query behavior in a datasource.  This is a similar model to a CRD where the
+// payload describes a valid query
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type QueryTypeDefinition struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec data.QueryTypeDefinitionSpec `json:"spec,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type QueryTypeDefinitionList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []QueryTypeDefinition `json:"items,omitempty"`
 }
