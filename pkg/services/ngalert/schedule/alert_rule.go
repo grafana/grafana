@@ -193,13 +193,6 @@ func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 	processDuration := a.metrics.ProcessDuration.WithLabelValues(orgID)
 	sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
 
-	notify := func(states []state.StateTransition) {
-		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock)
-		if len(expiredAlerts.PostableAlerts) > 0 {
-			a.sender.Send(grafanaCtx, key, expiredAlerts)
-		}
-	}
-
 	resetState := func(ctx context.Context, isPaused bool) {
 		rule := a.ruleProvider.get(key)
 		reason := ngmodels.StateReasonUpdated
@@ -207,7 +200,7 @@ func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 			reason = ngmodels.StateReasonPaused
 		}
 		states := a.stateManager.ResetStateByRuleUID(ctx, rule, reason)
-		notify(states)
+		a.notify(grafanaCtx, key, states)
 	}
 
 	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span trace.Span, retry bool) error {
@@ -403,11 +396,18 @@ func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
 				defer cancelFunc()
 				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, key), key, ngmodels.StateReasonRuleDeleted)
-				notify(states)
+				a.notify(grafanaCtx, key, states)
 			}
 			logger.Debug("Stopping alert rule routine")
 			return nil
 		}
+	}
+}
+
+func (a *alertRuleInfo) notify(ctx context.Context, key ngmodels.AlertRuleKey, states []state.StateTransition) {
+	expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock)
+	if len(expiredAlerts.PostableAlerts) > 0 {
+		a.sender.Send(ctx, key, expiredAlerts)
 	}
 }
 
