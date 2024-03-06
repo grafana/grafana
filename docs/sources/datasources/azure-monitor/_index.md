@@ -224,7 +224,9 @@ For details on workload identity, refer to the [Azure workload identity document
 
 ### Configure Current User Authentication
 
-**Note: This feature is experimental and subject to change or removal. Aspects of Grafana may not work as expected when using this authentication method.**
+{{< admonition type="note" >}}
+This feature is experimental and subject to change or removal. Aspects of Grafana may not work as expected when using this authentication method.
+{{< /admonition >}}
 
 If your Grafana instance is configured with Azure Entra (formerly Active Directory) authentication for login, this authentication method can be used to forward the currently logged in user's credentials to the data source. The users credentials will then be used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra refer to the [documentation][configure-grafana-azure-auth].
 
