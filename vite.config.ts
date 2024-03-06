@@ -1,5 +1,7 @@
 import react from '@vitejs/plugin-react-swc';
+import { move, remove } from 'fs-extra';
 import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
@@ -7,22 +9,23 @@ const require = createRequire(import.meta.url);
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  root: './public',
+  root: 'public',
   build: {
     // use manifest for backend integration in production
-    manifest: true,
+    manifest: 'public/build/.vite/manifest.json',
     rollupOptions: {
       input: ['./public/app/index.ts', './public/sass/grafana.dark.scss', './public/sass/grafana.light.scss'],
     },
-    outDir: './build',
-    assetsDir: './',
+    outDir: 'build_tmp',
+    assetsDir: 'public/build',
+    minify: 'esbuild',
   },
   server: {
     // vite binds to ipv6 by default... and that doesn't work for me locally on mac...
     host: '0.0.0.0',
     port: 5173,
   },
-  plugins: [react(), angularHtmlImport()],
+  plugins: [react(), angularHtmlImport(), { ...moveAssets(), apply: 'build' }],
   optimizeDeps: {
     // fixes for dependencies that don't support esm
     include: ['jquery'],
@@ -65,16 +68,16 @@ export default defineConfig({
 });
 
 /**
-This is a Vite plugin for handling angular templates.
-https://vitejs.dev/guide/api-plugin.html#simple-examples
- 
-The webpack output from https://github.com/WearyMonkey/ngtemplate-loader looks like this:
-var code = "\n<div class=\"graph-annotation\">\n\t<div class=\"graph-annotation__header\">\n\t\t</div></div>\n";
-Exports
-var _module_exports =code;;
-var path = 'public/app/features/annotations/partials/event_editor.html';
-window.angular.module('ng').run(['$templateCache', function(c) { c.put(path, _module_exports) }]);
-module.exports = path;
+ * This is a Vite plugin for handling angular templates.
+ * https://vitejs.dev/guide/api-plugin.html#simple-examples
+ *
+ * The webpack output from https://github.com/WearyMonkey/ngtemplate-loader looks like this:
+ * var code = "\n<div class=\"graph-annotation\">\n\t<div class=\"graph-annotation__header\">\n\t\t</div></div>\n";
+ * Exports
+ * var _module_exports =code;;
+ * var path = 'public/app/features/annotations/partials/event_editor.html';
+ * window.angular.module('ng').run(['$templateCache', function(c) { c.put(path, _module_exports) }]);
+ * module.exports = path;
  */
 
 function angularHtmlImport() {
@@ -93,6 +96,31 @@ angular.module('ng').run(['$templateCache', c => { c.put(path, htmlTemplate) }])
         return { code: result, map: null };
       } else {
         return;
+      }
+    },
+  };
+}
+
+/**
+ * This is a Vite plugin for moving assets to the build folder.
+ * Due to Vite expecting html files to be in the root of the project
+ * and the manifest generating paths using the assetDir, we build to a temp folder first
+ * then move it to the build folder.
+ */
+
+function moveAssets() {
+  return {
+    name: 'move-assets',
+    async closeBundle() {
+      try {
+        console.log('Moving assets to build folder...');
+        const __dirname = fileURLToPath(new URL('.', import.meta.url));
+        const buildPath = resolve(__dirname, 'public/build');
+        const buildTmpPath = resolve(__dirname, 'public/build_tmp/public/build');
+        await move(buildTmpPath, buildPath, { overwrite: true });
+        await remove(resolve(__dirname, 'public/build_tmp'));
+      } catch (error) {
+        console.error('Failed to move assets', error);
       }
     },
   };

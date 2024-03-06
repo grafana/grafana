@@ -106,7 +106,7 @@ func readWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) 
 }
 
 func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPointAssets, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/build/vite/manifest.json", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/build/.vite/manifest.json", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -221,6 +221,33 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	}
 	return rsp, nil
 	// do some error handling shizzle here.
+
+	// return &dtos.EntryPointAssets{
+	// 	JSFiles: entryPointJSAssets,
+	// 	Dark:    darkCSS,
+	// 	Light:   lightCSS,
+	// }, nil
+	// var entryPointJSAssets []dtos.EntryPointAsset
+	// var darkCSS, lightCSS string
+
+	// for _, entry := range manifest {
+	// 	if entry.IsEntry {
+	// 		if filepath.Ext(entry.File) != ".css" {
+	// 			asset := dtos.EntryPointAsset{
+	// 				FilePath: entry.File,
+	// 				// Not sure what should happen with integrity here
+	// 				Integrity: "",
+	// 			}
+	// 			entryPointJSAssets = append(entryPointJSAssets, asset)
+	// 		}
+	// 		if entry.Src == "sass/grafana.dark.scss" && entry.IsEntry {
+	// 			darkCSS = entry.File
+	// 		}
+	// 		if entry.Src == "sass/grafana.light.scss" && entry.IsEntry {
+	// 			lightCSS = entry.File
+	// 		}
+	// 	}
+	// }
 
 	// return &dtos.EntryPointAssets{
 	// 	JSFiles: entryPointJSAssets,
