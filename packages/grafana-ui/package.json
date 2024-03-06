@@ -37,9 +37,7 @@
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "storybook": "storybook dev -p 9001 -c .storybook --no-open",
     "storybook:build": "storybook build -o ./dist/storybook -c .storybook",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "mv package.json.bak package.json"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "browserslist": [
     "defaults",
