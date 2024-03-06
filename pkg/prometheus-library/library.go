@@ -32,17 +32,19 @@ type instance struct {
 	versionCache *cache.Cache
 }
 
-func NewService(httpClientProvider *httpclient.Provider, plog log.Logger, extendTransportOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *httpclient.Options) (*httpclient.Options, error)) *Service {
+type extendTransportOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *httpclient.Options) (*httpclient.Options, error)
+
+func NewService(httpClientProvider *httpclient.Provider, plog log.Logger, extendTransOpts extendTransportOptions) *Service {
 	if httpClientProvider == nil {
 		httpClientProvider = httpclient.NewProvider()
 	}
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, plog, extendTransportOptions)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, plog, extendTransOpts)),
 		logger: plog,
 	}
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider, log log.Logger, extendTransportOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *httpclient.Options) (*httpclient.Options, error)) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider, log log.Logger, extendTransOpts extendTransportOptions) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper.
 		opts, err := client.CreateTransportOptions(ctx, settings, log)
@@ -50,7 +52,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider, log log.Logger
 			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}
 
-		opts, err = extendTransportOptions(ctx, settings, opts)
+		opts, err = extendTransOpts(ctx, settings, opts)
 		if err != nil {
 			return nil, fmt.Errorf("error extending transport options: %v", err)
 		}

@@ -1,7 +1,6 @@
 package azureauth
 
 import (
-	"context"
 	"fmt"
 	"net/url"
 	"path"
@@ -13,34 +12,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/prometheus-library/utils"
 )
 
-func ExtendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) (*sdkhttpclient.Options, error) {
-	// Set SigV4 service namespace
-	if clientOpts.SigV4 != nil {
-		clientOpts.SigV4.Service = "aps"
-	}
-
-	azureSettings, err := azsettings.ReadSettings(ctx)
-	if err != nil {
-		logger.Error("failed to read Azure settings from Grafana", "error", err.Error())
-		return nil, fmt.Errorf("failed to read Azure settings from Grafana: %v", err)
-	}
-
-	// Set Azure authentication
-	if azureSettings.AzureAuthEnabled {
-		err = configureAzureAuthentication(settings, azureSettings, clientOpts)
-		if err != nil {
-			return nil, fmt.Errorf("error configuring Azure auth: %v", err)
-		}
-	}
-
-	return clientOpts, nil
-}
-
-func configureAzureAuthentication(settings backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, clientOpts *sdkhttpclient.Options) error {
+func ConfigureAzureAuthentication(settings backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, clientOpts *sdkhttpclient.Options) error {
 	jsonData, err := utils.GetJsonData(settings)
 	if err != nil {
 		return fmt.Errorf("failed to get jsonData: %w", err)
