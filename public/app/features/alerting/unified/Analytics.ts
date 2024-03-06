@@ -31,7 +31,7 @@ const { logInfo, logError, logMeasurement } = createMonitoringLogger('features.a
 export { logInfo, logError, logMeasurement };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function withPerformanceLogging<TFunc extends (type: string, ...args: any[]) => Promise<any>>(
+export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
   type: string,
   func: TFunc,
   context: Record<string, string>
@@ -39,7 +39,6 @@ export function withPerformanceLogging<TFunc extends (type: string, ...args: any
   return async function (...args) {
     const startLoadingTs = performance.now();
 
-    // @ts-ignore
     const response = await func(...args);
     const loadTimesMs = Number((performance.now() - startLoadingTs).toFixed(0));
 
