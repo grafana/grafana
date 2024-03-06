@@ -21,18 +21,18 @@ type ruleFactory interface {
 	new(context.Context) Rule
 }
 
-type alertRuleInfoRegistry struct {
+type ruleRegistry struct {
 	mu    sync.Mutex
 	rules map[models.AlertRuleKey]Rule
 }
 
-func newRuleRegistry() alertRuleInfoRegistry {
-	return alertRuleInfoRegistry{rules: make(map[models.AlertRuleKey]Rule)}
+func newRuleRegistry() ruleRegistry {
+	return ruleRegistry{rules: make(map[models.AlertRuleKey]Rule)}
 }
 
 // getOrCreate gets rule routine from registry by the key. If it does not exist, it creates a new one.
 // Returns a pointer to the rule routine and a flag that indicates whether it is a new struct or not.
-func (r *alertRuleInfoRegistry) getOrCreate(context context.Context, key models.AlertRuleKey, factory ruleFactory) (Rule, bool) {
+func (r *ruleRegistry) getOrCreate(context context.Context, key models.AlertRuleKey, factory ruleFactory) (Rule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -44,7 +44,7 @@ func (r *alertRuleInfoRegistry) getOrCreate(context context.Context, key models.
 	return rule, !ok
 }
 
-func (r *alertRuleInfoRegistry) exists(key models.AlertRuleKey) bool {
+func (r *ruleRegistry) exists(key models.AlertRuleKey) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -55,7 +55,7 @@ func (r *alertRuleInfoRegistry) exists(key models.AlertRuleKey) bool {
 // del removes pair that has specific key from the registry.
 // Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
-func (r *alertRuleInfoRegistry) del(key models.AlertRuleKey) (Rule, bool) {
+func (r *ruleRegistry) del(key models.AlertRuleKey) (Rule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	rule, ok := r.rules[key]
@@ -65,7 +65,7 @@ func (r *alertRuleInfoRegistry) del(key models.AlertRuleKey) (Rule, bool) {
 	return rule, ok
 }
 
-func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
+func (r *ruleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	definitionsIDs := make(map[models.AlertRuleKey]struct{}, len(r.rules))
