@@ -77,7 +77,7 @@ Congratulations, you have created your first dashboard and it's displaying resul
 
 #### Next steps
 
-Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../administration/data-source-management#add-a-data-source" >}}). The following topics will be of interest to you:
+Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources#add-a-data-source" >}}). The following topics will be of interest to you:
 
 - [Panels and visualizations]({{< relref "../panels-visualizations" >}})
 - [Dashboards]({{< relref "../dashboards" >}})
