@@ -23,10 +23,16 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+// Rule represents a single piece of work that is executed periodically by the ruler.
 type Rule interface {
+	// Run creates the resources that will perform the rule's work, and starts it. It blocks indefinitely, until Stop is called or another signal is sent.
 	Run(key ngmodels.AlertRuleKey) error
+	// Stop shuts down the rule's execution with an optional reason. It has no effect if the rule has not yet been Run.
 	Stop(reason error)
+	// Eval sends a signal to execute the work represented by the rule, exactly one time.
+	// It has no effect if the rule has not yet been Run, or if the rule is Stopped.
 	Eval(eval *Evaluation) (bool, *Evaluation)
+	// Update sends a singal to change the definition of the rule.
 	Update(lastVersion RuleVersionAndPauseStatus) bool
 }
 
@@ -184,7 +190,9 @@ func (a *alertRule) Update(lastVersion RuleVersionAndPauseStatus) bool {
 
 // stop sends an instruction to the rule evaluation routine to shut down. an optional shutdown reason can be given.
 func (a *alertRule) Stop(reason error) {
-	a.stopFn(reason)
+	if a.stopFn != nil {
+		a.stopFn(reason)
+	}
 }
 
 func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
