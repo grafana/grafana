@@ -4,6 +4,7 @@ import (
 	context "context"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -28,9 +29,9 @@ func (f ruleFactoryFunc) new(ctx context.Context) *alertRuleInfo {
 	return f(ctx)
 }
 
-func newRuleFactory(sender AlertsSender, stateManager *state.Manager, evalFactory eval.EvaluatorFactory, ruleProvider ruleProvider, clock clock.Clock, met *metrics.Scheduler, logger log.Logger, tracer tracing.Tracer, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) ruleFactoryFunc {
+func newRuleFactory(appURL *url.URL, disableGrafanaFolder bool, maxAttempts int64, sender AlertsSender, stateManager *state.Manager, evalFactory eval.EvaluatorFactory, ruleProvider ruleProvider, clock clock.Clock, met *metrics.Scheduler, logger log.Logger, tracer tracing.Tracer, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) ruleFactoryFunc {
 	return func(ctx context.Context) *alertRuleInfo {
-		return newAlertRuleInfo(ctx, sender, stateManager, evalFactory, ruleProvider, clock, met, logger, tracer, evalAppliedHook, stopAppliedHook)
+		return newAlertRuleInfo(ctx, appURL, disableGrafanaFolder, maxAttempts, sender, stateManager, evalFactory, ruleProvider, clock, met, logger, tracer, evalAppliedHook, stopAppliedHook)
 	}
 }
 
@@ -46,6 +47,10 @@ type alertRuleInfo struct {
 	updateCh chan ruleVersionAndPauseStatus
 	ctx      context.Context
 	stopFn   util.CancelCauseFunc
+
+	appURL               *url.URL
+	disableGrafanaFolder bool
+	maxAttempts          int64
 
 	clock        clock.Clock
 	sender       AlertsSender
@@ -64,6 +69,9 @@ type alertRuleInfo struct {
 
 func newAlertRuleInfo(
 	parent context.Context,
+	appURL *url.URL,
+	disableGrafanaFolder bool,
+	maxAttempts int64,
 	sender AlertsSender,
 	stateManager *state.Manager,
 	evalFactory eval.EvaluatorFactory,
@@ -77,20 +85,23 @@ func newAlertRuleInfo(
 ) *alertRuleInfo {
 	ctx, stop := util.WithCancelCause(parent)
 	return &alertRuleInfo{
-		evalCh:          make(chan *evaluation),
-		updateCh:        make(chan ruleVersionAndPauseStatus),
-		ctx:             ctx,
-		stopFn:          stop,
-		clock:           clock,
-		sender:          sender,
-		stateManager:    stateManager,
-		evalFactory:     evalFactory,
-		ruleProvider:    ruleProvider,
-		evalAppliedHook: evalAppliedHook,
-		stopAppliedHook: stopAppliedHook,
-		metrics:         met,
-		logger:          logger,
-		tracer:          tracer,
+		evalCh:               make(chan *evaluation),
+		updateCh:             make(chan ruleVersionAndPauseStatus),
+		ctx:                  ctx,
+		stopFn:               stop,
+		appURL:               appURL,
+		disableGrafanaFolder: disableGrafanaFolder,
+		maxAttempts:          maxAttempts,
+		clock:                clock,
+		sender:               sender,
+		stateManager:         stateManager,
+		evalFactory:          evalFactory,
+		ruleProvider:         ruleProvider,
+		evalAppliedHook:      evalAppliedHook,
+		stopAppliedHook:      stopAppliedHook,
+		metrics:              met,
+		logger:               logger,
+		tracer:               tracer,
 	}
 }
 
@@ -154,7 +165,7 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 	sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
 
 	notify := func(states []state.StateTransition) {
-		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, sch.appURL, a.clock)
+		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock)
 		if len(expiredAlerts.PostableAlerts) > 0 {
 			a.sender.Send(grafanaCtx, key, expiredAlerts)
 		}
@@ -246,12 +257,12 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 			e.scheduledAt,
 			e.rule,
 			results,
-			state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !sch.disableGrafanaFolder),
+			state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !a.disableGrafanaFolder),
 		)
 		processDuration.Observe(a.clock.Now().Sub(start).Seconds())
 
 		start = a.clock.Now()
-		alerts := state.FromStateTransitionToPostableAlerts(processedStates, a.stateManager, sch.appURL)
+		alerts := state.FromStateTransitionToPostableAlerts(processedStates, a.stateManager, a.appURL)
 		span.AddEvent("results processed", trace.WithAttributes(
 			attribute.Int64("state_transitions", int64(len(processedStates))),
 			attribute.Int64("alerts_to_send", int64(len(alerts.PostableAlerts))),
@@ -297,7 +308,7 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 					a.evalApplied(key, ctx.scheduledAt)
 				}()
 
-				for attempt := int64(1); attempt <= sch.maxAttempts; attempt++ {
+				for attempt := int64(1); attempt <= a.maxAttempts; attempt++ {
 					isPaused := ctx.rule.IsPaused
 					f := ruleWithFolder{ctx.rule, ctx.folderTitle}.Fingerprint()
 					// Do not clean up state if the eval loop has just started.
@@ -337,7 +348,7 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 						return
 					}
 
-					retry := attempt < sch.maxAttempts
+					retry := attempt < a.maxAttempts
 					err := evaluate(tracingCtx, f, attempt, ctx, span, retry)
 					// This is extremely confusing - when we exhaust all retry attempts, or we have no retryable errors
 					// we return nil - so technically, this is meaningless to know whether the evaluation has errors or not.
