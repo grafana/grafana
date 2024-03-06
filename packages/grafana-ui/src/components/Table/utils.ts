@@ -135,7 +135,7 @@ export function getColumns(
 
     const Cell = getCellComponent(fieldTableOptions.cellOptions?.type, field);
     columns.push({
-      // @ts-expect-error
+      // @ts-expect-error 
       // TODO fix type error here
       Cell,
       id: fieldIndex.toString(),
@@ -576,9 +576,12 @@ export function calculateAroundPointThreshold(timeField: Field): number {
  * Retrieve colors for a table cell (or table row).
  * 
  * @param tableStyles 
+ *  Styles for the table
  * @param cellOptions 
+ *  Table cell configuration options
  * @param displayValue 
- * @returns 
+ *  The value that will be displayed
+ * @returns CellColors
  */
 export function getCellColors(
   tableStyles: TableStyles,

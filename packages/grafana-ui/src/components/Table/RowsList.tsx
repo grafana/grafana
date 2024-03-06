@@ -13,7 +13,7 @@ import {
   TimeRange,
   hasTimeField,
 } from '@grafana/data';
-import { TableCellBackgroundDisplayMode, TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
+import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
@@ -210,14 +210,9 @@ export const RowsList = (props: RowsListProps) => {
         fieldOptions.cellOptions?.type === TableCellDisplayMode.ColorBackground &&
         fieldOptions.cellOptions.applyToRow
     ) {
-      const isGradient =
-        fieldOptions.cellOptions.mode === undefined ||
-        TableCellBackgroundDisplayMode.Gradient === fieldOptions.cellOptions.mode;
-
-      rowBg = (rowIndex: number):  {colors: CellColors, isGradient: boolean} => {
+      rowBg = (rowIndex: number): CellColors => {
           const display = field.display!(field.values.get(rowIndex));
-          const colors = getCellColors(tableStyles, fieldOptions.cellOptions, display);
-          return {colors, isGradient};
+          return getCellColors(tableStyles, fieldOptions.cellOptions, display);   
       };
     }
   }
@@ -239,15 +234,9 @@ export const RowsList = (props: RowsListProps) => {
       }
 
       if (rowBg) {
-        const { colors, isGradient } = rowBg(index);
-        style.color = colors.textColor;
-        
-        if (isGradient) {
-          style.backgroundImage = colors.bgColor;
-        }
-        else {
-          style.backgroundColor = colors.bgColor;
-        }        
+        const { bgColor, textColor } = rowBg(row.index);
+        style.background = bgColor;
+        style.color = textColor;
       }
 
       return (
