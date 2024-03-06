@@ -57,6 +57,7 @@ import {
 import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
 import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
+import { LibraryVizPanel } from './LibraryVizPanel';
 import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
@@ -531,6 +532,58 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     this.setState({ hasCopiedPanel: false });
     store.delete(LS_PANEL_COPY_KEY);
+  }
+
+  public removePanel(panel: VizPanel) {
+    const panels: SceneObject[] = [];
+    const key = panel.parent instanceof LibraryVizPanel ? panel.parent.parent?.state.key : panel.parent?.state.key;
+
+    if (!key) {
+      return;
+    }
+
+    let row: SceneGridRow | undefined;
+
+    try {
+      row = sceneGraph.getAncestor(panel, SceneGridRow);
+    } catch {
+      row = undefined;
+    }
+
+    if (row) {
+      row.forEachChild((child: SceneObject) => {
+        if (child.state.key !== key) {
+          panels.push(child);
+        }
+      });
+
+      row.setState({ children: panels });
+
+      const layout = this.state.body;
+
+      if (layout instanceof SceneGridLayout || layout instanceof SceneFlexLayout) {
+        const children: SceneObject[] = layout.state.children;
+        const index = children.findIndex((child) => child.state.key === row?.state.key);
+
+        children.splice(index, 1, row);
+
+        layout.setState({ children });
+      }
+
+      return;
+    }
+
+    this.state.body.forEachChild((child: SceneObject) => {
+      if (child.state.key !== key) {
+        panels.push(child);
+      }
+    });
+
+    const layout = this.state.body;
+
+    if (layout instanceof SceneGridLayout || layout instanceof SceneFlexLayout) {
+      layout.setState({ children: panels });
+    }
   }
 
   public showModal(modal: SceneObject) {
