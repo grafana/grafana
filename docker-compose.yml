@@ -3,14 +3,16 @@ version: "3"
 services:
   pmm-server:
     container_name: pmm-server
-    image: perconalab/pmm-server:dev-container
+    # Temporary till we have arm builds
+    platform: linux/amd64
+    image: perconalab/pmm-server:3-dev-container
     volumes:
       - "./:/workspace"
       - "./public:/usr/share/grafana/public"
       - "./conf/grafana.local-dev.ini:/usr/share/grafana/conf/defaults.ini"
     ports:
-      - 80:80
-      - 443:443
+      - 80:8080
+      - 443:8443
     environment:
       - PMM_DEBUG=1
       - PERCONA_PORTAL_URL=https://portal-dev.percona.com
