@@ -43,23 +43,23 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	ret := entryPointAssetsCache
 	entryPointAssetsCacheMu.RUnlock()
 
-	if cfg.Env == setting.Dev {
+	if cfg.Env == setting.Dev && cfg.FrontendDevServer != "" {
 		// TODO: Hardcoded right now just to get vite dev env working.
 		// see https://vitejs.dev/guide/backend-integration.html
 		// Not sure we can rely on env config === dev alone as it's used in prod envs.
 		viteDev := &dtos.EntryPointAssets{
 			JSFiles: []dtos.EntryPointAsset{
 				{
-					FilePath:  "http://localhost:5173/@vite/client",
+					FilePath:  fmt.Sprintf("%s/@vite/client", cfg.FrontendDevServer),
 					Integrity: "",
 				},
 				{
-					FilePath:  "http://localhost:5173/app/index.ts",
+					FilePath:  fmt.Sprintf("%s/app/index.ts", cfg.FrontendDevServer),
 					Integrity: "",
 				},
 			},
-			Dark:  "http://localhost:5173/sass/grafana.dark.scss",
-			Light: "http://localhost:5173/sass/grafana.light.scss",
+			Dark:  fmt.Sprintf("%s/sass/grafana.dark.scss", cfg.FrontendDevServer),
+			Light: fmt.Sprintf("%s/sass/grafana.light.scss", cfg.FrontendDevServer),
 		}
 
 		return viteDev, nil
