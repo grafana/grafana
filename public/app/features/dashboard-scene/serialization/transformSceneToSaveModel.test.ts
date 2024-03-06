@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import { advanceTo } from 'jest-date-mock';
 import { map, of } from 'rxjs';
 
@@ -18,6 +19,7 @@ import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime'
 import {
   MultiValueVariable,
   SceneDataLayers,
+  SceneGridItem,
   SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
@@ -29,6 +31,7 @@ import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
@@ -41,6 +44,7 @@ import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
 import snapshotableWithRowsDashboardJson from './testfiles/snapshotable_with_rows.json';
 import {
   buildGridItemForLibPanel,
+  buildGridItemForLibraryPanelWidget,
   buildGridItemForPanel,
   transformSaveModelToScene,
 } from './transformSaveModelToScene';
@@ -314,24 +318,41 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Library panels', () => {
     it('given a library panel', () => {
-      const panel = buildGridItemFromPanelSchema({
-        id: 4,
-        gridPos: {
-          h: 8,
-          w: 12,
-          x: 0,
-          y: 0,
-        },
-        libraryPanel: {
-          name: 'Some lib panel panel',
-          uid: 'lib-panel-uid',
-        },
+      // Not using buildGridItemFromPanelSchema since it strips options/fieldConfig
+      const libVizPanel = new LibraryVizPanel({
+        name: 'Some lib panel panel',
         title: 'A panel',
-        transformations: [],
-        fieldConfig: {
-          defaults: {},
-          overrides: [],
-        },
+        uid: 'lib-panel-uid',
+        panelKey: 'lib-panel',
+        panel: new VizPanel({
+          key: 'panel-4',
+          title: 'Panel blahh blah',
+          fieldConfig: {
+            defaults: {},
+            overrides: [],
+          },
+          options: {
+            legend: {
+              calcs: [],
+              displayMode: 'list',
+              placement: 'bottom',
+              showLegend: true,
+            },
+            tooltip: {
+              maxHeight: 600,
+              mode: 'single',
+              sort: 'none',
+            },
+          },
+        }),
+      });
+
+      const panel = new SceneGridItem({
+        body: libVizPanel,
+        y: 0,
+        x: 0,
+        width: 12,
+        height: 8,
       });
 
       const result = gridItemToPanel(panel);
@@ -350,6 +371,31 @@ describe('transformSceneToSaveModel', () => {
       expect(result.title).toBe('A panel');
       expect(result.transformations).toBeUndefined();
       expect(result.fieldConfig).toBeUndefined();
+      expect(result.options).toBeUndefined();
+    });
+
+    it('given a library panel widget', () => {
+      const panel = buildGridItemFromPanelSchema({
+        id: 4,
+        gridPos: {
+          h: 8,
+          w: 12,
+          x: 0,
+          y: 0,
+        },
+        type: 'add-library-panel',
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.id).toBe(4);
+      expect(result.gridPos).toEqual({
+        h: 8,
+        w: 12,
+        x: 0,
+        y: 0,
+      });
+      expect(result.type).toBe('add-library-panel');
     });
   });
 
@@ -564,6 +610,37 @@ describe('transformSceneToSaveModel', () => {
         uid: SHARED_DASHBOARD_QUERY,
       });
     });
+
+    it('Given panel with query caching options', () => {
+      const panel = buildGridItemFromPanelSchema({
+        datasource: {
+          type: 'grafana-testdata',
+          uid: 'abc',
+        },
+        cacheTimeout: '10',
+        queryCachingTTL: 200000,
+        maxDataPoints: 100,
+        targets: [
+          {
+            refId: 'A',
+            expr: 'A',
+            datasource: {
+              type: 'grafana-testdata',
+              uid: 'abc',
+            },
+          },
+          {
+            refId: 'B',
+            expr: 'B',
+          },
+        ],
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.cacheTimeout).toBe('10');
+      expect(result.queryCachingTTL).toBe(200000);
+    });
   });
 
   describe('Snapshots', () => {
@@ -711,6 +788,53 @@ describe('transformSceneToSaveModel', () => {
 
         expect(result[0].title).toEqual('Panel $server');
         expect(result[1].title).toEqual('Panel $server');
+      });
+
+      it('handles repeated library panels', () => {
+        const { scene, repeater } = buildPanelRepeaterScene(
+          { variableQueryTime: 0, numberOfOptions: 2 },
+          new LibraryVizPanel({
+            name: 'Some lib panel panel',
+            title: 'A panel',
+            uid: 'lib-panel-uid',
+            panelKey: 'lib-panel',
+            panel: new VizPanel({
+              key: 'panel-4',
+              title: 'Panel blahh blah',
+              fieldConfig: {
+                defaults: {},
+                overrides: [],
+              },
+              options: {
+                legend: {
+                  calcs: [],
+                  displayMode: 'list',
+                  placement: 'bottom',
+                  showLegend: true,
+                },
+                tooltip: {
+                  maxHeight: 600,
+                  mode: 'single',
+                  sort: 'none',
+                },
+              },
+            }),
+          })
+        );
+
+        activateFullSceneTree(scene);
+        const result = panelRepeaterToPanels(repeater, true);
+
+        expect(result).toHaveLength(1);
+
+        expect(result[0]).toMatchObject({
+          id: 4,
+          title: 'A panel',
+          libraryPanel: {
+            name: 'Some lib panel panel',
+            uid: 'lib-panel-uid',
+          },
+        });
       });
 
       it('handles row repeats ', () => {
@@ -866,6 +990,9 @@ describe('transformSceneToSaveModel', () => {
 export function buildGridItemFromPanelSchema(panel: Partial<Panel>): SceneGridItemLike {
   if (panel.libraryPanel) {
     return buildGridItemForLibPanel(new PanelModel(panel))!;
+  } else if (panel.type === 'add-library-panel') {
+    return buildGridItemForLibraryPanelWidget(new PanelModel(panel))!;
   }
+
   return buildGridItemForPanel(new PanelModel(panel));
 }

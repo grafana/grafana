@@ -77,14 +77,14 @@ func (gm *MathCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Va
 
 // ReduceCommand is an expression command for reduction of a timeseries such as a min, mean, or max.
 type ReduceCommand struct {
-	Reducer      string
+	Reducer      mathexp.ReducerID
 	VarToReduce  string
 	refID        string
 	seriesMapper mathexp.ReduceMapper
 }
 
 // NewReduceCommand creates a new ReduceCMD.
-func NewReduceCommand(refID, reducer, varToReduce string, mapper mathexp.ReduceMapper) (*ReduceCommand, error) {
+func NewReduceCommand(refID string, reducer mathexp.ReducerID, varToReduce string, mapper mathexp.ReduceMapper) (*ReduceCommand, error) {
 	_, err := mathexp.GetReduceFunc(reducer)
 	if err != nil {
 		return nil, err
@@ -114,10 +114,11 @@ func UnmarshalReduceCommand(rn *rawNode) (*ReduceCommand, error) {
 	if !ok {
 		return nil, errors.New("no reducer specified")
 	}
-	redFunc, ok := rawReducer.(string)
+	redString, ok := rawReducer.(string)
 	if !ok {
 		return nil, fmt.Errorf("expected reducer to be a string, got %T", rawReducer)
 	}
+	redFunc := mathexp.ReducerID(strings.ToLower(redString))
 
 	var mapper mathexp.ReduceMapper = nil
 	settings, ok := rn.Query["settings"]
@@ -163,7 +164,7 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 	_, span := tracer.Start(ctx, "SSE.ExecuteReduce")
 	defer span.End()
 
-	span.SetAttributes(attribute.String("reducer", gr.Reducer))
+	span.SetAttributes(attribute.String("reducer", string(gr.Reducer)))
 
 	newRes := mathexp.Results{}
 	for i, val := range vars[gr.VarToReduce].Values {
@@ -204,14 +205,14 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 type ResampleCommand struct {
 	Window        time.Duration
 	VarToResample string
-	Downsampler   string
-	Upsampler     string
+	Downsampler   mathexp.ReducerID
+	Upsampler     mathexp.Upsampler
 	TimeRange     TimeRange
 	refID         string
 }
 
 // NewResampleCommand creates a new ResampleCMD.
-func NewResampleCommand(refID, rawWindow, varToResample string, downsampler string, upsampler string, tr TimeRange) (*ResampleCommand, error) {
+func NewResampleCommand(refID, rawWindow, varToResample string, downsampler mathexp.ReducerID, upsampler mathexp.Upsampler, tr TimeRange) (*ResampleCommand, error) {
 	// TODO: validate reducer here, before execution
 	window, err := gtime.ParseDuration(rawWindow)
 	if err != nil {
@@ -270,7 +271,11 @@ func UnmarshalResampleCommand(rn *rawNode) (*ResampleCommand, error) {
 		return nil, fmt.Errorf("expected resample downsampler to be a string, got type %T", upsampler)
 	}
 
-	return NewResampleCommand(rn.RefID, window, varToResample, downsampler, upsampler, rn.TimeRange)
+	return NewResampleCommand(rn.RefID, window,
+		varToResample,
+		mathexp.ReducerID(downsampler),
+		mathexp.Upsampler(upsampler),
+		rn.TimeRange)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -323,6 +328,8 @@ const (
 	TypeClassicConditions
 	// TypeThreshold is the CMDType for checking if a threshold has been crossed
 	TypeThreshold
+	// TypeSQL is the CMDType for running SQL expressions
+	TypeSQL
 )
 
 func (gt CommandType) String() string {
@@ -335,6 +342,8 @@ func (gt CommandType) String() string {
 		return "resample"
 	case TypeClassicConditions:
 		return "classic_conditions"
+	case TypeSQL:
+		return "sql"
 	default:
 		return "unknown"
 	}
@@ -353,6 +362,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeClassicConditions, nil
 	case "threshold":
 		return TypeThreshold, nil
+	case "sql":
+		return TypeSQL, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

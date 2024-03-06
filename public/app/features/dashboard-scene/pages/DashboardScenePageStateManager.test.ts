@@ -56,6 +56,16 @@ describe('DashboardScenePageStateManager', () => {
       expect(loader.state.isLoading).toBe(false);
     });
 
+    it('should use DashboardScene creator to initialize the snapshot scene', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadSnapshot('fake-slug');
+
+      expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
+      expect(loader.state.isLoading).toBe(false);
+    });
+
     it('should initialize url sync', async () => {
       setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 

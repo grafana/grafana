@@ -9,9 +9,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"reflect"
 	"strconv"
 
+	grpcCodes "google.golang.org/grpc/codes"
+	grpcStatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,17 +30,14 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ storage.Interface = (*Storage)(nil)
 
-const MaxUpdateAttempts = 1
-
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
 	config       *storagebackend.ConfigForResource
-	store        entityStore.EntityStoreServer
+	store        entityStore.EntityStoreClient
 	gr           schema.GroupResource
 	codec        runtime.Codec
 	keyFunc      func(obj runtime.Object) (string, error)
@@ -52,7 +53,7 @@ type Storage struct {
 func NewStorage(
 	config *storagebackend.ConfigForResource,
 	gr schema.GroupResource,
-	store entityStore.EntityStoreServer,
+	store entityStore.EntityStoreClient,
 	codec runtime.Codec,
 	keyFunc func(obj runtime.Object) (string, error),
 	newFunc func() runtime.Object,
@@ -84,25 +85,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	metaAccessor, err := meta.Accessor(obj)
-	if err != nil {
-		return err
-	}
-
-	// Replace the default name generation strategy
-	if metaAccessor.GetGenerateName() != "" {
-		k, err := entityStore.ParseKey(key)
-		if err != nil {
-			return err
-		}
-		k.Name = util.GenerateShortUID()
-		key = k.String()
-
-		metaAccessor.SetName(k.Name)
-		metaAccessor.SetGenerateName("")
-	}
-
-	e, err := resourceToEntity(key, obj, requestInfo, s.codec)
+	e, err := resourceToEntity(obj, requestInfo, s.codec)
 	if err != nil {
 		return err
 	}
@@ -124,13 +107,6 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return apierrors.NewInternalError(err)
 	}
 
-	/*
-		s.watchSet.notifyWatchers(watch.Event{
-			Object: out.DeepCopyObject(),
-			Type:   watch.Added,
-		})
-	*/
-
 	return nil
 }
 
@@ -140,13 +116,26 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 // current version of the object to avoid read operation from storage to get it.
 // However, the implementations have to retry in case suggestion is stale.
 func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions, validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
+	}
+
+	k := &entityStore.Key{
+		Group:       requestInfo.APIGroup,
+		Resource:    requestInfo.Resource,
+		Namespace:   requestInfo.Namespace,
+		Name:        requestInfo.Name,
+		Subresource: requestInfo.Subresource,
+	}
+
 	previousVersion := int64(0)
 	if preconditions != nil && preconditions.ResourceVersion != nil {
 		previousVersion, _ = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
 	}
 
 	rsp, err := s.store.Delete(ctx, &entityStore.DeleteEntityRequest{
-		Key:             key,
+		Key:             k.String(),
 		PreviousVersion: previousVersion,
 	})
 	if err != nil {
@@ -169,7 +158,52 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 // If resource version is "0", this interface will get current object at given key
 // and send it in an "ADDED" event, before watch starts.
 func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
-	return nil, apierrors.NewMethodNotSupported(schema.GroupResource{}, "watch")
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return nil, apierrors.NewInternalError(fmt.Errorf("could not get request info"))
+	}
+
+	k := &entityStore.Key{
+		Group:       requestInfo.APIGroup,
+		Resource:    requestInfo.Resource,
+		Namespace:   requestInfo.Namespace,
+		Name:        requestInfo.Name,
+		Subresource: requestInfo.Subresource,
+	}
+
+	req := &entityStore.EntityWatchRequest{
+		Key: []string{
+			k.String(),
+		},
+		WithBody: true,
+	}
+
+	if opts.ResourceVersion != "" {
+		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+
+		req.Since = rv
+	}
+
+	result, err := s.store.Watch(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
+
+	decoder := &Decoder{
+		client:  result,
+		newFunc: s.newFunc,
+		opts:    opts,
+		codec:   s.codec,
+	}
+
+	w := watch.NewStreamWatcher(decoder, reporter)
+
+	return w, nil
 }
 
 // Get unmarshals object found at key into objPtr. On a not found error, will either
@@ -178,10 +212,33 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
+	}
+
+	k := &entityStore.Key{
+		Group:       requestInfo.APIGroup,
+		Resource:    requestInfo.Resource,
+		Namespace:   requestInfo.Namespace,
+		Name:        requestInfo.Name,
+		Subresource: requestInfo.Subresource,
+	}
+
+	resourceVersion := int64(0)
+	var err error
+	if opts.ResourceVersion != "" {
+		resourceVersion, err = strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+	}
+
 	rsp, err := s.store.Read(ctx, &entityStore.ReadEntityRequest{
-		Key:        key,
-		WithBody:   true,
-		WithStatus: true,
+		Key:             k.String(),
+		WithBody:        true,
+		WithStatus:      true,
+		ResourceVersion: resourceVersion,
 	})
 	if err != nil {
 		return err
@@ -192,7 +249,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 			return nil
 		}
 
-		return apierrors.NewNotFound(s.gr, key)
+		return apierrors.NewNotFound(s.gr, k.Name)
 	}
 
 	err = entityToResource(rsp, objPtr, s.codec)
@@ -210,6 +267,19 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
+	}
+
+	k := &entityStore.Key{
+		Group:       requestInfo.APIGroup,
+		Resource:    requestInfo.Resource,
+		Namespace:   requestInfo.Namespace,
+		Name:        requestInfo.Name,
+		Subresource: requestInfo.Subresource,
+	}
+
 	listPtr, err := meta.GetItemsPtr(listObj)
 	if err != nil {
 		return err
@@ -220,7 +290,9 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	req := &entityStore.EntityListRequest{
-		Key:           []string{key},
+		Key: []string{
+			k.String(),
+		},
 		WithBody:      true,
 		WithStatus:    true,
 		NextPageToken: opts.Predicate.Continue,
@@ -229,28 +301,31 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		// TODO push label/field matching down to storage
 	}
 
+	// translate grafana.app/* label selectors into field requirements
+	requirements, newSelector, err := ReadLabelSelectors(opts.Predicate.Label)
+	if err != nil {
+		return err
+	}
+	if requirements.Folder != nil {
+		req.Folder = *requirements.Folder
+	}
+	if len(requirements.SortBy) > 0 {
+		req.Sort = requirements.SortBy
+	}
+	// Update the selector to remove the unneeded requirements
+	opts.Predicate.Label = newSelector
+
 	// translate "equals" label selectors to storage label conditions
-	requirements, selectable := opts.Predicate.Label.Requirements()
+	labelRequirements, selectable := opts.Predicate.Label.Requirements()
 	if !selectable {
 		return apierrors.NewBadRequest("label selector is not selectable")
 	}
 
-	for _, r := range requirements {
+	for _, r := range labelRequirements {
 		if r.Operator() == selection.Equals {
 			req.Labels[r.Key()] = r.Values().List()[0]
 		}
 	}
-
-	// translate grafana.app/folder field selector to the folder condition
-	fieldRequirements, fieldSelector, err := ReadFieldRequirements(opts.Predicate.Field)
-	if err != nil {
-		return err
-	}
-	if fieldRequirements.Folder != nil {
-		req.Folder = *fieldRequirements.Folder
-	}
-	// Update the field selector to remove the unneeded selectors
-	opts.Predicate.Field = fieldSelector
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
@@ -286,6 +361,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		listAccessor.SetContinue(rsp.NextPageToken)
 	}
 
+	listAccessor.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
+
 	return nil
 }
 
@@ -311,32 +388,20 @@ func (s *Storage) GuaranteedUpdate(
 	tryUpdate storage.UpdateFunc,
 	cachedExistingObject runtime.Object,
 ) error {
-	var err error
-	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
-		err = s.guaranteedUpdate(ctx, key, destination, ignoreNotFound, preconditions, tryUpdate, cachedExistingObject)
-		if err == nil {
-			return nil
-		}
-	}
-
-	return err
-}
-
-func (s *Storage) guaranteedUpdate(
-	ctx context.Context,
-	key string,
-	destination runtime.Object,
-	ignoreNotFound bool,
-	preconditions *storage.Preconditions,
-	tryUpdate storage.UpdateFunc,
-	cachedExistingObject runtime.Object,
-) error {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
 	}
 
-	err := s.Get(ctx, key, storage.GetOptions{}, destination)
+	k := &entityStore.Key{
+		Group:       requestInfo.APIGroup,
+		Resource:    requestInfo.Resource,
+		Namespace:   requestInfo.Namespace,
+		Name:        requestInfo.Name,
+		Subresource: requestInfo.Subresource,
+	}
+
+	err := s.Get(ctx, k.String(), storage.GetOptions{}, destination)
 	if err != nil {
 		return err
 	}
@@ -361,10 +426,10 @@ func (s *Storage) guaranteedUpdate(
 			}
 		}
 
-		return apierrors.NewInternalError(fmt.Errorf("could not successfully update object. key=%s, err=%s", key, err.Error()))
+		return apierrors.NewInternalError(fmt.Errorf("could not successfully update object. key=%s, err=%s", k.String(), err.Error()))
 	}
 
-	e, err := resourceToEntity(key, updatedObj, requestInfo, s.codec)
+	e, err := resourceToEntity(updatedObj, requestInfo, s.codec)
 	if err != nil {
 		return err
 	}
@@ -388,13 +453,6 @@ func (s *Storage) guaranteedUpdate(
 		return apierrors.NewInternalError(err)
 	}
 
-	/*
-		s.watchSet.notifyWatchers(watch.Event{
-			Object: destination.DeepCopyObject(),
-			Type:   watch.Modified,
-		})
-	*/
-
 	return nil
 }
 
@@ -410,3 +468,69 @@ func (s *Storage) Versioner() storage.Versioner {
 func (s *Storage) RequestWatchProgress(ctx context.Context) error {
 	return nil
 }
+
+type Decoder struct {
+	client  entityStore.EntityStore_WatchClient
+	newFunc func() runtime.Object
+	opts    storage.ListOptions
+	codec   runtime.Codec
+}
+
+func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err error) {
+	for {
+		resp, err := d.client.Recv()
+		if errors.Is(err, io.EOF) {
+			log.Printf("watch is done")
+			return watch.Error, nil, err
+		}
+
+		if grpcStatus.Code(err) == grpcCodes.Canceled {
+			log.Printf("watch was canceled")
+			return watch.Error, nil, err
+		}
+
+		if err != nil {
+			log.Printf("error receiving result: %s", err)
+			return watch.Error, nil, err
+		}
+
+		obj := d.newFunc()
+
+		err = entityToResource(resp.Entity, obj, d.codec)
+		if err != nil {
+			log.Printf("error decoding entity: %s", err)
+			return watch.Error, nil, err
+		}
+
+		// apply any predicates not handled in storage
+		var matches bool
+		matches, err = d.opts.Predicate.Matches(obj)
+		if err != nil {
+			log.Printf("error matching object: %s", err)
+			return watch.Error, nil, err
+		}
+		if !matches {
+			continue
+		}
+
+		var watchAction watch.EventType
+		switch resp.Entity.Action {
+		case entityStore.Entity_CREATED:
+			watchAction = watch.Added
+		case entityStore.Entity_UPDATED:
+			watchAction = watch.Modified
+		case entityStore.Entity_DELETED:
+			watchAction = watch.Deleted
+		default:
+			watchAction = watch.Error
+		}
+
+		return watchAction, obj, nil
+	}
+}
+
+func (d *Decoder) Close() {
+	_ = d.client.CloseSend()
+}
+
+var _ watch.Decoder = (*Decoder)(nil)

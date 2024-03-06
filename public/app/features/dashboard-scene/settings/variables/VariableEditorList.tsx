@@ -42,7 +42,7 @@ export function VariableEditorList({
         {variables.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
 
         {variables.length > 0 && (
-          <Stack direction="column" gap={4}>
+          <Stack direction="column" gap={3}>
             <div className={styles.tableContainer}>
               <table
                 className="filter-table filter-table--hover"

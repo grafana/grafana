@@ -18,6 +18,16 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
         showIf: (opts, data) => originalDataHasHistogram(data),
       })
       .addNumberInput({
+        path: 'bucketCount',
+        name: histogramFieldInfo.bucketCount.name,
+        description: histogramFieldInfo.bucketCount.description,
+        settings: {
+          placeholder: `Default: ${defaultOptions.bucketCount}`,
+          min: 0,
+        },
+        showIf: (opts, data) => !originalDataHasHistogram(data),
+      })
+      .addNumberInput({
         path: 'bucketSize',
         name: histogramFieldInfo.bucketSize.name,
         description: histogramFieldInfo.bucketSize.description,
@@ -33,10 +43,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
         name: histogramFieldInfo.bucketOffset.name,
         description: histogramFieldInfo.bucketOffset.description,
         settings: {
-          placeholder: '0',
+          placeholder: `Default: ${defaultOptions.bucketOffset}`,
           min: 0,
         },
-        defaultValue: defaultOptions.bucketOffset,
         showIf: (opts, data) => !originalDataHasHistogram(data),
       })
       .addBooleanSwitch({

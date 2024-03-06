@@ -115,13 +115,11 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
         <div className={cx(styles.flexRow, styles.spaceBetween)}>
           <div className={styles.flexRow}>
             <MatcherFilter
-              className={styles.rowChild}
               key={queryStringKey}
               defaultQueryString={queryString}
               onFilterChange={(value) => setQueryString(value)}
             />
             <AlertInstanceStateFilter
-              className={styles.rowChild}
               filterType={stateFilterType}
               stateFilter={alertState}
               onStateFilterChange={setAlertState}
@@ -164,12 +162,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: 100%;
       flex-wrap: wrap;
       margin-bottom: ${theme.spacing(1)};
+      gap: ${theme.spacing(1)};
     `,
     spaceBetween: css`
       justify-content: space-between;
-    `,
-    rowChild: css`
-      margin-right: ${theme.spacing(1)};
     `,
     footerRow: css`
       display: flex;

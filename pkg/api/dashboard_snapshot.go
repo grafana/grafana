@@ -2,20 +2,43 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+// r.Post("/api/snapshots/"
+func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
+		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
+		return func(w http.ResponseWriter, r *http.Request) {
+			user, err := appcontext.User(r.Context())
+			if err != nil || user == nil {
+				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
+				return
+			}
+			r.URL.Path = "/apis/dashboardsnapshot.grafana.app/v0alpha1/namespaces/" +
+				namespaceMapper(user.OrgID) + "/dashboardsnapshots/create"
+			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
+		}
+	}
+	return hs.CreateDashboardSnapshot
+}
 
 // swagger:route GET /snapshot/shared-options snapshots getSharingOptions
 //
@@ -85,7 +108,7 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.
 
 	// expired snapshots should also be removed from db
 	if snapshot.Expires.Before(time.Now()) {
-		return response.Error(404, "Dashboard snapshot not found", err)
+		return response.Error(http.StatusNotFound, "Dashboard snapshot not found", err)
 	}
 
 	dto := dtos.DashboardFullWithMeta{
@@ -123,15 +146,15 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqCont
 
 	key := web.Params(c.Req)[":deleteKey"]
 	if len(key) == 0 {
-		return response.Error(404, "Snapshot not found", nil)
+		return response.Error(http.StatusNotFound, "Snapshot not found", nil)
 	}
 
 	err := dashboardsnapshots.DeleteWithKey(c.Req.Context(), key, hs.dashboardsnapshotsService)
 	if err != nil {
 		if errors.Is(err, dashboardsnapshots.ErrBaseNotFound) {
-			return response.Error(404, "Snapshot not found", err)
+			return response.Error(http.StatusNotFound, "Snapshot not found", err)
 		}
-		return response.Error(500, "Failed to delete dashboard snapshot", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete dashboard snapshot", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -169,10 +192,9 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusNotFound, "Failed to get dashboard snapshot", nil)
 	}
 
-	// TODO: enforce org ID same
-	// if queryResult.OrgID != c.OrgID {
-	// 	return response.Error(http.StatusUnauthorized, "OrgID mismatch", nil)
-	// }
+	if queryResult.OrgID != c.OrgID {
+		return response.Error(http.StatusUnauthorized, "OrgID mismatch", nil)
+	}
 
 	if queryResult.External {
 		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
@@ -247,7 +269,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) respo
 
 	searchQueryResult, err := hs.dashboardsnapshotsService.SearchDashboardSnapshots(c.Req.Context(), &searchQuery)
 	if err != nil {
-		return response.Error(500, "Search failed", err)
+		return response.Error(http.StatusInternalServerError, "Search failed", err)
 	}
 
 	dto := make([]*dashboardsnapshots.DashboardSnapshotDTO, len(searchQueryResult))

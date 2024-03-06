@@ -340,7 +340,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   onRefresh = () => {
     const { dashboard, panel, isInView, width } = this.props;
 
-    if (!isInView) {
+    if (!dashboard.snapshot && !isInView) {
       panel.refreshWhenInView = true;
       return;
     }

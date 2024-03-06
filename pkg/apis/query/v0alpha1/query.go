@@ -75,6 +75,12 @@ type GenericDataQuery struct {
 	props map[string]any `json:"-"`
 }
 
+func NewGenericDataQuery(vals map[string]any) GenericDataQuery {
+	q := GenericDataQuery{}
+	_ = q.unmarshal(vals)
+	return q
+}
+
 // TimeRange represents a time range for a query and is a property of DataQuery.
 type TimeRange struct {
 	// From is the start time of the query.
@@ -120,7 +126,7 @@ func (g GenericDataQuery) MarshalJSON() ([]byte, error) {
 	}
 
 	vals["refId"] = g.RefID
-	if g.Datasource.Type != "" || g.Datasource.UID != "" {
+	if g.Datasource != nil && (g.Datasource.Type != "" || g.Datasource.UID != "") {
 		vals["datasource"] = g.Datasource
 	}
 	if g.DatasourceId > 0 {
@@ -131,6 +137,9 @@ func (g GenericDataQuery) MarshalJSON() ([]byte, error) {
 	}
 	if g.MaxDataPoints > 0 {
 		vals["maxDataPoints"] = g.MaxDataPoints
+	}
+	if g.QueryType != "" {
+		vals["queryType"] = g.QueryType
 	}
 	return json.Marshal(vals)
 }
@@ -143,6 +152,15 @@ func (g *GenericDataQuery) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
+	return g.unmarshal(vals)
+}
+
+func (g *GenericDataQuery) unmarshal(vals map[string]any) error {
+	if vals == nil {
+		g.props = nil
+		return nil
+	}
+
 	key := "refId"
 	v, ok := vals[key]
 	if ok {
@@ -203,6 +221,17 @@ func (g *GenericDataQuery) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("expected datasourceId as number (got: %t)", v)
 		}
 		g.DatasourceId = int64(count)
+		delete(vals, key)
+	}
+
+	key = "queryType"
+	v, ok = vals[key]
+	if ok {
+		queryType, ok := v.(string)
+		if !ok {
+			return fmt.Errorf("expected queryType as string (got: %t)", v)
+		}
+		g.QueryType = queryType
 		delete(vals, key)
 	}
 

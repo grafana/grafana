@@ -4,6 +4,7 @@ export type FeatureToggle = {
   name: string;
   description?: string;
   enabled: boolean;
+  stage: string;
   readOnly?: boolean;
   hidden?: boolean;
 };
@@ -28,6 +29,7 @@ interface K8sToggleSpec {
   enabled: boolean;
   writeable: boolean;
   source: K8sToggleSource;
+  stage: string;
 }
 
 interface K8sToggleSource {
@@ -53,6 +55,7 @@ class K8sAPI implements FeatureTogglesAPI {
         description: t.description!,
         enabled: t.enabled,
         readOnly: !Boolean(t.writeable),
+        stage: t.stage,
         hidden: false, // only return visible things
       })),
     };

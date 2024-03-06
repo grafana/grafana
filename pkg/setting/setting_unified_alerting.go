@@ -83,6 +83,7 @@ type UnifiedAlertingSettings struct {
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
+	DisableJitter                  bool
 	ExecuteAlerts                  bool
 	DefaultConfiguration           string
 	Enabled                        *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
@@ -100,6 +101,7 @@ type UnifiedAlertingSettings struct {
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency   int
 	StatePeriodicSaveInterval time.Duration
+	RulesPerRuleGroupLimit    int64
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -300,6 +302,10 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	uaCfg.BaseInterval = SchedulerBaseInterval
 
+	// TODO: This was promoted from a feature toggle and is now the default behavior.
+	// We can consider removing the knob entirely in a release after 10.4.
+	uaCfg.DisableJitter = ua.Key("disable_jitter").MustBool(false)
+
 	// The base interval of the scheduler for evaluating alerts.
 	// 1. It is used by the internal scheduler's timer to tick at this interval.
 	// 2. to spread evaluations of rules that need to be evaluated at the current tick T. In other words, the evaluation of rules at the tick T will be evenly spread in the interval from T to T+scheduler_tick_interval.
@@ -346,6 +352,9 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
 		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
 	}
+
+	quotas := iniFile.Section("quota")
+	uaCfg.RulesPerRuleGroupLimit = quotas.Key("alerting_rule_group_rules").MustInt64(100)
 
 	remoteAlertmanager := iniFile.Section("remote.alertmanager")
 	uaCfgRemoteAM := RemoteAlertmanagerSettings{

@@ -341,9 +341,8 @@ const (
 	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
-	ActionUsersRead        = "users:read"
-	ActionUsersWrite       = "users:write"
-	ActionUsersImpersonate = "users:impersonate"
+	ActionUsersRead  = "users:read"
+	ActionUsersWrite = "users:write"
 
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
@@ -448,6 +447,11 @@ const (
 	// Alerting notifications time interval actions
 	ActionAlertingNotificationsTimeIntervalsRead  = "alert.notifications.time-intervals:read"
 	ActionAlertingNotificationsTimeIntervalsWrite = "alert.notifications.time-intervals:write"
+
+	// Alerting receiver actions
+	ActionAlertingReceiversList        = "alert.notifications.receivers:list"
+	ActionAlertingReceiversRead        = "alert.notifications.receivers:read"
+	ActionAlertingReceiversReadSecrets = "alert.notifications.receivers.secrets:read"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"

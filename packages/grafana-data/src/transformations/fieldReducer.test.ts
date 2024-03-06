@@ -64,9 +64,8 @@ describe('Stats Calculators', () => {
   });
 
   it('should handle undefined field data without crashing', () => {
-    // eslint-ignore @typescript-eslint/no-explicit-any
     const stats = reduceField({
-      field: { name: 'a', values: undefined as any, config: {}, type: FieldType.number },
+      field: { name: 'a', values: undefined as unknown as unknown[], config: {}, type: FieldType.number },
       reducers: [ReducerID.first, ReducerID.last, ReducerID.mean, ReducerID.count],
     });
 

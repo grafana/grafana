@@ -17,7 +17,20 @@ while IFS=" " read -r -a package; do
   CURRENT="./pr/$PACKAGE_PATH"
 
   # Temporarily skipping these packages as they don't have any exposed static typing
-  if [[ ${SKIP_PACKAGES[@]} =~ "$PACKAGE_PATH" ]]; then
+  SKIP_PACKAGE_FOUND=0
+  for skip_pkg in "${SKIP_PACKAGES[@]}"; do
+    if [[ "$PACKAGE_PATH" == "$skip_pkg" ]]; then
+      SKIP_PACKAGE_FOUND=1
+      break
+    fi
+  done
+
+  if [[ $SKIP_PACKAGE_FOUND -eq 1 ]]; then
+    continue
+  fi
+
+  # Skip packages that are marked as private in their package.json (private: true)
+  if [[ $(jq -r '.private' "./packages/$PACKAGE_PATH/package.json") == "true" ]]; then
     continue
   fi
 

@@ -43,7 +43,7 @@ export function GeneralSettingsUnconnected({
   const [renderCounter, setRenderCounter] = useState(0);
   const [dashboardTitle, setDashboardTitle] = useState(dashboard.title);
   const [dashboardDescription, setDashboardDescription] = useState(dashboard.description);
-  const pageNav = config.featureToggles.dockedMegaMenu ? sectionNav.node.parentItem : undefined;
+  const pageNav = sectionNav.node.parentItem;
 
   const onFolderChange = (newUID: string | undefined, newTitle: string | undefined) => {
     dashboard.meta.folderUid = newUID;

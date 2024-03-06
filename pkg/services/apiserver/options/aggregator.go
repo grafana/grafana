@@ -18,14 +18,16 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	filestorage "github.com/grafana/grafana/pkg/services/apiserver/storage/file"
+	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
 type AggregatorServerOptions struct {
-	AlternateDNS        []string
-	ProxyClientCertFile string
-	ProxyClientKeyFile  string
+	AlternateDNS           []string
+	ProxyClientCertFile    string
+	ProxyClientKeyFile     string
+	RemoteServicesFile     string
+	APIServiceCABundleFile string
 }
 
 func NewAggregatorServerOptions() *AggregatorServerOptions {
@@ -87,7 +89,14 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 		return err
 	}
 	// override the RESTOptionsGetter to use the file storage options getter
-	aggregatorConfig.GenericConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(dataPath, etcdOptions.StorageConfig)
+	restOptionsGetter, err := filestorage.NewRESTOptionsGetter(dataPath, etcdOptions.StorageConfig,
+		"apiregistration.k8s.io/apiservices",
+		"service.grafana.app/externalnames",
+	)
+	if err != nil {
+		return err
+	}
+	aggregatorConfig.GenericConfig.RESTOptionsGetter = restOptionsGetter
 
 	// prevent generic API server from installing the OpenAPI handler. Aggregator server has its own customized OpenAPI handler.
 	genericConfig.SkipOpenAPIInstallation = true
@@ -96,6 +105,9 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 		return err
 	}
 	genericConfig.MergedResourceConfig = mergedResourceConfig
+
+	aggregatorConfig.ExtraConfig.ProxyClientCertFile = o.ProxyClientCertFile
+	aggregatorConfig.ExtraConfig.ProxyClientKeyFile = o.ProxyClientKeyFile
 
 	namer := openapinamer.NewDefinitionNamer(aggregatorscheme.Scheme)
 	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(o.getMergedOpenAPIDefinitions, namer)

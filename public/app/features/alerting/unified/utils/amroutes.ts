@@ -8,7 +8,7 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { normalizeMatchers, parseMatcher } from './matchers';
+import { normalizeMatchers, parseMatcher, quoteWithEscape, unquoteWithUnescape } from './matchers';
 import { findExistingRoute } from './routeTree';
 import { isValidPrometheusDuration, safeParseDurationstr } from './time';
 
@@ -44,8 +44,8 @@ export const defaultGroupBy = ['grafana_folder', 'alertname'];
 
 // Common route group_by options for multiselect drop-down
 export const commonGroupByOptions = [
-  { label: 'grafana_folder', value: 'grafana_folder' },
-  { label: 'alertname', value: 'alertname' },
+  { label: 'grafana_folder', value: 'grafana_folder', isFixed: true },
+  { label: 'alertname', value: 'alertname', isFixed: true },
   { label: 'Disable (...)', value: '...' },
 ];
 
@@ -94,7 +94,14 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
 
   const objectMatchers =
     route.object_matchers?.map((matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] })) ?? [];
-  const matchers = route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? [];
+  const matchers =
+    route.matchers
+      ?.map((matcher) => matcherToMatcherField(parseMatcher(matcher)))
+      .map(({ name, operator, value }) => ({
+        name: unquoteWithUnescape(name),
+        operator,
+        value: unquoteWithUnescape(value),
+      })) ?? [];
 
   return {
     id,
@@ -149,8 +156,10 @@ export const formAmRouteToAmRoute = (
 
   const overrideRepeatInterval = overrideTimings && repeatIntervalValue;
   const repeat_interval = overrideRepeatInterval ? repeatIntervalValue : INHERIT_FROM_PARENT;
+
+  // Empty matcher values are valid. Such matchers require specified label to not exists
   const object_matchers: ObjectMatcher[] | undefined = formAmRoute.object_matchers
-    ?.filter((route) => route.name && route.value && route.operator)
+    ?.filter((route) => route.name && route.operator && route.value !== null && route.value !== undefined)
     .map(({ name, operator, value }) => [name, operator, value]);
 
   const routes = formAmRoute.routes?.map((subRoute) =>
@@ -176,7 +185,9 @@ export const formAmRouteToAmRoute = (
   // Grafana maintains a fork of AM to support all utf-8 characters in the "object_matchers" property values but this
   // does not exist in upstream AlertManager
   if (alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-    amRoute.matchers = formAmRoute.object_matchers?.map(({ name, operator, value }) => `${name}${operator}${value}`);
+    amRoute.matchers = formAmRoute.object_matchers?.map(
+      ({ name, operator, value }) => `${quoteWithEscape(name)}${operator}${quoteWithEscape(value)}`
+    );
     amRoute.object_matchers = undefined;
   } else {
     amRoute.object_matchers = normalizeMatchers(amRoute);

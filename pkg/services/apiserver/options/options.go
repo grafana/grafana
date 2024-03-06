@@ -10,6 +10,11 @@ import (
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 )
 
+type OptionsProvider interface {
+	AddFlags(fs *pflag.FlagSet)
+	ValidateOptions() []error
+}
+
 const defaultEtcdPathPrefix = "/registry/grafana.app"
 
 type Options struct {
@@ -17,6 +22,7 @@ type Options struct {
 	AggregatorOptions  *AggregatorServerOptions
 	StorageOptions     *StorageOptions
 	ExtraOptions       *ExtraOptions
+	APIOptions         []OptionsProvider
 }
 
 func NewOptions(codec runtime.Codec) *Options {
@@ -36,6 +42,10 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.AggregatorOptions.AddFlags(fs)
 	o.StorageOptions.AddFlags(fs)
 	o.ExtraOptions.AddFlags(fs)
+
+	for _, api := range o.APIOptions {
+		api.AddFlags(fs)
+	}
 }
 
 func (o *Options) Validate() []error {
@@ -55,8 +65,12 @@ func (o *Options) Validate() []error {
 		return errs
 	}
 
-	if errs := o.RecommendedOptions.Authentication.Validate(); len(errs) != 0 {
-		return errs
+	if o.ExtraOptions.DevMode {
+		// NOTE: Only consider authn for dev mode - resolves the failure due to missing extension apiserver auth-config
+		// in parent k8s
+		if errs := o.RecommendedOptions.Authentication.Validate(); len(errs) != 0 {
+			return errs
+		}
 	}
 
 	if o.StorageOptions.StorageType == StorageTypeEtcd {
@@ -65,11 +79,19 @@ func (o *Options) Validate() []error {
 		}
 	}
 
+	for _, api := range o.APIOptions {
+		if errs := api.ValidateOptions(); len(errs) != 0 {
+			return errs
+		}
+	}
 	return nil
 }
 
 func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) error {
 	serverConfig.AggregatedDiscoveryGroupManager = aggregated.NewResourceManager("apis")
+
+	// avoid picking up an in-cluster service account token
+	o.RecommendedOptions.Authentication.SkipInClusterLookup = true
 
 	if err := o.ExtraOptions.ApplyTo(serverConfig); err != nil {
 		return err
@@ -93,7 +115,6 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 		}
 		serverConfig.SecureServing = nil
 	}
-
 	return nil
 }
 

@@ -11,11 +11,17 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import {
+  getDashboardSceneFor,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+} from 'app/features/dashboard-scene/utils/utils';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
@@ -48,6 +54,8 @@ export type PromOrLokiQuery = PromQuery | LokiQuery;
 
 export const MINUTE = '1m';
 
+export const MANUAL_ROUTING_KEY = 'grafana.alerting.manualRouting';
+
 export const getDefaultFormValues = (): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
 
@@ -69,7 +77,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     execErrState: GrafanaAlertStateDecision.Error,
     evaluateFor: '5m',
     evaluateEvery: MINUTE,
-    manualRouting: false, // let's decide this later
+    manualRouting: getDefautManualRouting(), // we default to true if the feature toggle is enabled and the user hasn't set local storage to false
     contactPoints: {},
     overrideGrouping: false,
     overrideTimings: false,
@@ -81,6 +89,18 @@ export const getDefaultFormValues = (): RuleFormValues => {
     forTime: 1,
     forTimeUnit: 'm',
   });
+};
+
+export const getDefautManualRouting = () => {
+  // first check if feature toggle for simplified routing is enabled
+  const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
+  if (!simplifiedRoutingToggleEnabled) {
+    return false;
+  }
+  //then, check in local storage if the user has enabled simplified routing
+  // if it's not set, we'll default to true
+  const manualRouting = localStorage.getItem(MANUAL_ROUTING_KEY);
+  return manualRouting !== 'false';
 };
 
 export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
@@ -147,7 +167,7 @@ export function getNotificationSettingsForDTO(
   if (contactPoints?.grafana?.selectedContactPoint && manualRouting) {
     return {
       receiver: contactPoints?.grafana?.selectedContactPoint,
-      mute_timings: contactPoints?.grafana?.muteTimeIntervals,
+      mute_time_intervals: contactPoints?.grafana?.muteTimeIntervals,
       group_by: contactPoints?.grafana?.overrideGrouping ? contactPoints?.grafana?.groupBy : undefined,
       group_wait:
         contactPoints?.grafana?.overrideTimings && contactPoints?.grafana?.groupWaitValue
@@ -197,7 +217,7 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
   const contactPoint: ContactPoint | undefined = ga.notification_settings
     ? {
         selectedContactPoint: ga.notification_settings.receiver,
-        muteTimeIntervals: ga.notification_settings.mute_timings ?? [],
+        muteTimeIntervals: ga.notification_settings.mute_time_intervals ?? [],
         overrideGrouping:
           Array.isArray(ga.notification_settings.group_by) && ga.notification_settings.group_by.length > 0,
         overrideTimings: [
@@ -247,24 +267,6 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 
         contactPoints: routingSettings,
         manualRouting: Boolean(routingSettings),
-        // next line is for testing
-        // manualRouting: true,
-        // contactPoints: {
-        //   grafana: {
-        //       selectedContactPoint: "contact_point_5",
-        //       muteTimeIntervals: [
-        //           "mute timing 1"
-        //       ],
-        //       overrideGrouping: true,
-        //       overrideTimings: true,
-        //       "groupBy": [
-        //           "..."
-        //       ],
-        //       groupWaitValue: "35s",
-        //       groupIntervalValue: "6m",
-        //       repeatIntervalValue: "5h"
-        //   }
-        // }
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');
@@ -500,7 +502,7 @@ const dataQueriesToGrafanaQueries = async (
     };
 
     const interpolatedTarget = datasource.interpolateVariablesInQueries
-      ? await datasource.interpolateVariablesInQueries([target], queryVariables)[0]
+      ? datasource.interpolateVariablesInQueries([target], queryVariables)[0]
       : target;
 
     // expressions
@@ -591,6 +593,77 @@ export const panelToRuleFormValues = async (
       {
         key: Annotation.panelID,
         value: String(panel.id),
+      },
+    ],
+  };
+  return formValues;
+};
+
+export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<Partial<RuleFormValues> | undefined> => {
+  if (!vizPanel.state.key) {
+    return undefined;
+  }
+
+  const timeRange = sceneGraph.getTimeRange(vizPanel);
+  const queryRunner = getQueryRunnerFor(vizPanel);
+  if (!queryRunner) {
+    return undefined;
+  }
+  const { queries, datasource, maxDataPoints, minInterval } = queryRunner.state;
+
+  const dashboard = getDashboardSceneFor(vizPanel);
+  if (!dashboard || !dashboard.state.uid) {
+    return undefined;
+  }
+
+  const grafanaQueries = await dataQueriesToGrafanaQueries(
+    queries,
+    rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(timeRange.state.value.raw)),
+    { __sceneObject: { value: vizPanel } },
+    datasource,
+    maxDataPoints,
+    minInterval
+  );
+
+  // if no alerting capable queries are found, can't create a rule
+  if (!grafanaQueries.length || !grafanaQueries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {
+    return undefined;
+  }
+
+  if (!grafanaQueries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(grafanaQueries), '-');
+    grafanaQueries.push(reduceExpression);
+
+    const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
+      reduceExpression.refId,
+      getNextRefIdChar(grafanaQueries)
+    );
+    grafanaQueries.push(thresholdExpression);
+  }
+
+  const { folderTitle, folderUid } = dashboard.state.meta;
+
+  const formValues = {
+    type: RuleFormType.grafana,
+    folder:
+      folderUid && folderTitle
+        ? {
+            uid: folderUid,
+            title: folderTitle,
+          }
+        : undefined,
+    queries: grafanaQueries,
+    name: vizPanel.state.title,
+    condition: grafanaQueries[grafanaQueries.length - 1].refId,
+    annotations: [
+      {
+        key: Annotation.dashboardUID,
+        value: dashboard.state.uid,
+      },
+      {
+        key: Annotation.panelID,
+
+        value: String(getPanelIdForVizPanel(vizPanel)),
       },
     ],
   };

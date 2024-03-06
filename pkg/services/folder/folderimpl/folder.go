@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"runtime"
@@ -27,6 +28,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -40,7 +43,6 @@ type Service struct {
 	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
-
 	// bus is currently used to publish event in case of title change
 	bus bus.Bus
 
@@ -57,6 +59,7 @@ func ProvideService(
 	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
+	supportBundles supportbundles.Service,
 	r prometheus.Registerer,
 ) folder.Service {
 	store := ProvideStore(db, cfg)
@@ -75,6 +78,8 @@ func ProvideService(
 	}
 	srv.DBMigration(db)
 
+	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
+
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
@@ -88,18 +93,21 @@ func (s *Service) DBMigration(db db.DB) {
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		if db.GetDialect().DriverName() == migrator.SQLite {
+			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
 				INSERT INTO folder (uid, org_id, title, created, updated)
 				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1
 				ON CONFLICT DO UPDATE SET title=excluded.title, updated=excluded.updated
 			`)
 		} else if db.GetDialect().DriverName() == migrator.Postgres {
+			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
 				INSERT INTO folder (uid, org_id, title, created, updated)
 				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
 				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
 			`)
 		} else {
+			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
 				INSERT INTO folder (uid, org_id, title, created, updated)
 				SELECT * FROM (SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1) AS derived
@@ -109,6 +117,8 @@ func (s *Service) DBMigration(db db.DB) {
 		if err != nil {
 			return err
 		}
+
+		// covered by UQE_folder_org_id_uid
 		_, err = sess.Exec(`
 			DELETE FROM folder WHERE NOT EXISTS
 				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
@@ -148,9 +158,27 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 		}
 	}
 
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		qry.WithFullpath = false // do not request full path if nested folders are disabled
+		qry.WithFullpathUIDs = false
+	}
+
 	dashFolders, err := s.store.GetFolders(ctx, qry)
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
+	}
+
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		if q.WithFullpathUIDs || q.WithFullpath {
+			for _, f := range dashFolders { // and fix the full path with folder title (unescaped)
+				if q.WithFullpath {
+					f.Fullpath = f.Title
+				}
+				if q.WithFullpathUIDs {
+					f.FullpathUIDs = f.UID
+				}
+			}
+		}
 	}
 
 	return dashFolders, nil
@@ -159,6 +187,10 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
+	if q.UID != nil && *q.UID == accesscontrol.GeneralFolderUID {
+		return folder.RootFolder, nil
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && q.UID != nil && *q.UID == folder.SharedWithMeFolderUID {
@@ -209,8 +241,10 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	}
 
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		dashFolder.Fullpath = dashFolder.Title
 		return dashFolder, nil
 	}
+
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	if q.ID != nil {
@@ -228,6 +262,10 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	// nolint:staticcheck
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
+
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		f.Fullpath = f.Title // set full path to the folder title (unescaped)
+	}
 
 	return f, err
 }
@@ -454,7 +492,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 }
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) || q.UID == accesscontrol.GeneralFolderUID {
 		return nil, nil
 	}
 	if q.UID == folder.SharedWithMeFolderUID {
@@ -610,7 +648,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 			namespace, id := cmd.SignedInUser.GetNamespacedID()
 
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-			if err := s.bus.Publish(context.Background(), &events.FolderTitleUpdated{
+			if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
 				Timestamp: foldr.Updated,
 				Title:     foldr.Title,
 				ID:        dashFolder.ID, // nolint:staticcheck
@@ -1147,4 +1185,67 @@ func (s *Service) RegisterService(r folder.RegistryService) error {
 	s.registry[r.Kind()] = r
 
 	return nil
+}
+
+func (s *Service) supportBundleCollector() supportbundles.Collector {
+	collector := supportbundles.Collector{
+		UID:               "folder-stats",
+		DisplayName:       "Folder information",
+		Description:       "Folder information for the Grafana instance",
+		IncludedByDefault: false,
+		Default:           true,
+		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
+			s.log.Info("Generating folder support bundle")
+			folders, err := s.GetFolders(ctx, folder.GetFoldersQuery{
+				OrgID: 0,
+				SignedInUser: &user.SignedInUser{
+					Login:            "sa-supportbundle",
+					OrgRole:          "Admin",
+					IsGrafanaAdmin:   true,
+					IsServiceAccount: true,
+					Permissions:      map[int64]map[string][]string{accesscontrol.GlobalOrgID: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}}},
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
+			return s.supportItemFromFolders(folders)
+		},
+	}
+	return collector
+}
+
+func (s *Service) supportItemFromFolders(folders []*folder.Folder) (*supportbundles.SupportItem, error) {
+	stats := struct {
+		Total    int              `json:"total"`    // how many folders?
+		Depths   map[int]int      `json:"depths"`   // how deep they are?
+		Children map[int]int      `json:"children"` // how many child folders they have?
+		Folders  []*folder.Folder `json:"folders"`  // what are they?
+	}{Total: len(folders), Folders: folders, Children: map[int]int{}, Depths: map[int]int{}}
+
+	// Build parent-child mapping
+	parents := map[string]string{}
+	children := map[string][]string{}
+	for _, f := range folders {
+		parents[f.UID] = f.ParentUID
+		children[f.ParentUID] = append(children[f.ParentUID], f.UID)
+	}
+	// Find depths of each folder
+	for _, f := range folders {
+		depth := 0
+		for uid := f.UID; uid != ""; uid = parents[uid] {
+			depth++
+		}
+		stats.Depths[depth] += 1
+		stats.Children[len(children[f.UID])] += 1
+	}
+
+	b, err := json.MarshalIndent(stats, "", " ")
+	if err != nil {
+		return nil, err
+	}
+	return &supportbundles.SupportItem{
+		Filename:  "folders.json",
+		FileBytes: b,
+	}, nil
 }
