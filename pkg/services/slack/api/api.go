@@ -171,7 +171,7 @@ func (api *Api) handleLinkSharedEvent(c *contextmodel.ReqContext, event model.Ev
 		return
 	}
 	q := previewUrl.Query()
-	panelId, _ := strconv.ParseInt(q.Get("panelId"), 10, 64)
+	panelId, _ := strconv.ParseInt(q.Get("viewPanel"), 10, 64)
 
 	dq := dashboards.GetDashboardQuery{UID: dashboardUID}
 	dashboard, err := api.dashboardService.GetDashboard(c.Req.Context(), &dq)

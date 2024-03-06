@@ -1045,7 +1045,7 @@ func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "error parsing resource path", err)
 	}
 	q := previewUrl.Query()
-	panelId, _ := strconv.ParseInt(q.Get("panelId"), 10, 64)
+	panelId, _ := strconv.ParseInt(q.Get("viewPanel"), 10, 64)
 
 	hs.log.Info("Generating preview", "resourcePath", previewRequest.ResourcePath)
 

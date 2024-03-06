@@ -36,22 +36,20 @@ func ProvideService(cfg *setting.Cfg, rs rendering.Service) (*DashboardImageServ
 
 func (d *DashboardImageService) TakeScreenshotAndUpload(ctx context.Context, opts dashboardimage.ScreenshotOptions) (string, error) {
 	u := url.URL{}
-	urlPath := "d-solo"
-	if opts.PanelID == 0 {
-		urlPath = "d"
-	}
-	u.Path = path2.Join(urlPath, opts.DashboardUID, opts.DashboardSlug)
+	u.Path = path2.Join("d", opts.DashboardUID, opts.DashboardSlug)
 	p := u.Query()
 	p.Add("orgId", strconv.FormatInt(opts.OrgID, 10))
-	p.Add("panelId", strconv.FormatInt(opts.PanelID, 10))
+	if opts.PanelID != 0 {
+		p.Add("viewPanel", strconv.FormatInt(opts.PanelID, 10))
+	}
 	if opts.From != "" && opts.To != "" {
 		p.Add("from", opts.From)
 		p.Add("to", opts.To)
 	}
-	if opts.PanelID == 0 {
-		p.Add("fullPageImage", "true")
-		p.Add("kiosk", "true")
-	}
+
+	p.Add("fullPageImage", "true")
+	p.Add("kiosk", "true")
+
 	u.RawQuery = p.Encode()
 
 	renderOpts := rendering.Opts{
