@@ -217,7 +217,7 @@ We are working on adding complete support for configuring all other supported OA
 
 ![Screenshot of the Authentication provider list page](/media/docs/grafana-cloud/screenshot-sso-settings-ui-public-prev-v10.4.png)
 
-<!--{{< youtube id="q_fUgltb7-g" >}}-->
+{{< youtube id="xXW2eRTbjDY" >}}
 
 [Documentation](https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/)
 
