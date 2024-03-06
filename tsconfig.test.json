@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Vite uses `bundler` module resolution but Jest doesn't like it so we use `node`.
+    "moduleResolution": "node"
+  }
+}

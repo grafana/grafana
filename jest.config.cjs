@@ -27,7 +27,10 @@ module.exports = {
   verbose: false,
   testEnvironment: 'jsdom',
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest'), { isolatedModules: true }],
+    '^.+\\.(ts|tsx|js|jsx)$': [
+      require.resolve('ts-jest'),
+      { tsconfig: '<rootDir>/tsconfig.test.json', isolatedModules: true },
+    ],
   },
   transformIgnorePatterns: [
     `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
@@ -38,7 +41,7 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-setup.ts'],
   testTimeout: 30000,
-  resolver: `<rootDir>/public/test/jest-resolver.js`,
+  resolver: '<rootDir>/public/test/jest-resolver.cjs',
   setupFilesAfterEnv: ['./public/test/setupTests.ts'],
   globals: {
     __webpack_public_path__: '', // empty string
@@ -58,6 +61,6 @@ module.exports = {
     '@bsull/augurs': '<rootDir>/public/test/mocks/augurs.ts',
   },
   // Log the test results with dynamic Loki tags. Drone CI only
-  reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],
+  reporters: ['default', ['<rootDir>/public/test/log-reporter.cjs', { enable: process.env.DRONE === 'true' }]],
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
 };
