@@ -215,9 +215,6 @@ func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 		start := a.clock.Now()
 
 		evalCtx := eval.NewContextWithPreviousResults(ctx, SchedulerUserFor(e.rule.OrgID), a.newLoadedMetricsReader(e.rule))
-		if a.evalFactory == nil {
-			panic("evalfactory nil")
-		}
 		ruleEval, err := a.evalFactory.Create(evalCtx, e.rule.GetEvalCondition())
 		var results eval.Results
 		var dur time.Duration
