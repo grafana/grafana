@@ -1270,6 +1270,8 @@ trigger:
     include:
     - pkg/**
     - public/*.json
+    - go.mod
+    - go.sum
 type: docker
 volumes:
 - host:
