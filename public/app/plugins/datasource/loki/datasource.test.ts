@@ -1349,6 +1349,7 @@ describe('LokiDatasource', () => {
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
+          legendFormat: '{{ level }}',
         });
       });
 
@@ -1367,6 +1368,7 @@ describe('LokiDatasource', () => {
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
+          legendFormat: '{{ level }}',
         });
       });
 
@@ -1394,6 +1396,30 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual(undefined);
+      });
+
+      it('return logs volume query with defined field', () => {
+        const query = ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume, field: 'test' },
+          {
+            expr: '{label="value"}',
+            queryType: LokiQueryType.Range,
+            refId: 'A',
+          }
+        );
+        expect(query?.expr).toEqual('sum by (test) (count_over_time({label="value"} | drop __error__[$__auto]))');
+      });
+
+      it('return logs volume query with level as field if no field specified', () => {
+        const query = ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            expr: '{label="value"}',
+            queryType: LokiQueryType.Range,
+            refId: 'A',
+          }
+        );
+        expect(query?.expr).toEqual('sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))');
       });
     });
 
