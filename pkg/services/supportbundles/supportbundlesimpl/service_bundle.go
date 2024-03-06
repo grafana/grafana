@@ -26,24 +26,17 @@ type bundleResult struct {
 }
 
 func (s *Service) startBundleWork(ctx context.Context, collectors []string, uid string) {
-	ctxTracer, span := s.tracer.Start(ctx, "SupportBundle.startBundleWork")
-	defer span.End()
-
 	result := make(chan bundleResult)
 
 	go func() {
-		ctxBundler, span := s.tracer.Start(ctxTracer, "SupportBundle.bundle")
-		span.SetAttributes(attribute.String("SupportBundle.bundle.uid", uid))
-
 		defer func() {
-			span.End()
 			if err := recover(); err != nil {
 				s.log.Error("Support bundle collector panic", "err", err, "stack", string(debug.Stack()))
 				result <- bundleResult{err: ErrCollectorPanicked}
 			}
 		}()
 
-		bundleBytes, err := s.bundle(ctxBundler, collectors, uid)
+		bundleBytes, err := s.bundle(ctx, collectors, uid)
 		if err != nil {
 			result <- bundleResult{err: err}
 		}
@@ -74,6 +67,9 @@ func (s *Service) startBundleWork(ctx context.Context, collectors []string, uid 
 }
 
 func (s *Service) bundle(ctx context.Context, collectors []string, uid string) ([]byte, error) {
+	ctxTracer, span := s.tracer.Start(ctx, "SupportBundle.bundle")
+	defer span.End()
+
 	lookup := make(map[string]bool, len(collectors))
 	for _, c := range collectors {
 		lookup[c] = true
@@ -91,7 +87,12 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 			continue
 		}
 
-		item, err := collector.Fn(ctx)
+		// Trace the collector run
+		ctxBundler, span := s.tracer.Start(ctxTracer, "SupportBundle.bundle")
+		span.SetAttributes(attribute.String("SupportBundle.bundle.uid", uid))
+		span.SetAttributes(attribute.String("SupportBundle.collector.uid", collector.UID))
+
+		item, err := collector.Fn(ctxBundler)
 		if err != nil {
 			s.log.Warn("Failed to collect support bundle item", "error", err, "collector", collector.UID)
 		}
@@ -100,6 +101,8 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 		if item != nil {
 			files[item.Filename] = item.FileBytes
 		}
+
+		span.End()
 	}
 
 	// create tar.gz file
