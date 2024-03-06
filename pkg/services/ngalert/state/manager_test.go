@@ -911,6 +911,39 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
+			desc:      "normal -> pending -> pending -> alerting - keep last state respects For when result is NoData",
+			alertRule: baseRuleWith(models.WithForNTimes(2), models.WithNoDataExecAs(models.KeepLast)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because NoData does not have same labels
+				},
+				tn(4): {
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because NoData does not have same labels
+				},
+			},
+			expectedAnnotations: 2,
+			expectedStates: []*state.State{
+				{
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Alerting,
+					Results: []state.Evaluation{
+						newEvaluation(t3, eval.Pending),
+						newEvaluation(tn(4), eval.Alerting),
+					},
+					StartsAt:           tn(4),
+					EndsAt:             tn(4).Add(state.ResendDelay * 4),
+					LastEvaluationTime: tn(4),
+				},
+			},
+		},
+		{
 			desc:      "normal -> normal when result is NoData and NoDataState is ok",
 			alertRule: baseRuleWith(models.WithNoDataExecAs(models.OK)),
 			evalResults: map[time.Time]eval.Results{
@@ -1077,6 +1110,39 @@ func TestProcessEvalResults(t *testing.T) {
 						newEvaluation(tn(4), eval.Alerting),
 					},
 					StartsAt:           t3,
+					EndsAt:             tn(4).Add(state.ResendDelay * 4),
+					LastEvaluationTime: tn(4),
+				},
+			},
+		},
+		{
+			desc:      "normal -> pending -> pending -> alerting - keep last state respects For when result is Error",
+			alertRule: baseRuleWith(models.WithForNTimes(2), models.WithErrorExecAs(models.KeepLastErrState)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+				},
+				tn(4): {
+					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+				},
+			},
+			expectedAnnotations: 2,
+			expectedStates: []*state.State{
+				{
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Alerting,
+					Results: []state.Evaluation{
+						newEvaluation(t3, eval.Pending),
+						newEvaluation(tn(4), eval.Alerting),
+					},
+					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
 				},

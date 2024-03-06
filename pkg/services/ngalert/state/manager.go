@@ -353,9 +353,9 @@ func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.A
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, currentState *State, result eval.Result, logger log.Logger) StateTransition {
 	start := st.clock.Now()
 
-	// If either no data or error state is set to keep last state, don't update the state
+	// If either no data or error state is set to keep last state, do so
 	if result.State == eval.NoData && alertRule.NoDataState == ngModels.KeepLast || result.State == eval.Error && alertRule.ExecErrState == ngModels.KeepLastErrState {
-		result.State = currentState.State
+		st.keepLastState(alertRule, currentState, &result)
 	}
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -450,6 +450,16 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	}
 
 	return nextState
+}
+
+func (st *Manager) keepLastState(alertRule *ngModels.AlertRule, currentState *State, result *eval.Result) {
+	if currentState.State == eval.Pending && result.EvaluatedAt.Sub(currentState.StartsAt) >= alertRule.For {
+		// respect For duration if the current state is pending
+		result.State = eval.Alerting
+	} else {
+		// keep the current state
+		result.State = currentState.State
+	}
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
