@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.1.8";
+export const pluginVersion = "10.1.9";
 
 export enum QueryEditorMode {
   Builder = 'builder',
