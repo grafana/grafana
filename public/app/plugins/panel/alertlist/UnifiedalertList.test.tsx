@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { act } from 'react-test-renderer';
 import { byRole, byText } from 'testing-library-selector';
 
 import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps, PluginExtensionTypes } from '@grafana/data';
@@ -170,9 +169,7 @@ describe('UnifiedAlertList', () => {
   it('subscribes to the dashboard refresh interval', async () => {
     jest.spyOn(defaultProps, 'replaceVariables').mockReturnValue('severity=critical');
 
-    await act(async () => {
-      renderPanel();
-    });
+    renderPanel();
 
     expect(dashboard.events.subscribe).toHaveBeenCalledTimes(1);
     expect(dashboard.events.subscribe.mock.calls[0][0]).toEqual(TimeRangeUpdatedEvent);
@@ -188,14 +185,12 @@ describe('UnifiedAlertList', () => {
 
     const user = userEvent.setup();
 
-    await act(async () => {
-      renderPanel({
-        alertInstanceLabelFilter: '$label',
-        dashboardAlerts: false,
-        alertName: '',
-        datasource: GRAFANA_RULES_SOURCE_NAME,
-        folder: undefined,
-      });
+    renderPanel({
+      alertInstanceLabelFilter: '$label',
+      dashboardAlerts: false,
+      alertName: '',
+      datasource: GRAFANA_RULES_SOURCE_NAME,
+      folder: undefined,
     });
 
     await waitFor(() => {
@@ -227,9 +222,7 @@ describe('UnifiedAlertList', () => {
   it('should render authorization error when user has no permission', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
-    await act(async () => {
-      renderPanel();
-    });
+    renderPanel();
 
     expect(screen.getByRole('alert', { name: 'Permission required' })).toBeInTheDocument();
   });
