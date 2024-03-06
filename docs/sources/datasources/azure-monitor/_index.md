@@ -135,7 +135,9 @@ datasources:
 
 **Current User:**
 
-**Note: The `oauthPassThru` property is required for current user authentication to function. Additionally, `disableGrafanaCache` is necessary to ensure cached responses to resources users do not have access to in Azure are not returned.`**
+{{< admonition type="note" >}}
+The `oauthPassThru` property is required for current user authentication to function. Additionally, `disableGrafanaCache` is necessary to ensure cached responses to resources users do not have access to in Azure are not returned.
+{{< /admonition >}}
 
 ```yaml
 apiVersion: 1 # config file version
