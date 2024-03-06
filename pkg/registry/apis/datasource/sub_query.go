@@ -26,7 +26,8 @@ var (
 )
 
 func (r *subQueryREST) New() runtime.Object {
-	return &query.QueryDataRequest{}
+	// This is added as the "ResponseType" regarless what ProducesObject() says :)
+	return &query.QueryDataResponse{}
 }
 
 func (r *subQueryREST) Destroy() {}
