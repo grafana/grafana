@@ -6,6 +6,18 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 6.0.1 (2024-02-28)
+#
+# ### Added
+#
+# - Suppress new errors relating to absent content introduced in https://github.com/grafana/website/pull/17561.
+#
+# ## 6.0.0 (2024-02-16)
+#
+# ### Changed
+#
+# - Require `jq` for human readable `make doc-validator` output.
+#
 # ## 5.4.0 (2024-02-12)
 #
 # ### Changed
@@ -702,6 +714,13 @@ POSIX_HERESTRING
 
 case "${image}" in
   'grafana/doc-validator')
+    if ! command -v jq >/dev/null 2>&1; then
+      errr '`jq` must be installed for the `doc-validator` target to work.'
+      note 'To install `jq`, refer to https://jqlang.github.io/jq/download/,'
+
+      exit 1
+    fi
+
     proj="$(new_proj "$1")"
     printf '\r\n'
     "${PODMAN}" run \
@@ -714,8 +733,10 @@ case "${image}" in
                 "${DOCS_IMAGE}" \
                 "--include=${DOC_VALIDATOR_INCLUDE}" \
                 "--skip-checks=${DOC_VALIDATOR_SKIP_CHECKS}" \
-                /hugo/content/docs \
-                "$(proj_canonical "${proj}")" | sed "s#$(proj_dst "${proj}")#sources#"
+                "/hugo/content$(proj_canonical "${proj}")" \
+                "$(proj_canonical "${proj}")" \
+                | sed "s#$(proj_dst "${proj}")#sources#" \
+                | jq -r '"ERROR: \(.location.path):\(.location.range.start.line // 1):\(.location.range.start.column // 1): \(.message)" + if .suggestions[0].text then "\nSuggestion: \(.suggestions[0].text)" else "" end'
     ;;
   'grafana/vale')
     proj="$(new_proj "$1")"
@@ -807,7 +828,8 @@ EOF
               -e '/rm -rf dist*/ d' \
               -e '/Press Ctrl+C to stop/ d' \
               -e '/make/ d' \
-              -e '/WARNING: The manual_mount source directory/ d'
+              -e '/WARNING: The manual_mount source directory/ d' \
+              -e '/docs\/_index.md .* not found/ d'
     fi
     ;;
 esac

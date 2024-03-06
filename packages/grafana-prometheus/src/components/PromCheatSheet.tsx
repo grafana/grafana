@@ -28,7 +28,7 @@ const CHEAT_SHEET_ITEMS = [
   },
 ];
 
-const PromCheatSheet = (props: QueryEditorHelpProps<PromQuery>) => (
+export const PromCheatSheet = (props: QueryEditorHelpProps<PromQuery>) => (
   <div>
     <h2>PromQL Cheat Sheet</h2>
     {CHEAT_SHEET_ITEMS.map((item, index) => (
@@ -48,5 +48,3 @@ const PromCheatSheet = (props: QueryEditorHelpProps<PromQuery>) => (
     ))}
   </div>
 );
-
-export default PromCheatSheet;

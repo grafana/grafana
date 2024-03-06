@@ -107,7 +107,15 @@ export const ConfigEditor = (props: Props) => {
           })
         }
         externalId={externalId}
-      />
+      >
+        <Field label="Namespaces of Custom Metrics">
+          <Input
+            placeholder="Namespace1,Namespace2"
+            value={options.jsonData.customMetricsNamespaces || ''}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'customMetricsNamespaces')}
+          />
+        </Field>
+      </ConnectionConfig>
       {config.secureSocksDSProxyEnabled && (
         <SecureSocksProxySettingsNewStyling options={options} onOptionsChange={onOptionsChange} />
       )}

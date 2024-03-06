@@ -10,7 +10,6 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onImportDashboard } from 'app/features/dashboard/utils/dashboard';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { onCreateNewPanel as onCreateNewPanelScene } from 'app/features/dashboard-scene/utils/utils';
 import { useDispatch, useSelector } from 'app/types';
 
 import { setInitialDatasource } from '../state/reducers';
@@ -24,12 +23,11 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
-  const isDashboardScene = dashboard instanceof DashboardScene;
 
   const onAddVisualization = () => {
     let id;
-    if (isDashboardScene) {
-      id = onCreateNewPanelScene(dashboard);
+    if (dashboard instanceof DashboardScene) {
+      id = dashboard.onCreateNewPanel();
     } else {
       id = onCreateNewPanel(dashboard, initialDatasource);
       dispatch(setInitialDatasource(undefined));
@@ -114,8 +112,8 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
                   onClick={() => {
                     DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_from_library' });
-                    if (isDashboardScene) {
-                      // TODO: dashboard scene logic for adding a library panel
+                    if (dashboard instanceof DashboardScene) {
+                      dashboard.onCreateLibPanelWidget();
                     } else {
                       onAddLibraryPanel(dashboard);
                     }

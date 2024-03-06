@@ -3,14 +3,17 @@ package migration
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
@@ -27,16 +30,17 @@ const (
 var ErrDiscontinued = errors.New("discontinued")
 
 // migrateChannels creates Alertmanager configs with migrated receivers and routes.
-func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotification) ([]*migmodels.ContactPair, error) {
+func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotification, log log.Logger) ([]*migmodels.ContactPair, error) {
 	// Create all newly migrated receivers from legacy notification channels.
 	pairs := make([]*migmodels.ContactPair, 0, len(channels))
 	for _, c := range channels {
+		l := log.New("type", c.Type, "name", c.Name, "uid", c.UID)
 		pair := &migmodels.ContactPair{
 			Channel: c,
 		}
 		receiver, err := om.createReceiver(c)
 		if err != nil {
-			om.log.Warn("Failed to create receiver", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
+			l.Warn("Failed to create receiver", "error", err)
 			pair.Error = err
 			pairs = append(pairs, pair)
 			continue
@@ -45,7 +49,7 @@ func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotificati
 
 		route, err := createRoute(c, receiver.Name)
 		if err != nil {
-			om.log.Warn("Failed to create route", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
+			l.Warn("Failed to create route", "error", err)
 			pair.Error = err
 			pairs = append(pairs, pair)
 			continue
@@ -72,14 +76,38 @@ func (om *OrgMigration) createReceiver(c *legacymodels.AlertNotification) (*apim
 		return nil, err
 	}
 
-	return &apimodels.PostableGrafanaReceiver{
+	recv := &apimodels.PostableGrafanaReceiver{
 		UID:                   c.UID,
 		Name:                  c.Name,
 		Type:                  c.Type,
 		DisableResolveMessage: c.DisableResolveMessage,
 		Settings:              data,
 		SecureSettings:        secureSettings,
-	}, nil
+	}
+	err = validateReceiver(recv, om.encryptionService.GetDecryptedValue)
+	if err != nil {
+		return nil, err
+	}
+	return recv, nil
+}
+
+// validateReceiver validates a receiver by building the configuration and checking for errors.
+func validateReceiver(receiver *apimodels.PostableGrafanaReceiver, decrypt func(ctx context.Context, sjd map[string][]byte, key, fallback string) string) error {
+	var (
+		cfg = &alertingNotify.GrafanaIntegrationConfig{
+			UID:                   receiver.UID,
+			Name:                  receiver.Name,
+			Type:                  receiver.Type,
+			DisableResolveMessage: receiver.DisableResolveMessage,
+			Settings:              json.RawMessage(receiver.Settings),
+			SecureSettings:        receiver.SecureSettings,
+		}
+	)
+
+	_, err := alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
+		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{Integrations: []*alertingNotify.GrafanaIntegrationConfig{cfg}},
+	}, decrypt)
+	return err
 }
 
 // createRoute creates a route from a legacy notification channel, and matches using a label based on the channel UID.

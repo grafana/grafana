@@ -30,7 +30,7 @@ var seriesEmpty = Vars{
 func TestSeriesReduce(t *testing.T) {
 	var tests = []struct {
 		name        string
-		red         string
+		red         ReducerID
 		vars        Vars
 		varToReduce string
 		errIs       require.ErrorAssertionFunc
@@ -217,7 +217,7 @@ var seriesNonNumbers = Vars{
 func TestSeriesReduceDropNN(t *testing.T) {
 	var tests = []struct {
 		name        string
-		red         string
+		red         ReducerID
 		vars        Vars
 		varToReduce string
 		results     Results
@@ -304,7 +304,7 @@ func TestSeriesReduceReplaceNN(t *testing.T) {
 	replaceWith := rand.Float64()
 	var tests = []struct {
 		name        string
-		red         string
+		red         ReducerID
 		vars        Vars
 		varToReduce string
 		results     Results

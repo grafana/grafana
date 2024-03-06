@@ -80,7 +80,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 		return nil, convertRecSvcErr(err)
 	}
 	grafanaReceivers := []*apimodels.GettableGrafanaReceiver{}
-	if q.Name != "" {
+	if q.Name != "" && len(res) > 0 {
 		grafanaReceivers = res[0].GettableGrafanaReceivers.GrafanaManagedReceivers // we only expect one receiver group
 	} else {
 		for _, r := range res {

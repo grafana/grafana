@@ -28,6 +28,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Target":              schema_apis_query_v0alpha1_template_Target(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.TemplateVariable":    schema_apis_query_v0alpha1_template_TemplateVariable(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.VariableReplacement": schema_apis_query_v0alpha1_template_VariableReplacement(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.replacement":         schema_apis_query_v0alpha1_template_replacement(ref),
 	}
 }
 
@@ -535,7 +536,7 @@ func schema_apis_query_v0alpha1_template_TemplateVariable(ref common.ReferenceCa
 					"valueListDefinition": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ValueListDefinition is the object definition used by the FE to get a list of possible values to select for render.",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 				},
@@ -543,7 +544,7 @@ func schema_apis_query_v0alpha1_template_TemplateVariable(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
 	}
 }
 
@@ -582,5 +583,39 @@ func schema_apis_query_v0alpha1_template_VariableReplacement(ref common.Referenc
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Position"},
+	}
+}
+
+func schema_apis_query_v0alpha1_template_replacement(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"Position": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Position"),
+						},
+					},
+					"TemplateVariable": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.TemplateVariable"),
+						},
+					},
+					"format": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Possible enum values:\n - `\"csv\"` Formats variables with multiple values as a comma-separated string.\n - `\"doublequote\"` Formats single- and multi-valued variables into a comma-separated string\n - `\"json\"` Formats variables with multiple values as a comma-separated string.\n - `\"pipe\"` Formats variables with multiple values into a pipe-separated string.\n - `\"raw\"` Formats variables with multiple values into comma-separated string. This is the default behavior when no format is specified\n - `\"singlequote\"` Formats single- and multi-valued variables into a comma-separated string",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"csv", "doublequote", "json", "pipe", "raw", "singlequote"},
+						},
+					},
+				},
+				Required: []string{"Position", "TemplateVariable", "format"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Position", "github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.TemplateVariable"},
 	}
 }
