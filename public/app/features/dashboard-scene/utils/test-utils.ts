@@ -15,6 +15,7 @@ import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboar
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { DashboardDTO } from 'app/types';
 
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { PanelRepeaterGridItem, RepeatDirection } from '../scene/PanelRepeaterGridItem';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
@@ -99,7 +100,7 @@ interface SceneOptions {
   useRowRepeater?: boolean;
 }
 
-export function buildPanelRepeaterScene(options: SceneOptions) {
+export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel | LibraryVizPanel) {
   const defaults = { usePanelRepeater: true, ...options };
 
   const repeater = new PanelRepeaterGridItem({
@@ -108,10 +109,12 @@ export function buildPanelRepeaterScene(options: SceneOptions) {
     repeatDirection: options.repeatDirection,
     maxPerRow: options.maxPerRow,
     itemHeight: options.itemHeight,
-    source: new VizPanel({
-      title: 'Panel $server',
-      pluginId: 'timeseries',
-    }),
+    source:
+      source ??
+      new VizPanel({
+        title: 'Panel $server',
+        pluginId: 'timeseries',
+      }),
     x: options.x || 0,
     y: options.y || 0,
   });
