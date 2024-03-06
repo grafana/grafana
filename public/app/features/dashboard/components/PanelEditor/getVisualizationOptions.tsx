@@ -11,12 +11,13 @@ import {
 } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import {
-  isNestedPanelOptions,
   NestedValueAccess,
   PanelOptionsEditorBuilder,
+  isNestedPanelOptions,
 } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
+import { LibraryVizPanelInformation } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { LibraryVizPanel } from 'app/features/dashboard-scene/scene/LibraryVizPanel';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -180,7 +181,7 @@ export function getLibraryPanelOptionsCategory2(libraryPanel: LibraryVizPanel): 
       new OptionsPaneItemDescriptor({
         title: 'Information',
         render: function renderLibraryPanelInformation() {
-          return <div></div>; // Deal with this later: <LibraryPanelInformation panel={panel} formatDate={dashboard.formatDate} />;
+          return <LibraryVizPanelInformation libraryPanel={libraryPanel} />;
         },
       })
     );

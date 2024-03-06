@@ -13,18 +13,18 @@ import {
 } from '@grafana/data';
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
-  SceneObjectState,
-  VizPanel,
-  SceneObjectBase,
-  SceneComponentProps,
-  sceneUtils,
   DeepPartial,
-  SceneQueryRunner,
-  sceneGraph,
-  SceneDataTransformer,
   PanelBuilders,
+  SceneComponentProps,
+  SceneDataTransformer,
   SceneGridItem,
+  SceneObjectBase,
   SceneObjectRef,
+  SceneObjectState,
+  SceneQueryRunner,
+  VizPanel,
+  sceneGraph,
+  sceneUtils,
 } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig, Panel } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -40,7 +40,7 @@ import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem, RepeatDirection } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, getLibraryPanel } from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanel, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 export interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
@@ -361,7 +361,11 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         sourcePanel.parent.parent.setState({
           body: newLibPanel,
         });
-        updateLibraryVizPanel(newLibPanel!);
+        updateLibraryVizPanel(newLibPanel!).then((p) => {
+          if (sourcePanel.parent instanceof LibraryVizPanel) {
+            newLibPanel.setPanelFromLibPanel(p);
+          }
+        });
       }
     }
   }

@@ -339,7 +339,7 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={() => {
-          editPanel?.saveLibraryPanel();
+          editPanel?.onSaveLibraryPanel();
         }}
         tooltip="Save library panel"
         size="sm"
