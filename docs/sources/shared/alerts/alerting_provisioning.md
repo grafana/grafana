@@ -36,14 +36,14 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 | ------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | DELETE | /api/v1/provisioning/alert-rules/:uid                            | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                                  |
 | GET    | /api/v1/provisioning/alert-rules/:uid                            | [route get alert rule](#route-get-alert-rule)                           | Get a specific alert rule by UID.                                     |
+| POST   | /api/v1/provisioning/alert-rules                                 | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                              |
+| PUT    | /api/v1/provisioning/alert-rules/:uid                            | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                                        |
 | GET    | /api/v1/provisioning/alert-rules/:uid/export                     | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.                     |
 | GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                                     |
+| PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group or modify the rules of the group. |
 | GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format.               |
 | GET    | /api/v1/provisioning/alert-rules                                 | [route get alert rules](#route-get-alert-rules)                         | Get all the alert rules.                                              |
 | GET    | /api/v1/provisioning/alert-rules/export                          | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.                   |
-| POST   | /api/v1/provisioning/alert-rules                                 | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                              |
-| PUT    | /api/v1/provisioning/alert-rules/:uid                            | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                                        |
-| PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group or modify the rules of the group. |
 
 #### Example alert rules template
 
@@ -130,9 +130,9 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 | ------ | ------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------ |
 | DELETE | /api/v1/provisioning/contact-points/:uid   | [route delete contactpoints](#route-delete-contactpoints)         | Delete a contact point.                                |
 | GET    | /api/v1/provisioning/contact-points        | [route get contactpoints](#route-get-contactpoints)               | Get all the contact points.                            |
-| GET    | /api/v1/provisioning/contact-points/export | [route get contactpoints export](#route-get-contactpoints-export) | Export all contact points in provisioning file format. |
 | POST   | /api/v1/provisioning/contact-points        | [route post contactpoints](#route-post-contactpoints)             | Create a contact point.                                |
 | PUT    | /api/v1/provisioning/contact-points/:uid   | [route put contactpoint](#route-put-contactpoint)                 | Update an existing contact point.                      |
+| GET    | /api/v1/provisioning/contact-points/export | [route get contactpoints export](#route-get-contactpoints-export) | Export all contact points in provisioning file format. |
 
 ### Notification policies
 
@@ -140,18 +140,20 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 | ------ | ------------------------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------- |
 | DELETE | /api/v1/provisioning/policies        | [route reset policy tree](#route-reset-policy-tree)           | Clears the notification policy tree.                             |
 | GET    | /api/v1/provisioning/policies        | [route get policy tree](#route-get-policy-tree)               | Get the notification policy tree.                                |
-| GET    | /api/v1/provisioning/policies/export | [route get policy tree export](#route-get-policy-tree-export) | Export the notification policy tree in provisioning file format. |
 | PUT    | /api/v1/provisioning/policies        | [route put policy tree](#route-put-policy-tree)               | Sets the notification policy tree.                               |
+| GET    | /api/v1/provisioning/policies/export | [route get policy tree export](#route-get-policy-tree-export) | Export the notification policy tree in provisioning file format. |
 
 ### Mute timings
 
-| Method | URI                                     | Name                                                  | Summary                          |
-| ------ | --------------------------------------- | ----------------------------------------------------- | -------------------------------- |
-| DELETE | /api/v1/provisioning/mute-timings/:name | [route delete mute timing](#route-delete-mute-timing) | Delete a mute timing.            |
-| GET    | /api/v1/provisioning/mute-timings/:name | [route get mute timing](#route-get-mute-timing)       | Get a mute timing.               |
-| GET    | /api/v1/provisioning/mute-timings       | [route get mute timings](#route-get-mute-timings)     | Get all the mute timings.        |
-| POST   | /api/v1/provisioning/mute-timings       | [route post mute timing](#route-post-mute-timing)     | Create a new mute timing.        |
-| PUT    | /api/v1/provisioning/mute-timings/:name | [route put mute timing](#route-put-mute-timing)       | Replace an existing mute timing. |
+| Method | URI                                            | Name                                                            | Summary                                              |
+| ------ | ---------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
+| DELETE | /api/v1/provisioning/mute-timings/:name        | [route delete mute timing](#route-delete-mute-timing)           | Delete a mute timing.                                |
+| GET    | /api/v1/provisioning/mute-timings/:name        | [route get mute timing](#route-get-mute-timing)                 | Get a mute timing.                                   |
+| GET    | /api/v1/provisioning/mute-timings              | [route get mute timings](#route-get-mute-timings)               | Get all the mute timings.                            |
+| POST   | /api/v1/provisioning/mute-timings              | [route post mute timing](#route-post-mute-timing)               | Create a new mute timing.                            |
+| PUT    | /api/v1/provisioning/mute-timings/:name        | [route put mute timing](#route-put-mute-timing)                 | Replace an existing mute timing.                     |
+| GET    | /api/v1/provisioning/mute-timings/export       | [route get mute timings export](#route-get-mute-timings-export) | Export all mute timings in provisioning file format. |
+| GET    | /api/v1/provisioning/mute-timings/:name/export | [route get mute timing export](#route-get-mute-timing-export)   | Export a mute timing in provisioning file format.    |
 
 ### Templates
 
@@ -630,6 +632,83 @@ Status: OK
 ###### <span id="route-get-mute-timings-200-schema"></span> Schema
 
 [MuteTimings](#mute-timings)
+
+### <span id="route-get-mute-timings-export"></span> Export all mute timings in provisioning file format. (_RouteGetMuteTimingsExport_)
+
+```
+GET /api/v1/provisioning/mute-timings/export
+```
+
+#### Parameters
+
+| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                       |
+| -------- | ------- | ------- | -------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                |
+| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
+
+#### All responses
+
+| Code                                      | Status    | Description       | Has headers | Schema                                              |
+| ----------------------------------------- | --------- | ----------------- | :---------: | --------------------------------------------------- |
+| [200](#route-get-mute-timings-export-200) | OK        | MuteTimingsExport |             | [schema](#route-get-mute-timings-export-200-schema) |
+| [403](#route-get-mute-timings-export-403) | Forbidden | PermissionDenied  |             | [schema](#route-get-mute-timings-export-403-schema) |
+
+#### Responses
+
+##### <span id="route-get-mute-timings-export-200"></span> 200 - MuteTimingsExport
+
+Status: OK
+
+###### <span id="route-get-mute-timings-export-200-schema"></span> Schema
+
+[AlertingFileExport](#alerting-file-export)
+
+##### <span id="route-get-mute-timings-export-403"></span> 403 - PermissionDenied
+
+Status: Forbidden
+
+###### <span id="route-get-mute-timings-export-403-schema"></span> Schema
+
+[PermissionDenied](#permission-denied)
+
+### <span id="route-get-mute-timing-export"></span> Export a mute timing in provisioning file format. (_RouteGetMuteTimingExport_)
+
+```
+GET /api/v1/provisioning/mute-timings/:name/export
+```
+
+#### Parameters
+
+| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                       |
+| -------- | ------- | ------- | -------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| name     | `path`  | string  | `string` |           |    ✓     |          | Mute timing name.                                                                                                                 |
+| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                |
+| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
+
+#### All responses
+
+| Code                                     | Status    | Description      | Has headers | Schema                                              |
+| ---------------------------------------- | --------- | ---------------- | :---------: | --------------------------------------------------- |
+| [200](#route-get-mute-timing-export-200) | OK        | MuteTimingExport |             | [schema](#route-get-mute-timings-export-200-schema) |
+| [403](#route-get-mute-timing-export-403) | Forbidden | PermissionDenied |             | [schema](#route-get-mute-timings-export-403-schema) |
+
+#### Responses
+
+##### <span id="route-get-mute-timing-export-200"></span> 200 - MuteTimingExport
+
+Status: OK
+
+###### <span id="route-get-mute-timing-export-200-schema"></span> Schema
+
+[AlertingFileExport](#alerting-file-export)
+
+##### <span id="route-get-mute-timing-export-403"></span> 403 - PermissionDenied
+
+Status: Forbidden
+
+###### <span id="route-get-mute-timing-export-403-schema"></span> Schema
+
+[PermissionDenied](#permission-denied)
 
 ### <span id="route-get-policy-tree"></span> Get the notification policy tree. (_RouteGetPolicyTree_)
 
@@ -1392,6 +1471,14 @@ Status: Accepted
 | time_intervals | [][TimeInterval](#time-interval) | `[]*TimeInterval` |          |         |             |         |
 
 {{% /responsive-table %}}
+
+### <span id="mute-timing-export"></span> MuteTimingExport
+
+**Properties**
+
+### <span id="mute-timings-export"></span> MuteTimingsExport
+
+**Properties**
 
 ### <span id="mute-timings"></span> MuteTimings
 

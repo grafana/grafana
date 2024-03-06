@@ -4,8 +4,8 @@ ARG BASE_IMAGE=alpine:3.18.5
 ARG JS_IMAGE=node:20-alpine3.18
 ARG JS_PLATFORM=linux/amd64
 ARG GO_ARCH=amd64
-ARG GO_VERSION=1.21.6
-ARG GO_IMAGE=golang:${GO_VERSION}-alpine
+ARG GO_VERSION=1.21.8
+ARG GO_IMAGE=golang:${GO_VERSION}-alpine3.18
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -60,6 +60,8 @@ COPY .bingo .bingo
 
 # Include vendored dependencies
 COPY pkg/util/xorm/go.* pkg/util/xorm/
+COPY pkg/apiserver/go.* pkg/apiserver/
+COPY pkg/apimachinery/go.* pkg/apimachinery/
 
 RUN go mod download
 RUN if [ "$BINGO" = "true" ]; then \

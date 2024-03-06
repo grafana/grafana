@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -40,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -57,7 +59,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
 		db := sqlstore.InitTestDB(t)
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, db, &featuremgmt.FeatureManager{}, nil)
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, db, &featuremgmt.FeatureManager{}, supportbundlestest.NewFakeBundleService(), nil)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
@@ -1796,6 +1798,70 @@ func TestFolderServiceGetFolders(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestSupportBundle(t *testing.T) {
+	f := func(uid, parent string) *folder.Folder { return &folder.Folder{UID: uid, ParentUID: parent} }
+	for _, tc := range []struct {
+		Folders          []*folder.Folder
+		ExpectedTotal    int
+		ExpectedDepths   map[int]int
+		ExpectedChildren map[int]int
+	}{
+		// Empty folder list
+		{
+			Folders:          []*folder.Folder{},
+			ExpectedTotal:    0,
+			ExpectedDepths:   map[int]int{},
+			ExpectedChildren: map[int]int{},
+		},
+		// Single folder
+		{
+			Folders:          []*folder.Folder{f("a", "")},
+			ExpectedTotal:    1,
+			ExpectedDepths:   map[int]int{1: 1},
+			ExpectedChildren: map[int]int{0: 1},
+		},
+		// Flat folders
+		{
+			Folders:          []*folder.Folder{f("a", ""), f("b", ""), f("c", "")},
+			ExpectedTotal:    3,
+			ExpectedDepths:   map[int]int{1: 3},
+			ExpectedChildren: map[int]int{0: 3},
+		},
+		// Nested folders
+		{
+			Folders:          []*folder.Folder{f("a", ""), f("ab", "a"), f("ac", "a"), f("x", ""), f("xy", "x"), f("xyz", "xy")},
+			ExpectedTotal:    6,
+			ExpectedDepths:   map[int]int{1: 2, 2: 3, 3: 1},
+			ExpectedChildren: map[int]int{0: 3, 1: 2, 2: 1},
+		},
+	} {
+		svc := &Service{}
+		supportItem, err := svc.supportItemFromFolders(tc.Folders)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		stats := struct {
+			Total    int         `json:"total"`
+			Depths   map[int]int `json:"depths"`
+			Children map[int]int `json:"children"`
+		}{}
+		if err := json.Unmarshal(supportItem.FileBytes, &stats); err != nil {
+			t.Fatal(err)
+		}
+
+		if stats.Total != tc.ExpectedTotal {
+			t.Error("Total mismatch", stats, tc)
+		}
+		if fmt.Sprint(stats.Depths) != fmt.Sprint(tc.ExpectedDepths) {
+			t.Error("Depths mismatch", stats, tc.ExpectedDepths)
+		}
+		if fmt.Sprint(stats.Children) != fmt.Sprint(tc.ExpectedChildren) {
+			t.Error("Depths mismatch", stats, tc.ExpectedChildren)
+		}
+	}
 }
 
 func CreateSubtreeInStore(t *testing.T, store store, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []*folder.Folder {
