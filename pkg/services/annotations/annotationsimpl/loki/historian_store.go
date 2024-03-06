@@ -43,6 +43,7 @@ var (
 
 type lokiQueryClient interface {
 	RangeQuery(ctx context.Context, query string, start, end, limit int64) (historian.QueryRes, error)
+	GetConfigProjection(ctx context.Context) (historian.LokiConfProj, error)
 }
 
 // LokiHistorianStore is a read store that queries Loki for alert state history.
@@ -106,6 +107,16 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 	// query.From and query.To are always in milliseconds, convert them to nanoseconds for loki
 	from := query.From * 1e6
 	to := query.To * 1e6
+
+	// clamp 'from' to the max time range, treating a value of 0 as no limit
+	cfg, err := r.client.GetConfigProjection(ctx)
+	if err != nil {
+		return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to get loki config: %w", err)
+	}
+	maxTimeRange := time.Duration(cfg.LimitsConfig.MaxQueryLength).Nanoseconds()
+	if maxTimeRange != 0 && to-from > maxTimeRange {
+		from = to - maxTimeRange
+	}
 
 	res, err := r.client.RangeQuery(ctx, logQL, from, to, query.Limit)
 	if err != nil {

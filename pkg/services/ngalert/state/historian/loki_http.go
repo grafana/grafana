@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -193,26 +195,15 @@ func (c *HttpLokiClient) Push(ctx context.Context, s []Stream) error {
 	c.metrics.BytesWritten.Add(float64(len(enc)))
 	req = req.WithContext(ctx)
 	resp, err := c.client.Do(req)
-	if resp != nil {
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				c.log.Warn("Failed to close response body", "err", err)
-			}
-		}()
-	}
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
 	}
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		byt, _ := io.ReadAll(resp.Body)
-		if len(byt) > 0 {
-			c.log.Error("Error response from Loki", "response", string(byt), "status", resp.StatusCode)
-		} else {
-			c.log.Error("Error response from Loki with an empty body", "status", resp.StatusCode)
-		}
-		return fmt.Errorf("received a non-200 response from loki, status: %d", resp.StatusCode)
+	_, err = c.handleLokiResponse(resp)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }
 
@@ -262,22 +253,9 @@ func (c *HttpLokiClient) RangeQuery(ctx context.Context, logQL string, start, en
 		return QueryRes{}, fmt.Errorf("error executing request: %w", err)
 	}
 
-	defer func() {
-		_ = res.Body.Close()
-	}()
-
-	data, err := io.ReadAll(res.Body)
+	data, err := c.handleLokiResponse(res)
 	if err != nil {
-		return QueryRes{}, fmt.Errorf("error reading request response: %w", err)
-	}
-
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		if len(data) > 0 {
-			c.log.Error("Error response from Loki", "response", string(data), "status", res.StatusCode)
-		} else {
-			c.log.Error("Error response from Loki with an empty body", "status", res.StatusCode)
-		}
-		return QueryRes{}, fmt.Errorf("received a non-200 response from loki, status: %d", res.StatusCode)
+		return QueryRes{}, err
 	}
 
 	result := QueryRes{}
@@ -296,4 +274,71 @@ type QueryRes struct {
 
 type QueryData struct {
 	Result []Stream `json:"result"`
+}
+
+type LokiLimitsConfProj struct {
+	MaxQueryLength model.Duration `yaml:"max_query_length" json:"max_query_length"`
+}
+
+type LokiConfProj struct {
+	LimitsConfig LokiLimitsConfProj `yaml:"limits_config,omitempty"`
+}
+
+func (c *HttpLokiClient) GetConfigProjection(ctx context.Context) (LokiConfProj, error) {
+	queryURL := c.cfg.ReadPathURL.JoinPath("/config")
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		c.log.Error("Error creating request", "err", err)
+		return LokiConfProj{}, err
+	}
+
+	req = req.WithContext(ctx)
+	c.setAuthAndTenantHeaders(req)
+
+	res, err := c.client.Do(req)
+	if err != nil {
+		c.log.Error("Error executing request", "err", err)
+		return LokiConfProj{}, err
+	}
+
+	data, err := c.handleLokiResponse(res)
+	if err != nil {
+		return LokiConfProj{}, err
+	}
+
+	result := LokiConfProj{}
+	if err := json.Unmarshal(data, &result); err != nil {
+		return LokiConfProj{}, fmt.Errorf("error parsing request response: %w", err)
+	}
+
+	return result, nil
+}
+
+func (c *HttpLokiClient) handleLokiResponse(res *http.Response) ([]byte, error) {
+	if res == nil {
+		return nil, fmt.Errorf("response is nil")
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			c.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading request response: %w", err)
+	}
+
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		if len(data) > 0 {
+			c.log.Error("Error response from Loki", "response", string(data), "status", res.StatusCode)
+		} else {
+			c.log.Error("Error response from Loki with an empty body", "status", res.StatusCode)
+		}
+		return nil, fmt.Errorf("received a non-200 response from loki, status: %d", res.StatusCode)
+	}
+
+	return data, nil
 }
