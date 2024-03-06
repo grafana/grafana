@@ -98,5 +98,6 @@ function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPrel
   return registry;
 }
 
+// This is a singleton of the reactive registry that can be accessed throughout the Grafana core
 // TODO - check if this is only accessible by core Grafana (and not by plugins)
 export const reactivePluginExtensionRegistry = new ReactivePluginExtensionsRegistry();

@@ -87,10 +87,7 @@ import {
   createPluginCapabilityGetter,
   createPluginExtensionsGetter,
 } from './features/plugins/extensions/getPluginExtensions';
-import {
-  ReactivePluginExtensionsRegistry,
-  reactivePluginExtensionRegistry,
-} from './features/plugins/extensions/reactivePluginExtensionRegistry';
+import { reactivePluginExtensionRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
 import { createPluginExtensionsHook } from './features/plugins/extensions/usePluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';

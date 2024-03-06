@@ -6,6 +6,7 @@ import { useStyles2, TabsBar, TabContent, Tab } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'app/types';
+
 import ExtensionSettings from '../components/ExtensionSettings';
 
 export default function Extensions(): ReactElement | null {
@@ -16,21 +17,6 @@ export default function Extensions(): ReactElement | null {
     { value: 'settings', label: 'Settings', icon: 'cog' },
     { value: 'explore', label: 'Explore', icon: 'bolt' },
   ];
-
-  async function generateSHA256Hash(inputString) {
-    // Encode the string into a Uint8Array
-    const encoder = new TextEncoder();
-    const data = encoder.encode(inputString);
-
-    // Use the SubtleCrypto.digest method to generate the hash
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-
-    // Convert the ArrayBuffer to a hex string
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-
-    return hashHex;
-  }
 
   generateSHA256Hash('test').then((hash) => console.log('*** HASH ***', hash));
 
@@ -52,8 +38,6 @@ export default function Extensions(): ReactElement | null {
           {tabs[0].value === activeTab && <ExtensionSettings />}
           {tabs[1].value === activeTab && <div>Second tab content</div>}
         </TabContent>
-
-        <div>ExtensionSettings 12345</div>
       </Page.Contents>
     </Page>
   );
@@ -74,3 +58,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
+
+async function generateSHA256Hash(str: string) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+
+  return hashHex;
+}
