@@ -115,9 +115,7 @@ export function withRulerRulesMetadataLogging<TFunc extends (...args: any[]) => 
         rulesCount,
         loadTimeMs: performance.now() - startLoadingTs,
       },
-      {
-        ...context,
-      }
+      context
     );
     return response;
   };
