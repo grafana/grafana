@@ -186,14 +186,14 @@ func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 	logger := a.logger.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
 
-	orgID := fmt.Sprint(key.OrgID)
-	evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
-	evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
-	evalTotalFailures := a.metrics.EvalFailures.WithLabelValues(orgID)
-	processDuration := a.metrics.ProcessDuration.WithLabelValues(orgID)
-	sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
-
 	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span trace.Span, retry bool) error {
+		orgID := fmt.Sprint(key.OrgID)
+		evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
+		evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
+		evalTotalFailures := a.metrics.EvalFailures.WithLabelValues(orgID)
+		processDuration := a.metrics.ProcessDuration.WithLabelValues(orgID)
+		sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
+
 		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 		start := a.clock.Now()
 
