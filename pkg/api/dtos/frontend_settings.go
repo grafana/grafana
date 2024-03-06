@@ -261,4 +261,9 @@ type FrontendSettingsDTO struct {
 	// Enterprise
 	Licensing     *FrontendSettingsLicensingDTO     `json:"licensing,omitempty"`
 	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
+
+	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
+	// Experimental Scope settings
+	ListScopesEndpoint          string `json:"listScopesEndpoint"`
+	ListDashboardScopesEndpoint string `json:"listDashboardScopesEndpoint"`
 }
