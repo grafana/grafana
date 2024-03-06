@@ -343,24 +343,40 @@ func TestProvisioningApi(t *testing.T) {
 	})
 
 	t.Run("alert rule groups", func(t *testing.T) {
-		t.Run("are present, GET returns 200", func(t *testing.T) {
+		t.Run("are present", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
 			insertRule(t, sut, createTestAlertRule("rule", 1))
 
-			response := sut.RouteGetAlertRuleGroup(&rc, "folder-uid", "my-cool-group")
+			t.Run("GET returns 200", func(t *testing.T) {
+				response := sut.RouteGetAlertRuleGroup(&rc, "folder-uid", "my-cool-group")
 
-			require.Equal(t, 200, response.Status())
+				require.Equal(t, 200, response.Status())
+			})
+
+			t.Run("DELETE returns 204", func(t *testing.T) {
+				response := sut.RouteDeleteAlertRuleGroup(&rc, "folder-uid", "my-cool-group")
+
+				require.Equal(t, 204, response.Status())
+			})
 		})
 
-		t.Run("are missing, GET returns 404", func(t *testing.T) {
+		t.Run("are missing", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
 			insertRule(t, sut, createTestAlertRule("rule", 1))
 
-			response := sut.RouteGetAlertRuleGroup(&rc, "folder-uid", "does not exist")
+			t.Run("GET returns 404", func(t *testing.T) {
+				response := sut.RouteGetAlertRuleGroup(&rc, "folder-uid", "does not exist")
 
-			require.Equal(t, 404, response.Status())
+				require.Equal(t, 404, response.Status())
+			})
+
+			t.Run("DELETE returns 404", func(t *testing.T) {
+				response := sut.RouteDeleteAlertRuleGroup(&rc, "folder-uid", "does not exist")
+
+				require.Equal(t, 404, response.Status())
+			})
 		})
 
 		t.Run("are invalid at group level", func(t *testing.T) {
@@ -1587,6 +1603,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		})
 	sqlStore := db.InitTestDB(t)
 	store := store.DBstore{
+		Logger:   log,
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Second * 10,

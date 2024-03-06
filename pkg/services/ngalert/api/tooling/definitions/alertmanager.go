@@ -739,11 +739,11 @@ func (c *GettableApiAlertingConfig) GetReceivers() []*GettableApiReceiver {
 	return c.Receivers
 }
 
-func (c *GettableApiAlertingConfig) GetTimeIntervals() []config.TimeInterval { return c.TimeIntervals }
-
 func (c *GettableApiAlertingConfig) GetMuteTimeIntervals() []config.MuteTimeInterval {
 	return c.MuteTimeIntervals
 }
+
+func (c *GettableApiAlertingConfig) GetTimeIntervals() []config.TimeInterval { return c.TimeIntervals }
 
 func (c *GettableApiAlertingConfig) GetRoute() *Route {
 	return c.Route
@@ -802,12 +802,14 @@ func (c *GettableApiAlertingConfig) validate() error {
 
 // Config is the top-level configuration for Alertmanager's config files.
 type Config struct {
-	Global            *config.GlobalConfig      `yaml:"global,omitempty" json:"global,omitempty"`
-	Route             *Route                    `yaml:"route,omitempty" json:"route,omitempty"`
-	InhibitRules      []config.InhibitRule      `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
-	TimeIntervals     []config.TimeInterval     `yaml:"time_intervals,omitempty" json:"time_intervals,omitempty"`
+	Global       *config.GlobalConfig `yaml:"global,omitempty" json:"global,omitempty"`
+	Route        *Route               `yaml:"route,omitempty" json:"route,omitempty"`
+	InhibitRules []config.InhibitRule `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
+	// MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.
 	MuteTimeIntervals []config.MuteTimeInterval `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
-	Templates         []string                  `yaml:"templates" json:"templates"`
+	TimeIntervals     []config.TimeInterval     `yaml:"time_intervals,omitempty" json:"time_intervals,omitempty"`
+	// Templates is unused by Grafana Managed AM but is passed-through for compatibility with some external AMs.
+	Templates []string `yaml:"templates" json:"templates"`
 }
 
 // A Route is a node that contains definitions of how to handle alerts. This is modified
@@ -939,15 +941,6 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	}
 
 	tiNames := make(map[string]struct{})
-	for _, ti := range c.TimeIntervals {
-		if ti.Name == "" {
-			return fmt.Errorf("missing name in time interval")
-		}
-		if _, ok := tiNames[ti.Name]; ok {
-			return fmt.Errorf("time interval %q is not unique", ti.Name)
-		}
-		tiNames[ti.Name] = struct{}{}
-	}
 	for _, mt := range c.MuteTimeIntervals {
 		if mt.Name == "" {
 			return fmt.Errorf("missing name in mute time interval")
@@ -956,6 +949,15 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("mute time interval %q is not unique", mt.Name)
 		}
 		tiNames[mt.Name] = struct{}{}
+	}
+	for _, ti := range c.TimeIntervals {
+		if ti.Name == "" {
+			return fmt.Errorf("missing name in time interval")
+		}
+		if _, ok := tiNames[ti.Name]; ok {
+			return fmt.Errorf("time interval %q is not unique", ti.Name)
+		}
+		tiNames[ti.Name] = struct{}{}
 	}
 	return checkTimeInterval(c.Route, tiNames)
 }
@@ -988,11 +990,11 @@ func (c *PostableApiAlertingConfig) GetReceivers() []*PostableApiReceiver {
 	return c.Receivers
 }
 
-func (c *PostableApiAlertingConfig) GetTimeIntervals() []config.TimeInterval { return c.TimeIntervals }
-
 func (c *PostableApiAlertingConfig) GetMuteTimeIntervals() []config.MuteTimeInterval {
 	return c.MuteTimeIntervals
 }
+
+func (c *PostableApiAlertingConfig) GetTimeIntervals() []config.TimeInterval { return c.TimeIntervals }
 
 func (c *PostableApiAlertingConfig) GetRoute() *Route {
 	return c.Route

@@ -21,15 +21,19 @@ import {
   URLRangeValue,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery, DataSourceRef, TimeZone } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, DataSourceRef, TimeZone } from '@grafana/schema';
+import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
+import { SortOrder } from 'app/core/utils/richHistory';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExplorePanelData, StoreState } from 'app/types';
-import { ExploreItemState } from 'app/types/explore';
+import { ExploreItemState, RichHistoryQuery } from 'app/types/explore';
 
 import store from '../../../core/store';
 import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
+
+export const MAX_HISTORY_AUTOCOMPLETE_ITEMS = 100;
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -100,7 +104,7 @@ export async function loadAndInitDatasource(
   orgId: number,
   datasource: DataSourceRef | string
 ): Promise<{ history: HistoryItem[]; instance: DataSourceApi }> {
-  let instance;
+  let instance: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
   try {
     // let datasource be a ref if we have the info, otherwise a name or uid will do for lookup
     instance = await getDatasourceSrv().get(datasource);
@@ -119,12 +123,60 @@ export async function loadAndInitDatasource(
     }
   }
 
-  const historyKey = `grafana.explore.history.${instance.meta?.id}`;
-  const history = store.getObject<HistoryItem[]>(historyKey, []);
-  // Save last-used datasource
+  let history: HistoryItem[] = [];
 
+  const localStorageHistory = getLocalRichHistoryStorage();
+
+  const historyResults = await localStorageHistory.getRichHistory({
+    search: '',
+    sortOrder: SortOrder.Ascending,
+    datasourceFilters: [instance.name],
+    starred: false,
+  });
+
+  // first, fill autocomplete with query history for that datasource
+  if ((historyResults.total || 0) > 0) {
+    historyResults.richHistory.forEach((historyResult: RichHistoryQuery) => {
+      historyResult.queries.forEach((q) => {
+        history.push({ ts: parseInt(historyResult.id, 10), query: q });
+      });
+    });
+  }
+
+  if (history.length < MAX_HISTORY_AUTOCOMPLETE_ITEMS) {
+    // check the last 100 mixed history results seperately
+    const historyMixedResults = await localStorageHistory.getRichHistory({
+      search: '',
+      sortOrder: SortOrder.Ascending,
+      datasourceFilters: [MIXED_DATASOURCE_NAME],
+      starred: false,
+    });
+
+    if ((historyMixedResults.total || 0) > 0) {
+      // second, fill autocomplete with queries for that datasource used in Mixed scenarios
+      historyMixedResults.richHistory.forEach((historyResult: RichHistoryQuery) => {
+        historyResult.queries.forEach((q) => {
+          if (q?.datasource?.uid === instance.uid) {
+            history.push({ ts: parseInt(historyResult.id, 10), query: q });
+          }
+        });
+      });
+    }
+  }
+
+  // finally, add any legacy local storage history that might exist. To be removed in Grafana 12 #83309
+  if (history.length < MAX_HISTORY_AUTOCOMPLETE_ITEMS) {
+    const historyKey = `grafana.explore.history.${instance.meta?.id}`;
+    history = [...history, ...store.getObject<HistoryItem[]>(historyKey, [])];
+  }
+
+  if (history.length > MAX_HISTORY_AUTOCOMPLETE_ITEMS) {
+    history.length = MAX_HISTORY_AUTOCOMPLETE_ITEMS;
+  }
+
+  // Save last-used datasource
   setLastUsedDatasourceUID(orgId, instance.uid);
-  return { history, instance };
+  return { history: history, instance };
 }
 
 export function createCacheKey(absRange: AbsoluteTimeRange) {

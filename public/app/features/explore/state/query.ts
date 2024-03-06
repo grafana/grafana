@@ -13,7 +13,6 @@ import {
   dateTimeForTimeZone,
   hasQueryExportSupport,
   hasQueryImportSupport,
-  HistoryItem,
   LoadingState,
   LogsVolumeType,
   PanelEvents,
@@ -35,7 +34,6 @@ import {
   getTimeRange,
   hasNonEmptyQuery,
   stopQueryState,
-  updateHistory,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
@@ -481,16 +479,21 @@ export function modifyQueries(
 async function handleHistory(
   dispatch: ThunkDispatch,
   state: ExploreState,
-  history: Array<HistoryItem<DataQuery>>,
   datasource: DataSourceApi,
-  queries: DataQuery[],
-  exploreId: string
+  queries: DataQuery[]
 ) {
-  const datasourceId = datasource.meta.id;
-  const nextHistory = updateHistory(history, datasourceId, queries);
-  dispatch(historyUpdatedAction({ history: nextHistory }));
+  /*
+  Always write to local storage. If query history is enabled, we will use local storage for autocomplete only (and want to hide errors)
+  If query history is disabled, we will use local storage for query history as well, and will want to show errors
+  */
+  dispatch(addHistoryItem(true, datasource.uid, datasource.name, queries, config.queryHistoryEnabled));
+  if (config.queryHistoryEnabled) {
+    // write to remote if flag enabled
+    dispatch(addHistoryItem(false, datasource.uid, datasource.name, queries, false));
+  }
 
-  dispatch(addHistoryItem(datasource.uid, datasource.name, queries));
+  // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
+  // used filters. Instead, we refresh the query history list.
   await dispatch(loadRichHistory());
 }
 
@@ -544,7 +547,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     }));
 
     if (datasourceInstance != null) {
-      handleHistory(dispatch, getState().explore, exploreItemState.history, datasourceInstance, queries, exploreId);
+      handleHistory(dispatch, getState().explore, datasourceInstance, queries);
     }
 
     const cachedValue = getResultsFromCache(cache, absoluteRange);

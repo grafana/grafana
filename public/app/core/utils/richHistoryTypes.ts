@@ -23,8 +23,8 @@ export type RichHistorySearchFilters = {
   sortOrder: SortOrder;
   /** Names of data sources (not uids) - used by local and remote storage **/
   datasourceFilters: string[];
-  from: number;
-  to: number;
+  from?: number;
+  to?: number;
   starred: boolean;
   page?: number;
 };

@@ -16,7 +16,7 @@ labels:
     - enterprise
     - oss
 title: Labels and annotations
-weight: 120
+weight: 130
 ---
 
 # Labels and annotations

@@ -107,10 +107,6 @@ const (
 	// Logs the path for requests that are instrumented as unknown
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
 
-	// FlagDataConnectionsConsole
-	// Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.
-	FlagDataConnectionsConsole = "dataConnectionsConsole"
-
 	// FlagTopnav
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
@@ -243,10 +239,6 @@ const (
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
 
-	// FlagExternalServiceAuth
-	// Starts an OAuth2 authentication provider for external services
-	FlagExternalServiceAuth = "externalServiceAuth"
-
 	// FlagRefactorVariablesTimeRange
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
@@ -355,10 +347,6 @@ const (
 	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
 
-	// FlagSplitScopes
-	// Support faster dashboard and folder search by splitting permission scopes into parts
-	FlagSplitScopes = "splitScopes"
-
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
@@ -386,6 +374,10 @@ const (
 	// FlagDashgpt
 	// Enable AI powered features in dashboards
 	FlagDashgpt = "dashgpt"
+
+	// FlagAiGeneratedDashboardChanges
+	// Enable AI powered features for dashboards to auto-summary changes when saving
+	FlagAiGeneratedDashboardChanges = "aiGeneratedDashboardChanges"
 
 	// FlagReportingRetries
 	// Enables rendering retries for the reporting feature
@@ -472,7 +464,7 @@ const (
 	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
 
 	// FlagTeamHttpHeaders
-	// Enables datasources to apply team headers to the client requests
+	// Enables Team LBAC for datasources to apply team headers to the client requests
 	FlagTeamHttpHeaders = "teamHttpHeaders"
 
 	// FlagAwsDatasourcesNewFormStyling
@@ -583,10 +575,6 @@ const (
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
 
-	// FlagDisplayAnonymousStats
-	// Enables anonymous stats to be shown in the UI for Grafana
-	FlagDisplayAnonymousStats = "displayAnonymousStats"
-
 	// FlagLokiQueryHints
 	// Enables query hints for Loki
 	FlagLokiQueryHints = "lokiQueryHints"
@@ -631,6 +619,10 @@ const (
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
 
+	// FlagSqlExpressions
+	// Enables using SQL and DuckDB functions as Expressions.
+	FlagSqlExpressions = "sqlExpressions"
+
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
 	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
@@ -655,7 +647,15 @@ const (
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
 
+	// FlagBetterPageScrolling
+	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
+	FlagBetterPageScrolling = "betterPageScrolling"
+
 	// FlagAlertingUpgradeDryrunOnStart
 	// When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.
 	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
+
+	// FlagScopeFilters
+	// Enables the use of scope filters in Grafana
+	FlagScopeFilters = "scopeFilters"
 )
