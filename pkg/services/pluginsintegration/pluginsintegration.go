@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pCfg "github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
@@ -35,13 +36,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -55,7 +56,12 @@ import (
 
 // WireSet provides a wire.ProviderSet of plugin providers.
 var WireSet = wire.NewSet(
-	config.ProvideConfig,
+	pluginconfig.ProvidePluginManagementConfig,
+	pluginconfig.ProvidePluginInstanceConfig,
+	pluginconfig.NewEnvVarsProvider,
+	wire.Bind(new(envvars.Provider), new(*pluginconfig.EnvVarsProvider)),
+	pluginconfig.NewRequestConfigProvider,
+	wire.Bind(new(pluginconfig.PluginRequestConfigProvider), new(*pluginconfig.RequestConfigProvider)),
 	pluginstore.ProvideService,
 	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginstore.Service)),
@@ -130,7 +136,7 @@ var WireExtensionSet = wire.NewSet(
 )
 
 func ProvideClientDecorator(
-	cfg *setting.Cfg, pCfg *pCfg.Cfg,
+	cfg *setting.Cfg, pCfg *pCfg.PluginManagementCfg,
 	pluginRegistry registry.Service,
 	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer,
@@ -142,7 +148,7 @@ func ProvideClientDecorator(
 }
 
 func NewClientDecorator(
-	cfg *setting.Cfg, pCfg *pCfg.Cfg,
+	cfg *setting.Cfg, pCfg *pCfg.PluginManagementCfg,
 	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager,
 	promRegisterer prometheus.Registerer, registry registry.Service,

@@ -3,7 +3,7 @@ package template
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 

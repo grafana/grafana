@@ -20,7 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var ExtraGrafanaComSettingKeys = []string{allowedOrganizationsKey}
+var ExtraGrafanaComSettingKeys = map[string]ExtraKeyInfo{
+	allowedOrganizationsKey: {Type: String, DefaultValue: ""},
+}
 
 var _ social.SocialConnector = (*SocialGrafanaCom)(nil)
 var _ ssosettings.Reloadable = (*SocialGrafanaCom)(nil)
@@ -85,7 +87,7 @@ func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSet
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.SocialBase = newSocialBase(social.GrafanaComProviderName, newInfo, s.features, s.cfg)
+	s.updateInfo(social.GrafanaComProviderName, newInfo)
 
 	s.url = s.cfg.GrafanaComURL
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])

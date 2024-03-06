@@ -61,7 +61,7 @@ func schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardCreateCommand(ref commo
 					"dashboard": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The complete dashboard model. required:true",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 					"expires": {
@@ -85,7 +85,7 @@ func schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardCreateCommand(ref commo
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
 	}
 }
 
@@ -325,7 +325,7 @@ func schema_pkg_apis_dashboardsnapshot_v0alpha1_FullDashboardSnapshot(ref common
 					"dashboard": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The raw dashboard (unstructured for now)",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 				},
@@ -333,7 +333,7 @@ func schema_pkg_apis_dashboardsnapshot_v0alpha1_FullDashboardSnapshot(ref common
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SnapshotInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SnapshotInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 

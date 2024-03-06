@@ -61,7 +61,7 @@ The following image and descriptions highlight all dashboard features.
 
 ## Keyboard shortcuts
 
-Grafana has a number of keyboard shortcuts available. Press `?` or `h` on your keyboard to display all keyboard shortcuts available in your version of Grafana.
+Grafana has a number of keyboard shortcuts available. Press `?` or `Ctrl+h` on your keyboard to display all keyboard shortcuts available in your version of Grafana.
 
 - `Ctrl+S`: Saves the current dashboard.
 - `f`: Opens the dashboard finder / search.
@@ -197,7 +197,7 @@ Click the **Copy time range to clipboard** icon to copy the current time range t
 
 <img class="no-shadow" src="/media/docs/grafana/dashboards/screenshot-copy-paste-time-range.png" max-width="900">
 
-You can also copy and paste a time range using the the keyboard shortcuts `t+c` and `t+v` respectively.
+You can also copy and paste a time range using the keyboard shortcuts `t+c` and `t+v` respectively.
 
 #### Zoom out (Cmd+Z or Ctrl+Z)
 

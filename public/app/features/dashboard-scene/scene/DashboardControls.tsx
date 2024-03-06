@@ -13,6 +13,7 @@ import {
 } from '@grafana/scenes';
 import { Box, Stack, useStyles2 } from '@grafana/ui';
 
+import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardLinksControls } from './DashboardLinksControls';
@@ -51,6 +52,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         ))}
         <Box grow={1} />
         {!editPanel && <DashboardLinksControls links={links} uid={dashboard.state.uid} />}
+        {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
       {!hideTimeControls && (
         <Stack justifyContent={'flex-end'}>
