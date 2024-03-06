@@ -44,8 +44,8 @@ type HostedGrafanaACHeaderMiddleware struct {
 }
 
 func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(ctx context.Context, pCtx backend.PluginContext, h backend.ForwardHTTPHeaders) {
-	// if request is not for a datasource, skip the middleware
-	if h == nil || pCtx.DataSourceInstanceSettings == nil {
+	// if request is not for a datasource or the right headers are already set, skip the middleware
+	if h == nil || pCtx.DataSourceInstanceSettings == nil || h.GetHTTPHeader(GrafanaRequestID) != "" {
 		return
 	}
 
