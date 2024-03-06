@@ -585,16 +585,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
       row.setState({ children: panels });
 
-      const layout = this.state.body;
-
-      if (layout instanceof SceneGridLayout || layout instanceof SceneFlexLayout) {
-        const children: SceneObject[] = layout.state.children;
-        const index = children.findIndex((child) => child.state.key === row?.state.key);
-
-        children.splice(index, 1, row);
-
-        layout.setState({ children });
-      }
+      this.state.body.forceRender();
 
       return;
     }
