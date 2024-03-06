@@ -58,7 +58,7 @@ Use the aforementioned tooling and warnings to plan migrations to React based [v
 
 To learn more, refer to the [Angular support deprecation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/), which includes [recommended alternative plugins](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/angular-plugins/).
 
-<!--{{< youtube id="XlEVs6g8dC8" >}}-->
+{{< youtube id="XlEVs6g8dC8" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/)
 
@@ -148,7 +148,7 @@ When you're browsing Grafana - for example, exploring the dashboard and metrics 
 
 Return to Previous is rolling out across Grafana Cloud now. To try Return to Previous in self-managed Grafana, turn on the `returnToPrevious` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana v10.4 or newer.
 
-<!--{{< youtube id="-Y3qPfD2wrA" >}}-->
+{{< youtube id="-Y3qPfD2wrA" >}}
 
 {{< admonition type="note" >}}
 The term **context** refers to applications in Grafana like Incident and OnCall, as well as core features like Explore and Dashboards.
@@ -170,7 +170,7 @@ Simplified routing inherits the alert rule RBAC, increasing control over notific
 
 To try out Simplified Alert Notification Routing enable the `alertingSimplifiedRouting` feature toggle.
 
-<!--{{< youtube id="-uBBQ-_pWSNs" >}}-->
+{{< youtube id="uBBQ-_pWSNs" >}}
 
 ### Grafana Alerting upgrade with rule preview
 
@@ -247,7 +247,7 @@ Screenshots:
 
 {{< figure src="/media/docs/plugins/PagerDuty-incidents-real-life-example.png" caption="Incidents annotations from PagerDuty data source on a dashboard panel" alt="Incidents annotations from PagerDuty data source on a dashboard panel" >}}
 
-<!--{{< youtube id="dCklm2DaVqQ" >}}-->
+{{< youtube id="dCklm2DaVqQ" >}}
 
 ### SurrealDB Data Source
 
