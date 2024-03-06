@@ -29,7 +29,7 @@ import (
 func TestAlertRuleInfo(t *testing.T) {
 	type evalResponse struct {
 		success     bool
-		droppedEval *evaluation
+		droppedEval *Evaluation
 	}
 
 	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
@@ -76,7 +76,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
 			expected := time.Now()
 			resultCh := make(chan evalResponse)
-			data := &evaluation{
+			data := &Evaluation{
 				scheduledAt: expected,
 				rule:        models.AlertRuleGen()(),
 				folderTitle: util.GenerateShortUID(),
@@ -101,12 +101,12 @@ func TestAlertRuleInfo(t *testing.T) {
 			time2 := time.UnixMilli(rand.Int63n(math.MaxInt64))
 			resultCh1 := make(chan evalResponse)
 			resultCh2 := make(chan evalResponse)
-			data := &evaluation{
+			data := &Evaluation{
 				scheduledAt: time1,
 				rule:        models.AlertRuleGen()(),
 				folderTitle: util.GenerateShortUID(),
 			}
-			data2 := &evaluation{
+			data2 := &Evaluation{
 				scheduledAt: time2,
 				rule:        data.rule,
 				folderTitle: data.folderTitle,
@@ -144,7 +144,7 @@ func TestAlertRuleInfo(t *testing.T) {
 		t.Run("eval should exit when context is cancelled", func(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
 			resultCh := make(chan evalResponse)
-			data := &evaluation{
+			data := &Evaluation{
 				scheduledAt: time.Now(),
 				rule:        models.AlertRuleGen()(),
 				folderTitle: util.GenerateShortUID(),
@@ -174,7 +174,7 @@ func TestAlertRuleInfo(t *testing.T) {
 		t.Run("eval should do nothing", func(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
 			r.stop(nil)
-			data := &evaluation{
+			data := &Evaluation{
 				scheduledAt: time.Now(),
 				rule:        models.AlertRuleGen()(),
 				folderTitle: util.GenerateShortUID(),
@@ -223,7 +223,7 @@ func TestAlertRuleInfo(t *testing.T) {
 					case 1:
 						r.update(ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
 					case 2:
-						r.eval(&evaluation{
+						r.eval(&Evaluation{
 							scheduledAt: time.Now(),
 							rule:        models.AlertRuleGen()(),
 							folderTitle: util.GenerateShortUID(),
@@ -284,7 +284,7 @@ func TestRuleRoutine(t *testing.T) {
 
 			expectedTime := time.UnixMicro(rand.Int63())
 
-			ruleInfo.evalCh <- &evaluation{
+			ruleInfo.evalCh <- &Evaluation{
 				scheduledAt: expectedTime,
 				rule:        rule,
 				folderTitle: folderTitle,
@@ -483,7 +483,7 @@ func TestRuleRoutine(t *testing.T) {
 		}()
 
 		// init evaluation loop so it got the rule version
-		ruleInfo.evalCh <- &evaluation{
+		ruleInfo.evalCh <- &Evaluation{
 			scheduledAt: sch.clock.Now(),
 			rule:        rule,
 			folderTitle: folderTitle,
@@ -564,7 +564,7 @@ func TestRuleRoutine(t *testing.T) {
 			_ = ruleInfo.run(rule.GetKey())
 		}()
 
-		ruleInfo.evalCh <- &evaluation{
+		ruleInfo.evalCh <- &Evaluation{
 			scheduledAt: sch.clock.Now(),
 			rule:        rule,
 		}
@@ -670,7 +670,7 @@ func TestRuleRoutine(t *testing.T) {
 				_ = ruleInfo.run(rule.GetKey())
 			}()
 
-			ruleInfo.evalCh <- &evaluation{
+			ruleInfo.evalCh <- &Evaluation{
 				scheduledAt: sch.clock.Now(),
 				rule:        rule,
 			}
@@ -704,7 +704,7 @@ func TestRuleRoutine(t *testing.T) {
 			_ = ruleInfo.run(rule.GetKey())
 		}()
 
-		ruleInfo.evalCh <- &evaluation{
+		ruleInfo.evalCh <- &Evaluation{
 			scheduledAt: sch.clock.Now(),
 			rule:        rule,
 		}
