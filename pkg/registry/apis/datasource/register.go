@@ -2,7 +2,6 @@ package datasource
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -32,8 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	kinds_testdata "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
-	kinds_prometheus "github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
 const QueryRequestSchemaKey = "QueryRequestSchema"
@@ -112,10 +109,6 @@ func NewDataSourceAPIBuilder(
 	if err != nil {
 		return nil, err
 	}
-	queryTypes, err := getQueryTypes(plugin.ID)
-	if err != nil {
-		return nil, err
-	}
 
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: ri,
@@ -124,27 +117,7 @@ func NewDataSourceAPIBuilder(
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
-		queryTypes:             queryTypes,
 	}, nil
-}
-
-// This is a quick hack to load the local statically defined definitions
-func getQueryTypes(pluginId string) (*query.QueryTypeDefinitionList, error) {
-	var err error
-	var b []byte
-	defs := &query.QueryTypeDefinitionList{}
-	switch pluginId {
-	case "grafana-testdata-datasource":
-		b, err = kinds_testdata.QueryTypeDefinitionsJSON()
-	case "prometheus":
-		b, err = kinds_prometheus.QueryTypeDefinitionsJSON()
-	}
-
-	// Read the JSON bytes into a definition list
-	if b != nil && err == nil {
-		err = json.Unmarshal(b, defs)
-	}
-	return defs, err
 }
 
 func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -283,14 +256,16 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	if b.pluginJSON.AliasIDs != nil {
 		opts.PluginID = append(opts.PluginID, b.pluginJSON.AliasIDs...)
 	}
-	for _, qt := range b.queryTypes.Items {
-		// The SDK type and api type are not the same so we recreate it here
-		opts.QueryTypes = append(opts.QueryTypes, data.QueryTypeDefinition{
-			ObjectMeta: data.ObjectMeta{
-				Name: qt.Name,
-			},
-			Spec: qt.Spec,
-		})
+	if b.queryTypes != nil {
+		for _, qt := range b.queryTypes.Items {
+			// The SDK type and api type are not the same so we recreate it here
+			opts.QueryTypes = append(opts.QueryTypes, data.QueryTypeDefinition{
+				ObjectMeta: data.ObjectMeta{
+					Name: qt.Name,
+				},
+				Spec: qt.Spec,
+			})
+		}
 	}
 	oas.Components.Schemas[QueryPayloadSchemaKey], err = schemabuilder.GetQuerySchema(opts)
 	if err != nil {
@@ -344,6 +319,10 @@ func (b *DataSourceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 }
 
 func getExamples(queryTypes *query.QueryTypeDefinitionList) map[string]*spec3.Example {
+	if queryTypes == nil {
+		return nil
+	}
+
 	tr := data.TimeRange{From: "now-1h", To: "now"}
 	examples := map[string]*spec3.Example{}
 	for _, queryType := range queryTypes.Items {

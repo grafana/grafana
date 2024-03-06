@@ -5,10 +5,12 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // Once we are comfortable with the parsing logic, this struct will
@@ -43,7 +45,7 @@ func NewExpressionQueryReader(features featuremgmt.FeatureToggles) *ExpressionQu
 // nolint:gocyclo
 func (h *ExpressionQueryReader) ReadQuery(
 	// Properties that have been parsed off the same node
-	common *rawNode,
+	common data.CommonQueryProperties,
 	// An iterator with context for the full node (include common values)
 	iter *jsoniter.Iterator,
 ) (eq ExpressionQuery, err error) {
@@ -99,13 +101,17 @@ func (h *ExpressionQueryReader) ReadQuery(
 			referenceVar, err = getReferenceVar(q.Expression, common.RefID)
 		}
 		if err == nil {
+			tr := legacydata.NewDataTimeRange(common.TimeRange.From, common.TimeRange.To)
 			eq.Properties = q
 			eq.Command, err = NewResampleCommand(common.RefID,
 				q.Window,
 				referenceVar,
 				q.Downsampler,
 				q.Upsampler,
-				common.TimeRange,
+				AbsoluteTimeRange{
+					From: tr.GetFromAsTimeUTC(),
+					To:   tr.GetToAsTimeUTC(),
+				},
 			)
 		}
 
