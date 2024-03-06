@@ -72,7 +72,7 @@ type ruleProvider interface {
 }
 
 type alertRuleInfo struct {
-	evalCh   chan *evaluation
+	evalCh   chan *Evaluation
 	updateCh chan ruleVersionAndPauseStatus
 	ctx      context.Context
 	stopFn   util.CancelCauseFunc
@@ -114,7 +114,7 @@ func newAlertRuleInfo(
 ) *alertRuleInfo {
 	ctx, stop := util.WithCancelCause(parent)
 	return &alertRuleInfo{
-		evalCh:               make(chan *evaluation),
+		evalCh:               make(chan *Evaluation),
 		updateCh:             make(chan ruleVersionAndPauseStatus),
 		ctx:                  ctx,
 		stopFn:               stop,
@@ -141,9 +141,9 @@ func newAlertRuleInfo(
 //   - false when the send operation is stopped
 //
 // the second element contains a dropped message that was sent by a concurrent sender.
-func (a *alertRuleInfo) eval(eval *evaluation) (bool, *evaluation) {
+func (a *alertRuleInfo) eval(eval *Evaluation) (bool, *Evaluation) {
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
-	var droppedMsg *evaluation
+	var droppedMsg *Evaluation
 	select {
 	case droppedMsg = <-a.evalCh:
 	default:
@@ -295,7 +295,7 @@ func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 	}
 }
 
-func (a *alertRuleInfo) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f fingerprint, attempt int64, e *evaluation, span trace.Span, retry bool) error {
+func (a *alertRuleInfo) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f fingerprint, attempt int64, e *Evaluation, span trace.Span, retry bool) error {
 	orgID := fmt.Sprint(key.OrgID)
 	evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
 	evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)

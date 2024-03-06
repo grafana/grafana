@@ -76,7 +76,7 @@ type ruleVersionAndPauseStatus struct {
 	IsPaused    bool
 }
 
-type evaluation struct {
+type Evaluation struct {
 	scheduledAt time.Time
 	rule        *models.AlertRule
 	folderTitle string

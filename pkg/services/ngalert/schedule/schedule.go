@@ -203,7 +203,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 
 type readyToRunItem struct {
 	ruleInfo *alertRuleInfo
-	evaluation
+	Evaluation
 }
 
 // TODO refactor to accept a callback for tests that will be called with things that are returned currently, and return nothing.
@@ -291,7 +291,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		if isReadyToRun {
 			sch.log.Debug("Rule is ready to run on the current tick", "uid", item.UID, "tick", tickNum, "frequency", itemFrequency, "offset", offset)
-			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
+			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, Evaluation: Evaluation{
 				scheduledAt: tick,
 				rule:        item,
 				folderTitle: folderTitle,
@@ -330,7 +330,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		time.AfterFunc(time.Duration(int64(i)*step), func() {
 			key := item.rule.GetKey()
-			success, dropped := item.ruleInfo.eval(&item.evaluation)
+			success, dropped := item.ruleInfo.eval(&item.Evaluation)
 			if !success {
 				sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", tick)...)
 				return
