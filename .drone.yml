@@ -1269,6 +1269,7 @@ trigger:
     - '*.md'
     include:
     - pkg/**
+    - public/*.json
 type: docker
 volumes:
 - host:
