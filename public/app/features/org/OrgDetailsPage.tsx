@@ -122,42 +122,40 @@ export class OrgDetailsPage extends PureComponent<Props, State> {
     ];
 
     return (
-      <div data-testid={selectors.components.OrgDetails.extensionPointTabs}>
-        <VerticalGroup spacing="md">
-          <TabsBar>
-            {tabs.map(({ id, title }) => {
-              return (
-                <Tab
-                  key={id}
-                  label={title}
-                  active={activeTab === id}
-                  onChangeTab={() => {
-                    this.setState({ activeTab: id });
-                    // updateQueryParams({ [TAB_QUERY_PARAM]: id }); TODO:
-                  }}
-                  data-testid={selectors.components.OrgDetails.extensionPointTab(id)}
-                />
-              );
-            })}
-          </TabsBar>
-          <TabContent>
-            {activeTab === GENERAL_SETTINGS_TAB && this.renderOrgDetails()}
-            {Object.entries(groupedExtensionComponents).map(([title, pluginExtensionComponents]) => {
-              const tabId = this.convertExtensionComponentTitleToTabId(title);
+      <div data-testid={selectors.components.OrgDetails.extensionPointTabs} style={{ marginTop: '10px' }}>
+        <TabsBar>
+          {tabs.map(({ id, title }) => {
+            return (
+              <Tab
+                key={id}
+                label={title}
+                active={activeTab === id}
+                onChangeTab={() => {
+                  this.setState({ activeTab: id });
+                  // updateQueryParams({ [TAB_QUERY_PARAM]: id }); TODO:
+                }}
+                data-testid={selectors.components.OrgDetails.extensionPointTab(id)}
+              />
+            );
+          })}
+        </TabsBar>
+        <TabContent>
+          {activeTab === GENERAL_SETTINGS_TAB && this.renderOrgDetails()}
+          {Object.entries(groupedExtensionComponents).map(([title, pluginExtensionComponents]) => {
+            const tabId = this.convertExtensionComponentTitleToTabId(title);
 
-              if (activeTab === tabId) {
-                return (
-                  <React.Fragment key={tabId}>
-                    {pluginExtensionComponents.map(({ component: Component }, index) => (
-                      <Component key={`${tabId}-${index}`} />
-                    ))}
-                  </React.Fragment>
-                );
-              }
-              return null;
-            })}
-          </TabContent>
-        </VerticalGroup>
+            if (activeTab === tabId) {
+              return (
+                <React.Fragment key={tabId}>
+                  {pluginExtensionComponents.map(({ component: Component }, index) => (
+                    <Component key={`${tabId}-${index}`} />
+                  ))}
+                </React.Fragment>
+              );
+            }
+            return null;
+          })}
+        </TabContent>
       </div>
     );
   }
