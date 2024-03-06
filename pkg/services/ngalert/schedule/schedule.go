@@ -116,7 +116,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	}
 
 	sch := schedule{
-		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]Rule)},
+		registry:              newRuleRegistry(),
 		maxAttempts:           cfg.MaxAttempts,
 		clock:                 cfg.C,
 		baseInterval:          cfg.BaseInterval,

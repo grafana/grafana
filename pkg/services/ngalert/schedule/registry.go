@@ -22,8 +22,12 @@ type ruleFactory interface {
 }
 
 type alertRuleInfoRegistry struct {
-	mu            sync.Mutex
-	alertRuleInfo map[models.AlertRuleKey]Rule
+	mu    sync.Mutex
+	rules map[models.AlertRuleKey]Rule
+}
+
+func newRuleRegistry() alertRuleInfoRegistry {
+	return alertRuleInfoRegistry{rules: make(map[models.AlertRuleKey]Rule)}
 }
 
 // getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
@@ -32,10 +36,10 @@ func (r *alertRuleInfoRegistry) getOrCreateInfo(context context.Context, key mod
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	rule, ok := r.alertRuleInfo[key]
+	rule, ok := r.rules[key]
 	if !ok {
 		rule = factory.new(context)
-		r.alertRuleInfo[key] = rule
+		r.rules[key] = rule
 	}
 	return rule, !ok
 }
@@ -44,19 +48,19 @@ func (r *alertRuleInfoRegistry) exists(key models.AlertRuleKey) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	_, ok := r.alertRuleInfo[key]
+	_, ok := r.rules[key]
 	return ok
 }
 
-// del removes pair that has specific key from alertRuleInfo.
+// del removes pair that has specific key from the registry.
 // Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
 func (r *alertRuleInfoRegistry) del(key models.AlertRuleKey) (Rule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	rule, ok := r.alertRuleInfo[key]
+	rule, ok := r.rules[key]
 	if ok {
-		delete(r.alertRuleInfo, key)
+		delete(r.rules, key)
 	}
 	return rule, ok
 }
@@ -64,8 +68,8 @@ func (r *alertRuleInfoRegistry) del(key models.AlertRuleKey) (Rule, bool) {
 func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	definitionsIDs := make(map[models.AlertRuleKey]struct{}, len(r.alertRuleInfo))
-	for k := range r.alertRuleInfo {
+	definitionsIDs := make(map[models.AlertRuleKey]struct{}, len(r.rules))
+	for k := range r.rules {
 		definitionsIDs[k] = struct{}{}
 	}
 	return definitionsIDs
