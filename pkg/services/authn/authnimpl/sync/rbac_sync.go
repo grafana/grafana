@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -67,7 +68,7 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 	if len(roles) > 0 {
 		for _, role := range roles {
 			roles, err := s.ac.GetRoleByName(ctx, ident.GetOrgID(), role)
-			if err != nil && err != accesscontrol.ErrRoleNotFound {
+			if err != nil && !errors.Is(err, accesscontrol.ErrRoleNotFound) {
 				s.log.FromContext(ctx).Error("Failed to fetch role from db", "error", err, "role", role)
 				return nil, errSyncPermissionsForbidden
 			}
