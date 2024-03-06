@@ -24,9 +24,7 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   `The description should be, at most, ${PANEL_DESCRIPTION_CHAR_LIMIT} characters.`;
 
 export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDescriptionButtonProps) => {
-  // We want to recompute messages when panel type changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const messages = React.useMemo(() => getMessages(panel), [panel, panel.type]);
+  const messages = getMessages(panel);
 
   return (
     <GenAIButton

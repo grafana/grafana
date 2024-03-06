@@ -20,9 +20,7 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   `The title should be shorter than ${PANEL_TITLE_CHAR_LIMIT} characters.`;
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
-  // We want to recompute messages when panel type changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const messages = React.useMemo(() => getMessages(panel), [panel, panel.type]);
+  const messages = getMessages(panel);
 
   return (
     <GenAIButton
@@ -38,6 +36,8 @@ function getMessages(panel: PanelModel): Message[] {
   const dashboard = getDashboardSrv().getCurrent()!;
   const panelString = getFilteredPanelString(panel);
 
+  console.log(panel.type, 'hm');
+
   return [
     {
       content: TITLE_GENERATION_STANDARD_PROMPT,
@@ -49,6 +49,10 @@ function getMessages(panel: PanelModel): Message[] {
     },
     {
       content: `The panel is part of a dashboard with the description: ${dashboard.description}`,
+      role: Role.system,
+    },
+    {
+      content: `The panel is a ${panel.type} type of panel that can be mentioned in the title but only do so if it is relevant to the title`,
       role: Role.system,
     },
     {
