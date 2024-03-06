@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardimage"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/slack"
@@ -22,21 +23,22 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"regexp"
 	"strconv"
 )
 
 type Api struct {
-	slackService  slack.Service
-	accessControl accesscontrol.AccessControl
-	cfg           *setting.Cfg
-	features      featuremgmt.FeatureToggles
-	routeRegister routing.RouteRegister
-	log           log.Logger
+	dashboardService dashboards.DashboardService
+	slackService     slack.Service
+	accessControl    accesscontrol.AccessControl
+	cfg              *setting.Cfg
+	features         featuremgmt.FeatureToggles
+	routeRegister    routing.RouteRegister
+	log              log.Logger
 }
 
 func ProvideApi(
+	ds dashboards.DashboardService,
 	ss slack.Service,
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
@@ -44,12 +46,13 @@ func ProvideApi(
 	cfg *setting.Cfg,
 ) *Api {
 	api := &Api{
-		slackService:  ss,
-		accessControl: ac,
-		cfg:           cfg,
-		features:      features,
-		routeRegister: rr,
-		log:           log.New("slack.api"),
+		dashboardService: ds,
+		slackService:     ss,
+		accessControl:    ac,
+		cfg:              cfg,
+		features:         features,
+		routeRegister:    rr,
+		log:              log.New("slack.api"),
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSlackUnfurling) {
@@ -170,27 +173,34 @@ func (api *Api) handleLinkSharedEvent(c *contextmodel.ReqContext, event model.Ev
 	q := previewUrl.Query()
 	panelId, _ := strconv.ParseInt(q.Get("panelId"), 10, 64)
 
+	dq := dashboards.GetDashboardQuery{UID: dashboardUID}
+	dashboard, err := api.dashboardService.GetDashboard(c.Req.Context(), &dq)
+	if err != nil {
+		api.log.Error("retrieving dashboard failed", "err", err)
+		return
+	}
+
 	opts := dashboardimage.ScreenshotOptions{
 		AuthOptions: rendering.AuthOpts{
 			//UserID:  c.SignedInUser.UserID,
 			OrgID:   1,
 			OrgRole: roletype.RoleAdmin,
 		},
-		OrgID:        1,
-		DashboardUID: dashboardUID,
-		PanelID:      panelId,
-		From:         q.Get("from"),
-		To:           q.Get("to"),
+		OrgID:         1,
+		DashboardUID:  dashboard.UID,
+		DashboardSlug: dashboard.Slug,
+		PanelID:       panelId,
+		From:          q.Get("from"),
+		To:            q.Get("to"),
 	}
 
-	imagePath, err := api.slackService.TakeScreenshot(ctx, opts)
+	previewURL, err := api.slackService.TakeScreenshot(ctx, opts)
 	if err != nil {
 		api.log.Error("fail to render dashboard for Slack preview", "err", err)
 		return
 	}
 
-	imageURL := api.getImageURL(filepath.Base(imagePath))
-	err = api.slackService.PostUnfurl(ctx, event, imageURL, "saraza")
+	err = api.slackService.PostUnfurl(ctx, event, previewURL, dashboard.Title)
 	if err != nil {
 		api.log.Error("fail to send unfurl event to Slack", "err", err)
 	}

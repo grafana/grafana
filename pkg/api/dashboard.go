@@ -1049,32 +1049,37 @@ func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Respo
 
 	hs.log.Info("Generating preview", "resourcePath", previewRequest.ResourcePath)
 
+	dq := dashboards.GetDashboardQuery{OrgID: c.SignedInUser.GetOrgID(), UID: web.Params(c.Req)[":uid"]}
+	dashboard, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Retrieving dashboard failed", err)
+	}
+
 	opts := dashboardimage.ScreenshotOptions{
 		AuthOptions: rendering.AuthOpts{
 			OrgID:   c.SignedInUser.GetOrgID(),
 			UserID:  c.SignedInUser.UserID,
 			OrgRole: c.SignedInUser.OrgRole,
 		},
-		OrgID:        c.SignedInUser.GetOrgID(),
-		DashboardUID: web.Params(c.Req)[":uid"],
-		PanelID:      panelId,
-		From:         q.Get("from"),
-		To:           q.Get("to"),
-		Width:        1600,
-		Height:       800,
-		Theme:        models.ThemeDark,
-		Timeout:      time.Duration(60) * time.Second,
+		OrgID:         c.SignedInUser.GetOrgID(),
+		DashboardUID:  dashboard.UID,
+		DashboardSlug: dashboard.Slug,
+		PanelID:       panelId,
+		From:          q.Get("from"),
+		To:            q.Get("to"),
+		Width:         1600,
+		Height:        800,
+		Theme:         models.ThemeDark,
+		Timeout:       time.Duration(60) * time.Second,
 	}
 
-	hs.log.Info("Generating preview", "resourcePath", opts)
-
-	filePath, err := hs.dashboardImageService.TakeScreenshotAndUpload(c.Req.Context(), opts)
+	previewURL, err := hs.dashboardImageService.TakeScreenshotAndUpload(c.Req.Context(), opts)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
 	}
 
 	return response.JSON(http.StatusOK, &PreviewResponse{
-		PreviewURL: filePath,
+		PreviewURL: previewURL,
 	})
 }
 

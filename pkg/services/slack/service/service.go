@@ -238,24 +238,17 @@ func (s *SlackService) postRequest(ctx context.Context, endpoint string, body io
 }
 
 func (s *SlackService) TakeScreenshot(ctx context.Context, opts dashboardimage.ScreenshotOptions) (string, error) {
-	opts = dashboardimage.ScreenshotOptions{
-		AuthOptions:  opts.AuthOptions,
-		OrgID:        opts.OrgID,
-		DashboardUID: opts.DashboardUID,
-		PanelID:      opts.PanelID,
-		From:         opts.From,
-		To:           opts.To,
-		Width:        1600,
-		Height:       800,
-		Theme:        models.ThemeDark,
-		Timeout:      time.Duration(60) * time.Second,
-	}
-	path, err := s.dashboardImageService.TakeScreenshotAndUpload(ctx, opts)
+	opts.Width = 1600
+	opts.Height = 800
+	opts.Theme = models.ThemeDark
+	opts.Timeout = time.Duration(60) * time.Second
+
+	previewURL, err := s.dashboardImageService.TakeScreenshotAndUpload(ctx, opts)
 	if err != nil {
 		return "", err
 	}
 
-	return path, nil
+	return previewURL, nil
 }
 
 func calculateHMAC(message, key []byte) string {

@@ -9,8 +9,9 @@ import (
 type ScreenshotOptions struct {
 	AuthOptions rendering.AuthOpts
 	// OrgID and DashboardUID are required.
-	OrgID        int64
-	DashboardUID string
+	OrgID         int64
+	DashboardUID  string
+	DashboardSlug string
 
 	// These are optional. From and To must both be set to take effect.
 	// Width, Height, Theme and Timeout inherit their defaults from

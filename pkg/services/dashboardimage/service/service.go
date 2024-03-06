@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboardimage"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"net/url"
@@ -17,12 +16,11 @@ import (
 type DashboardImageService struct {
 	cfg                  *setting.Cfg
 	log                  log.Logger
-	dashboardService     dashboards.DashboardService
 	renderService        rendering.Service
 	imageUploaderService imguploader.ImageUploader
 }
 
-func ProvideService(cfg *setting.Cfg, ds dashboards.DashboardService, rs rendering.Service) (*DashboardImageService, error) {
+func ProvideService(cfg *setting.Cfg, rs rendering.Service) (*DashboardImageService, error) {
 	us, err := imguploader.NewImageUploader(cfg)
 	if err != nil {
 		return nil, err
@@ -31,29 +29,20 @@ func ProvideService(cfg *setting.Cfg, ds dashboards.DashboardService, rs renderi
 	return &DashboardImageService{
 		cfg:                  cfg,
 		log:                  log.New("dashboardimage.service"),
-		dashboardService:     ds,
 		renderService:        rs,
 		imageUploaderService: us,
 	}, nil
 }
 
 func (d *DashboardImageService) TakeScreenshotAndUpload(ctx context.Context, opts dashboardimage.ScreenshotOptions) (string, error) {
-	q := dashboards.GetDashboardQuery{OrgID: opts.OrgID, UID: opts.DashboardUID}
-	dashboard, err := d.dashboardService.GetDashboard(ctx, &q)
-	if err != nil {
-		return "", err
-	}
-
-	//opts = opts.SetDefaults()
-
 	u := url.URL{}
 	urlPath := "d-solo"
 	if opts.PanelID == 0 {
 		urlPath = "d"
 	}
-	u.Path = path2.Join(urlPath, dashboard.UID, dashboard.Slug)
+	u.Path = path2.Join(urlPath, opts.DashboardUID, opts.DashboardSlug)
 	p := u.Query()
-	p.Add("orgId", strconv.FormatInt(dashboard.OrgID, 10))
+	p.Add("orgId", strconv.FormatInt(opts.OrgID, 10))
 	p.Add("panelId", strconv.FormatInt(opts.PanelID, 10))
 	if opts.From != "" && opts.To != "" {
 		p.Add("from", opts.From)
