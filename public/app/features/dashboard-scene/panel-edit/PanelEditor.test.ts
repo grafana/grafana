@@ -1,10 +1,9 @@
 import { PanelPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
-import { SceneFlexItem, SceneGridItem, SceneGridLayout, SplitLayout, VizPanel } from '@grafana/scenes';
+import { SceneGridItem, SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { buildPanelEditScene } from './PanelEditor';
 
 let pluginToLoad: PanelPlugin | undefined;
@@ -47,8 +46,7 @@ describe('PanelEditor', () => {
 
       const deactivate = activateFullSceneTree(scene);
 
-      const vizManager = editScene.state.panelRef.resolve();
-      vizManager.state.panel.setState({ title: 'changed title' });
+      editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
 
       deactivate();
 
@@ -72,7 +70,7 @@ describe('PanelEditor', () => {
 
       activateFullSceneTree(scene);
 
-      expect(((editScene.state.body as SplitLayout).state.primary as SplitLayout).state.secondary).toBeUndefined();
+      expect(editScene.state.dataPane).toBeUndefined();
     });
 
     it('should exist if panel is supporting querying', () => {
@@ -88,10 +86,7 @@ describe('PanelEditor', () => {
       });
 
       activateFullSceneTree(scene);
-      const secondaryPane = ((editScene.state.body as SplitLayout).state.primary as SplitLayout).state.secondary;
-
-      expect(secondaryPane).toBeInstanceOf(SceneFlexItem);
-      expect((secondaryPane as SceneFlexItem).state.body).toBeInstanceOf(PanelDataPane);
+      expect(editScene.state.dataPane).toBeDefined();
     });
   });
 });

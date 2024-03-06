@@ -18,12 +18,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ExtraGithubSettingKeys = []string{allowedOrganizationsKey, teamIdsKey}
+var ExtraGithubSettingKeys = map[string]ExtraKeyInfo{
+	allowedOrganizationsKey: {Type: String},
+	teamIdsKey:              {Type: String},
+}
 
 var _ social.SocialConnector = (*SocialGithub)(nil)
 var _ ssosettings.Reloadable = (*SocialGithub)(nil)
@@ -86,6 +90,14 @@ func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSetti
 		return err
 	}
 
+	return validation.Validate(info, requester,
+		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
+		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
+		teamIdsNumbersValidator)
+}
+
+func teamIdsNumbersValidator(info *social.OAuthInfo, requester identity.Requester) error {
 	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
 	teamIds := mustInts(teamIdsSplitted)
 
@@ -112,7 +124,7 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.SocialBase = newSocialBase(social.GitHubProviderName, newInfo, s.features, s.cfg)
+	s.updateInfo(social.GitHubProviderName, newInfo)
 
 	s.teamIds = teamIds
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])

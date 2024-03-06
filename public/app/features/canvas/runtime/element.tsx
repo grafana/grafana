@@ -486,6 +486,7 @@ export class ElementState implements LayerElement {
   };
 
   onElementClick = (event: React.MouseEvent) => {
+    this.handleTooltip(event);
     this.onTooltipCallback();
   };
 

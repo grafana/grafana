@@ -14,6 +14,7 @@ import {
   DescendantCount,
   DescendantCountDTO,
   FolderDTO,
+  FolderListItemDTO,
   ImportDashboardResponseDTO,
   SaveDashboardResponseDTO,
 } from 'app/types';
@@ -69,11 +70,22 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
   return backendSrvBaseQuery;
 }
 
+export interface ListFolderQueryArgs {
+  page: number;
+  parentUid: string | undefined;
+  limit: number;
+}
+
 export const browseDashboardsAPI = createApi({
   tagTypes: ['getFolder'],
   reducerPath: 'browseDashboardsAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
+    listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
+      providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
+      query: ({ page, parentUid, limit }) => ({ url: '/folders', params: { page, parentUid, limit } }),
+    }),
+
     // get folder info (e.g. title, parents) but *not* children
     getFolder: builder.query<FolderDTO, string>({
       providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
@@ -360,4 +372,5 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
 } = browseDashboardsAPI;
+
 export { skipToken } from '@reduxjs/toolkit/query/react';

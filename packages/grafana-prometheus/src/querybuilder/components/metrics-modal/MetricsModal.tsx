@@ -1,4 +1,5 @@
 import { cx } from '@emotion/css';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import debounce from 'debounce-promise';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
@@ -38,10 +39,10 @@ import {
   initialState,
   MAXIMUM_RESULTS_PER_PAGE,
   MetricsModalMetadata,
-  stateSlice,
+  // stateSlice,
 } from './state/state';
 import { getStyles } from './styles';
-import { PromFilterOption } from './types';
+import { MetricsData, PromFilterOption } from './types';
 import { debouncedFuzzySearch } from './uFuzzy';
 
 export type MetricsModalProps = {
@@ -52,24 +53,6 @@ export type MetricsModalProps = {
   onChange: (query: PromVisualQuery) => void;
   initialMetrics: string[];
 };
-
-// actions to update the state
-const {
-  setIsLoading,
-  buildMetrics,
-  filterMetricsBackend,
-  setResultsPerPage,
-  setPageNum,
-  setFuzzySearchQuery,
-  setNameHaystack,
-  setMetaHaystack,
-  setFullMetaSearch,
-  setIncludeNullMetadata,
-  setSelectedTypes,
-  setUseBackend,
-  setDisableTextWrap,
-  showAdditionalSettings,
-} = stateSlice.actions;
 
 export const MetricsModal = (props: MetricsModalProps) => {
   const { datasource, isOpen, onClose, onChange, query, initialMetrics } = props;
@@ -335,3 +318,97 @@ export const metricsModaltestIds = {
   setUseBackend: 'set-use-backend',
   showAdditionalSettings: 'show-additional-settings',
 };
+
+const stateSlice = createSlice({
+  name: 'metrics-modal-state',
+  initialState: initialState(),
+  reducers: {
+    filterMetricsBackend: (
+      state,
+      action: PayloadAction<{
+        metrics: MetricsData;
+        filteredMetricCount: number;
+        isLoading: boolean;
+      }>
+    ) => {
+      state.metrics = action.payload.metrics;
+      state.filteredMetricCount = action.payload.filteredMetricCount;
+      state.isLoading = action.payload.isLoading;
+    },
+    buildMetrics: (state, action: PayloadAction<MetricsModalMetadata>) => {
+      state.isLoading = action.payload.isLoading;
+      state.metrics = action.payload.metrics;
+      state.hasMetadata = action.payload.hasMetadata;
+      state.metaHaystackDictionary = action.payload.metaHaystackDictionary;
+      state.nameHaystackDictionary = action.payload.nameHaystackDictionary;
+      state.totalMetricCount = action.payload.totalMetricCount;
+      state.filteredMetricCount = action.payload.filteredMetricCount;
+    },
+    setIsLoading: (state, action: PayloadAction<boolean>) => {
+      state.isLoading = action.payload;
+    },
+    setFilteredMetricCount: (state, action: PayloadAction<number>) => {
+      state.filteredMetricCount = action.payload;
+    },
+    setResultsPerPage: (state, action: PayloadAction<number>) => {
+      state.resultsPerPage = action.payload;
+    },
+    setPageNum: (state, action: PayloadAction<number>) => {
+      state.pageNum = action.payload;
+    },
+    setFuzzySearchQuery: (state, action: PayloadAction<string>) => {
+      state.fuzzySearchQuery = action.payload;
+      state.pageNum = 1;
+    },
+    setNameHaystack: (state, action: PayloadAction<string[][]>) => {
+      state.nameHaystackOrder = action.payload[0];
+      state.nameHaystackMatches = action.payload[1];
+    },
+    setMetaHaystack: (state, action: PayloadAction<string[][]>) => {
+      state.metaHaystackOrder = action.payload[0];
+      state.metaHaystackMatches = action.payload[1];
+    },
+    setFullMetaSearch: (state, action: PayloadAction<boolean>) => {
+      state.fullMetaSearch = action.payload;
+      state.pageNum = 1;
+    },
+    setIncludeNullMetadata: (state, action: PayloadAction<boolean>) => {
+      state.includeNullMetadata = action.payload;
+      state.pageNum = 1;
+    },
+    setSelectedTypes: (state, action: PayloadAction<Array<SelectableValue<string>>>) => {
+      state.selectedTypes = action.payload;
+      state.pageNum = 1;
+    },
+    setUseBackend: (state, action: PayloadAction<boolean>) => {
+      state.useBackend = action.payload;
+      state.fullMetaSearch = false;
+      state.pageNum = 1;
+    },
+    setDisableTextWrap: (state) => {
+      state.disableTextWrap = !state.disableTextWrap;
+    },
+    showAdditionalSettings: (state) => {
+      state.showAdditionalSettings = !state.showAdditionalSettings;
+    },
+  },
+});
+
+// actions to update the state
+export const {
+  setIsLoading,
+  buildMetrics,
+  filterMetricsBackend,
+  setResultsPerPage,
+  setPageNum,
+  setFuzzySearchQuery,
+  setNameHaystack,
+  setMetaHaystack,
+  setFullMetaSearch,
+  setIncludeNullMetadata,
+  setSelectedTypes,
+  setUseBackend,
+  setDisableTextWrap,
+  showAdditionalSettings,
+  setFilteredMetricCount,
+} = stateSlice.actions;

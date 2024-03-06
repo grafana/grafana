@@ -51,13 +51,6 @@ export interface ScatterSeries {
   };
 }
 
-export interface YValue {
-  name: string;
-  val: number;
-  field: Field;
-  color: string;
-}
-
 export interface ExtraFacets {
   colorFacetFieldName: string;
   sizeFacetFieldName: string;

@@ -95,6 +95,22 @@ func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featur
 	return initTestDB(t, cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
+// NewSQLStoreWithoutSideEffects creates a new *SQLStore without side-effects such as
+// running database migrations and/or ensuring main org and admin user exists.
+func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+	s, err := newSQLStore(cfg, nil, nil, bus, tracer)
+	if err != nil {
+		return nil, err
+	}
+
+	s.features = features
+	s.tracer = tracer
+
+	return s, nil
+}
+
 func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
 	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
@@ -210,7 +226,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 			if _, err := ss.createUser(ctx, sess, user.CreateUserCommand{
 				Login:    ss.Cfg.AdminUser,
 				Email:    ss.Cfg.AdminEmail,
-				Password: ss.Cfg.AdminPassword,
+				Password: user.Password(ss.Cfg.AdminPassword),
 				IsAdmin:  true,
 			}); err != nil {
 				return fmt.Errorf("failed to create admin user: %s", err)

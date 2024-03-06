@@ -9,8 +9,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-data/src/dataframe/ArrayDataFrame.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/dataframe/CircularDataFrame.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -34,14 +33,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
+      [0, 0, 0, "Do not use any type assertions.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Do not use any type assertions.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Do not use any type assertions.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Do not use any type assertions.", "15"]
+      [0, 0, 0, "Do not use any type assertions.", "11"]
     ],
     "packages/grafana-data/src/dataframe/StreamingDataFrame.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -370,11 +365,6 @@ exports[`better eslint`] = {
     "packages/grafana-data/src/types/variables.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "packages/grafana-data/src/types/vector.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
     "packages/grafana-data/src/utils/OptionsUIBuilders.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -449,23 +439,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
-    "packages/grafana-data/src/vector/AppendedVectors.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
-    "packages/grafana-data/src/vector/ArrayVector.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
     "packages/grafana-data/src/vector/CircularVector.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-data/src/vector/ConstantVector.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-data/src/vector/FormattedVector.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/vector/FunctionalVector.ts:5381": [
@@ -477,11 +451,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
-    ],
-    "packages/grafana-data/src/vector/SortedVector.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
     ],
     "packages/grafana-data/test/__mocks__/pluginMocks.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -1334,9 +1304,6 @@ exports[`better eslint`] = {
     "public/app/core/specs/backend_srv.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/core/specs/time_series.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/core/time_series2.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -1559,9 +1526,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/AlertWarning.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
-    "public/app/features/alerting/unified/AlertsFolderView.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/alerting/unified/AlertsFolderView.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -1668,13 +1632,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/GrafanaAlertmanagerDeliveryWarning.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/features/alerting/unified/components/HoverCard.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"]
     ],
     "public/app/features/alerting/unified/components/Label.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -1812,9 +1769,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"]
-    ],
-    "public/app/features/alerting/unified/components/notification-policies/Filters.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/alerting/unified/components/notification-policies/Matchers.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -2561,12 +2515,17 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataPane.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/dashboard-scene/panel-edit/VizPanelManager.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    "public/app/features/dashboard-scene/saving/DetectChangesWorker.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
+    "public/app/features/dashboard-scene/saving/getDashboardChanges.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/dashboard-scene/saving/getSaveDashboardChange.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -2575,20 +2534,10 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/saving/shared.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
-    "public/app/features/dashboard-scene/scene/DashboardScene.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
-    "public/app/features/dashboard-scene/scene/setDashboardPanelContext.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/dashboard-scene/serialization/angularMigration.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2655,22 +2604,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "19"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "20"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "public/app/features/dashboard/components/DashExportModal/DashboardExporter.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2958,14 +2892,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "18"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
     ],
     "public/app/features/dashboard/state/DashboardMigrator.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3004,10 +2931,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/features/dashboard/state/DashboardModel.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -3076,8 +3000,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/state/initDashboard.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/utils/getPanelMenu.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -3379,10 +3302,6 @@ exports[`better eslint`] = {
     "public/app/features/explore/TraceView/components/TracePageHeader/Actions/ActionButton.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
-    "public/app/features/explore/TraceView/components/TracePageHeader/Actions/TracePageActions.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
     "public/app/features/explore/TraceView/components/TracePageHeader/SearchBar/NextPrevResult.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -3442,11 +3361,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "5"],
       [0, 0, 0, "Styles should be written using objects.", "6"],
       [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"],
-      [0, 0, 0, "Styles should be written using objects.", "11"],
-      [0, 0, 0, "Styles should be written using objects.", "12"]
+      [0, 0, 0, "Styles should be written using objects.", "8"]
     ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanBarRow.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -3743,17 +3658,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
-    "public/app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"]
     ],
     "public/app/features/library-panels/components/LibraryPanelsView/actions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -4067,8 +3971,7 @@ exports[`better eslint`] = {
     "public/app/features/plugins/tests/datasource_srv.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/features/plugins/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4149,8 +4052,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
     ],
     "public/app/features/search/page/components/ActionRow.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -4192,12 +4094,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/search/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/serviceaccounts/components/CreateTokenModal.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
     "public/app/features/serviceaccounts/components/ServiceAccountProfile.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -4396,8 +4292,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/transformers/prepareTimeSeries/prepareTimeSeries.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/transformers/prepareTimeSeries/prepareTimeSeries.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4518,9 +4413,6 @@ exports[`better eslint`] = {
     "public/app/features/variables/pickers/shared/VariableOptions.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
-    "public/app/features/variables/query/QueryVariableEditor.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/variables/query/QueryVariableEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -4544,13 +4436,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/variables/query/queryRunners.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/variables/query/queryRunners.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4640,10 +4526,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/azuremonitor/azure_monitor/azure_monitor_datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/components/LogsQueryEditor/QueryField.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/plugins/datasource/azuremonitor/components/QueryEditor/QueryEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -4935,14 +4817,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/grafana/components/QueryEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"]
+      [0, 0, 0, "Styles should be written using objects.", "4"]
     ],
     "public/app/plugins/datasource/grafana/components/TimePickerInput.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -5290,10 +5169,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "11"],
       [0, 0, 0, "Styles should be written using objects.", "12"],
       [0, 0, 0, "Styles should be written using objects.", "13"]
-    ],
-    "public/app/plugins/datasource/loki/components/LokiOptionFields.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/datasource/loki/components/monaco-query-field/MonacoQueryField.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -5713,12 +5588,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "public/app/plugins/datasource/tempo/_importedDependencies/store.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
     "public/app/plugins/datasource/tempo/_importedDependencies/test/helpers/createFetchResponse.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -6023,9 +5892,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "6"],
       [0, 0, 0, "Styles should be written using objects.", "7"]
     ],
-    "public/app/plugins/panel/live/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/panel/logs/LogsPanel.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -6106,96 +5972,6 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/state-timeline/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/plugins/panel/table-old/column_options.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "19"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "20"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "21"]
-    ],
-    "public/app/plugins/panel/table-old/editor.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
-    ],
-    "public/app/plugins/panel/table-old/module.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
-    ],
-    "public/app/plugins/panel/table-old/renderer.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
-    ],
-    "public/app/plugins/panel/table-old/transformers.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
-    ],
-    "public/app/plugins/panel/table-old/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
     ],
     "public/app/plugins/panel/table/TablePanel.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -6993,9 +6769,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
-    "public/app/plugins/datasource/cloud-monitoring/components/AnnotationsHelp.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/ConfigEditor.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
@@ -7081,14 +6854,6 @@ exports[`no gf-form usage`] = {
     ],
     "public/app/plugins/datasource/influxdb/components/editor/variable/VariableQueryEditor.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/plugins/datasource/loki/components/AnnotationsQueryEditor.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/plugins/datasource/loki/components/LokiOptionFields.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]

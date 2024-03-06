@@ -457,6 +457,21 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
+	// Needed to be able to list permissions on the general folder for viewers, doesn't actually grant access to any resources
+	generalFolderReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:folders.general:reader",
+			DisplayName: "General folder reader",
+			Description: "Access the general (root) folder.",
+			Group:       "Folders",
+			Hidden:      true,
+			Permissions: []ac.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+			},
+		},
+		Grants: []string{string(org.RoleViewer)},
+	}
+
 	foldersWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:folders:writer",
@@ -593,7 +608,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, teamsReaderRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
-		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
+		foldersCreatorRole, foldersReaderRole, generalFolderReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole}
 
@@ -639,7 +654,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
 func (hs *HTTPServer) getAccessControlMetadata(c *contextmodel.ReqContext,
-	orgID int64, prefix string, resourceID string) ac.Metadata {
+	prefix string, resourceID string) ac.Metadata {
 	ids := map[string]bool{resourceID: true}
 	return hs.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
 }

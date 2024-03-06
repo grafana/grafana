@@ -65,7 +65,7 @@ function rowTypes(gridRow: SceneGridRow) {
 }
 
 function panelDatasourceTypes(gridItem: SceneGridItemLike) {
-  let vizPanel: VizPanel | undefined;
+  let vizPanel: VizPanel | LibraryVizPanel | undefined;
   if (gridItem instanceof SceneGridItem) {
     if (gridItem.state.body instanceof LibraryVizPanel) {
       vizPanel = gridItem.state.body.state.panel;

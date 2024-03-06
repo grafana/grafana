@@ -15,9 +15,21 @@ interface Props {
   tableStyles: TableStyles;
   onClose: () => void;
   field?: Field;
+  searchFilter: string;
+  setSearchFilter: (value: string) => void;
+  operator: SelectableValue<string>;
+  setOperator: (item: SelectableValue<string>) => void;
 }
 
-export const FilterPopup = ({ column: { preFilteredRows, filterValue, setFilter }, onClose, field }: Props) => {
+export const FilterPopup = ({
+  column: { preFilteredRows, filterValue, setFilter },
+  onClose,
+  field,
+  searchFilter,
+  setSearchFilter,
+  operator,
+  setOperator,
+}: Props) => {
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
@@ -67,7 +79,17 @@ export const FilterPopup = ({ column: { preFilteredRows, filterValue, setFilter 
               />
             </HorizontalGroup>
             <div className={cx(styles.listDivider)} />
-            <FilterList onChange={setValues} values={values} options={options} caseSensitive={matchCase} />
+            <FilterList
+              onChange={setValues}
+              values={values}
+              options={options}
+              caseSensitive={matchCase}
+              showOperators={true}
+              searchFilter={searchFilter}
+              setSearchFilter={setSearchFilter}
+              operator={operator}
+              setOperator={setOperator}
+            />
           </VerticalGroup>
           <HorizontalGroup spacing="lg">
             <HorizontalGroup>
@@ -102,7 +124,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(2),
-    margin: theme.spacing(1, 0),
     boxShadow: theme.shadows.z3,
     borderRadius: theme.shape.radius.default,
   }),

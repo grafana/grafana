@@ -8,7 +8,13 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { logInfo, LogMessages } from '../../Analytics';
+import {
+  logInfo,
+  LogMessages,
+  trackRulesListViewChange,
+  trackRulesSearchComponentInteraction,
+  trackRulesSearchInputInteraction,
+} from '../../Analytics';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth } from '../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../utils/rules';
@@ -90,10 +96,12 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     });
 
     setFilterKey((key) => key + 1);
+    trackRulesSearchComponentInteraction('dataSourceNames');
   };
 
   const handleDashboardChange = (dashboardUid: string | undefined) => {
     updateFilters({ ...filterState, dashboardUid });
+    trackRulesSearchComponentInteraction('dashboardUid');
   };
 
   const clearDataSource = () => {
@@ -104,18 +112,17 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
   const handleAlertStateChange = (value: PromAlertingRuleState) => {
     logInfo(LogMessages.clickingAlertStateFilters);
     updateFilters({ ...filterState, ruleState: value });
-  };
-
-  const handleViewChange = (view: string) => {
-    setQueryParams({ view });
+    trackRulesSearchComponentInteraction('ruleState');
   };
 
   const handleRuleTypeChange = (ruleType: PromRuleType) => {
     updateFilters({ ...filterState, ruleType });
+    trackRulesSearchComponentInteraction('ruleType');
   };
 
   const handleRuleHealthChange = (ruleHealth: RuleHealth) => {
     updateFilters({ ...filterState, ruleHealth });
+    trackRulesSearchComponentInteraction('ruleHealth');
   };
 
   const handleClearFiltersClick = () => {
@@ -123,6 +130,11 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     onFilterCleared();
 
     setTimeout(() => setFilterKey(filterKey + 1), 100);
+  };
+
+  const handleViewChange = (view: string) => {
+    setQueryParams({ view });
+    trackRulesListViewChange({ view });
   };
 
   const searchIcon = <Icon name={'search'} />;
@@ -211,6 +223,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               onSubmit={handleSubmit((data) => {
                 setSearchQuery(data.searchQuery);
                 searchQueryRef.current?.blur();
+                trackRulesSearchInputInteraction({ oldQuery: searchQuery, newQuery: data.searchQuery });
               })}
             >
               <Field
