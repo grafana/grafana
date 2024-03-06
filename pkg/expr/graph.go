@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -225,7 +227,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		var node Node
 		switch NodeTypeFromDatasourceUID(query.DataSource.UID) {
 		case TypeDatasourceNode:
-			node, err = s.buildDSNode(dp, rn, req)
+			node, err = s.buildDSNode(rn, req)
 		case TypeCMDNode:
 			node, err = buildCMDNode(rn, s.features)
 		case TypeMLNode:
@@ -250,11 +252,24 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 	return dp, nil
 }
 
+func sortedNodes(dp *simple.DirectedGraph) []Node {
+	nodes := []Node{}
+	nodeIt := dp.Nodes()
+	for nodeIt.Next() {
+		node := nodeIt.Node().(Node)
+		nodes = append(nodes, node)
+	}
+	sort.SliceStable(nodes, func(i, j int) bool {
+		return nodes[i].ID() < nodes[j].ID()
+	})
+	return nodes
+}
+
 // buildGraphEdges generates graph edges based on each node's dependencies.
 func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 	nodeIt := dp.Nodes()
 
-	nodeList := []Node{}
+	nodeList := sortedNodes(dp)
 
 	for nodeIt.Next() {
 		node := nodeIt.Node().(Node)
@@ -262,7 +277,6 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		if node.NodeType() != TypeCMDNode {
 			// datasource node, nothing to do for now. Although if we want expression results to be
 			// used as datasource query params some day this will need change
-			nodeList = append(nodeList, node)
 			continue
 		}
 		cmdNode := node.(*CMDNode)
@@ -271,13 +285,20 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		textToSqlCmd, ok := cmdNode.Command.(*TextToSQLCommand)
 		if ok {
 			refs := []string{}
+			// TODO: can't guarantee order so just add all other queries as refs
 			for _, ref := range nodeList {
+				if ref.RefID() == node.RefID() {
+					continue
+				}
 				refs = append(refs, ref.RefID())
+			}
+			fmt.Println(strings.Join(refs, ", "))
+			if len(refs) == 0 {
+				// return errors.New("no refs")
+				fmt.Println("no refs")
 			}
 			textToSqlCmd.varsToQuery = refs
 		}
-
-		nodeList = append(nodeList, node)
 
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]

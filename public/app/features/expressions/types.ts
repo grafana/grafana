@@ -33,7 +33,7 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
     case ExpressionQueryType.sql:
       return 'SQL';
     case ExpressionQueryType.ask:
-      return 'Ask';
+      return 'AX';
   }
 };
 
@@ -73,8 +73,8 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   },
   {
     value: ExpressionQueryType.ask,
-    label: 'Ask',
-    description: 'Ask questions about your data',
+    label: 'AX',
+    description: 'Answer questions about your data using AI',
   },
 ].filter((expr) => {
   if (expr.value === ExpressionQueryType.sql) {
