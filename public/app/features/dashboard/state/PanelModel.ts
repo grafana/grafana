@@ -744,7 +744,7 @@ function getPluginToMigrateTo(panel: any): string | undefined {
       return 'barchart';
     }
 
-    if (panel.xaxis === 'histogram') {
+    if (panel.xaxis?.mode === 'histogram') {
       return 'histogram';
     }
 
