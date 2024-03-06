@@ -25,6 +25,7 @@ import (
 
 type Rule interface {
 	Eval(eval *Evaluation) (bool, *Evaluation)
+	Update(lastVersion RuleVersionAndPauseStatus) bool
 }
 
 type ruleFactoryFunc func(context.Context) *alertRuleInfo
@@ -162,7 +163,7 @@ func (a *alertRuleInfo) Eval(eval *Evaluation) (bool, *Evaluation) {
 }
 
 // update sends an instruction to the rule evaluation routine to update the scheduled rule to the specified version. The specified version must be later than the current version, otherwise no update will happen.
-func (a *alertRuleInfo) update(lastVersion RuleVersionAndPauseStatus) bool {
+func (a *alertRuleInfo) Update(lastVersion RuleVersionAndPauseStatus) bool {
 	// check if the channel is not empty.
 	select {
 	case <-a.updateCh:

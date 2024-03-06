@@ -301,7 +301,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
 			sch.log.Debug("Rule has been updated. Notifying evaluation routine", key.LogContext()...)
 			go func(ri *alertRuleInfo, rule *ngmodels.AlertRule) {
-				ri.update(RuleVersionAndPauseStatus{
+				ri.Update(RuleVersionAndPauseStatus{
 					Fingerprint: ruleWithFolder{rule: rule, folderTitle: folderTitle}.Fingerprint(),
 					IsPaused:    rule.IsPaused,
 				})

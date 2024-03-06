@@ -37,7 +37,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
 			resultCh := make(chan bool)
 			go func() {
-				resultCh <- r.update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
+				resultCh <- r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
 			}()
 			select {
 			case <-r.updateCh:
@@ -55,14 +55,14 @@ func TestAlertRuleInfo(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				r.update(version1)
+				r.Update(version1)
 				wg.Done()
 			}()
 			wg.Wait()
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				r.update(version2)
+				r.Update(version2)
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
 			select {
@@ -169,7 +169,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
 			r.stop(errRuleDeleted)
 			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
-			require.False(t, r.update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}))
+			require.False(t, r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
@@ -221,7 +221,7 @@ func TestAlertRuleInfo(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
+						r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
 					case 2:
 						r.Eval(&Evaluation{
 							scheduledAt: time.Now(),
