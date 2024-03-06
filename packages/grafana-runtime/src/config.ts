@@ -235,21 +235,21 @@ function overrideFeatureTogglesFromLocalStorage(config: GrafanaBootConfig) {
   }
 }
 
-const prodUrlAllowedFeatureFlags = new Set([
-  'autoMigrateOldPanels',
-  'autoMigrateGraphPanel',
-  'autoMigrateTablePanel',
-  'autoMigratePiechartPanel',
-  'autoMigrateWorldmapPanel',
-  'autoMigrateStatPanel, disableAngular',
-]);
-
 function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig, allowWhiteListed = false) {
   if (window.location.href.indexOf('__feature') === -1) {
     return;
   }
 
   const isLocalDevEnv = config.buildInfo.env === 'development';
+
+  const prodUrlAllowedFeatureFlags = new Set([
+    'autoMigrateOldPanels',
+    'autoMigrateGraphPanel',
+    'autoMigrateTablePanel',
+    'autoMigratePiechartPanel',
+    'autoMigrateWorldmapPanel',
+    'autoMigrateStatPanel, disableAngular',
+  ]);
 
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
