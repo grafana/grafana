@@ -76,6 +76,7 @@ For a complete list of every change, with links to pull requests and related iss
 
 ## Grafana 10
 
+- [What's new in 10.4](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v10-4/)
 - [What's new in 10.3](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v10-3/)
 - [What's new in 10.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v10-2/)
 - [What's new in 10.1]({{< relref "whats-new-in-v10-1/" >}})
