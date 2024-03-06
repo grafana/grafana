@@ -107,7 +107,7 @@ type SchedulerCfg struct {
 	Log                  log.Logger
 }
 
-// NewScheduler returns a new schedule.
+// NewScheduler returns a new scheduler.
 func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	const minMaxAttempts = int64(1)
 	if cfg.MaxAttempts < minMaxAttempts {

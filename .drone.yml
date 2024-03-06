@@ -1250,9 +1250,9 @@ steps:
   - make swagger-clean && make openapi3-gen
   - for f in public/api-merged.json public/openapi3.json; do git add $f; done
   - if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to
-    date!"; else echo "Please ensure the branch is up-to-date, then regenerate the
-    specification by running make swagger-clean && make openapi3-gen" && return 1;
-    fi
+    date!"; else git diff --cached && echo "Please ensure the branch is up-to-date,
+    then regenerate the specification by running make swagger-clean && make openapi3-gen"
+    && return 1; fi
   depends_on:
   - clone-enterprise
   environment:
@@ -1263,12 +1263,6 @@ steps:
 trigger:
   event:
   - pull_request
-  paths:
-    exclude:
-    - docs/**
-    - '*.md'
-    include:
-    - pkg/**
 type: docker
 volumes:
 - host:
@@ -4926,6 +4920,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 32b6ed2f5819225842aa94379423bcf4354dde154e91af3e293bc919594c10b9
+hmac: 2f4a5620d00189804c2facf65fa2a17b75883cf330cd32e5612a2f36d3712847
 
 ...
