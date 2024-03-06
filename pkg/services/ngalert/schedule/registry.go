@@ -30,9 +30,9 @@ func newRuleRegistry() alertRuleInfoRegistry {
 	return alertRuleInfoRegistry{rules: make(map[models.AlertRuleKey]Rule)}
 }
 
-// getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
-// Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
-func (r *alertRuleInfoRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey, factory ruleFactory) (Rule, bool) {
+// getOrCreate gets rule routine from registry by the key. If it does not exist, it creates a new one.
+// Returns a pointer to the rule routine and a flag that indicates whether it is a new struct or not.
+func (r *alertRuleInfoRegistry) getOrCreate(context context.Context, key models.AlertRuleKey, factory ruleFactory) (Rule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
