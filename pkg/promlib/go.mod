@@ -6,6 +6,7 @@ require (
 	github.com/grafana/grafana-azure-sdk-go v1.12.0
 	github.com/grafana/grafana-plugin-sdk-go v0.212.0
 	github.com/json-iterator/go v1.1.12
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.18.0
 	github.com/prometheus/common v0.46.0
 	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3
