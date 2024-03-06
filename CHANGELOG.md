@@ -1,3 +1,12 @@
+<!-- 10.1.8 START -->
+
+# 10.1.8 (2024-03-06)
+
+### Bug fixes
+
+- **Auth:** Fix email verification bypass when using basic authentication. [#83492](https://github.com/grafana/grafana/issues/83492)
+
+<!-- 10.1.8 END -->
 <!-- 10.1.7 START -->
 
 # 10.1.7 (2024-01-29)
