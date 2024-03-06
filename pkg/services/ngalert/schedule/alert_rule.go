@@ -52,7 +52,7 @@ func newRuleFactory(
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
 	return func(ctx context.Context) Rule {
-		return newAlertRuleInfo(
+		return newAlertRule(
 			ctx,
 			appURL,
 			disableGrafanaFolder,
@@ -78,7 +78,7 @@ type ruleProvider interface {
 	get(ngmodels.AlertRuleKey) *ngmodels.AlertRule
 }
 
-type alertRuleInfo struct {
+type alertRule struct {
 	evalCh   chan *Evaluation
 	updateCh chan RuleVersionAndPauseStatus
 	ctx      context.Context
@@ -103,7 +103,7 @@ type alertRuleInfo struct {
 	tracer  tracing.Tracer
 }
 
-func newAlertRuleInfo(
+func newAlertRule(
 	parent context.Context,
 	appURL *url.URL,
 	disableGrafanaFolder bool,
@@ -118,9 +118,9 @@ func newAlertRuleInfo(
 	tracer tracing.Tracer,
 	evalAppliedHook func(ngmodels.AlertRuleKey, time.Time),
 	stopAppliedHook func(ngmodels.AlertRuleKey),
-) *alertRuleInfo {
+) *alertRule {
 	ctx, stop := util.WithCancelCause(parent)
-	return &alertRuleInfo{
+	return &alertRule{
 		evalCh:               make(chan *Evaluation),
 		updateCh:             make(chan RuleVersionAndPauseStatus),
 		ctx:                  ctx,
@@ -148,7 +148,7 @@ func newAlertRuleInfo(
 //   - false when the send operation is stopped
 //
 // the second element contains a dropped message that was sent by a concurrent sender.
-func (a *alertRuleInfo) Eval(eval *Evaluation) (bool, *Evaluation) {
+func (a *alertRule) Eval(eval *Evaluation) (bool, *Evaluation) {
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
 	var droppedMsg *Evaluation
 	select {
@@ -165,7 +165,7 @@ func (a *alertRuleInfo) Eval(eval *Evaluation) (bool, *Evaluation) {
 }
 
 // update sends an instruction to the rule evaluation routine to update the scheduled rule to the specified version. The specified version must be later than the current version, otherwise no update will happen.
-func (a *alertRuleInfo) Update(lastVersion RuleVersionAndPauseStatus) bool {
+func (a *alertRule) Update(lastVersion RuleVersionAndPauseStatus) bool {
 	// check if the channel is not empty.
 	select {
 	case <-a.updateCh:
@@ -183,11 +183,11 @@ func (a *alertRuleInfo) Update(lastVersion RuleVersionAndPauseStatus) bool {
 }
 
 // stop sends an instruction to the rule evaluation routine to shut down. an optional shutdown reason can be given.
-func (a *alertRuleInfo) Stop(reason error) {
+func (a *alertRule) Stop(reason error) {
 	a.stopFn(reason)
 }
 
-func (a *alertRuleInfo) Run(key ngmodels.AlertRuleKey) error {
+func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 	grafanaCtx := ngmodels.WithRuleKey(a.ctx, key)
 	logger := a.logger.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
@@ -302,7 +302,7 @@ func (a *alertRuleInfo) Run(key ngmodels.AlertRuleKey) error {
 	}
 }
 
-func (a *alertRuleInfo) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f fingerprint, attempt int64, e *Evaluation, span trace.Span, retry bool) error {
+func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f fingerprint, attempt int64, e *Evaluation, span trace.Span, retry bool) error {
 	orgID := fmt.Sprint(key.OrgID)
 	evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
 	evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
@@ -400,14 +400,14 @@ func (a *alertRuleInfo) evaluate(ctx context.Context, key ngmodels.AlertRuleKey,
 	return nil
 }
 
-func (a *alertRuleInfo) notify(ctx context.Context, key ngmodels.AlertRuleKey, states []state.StateTransition) {
+func (a *alertRule) notify(ctx context.Context, key ngmodels.AlertRuleKey, states []state.StateTransition) {
 	expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock)
 	if len(expiredAlerts.PostableAlerts) > 0 {
 		a.sender.Send(ctx, key, expiredAlerts)
 	}
 }
 
-func (a *alertRuleInfo) resetState(ctx context.Context, key ngmodels.AlertRuleKey, isPaused bool) {
+func (a *alertRule) resetState(ctx context.Context, key ngmodels.AlertRuleKey, isPaused bool) {
 	rule := a.ruleProvider.get(key)
 	reason := ngmodels.StateReasonUpdated
 	if isPaused {
@@ -418,7 +418,7 @@ func (a *alertRuleInfo) resetState(ctx context.Context, key ngmodels.AlertRuleKe
 }
 
 // evalApplied is only used on tests.
-func (a *alertRuleInfo) evalApplied(alertDefKey ngmodels.AlertRuleKey, now time.Time) {
+func (a *alertRule) evalApplied(alertDefKey ngmodels.AlertRuleKey, now time.Time) {
 	if a.evalAppliedHook == nil {
 		return
 	}
@@ -427,7 +427,7 @@ func (a *alertRuleInfo) evalApplied(alertDefKey ngmodels.AlertRuleKey, now time.
 }
 
 // stopApplied is only used on tests.
-func (a *alertRuleInfo) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
+func (a *alertRule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
 	if a.stopAppliedHook == nil {
 		return
 	}
