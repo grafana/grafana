@@ -517,21 +517,24 @@ func FormatStateAndReason(state eval.State, reason string) string {
 // ParseFormattedState parses a state string in the format "state (reason)"
 // and returns the state and reason separately.
 func ParseFormattedState(stateStr string) (eval.State, string, error) {
-	split := strings.Split(stateStr, " ")
-	if len(split) == 0 {
+	p := 0
+	// walk string until we find a space
+	for i, c := range stateStr {
+		if c == ' ' {
+			p = i
+			break
+		}
+	}
+	if p == 0 {
 		return -1, "", errors.New("invalid state format")
 	}
 
-	state, err := eval.ParseStateString(split[0])
+	state, err := eval.ParseStateString(stateStr[:p])
 	if err != nil {
 		return -1, "", err
 	}
 
-	var reason string
-	if len(split) > 1 {
-		reason = strings.Trim(split[1], "()")
-	}
-
+	reason := strings.Trim(stateStr[p+1:], "()")
 	return state, reason, nil
 }
 

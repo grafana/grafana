@@ -876,7 +876,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> normal -> alerting -> alerting - keeps last state when result is NoData and NoDataState is KeepLast",
+			desc:      "normal -> normal (NoData, KeepLastState) -> alerting -> alerting (NoData, KeepLastState) - keeps last state when result is NoData and NoDataState is KeepLast",
 			alertRule: baseRuleWith(models.WithForNTimes(0), models.WithNoDataExecAs(models.KeepLast)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -898,11 +898,12 @@ func TestProcessEvalResults(t *testing.T) {
 					Labels:            labels["system + rule + labels1"],
 					ResultFingerprint: labels1.Fingerprint(),
 					State:             eval.Alerting,
+					StateReason:       models.ConcatReasons(eval.NoData.String(), models.StateReasonKeepLast),
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
-						newEvaluation(t2, eval.Normal),
+						newEvaluation(t2, eval.NoData),
 						newEvaluation(t3, eval.Alerting),
-						newEvaluation(tn(4), eval.Alerting),
+						newEvaluation(tn(4), eval.NoData),
 					},
 					StartsAt:           t3,
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
@@ -911,7 +912,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> pending -> pending -> alerting - keep last state respects For when result is NoData",
+			desc:      "normal -> pending -> pending (NoData, KeepLastState) -> alerting (NoData, KeepLastState) - keep last state respects For when result is NoData",
 			alertRule: baseRuleWith(models.WithForNTimes(2), models.WithNoDataExecAs(models.KeepLast)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -933,9 +934,10 @@ func TestProcessEvalResults(t *testing.T) {
 					Labels:            labels["system + rule + labels1"],
 					ResultFingerprint: labels1.Fingerprint(),
 					State:             eval.Alerting,
+					StateReason:       models.ConcatReasons(eval.NoData.String(), models.StateReasonKeepLast),
 					Results: []state.Evaluation{
-						newEvaluation(t3, eval.Pending),
-						newEvaluation(tn(4), eval.Alerting),
+						newEvaluation(t3, eval.NoData),
+						newEvaluation(tn(4), eval.NoData),
 					},
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
@@ -1081,7 +1083,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> normal -> alerting -> alerting - keeps last state when result is Error and ExecErrState is KeepLast",
+			desc:      "normal -> normal (Error, KeepLastState) -> alerting -> alerting (Error, KeepLastState) - keeps last state when result is Error and ExecErrState is KeepLast",
 			alertRule: baseRuleWith(models.WithForNTimes(0), models.WithErrorExecAs(models.KeepLastErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -1103,11 +1105,12 @@ func TestProcessEvalResults(t *testing.T) {
 					Labels:            labels["system + rule + labels1"],
 					ResultFingerprint: labels1.Fingerprint(),
 					State:             eval.Alerting,
+					StateReason:       models.ConcatReasons(eval.Error.String(), models.StateReasonKeepLast),
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
-						newEvaluation(t2, eval.Normal),
+						newEvaluation(t2, eval.Error),
 						newEvaluation(t3, eval.Alerting),
-						newEvaluation(tn(4), eval.Alerting),
+						newEvaluation(tn(4), eval.Error),
 					},
 					StartsAt:           t3,
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
@@ -1116,7 +1119,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> pending -> pending -> alerting - keep last state respects For when result is Error",
+			desc:      "normal -> pending -> pending (Error, KeepLastState) -> alerting (Error, KeepLastState) - keep last state respects For when result is Error",
 			alertRule: baseRuleWith(models.WithForNTimes(2), models.WithErrorExecAs(models.KeepLastErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -1138,9 +1141,10 @@ func TestProcessEvalResults(t *testing.T) {
 					Labels:            labels["system + rule + labels1"],
 					ResultFingerprint: labels1.Fingerprint(),
 					State:             eval.Alerting,
+					StateReason:       models.ConcatReasons(eval.Error.String(), models.StateReasonKeepLast),
 					Results: []state.Evaluation{
-						newEvaluation(t3, eval.Pending),
-						newEvaluation(tn(4), eval.Alerting),
+						newEvaluation(t3, eval.Error),
+						newEvaluation(tn(4), eval.Error),
 					},
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
