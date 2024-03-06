@@ -225,6 +225,34 @@ Any consumers of the specific API should be appropriately adapted. Issue [#74600
 - **Grafana/UI:** Add new Splitter component . [#82357](https://github.com/grafana/grafana/issues/82357), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.4.0 END -->
+<!-- 10.3.4 START -->
+
+# 10.3.4 (2024-03-06)
+
+### Features and enhancements
+
+- **Chore:** Improve domain validation for Google OAuth - Backport 83229 to v10.3.x. [#83725](https://github.com/grafana/grafana/issues/83725), [@linoman](https://github.com/linoman)
+
+### Bug fixes
+
+- **LDAP:** Fix LDAP users authenticated via auth proxy not being able to use LDAP active sync. [#83750](https://github.com/grafana/grafana/issues/83750), [@Jguer](https://github.com/Jguer)
+- **Tempo:** Add template variable interpolation for filters (#83213). [#83706](https://github.com/grafana/grafana/issues/83706), [@joey-grafana](https://github.com/joey-grafana)
+- **Elasticsearch:** Fix adhoc filters not applied in frontend mode. [#83596](https://github.com/grafana/grafana/issues/83596), [@svennergr](https://github.com/svennergr)
+- **Dashboards:** Fixes issue where panels would not refresh if time range updated while in panel view mode. [#83525](https://github.com/grafana/grafana/issues/83525), [@kaydelaney](https://github.com/kaydelaney)
+- **Auth:** Fix email verification bypass when using basic authentication. [#83484](https://github.com/grafana/grafana/issues/83484)
+- **AuthProxy:** Invalidate previous cached item for user when changes are made to any header. [#83203](https://github.com/grafana/grafana/issues/83203), [@klesh](https://github.com/klesh)
+- **LibraryPanels/RBAC:** Fix issue where folder scopes weren't being correctly inherited. [#82902](https://github.com/grafana/grafana/issues/82902), [@kaydelaney](https://github.com/kaydelaney)
+- **LibraryPanels:** Fix issue with repeated library panels. [#82259](https://github.com/grafana/grafana/issues/82259), [@kaydelaney](https://github.com/kaydelaney)
+- **Plugins:** Don't auto prepend app sub url to plugin asset paths. [#82147](https://github.com/grafana/grafana/issues/82147), [@wbrowne](https://github.com/wbrowne)
+- **Elasticsearch:** Set middlewares from Grafana's `httpClientProvider`. [#81929](https://github.com/grafana/grafana/issues/81929), [@svennergr](https://github.com/svennergr)
+- **Folders:** Fix failure to update folder in SQLite. [#81862](https://github.com/grafana/grafana/issues/81862), [@papagian](https://github.com/papagian)
+- **Loki/Elastic:** Assert queryfix value to always be string. [#81463](https://github.com/grafana/grafana/issues/81463), [@svennergr](https://github.com/svennergr)
+
+### Breaking changes
+
+We're adding a between the response of the ID token HD parameter and the list of allowed domains. This feature can be disabled through the configuration toggle `validate_hd `. Anyone using the legacy Google OAuth configuration should disable this validation if the ID Token response doesn't have the HD parameter. Issue [#83725](https://github.com/grafana/grafana/issues/83725)
+
+<!-- 10.3.4 END -->
 <!-- 10.3.3 START -->
 
 # 10.3.3 (2024-02-02)
