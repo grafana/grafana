@@ -235,7 +235,7 @@ function overrideFeatureTogglesFromLocalStorage(config: GrafanaBootConfig) {
   }
 }
 
-function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig, allowWhiteListed = false) {
+function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   if (window.location.href.indexOf('__feature') === -1) {
     return;
   }
