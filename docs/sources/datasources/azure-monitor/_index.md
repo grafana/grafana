@@ -230,7 +230,9 @@ If your Grafana instance is configured with Azure Entra (formerly Active Directo
 
 This method of authentication does not inherently support backend functionality as a user's credentials will not be in scope e.g. alerting, reporting, recorded queries. In order to support backend queries when using a data source configured with current user authentication, it is possible to configure service credentials. Also, note that query and resource caching will be disabled by default for data sources using current user authentication.
 
-**Note: To configure fallback service credentials the [feature toggle][configure-grafana-feature-toggles] `idForwarding` must be set to `true` and `user_identity_fallback_credentials_enabled` must be enabled in the [Azure configuration section][configure-grafana-azure] (enabled by default when `user_identity_enabled` is set to `true`).**
+{{< admonition type="note" >}}
+To configure fallback service credentials the [feature toggle][configure-grafana-feature-toggles] `idForwarding` must be set to `true` and `user_identity_fallback_credentials_enabled` must be enabled in the [Azure configuration section][configure-grafana-azure] (enabled by default when `user_identity_enabled` is set to `true`).
+{{< /admonition >}}
 
 Permissions for fallback credentials may need to be broad in order to appropriately support backend functionality. For example, an alerting query created by a user will be dependent on their permissions. If a user creates an alert for a resource that the fallback credentials cannot access, the alert will fail.
 
