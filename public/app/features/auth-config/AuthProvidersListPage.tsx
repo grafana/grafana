@@ -1,8 +1,8 @@
-import React, { JSX, useEffect, useState } from 'react';
+import React, { JSX, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { reportInteraction } from '@grafana/runtime';
-import { Drawer, Grid, TextLink, ToolbarButton } from '@grafana/ui';
+import { Grid, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 
@@ -41,8 +41,6 @@ export const AuthConfigPageUnconnected = ({
     loadSettings();
   }, [loadSettings]);
 
-  const [showDrawer, setShowDrawer] = useState(false);
-
   const authProviders = getRegisteredAuthProviders();
   const availableProviders = authProviders.filter((p) => !providerStatuses[p.id]?.hide);
   const onProviderCardClick = (providerType: string, enabled: boolean) => {
@@ -73,11 +71,6 @@ export const AuthConfigPageUnconnected = ({
           .
         </>
       }
-      actions={
-        <ToolbarButton icon="cog" variant="canvas" onClick={() => setShowDrawer(true)}>
-          Auth settings
-        </ToolbarButton>
-      }
     >
       <Page.Contents isLoading={isLoading}>
         {!providerList.length ? (
@@ -98,16 +91,6 @@ export const AuthConfigPageUnconnected = ({
                   configPath={settings.configPath}
                 />
               ))}
-            {showDrawer && (
-              <Drawer
-                title="Auth Settings"
-                subtitle="Configure auth settings. Find out more in our documentation"
-                size="sm"
-                onClose={() => setShowDrawer(false)}
-              >
-                <div>Put your Drawer content here</div>
-              </Drawer>
-            )}
           </Grid>
         )}
       </Page.Contents>
