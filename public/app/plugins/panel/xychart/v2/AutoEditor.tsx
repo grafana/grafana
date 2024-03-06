@@ -38,8 +38,9 @@ export const AutoEditor = ({
 
   return seriesCfg.map((series, i) => (
     <div key={i}>
-      <Field label="Frame #">
+      <Field label="Frame">
         <Select
+          placeholder='All frames'
           isClearable={true}
           options={context.data.map((frame, index) => ({
             value: index,
