@@ -87,7 +87,10 @@ import {
   createPluginCapabilityGetter,
   createPluginExtensionsGetter,
 } from './features/plugins/extensions/getPluginExtensions';
-import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
+import {
+  ReactivePluginExtensionsRegistry,
+  reactivePluginExtensionRegistry,
+} from './features/plugins/extensions/reactivePluginExtensionRegistry';
 import { createPluginExtensionsHook } from './features/plugins/extensions/usePluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
@@ -212,19 +215,18 @@ export class GrafanaApp {
       modalManager.init();
 
       // Initialize plugin extensions
-      const extensionsRegistry = new ReactivePluginExtensionsRegistry();
-      extensionsRegistry.register({
+      reactivePluginExtensionRegistry.register({
         pluginId: 'grafana',
         extensionConfigs: getCoreExtensionConfigurations(),
       });
 
       if (contextSrv.user.orgRole !== '') {
-        preloadPlugins(config.apps, extensionsRegistry);
+        preloadPlugins(config.apps, reactivePluginExtensionRegistry);
       }
 
-      setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
-      setPluginExtensionsHook(createPluginExtensionsHook(extensionsRegistry));
-      setPluginCapabilityGetter(createPluginCapabilityGetter(extensionsRegistry));
+      setPluginExtensionGetter(createPluginExtensionsGetter(reactivePluginExtensionRegistry));
+      setPluginExtensionsHook(createPluginExtensionsHook(reactivePluginExtensionRegistry));
+      setPluginCapabilityGetter(createPluginCapabilityGetter(reactivePluginExtensionRegistry));
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

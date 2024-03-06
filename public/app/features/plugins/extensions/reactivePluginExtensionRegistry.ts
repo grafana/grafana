@@ -97,3 +97,6 @@ function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPrel
 
   return registry;
 }
+
+// TODO - check if this is only accessible by core Grafana (and not by plugins)
+export const reactivePluginExtensionRegistry = new ReactivePluginExtensionsRegistry();

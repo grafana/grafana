@@ -16,29 +16,7 @@ export default function ExtensionSettings(): ReactElement | null {
     { value: 'explore', label: 'Explore', icon: 'bolt' },
   ];
 
-  return (
-    <Page navModel={navModel} subTitle={'Manage UI extensions.'}>
-      <Page.Contents>
-        <TabsBar>
-          {tabs.map((tab, index) => (
-            <Tab
-              key={index}
-              label={tab.label}
-              active={tab.value === activeTab}
-              icon={tab.icon as IconName}
-              onChangeTab={() => setActivetab(tab.value)}
-            />
-          ))}
-        </TabsBar>
-        <TabContent>
-          {tabs[0].value === activeTab && <div>First tab content</div>}
-          {tabs[1].value === activeTab && <div>Second tab content</div>}
-        </TabContent>
-
-        <div>ExtensionSettings</div>
-      </Page.Contents>
-    </Page>
-  );
+  return <div>HEY HEY HEY</div>;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -47,7 +47,7 @@ const DEFAULT_ROUTES = [
       ['Admin', 'ServerAdmin']
     ),
     routeName: ExtensionAdminRoutes.Settings,
-    component: SafeDynamicImport(() => import(/* webpackChunkName: "ExtensionsAdmin" */ './pages/ExtensionSettings')),
+    component: SafeDynamicImport(() => import(/* webpackChunkName: "ExtensionsAdmin" */ './pages/Extensions')),
   },
 ];
 
