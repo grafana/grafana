@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	"github.com/stretchr/testify/require"
 )
@@ -29,10 +29,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		schemabuilder.QueryTypeInfo{
 			Name:   "default",
 			GoType: reflect.TypeOf(&TestDataDataQuery{}),
-			Examples: []sdkapi.QueryExample{
+			Examples: []data.QueryExample{
 				{
 					Name: "simple random walk",
-					SaveModel: sdkapi.AsUnstructured(
+					SaveModel: data.AsUnstructured(
 						TestDataDataQuery{
 							ScenarioId: TestDataQueryTypeRandomWalk,
 						},
@@ -40,7 +40,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				},
 				{
 					Name: "pulse wave example",
-					SaveModel: sdkapi.AsUnstructured(
+					SaveModel: data.AsUnstructured(
 						TestDataDataQuery{
 							ScenarioId: TestDataQueryTypePredictablePulse,
 							PulseWave: &PulseWaveQuery{

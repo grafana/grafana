@@ -4,7 +4,7 @@ import (
 	"maps"
 	"strings"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
@@ -16,7 +16,7 @@ import (
 func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefinitions {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := v0alpha1.GetOpenAPIDefinitions(ref) // common grafana apis
-		maps.Copy(defs, sdkapi.GetOpenAPIDefinitions(ref))
+		maps.Copy(defs, data.GetOpenAPIDefinitions(ref))
 		for _, b := range builders {
 			g := b.GetOpenAPIDefinitions()
 			if g != nil {

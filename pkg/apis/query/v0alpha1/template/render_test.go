@@ -3,8 +3,8 @@ package template
 import (
 	"testing"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	apidata "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,7 +31,7 @@ var nestedFieldRender = QueryTemplate{
 					},
 				},
 			},
-			Properties: sdkapi.NewDataQuery(map[string]any{
+			Properties: apidata.NewDataQuery(map[string]any{
 				"nestedObject": map[string]any{
 					"anArray": []any{"foo", .2},
 				},
@@ -55,7 +55,7 @@ var nestedFieldRenderedTargets = []Target{
 			},
 		},
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
-		Properties: sdkapi.NewDataQuery(
+		Properties: apidata.NewDataQuery(
 			map[string]any{
 				"nestedObject": map[string]any{
 					"anArray": []any{"up", .2},
@@ -116,7 +116,7 @@ var multiVarTemplate = QueryTemplate{
 				},
 			},
 
-			Properties: sdkapi.NewDataQuery(map[string]any{
+			Properties: apidata.NewDataQuery(map[string]any{
 				"expr": "1 + metricName + 1 + anotherMetric + metricName",
 			}),
 		},
@@ -154,7 +154,7 @@ var multiVarRenderedTargets = []Target{
 			},
 		},
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
-		Properties: sdkapi.NewDataQuery(map[string]any{
+		Properties: apidata.NewDataQuery(map[string]any{
 			"expr": "1 + up + 1 + sloths_do_like_a_good_nap + up",
 		}),
 	},
@@ -181,7 +181,7 @@ func TestRenderWithRune(t *testing.T) {
 		},
 		Targets: []Target{
 			{
-				Properties: sdkapi.NewDataQuery(map[string]any{
+				Properties: apidata.NewDataQuery(map[string]any{
 					"message": "🐦 name!",
 				}),
 				Variables: map[string][]VariableReplacement{

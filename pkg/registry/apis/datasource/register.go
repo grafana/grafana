@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	data "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"

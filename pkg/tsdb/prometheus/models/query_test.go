@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	"github.com/stretchr/testify/require"
 
@@ -38,17 +38,17 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		schemabuilder.QueryTypeInfo{
 			Name:   "default",
 			GoType: reflect.TypeOf(&models.PrometheusQueryProperties{}),
-			Examples: []sdkapi.QueryExample{
+			Examples: []data.QueryExample{
 				{
 					Name: "example timeseries",
-					SaveModel: sdkapi.AsUnstructured(models.PrometheusQueryProperties{
+					SaveModel: data.AsUnstructured(models.PrometheusQueryProperties{
 						Format: models.PromQueryFormatTimeSeries,
 						Expr:   "???",
 					}),
 				},
 				{
 					Name: "example table",
-					SaveModel: sdkapi.AsUnstructured(models.PrometheusQueryProperties{
+					SaveModel: data.AsUnstructured(models.PrometheusQueryProperties{
 						Format: models.PromQueryFormatTable,
 						Expr:   "something",
 					}),

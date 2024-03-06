@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	data "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -58,7 +58,7 @@ func NewDataSourceRegistryFromStore(pluginStore pluginstore.Store,
 }
 
 // ExecuteQueryData implements QueryHelper.
-func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest, headers ...string) (int, *backend.QueryDataResponse, error) {
+func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (int, *backend.QueryDataResponse, error) {
 	queries, dsRef, err := legacydata.ToDataSourceQueries(req)
 	if err != nil {
 		return http.StatusBadRequest, nil, err
@@ -75,10 +75,6 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest,
 
 	qdr := &backend.QueryDataRequest{
 		Queries: queries,
-	}
-	qdr.Headers, err = getHeaders(headers)
-	if err != nil {
-		return http.StatusBadRequest, nil, err
 	}
 	qdr.PluginContext, err = d.pCtxProvider.PluginContextForDataSource(ctx, settings)
 	if err != nil {
@@ -180,19 +176,4 @@ func (d *pluginRegistry) updatePlugins() error {
 	d.apis = apis
 	d.groupToPlugin = groupToPlugin
 	return nil
-}
-
-func getHeaders(headers []string) (map[string]string, error) {
-	if len(headers) == 0 {
-		return nil, nil
-	}
-	count := len(headers)
-	if (count % 2) != 2 {
-		return nil, fmt.Errorf("expected even number of header pairs")
-	}
-	h := make(map[string]string, count/2)
-	for i := 0; i < count; i += 2 {
-		h[headers[i]] = headers[i+1]
-	}
-	return h, nil
 }

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	data "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -32,19 +32,14 @@ func NewTestDataRegistry() query.DataSourceApiServerRegistry {
 }
 
 // ExecuteQueryData implements QueryHelper.
-func (d *testdataDummy) QueryData(ctx context.Context, req data.QueryDataRequest, headers ...string) (int, *backend.QueryDataResponse, error) {
+func (d *testdataDummy) QueryData(ctx context.Context, req data.QueryDataRequest) (int, *backend.QueryDataResponse, error) {
 	queries, _, err := legacydata.ToDataSourceQueries(req)
 	if err != nil {
 		return http.StatusBadRequest, nil, err
 	}
 
-	qdr := &backend.QueryDataRequest{Queries: queries}
-	qdr.Headers, err = getHeaders(headers)
-	if err != nil {
-		return http.StatusBadRequest, nil, err
-	}
-
 	code := http.StatusOK
+	qdr := &backend.QueryDataRequest{Queries: queries}
 	rsp, err := testdata.ProvideService().QueryData(ctx, qdr)
 	if err == nil {
 		for _, v := range rsp.Responses {

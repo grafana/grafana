@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 
@@ -107,8 +107,8 @@ var safeResolution = 11000
 
 // QueryModel includes both the common and specific values
 type QueryModel struct {
-	PrometheusQueryProperties    `json:",inline"`
-	sdkapi.CommonQueryProperties `json:",inline"`
+	PrometheusQueryProperties  `json:",inline"`
+	data.CommonQueryProperties `json:",inline"`
 
 	// The following properties may be part of the request payload, however they are not saved in panel JSON
 	// Timezone offset to align start & end time on backend

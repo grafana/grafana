@@ -38,6 +38,8 @@ import {
   DataSourceGetTagValuesOptions,
   DataSourceGetTagKeysOptions,
   DataSourceWithQueryModificationSupport,
+  LogsVolumeOption,
+  LogsSampleOptions,
 } from '@grafana/data';
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -167,13 +169,18 @@ export class LokiDatasource
    */
   getSupplementaryRequest(
     type: SupplementaryQueryType,
-    request: DataQueryRequest<LokiQuery>
+    request: DataQueryRequest<LokiQuery>,
+    options?: SupplementaryQueryOptions
   ): DataQueryRequest<LokiQuery> | undefined {
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
-        return this.getLogsVolumeDataProvider(request);
+        const logsVolumeOption: LogsVolumeOption =
+          options?.type === SupplementaryQueryType.LogsVolume ? options : { type };
+        return this.getLogsVolumeDataProvider(request, logsVolumeOption);
       case SupplementaryQueryType.LogsSample:
-        return this.getLogsSampleDataProvider(request);
+        const logsSampleOption: LogsSampleOptions =
+          options?.type === SupplementaryQueryType.LogsSample ? options : { type };
+        return this.getLogsSampleDataProvider(request, logsSampleOption);
       default:
         return undefined;
     }
@@ -207,6 +214,7 @@ export class LokiDatasource
         }
 
         const dropErrorExpression = `${expr} | drop __error__`;
+        const field = options.field || 'level';
         if (isQueryWithError(this.interpolateString(dropErrorExpression, placeHolderScopedVars)) === false) {
           expr = dropErrorExpression;
         }
@@ -216,7 +224,8 @@ export class LokiDatasource
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
           queryType: LokiQueryType.Range,
           supportingQueryType: SupportingQueryType.LogsVolume,
-          expr: `sum by (level) (count_over_time(${expr}[$__auto]))`,
+          expr: `sum by (${field}) (count_over_time(${expr}[$__auto]))`,
+          legendFormat: `{{ ${field} }}`,
         };
 
       case SupplementaryQueryType.LogsSample:
@@ -242,10 +251,13 @@ export class LokiDatasource
    * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs volume queries.
    * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
    */
-  private getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> | undefined {
+  private getLogsVolumeDataProvider(
+    request: DataQueryRequest<LokiQuery>,
+    options: LogsVolumeOption
+  ): DataQueryRequest<LokiQuery> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
-      .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, query))
+      .map((query) => this.getSupplementaryQuery(options, query))
       .filter((query): query is LokiQuery => !!query);
 
     if (!targets.length) {
@@ -259,7 +271,10 @@ export class LokiDatasource
    * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs sample queries.
    * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
    */
-  private getLogsSampleDataProvider(request: DataQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> | undefined {
+  private getLogsSampleDataProvider(
+    request: DataQueryRequest<LokiQuery>,
+    options?: LogsSampleOptions
+  ): DataQueryRequest<LokiQuery> | undefined {
     const logsSampleRequest = cloneDeep(request);
     const targets = logsSampleRequest.targets
       .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsSample, limit: 100 }, query))

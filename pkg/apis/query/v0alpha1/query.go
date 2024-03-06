@@ -1,7 +1,7 @@
 package v0alpha1
 
 import (
-	data "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

@@ -403,7 +403,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     }
   }
 
-  const getBucket = (v: number) => incrRoundDn(v - bucketOffset, bucketSize!) + bucketOffset;
+  const getBucket = (v: number) => roundDecimals(incrRoundDn(v - bucketOffset, bucketSize!) + bucketOffset, 9);
 
   // guess number of decimals
   let bucketDecimals = (('' + bucketSize).match(/\.\d+$/) ?? ['.'])[0].length - 1;

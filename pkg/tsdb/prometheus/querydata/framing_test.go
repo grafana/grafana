@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
@@ -115,7 +115,7 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 			Expr:         sq.Expr,
 			LegendFormat: sq.LegendFormat,
 		},
-		CommonQueryProperties: sdkapi.CommonQueryProperties{
+		CommonQueryProperties: data.CommonQueryProperties{
 			IntervalMS: float64(sq.Step * 1000),
 		},
 		Interval: fmt.Sprintf("%ds", sq.Step),

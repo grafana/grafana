@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -148,6 +148,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return &backend.QueryDataResponse{}, nil
 	}
 
+	// headers?
 	client, err := b.client.GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
 		Type: req.PluginId,
 		UID:  req.UID,
@@ -156,11 +157,8 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return nil, err
 	}
 
-	headers := []string{}
-	for k, v := range req.Headers {
-		headers = append(headers, k, v)
-	}
-	_, rsp, err := client.QueryData(ctx, *req.Request, headers...)
+	// headers?
+	_, rsp, err := client.QueryData(ctx, *req.Request)
 	if err == nil {
 		for _, q := range req.Request.Queries {
 			if q.ResultAssertions != nil {

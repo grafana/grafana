@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	data "github.com/grafana/grafana-plugin-sdk-go/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 )
 
 // ToDataSourceQueries returns queries that should be sent to a single datasource
