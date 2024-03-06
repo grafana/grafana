@@ -1263,14 +1263,6 @@ steps:
 trigger:
   event:
   - pull_request
-  paths:
-    exclude:
-    - docs/**
-    - '*.md'
-    include:
-    - pkg/**
-    - go.mod
-    - go.sum
 type: docker
 volumes:
 - host:
@@ -4928,6 +4920,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 32b6ed2f5819225842aa94379423bcf4354dde154e91af3e293bc919594c10b9
+hmac: adbfa41d432ffafdee0988e8dd15ed94fbd71187fadefbabd31b71c864e9de8a
 
 ...

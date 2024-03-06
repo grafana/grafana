@@ -40,7 +40,7 @@ def swagger_gen_step(ver_mode):
         ],
     }
 
-def swagger_gen(trigger, ver_mode, source = "${DRONE_SOURCE_BRANCH}"):
+def swagger_gen(ver_mode, source = "${DRONE_SOURCE_BRANCH}"):
     test_steps = [
         clone_enterprise_step_pr(source = source, canFail = True),
         swagger_gen_step(ver_mode = ver_mode),
@@ -48,7 +48,9 @@ def swagger_gen(trigger, ver_mode, source = "${DRONE_SOURCE_BRANCH}"):
 
     p = pipeline(
         name = "{}-swagger-gen".format(ver_mode),
-        trigger = trigger,
+        trigger = {
+            "event": ["pull_request"],
+        },
         services = [],
         steps = test_steps,
     )
