@@ -147,6 +147,6 @@ To build your own data source plugin, refer to the [Build a data source plugin](
 [Plugin-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/plugin-management"
 [Plugin-management]: "/docs/grafana-cloud -> /docs/grafana/<GRAFANA VERSION>/administration/plugin-management"
 
-[Grafana-Enterprise]:  "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
+[Grafana-Enterprise]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
 
 {{% /docs/reference %}}
