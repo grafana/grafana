@@ -767,7 +767,10 @@ function getPluginToMigrateTo(panel: any): string | undefined {
     return 'geomap';
   }
 
-  if (panel.type === 'singlestat' || config.featureToggles.autoMigrateStatPanel) {
+  if (
+    (panel.type === 'singlestat' || panel.type === 'grafana-singlestat-panel') &&
+    config.featureToggles.autoMigrateStatPanel
+  ) {
     return 'stat';
   }
 
