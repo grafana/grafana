@@ -60,7 +60,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 }
 
 func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]any) {
-	ctx, span := uss.tracer.Start(ctx, "UsageStats.GatherLoop")
+	ctxTracer, span := uss.tracer.Start(context.Background(), "UsageStats.GatherLoop")
 	defer span.End()
 	totC, errC := 0, 0
 
@@ -75,7 +75,7 @@ func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]any
 			sem <- struct{}{}        // acquire a token
 			defer func() { <-sem }() // release the token when done
 
-			ctxWithTimeout, cancel := context.WithTimeout(context.Background(), collectorTimeoutDuration)
+			ctxWithTimeout, cancel := context.WithTimeout(ctxTracer, collectorTimeoutDuration)
 			defer cancel()
 
 			fnMetrics, err := uss.runMetricsFunc(ctxWithTimeout, fn)
