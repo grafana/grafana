@@ -17,6 +17,7 @@ import {
   sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
+import { LibraryPanel } from '@grafana/schema/';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
@@ -26,6 +27,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { reportPanelInspectInteraction } from 'app/features/search/page/reporting';
 
+import { VizPanelManager } from '../panel-edit/VizPanelManager';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
@@ -60,7 +62,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
   public getOptions(): Array<SelectableValue<ShowContent>> {
     const panel = this.state.panelRef.resolve();
-    const dataProvider = panel.state.$data;
+    const dataProvider = panel.state.$data ?? panel.parent?.state.$data;
 
     const options: Array<SelectableValue<ShowContent>> = [
       {
@@ -201,10 +203,14 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
     case 'panel-json': {
       reportPanelInspectInteraction(InspectTab.JSON, 'panelData');
 
-      if (panel.parent instanceof SceneGridItem || panel.parent instanceof PanelRepeaterGridItem) {
-        objToStringify = gridItemToPanel(panel.parent);
-      } else if (panel.parent instanceof LibraryVizPanel) {
+      const parent = panel.parent!;
+
+      if (parent instanceof SceneGridItem || parent instanceof PanelRepeaterGridItem) {
+        objToStringify = gridItemToPanel(parent);
+      } else if (parent instanceof LibraryVizPanel) {
         objToStringify = libraryPanelChildToLegacyRepresentation(panel);
+      } else if (parent instanceof VizPanelManager) {
+        objToStringify = parent.getPanelSaveModel();
       }
       break;
     }
@@ -246,19 +252,32 @@ function libraryPanelChildToLegacyRepresentation(panel: VizPanel<{}, {}>) {
   if (!(panel.parent instanceof LibraryVizPanel)) {
     throw 'Panel not child of LibraryVizPanel';
   }
+
   if (!(panel.parent.parent instanceof SceneGridItem)) {
     throw 'LibraryPanel not child of SceneGridItem';
   }
+
   const gridItem = panel.parent.parent;
-  const libraryPanelObj = gridItemToPanel(gridItem);
-  const panelObj = vizPanelToPanel(panel);
-  panelObj.gridPos = {
+  const gridPos = {
     x: gridItem.state.x || 0,
     y: gridItem.state.y || 0,
     h: gridItem.state.height || 0,
     w: gridItem.state.width || 0,
   };
-  return { ...libraryPanelObj, ...panelObj };
+  const libraryPanelObj = vizPanelToLibraryPanel(panel);
+  const panelObj = vizPanelToPanel(panel, gridPos, false, gridItem);
+
+  return { libraryPanel: { ...libraryPanelObj }, ...panelObj };
+}
+
+function vizPanelToLibraryPanel(panel: VizPanel): LibraryPanel {
+  if (!(panel.parent instanceof LibraryVizPanel)) {
+    throw new Error('Panel not a child of LibraryVizPanel');
+  }
+  if (!panel.parent.state._loadedPanel) {
+    throw new Error('Library panel not loaded');
+  }
+  return panel.parent.state._loadedPanel;
 }
 
 function hasGridPosChanged(a: SceneGridItemStateLike, b: SceneGridItemStateLike) {

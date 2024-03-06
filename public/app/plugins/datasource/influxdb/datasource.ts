@@ -309,22 +309,24 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       }
 
       // If the value is a string array first escape them then join them with pipe
-      return value.map((v) => escapeRegex(v)).join('|');
+      // then put inside parenthesis.
+      return `(${value.map((v) => escapeRegex(v)).join('|')})`;
     }
 
     // If the variable is not a multi-value variable
     // we want to see how it's been used. If it is used in a regex expression
     // we escape it. Otherwise, we return it directly.
     // regex below checks if the variable inside /^...$/ (^ and $ is optional)
-    // i.e. /^$myVar$/ or /$myVar/
-    const regex = new RegExp(`\\/(?:\\^)?\\$${variable.name}(?:\\$)?\\/`, 'gm');
+    // i.e. /^$myVar$/ or /$myVar/ or /^($myVar)$/
+    const regex = new RegExp(`\\/(?:\\^)?(.*)(\\$${variable.name})(.*)(?:\\$)?\\/`, 'gm');
     if (regex.test(query)) {
       if (typeof value === 'string') {
         return escapeRegex(value);
       }
 
       // If the value is a string array first escape them then join them with pipe
-      return value.map((v) => escapeRegex(v)).join('|');
+      // then put inside parenthesis.
+      return `(${value.map((v) => escapeRegex(v)).join('|')})`;
     }
 
     return value;

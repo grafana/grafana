@@ -443,6 +443,19 @@ describe('InfluxDataSource Frontend Mode', () => {
         expect(result).toBe(expectation);
       });
 
+      it('should return the escaped value if the value wrapped in regex 3', () => {
+        const value = ['env', 'env2', 'env3'];
+        const variableMock = queryBuilder()
+          .withId('tempVar')
+          .withName('tempVar')
+          .withMulti(false)
+          .withIncludeAll(true)
+          .build();
+        const result = ds.interpolateQueryExpr(value, variableMock, 'select from /^($tempVar)$/');
+        const expectation = `(env|env2|env3)`;
+        expect(result).toBe(expectation);
+      });
+
       it('should **not** return the escaped value if the value **is not** wrapped in regex', () => {
         const value = '/special/path';
         const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
@@ -463,7 +476,7 @@ describe('InfluxDataSource Frontend Mode', () => {
         const value = [`/special/path`, `/some/other/path`];
         const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti().build();
         const result = ds.interpolateQueryExpr(value, variableMock, `select that where path = '$tempVar'`);
-        const expectation = `\\/special\\/path|\\/some\\/other\\/path`;
+        const expectation = `(\\/special\\/path|\\/some\\/other\\/path)`;
         expect(result).toBe(expectation);
       });
 
@@ -492,7 +505,7 @@ describe('InfluxDataSource Frontend Mode', () => {
           .build();
         const value = [`/special/path`, `/some/other/path`];
         const result = ds.interpolateQueryExpr(value, variableMock, `select that where path = /$tempVar/`);
-        const expectation = `\\/special\\/path|\\/some\\/other\\/path`;
+        const expectation = `(\\/special\\/path|\\/some\\/other\\/path)`;
         expect(result).toBe(expectation);
       });
     });

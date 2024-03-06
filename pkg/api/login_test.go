@@ -600,8 +600,8 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 		return response.Empty(http.StatusOK)
 	})
 
-	sc.cfg.AuthProxyEnabled = true
-	sc.cfg.AuthProxyEnableLoginToken = true
+	sc.cfg.AuthProxy.Enabled = true
+	sc.cfg.AuthProxy.EnableLoginToken = true
 
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
@@ -640,8 +640,8 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 		return response.Empty(http.StatusOK)
 	})
 
-	sc.cfg.AuthProxyEnabled = true
-	sc.cfg.AuthProxyEnableLoginToken = enableLoginToken
+	sc.cfg.AuthProxy.Enabled = true
+	sc.cfg.AuthProxy.EnableLoginToken = enableLoginToken
 
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()

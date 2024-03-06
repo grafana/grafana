@@ -115,7 +115,6 @@ function grafana::codegen::gen_openapi() {
 
     local input_pkgs=()
     while read -r dir; do
-        echo ${dir}
         pkg="$(cd "${dir}" && GO111MODULE=on go list -find .)"
         input_pkgs+=("${pkg}")
     done < <(
@@ -127,6 +126,8 @@ function grafana::codegen::gen_openapi() {
           | LC_ALL=C sort -u
     )
 
+
+   local new_report=""
     if [ "${#input_pkgs[@]}" != 0 ]; then
         echo "Generating openapi code for ${#input_pkgs[@]} targets"
 
@@ -139,7 +140,6 @@ function grafana::codegen::gen_openapi() {
             inputs+=("--input-dirs" "$arg")
         done
 
-        local new_report
         new_report="${root}/${report}.tmp"
         if [ -n "${update_report}" ]; then
             new_report="${root}/${report}"
@@ -157,6 +157,9 @@ function grafana::codegen::gen_openapi() {
     fi
 
     touch "${root}/${report}" # in case it doesn't exist yet
+    if [[ -z "${new_report}" ]]; then
+        return 0
+    fi
     if ! diff -u "${root}/${report}" "${new_report}"; then
         echo -e "ERROR:"
         echo -e "\tAPI rule check failed for ${root}/${report}: new reported violations"
