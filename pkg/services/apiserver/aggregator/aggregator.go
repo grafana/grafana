@@ -146,7 +146,13 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 	}
 
 	remoteServicesConfig := &RemoteServicesConfig{
-		InsecureSkipTLSVerify:  commandOptions.ExtraOptions.DevMode,
+		// TODO: determine if we can switch to commandOptions.ExtraOptions.DevMode for Insecure flag below
+		// without insecure, aggregator is checking the referrer / externalname service name
+		// such as v0alpha1.{MT_SERVICE_GROUP_NAME}.grafana.app.stack-{STACK_ID}.svc
+		// against the TLS cert, which it will obviously fail
+		// This disables server cert validation for the aggregated servers
+		// Client certificate validation is still active on their side
+		InsecureSkipTLSVerify:  true,
 		ExternalNamesNamespace: externalNamesNamespace,
 		CABundle:               caBundlePEM,
 		Services:               remoteServices,
