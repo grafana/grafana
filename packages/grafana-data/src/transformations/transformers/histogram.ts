@@ -479,10 +479,14 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     counts = [
       {
         ...counts[0],
-        name: 'count',
+        name: 'Count',
         values: vals,
         type: FieldType.number,
-        state: undefined,
+        state: {
+          ...counts[0].state,
+          displayName: 'Count',
+          origin: { frameIndex: 0, fieldIndex: 2 },
+        },
       },
     ];
   } else {
