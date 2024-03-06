@@ -160,9 +160,11 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
                   })}
                 />
               </Field>
-              {strongPasswordValidations.map((validation, index) =>
-                validationLabel(index, validation.message, () => validation.validation(newPassword))
-              )}
+              <div className={styles.labelContainer}>
+                {strongPasswordValidations.map((validation, index) =>
+                  validationLabel(index, validation.message, () => validation.validation(newPassword))
+                )}
+              </div>
               <Field
                 label={t('profile.change-password.confirm-password-label', 'Confirm password')}
                 invalid={!!errors.confirmNew}
@@ -203,6 +205,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
     label: css({
       display: 'flex',
       marginTop: theme.spacing(1),
+    }),
+    labelContainer: css({
+      marginBottom: theme.spacing(2),
     }),
     hidden: css({
       display: 'none',
