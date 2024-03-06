@@ -18,7 +18,7 @@ import (
 var errRuleDeleted = errors.New("rule deleted")
 
 type ruleFactory interface {
-	new(context.Context) *alertRuleInfo
+	new(context.Context) Rule
 }
 
 type alertRuleInfoRegistry struct {

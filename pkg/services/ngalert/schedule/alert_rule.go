@@ -30,9 +30,9 @@ type Rule interface {
 	Update(lastVersion RuleVersionAndPauseStatus) bool
 }
 
-type ruleFactoryFunc func(context.Context) *alertRuleInfo
+type ruleFactoryFunc func(context.Context) Rule
 
-func (f ruleFactoryFunc) new(ctx context.Context) *alertRuleInfo {
+func (f ruleFactoryFunc) new(ctx context.Context) Rule {
 	return f(ctx)
 }
 
@@ -51,7 +51,7 @@ func newRuleFactory(
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
-	return func(ctx context.Context) *alertRuleInfo {
+	return func(ctx context.Context) Rule {
 		return newAlertRuleInfo(
 			ctx,
 			appURL,

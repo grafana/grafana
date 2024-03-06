@@ -241,8 +241,7 @@ func TestAlertRuleInfo(t *testing.T) {
 }
 
 func blankRuleInfoForTests(ctx context.Context) *alertRuleInfo {
-	factory := newRuleFactory(nil, false, 0, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-	return factory.new(context.Background())
+	return newAlertRuleInfo(context.Background(), nil, false, 0, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {
@@ -284,11 +283,11 @@ func TestRuleRoutine(t *testing.T) {
 
 			expectedTime := time.UnixMicro(rand.Int63())
 
-			ruleInfo.evalCh <- &Evaluation{
+			ruleInfo.Eval(&Evaluation{
 				scheduledAt: expectedTime,
 				rule:        rule,
 				folderTitle: folderTitle,
-			}
+			})
 
 			actualTime := waitForTimeChannel(t, evalAppliedChan)
 			require.Equal(t, expectedTime, actualTime)
@@ -483,11 +482,11 @@ func TestRuleRoutine(t *testing.T) {
 		}()
 
 		// init evaluation loop so it got the rule version
-		ruleInfo.evalCh <- &Evaluation{
+		ruleInfo.Eval(&Evaluation{
 			scheduledAt: sch.clock.Now(),
 			rule:        rule,
 			folderTitle: folderTitle,
-		}
+		})
 
 		waitForTimeChannel(t, evalAppliedChan)
 
@@ -519,8 +518,8 @@ func TestRuleRoutine(t *testing.T) {
 		require.Greaterf(t, expectedToBeSent, 0, "State manager was expected to return at least one state that can be expired")
 
 		t.Run("should do nothing if version in channel is the same", func(t *testing.T) {
-			ruleInfo.updateCh <- RuleVersionAndPauseStatus{ruleFp, false}
-			ruleInfo.updateCh <- RuleVersionAndPauseStatus{ruleFp, false} // second time just to make sure that previous messages were handled
+			ruleInfo.Update(RuleVersionAndPauseStatus{ruleFp, false})
+			ruleInfo.Update(RuleVersionAndPauseStatus{ruleFp, false}) // second time just to make sure that previous messages were handled
 
 			actualStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, actualStates, len(states))
@@ -529,7 +528,7 @@ func TestRuleRoutine(t *testing.T) {
 		})
 
 		t.Run("should clear the state and expire firing alerts if version in channel is greater", func(t *testing.T) {
-			ruleInfo.updateCh <- RuleVersionAndPauseStatus{ruleFp + 1, false}
+			ruleInfo.Update(RuleVersionAndPauseStatus{ruleFp + 1, false})
 
 			require.Eventually(t, func() bool {
 				return len(sender.Calls()) > 0
@@ -564,10 +563,10 @@ func TestRuleRoutine(t *testing.T) {
 			_ = ruleInfo.Run(rule.GetKey())
 		}()
 
-		ruleInfo.evalCh <- &Evaluation{
+		ruleInfo.Eval(&Evaluation{
 			scheduledAt: sch.clock.Now(),
 			rule:        rule,
-		}
+		})
 
 		waitForTimeChannel(t, evalAppliedChan)
 
@@ -670,10 +669,10 @@ func TestRuleRoutine(t *testing.T) {
 				_ = ruleInfo.Run(rule.GetKey())
 			}()
 
-			ruleInfo.evalCh <- &Evaluation{
+			ruleInfo.Eval(&Evaluation{
 				scheduledAt: sch.clock.Now(),
 				rule:        rule,
-			}
+			})
 
 			waitForTimeChannel(t, evalAppliedChan)
 
@@ -704,10 +703,10 @@ func TestRuleRoutine(t *testing.T) {
 			_ = ruleInfo.Run(rule.GetKey())
 		}()
 
-		ruleInfo.evalCh <- &Evaluation{
+		ruleInfo.Eval(&Evaluation{
 			scheduledAt: sch.clock.Now(),
 			rule:        rule,
-		}
+		})
 
 		waitForTimeChannel(t, evalAppliedChan)
 
