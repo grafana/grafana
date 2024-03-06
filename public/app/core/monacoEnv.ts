@@ -5,8 +5,9 @@ import { monacoLanguageRegistry } from '@grafana/data';
 export function setMonacoEnv() {
   self.MonacoEnvironment = {
     getWorker(_moduleId, label) {
-      const getWorkerModule = (moduleUrl, label) => {
-        return new Worker(self.MonacoEnvironment.getWorkerUrl(moduleUrl), {
+      const getWorkerModule = (moduleUrl: string, label: string) => {
+        const workerUrl = self.MonacoEnvironment!.getWorkerUrl!(moduleUrl, label);
+        return new Worker(workerUrl, {
           name: label,
           type: 'module',
         });
