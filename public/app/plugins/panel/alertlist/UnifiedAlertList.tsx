@@ -16,7 +16,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { contextSrv } from 'app/core/services/context_srv';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
@@ -38,10 +37,10 @@ import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/un
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction, ThunkDispatch, useDispatch } from 'app/types';
+import { ThunkDispatch, useDispatch } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { getRulesPermissions } from '../../../features/alerting/unified/utils/access-control';
+import { AlertingAction, useAlertingAbility } from '../../../features/alerting/unified/hooks/useAbilities';
 import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
 import { AlertingRule, CombinedRuleWithLocation } from '../../../types/unified-alerting';
 
@@ -97,6 +96,7 @@ const fetchPromAndRuler = ({
 function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
   const [limitInstances, toggleLimit] = useToggle(true);
+  const [, gmaViewAllowed] = useAlertingAbility(AlertingAction.ViewAlertRule);
 
   const { usePrometheusRulesByNamespaceQuery } = alertRuleApi;
 
@@ -138,9 +138,7 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   // If the datasource is not defined we should NOT skip the query
   // Undefined dataSourceName means that there is no datasource filter applied and we should fetch all the rules
-  const shouldFetchGrafanaRules =
-    (!dataSourceName || dataSourceName === GRAFANA_RULES_SOURCE_NAME) &&
-    contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
+  const shouldFetchGrafanaRules = (!dataSourceName || dataSourceName === GRAFANA_RULES_SOURCE_NAME) && gmaViewAllowed;
 
   //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
   //See https://github.com/grafana/grafana/pull/70482
@@ -452,10 +450,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export function UnifiedAlertListPanel(props: PanelProps<UnifiedAlertListOptions>) {
-  if (
-    !contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
-    !contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)
-  ) {
+  const [, gmaReadAllowed] = useAlertingAbility(AlertingAction.ViewAlertRule);
+  const [, externalReadAllowed] = useAlertingAbility(AlertingAction.ViewExternalAlertRule);
+
+  if (!gmaReadAllowed && !externalReadAllowed) {
     return (
       <Alert title="Permission required">Sorry, you do not have the required permissions to read alert rules</Alert>
     );

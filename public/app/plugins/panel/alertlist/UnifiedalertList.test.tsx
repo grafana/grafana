@@ -25,7 +25,7 @@ import {
 } from '../../../features/alerting/unified/mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
 
-import { UnifiedAlertList } from './UnifiedAlertList';
+import { UnifiedAlertListPanel } from './UnifiedAlertList';
 import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 import * as utils from './util';
 
@@ -159,12 +159,14 @@ const renderPanel = (options: Partial<UnifiedAlertListOptions> = defaultOptions)
 
   return render(
     <Provider store={store}>
-      <UnifiedAlertList {...props} />
+      <UnifiedAlertListPanel {...props} />
     </Provider>
   );
 };
 
 describe('UnifiedAlertList', () => {
+  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
   it('subscribes to the dashboard refresh interval', async () => {
     jest.spyOn(defaultProps, 'replaceVariables').mockReturnValue('severity=critical');
 
@@ -180,7 +182,6 @@ describe('UnifiedAlertList', () => {
     await waitFor(() => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
     });
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     const filterAlertsSpy = jest.spyOn(utils, 'filterAlerts');
 
     const replaceVarsSpy = jest.spyOn(defaultProps, 'replaceVariables').mockReturnValue('severity=critical');
@@ -221,5 +222,15 @@ describe('UnifiedAlertList', () => {
       }),
       expect.anything()
     );
+  });
+
+  it('should render authorization error when user has no permission', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+    await act(async () => {
+      renderPanel();
+    });
+
+    expect(screen.getByRole('alert', { name: 'Permission required' })).toBeInTheDocument();
   });
 });
