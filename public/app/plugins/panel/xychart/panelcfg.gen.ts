@@ -15,7 +15,6 @@ import * as common from '@grafana/schema';
  */
 export enum SeriesMapping {
   Auto = 'auto',
-  Dynamic = 'dynamic',
   Manual = 'manual',
 }
 
@@ -50,7 +49,7 @@ export interface FieldConfig extends common.HideableFieldConfig, common.AxisConf
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
-  label: common.VisibilityMode.Always,
+  label: common.VisibilityMode.Auto,
   show: ScatterShow.Points,
 };
 
@@ -66,10 +65,6 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    * Table Mode (auto)
    */
   dims: XYDimensionConfig;
-  /**
-   * Dynamic Mode
-   */
-  dynamicConfig?: ScatterSeriesConfig;
   /**
    * Manual Mode
    */

@@ -10,7 +10,6 @@ import {
   getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
-  getFrameDisplayName,
   GrafanaTheme2,
 } from '@grafana/data';
 import { getSingleLabelName } from '@grafana/data/src/field/fieldState';
@@ -208,44 +207,6 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
   let seriesIndex = 0;
   if (!frames.length) {
     throw 'Missing data';
-  }
-
-  if (options.seriesMapping === 'dynamic') {
-    const dynamicConfig = options.dynamicConfig;
-    if (!dynamicConfig?.x) {
-      throw 'Select X dimension';
-    }
-
-    if (!dynamicConfig?.y) {
-      throw 'Select Y dimension';
-    }
-
-    const scatterSeries: ScatterSeries[] = [];
-    const labelName = getSingleLabelName(frames) ?? undefined;
-
-    for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
-      const frame = frames[frameIndex];
-      const xIndex = findFieldIndex(dynamicConfig.x, frame, frames);
-
-      if (xIndex != null) {
-        const yIndex = findFieldIndex(dynamicConfig.y, frame, frames);
-
-        if (yIndex == null) {
-          throw 'Y must be in the same frame as X';
-        }
-
-        const dims: Dims = {
-          pointColorFixed: dynamicConfig.pointColor?.fixed,
-          pointColorIndex: findFieldIndex(dynamicConfig.pointColor?.field, frame, frames),
-          pointSizeConfig: dynamicConfig.pointSize,
-          pointSizeIndex: findFieldIndex(dynamicConfig.pointSize?.field, frame, frames),
-        };
-
-        const nameOverride = getFrameDisplayName(frame, frameIndex, labelName);
-        scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims, nameOverride));
-      }
-    }
-    return scatterSeries;
   }
 
   if (options.seriesMapping === 'manual') {

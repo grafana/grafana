@@ -19,7 +19,6 @@ import { Options } from '../types2';
 
 import { XYChartTooltip } from './XYChartTooltip';
 import { prepConfig } from './scatter';
-// import { autoOpts, manualOpts } from './testProps';
 import { prepSeries } from './utils';
 
 type Props2 = PanelProps<Options>;
@@ -128,18 +127,3 @@ const getStyles = () => ({
     },
   }),
 });
-
-/*
-// import { autoOpts, manualOpts } from './testProps';
-import { Options as Options2 } from './types2';
-import { prepXYSeries } from './utils';
-
-export const XYChartPanel = (props: Props2) => {
-  let frames = props.data.series;
-  // console.log(prepXYSeries(autoOpts, frames));
-  // console.log(prepXYSeries(manualOpts, frames));
-  console.log(prepXYSeries(props.options, frames));
-};
-
-type Props2 = PanelProps<Options2>;
-*/

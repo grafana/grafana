@@ -1,120 +1,165 @@
-import React, { useEffect, useMemo } from 'react';
+import { css } from '@emotion/css';
+import React, { useMemo } from 'react';
 
 import {
+  SelectableValue,
   getFrameDisplayName,
   StandardEditorProps,
   getFieldDisplayName,
-  FrameMatcherID,
-  FieldMatcherID,
-  FieldNamePickerBaseNameMode,
-  StandardEditorsRegistryItem,
+  GrafanaTheme2,
 } from '@grafana/data';
-import { Field, Select } from '@grafana/ui';
+import { Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 
-import { ScatterSeriesEditor } from './ScatterSeriesEditor';
-import { isGraphable } from './dims';
-import { Options } from './panelcfg.gen';
-import { XYSeriesConfig } from './types2';
+import { getXYDimensions, isGraphable } from './dims';
+import { XYDimensionConfig, Options } from './panelcfg.gen';
 
-export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYSeriesConfig[], unknown, Options>) => {
+interface XYInfo {
+  numberFields: Array<SelectableValue<string>>;
+  xAxis?: SelectableValue<string>;
+  yFields: Array<SelectableValue<boolean>>;
+}
+
+export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYDimensionConfig, any, Options>) => {
   const frameNames = useMemo(() => {
     if (context?.data?.length) {
-      return context.data.map((frame, index) => ({
-        value: index,
-        label: `${getFrameDisplayName(frame, index)} (index: ${index}, rows: ${frame.length})`,
+      return context.data.map((f, idx) => ({
+        value: idx,
+        label: `${getFrameDisplayName(f, idx)} (index: ${idx}, rows: ${f.length})`,
       }));
     }
     return [{ value: 0, label: 'First result' }];
   }, [context.data]);
 
-  const selected = 0;
+  const dims = useMemo(() => getXYDimensions(value, context.data), [context.data, value]);
 
-  const numberFieldsForSelected = useMemo(() => {
-    const numberFields: string[] = [];
-    if (!value || !value[selected]) {
-      return numberFields;
-    }
-    const frame = context.data[value[selected].frame?.matcher.options ?? 0];
-
+  const info = useMemo(() => {
+    const v: XYInfo = {
+      numberFields: [],
+      yFields: [],
+      xAxis: value?.x
+        ? {
+            label: `${value.x} (Not found)`,
+            value: value.x, // empty
+          }
+        : undefined,
+    };
+    const frame = context.data ? context.data[value?.frame ?? 0] : undefined;
     if (frame) {
+      const xName = 'x' in dims ? getFieldDisplayName(dims.x, dims.frame, context.data) : undefined;
       for (let field of frame.fields) {
         if (isGraphable(field)) {
-          const name = getFieldDisplayName(field);
-          numberFields.push(name);
+          const name = getFieldDisplayName(field, frame, context.data);
+          const sel = {
+            label: name,
+            value: name,
+          };
+          v.numberFields.push(sel);
+          if (value?.x && name === value.x) {
+            v.xAxis = sel;
+          }
+          if (xName !== name) {
+            v.yFields.push({
+              label: name,
+              value: value?.exclude?.includes(name),
+            });
+          }
         }
       }
+      if (!v.xAxis) {
+        v.xAxis = { label: xName, value: xName };
+      }
     }
-    return numberFields;
-  }, [context.data, selected, value]);
 
-  // Component-did-mount callback to check if a new series should be created
-  useEffect(() => {
-    if (!value) {
-      // create new series
-      const defaultConfig: XYSeriesConfig = { x: { matcher: { id: FieldMatcherID.byName, options: undefined } } };
-      onChange([defaultConfig]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return v;
+  }, [dims, context.data, value]);
+
+  const styles = useStyles2(getStyles);
+
+  if (!context.data?.length) {
+    return <div>No data...</div>;
+  }
 
   return (
-    value && (
-      <>
-        {frameNames.length > 1 && (
-          <Field label={'Data'}>
-            <Select
-              isClearable={true}
-              options={frameNames}
-              placeholder={'Change filter'}
-              value={
-                frameNames.find((v) => {
-                  return v.value === value[selected].frame?.matcher.options;
-                }) ?? null
-              }
-              onChange={(val) => {
-                onChange(
-                  value.map((obj, i) => {
-                    if (i === selected) {
-                      return {
-                        ...value[i],
-                        frame: {
-                          matcher: { id: FrameMatcherID.byIndex, options: val?.value ?? undefined },
-                        },
-                        x: {
-                          matcher: {
-                            id: FieldMatcherID.byName,
-                            options: numberFieldsForSelected[0],
-                          },
-                        },
-                      };
-                    }
-                    return obj;
-                  })
-                );
-              }}
-            />
-          </Field>
-        )}
-        <ScatterSeriesEditor
-          key={`series/${selected}`}
-          baseNameMode={FieldNamePickerBaseNameMode.IncludeAll}
-          item={{} as StandardEditorsRegistryItem}
-          context={context}
-          value={value[selected]}
-          onChange={(val) => {
-            onChange(
-              value.map((obj, i) => {
-                if (i === selected) {
-                  return val!;
-                }
-                return obj;
-              })
-            );
+    <div>
+      <Field label={'Data'}>
+        <Select
+          isClearable={true}
+          options={frameNames}
+          placeholder={'Change filter'}
+          value={frameNames.find((v) => v.value === value?.frame)}
+          onChange={(v) => {
+            onChange({
+              ...value,
+              frame: v?.value!,
+              x: undefined,
+            });
           }}
-          excludes={true}
-          frameFilter={value[selected].frame?.matcher.options ?? undefined}
         />
-      </>
-    )
+      </Field>
+      <Field label={'X Field'}>
+        <Select
+          isClearable={true}
+          options={info.numberFields}
+          value={info.xAxis}
+          placeholder={`${info.numberFields?.[0].label} (First numeric)`}
+          onChange={(v) => {
+            onChange({
+              ...value,
+              x: v?.value,
+            });
+          }}
+        />
+      </Field>
+      <Field label={'Y Fields'}>
+        <div>
+          {info.yFields.map((v) => (
+            <div key={v.label} className={styles.row}>
+              <IconButton
+                name={v.value ? 'eye-slash' : 'eye'}
+                onClick={() => {
+                  const exclude: string[] = value?.exclude ? [...value.exclude] : [];
+                  let idx = exclude.indexOf(v.label!);
+                  if (idx < 0) {
+                    exclude.push(v.label!);
+                  } else {
+                    exclude.splice(idx, 1);
+                  }
+                  onChange({
+                    ...value,
+                    exclude,
+                  });
+                }}
+                tooltip={v.value ? 'Disable' : 'Enable'}
+              />
+              {v.label}
+            </div>
+          ))}
+        </div>
+      </Field>
+    </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  sorter: css`
+    margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    cursor: pointer;
+  `,
+
+  row: css`
+    padding: ${theme.spacing(0.5, 1)};
+    border-radius: ${theme.shape.radius.default};
+    background: ${theme.colors.background.secondary};
+    min-height: ${theme.spacing(4)};
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    margin-bottom: 3px;
+    border: 1px solid ${theme.components.input.borderColor};
+  `,
+});

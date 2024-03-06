@@ -42,7 +42,7 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, ex
 
   const styles = useStyles2(getStyles);
 
-  const xName = value.x.matcher.options;
+  const xName = value.x?.matcher.options;
   const yFields: yFields = [];
   if (frame) {
     for (let field of frame.fields) {
@@ -76,7 +76,7 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, ex
     <div>
       <Field label={'X Field'}>
         <FieldNamePicker
-          value={value.x.matcher.options ?? ''}
+          value={value.x?.matcher.options}
           context={context}
           onChange={(field) =>
             onChange({

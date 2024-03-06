@@ -18,7 +18,6 @@ export const pluginVersion = "10.4.0-pre";
  */
 export enum SeriesMapping {
   Auto = 'auto',
-  Dynamic = 'dynamic',
   Manual = 'manual',
 }
 
@@ -69,10 +68,6 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    * Table Mode (auto)
    */
   dims: XYDimensionConfig;
-  /**
-   * Dynamic Mode
-   */
-  dynamicConfig?: ScatterSeriesConfig;
   /**
    * Manual Mode
    */

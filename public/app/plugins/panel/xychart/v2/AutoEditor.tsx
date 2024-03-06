@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import {
   getFrameDisplayName,
   StandardEditorProps,
-  getFieldDisplayName,
+  // getFieldDisplayName,
   FrameMatcherID,
   FieldMatcherID,
   FieldNamePickerBaseNameMode,
@@ -15,7 +15,7 @@ import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldName
 import { Options } from '../panelcfg.gen';
 import { XYSeriesConfig } from '../types2';
 
-import { prepSeries } from './utils';
+// import { prepSeries } from './utils';
 
 export const AutoEditor = ({
   value: seriesCfg,

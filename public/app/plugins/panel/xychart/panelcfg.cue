@@ -26,7 +26,7 @@ composableKinds: PanelCfg: {
 			version: [0, 0]
 			schema: {
 				// Auto is "table" in the UI
-				SeriesMapping: "auto" | "manual" | "dynamic"       @cuetsy(kind="enum")
+				SeriesMapping: "auto" | "manual"                   @cuetsy(kind="enum")
 				ScatterShow:   "points" | "lines" | "points+lines" @cuetsy(kind="enum", memberNames="Points|Lines|PointsAndLines")
 
 				// Configuration for the Table/Auto mode
@@ -74,9 +74,6 @@ composableKinds: PanelCfg: {
 
 					// Manual Mode
 					series: [...ScatterSeriesConfig]
-
-					// Dynamic Mode
-					dynamicConfig?: ScatterSeriesConfig
 				} @cuetsy(kind="interface")
 			}
 		}]
