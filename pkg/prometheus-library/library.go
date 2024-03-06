@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/patrickmn/go-cache"
@@ -32,11 +32,11 @@ type instance struct {
 	versionCache *cache.Cache
 }
 
-type extendTransportOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *httpclient.Options) (*httpclient.Options, error)
+type extendTransportOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) (*sdkhttpclient.Options, error)
 
-func NewService(httpClientProvider *httpclient.Provider, plog log.Logger, extendTransOpts extendTransportOptions) *Service {
+func NewService(httpClientProvider *sdkhttpclient.Provider, plog log.Logger, extendTransOpts extendTransportOptions) *Service {
 	if httpClientProvider == nil {
-		httpClientProvider = httpclient.NewProvider()
+		httpClientProvider = sdkhttpclient.NewProvider()
 	}
 	return &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, plog, extendTransOpts)),
@@ -44,7 +44,7 @@ func NewService(httpClientProvider *httpclient.Provider, plog log.Logger, extend
 	}
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider, log log.Logger, extendTransOpts extendTransportOptions) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Logger, extendTransOpts extendTransportOptions) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper.
 		opts, err := client.CreateTransportOptions(ctx, settings, log)

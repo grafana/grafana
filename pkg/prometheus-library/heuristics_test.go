@@ -13,7 +13,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
 type heuristicsSuccessRoundTripper struct {
@@ -32,13 +32,17 @@ func (rt *heuristicsSuccessRoundTripper) RoundTrip(req *http.Request) (*http.Res
 	}, nil
 }
 
-func newHeuristicsSDKProvider(hrt heuristicsSuccessRoundTripper) *httpclient.Provider {
-	anotherFN := func(o httpclient.Options, next http.RoundTripper) http.RoundTripper {
+func newHeuristicsSDKProvider(hrt heuristicsSuccessRoundTripper) *sdkhttpclient.Provider {
+	anotherFN := func(o sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return &hrt
 	}
-	fn := httpclient.MiddlewareFunc(anotherFN)
-	mid := httpclient.NamedMiddlewareFunc("mock", fn)
-	return httpclient.NewProvider(httpclient.ProviderOptions{Middlewares: []httpclient.Middleware{mid}})
+	fn := sdkhttpclient.MiddlewareFunc(anotherFN)
+	mid := sdkhttpclient.NamedMiddlewareFunc("mock", fn)
+	return sdkhttpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{mid}})
+}
+
+func mockExtendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) (*sdkhttpclient.Options, error) {
+	return clientOpts, nil
 }
 
 func Test_GetHeuristics(t *testing.T) {
@@ -49,7 +53,7 @@ func Test_GetHeuristics(t *testing.T) {
 		}
 		httpProvider := newHeuristicsSDKProvider(rt)
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"))),
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"), mockExtendClientOpts)),
 		}
 
 		req := HeuristicsRequest{
@@ -69,7 +73,7 @@ func Test_GetHeuristics(t *testing.T) {
 		}
 		httpProvider := newHeuristicsSDKProvider(rt)
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"))),
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"), mockExtendClientOpts)),
 		}
 
 		req := HeuristicsRequest{

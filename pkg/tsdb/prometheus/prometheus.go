@@ -21,7 +21,7 @@ func ProvideService(httpClientProvider *sdkhttpclient.Provider) *Service {
 	plog := backend.NewLoggerWith("logger", "tsdb.prometheus")
 	plog.Debug("Initializing")
 	return &Service{
-		lib: prometheuslibrary.NewService(httpClientProvider, plog, ExtendClientOpts),
+		lib: prometheuslibrary.NewService(httpClientProvider, plog, extendClientOpts),
 	}
 }
 
@@ -46,7 +46,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	return s.lib.CheckHealth(ctx, req)
 }
 
-func ExtendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) (*sdkhttpclient.Options, error) {
+func extendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) (*sdkhttpclient.Options, error) {
 	// Set SigV4 service namespace
 	if clientOpts.SigV4 != nil {
 		clientOpts.SigV4.Service = "aps"

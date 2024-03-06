@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,32 +34,32 @@ func (rt *fakeRoundtripper) RoundTrip(req *http.Request) (*http.Response, error)
 }
 
 type fakeHTTPClientProvider struct {
-	httpclient.Provider
+	sdkhttpclient.Provider
 	Roundtripper *fakeRoundtripper
 }
 
-func (provider *fakeHTTPClientProvider) New(opts ...httpclient.Options) (*http.Client, error) {
+func (provider *fakeHTTPClientProvider) New(opts ...sdkhttpclient.Options) (*http.Client, error) {
 	client := &http.Client{}
 	provider.Roundtripper = &fakeRoundtripper{}
 	client.Transport = provider.Roundtripper
 	return client, nil
 }
 
-func (provider *fakeHTTPClientProvider) GetTransport(opts ...httpclient.Options) (http.RoundTripper, error) {
+func (provider *fakeHTTPClientProvider) GetTransport(opts ...sdkhttpclient.Options) (http.RoundTripper, error) {
 	return &fakeRoundtripper{}, nil
 }
 
-func getMockPromTestSDKProvider(f *fakeHTTPClientProvider) *httpclient.Provider {
-	anotherFN := func(o httpclient.Options, next http.RoundTripper) http.RoundTripper {
+func getMockPromTestSDKProvider(f *fakeHTTPClientProvider) *sdkhttpclient.Provider {
+	anotherFN := func(o sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		_, _ = f.New()
 		return f.Roundtripper
 	}
-	fn := httpclient.MiddlewareFunc(anotherFN)
-	mid := httpclient.NamedMiddlewareFunc("mock", fn)
-	return httpclient.NewProvider(httpclient.ProviderOptions{Middlewares: []httpclient.Middleware{mid}})
+	fn := sdkhttpclient.MiddlewareFunc(anotherFN)
+	mid := sdkhttpclient.NamedMiddlewareFunc("mock", fn)
+	return sdkhttpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{mid}})
 }
 
-func mockExtendTransportOptions(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *httpclient.Options) (*httpclient.Options, error) {
+func mockExtendTransportOptions(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) (*sdkhttpclient.Options, error) {
 	return clientOpts, nil
 }
 
