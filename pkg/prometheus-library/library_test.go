@@ -59,13 +59,17 @@ func getMockPromTestSDKProvider(f *fakeHTTPClientProvider) *httpclient.Provider 
 	return httpclient.NewProvider(httpclient.ProviderOptions{Middlewares: []httpclient.Middleware{mid}})
 }
 
+func mockExtendTransportOptions(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *httpclient.Options) (*httpclient.Options, error) {
+	return clientOpts, nil
+}
+
 func TestService(t *testing.T) {
 	t.Run("Service", func(t *testing.T) {
 		t.Run("CallResource", func(t *testing.T) {
 			t.Run("creates correct request", func(t *testing.T) {
 				f := &fakeHTTPClientProvider{}
 				httpProvider := getMockPromTestSDKProvider(f)
-				service := NewService(httpProvider, backend.NewLoggerWith("logger", "test"), []httpclient.Middleware{})
+				service := NewService(httpProvider, backend.NewLoggerWith("logger", "test"), mockExtendTransportOptions)
 
 				req := &backend.CallResourceRequest{
 					PluginContext: backend.PluginContext{
