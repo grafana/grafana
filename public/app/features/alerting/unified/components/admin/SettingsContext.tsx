@@ -142,10 +142,10 @@ export function useSettings() {
   }, 3000);
   const refetchAlertmanagerConnectionStatus = useRef(debouncedUpdateStatus);
 
-  const hasAlertmanagersPending = context.externalAlertmanagerDataSourcesWithStatus.some(
+  const hasPendingAlertmanagers = context.externalAlertmanagerDataSourcesWithStatus.some(
     ({ status }) => status === 'pending'
   );
-  if (hasAlertmanagersPending) {
+  if (hasPendingAlertmanagers) {
     refetchAlertmanagerConnectionStatus.current();
   }
 

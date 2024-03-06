@@ -1,0 +1,296 @@
+import { css } from '@emotion/css';
+import { chain, omit } from 'lodash';
+import moment from 'moment';
+import React, { useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Badge, Button, CellProps, Column, ConfirmModal, InteractiveTable, Stack, Text, useStyles2 } from '@grafana/ui';
+import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
+import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+
+import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { Spacer } from '../Spacer';
+
+const VERSIONS_PAGE_SIZE = 30;
+
+interface AlertmanagerConfigurationVersionManagerProps {
+  alertmanagerName: string;
+}
+
+type Diff = {
+  added: number;
+  removed: number;
+};
+
+type VersionData = {
+  id: string;
+  lastAppliedAt: string;
+  diff: Diff;
+};
+
+interface ConfigWithDiff extends AlertManagerCortexConfig {
+  diff: Diff;
+}
+
+const AlertmanagerConfigurationVersionManager = ({
+  alertmanagerName,
+}: AlertmanagerConfigurationVersionManagerProps) => {
+  // we'll track the ID of the version we want to restore
+  const [activeRestoreVersion, setActiveRestoreVersion] = useState<number | undefined>(undefined);
+  const [confirmRestore, setConfirmRestore] = useState(false);
+
+  // in here we'll track the configs we are comparing
+  const [activeComparison, setActiveComparison] = useState<[string, string] | undefined>(undefined);
+
+  const {
+    currentData: historicalConfigs = [],
+    isLoading: isLoadingPreviousVersions,
+    isError: isErrorLoadingPreviousVersions,
+  } = alertmanagerApi.endpoints.getValidAlertManagersConfig.useQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  const { currentData: currentConfig, isLoading: isLoadingCurrentVersion } =
+    alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(alertmanagerName, {
+      refetchOnMountOrArgChange: true,
+    });
+
+  const [resetAlertManagerConfigToOldVersion, restoreVersionState] =
+    alertmanagerApi.endpoints.resetAlertManagerConfigToOldVersion.useMutation();
+
+  const showConfirmation = () => {
+    setConfirmRestore(true);
+  };
+
+  const hideConfirmation = () => {
+    setConfirmRestore(false);
+  };
+
+  const restoreVersion = (id: number) => {
+    setActiveComparison(undefined);
+    setActiveRestoreVersion(undefined);
+
+    resetAlertManagerConfigToOldVersion({ id });
+  };
+
+  if (isLoadingPreviousVersions) {
+    return 'Loading...';
+  }
+
+  if (!historicalConfigs.length) {
+    return 'No previous configurations';
+  }
+
+  // with this function we'll compute the diff with the previous version; that way the user can get some idea of how many lines where changed in each update that was applied
+  const previousVersions: ConfigWithDiff[] = historicalConfigs.map((config, index) => {
+    const priorConfig = historicalConfigs[index + 1] ?? currentConfig;
+
+    return {
+      ...config,
+      diff: priorConfig ? computeConfigDiff(priorConfig, config) : { added: 0, removed: 0 },
+    };
+  });
+
+  const rows: VersionData[] = previousVersions.map((version) => ({
+    id: String(version.id ?? 0),
+    lastAppliedAt: version.last_applied ?? 'unknown',
+    diff: version.diff,
+  }));
+
+  const columns: Array<Column<VersionData>> = [
+    {
+      id: 'lastAppliedAt',
+      header: 'Last applied',
+      cell: LastAppliedCell,
+    },
+    {
+      id: 'diff',
+      disableGrow: true,
+      cell: ({ value }) => (
+        <Stack alignItems="baseline" gap={0.5}>
+          <Text color="success" variant="bodySmall">
+            +{value.added}
+          </Text>
+          <Text color="error" variant="bodySmall">
+            -{value.removed}
+          </Text>
+        </Stack>
+      ),
+    },
+    {
+      id: 'actions',
+      disableGrow: true,
+      cell: ({ row }) => {
+        const isFirstItem = row.index === 0;
+        const versionID = Number(row.id);
+
+        return (
+          <Stack direction="row" alignItems="center" justifyContent="flex-end">
+            {isFirstItem ? (
+              <Badge text="Latest" color="blue" />
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon="code-branch"
+                  fill="outline"
+                  onClick={() => {
+                    const left = currentConfig ? normalizeConfig(currentConfig) : {};
+                    const right = normalizeConfig(historicalConfigs[row.index]);
+
+                    setActiveRestoreVersion(versionID);
+                    setActiveComparison([JSON.stringify(left, null, 2), JSON.stringify(right, null, 2)]);
+                  }}
+                >
+                  Compare
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon="history"
+                  onClick={() => {
+                    setActiveRestoreVersion(versionID);
+                    showConfirmation();
+                  }}
+                  disabled={restoreVersionState.isLoading}
+                >
+                  Restore
+                </Button>
+              </>
+            )}
+          </Stack>
+        );
+      },
+    },
+  ];
+
+  if (restoreVersionState.isLoading) {
+    return 'Restoring version, this might take a while...';
+  }
+
+  return (
+    <>
+      {activeComparison ? (
+        <CompareVersions
+          left={activeComparison[0]}
+          right={activeComparison[1]}
+          disabled={restoreVersionState.isLoading}
+          onCancel={() => {
+            setActiveRestoreVersion(undefined);
+            setActiveComparison(undefined);
+            hideConfirmation();
+          }}
+          onConfirm={() => {
+            showConfirmation();
+          }}
+        />
+      ) : (
+        <InteractiveTable pageSize={VERSIONS_PAGE_SIZE} columns={columns} data={rows} getRowId={(row) => row.id} />
+      )}
+      {/* TODO make this modal persist while restore is in progress */}
+      <ConfirmModal
+        isOpen={confirmRestore}
+        title={'Restore Version'}
+        body={'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'}
+        confirmText={'Yes, restore configuration'}
+        onConfirm={() => {
+          if (activeRestoreVersion) {
+            restoreVersion(activeRestoreVersion);
+          }
+
+          hideConfirmation();
+        }}
+        onDismiss={() => hideConfirmation()}
+      />
+    </>
+  );
+};
+
+interface CompareVersionsProps {
+  left: string;
+  right: string;
+
+  disabled?: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }: CompareVersionsProps) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.drawerWrapper}>
+      <div className={styles.diffWrapper}>
+        <DiffViewer newValue={left} oldValue={right} />
+      </div>
+      <Stack direction="row" alignItems="center">
+        <Spacer />
+        <Button variant="secondary" onClick={onCancel} disabled={disabled}>
+          Return
+        </Button>
+        <Button icon="history" variant="primary" onClick={onConfirm} disabled={disabled}>
+          Restore
+        </Button>
+      </Stack>
+    </div>
+  );
+}
+
+const LastAppliedCell = ({ value }: CellProps<VersionData>) => {
+  const date = moment(value);
+
+  return (
+    <Stack direction="row" alignItems="center">
+      {date.toLocaleString()}
+      <Text variant="bodySmall" color="secondary">
+        {date.fromNow()}
+      </Text>
+    </Stack>
+  );
+};
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  drawerWrapper: css({
+    maxHeight: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+  }),
+  diffWrapper: css({
+    overflowY: 'auto',
+  }),
+});
+
+// these props are part of the historical config response but not the current config, so we remove them for fair comparison
+function normalizeConfig(config: AlertManagerCortexConfig) {
+  return omit(config, ['id', 'last_applied']);
+}
+
+function computeConfigDiff(json1: AlertManagerCortexConfig, json2: AlertManagerCortexConfig): Diff {
+  const cleanedJson1 = normalizeConfig(json1);
+  const cleanedJson2 = normalizeConfig(json2);
+
+  const diff = jsonDiff(cleanedJson1, cleanedJson2);
+  const added = chain(diff)
+    .values()
+    .flatMap()
+    .filter((operation) => operation.op === 'add' || operation.op === 'replace')
+    .size()
+    .value();
+
+  const removed = chain(diff)
+    .values()
+    .flatMap()
+    .filter((operation) => operation.op === 'remove' || operation.op === 'replace')
+    .size()
+    .value();
+
+  return {
+    added,
+    removed,
+  };
+}
+
+export { AlertmanagerConfigurationVersionManager };

@@ -1,14 +1,12 @@
-import moment from 'moment';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { Button, CellProps, Column, Drawer, InteractiveTable, Stack, Tab, TabsBar, Text } from '@grafana/ui';
+import { Drawer, Tab, TabsBar } from '@grafana/ui';
 
-import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { Spacer } from '../Spacer';
 
 import AlertmanagerConfig from './AlertmanagerConfig';
 import { useSettings } from './SettingsContext';
+import { AlertmanagerConfigurationVersionManager } from './VersionManager';
 
 type ActiveTab = 'configuration' | 'versions';
 
@@ -50,14 +48,16 @@ export function useEditConfigurationDrawer(): [React.ReactNode, (dataSourceName:
         tabs={
           <TabsBar>
             <Tab
-              label="Configuration"
+              label="JSON Model"
               key="configuration"
+              icon="arrow"
               active={activeTab === 'configuration'}
               onChangeTab={() => setActiveTab('configuration')}
             />
             <Tab
               label="Versions"
               key="versions"
+              icon="history"
               active={activeTab === 'versions'}
               onChangeTab={() => setActiveTab('versions')}
               hidden={!isGrafanaAlertmanager}
@@ -82,65 +82,3 @@ export function useEditConfigurationDrawer(): [React.ReactNode, (dataSourceName:
 
   return [drawer, showConfiguration, handleDismiss];
 }
-
-const VERSIONS_PAGE_SIZE = 30;
-
-interface AlertmanagerConfigurationVersionManagerProps {
-  alertmanagerName: string;
-}
-
-type VersionData = {
-  id: string;
-  lastAppliedAt: string;
-};
-
-const AlertmanagerConfigurationVersionManager = ({
-  alertmanagerName,
-}: AlertmanagerConfigurationVersionManagerProps) => {
-  const { currentData: previousVersions = [], isLoading: isLoadingPreviousVersions } =
-    alertmanagerApi.endpoints.getValidAlertManagersConfig.useQuery();
-
-  const [resetAlertManagerConfigToOldVersion] =
-    alertmanagerApi.endpoints.resetAlertManagerConfigToOldVersion.useMutation();
-
-  if (isLoadingPreviousVersions) {
-    return 'Loading...';
-  }
-
-  if (!previousVersions.length) {
-    return 'No previous configurations';
-  }
-
-  const rows: VersionData[] = previousVersions.map((version) => ({
-    id: String(version.id ?? 0),
-    lastAppliedAt: version.last_applied ?? 'unknown',
-  }));
-
-  const columns: Array<Column<VersionData>> = [
-    { id: 'id', header: 'ID' },
-    { id: 'lastAppliedAt', header: 'Last applied', cell: LastAppliedCell },
-  ];
-
-  return <InteractiveTable pageSize={VERSIONS_PAGE_SIZE} columns={columns} data={rows} getRowId={(row) => row.id} />;
-};
-
-const LastAppliedCell = ({ value }: CellProps<VersionData>) => {
-  const date = moment(value);
-
-  return (
-    <Stack direction="row" alignItems="center">
-      {date.toLocaleString()}
-      <Text variant="bodySmall" color="secondary">
-        {date.fromNow()}
-      </Text>
-      <Spacer />
-      {/* TODO make sure we ask for confirmation! */}
-      <Button variant="secondary" size="sm" icon="pathfinder" fill="outline" onClick={() => {}}>
-        Compare
-      </Button>
-      <Button variant="secondary" size="sm" icon="history" onClick={() => {}}>
-        Restore
-      </Button>
-    </Stack>
-  );
-};

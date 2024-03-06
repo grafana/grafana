@@ -34,7 +34,7 @@ export default function InternalAlertmanager({ onEditConfiguration }: Props) {
 
       <Card.Tags>
         <Stack direction="row" gap={1}>
-          <Button icon="file-edit-alt" variant="secondary" fill="outline" onClick={handleEditConfiguration}>
+          <Button icon="edit" variant="secondary" fill="outline" onClick={handleEditConfiguration}>
             Edit configuration
           </Button>
           {isReceiving ? (

@@ -91,7 +91,7 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
               <Stack direction="row" gap={1}>
                 <Button
                   onClick={handleEditConfiguration}
-                  icon={readOnlyDataSource ? 'file-alt' : 'file-edit-alt'}
+                  icon={readOnlyDataSource ? 'eye' : 'edit'}
                   variant="secondary"
                   fill="outline"
                 >
