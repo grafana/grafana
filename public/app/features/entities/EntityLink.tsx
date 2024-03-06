@@ -10,8 +10,15 @@ type Props = {
 
 export function EntityLink(props: Props) {
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const entities = entityService.getEntitiesForKeys([props.context.key]);
-  if (entities.length === 0) {
+
+  const entityType = {
+    compose_service: 'service',
+    'service.name': 'service',
+    namespace: 'namespace',
+    container_name: 'container',
+  }[props.context.key];
+
+  if (!entityType) {
     return <>{props.children}</>;
   }
 
@@ -32,7 +39,7 @@ export function EntityLink(props: Props) {
       {drawerVisible && (
         <EntityDrawer
           // TODO: make this more clever
-          entity={'service:app'}
+          entity={entityType + ':' + props.context.value}
           title={`${props.context.key}: ${props.context.value}`}
           onClose={() => {
             setDrawerVisible(false);

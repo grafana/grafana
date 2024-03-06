@@ -2,7 +2,7 @@ import { LayoutConfig } from '@antv/g6';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { EmbeddedDashboard } from '@grafana/runtime';
-import { Drawer, FilterPill, Stack, LinkButton } from '@grafana/ui';
+import { Drawer, FilterPill, Stack, Button } from '@grafana/ui';
 import { IconButton } from '@grafana/ui/';
 
 import GraphinGraph from './GraphinGraph/GraphinGraph.component';
@@ -73,21 +73,21 @@ const entitiesMap: Record<string, Entity> = {
   'container:devenv-app-1': {
     type: 'container',
     id: 'devenv-app-1',
-    dashboardUid: 'bdecitbzna96od',
+    dashboardUid: 'adeuqybdrjugwc',
     parents: ['service:app'],
   },
 
   'container:devenv-app-2': {
     type: 'container',
     id: 'devenv-app-2',
-    dashboardUid: 'bdecitbzna96od',
+    dashboardUid: 'adeuqybdrjugwc',
     parents: ['service:app'],
   },
 
   'container:devenv-db-1': {
     type: 'container',
     id: 'devenv-db-1',
-    dashboardUid: 'bdecitbzna96od',
+    dashboardUid: 'adeuqybdrjugwc',
     parents: ['service:db'],
   },
 
@@ -99,7 +99,7 @@ const entitiesMap: Record<string, Entity> = {
 };
 
 type Props = {
-  entity: 'service:app' | 'namespace:tns';
+  entity: string;
   title: string;
   onClose: () => void;
 };
@@ -229,7 +229,13 @@ function EntityMapAsserts({ onEntityChange, entity }: EntityMapAssertsProps) {
     [onEntityChange]
   );
   return (
-    <GraphinGraph data={entityToAssertsGraph(entity)} layout={DEFAULT_FORCE_LAYOUT_OPTIONS} onNodeClick={onNodeClick} />
+    <div style={{ border: '1px solid lightgray' }}>
+      <GraphinGraph
+        data={entityToAssertsGraph(entity)}
+        layout={DEFAULT_FORCE_LAYOUT_OPTIONS}
+        onNodeClick={onNodeClick}
+      />
+    </div>
   );
 }
 
@@ -287,26 +293,38 @@ function Header(props: { stack: Entity[]; onBack: () => void; onClose: () => voi
   const prev = props.stack.length === 1 ? undefined : props.stack[props.stack.length - 2];
   return (
     <div style={{ flex: 1 }}>
-      <Stack direction={'row'} alignItems={'center'} justifyContent={'space-between'}>
-        <div style={{ display: 'flex' }}>
-          {prev && (
-            <>
-              <IconButton name={'arrow-left'} onClick={props.onBack} aria-label={'back'} size={'xl'} />
-              <span>{prev.id}</span>
-            </>
-          )}
-        </div>
-        <span>
-          {current?.type}: {current?.id}{' '}
-          <LinkButton
+      <Stack direction={'column'}>
+        <Stack direction={'row'} alignItems={'center'} justifyContent={'space-between'}>
+          <div style={{ display: 'flex' }}>
+            {prev && (
+              <>
+                <IconButton name={'arrow-left'} onClick={props.onBack} aria-label={'back'} size={'xl'} />
+                <span>{prev.id}</span>
+              </>
+            )}
+          </div>
+          <span>
+            {current?.type}: {current?.id}{' '}
+          </span>
+          <IconButton name={'times'} onClick={props.onClose} aria-label={'close'} size={'xl'} />
+        </Stack>
+        <Stack direction={'row'} alignItems={'center'} justifyContent={'center'}>
+          <Button
+            onClick={() => {
+              window.location.href = `/d/${current.dashboardUid}`;
+            }}
+            variant="secondary"
             icon={'external-link-alt'}
-            variant={'secondary'}
-            fill={'text'}
-            aria-label={'button'}
-            href={`/d/${current.dashboardUid}`}
-          />
-        </span>
-        <IconButton name={'times'} onClick={props.onClose} aria-label={'close'} size={'xl'} />
+          >
+            To dashboard
+          </Button>
+          <Button variant="secondary" icon={'external-link-alt'}>
+            Add to incident
+          </Button>
+          <Button variant="secondary" icon={'external-link-alt'}>
+            To App O11y
+          </Button>
+        </Stack>
       </Stack>
     </div>
   );

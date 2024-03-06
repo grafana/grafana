@@ -316,21 +316,21 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           </td>
           {/* Key - value columns */}
           <td className={rowStyles.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
-          <EntityLink context={{ key: 'service.name', value: 'app' }}>
-            <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
-              <div className={styles.logDetailsValue}>
+          <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
+            <div className={styles.logDetailsValue}>
+              <EntityLink context={{ key: parsedKeys[0], value: parsedValues[0] }}>
                 {singleVal ? parsedValues[0] : this.generateMultiVal(parsedValues, true)}
-                {singleVal && this.generateClipboardButton(parsedValues[0])}
-                <div className={cx((singleVal || isMultiParsedValueWithNoContent) && styles.adjoiningLinkButton)}>
-                  {links?.map((link, i) => (
-                    <span key={`${link.title}-${i}`}>
-                      <DataLinkButton link={link} />
-                    </span>
-                  ))}
-                </div>
+              </EntityLink>
+              {singleVal && this.generateClipboardButton(parsedValues[0])}
+              <div className={cx((singleVal || isMultiParsedValueWithNoContent) && styles.adjoiningLinkButton)}>
+                {links?.map((link, i) => (
+                  <span key={`${link.title}-${i}`}>
+                    <DataLinkButton link={link} />
+                  </span>
+                ))}
               </div>
-            </td>
-          </EntityLink>
+            </div>
+          </td>
         </tr>
         {showFieldsStats && singleKey && singleVal && (
           <tr>
