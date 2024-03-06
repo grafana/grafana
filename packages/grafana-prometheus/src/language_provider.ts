@@ -41,7 +41,7 @@ export function getMetadataString(metric: string, metadata: PromMetricsMetadata)
     return undefined;
   }
   const { type, help } = metadata[metric];
-  return `${type.toUpperCase()}: ${help}`;
+  return `${type?.toUpperCase()}: ${help}`;
 }
 
 export function getMetadataHelp(metric: string, metadata: PromMetricsMetadata): string | undefined {

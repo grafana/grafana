@@ -50,7 +50,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
         queryTokens.find((metricName) => {
           // Only considering first type information, could be non-deterministic
           const metadata = metricsMetadata[metricName];
-          if (metadata && metadata.type.toLowerCase() === 'counter') {
+          if (metadata && metadata.type?.toLowerCase() === 'counter') {
             certain = true;
             return true;
           } else {
