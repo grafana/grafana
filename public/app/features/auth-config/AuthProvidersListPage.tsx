@@ -1,9 +1,11 @@
 import React, { JSX, useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { reportInteraction } from '@grafana/runtime';
 import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { config } from 'app/core/config';
 import { StoreState } from 'app/types';
 
 import { AuthDrawer } from './AuthDrawer';
@@ -75,9 +77,11 @@ export const AuthConfigPageUnconnected = ({
         </>
       }
       actions={
-        <ToolbarButton icon="cog" variant="canvas" onClick={() => setShowDrawer(true)}>
-          Auth settings
-        </ToolbarButton>
+        config.buildInfo.edition !== GrafanaEdition.OpenSource && (
+          <ToolbarButton icon="cog" variant="canvas" onClick={() => setShowDrawer(true)}>
+            Auth settings
+          </ToolbarButton>
+        )
       }
     >
       <Page.Contents isLoading={isLoading}>
