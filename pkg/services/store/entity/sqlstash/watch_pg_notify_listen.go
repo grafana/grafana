@@ -366,7 +366,7 @@ func (s *sqlEntityServer) pgRemoveNotifyChan(ctx context.Context, pgChannelName 
 		defer s.pgNotifyMapMu.Unlock()
 		s.pgListenerConnMu.Lock()
 		defer s.pgListenerConnMu.Unlock()
-		if s.pgNotifyMap == nil && len(s.pgNotifyMap) > 0 {
+		if s.pgNotifyMap == nil || len(s.pgNotifyMap) > 0 {
 			return
 		}
 		if err := s.pgTerminateWatch(ctx); err != nil {
