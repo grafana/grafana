@@ -245,7 +245,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       position: 'sticky',
       background: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
-      zIndex: theme.zIndex.activePanel + 1,
+      zIndex: theme.zIndex.navbarFixed,
       top: 0,
     }),
   };

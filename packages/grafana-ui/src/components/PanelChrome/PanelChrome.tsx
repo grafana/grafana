@@ -358,15 +358,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
 
-      '> *': {
-        zIndex: 0,
-      },
-
-      // matches .react-grid-item styles in _dashboard_grid.scss to ensure any contained tooltips occlude adjacent panels
-      '&:hover, &:active, &:focus': {
-        zIndex: theme.zIndex.activePanel,
-      },
-
       '.show-on-hover': {
         opacity: '0',
         visibility: 'hidden',
