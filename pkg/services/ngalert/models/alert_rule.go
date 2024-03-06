@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -143,7 +144,12 @@ const (
 	StateReasonPaused        = "Paused"
 	StateReasonUpdated       = "Updated"
 	StateReasonRuleDeleted   = "RuleDeleted"
+	StateReasonKeepLast      = "KeepLast"
 )
+
+func ConcatReasons(reasons ...string) string {
+	return strings.Join(reasons, ", ")
+}
 
 var (
 	// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
