@@ -170,7 +170,7 @@ Simplified routing inherits the alert rule RBAC, increasing control over notific
 
 To try out Simplified Alert Notification Routing enable the `alertingSimplifiedRouting` feature toggle.
 
-{{< youtube id="-uBBQ-_pWSNs" >}}
+{{< youtube id="uBBQ-_pWSNs" >}}
 
 ### Grafana Alerting upgrade with rule preview
 
