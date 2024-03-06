@@ -258,7 +258,18 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
                   y2={y2}
                   cursor={connectionCursorStyle}
                 />
-                <circle fill={'gray'} cx={midpoint.x} cy={midpoint.y} r={5} />
+                {isSelected && (
+                  <circle
+                    fill={'gray'}
+                    cx={midpoint.x}
+                    cy={midpoint.y}
+                    r={4}
+                    stroke={strokeColor}
+                    style={futureVertexStyles}
+                    cursor={'crosshair'}
+                    pointerEvents="auto"
+                  />
+                )}
               </g>
             )}
           </g>
