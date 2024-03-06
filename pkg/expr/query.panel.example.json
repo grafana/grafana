@@ -1,0 +1,57 @@
+{
+  "type": "table",
+  "targets": [
+    {
+      "refId": "A",
+      "datasource": {
+        "type": "__expr__",
+        "uid": "TheUID"
+      },
+      "queryType": "math",
+      "expression": "$A + 10"
+    },
+    {
+      "refId": "B",
+      "datasource": {
+        "type": "__expr__",
+        "uid": "TheUID"
+      },
+      "queryType": "math",
+      "expression": "$A - $B"
+    },
+    {
+      "refId": "C",
+      "datasource": {
+        "type": "__expr__",
+        "uid": "TheUID"
+      },
+      "queryType": "reduce",
+      "expression": "$A",
+      "reducer": "max",
+      "settings": {
+        "mode": "dropNN"
+      }
+    },
+    {
+      "refId": "D",
+      "datasource": {
+        "type": "__expr__",
+        "uid": "TheUID"
+      },
+      "queryType": "resample",
+      "downsampler": "last",
+      "expression": "$A",
+      "upsampler": "pad",
+      "window": "1d"
+    },
+    {
+      "refId": "E",
+      "datasource": {
+        "type": "__expr__",
+        "uid": "TheUID"
+      },
+      "queryType": "sql",
+      "expression": "SELECT * FROM A limit 1"
+    }
+  ]
+}
