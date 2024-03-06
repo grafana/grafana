@@ -7,13 +7,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -133,7 +132,7 @@ func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context
 // CreateAlertRule creates a new alert rule. This function will ignore any
 // interval that is set in the rule struct and use the already existing group
 // interval or the default one.
-func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance, userID int64) (models.AlertRule, error) {
+func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
 	} else if err := util.ValidateUID(rule.UID); err != nil {
@@ -155,7 +154,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	if err = service.ensureRuleNamespace(ctx, &rule, defaultNamespace.UID); err != nil {
+	if err = service.ensureRuleNamespace(ctx, user, &rule, defaultNamespace.UID); err != nil {
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
@@ -189,6 +188,11 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 			return errors.New("couldn't find newly created id")
 		}
 
+		// default to 0 if there is no user
+		userID := int64(0)
+		if user != nil {
+			userID, _ = identity.UserIdentifier(user.GetNamespacedID())
+		}
 		if err = service.checkLimitsTransactionCtx(ctx, rule.OrgID, userID); err != nil {
 			return err
 		}
@@ -259,7 +263,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 	})
 }
 
-func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int64, group models.AlertRuleGroup, userID int64, provenance models.Provenance) error {
+func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int64, user identity.Requester, group models.AlertRuleGroup, provenance models.Provenance) error {
 	if err := models.ValidateRuleGroupInterval(group.Interval, service.baseIntervalSeconds); err != nil {
 		return err
 	}
@@ -275,7 +279,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	}
 
 	for _, rule := range delta.New {
-		if err := service.ensureRuleNamespace(ctx, rule, defaultNamespace.UID); err != nil {
+		if err := service.ensureRuleNamespace(ctx, user, rule, defaultNamespace.UID); err != nil {
 			return err
 		}
 	}
@@ -297,6 +301,11 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		}
 	}
 
+	// default to 0 if there is no user
+	userID := int64(0)
+	if user != nil {
+		userID, _ = identity.UserIdentifier(user.GetNamespacedID())
+	}
 	return service.persistDelta(ctx, orgID, delta, userID, provenance)
 }
 
@@ -666,7 +675,11 @@ func (service *AlertRuleService) checkGroupLimits(group models.AlertRuleGroup) e
 
 // ensureRuleNamespace ensures that the rule has a valid namespace UID.
 // If the rule does not have a namespace UID, it will be set to the default namespace.
-func (service *AlertRuleService) ensureRuleNamespace(ctx context.Context, rule *models.AlertRule, defaultNsUID string) error {
+func (service *AlertRuleService) ensureRuleNamespace(ctx context.Context, user identity.Requester, rule *models.AlertRule, defaultNsUID string) error {
+	if user == nil {
+		return nil // noop if no user
+	}
+
 	if rule == nil {
 		return errors.New("rule must not be nil")
 	}
@@ -677,12 +690,7 @@ func (service *AlertRuleService) ensureRuleNamespace(ctx context.Context, rule *
 			OrgID: rule.OrgID,
 			UID:   &rule.NamespaceUID,
 			// use bg user to avoid access control checks
-			SignedInUser: accesscontrol.BackgroundUser(
-				"ngalert_provisioning",
-				rule.OrgID,
-				org.RoleAdmin,
-				[]accesscontrol.Permission{{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll}},
-			),
+			SignedInUser: user,
 		})
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
