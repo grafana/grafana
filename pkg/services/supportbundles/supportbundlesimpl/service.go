@@ -128,7 +128,6 @@ func (s *Service) create(ctx context.Context, collectors []string, usr identity.
 			cancel()
 		}()
 
-		s.tracer.Start(ctx, "SupportBundle.Create")
 		s.startBundleWork(ctx, collectors, uid)
 	}(bundle.UID, collectors)
 
