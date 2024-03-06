@@ -16,7 +16,7 @@
 
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
+    // "noUnusedLocals": true, // Disabled because of React being imported everywhere
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
