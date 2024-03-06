@@ -54,6 +54,10 @@ function getMessages(panel: PanelModel): Message[] {
       role: Role.system,
     },
     {
+      content: `Disregard the current panel description and come up with one that makes sense given the panel's type and purpose. The panel's type is ${panel.type}`,
+      role: Role.system,
+    },
+    {
       content: `This is the JSON which defines the panel: ${panelString}`,
       role: Role.user,
     },

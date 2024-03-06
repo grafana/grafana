@@ -50,7 +50,7 @@ function getMessages(panel: PanelModel): Message[] {
       role: Role.system,
     },
     {
-      content: `The panel is a ${panel.type} type of panel that can be mentioned in the title but only do so if it is relevant to the title`,
+      content: `Disregard the current panel title and come up with one that makes sense given the panel's type and purpose. The panel's type is ${panel.type}`,
       role: Role.system,
     },
     {
