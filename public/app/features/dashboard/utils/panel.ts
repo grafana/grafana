@@ -79,6 +79,7 @@ export const shareToSlack = (dashboard: DashboardModel, panel: PanelModel) => {
         resourceType: 'panel',
         resourcePath: buildRenderPath(dashboard.uid, panel),
         panelTitle: panel.title,
+        dashboardUid: dashboard.uid,
       },
     })
   );

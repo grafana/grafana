@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/components/imguploader"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/grafana/grafana/pkg/services/slack/model"
@@ -21,17 +22,24 @@ import (
 )
 
 type SlackService struct {
-	cfg               *setting.Cfg
-	log               log.Logger
-	screenshotService screenshot.ScreenshotService
+	cfg                  *setting.Cfg
+	log                  log.Logger
+	screenshotService    screenshot.ScreenshotService
+	imageUploaderService imguploader.ImageUploader
 }
 
-func ProvideService(cfg *setting.Cfg, ss screenshot.ScreenshotService) *SlackService {
-	return &SlackService{
-		cfg:               cfg,
-		screenshotService: ss,
-		log:               log.New("slack"),
+func ProvideService(cfg *setting.Cfg, ss screenshot.ScreenshotService) (*SlackService, error) {
+	us, err := imguploader.NewImageUploader(cfg)
+	if err != nil {
+		return nil, err
 	}
+
+	return &SlackService{
+		cfg:                  cfg,
+		screenshotService:    ss,
+		log:                  log.New("slack"),
+		imageUploaderService: us,
+	}, nil
 }
 
 func (s *SlackService) GetUserConversations(ctx context.Context) (*dtos.SlackChannels, error) {
@@ -235,20 +243,18 @@ func (s *SlackService) postRequest(ctx context.Context, endpoint string, body io
 	return b, nil
 }
 
-func (s *SlackService) TakeScreenshot(ctx context.Context, opts model.ScreenshotOptions) (string, error) {
-	screenshotOpts := screenshot.ScreenshotOptions{
-		DashboardUID: opts.DashboardUID,
-		PanelID:      opts.PanelID,
-		From:         opts.From,
-		To:           opts.To,
-		AuthOptions:  opts.AuthOptions,
-	}
-	image, err := s.screenshotService.Take(ctx, screenshotOpts)
+func (s *SlackService) TakeScreenshot(ctx context.Context, opts screenshot.ScreenshotOptions) (string, error) {
+	image, err := s.screenshotService.Take(ctx, opts)
 	if err != nil {
 		return "", err
 	}
 
-	return image.Path, nil
+	path, err := s.imageUploaderService.Upload(ctx, image.Path)
+	if err != nil {
+		return "", err
+	}
+
+	return path, nil
 }
 
 func calculateHMAC(message, key []byte) string {

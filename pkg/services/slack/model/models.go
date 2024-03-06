@@ -1,7 +1,5 @@
 package model
 
-import "github.com/grafana/grafana/pkg/services/rendering"
-
 type PreviewRequest struct {
 	DashboardURL string `json:"dashboardUrl"`
 }
@@ -104,12 +102,4 @@ type PostMessageRequest struct {
 
 type PostMessageResponse struct {
 	Ok bool `json:"ok"`
-}
-
-type ScreenshotOptions struct {
-	AuthOptions  rendering.AuthOpts
-	DashboardUID string
-	PanelID      int64
-	From         string
-	To           string
 }

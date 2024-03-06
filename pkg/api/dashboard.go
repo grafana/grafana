@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -1039,15 +1040,21 @@ func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Respo
 	if err := web.Bind(c.Req, &previewRequest); err != nil {
 		return response.Error(http.StatusBadRequest, "error parsing body", err)
 	}
+	previewUrl, err := url.Parse(previewRequest.ResourcePath)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "error parsing resource path", err)
+	}
+	q := previewUrl.Query()
+	panelId, _ := strconv.ParseInt(q.Get("panelId"), 10, 64)
 
 	hs.log.Info("Generating preview", "resourcePath", previewRequest.ResourcePath)
 
 	opts := screenshot.ScreenshotOptions{
 		OrgID:        c.SignedInUser.GetOrgID(),
 		DashboardUID: web.Params(c.Req)[":uid"],
-		PanelID:      c.QueryInt64("panelId"),
-		From:         c.Query("from"),
-		To:           c.Query("to"),
+		PanelID:      panelId,
+		From:         q.Get("from"),
+		To:           q.Get("to"),
 		Width:        1600,
 		Height:       800,
 		Theme:        models.ThemeDark,
@@ -1058,16 +1065,13 @@ func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Respo
 			OrgRole: c.SignedInUser.OrgRole,
 		},
 	}
-	filePath, err := hs.screenshotService.Take(c.Req.Context(), opts)
+	filePath, err := hs.slackService.TakeScreenshot(c.Req.Context(), opts)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
 	}
 
-	imageFileName := filepath.Base(filePath.Path)
-	imageURL := hs.getImageURL(imageFileName)
-
 	return response.JSON(http.StatusOK, &PreviewResponse{
-		PreviewURL: imageURL,
+		PreviewURL: filePath,
 	})
 }
 

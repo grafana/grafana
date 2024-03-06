@@ -7,12 +7,14 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/grafana/grafana/pkg/services/slack"
 	"github.com/grafana/grafana/pkg/services/slack/model"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,15 +52,14 @@ func ProvideApi(
 		log:           log.New("slack.api"),
 	}
 
-	api.log.Info("Running SLACK APP")
-	//if features.IsEnabledGlobally(featuremgmt.FlagSlackUnfurling) {
-	api.routeRegister.Post("/api/share/slack/unfurl", routing.Wrap(api.SlackUnfurl))
-	//}
+	if features.IsEnabledGlobally(featuremgmt.FlagSlackUnfurling) {
+		api.routeRegister.Post("/api/share/slack/unfurl", middleware.ReqSignedIn, routing.Wrap(api.SlackUnfurl))
+	}
 
-	//if features.IsEnabledGlobally(featuremgmt.FlagSlackSharePreview) {
-	api.routeRegister.Get("/api/share/slack/channels", api.GetSlackChannels)
-	api.routeRegister.Post("/api/share/slack", api.ShareToSlack)
-	//}
+	if features.IsEnabledGlobally(featuremgmt.FlagSlackSharePreview) {
+		api.routeRegister.Get("/api/share/slack/channels", middleware.ReqSignedIn, routing.Wrap(api.GetSlackChannels))
+		api.routeRegister.Post("/api/share/slack", middleware.ReqSignedIn, routing.Wrap(api.ShareToSlack))
+	}
 
 	return api
 }
@@ -169,7 +170,7 @@ func (api *Api) handleLinkSharedEvent(c *contextmodel.ReqContext, event model.Ev
 	q := previewUrl.Query()
 	panelId, _ := strconv.ParseInt(q.Get("panelId"), 10, 64)
 
-	opts := model.ScreenshotOptions{
+	opts := screenshot.ScreenshotOptions{
 		AuthOptions: rendering.AuthOpts{
 			//UserID:  c.SignedInUser.UserID,
 			OrgID:   1,
