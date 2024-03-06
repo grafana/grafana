@@ -50,10 +50,14 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
   const [pristine, setPristine] = useState(true);
   const [newPassword, setNewPassword] = useState('');
 
-  const { disableLoginForm } = config; // TODO add feature flag
+  const { disableLoginForm } = config;
+  const { basicAuthStrongPasswordPolicy } = config.auth;
   const authSource = user.authLabels?.length && user.authLabels[0];
 
   const validationLabel = (index: number, message: string, validation: () => {}) => {
+    if (!basicAuthStrongPasswordPolicy) {
+      return null;
+    }
     const result = newPassword.length > 0 && validation();
 
     const iconName = result || pristine ? 'check' : 'exclamation-triangle';
@@ -79,6 +83,9 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
   };
 
   const strongPasswordValidation = (value: string) => {
+    if (!basicAuthStrongPasswordPolicy) {
+      return true;
+    }
     return (
       strongPasswordValidations.every((validation) => validation.validation(value)) ||
       t(
