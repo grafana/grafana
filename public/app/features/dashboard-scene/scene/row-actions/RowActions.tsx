@@ -26,12 +26,6 @@ import { RowOptionsButton } from './RowOptionsButton';
 export interface RowActionsState extends SceneObjectState {}
 
 export class RowActions extends SceneObjectBase<RowActionsState> {
-  public constructor(state: RowActionsState) {
-    super({
-      ...state,
-    });
-  }
-
   private updateLayout(rowClone: SceneGridRow): void {
     const row = this.getParent();
 
