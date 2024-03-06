@@ -20,7 +20,8 @@ func (uss *UsageStats) registerAPIEndpoints() {
 }
 
 func (uss *UsageStats) getUsageReportPreview(ctx *contextmodel.ReqContext) response.Response {
-	ctxTracer, _ := uss.tracer.Start(ctx.Req.Context(), "usageStats.getUsageReportPreview")
+	ctxTracer, span := uss.tracer.Start(ctx.Req.Context(), "usageStats.getUsageReportPreview")
+	defer span.End()
 
 	usageReport, err := uss.GetUsageReport(ctxTracer)
 	if err != nil {

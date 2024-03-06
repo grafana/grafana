@@ -26,19 +26,23 @@ type bundleResult struct {
 }
 
 func (s *Service) startBundleWork(ctx context.Context, collectors []string, uid string) {
-	ctxTracer, _ := s.tracer.Start(ctx, "SupportBundle.startBundleWork")
+	ctxTracer, span := s.tracer.Start(ctx, "SupportBundle.startBundleWork")
+	defer span.End()
+
 	result := make(chan bundleResult)
 
 	go func() {
+		ctxBundler, span := s.tracer.Start(ctxTracer, "SupportBundle.bundle")
+		span.SetAttributes(attribute.String("SupportBundle.bundle.uid", uid))
+
 		defer func() {
+			span.End()
 			if err := recover(); err != nil {
 				s.log.Error("Support bundle collector panic", "err", err, "stack", string(debug.Stack()))
 				result <- bundleResult{err: ErrCollectorPanicked}
 			}
 		}()
 
-		ctxBundler, span := s.tracer.Start(ctxTracer, "SupportBundle.bundle")
-		span.SetAttributes(attribute.String("SupportBundle.bundle.uid", uid))
 		bundleBytes, err := s.bundle(ctxBundler, collectors, uid)
 		if err != nil {
 			result <- bundleResult{err: err}
