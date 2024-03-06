@@ -248,7 +248,8 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig, allowWhiteList
     'autoMigrateTablePanel',
     'autoMigratePiechartPanel',
     'autoMigrateWorldmapPanel',
-    'autoMigrateStatPanel, disableAngular',
+    'autoMigrateStatPanel',
+    'disableAngular',
   ]);
 
   const params = new URLSearchParams(window.location.search);
