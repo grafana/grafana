@@ -73,7 +73,7 @@ type ruleProvider interface {
 
 type alertRuleInfo struct {
 	evalCh   chan *Evaluation
-	updateCh chan ruleVersionAndPauseStatus
+	updateCh chan RuleVersionAndPauseStatus
 	ctx      context.Context
 	stopFn   util.CancelCauseFunc
 
@@ -115,7 +115,7 @@ func newAlertRuleInfo(
 	ctx, stop := util.WithCancelCause(parent)
 	return &alertRuleInfo{
 		evalCh:               make(chan *Evaluation),
-		updateCh:             make(chan ruleVersionAndPauseStatus),
+		updateCh:             make(chan RuleVersionAndPauseStatus),
 		ctx:                  ctx,
 		stopFn:               stop,
 		appURL:               appURL,
@@ -158,7 +158,7 @@ func (a *alertRuleInfo) eval(eval *Evaluation) (bool, *Evaluation) {
 }
 
 // update sends an instruction to the rule evaluation routine to update the scheduled rule to the specified version. The specified version must be later than the current version, otherwise no update will happen.
-func (a *alertRuleInfo) update(lastVersion ruleVersionAndPauseStatus) bool {
+func (a *alertRuleInfo) update(lastVersion RuleVersionAndPauseStatus) bool {
 	// check if the channel is not empty.
 	select {
 	case <-a.updateCh:

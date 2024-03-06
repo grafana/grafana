@@ -71,7 +71,7 @@ func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	return definitionsIDs
 }
 
-type ruleVersionAndPauseStatus struct {
+type RuleVersionAndPauseStatus struct {
 	Fingerprint fingerprint
 	IsPaused    bool
 }

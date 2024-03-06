@@ -37,7 +37,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
 			resultCh := make(chan bool)
 			go func() {
-				resultCh <- r.update(ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
+				resultCh <- r.update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
 			}()
 			select {
 			case <-r.updateCh:
@@ -48,8 +48,8 @@ func TestAlertRuleInfo(t *testing.T) {
 		})
 		t.Run("update should drop any concurrent sending to updateCh", func(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
-			version1 := ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
-			version2 := ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
+			version1 := RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
+			version2 := RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
 
 			wg := sync.WaitGroup{}
 			wg.Add(1)
@@ -169,7 +169,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
 			r.stop(errRuleDeleted)
 			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
-			require.False(t, r.update(ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}))
+			require.False(t, r.update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
@@ -221,7 +221,7 @@ func TestAlertRuleInfo(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.update(ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
+						r.update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
 					case 2:
 						r.eval(&Evaluation{
 							scheduledAt: time.Now(),
@@ -519,8 +519,8 @@ func TestRuleRoutine(t *testing.T) {
 		require.Greaterf(t, expectedToBeSent, 0, "State manager was expected to return at least one state that can be expired")
 
 		t.Run("should do nothing if version in channel is the same", func(t *testing.T) {
-			ruleInfo.updateCh <- ruleVersionAndPauseStatus{ruleFp, false}
-			ruleInfo.updateCh <- ruleVersionAndPauseStatus{ruleFp, false} // second time just to make sure that previous messages were handled
+			ruleInfo.updateCh <- RuleVersionAndPauseStatus{ruleFp, false}
+			ruleInfo.updateCh <- RuleVersionAndPauseStatus{ruleFp, false} // second time just to make sure that previous messages were handled
 
 			actualStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, actualStates, len(states))
@@ -529,7 +529,7 @@ func TestRuleRoutine(t *testing.T) {
 		})
 
 		t.Run("should clear the state and expire firing alerts if version in channel is greater", func(t *testing.T) {
-			ruleInfo.updateCh <- ruleVersionAndPauseStatus{ruleFp + 1, false}
+			ruleInfo.updateCh <- RuleVersionAndPauseStatus{ruleFp + 1, false}
 
 			require.Eventually(t, func() bool {
 				return len(sender.Calls()) > 0
