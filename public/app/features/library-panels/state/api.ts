@@ -137,12 +137,12 @@ export async function getConnectedDashboards(uid: string): Promise<DashboardSear
 }
 
 function libraryVizPanelToSaveModel(libraryPanel: LibraryVizPanel) {
-  const { panel, uid, folderUID, name, _loadedVersion: version } = libraryPanel.state;
+  const { panel, uid, name, _loadedPanel } = libraryPanel.state;
   const saveModel = {
     uid,
-    folderUID,
+    folderUID: _loadedPanel?.folderUid,
     name,
-    version,
+    version: _loadedPanel?.version,
     model: vizPanelToPanel(panel!),
     kind: LibraryElementKind.Panel,
   };

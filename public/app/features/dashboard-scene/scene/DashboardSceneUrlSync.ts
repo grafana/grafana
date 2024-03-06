@@ -66,7 +66,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      if (isLibraryPanelChild(panel)) {
+      if (getLibraryPanel(panel)) {
         this._handleLibraryPanel(panel, (p) => {
           if (p.state.key === undefined) {
             // Inspect drawer require a panel key to be set
