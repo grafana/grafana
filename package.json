@@ -399,6 +399,7 @@
     "react-router-dom-v5-compat": "^6.10.0",
     "react-select": "5.7.0",
     "react-split-pane": "0.1.92",
+    "react-style-tag": "3.0.1",
     "react-table": "7.8.0",
     "react-transition-group": "4.4.5",
     "react-use": "17.4.0",

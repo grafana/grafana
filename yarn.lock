@@ -19527,6 +19527,7 @@ __metadata:
     react-select-event: 5.5.1
     react-simple-compat: 1.2.3
     react-split-pane: 0.1.92
+    react-style-tag: 3.0.1
     react-table: 7.8.0
     react-test-renderer: 18.2.0
     react-transition-group: 4.4.5
@@ -27983,6 +27984,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-style-tag@npm:3.0.1":
+  version: 3.0.1
+  resolution: "react-style-tag@npm:3.0.1"
+  dependencies:
+    stylis: ^4.1.1
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: 9901f3cd83e751116a456195681f1f621bed028ca4f440569b3e18e1795448c33970353ce48689cd922db482ed1520b0d2a90a770da0c8607a656ce3a897b096
+  languageName: node
+  linkType: hard
+
 "react-syntax-highlighter@npm:^15.5.0":
   version: 15.5.0
   resolution: "react-syntax-highlighter@npm:15.5.0"
@@ -30742,6 +30755,13 @@ __metadata:
   version: 4.0.10
   resolution: "stylis@npm:4.0.10"
   checksum: 0fecaf5c234ec3ffcb0afc21478742a815a21cb964365259789be9c1692e72e13d8c081c1150fd76ed2146633a3251cdecd6e0c120b158f44bd74c38f81cafb3
+  languageName: node
+  linkType: hard
+
+"stylis@npm:^4.1.1":
+  version: 4.3.1
+  resolution: "stylis@npm:4.3.1"
+  checksum: d365f1b008677b2147e8391e9cf20094a4202a5f9789562e7d9d0a3bd6f0b3067d39e8fd17cce5323903a56f6c45388e3d839e9c0bb5a738c91726992b14966d
   languageName: node
   linkType: hard
 

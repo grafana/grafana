@@ -1,6 +1,8 @@
 import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { Style } from 'react-style-tag';
+import { themeSetting } from 'themeSetting';
 
 import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -58,6 +60,7 @@ export type DashboardPageRouteSearchParams = {
   to?: string;
   refresh?: string;
   kiosk?: string | true;
+  theme?: string;
 };
 
 export const mapStateToProps = (state: StoreState) => ({
@@ -92,6 +95,7 @@ export interface State {
   scrollElement?: HTMLDivElement;
   pageNav?: NavModelItem;
   sectionNav?: NavModel;
+  addThemeStyle?: string;
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
@@ -108,12 +112,19 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       showLoadingState: false,
       panelNotFound: false,
       editPanelAccessDenied: false,
+      addThemeStyle: '',
     };
   }
 
   componentDidMount() {
     this.initDashboard();
     this.forceRouteReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter || 0;
+
+    const { queryParams } = this.props;
+    if (queryParams.theme) {
+      const type = queryParams.theme;
+      this.setState({ addThemeStyle: themeSetting[type] || '' });
+    }
   }
 
   componentWillUnmount() {
@@ -332,7 +343,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, initError, queryParams } = this.props;
-    const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
+    const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav, addThemeStyle } = this.state;
     const kioskMode = getKioskMode(this.props.queryParams);
 
     if (!dashboard || !pageNav || !sectionNav) {
@@ -395,6 +406,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+          <Style>{addThemeStyle || ''}</Style>
         </Page>
         {editPanel && (
           <PanelEditor

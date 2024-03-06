@@ -45,7 +45,7 @@ export function AppChrome({ children }: Props) {
           <LinkButton className={styles.skipLink} href="#pageContent">
             Skip to main content
           </LinkButton>
-          <div className={cx(styles.topNav)}>
+          <div className={`${cx(styles.topNav)} navBar`}>
             {!searchBarHidden && <TopSearchBar />}
             <NavToolbar
               searchBarHidden={searchBarHidden}
