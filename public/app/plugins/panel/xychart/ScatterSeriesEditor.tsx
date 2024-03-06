@@ -204,25 +204,25 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, ex
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  sorter: css`
-    margin-top: 10px;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    cursor: pointer;
-  `,
+  sorter: css({
+    marginTop: '10px',
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    alignItems: 'center',
+    cursor: 'pointer',
+  }),
 
-  row: css`
-    padding: ${theme.spacing(0.5, 1)};
-    border-radius: ${theme.shape.radius.default};
-    background: ${theme.colors.background.secondary};
-    min-height: ${theme.spacing(4)};
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    margin-bottom: 3px;
-    border: 1px solid ${theme.components.input.borderColor};
-  `,
+  row: css({
+    padding: theme.spacing(0.5, 1),
+    borderRadius: theme.shape.radius.default,
+    background: theme.colors.background.secondary,
+    minHeight: theme.spacing(4),
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    alignItems: 'center',
+    marginBottom: '3px',
+    border: `1px solid ${theme.components.input.borderColor}`,
+  }),
 });
