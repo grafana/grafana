@@ -42,7 +42,7 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 	}
 
 	if ident.Permissions == nil {
-		ident.Permissions = make(map[int64]map[string][]string)
+		ident.Permissions = make(map[int64]map[string][]string, len(permissions))
 	}
 	grouped := accesscontrol.GroupScopesByAction(permissions)
 
