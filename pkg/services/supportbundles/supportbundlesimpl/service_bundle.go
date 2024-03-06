@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"filippo.io/age"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 )
@@ -25,6 +26,7 @@ type bundleResult struct {
 }
 
 func (s *Service) startBundleWork(ctx context.Context, collectors []string, uid string) {
+	ctxTracer, _ := s.tracer.Start(ctx, "SupportBundle.startBundleWork")
 	result := make(chan bundleResult)
 
 	go func() {
@@ -35,7 +37,9 @@ func (s *Service) startBundleWork(ctx context.Context, collectors []string, uid 
 			}
 		}()
 
-		bundleBytes, err := s.bundle(ctx, collectors, uid)
+		ctxBundler, span := s.tracer.Start(ctxTracer, "SupportBundle.bundle")
+		span.SetAttributes(attribute.String("SupportBundle.bundle.uid", uid))
+		bundleBytes, err := s.bundle(ctxBundler, collectors, uid)
 		if err != nil {
 			result <- bundleResult{err: err}
 		}
