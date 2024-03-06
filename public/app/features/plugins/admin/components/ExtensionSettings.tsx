@@ -42,8 +42,8 @@ export default function ExtensionSettings(): ReactElement | null {
           <div className={styles.leftColumnGroupTitle}>Capabilities</div>
           <div className={styles.leftColumnGroupSubTitle}>Grafana ML App</div>
           <div className={styles.leftColumnGroupContent}>
-            <div className={styles.leftColumnGroupItem}>predict()</div>
-            <div className={styles.leftColumnGroupItem}>predictWeek()</div>
+            <div className={styles.leftColumnGroupCapabilityItem}>predict()</div>
+            <div className={styles.leftColumnGroupCapabilityItem}>predictWeek()</div>
           </div>
         </div>
       </div>
@@ -88,8 +88,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding-left: ${theme.spacing(2)};
   `,
   leftColumnGroupItem: css`
+    cursor: pointer;
     color: ${theme.colors.text.secondary};
     padding-left: ${theme.spacing(4)};
+    font-size: ${theme.typography.pxToRem(13)};
+  `,
+  leftColumnGroupCapabilityItem: css`
+    cursor: pointer;
+    padding-left: ${theme.spacing(4)};
+    color: ${theme.colors.text.secondary};
+    font-family: ${theme.typography.fontFamilyMonospace};
+    font-size: ${theme.typography.pxToRem(12)};
   `,
   leftColumnGroupContent: css``,
   rightColumn: css`
