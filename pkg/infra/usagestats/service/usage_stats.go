@@ -78,7 +78,7 @@ func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]any
 			ctxWithTimeout, cancel := context.WithTimeout(context.Background(), collectorTimeoutDuration)
 			defer cancel()
 
-			fnMetrics, err := fn(ctxWithTimeout)
+			fnMetrics, err := uss.runMetricsFunc(ctxWithTimeout, fn)
 			totC++
 			if err != nil {
 				errC++
