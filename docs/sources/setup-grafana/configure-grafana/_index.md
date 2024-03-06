@@ -2210,7 +2210,11 @@ Set to `true` if you want to test alpha panels that are not yet ready for genera
 
 ### disable_sanitize_html
 
-If set to true Grafana will allow script tags in text panels. Not recommended as it enables XSS vulnerabilities. Default is false. This setting was introduced in Grafana v6.0.
+{{% admonition type="note" %}}
+This configuration is not available in Grafana Cloud instances.
+{{% /admonition %}}
+
+If set to true Grafana will allow script tags in text panels. Not recommended as it enables XSS vulnerabilities. Default is false.
 
 ## [plugins]
 
