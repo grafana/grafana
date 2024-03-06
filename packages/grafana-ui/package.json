@@ -52,7 +52,7 @@
     "@floating-ui/react": "0.26.9",
     "@grafana/data": "11.0.0-pre",
     "@grafana/e2e-selectors": "11.0.0-pre",
-    "@grafana/faro-web-sdk": "^1.3.6",
+    "@grafana/faro-web-sdk": "^1.4.2",
     "@grafana/schema": "11.0.0-pre",
     "@leeoniya/ufuzzy": "1.0.14",
     "@monaco-editor/react": "4.6.0",
