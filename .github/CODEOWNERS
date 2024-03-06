@@ -461,7 +461,7 @@
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
 /.husky/pre-commit @grafana/frontend-ops
-/cypress.config.js @grafana/grafana-frontend-platform
+/cypress.config.cjs @grafana/grafana-frontend-platform
 /.levignore.js @grafana/plugins-platform-frontend
 playwright.config.ts @grafana/plugins-platform-frontend
 
