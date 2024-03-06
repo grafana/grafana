@@ -1,16 +1,8 @@
 import uPlot from 'uplot';
 
-import {
-  formattedValueToString,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import {
-  AxisPlacement,
-  ScaleDirection,
-  ScaleOrientation,
-  VisibilityMode,
-} from '@grafana/schema';
+import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
 
@@ -31,10 +23,11 @@ interface DrawBubblesOpts {
   };
 }
 
-export const prepConfig = (
-  xySeries: XYSeries[],
-  theme: GrafanaTheme2,
-) => {
+export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
+  if (xySeries.length === 0) {
+    return { builder: null, prepData: () => [] };
+  }
+
   let qt: Quadtree;
   let hRect: Rect | null;
 
@@ -89,7 +82,7 @@ export const prepConfig = (
 
           // let pointHints = scatterInfo.hints.pointSize;
           // const colorByValue = scatterInfo.hints.pointColor.mode.isByValue;
-          const pointHints = {max: undefined, fixed: 5};
+          const pointHints = { max: undefined, fixed: 5 };
           const colorByValue = false;
 
           let maxSize = (pointHints.max ?? pointHints.fixed) * pxRatio;
@@ -473,7 +466,7 @@ export function prepData(xySeries: XYSeries[]): FacetedData {
       return [
         s.x.field.values, // X
         s.y.field.values, // Y
-        diams,  // TODO: fails for by value
+        diams, // TODO: fails for by value
         Array(len).fill(s.color.fixed!), // TODO: fails for by value
       ];
     }),

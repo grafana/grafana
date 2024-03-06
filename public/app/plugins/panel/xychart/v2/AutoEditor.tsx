@@ -36,6 +36,10 @@ export const AutoEditor = ({
   // excluded yFields
   // matched yFields
 
+  if (seriesCfg == null || seriesCfg.length === 0) {
+    seriesCfg = [{}];
+  }
+
   return seriesCfg.map((series, i) => (
     <div key={i}>
       <Field label="Frame">
@@ -47,14 +51,14 @@ export const AutoEditor = ({
             label: `${getFrameDisplayName(frame, index)} (index: ${index}, rows: ${frame.length})`,
           }))}
           value={series.frame?.matcher.options}
-          onChange={(index) => {
-            if (index == null) {
+          onChange={(opt) => {
+            if (opt == null) {
               delete series.frame;
             } else {
-              series.y = {
+              series.frame = {
                 matcher: {
                   id: FrameMatcherID.byIndex,
-                  options: index,
+                  options: Number(opt.value),
                 },
               };
             }

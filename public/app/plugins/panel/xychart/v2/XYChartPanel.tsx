@@ -50,7 +50,7 @@ export const XYChartPanel2 = (props: Props2) => {
   );
 
   // todo: handle errors
-  let error = '';
+  let error = builder == null || data.length === 0 ? 'Err' : '';
 
   // TODO: React.memo()
   const renderLegend = () => {
@@ -96,7 +96,7 @@ export const XYChartPanel2 = (props: Props2) => {
         <UPlotChart config={builder!} data={data} width={vizWidth} height={vizHeight}>
           {props.options.tooltip.mode !== TooltipDisplayMode.None && (
             <TooltipPlugin2
-              config={builder}
+              config={builder!}
               hoverMode={TooltipHoverMode.xyOne}
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
                 return (
