@@ -180,109 +180,10 @@ func (a *alertRuleInfo) stop(reason error) {
 	a.stopFn(reason)
 }
 
-//nolint:gocyclo
 func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 	grafanaCtx := ngmodels.WithRuleKey(a.ctx, key)
 	logger := a.logger.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
-
-	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span trace.Span, retry bool) error {
-		orgID := fmt.Sprint(key.OrgID)
-		evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
-		evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
-		evalTotalFailures := a.metrics.EvalFailures.WithLabelValues(orgID)
-		processDuration := a.metrics.ProcessDuration.WithLabelValues(orgID)
-		sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
-
-		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
-		start := a.clock.Now()
-
-		evalCtx := eval.NewContextWithPreviousResults(ctx, SchedulerUserFor(e.rule.OrgID), a.newLoadedMetricsReader(e.rule))
-		ruleEval, err := a.evalFactory.Create(evalCtx, e.rule.GetEvalCondition())
-		var results eval.Results
-		var dur time.Duration
-		if err != nil {
-			dur = a.clock.Now().Sub(start)
-			logger.Error("Failed to build rule evaluator", "error", err)
-		} else {
-			results, err = ruleEval.Evaluate(ctx, e.scheduledAt)
-			dur = a.clock.Now().Sub(start)
-			if err != nil {
-				logger.Error("Failed to evaluate rule", "error", err, "duration", dur)
-			}
-		}
-
-		evalTotal.Inc()
-		evalDuration.Observe(dur.Seconds())
-
-		if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
-			span.SetStatus(codes.Error, "rule evaluation cancelled")
-			logger.Debug("Skip updating the state because the context has been cancelled")
-			return nil
-		}
-
-		if err != nil || results.HasErrors() {
-			evalTotalFailures.Inc()
-
-			// Only retry (return errors) if this isn't the last attempt, otherwise skip these return operations.
-			if retry {
-				// The only thing that can return non-nil `err` from ruleEval.Evaluate is the server side expression pipeline.
-				// This includes transport errors such as transient network errors.
-				if err != nil {
-					span.SetStatus(codes.Error, "rule evaluation failed")
-					span.RecordError(err)
-					return fmt.Errorf("server side expressions pipeline returned an error: %w", err)
-				}
-
-				// If the pipeline executed successfully but have other types of errors that can be retryable, we should do so.
-				if !results.HasNonRetryableErrors() {
-					span.SetStatus(codes.Error, "rule evaluation failed")
-					span.RecordError(err)
-					return fmt.Errorf("the result-set has errors that can be retried: %w", results.Error())
-				}
-			}
-
-			// If results is nil, we assume that the error must be from the SSE pipeline (ruleEval.Evaluate) which is the only code that can actually return an `err`.
-			if results == nil {
-				results = append(results, eval.NewResultFromError(err, e.scheduledAt, dur))
-			}
-
-			// If err is nil, we assume that the SSS pipeline succeeded and that the error must be embedded in the results.
-			if err == nil {
-				err = results.Error()
-			}
-
-			span.SetStatus(codes.Error, "rule evaluation failed")
-			span.RecordError(err)
-		} else {
-			logger.Debug("Alert rule evaluated", "results", results, "duration", dur)
-			span.AddEvent("rule evaluated", trace.WithAttributes(
-				attribute.Int64("results", int64(len(results))),
-			))
-		}
-		start = a.clock.Now()
-		processedStates := a.stateManager.ProcessEvalResults(
-			ctx,
-			e.scheduledAt,
-			e.rule,
-			results,
-			state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !a.disableGrafanaFolder),
-		)
-		processDuration.Observe(a.clock.Now().Sub(start).Seconds())
-
-		start = a.clock.Now()
-		alerts := state.FromStateTransitionToPostableAlerts(processedStates, a.stateManager, a.appURL)
-		span.AddEvent("results processed", trace.WithAttributes(
-			attribute.Int64("state_transitions", int64(len(processedStates))),
-			attribute.Int64("alerts_to_send", int64(len(alerts.PostableAlerts))),
-		))
-		if len(alerts.PostableAlerts) > 0 {
-			a.sender.Send(ctx, key, alerts)
-		}
-		sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
-
-		return nil
-	}
 
 	evalRunning := false
 	var currentFingerprint fingerprint
@@ -358,7 +259,7 @@ func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 					}
 
 					retry := attempt < a.maxAttempts
-					err := evaluate(tracingCtx, f, attempt, ctx, span, retry)
+					err := a.evaluate(tracingCtx, key, f, attempt, ctx, span, retry)
 					// This is extremely confusing - when we exhaust all retry attempts, or we have no retryable errors
 					// we return nil - so technically, this is meaningless to know whether the evaluation has errors or not.
 					span.End()
@@ -392,6 +293,104 @@ func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 			return nil
 		}
 	}
+}
+
+func (a *alertRuleInfo) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f fingerprint, attempt int64, e *evaluation, span trace.Span, retry bool) error {
+	orgID := fmt.Sprint(key.OrgID)
+	evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
+	evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
+	evalTotalFailures := a.metrics.EvalFailures.WithLabelValues(orgID)
+	processDuration := a.metrics.ProcessDuration.WithLabelValues(orgID)
+	sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
+
+	logger := a.logger.FromContext(ctx).New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
+	start := a.clock.Now()
+
+	evalCtx := eval.NewContextWithPreviousResults(ctx, SchedulerUserFor(e.rule.OrgID), a.newLoadedMetricsReader(e.rule))
+	ruleEval, err := a.evalFactory.Create(evalCtx, e.rule.GetEvalCondition())
+	var results eval.Results
+	var dur time.Duration
+	if err != nil {
+		dur = a.clock.Now().Sub(start)
+		logger.Error("Failed to build rule evaluator", "error", err)
+	} else {
+		results, err = ruleEval.Evaluate(ctx, e.scheduledAt)
+		dur = a.clock.Now().Sub(start)
+		if err != nil {
+			logger.Error("Failed to evaluate rule", "error", err, "duration", dur)
+		}
+	}
+
+	evalTotal.Inc()
+	evalDuration.Observe(dur.Seconds())
+
+	if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
+		span.SetStatus(codes.Error, "rule evaluation cancelled")
+		logger.Debug("Skip updating the state because the context has been cancelled")
+		return nil
+	}
+
+	if err != nil || results.HasErrors() {
+		evalTotalFailures.Inc()
+
+		// Only retry (return errors) if this isn't the last attempt, otherwise skip these return operations.
+		if retry {
+			// The only thing that can return non-nil `err` from ruleEval.Evaluate is the server side expression pipeline.
+			// This includes transport errors such as transient network errors.
+			if err != nil {
+				span.SetStatus(codes.Error, "rule evaluation failed")
+				span.RecordError(err)
+				return fmt.Errorf("server side expressions pipeline returned an error: %w", err)
+			}
+
+			// If the pipeline executed successfully but have other types of errors that can be retryable, we should do so.
+			if !results.HasNonRetryableErrors() {
+				span.SetStatus(codes.Error, "rule evaluation failed")
+				span.RecordError(err)
+				return fmt.Errorf("the result-set has errors that can be retried: %w", results.Error())
+			}
+		}
+
+		// If results is nil, we assume that the error must be from the SSE pipeline (ruleEval.Evaluate) which is the only code that can actually return an `err`.
+		if results == nil {
+			results = append(results, eval.NewResultFromError(err, e.scheduledAt, dur))
+		}
+
+		// If err is nil, we assume that the SSS pipeline succeeded and that the error must be embedded in the results.
+		if err == nil {
+			err = results.Error()
+		}
+
+		span.SetStatus(codes.Error, "rule evaluation failed")
+		span.RecordError(err)
+	} else {
+		logger.Debug("Alert rule evaluated", "results", results, "duration", dur)
+		span.AddEvent("rule evaluated", trace.WithAttributes(
+			attribute.Int64("results", int64(len(results))),
+		))
+	}
+	start = a.clock.Now()
+	processedStates := a.stateManager.ProcessEvalResults(
+		ctx,
+		e.scheduledAt,
+		e.rule,
+		results,
+		state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !a.disableGrafanaFolder),
+	)
+	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
+
+	start = a.clock.Now()
+	alerts := state.FromStateTransitionToPostableAlerts(processedStates, a.stateManager, a.appURL)
+	span.AddEvent("results processed", trace.WithAttributes(
+		attribute.Int64("state_transitions", int64(len(processedStates))),
+		attribute.Int64("alerts_to_send", int64(len(alerts.PostableAlerts))),
+	))
+	if len(alerts.PostableAlerts) > 0 {
+		a.sender.Send(ctx, key, alerts)
+	}
+	sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
+
+	return nil
 }
 
 func (a *alertRuleInfo) notify(ctx context.Context, key ngmodels.AlertRuleKey, states []state.StateTransition) {
