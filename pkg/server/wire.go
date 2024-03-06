@@ -9,6 +9,7 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/services/dashboardimage"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -53,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration/cloudmigrationimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
+	dashboardImageService "github.com/grafana/grafana/pkg/services/dashboardimage/service"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -379,8 +381,6 @@ var wireBasicSet = wire.NewSet(
 	anonstore.ProvideAnonDBStore,
 	wire.Bind(new(anonstore.AnonStore), new(*anonstore.AnonDBStore)),
 	loggermw.Provide,
-	slackService.ProvideService,
-	wire.Bind(new(slack.Service), new(*slackService.SlackService)),
 	slackApi.ProvideApi,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
@@ -392,6 +392,10 @@ var wireBasicSet = wire.NewSet(
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
+	dashboardImageService.ProvideService,
+	wire.Bind(new(dashboardimage.Service), new(*dashboardImageService.DashboardImageService)),
+	slackService.ProvideService,
+	wire.Bind(new(slack.Service), new(*slackService.SlackService)),
 )
 
 var wireSet = wire.NewSet(

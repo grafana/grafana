@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboardimage"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/screenshot"
 	"net/http"
 	"net/url"
 	"os"
@@ -1049,7 +1049,12 @@ func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Respo
 
 	hs.log.Info("Generating preview", "resourcePath", previewRequest.ResourcePath)
 
-	opts := screenshot.ScreenshotOptions{
+	opts := dashboardimage.ScreenshotOptions{
+		AuthOptions: rendering.AuthOpts{
+			OrgID:   c.SignedInUser.GetOrgID(),
+			UserID:  c.SignedInUser.UserID,
+			OrgRole: c.SignedInUser.OrgRole,
+		},
 		OrgID:        c.SignedInUser.GetOrgID(),
 		DashboardUID: web.Params(c.Req)[":uid"],
 		PanelID:      panelId,
@@ -1059,13 +1064,11 @@ func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Respo
 		Height:       800,
 		Theme:        models.ThemeDark,
 		Timeout:      time.Duration(60) * time.Second,
-		AuthOptions: rendering.AuthOpts{
-			OrgID:   c.SignedInUser.GetOrgID(),
-			UserID:  c.SignedInUser.UserID,
-			OrgRole: c.SignedInUser.OrgRole,
-		},
 	}
-	filePath, err := hs.slackService.TakeScreenshot(c.Req.Context(), opts)
+
+	hs.log.Info("Generating preview", "resourcePath", opts)
+
+	filePath, err := hs.dashboardImageService.TakeScreenshotAndUpload(c.Req.Context(), opts)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
 	}

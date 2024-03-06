@@ -12,9 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboardimage"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/grafana/grafana/pkg/services/slack"
 	"github.com/grafana/grafana/pkg/services/slack/model"
 	"github.com/grafana/grafana/pkg/setting"
@@ -170,12 +170,13 @@ func (api *Api) handleLinkSharedEvent(c *contextmodel.ReqContext, event model.Ev
 	q := previewUrl.Query()
 	panelId, _ := strconv.ParseInt(q.Get("panelId"), 10, 64)
 
-	opts := screenshot.ScreenshotOptions{
+	opts := dashboardimage.ScreenshotOptions{
 		AuthOptions: rendering.AuthOpts{
 			//UserID:  c.SignedInUser.UserID,
 			OrgID:   1,
 			OrgRole: roletype.RoleAdmin,
 		},
+		OrgID:        1,
 		DashboardUID: dashboardUID,
 		PanelID:      panelId,
 		From:         q.Get("from"),

@@ -8,13 +8,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/components/imguploader"
+	"github.com/grafana/grafana/pkg/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/screenshot"
+	"github.com/grafana/grafana/pkg/services/dashboardimage"
 	"github.com/grafana/grafana/pkg/services/slack/model"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,23 +23,16 @@ import (
 )
 
 type SlackService struct {
-	cfg                  *setting.Cfg
-	log                  log.Logger
-	screenshotService    screenshot.ScreenshotService
-	imageUploaderService imguploader.ImageUploader
+	cfg                   *setting.Cfg
+	log                   log.Logger
+	dashboardImageService dashboardimage.Service
 }
 
-func ProvideService(cfg *setting.Cfg, ss screenshot.ScreenshotService) (*SlackService, error) {
-	us, err := imguploader.NewImageUploader(cfg)
-	if err != nil {
-		return nil, err
-	}
-
+func ProvideService(cfg *setting.Cfg, ds dashboardimage.Service) (*SlackService, error) {
 	return &SlackService{
-		cfg:                  cfg,
-		screenshotService:    ss,
-		log:                  log.New("slack"),
-		imageUploaderService: us,
+		cfg:                   cfg,
+		log:                   log.New("slack"),
+		dashboardImageService: ds,
 	}, nil
 }
 
@@ -243,13 +237,20 @@ func (s *SlackService) postRequest(ctx context.Context, endpoint string, body io
 	return b, nil
 }
 
-func (s *SlackService) TakeScreenshot(ctx context.Context, opts screenshot.ScreenshotOptions) (string, error) {
-	image, err := s.screenshotService.Take(ctx, opts)
-	if err != nil {
-		return "", err
+func (s *SlackService) TakeScreenshot(ctx context.Context, opts dashboardimage.ScreenshotOptions) (string, error) {
+	opts = dashboardimage.ScreenshotOptions{
+		AuthOptions:  opts.AuthOptions,
+		OrgID:        opts.OrgID,
+		DashboardUID: opts.DashboardUID,
+		PanelID:      opts.PanelID,
+		From:         opts.From,
+		To:           opts.To,
+		Width:        1600,
+		Height:       800,
+		Theme:        models.ThemeDark,
+		Timeout:      time.Duration(60) * time.Second,
 	}
-
-	path, err := s.imageUploaderService.Upload(ctx, image.Path)
+	path, err := s.dashboardImageService.TakeScreenshotAndUpload(ctx, opts)
 	if err != nil {
 		return "", err
 	}
