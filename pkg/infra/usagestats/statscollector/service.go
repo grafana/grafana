@@ -82,13 +82,25 @@ func ProvideService(
 		s.collectDatasourceAccess,
 		s.collectAlertNotifierStats,
 		s.collectPrometheusFlavors,
-		s.collectAdditionalMetrics,
 	}
+
 	for _, c := range collectors {
 		us.RegisterMetricsFunc(c)
 	}
 
+	s.registerUsageStatProviders()
+
 	return s
+}
+
+func (s *Service) registerUsageStatProviders() {
+	for _, usageStatProvider := range s.usageStatProviders {
+		collector := func(ctx context.Context) (map[string]interface{}, error) {
+			return usageStatProvider.GetUsageStats(ctx), nil
+		}
+
+		s.usageStats.RegisterMetricsFunc(collector)
+	}
 }
 
 // RegisterProviders is called only once - during Grafana start up
@@ -209,17 +221,6 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 		m[k] = v
 	}
 
-	return m, nil
-}
-
-func (s *Service) collectAdditionalMetrics(ctx context.Context) (map[string]any, error) {
-	m := map[string]any{}
-	for _, usageStatProvider := range s.usageStatProviders {
-		stats := usageStatProvider.GetUsageStats(ctx)
-		for k, v := range stats {
-			m[k] = v
-		}
-	}
 	return m, nil
 }
 

@@ -102,13 +102,14 @@ func TestUsageStatsProviders(t *testing.T) {
 	s := createService(t, setting.NewCfg(), store, statsService)
 	s.RegisterProviders([]registry.ProvidesUsageStats{provider1, provider2})
 
-	m, err := s.collectAdditionalMetrics(context.Background())
+	s.registerUsageStatProviders()
+	report, err := s.usageStats.GetUsageReport(context.Background())
 	require.NoError(t, err, "Expected no error")
 
-	assert.Equal(t, "val1", m["my_stat_1"])
-	assert.Equal(t, "val2", m["my_stat_2"])
-	assert.Equal(t, "valx", m["my_stat_x"])
-	assert.Equal(t, "valz", m["my_stat_z"])
+	assert.Equal(t, "valx", report.Metrics["my_stat_x"])
+	assert.Equal(t, "valz", report.Metrics["my_stat_z"])
+	assert.Equal(t, "val1", report.Metrics["my_stat_1"])
+	assert.Equal(t, "val2", report.Metrics["my_stat_2"])
 }
 
 func TestFeatureUsageStats(t *testing.T) {

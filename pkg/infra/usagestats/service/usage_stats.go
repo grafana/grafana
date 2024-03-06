@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -57,18 +58,35 @@ func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]any
 	ctx, span := uss.tracer.Start(ctx, "UsageStats.GatherLoop")
 	defer span.End()
 	totC, errC := 0, 0
-	for _, fn := range uss.externalMetrics {
-		fnMetrics, err := uss.runMetricsFunc(ctx, fn)
-		totC++
-		if err != nil {
-			errC++
-			continue
-		}
 
-		for name, value := range fnMetrics {
-			metrics[name] = value
-		}
+	sem := make(chan struct{}, 5) // create a semaphore with a capacity of 5
+	var wg sync.WaitGroup
+
+	for _, fn := range uss.externalMetrics {
+		wg.Add(1)
+		go func(fn func(context.Context) (map[string]any, error)) {
+			defer wg.Done()
+
+			sem <- struct{}{}        // acquire a token
+			defer func() { <-sem }() // release the token when done
+
+			ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Minute*5)
+			defer cancel()
+
+			fnMetrics, err := fn(ctxWithTimeout)
+			totC++
+			if err != nil {
+				errC++
+				return
+			}
+
+			for name, value := range fnMetrics {
+				metrics[name] = value
+			}
+		}(fn)
 	}
+
+	wg.Wait()
 	metrics["stats.usagestats.debug.collect.total.count"] = totC
 	metrics["stats.usagestats.debug.collect.error.count"] = errC
 }
