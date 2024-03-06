@@ -319,7 +319,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 
 	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, dr.cfg.IsLegacyAlertingEnabled(), false)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -328,26 +328,6 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	dash, err := dr.dashboardStore.SaveProvisionedDashboard(ctx, *cmd, provisioning)
 	if err != nil {
 		return nil, err
-	}
-
-	// alerts
-	dashAlertInfo := alerting.DashAlertInfo{
-		User:  dto.User,
-		Dash:  dash,
-		OrgID: dto.OrgID,
-	}
-
-	// extract/save legacy alerts only if legacy alerting is enabled
-	if dr.cfg.IsLegacyAlertingEnabled() {
-		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
-		if err != nil {
-			return nil, err
-		}
-
-		err = dr.dashboardStore.SaveAlerts(ctx, dash.ID, alerts)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	if dto.Dashboard.ID == 0 {
@@ -379,7 +359,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		dto.Dashboard.Data.Set("refresh", dr.cfg.MinRefreshInterval)
 	}
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, dr.cfg.IsLegacyAlertingEnabled(), !allowUiUpdate)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false, !allowUiUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -387,25 +367,6 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 	dash, err := dr.dashboardStore.SaveDashboard(ctx, *cmd)
 	if err != nil {
 		return nil, fmt.Errorf("saving dashboard failed: %w", err)
-	}
-
-	dashAlertInfo := alerting.DashAlertInfo{
-		User:  dto.User,
-		Dash:  dash,
-		OrgID: dto.OrgID,
-	}
-
-	// extract/save legacy alerts only if legacy alerting is enabled
-	if dr.cfg.IsLegacyAlertingEnabled() {
-		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
-		if err != nil {
-			return nil, err
-		}
-
-		err = dr.dashboardStore.SaveAlerts(ctx, dash.ID, alerts)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	// new dashboard created

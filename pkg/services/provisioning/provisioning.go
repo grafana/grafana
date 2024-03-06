@@ -86,7 +86,6 @@ type ProvisioningService interface {
 	RunInitProvisioners(ctx context.Context) error
 	ProvisionDatasources(ctx context.Context) error
 	ProvisionPlugins(ctx context.Context) error
-	ProvisionNotifications(ctx context.Context) error
 	ProvisionDashboards(ctx context.Context) error
 	ProvisionAlerting(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
@@ -163,12 +162,6 @@ func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) erro
 		return err
 	}
 
-	err = ps.ProvisionNotifications(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision alert notifications", "error", err)
-		return err
-	}
-
 	err = ps.ProvisionAlerting(ctx)
 	if err != nil {
 		ps.log.Error("Failed to provision alerting", "error", err)
@@ -225,16 +218,6 @@ func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 	if err := ps.provisionPlugins(ctx, appPath, ps.pluginStore, ps.pluginsSettings, ps.orgService); err != nil {
 		err = fmt.Errorf("%v: %w", "app provisioning error", err)
 		ps.log.Error("Failed to provision plugins", "error", err)
-		return err
-	}
-	return nil
-}
-
-func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) error {
-	alertNotificationsPath := filepath.Join(ps.Cfg.ProvisioningPath, "notifiers")
-	if err := ps.provisionNotifiers(ctx, ps.Cfg, alertNotificationsPath, ps.alertingService, ps.orgService, ps.EncryptionService, ps.NotificationService); err != nil {
-		err = fmt.Errorf("%v: %w", "Alert notification provisioning error", err)
-		ps.log.Error("Failed to provision alert notifications", "error", err)
 		return err
 	}
 	return nil
