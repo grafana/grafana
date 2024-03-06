@@ -53,7 +53,7 @@ func ProvideApi(
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSlackUnfurling) {
-		api.routeRegister.Post("/api/share/slack/unfurl", middleware.ReqSignedIn, routing.Wrap(api.SlackUnfurl))
+		api.routeRegister.Post("/api/share/slack/unfurl", routing.Wrap(api.SlackUnfurl))
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSlackSharePreview) {
