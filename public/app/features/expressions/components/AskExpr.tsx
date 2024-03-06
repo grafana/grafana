@@ -5,13 +5,15 @@ import { SQLEditor } from '@grafana/experimental';
 
 import { ExpressionQuery } from '../types';
 
+import { SpeechRecognitionButton } from './SpeechRecognitionButton';
+
 interface Props {
   refIds: Array<SelectableValue<string>>;
   query: ExpressionQuery;
   onChange: (query: ExpressionQuery) => void;
 }
 
-export const AskExpr = ({ onChange, refIds, query }: Props) => {
+export const AskExpr: React.FC<Props> = ({ onChange, refIds, query }) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
 
   const initialQuery = `What is the count of ${vars[0]}?`;
@@ -23,5 +25,12 @@ export const AskExpr = ({ onChange, refIds, query }: Props) => {
     });
   };
 
-  return <SQLEditor language={{ id: 'txt' }} query={query.expression || initialQuery} onChange={onEditorChange} />;
+  const onSpeechResult = (result: string) => onEditorChange(result);
+
+  return (
+    <div>
+      <SpeechRecognitionButton onResult={onSpeechResult} />
+      <SQLEditor language={{ id: 'txt' }} query={query.expression || initialQuery} onChange={onEditorChange} />
+    </div>
+  );
 };

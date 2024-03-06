@@ -282,6 +282,7 @@
     "@reduxjs/toolkit": "1.9.5",
     "@remix-run/router": "^1.5.0",
     "@testing-library/react-hooks": "^8.0.1",
+    "@types/dom-speech-recognition": "^0.0.4",
     "@types/react-resizable": "3.0.7",
     "@types/trusted-types": "2.0.7",
     "@types/webpack-env": "1.18.4",
