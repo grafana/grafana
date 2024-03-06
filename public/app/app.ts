@@ -132,7 +132,11 @@ export class GrafanaApp {
       initIconCache();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
-      addClassIfNoOverlayScrollbar();
+
+      if (!config.featureToggles.betterPageScrolling) {
+        addClassIfNoOverlayScrollbar();
+      }
+
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);

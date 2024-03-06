@@ -521,6 +521,10 @@ type Cfg struct {
 
 	// News Feed
 	NewsFeedEnabled bool
+
+	// Experimental scope settings
+	ScopesListScopesURL     string
+	ScopesListDashboardsURL string
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1281,6 +1285,11 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
 
+	// read experimental scopes settings.
+	scopesSection := iniFile.Section("scopes")
+	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
+	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
+
 	return nil
 }
 
@@ -1935,6 +1944,9 @@ func (cfg *Cfg) readDataSourceSecuritySettings() {
 	datasources := cfg.Raw.Section("datasources.ip_range_security")
 	cfg.IPRangeACEnabled = datasources.Key("enabled").MustBool(false)
 	cfg.IPRangeACSecretKey = datasources.Key("secret_key").MustString("")
+	if cfg.IPRangeACEnabled && cfg.IPRangeACSecretKey == "" {
+		cfg.Logger.Error("IP range access control is enabled but no secret key is set")
+	}
 	allowedURLString := datasources.Key("allow_list").MustString("")
 	for _, urlString := range util.SplitString(allowedURLString) {
 		allowedURL, err := url.Parse(urlString)
