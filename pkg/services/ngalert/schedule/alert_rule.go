@@ -193,16 +193,6 @@ func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 	processDuration := a.metrics.ProcessDuration.WithLabelValues(orgID)
 	sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
 
-	resetState := func(ctx context.Context, isPaused bool) {
-		rule := a.ruleProvider.get(key)
-		reason := ngmodels.StateReasonUpdated
-		if isPaused {
-			reason = ngmodels.StateReasonPaused
-		}
-		states := a.stateManager.ResetStateByRuleUID(ctx, rule, reason)
-		a.notify(grafanaCtx, key, states)
-	}
-
 	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span trace.Span, retry bool) error {
 		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 		start := a.clock.Now()
@@ -308,7 +298,7 @@ func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 
 			logger.Info("Clearing the state of the rule because it was updated", "isPaused", ctx.IsPaused, "fingerprint", ctx.Fingerprint)
 			// clear the state. So the next evaluation will start from the scratch.
-			resetState(grafanaCtx, ctx.IsPaused)
+			a.resetState(grafanaCtx, key, ctx.IsPaused)
 			currentFingerprint = ctx.Fingerprint
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-a.evalCh:
@@ -341,7 +331,7 @@ func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
 					// lingers in DB and won't be cleaned up until next alert rule update.
 					needReset = needReset || (currentFingerprint == 0 && isPaused)
 					if needReset {
-						resetState(grafanaCtx, isPaused)
+						a.resetState(grafanaCtx, key, isPaused)
 					}
 					currentFingerprint = f
 					if isPaused {
@@ -409,6 +399,16 @@ func (a *alertRuleInfo) notify(ctx context.Context, key ngmodels.AlertRuleKey, s
 	if len(expiredAlerts.PostableAlerts) > 0 {
 		a.sender.Send(ctx, key, expiredAlerts)
 	}
+}
+
+func (a *alertRuleInfo) resetState(ctx context.Context, key ngmodels.AlertRuleKey, isPaused bool) {
+	rule := a.ruleProvider.get(key)
+	reason := ngmodels.StateReasonUpdated
+	if isPaused {
+		reason = ngmodels.StateReasonPaused
+	}
+	states := a.stateManager.ResetStateByRuleUID(ctx, rule, reason)
+	a.notify(ctx, key, states)
 }
 
 // evalApplied is only used on tests.
