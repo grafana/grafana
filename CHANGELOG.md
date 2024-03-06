@@ -1,3 +1,17 @@
+<!-- 9.5.17 START -->
+
+# 9.5.17 (2024-03-05)
+
+### Features and enhancements
+
+- Bump go-git to v5.11.0. [#83711](https://github.com/grafana/grafana/issues/83711), [@papagian](https://github.com/papagian)
+- **Plugins:** Bump otelgrpc instrumentation to 0.47.0. [#83674](https://github.com/grafana/grafana/issues/83674), [@wbrowne](https://github.com/wbrowne)
+
+### Bug fixes
+
+- **Auth:** Fix email verification bypass when using basic authentication. [#83494](https://github.com/grafana/grafana/issues/83494)
+
+<!-- 9.5.17 END -->
 <!-- 9.5.16 START -->
 
 # 9.5.16 (2024-01-29)
