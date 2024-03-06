@@ -12,10 +12,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/grafana/grafana/pkg/prometheus-library/converter"
-	"github.com/grafana/grafana/pkg/prometheus-library/models"
-	"github.com/grafana/grafana/pkg/prometheus-library/querydata/exemplar"
-	"github.com/grafana/grafana/pkg/prometheus-library/utils"
+	"github.com/grafana/grafana/pkg/promlib/converter"
+	"github.com/grafana/grafana/pkg/promlib/models"
+	"github.com/grafana/grafana/pkg/promlib/querydata/exemplar"
+	"github.com/grafana/grafana/pkg/promlib/utils"
 )
 
 func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response, enablePrometheusDataplaneFlag bool) backend.DataResponse {

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/grafana/grafana/pkg/prometheus-library/models"
+	"github.com/grafana/grafana/pkg/promlib/models"
 )
 
 type StandardDeviationSampler struct {

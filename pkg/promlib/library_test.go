@@ -1,4 +1,4 @@
-package prometheus_library
+package promlib
 
 import (
 	"context"

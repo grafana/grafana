@@ -6,8 +6,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 
-	"github.com/grafana/grafana/pkg/prometheus-library/models"
-	"github.com/grafana/grafana/pkg/prometheus-library/querydata/exemplar"
+	"github.com/grafana/grafana/pkg/promlib/models"
+	"github.com/grafana/grafana/pkg/promlib/querydata/exemplar"
 )
 
 func TestStdDevSampler(t *testing.T) {

@@ -9,19 +9,19 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	prometheuslibrary "github.com/grafana/grafana/pkg/prometheus-library"
+	"github.com/grafana/grafana/pkg/promlib"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/azureauth"
 )
 
 type Service struct {
-	lib *prometheuslibrary.Service
+	lib *promlib.Service
 }
 
 func ProvideService(httpClientProvider *sdkhttpclient.Provider) *Service {
 	plog := backend.NewLoggerWith("logger", "tsdb.prometheus")
 	plog.Debug("Initializing")
 	return &Service{
-		lib: prometheuslibrary.NewService(httpClientProvider, plog, extendClientOpts),
+		lib: promlib.NewService(httpClientProvider, plog, extendClientOpts),
 	}
 }
 
@@ -33,11 +33,11 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	return s.lib.CallResource(ctx, req, sender)
 }
 
-func (s *Service) GetBuildInfo(ctx context.Context, req prometheuslibrary.BuildInfoRequest) (*prometheuslibrary.BuildInfoResponse, error) {
+func (s *Service) GetBuildInfo(ctx context.Context, req promlib.BuildInfoRequest) (*promlib.BuildInfoResponse, error) {
 	return s.GetBuildInfo(ctx, req)
 }
 
-func (s *Service) GetHeuristics(ctx context.Context, req prometheuslibrary.HeuristicsRequest) (*prometheuslibrary.Heuristics, error) {
+func (s *Service) GetHeuristics(ctx context.Context, req promlib.HeuristicsRequest) (*promlib.Heuristics, error) {
 	return s.lib.GetHeuristics(ctx, req)
 }
 

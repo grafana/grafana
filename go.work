@@ -4,7 +4,7 @@ use (
 	.
 	./pkg/apimachinery
 	./pkg/apiserver
-	./pkg/prometheus-library
+	./pkg/promlib
 	./pkg/util/xorm
 )
 

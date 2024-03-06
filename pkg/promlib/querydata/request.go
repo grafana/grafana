@@ -16,11 +16,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
-	"github.com/grafana/grafana/pkg/prometheus-library/client"
-	"github.com/grafana/grafana/pkg/prometheus-library/intervalv2"
-	"github.com/grafana/grafana/pkg/prometheus-library/models"
-	"github.com/grafana/grafana/pkg/prometheus-library/querydata/exemplar"
-	"github.com/grafana/grafana/pkg/prometheus-library/utils"
+	"github.com/grafana/grafana/pkg/promlib/client"
+	"github.com/grafana/grafana/pkg/promlib/intervalv2"
+	"github.com/grafana/grafana/pkg/promlib/models"
+	"github.com/grafana/grafana/pkg/promlib/querydata/exemplar"
+	"github.com/grafana/grafana/pkg/promlib/utils"
 )
 
 const legendFormatAuto = "__auto"

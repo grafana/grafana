@@ -1,4 +1,4 @@
-package prometheus_library
+package promlib
 
 import (
 	"context"
@@ -15,10 +15,10 @@ import (
 	"github.com/patrickmn/go-cache"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
-	"github.com/grafana/grafana/pkg/prometheus-library/client"
-	"github.com/grafana/grafana/pkg/prometheus-library/instrumentation"
-	"github.com/grafana/grafana/pkg/prometheus-library/querydata"
-	"github.com/grafana/grafana/pkg/prometheus-library/resource"
+	"github.com/grafana/grafana/pkg/promlib/client"
+	"github.com/grafana/grafana/pkg/promlib/instrumentation"
+	"github.com/grafana/grafana/pkg/promlib/querydata"
+	"github.com/grafana/grafana/pkg/promlib/resource"
 )
 
 type Service struct {

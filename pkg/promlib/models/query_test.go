@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/prometheus-library/intervalv2"
-	"github.com/grafana/grafana/pkg/prometheus-library/models"
+	"github.com/grafana/grafana/pkg/promlib/intervalv2"
+	"github.com/grafana/grafana/pkg/promlib/models"
 )
 
 var (
