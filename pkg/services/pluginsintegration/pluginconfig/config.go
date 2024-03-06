@@ -123,6 +123,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		SQLDatasourceMaxOpenConnsDefault:    cfg.SqlDatasourceMaxOpenConnsDefault,
 		SQLDatasourceMaxIdleConnsDefault:    cfg.SqlDatasourceMaxIdleConnsDefault,
 		SQLDatasourceMaxConnLifetimeDefault: cfg.SqlDatasourceMaxConnLifetimeDefault,
+		ResponseLimit:                       cfg.ResponseLimit,
 	}, nil
 }
 
