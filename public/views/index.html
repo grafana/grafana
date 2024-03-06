@@ -354,10 +354,10 @@
     <!-- End Google Tag Manager -->
     [[end]]
 
-    <!-- see pkg/api/webassets/webassets.go L50 -->
-    [[ if .IsDevelopmentEnv ]]
-    <script type="module">
-      import RefreshRuntime from 'http://localhost:5173/@react-refresh';
+    <!-- see pkg/api/webassets/webassets.go -->
+    [[ if and .IsDevelopmentEnv .FrontendDevServer ]]
+    <script nonce="[[$.Nonce]]" type="module">
+      import RefreshRuntime from '[[ .FrontendDevServer ]]/@react-refresh';
       RefreshRuntime.injectIntoGlobalHook(window);
       window.$RefreshReg$ = () => {};
       window.$RefreshSig$ = () => (type) => type;
