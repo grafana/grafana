@@ -1,8 +1,12 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Form, HorizontalGroup, Icon, LinkButton, Text, useStyles2 } from '@grafana/ui';
+import { Button, Field, Form, HorizontalGroup, LinkButton } from '@grafana/ui';
+import {
+  ValidationLabels,
+  strongPasswordValidations,
+  strongPasswordValidationRegister,
+} from 'app/core/components/ValidationLabels/ValidationLabels';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 import { UserDTO } from 'app/types';
@@ -17,85 +21,13 @@ export interface Props {
   onChangePassword: (payload: ChangePasswordFields) => void;
 }
 
-interface StrongPasswordValidation {
-  message: string;
-  validation: (value: string) => boolean;
-}
-
-const strongPasswordValidations: StrongPasswordValidation[] = [
-  {
-    message: 'At least 12 characters',
-    validation: (value: string) => value.length >= 12,
-  },
-  {
-    message: 'One uppercase letter',
-    validation: (value: string) => /[A-Z]+/.test(value),
-  },
-  {
-    message: 'One lowercase letter',
-    validation: (value: string) => /[a-z]+/.test(value),
-  },
-  {
-    message: 'One number',
-    validation: (value: string) => /[0-9]+/.test(value),
-  },
-  {
-    message: 'One symbol',
-    validation: (value: string) => /[\W]/.test(value),
-  },
-];
-
 export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) => {
   const [displayValidationLabels, setDisplayValidationLabels] = useState(false);
   const [pristine, setPristine] = useState(true);
   const [newPassword, setNewPassword] = useState('');
 
   const { disableLoginForm } = config;
-  const { basicAuthStrongPasswordPolicy } = config.auth;
   const authSource = user.authLabels?.length && user.authLabels[0];
-
-  const validationLabel = (index: number, message: string, validation: () => {}) => {
-    if (!basicAuthStrongPasswordPolicy) {
-      return null;
-    }
-    const result = newPassword.length > 0 && validation();
-
-    const iconName = result || pristine ? 'check' : 'exclamation-triangle';
-    const textColor = result ? 'secondary' : pristine ? 'primary' : 'error';
-
-    let iconClassName = undefined;
-    if (result) {
-      iconClassName = styles.icon.valid;
-    } else if (pristine) {
-      iconClassName = styles.icon.pending;
-    } else {
-      iconClassName = styles.icon.error;
-    }
-
-    return (
-      displayValidationLabels && (
-        <div key={index} className={styles.label}>
-          <Icon className={styles.icon.style + ' ' + iconClassName} name={iconName} />
-          <Text color={textColor}>{message}</Text>
-        </div>
-      )
-    );
-  };
-
-  const strongPasswordValidation = (value: string) => {
-    if (!basicAuthStrongPasswordPolicy) {
-      return true;
-    }
-    return (
-      strongPasswordValidations.every((validation) => validation.validation(value)) ||
-      t(
-        'profile.change-password.strong-password-validation',
-        'Password does not comply with the strong password policy'
-      )
-    );
-  };
-
-  const styles = useStyles2(getStyles);
 
   if (authSource === 'LDAP' || authSource === 'Auth Proxy') {
     return (
@@ -153,7 +85,7 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
                     onChange: (e) => setNewPassword(e.target.value),
                     required: t('profile.change-password.new-password-required', 'New password is required'),
                     validate: {
-                      strongPasswordValidation: strongPasswordValidation,
+                      strongPasswordValidationRegister,
                       confirm: (v) =>
                         v === getValues().confirmNew ||
                         t('profile.change-password.passwords-must-match', 'Passwords must match'),
@@ -167,11 +99,13 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
                   })}
                 />
               </Field>
-              <div className={styles.labelContainer}>
-                {strongPasswordValidations.map((validation, index) =>
-                  validationLabel(index, validation.message, () => validation.validation(newPassword))
-                )}
-              </div>
+              {displayValidationLabels && (
+                <ValidationLabels
+                  pristine={pristine}
+                  password={newPassword}
+                  strongPasswordValidations={strongPasswordValidations}
+                />
+              )}
               <Field
                 label={t('profile.change-password.confirm-password-label', 'Confirm password')}
                 invalid={!!errors.confirmNew}
@@ -205,33 +139,4 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
       </Form>
     </div>
   );
-};
-
-export const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    label: css({
-      display: 'flex',
-      marginTop: theme.spacing(1),
-    }),
-    labelContainer: css({
-      marginBottom: theme.spacing(2),
-    }),
-    hidden: css({
-      display: 'none',
-    }),
-    icon: {
-      style: css({
-        marginRight: theme.spacing(1),
-      }),
-      valid: css({
-        color: theme.colors.success.text,
-      }),
-      pending: css({
-        color: theme.colors.secondary.text,
-      }),
-      error: css({
-        color: theme.colors.error.text,
-      }),
-    },
-  };
 };
