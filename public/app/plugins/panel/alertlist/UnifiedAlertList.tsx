@@ -41,6 +41,7 @@ import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction, ThunkDispatch, useDispatch } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { getRulesPermissions } from '../../../features/alerting/unified/utils/access-control';
 import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
 import { AlertingRule, CombinedRuleWithLocation } from '../../../types/unified-alerting';
 
@@ -93,7 +94,7 @@ const fetchPromAndRuler = ({
   }
 };
 
-export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
+function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
   const [limitInstances, toggleLimit] = useToggle(true);
 
@@ -137,7 +138,9 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   // If the datasource is not defined we should NOT skip the query
   // Undefined dataSourceName means that there is no datasource filter applied and we should fetch all the rules
-  const shouldFetchGrafanaRules = !dataSourceName || dataSourceName === GRAFANA_RULES_SOURCE_NAME;
+  const shouldFetchGrafanaRules =
+    (!dataSourceName || dataSourceName === GRAFANA_RULES_SOURCE_NAME) &&
+    contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
 
   //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
   //See https://github.com/grafana/grafana/pull/70482
@@ -216,15 +219,6 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const renderLoading = grafanaRulesLoading || (dispatched && loading && !haveResults);
 
   const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
-
-  if (
-    !contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
-    !contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)
-  ) {
-    return (
-      <Alert title="Permission required">Sorry, you do not have the required permissions to read alert rules</Alert>
-    );
-  }
 
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
@@ -456,3 +450,16 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     display: none;
   `,
 });
+
+export function UnifiedAlertListPanel(props: PanelProps<UnifiedAlertListOptions>) {
+  if (
+    !contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
+    !contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)
+  ) {
+    return (
+      <Alert title="Permission required">Sorry, you do not have the required permissions to read alert rules</Alert>
+    );
+  }
+
+  return <UnifiedAlertList {...props} />;
+}
