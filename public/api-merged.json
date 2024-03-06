@@ -17045,6 +17045,7 @@
     },
     "ObjectMatchers": {
       "type": "array",
+      "title": "ObjectMatchers is a list of matchers that can be used to filter alerts.",
       "items": {
         "$ref": "#/definitions/ObjectMatcher"
       }
@@ -21795,6 +21796,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -21818,6 +21820,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -21950,6 +21953,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -22012,6 +22016,7 @@
       }
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -22066,6 +22071,7 @@
       }
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
