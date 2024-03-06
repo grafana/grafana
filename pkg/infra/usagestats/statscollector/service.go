@@ -45,7 +45,6 @@ type Service struct {
 	startTime                time.Time
 	concurrentUserStatsCache memoConcurrentUserStats
 	promFlavorCache          memoPrometheusFlavor
-	usageStatProviders       []registry.ProvidesUsageStats
 }
 
 func ProvideService(
@@ -91,8 +90,10 @@ func ProvideService(
 	return s
 }
 
-func (s *Service) registerUsageStatProviders() {
-	for _, usageStatProvider := range s.usageStatProviders {
+// RegisterProviders is called only once - during Grafana start up
+func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageStats) {
+	s.log.Info("registering usage stat providers", "usageStatsProvidersLen", len(usageStatProviders))
+	for _, usageStatProvider := range usageStatProviders {
 		collector := func(ctx context.Context) (map[string]interface{}, error) {
 			return usageStatProvider.GetUsageStats(ctx), nil
 		}
@@ -101,20 +102,12 @@ func (s *Service) registerUsageStatProviders() {
 	}
 }
 
-// RegisterProviders is called only once - during Grafana start up
-func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageStats) {
-	s.log.Info("registering usage stat providers", "usageStatsProvidersLen", len(usageStatProviders))
-	s.usageStatProviders = usageStatProviders
-}
-
 func (s *Service) Run(ctx context.Context) error {
 	sendInterval := time.Second * time.Duration(s.cfg.MetricsTotalStatsIntervalSeconds)
 	nextSendInterval := time.Duration(rand.Intn(maxDelay-minDelay)+minDelay) * time.Second
 	s.log.Debug("usage stats collector started", "sendInterval", sendInterval, "nextSendInterval", nextSendInterval)
 	updateStatsTicker := time.NewTicker(nextSendInterval)
 	defer updateStatsTicker.Stop()
-
-	s.registerUsageStatProviders()
 
 	for {
 		select {

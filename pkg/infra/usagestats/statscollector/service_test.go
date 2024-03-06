@@ -101,7 +101,6 @@ func TestUsageStatsProviders(t *testing.T) {
 	s := createService(t, setting.NewCfg(), store, statsService)
 	s.RegisterProviders([]registry.ProvidesUsageStats{provider})
 
-	s.registerUsageStatProviders()
 	report, err := s.usageStats.GetUsageReport(context.Background())
 	require.NoError(t, err, "Expected no error")
 
