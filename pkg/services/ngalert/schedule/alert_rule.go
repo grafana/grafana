@@ -28,14 +28,18 @@ func (f ruleFactoryFunc) new(ctx context.Context) *alertRuleInfo {
 	return f(ctx)
 }
 
-func newRuleFactory(sender AlertsSender, stateManager *state.Manager, evalFactory eval.EvaluatorFactory, clock clock.Clock, met *metrics.Scheduler, logger log.Logger, tracer tracing.Tracer, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) ruleFactoryFunc {
+func newRuleFactory(sender AlertsSender, stateManager *state.Manager, evalFactory eval.EvaluatorFactory, ruleProvider ruleProvider, clock clock.Clock, met *metrics.Scheduler, logger log.Logger, tracer tracing.Tracer, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) ruleFactoryFunc {
 	return func(ctx context.Context) *alertRuleInfo {
-		return newAlertRuleInfo(ctx, sender, stateManager, evalFactory, clock, met, logger, tracer, evalAppliedHook, stopAppliedHook)
+		return newAlertRuleInfo(ctx, sender, stateManager, evalFactory, ruleProvider, clock, met, logger, tracer, evalAppliedHook, stopAppliedHook)
 	}
 }
 
 type evalAppliedFunc = func(ngmodels.AlertRuleKey, time.Time)
 type stopAppliedFunc = func(ngmodels.AlertRuleKey)
+
+type ruleProvider interface {
+	get(ngmodels.AlertRuleKey) *ngmodels.AlertRule
+}
 
 type alertRuleInfo struct {
 	evalCh   chan *evaluation
@@ -47,6 +51,7 @@ type alertRuleInfo struct {
 	sender       AlertsSender
 	stateManager *state.Manager
 	evalFactory  eval.EvaluatorFactory
+	ruleProvider ruleProvider
 
 	// Event hooks that are only used in tests.
 	evalAppliedHook evalAppliedFunc
@@ -62,6 +67,7 @@ func newAlertRuleInfo(
 	sender AlertsSender,
 	stateManager *state.Manager,
 	evalFactory eval.EvaluatorFactory,
+	ruleProvider ruleProvider,
 	clock clock.Clock,
 	met *metrics.Scheduler,
 	logger log.Logger,
@@ -79,6 +85,7 @@ func newAlertRuleInfo(
 		sender:          sender,
 		stateManager:    stateManager,
 		evalFactory:     evalFactory,
+		ruleProvider:    ruleProvider,
 		evalAppliedHook: evalAppliedHook,
 		stopAppliedHook: stopAppliedHook,
 		metrics:         met,
@@ -154,7 +161,7 @@ func (a *alertRuleInfo) ruleRoutine(key ngmodels.AlertRuleKey, sch *schedule) er
 	}
 
 	resetState := func(ctx context.Context, isPaused bool) {
-		rule := sch.schedulableAlertRules.get(key)
+		rule := a.ruleProvider.get(key)
 		reason := ngmodels.StateReasonUpdated
 		if isPaused {
 			reason = ngmodels.StateReasonPaused
