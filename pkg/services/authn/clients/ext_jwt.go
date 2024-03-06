@@ -226,7 +226,7 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string, t
 	}
 
 	jwtType := strings.ToLower(typeHeader.(string))
-	if strings.EqualFold(jwtType, typ) {
+	if !strings.EqualFold(jwtType, typ) {
 		return nil, fmt.Errorf("invalid JWT type: %s", jwtType)
 	}
 

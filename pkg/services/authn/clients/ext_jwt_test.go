@@ -11,11 +11,13 @@ import (
 
 	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
+	"golang.org/x/oauth2"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
@@ -29,23 +31,15 @@ var (
 	validPayload = ExtendedJWTClaims{
 		Claims: jwt.Claims{
 			Issuer:   "http://localhost:3000",
-			Subject:  "user:id:2",
+			Subject:  "service-account:id:2",
 			Audience: jwt.Audience{"http://localhost:3000"},
 			ID:       "1234567890",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
-		Scopes: []string{"profile", "groups"},
-		Entitlements: map[string][]string{
-			"dashboards:create": {
-				"folders:uid:general",
-			},
-			"folders:read": {
-				"folders:uid:general",
-			},
-			"datasources:explore":       nil,
-			"datasources.insights:read": {},
-		},
+		Scopes:                []string{"profile", "groups"},
+		DelegatedEntitlements: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+		Entitlements:          []string{"fixed:folders:reader"},
 	}
 	pk, _ = rsa.GenerateKey(rand.Reader, 4096)
 )
@@ -72,13 +66,13 @@ func TestExtendedJWT_Test(t *testing.T) {
 		{
 			name:           "should return true when Authorization header contains Bearer prefix",
 			cfg:            nil,
-			authHeaderFunc: func() string { return "Bearer " + generateToken(validPayload, pk, jose.RS256) },
+			authHeaderFunc: func() string { return "Bearer " + generateToken(validPayload, pk, jose.RS256, "at+jwt") },
 			want:           true,
 		},
 		{
 			name:           "should return true when Authorization header only contains the token",
 			cfg:            nil,
-			authHeaderFunc: func() string { return generateToken(validPayload, pk, jose.RS256) },
+			authHeaderFunc: func() string { return generateToken(validPayload, pk, jose.RS256, "at+jwt") },
 			want:           true,
 		},
 		{
@@ -103,7 +97,7 @@ func TestExtendedJWT_Test(t *testing.T) {
 			authHeaderFunc: func() string {
 				payload := validPayload
 				payload.Issuer = "http://unknown-issuer"
-				return generateToken(payload, pk, jose.RS256)
+				return generateToken(payload, pk, jose.RS256, "at+jwt")
 			},
 			want: false,
 		},
@@ -114,7 +108,7 @@ func TestExtendedJWT_Test(t *testing.T) {
 
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
-					"Authorization": {tc.authHeaderFunc()},
+					"X-Access-Token": {tc.authHeaderFunc()},
 				},
 			}
 
@@ -139,7 +133,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 	}
 	testCases := []testCase{
 		{
-			name:    "successful authentication",
+			name:    "successful authentication as service",
 			payload: validPayload,
 			orgID:   1,
 			initTestEnv: func(env *testEnv) {
@@ -152,46 +146,21 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					Login:   "johndoe",
 				}
 			},
-			want: &authn.Identity{
-				OrgID:           1,
-				OrgName:         "",
-				OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
-				ID:              "user:2",
-				Login:           "johndoe",
-				Name:            "John Doe",
-				Email:           "johndoe@grafana.com",
-				IsGrafanaAdmin:  boolPtr(false),
-				AuthenticatedBy: login.ExtendedJWTModule,
-				AuthID:          "",
-				IsDisabled:      false,
-				HelpFlags1:      0,
-				Permissions: map[int64]map[string][]string{
-					1: {
-						"dashboards:create": {
-							"folders:uid:general",
-						},
-						"folders:read": {
-							"folders:uid:general",
-						},
-						"datasources:explore":       nil,
-						"datasources.insights:read": []string{},
-					},
-				},
-				ClientParams: authn.ClientParams{
-					SyncUser:        false,
-					AllowSignUp:     false,
-					FetchSyncedUser: false,
-					EnableUser:      false,
-					SyncOrgRoles:    false,
-					SyncTeams:       false,
-					SyncPermissions: false,
-					LookUpParams: login.UserLookupParams{
-						UserID: nil,
-						Email:  nil,
-						Login:  nil,
-					},
-				},
-			},
+			want: &authn.Identity{OrgID: 1, OrgName: "",
+				OrgRoles: map[int64]roletype.RoleType(nil),
+				ID:       "service-account:id:2", Login: "", Name: "", Email: "",
+				IsGrafanaAdmin: (*bool)(nil), AuthenticatedBy: "extendedjwt",
+				AuthID: "service-account:id:2", IsDisabled: false, HelpFlags1: 0x0,
+				LastSeenAt: time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC),
+				Teams:      []int64(nil), Groups: []string(nil),
+				OAuthToken: (*oauth2.Token)(nil), SessionToken: (*usertoken.UserToken)(nil),
+				ClientParams: authn.ClientParams{SyncUser: false,
+					AllowSignUp: false, EnableUser: false, FetchSyncedUser: false,
+					SyncTeams: false, SyncOrgRoles: false, CacheAuthProxyKey: "",
+					LookUpParams: login.UserLookupParams{UserID: (*int64)(nil),
+						Email: (*string)(nil), Login: (*string)(nil)}, SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{ActionsLookup: []string(nil), Roles: []string{"fixed:folders:reader"}}},
+				Permissions: map[int64]map[string][]string(nil), IDToken: ""},
 			wantErr: false,
 		},
 		{
@@ -276,7 +245,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
-					"Authorization": {generateToken(tc.payload, pk, jose.RS256)},
+					"X-Access-Token": {generateToken(tc.payload, pk, jose.RS256, "at+jwt")},
 				},
 			}
 
@@ -387,20 +356,6 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 			},
 		},
 		{
-			name: "missing client_id",
-			payload: ExtendedJWTClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
-				Scopes: []string{"profile", "groups"},
-			},
-		},
-		{
 			name: "missing iat",
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
@@ -423,19 +378,6 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 2, 0, 0, time.UTC)),
-				},
-				Scopes: []string{"profile", "groups"},
-			},
-		},
-		{
-			name: "missing jti",
-			payload: ExtendedJWTClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				},
 				Scopes: []string{"profile", "groups"},
 			},
@@ -465,7 +407,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 			if tc.alg == "" {
 				tc.alg = jose.RS256
 			}
-			tokenToTest := generateToken(tc.payload, pk, tc.alg)
+			tokenToTest := generateToken(tc.payload, pk, tc.alg, "at+jwt")
 			_, err := env.s.verifyRFC9068Token(context.Background(), tokenToTest, rfc9068ShortMediaType)
 			require.Error(t, err)
 		})
@@ -503,10 +445,11 @@ type testEnv struct {
 	s       *ExtendedJWT
 }
 
-func generateToken(payload ExtendedJWTClaims, signingKey any, alg jose.SignatureAlgorithm) string {
+func generateToken(payload ExtendedJWTClaims, signingKey any, alg jose.SignatureAlgorithm, typ string) string {
 	signer, _ := jose.NewSigner(jose.SigningKey{Algorithm: alg, Key: signingKey}, &jose.SignerOptions{
 		ExtraHeaders: map[jose.HeaderKey]any{
-			jose.HeaderType: "at+jwt",
+			jose.HeaderType: typ,
+			"kid":           "default",
 		}})
 
 	result, _ := jwt.Signed(signer).Claims(payload).CompactSerialize()
@@ -518,3 +461,5 @@ func mockTimeNow(timeSeed time.Time) {
 		return timeSeed
 	}
 }
+
+// TODO: add AuthenticateAsUser tests and user namespace should not be service-account, maybe?
