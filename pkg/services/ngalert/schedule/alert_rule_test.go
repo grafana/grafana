@@ -82,7 +82,7 @@ func TestAlertRuleInfo(t *testing.T) {
 				folderTitle: util.GenerateShortUID(),
 			}
 			go func() {
-				result, dropped := r.eval(data)
+				result, dropped := r.Eval(data)
 				resultCh <- evalResponse{result, dropped}
 			}()
 			select {
@@ -115,7 +115,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				result, dropped := r.eval(data)
+				result, dropped := r.Eval(data)
 				wg.Done()
 				resultCh1 <- evalResponse{result, dropped}
 			}()
@@ -123,7 +123,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				result, dropped := r.eval(data2)
+				result, dropped := r.Eval(data2)
 				resultCh2 <- evalResponse{result, dropped}
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
@@ -150,7 +150,7 @@ func TestAlertRuleInfo(t *testing.T) {
 				folderTitle: util.GenerateShortUID(),
 			}
 			go func() {
-				result, dropped := r.eval(data)
+				result, dropped := r.Eval(data)
 				resultCh <- evalResponse{result, dropped}
 			}()
 			runtime.Gosched()
@@ -179,7 +179,7 @@ func TestAlertRuleInfo(t *testing.T) {
 				rule:        models.AlertRuleGen()(),
 				folderTitle: util.GenerateShortUID(),
 			}
-			success, dropped := r.eval(data)
+			success, dropped := r.Eval(data)
 			require.False(t, success)
 			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 		})
@@ -223,7 +223,7 @@ func TestAlertRuleInfo(t *testing.T) {
 					case 1:
 						r.update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
 					case 2:
-						r.eval(&Evaluation{
+						r.Eval(&Evaluation{
 							scheduledAt: time.Now(),
 							rule:        models.AlertRuleGen()(),
 							folderTitle: util.GenerateShortUID(),

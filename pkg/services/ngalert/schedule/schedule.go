@@ -330,7 +330,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		time.AfterFunc(time.Duration(int64(i)*step), func() {
 			key := item.rule.GetKey()
-			success, dropped := item.ruleInfo.eval(&item.Evaluation)
+			success, dropped := item.ruleInfo.Eval(&item.Evaluation)
 			if !success {
 				sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", tick)...)
 				return

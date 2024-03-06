@@ -23,6 +23,10 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+type Rule interface {
+	Eval(eval *Evaluation) (bool, *Evaluation)
+}
+
 type ruleFactoryFunc func(context.Context) *alertRuleInfo
 
 func (f ruleFactoryFunc) new(ctx context.Context) *alertRuleInfo {
@@ -141,7 +145,7 @@ func newAlertRuleInfo(
 //   - false when the send operation is stopped
 //
 // the second element contains a dropped message that was sent by a concurrent sender.
-func (a *alertRuleInfo) eval(eval *Evaluation) (bool, *Evaluation) {
+func (a *alertRuleInfo) Eval(eval *Evaluation) (bool, *Evaluation) {
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
 	var droppedMsg *Evaluation
 	select {
