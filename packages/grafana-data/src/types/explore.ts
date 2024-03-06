@@ -58,8 +58,6 @@ export interface ExploreLogsPanelState {
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {
   datasourceUid: string;
-  /** @deprecated Will be removed in a future version. Use queries instead. */
-  query?: T;
   queries?: T[];
   range?: TimeRange;
   panelsState?: ExplorePanelsState;

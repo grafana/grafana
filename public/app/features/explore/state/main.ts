@@ -69,8 +69,6 @@ export const splitOpen = createAsyncThunk(
     // we currently support showing only 2 panes in explore, so if this action is dispatched we know it has been dispatched from the "first" pane.
     const originState = Object.values(getState().explore.panes)[0];
 
-    const queries = options?.queries ?? (options?.query ? [options?.query] : originState?.queries || []);
-
     Object.keys(getState().explore.panes).forEach((paneId, index) => {
       // Only 2 panes are supported. Remove panes before create a new one.
       if (index >= 1) {
@@ -90,7 +88,7 @@ export const splitOpen = createAsyncThunk(
       createNewSplitOpenPane({
         exploreId: newPaneId,
         datasource: options?.datasourceUid || originState?.datasourceInstance?.getRef(),
-        queries: withUniqueRefIds(queries),
+        queries: options?.queries ? withUniqueRefIds(options.queries) : [],
         range: splitRange,
         panelsState: options?.panelsState || originState?.panelsState,
         correlationHelperData: options?.correlationHelperData,
