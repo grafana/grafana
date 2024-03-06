@@ -24,6 +24,8 @@ import (
 )
 
 type Rule interface {
+	Run(key ngmodels.AlertRuleKey) error
+	Stop(reason error)
 	Eval(eval *Evaluation) (bool, *Evaluation)
 	Update(lastVersion RuleVersionAndPauseStatus) bool
 }
@@ -181,11 +183,11 @@ func (a *alertRuleInfo) Update(lastVersion RuleVersionAndPauseStatus) bool {
 }
 
 // stop sends an instruction to the rule evaluation routine to shut down. an optional shutdown reason can be given.
-func (a *alertRuleInfo) stop(reason error) {
+func (a *alertRuleInfo) Stop(reason error) {
 	a.stopFn(reason)
 }
 
-func (a *alertRuleInfo) run(key ngmodels.AlertRuleKey) error {
+func (a *alertRuleInfo) Run(key ngmodels.AlertRuleKey) error {
 	grafanaCtx := ngmodels.WithRuleKey(a.ctx, key)
 	logger := a.logger.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")

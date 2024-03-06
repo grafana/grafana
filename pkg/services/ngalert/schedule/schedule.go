@@ -171,7 +171,7 @@ func (sch *schedule) deleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 			continue
 		}
 		// stop rule evaluation
-		ruleInfo.stop(errRuleDeleted)
+		ruleInfo.Stop(errRuleDeleted)
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
 	alertRules, _ := sch.schedulableAlertRules.all()
@@ -264,7 +264,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		if newRoutine && !invalidInterval {
 			dispatcherGroup.Go(func() error {
-				return ruleInfo.run(key)
+				return ruleInfo.Run(key)
 			})
 		}
 

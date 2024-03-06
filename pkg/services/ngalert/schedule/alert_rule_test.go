@@ -154,7 +154,7 @@ func TestAlertRuleInfo(t *testing.T) {
 				resultCh <- evalResponse{result, dropped}
 			}()
 			runtime.Gosched()
-			r.stop(nil)
+			r.Stop(nil)
 			select {
 			case result := <-resultCh:
 				require.False(t, result.success)
@@ -167,13 +167,13 @@ func TestAlertRuleInfo(t *testing.T) {
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
 		t.Run("Update should do nothing", func(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
-			r.stop(errRuleDeleted)
+			r.Stop(errRuleDeleted)
 			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
 			require.False(t, r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
-			r.stop(nil)
+			r.Stop(nil)
 			data := &Evaluation{
 				scheduledAt: time.Now(),
 				rule:        models.AlertRuleGen()(),
@@ -185,14 +185,14 @@ func TestAlertRuleInfo(t *testing.T) {
 		})
 		t.Run("stop should do nothing", func(t *testing.T) {
 			r := blankRuleInfoForTests(context.Background())
-			r.stop(nil)
-			r.stop(nil)
+			r.Stop(nil)
+			r.Stop(nil)
 		})
 		t.Run("stop should do nothing if parent context stopped", func(t *testing.T) {
 			ctx, cancelFn := context.WithCancel(context.Background())
 			r := blankRuleInfoForTests(ctx)
 			cancelFn()
-			r.stop(nil)
+			r.Stop(nil)
 		})
 	})
 	t.Run("should be thread-safe", func(t *testing.T) {
@@ -229,7 +229,7 @@ func TestAlertRuleInfo(t *testing.T) {
 							folderTitle: util.GenerateShortUID(),
 						})
 					case 3:
-						r.stop(nil)
+						r.Stop(nil)
 					}
 				}
 				wg.Done()
@@ -279,7 +279,7 @@ func TestRuleRoutine(t *testing.T) {
 			t.Cleanup(cancel)
 			ruleInfo := factory.new(ctx)
 			go func() {
-				_ = ruleInfo.run(rule.GetKey())
+				_ = ruleInfo.Run(rule.GetKey())
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
@@ -428,7 +428,7 @@ func TestRuleRoutine(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			ruleInfo := factory.new(ctx)
 			go func() {
-				err := ruleInfo.run(models.AlertRuleKey{})
+				err := ruleInfo.Run(models.AlertRuleKey{})
 				stoppedChan <- err
 			}()
 
@@ -448,11 +448,11 @@ func TestRuleRoutine(t *testing.T) {
 			factory := ruleFactoryFromScheduler(sch)
 			ruleInfo := factory.new(context.Background())
 			go func() {
-				err := ruleInfo.run(rule.GetKey())
+				err := ruleInfo.Run(rule.GetKey())
 				stoppedChan <- err
 			}()
 
-			ruleInfo.stop(errRuleDeleted)
+			ruleInfo.Stop(errRuleDeleted)
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
 
@@ -479,7 +479,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := factory.new(ctx)
 
 		go func() {
-			_ = ruleInfo.run(rule.GetKey())
+			_ = ruleInfo.Run(rule.GetKey())
 		}()
 
 		// init evaluation loop so it got the rule version
@@ -561,7 +561,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := factory.new(ctx)
 
 		go func() {
-			_ = ruleInfo.run(rule.GetKey())
+			_ = ruleInfo.Run(rule.GetKey())
 		}()
 
 		ruleInfo.evalCh <- &Evaluation{
@@ -667,7 +667,7 @@ func TestRuleRoutine(t *testing.T) {
 			ruleInfo := factory.new(ctx)
 
 			go func() {
-				_ = ruleInfo.run(rule.GetKey())
+				_ = ruleInfo.Run(rule.GetKey())
 			}()
 
 			ruleInfo.evalCh <- &Evaluation{
@@ -701,7 +701,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := factory.new(ctx)
 
 		go func() {
-			_ = ruleInfo.run(rule.GetKey())
+			_ = ruleInfo.Run(rule.GetKey())
 		}()
 
 		ruleInfo.evalCh <- &Evaluation{
