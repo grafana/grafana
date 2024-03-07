@@ -96,5 +96,3 @@ To use a custom query with the configuration, follow these steps:
 1.  Switch on **Use custom query** to enter a custom query.
 1.  Specify a custom query to be used to query profile data. You can use various variables to make that query relevant for current span. The link is shown only if all the variables are interpolated with non-empty values to prevent creating an invalid query. You can interpolate the configured tags using the `$__tags` keyword.
 1.  Select **Save and Test**.
-
-                                                                                                                                                                                                         |

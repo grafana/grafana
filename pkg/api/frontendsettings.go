@@ -322,19 +322,20 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	oauthProviders := hs.SocialService.GetOAuthInfoProviders()
 	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
-		AuthProxyEnableLoginToken:   hs.Cfg.AuthProxy.EnableLoginToken,
-		OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-		SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
-		LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
-		JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuth.SkipOrgRoleSync,
-		GoogleSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
-		GrafanaComSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
-		GenericOAuthSkipOrgRoleSync: parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
-		AzureADSkipOrgRoleSync:      parseSkipOrgRoleSyncEnabled(oauthProviders[social.AzureADProviderName]),
-		GithubSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
-		GitLabSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
-		OktaSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
-		DisableLogin:                hs.Cfg.DisableLogin,
+		AuthProxyEnableLoginToken:     hs.Cfg.AuthProxy.EnableLoginToken,
+		OAuthSkipOrgRoleUpdateSync:    hs.Cfg.OAuthSkipOrgRoleUpdateSync,
+		SAMLSkipOrgRoleSync:           hs.Cfg.SAMLSkipOrgRoleSync,
+		LDAPSkipOrgRoleSync:           hs.Cfg.LDAPSkipOrgRoleSync,
+		JWTAuthSkipOrgRoleSync:        hs.Cfg.JWTAuth.SkipOrgRoleSync,
+		GoogleSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
+		GrafanaComSkipOrgRoleSync:     parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
+		GenericOAuthSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
+		AzureADSkipOrgRoleSync:        parseSkipOrgRoleSyncEnabled(oauthProviders[social.AzureADProviderName]),
+		GithubSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
+		GitLabSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
+		OktaSkipOrgRoleSync:           parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
+		DisableLogin:                  hs.Cfg.DisableLogin,
+		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
