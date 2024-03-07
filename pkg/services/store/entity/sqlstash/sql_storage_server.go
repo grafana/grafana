@@ -1050,10 +1050,6 @@ func ParseSortBy(sort string) (*SortBy, error) {
 }
 
 func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
-	if r.Deleted {
-		return s.listDeleted(ctx, r)
-	}
-
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
@@ -1083,148 +1079,11 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
 
-	// TODO fix this
-	// entityQuery.addWhere("namespace", user.OrgID)
-
-	if len(r.Group) > 0 {
-		entityQuery.addWhereIn("group", r.Group)
+	// if we are looking for deleted entities, we list "deleted" entries from the entity_history table
+	if r.Deleted {
+		entityQuery.from = "entity_history"
+		entityQuery.addWhere("action", entity.Entity_DELETED)
 	}
-
-	if len(r.Resource) > 0 {
-		entityQuery.addWhereIn("resource", r.Resource)
-	}
-
-	if len(r.Key) > 0 {
-		where := []string{}
-		args := []any{}
-		for _, k := range r.Key {
-			key, err := entity.ParseKey(k)
-			if err != nil {
-				return nil, err
-			}
-
-			args = append(args, key.Group, key.Resource)
-			whereclause := "(" + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
-			if key.Namespace != "" {
-				args = append(args, key.Namespace)
-				whereclause += " AND " + s.dialect.Quote("namespace") + "=?"
-			}
-			if key.Name != "" {
-				args = append(args, key.Name)
-				whereclause += " AND " + s.dialect.Quote("name") + "=?"
-			}
-			whereclause += ")"
-
-			where = append(where, whereclause)
-		}
-
-		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)
-	}
-
-	// Folder guid
-	if r.Folder != "" {
-		entityQuery.addWhere("folder", r.Folder)
-	}
-
-	// if we have a page token, use that to specify the first record
-	continueToken, err := GetContinueToken(r)
-	if err != nil {
-		return nil, err
-	}
-	if continueToken != nil {
-		entityQuery.offset = continueToken.StartOffset
-	}
-
-	if len(r.Labels) > 0 {
-		var args []any
-		var conditions []string
-		for labelKey, labelValue := range r.Labels {
-			args = append(args, labelKey)
-			args = append(args, labelValue)
-			conditions = append(conditions, "(label = ? AND value = ?)")
-		}
-		query := "SELECT guid FROM entity_labels" +
-			" WHERE (" + strings.Join(conditions, " OR ") + ")" +
-			" GROUP BY guid" +
-			" HAVING COUNT(label) = ?"
-		args = append(args, len(r.Labels))
-
-		entityQuery.addWhereInSubquery("guid", query, args)
-	}
-	for _, sort := range r.Sort {
-		sortBy, err := ParseSortBy(sort)
-		if err != nil {
-			return nil, err
-		}
-		entityQuery.addOrderBy(sortBy.Field, sortBy.Direction)
-	}
-	entityQuery.addOrderBy("guid", Ascending)
-
-	query, args := entityQuery.toQuery()
-
-	s.log.Debug("listing", "query", query, "args", args)
-
-	rows, err := s.sess.Query(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-	rsp := &entity.EntityListResponse{
-		ResourceVersion: s.snowflake.Generate().Int64(),
-	}
-	for rows.Next() {
-		result, err := s.rowToEntity(ctx, rows, rr)
-		if err != nil {
-			return rsp, err
-		}
-
-		// found more than requested
-		if int64(len(rsp.Results)) >= entityQuery.limit {
-			continueToken := &ContinueToken{
-				Sort:        r.Sort,
-				StartOffset: entityQuery.offset + entityQuery.limit,
-			}
-			rsp.NextPageToken = continueToken.String()
-			break
-		}
-
-		rsp.Results = append(rsp.Results, result)
-	}
-
-	return rsp, err
-}
-
-func (s *sqlEntityServer) listDeleted(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if user == nil {
-		return nil, fmt.Errorf("missing user in context")
-	}
-
-	rr := &entity.ReadEntityRequest{
-		WithBody:   r.WithBody,
-		WithStatus: r.WithStatus,
-	}
-
-	fields := s.getReadFields(rr)
-
-	entityQuery := selectQuery{
-		dialect:  s.dialect,
-		fields:   fields,
-		from:     "entity_history", // the table
-		args:     []any{},
-		limit:    r.Limit,
-		offset:   0,
-		oneExtra: true, // request one more than the limit (and show next token if it exists)
-	}
-
-	entityQuery.addWhere("action", entity.Entity_DELETED)
 
 	// TODO fix this
 	// entityQuery.addWhere("namespace", user.OrgID)
@@ -1279,8 +1138,27 @@ func (s *sqlEntityServer) listDeleted(ctx context.Context, r *entity.EntityListR
 	}
 
 	if len(r.Labels) > 0 {
-		for labelKey, labelValue := range r.Labels {
-			entityQuery.addWhere(s.dialect.Quote("labels")+" LIKE ?", "%\""+labelKey+"\":\""+labelValue+"\"%")
+		// if we are looking for deleted entities, we need to use the labels column
+		if r.Deleted {
+			for labelKey, labelValue := range r.Labels {
+				entityQuery.addWhere(s.dialect.Quote("labels")+" LIKE ?", "%\""+labelKey+"\":\""+labelValue+"\"%")
+			}
+			// for active entities, we can use the entity_labels table
+		} else {
+			var args []any
+			var conditions []string
+			for labelKey, labelValue := range r.Labels {
+				args = append(args, labelKey)
+				args = append(args, labelValue)
+				conditions = append(conditions, "(label = ? AND value = ?)")
+			}
+			query := "SELECT guid FROM entity_labels" +
+				" WHERE (" + strings.Join(conditions, " OR ") + ")" +
+				" GROUP BY guid" +
+				" HAVING COUNT(label) = ?"
+			args = append(args, len(r.Labels))
+
+			entityQuery.addWhereInSubquery("guid", query, args)
 		}
 	}
 	for _, sort := range r.Sort {
