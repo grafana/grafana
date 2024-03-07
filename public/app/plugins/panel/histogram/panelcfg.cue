@@ -37,6 +37,8 @@ composableKinds: PanelCfg: {
 					bucketOffset?: float32 | *0
 					//Combines multiple series into a single histogram
 					combine?: bool
+					//Controls whether the histogram is stacked or not
+					stacking: common.StackingMode & (*"none" | _)
 				} @cuetsy(kind="interface")
 
 				FieldConfig: {

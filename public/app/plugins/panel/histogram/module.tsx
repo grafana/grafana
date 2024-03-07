@@ -1,6 +1,6 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { histogramFieldInfo } from '@grafana/data/src/transformations/transformers/histogram';
-import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
+import { commonOptionsBuilder, graphFieldOptions, StackingMode } from '@grafana/ui';
 
 import { HistogramPanel } from './HistogramPanel';
 import { changeToHistogramPanelMigrationHandler } from './migrations';
@@ -50,12 +50,21 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
         },
         showIf: (opts, data) => !originalDataHasHistogram(data),
       })
+      .addRadio({
+        path: 'stacking',
+        name: 'Stacking',
+        settings: {
+          options: graphFieldOptions.stacking,
+        },
+        defaultValue: defaultOptions.stacking,
+        showIf: (opts, data) => !originalDataHasHistogram(data),
+      })
       .addBooleanSwitch({
         path: 'combine',
         name: histogramFieldInfo.combine.name,
         description: histogramFieldInfo.combine.description,
         defaultValue: defaultOptions.combine,
-        showIf: (opts, data) => !originalDataHasHistogram(data),
+        showIf: (opts, data) => !originalDataHasHistogram(data) && opts.stacking === StackingMode.None,
       });
 
     // commonOptionsBuilder.addTooltipOptions(builder);
