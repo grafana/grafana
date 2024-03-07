@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -56,14 +56,34 @@ export const VizLegendListItem = <T = unknown,>({
     [item, onLabelMouseOut]
   );
 
+  const [labelWithUrl, setLabelWithUrl] = useState('');
+  const [urlForLabel, setUrlForLabel] = useState('');
+  const [isUsingUrl, setIsUsingUrl] = useState(false);
+
+
   const onClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       if (onLabelClick) {
-        onLabelClick(item, event);
+        if(isUsingUrl) {
+          window.location.href = urlForLabel;
+        } else { onLabelClick(item, event); }
       }
     },
-    [item, onLabelClick]
+    [item, onLabelClick, isUsingUrl, urlForLabel]
   );
+  console.log(item);
+  //item.url = item.label.split();
+  useEffect(() => {
+    const regex = /\[([^\]]+)\]\((.*?)\)/;
+    const match = item.label.match(regex);
+    setIsUsingUrl(match ? true : false);
+    console.log("isUsingUrl", isUsingUrl);
+    if (isUsingUrl) {
+      setLabelWithUrl(match[1]);
+      setUrlForLabel(match[2]);
+      console.log("deconstructed url", labelWithUrl, urlForLabel);
+    }
+  }, [item.label, isUsingUrl, labelWithUrl, urlForLabel]);
 
   return (
     <div
@@ -81,7 +101,7 @@ export const VizLegendListItem = <T = unknown,>({
         onClick={onClick}
         className={styles.label}
       >
-        {item.label}
+        {isUsingUrl ? labelWithUrl : item.label}
       </button>
 
       {item.getDisplayValues && <VizLegendStatsList stats={item.getDisplayValues()} />}

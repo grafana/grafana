@@ -48,7 +48,7 @@ export interface Prometheus extends common.DataQuery {
    */
   legendFormat?: string;
   /**
-   * Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname
+   * Drilldown URL similar to Series name. Ex. {{hostname}} will be replaced with label value for hostname
    */
   legendUrlFormat?: string;
   /**
