@@ -32,9 +32,7 @@ You can configure tooltips for the following visualizations:
 
 <!--Also xy chart -->
 
-Special tooltips: Geomap
-
-Some visualizations (for example, [candlestick][] and [flame graph][]) have tooltips, but they aren't configurable. These visualizations don't have a **Tooltip** section in the panel editor pane.
+Some visualizations, for example [candlestick][] and [flame graph][], have tooltips, but they aren't configurable. These visualizations don't have a **Tooltip** section in the panel editor pane. [Geomaps][geomaps] provide you the option to have tooltips triggered upon click or hover under the **Map controls** options in the panel editor pane.
 
 ## Tooltip options
 
@@ -82,8 +80,8 @@ For the heatmap visualization only, when you set the **Tooltip mode** to **Singl
 [flame graph]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
 [flame graph]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/flame-graph"
 
-[geomap]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
-[geomap]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/geomap"
+[geomaps]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap#tooltip"
+[geomaps]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/geomap#tooltip"
 
 [heatmap]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
 [heatmap]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/heatmap"
