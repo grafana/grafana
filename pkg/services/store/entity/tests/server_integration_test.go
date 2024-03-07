@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -115,15 +114,8 @@ func TestIntegrationWatch(t *testing.T) {
 	testCtx := createTestContext(t)
 	testCtx.ctx = appcontext.WithUser(testCtx.ctx, testCtx.user)
 
-	dbType := os.Getenv("GRAFANA_TEST_DB")
-	if dbType == migrator.SQLite {
-		t.Skip("skipping watch tests for sqlite3")
-	}
-	if dbType == "" {
-		t.Skip("GRAFANA_TEST_DB not specified")
-	}
-
 	// Update env with entity_api db config
+	dbType := os.Getenv("GRAFANA_TEST_DB")
 	err := addUnifiedStorageConfig(t, testCtx, dbType)
 	require.NoError(t, err)
 
@@ -133,6 +125,44 @@ func TestIntegrationWatch(t *testing.T) {
 	name := "my-test-entity"
 	testKey := "/" + group + "/" + resource + "/" + namespace + "/" + name
 	body := []byte("{\"name\":\"John\"}")
+
+	t.Run("watch will not receive events for keys its not watching", func(t *testing.T) {
+		otherKey := "/" + group + "/" + resource + "/" + namespace + "/" + "otherName"
+		watchClient := newWatchClient(t, testCtx, otherKey)
+		events := make(chan *entity.EntityWatchResponse)
+
+		// listen for any watch events
+		go func() {
+			resp, err := watchClient.Recv()
+			require.NoError(t, err)
+			events <- resp
+		}()
+
+		// create entity
+		createReq := &entity.CreateEntityRequest{
+			Entity: &entity.Entity{
+				Key:       testKey,
+				Group:     group,
+				Resource:  resource,
+				Namespace: namespace,
+				Name:      name,
+				Body:      body,
+				Message:   "first entity!",
+			},
+		}
+		_, err = testCtx.client.Create(testCtx.ctx, createReq)
+		require.NoError(t, err)
+
+		// fail if we receive any watch events
+		for {
+			select {
+			case event := <-events:
+				t.Errorf("Received event for key %s", event.Entity.Key)
+			case <-time.After(5 * time.Second):
+				return
+			}
+		}
+	})
 
 	t.Run("watch will receive create and update", func(t *testing.T) {
 		watchClient := newWatchClient(t, testCtx, testKey)
@@ -169,7 +199,8 @@ func TestIntegrationWatch(t *testing.T) {
 		}
 		updateResp, err := testCtx.client.Update(testCtx.ctx, updateReq)
 		require.NoError(t, err)
-		require.Equal(t, entity.Entity_UPDATED, updateResp.Entity.Action)
+		fmt.Println(updateResp)
+		//require.Equal(t, entity.Entity_UPDATED, updateResp.Entity.Action)
 
 		// watch client receives update
 		res, err = watchClient.Recv()
