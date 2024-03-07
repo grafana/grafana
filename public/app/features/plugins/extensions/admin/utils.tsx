@@ -84,3 +84,25 @@ export function getPluginExtensionPoints(regsitry?: PluginExtensionRegistry): Ex
       extensions: regsitry[key],
     }));
 }
+
+export function getPluginCapabilities(regsitry?: PluginExtensionRegistry): Record<string, ExtensionPointConfig[]> {
+  const pluginCapabilities: Record<string, ExtensionPointConfig[]> = {};
+
+  if (!regsitry) {
+    return pluginCapabilities;
+  }
+
+  Object.keys(regsitry)
+    .filter((key) => key.startsWith('capabilities/'))
+    .forEach((key) => {
+      const pluginId = key.split('/')[1];
+      pluginCapabilities[pluginId] = pluginCapabilities[pluginId] || [];
+      pluginCapabilities[pluginId].push({
+        id: key,
+        extensions: regsitry[key],
+      });
+    });
+
+  return pluginCapabilities;
+}
+
