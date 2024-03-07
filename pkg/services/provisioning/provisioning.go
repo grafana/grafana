@@ -86,6 +86,7 @@ type ProvisioningService interface {
 	RunInitProvisioners(ctx context.Context) error
 	ProvisionDatasources(ctx context.Context) error
 	ProvisionPlugins(ctx context.Context) error
+	ProvisionNotifications(ctx context.Context) error
 	ProvisionDashboards(ctx context.Context) error
 	ProvisionAlerting(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
@@ -220,6 +221,11 @@ func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 		ps.log.Error("Failed to provision plugins", "error", err)
 		return err
 	}
+	return nil
+}
+
+func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) error {
+	// TODO: Remove this entirely after dependencies are removed in enterprise.
 	return nil
 }
 
