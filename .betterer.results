@@ -2999,14 +2999,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "21"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "22"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "23"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "24"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "25"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "24"]
     ],
     "public/app/features/dashboard/state/TimeModel.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard/state/actions.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/dashboard/state/getPanelPluginToMigrateTo.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/state/initDashboard.test.ts:5381": [
