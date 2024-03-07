@@ -294,7 +294,7 @@ are watched for changes. If there is change, the new certificates are loaded aut
 
 {{% admonition type="warning" %}}
 After the new certificates are loaded, connections with old certificates
-will not work. You must reload the connections to the old certs for them to work. 
+will not work. You must reload the connections to the old certs for them to work.
 {{% /admonition %}}
 
 ### socket_gid
