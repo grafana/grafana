@@ -833,7 +833,7 @@ The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For
 
 ### verify_email_enabled
 
-Require email validation before sign up completes. Default is `false`.
+Require email validation before sign up completes or when updating a user email address. Default is `false`.
 
 ### login_hint
 
@@ -877,6 +877,12 @@ Default is `false`.
 The duration in time a user invitation remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
+
+### verification_email_max_lifetime_duration
+
+The duration in time a verification email, used to update the email address of a user, remains valid before expiring.
+This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
+Default is 1h (1 hour).
 
 ### hidden_users
 
