@@ -848,9 +848,6 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						executeTest(t, r, tc.results, expectedTransitions, true)
 					})
 					t.Run("applyNoDataErrorToAllStates=false", func(t *testing.T) {
-						if stateExec == ngmodels.KeepLast {
-							t.Skip("KeepLastErrState is not supported with applyNoDataErrorToAllStates=false")
-						}
 						expectedTransitions, ok := tc.expectedTransitions[stateExec]
 						if !ok {
 							require.Fail(t, "no expected state transitions")
@@ -997,6 +994,24 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									Labels:      labels["system + rule + no-data"],
 									State:       eval.Normal,
 									StateReason: eval.NoData.String(),
+									Results: []Evaluation{
+										newEvaluation(t2, eval.NoData),
+									},
+									StartsAt:           t2,
+									EndsAt:             t2,
+									LastEvaluationTime: t2,
+								},
+							},
+						},
+					},
+					ngmodels.KeepLast: {
+						t2: {
+							{
+								PreviousState: eval.Normal,
+								State: &State{
+									Labels:      labels["system + rule + no-data"],
+									State:       eval.Normal,
+									StateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									Results: []Evaluation{
 										newEvaluation(t2, eval.NoData),
 									},
@@ -1232,6 +1247,55 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									Labels:      labels["system + rule + no-data"],
 									State:       eval.Normal,
 									StateReason: eval.NoData.String(),
+									Results: []Evaluation{
+										newEvaluation(t2, eval.NoData),
+										newEvaluation(t3, eval.NoData),
+									},
+									StartsAt:           t2,
+									EndsAt:             t2,
+									LastEvaluationTime: t3,
+								},
+							},
+						},
+					},
+					ngmodels.KeepLast: {
+						t3: {
+							{
+								PreviousState: eval.Normal,
+								State: &State{
+									Labels:      labels["system + rule + labels1"],
+									State:       eval.Normal,
+									StateReason: ngmodels.StateReasonMissingSeries,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Normal),
+									},
+									StartsAt:           t1,
+									EndsAt:             t3,
+									LastEvaluationTime: t3,
+								},
+							},
+							{
+								PreviousState: eval.Alerting,
+								State: &State{
+									Labels:      labels["system + rule + labels2"],
+									State:       eval.Normal,
+									StateReason: ngmodels.StateReasonMissingSeries,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Alerting),
+									},
+									StartsAt:           t1,
+									EndsAt:             t3,
+									LastEvaluationTime: t3,
+									Resolved:           true,
+								},
+							},
+							{
+								PreviousState:       eval.Normal,
+								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
+								State: &State{
+									Labels:      labels["system + rule + no-data"],
+									State:       eval.Normal,
+									StateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									Results: []Evaluation{
 										newEvaluation(t2, eval.NoData),
 										newEvaluation(t3, eval.NoData),
@@ -1644,6 +1708,53 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 						},
 					},
+					ngmodels.KeepLast: {
+						t3: {
+							{
+								PreviousState: eval.Normal,
+								State: &State{
+									Labels:      labels["system + rule + labels1"],
+									State:       eval.Normal,
+									StateReason: ngmodels.StateReasonMissingSeries,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Normal),
+									},
+									StartsAt:           t1,
+									EndsAt:             t3,
+									LastEvaluationTime: t3,
+								},
+							},
+							{
+								PreviousState: eval.Pending,
+								State: &State{
+									Labels:      labels["system + rule + labels2"],
+									State:       eval.Normal,
+									StateReason: ngmodels.StateReasonMissingSeries,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Alerting),
+									},
+									StartsAt:           t1,
+									EndsAt:             t3,
+									LastEvaluationTime: t3,
+								},
+							},
+							{
+								PreviousState:       eval.Normal,
+								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
+								State: &State{
+									Labels:      labels["system + rule + no-data"],
+									State:       eval.Normal,
+									StateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
+									Results: []Evaluation{
+										newEvaluation(t3, eval.NoData),
+									},
+									StartsAt:           t2,
+									EndsAt:             t2,
+									LastEvaluationTime: t3,
+								},
+							},
+						},
+					},
 				},
 				expectedTransitionsApplyNoDataErrorToAllStates: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
 					ngmodels.Alerting: {
@@ -1909,6 +2020,24 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 						},
 					},
+					ngmodels.KeepLast: {
+						t3: {
+							{
+								PreviousState: eval.Pending,
+								State: &State{
+									Labels: labels["system + rule + labels1"],
+									State:  eval.Alerting,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Alerting),
+										newEvaluation(t3, eval.Alerting),
+									},
+									StartsAt:           t3,
+									EndsAt:             t3.Add(ResendDelay * 4),
+									LastEvaluationTime: t3,
+								},
+							},
+						},
+					},
 				},
 				expectedTransitionsApplyNoDataErrorToAllStates: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
 					ngmodels.Alerting: {
@@ -2083,8 +2212,6 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 						},
 					},
-				},
-				expectedTransitionsApplyNoDataErrorToAllStates: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
 					ngmodels.KeepLast: {
 						t3: {
 							{
@@ -2174,6 +2301,24 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									Labels:      labels["system + rule + no-data"],
 									State:       eval.Normal,
 									StateReason: eval.NoData.String(),
+									Results: []Evaluation{
+										newEvaluation(t2, eval.NoData),
+									},
+									StartsAt:           t2,
+									EndsAt:             t2,
+									LastEvaluationTime: t2,
+								},
+							},
+						},
+					},
+					ngmodels.KeepLast: {
+						t2: {
+							{
+								PreviousState: eval.Normal,
+								State: &State{
+									Labels:      labels["system + rule + no-data"],
+									State:       eval.Normal,
+									StateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									Results: []Evaluation{
 										newEvaluation(t2, eval.NoData),
 									},
@@ -2366,6 +2511,41 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									Labels:      labels["system + rule + no-data"],
 									State:       eval.Normal,
 									StateReason: eval.NoData.String(),
+									Results: []Evaluation{
+										newEvaluation(t2, eval.NoData),
+										newEvaluation(t3, eval.NoData),
+									},
+									StartsAt:           t2,
+									EndsAt:             t2,
+									LastEvaluationTime: t3,
+								},
+							},
+						},
+					},
+					ngmodels.KeepLast: {
+						t3: {
+							{
+								PreviousState: eval.Alerting,
+								State: &State{
+									Labels:      labels["system + rule"],
+									State:       eval.Normal,
+									StateReason: ngmodels.StateReasonMissingSeries,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Alerting),
+									},
+									StartsAt:           t1,
+									EndsAt:             t3,
+									LastEvaluationTime: t3,
+									Resolved:           true,
+								},
+							},
+							{
+								PreviousState:       eval.Normal,
+								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
+								State: &State{
+									Labels:      labels["system + rule + no-data"],
+									State:       eval.Normal,
+									StateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									Results: []Evaluation{
 										newEvaluation(t2, eval.NoData),
 										newEvaluation(t3, eval.NoData),
@@ -2580,6 +2760,24 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 						},
 					},
+					ngmodels.KeepLast: {
+						t3: {
+							{
+								PreviousState: eval.Pending,
+								State: &State{
+									Labels: labels["system + rule"],
+									State:  eval.Alerting,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Alerting),
+										newEvaluation(t3, eval.Alerting),
+									},
+									StartsAt:           t3,
+									EndsAt:             t3.Add(ResendDelay * 4),
+									LastEvaluationTime: t3,
+								},
+							},
+						},
+					},
 				},
 				expectedTransitionsApplyNoDataErrorToAllStates: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
 					ngmodels.Alerting: {
@@ -2700,9 +2898,6 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						executeTest(t, r, tc.results, expectedTransitions, true)
 					})
 					t.Run("applyNoDataErrorToAllStates=false", func(t *testing.T) {
-						if stateExec == ngmodels.KeepLastErrState {
-							t.Skip("KeepLastErrState is not supported with applyNoDataErrorToAllStates=false")
-						}
 						expectedTransitions, ok := tc.expectedTransitions[stateExec]
 						if !ok {
 							require.Fail(t, "no expected state transitions")
@@ -2781,14 +2976,11 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 						},
 					},
-				},
-				expectedTransitionsApplyNoDataErrorToAllStates: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
 					ngmodels.KeepLastErrState: {
 						t1: {
 							{
 								PreviousState: eval.Normal,
 								State: &State{
-									CacheID:     cacheID(labels["system + rule"]),
 									Labels:      labels["system + rule"],
 									State:       eval.Normal,
 									StateReason: ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
@@ -2870,8 +3062,6 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 						},
 					},
-				},
-				expectedTransitionsApplyNoDataErrorToAllStates: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
 					ngmodels.KeepLastErrState: {
 						t1: {
 							{
@@ -2953,6 +3143,24 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									Labels:      labels["system + rule"],
 									State:       eval.Normal,
 									StateReason: eval.Error.String(),
+									Results: []Evaluation{
+										newEvaluation(t2, eval.Error),
+									},
+									StartsAt:           t2,
+									EndsAt:             t2,
+									LastEvaluationTime: t2,
+								},
+							},
+						},
+					},
+					ngmodels.KeepLastErrState: {
+						t2: {
+							{
+								PreviousState: eval.Normal,
+								State: &State{
+									Labels:      labels["system + rule"],
+									State:       eval.Normal,
+									StateReason: ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									Results: []Evaluation{
 										newEvaluation(t2, eval.Error),
 									},
@@ -3082,6 +3290,24 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									Labels:      labels["system + rule"],
 									State:       eval.Normal,
 									StateReason: eval.Error.String(),
+									Results: []Evaluation{
+										newEvaluation(t2, eval.Error),
+									},
+									StartsAt:           t2,
+									EndsAt:             t2,
+									LastEvaluationTime: t2,
+								},
+							},
+						},
+					},
+					ngmodels.KeepLastErrState: {
+						t2: {
+							{
+								PreviousState: eval.Normal,
+								State: &State{
+									Labels:      labels["system + rule"],
+									State:       eval.Normal,
+									StateReason: ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									Results: []Evaluation{
 										newEvaluation(t2, eval.Error),
 									},
@@ -3273,8 +3499,6 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 						},
 					},
-				},
-				expectedTransitionsApplyNoDataErrorToAllStates: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
 					ngmodels.KeepLastErrState: {
 						t3: {
 							{
@@ -3295,7 +3519,6 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 								PreviousState:       eval.Normal,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 								State: &State{
-									CacheID:     cacheID(labels["system + rule"]),
 									Labels:      labels["system + rule"],
 									State:       eval.Normal,
 									StateReason: ngmodels.StateReasonMissingSeries,
@@ -3384,8 +3607,6 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 						},
 					},
-				},
-				expectedTransitionsApplyNoDataErrorToAllStates: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
 					ngmodels.KeepLastErrState: {
 						t2: {
 							{
@@ -3493,8 +3714,6 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 						},
 					},
-				},
-				expectedTransitionsApplyNoDataErrorToAllStates: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
 					ngmodels.KeepLastErrState: {
 						t2: {
 							{
@@ -3642,8 +3861,6 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 						},
 					},
-				},
-				expectedTransitionsApplyNoDataErrorToAllStates: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
 					ngmodels.KeepLastErrState: {
 						t2: {
 							{
@@ -3657,7 +3874,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 										newEvaluation(t2, eval.Error),
 									},
 									StartsAt:           t1,
-									EndsAt:             t1.Add(ResendDelay * 4), // TODO probably it should be t1 (semantic of Normal)?
+									EndsAt:             t1.Add(ResendDelay * 4),
 									LastEvaluationTime: t2,
 								},
 							},
@@ -3750,8 +3967,6 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 						},
 					},
-				},
-				expectedTransitionsApplyNoDataErrorToAllStates: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
 					ngmodels.KeepLastErrState: {
 						t2: {
 							{
