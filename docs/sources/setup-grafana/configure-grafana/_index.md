@@ -1207,7 +1207,7 @@ Disabled by default, needs to be explicitly enabled.
 
 Specifies whether user identity authentication fallback credentials should be enabled in data sources. Enabling this allows data source creators to provide fallback credentials for backend-initiated requests, such as alerting, recorded queries, and so on.
 
-Enabled by default, needs to be explicitly disabled. Will not have any effect if user identity is disabled above.
+It is by default and needs to be explicitly disabled. It will not have any effect if user identity authentication is disabled.
 
 ### user_identity_token_url
 
