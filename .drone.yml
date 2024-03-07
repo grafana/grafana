@@ -1234,11 +1234,15 @@ steps:
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
   - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
-    elif git checkout main; then echo "git checkout main"; else git checkout main;
-    fi
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd ./grafana-enterprise
+  - ./build.sh
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -4920,6 +4924,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 2f4a5620d00189804c2facf65fa2a17b75883cf330cd32e5612a2f36d3712847
+hmac: 3fa4360bd3c21fbc95bd3c2b63130541f9ea7c0aa56eb95dfe49c4f579aac4bb
 
 ...

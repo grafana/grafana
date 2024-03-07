@@ -4,7 +4,7 @@ This module returns all pipelines used in OpenAPI specification generation of Gr
 
 load(
     "scripts/drone/steps/lib.star",
-    "clone_enterprise_step_pr",
+    "enterprise_setup_step",
 )
 load(
     "scripts/drone/utils/images.star",
@@ -42,7 +42,7 @@ def swagger_gen_step(ver_mode):
 
 def swagger_gen(ver_mode, source = "${DRONE_SOURCE_BRANCH}"):
     test_steps = [
-        clone_enterprise_step_pr(source = source, canFail = True),
+        enterprise_setup_step(source = source, canFail = True),
         swagger_gen_step(ver_mode = ver_mode),
     ]
 
