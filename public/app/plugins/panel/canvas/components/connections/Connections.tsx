@@ -7,7 +7,13 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionState } from '../../types';
-import { getConnections, getParentBoundingClientRect, isConnectionSource, isConnectionTarget } from '../../utils';
+import {
+  calculateCoordinates,
+  getConnections,
+  getParentBoundingClientRect,
+  isConnectionSource,
+  isConnectionTarget,
+} from '../../utils';
 
 import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
@@ -18,11 +24,12 @@ export class Connections {
   connectionSVG?: SVGElement;
   connectionLine?: SVGLineElement;
   connectionSVGVertex?: SVGElement;
+  connectionVertexPath?: SVGPathElement;
   connectionVertex?: SVGCircleElement;
   connectionSource?: ElementState;
   connectionTarget?: ElementState;
   isDrawingConnection?: boolean;
-  isEditingVertex?: boolean;
+  vertexIndex?: number;
   didConnectionLeaveHighlight?: boolean;
   state: ConnectionState[] = [];
   readonly selection = new BehaviorSubject<ConnectionState | undefined>(undefined);
@@ -71,6 +78,10 @@ export class Connections {
 
   setConnectionVertexRef = (connectionVertex: SVGCircleElement) => {
     this.connectionVertex = connectionVertex;
+  };
+
+  setConnectionVertexPathRef = (connectionVertexPath: SVGPathElement) => {
+    this.connectionVertexPath = connectionVertexPath;
   };
 
   // Recursively find the first parent that is a canvas element
@@ -173,7 +184,6 @@ export class Connections {
         this.didConnectionLeaveHighlight = true;
         this.connectionSVG.style.display = 'block';
         this.isDrawingConnection = true;
-        console.log(this.connectionSVG);
       }
     }
 
@@ -280,10 +290,39 @@ export class Connections {
     const x = event.pageX - parentBoundingRect.x ?? 0;
     const y = event.pageY - parentBoundingRect.y ?? 0;
 
-    console.log(`x:${x / transformScale} y:${y / transformScale}`);
-
     this.connectionVertex?.setAttribute('cx', `${x / transformScale}`);
     this.connectionVertex?.setAttribute('cy', `${y / transformScale}`);
+
+    const sourceRect = this.selection.value!.source.div!.getBoundingClientRect();
+
+    // calculate relative coordinates based on source and target coorindates of connection
+    const { x1, y1, x2, y2 } = calculateCoordinates(
+      sourceRect,
+      parentBoundingRect,
+      this.selection.value?.info!,
+      this.selection.value!.target,
+      transformScale
+    );
+
+    let vx1 = x1;
+    let vy1 = y1;
+    let vx2 = x2;
+    let vy2 = y2;
+    if (this.selection.value && this.selection.value.vertices) {
+      if (this.vertexIndex !== undefined && this.vertexIndex > 0) {
+        vx1 += this.selection.value.vertices[this.vertexIndex - 1].x * (x2 - x1);
+        vy1 += this.selection.value.vertices[this.vertexIndex - 1].y * (y2 - y1);
+      }
+      if (this.vertexIndex !== undefined && this.vertexIndex < this.selection.value.vertices.length - 1) {
+        vx2 = this.selection.value.vertices[this.vertexIndex + 1].x * (x2 - x1) + x1;
+        vy2 = this.selection.value.vertices[this.vertexIndex + 1].y * (y2 - y1) + y1;
+      }
+    }
+
+    this.connectionVertexPath?.setAttribute(
+      'd',
+      `M${vx1 / transformScale} ${vy1 / transformScale} L${x / transformScale} ${y / transformScale} L${vx2 / transformScale} ${vy2 / transformScale}`
+    );
 
     this.connectionSVGVertex!.style.display = 'block';
 
@@ -293,8 +332,10 @@ export class Connections {
       this.scene.selecto?.rootContainer?.removeEventListener('mouseup', this.vertexListener);
       this.scene.selecto!.rootContainer!.style.cursor = 'auto';
       this.connectionSVGVertex!.style.display = 'none';
-      // calculate relative coordinates based on source and target coorindates of connection
+
       // call onChange here and update appropriate index of connection vertices array
+
+      //console.log(this.connectionSource?.options.connections);
 
       this.updateState();
       this.scene.save();
@@ -334,8 +375,7 @@ export class Connections {
   };
 
   handleVertexDragStart = (selectedTarget: HTMLElement) => {
-    console.log(selectedTarget.getAttribute('data-index'));
-    this.isEditingVertex = true;
+    this.vertexIndex = Number(selectedTarget.getAttribute('data-index'));
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.vertexListener);
@@ -362,9 +402,9 @@ export class Connections {
           setSVGRef={this.setConnectionSVGRef}
           setLineRef={this.setConnectionLineRef}
           setSVGVertexRef={this.setConnectionSVGVertexRef}
+          setVertexPathRef={this.setConnectionVertexPathRef}
           setVertexRef={this.setConnectionVertexRef}
           scene={this.scene}
-          editingVertex={this.isEditingVertex ?? false}
         />
       </>
     );

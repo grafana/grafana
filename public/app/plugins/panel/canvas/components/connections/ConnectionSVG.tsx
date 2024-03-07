@@ -20,9 +20,9 @@ type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
   setLineRef: (anchorElement: SVGLineElement) => void;
   setSVGVertexRef: (anchorElement: SVGSVGElement) => void;
+  setVertexPathRef: (anchorElement: SVGPathElement) => void;
   setVertexRef: (anchorElement: SVGCircleElement) => void;
   scene: Scene;
-  editingVertex: boolean;
 };
 
 let idCounter = 0;
@@ -32,9 +32,9 @@ export const ConnectionSVG = ({
   setSVGRef,
   setLineRef,
   setSVGVertexRef,
+  setVertexPathRef,
   setVertexRef,
   scene,
-  editingVertex,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -116,11 +116,13 @@ export const ConnectionSVG = ({
     }
   };
 
+  const vertexStyles = { fill: '#44aaff', strokeWidth: 1 };
+  const futureVertexStyles = { fill: '#44aaff', opacity: 0.6, strokeWidth: 1 };
+
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
     return scene.connections.state.map((v, idx) => {
       const { source, target, info, vertices } = v;
-      console.log(vertices);
       const sourceRect = source.div?.getBoundingClientRect();
       const parent = source.div?.parentElement;
       const transformScale = scene.scale;
@@ -139,8 +141,6 @@ export const ConnectionSVG = ({
 
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
       const selectedStyles = { stroke: '#44aaff', strokeOpacity: 0.6, strokeWidth: strokeWidth + 5 };
-      const vertexStyles = { fill: '#44aaff', strokeWidth: 1 };
-      const futureVertexStyles = { fill: '#44aaff', opacity: 0.6, strokeWidth: 1 };
 
       const CONNECTION_HEAD_ID = `connectionHead-${headId + Math.random()}`;
       //const vertices: Vertex[] = [];
@@ -302,10 +302,17 @@ export const ConnectionSVG = ({
             <polygon points="0 0, 10 3.5, 0 7" fill={defaultArrowColor} />
           </marker>
         </defs>
-        <line ref={setLineRef} stroke={'red'} strokeWidth={2} markerEnd={`url(#${EDITOR_HEAD_ID})`} />
+        <line ref={setLineRef} stroke={defaultArrowColor} strokeWidth={2} markerEnd={`url(#${EDITOR_HEAD_ID})`} />
       </svg>
       <svg ref={setSVGVertexRef} className={styles.editorSVG}>
-        <circle ref={setVertexRef} stroke={'white'} strokeWidth={2} r={10} fill={'blue'} />
+        <path
+          ref={setVertexPathRef}
+          stroke={defaultArrowColor}
+          strokeWidth={2}
+          strokeDasharray={'5, 5'}
+          fill={'none'}
+        />
+        <circle ref={setVertexRef} stroke={defaultArrowColor} r={4} style={vertexStyles} />
       </svg>
       {renderConnections()}
     </>
