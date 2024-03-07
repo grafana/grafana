@@ -1,55 +1,28 @@
 package pfs
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
-	"path/filepath"
 	"sort"
 	"strings"
-	"sync"
 	"testing/fstest"
 
 	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/build"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/errors"
-	"cuelang.org/go/cue/parser"
 	"cuelang.org/go/cue/token"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/load"
-	"github.com/grafana/thema/vmux"
 	"github.com/yalue/merged_fs"
 
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
 )
 
 // PackageName is the name of the CUE package that Grafana will load when
 // looking for a Grafana plugin's kind declarations.
 const PackageName = "grafanaplugin"
-
-var onceGP sync.Once
-var defaultGP cue.Value
-
-func doLoadGP(ctx *cue.Context) cue.Value {
-	v, err := cuectx.BuildGrafanaInstance(ctx, filepath.Join("pkg", "plugins", "pfs"), "pfs", nil)
-	if err != nil {
-		// should be unreachable
-		panic(err)
-	}
-	return v.LookupPath(cue.MakePath(cue.Str("GrafanaPlugin")))
-}
-
-func loadGP(ctx *cue.Context) cue.Value {
-	if ctx == nil || ctx == cuectx.GrafanaCUEContext() {
-		onceGP.Do(func() {
-			defaultGP = doLoadGP(ctx)
-		})
-		return defaultGP
-	}
-	return doLoadGP(ctx)
-}
 
 // PermittedCUEImports returns the list of import paths that may be used in a
 // plugin's grafanaplugin cue package.
@@ -109,35 +82,14 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		rt = cuectx.GrafanaThemaRuntime()
 	}
 
-	lin, err := plugindef.Lineage(rt)
+	metadata, err := getPluginMetadata(fsys)
 	if err != nil {
-		panic(fmt.Sprintf("plugindef lineage is invalid or broken, needs dev attention: %s", err))
-	}
-	ctx := rt.Context()
-
-	b, err := fs.ReadFile(fsys, "plugin.json")
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return ParsedPlugin{}, ErrNoRootFile
-		}
-		return ParsedPlugin{}, fmt.Errorf("error reading plugin.json: %w", err)
+		return ParsedPlugin{}, err
 	}
 
 	pp := ParsedPlugin{
 		ComposableKinds: make(map[string]kindsys.Composable),
-		// CustomKinds:     make(map[string]kindsys.Custom),
-	}
-
-	// Pass the raw bytes into the muxer, get the populated PluginDef type out that we want.
-	// TODO stop ignoring second return. (for now, lacunas are a WIP and can't occur until there's >1 schema in the plugindef lineage)
-	pinst, _, err := vmux.NewTypedMux(lin.TypedSchema(), vmux.NewJSONCodec("plugin.json"))(b)
-	if err != nil {
-		return ParsedPlugin{}, errors.Wrap(errors.Promote(err, ""), ErrInvalidRootFile)
-	}
-	pp.Properties = *(pinst.ValueP())
-	// FIXME remove this once it's being correctly populated coming out of lineage
-	if pp.Properties.PascalName == "" {
-		pp.Properties.PascalName = plugindef.DerivePascalName(pp.Properties)
+		Properties:      metadata,
 	}
 
 	if cuefiles, err := fs.Glob(fsys, "*.cue"); err != nil {
@@ -145,8 +97,6 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 	} else if len(cuefiles) == 0 {
 		return pp, nil
 	}
-
-	gpv := loadGP(rt.Context())
 
 	fsys, err = ensureCueMod(fsys, pp.Properties)
 	if err != nil {
@@ -160,11 +110,6 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		}
 		return ParsedPlugin{}, errors.Wrap(errors.Newf(token.NoPos, "%s did not load", pp.Properties.Id), err)
 	}
-
-	f, _ := parser.ParseFile("plugin.json", fmt.Sprintf(`{
-		"id": %q,
-		"pascalName": %q
-	}`, pp.Properties.Id, pp.Properties.PascalName))
 
 	for _, f := range bi.Files {
 		for _, im := range f.Imports {
@@ -187,16 +132,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		panic("Refactor required - upstream CUE implementation changed, bi.Files is no longer populated")
 	}
 
-	// Inject the JSON directly into the build so it gets loaded together
-	bi.BuildFiles = append(bi.BuildFiles, &build.File{
-		Filename: "plugin.json",
-		Encoding: build.JSON,
-		Form:     build.Data,
-		Source:   b,
-	})
-	bi.Files = append(bi.Files, f)
-
-	gpi := ctx.BuildInstance(bi).Unify(gpv)
+	gpi := rt.Context().BuildInstance(bi)
 	if gpi.Err() != nil {
 		return ParsedPlugin{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, pp.Properties.Id), gpi.Err())
 	}
@@ -205,6 +141,18 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		iv := gpi.LookupPath(cue.MakePath(cue.Str("composableKinds"), cue.Str(si.Name())))
 		if !iv.Exists() {
 			continue
+		}
+
+		iv = iv.FillPath(cue.MakePath(cue.Str("schemaInterface")), si.Name())
+		iv = iv.FillPath(cue.MakePath(cue.Str("name")), derivePascalName(pp.Properties.Id, pp.Properties.Name)+si.Name())
+		lineageNamePath := iv.LookupPath(cue.MakePath(cue.Str("lineage"), cue.Str("name")))
+		if !lineageNamePath.Exists() {
+			iv = iv.FillPath(cue.MakePath(cue.Str("lineage"), cue.Str("name")), derivePascalName(pp.Properties.Id, pp.Properties.Name)+si.Name())
+		}
+
+		validSchema := iv.LookupPath(cue.ParsePath("lineage.schemas[0].schema"))
+		if !validSchema.Exists() {
+			return ParsedPlugin{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, pp.Properties.Id), validSchema.Err())
 		}
 
 		props, err := kindsys.ToKindProps[kindsys.ComposableProperties](iv)
@@ -222,7 +170,6 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		pp.ComposableKinds[si.Name()] = compo
 	}
 
-	// TODO custom kinds
 	return pp, nil
 }
 
@@ -237,7 +184,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 func LoadComposableKindDef(fsys fs.FS, rt *thema.Runtime, defpath string) (kindsys.Def[kindsys.ComposableProperties], error) {
 	pp := ParsedPlugin{
 		ComposableKinds: make(map[string]kindsys.Composable),
-		Properties: plugindef.PluginDef{
+		Properties: Metadata{
 			Id: defpath,
 		},
 	}
@@ -269,17 +216,75 @@ func LoadComposableKindDef(fsys fs.FS, rt *thema.Runtime, defpath string) (kinds
 	}, nil
 }
 
-func ensureCueMod(fsys fs.FS, pdef plugindef.PluginDef) (fs.FS, error) {
+func ensureCueMod(fsys fs.FS, metadata Metadata) (fs.FS, error) {
 	if modf, err := fs.ReadFile(fsys, "cue.mod/module.cue"); err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
 			return nil, err
 		}
 		return merged_fs.NewMergedFS(fsys, fstest.MapFS{
-			"cue.mod/module.cue": &fstest.MapFile{Data: []byte(fmt.Sprintf(`module: "grafana.com/grafana/plugins/%s"`, pdef.Id))},
+			"cue.mod/module.cue": &fstest.MapFile{Data: []byte(fmt.Sprintf(`module: "grafana.com/grafana/plugins/%s"`, metadata.Id))},
 		}), nil
 	} else if _, err := cuecontext.New().CompileBytes(modf).LookupPath(cue.MakePath(cue.Str("module"))).String(); err != nil {
 		return nil, fmt.Errorf("error reading cue module name: %w", err)
 	}
 
 	return fsys, nil
+}
+
+func getPluginMetadata(fsys fs.FS) (Metadata, error) {
+	b, err := fs.ReadFile(fsys, "plugin.json")
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return Metadata{}, ErrNoRootFile
+		}
+		return Metadata{}, fmt.Errorf("error reading plugin.json: %w", err)
+	}
+
+	var metadata PluginDef
+	if err := json.Unmarshal(b, &metadata); err != nil {
+		return Metadata{}, fmt.Errorf("error unmarshalling plugin.json: %s", err)
+	}
+
+	if err := metadata.Validate(); err != nil {
+		return Metadata{}, err
+	}
+
+	return Metadata{
+		Id:      metadata.Id,
+		Name:    metadata.Name,
+		Backend: metadata.Backend,
+		Version: metadata.Info.Version,
+	}, nil
+}
+
+func derivePascalName(id string, name string) string {
+	sani := func(s string) string {
+		ret := strings.Title(strings.Map(func(r rune) rune {
+			switch {
+			case r >= 'a' && r <= 'z':
+				return r
+			case r >= 'A' && r <= 'Z':
+				return r
+			default:
+				return -1
+			}
+		}, strings.Title(strings.Map(func(r rune) rune {
+			switch r {
+			case '-', '_':
+				return ' '
+			default:
+				return r
+			}
+		}, s))))
+		if len(ret) > 63 {
+			return ret[:63]
+		}
+		return ret
+	}
+
+	fromname := sani(name)
+	if len(fromname) != 0 {
+		return fromname
+	}
+	return sani(strings.Split(id, "-")[1])
 }
