@@ -394,9 +394,9 @@ func resultKeepLast(state *State, rule *models.AlertRule, result eval.Result, lo
 		logger.Debug("Execution keep last state is Normal", "handler", "resultNormal")
 		resultNormal(state, rule, result, logger, reason)
 	default:
-		err := fmt.Errorf("unsupported keep last state: %s", state.State)
-		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
-		state.Annotations["Error"] = err.Error()
+		// this should not happen, add as failsafe
+		logger.Debug("Reverting invalid state to normal", "handler", "resultNormal")
+		resultNormal(state, rule, result, logger, reason)
 	}
 }
 
