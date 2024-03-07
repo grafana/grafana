@@ -8,16 +8,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
-import {
-  LocalValueVariable,
-  SceneFlexLayout,
-  SceneGridLayout,
-  SceneGridRow,
-  SceneObject,
-  VizPanel,
-  VizPanelMenu,
-  sceneGraph,
-} from '@grafana/scenes';
+import { LocalValueVariable, SceneGridRow, VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
@@ -203,7 +194,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       iconClassName: 'trash-alt',
       onClick: () => {
         DashboardInteractions.panelMenuItemClicked('remove');
-        removePanel(dashboard, panel, true);
+        onRemovePanel(dashboard, panel);
       },
       shortcut: 'p r',
     });
@@ -377,7 +368,7 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
   };
 }
 
-export function removePanel(dashboard: DashboardScene, panel: VizPanel, ask: boolean) {
+export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
   const vizPanelData = sceneGraph.getData(panel);
   let panelHasAlert = false;
 
@@ -385,40 +376,23 @@ export function removePanel(dashboard: DashboardScene, panel: VizPanel, ask: boo
     panelHasAlert = true;
   }
 
-  if (ask !== false) {
-    const text2 =
-      panelHasAlert && !config.unifiedAlertingEnabled
-        ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
-        : undefined;
-    const confirmText = panelHasAlert ? 'YES' : undefined;
+  const text2 =
+    panelHasAlert && !config.unifiedAlertingEnabled
+      ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
+      : undefined;
+  const confirmText = panelHasAlert ? 'YES' : undefined;
 
-    appEvents.publish(
-      new ShowConfirmModalEvent({
-        title: 'Remove panel',
-        text: 'Are you sure you want to remove this panel?',
-        text2: text2,
-        icon: 'trash-alt',
-        confirmText: confirmText,
-        yesText: 'Remove',
-        onConfirm: () => removePanel(dashboard, panel, false),
-      })
-    );
-
-    return;
-  }
-
-  const panels: SceneObject[] = [];
-  dashboard.state.body.forEachChild((child: SceneObject) => {
-    if (child.state.key !== panel.parent?.state.key) {
-      panels.push(child);
-    }
-  });
-
-  const layout = dashboard.state.body;
-
-  if (layout instanceof SceneGridLayout || SceneFlexLayout) {
-    layout.setState({ children: panels });
-  }
+  appEvents.publish(
+    new ShowConfirmModalEvent({
+      title: 'Remove panel',
+      text: 'Are you sure you want to remove this panel?',
+      text2: text2,
+      icon: 'trash-alt',
+      confirmText: confirmText,
+      yesText: 'Remove',
+      onConfirm: () => dashboard.removePanel(panel),
+    })
+  );
 }
 
 const onCreateAlert = async (panel: VizPanel) => {

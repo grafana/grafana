@@ -692,6 +692,13 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
+			Name:         "aiGeneratedDashboardChanges",
+			Description:  "Enable AI powered features for dashboards to auto-summary changes when saving",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:            "reportingRetries",
 			Description:     "Enables rendering retries for the reporting feature",
 			Stage:           FeatureStagePublicPreview,
@@ -1182,6 +1189,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:         "betterPageScrolling",
+			Description:  "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
+			Stage:        FeatureStageGeneralAvailability,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "true", // enabled by default
+		},
+		{
 			Name:            "alertingUpgradeDryrunOnStart",
 			Description:     "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
 			FrontendOnly:    false,
@@ -1189,6 +1204,17 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Expression:      "true", // enabled by default
+		},
+		{
+			Name:              "scopeFilters",
+			Description:       "Enables the use of scope filters in Grafana",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 	}
 )

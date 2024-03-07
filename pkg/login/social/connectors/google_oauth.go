@@ -27,9 +27,12 @@ const (
 	validateHDKey           = "validate_hd"
 )
 
+var ExtraGoogleSettingKeys = map[string]ExtraKeyInfo{
+	validateHDKey: {Type: Bool, DefaultValue: true},
+}
+
 var _ social.SocialConnector = (*SocialGoogle)(nil)
 var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
-var ExtraGoogleSettingKeys = []string{validateHDKey}
 
 type SocialGoogle struct {
 	*SocialBase
@@ -93,13 +96,14 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	defer s.reloadMutex.Unlock()
 
 	s.updateInfo(social.GoogleProviderName, newInfo)
-	s.validateHD = MustBool(newInfo.Extra[validateHDKey], false)
+	s.validateHD = MustBool(newInfo.Extra[validateHDKey], true)
 
 	return nil
 }
 
 func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
 
 	data, errToken := s.extractFromToken(ctx, client, token)
 	if errToken != nil {
@@ -122,7 +126,7 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		return nil, fmt.Errorf("user email is not verified")
 	}
 
-	if err := s.isHDAllowed(data.HD, info); err != nil {
+	if err := s.isHDAllowed(data.HD); err != nil {
 		return nil, err
 	}
 
@@ -145,13 +149,13 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		Groups:         groups,
 	}
 
-	if !info.SkipOrgRoleSync {
+	if !s.info.SkipOrgRoleSync {
 		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(data.rawJSON, groups)
 		if errRole != nil {
 			return nil, errRole
 		}
 
-		if info.AllowAssignGrafanaAdmin {
+		if s.info.AllowAssignGrafanaAdmin {
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
@@ -172,11 +176,9 @@ type googleAPIData struct {
 }
 
 func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) (*googleUserData, error) {
-	info := s.GetOAuthInfo()
-
-	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
+	if strings.HasPrefix(s.info.ApiUrl, legacyAPIURL) {
 		data := googleAPIData{}
-		response, err := s.httpGet(ctx, client, info.ApiUrl)
+		response, err := s.httpGet(ctx, client, s.info.ApiUrl)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving legacy user info: %s", err)
 		}
@@ -196,7 +198,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 	}
 
 	data := googleUserData{}
-	response, err := s.httpGet(ctx, client, info.ApiUrl)
+	response, err := s.httpGet(ctx, client, s.info.ApiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
@@ -209,12 +211,13 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 }
 
 func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
 
-	if info.UseRefreshToken {
+	if s.info.UseRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
-	return s.SocialBase.AuthCodeURL(state, opts...)
+	return s.SocialBase.Config.AuthCodeURL(state, opts...)
 }
 
 func (s *SocialGoogle) extractFromToken(ctx context.Context, client *http.Client, token *oauth2.Token) (*googleUserData, error) {
@@ -304,16 +307,16 @@ func (s *SocialGoogle) getGroupsPage(ctx context.Context, client *http.Client, u
 	return &data, nil
 }
 
-func (s *SocialGoogle) isHDAllowed(hd string, info *social.OAuthInfo) error {
+func (s *SocialGoogle) isHDAllowed(hd string) error {
 	if s.validateHD {
 		return nil
 	}
 
-	if len(info.AllowedDomains) == 0 {
+	if len(s.info.AllowedDomains) == 0 {
 		return nil
 	}
 
-	for _, allowedDomain := range info.AllowedDomains {
+	for _, allowedDomain := range s.info.AllowedDomains {
 		if hd == allowedDomain {
 			return nil
 		}

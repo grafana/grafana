@@ -85,7 +85,7 @@ export const getContentItems = (
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
-  let allNumeric = false;
+  let allNumeric = true;
 
   for (let i = 0; i < fields.length; i++) {
     const field = fields[i];
