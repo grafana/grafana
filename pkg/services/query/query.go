@@ -330,8 +330,8 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 
 		s.log.Debug("Processed metrics query",
 			"ref_id", pq.query.RefID,
-			"from", pq.query.TimeRange.From,
-			"to", pq.query.TimeRange.To,
+			"from", timeRange.GetFromAsMsEpoch(),
+			"to", timeRange.GetToAsMsEpoch(),
 			"interval", pq.query.Interval.Milliseconds(),
 			"max_data_points", pq.query.MaxDataPoints,
 			"query", string(modelJSON))
