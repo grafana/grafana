@@ -54,6 +54,7 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [News][] can show RSS feeds.
 
 The following video shows you how to create gauge, time series line graph, stats, logs, and node graph visualizations:
+
 {{< youtube id="yNRnLyVntUw" >}}
 
 ## Get more
