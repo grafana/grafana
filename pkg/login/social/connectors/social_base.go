@@ -3,10 +3,12 @@ package connectors
 import (
 	"bytes"
 	"compress/zlib"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"regexp"
 	"strings"
 	"sync"
@@ -60,6 +62,48 @@ type groupStruct struct {
 }
 
 func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.getBaseSupportBundleContent(bf)
+}
+
+func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.info
+}
+
+func (s *SocialBase) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.Config.AuthCodeURL(state, opts...)
+}
+
+func (s *SocialBase) Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.Config.Exchange(ctx, code, opts...)
+}
+
+func (s *SocialBase) Client(ctx context.Context, t *oauth2.Token) *http.Client {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.Config.Client(ctx, t)
+}
+
+func (s *SocialBase) TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.Config.TokenSource(ctx, t)
+}
+
+func (s *SocialBase) getBaseSupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString("## Client configuration\n\n")
 	bf.WriteString("```ini\n")
 	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.info.AllowAssignGrafanaAdmin))
@@ -77,14 +121,8 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("redirect_url = %v\n", s.Config.RedirectURL))
 	bf.WriteString(fmt.Sprintf("scopes = %v\n", s.Config.Scopes))
 	bf.WriteString("```\n\n")
+
 	return nil
-}
-
-func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
-	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
-
-	return s.info
 }
 
 func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {

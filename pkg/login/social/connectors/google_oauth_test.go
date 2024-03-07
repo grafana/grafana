@@ -931,7 +931,7 @@ func TestIsHDAllowed(t *testing.T) {
 			info.AllowedDomains = tc.allowedDomains
 			s := NewGoogleProvider(info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 			s.validateHD = tc.validateHD
-			err := s.isHDAllowed(tc.email, info)
+			err := s.isHDAllowed(tc.email)
 
 			if tc.expectedErrorMessage != "" {
 				require.Error(t, err)
