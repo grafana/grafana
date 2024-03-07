@@ -35,7 +35,7 @@ Before you add a panel, ensure that you have configured a data source.
 - For more information about managing data sources as an administrator, refer to [Data source management][].
   
   {{% admonition type="note" %}}
-  Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud(/docs/grafana-cloud).
+  Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
   {{% /admonition %}}
 
 
