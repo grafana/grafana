@@ -41,8 +41,8 @@ func newHeuristicsSDKProvider(hrt heuristicsSuccessRoundTripper) *sdkhttpclient.
 	return sdkhttpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{mid}})
 }
 
-func mockExtendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) (*sdkhttpclient.Options, error) {
-	return clientOpts, nil
+func mockExtendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error {
+	return nil
 }
 
 func Test_GetHeuristics(t *testing.T) {
