@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, Button } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
 const LOCAL_STORAGE_KEY_PREFIX = 'grafana.angularDeprecation.dashboardNotice.isDismissed';
@@ -15,13 +15,17 @@ export interface Props {
   showAutoMigrateLink?: boolean;
 }
 
-function autoMigrateHref(): string {
+function readDeprecationNotice() {
+  window.open('https://grafana.com/docs/grafana/latest/developers/angular_deprecation/');
+}
+
+function tryMigration() {
   const autoMigrateParam = '__feature.autoMigrateOldPanels';
   const url = new URL(window.location.toString());
   if (!url.searchParams.has(autoMigrateParam)) {
     url.searchParams.append(autoMigrateParam, 'true');
   }
-  return url.toString();
+  window.open(url.toString());
 }
 
 export function AngularDeprecationNotice({ dashboardUid, showAutoMigrateLink }: Props) {
@@ -42,25 +46,14 @@ export function AngularDeprecationNotice({ dashboardUid, showAutoMigrateLink }: 
               }}
             >
               <div className="markdown-html">
-                <ul>
-                  <li>
-                    <a
-                      href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
-                      className="external-link"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Read our deprecation notice and migration advice.
-                    </a>
-                  </li>
-                  {showAutoMigrateLink && (
-                    <li>
-                      <a href={autoMigrateHref()} className="external-link" target="_blank" rel="noreferrer">
-                        Auto-migrate compatible panels.
-                      </a>
-                    </li>
-                  )}
-                </ul>
+                <Button fill="outline" size="sm" style={{ marginRight: 10 }} onClick={readDeprecationNotice}>
+                  Read our deprecation notice and migration advice
+                </Button>
+                {showAutoMigrateLink && (
+                  <Button fill="outline" size="sm" onClick={tryMigration}>
+                    Try migration
+                  </Button>
+                )}
               </div>
             </Alert>
           </div>
