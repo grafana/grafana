@@ -321,7 +321,8 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
 		resultNormal(state, rule, result, logger, "") // TODO: Should we add a reason?
 	case models.KeepLastErrState:
-		resultKeepLast(state, rule, result, logger, handlerStr)
+		logger := logger.New("previous_handler", handlerStr)
+		resultKeepLast(state, rule, result, logger)
 	default:
 		err := fmt.Errorf("unsupported execution error state: %s", rule.ExecErrState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
@@ -365,7 +366,8 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
 		resultNormal(state, rule, result, logger, models.StateReasonNoData)
 	case models.KeepLast:
-		resultKeepLast(state, rule, result, logger, handlerStr)
+		logger := logger.New("previous_handler", handlerStr)
+		resultKeepLast(state, rule, result, logger)
 	default:
 		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
@@ -373,23 +375,23 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 	}
 }
 
-func resultKeepLast(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, previousHandler string) {
+func resultKeepLast(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
 	reason := models.ConcatReasons(result.State.String(), models.StateReasonKeepLast)
 
 	switch state.State {
 	case eval.Alerting:
-		logger.Debug("Execution keep last state is Alerting", "handler", "resultAlerting", "previous_handler", previousHandler)
+		logger.Debug("Execution keep last state is Alerting", "handler", "resultAlerting")
 		resultAlerting(state, rule, result, logger, reason)
 	case eval.Pending:
 		// respect 'for' setting on rule
 		if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
-			logger.Debug("Execution keep last state is Pending", "handler", "resultAlerting", "previous_handler", previousHandler)
+			logger.Debug("Execution keep last state is Pending", "handler", "resultAlerting")
 			resultAlerting(state, rule, result, logger, reason)
 		} else {
 			logger.Debug("Ignoring set next state to pending")
 		}
 	case eval.Normal:
-		logger.Debug("Execution keep last state is Normal", "handler", "resultNormal", "previous_handler", previousHandler)
+		logger.Debug("Execution keep last state is Normal", "handler", "resultNormal")
 		resultNormal(state, rule, result, logger, reason)
 	default:
 		err := fmt.Errorf("unsupported keep last state: %s", state.State)
