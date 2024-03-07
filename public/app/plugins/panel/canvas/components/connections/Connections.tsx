@@ -17,9 +17,12 @@ export class Connections {
   connectionAnchorDiv?: HTMLDivElement;
   connectionSVG?: SVGElement;
   connectionLine?: SVGLineElement;
+  connectionSVGVertex?: SVGElement;
+  connectionVertex?: SVGCircleElement;
   connectionSource?: ElementState;
   connectionTarget?: ElementState;
   isDrawingConnection?: boolean;
+  isEditingVertex?: boolean;
   didConnectionLeaveHighlight?: boolean;
   state: ConnectionState[] = [];
   readonly selection = new BehaviorSubject<ConnectionState | undefined>(undefined);
@@ -60,6 +63,14 @@ export class Connections {
 
   setConnectionLineRef = (connectionLine: SVGLineElement) => {
     this.connectionLine = connectionLine;
+  };
+
+  setConnectionSVGVertexRef = (connectionSVG: SVGSVGElement) => {
+    this.connectionSVGVertex = connectionSVG;
+  };
+
+  setConnectionVertexRef = (connectionVertex: SVGCircleElement) => {
+    this.connectionVertex = connectionVertex;
   };
 
   // Recursively find the first parent that is a canvas element
@@ -162,6 +173,7 @@ export class Connections {
         this.didConnectionLeaveHighlight = true;
         this.connectionSVG.style.display = 'block';
         this.isDrawingConnection = true;
+        console.log(this.connectionSVG);
       }
     }
 
@@ -251,6 +263,44 @@ export class Connections {
     }
   };
 
+  vertexListener = (event: MouseEvent) => {
+    event.preventDefault();
+
+    if (!(this.connectionVertex && this.scene.div && this.scene.div.parentElement)) {
+      return;
+    }
+
+    const transformScale = this.scene.scale;
+    const parentBoundingRect = getParentBoundingClientRect(this.scene);
+
+    if (!parentBoundingRect) {
+      return;
+    }
+
+    const x = event.pageX - parentBoundingRect.x ?? 0;
+    const y = event.pageY - parentBoundingRect.y ?? 0;
+
+    console.log(`x:${x / transformScale} y:${y / transformScale}`);
+
+    this.connectionVertex?.setAttribute('cx', `${x / transformScale}`);
+    this.connectionVertex?.setAttribute('cy', `${y / transformScale}`);
+
+    this.connectionSVGVertex!.style.display = 'block';
+
+    if (!event.buttons) {
+      console.log('done vertexing');
+      this.scene.selecto?.rootContainer?.removeEventListener('mousemove', this.vertexListener);
+      this.scene.selecto?.rootContainer?.removeEventListener('mouseup', this.vertexListener);
+      this.scene.selecto!.rootContainer!.style.cursor = 'auto';
+      this.connectionSVGVertex!.style.display = 'none';
+      // calculate relative coordinates based on source and target coorindates of connection
+      // call onChange here and update appropriate index of connection vertices array
+
+      this.updateState();
+      this.scene.save();
+    }
+  };
+
   handleConnectionDragStart = (selectedTarget: HTMLElement, clientX: number, clientY: number) => {
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
     if (this.connectionSVG && this.connectionLine && this.scene.div && this.scene.div.parentElement) {
@@ -283,6 +333,15 @@ export class Connections {
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.connectionListener);
   };
 
+  handleVertexDragStart = (selectedTarget: HTMLElement) => {
+    console.log(selectedTarget.getAttribute('data-index'));
+    this.isEditingVertex = true;
+    this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
+
+    this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.vertexListener);
+    this.scene.selecto?.rootContainer?.addEventListener('mouseup', this.vertexListener);
+  };
+
   onChange = (current: ConnectionState, update: CanvasConnection) => {
     const connections = current.source.options.connections?.splice(0) ?? [];
     connections[current.index] = update;
@@ -299,7 +358,14 @@ export class Connections {
     return (
       <>
         <ConnectionAnchors setRef={this.setConnectionAnchorRef} handleMouseLeave={this.handleMouseLeave} />
-        <ConnectionSVG setSVGRef={this.setConnectionSVGRef} setLineRef={this.setConnectionLineRef} scene={this.scene} />
+        <ConnectionSVG
+          setSVGRef={this.setConnectionSVGRef}
+          setLineRef={this.setConnectionLineRef}
+          setSVGVertexRef={this.setConnectionSVGVertexRef}
+          setVertexRef={this.setConnectionVertexRef}
+          scene={this.scene}
+          editingVertex={this.isEditingVertex ?? false}
+        />
       </>
     );
   }

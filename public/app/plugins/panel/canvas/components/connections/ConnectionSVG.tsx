@@ -19,13 +19,23 @@ import {
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
   setLineRef: (anchorElement: SVGLineElement) => void;
+  setSVGVertexRef: (anchorElement: SVGSVGElement) => void;
+  setVertexRef: (anchorElement: SVGCircleElement) => void;
   scene: Scene;
+  editingVertex: boolean;
 };
 
 let idCounter = 0;
 const htmlElementTypes = ['input', 'textarea'];
 
-export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
+export const ConnectionSVG = ({
+  setSVGRef,
+  setLineRef,
+  setSVGVertexRef,
+  setVertexRef,
+  scene,
+  editingVertex,
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   const headId = Date.now() + '_' + idCounter++;
@@ -109,7 +119,6 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
     return scene.connections.state.map((v, idx) => {
-      //console.log(v);
       const { source, target, info, vertices } = v;
       console.log(vertices);
       const sourceRect = source.div?.getBoundingClientRect();
@@ -200,6 +209,8 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
                       const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
                       return (
                         <circle
+                          id={`vertex`}
+                          data-index={index}
                           key={`vertex${index}_${idx}`}
                           cx={x}
                           cy={y}
@@ -208,9 +219,6 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
                           style={vertexStyles}
                           cursor={'crosshair'}
                           pointerEvents="auto"
-                          onMouseDown={(e) => {
-                            console.log(e);
-                          }}
                         />
                       );
                     })}
@@ -289,12 +297,15 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
             refX="10"
             refY="3.5"
             orient="auto"
-            stroke={defaultArrowColor}
+            stroke={'defaultArrowColor'}
           >
             <polygon points="0 0, 10 3.5, 0 7" fill={defaultArrowColor} />
           </marker>
         </defs>
-        <line ref={setLineRef} stroke={defaultArrowColor} strokeWidth={2} markerEnd={`url(#${EDITOR_HEAD_ID})`} />
+        <line ref={setLineRef} stroke={'red'} strokeWidth={2} markerEnd={`url(#${EDITOR_HEAD_ID})`} />
+      </svg>
+      <svg ref={setSVGVertexRef} className={styles.editorSVG}>
+        <circle ref={setVertexRef} stroke={'white'} strokeWidth={2} r={10} fill={'blue'} />
       </svg>
       {renderConnections()}
     </>

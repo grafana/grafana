@@ -28,7 +28,10 @@ import {
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
-import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
+import {
+  CONNECTION_ANCHOR_DIV_ID,
+  CONNECTION_VERTEX_ID,
+} from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
 import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
 import { getParent, getTransformInstance } from 'app/plugins/panel/canvas/utils';
@@ -611,6 +614,13 @@ export class Scene {
       // If selected target is a connection control, eject to handle connection event
       if (selectedTarget.id === CONNECTION_ANCHOR_DIV_ID) {
         this.connections.handleConnectionDragStart(selectedTarget, event.inputEvent.clientX, event.inputEvent.clientY);
+        event.stop();
+        return;
+      }
+
+      // If selected target is a vertex, eject to handle vertex event
+      if (selectedTarget.id === CONNECTION_VERTEX_ID) {
+        this.connections.handleVertexDragStart(selectedTarget);
         event.stop();
         return;
       }
