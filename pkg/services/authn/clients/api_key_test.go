@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -29,7 +28,6 @@ func TestAPIKey_Authenticate(t *testing.T) {
 		desc             string
 		req              *authn.Request
 		expectedKey      *apikey.APIKey
-		expectedUser     *user.SignedInUser
 		expectedErr      error
 		expectedIdentity *authn.Identity
 	}
