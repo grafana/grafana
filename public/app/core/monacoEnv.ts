@@ -1,42 +1,40 @@
+import editorWorkerUrl from 'monaco-editor/esm/vs/editor/editor.worker.js?worker&url';
+import cssWorkerUrl from 'monaco-editor/esm/vs/language/css/css.worker?worker&url';
+import htmlWorkerUrl from 'monaco-editor/esm/vs/language/html/html.worker?worker&url';
+import jsonWorkerUrl from 'monaco-editor/esm/vs/language/json/json.worker?worker&url';
+import typescriptWorkerUrl from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker&url';
+
 import { monacoLanguageRegistry } from '@grafana/data';
-// TODO: vite - handle CORs with webworkers
-// import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
+
+import { WorkaroundWorker } from './utils/CorsWorker';
 
 export function setMonacoEnv() {
   self.MonacoEnvironment = {
     getWorker(_moduleId, label) {
-      const getWorkerModule = (moduleUrl: string, label: string) => {
-        const workerUrl = self.MonacoEnvironment!.getWorkerUrl!(moduleUrl, label);
-        return new Worker(workerUrl, {
-          name: label,
-          type: 'module',
-        });
-      };
-
       const language = monacoLanguageRegistry.getIfExists(label);
 
       if (language) {
         const moduleUrl = language.init();
-        return getWorkerModule(moduleUrl, label);
+        return WorkaroundWorker(moduleUrl, { name: label });
       }
 
       if (label === 'json') {
-        return getWorkerModule('/monaco-editor/esm/vs/language/json/json.worker?worker', label);
+        return WorkaroundWorker(jsonWorkerUrl, { name: label });
       }
 
       if (label === 'css' || label === 'scss' || label === 'less') {
-        return getWorkerModule('/monaco-editor/esm/vs/language/css/css.worker?worker', label);
+        return WorkaroundWorker(cssWorkerUrl, { name: label });
       }
 
       if (label === 'html' || label === 'handlebars' || label === 'razor') {
-        return getWorkerModule('/monaco-editor/esm/vs/language/html/html.worker?worker', label);
+        return WorkaroundWorker(htmlWorkerUrl, { name: label });
       }
 
       if (label === 'typescript' || label === 'javascript') {
-        return getWorkerModule('/monaco-editor/esm/vs/language/typescript/ts.worker?worker', label);
+        return WorkaroundWorker(typescriptWorkerUrl, { name: label });
       }
 
-      return getWorkerModule('/monaco-editor/esm/vs/editor/editor.worker?worker', label);
+      return WorkaroundWorker(editorWorkerUrl, { name: label });
     },
   };
 }

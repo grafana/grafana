@@ -27,8 +27,16 @@ export default defineConfig({
   },
   plugins: [react(), angularHtmlImport(), { ...moveAssets(), apply: 'build' }],
   optimizeDeps: {
-    // fixes for dependencies that don't support esm
-    include: ['jquery'],
+    include: [
+      'monaco-editor/esm/vs/editor/editor.worker',
+      'monaco-editor/esm/vs/language/css/css.worker',
+      'monaco-editor/esm/vs/language/html/html.worker',
+      'monaco-editor/esm/vs/language/json/json.worker',
+      'monaco-editor/esm/vs/language/typescript/ts.worker',
+      '@kusto/monaco-kusto/release/esm/kusto.worker',
+      '@kusto/language-service/bridge.min',
+      'jquery',
+    ],
   },
   resolve: {
     alias: [
