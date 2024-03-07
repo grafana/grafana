@@ -64,7 +64,7 @@ type AlertRuleService interface {
 	UpdateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
 	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroup, error)
-	ReplaceRuleGroup(ctx context.Context, orgID int64, user identity.Requester, group alerting_models.AlertRuleGroup, provenance alerting_models.Provenance) error
+	ReplaceRuleGroup(ctx context.Context, orgID int64, group alerting_models.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
 	DeleteRuleGroup(ctx context.Context, orgID int64, folder, group string, provenance alerting_models.Provenance) error
 	GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (provisioning.AlertRuleWithFolderTitle, error)
 	GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroupWithFolderTitle, error)
@@ -335,9 +335,9 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 	}
 	provenance := determineProvenance(c)
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), c.SignedInUser, upstreamModel, alerting_models.Provenance(provenance))
-	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
-		return ErrResp(http.StatusBadRequest, err, "")
-	}
+		if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
 	if err != nil {
 		if errors.Is(err, alerting_models.ErrAlertRuleUniqueConstraintViolation) {
 			return ErrResp(http.StatusBadRequest, err, "")
@@ -488,7 +488,8 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 	}
 	provenance := determineProvenance(c)
 
-	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser, groupModel, alerting_models.Provenance(provenance))
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), groupModel, userID, alerting_models.Provenance(provenance))
 	if errors.Is(err, alerting_models.ErrAlertRuleUniqueConstraintViolation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}

@@ -150,11 +150,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	defaultNamespace, err := service.ruleStore.GetOrCreateDefaultAlertingNamespace(ctx, rule.OrgID)
-	if err != nil {
-		return models.AlertRule{}, err
-	}
-	if err = service.ensureRuleNamespace(ctx, user, &rule, defaultNamespace.UID); err != nil {
+	if err = service.ensureRuleNamespace(ctx, user, rule); err != nil {
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
@@ -263,7 +259,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 	})
 }
 
-func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int64, user identity.Requester, group models.AlertRuleGroup, provenance models.Provenance) error {
+func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int64, group models.AlertRuleGroup, userID int64, provenance models.Provenance) error {
 	if err := models.ValidateRuleGroupInterval(group.Interval, service.baseIntervalSeconds); err != nil {
 		return err
 	}
@@ -271,17 +267,6 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	delta, err := service.calcDelta(ctx, orgID, group)
 	if err != nil {
 		return err
-	}
-
-	defaultNamespace, err := service.ruleStore.GetOrCreateDefaultAlertingNamespace(ctx, orgID)
-	if err != nil {
-		return err
-	}
-
-	for _, rule := range delta.New {
-		if err := service.ensureRuleNamespace(ctx, user, rule, defaultNamespace.UID); err != nil {
-			return err
-		}
 	}
 
 	if len(delta.New) == 0 && len(delta.Update) == 0 && len(delta.Delete) == 0 {
@@ -301,11 +286,6 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		}
 	}
 
-	// default to 0 if there is no user
-	userID := int64(0)
-	if user != nil {
-		userID, _ = identity.UserIdentifier(user.GetNamespacedID())
-	}
 	return service.persistDelta(ctx, orgID, delta, userID, provenance)
 }
 
@@ -675,32 +655,26 @@ func (service *AlertRuleService) checkGroupLimits(group models.AlertRuleGroup) e
 
 // ensureRuleNamespace ensures that the rule has a valid namespace UID.
 // If the rule does not have a namespace UID, it will be set to the default namespace.
-func (service *AlertRuleService) ensureRuleNamespace(ctx context.Context, user identity.Requester, rule *models.AlertRule, defaultNsUID string) error {
+func (service *AlertRuleService) ensureRuleNamespace(ctx context.Context, user identity.Requester, rule models.AlertRule) error {
 	if user == nil {
 		return nil // noop if no user
 	}
 
-	if rule == nil {
-		return errors.New("rule must not be nil")
+	if rule.NamespaceUID == "" {
+		return fmt.Errorf("%w: folderUID must be set", models.ErrAlertRuleFailedValidation)
 	}
 
-	if rule.NamespaceUID != "" {
-		// if namespace UID is set, check that it exists
-		_, err := service.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID: rule.OrgID,
-			UID:   &rule.NamespaceUID,
-			// use bg user to avoid access control checks
-			SignedInUser: user,
-		})
-		if err != nil {
-			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return fmt.Errorf("namespace UID '%s' does not exist", rule.NamespaceUID)
-			}
-			return err
+	// ensure the namespace exists
+	_, err := service.folderService.Get(ctx, &folder.GetFolderQuery{
+		OrgID:        rule.OrgID,
+		UID:          &rule.NamespaceUID,
+		SignedInUser: user,
+	})
+	if err != nil {
+		if errors.Is(err, dashboards.ErrFolderNotFound) {
+			return fmt.Errorf("%w: folder does not exist", models.ErrAlertRuleFailedValidation)
 		}
-	} else {
-		// if namespace UID is not set, use the default
-		rule.NamespaceUID = defaultNsUID
+		return err
 	}
 
 	return nil
