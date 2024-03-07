@@ -9,6 +9,8 @@ import { reactivePluginExtensionRegistry } from 'app/features/plugins/extensions
 
 import { getCoreExtensionPoints, getPluginCapabilities, getPluginExtensionPoints } from '../utils';
 
+import { ExtensionSettingsForm } from './ExtensionSettingsForm';
+
 export default function ExtensionSettings(): ReactElement | null {
   const params = useParams<{ id: string }>();
   const activeExtensionPointId = params.id ? decodeURIComponent(params.id) : null;
@@ -94,11 +96,7 @@ export default function ExtensionSettings(): ReactElement | null {
         {!activeExtensionPointId && <div>Select an extension point to view its extensions.</div>}
 
         {activeExtensionPointId && (
-          <div>
-            <h3>
-              Extensions point <code>{activeExtensionPointId}</code>
-            </h3>
-          </div>
+          <ExtensionSettingsForm extensionPointId={activeExtensionPointId} registry={registry} />
         )}
       </div>
     </div>
@@ -153,6 +151,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   activeLeftColumnGroupItem: css`
     color: ${theme.colors.text.primary};
+    text-decoration: underline;
   `,
   code: css`
     font-family: ${theme.typography.fontFamilyMonospace};
@@ -161,6 +160,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   leftColumnGroupContent: css``,
   rightColumn: css`
     flex-grow: 1;
-    padding: ${theme.spacing(2)};
+    padding: ${theme.spacing(2)} ${theme.spacing(4)};
   `,
 });
