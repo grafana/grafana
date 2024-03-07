@@ -26,29 +26,29 @@ export const LogMessages = {
   unknownMessageFromError: 'unknown messageFromError',
 };
 
-const alertingLogger = createMonitoringLogger('features.alerting', { module: 'Alerting' });
+const { logInfo, logError, logMeasurement } = createMonitoringLogger('features.alerting', { module: 'Alerting' });
 
-export function logInfo(message: string, context?: Record<string, string>) {
-  alertingLogger.logInfo(message, context);
-}
-
-export function logError(error: Error, context?: Record<string, string>) {
-  alertingLogger.logError(error, context);
-}
+export { logInfo, logError, logMeasurement };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
+  type: string,
   func: TFunc,
-  message: string,
   context: Record<string, string>
 ): (...args: Parameters<TFunc>) => Promise<Awaited<ReturnType<TFunc>>> {
   return async function (...args) {
     const startLoadingTs = performance.now();
+
     const response = await func(...args);
-    logInfo(message, {
-      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
-      ...context,
-    });
+    const loadTimesMs = performance.now() - startLoadingTs;
+
+    logMeasurement(
+      type,
+      {
+        loadTimesMs,
+      },
+      context
+    );
 
     return response;
   };
@@ -56,8 +56,8 @@ export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RuleNamespace[]>>(
+  type: string,
   func: TFunc,
-  message: string,
   context: Record<string, string>
 ) {
   return async (...args: Parameters<TFunc>) => {
@@ -66,13 +66,16 @@ export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => P
 
     const { namespacesCount, groupsCount, rulesCount } = getPromRulesMetadata(response);
 
-    logInfo(message, {
-      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
-      namespacesCount,
-      groupsCount,
-      rulesCount,
-      ...context,
-    });
+    logMeasurement(
+      type,
+      {
+        loadTimeMs: performance.now() - startLoadingTs,
+        namespacesCount,
+        groupsCount,
+        rulesCount,
+      },
+      context
+    );
     return response;
   };
 }
@@ -83,9 +86,9 @@ function getPromRulesMetadata(promRules: RuleNamespace[]) {
   const rulesCount = promRules.flatMap((ns) => ns.groups).flatMap((g) => g.rules).length;
 
   const metadata = {
-    namespacesCount: namespacesCount.toFixed(0),
-    groupsCount: groupsCount.toFixed(0),
-    rulesCount: rulesCount.toFixed(0),
+    namespacesCount: namespacesCount,
+    groupsCount: groupsCount,
+    rulesCount: rulesCount,
   };
 
   return metadata;
@@ -93,8 +96,8 @@ function getPromRulesMetadata(promRules: RuleNamespace[]) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withRulerRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RulerRulesConfigDTO>>(
+  type: string,
   func: TFunc,
-  message: string,
   context: Record<string, string>
 ) {
   return async (...args: Parameters<TFunc>) => {
@@ -103,26 +106,29 @@ export function withRulerRulesMetadataLogging<TFunc extends (...args: any[]) => 
 
     const { namespacesCount, groupsCount, rulesCount } = getRulerRulesMetadata(response);
 
-    logInfo(message, {
-      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
-      namespacesCount,
-      groupsCount,
-      rulesCount,
-      ...context,
-    });
+    logMeasurement(
+      type,
+      {
+        namespacesCount,
+        groupsCount,
+        rulesCount,
+        loadTimeMs: performance.now() - startLoadingTs,
+      },
+      context
+    );
     return response;
   };
 }
 
 function getRulerRulesMetadata(rulerRules: RulerRulesConfigDTO) {
-  const namespacesCount = Object.keys(rulerRules).length;
+  const namespaces = Object.keys(rulerRules);
   const groups = Object.values(rulerRules).flatMap((groups) => groups);
   const rules = groups.flatMap((group) => group.rules);
 
   return {
-    namespacesCount: namespacesCount.toFixed(0),
-    groupsCount: groups.length.toFixed(0),
-    rulesCount: rules.length.toFixed(0),
+    namespacesCount: namespaces.length,
+    groupsCount: groups.length,
+    rulesCount: rules.length,
   };
 }
 

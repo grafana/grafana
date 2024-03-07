@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 
-import { logInfo } from '../Analytics';
+import { logMeasurement } from '../Analytics';
 
 export const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (requestOptions) => {
   try {
@@ -11,12 +11,17 @@ export const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (
 
     const { data, ...meta } = await lastValueFrom(getBackendSrv().fetch(requestOptions));
 
-    logInfo('Request finished', {
-      loadTimeMs: (performance.now() - requestStartTs).toFixed(0),
-      url: requestOptions.url,
-      method: requestOptions.method ?? '',
-      responseStatus: meta.statusText,
-    });
+    logMeasurement(
+      'backendSrvBaseQuery',
+      {
+        loadTimeMs: performance.now() - requestStartTs,
+      },
+      {
+        url: requestOptions.url,
+        method: requestOptions.method ?? 'GET',
+        responseStatus: meta.statusText,
+      }
+    );
 
     return { data, meta };
   } catch (error) {
