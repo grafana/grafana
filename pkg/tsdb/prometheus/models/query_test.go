@@ -571,7 +571,7 @@ func TestRateInterval(t *testing.T) {
 				},
 			},
 			want: &models.Query{
-				Expr: "rate(rpc_durations_seconds_count[2m0s])",
+				Expr: "rate(rpc_durations_seconds_count[2m30s])",
 				Step: time.Second * 30,
 			},
 		},
@@ -637,75 +637,6 @@ func TestRateInterval(t *testing.T) {
 			require.Equal(t, tt.want.Step, res.Step)
 		})
 	}
-
-	t.Run("minStep is auto and ds scrape interval 30s and time range 1 hour", func(t *testing.T) {
-		query := backend.DataQuery{
-			RefID:         "G",
-			QueryType:     "",
-			MaxDataPoints: 1613,
-			Interval:      30 * time.Second,
-			TimeRange: backend.TimeRange{
-				From: now,
-				To:   now.Add(1 * time.Hour),
-			},
-			JSON: []byte(`{
-			"datasource":{"type":"prometheus","uid":"zxS5e5W4k"},
-			"datasourceId":38,
-			"editorMode":"code",
-			"exemplar":false,
-			"expr":"sum(rate(process_cpu_seconds_total[$__rate_interval]))",
-			"instant":false,
-			"interval":"",
-			"intervalMs":30000,
-			"key":"Q-f96b6729-c47a-4ea8-8f71-a79774cf9bd5-0",
-			"legendFormat":"__auto",
-			"maxDataPoints":1613,
-			"range":true,
-			"refId":"G",
-			"requestId":"1G",
-			"utcOffsetSec":3600
-		}`),
-		}
-		res, err := models.Parse(query, "30s", intervalCalculator, false)
-		require.NoError(t, err)
-		require.Equal(t, "sum(rate(process_cpu_seconds_total[2m0s]))", res.Expr)
-		require.Equal(t, 30*time.Second, res.Step)
-	})
-
-	t.Run("minStep is auto and ds scrape interval 15s and time range 5 minutes", func(t *testing.T) {
-		query := backend.DataQuery{
-			RefID:         "A",
-			QueryType:     "",
-			MaxDataPoints: 1055,
-			Interval:      15 * time.Second,
-			TimeRange: backend.TimeRange{
-				From: now,
-				To:   now.Add(5 * time.Minute),
-			},
-			JSON: []byte(`{
-			"datasource": {
-		        "type": "prometheus",
-		        "uid": "2z9d6ElGk"
-		    },
-		    "editorMode": "code",
-		    "expr": "sum(rate(cache_requests_total[$__rate_interval]))",
-		    "legendFormat": "__auto",
-		    "range": true,
-		    "refId": "A",
-		    "exemplar": false,
-		    "requestId": "1A",
-		    "utcOffsetSec": 0,
-		    "interval": "",
-		    "datasourceId": 508,
-		    "intervalMs": 15000,
-		    "maxDataPoints": 1055
-		}`),
-		}
-		res, err := models.Parse(query, "15s", intervalCalculator, false)
-		require.NoError(t, err)
-		require.Equal(t, "sum(rate(cache_requests_total[1m0s]))", res.Expr)
-		require.Equal(t, 15*time.Second, res.Step)
-	})
 }
 
 func mockQuery(expr string, interval string, intervalMs int64, timeRange *backend.TimeRange) backend.DataQuery {
@@ -716,7 +647,7 @@ func mockQuery(expr string, interval string, intervalMs int64, timeRange *backen
 		}
 	}
 	return backend.DataQuery{
-		Interval: time.Duration(intervalMs) * time.Millisecond,
+		Interval: 2 * time.Minute,
 		JSON: []byte(fmt.Sprintf(`{
 			"expr": "%s",
 			"format": "time_series",

@@ -96,7 +96,6 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 		query.Interval,
 		calculatedMinStep,
 		model.Interval,
-		dsScrapeInterval,
 		timeRange,
 	)
 	var rangeQuery, instantQuery bool
@@ -228,14 +227,12 @@ func calculateRateInterval(
 // queryInterval                Requested interval in milliseconds. This value may be overridden by MinStep in query options
 // calculatedMinStep            Calculated final step value. It was calculated in calculatePrometheusInterval
 // requestedMinStep             Requested minimum step value. QueryModel.interval
-// dsScrapeInterval             Data source scrape interval in the config
 // timeRange                    Requested time range for query
 func interpolateVariables(
 	expr string,
 	queryInterval time.Duration,
 	calculatedMinStep time.Duration,
 	requestedMinStep string,
-	dsScrapeInterval string,
 	timeRange time.Duration,
 ) string {
 	rangeMs := timeRange.Milliseconds()
@@ -247,9 +244,6 @@ func interpolateVariables(
 	} else {
 		if requestedMinStep == varInterval || requestedMinStep == varIntervalAlt {
 			requestedMinStep = calculatedMinStep.String()
-		}
-		if requestedMinStep == "" {
-			requestedMinStep = dsScrapeInterval
 		}
 		rateInterval = calculateRateInterval(queryInterval, requestedMinStep)
 	}
