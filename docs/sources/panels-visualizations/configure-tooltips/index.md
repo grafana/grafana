@@ -34,6 +34,8 @@ You can configure tooltips for the following visualizations:
 
 Some visualizations, for example [candlestick][] and [flame graph][], have tooltips, but they aren't configurable. These visualizations don't have a **Tooltip** section in the panel editor pane. [Geomaps][geomaps] provide you the option to have tooltips triggered upon click or hover under the **Map controls** options in the panel editor pane.
 
+<!-- if we add documentation for treemap, some info will need to be added in the paragraph above -->
+
 ## Tooltip options
 
 You can find the following options under the **Tooltip** section in the panel edit pane.
@@ -44,7 +46,7 @@ Not all of the options listed apply to all visualizations with tooltips.
 
 ### Tooltip mode
 
-Choose how tooltips behave.
+Choose how tooltips behave with the following options:
 
 - **Single** - The tooltip only the single series that you're hovering over in the visualization.
 - **All** - The tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
@@ -66,7 +68,7 @@ Set the hover proximity (in pixels) to control how close the cursor must be to a
 
 ![Adding a hover proximity limit for tooltips](/media/docs/grafana/gif-grafana-10-4-hover-proximity.gif)
 
-### Show histogram (y axis)
+### Show histogram (Y axis)
 
 For the heatmap visualization only, when you set the **Tooltip mode** to **Single**, the **Show histogram (Y axis)** option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.
 
