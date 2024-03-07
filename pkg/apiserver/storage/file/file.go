@@ -120,12 +120,12 @@ func (s *Storage) Versioner() storage.Versioner {
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	filename := s.filePath(key)
-	if exists(filename) {
+	fpath := s.filePath(key)
+	if exists(fpath) {
 		return storage.NewKeyExistsError(key, 0)
 	}
 
-	dirname := filepath.Dir(filename)
+	dirname := filepath.Dir(fpath)
 	if err := ensureDir(dirname); err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	if err := writeFile(s.codec, filename, obj); err != nil {
+	if err := writeFile(s.codec, fpath, obj); err != nil {
 		return err
 	}
 
@@ -186,7 +186,7 @@ func (s *Storage) Delete(
 	validateDeletion storage.ValidateObjectFunc,
 	cachedExistingObject runtime.Object,
 ) error {
-	filename := s.filePath(key)
+	fpath := s.filePath(key)
 	var currentState runtime.Object
 	var stateIsCurrent bool
 	if cachedExistingObject != nil {
@@ -241,7 +241,7 @@ func (s *Storage) Delete(
 			return err
 		}
 
-		if err := deleteFile(filename); err != nil {
+		if err := deleteFile(fpath); err != nil {
 			return err
 		}
 
@@ -305,8 +305,15 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
-	filename := s.filePath(key)
-	obj, err := readFile(s.codec, filename, func() runtime.Object {
+	fpath := s.filePath(key)
+
+	// Since it's a get, check if the dir exists and return early as needed
+	dirname := filepath.Dir(fpath)
+	if !exists(dirname) {
+		return apierrors.NewNotFound(s.gr, s.nameFromKey(key))
+	}
+
+	obj, err := readFile(s.codec, fpath, func() runtime.Object {
 		return objPtr
 	})
 	if err != nil {
@@ -364,9 +371,14 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		}
 	}
 
-	dirname := s.dirPath(key)
+	dirpath := s.dirPath(key)
+	// Since it's a get, check if the dir exists and return early as needed
+	if !exists(dirpath) {
+		// ensure we return empty list in listObj insted of a not found error
+		return nil
+	}
 
-	objs, err := readDirRecursive(s.codec, dirname, s.newFunc)
+	objs, err := readDirRecursive(s.codec, dirpath, s.newFunc)
 	if err != nil {
 		return err
 	}
@@ -424,18 +436,25 @@ func (s *Storage) GuaranteedUpdate(
 	var res storage.ResponseMeta
 	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
 		var (
-			filename = s.filePath(key)
+			fpath   = s.filePath(key)
+			dirpath = filepath.Dir(fpath)
 
 			obj     runtime.Object
 			err     error
 			created bool
 		)
 
-		if !exists(filename) && !ignoreNotFound {
+		if !exists(dirpath) {
+			if err := ensureDir(dirpath); err != nil {
+				return err
+			}
+		}
+
+		if !exists(fpath) && !ignoreNotFound {
 			return apierrors.NewNotFound(s.gr, s.nameFromKey(key))
 		}
 
-		obj, err = readFile(s.codec, filename, s.newFunc)
+		obj, err = readFile(s.codec, fpath, s.newFunc)
 		if err != nil {
 			// fallback to new object if the file is not found
 			obj = s.newFunc()
@@ -482,7 +501,7 @@ func (s *Storage) GuaranteedUpdate(
 		if err := s.Versioner().UpdateObject(updatedObj, *generatedRV); err != nil {
 			return err
 		}
-		if err := writeFile(s.codec, filename, updatedObj); err != nil {
+		if err := writeFile(s.codec, fpath, updatedObj); err != nil {
 			return err
 		}
 		eventType := watch.Modified
