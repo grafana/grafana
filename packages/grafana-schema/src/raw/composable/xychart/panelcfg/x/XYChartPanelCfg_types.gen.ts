@@ -4,12 +4,9 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
-
-import * as common from '@grafana/schema';
 
 export const pluginVersion = "11.0.0-pre";
 
