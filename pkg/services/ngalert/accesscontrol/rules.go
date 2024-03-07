@@ -48,6 +48,7 @@ func (r *RuleService) HasAccessOrError(ctx context.Context, user identity.Reques
 	return nil
 }
 
+// getReadFolderAccessEvaluator constructs accesscontrol.Evaluator that checks all permissions required to read rules in  specific folder
 func getReadFolderAccessEvaluator(folderUID string) accesscontrol.Evaluator {
 	return accesscontrol.EvalAll(
 		accesscontrol.EvalPermission(ruleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
@@ -55,7 +56,7 @@ func getReadFolderAccessEvaluator(folderUID string) accesscontrol.Evaluator {
 	)
 }
 
-// getRulesQueryEvaluator constructs accesscontrol.Evaluator that checks all permissions required to access provided rules
+// getRulesReadEvaluator constructs accesscontrol.Evaluator that checks all permissions required to access provided rules
 func (r *RuleService) getRulesReadEvaluator(rules ...*models.AlertRule) accesscontrol.Evaluator {
 	added := make(map[string]struct{}, 1)
 	evals := make([]accesscontrol.Evaluator, 0, 1)
