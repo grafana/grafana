@@ -4,7 +4,7 @@ import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { EmbeddedScene, SceneFlexLayout, SceneFlexItem, SceneReactObject } from '@grafana/scenes';
-import { Icon, useStyles2, useTheme2, Stack } from '@grafana/ui';
+import { useStyles2, useTheme2, Stack, Text, TextLink } from '@grafana/ui';
 
 export const getOverviewScene = () => {
   return new EmbeddedScene({
@@ -26,9 +26,9 @@ export default function GettingStarted() {
 
   return (
     <div className={styles.grid}>
-      <ContentBox className={styles.flowBlock}>
-        <div>
-          <h3>How it works</h3>
+      <ContentBox>
+        <Stack direction="column" gap={1}>
+          <Text element="h3">How it works</Text>
           <ul className={styles.list}>
             <li>
               Grafana alerting periodically queries data sources and evaluates the condition defined in the alert rule
@@ -37,19 +37,24 @@ export default function GettingStarted() {
             <li>Firing instances are routed to notification policies based on matching labels</li>
             <li>Notifications are sent out to the contact points specified in the notification policy</li>
           </ul>
-        </div>
-        <SVG
-          src={`public/img/alerting/at_a_glance_${theme.name.toLowerCase()}.svg`}
-          width={undefined}
-          height={undefined}
-        />
+          <div className={styles.svgContainer}>
+            <Stack justifyContent={'center'}>
+              <SVG
+                src={`public/img/alerting/at_a_glance_${theme.name.toLowerCase()}.svg`}
+                width={undefined}
+                height={undefined}
+              />
+            </Stack>
+          </div>
+        </Stack>
       </ContentBox>
-      <ContentBox className={styles.gettingStartedBlock}>
-        <h3>Get started</h3>
-        <Stack direction="column">
+      <ContentBox>
+        <Stack direction="column" gap={1}>
+          <Text element="h3">Get started</Text>
           <ul className={styles.list}>
             <li>
-              <strong>Create an alert rule</strong> by adding queries and expressions from multiple data sources.
+              <Text weight="bold">Create an alert rule</Text> by adding queries and expressions from multiple data
+              sources.
             </li>
             <li>
               <strong>Add labels</strong> to your alert rules <strong>to connect them to notification policies</strong>
@@ -61,9 +66,9 @@ export default function GettingStarted() {
               <strong>Configure notification policies</strong> to route your alert instances to contact points.
             </li>
           </ul>
-          <div>
-            <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Docs" />
-          </div>
+          <TextLink href="https://grafana.com/docs/grafana/latest/alerting/" icon="angle-right" inline={false}>
+            Read more in the docs
+          </TextLink>
         </Stack>
       </ContentBox>
     </div>
@@ -74,48 +79,21 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   grid: css`
     display: grid;
     grid-template-rows: min-content auto auto;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: ${theme.spacing(2)};
     width: 100%;
+
+    ${theme.breakpoints.up('lg')} {
+      grid-template-columns: 3fr 2fr;
+    }
   `,
   ctaContainer: css`
     grid-column: 1 / span 5;
   `,
-  flowBlock: css`
-    grid-column: 1 / span 5;
-
-    display: flex;
-    flex-wrap: wrap;
-    gap: ${theme.spacing(1)};
-
-    & > div {
-      flex: 2;
-      min-width: 350px;
+  svgContainer: css`
+    & svg {
+      max-width: 900px;
     }
-    & > svg {
-      flex: 3;
-      min-width: 500px;
-    }
-  `,
-  videoBlock: css`
-    grid-column: 3 / span 3;
-
-    // Video required
-    position: relative;
-    padding: 56.25% 0 0 0; /* 16:9 */
-
-    iframe {
-      position: absolute;
-      top: ${theme.spacing(2)};
-      left: ${theme.spacing(2)};
-      width: calc(100% - ${theme.spacing(4)});
-      height: calc(100% - ${theme.spacing(4)});
-      border: none;
-    }
-  `,
-  gettingStartedBlock: css`
-    grid-column: 1 / span 2;
-    justify-content: space-between;
   `,
   list: css`
     margin: ${theme.spacing(0, 2)};
@@ -167,7 +145,7 @@ const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
     paddingBottom: theme.spacing(2),
   }),
   ctaContainer: css`
-    padding: ${theme.spacing(4, 2)};
+    padding: ${theme.spacing(2)};
     display: flex;
     gap: ${theme.spacing(4)};
     justify-content: space-between;
@@ -200,12 +178,14 @@ function WelcomeCTABox({ title, description, href, hrefText }: WelcomeCTABoxProp
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.title}>{title}</h3>
+      <Text element="h2" variant="h3">
+        {title}
+      </Text>
       <div className={styles.desc}>{description}</div>
       <div className={styles.actionRow}>
-        <a href={href} className={styles.link}>
+        <TextLink href={href} inline={false}>
           {hrefText}
-        </a>
+        </TextLink>
       </div>
     </div>
   );
@@ -216,15 +196,15 @@ const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
     flex: 1;
     min-width: 240px;
     display: grid;
-    gap: ${theme.spacing(1)};
+    row-gap: ${theme.spacing(1)};
     grid-template-columns: min-content 1fr 1fr 1fr;
     grid-template-rows: min-content auto min-content;
-  `,
 
-  title: css`
-    margin-bottom: 0;
-    grid-column: 2 / span 3;
-    grid-row: 1;
+    & h2 {
+      margin-bottom: 0;
+      grid-column: 2 / span 3;
+      grid-row: 1;
+    }
   `,
 
   desc: css`
@@ -236,10 +216,6 @@ const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
     grid-column: 2 / span 3;
     grid-row: 3;
     max-width: 240px;
-  `,
-
-  link: css`
-    color: ${theme.colors.text.link};
   `,
 });
 
@@ -254,22 +230,5 @@ const getContentBoxStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(2)};
     background-color: ${theme.colors.background.secondary};
     border-radius: ${theme.shape.radius.default};
-  `,
-});
-
-function ArrowLink({ href, title }: { href: string; title: string }) {
-  const styles = useStyles2(getArrowLinkStyles);
-
-  return (
-    <a href={href} className={styles.link} rel="noreferrer">
-      {title} <Icon name="angle-right" size="xl" />
-    </a>
-  );
-}
-
-const getArrowLinkStyles = (theme: GrafanaTheme2) => ({
-  link: css`
-    display: block;
-    color: ${theme.colors.text.link};
   `,
 });
