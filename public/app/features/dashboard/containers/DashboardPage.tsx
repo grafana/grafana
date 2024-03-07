@@ -36,6 +36,7 @@ import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
+import { explicitlyControlledMigrationPanels } from '../state/PanelModel';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
 
@@ -349,7 +350,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             </section>
           )}
           {config.featureToggles.angularDeprecationUI && dashboard.hasAngularPlugins() && dashboard.uid !== null && (
-            <AngularDeprecationNotice dashboardUid={dashboard.uid} />
+            <AngularDeprecationNotice
+              dashboardUid={dashboard.uid}
+              showAutoMigrateLink={dashboard.panels.some((x) => explicitlyControlledMigrationPanels.includes(x.type))}
+            />
           )}
           <DashboardGrid
             dashboard={dashboard}
