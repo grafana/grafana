@@ -30,7 +30,7 @@ export const AskExpr: React.FC<Props> = ({ onChange, refIds, query }) => {
   return (
     <div>
       <SpeechRecognitionButton onResult={onSpeechResult} />
-      <SQLEditor language={{ id: 'txt' }} query={query.expression || initialQuery} onChange={onEditorChange} />
+      <SQLEditor language={{ id: 'markdown' }} query={query.expression || initialQuery} onChange={onEditorChange} />
     </div>
   );
 };
