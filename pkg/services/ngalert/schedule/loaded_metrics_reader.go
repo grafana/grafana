@@ -10,9 +10,9 @@ import (
 
 var _ eval.AlertingResultsReader = AlertingResultsFromRuleState{}
 
-func (sch *schedule) newLoadedMetricsReader(rule *ngmodels.AlertRule) eval.AlertingResultsReader {
+func (a *alertRuleInfo) newLoadedMetricsReader(rule *ngmodels.AlertRule) eval.AlertingResultsReader {
 	return &AlertingResultsFromRuleState{
-		Manager: sch.stateManager,
+		Manager: a.stateManager,
 		Rule:    rule,
 	}
 }

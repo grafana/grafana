@@ -1,7 +1,12 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { Button, Field, Form, HorizontalGroup, LinkButton } from '@grafana/ui';
+import {
+  ValidationLabels,
+  strongPasswordValidations,
+  strongPasswordValidationRegister,
+} from 'app/core/components/ValidationLabels/ValidationLabels';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 import { UserDTO } from 'app/types';
@@ -17,6 +22,10 @@ export interface Props {
 }
 
 export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) => {
+  const [displayValidationLabels, setDisplayValidationLabels] = useState(false);
+  const [pristine, setPristine] = useState(true);
+  const [newPassword, setNewPassword] = useState('');
+
   const { disableLoginForm } = config;
   const authSource = user.authLabels?.length && user.authLabels[0];
 
@@ -69,9 +78,14 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
                 <PasswordField
                   id="new-password"
                   autoComplete="new-password"
+                  onFocus={() => setDisplayValidationLabels(true)}
+                  value={newPassword}
                   {...register('newPassword', {
+                    onBlur: () => setPristine(false),
+                    onChange: (e) => setNewPassword(e.target.value),
                     required: t('profile.change-password.new-password-required', 'New password is required'),
                     validate: {
+                      strongPasswordValidationRegister,
                       confirm: (v) =>
                         v === getValues().confirmNew ||
                         t('profile.change-password.passwords-must-match', 'Passwords must match'),
@@ -85,7 +99,13 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
                   })}
                 />
               </Field>
-
+              {displayValidationLabels && (
+                <ValidationLabels
+                  pristine={pristine}
+                  password={newPassword}
+                  strongPasswordValidations={strongPasswordValidations}
+                />
+              )}
               <Field
                 label={t('profile.change-password.confirm-password-label', 'Confirm password')}
                 invalid={!!errors.confirmNew}
