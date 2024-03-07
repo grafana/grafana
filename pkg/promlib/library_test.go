@@ -59,8 +59,8 @@ func getMockPromTestSDKProvider(f *fakeHTTPClientProvider) *sdkhttpclient.Provid
 	return sdkhttpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{mid}})
 }
 
-func mockExtendTransportOptions(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) (*sdkhttpclient.Options, error) {
-	return clientOpts, nil
+func mockExtendTransportOptions(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error {
+	return nil
 }
 
 func TestService(t *testing.T) {
