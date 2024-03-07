@@ -56,7 +56,7 @@ export const TimeSeriesTooltip = ({
     seriesIdx,
     mode,
     sortOrder,
-    (field) => field.type === FieldType.number
+    (field) => field.type === FieldType.number || field.type === FieldType.enum
   );
 
   let footer: ReactNode;

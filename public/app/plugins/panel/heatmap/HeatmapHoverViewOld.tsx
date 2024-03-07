@@ -9,15 +9,15 @@ import {
   getFieldDisplayName,
   LinkModel,
   TimeRange,
-  getLinksSupplier,
   InterpolateFunction,
-  ScopedVars,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
+
+import { getDataLinks } from '../status-history/utils';
 
 import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
@@ -29,7 +29,6 @@ type Props = {
   showHistogram?: boolean;
   timeRange: TimeRange;
   replaceVars: InterpolateFunction;
-  scopedVars: ScopedVars[];
 };
 
 export const HeatmapHoverView = (props: Props) => {
@@ -39,7 +38,7 @@ export const HeatmapHoverView = (props: Props) => {
   return <HeatmapHoverCell {...props} />;
 };
 
-const HeatmapHoverCell = ({ data, hover, showHistogram = false, scopedVars, replaceVars }: Props) => {
+const HeatmapHoverCell = ({ data, hover, showHistogram = false }: Props) => {
   const index = hover.dataIdx;
 
   const [isSparse] = useState(
@@ -70,7 +69,8 @@ const HeatmapHoverCell = ({ data, hover, showHistogram = false, scopedVars, repl
   const meta = readHeatmapRowsCustomMeta(data.heatmap);
   const yDisp = yField?.display ? (v: string) => formattedValueToString(yField.display!(v)) : (v: string) => `${v}`;
 
-  const yValueIdx = index % data.yBucketCount! ?? 0;
+  const yValueIdx = index % (data.yBucketCount ?? 1);
+  const xValueIdx = Math.floor(index / (data.yBucketCount ?? 1));
 
   let yBucketMin: string;
   let yBucketMax: string;
@@ -126,33 +126,16 @@ const HeatmapHoverCell = ({ data, hover, showHistogram = false, scopedVars, repl
 
   const count = countVals?.[index];
 
-  const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
-  const links: Array<LinkModel<Field>> = [];
-  const linkLookup = new Set<string>();
+  let links: Array<LinkModel<Field>> = [];
 
-  for (const field of visibleFields ?? []) {
-    const hasLinks = field.config.links && field.config.links.length > 0;
+  const linksField = data.series?.fields[yValueIdx + 1];
 
-    if (hasLinks && data.heatmap) {
-      const appropriateScopedVars = scopedVars.find(
-        (scopedVar) =>
-          scopedVar && scopedVar.__dataContext && scopedVar.__dataContext.value.field.name === nonNumericOrdinalDisplay
-      );
+  if (linksField != null) {
+    const visible = !Boolean(linksField.config.custom?.hideFrom?.tooltip);
+    const hasLinks = (linksField.config.links?.length ?? 0) > 0;
 
-      field.getLinks = getLinksSupplier(data.heatmap, field, appropriateScopedVars || {}, replaceVars);
-    }
-
-    if (field.getLinks) {
-      const value = field.values[index];
-      const display = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
-
-      field.getLinks({ calculatedValue: display, valueRowIndex: index }).forEach((link) => {
-        const key = `${link.title}/${link.href}`;
-        if (!linkLookup.has(key)) {
-          links.push(link);
-          linkLookup.add(key);
-        }
-      });
+    if (visible && hasLinks) {
+      links = getDataLinks(linksField, xValueIdx);
     }
   }
 
