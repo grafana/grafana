@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { dump } from 'js-yaml';
 import { keyBy, startCase } from 'lodash';
 import React from 'react';
 
@@ -29,12 +28,8 @@ import { WithReturnButton } from './components/WithReturnButton';
 import { ExpressionResult } from './components/expressions/Expression';
 import { getThresholdsForQueries, ThresholdDefinition } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
+import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
 import { AlertRuleAction, useAlertRuleAbility } from './hooks/useAbilities';
-import { DataSourceType } from './utils/datasource';
-import { isPromOrLokiQuery } from './utils/rule-form';
-
-const PrometheusQueryPreview = React.lazy(() => import('./components/rule-viewer/tabs/Query/PrometheusQueryPreview'));
-const LokiQueryPreview = React.lazy(() => import('./components/rule-viewer/tabs/Query/LokiQueryPreview'));
 
 interface GrafanaRuleViewerProps {
   rule: CombinedRule;
@@ -149,28 +144,6 @@ export function QueryPreview({
       </QueryBox>
       {dataSource && <RuleViewerVisualization data={queryData} thresholds={thresholds} />}
     </>
-  );
-}
-
-interface DatasourceModelPreviewProps {
-  model: AlertDataQuery;
-}
-
-function DatasourceModelPreview({ model }: DatasourceModelPreviewProps): React.ReactNode {
-  const { datasource } = model;
-
-  if (datasource?.type === DataSourceType.Prometheus && isPromOrLokiQuery(model)) {
-    return <PrometheusQueryPreview query={model.expr} />;
-  }
-
-  if (datasource?.type === DataSourceType.Loki && isPromOrLokiQuery(model)) {
-    return <LokiQueryPreview query={model.expr ?? ''} />;
-  }
-
-  return (
-    <pre>
-      <code>{dump(model)}</code>
-    </pre>
   );
 }
 
