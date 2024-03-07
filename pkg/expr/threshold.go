@@ -169,8 +169,8 @@ type ThresholdCommandConfig struct {
 
 type ThresholdConditionJSON struct {
 	Evaluator        ConditionEvalJSON  `json:"evaluator"`
-	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator"`
-	LoadedDimensions *data.Frame        `json:"loadedDimensions"`
+	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator,omitempty"`
+	LoadedDimensions *data.Frame        `json:"loadedDimensions,omitempty"`
 }
 
 // IsHysteresisExpression returns true if the raw model describes a hysteresis command:

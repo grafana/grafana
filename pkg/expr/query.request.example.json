@@ -32,13 +32,112 @@
       "queryType": "resample",
       "maxDataPoints": 1000,
       "intervalMs": 5,
-      "window": "1d",
       "downsampler": "last",
       "expression": "$A",
-      "upsampler": "pad"
+      "upsampler": "pad",
+      "window": "1d"
     },
     {
       "refId": "E",
+      "queryType": "classic_conditions",
+      "maxDataPoints": 1000,
+      "intervalMs": 5,
+      "conditions": [
+        {
+          "evaluator": {
+            "params": [
+              5
+            ],
+            "type": "gt"
+          },
+          "operator": {
+            "type": "and"
+          },
+          "query": {
+            "params": [
+              "A"
+            ]
+          },
+          "reducer": {
+            "type": "max"
+          }
+        }
+      ]
+    },
+    {
+      "refId": "F",
+      "queryType": "threshold",
+      "maxDataPoints": 1000,
+      "intervalMs": 5,
+      "conditions": [
+        {
+          "evaluator": {
+            "params": [
+              5
+            ],
+            "type": "gt"
+          }
+        }
+      ],
+      "expression": "A"
+    },
+    {
+      "refId": "G",
+      "queryType": "threshold",
+      "maxDataPoints": 1000,
+      "intervalMs": 5,
+      "expression": "B",
+      "conditions": [
+        {
+          "evaluator": {
+            "params": [
+              100
+            ],
+            "type": "gt"
+          },
+          "loadedDimensions": {
+            "data": {
+              "values": [
+                [
+                  18446744073709552000,
+                  2,
+                  3,
+                  4,
+                  5
+                ]
+              ]
+            },
+            "schema": {
+              "fields": [
+                {
+                  "name": "fingerprints",
+                  "type": "number",
+                  "typeInfo": {
+                    "frame": "uint64"
+                  }
+                }
+              ],
+              "meta": {
+                "type": "fingerprints",
+                "typeVersion": [
+                  1,
+                  0
+                ]
+              },
+              "name": "test"
+            }
+          },
+          "unloadEvaluator": {
+            "params": [
+              31
+            ],
+            "type": "lt"
+          }
+        }
+      ]
+    },
+    {
+      "refId": "H",
       "queryType": "sql",
       "maxDataPoints": 1000,
       "intervalMs": 5,

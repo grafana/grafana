@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -94,30 +95,80 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		schemabuilder.QueryTypeInfo{
 			Discriminators: data.NewDiscriminators("queryType", QueryTypeClassic),
 			GoType:         reflect.TypeOf(&ClassicQuery{}),
-			Examples:       []data.QueryExample{
-				// {
-				// 	Name: "do classic query (TODO)",
-				// 	SaveModel: ClassicQuery{
-				// 		// ????
-				// 		Conditions: []classic.ConditionJSON{},
-				// 	},
-				// },
+			Examples: []data.QueryExample{
+				{
+					Name: "Where query A > 5",
+					SaveModel: data.AsUnstructured(ClassicQuery{
+						Conditions: []classic.ConditionJSON{
+							{
+								Query: classic.ConditionQueryJSON{
+									Params: []string{"A"},
+								},
+								Reducer: classic.ConditionReducerJSON{
+									Type: "max",
+								},
+								Operator: classic.ConditionOperatorJSON{
+									Type: "and",
+								},
+								Evaluator: classic.ConditionEvalJSON{
+									Type:   "gt",
+									Params: []float64{5},
+								},
+							},
+						},
+					}),
+				},
 			},
 		},
 		schemabuilder.QueryTypeInfo{
 			Discriminators: data.NewDiscriminators("queryType", QueryTypeThreshold),
 			GoType:         reflect.TypeOf(&ThresholdQuery{}),
-			Examples:       []data.QueryExample{
-				// {
-				// 	Name: "TODO... a threshold query",
-				// 	SaveModel: ThresholdQuery{
-				// 		Expression: "$A",
-				// 	},
-				// },
+			Examples: []data.QueryExample{
+				{
+					Name: "Where query A > 5",
+					SaveModel: data.AsUnstructured(ThresholdQuery{
+						Expression: "A",
+						Conditions: []ThresholdConditionJSON{{
+							Evaluator: ConditionEvalJSON{
+								Type:   ThresholdIsAbove,
+								Params: []float64{5},
+							},
+						}},
+					}),
+				},
+				{
+					Name: "With loaded+unloaded evaluators",
+					SaveModel: toUnstructured(`{
+						"expression": "B",
+						"conditions": [
+						  {
+							"evaluator": {
+							  "params": [
+								100
+							  ],
+							  "type": "gt"
+							},
+							"unloadEvaluator": {
+							  "params": [
+								31
+							  ],
+							  "type": "lt"
+							},
+							"loadedDimensions": {"schema":{"name":"test","meta":{"type":"fingerprints","typeVersion":[1,0]},"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[18446744073709551615,2,3,4,5]]}}
+						  }
+						]
+					  }`),
+				},
 			},
 		},
 	)
 
 	require.NoError(t, err)
 	_ = builder.UpdateQueryDefinition(t, "./")
+}
+
+func toUnstructured(ex string) data.Unstructured {
+	v := data.Unstructured{}
+	_ = json.Unmarshal([]byte(ex), &v.Object)
+	return v
 }

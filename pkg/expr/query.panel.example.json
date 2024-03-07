@@ -50,6 +50,111 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
+      "queryType": "classic_conditions",
+      "conditions": [
+        {
+          "evaluator": {
+            "params": [
+              5
+            ],
+            "type": "gt"
+          },
+          "operator": {
+            "type": "and"
+          },
+          "query": {
+            "params": [
+              "A"
+            ]
+          },
+          "reducer": {
+            "type": "max"
+          }
+        }
+      ]
+    },
+    {
+      "refId": "F",
+      "datasource": {
+        "type": "__expr__",
+        "uid": "TheUID"
+      },
+      "queryType": "threshold",
+      "expression": "A",
+      "conditions": [
+        {
+          "evaluator": {
+            "params": [
+              5
+            ],
+            "type": "gt"
+          }
+        }
+      ]
+    },
+    {
+      "refId": "G",
+      "datasource": {
+        "type": "__expr__",
+        "uid": "TheUID"
+      },
+      "queryType": "threshold",
+      "expression": "B",
+      "conditions": [
+        {
+          "evaluator": {
+            "params": [
+              100
+            ],
+            "type": "gt"
+          },
+          "loadedDimensions": {
+            "data": {
+              "values": [
+                [
+                  18446744073709552000,
+                  2,
+                  3,
+                  4,
+                  5
+                ]
+              ]
+            },
+            "schema": {
+              "fields": [
+                {
+                  "name": "fingerprints",
+                  "type": "number",
+                  "typeInfo": {
+                    "frame": "uint64"
+                  }
+                }
+              ],
+              "meta": {
+                "type": "fingerprints",
+                "typeVersion": [
+                  1,
+                  0
+                ]
+              },
+              "name": "test"
+            }
+          },
+          "unloadEvaluator": {
+            "params": [
+              31
+            ],
+            "type": "lt"
+          }
+        }
+      ]
+    },
+    {
+      "refId": "H",
+      "datasource": {
+        "type": "__expr__",
+        "uid": "TheUID"
+      },
       "queryType": "sql",
       "expression": "SELECT * FROM A limit 1"
     }

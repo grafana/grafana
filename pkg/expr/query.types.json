@@ -56,7 +56,7 @@
     {
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1709527428740",
+        "resourceVersion": "1709793147924",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -96,10 +96,12 @@
               "description": "Reducer Options",
               "properties": {
                 "mode": {
-                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
+                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers\n - `\"__expr__\"` \n - `\"-100\"` ",
                   "enum": [
                     "dropNN",
-                    "replaceNN"
+                    "replaceNN",
+                    "__expr__",
+                    "-100"
                   ],
                   "type": "string",
                   "x-enum-description": {
@@ -226,7 +228,7 @@
     {
       "metadata": {
         "name": "classic_conditions",
-        "resourceVersion": "1709252408346",
+        "resourceVersion": "1709792695246",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -326,13 +328,40 @@
           ],
           "type": "object"
         },
-        "examples": []
+        "examples": [
+          {
+            "name": "Where query A \u003e 5",
+            "saveModel": {
+              "conditions": [
+                {
+                  "evaluator": {
+                    "params": [
+                      5
+                    ],
+                    "type": "gt"
+                  },
+                  "operator": {
+                    "type": "and"
+                  },
+                  "query": {
+                    "params": [
+                      "A"
+                    ]
+                  },
+                  "reducer": {
+                    "type": "max"
+                  }
+                }
+              ]
+            }
+          }
+        ]
       }
     },
     {
       "metadata": {
         "name": "threshold",
-        "resourceVersion": "1709252408346",
+        "resourceVersion": "1709793141311",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -412,9 +441,7 @@
                   }
                 },
                 "required": [
-                  "evaluator",
-                  "unloadEvaluator",
-                  "loadedDimensions"
+                  "evaluator"
                 ],
                 "type": "object"
               },
@@ -435,7 +462,78 @@
           ],
           "type": "object"
         },
-        "examples": []
+        "examples": [
+          {
+            "name": "Where query A \u003e 5",
+            "saveModel": {
+              "conditions": [
+                {
+                  "evaluator": {
+                    "params": [
+                      5
+                    ],
+                    "type": "gt"
+                  }
+                }
+              ],
+              "expression": "A"
+            }
+          },
+          {
+            "name": "With loaded+unloaded evaluators",
+            "saveModel": {
+              "conditions": [
+                {
+                  "evaluator": {
+                    "params": [
+                      100
+                    ],
+                    "type": "gt"
+                  },
+                  "loadedDimensions": {
+                    "data": {
+                      "values": [
+                        [
+                          18446744073709552000,
+                          2,
+                          3,
+                          4,
+                          5
+                        ]
+                      ]
+                    },
+                    "schema": {
+                      "fields": [
+                        {
+                          "name": "fingerprints",
+                          "type": "number",
+                          "typeInfo": {
+                            "frame": "uint64"
+                          }
+                        }
+                      ],
+                      "meta": {
+                        "type": "fingerprints",
+                        "typeVersion": [
+                          1,
+                          0
+                        ]
+                      },
+                      "name": "test"
+                    }
+                  },
+                  "unloadEvaluator": {
+                    "params": [
+                      31
+                    ],
+                    "type": "lt"
+                  }
+                }
+              ],
+              "expression": "B"
+            }
+          }
+        ]
       }
     },
     {
