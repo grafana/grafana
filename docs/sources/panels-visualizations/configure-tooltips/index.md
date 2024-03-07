@@ -17,7 +17,7 @@ weight: 80
 
 # Configure tooltips
 
-<!--Intro: what are tooltips and what we do we use them for-->
+When you hover your cursor over a visualization, Grafana can display tooltips that contain more information about a data point like the exact time of a result. You can customize tooltips to to control how many series are included and their order. You can also copy the content from tooltips to use elsewhere. Learn more about configuring tooltips in [Tooltip options](#tooltip-options).
 
 ## Supported visualizations
 
@@ -43,25 +43,39 @@ Non-configurable tooltips:
 
 ## Tooltip options
 
+You can find the following options under the **Tooltip** section in the panel edit pane.
+
+{{% admonition type="note" %}}
+Not all of the options listed apply to all visualizations with tooltips.
+{{% /admonition %}}
+
 ### Tooltip mode
 
-- **Single** -
-- **All** -
-- **Hidden** -
+Choose how tooltips behave.
 
-When you choose All
+- **Single** - The tooltip only the single series that you're hovering over in the visualization.
+- **All** - The tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
+- **Hidden** - Tooltips aren't displayed when you interact with the visualization.
 
-- **None** -
-- **Ascending** -
-- **Descending** -
+You can use a [field override][] to hide individual series from the tooltip.
+
+### Values sort order
+
+When you set the **Tooltip mode** to **All**, the **Values sort order** option is displayed. This option controls the order in which values are listed in a tooltip. Choose from the following:
+
+- **None** - Grafana automatically sorts the values displayed in a tooltip.
+- **Ascending** - Values in the tooltip are listed from smallest to largest.
+- **Descending** - Values in the tooltip are listed from largest to smallest.
 
 ### Hover proximity
 
-Set the hover proximity to control...
+Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display.
+
+![Adding a hover proximity limit for tooltips](/media/docs/grafana/gif-grafana-10-4-hover-proximity.gif)
 
 ### Show histogram (y axis)
 
-Control whether or not the y-axis...
+For the heatmap visualization only, when you set the **Tooltip mode** to **Single**, the **Show histogram (Y axis)** option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.
 
 {{% docs/reference %}}
 [bar chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-chart"
@@ -99,4 +113,7 @@ Control whether or not the y-axis...
 
 [trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
 [trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
+
+[field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
+[field override]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides"
 {{% /docs/reference %}}
