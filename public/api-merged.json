@@ -19011,9 +19011,6 @@
     "ReportSchedule": {
       "type": "object",
       "properties": {
-        "day": {
-          "type": "string"
-        },
         "dayOfMonth": {
           "type": "string"
         },
@@ -19024,20 +19021,12 @@
         "frequency": {
           "type": "string"
         },
-        "hour": {
-          "type": "integer",
-          "format": "int64"
-        },
         "intervalAmount": {
           "type": "integer",
           "format": "int64"
         },
         "intervalFrequency": {
           "type": "string"
-        },
-        "minute": {
-          "type": "integer",
-          "format": "int64"
         },
         "startDate": {
           "type": "string",
