@@ -1,7 +1,6 @@
 package entity_server_tests
 
 import (
-	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -115,10 +114,6 @@ func requireVersionMatch(t *testing.T, obj *entity.Entity, m objectVersionMatche
 func TestIntegrationWatch(t *testing.T) {
 	testCtx := createTestContext(t)
 	testCtx.ctx = appcontext.WithUser(testCtx.ctx, testCtx.user)
-	// Prevent watch from waiting forever
-	ctx, cancel := context.WithTimeout(testCtx.ctx, time.Second*10)
-	defer cancel()
-	testCtx.ctx = ctx
 
 	dbType := os.Getenv("GRAFANA_TEST_DB")
 	if dbType == migrator.SQLite {
@@ -129,13 +124,8 @@ func TestIntegrationWatch(t *testing.T) {
 	}
 
 	// Update env with entity_api db config
-	s, _ := testCtx.testEnv.SQLStore.Cfg.Raw.NewSection("entity_api")
-	_, err := s.NewKey("db_type", dbType)
+	err := addUnifiedStorageConfig(t, testCtx, dbType)
 	require.NoError(t, err)
-	_, _ = s.NewKey("db_host", "localhost")
-	_, _ = s.NewKey("db_name", "grafanatest")
-	_, _ = s.NewKey("db_user", "grafanatest")
-	_, _ = s.NewKey("db_pass", "grafanatest")
 
 	group := "test.grafana.app"
 	resource := "jsonobjs"
@@ -179,7 +169,6 @@ func TestIntegrationWatch(t *testing.T) {
 		}
 		updateResp, err := testCtx.client.Update(testCtx.ctx, updateReq)
 		require.NoError(t, err)
-		//TODO why is the Entity.Action wrong?
 		require.Equal(t, entity.Entity_UPDATED, updateResp.Entity.Action)
 
 		// watch client receives update
@@ -187,7 +176,31 @@ func TestIntegrationWatch(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, testKey, res.Entity.Key)
 		require.Equal(t, entity.Entity_UPDATED, res.Entity.Action)
+
+		// delete entity
+		_, err = testCtx.client.Delete(testCtx.ctx, &entity.DeleteEntityRequest{
+			Key:             testKey,
+			PreviousVersion: res.Entity.ResourceVersion,
+		})
+		require.NoError(t, err)
+
+		// watch client receives delete
+		res, err = watchClient.Recv()
+		require.NoError(t, err)
+		require.Equal(t, testKey, res.Entity.Key)
+		require.Equal(t, entity.Entity_DELETED, res.Entity.Action)
 	})
+}
+
+func addUnifiedStorageConfig(t *testing.T, testCtx testContext, dbType string) error {
+	s, _ := testCtx.testEnv.SQLStore.Cfg.Raw.NewSection("entity_api")
+	_, err := s.NewKey("db_type", dbType)
+	require.NoError(t, err)
+	_, _ = s.NewKey("db_host", "localhost")
+	_, _ = s.NewKey("db_name", "grafanatest")
+	_, _ = s.NewKey("db_user", "grafanatest")
+	_, _ = s.NewKey("db_pass", "grafanatest")
+	return err
 }
 
 func TestIntegrationEntityServer(t *testing.T) {
