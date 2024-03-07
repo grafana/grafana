@@ -1,14 +1,23 @@
 import { css } from '@emotion/css';
-import React, { ReactElement, useState } from 'react';
+import React, { ReactElement } from 'react';
 import { useObservable } from 'react-use';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
-import { useStyles2, TabsBar, TabContent, Tab, Counter } from '@grafana/ui';
+import { GrafanaTheme2, PluginExtensionPointsMeta } from '@grafana/data';
+import { useStyles2, Counter } from '@grafana/ui';
 import { reactivePluginExtensionRegistry } from 'app/features/plugins/extensions/reactivePluginExtensionRegistry';
+
+import { PluginExtensionRegistry } from '../../../extensions/types';
+
+export type PluginExtensionPoint = {
+  id: string;
+  title?: string;
+  description?: string;
+};
 
 export default function ExtensionSettings(): ReactElement | null {
   const styles = useStyles2(getStyles);
   const registry = useObservable(reactivePluginExtensionRegistry.asObservable());
+  const pluginExtensionPoints = getPluginExtensionPoints(registry);
 
   return (
     <div className={styles.container}>
@@ -17,23 +26,37 @@ export default function ExtensionSettings(): ReactElement | null {
         {/* Extension points */}
         <div className={styles.leftColumnGroup}>
           <div className={styles.leftColumnGroupTitle}>Extension points</div>
+
+          {/* Core extension points */}
           <div className={styles.leftColumnGroupSubTitle}>Core</div>
           <div className={styles.leftColumnGroupContent}>
-            <div className={styles.leftColumnGroupItem}>
-              Extension point 1 <Counter value={3} />
-            </div>
-            <div className={styles.leftColumnGroupItem}>Extension point 1</div>
-            <div className={styles.leftColumnGroupItem}>
-              Extension point 1 <Counter value={2} />
-            </div>
+            {Object.keys(PluginExtensionPointsMeta).map((extensionPointId, index) => (
+              <a
+                href={`/extensions/settings/${encodeURIComponent(extensionPointId)}`}
+                key={index}
+                onClick={() => {}}
+                className={styles.leftColumnGroupItem}
+              >
+                {Object.values(PluginExtensionPointsMeta)[index].title}
+              </a>
+            ))}
           </div>
 
-          <div className={styles.leftColumnGroupSubTitle}>Plugin 2</div>
+          {/* Plugin extension points */}
+          <div className={styles.leftColumnGroupSubTitle}>Plugins</div>
           <div className={styles.leftColumnGroupContent}>
-            <div className={styles.leftColumnGroupItem}>Extension point 1</div>
-            <div className={styles.leftColumnGroupItem}>
-              Extension point 1 <Counter value={2} />
-            </div>
+            {pluginExtensionPoints.map((extensionPoint, index) => (
+              <a
+                href={`/extensions/settings/${encodeURIComponent(extensionPoint.id)}`}
+                key={index}
+                onClick={() => {}}
+                className={styles.leftColumnGroupItem}
+              >
+                {extensionPoint.id}
+
+                <Counter value={extensionPoint.extensionCount} />
+              </a>
+            ))}
           </div>
         </div>
 
@@ -88,7 +111,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding-left: ${theme.spacing(2)};
   `,
   leftColumnGroupItem: css`
-    cursor: pointer;
+    display: inline-block;
     color: ${theme.colors.text.secondary};
     padding-left: ${theme.spacing(4)};
     font-size: ${theme.typography.pxToRem(13)};
@@ -106,3 +129,36 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(2)};
   `,
 });
+
+// Returns the core extension points in the following format:
+// { extensionPointId, extensionCount }
+function getCoreExtensionPoints(regsitry?: PluginExtensionRegistry) {
+  if (!regsitry) {
+    return [];
+  }
+
+  return Object.keys(regsitry)
+    .filter((key) => key.startsWith('grafana/'))
+    .map((id) => ({
+      id,
+      extensionCount: regsitry[id].length,
+    }));
+}
+
+// Returns extension points registered by plugins in the following format:
+// { [pluignId]: { extensionPointId, extensionCount }[] }
+function getPluginExtensionPoints(regsitry?: PluginExtensionRegistry) {
+  if (!regsitry) {
+    return [];
+  }
+
+  const extensionPointsByPlugins = {};
+
+  const pluginExtensionPointIds = Object.keys(regsitry).filter((key) => key.startsWith('plugins/'));
+
+  return pluginExtensionPointIds.map((id) => ({
+    id,
+    pluginId: id.split('/')[1],
+    extensionCount: regsitry[id].length,
+  }));
+}

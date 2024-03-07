@@ -24,11 +24,6 @@ export enum PluginAdminRoutes {
   Details = 'plugins-details',
 }
 
-export enum ExtensionAdminRoutes {
-  Settings = 'extensions-settings',
-  Explore = 'extensions-explore',
-}
-
 export enum PluginIconName {
   app = 'apps',
   datasource = 'database',

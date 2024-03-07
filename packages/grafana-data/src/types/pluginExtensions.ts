@@ -147,6 +147,33 @@ export enum PluginExtensionPoints {
   UserProfileTab = 'grafana/user/profile/tab',
 }
 
+export const PluginExtensionPointsMeta = {
+  [PluginExtensionPoints.AlertInstanceAction]: {
+    title: 'Alert instance actions',
+    description: 'Add custom actions to alert instances',
+  },
+  [PluginExtensionPoints.CommandPalette]: {
+    title: 'Command palette',
+    description: 'Extend the command palette with custom actions',
+  },
+  [PluginExtensionPoints.DashboardPanelMenu]: {
+    title: 'Dashboard panel menu',
+    description: 'Add custom actions to panel menu',
+  },
+  [PluginExtensionPoints.DataSourceConfig]: {
+    title: 'Data source configuration',
+    description: 'Add custom configuration options to data sources configuration page',
+  },
+  [PluginExtensionPoints.ExploreToolbarAction]: {
+    title: 'Explore toolbar action',
+    description: 'Add custom actions to the explore toolbar',
+  },
+  [PluginExtensionPoints.UserProfileTab]: {
+    title: 'User profile tab',
+    description: 'Add custom tabs to the user profile page',
+  },
+};
+
 export type PluginExtensionPanelContext = {
   pluginId: string;
   id: number;
