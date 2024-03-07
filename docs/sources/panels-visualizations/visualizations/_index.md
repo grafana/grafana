@@ -53,7 +53,7 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Text][] can show markdown and html.
   - [News][] can show RSS feeds.
 
-The following video shows you how to create visualizations to match your needs:
+The following video shows you how to create gauge, time series line graph, stats, logs, and node graph visualizations:
 {{< youtube id="yNRnLyVntUw" >}}
 
 ## Get more
