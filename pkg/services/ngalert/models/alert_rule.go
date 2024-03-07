@@ -38,8 +38,6 @@ var (
 	ErrNoPanel = errors.New("no panel")
 )
 
-const DefaultNamespaceTitle = "General Alerting"
-
 // swagger:enum NoDataState
 type NoDataState string
 

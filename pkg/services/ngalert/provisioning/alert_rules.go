@@ -654,7 +654,7 @@ func (service *AlertRuleService) checkGroupLimits(group models.AlertRuleGroup) e
 }
 
 // ensureRuleNamespace ensures that the rule has a valid namespace UID.
-// If the rule does not have a namespace UID, it will be set to the default namespace.
+// If the rule does not have a namespace UID or the namespace (folder) does not exist it will return an error.
 func (service *AlertRuleService) ensureRuleNamespace(ctx context.Context, user identity.Requester, rule models.AlertRule) error {
 	if user == nil {
 		return nil // noop if no user
