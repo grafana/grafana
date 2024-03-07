@@ -261,7 +261,7 @@ describe('DashboardScene', () => {
         const gridItem = body.state.children[0] as SceneGridItem;
 
         expect(body.state.children.length).toBe(6);
-        expect(gridItem.state.body!.state.key).toBe('panel-5');
+        expect(gridItem.state.body!.state.key).toBe('panel-7');
       });
 
       it('Should create and add a new row to the dashboard', () => {
@@ -271,7 +271,7 @@ describe('DashboardScene', () => {
         const gridRow = body.state.children[0] as SceneGridRow;
 
         expect(body.state.children.length).toBe(4);
-        expect(gridRow.state.key).toBe('panel-5');
+        expect(gridRow.state.key).toBe('panel-7');
         expect(gridRow.state.children[0].state.key).toBe('griditem-1');
         expect(gridRow.state.children[1].state.key).toBe('griditem-2');
       });
@@ -405,7 +405,7 @@ describe('DashboardScene', () => {
 
         expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
         expect(body.state.children.length).toBe(6);
-        expect(gridItem.state.body!.state.key).toBe('panel-5');
+        expect(gridItem.state.body!.state.key).toBe('panel-7');
         expect(gridItem.state.y).toBe(0);
         expect(scene.state.hasCopiedPanel).toBe(false);
       });
@@ -433,8 +433,8 @@ describe('DashboardScene', () => {
 
         expect(buildGridItemForLibPanel).toHaveBeenCalledTimes(1);
         expect(body.state.children.length).toBe(6);
-        expect(libVizPanel.state.panelKey).toBe('panel-5');
-        expect(libVizPanel.state.panel?.state.key).toBe('panel-5');
+        expect(libVizPanel.state.panelKey).toBe('panel-7');
+        expect(libVizPanel.state.panel?.state.key).toBe('panel-7');
         expect(gridItem.state.y).toBe(0);
         expect(scene.state.hasCopiedPanel).toBe(false);
       });
@@ -446,8 +446,49 @@ describe('DashboardScene', () => {
         const gridItem = body.state.children[0] as SceneGridItem;
 
         expect(body.state.children.length).toBe(6);
-        expect(gridItem.state.body!.state.key).toBe('panel-5');
+        expect(gridItem.state.body!.state.key).toBe('panel-7');
         expect(gridItem.state.y).toBe(0);
+      });
+
+      it('Should remove a panel', () => {
+        const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as SceneGridItem).state.body;
+        scene.removePanel(vizPanel as VizPanel);
+
+        const body = scene.state.body as SceneGridLayout;
+        expect(body.state.children.length).toBe(4);
+      });
+
+      it('Should remove a panel within a row', () => {
+        const vizPanel = (
+          ((scene.state.body as SceneGridLayout).state.children[2] as SceneGridRow).state.children[0] as SceneGridItem
+        ).state.body;
+        scene.removePanel(vizPanel as VizPanel);
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridRow = body.state.children[2] as SceneGridRow;
+        expect(gridRow.state.children.length).toBe(1);
+      });
+
+      it('Should remove a library panel', () => {
+        const libraryPanel = ((scene.state.body as SceneGridLayout).state.children[4] as SceneGridItem).state.body;
+        const vizPanel = (libraryPanel as LibraryVizPanel).state.panel;
+        scene.removePanel(vizPanel as VizPanel);
+
+        const body = scene.state.body as SceneGridLayout;
+        expect(body.state.children.length).toBe(4);
+      });
+
+      it('Should remove a library panel within a row', () => {
+        const libraryPanel = (
+          ((scene.state.body as SceneGridLayout).state.children[2] as SceneGridRow).state.children[1] as SceneGridItem
+        ).state.body;
+        const vizPanel = (libraryPanel as LibraryVizPanel).state.panel;
+
+        scene.removePanel(vizPanel as VizPanel);
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridRow = body.state.children[2] as SceneGridRow;
+        expect(gridRow.state.children.length).toBe(1);
       });
     });
   });
@@ -639,6 +680,19 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
                 pluginId: 'table',
               }),
             }),
+            new SceneGridItem({
+              body: new LibraryVizPanel({
+                uid: 'uid',
+                name: 'libraryPanel',
+                panelKey: 'panel-5',
+                title: 'Library Panel',
+                panel: new VizPanel({
+                  title: 'Library Panel',
+                  key: 'panel-5',
+                  pluginId: 'table',
+                }),
+              }),
+            }),
           ],
         }),
         new SceneGridItem({
@@ -653,11 +707,11 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
           body: new LibraryVizPanel({
             uid: 'uid',
             name: 'libraryPanel',
-            panelKey: 'panel-4',
+            panelKey: 'panel-6',
             title: 'Library Panel',
             panel: new VizPanel({
               title: 'Library Panel',
-              key: 'panel-4',
+              key: 'panel-6',
               pluginId: 'table',
             }),
           }),
