@@ -20,13 +20,12 @@ export const getOverviewScene = () => {
   });
 };
 
-export default function GettingStarted({ showWelcomeHeader }: { showWelcomeHeader?: boolean }) {
+export default function GettingStarted() {
   const theme = useTheme2();
   const styles = useStyles2(getWelcomePageStyles);
 
   return (
     <div className={styles.grid}>
-      {showWelcomeHeader && <WelcomeHeader className={styles.ctaContainer} />}
       <ContentBox className={styles.flowBlock}>
         <div>
           <h3>How it works</h3>
