@@ -709,5 +709,4 @@ embed.go @grafana/grafana-as-code
 /conf/provisioning/alerting/ @grafana/alerting-backend-product
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/plugins-platform-backend
-/conf/provisioning/notifiers/ @bergquist
 /conf/provisioning/plugins/ @grafana/plugins-platform-backend
