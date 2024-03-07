@@ -40,7 +40,6 @@ export function useEditConfigurationDrawer(): [React.ReactNode, (dataSourceName:
         onClose={handleDismiss}
         title={title}
         subtitle="Edit the Alertmanager configuration"
-        size="lg"
         tabs={
           <TabsBar>
             <Tab

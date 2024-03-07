@@ -93,23 +93,18 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
                   onClick={handleEditConfiguration}
                   icon={readOnlyDataSource ? 'eye' : 'edit'}
                   variant="secondary"
-                  fill="outline"
+                  size="sm"
                 >
                   {readOnlyDataSource ? 'View configuration' : 'Edit configuration'}
                 </Button>
                 {provisionedDataSource ? null : (
                   <>
                     {isReceiving ? (
-                      <Button
-                        icon="times"
-                        variant="destructive"
-                        fill="outline"
-                        onClick={() => disableAlertmanager(uid)}
-                      >
+                      <Button icon="times" variant="destructive" size="sm" onClick={() => disableAlertmanager(uid)}>
                         Disable
                       </Button>
                     ) : (
-                      <Button icon="check" variant="secondary" fill="outline" onClick={() => enableAlertmanager(uid)}>
+                      <Button icon="check" variant="secondary" size="sm" onClick={() => enableAlertmanager(uid)}>
                         Enable
                       </Button>
                     )}
