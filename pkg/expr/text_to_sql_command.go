@@ -91,6 +91,9 @@ func (gr *TextToSQLCommand) Execute(ctx context.Context, now time.Time, vars mat
 	}
 
 	frame.RefID = gr.refID
+	frame.SetMeta(&data.FrameMeta{
+		Custom: s,
+	})
 
 	if frame.Rows() == 0 {
 		rsp.Values = mathexp.Values{
