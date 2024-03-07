@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type Api struct {
@@ -165,15 +166,18 @@ func (api *Api) handleLinkSharedEvent(c *contextmodel.ReqContext, event model.Ev
 
 	// TODO: handle multiple links
 	dashboardUID := extractDashboardUid(event.Event.Links[0].URL)
-	previewUrl, err := url.Parse(event.Event.Links[0].URL)
+	replacedURL := strings.ReplaceAll(event.Event.Links[0].URL, "&amp;", "&")
+
+	previewUrl, err := url.Parse(replacedURL)
 	if err != nil {
 		api.log.Error("fail to parse url")
 		return
 	}
 	q := previewUrl.Query()
 	panelId, _ := strconv.ParseInt(q.Get("viewPanel"), 10, 64)
+	orgId, _ := strconv.ParseInt(q.Get("orgId"), 10, 64)
 
-	dq := dashboards.GetDashboardQuery{UID: dashboardUID}
+	dq := dashboards.GetDashboardQuery{OrgID: orgId, UID: dashboardUID}
 	dashboard, err := api.dashboardService.GetDashboard(c.Req.Context(), &dq)
 	if err != nil {
 		api.log.Error("retrieving dashboard failed", "err", err)
@@ -194,13 +198,19 @@ func (api *Api) handleLinkSharedEvent(c *contextmodel.ReqContext, event model.Ev
 		To:            q.Get("to"),
 	}
 
-	previewURL, err := api.slackService.TakeScreenshot(ctx, opts)
+	previewURL, err := api.slackService.TakeScreenshotAndUpload(ctx, opts)
 	if err != nil {
 		api.log.Error("fail to render dashboard for Slack preview", "err", err)
 		return
 	}
 
-	err = api.slackService.PostUnfurl(ctx, event, previewURL, dashboard.Title)
+	title := dashboard.Title
+	description := "Here is the dashboard that I wanted to show you"
+	if panelId != 0 {
+		//TODO: should we look for the panel title? we're sending it form the modal
+		description = "Here is the panel that I wanted to show you"
+	}
+	err = api.slackService.PostUnfurl(ctx, event, previewURL, title, description)
 	if err != nil {
 		api.log.Error("fail to send unfurl event to Slack", "err", err)
 	}

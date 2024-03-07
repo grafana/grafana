@@ -11,7 +11,7 @@ import (
 type Service interface {
 	GetUserConversations(ctx context.Context) (*dtos.SlackChannels, error)
 	PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, dashboardLink string) error
-	PostUnfurl(ctx context.Context, linkEvent model.EventPayload, imageURL string, dashboardTitle string) error
+	PostUnfurl(ctx context.Context, linkEvent model.EventPayload, imageURL string, title string, description string) error
 	ValidateSignatureRequest(c *contextmodel.ReqContext, body string) bool
-	TakeScreenshot(ctx context.Context, opts dashboardimage.ScreenshotOptions) (string, error)
+	TakeScreenshotAndUpload(ctx context.Context, opts dashboardimage.ScreenshotOptions) (string, error)
 }

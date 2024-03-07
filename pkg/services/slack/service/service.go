@@ -121,7 +121,7 @@ func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareR
 	return nil
 }
 
-func (s *SlackService) PostUnfurl(ctx context.Context, linkEvent model.EventPayload, imageURL string, dashboardTitle string) error {
+func (s *SlackService) PostUnfurl(ctx context.Context, linkEvent model.EventPayload, imageURL string, title string, description string) error {
 	unfurlEvent := &model.UnfurlEventPayload{
 		Channel: linkEvent.Event.Channel,
 		TS:      linkEvent.Event.MessageTS,
@@ -135,14 +135,14 @@ func (s *SlackService) PostUnfurl(ctx context.Context, linkEvent model.EventPayl
 					Type: "header",
 					Text: &model.Text{
 						Type: "plain_text",
-						Text: dashboardTitle,
+						Text: title,
 					},
 				},
 				{
 					Type: "section",
 					Text: &model.Text{
 						Type: "plain_text",
-						Text: "Here is the dashboard that I wanted to show you",
+						Text: description,
 					},
 				},
 				{
@@ -237,7 +237,7 @@ func (s *SlackService) postRequest(ctx context.Context, endpoint string, body io
 	return b, nil
 }
 
-func (s *SlackService) TakeScreenshot(ctx context.Context, opts dashboardimage.ScreenshotOptions) (string, error) {
+func (s *SlackService) TakeScreenshotAndUpload(ctx context.Context, opts dashboardimage.ScreenshotOptions) (string, error) {
 	opts.Width = 1600
 	opts.Height = 800
 	opts.Theme = models.ThemeDark

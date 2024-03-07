@@ -7,16 +7,12 @@ import (
 )
 
 type ScreenshotOptions struct {
-	AuthOptions rendering.AuthOpts
-	// OrgID and DashboardUID are required.
+	AuthOptions   rendering.AuthOpts
 	OrgID         int64
 	DashboardUID  string
 	DashboardSlug string
 
-	// These are optional. From and To must both be set to take effect.
-	// Width, Height, Theme and Timeout inherit their defaults from
-	// DefaultWidth, DefaultHeight, DefaultTheme and DefaultTimeout.
-	// PanelID must be 0 if the screenshot is for the whole dashboard
+	// PanelID must be 0 or null if the screenshot is for the whole dashboard
 	PanelID int64
 	From    string
 	To      string
