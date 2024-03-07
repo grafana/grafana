@@ -3008,6 +3008,9 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/state/actions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/dashboard/state/getPanelPluginToMigrateTo.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "public/app/features/dashboard/state/initDashboard.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],

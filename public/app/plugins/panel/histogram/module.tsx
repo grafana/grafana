@@ -3,10 +3,12 @@ import { histogramFieldInfo } from '@grafana/data/src/transformations/transforme
 import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
 
 import { HistogramPanel } from './HistogramPanel';
+import { changeToHistogramPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { originalDataHasHistogram } from './utils';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
+  .setPanelChangeHandler(changeToHistogramPanelMigrationHandler)
   .setPanelOptions((builder) => {
     builder
       .addCustomEditor({
