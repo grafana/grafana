@@ -284,7 +284,7 @@ const LabelsField: FC<Props> = ({ dataSourceName }) => {
         <Text element="h5">Labels</Text>
         <Stack direction={'row'} gap={1}>
           <Text variant="bodySmall" color="secondary">
-            Add labels to your rule to annotate your rules, ease searching, or route to a notification policy.
+            Add labels to your rule for searching, silencing, or routing to a notification policy.
           </Text>
           <NeedHelpInfo
             contentText="The dropdown only displays labels that you have previously used for alerts.

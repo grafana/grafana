@@ -89,9 +89,6 @@ const AnnotationsStep = () => {
   };
 
   function getAnnotationsSectionDescription() {
-    const docsLink =
-      'https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation';
-
     return (
       <Stack direction="row" gap={0.5} alignItems="baseline">
         <Text variant="bodySmall" color="secondary">
@@ -101,8 +98,6 @@ const AnnotationsStep = () => {
           contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages. 
           For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on. 
           Annotations can contain a combination of text and template code.`}
-          externalLink={docsLink}
-          linkText={`Read about annotations`}
           title="Annotations"
         />
       </Stack>
