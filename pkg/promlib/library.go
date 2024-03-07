@@ -32,19 +32,19 @@ type instance struct {
 	versionCache *cache.Cache
 }
 
-type extendTransportOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) (*sdkhttpclient.Options, error)
+type ExtendOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error
 
-func NewService(httpClientProvider *sdkhttpclient.Provider, plog log.Logger, extendTransOpts extendTransportOptions) *Service {
+func NewService(httpClientProvider *sdkhttpclient.Provider, plog log.Logger, extendOptions ExtendOptions) *Service {
 	if httpClientProvider == nil {
 		httpClientProvider = sdkhttpclient.NewProvider()
 	}
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, plog, extendTransOpts)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, plog, extendOptions)),
 		logger: plog,
 	}
 }
 
-func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Logger, extendTransOpts extendTransportOptions) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Logger, extendOptions ExtendOptions) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper.
 		opts, err := client.CreateTransportOptions(ctx, settings, log)
@@ -52,7 +52,7 @@ func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Log
 			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}
 
-		opts, err = extendTransOpts(ctx, settings, opts)
+		err = extendOptions(ctx, settings, opts)
 		if err != nil {
 			return nil, fmt.Errorf("error extending transport options: %v", err)
 		}

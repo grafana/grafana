@@ -45,7 +45,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	return s.lib.CheckHealth(ctx, req)
 }
 
-func extendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) (*sdkhttpclient.Options, error) {
+func extendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error {
 	// Set SigV4 service namespace
 	if clientOpts.SigV4 != nil {
 		clientOpts.SigV4.Service = "aps"
@@ -53,16 +53,16 @@ func extendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSe
 
 	azureSettings, err := azsettings.ReadSettings(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read Azure settings from Grafana: %v", err)
+		return fmt.Errorf("failed to read Azure settings from Grafana: %v", err)
 	}
 
 	// Set Azure authentication
 	if azureSettings.AzureAuthEnabled {
 		err = azureauth.ConfigureAzureAuthentication(settings, azureSettings, clientOpts)
 		if err != nil {
-			return nil, fmt.Errorf("error configuring Azure auth: %v", err)
+			return fmt.Errorf("error configuring Azure auth: %v", err)
 		}
 	}
 
-	return clientOpts, nil
+	return nil
 }
