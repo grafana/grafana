@@ -715,6 +715,8 @@ func (cfg *Cfg) readAnnotationSettings() error {
 
 	alertingAnnotations := cfg.Raw.Section("unified_alerting.state_history.annotations")
 	if alertingAnnotations.Key("max_age").Value() == "" && section.Key("max_annotations_to_keep").Value() == "" {
+		// Although this section is not documented anymore, we decided to keep it to avoid potential data-loss when user upgrades Grafana and does not change the setting.
+		// TODO delete some time after Grafana 11.
 		alertingSection := cfg.Raw.Section("alerting")
 		cleanup := newAnnotationCleanupSettings(alertingSection, "max_annotation_age")
 		if cleanup.MaxCount > 0 || cleanup.MaxAge > 0 {
@@ -1743,25 +1745,13 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 }
 
 func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
+	// This check is kept to prevent users that upgrade to Grafana 11 with the legacy alerting enabled. This should prevent them from accidentally upgrading without migration to Unified Alerting.
 	alerting := iniFile.Section("alerting")
 	enabled, err := alerting.Key("enabled").Bool()
-	cfg.AlertingEnabled = nil
-	if err == nil {
-		cfg.AlertingEnabled = &enabled
+	if err == nil && enabled {
+		cfg.Logger.Error("Option '[alerting].enabled' cannot be true. Legacy Alerting is removed. It is no longer deployed, enhanced, or supported. Delete '[alerting].enabled' and use '[unified_alerting].enabled' to enable Grafana Alerting. For more information, refer to the documentation on upgrading to Grafana Alerting (https://grafana.com/docs/grafana/v10.4/alerting/set-up/migrating-alerts)")
+		return fmt.Errorf("invalid setting [alerting].enabled")
 	}
-	cfg.ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
-	cfg.AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
-
-	cfg.AlertingErrorOrTimeout = valueAsString(alerting, "error_or_timeout", "alerting")
-	cfg.AlertingNoDataOrNullValues = valueAsString(alerting, "nodata_or_nullvalues", "no_data")
-
-	evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
-	cfg.AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
-	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
-	cfg.AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
-	cfg.AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
-	cfg.AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
-
 	return nil
 }
 

@@ -30,7 +30,7 @@ You can also render a PNG by hovering over the panel to display the actions menu
 
 ## Alerting and render limits
 
-Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "../configure-grafana#concurrent_render_limit" >}}).
+Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [max_concurrent_screenshots]({{< relref "../configure-grafana#max_concurrent_screenshots" >}}).
 
 ## Install Grafana Image Renderer plugin
 
