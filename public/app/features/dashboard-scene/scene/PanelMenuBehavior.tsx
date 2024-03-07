@@ -38,6 +38,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     // hm.. add another generic param to SceneObject to specify parent type?
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const panel = menu.parent as VizPanel;
+    const parent = panel.parent;
     const plugin = panel.getPlugin();
 
     const items: PanelMenuItem[] = [];
@@ -102,14 +103,14 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       },
     });
 
-    if (panel.parent instanceof LibraryVizPanel) {
+    if (parent instanceof LibraryVizPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
         onClick: () => {
           DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
           dashboard.showModal(
             new UnlinkLibraryPanelModal({
-              panelRef: (panel.parent as LibraryVizPanel).getRef(),
+              panelRef: parent.getRef(),
             })
           );
         },
