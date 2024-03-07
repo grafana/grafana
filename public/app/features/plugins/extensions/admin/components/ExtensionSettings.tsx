@@ -30,7 +30,9 @@ export default function ExtensionSettings(): ReactElement | null {
               <a
                 href={`/extensions/${encodeURIComponent(extensionPoint.id)}`}
                 key={extensionPoint.id}
-                className={cx(styles.leftColumnGroupItem, styles.code)}
+                className={cx(styles.leftColumnGroupItem, styles.code, {
+                  [styles.activeLeftColumnGroupItem]: extensionPoint.id === activeExtensionPointId,
+                })}
               >
                 {extensionPoint.id}
               </a>
@@ -130,6 +132,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.text.secondary};
     font-family: ${theme.typography.fontFamilyMonospace};
     font-size: ${theme.typography.pxToRem(12)};
+  `,
+  activeLeftColumnGroupItem: css`
+    color: ${theme.colors.text.primary};
   `,
   code: css`
     font-family: ${theme.typography.fontFamilyMonospace};
