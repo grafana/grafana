@@ -473,6 +473,7 @@ require (
 
 require (
 	github.com/bufbuild/protocompile v0.4.0 // indirect
+	github.com/grafana/gomemcache v0.0.0-20240229205252-cd6a66d6fb56
 	github.com/grafana/sqlds/v3 v3.2.0 // indirect
 	github.com/jhump/protoreflect v1.15.1 // indirect
 	github.com/klauspost/asmfmt v1.3.2 // indirect
