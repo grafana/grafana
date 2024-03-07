@@ -50,6 +50,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+	ctx = contextualMiddlewares(ctx)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		queries, dsRef, err := r.readQueries(req)
