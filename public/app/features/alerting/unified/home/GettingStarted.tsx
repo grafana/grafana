@@ -57,13 +57,15 @@ export default function GettingStarted() {
               sources.
             </li>
             <li>
-              <strong>Add labels</strong> to your alert rules <strong>to connect them to notification policies</strong>
+              <Text weight="bold">Add labels</Text> to your alert rules{' '}
+              <Text weight="bold">to connect them to notification policies</Text>
             </li>
             <li>
-              <strong>Configure contact points</strong> to define where to send your notifications to.
+              <Text weight="bold">Configure contact points</Text> to define where to send your notifications to.
             </li>
             <li>
-              <strong>Configure notification policies</strong> to route your alert instances to contact points.
+              <Text weight="bold">Configure notification policies</Text> to route your alert instances to contact
+              points.
             </li>
           </ul>
           <TextLink href="https://grafana.com/docs/grafana/latest/alerting/" icon="angle-right" inline={false}>
