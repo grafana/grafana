@@ -16,11 +16,13 @@ import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
 import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
+import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { prepareBarChartDisplayValues } from './utils';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
+  .setPanelChangeHandler(changeToBarChartPanelMigrationHandler)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {

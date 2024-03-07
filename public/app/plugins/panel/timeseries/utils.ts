@@ -3,10 +3,7 @@ import {
   Field,
   FieldType,
   getDisplayProcessor,
-  getLinksSupplier,
   GrafanaTheme2,
-  DataLinkPostProcessor,
-  InterpolateFunction,
   isBooleanUnit,
   TimeRange,
   cacheFieldDisplayNames,
@@ -264,43 +261,6 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
     return [defaultTimezone];
   }
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
-}
-
-export function regenerateLinksSupplier(
-  alignedDataFrame: DataFrame,
-  frames: DataFrame[],
-  replaceVariables: InterpolateFunction,
-  timeZone: string,
-  dataLinkPostProcessor?: DataLinkPostProcessor
-): DataFrame {
-  alignedDataFrame.fields.forEach((field) => {
-    if (field.state?.origin?.frameIndex === undefined || frames[field.state?.origin?.frameIndex] === undefined) {
-      return;
-    }
-
-    const tempFields: Field[] = [];
-    for (const frameField of frames[field.state?.origin?.frameIndex].fields) {
-      if (frameField.type === FieldType.string) {
-        tempFields.push(frameField);
-      }
-    }
-
-    const tempFrame: DataFrame = {
-      fields: [...alignedDataFrame.fields, ...tempFields],
-      length: alignedDataFrame.fields.length + tempFields.length,
-    };
-
-    field.getLinks = getLinksSupplier(
-      tempFrame,
-      field,
-      field.state!.scopedVars!,
-      replaceVariables,
-      timeZone,
-      dataLinkPostProcessor
-    );
-  });
-
-  return alignedDataFrame;
 }
 
 export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions) => {
