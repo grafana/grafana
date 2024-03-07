@@ -490,6 +490,39 @@ describe('DashboardScene', () => {
         const gridRow = body.state.children[2] as SceneGridRow;
         expect(gridRow.state.children.length).toBe(1);
       });
+
+      it('Should unlink a  library panel', () => {
+        const libPanel = new LibraryVizPanel({
+          title: 'title',
+          uid: 'abc',
+          name: 'lib panel',
+          panelKey: 'panel-1',
+          isLoaded: true,
+          panel: new VizPanel({
+            title: 'Panel B',
+            pluginId: 'table',
+          }),
+        });
+
+        const scene = buildTestScene({
+          body: new SceneGridLayout({
+            children: [
+              new SceneGridItem({
+                key: 'griditem-2',
+                body: libPanel,
+              }),
+            ],
+          }),
+        });
+
+        scene.unlinkLibraryPanel(libPanel);
+
+        const body = scene.state.body as SceneGridLayout;
+        const gridItem = body.state.children[0] as SceneGridItem;
+
+        expect(body.state.children.length).toBe(1);
+        expect(gridItem.state.body).toBeInstanceOf(VizPanel);
+      });
     });
   });
 

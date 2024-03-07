@@ -28,6 +28,7 @@ import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
+import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -37,6 +38,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     // hm.. add another generic param to SceneObject to specify parent type?
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const panel = menu.parent as VizPanel;
+    const parent = panel.parent;
     const plugin = panel.getPlugin();
 
     const items: PanelMenuItem[] = [];
@@ -101,8 +103,18 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       },
     });
 
-    if (panel.parent instanceof LibraryVizPanel) {
-      // TODO: Implement lib panel unlinking
+    if (parent instanceof LibraryVizPanel) {
+      moreSubMenu.push({
+        text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
+        onClick: () => {
+          DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
+          dashboard.showModal(
+            new UnlinkLibraryPanelModal({
+              panelRef: parent.getRef(),
+            })
+          );
+        },
+      });
     } else {
       moreSubMenu.push({
         text: t('panel.header-menu.create-library-panel', `Create library panel`),

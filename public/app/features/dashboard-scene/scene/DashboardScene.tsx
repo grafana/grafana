@@ -603,6 +603,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   }
 
+  public unlinkLibraryPanel(panel: LibraryVizPanel) {
+    if (!panel.parent) {
+      return;
+    }
+
+    const gridItem = panel.parent;
+
+    if (!(gridItem instanceof SceneGridItem || gridItem instanceof PanelRepeaterGridItem)) {
+      console.error('Trying to duplicate a panel in a layout that is not SceneGridItem or PanelRepeaterGridItem');
+      return;
+    }
+
+    gridItem?.setState({
+      body: panel.state.panel?.clone(),
+    });
+  }
+
   public showModal(modal: SceneObject) {
     this.setState({ overlay: modal });
   }
