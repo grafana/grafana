@@ -12,12 +12,12 @@ labels:
 menuTitle: Configure tooltips
 title: Configure tooltips
 description: Configure tooltips for your visualizations
-weight: 80
+weight: 75
 ---
 
 # Configure tooltips
 
-When you hover your cursor over a visualization, Grafana can display tooltips that contain more information about a data point like the exact time of a result. You can customize tooltips to to control how many series are included and their order. You can also copy the content from tooltips to use elsewhere. Learn more about configuring tooltips in [Tooltip options](#tooltip-options).
+When you hover your cursor over a visualization, Grafana can display tooltips that contain more information about a data point like the exact time of a result. You can customize tooltips to to control how many series they include and the order of those values. You can also copy the content from tooltips to use elsewhere. Learn more about configuring tooltips in [Tooltip options](#tooltip-options).
 
 ## Supported visualizations
 
