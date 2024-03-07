@@ -12,6 +12,12 @@ module.exports = merge(common, {
   devtool: 'inline-source-map',
   mode: 'development',
 
+  resolve: {
+    alias: {
+      'react-dom$': 'react-dom/profiling',
+      'scheduler/tracing': 'scheduler/tracing-profiling',
+    }
+  },
   entry: {
     app: ['./public/app/index.ts'],
     dark: './public/sass/grafana.dark.scss',

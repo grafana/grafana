@@ -44,6 +44,9 @@ module.exports = (env = {}) => {
         // the same singletons
         '@grafana/runtime': path.resolve(__dirname, '../../packages/grafana-runtime'),
         '@grafana/data': path.resolve(__dirname, '../../packages/grafana-data'),
+        // needed for dev
+        'react-dom$': 'react-dom/profiling',
+        'scheduler/tracing': 'scheduler/tracing-profiling',
       },
     },
 
