@@ -9,6 +9,8 @@ import {
   getVisualizationOptions2,
 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+
 import { VizPanelManager } from './VizPanelManager';
 
 interface Props {
@@ -18,7 +20,8 @@ interface Props {
 }
 
 export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMode }) => {
-  const { panel, libraryPanel } = vizManager.useState();
+  const { panel, sourcePanel } = vizManager.useState();
+  const parent = sourcePanel.resolve().parent;
   const { data } = sceneGraph.getData(panel).useState();
   const { options, fieldConfig } = panel.useState();
 
@@ -41,11 +44,11 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
   }, [panel, options, fieldConfig]);
 
   const libraryPanelOptions = useMemo(() => {
-    if (libraryPanel) {
-      return getLibraryVizPanelOptionsCategory(libraryPanel);
+    if (parent instanceof LibraryVizPanel) {
+      return getLibraryVizPanelOptionsCategory(parent);
     }
     return;
-  }, [libraryPanel]);
+  }, [parent]);
 
   const justOverrides = useMemo(
     () =>

@@ -16,6 +16,7 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
+import { LibraryVizPanel } from './LibraryVizPanel';
 
 interface Props {
   dashboard: DashboardScene;
@@ -52,7 +53,9 @@ export function ToolbarActions({ dashboard }: Props) {
   const buttonWithExtraMargin = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
-  const isEditingLibraryPanel = Boolean(editPanel?.state.vizManager.state.libraryPanel);
+  const isEditingLibraryPanel = Boolean(
+    editPanel?.state.vizManager.state.sourcePanel.resolve().parent instanceof LibraryVizPanel
+  );
   const hasCopiedPanel = Boolean(copiedPanel);
 
   toolbarActions.push({

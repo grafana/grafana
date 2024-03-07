@@ -1,20 +1,21 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DateTimeInput, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 
 interface Props {
   libraryPanel: LibraryVizPanel;
-  formatDate?: (dateString: DateTimeInput, format?: string) => string;
 }
 
-export const LibraryVizPanelInformation = ({ libraryPanel, formatDate }: Props) => {
+export const LibraryVizPanelInformation = ({ libraryPanel }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const meta = libraryPanel.state._loadedPanel?.meta;
+  const libraryPanelState = libraryPanel.useState();
+  const tz = libraryPanelState.$timeRange?.getTimeZone();
+  const meta = libraryPanelState._loadedPanel?.meta;
   if (!meta) {
     return null;
   }
@@ -26,7 +27,7 @@ export const LibraryVizPanelInformation = ({ libraryPanel, formatDate }: Props) 
         {meta.connectedDashboards === 1 ? 'dashboard' : 'dashboards'}
       </div>
       <div className={styles.libraryPanelInfo}>
-        Last edited on {formatDate?.(meta.updated, 'L') ?? meta.updated} by
+        {dateTimeFormat(meta.updated, { format: 'L', timeZone: tz })} by
         {meta.updatedBy.avatarUrl && (
           <img
             width="22"

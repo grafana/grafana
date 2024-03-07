@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -59,7 +60,8 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
   const { vizManager, dataPane, showLibraryPanelSaveModal } = model.useState();
-  const { libraryPanel } = vizManager.useState();
+  const { sourcePanel } = vizManager.useState();
+  const libraryPanel = sourcePanel.resolve().parent;
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
@@ -84,7 +86,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         <div {...primaryProps}>
           <vizManager.Component model={vizManager} />
         </div>
-        {showLibraryPanelSaveModal && libraryPanel && (
+        {showLibraryPanelSaveModal && libraryPanel instanceof LibraryVizPanel && (
           <SaveLibraryVizPanelModal
             libraryPanel={libraryPanel}
             onDismiss={() => {

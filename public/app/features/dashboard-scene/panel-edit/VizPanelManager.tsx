@@ -40,14 +40,13 @@ import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem, RepeatDirection } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
-import { getDashboardSceneFor, getLibraryPanel, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 export interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
   sourcePanel: SceneObjectRef<VizPanel>;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
-  libraryPanel?: LibraryVizPanel;
   tableView?: VizPanel;
   repeat?: string;
   repeatDirection?: RepeatDirection;
@@ -87,7 +86,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       panel: sourcePanel.clone({ $data: undefined }),
       $data: sourcePanel.state.$data?.clone(),
       sourcePanel: sourcePanel.getRef(),
-      libraryPanel: getLibraryPanel(sourcePanel)?.clone(),
       ...repeatOptions,
     });
   }
@@ -351,9 +349,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       });
     }
 
-    if (sourcePanel.parent instanceof LibraryVizPanel && this.state.libraryPanel) {
+    if (sourcePanel.parent instanceof LibraryVizPanel) {
       if (sourcePanel.parent.parent instanceof SceneGridItem) {
-        const newLibPanel = this.state.libraryPanel.clone({
+        const newLibPanel = sourcePanel.parent.clone({
           panel: this.state.panel.clone({
             $data: this.state.$data?.clone(),
           }),
