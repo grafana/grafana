@@ -240,9 +240,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     return;
   }
 
-  const isLocalDevEnv = config.buildInfo.env === 'development';
-
-  const prodUrlAllowedFeatureFlags = new Set([
+  const migrationFeatureFlags = new Set([
     'autoMigrateOldPanels',
     'autoMigrateGraphPanel',
     'autoMigrateTablePanel',
@@ -258,7 +256,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
 
-      if (!isLocalDevEnv && !prodUrlAllowedFeatureFlags.has(featureName)) {
+      if (migrationFeatureFlags.has(featureName)) {
         return;
       }
 
