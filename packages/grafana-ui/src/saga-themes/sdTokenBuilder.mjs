@@ -15,7 +15,6 @@ StyleDictionary.registerFormat({
 StyleDictionary.registerFormat({
   name: 'typescript/nested',
   formatter: function (dictionary) {
-    console.info(JsonToTs(minifyDictionary(dictionary.tokens)).join('\n'));
     return `export default ${JsonToTs(minifyDictionary(dictionary.tokens)).join('\n')}\n`;
   },
 });
@@ -71,8 +70,8 @@ const semanticTokens = [
   },
 ];
 
-const sd = StyleDictionary.extend({
-  source: ['tokens/**/*.json'],
+let sd = StyleDictionary.extend({
+  source: ['tokens/*.json', 'tokens/Themes/dark.json'],
   platforms: {
     js: {
       transformGroup: 'tokens-studio',
@@ -107,9 +106,28 @@ const sd = StyleDictionary.extend({
           destination: 'code/themes/theme.d.ts',
           format: 'typescript/nested',
           filter: (token) => {
-            return token.filePath === 'tokens/Themes/dark.json';
+            return token.filePath.indexOf('tokens/Themes') > -1;
           },
         },
+      ],
+    },
+  },
+});
+
+sd.cleanAllPlatforms();
+sd.buildAllPlatforms();
+
+/*
+ * We need to build each theme separately, because style-dictionary deep merges all the json files
+ * into one, but we want to keep the themes separate.
+ */
+sd = StyleDictionary.extend({
+  source: ['tokens/*.json', 'tokens/Themes/light.json'],
+  platforms: {
+    js: {
+      transformGroup: 'tokens-studio',
+      buildPath: '',
+      files: [
         {
           destination: 'code/themes/light.ts',
           format: 'javascript/nested',

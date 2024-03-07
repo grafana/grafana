@@ -2,7 +2,7 @@ export default {
   color: {
     base: {
       white: '#ffffff',
-      black: '#000000',
+      black: '#020409',
     },
     modifier: {
       '50': '0.96',
