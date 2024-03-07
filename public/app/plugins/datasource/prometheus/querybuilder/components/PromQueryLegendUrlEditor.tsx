@@ -10,9 +10,6 @@ export interface Props {
   onRunQuery: () => void;
 }
 
-/**
- * Tests for this component are on the parent level (PromQueryBuilderOptions).
- */
 export const PromQueryLegendUrlEditor = React.memo<Props>(({ legendUrlFormat, onChange, onRunQuery }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const onLegendUrlFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
