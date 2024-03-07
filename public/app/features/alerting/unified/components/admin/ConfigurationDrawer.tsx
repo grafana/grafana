@@ -31,10 +31,6 @@ export function useEditConfigurationDrawer(): [React.ReactNode, (dataSourceName:
       return null;
     }
 
-    const handleReset = (uid: string) => {
-      resetAlertmanagerSettings(uid);
-    };
-
     const isGrafanaAlertmanager = dataSourceName === GRAFANA_RULES_SOURCE_NAME;
     const title = isGrafanaAlertmanager ? 'Internal Grafana Alertmanager' : dataSourceName;
 
@@ -70,7 +66,7 @@ export function useEditConfigurationDrawer(): [React.ReactNode, (dataSourceName:
             alertmanagerName={dataSourceName}
             onDismiss={handleDismiss}
             onSave={updateAlertmanagerSettings}
-            onReset={handleReset}
+            onReset={resetAlertmanagerSettings}
           />
         )}
         {activeTab === 'versions' && dataSourceName && (

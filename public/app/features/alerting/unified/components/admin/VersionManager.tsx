@@ -4,12 +4,24 @@ import moment from 'moment';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Button, CellProps, Column, ConfirmModal, InteractiveTable, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  CellProps,
+  Column,
+  ConfirmModal,
+  InteractiveTable,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { stringifyErrorLike } from '../../utils/misc';
 import { Spacer } from '../Spacer';
 
 const VERSIONS_PAGE_SIZE = 30;
@@ -41,20 +53,26 @@ const AlertmanagerConfigurationVersionManager = ({
   const [confirmRestore, setConfirmRestore] = useState(false);
 
   // in here we'll track the configs we are comparing
-  const [activeComparison, setActiveComparison] = useState<[string, string] | undefined>(undefined);
+  const [activeComparison, setActiveComparison] = useState<[left: string, right: string] | undefined>(undefined);
 
   const {
     currentData: historicalConfigs = [],
     isLoading: isLoadingPreviousVersions,
-    isError: isErrorLoadingPreviousVersions,
+    error: errorLoadingPreviousVersions,
   } = alertmanagerApi.endpoints.getValidAlertManagersConfig.useQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
 
-  const { currentData: currentConfig, isLoading: isLoadingCurrentVersion } =
-    alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(alertmanagerName, {
-      refetchOnMountOrArgChange: true,
-    });
+  const {
+    currentData: currentConfig,
+    isLoading: isLoadingCurrentVersion,
+    error: errorLoadingCurrentConfiguration,
+  } = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(alertmanagerName, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  const loadingError = errorLoadingPreviousVersions ?? errorLoadingCurrentConfiguration;
+  const isLoadingData = isLoadingPreviousVersions ?? isLoadingCurrentVersion;
 
   const [resetAlertManagerConfigToOldVersion, restoreVersionState] =
     alertmanagerApi.endpoints.resetAlertManagerConfigToOldVersion.useMutation();
@@ -74,7 +92,11 @@ const AlertmanagerConfigurationVersionManager = ({
     resetAlertManagerConfigToOldVersion({ id });
   };
 
-  if (isLoadingPreviousVersions) {
+  if (loadingError) {
+    return <Alert title="Failed to load configuration history">{stringifyErrorLike(loadingError)}</Alert>;
+  }
+
+  if (isLoadingData) {
     return 'Loading...';
   }
 
@@ -167,7 +189,11 @@ const AlertmanagerConfigurationVersionManager = ({
   ];
 
   if (restoreVersionState.isLoading) {
-    return 'Restoring version, this might take a while...';
+    return (
+      <Alert severity="info" title="Restoring Alertmanager configuration">
+        This might take a while...
+      </Alert>
+    );
   }
 
   return (

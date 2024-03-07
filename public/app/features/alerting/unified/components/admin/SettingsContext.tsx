@@ -10,7 +10,7 @@ import {
   ExternalAlertmanagerDataSourceWithStatus,
   useExternalDataSourceAlertmanagers,
 } from '../../hooks/useExternalAmSelector';
-import { updateAlertManagerConfigAction } from '../../state/actions';
+import { deleteAlertManagerConfigAction, updateAlertManagerConfigAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isAlertmanagerDataSourceInterestedInAlerts } from '../../utils/datasource';
 
 const USING_INTERNAL_ALERTMANAGER_SETTINGS = [AlertmanagerChoice.Internal, AlertmanagerChoice.All];
@@ -18,10 +18,15 @@ const USING_INTERNAL_ALERTMANAGER_SETTINGS = [AlertmanagerChoice.Internal, Alert
 interface Context {
   deliverySettings?: ExternalAlertmanagerConfig;
   externalAlertmanagerDataSourcesWithStatus: ExternalAlertmanagerDataSourceWithStatus[];
+
   isLoading: boolean;
   isUpdating: boolean;
+
+  // for enabling / disabling Alertmanager datasources as additional receivers
   enableAlertmanager: (uid: string) => void;
   disableAlertmanager: (uid: string) => void;
+
+  // for updating or resetting the configuration for an Alertmanager
   updateAlertmanagerSettings: (name: string, oldConfig: string, newConfig: string) => void;
   resetAlertmanagerSettings: (name: string) => void;
 }
@@ -83,6 +88,21 @@ export const SettingsProvider = (props: PropsWithChildren) => {
     }
   };
 
+  const updateAlertmanagerSettings = (alertManagerName: string, oldConfig: string, newConfig: string): void => {
+    dispatch(
+      updateAlertManagerConfigAction({
+        newConfig: JSON.parse(newConfig),
+        oldConfig: JSON.parse(oldConfig),
+        alertManagerSourceName: alertManagerName,
+        successMessage: 'Alertmanager configuration updated.',
+      })
+    );
+  };
+
+  const resetAlertmanagerSettings = (alertmanagerName: string) => {
+    dispatch(deleteAlertManagerConfigAction(alertmanagerName));
+  };
+
   const value: Context = {
     deliverySettings,
     externalAlertmanagerDataSourcesWithStatus: externalAlertmanagersWithStatus,
@@ -92,17 +112,8 @@ export const SettingsProvider = (props: PropsWithChildren) => {
     isUpdating: updateDeliverySettingsState.isLoading || updateAlertmanagerDataSourceState.isLoading,
 
     // CRUD for Alertmanager settings
-    updateAlertmanagerSettings: (alertManagerName: string, oldConfig: string, newConfig: string): void => {
-      dispatch(
-        updateAlertManagerConfigAction({
-          newConfig: JSON.parse(newConfig),
-          oldConfig: JSON.parse(oldConfig),
-          alertManagerSourceName: alertManagerName,
-          successMessage: 'Alertmanager configuration updated.',
-        })
-      );
-    },
-    resetAlertmanagerSettings: () => {},
+    updateAlertmanagerSettings,
+    resetAlertmanagerSettings,
   };
 
   return <SettingsContext.Provider value={value}>{props.children}</SettingsContext.Provider>;

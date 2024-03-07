@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
 
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { Spacer } from '../Spacer';
 
 export interface FormValues {
@@ -25,6 +25,7 @@ interface Props {
 export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave, onReset }: Props): JSX.Element {
   const { loading: isDeleting, error: deletingError } = useUnifiedAlertingSelector((state) => state.deleteAMConfig);
   const { loading: isSaving, error: savingError } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
 
   const readOnly = alertmanagerName ? isVanillaPrometheusAlertManagerDataSource(alertmanagerName) : false;
   const styles = useStyles2(getStyles);
@@ -94,19 +95,21 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
     );
   }
 
+  /* resetting configuration state */
+  if (isDeleting) {
+    return (
+      <Alert severity="info" title="Resetting Alertmanager configuration">
+        It might take a while...
+      </Alert>
+    );
+  }
+
   return (
     <div className={styles.container}>
       {/* form error state */}
       {errors.configJSON && (
         <Alert severity="error" title="Oops, something went wrong">
           {errors.configJSON.message || 'An unknown error occurred.'}
-        </Alert>
-      )}
-
-      {/* resetting state */}
-      {isDeleting && (
-        <Alert severity="info" title="Resetting Alertmanager configuration">
-          It might take a while...
         </Alert>
       )}
 
@@ -134,7 +137,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
       </div>
       {!readOnly && (
         <Stack justifyContent="flex-end">
-          <Button variant="destructive" onClick={() => undefined} disabled={isOperating}>
+          <Button variant="destructive" disabled={isOperating} onClick={() => setShowResetConfirmation(true)}>
             Reset
           </Button>
           <Spacer />
@@ -146,6 +149,21 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
           </Button>
         </Stack>
       )}
+      <ConfirmModal
+        isOpen={showResetConfirmation}
+        title="Reset Alertmanager configuration"
+        body={`Are you sure you want to reset configuration ${
+          alertmanagerName === GRAFANA_RULES_SOURCE_NAME ? 'for the Grafana Alertmanager' : `for "${alertmanagerName}"`
+        }? Contact points and notification policies will be reset to their defaults.`}
+        confirmText="Yes, reset configuration"
+        onConfirm={() => {
+          onReset(alertmanagerName);
+          setShowResetConfirmation(false);
+        }}
+        onDismiss={() => {
+          setShowResetConfirmation(false);
+        }}
+      />
     </div>
   );
 }
