@@ -138,8 +138,8 @@ func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user ident
 func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
 	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(change.GroupKey.NamespaceUID)
 
-	rules, ok := change.AffectedGroups[change.GroupKey]
-	if ok { // not ok can be when user creates a new rule group or moves existing alerts to a new group
+	rules, existingGroup := change.AffectedGroups[change.GroupKey]
+	if existingGroup { // not existingGroup can be when user creates a new rule group or moves existing alerts to a new group
 		if err := r.AuthorizeAccessToRuleGroup(ctx, user, rules); err != nil { // if user is not authorized to do operation in the group that is being changed
 			return err
 		}
@@ -147,12 +147,6 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 		if len(change.Delete) > 0 {
 			// add a safeguard in the case of inconsistency. If user hit this then there is a bug in the calculating of changes struct
 			return fmt.Errorf("failed to authorize changes in rule group %s. Detected %d deletes but group was not provided", change.GroupKey.RuleGroup, len(change.Delete))
-		}
-		if len(change.New) > 0 {
-			// create a new group, check that user has "read" access to that new group. Otherwise, it will not be able to read it back.
-			if err := r.AuthorizeAccessToRuleGroup(ctx, user, change.New); err != nil { // if user is not authorized to do operation in the group that is being changed
-				return err
-			}
 		}
 	}
 
@@ -183,6 +177,12 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 			if err := r.HasAccessOrError(ctx, user, r.getRulesQueryEvaluator(rule), func() string {
 				return fmt.Sprintf("create a new alert rule '%s'", rule.Title)
 			}); err != nil {
+				return err
+			}
+		}
+		if !existingGroup {
+			// create a new group, check that user has "read" access to that new group. Otherwise, it will not be able to read it back.
+			if err := r.AuthorizeAccessToRuleGroup(ctx, user, change.New); err != nil { // if user is not authorized to do operation in the group that is being changed
 				return err
 			}
 		}
@@ -223,8 +223,8 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 
 		if rule.Existing.NamespaceUID != rule.New.NamespaceUID || rule.Existing.RuleGroup != rule.New.RuleGroup {
 			key := rule.Existing.GetGroupKey()
-			rules, ok = change.AffectedGroups[key]
-			if !ok {
+			rules, existingGroup = change.AffectedGroups[key]
+			if !existingGroup {
 				// add a safeguard in the case of inconsistency. If user hit this then there is a bug in the calculating of changes struct
 				return fmt.Errorf("failed to authorize moving an alert rule %s between groups because unable to check access to group %s from which the rule is moved", rule.Existing.UID, rule.Existing.RuleGroup)
 			}
