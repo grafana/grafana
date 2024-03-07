@@ -5,6 +5,7 @@
 import { produce } from 'immer';
 import { omit } from 'lodash';
 
+import { insertAfterImmutably, insertBeforeImmutably } from '@grafana/data/src/utils/arrayUtils';
 import { Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../types/amroutes';
@@ -105,12 +106,12 @@ export const addRouteToReferenceRoute = (
 
     // insert new policy before / above the referenceRoute
     if (position === 'above') {
-      parentRoute.routes = insertBefore(parentRoute.routes ?? [], newRoute, positionInParent);
+      parentRoute.routes = insertBeforeImmutably(parentRoute.routes ?? [], newRoute, positionInParent);
     }
 
     // insert new policy after / below the referenceRoute
     if (position === 'below') {
-      parentRoute.routes = insertAfter(parentRoute.routes ?? [], newRoute, positionInParent);
+      parentRoute.routes = insertAfterImmutably(parentRoute.routes ?? [], newRoute, positionInParent);
     }
   });
 };
@@ -127,6 +128,10 @@ export function findRouteInTree(
 
   // recurse through the tree to find the matching route, its parent and the position of the route in the parent
   function findRouteInTree(currentRoute: RouteWithID, index: number, parentRoute: RouteWithID) {
+    if (matchingRoute) {
+      return;
+    }
+
     if (currentRoute.id === referenceRoute.id) {
       matchingRoute = currentRoute;
       matchingRouteParent = parentRoute;
@@ -145,20 +150,4 @@ export function findRouteInTree(
 
 export function findExistingRoute(id: string, routeTree: RouteWithID): RouteWithID | undefined {
   return routeTree.id === id ? routeTree : routeTree.routes?.find((route) => findExistingRoute(id, route));
-}
-
-export function insertBefore<T>(array: T[], item: T, index: number): T[] {
-  if (index < 0 || index > array.length) {
-    throw new Error('Index out of bounds');
-  }
-
-  return [...array.slice(0, index), item, ...array.slice(index)];
-}
-
-export function insertAfter<T>(array: T[], item: T, index: number): T[] {
-  if (index < 0 || index > array.length) {
-    throw new Error('Index out of bounds');
-  }
-
-  return [...array.slice(0, index + 1), item, ...array.slice(index + 1)];
 }

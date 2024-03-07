@@ -3,13 +3,7 @@ import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../types/amroutes';
 
 import { GRAFANA_DATASOURCE_NAME } from './datasource';
-import {
-  addRouteToReferenceRoute,
-  findRouteInTree,
-  insertAfter,
-  insertBefore,
-  omitRouteFromRouteTree,
-} from './routeTree';
+import { addRouteToReferenceRoute, findRouteInTree, omitRouteFromRouteTree } from './routeTree';
 
 describe('findRouteInTree', () => {
   it('should find the correct route', () => {
@@ -30,60 +24,6 @@ describe('findRouteInTree', () => {
     };
 
     expect(findRouteInTree(root, { id: 'none' })).toStrictEqual([undefined, undefined, undefined]);
-  });
-});
-
-describe('insertBefore', () => {
-  it('should correctly insert before', () => {
-    const original = [1, 2, 3];
-    expect(insertBefore(original, 4, 1)).toStrictEqual([1, 4, 2, 3]);
-  });
-
-  it('should correctly insert before 0', () => {
-    const original = [1, 2, 3];
-    expect(insertBefore(original, 0, 0)).toStrictEqual([0, 1, 2, 3]);
-  });
-
-  it('should correctly insert before last', () => {
-    const original = [1, 2, 3];
-    expect(insertBefore(original, 4, 2)).toStrictEqual([1, 2, 4, 3]);
-  });
-
-  it('should throw when out of bounds', () => {
-    expect(() => {
-      insertBefore([], 1, -1);
-    }).toThrow();
-
-    expect(() => {
-      insertBefore([], 1, 3);
-    }).toThrow();
-  });
-});
-
-describe('insertAfter', () => {
-  it('should correctly insert after', () => {
-    const original = [1, 2, 3];
-    expect(insertAfter(original, 4, 1)).toStrictEqual([1, 2, 4, 3]);
-  });
-
-  it('should correctly insert after first', () => {
-    const original = [1, 2, 3];
-    expect(insertAfter(original, 4, 0)).toStrictEqual([1, 4, 2, 3]);
-  });
-
-  it('should correctly insert after last', () => {
-    const original = [1, 2, 3];
-    expect(insertAfter(original, 4, 2)).toStrictEqual([1, 2, 3, 4]);
-  });
-
-  it('should throw when out of bounds', () => {
-    expect(() => {
-      insertAfter([], 1, -1);
-    }).toThrow();
-
-    expect(() => {
-      insertAfter([], 1, 3);
-    }).toThrow();
   });
 });
 
