@@ -67,21 +67,6 @@ export default function GettingStarted({ showWelcomeHeader }: { showWelcomeHeade
           </div>
         </Stack>
       </ContentBox>
-      <ContentBox className={styles.videoBlock}>
-        <iframe
-          title="Alerting - Introductory video"
-          src="https://player.vimeo.com/video/720001629?h=c6c1732f92"
-          width="960"
-          height="540"
-          allow="autoplay; fullscreen"
-          allowFullScreen
-          frameBorder="0"
-          // This is necessary because color-scheme defined on :root has impact on iframe elements
-          // More about how color-scheme works for iframes https://github.com/w3c/csswg-drafts/issues/4772
-          // Summary: If the color scheme of an iframe differs from embedding document iframe gets an opaque canvas bg appropriate to its color scheme
-          style={{ colorScheme: 'light dark' }}
-        ></iframe>
-      </ContentBox>
     </div>
   );
 }
