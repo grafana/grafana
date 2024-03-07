@@ -239,12 +239,27 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	// TODO load from ini file
 	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration
-	uaCfg.ExecuteAlerts = ua.Key("execute_alerts").MustBool(schedulerDefaultExecuteAlerts)
+
+	alerting := iniFile.Section("alerting")
+
+	uaExecuteAlerts := ua.Key("execute_alerts").MustBool(schedulerDefaultExecuteAlerts)
+	if uaExecuteAlerts { // unified option equals the default (true)
+		legacyExecuteAlerts := alerting.Key("execute_alerts").MustBool(schedulerDefaultExecuteAlerts)
+		if !legacyExecuteAlerts {
+			cfg.Logger.Warn("falling back to legacy setting of 'execute_alerts'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
+		}
+		uaExecuteAlerts = legacyExecuteAlerts
+	}
+	uaCfg.ExecuteAlerts = uaExecuteAlerts
 
 	// if the unified alerting options equal the defaults, apply the respective legacy one
 	uaEvaluationTimeout, err := gtime.ParseDuration(valueAsString(ua, "evaluation_timeout", evaluatorDefaultEvaluationTimeout.String()))
-	if err != nil {
-		return fmt.Errorf("failed to parse setting `evaluation_timeout` as duration: %w", err)
+	if err != nil || uaEvaluationTimeout == evaluatorDefaultEvaluationTimeout { // unified option is invalid duration or equals the default
+		legaceEvaluationTimeout := time.Duration(alerting.Key("evaluation_timeout_seconds").MustInt64(int64(evaluatorDefaultEvaluationTimeout.Seconds()))) * time.Second
+		if legaceEvaluationTimeout != evaluatorDefaultEvaluationTimeout {
+			cfg.Logger.Warn("falling back to legacy setting of 'evaluation_timeout_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
+		}
+		uaEvaluationTimeout = legaceEvaluationTimeout
 	}
 	uaCfg.EvaluationTimeout = uaEvaluationTimeout
 
@@ -278,8 +293,16 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 
 	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", uaCfg.BaseInterval.String()))
-	if err != nil {
-		return fmt.Errorf("failed to parse setting `min_interval` as duration: %w", err)
+	if err != nil || uaMinInterval == uaCfg.BaseInterval { // unified option is invalid duration or equals the default
+		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
+		legacyMinInterval := time.Duration(alerting.Key("min_interval_seconds").MustInt64(int64(uaCfg.BaseInterval.Seconds()))) * time.Second
+		if legacyMinInterval > uaCfg.BaseInterval {
+			cfg.Logger.Warn("falling back to legacy setting of 'min_interval_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
+			uaMinInterval = legacyMinInterval
+		} else {
+			// if legacy interval is smaller than the base interval, adjust it to the base interval
+			uaMinInterval = uaCfg.BaseInterval
+		}
 	}
 
 	if uaMinInterval < uaCfg.BaseInterval {
