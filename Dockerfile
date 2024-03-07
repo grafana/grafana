@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=alpine:3.18.5
-ARG JS_IMAGE=node:20-alpine3.18
+ARG BASE_IMAGE=alpine:3.19.1
+ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.21.8-alpine3.18
+ARG GO_IMAGE=golang:1.21.8-alpine
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -19,6 +19,8 @@ COPY .yarn .yarn
 COPY packages packages
 COPY plugins-bundled plugins-bundled
 COPY public public
+
+RUN apk add --no-cache make build-base python3
 
 RUN yarn install --immutable
 
