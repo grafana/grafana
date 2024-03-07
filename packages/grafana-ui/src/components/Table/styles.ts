@@ -66,7 +66,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       '.cellActions': {
         display: 'flex',
         position: overflowOnHover ? undefined : 'absolute',
-        top: overflowOnHover ? undefined : "1px",
+        top: overflowOnHover ? undefined : '1px',
         right: overflowOnHover ? undefined : 0,
         margin: overflowOnHover ? theme.spacing(0, -0.5, 0, 0.5) : 'auto',
         visibility: 'hidden',

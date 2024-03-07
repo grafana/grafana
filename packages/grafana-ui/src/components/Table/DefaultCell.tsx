@@ -106,7 +106,7 @@ function getCellStyle(
 
   // Get colors
   const colors = getCellColors(tableStyles, cellOptions, displayValue);
-  
+
   // Skip application of background color if we're applying to the whole row
   if (cellOptions.type === TableCellDisplayMode.ColorBackground && !cellOptions.applyToRow) {
     textColor = colors.textColor;
