@@ -76,31 +76,31 @@ export default function GettingStarted() {
 }
 
 const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
-  grid: css`
-    display: grid;
-    grid-template-rows: min-content auto auto;
-    grid-template-columns: 1fr;
-    gap: ${theme.spacing(2)};
-    width: 100%;
+  grid: css({
+    display: 'grid',
+    gridTemplateRows: 'min-content auto auto',
+    gridTemplateColumns: '1fr',
+    gap: theme.spacing(2),
+    width: '100%',
 
-    ${theme.breakpoints.up('lg')} {
-      grid-template-columns: 3fr 2fr;
-    }
-  `,
-  ctaContainer: css`
-    grid-column: 1 / span 5;
-  `,
-  svgContainer: css`
-    & svg {
-      max-width: 900px;
-    }
-  `,
-  list: css`
-    margin: ${theme.spacing(0, 2)};
-    & > li {
-      margin-bottom: ${theme.spacing(1)};
-    }
-  `,
+    [theme.breakpoints.up('lg')]: {
+      gridTemplateColumns: '3fr 2fr',
+    },
+  }),
+  ctaContainer: css({
+    gridColumn: '1 / span 5',
+  }),
+  svgContainer: css({
+    '& svg': {
+      maxWidth: '900px',
+    },
+  }),
+  list: css({
+    margin: theme.spacing(0, 2),
+    '& > li': {
+      marginBottom: theme.spacing(1),
+    },
+  }),
 });
 
 export function WelcomeHeader({ className }: { className?: string }) {
@@ -144,26 +144,25 @@ const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     paddingBottom: theme.spacing(2),
   }),
-  ctaContainer: css`
-    padding: ${theme.spacing(2)};
-    display: flex;
-    gap: ${theme.spacing(4)};
-    justify-content: space-between;
-    flex-wrap: wrap;
+  ctaContainer: css({
+    padding: theme.spacing(2),
+    display: 'flex',
+    gap: theme.spacing(4),
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
 
-    ${theme.breakpoints.down('lg')} {
-      flex-direction: column;
-    }
-  `,
+    [theme.breakpoints.down('lg')]: {
+      flexDirection: 'column',
+    },
+  }),
+  separator: css({
+    width: '1px',
+    backgroundColor: theme.colors.border.medium,
 
-  separator: css`
-    width: 1px;
-    background-color: ${theme.colors.border.medium};
-
-    ${theme.breakpoints.down('lg')} {
-      display: none;
-    }
-  `,
+    [theme.breakpoints.down('lg')]: {
+      display: 'none',
+    },
+  }),
 });
 
 interface WelcomeCTABoxProps {
@@ -192,31 +191,31 @@ function WelcomeCTABox({ title, description, href, hrefText }: WelcomeCTABoxProp
 }
 
 const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    flex: 1;
-    min-width: 240px;
-    display: grid;
-    row-gap: ${theme.spacing(1)};
-    grid-template-columns: min-content 1fr 1fr 1fr;
-    grid-template-rows: min-content auto min-content;
+  container: css({
+    flex: 1,
+    minWidth: '240px',
+    display: 'grid',
+    rowGap: theme.spacing(1),
+    gridTemplateColumns: 'min-content 1fr 1fr 1fr',
+    gridTemplateRows: 'min-content auto min-content',
 
-    & h2 {
-      margin-bottom: 0;
-      grid-column: 2 / span 3;
-      grid-row: 1;
-    }
-  `,
+    '& h2': {
+      marginBottom: 0,
+      gridColumn: '2 / span 3',
+      gridRow: 1,
+    },
+  }),
 
-  desc: css`
-    grid-column: 2 / span 3;
-    grid-row: 2;
-  `,
+  desc: css({
+    gridColumn: '2 / span 3',
+    gridRow: 2,
+  }),
 
-  actionRow: css`
-    grid-column: 2 / span 3;
-    grid-row: 3;
-    max-width: 240px;
-  `,
+  actionRow: css({
+    gridColumn: '2 / span 3',
+    gridRow: 3,
+    maxWidth: '240px',
+  }),
 });
 
 function ContentBox({ children, className }: React.PropsWithChildren<{ className?: string }>) {
@@ -226,9 +225,9 @@ function ContentBox({ children, className }: React.PropsWithChildren<{ className
 }
 
 const getContentBoxStyles = (theme: GrafanaTheme2) => ({
-  box: css`
-    padding: ${theme.spacing(2)};
-    background-color: ${theme.colors.background.secondary};
-    border-radius: ${theme.shape.radius.default};
-  `,
+  box: css({
+    padding: theme.spacing(2),
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.default,
+  }),
 });
