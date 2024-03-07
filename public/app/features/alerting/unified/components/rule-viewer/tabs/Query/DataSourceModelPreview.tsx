@@ -37,9 +37,10 @@ function DatasourceModelPreview({ model }: DatasourceModelPreviewProps): React.R
           scrollBeyondLastLine: false,
           lineNumbers: 'off',
           cursorWidth: 0,
+          overviewRulerLanes: 0,
         }}
         defaultLanguage="sql"
-        height={64}
+        height={80}
         defaultValue={model.rawSql}
         width="100%"
       />
