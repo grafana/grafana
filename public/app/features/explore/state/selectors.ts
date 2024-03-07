@@ -1,5 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
+import { flatten, uniq, uniqBy } from 'lodash';
 
+import { DataSourceRef } from '@grafana/schema';
 import { ExploreItemState, StoreState } from 'app/types';
 
 export const selectPanes = (state: Pick<StoreState, 'explore'>) => state.explore.panes;
@@ -25,3 +27,41 @@ export const getExploreItemSelector = (exploreId: string) => createSelector(sele
 export const selectCorrelationDetails = createSelector(selectExploreRoot, (state) => state.correlationEditorDetails);
 
 export const selectShowQueryHistory = createSelector(selectExploreRoot, (state) => state.showQueryHistory);
+
+export const selectExploreDSMaps = createSelector(selectPanesEntries, (panes) => {
+  const exploreDSMap = panes
+    .map((pane) => {
+      const rootDatasource = [pane[1]?.datasourceInstance?.getRef()];
+      const queryDatasources = pane[1]?.queries.map((q) => q.datasource) || [];
+      const datasources = [...rootDatasource, ...queryDatasources].filter(
+        (datasource): datasource is DataSourceRef => !!datasource
+      );
+
+      if (datasources === undefined || datasources.length === 0) {
+        return undefined;
+      } else {
+        return {
+          exploreId: pane[0],
+          datasources: uniqBy(datasources, (ds) => ds.uid),
+        };
+      }
+    })
+    .filter((pane): pane is { exploreId: string; datasources: DataSourceRef[] } => !!pane);
+
+  const uniqueDataSources = uniq(flatten(exploreDSMap.map((pane) => pane.datasources)));
+
+  const dsToExploreMap = uniqueDataSources.map((ds) => {
+    let exploreIds: string[] = [];
+    exploreDSMap.forEach((eds) => {
+      if (eds.datasources.includes(ds)) {
+        exploreIds.push(eds.exploreId);
+      }
+    });
+    return {
+      datasource: ds,
+      exploreIds: exploreIds,
+    };
+  });
+
+  return { exploreToDS: exploreDSMap, dsToExplore: dsToExploreMap };
+});

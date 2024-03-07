@@ -44,7 +44,6 @@ export interface RichHistoryProps {
   loadMoreRichHistory: () => void;
   clearRichHistoryResults: () => void;
   deleteRichHistory: () => void;
-  datasourceInstances: DataSourceData[];
   firstTab: Tabs;
   height: number;
   onClose: () => void;
@@ -95,7 +94,6 @@ export function RichHistory(props: RichHistoryProps) {
     value: Tabs.RichHistory,
     content: (
       <RichHistoryQueriesTab
-        datasourceInstances={props.datasourceInstances}
         queries={richHistory}
         totalQueries={richHistoryTotal || 0}
         loading={loading}
@@ -118,7 +116,6 @@ export function RichHistory(props: RichHistoryProps) {
         queries={richHistory}
         totalQueries={richHistoryTotal || 0}
         loading={loading}
-        datasourceInstances={props.datasourceInstances}
         updateFilters={updateFilters}
         clearRichHistoryResults={() => props.clearRichHistoryResults()}
         loadMoreRichHistory={() => props.loadMoreRichHistory()}
