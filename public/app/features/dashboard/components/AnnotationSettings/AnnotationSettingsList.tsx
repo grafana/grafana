@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { arrayUtils, AnnotationQuery } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, DeleteButton, IconButton, useStyles2, VerticalGroup } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -127,7 +128,14 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
           }}
         />
       )}
-      {!showEmptyListCTA && <ListNewButton onClick={onNew}>New query</ListNewButton>}
+      {!showEmptyListCTA && (
+        <ListNewButton
+          data-testid={selectors.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2}
+          onClick={onNew}
+        >
+          New query
+        </ListNewButton>
+      )}
     </VerticalGroup>
   );
 };
