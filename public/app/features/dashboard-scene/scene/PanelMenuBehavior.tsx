@@ -41,7 +41,7 @@ import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
  */
-export function panelMenuBehavior(menu: VizPanelMenu) {
+export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
   const asyncFunc = async () => {
     // hm.. add another generic param to SceneObject to specify parent type?
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -71,7 +71,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       href: getViewPanelUrl(panel),
     });
 
-    if (dashboard.canEditDashboard()) {
+    if (dashboard.canEditDashboard() && !isRepeat) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
@@ -93,14 +93,16 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       shortcut: 'p s',
     });
 
-    moreSubMenu.push({
-      text: t('panel.header-menu.duplicate', `Duplicate`),
-      onClick: () => {
-        DashboardInteractions.panelMenuItemClicked('duplicate');
-        dashboard.duplicatePanel(panel);
-      },
-      shortcut: 'p d',
-    });
+    if (!isRepeat) {
+      moreSubMenu.push({
+        text: t('panel.header-menu.duplicate', `Duplicate`),
+        onClick: () => {
+          DashboardInteractions.panelMenuItemClicked('duplicate');
+          dashboard.duplicatePanel(panel);
+        },
+        shortcut: 'p d',
+      });
+    }
 
     moreSubMenu.push({
       text: t('panel.header-menu.copy', `Copy`),
@@ -112,7 +114,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     if (panel.parent instanceof LibraryVizPanel) {
       // TODO: Implement lib panel unlinking
-    } else {
+    } else if (!isRepeat) {
       moreSubMenu.push({
         text: t('panel.header-menu.create-library-panel', `Create library panel`),
         onClick: () => {
@@ -146,7 +148,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (dashboard.canEditDashboard() && plugin && !plugin.meta.skipDataQuery) {
+    if (dashboard.canEditDashboard() && plugin && !plugin.meta.skipDataQuery && !isRepeat) {
       moreSubMenu.push({
         text: t('panel.header-menu.get-help', 'Get help'),
         onClick: (e: React.MouseEvent) => {
@@ -193,26 +195,30 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    items.push({
-      text: '',
-      type: 'divider',
-    });
+    if (!isRepeat) {
+      items.push({
+        text: '',
+        type: 'divider',
+      });
 
-    items.push({
-      text: t('panel.header-menu.remove', `Remove`),
-      iconClassName: 'trash-alt',
-      onClick: () => {
-        DashboardInteractions.panelMenuItemClicked('remove');
-        removePanel(dashboard, panel, true);
-      },
-      shortcut: 'p r',
-    });
+      items.push({
+        text: t('panel.header-menu.remove', `Remove`),
+        iconClassName: 'trash-alt',
+        onClick: () => {
+          DashboardInteractions.panelMenuItemClicked('remove');
+          removePanel(dashboard, panel, true);
+        },
+        shortcut: 'p r',
+      });
+    }
 
     menu.setState({ items });
   };
 
   asyncFunc();
 }
+
+export const repeatPanelMenuBehavior = (menu: VizPanelMenu) => panelMenuBehavior(menu, true);
 
 async function getExploreMenuItem(panel: VizPanel): Promise<PanelMenuItem | undefined> {
   const exploreUrl = await tryGetExploreUrlForPanel(panel);
