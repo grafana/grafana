@@ -557,7 +557,8 @@ export function prepConfig(opts: PrepConfigOpts) {
           });
         },
       },
-      exemplarFillColor
+      exemplarFillColor,
+      dataRef.current.yLayout
     ),
     theme,
     scaleKey: '', // facets' scales used (above)
@@ -584,6 +585,10 @@ export function prepConfig(opts: PrepConfigOpts) {
       }
 
       return hRect && seriesIdx === hRect.sidx ? hRect.didx : null;
+    },
+    focus: {
+      prox: 1e3,
+      dist: (u, seriesIdx) => (hRect?.sidx === seriesIdx ? 0 : Infinity),
     },
     points: {
       fill: 'rgba(255,255,255, 0.3)',
@@ -744,7 +749,7 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
   };
 }
 
-export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: string) {
+export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: string, yLayout?: HeatmapCellLayout) {
   return (u: uPlot, seriesIdx: number) => {
     uPlot.orient(
       u,
@@ -772,6 +777,8 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
         let fillPaths = [points];
         let fillPalette = [exemplarColor ?? 'rgba(255,0,255,0.7)'];
 
+        let yShift = yLayout === HeatmapCellLayout.le ? -0.5 : yLayout === HeatmapCellLayout.ge ? 0.5 : 0;
+
         for (let i = 0; i < dataX.length; i++) {
           let yVal = dataY[i]!;
 
@@ -782,10 +789,7 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
           let isSparseHeatmap = scaleY.distr === 3 && scaleY.log === 2;
 
           if (!isSparseHeatmap) {
-            yVal -= 0.5; // center vertically in bucket (when tiles are le)
-            // y-randomize vertically to distribute exemplars in same bucket at same time
-            let randSign = Math.round(Math.random()) * 2 - 1;
-            yVal += randSign * 0.5 * Math.random();
+            yVal += yShift;
           }
 
           let x = valToPosX(dataX[i], scaleX, xDim, xOff);

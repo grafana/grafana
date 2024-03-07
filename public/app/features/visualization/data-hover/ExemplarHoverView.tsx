@@ -39,7 +39,7 @@ export const ExemplarHoverView = ({ displayValues, links, header = 'Exemplar' }:
           );
         })}
       </div>
-      {links && (
+      {links && links.length > 0 && (
         <div className={styles.exemplarFooter}>
           {links.map((link, i) => (
             <LinkButton key={i} href={link.href} className={styles.linkButton}>

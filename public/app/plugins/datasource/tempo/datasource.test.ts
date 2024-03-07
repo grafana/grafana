@@ -954,11 +954,19 @@ describe('Tempo service graph view', () => {
               refId: 'A',
               filters: [
                 {
+                  id: 'service-namespace',
+                  operator: '=',
+                  scope: 'resource',
+                  tag: 'service.namespace',
+                  value: '${__data.fields.targetNamespace}',
+                  valueType: 'string',
+                },
+                {
                   id: 'service-name',
                   operator: '=',
                   scope: 'resource',
                   tag: 'service.name',
-                  value: '${__data.fields.target}',
+                  value: '${__data.fields.targetName}',
                   valueType: 'string',
                 },
               ],
@@ -1033,8 +1041,8 @@ describe('Tempo service graph view', () => {
     ]);
   });
 
-  it('should make tempo link correctly', () => {
-    const tempoLink = makeTempoLink('Tempo', '', '"${__data.fields[0]}"', 'gdev-tempo');
+  it('should make tempo link correctly without namespace', () => {
+    const tempoLink = makeTempoLink('Tempo', undefined, '', '"${__data.fields[0]}"', 'gdev-tempo');
     expect(tempoLink).toEqual({
       url: '',
       title: 'Tempo',
@@ -1043,6 +1051,40 @@ describe('Tempo service graph view', () => {
           queryType: 'traceqlSearch',
           refId: 'A',
           filters: [
+            {
+              id: 'span-name',
+              operator: '=',
+              scope: 'span',
+              tag: 'name',
+              value: '"${__data.fields[0]}"',
+              valueType: 'string',
+            },
+          ],
+        },
+        datasourceUid: 'gdev-tempo',
+        datasourceName: 'Tempo',
+      },
+    });
+  });
+
+  it('should make tempo link correctly with namespace', () => {
+    const tempoLink = makeTempoLink('Tempo', '"${__data.fields.subtitle}"', '', '"${__data.fields[0]}"', 'gdev-tempo');
+    expect(tempoLink).toEqual({
+      url: '',
+      title: 'Tempo',
+      internal: {
+        query: {
+          queryType: 'traceqlSearch',
+          refId: 'A',
+          filters: [
+            {
+              id: 'service-namespace',
+              operator: '=',
+              scope: 'resource',
+              tag: 'service.namespace',
+              value: '"${__data.fields.subtitle}"',
+              valueType: 'string',
+            },
             {
               id: 'span-name',
               operator: '=',
@@ -1457,7 +1499,7 @@ const serviceGraphLinks = [
             operator: '=',
             scope: 'resource',
             tag: 'service.name',
-            value: '${__data.fields[0]}',
+            value: '${__data.fields.id}',
             valueType: 'string',
           },
         ],

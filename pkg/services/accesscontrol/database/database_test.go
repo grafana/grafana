@@ -629,6 +629,24 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			options:  accesscontrol.SearchOptions{Action: "teams:read", Scope: "teams:id:1"},
 			wantPerm: map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
 		},
+		{
+			name:  "user assignment by role prefixes",
+			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("1")},
+			},
+			options:  accesscontrol.SearchOptions{RolePrefixes: []string{accesscontrol.ManagedRolePrefix}},
+			wantPerm: map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
+		},
+		{
+			name:  "filter out permissions by role prefix",
+			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("1")},
+			},
+			options:  accesscontrol.SearchOptions{RolePrefixes: []string{accesscontrol.BasicRolePrefix}},
+			wantPerm: map[int64][]accesscontrol.Permission{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
