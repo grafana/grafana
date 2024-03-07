@@ -165,11 +165,9 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	// At present an invalid value is considered the same as no value. This means that a
 	// spelling mistake in the string "false" could enable unified alerting rather
 	// than disable it. This issue can be found here
-	hasEnabled := section.Key("enabled").Value() != ""
-	if !hasEnabled {
+	if section.Key("enabled").Value() == "" {
 		return util.Pointer(true), nil
 	}
-
 	unifiedAlerting, err := section.Key("enabled").Bool()
 	if err != nil {
 		return nil, fmt.Errorf("invalid value %s, should be either true or false", section.Key("enabled"))
