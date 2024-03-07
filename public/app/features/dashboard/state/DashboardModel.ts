@@ -44,7 +44,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { PanelModel } from './PanelModel';
+import { explicitlyControlledMigrationPanels, PanelModel } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -121,15 +121,6 @@ export class DashboardModel implements TimeModel {
     originalDashboard: true,
   };
 
-  static autoMigratePluginIDs = [
-    'graph',
-    'table-old',
-    'grafana-piechart-panel',
-    'grafana-worldmap-panel',
-    'singlestat',
-    'grafana-singlestat-panel',
-  ];
-
   constructor(
     data: Dashboard,
     meta?: DashboardMeta,
@@ -192,7 +183,7 @@ export class DashboardModel implements TimeModel {
     // Handles both granular and all angular panel migration
     if (shouldMigrateAllAngularPanels || shouldMigrateExplicitAngularPanels) {
       for (const panel of this.panelIterator()) {
-        if (!DashboardModel.autoMigratePluginIDs.includes(panel.type)) {
+        if (!explicitlyControlledMigrationPanels.includes(panel.type)) {
           continue;
         }
 
