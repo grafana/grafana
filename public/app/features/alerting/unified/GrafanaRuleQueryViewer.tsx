@@ -137,20 +137,6 @@ export function QueryPreview({
     );
   }
 
-  let queryPreview: JSX.Element = (
-    <pre>
-      <code>{dump(model)}</code>
-    </pre>
-  );
-
-  if (dataSource?.type === DataSourceType.Prometheus && isPromOrLokiQuery(model)) {
-    queryPreview = <PrometheusQueryPreview query={model.expr} />;
-  }
-
-  if (dataSource?.type === DataSourceType.Loki && isPromOrLokiQuery(model)) {
-    queryPreview = <LokiQueryPreview query={model.expr ?? ''} />;
-  }
-
   let exploreLink: string | undefined = undefined;
   if (!isExpression && canExplore) {
     exploreLink = dataSource && createExploreLink(dataSource, model);
@@ -159,10 +145,32 @@ export function QueryPreview({
   return (
     <>
       <QueryBox refId={refId} headerItems={headerItems} exploreLink={exploreLink}>
-        <div className={styles.queryPreviewWrapper}>{queryPreview}</div>
+        <div className={styles.queryPreviewWrapper}>{model && <DatasourceModelPreview model={model} />}</div>
       </QueryBox>
       {dataSource && <RuleViewerVisualization data={queryData} thresholds={thresholds} />}
     </>
+  );
+}
+
+interface DatasourceModelPreviewProps {
+  model: AlertDataQuery;
+}
+
+function DatasourceModelPreview({ model }: DatasourceModelPreviewProps): React.ReactNode {
+  const { datasource } = model;
+
+  if (datasource?.type === DataSourceType.Prometheus && isPromOrLokiQuery(model)) {
+    return <PrometheusQueryPreview query={model.expr} />;
+  }
+
+  if (datasource?.type === DataSourceType.Loki && isPromOrLokiQuery(model)) {
+    return <LokiQueryPreview query={model.expr ?? ''} />;
+  }
+
+  return (
+    <pre>
+      <code>{dump(model)}</code>
+    </pre>
   );
 }
 
