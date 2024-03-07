@@ -66,7 +66,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       '.cellActions': {
         display: 'flex',
         position: overflowOnHover ? undefined : 'absolute',
-        top: overflowOnHover ? undefined : 0,
+        top: overflowOnHover ? undefined : "1px",
         right: overflowOnHover ? undefined : 0,
         margin: overflowOnHover ? theme.spacing(0, -0.5, 0, 0.5) : 'auto',
         visibility: 'hidden',
@@ -75,7 +75,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         alignItems: 'center',
         height: '100%',
         padding: theme.spacing(1, 0.5, 1, 0.5),
-        background: background ? 'none' : theme.colors.emphasize(theme.colors.background.primary, 0.03),
+        background: background ? 'none' : 'rgba(0, 0, 0, 0.5)',
 
         svg: {
           color,
