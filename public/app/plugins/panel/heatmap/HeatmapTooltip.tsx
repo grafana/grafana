@@ -1,4 +1,4 @@
-import React, { ReactElement, useEffect, useRef, useState } from 'react';
+import React, { ReactElement, useEffect, useRef, useState, ReactNode } from 'react';
 import uPlot from 'uplot';
 
 import {
@@ -7,11 +7,8 @@ import {
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
-  getLinksSupplier,
-  InterpolateFunction,
   LinkModel,
   PanelData,
-  ScopedVars,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
 import { TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
@@ -24,13 +21,14 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
+import { getDataLinks } from '../status-history/utils';
 import { getStyles } from '../timeseries/TimeSeriesTooltip';
 
 import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
 import { formatMilliseconds, getFieldFromData, getHoverCellColor, getSparseCellMinMax } from './tooltip/utils';
 
-interface Props {
+interface HeatmapTooltipProps {
   mode: TooltipDisplayMode;
   dataIdxs: Array<number | null>;
   seriesIdx: number | null | undefined;
@@ -40,12 +38,10 @@ interface Props {
   isPinned: boolean;
   dismiss: () => void;
   panelData: PanelData;
-  replaceVars: InterpolateFunction;
-  scopedVars: ScopedVars[];
   annotate?: () => void;
 }
 
-export const HeatmapHoverView = (props: Props) => {
+export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
   if (props.seriesIdx === 2) {
     return (
       <DataHoverView
@@ -66,11 +62,9 @@ const HeatmapHoverCell = ({
   showHistogram,
   isPinned,
   showColorScale = false,
-  scopedVars,
-  replaceVars,
   mode,
   annotate,
-}: Props) => {
+}: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
 
@@ -114,11 +108,8 @@ const HeatmapHoverCell = ({
 
   let contentItems: VizTooltipItem[] = [];
 
-  const getYValueIndex = (idx: number) => {
-    return idx % data.yBucketCount! ?? 0;
-  };
-
-  let yValueIdx = getYValueIndex(index);
+  const yValueIdx = index % (data.yBucketCount ?? 1);
+  const xValueIdx = Math.floor(index / (data.yBucketCount ?? 1));
 
   const getData = (idx: number = index) => {
     if (meta.yOrdinalDisplay) {
@@ -187,7 +178,6 @@ const HeatmapHoverCell = ({
       if (isSparse) {
         ({ xBucketMin, xBucketMax, yBucketMin, yBucketMax } = getSparseCellMinMax(data!, idx));
       } else {
-        yValueIdx = getYValueIndex(idx);
         getData(idx);
       }
 
@@ -283,34 +273,23 @@ const HeatmapHoverCell = ({
     });
   }
 
-  const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
-  const links: Array<LinkModel<Field>> = [];
-  const linkLookup = new Set<string>();
+  let footer: ReactNode;
 
-  for (const field of visibleFields ?? []) {
-    const hasLinks = field.config.links && field.config.links.length > 0;
+  if (isPinned) {
+    let links: Array<LinkModel<Field>> = [];
 
-    if (hasLinks && data.heatmap) {
-      const appropriateScopedVars = scopedVars.find(
-        (scopedVar) =>
-          scopedVar && scopedVar.__dataContext && scopedVar.__dataContext.value.field.name === nonNumericOrdinalDisplay
-      );
+    const linksField = data.series?.fields[yValueIdx + 1];
 
-      field.getLinks = getLinksSupplier(data.heatmap, field, appropriateScopedVars || {}, replaceVars);
+    if (linksField != null) {
+      const visible = !Boolean(linksField.config.custom?.hideFrom?.tooltip);
+      const hasLinks = (linksField.config.links?.length ?? 0) > 0;
+
+      if (visible && hasLinks) {
+        links = getDataLinks(linksField, xValueIdx);
+      }
     }
 
-    if (field.getLinks) {
-      const value = field.values[index];
-      const display = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
-
-      field.getLinks({ calculatedValue: display, valueRowIndex: index }).forEach((link) => {
-        const key = `${link.title}/${link.href}`;
-        if (!linkLookup.has(key)) {
-          links.push(link);
-          linkLookup.add(key);
-        }
-      });
-    }
+    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} />;
   }
 
   let can = useRef<HTMLCanvasElement>(null);
@@ -377,9 +356,7 @@ const HeatmapHoverCell = ({
           </div>
         ))}
       </VizTooltipContent>
-      {(links.length > 0 || isPinned) && (
-        <VizTooltipFooter dataLinks={links} annotate={isPinned ? annotate : undefined} />
-      )}
+      {footer}
     </div>
   );
 };
