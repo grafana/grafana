@@ -94,8 +94,9 @@ func ProvideService(
 func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageStats) {
 	s.log.Info("registering usage stat providers", "usageStatsProvidersLen", len(usageStatProviders))
 	for _, usageStatProvider := range usageStatProviders {
+		provider := usageStatProvider.GetUsageStats
 		collector := func(ctx context.Context) (map[string]interface{}, error) {
-			return usageStatProvider.GetUsageStats(ctx), nil
+			return provider(ctx), nil
 		}
 
 		s.usageStats.RegisterMetricsFunc(collector)
