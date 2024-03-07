@@ -72,7 +72,7 @@ export default function ExtensionSettings(): ReactElement | null {
                 <div className={styles.leftColumnGroupContent}>
                   {pluginCapabilities[pluginId].map((extensionPoint) => (
                     <a
-                        title={extensionPoint.id}
+                      title={extensionPoint.id}
                       href={`/extensions/${encodeURIComponent(extensionPoint.id)}`}
                       key={extensionPoint.id}
                       className={cx(styles.leftColumnGroupItem, styles.code, {
@@ -88,12 +88,16 @@ export default function ExtensionSettings(): ReactElement | null {
           })}
         </div>
       </div>
+
       {/* Right column */}
       <div className={styles.rightColumn}>
         {!activeExtensionPointId && <div>Select an extension point to view its extensions.</div>}
+
         {activeExtensionPointId && (
           <div>
-            <div>Extensions for {activeExtensionPointId}</div>
+            <h3>
+              Extensions point <code>{activeExtensionPointId}</code>
+            </h3>
           </div>
         )}
       </div>
