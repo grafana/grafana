@@ -8,8 +8,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/cuetsy/ts"
-	"github.com/grafana/cuetsy/ts/ast"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -21,6 +19,8 @@ import (
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
+	"github.com/grafana/cuetsy/ts"
+	"github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/kindsys"
 
 	"github.com/grafana/grafana/pkg/codegen"
