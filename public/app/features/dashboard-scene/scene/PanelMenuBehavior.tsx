@@ -105,32 +105,34 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       },
     });
 
-    if (parent instanceof LibraryVizPanel) {
-      moreSubMenu.push({
-        text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
-        onClick: () => {
-          DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
-          dashboard.showModal(
-            new UnlinkLibraryPanelModal({
-              panelRef: parent.getRef(),
-            })
-          );
-        },
-      });
-    } else if (!isRepeat) {
-      moreSubMenu.push({
-        text: t('panel.header-menu.create-library-panel', `Create library panel`),
-        onClick: () => {
-          DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
-          dashboard.showModal(
-            new ShareModal({
-              panelRef: panel.getRef(),
-              dashboardRef: dashboard.getRef(),
-              activeTab: shareDashboardType.libraryPanel,
-            })
-          );
-        },
-      });
+    if (!isRepeat) {
+      if (parent instanceof LibraryVizPanel) {
+        moreSubMenu.push({
+          text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
+          onClick: () => {
+            DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
+            dashboard.showModal(
+              new UnlinkLibraryPanelModal({
+                panelRef: parent.getRef(),
+              })
+            );
+          },
+        });
+      } else {
+        moreSubMenu.push({
+          text: t('panel.header-menu.create-library-panel', `Create library panel`),
+          onClick: () => {
+            DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
+            dashboard.showModal(
+              new ShareModal({
+                panelRef: panel.getRef(),
+                dashboardRef: dashboard.getRef(),
+                activeTab: shareDashboardType.libraryPanel,
+              })
+            );
+          },
+        });
+      }
     }
 
     moreSubMenu.push({
