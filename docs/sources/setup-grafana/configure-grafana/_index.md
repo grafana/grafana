@@ -23,7 +23,7 @@ After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the
 
 The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ change this file.
 
-Depending on your OS, your custom configuration file is either the `$WORKING_DIR/conf/defaults.ini` file or the `/usr/local/etc/grafana/grafana.ini` file. The custom configuration file path can be overridden using the `--config` parameter.
+Depending on your OS, your custom configuration file is either the `$WORKING_DIR/conf/custom.ini` file or the `/usr/local/etc/grafana/grafana.ini` file. The custom configuration file path can be overridden using the `--config` parameter.
 
 ### Linux
 
@@ -833,7 +833,7 @@ The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For
 
 ### verify_email_enabled
 
-Require email validation before sign up completes. Default is `false`.
+Require email validation before sign up completes or when updating a user email address. Default is `false`.
 
 ### login_hint
 
@@ -877,6 +877,12 @@ Default is `false`.
 The duration in time a user invitation remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
+
+### verification_email_max_lifetime_duration
+
+The duration in time a verification email, used to update the email address of a user, remains valid before expiring.
+This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
+Default is 1h (1 hour).
 
 ### hidden_users
 
@@ -2210,7 +2216,11 @@ Set to `true` if you want to test alpha panels that are not yet ready for genera
 
 ### disable_sanitize_html
 
-If set to true Grafana will allow script tags in text panels. Not recommended as it enables XSS vulnerabilities. Default is false. This setting was introduced in Grafana v6.0.
+{{% admonition type="note" %}}
+This configuration is not available in Grafana Cloud instances.
+{{% /admonition %}}
+
+If set to true Grafana will allow script tags in text panels. Not recommended as it enables XSS vulnerabilities. Default is false.
 
 ## [plugins]
 

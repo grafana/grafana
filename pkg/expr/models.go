@@ -50,8 +50,8 @@ type ResampleQuery struct {
 	// The math expression
 	Expression string `json:"expression" jsonschema:"minLength=1,example=$A + 1,example=$A"`
 
-	// The time durration
-	Window string `json:"window" jsonschema:"minLength=1,example=1w,example=10m"`
+	// The time duration
+	Window string `json:"window" jsonschema:"minLength=1,example=1d,example=10m"`
 
 	// The downsample function
 	Downsampler mathexp.ReducerID `json:"downsampler"`

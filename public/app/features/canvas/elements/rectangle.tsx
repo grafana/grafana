@@ -7,6 +7,7 @@ import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
+import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor, defaultTextColor } from '../element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
@@ -80,6 +81,8 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
     if (cfg.color) {
       data.color = ctx.getColor(cfg.color).value();
     }
+
+    data.links = getDataLinks(ctx, cfg, data.text);
 
     return data;
   },

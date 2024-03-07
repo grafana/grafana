@@ -8,7 +8,7 @@ import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPan
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
-import { removePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -120,7 +120,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'p r',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      removePanel(scene, vizPanel, true);
+      onRemovePanel(scene, vizPanel);
     }),
   });
 
