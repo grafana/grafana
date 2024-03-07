@@ -74,7 +74,6 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
                 id="new-password"
                 autoComplete="new-password"
                 onFocus={() => setDisplayValidationLabels(true)}
-                value={newPassword}
                 {...register('newPassword', {
                   onBlur: () => setPristine(false),
                   required: t('profile.change-password.new-password-required', 'New password is required'),
