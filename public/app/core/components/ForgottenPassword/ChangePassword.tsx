@@ -27,19 +27,21 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
   const styles = useStyles2(getStyles);
   const [displayValidationLabels, setDisplayValidationLabels] = useState(false);
   const [pristine, setPristine] = useState(true);
-  const [newPassword, setNewPassword] = useState('');
 
   const {
     handleSubmit,
     register,
     getValues,
     formState: { errors },
+    watch,
   } = useForm<PasswordDTO>({
     defaultValues: {
       newPassword: '',
       confirmNew: '',
     },
   });
+
+  const newPassword = watch('newPassword');
   const submit = (passwords: PasswordDTO) => {
     onSubmit(passwords.newPassword);
   };
@@ -54,7 +56,6 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
           {...register('newPassword', {
             required: 'New Password is required',
             onBlur: () => setPristine(false),
-            onChange: (e) => setNewPassword(e.target.value),
             validate: { strongPasswordValidationRegister },
           })}
           id="new-password"
