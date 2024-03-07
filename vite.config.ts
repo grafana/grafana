@@ -65,6 +65,12 @@ export default defineConfig({
       },
     ],
   },
+  experimental: {
+    // Support CDN asset paths
+    renderBuiltUrl(filename: string, { hostType }) {
+      return { relative: true };
+    },
+  },
 });
 
 /**
