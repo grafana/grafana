@@ -72,5 +72,5 @@ func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver a
 
 func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg string, eval accesscontrol.Evaluator) {
 	namespace, id := ident.GetNamespacedID()
-	a.log.FromContext(ctx).Debug(msg, "namespace", namespace, "id", id, "orgID", ident.GetOrgID(), eval.GoString())
+	a.log.FromContext(ctx).Debug(msg, "namespace", namespace, "id", id, "orgID", ident.GetOrgID(), "permissions", eval.GoString())
 }
