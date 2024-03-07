@@ -74,7 +74,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         width: 0,
         alignItems: 'center',
         height: '100%',
-        padding: theme.spacing(1, 0.5, 1, 0.5),
+        padding: theme.spacing(1, 0.5, 1, 1),
         background: background ? 'none' : 'rgba(0, 0, 0, 0.5)',
 
         svg: {
