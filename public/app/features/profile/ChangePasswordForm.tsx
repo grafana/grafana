@@ -24,7 +24,6 @@ export interface Props {
 export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) => {
   const [displayValidationLabels, setDisplayValidationLabels] = useState(false);
   const [pristine, setPristine] = useState(true);
-  const [newPassword, setNewPassword] = useState('');
 
   const { disableLoginForm } = config;
   const authSource = user.authLabels?.length && user.authLabels[0];
@@ -53,7 +52,8 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
       `}
     >
       <Form onSubmit={onChangePassword}>
-        {({ register, errors, getValues }) => {
+        {({ register, errors, getValues, watch }) => {
+          const newPassword = watch('newPassword');
           return (
             <>
               <Field
@@ -82,7 +82,6 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
                   value={newPassword}
                   {...register('newPassword', {
                     onBlur: () => setPristine(false),
-                    onChange: (e) => setNewPassword(e.target.value),
                     required: t('profile.change-password.new-password-required', 'New password is required'),
                     validate: {
                       strongPasswordValidationRegister,
