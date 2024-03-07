@@ -45,6 +45,27 @@ func TestQuerySplitting(t *testing.T) {
 		require.Empty(t, split.Requests)
 	})
 
+	t.Run("applies default timerage", func(t *testing.T) {
+		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				TimeRange: data.TimeRange{}, // missing
+				Queries: []data.DataQuery{{
+					CommonQueryProperties: data.CommonQueryProperties{
+						RefID: "A",
+						Datasource: &data.DataSourceRef{
+							Type: "x",
+							UID:  "abc",
+						},
+					},
+				}},
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, split.Requests, 1)
+		require.Equal(t, "now-6", split.Requests[0].Request.From)
+		require.Equal(t, "now", split.Requests[0].Request.To)
+	})
+
 	t.Run("verify tests", func(t *testing.T) {
 		files, err := os.ReadDir("testdata")
 		require.NoError(t, err)

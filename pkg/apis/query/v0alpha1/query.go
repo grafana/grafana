@@ -1,6 +1,8 @@
 package v0alpha1
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +25,19 @@ type QueryDataResponse struct {
 
 	// Backend wrapper (external dependency)
 	backend.QueryDataResponse `json:",inline"`
+}
+
+// If errors exist, return multi-status
+func GetResponseCode(rsp *backend.QueryDataResponse) int {
+	if rsp == nil {
+		return http.StatusInternalServerError
+	}
+	for _, v := range rsp.Responses {
+		if v.Error != nil {
+			return http.StatusMultiStatus
+		}
+	}
+	return http.StatusOK
 }
 
 // Defines a query behavior in a datasource.  This is a similar model to a CRD where the

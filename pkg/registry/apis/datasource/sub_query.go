@@ -80,12 +80,8 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			responder.Error(err)
 			return
 		}
-		statusCode := http.StatusOK
-		for _, res := range rsp.Responses {
-			if res.Error != nil {
-				statusCode = http.StatusMultiStatus // no need for feature toggle on this endpoint!
-			}
-		}
-		responder.Object(statusCode, &query.QueryDataResponse{QueryDataResponse: *rsp})
+		responder.Object(query.GetResponseCode(rsp),
+			&query.QueryDataResponse{QueryDataResponse: *rsp},
+		)
 	}), nil
 }

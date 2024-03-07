@@ -38,20 +38,9 @@ func (d *testdataDummy) QueryData(ctx context.Context, req data.QueryDataRequest
 		return http.StatusBadRequest, nil, err
 	}
 
-	code := http.StatusOK
 	qdr := &backend.QueryDataRequest{Queries: queries}
 	rsp, err := testdata.ProvideService().QueryData(ctx, qdr)
-	if err == nil {
-		for _, v := range rsp.Responses {
-			if v.Error != nil {
-				code = http.StatusMultiStatus
-				break
-			}
-		}
-	} else {
-		code = http.StatusInternalServerError
-	}
-	return code, rsp, err
+	return query.GetResponseCode(rsp), rsp, err
 }
 
 // GetDatasourceAPI implements DataSourceRegistry.

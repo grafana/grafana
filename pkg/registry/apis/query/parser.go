@@ -75,7 +75,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 		input.From = "now-6h"
 	}
 	if input.To == "" {
-		input.To = ""
+		input.To = "now"
 	}
 
 	for _, q := range input.Queries {
@@ -95,6 +95,10 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 
 		// Process each query
 		if expr.IsDataSource(ds.UID) {
+			// In order to process the query as a typed expression query, we
+			// are writing it back to JSON and parsing again.  Alternatively we
+			// could construct it from the untyped map[string]any additional properties
+			// but this approach lets us focus on well typed behavior first
 			raw, err := json.Marshal(q)
 			if err != nil {
 				return rsp, err
