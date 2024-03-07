@@ -18,8 +18,6 @@ export default function Extensions(): ReactElement | null {
     { value: 'explore', label: 'Explore', icon: 'bolt' },
   ];
 
-  generateSHA256Hash('test').then((hash) => console.log('*** HASH ***', hash));
-
   return (
     <Page navModel={navModel} subTitle={'Manage UI extensions.'}>
       <Page.Contents>
@@ -58,13 +56,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
-
-async function generateSHA256Hash(str: string) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-
-  return hashHex;
-}

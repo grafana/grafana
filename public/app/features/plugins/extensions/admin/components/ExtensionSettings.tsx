@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { ReactElement } from 'react';
 import { useObservable } from 'react-use';
 
@@ -6,38 +6,30 @@ import { GrafanaTheme2, PluginExtensionPointsMeta } from '@grafana/data';
 import { useStyles2, Counter } from '@grafana/ui';
 import { reactivePluginExtensionRegistry } from 'app/features/plugins/extensions/reactivePluginExtensionRegistry';
 
-import { PluginExtensionRegistry } from '../../../extensions/types';
-
-export type PluginExtensionPoint = {
-  id: string;
-  title?: string;
-  description?: string;
-};
+import { getCoreExtensionPoints, getPluginExtensionPoints } from '../utils';
 
 export default function ExtensionSettings(): ReactElement | null {
   const styles = useStyles2(getStyles);
   const registry = useObservable(reactivePluginExtensionRegistry.asObservable());
   const pluginExtensionPoints = getPluginExtensionPoints(registry);
+  const coreExtensionPoints = getCoreExtensionPoints(registry);
 
   return (
     <div className={styles.container}>
-      {/* Left column */}
       <div className={styles.leftColumn}>
-        {/* Extension points */}
         <div className={styles.leftColumnGroup}>
           <div className={styles.leftColumnGroupTitle}>Extension points</div>
 
           {/* Core extension points */}
           <div className={styles.leftColumnGroupSubTitle}>Core</div>
           <div className={styles.leftColumnGroupContent}>
-            {Object.keys(PluginExtensionPointsMeta).map((extensionPointId, index) => (
+            {coreExtensionPoints.map((extensionPoint) => (
               <a
-                href={`/extensions/settings/${encodeURIComponent(extensionPointId)}`}
-                key={index}
-                onClick={() => {}}
-                className={styles.leftColumnGroupItem}
+                href={`/extensions/settings/${encodeURIComponent(extensionPoint.id)}`}
+                key={extensionPoint.id}
+                className={cx(styles.leftColumnGroupItem, styles.code)}
               >
-                {Object.values(PluginExtensionPointsMeta)[index].title}
+                {extensionPoint.id}
               </a>
             ))}
           </div>
@@ -45,16 +37,16 @@ export default function ExtensionSettings(): ReactElement | null {
           {/* Plugin extension points */}
           <div className={styles.leftColumnGroupSubTitle}>Plugins</div>
           <div className={styles.leftColumnGroupContent}>
-            {pluginExtensionPoints.map((extensionPoint, index) => (
+            {pluginExtensionPoints.length === 0 && (
+              <div className={styles.leftColumnGroupItemNotFound}>No extensions.</div>
+            )}
+            {pluginExtensionPoints.map((extensionPoint) => (
               <a
                 href={`/extensions/settings/${encodeURIComponent(extensionPoint.id)}`}
-                key={index}
-                onClick={() => {}}
-                className={styles.leftColumnGroupItem}
+                key={extensionPoint.id}
+                className={cx(styles.leftColumnGroupItem, styles.code)}
               >
                 {extensionPoint.id}
-
-                <Counter value={extensionPoint.extensionCount} />
               </a>
             ))}
           </div>
@@ -116,6 +108,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding-left: ${theme.spacing(4)};
     font-size: ${theme.typography.pxToRem(13)};
   `,
+  leftColumnGroupItemNotFound: css`
+    display: inline-block;
+    color: ${theme.colors.text.disabled};
+    padding-left: ${theme.spacing(4)};
+    font-size: ${theme.typography.pxToRem(12)};
+  `,
   leftColumnGroupCapabilityItem: css`
     cursor: pointer;
     padding-left: ${theme.spacing(4)};
@@ -123,42 +121,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-family: ${theme.typography.fontFamilyMonospace};
     font-size: ${theme.typography.pxToRem(12)};
   `,
+  code: css`
+    font-family: ${theme.typography.fontFamilyMonospace};
+    font-size: ${theme.typography.pxToRem(11)};
+  `,
   leftColumnGroupContent: css``,
   rightColumn: css`
     flex-grow: 1;
     padding: ${theme.spacing(2)};
   `,
 });
-
-// Returns the core extension points in the following format:
-// { extensionPointId, extensionCount }
-function getCoreExtensionPoints(regsitry?: PluginExtensionRegistry) {
-  if (!regsitry) {
-    return [];
-  }
-
-  return Object.keys(regsitry)
-    .filter((key) => key.startsWith('grafana/'))
-    .map((id) => ({
-      id,
-      extensionCount: regsitry[id].length,
-    }));
-}
-
-// Returns extension points registered by plugins in the following format:
-// { [pluignId]: { extensionPointId, extensionCount }[] }
-function getPluginExtensionPoints(regsitry?: PluginExtensionRegistry) {
-  if (!regsitry) {
-    return [];
-  }
-
-  const extensionPointsByPlugins = {};
-
-  const pluginExtensionPointIds = Object.keys(regsitry).filter((key) => key.startsWith('plugins/'));
-
-  return pluginExtensionPointIds.map((id) => ({
-    id,
-    pluginId: id.split('/')[1],
-    extensionCount: regsitry[id].length,
-  }));
-}

@@ -1,4 +1,8 @@
-import { PluginExtensionConfig } from '@grafana/data';
+import { PluginExtensionConfig, PluginExtensionPoints } from '@grafana/data';
+
+import { PluginExtensionRegistry } from '../types';
+
+import { ExtensionPointConfig } from './types';
 
 // Gets persisted settings for an extension point
 export function getExtensionPointSettings(extensionPointId: string) {}
@@ -57,3 +61,26 @@ export async function generateSHA256Hash(str: string) {
 export async function generateIdForExtension(extension: PluginExtensionConfig) {}
 
 export async function generateIdForCapability(extension: PluginExtensionConfig) {}
+
+export function getCoreExtensionPoints(regsitry?: PluginExtensionRegistry): ExtensionPointConfig[] {
+  const availableIds = Object.values(PluginExtensionPoints);
+  const coreExtensionPoints = availableIds.map((id) => ({
+    id,
+    extensions: regsitry?.[id] || [],
+  }));
+
+  return coreExtensionPoints;
+}
+
+export function getPluginExtensionPoints(regsitry?: PluginExtensionRegistry): ExtensionPointConfig[] {
+  if (!regsitry) {
+    return [];
+  }
+
+  return Object.keys(regsitry)
+    .filter((key) => key.startsWith('plugins/'))
+    .map((key) => ({
+      id: key,
+      extensions: regsitry[key],
+    }));
+}
