@@ -23,23 +23,18 @@ When you hover your cursor over a visualization, Grafana can display tooltips th
 
 You can configure tooltips for the following visualizations:
 
-- [Bar chart][bar chart]
-- [Heatmap][heatmap]
-- [Pie chart][pie chart]
-- [State timeline][state timeline]
-- [Status history][status history]
-- [Time series][time series]
-- [Trend][trend]
+|                                  |                                  |
+| -------------------------------- | -------------------------------- |
+| [Bar chart][bar chart]           | [Status history][status history] |
+| [Heatmap][heatmap]               | [Time series][time series]       |
+| [Pie chart][pie chart]           | [Trend][trend]                   |
+| [State timeline][state timeline] |
+
 <!--Also xy chart -->
 
 Special tooltips: Geomap
 
-Non-configurable tooltips:
-
-- [Candlestick][candlestick]
-- [Canvas][canvas]
-- [Flame graph][flame graph]
-- [Node graph][node graph]
+Some visualizations (for example, [candlestick][] and [flame graph][]) have tooltips, but they aren't configurable. These visualizations don't have a **Tooltip** section in the panel editor pane.
 
 ## Tooltip options
 
@@ -84,9 +79,6 @@ For the heatmap visualization only, when you set the **Tooltip mode** to **Singl
 [candlestick]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/candlestick"
 [candlestick]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/candlestick"
 
-[canvas]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/canvas"
-[canvas]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/canvas"
-
 [flame graph]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
 [flame graph]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/flame-graph"
 
@@ -95,9 +87,6 @@ For the heatmap visualization only, when you set the **Tooltip mode** to **Singl
 
 [heatmap]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
 [heatmap]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/heatmap"
-
-[node graph]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph"
-[node graph]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/node-graph"
 
 [pie chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/pie-chart"
 [pie chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/pie-chart"
