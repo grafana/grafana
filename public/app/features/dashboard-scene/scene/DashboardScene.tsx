@@ -560,6 +560,66 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     store.delete(LS_PANEL_COPY_KEY);
   }
 
+  public removePanel(panel: VizPanel) {
+    const panels: SceneObject[] = [];
+    const key = panel.parent instanceof LibraryVizPanel ? panel.parent.parent?.state.key : panel.parent?.state.key;
+
+    if (!key) {
+      return;
+    }
+
+    let row: SceneGridRow | undefined;
+
+    try {
+      row = sceneGraph.getAncestor(panel, SceneGridRow);
+    } catch {
+      row = undefined;
+    }
+
+    if (row) {
+      row.forEachChild((child: SceneObject) => {
+        if (child.state.key !== key) {
+          panels.push(child);
+        }
+      });
+
+      row.setState({ children: panels });
+
+      this.state.body.forceRender();
+
+      return;
+    }
+
+    this.state.body.forEachChild((child: SceneObject) => {
+      if (child.state.key !== key) {
+        panels.push(child);
+      }
+    });
+
+    const layout = this.state.body;
+
+    if (layout instanceof SceneGridLayout || layout instanceof SceneFlexLayout) {
+      layout.setState({ children: panels });
+    }
+  }
+
+  public unlinkLibraryPanel(panel: LibraryVizPanel) {
+    if (!panel.parent) {
+      return;
+    }
+
+    const gridItem = panel.parent;
+
+    if (!(gridItem instanceof SceneGridItem || gridItem instanceof PanelRepeaterGridItem)) {
+      console.error('Trying to duplicate a panel in a layout that is not SceneGridItem or PanelRepeaterGridItem');
+      return;
+    }
+
+    gridItem?.setState({
+      body: panel.state.panel?.clone(),
+    });
+  }
+
   public showModal(modal: SceneObject) {
     this.setState({ overlay: modal });
   }

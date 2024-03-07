@@ -86,7 +86,7 @@ To export contact points from the Grafana UI, complete the following steps.
 
 ### Export templates
 
-Grafana currently doesn't offer an Export UI for notification templates, unlike other Alerting resources presented in this documentation.
+Grafana currently doesn't offer an Export UI or [Export endpoint](#export-api-endpoints) for notification templates, unlike other Alerting resources presented in this documentation.
 
 However, you can export it by manually copying the content template and title directly from the Grafana UI.
 
@@ -129,14 +129,17 @@ To export mute timings from the Grafana UI, complete the following steps.
 
 ## HTTP Alerting API
 
-You can use the [Alerting HTTP API][alerting_http_provisioning] to return existing alerting resources in JSON and import them to another Grafana instance using the same endpoint. For instance:
+You can use the [Alerting HTTP API][alerting_http_provisioning] to return existing alerting resources in JSON and import them to another Grafana instance using the same endpoint.
 
-| Resource    | Method / URI                          | Summary                  |
-| ----------- | ------------------------------------- | ------------------------ |
-| Alert rules | GET /api/v1/provisioning/alert-rules  | Get all alert rules.     |
-| Alert rules | POST /api/v1/provisioning/alert-rules | Create a new alert rule. |
+| Resource                                                       | URI                                 | Methods          |
+| -------------------------------------------------------------- | ----------------------------------- | ---------------- |
+| [Alert rules][alerting_http_alertrules]                        | /api/v1/provisioning/alert-rules    | GET,POST,PUT,DEL |
+| [Contact points][alerting_http_contactpoints]                  | /api/v1/provisioning/contact-points | GET,POST,PUT,DEL |
+| [Notification policy tree][alerting_http_notificationpolicies] | /api/v1/provisioning/policies       | GET,PUT,DEL      |
+| [Mute timings][alerting_http_mutetimings]                      | /api/v1/provisioning/mute-timings   | GET,POST,PUT,DEL |
+| [Templates][alerting_http_templates]                           | /api/v1/provisioning/templates      | GET,PUT,DEL      |
 
-However, note these Alerting endpoints return a JSON format that is not compatible for provisioning through configuration files or Terraform, except the endpoints listed below.
+However, note the standard endpoints return a JSON format that is not compatible for provisioning through configuration files or Terraform, except the `/export` endpoints listed below.
 
 ### Export API endpoints
 
@@ -157,6 +160,22 @@ These endpoints accept a `download` parameter to download a file containing the 
 <!-- prettier-ignore-start -->
 
 {{% docs/reference %}}
+
+[alerting_http_alertrules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning#alert-rules"
+[alerting_http_alertrules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning#alert-rules"
+
+[alerting_http_contactpoints]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning#contact-points"
+[alerting_http_contactpoints]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning#contact-points"
+
+[alerting_http_notificationpolicies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning#notification-policies"
+[alerting_http_notificationpolicies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning#notification-policies"
+
+[alerting_http_mutetimings]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning#mute-timings"
+[alerting_http_mutetimings]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning#mute-timings"
+
+[alerting_http_templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning#templates"
+[alerting_http_templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning#templates"
+
 [alerting_tf_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"
 [alerting_tf_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning"
 
