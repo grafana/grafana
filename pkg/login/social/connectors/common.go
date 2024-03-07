@@ -197,7 +197,7 @@ func CreateOAuthInfoFromKeyValues(settingsKV map[string]any) (*social.OAuthInfo,
 }
 
 func appendUniqueScope(config *oauth2.Config, scope string) {
-	if !slices.Contains(config.Scopes, social.OfflineAccessScope) {
-		config.Scopes = append(config.Scopes, social.OfflineAccessScope)
+	if !slices.Contains(config.Scopes, scope) {
+		config.Scopes = append(config.Scopes, scope)
 	}
 }

@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -541,8 +541,8 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 						GrafanaVersion: "*",
 						Plugins:        []plugins.Dependency{},
 					},
-					IAM: &plugindef.IAM{
-						Permissions: []plugindef.Permission{
+					IAM: &pfs.IAM{
+						Permissions: []pfs.Permission{
 							{
 								Action: "read",
 								Scope:  stringPtr("datasource"),
