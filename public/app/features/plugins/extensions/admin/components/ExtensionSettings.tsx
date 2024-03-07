@@ -1,14 +1,17 @@
 import { css, cx } from '@emotion/css';
 import React, { ReactElement } from 'react';
+import { useParams } from 'react-router-dom';
 import { useObservable } from 'react-use';
 
-import { GrafanaTheme2, PluginExtensionPointsMeta } from '@grafana/data';
-import { useStyles2, Counter } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { reactivePluginExtensionRegistry } from 'app/features/plugins/extensions/reactivePluginExtensionRegistry';
 
 import { getCoreExtensionPoints, getPluginExtensionPoints } from '../utils';
 
 export default function ExtensionSettings(): ReactElement | null {
+  const params = useParams<{ id: string }>();
+  const activeExtensionPointId = params.id ? decodeURIComponent(params.id) : null;
   const styles = useStyles2(getStyles);
   const registry = useObservable(reactivePluginExtensionRegistry.asObservable());
   const pluginExtensionPoints = getPluginExtensionPoints(registry);
@@ -25,7 +28,7 @@ export default function ExtensionSettings(): ReactElement | null {
           <div className={styles.leftColumnGroupContent}>
             {coreExtensionPoints.map((extensionPoint) => (
               <a
-                href={`/extensions/settings/${encodeURIComponent(extensionPoint.id)}`}
+                href={`/extensions/${encodeURIComponent(extensionPoint.id)}`}
                 key={extensionPoint.id}
                 className={cx(styles.leftColumnGroupItem, styles.code)}
               >
@@ -42,7 +45,7 @@ export default function ExtensionSettings(): ReactElement | null {
             )}
             {pluginExtensionPoints.map((extensionPoint) => (
               <a
-                href={`/extensions/settings/${encodeURIComponent(extensionPoint.id)}`}
+                href={`/extensions/${encodeURIComponent(extensionPoint.id)}`}
                 key={extensionPoint.id}
                 className={cx(styles.leftColumnGroupItem, styles.code)}
               >
@@ -63,7 +66,14 @@ export default function ExtensionSettings(): ReactElement | null {
         </div>
       </div>
       {/* Right column */}
-      <div className={styles.rightColumn}>Right Column (Flexible width)</div>
+      <div className={styles.rightColumn}>
+        {!activeExtensionPointId && <div>Select an extension point to view its extensions.</div>}
+        {activeExtensionPointId && (
+          <div>
+            <div>Extensions for {activeExtensionPointId}</div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

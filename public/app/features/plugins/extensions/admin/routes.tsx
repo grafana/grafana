@@ -20,7 +20,7 @@ function evaluateAccess(actions: AccessControlAction[], userRoles: string[]): ()
 export function getRoutes(): RouteDescriptor[] {
   return [
     {
-      path: '/extensions',
+      path: '/extensions/:id?',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "ExtensionsAdmin" */ './pages/Extensions')),
       roles: evaluateAccess(
         // TODO: maybe we should have a separate permission for this
