@@ -144,10 +144,6 @@ function join () {
 
 export TZ="Pacific/Honolulu"
 
-# Brute force installation of cypress
-# TODO: We should fix this over in the build repo to look in package.json for the cypress version
-yarn cypress install
-
 yarn run $CMD --env "$(join env)" \
   --config "$(join cypressConfig)" \
   $PARAMS
