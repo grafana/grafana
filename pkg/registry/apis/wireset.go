@@ -31,7 +31,6 @@ var WireSet = wire.NewSet(
 	example.RegisterAPIService,
 	dashboardsnapshot.RegisterAPIService,
 	featuretoggle.RegisterAPIService,
-	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
 	peakq.RegisterAPIService,
 	service.RegisterAPIService,

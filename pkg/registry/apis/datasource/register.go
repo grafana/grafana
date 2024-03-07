@@ -15,7 +15,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/utils/strings/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -26,8 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
@@ -37,50 +34,10 @@ type DataSourceAPIBuilder struct {
 	connectionResourceInfo common.ResourceInfo
 
 	pluginJSON      plugins.JSONData
-	client          PluginClient // will only ever be called with the same pluginid!
+	clientProvider  PluginClientProvider // will only ever be called with the same pluginid!
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
-}
-
-func RegisterAPIService(
-	features featuremgmt.FeatureToggles,
-	apiRegistrar builder.APIRegistrar,
-	pluginClient plugins.Client, // access to everything
-	datasources PluginDatasourceProvider,
-	contextProvider PluginContextWrapper,
-	pluginStore pluginstore.Store,
-	accessControl accesscontrol.AccessControl,
-) (*DataSourceAPIBuilder, error) {
-	// This requires devmode!
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil, nil // skip registration unless opting into experimental apis
-	}
-
-	var err error
-	var builder *DataSourceAPIBuilder
-	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
-	ids := []string{
-		"grafana-testdata-datasource",
-	}
-
-	for _, ds := range all {
-		if !slices.Contains(ids, ds.ID) {
-			continue // skip this one
-		}
-
-		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
-			pluginClient,
-			datasources,
-			contextProvider,
-			accessControl,
-		)
-		if err != nil {
-			return nil, err
-		}
-		apiRegistrar.RegisterAPI(builder)
-	}
-	return builder, nil // only used for wire
 }
 
 // PluginClient is a subset of the plugins.Client interface with only the
@@ -91,9 +48,11 @@ type PluginClient interface {
 	backend.CallResourceHandler
 }
 
+type PluginClientProvider func(context.Context) (PluginClient, error)
+
 func NewDataSourceAPIBuilder(
 	plugin plugins.JSONData,
-	client PluginClient,
+	clientProvider PluginClientProvider,
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
@@ -105,7 +64,7 @@ func NewDataSourceAPIBuilder(
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: ri,
 		pluginJSON:             plugin,
-		client:                 client,
+		clientProvider:         clientProvider,
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
