@@ -12,7 +12,7 @@ import pluginJson from './plugin.json';
 import { getNormalizedLokiQuery, isLogsQuery, obfuscate } from './queryUtils';
 import { variableRegex } from './querybuilder/parsingUtils';
 import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
-import {LokiDataQuery} from "./dataquery.gen";
+import { LokiDataQuery } from './dataquery.gen';
 
 type LokiOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;
