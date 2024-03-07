@@ -1208,7 +1208,8 @@
       "new-password-same-as-old": "Ńęŵ päşşŵőřđ čäŉ'ŧ þę ŧĥę şämę äş ŧĥę őľđ őŉę.",
       "old-password-label": "Øľđ päşşŵőřđ",
       "old-password-required": "Øľđ päşşŵőřđ įş řęqūįřęđ",
-      "passwords-must-match": "Päşşŵőřđş mūşŧ mäŧčĥ"
+      "passwords-must-match": "Päşşŵőřđş mūşŧ mäŧčĥ",
+      "strong-password-validation-register": "Päşşŵőřđ đőęş ŉőŧ čőmpľy ŵįŧĥ ŧĥę şŧřőŉģ päşşŵőřđ pőľįčy"
     }
   },
   "public-dashboard": {
