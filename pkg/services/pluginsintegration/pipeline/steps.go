@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
@@ -42,7 +42,7 @@ func newExternalServiceRegistration(cfg *config.PluginManagementCfg, serviceRegi
 // Register registers the external service with the external service registry, if the feature is enabled.
 func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if p.IAM != nil {
-		s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, plugindef.Type(p.Type), p.IAM)
+		s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, pfs.Type(p.Type), p.IAM)
 		if err != nil {
 			r.log.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
 			return nil, err

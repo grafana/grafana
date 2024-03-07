@@ -14,12 +14,11 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/kindsys"
-
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
 
@@ -86,7 +85,7 @@ func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneTo
 		return corecodegen.SchemaForGen{
 			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
 			Schema:  pd.Lineage.Latest(),
-			IsGroup: pd.SchemaInterface.IsGroup(),
+			IsGroup: pd.SchemaInterface.IsGroup,
 		}
 	})
 }

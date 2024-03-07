@@ -51,7 +51,7 @@ func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 		Data: string(jf.Data),
 	})
 
-	path := filepath.Join(j.root, decl.PluginPath, fmt.Sprintf("%s.gen.ts", strings.ToLower(decl.SchemaInterface.Name())))
+	path := filepath.Join(j.root, decl.PluginPath, fmt.Sprintf("%s.gen.ts", strings.ToLower(decl.SchemaInterface.Name)))
 	data := []byte(tsf.String())
 	data = data[:len(data)-1] // remove the additional line break added by the inner jenny
 

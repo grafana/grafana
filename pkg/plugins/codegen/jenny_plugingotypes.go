@@ -35,10 +35,10 @@ func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 		return nil, nil
 	}
 
-	slotname := strings.ToLower(decl.SchemaInterface.Name())
+	slotname := strings.ToLower(decl.SchemaInterface.Name)
 	byt, err := gocode.GenerateTypesOpenAPI(decl.Lineage.Latest(), &gocode.TypeConfigOpenAPI{
 		Config: &openapi.Config{
-			Group: decl.SchemaInterface.IsGroup(),
+			Group: decl.SchemaInterface.IsGroup,
 			Config: &copenapi.Config{
 				MaxCycleDepth: 10,
 			},
