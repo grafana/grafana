@@ -40,7 +40,7 @@ export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise
     const startLoadingTs = performance.now();
 
     const response = await func(...args);
-    const loadTimesMs = Number((performance.now() - startLoadingTs).toFixed(0));
+    const loadTimesMs = performance.now() - startLoadingTs;
 
     logMeasurement(
       type,
