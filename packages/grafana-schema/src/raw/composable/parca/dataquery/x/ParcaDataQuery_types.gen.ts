@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+import * as common from '@grafana/schema';
+
 export const pluginVersion = "%VERSION%";
 
 export type ParcaQueryType = ('metrics' | 'profile' | 'both');

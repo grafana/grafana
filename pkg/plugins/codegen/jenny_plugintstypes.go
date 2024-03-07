@@ -46,6 +46,7 @@ func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (codejen.Files, error) {
 			return nil, err
 		} else if tsim.From.Value != "" {
 			genFile.Imports = append(genFile.Imports, tsim)
+			versionedFile.Imports = append(versionedFile.Imports, tsim)
 		}
 	}
 
