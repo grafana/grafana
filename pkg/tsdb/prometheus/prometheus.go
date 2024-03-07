@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/promlib"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/azureauth"
 )
@@ -54,7 +53,6 @@ func extendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSe
 
 	azureSettings, err := azsettings.ReadSettings(ctx)
 	if err != nil {
-		logger.Error("failed to read Azure settings from Grafana", "error", err.Error())
 		return nil, fmt.Errorf("failed to read Azure settings from Grafana: %v", err)
 	}
 
