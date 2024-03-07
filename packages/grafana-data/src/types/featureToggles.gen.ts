@@ -181,5 +181,6 @@ export interface FeatureToggles {
   betterPageScrolling?: boolean;
   alertingUpgradeDryrunOnStart?: boolean;
   scopeFilters?: boolean;
+  tlsMemcached?: boolean;
   emailVerificationEnforcement?: boolean;
 }
