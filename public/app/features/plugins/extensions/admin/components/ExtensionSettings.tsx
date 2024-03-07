@@ -9,6 +9,7 @@ import { reactivePluginExtensionRegistry } from 'app/features/plugins/extensions
 
 import { getCoreExtensionPoints, getPluginCapabilities, getPluginExtensionPoints } from '../utils';
 
+import { CapabilitySettingsForm } from './CapabilitySettingsForm';
 import { ExtensionSettingsForm } from './ExtensionSettingsForm';
 
 export default function ExtensionSettings(): ReactElement | null {
@@ -81,7 +82,7 @@ export default function ExtensionSettings(): ReactElement | null {
                         [styles.activeLeftColumnGroupItem]: extensionPoint.id === activeExtensionPointId,
                       })}
                     >
-                      {extensionPoint.id}
+                      {extensionPoint.id.replace(`capabilities/${pluginId}/`, '')}
                     </a>
                   ))}
                 </div>
@@ -95,7 +96,11 @@ export default function ExtensionSettings(): ReactElement | null {
       <div className={styles.rightColumn}>
         {!activeExtensionPointId && <div>Select an extension point to view its extensions.</div>}
 
-        {activeExtensionPointId && (
+        {activeExtensionPointId && activeExtensionPointId.startsWith('capabilities/') && (
+          <CapabilitySettingsForm capabilityId={activeExtensionPointId} registry={registry} />
+        )}
+
+        {activeExtensionPointId && !activeExtensionPointId.startsWith('capabilities/') && (
           <ExtensionSettingsForm extensionPointId={activeExtensionPointId} registry={registry} />
         )}
       </div>
