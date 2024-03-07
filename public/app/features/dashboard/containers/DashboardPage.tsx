@@ -17,6 +17,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
+import { AngularMigrationNotice } from 'app/features/plugins/angularDeprecation/AngularMigrationNotice';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
 import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
@@ -36,7 +37,7 @@ import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
-import { explicitlyControlledMigrationPanels } from '../state/PanelModel';
+import { explicitlyControlledMigrationPanels, autoMigrateAngular } from '../state/PanelModel';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
 
@@ -320,6 +321,50 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       );
     }
 
+    const migrationFeatureFlags = new Set([
+      'autoMigrateOldPanels',
+      'autoMigrateGraphPanel',
+      'autoMigrateTablePanel',
+      'autoMigratePiechartPanel',
+      'autoMigrateWorldmapPanel',
+      'autoMigrateStatPanel',
+      'disableAngular',
+    ]);
+
+    const isAutoMigrationFlagSet = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      let isFeatureFlagSet = false;
+
+      urlParams.forEach((value, key) => {
+        if (key.startsWith('__feature.')) {
+          const featureName = key.substring(10);
+          const toggleState = value === 'true' || value === '';
+          const featureToggles = config.featureToggles as Record<string, boolean>;
+
+          if (featureToggles[featureName]) {
+            return;
+          }
+
+          if (migrationFeatureFlags.has(featureName) && toggleState) {
+            isFeatureFlagSet = true;
+            return;
+          }
+        }
+      });
+
+      return isFeatureFlagSet;
+    };
+
+    const dashboardWasAngular = dashboard.panels.some(
+      (panel) => panel.autoMigrateFrom && autoMigrateAngular[panel.autoMigrateFrom] != null
+    );
+
+    const showDashboardMigrationNotice =
+      config.featureToggles.angularDeprecationUI &&
+      dashboardWasAngular &&
+      isAutoMigrationFlagSet() &&
+      dashboard.uid !== null;
+
     return (
       <>
         <Page
@@ -355,6 +400,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
               showAutoMigrateLink={dashboard.panels.some((x) => explicitlyControlledMigrationPanels.includes(x.type))}
             />
           )}
+          {showDashboardMigrationNotice && <AngularMigrationNotice dashboardUid={dashboard.uid} />}
           <DashboardGrid
             dashboard={dashboard}
             isEditable={!!dashboard.meta.canEdit}
