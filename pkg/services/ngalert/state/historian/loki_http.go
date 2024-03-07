@@ -198,6 +198,11 @@ func (c *HttpLokiClient) Push(ctx context.Context, s []Stream) error {
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			c.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	_, err = c.handleLokiResponse(resp)
 	if err != nil {
@@ -252,6 +257,11 @@ func (c *HttpLokiClient) RangeQuery(ctx context.Context, logQL string, start, en
 	if err != nil {
 		return QueryRes{}, fmt.Errorf("error executing request: %w", err)
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			c.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	data, err := c.handleLokiResponse(res)
 	if err != nil {
@@ -301,6 +311,11 @@ func (c *HttpLokiClient) GetConfigProjection(ctx context.Context) (LokiConfProj,
 		c.log.Error("Error executing request", "err", err)
 		return LokiConfProj{}, err
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			c.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	data, err := c.handleLokiResponse(res)
 	if err != nil {
@@ -319,12 +334,6 @@ func (c *HttpLokiClient) handleLokiResponse(res *http.Response) ([]byte, error) 
 	if res == nil {
 		return nil, fmt.Errorf("response is nil")
 	}
-
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			c.log.Warn("Failed to close response body", "err", err)
-		}
-	}()
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
