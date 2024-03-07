@@ -140,6 +140,17 @@ export default class InfluxQueryModel {
     partModel.def.addStrategy(selectParts, partModel, this);
     this.updatePersistedParts();
   }
+  
+  private removeRegexWrapper(str: string) {
+    const regex = /\/\^(.*?)\$\//;
+    const match = str.match(regex);
+  
+    if (match && match.length > 1){
+      return match[1];
+    } else {
+      return str;
+    }
+  }
 
   private isOperatorTypeHandler(operator: string, value: string, fieldName: string) {
     let textValue;
@@ -151,7 +162,7 @@ export default class InfluxQueryModel {
 
     // Tags should always quote
     if (fieldName.endsWith('::tag')) {
-      textValue = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+      textValue = "'" + this.removeRegexWrapper(value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'")) + "'";
       return {
         operator: operator,
         value: textValue,
@@ -169,7 +180,7 @@ export default class InfluxQueryModel {
       textValue = lowerValue;
     } else {
       // String or unrecognised: quote
-      textValue = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+      textValue = "'" + this.removeRegexWrapper(value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'")) + "'";
     }
     return {
       operator: operator,
@@ -205,7 +216,7 @@ export default class InfluxQueryModel {
         operator = r.operator;
         value = r.value;
       } else if ((!operator.startsWith('>') && !operator.startsWith('<')) || operator === '<>') {
-        value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+        value = "'" + this.removeRegexWrapper(value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'")) + "'";
       }
     } else if (interpolate) {
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');
