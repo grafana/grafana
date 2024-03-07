@@ -171,7 +171,7 @@ describe('UnifiedAlertList', () => {
 
     renderPanel();
 
-    expect(dashboard.events.subscribe).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(dashboard.events.subscribe).toHaveBeenCalledTimes(1));
     expect(dashboard.events.subscribe.mock.calls[0][0]).toEqual(TimeRangeUpdatedEvent);
   });
 
