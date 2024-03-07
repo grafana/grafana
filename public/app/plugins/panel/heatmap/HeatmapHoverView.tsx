@@ -1,36 +1,37 @@
-import { css } from '@emotion/css';
 import React, { ReactElement, useEffect, useRef, useState } from 'react';
 import uPlot from 'uplot';
 
 import {
   DataFrameType,
-  formattedValueToString,
-  getFieldDisplayName,
-  GrafanaTheme2,
-  getLinksSupplier,
-  InterpolateFunction,
-  ScopedVars,
-  PanelData,
-  LinkModel,
   Field,
   FieldType,
+  formattedValueToString,
+  getFieldDisplayName,
+  getLinksSupplier,
+  InterpolateFunction,
+  LinkModel,
+  PanelData,
+  ScopedVars,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { TooltipDisplayMode, useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { ColorIndicator, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+import { ColorIndicator, ColorPlacement, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
+import { getStyles } from '../timeseries/TimeSeriesTooltip';
+
 import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
-import { getSparseCellMinMax, formatMilliseconds, getFieldFromData, getHoverCellColor } from './tooltip/utils';
+import { formatMilliseconds, getFieldFromData, getHoverCellColor, getSparseCellMinMax } from './tooltip/utils';
 
 interface Props {
+  mode: TooltipDisplayMode;
   dataIdxs: Array<number | null>;
   seriesIdx: number | null | undefined;
   dataRef: React.MutableRefObject<HeatmapData>;
@@ -38,10 +39,10 @@ interface Props {
   showColorScale?: boolean;
   isPinned: boolean;
   dismiss: () => void;
-  canAnnotate: boolean;
   panelData: PanelData;
   replaceVars: InterpolateFunction;
   scopedVars: ScopedVars[];
+  annotate?: () => void;
 }
 
 export const HeatmapHoverView = (props: Props) => {
@@ -64,12 +65,11 @@ const HeatmapHoverCell = ({
   dataRef,
   showHistogram,
   isPinned,
-  canAnnotate,
-  panelData,
   showColorScale = false,
   scopedVars,
   replaceVars,
-  dismiss,
+  mode,
+  annotate,
 }: Props) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
@@ -102,8 +102,6 @@ const HeatmapHoverCell = ({
   const meta = readHeatmapRowsCustomMeta(data.heatmap);
   const yDisp = yField?.display ? (v: string) => formattedValueToString(yField.display!(v)) : (v: string) => `${v}`;
 
-  const yValueIdx = index % data.yBucketCount! ?? 0;
-
   let interval = xField?.config.interval;
 
   let yBucketMin: string;
@@ -114,9 +112,15 @@ const HeatmapHoverCell = ({
 
   let nonNumericOrdinalDisplay: string | undefined = undefined;
 
-  if (isSparse) {
-    ({ xBucketMin, xBucketMax, yBucketMin, yBucketMax } = getSparseCellMinMax(data!, index));
-  } else {
+  let contentItems: LabelValue[] = [];
+
+  const getYValueIndex = (idx: number) => {
+    return idx % data.yBucketCount! ?? 0;
+  };
+
+  let yValueIdx = getYValueIndex(index);
+
+  const getData = (idx: number = index) => {
     if (meta.yOrdinalDisplay) {
       const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
       const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
@@ -154,15 +158,130 @@ const HeatmapHoverCell = ({
     }
 
     if (data.xLayout === HeatmapCellLayout.le) {
-      xBucketMax = xVals[index];
+      xBucketMax = xVals[idx];
       xBucketMin = xBucketMax - data.xBucketSize!;
     } else {
-      xBucketMin = xVals[index];
+      xBucketMin = xVals[idx];
       xBucketMax = xBucketMin + data.xBucketSize!;
     }
+  };
+
+  if (isSparse) {
+    ({ xBucketMin, xBucketMax, yBucketMin, yBucketMax } = getSparseCellMinMax(data!, index));
+  } else {
+    getData();
   }
 
-  const count = countVals?.[index];
+  const { cellColor, colorPalette } = getHoverCellColor(data, index);
+
+  const getDisplayData = (fromIdx: number, toIdx: number) => {
+    let vals = [];
+    for (let idx = fromIdx; idx <= toIdx; idx++) {
+      if (!countVals?.[idx]) {
+        continue;
+      }
+
+      const color = getHoverCellColor(data, idx).cellColor;
+      count = getCountValue(idx);
+
+      if (isSparse) {
+        ({ xBucketMin, xBucketMax, yBucketMin, yBucketMax } = getSparseCellMinMax(data!, idx));
+      } else {
+        yValueIdx = getYValueIndex(idx);
+        getData(idx);
+      }
+
+      const { label, value } = getContentLabels()[0];
+
+      vals.push({
+        label,
+        value,
+        color: color ?? '#FFF',
+        isActive: index === idx,
+      });
+    }
+
+    return vals;
+  };
+
+  const getContentLabels = (): LabelValue[] => {
+    const isMulti = mode === TooltipDisplayMode.Multi && !isPinned;
+
+    if (nonNumericOrdinalDisplay) {
+      return isMulti
+        ? [{ label: `Name ${nonNumericOrdinalDisplay}`, value: data.display!(count) }]
+        : [{ label: 'Name', value: nonNumericOrdinalDisplay }];
+    }
+
+    switch (data.yLayout) {
+      case HeatmapCellLayout.unknown:
+        return isMulti
+          ? [{ label: yDisp(yBucketMin), value: data.display!(count) }]
+          : [{ label: '', value: yDisp(yBucketMin) }];
+    }
+
+    return isMulti
+      ? [
+          {
+            label: `Bucket ${yDisp(yBucketMin)}` + '-' + `${yDisp(yBucketMax)}`,
+            value: data.display!(count),
+          },
+        ]
+      : [
+          {
+            label: 'Bucket',
+            value: `${yDisp(yBucketMin)}` + '-' + `${yDisp(yBucketMax)}`,
+          },
+        ];
+  };
+
+  const getCountValue = (idx: number) => {
+    return countVals?.[idx];
+  };
+
+  let count = getCountValue(index);
+
+  if (mode === TooltipDisplayMode.Single || isPinned) {
+    const fromToInt: LabelValue[] = interval ? [{ label: 'Duration', value: formatMilliseconds(interval) }] : [];
+
+    contentItems = [
+      {
+        label: getFieldDisplayName(countField, data.heatmap),
+        value: data.display!(count),
+        color: cellColor ?? '#FFF',
+        colorPlacement: ColorPlacement.trailing,
+        colorIndicator: ColorIndicator.value,
+      },
+      ...getContentLabels(),
+      ...fromToInt,
+    ];
+  }
+
+  if (mode === TooltipDisplayMode.Multi && !isPinned) {
+    let xVal = xField.values[index];
+    let fromIdx = index;
+    let toIdx = index;
+
+    while (xField.values[fromIdx - 1] === xVal) {
+      fromIdx--;
+    }
+
+    while (xField.values[toIdx + 1] === xVal) {
+      toIdx++;
+    }
+
+    const vals: LabelValue[] = getDisplayData(fromIdx, toIdx);
+    vals.forEach((val) => {
+      contentItems.push({
+        label: val.label,
+        value: val.value,
+        color: val.color ?? '#FFF',
+        colorIndicator: ColorIndicator.value,
+        colorPlacement: ColorPlacement.trailing,
+        isActive: val.isActive,
+      });
+    });
+  }
 
   const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const links: Array<LinkModel<Field>> = [];
@@ -203,7 +322,7 @@ const HeatmapHoverCell = ({
 
   useEffect(
     () => {
-      if (showHistogram && xVals != null && countVals != null) {
+      if (showHistogram && xVals != null && countVals != null && mode === TooltipDisplayMode.Single) {
         renderHistogram(can, histCanWidth, histCanHeight, xVals, countVals, index, data.yBucketCount!);
       }
     },
@@ -211,75 +330,17 @@ const HeatmapHoverCell = ({
     [index]
   );
 
-  const { cellColor, colorPalette } = getHoverCellColor(data, index);
-
-  const getLabelValue = (): LabelValue[] => {
-    return [
-      {
-        label: getFieldDisplayName(countField, data.heatmap),
-        value: data.display!(count),
-        color: cellColor ?? '#FFF',
-        colorIndicator: ColorIndicator.value,
-      },
-    ];
+  const headerLabel: LabelValue = {
+    label: '',
+    value: xDisp(xBucketMax!)!,
   };
 
-  const getHeaderLabel = (): LabelValue => {
-    if (nonNumericOrdinalDisplay) {
-      return { label: 'Name', value: nonNumericOrdinalDisplay };
-    }
+  let customContent: ReactElement[] = [];
 
-    switch (data.yLayout) {
-      case HeatmapCellLayout.unknown:
-        return { label: '', value: yDisp(yBucketMin) };
-    }
-
-    return {
-      label: 'Bucket',
-      value: `${yDisp(yBucketMin)}` + '-' + `${yDisp(yBucketMax)}`,
-    };
-  };
-
-  // Color scale
-  const getCustomValueDisplay = (): ReactElement | null => {
-    if (colorPalette && showColorScale) {
-      return (
-        <ColorScale
-          colorPalette={colorPalette}
-          min={data.heatmapColors?.minValue!}
-          max={data.heatmapColors?.maxValue!}
-          display={data.display}
-          hoverValue={count}
-        />
-      );
-    }
-
-    return null;
-  };
-
-  const getContentLabelValue = (): LabelValue[] => {
-    let fromToInt = [
-      {
-        label: 'From',
-        value: xDisp(xBucketMin)!,
-      },
-    ];
-
-    if (data.xLayout !== HeatmapCellLayout.unknown) {
-      fromToInt.push({ label: 'To', value: xDisp(xBucketMax)! });
-
-      if (interval) {
-        const formattedString = formatMilliseconds(interval);
-        fromToInt.push({ label: 'Interval', value: formattedString });
-      }
-    }
-
-    return fromToInt;
-  };
-
-  const getCustomContent = (): ReactElement | null => {
-    if (showHistogram) {
-      return (
+  if (mode === TooltipDisplayMode.Single) {
+    // Histogram
+    if (showHistogram && !isSparse) {
+      customContent.push(
         <canvas
           width={histCanWidth}
           height={histCanHeight}
@@ -289,31 +350,27 @@ const HeatmapHoverCell = ({
       );
     }
 
-    return null;
-  };
-
-  // @TODO remove this when adding annotations support
-  canAnnotate = false;
+    // Color scale
+    if (colorPalette && showColorScale) {
+      customContent.push(
+        <ColorScale
+          colorPalette={colorPalette}
+          min={data.heatmapColors?.minValue!}
+          max={data.heatmapColors?.maxValue!}
+          display={data.display}
+          hoverValue={count}
+        />
+      );
+    }
+  }
 
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader
-        headerLabel={getHeaderLabel()}
-        keyValuePairs={getLabelValue()}
-        customValueDisplay={getCustomValueDisplay()}
-      />
-      <VizTooltipContent contentLabelValue={getContentLabelValue()} customContent={getCustomContent()} />
-      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={canAnnotate} />}
+      <VizTooltipHeader headerLabel={headerLabel} isPinned={isPinned} />
+      <VizTooltipContent contentLabelValue={contentItems} customContent={customContent} isPinned={isPinned} />
+      {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
     </div>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-    width: '280px',
-  }),
-});

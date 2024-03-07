@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.2.3";
+export const pluginVersion = "10.4.0-pre";
 
 export interface Options extends common.SingleStatBaseOptions {
   minVizHeight: number;
@@ -22,8 +22,8 @@ export interface Options extends common.SingleStatBaseOptions {
 }
 
 export const defaultOptions: Partial<Options> = {
-  minVizHeight: 200,
-  minVizWidth: 200,
+  minVizHeight: 75,
+  minVizWidth: 75,
   showThresholdLabels: false,
   showThresholdMarkers: true,
   sizing: common.BarGaugeSizing.Auto,

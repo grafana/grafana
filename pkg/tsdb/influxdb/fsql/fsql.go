@@ -3,9 +3,7 @@ package fsql
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/url"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"google.golang.org/grpc/metadata"
@@ -94,24 +92,15 @@ func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 		return nil, fmt.Errorf("bad URL : %s", err)
 	}
 
-	host, port, err := net.SplitHostPort(u.Host)
-	if err != nil {
-		return nil, fmt.Errorf("bad URL : %s", err)
+	addr := u.Host
+	if u.Port() == "" {
+		addr += ":443"
 	}
-	addr := strings.Join([]string{host, port}, ":")
 
 	md := metadata.MD{}
-	for _, m := range dsInfo.Metadata {
-		for k, v := range m {
-			if _, ok := md[k]; ok {
-				return nil, fmt.Errorf("metadata: duplicate key: %s", k)
-			}
-			if k != "" {
-				md.Set(k, v)
-			}
-		}
+	if dsInfo.DbName != "" {
+		md.Set("database", dsInfo.DbName)
 	}
-
 	if dsInfo.Token != "" {
 		md.Set("Authorization", fmt.Sprintf("Bearer %s", dsInfo.Token))
 	}

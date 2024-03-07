@@ -3,7 +3,19 @@
 // 2. Any wrong timezone handling could be hidden if we use UTC/GMT local time (which would happen in CI).
 process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylight savings
 
-const esModules = ['ol', 'd3', 'd3-color', 'd3-interpolate', 'delaunator', 'internmap', 'robust-predicates'].join('|');
+const esModules = [
+  '@glideapps/glide-data-grid',
+  'ol',
+  'd3',
+  'd3-color',
+  'd3-interpolate',
+  'delaunator',
+  'internmap',
+  'robust-predicates',
+  'leven',
+  'nanoid',
+  'monaco-promql',
+].join('|');
 
 module.exports = {
   verbose: false,
@@ -14,7 +26,7 @@ module.exports = {
   transformIgnorePatterns: [
     `/node_modules/(?!(${esModules}|yaml))`, // exclude es modules and yaml to prevent TS complaining
   ],
-  moduleDirectories: ['public'],
+  moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],

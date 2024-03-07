@@ -93,13 +93,14 @@ TODO docs
 
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip).
 
-| Property       | Type                                    | Required | Default | Description                                                                |
-|----------------|-----------------------------------------|----------|---------|----------------------------------------------------------------------------|
-| `legend`       | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
-| `tooltip`      | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
-| `bucketOffset` | int32                                   | No       | `0`     | Offset buckets by this amount                                              |
-| `bucketSize`   | integer                                 | No       |         | Size of each bucket                                                        |
-| `combine`      | boolean                                 | No       |         | Combines multiple series into a single histogram                           |
+| Property       | Type                                    | Required | Default | Description                                                                                                                             |
+|----------------|-----------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `legend`       | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs                                                                |
+| `tooltip`      | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs                                                              |
+| `bucketCount`  | integer                                 | No       | `30`    | Bucket count (approx)<br/>Constraint: `>0 & <=2147483647`.                                                                              |
+| `bucketOffset` | number                                  | No       | `0`     | Offset buckets by this amount<br/>Constraint: `>=-340282346638528859811704183484516925440 & <=340282346638528859811704183484516925440`. |
+| `bucketSize`   | integer                                 | No       |         | Size of each bucket                                                                                                                     |
+| `combine`      | boolean                                 | No       |         | Combines multiple series into a single histogram                                                                                        |
 
 ### OptionsWithLegend
 
@@ -137,9 +138,11 @@ TODO docs
 
 TODO docs
 
-| Property | Type   | Required | Default | Description                                                   |
-|----------|--------|----------|---------|---------------------------------------------------------------|
-| `mode`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| Property    | Type   | Required | Default | Description                                                   |
+|-------------|--------|----------|---------|---------------------------------------------------------------|
+| `mode`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
+| `sort`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| `maxHeight` | number | No       |         |                                                               |
+| `maxWidth`  | number | No       |         |                                                               |
 
 

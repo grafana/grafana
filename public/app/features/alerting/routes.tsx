@@ -1,5 +1,6 @@
 import { uniq } from 'lodash';
 import React from 'react';
+import { Redirect, RouteComponentProps } from 'react-router-dom';
 
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
@@ -14,73 +15,86 @@ const commonRoutes: RouteDescriptor[] = [];
 const legacyRoutes: RouteDescriptor[] = [
   ...commonRoutes,
   {
-    path: '/alerting',
+    path: '/alerting-legacy',
     component: () => <NavLandingPage navId="alerting-legacy" />,
   },
   {
-    path: '/alerting/list',
+    path: '/alerting-legacy/list',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "AlertRuleListIndex" */ 'app/features/alerting/AlertRuleList')
+      () => import(/* webpackChunkName: "AlertRuleListLegacyIndex" */ 'app/features/alerting/AlertRuleList')
     ),
   },
   {
-    path: '/alerting/ng/list',
+    path: '/alerting-legacy/ng/list',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleList')
+      () => import(/* webpackChunkName: "AlertRuleListLegacy" */ 'app/features/alerting/AlertRuleList')
     ),
   },
   {
-    path: '/alerting/notifications',
+    path: '/alerting-legacy/notifications',
     roles: config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : undefined,
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+      () => import(/* webpackChunkName: "NotificationsListLegacyPage" */ 'app/features/alerting/NotificationsListPage')
     ),
   },
   {
-    path: '/alerting/notifications/templates/new',
+    path: '/alerting-legacy/notifications/templates/new',
     roles: () => ['Editor', 'Admin'],
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+      () => import(/* webpackChunkName: "NotificationsListLegacyPage" */ 'app/features/alerting/NotificationsListPage')
     ),
   },
   {
-    path: '/alerting/notifications/templates/:id/edit',
+    path: '/alerting-legacy/notifications/templates/:id/edit',
     roles: () => ['Editor', 'Admin'],
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+      () => import(/* webpackChunkName: "NotificationsListLegacyPage" */ 'app/features/alerting/NotificationsListPage')
     ),
   },
   {
-    path: '/alerting/notifications/receivers/new',
+    path: '/alerting-legacy/notifications/receivers/new',
     roles: () => ['Editor', 'Admin'],
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+      () => import(/* webpackChunkName: "NotificationsListLegacyPage" */ 'app/features/alerting/NotificationsListPage')
     ),
   },
   {
-    path: '/alerting/notifications/receivers/:id/edit',
+    path: '/alerting-legacy/notifications/receivers/:id/edit',
     roles: () => ['Editor', 'Admin'],
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+      () => import(/* webpackChunkName: "NotificationsListLegacyPage" */ 'app/features/alerting/NotificationsListPage')
     ),
   },
   {
-    path: '/alerting/notifications/global-config',
+    path: '/alerting-legacy/notifications/global-config',
     roles: () => ['Admin', 'Editor'],
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+      () => import(/* webpackChunkName: "NotificationsListLegacyPage" */ 'app/features/alerting/NotificationsListPage')
     ),
   },
   {
-    path: '/alerting/notification/new',
+    path: '/alerting-legacy/notification/new',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NewNotificationChannel" */ 'app/features/alerting/NewNotificationChannelPage')
+      () =>
+        import(
+          /* webpackChunkName: "NewNotificationChannelLegacy" */ 'app/features/alerting/NewNotificationChannelPage'
+        )
     ),
   },
   {
-    path: '/alerting/notification/:id/edit',
+    path: '/alerting-legacy/notification/:id/edit',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "EditNotificationChannel"*/ 'app/features/alerting/EditNotificationChannelPage')
+      () =>
+        import(
+          /* webpackChunkName: "EditNotificationChannelLegacy"*/ 'app/features/alerting/EditNotificationChannelPage'
+        )
+    ),
+  },
+  {
+    path: '/alerting-legacy/upgrade',
+    roles: () => ['Admin'],
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "AlertingUpgrade" */ 'app/features/alerting/Upgrade')
     ),
   },
 ];
@@ -295,9 +309,39 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   if (cfg.unifiedAlertingEnabled) {
     return unifiedRoutes;
   } else if (cfg.alertingEnabled) {
-    return legacyRoutes;
+    if (config.featureToggles.alertingPreviewUpgrade) {
+      // If preview is enabled, return both legacy and unified routes.
+      return [...legacyRoutes, ...unifiedRoutes];
+    }
+    // Redirect old overlapping legacy routes to new separate ones to minimize unintended 404s.
+    const redirects = [
+      {
+        path: '/alerting',
+        component: () => <Redirect to={'/alerting-legacy'} />,
+      },
+      {
+        path: '/alerting/list',
+        component: () => <Redirect to={'/alerting-legacy/list'} />,
+      },
+      {
+        path: '/alerting/notifications',
+        component: () => <Redirect to={'/alerting-legacy/notifications'} />,
+      },
+      {
+        path: '/alerting/notification/new',
+        component: () => <Redirect to={'/alerting-legacy/notification/new'} />,
+      },
+      {
+        path: '/alerting/notification/:id/edit',
+        component: (props: RouteComponentProps<{ id: string }>) => (
+          <Redirect to={'/alerting-legacy/notification/:id/edit'.replace(':id', props.match.params.id)} />
+        ),
+      },
+    ];
+    return [...legacyRoutes, ...redirects];
   }
 
+  // Disable all alerting routes.
   const uniquePaths = uniq([...legacyRoutes, ...unifiedRoutes].map((route) => route.path));
   return uniquePaths.map((path) => ({
     path,

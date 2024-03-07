@@ -27,11 +27,10 @@ import {
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
-import { ErrorId, replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
-
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
 import { LokiDatasource } from './datasource';
 import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
+import { ErrorId, replaceVariables, returnVariables } from './querybuilder/parsingUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 /**
@@ -196,7 +195,7 @@ export function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | 
 }
 
 /**
- * Parses the query and looks for error nodes. If there is at least one, it returns false.
+ * Parses the query and looks for error nodes. If there is at least one, it returns true.
  * Grafana variables are considered errors, so if you need to validate a query
  * with variables you should interpolate it first.
  */

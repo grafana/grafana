@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -18,104 +18,26 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
-	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestFilterReceiversForAlert(t *testing.T) {
-	tc := []struct {
-		name             string
-		channelIds       []migrationStore.UidOrID
-		receivers        map[migrationStore.UidOrID]*apimodels.PostableApiReceiver
-		defaultReceivers map[string]struct{}
-		expected         map[string]any
-	}{
-		{
-			name:       "when an alert has multiple channels, each should filter for the correct receiver",
-			channelIds: []migrationStore.UidOrID{"uid1", "uid2"},
-			receivers: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
-				"uid1": createPostableApiReceiver("recv1", nil),
-				"uid2": createPostableApiReceiver("recv2", nil),
-				"uid3": createPostableApiReceiver("recv3", nil),
-			},
-			defaultReceivers: map[string]struct{}{},
-			expected: map[string]any{
-				"recv1": struct{}{},
-				"recv2": struct{}{},
-			},
-		},
-		{
-			name:       "when default receivers exist, they should be added to an alert's filtered receivers",
-			channelIds: []migrationStore.UidOrID{"uid1"},
-			receivers: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
-				"uid1": createPostableApiReceiver("recv1", nil),
-				"uid2": createPostableApiReceiver("recv2", nil),
-				"uid3": createPostableApiReceiver("recv3", nil),
-			},
-			defaultReceivers: map[string]struct{}{
-				"recv2": {},
-			},
-			expected: map[string]any{
-				"recv1": struct{}{}, // From alert
-				"recv2": struct{}{}, // From default
-			},
-		},
-		{
-			name:       "when an alert has a channels associated by ID instead of UID, it should be included",
-			channelIds: []migrationStore.UidOrID{int64(42)},
-			receivers: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
-				int64(42): createPostableApiReceiver("recv1", nil),
-			},
-			defaultReceivers: map[string]struct{}{},
-			expected: map[string]any{
-				"recv1": struct{}{},
-			},
-		},
-		{
-			name:       "when an alert's receivers are covered by the defaults, return nil to use default receiver downstream",
-			channelIds: []migrationStore.UidOrID{"uid1"},
-			receivers: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
-				"uid1": createPostableApiReceiver("recv1", nil),
-				"uid2": createPostableApiReceiver("recv2", nil),
-				"uid3": createPostableApiReceiver("recv3", nil),
-			},
-			defaultReceivers: map[string]struct{}{
-				"recv1": {},
-				"recv2": {},
-			},
-			expected: nil, // recv1 is already a default
-		},
-	}
-
-	sqlStore := db.InitTestDB(t)
-	for _, tt := range tc {
-		t.Run(tt.name, func(t *testing.T) {
-			service := NewTestMigrationService(t, sqlStore, nil)
-			m := service.newOrgMigration(1)
-			res := m.filterReceiversForAlert("", tt.channelIds, tt.receivers, tt.defaultReceivers)
-
-			require.Equal(t, tt.expected, res)
-		})
-	}
-}
-
 func TestCreateRoute(t *testing.T) {
 	tc := []struct {
 		name     string
 		channel  *legacymodels.AlertNotification
-		recv     *apimodels.PostableApiReceiver
+		recv     *apimodels.PostableGrafanaReceiver
 		expected *apimodels.Route
 	}{
 		{
-			name:    "when a receiver is passed in, the route should regex match based on quoted name with continue=true",
-			channel: &legacymodels.AlertNotification{},
-			recv:    createPostableApiReceiver("recv1", nil),
+			name:    "when a receiver is passed in, the route should exact match based on channel uid with continue=true",
+			channel: &legacymodels.AlertNotification{UID: "uid1", Name: "recv1"},
+			recv:    createPostableGrafanaReceiver("uid1", "recv1"),
 			expected: &apimodels.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("recv1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -123,12 +45,12 @@ func TestCreateRoute(t *testing.T) {
 			},
 		},
 		{
-			name:    "notification channel should be escaped for regex in the matcher",
-			channel: &legacymodels.AlertNotification{},
-			recv:    createPostableApiReceiver(`. ^ $ * + - ? ( ) [ ] { } \ |`, nil),
+			name:    "notification channel labels matcher should work with special characters",
+			channel: &legacymodels.AlertNotification{UID: "uid1", Name: `. ^ $ * + - ? ( ) [ ] { } \ |`},
+			recv:    createPostableGrafanaReceiver("uid1", `. ^ $ * + - ? ( ) [ ] { } \ |`),
 			expected: &apimodels.Route{
 				Receiver:       `. ^ $ * + - ? ( ) [ ] { } \ |`,
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"\. \^ \$ \* \+ - \? \( \) \[ \] \{ \} \\ \|".*`}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel(`. ^ $ * + - ? ( ) [ ] { } \ |`), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -137,11 +59,11 @@ func TestCreateRoute(t *testing.T) {
 		},
 		{
 			name:    "when a channel has sendReminder=true, the route should use the frequency in repeat interval",
-			channel: &legacymodels.AlertNotification{SendReminder: true, Frequency: time.Duration(42) * time.Hour},
-			recv:    createPostableApiReceiver("recv1", nil),
+			channel: &legacymodels.AlertNotification{SendReminder: true, Frequency: time.Duration(42) * time.Hour, UID: "uid1", Name: "recv1"},
+			recv:    createPostableGrafanaReceiver("uid1", "recv1"),
 			expected: &apimodels.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("recv1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -150,11 +72,11 @@ func TestCreateRoute(t *testing.T) {
 		},
 		{
 			name:    "when a channel has sendReminder=false, the route should ignore the frequency in repeat interval and use DisabledRepeatInterval",
-			channel: &legacymodels.AlertNotification{SendReminder: false, Frequency: time.Duration(42) * time.Hour},
-			recv:    createPostableApiReceiver("recv1", nil),
+			channel: &legacymodels.AlertNotification{SendReminder: false, Frequency: time.Duration(42) * time.Hour, UID: "uid1", Name: "recv1"},
+			recv:    createPostableGrafanaReceiver("uid1", "recv1"),
 			expected: &apimodels.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("recv1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -165,10 +87,7 @@ func TestCreateRoute(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := createRoute(channelReceiver{
-				channel:  tt.channel,
-				receiver: tt.recv,
-			})
+			res, err := createRoute(tt.channel, tt.recv.Name)
 			require.NoError(t, err)
 
 			// Order of nested routes is not guaranteed.
@@ -189,78 +108,51 @@ func TestCreateRoute(t *testing.T) {
 	}
 }
 
-func createNotChannel(t *testing.T, uid string, id int64, name string) *legacymodels.AlertNotification {
+func createNotChannel(t *testing.T, uid string, id int64, name string, isDefault bool, frequency time.Duration) *legacymodels.AlertNotification {
 	t.Helper()
-	return &legacymodels.AlertNotification{UID: uid, ID: id, Name: name, Settings: simplejson.New()}
+	return &legacymodels.AlertNotification{
+		OrgID:        1,
+		UID:          uid,
+		ID:           id,
+		Name:         name,
+		Type:         "email",
+		SendReminder: frequency > 0,
+		Frequency:    frequency,
+		Settings:     simplejson.New(),
+		IsDefault:    isDefault,
+		Created:      now,
+		Updated:      now,
+	}
 }
 
-func createNotChannelWithReminder(t *testing.T, uid string, id int64, name string, frequency time.Duration) *legacymodels.AlertNotification {
+func createBasicNotChannel(t *testing.T, notType string) *legacymodels.AlertNotification {
 	t.Helper()
-	return &legacymodels.AlertNotification{UID: uid, ID: id, Name: name, SendReminder: true, Frequency: frequency, Settings: simplejson.New()}
+	a := createNotChannel(t, "uid1", int64(1), "name1", false, 0)
+	a.Type = notType
+	return a
 }
 
 func TestCreateReceivers(t *testing.T) {
 	tc := []struct {
-		name            string
-		allChannels     []*legacymodels.AlertNotification
-		defaultChannels []*legacymodels.AlertNotification
-		expRecvMap      map[migrationStore.UidOrID]*apimodels.PostableApiReceiver
-		expRecv         []channelReceiver
-		expErr          error
+		name    string
+		channel *legacymodels.AlertNotification
+		expRecv *apimodels.PostableGrafanaReceiver
+		expErr  error
 	}{
 		{
-			name:        "when given notification channels migrate them to receivers",
-			allChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
-			expRecvMap: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
-				"uid1":   createPostableApiReceiver("name1", []string{"name1"}),
-				"uid2":   createPostableApiReceiver("name2", []string{"name2"}),
-				int64(1): createPostableApiReceiver("name1", []string{"name1"}),
-				int64(2): createPostableApiReceiver("name2", []string{"name2"}),
-			},
-			expRecv: []channelReceiver{
-				{
-					channel:  createNotChannel(t, "uid1", int64(1), "name1"),
-					receiver: createPostableApiReceiver("name1", []string{"name1"}),
-				},
-				{
-					channel:  createNotChannel(t, "uid2", int64(2), "name2"),
-					receiver: createPostableApiReceiver("name2", []string{"name2"}),
-				},
-			},
+			name:    "when given notification channels migrate them to receivers",
+			channel: createNotChannel(t, "uid1", int64(1), "name1", false, 0),
+			expRecv: createPostableGrafanaReceiver("uid1", "name1"),
 		},
 		{
-			name:        "when given notification channel contains double quote sanitize with underscore",
-			allChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name\"1")},
-			expRecvMap: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
-				"uid1":   createPostableApiReceiver("name_1", []string{"name_1"}),
-				int64(1): createPostableApiReceiver("name_1", []string{"name_1"}),
-			},
-			expRecv: []channelReceiver{
-				{
-					channel:  createNotChannel(t, "uid1", int64(1), "name\"1"),
-					receiver: createPostableApiReceiver("name_1", []string{"name_1"}),
-				},
-			},
+			name:    "when given hipchat return discontinued error",
+			channel: createBasicNotChannel(t, "hipchat"),
+			expErr:  fmt.Errorf("'hipchat': %w", ErrDiscontinued),
 		},
 		{
-			name:        "when given notification channels collide after sanitization add short hash to end",
-			allChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name\"1"), createNotChannel(t, "uid2", int64(2), "name_1")},
-			expRecvMap: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
-				"uid1":   createPostableApiReceiver("name_1", []string{"name_1"}),
-				"uid2":   createPostableApiReceiver("name_1_dba13d", []string{"name_1_dba13d"}),
-				int64(1): createPostableApiReceiver("name_1", []string{"name_1"}),
-				int64(2): createPostableApiReceiver("name_1_dba13d", []string{"name_1_dba13d"}),
-			},
-			expRecv: []channelReceiver{
-				{
-					channel:  createNotChannel(t, "uid1", int64(1), "name\"1"),
-					receiver: createPostableApiReceiver("name_1", []string{"name_1"}),
-				},
-				{
-					channel:  createNotChannel(t, "uid2", int64(2), "name_1"),
-					receiver: createPostableApiReceiver("name_1_dba13d", []string{"name_1_dba13d"}),
-				},
-			},
+			name:    "when given sensu return discontinued error",
+			channel: createBasicNotChannel(t, "sensu"),
+			expErr:  fmt.Errorf("'sensu': %w", ErrDiscontinued),
 		},
 	}
 
@@ -269,37 +161,26 @@ func TestCreateReceivers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			service := NewTestMigrationService(t, sqlStore, nil)
 			m := service.newOrgMigration(1)
-			recvMap, recvs, err := m.createReceivers(tt.allChannels)
+			recv, err := m.createReceiver(tt.channel)
 			if tt.expErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expErr.Error())
 				return
 			}
-
 			require.NoError(t, err)
-
-			// We ignore certain fields for the purposes of this test
-			for _, recv := range recvs {
-				for _, not := range recv.receiver.GrafanaManagedReceivers {
-					not.UID = ""
-					not.Settings = nil
-					not.SecureSettings = nil
-				}
-			}
-
-			require.Equal(t, tt.expRecvMap, recvMap)
-			require.ElementsMatch(t, tt.expRecv, recvs)
+			require.Equal(t, tt.expRecv, recv)
 		})
 	}
 }
 
 func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
+	cfg := setting.NewCfg()
 	legacyEncryptFn := func(data string) string {
-		raw, err := util.Encrypt([]byte(data), setting.SecretKey)
+		raw, err := util.Encrypt([]byte(data), cfg.SecretKey)
 		require.NoError(t, err)
 		return string(raw)
 	}
-	decryptFn := func(data string, m *OrgMigration) string {
+	decryptFn := func(data string, m *migrationService) string {
 		decoded, err := base64.StdEncoding.DecodeString(data)
 		require.NoError(t, err)
 		raw, err := m.encryptionService.Decrypt(context.Background(), decoded)
@@ -385,7 +266,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			service := NewTestMigrationService(t, sqlStore, nil)
 			m := service.newOrgMigration(1)
-			recv, err := m.createNotifier(tt.channel)
+			recv, err := m.createReceiver(tt.channel)
 			if tt.expErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expErr.Error())
@@ -397,7 +278,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 				require.NotEqual(t, tt.expRecv, recv) // Make sure they were actually encrypted at first.
 			}
 			for k, v := range recv.SecureSettings {
-				recv.SecureSettings[k] = decryptFn(v, m)
+				recv.SecureSettings[k] = decryptFn(v, service)
 			}
 			require.Equal(t, tt.expRecv, recv)
 		})
@@ -419,7 +300,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 							channel.SecureSettings[key] = []byte(legacyEncryptFn("secure " + key))
 						}
 					})
-					recv, err := m.createNotifier(channel)
+					recv, err := m.createReceiver(channel)
 					require.NoError(t, err)
 
 					require.Equal(t, nType, recv.Type)
@@ -430,7 +311,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 					}
 					require.Len(t, recv.SecureSettings, len(secureSettings))
 					for _, key := range secureSettings {
-						require.Equal(t, "secure "+key, decryptFn(recv.SecureSettings[key], m))
+						require.Equal(t, "secure "+key, decryptFn(recv.SecureSettings[key], service))
 					}
 				})
 			}
@@ -454,7 +335,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 							channel.Settings.Set(key, "secure "+key)
 						}
 					})
-					recv, err := m.createNotifier(channel)
+					recv, err := m.createReceiver(channel)
 					require.NoError(t, err)
 
 					require.Equal(t, nType, recv.Type)
@@ -465,7 +346,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 					}
 					require.Len(t, recv.SecureSettings, len(secureSettings))
 					for _, key := range secureSettings {
-						require.Equal(t, "secure "+key, decryptFn(recv.SecureSettings[key], m))
+						require.Equal(t, "secure "+key, decryptFn(recv.SecureSettings[key], service))
 					}
 				})
 			}
@@ -473,116 +354,98 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 	})
 }
 
-func TestCreateDefaultRouteAndReceiver(t *testing.T) {
+func TestSetupAlertmanagerConfig(t *testing.T) {
 	tc := []struct {
 		name            string
-		amConfig        *apimodels.PostableUserConfig
-		defaultChannels []*legacymodels.AlertNotification
-		expRecv         *apimodels.PostableApiReceiver
-		expRoute        *apimodels.Route
+		channels        []*legacymodels.AlertNotification
+		expContactPairs []*migmodels.ContactPair
 		expErr          error
 	}{
 		{
-			name:            "when given multiple default notification channels migrate them to a single receiver",
-			defaultChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
-			expRecv:         createPostableApiReceiver("autogen-contact-point-default", []string{"name1", "name2"}),
-			expRoute: &apimodels.Route{
-				Receiver:       "autogen-contact-point-default",
-				Routes:         make([]*apimodels.Route, 0),
-				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-				RepeatInterval: durationPointer(DisabledRepeatInterval),
+			name:     "when given multiple notification channels migrate them to receivers",
+			channels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "notifier1", false, 0), createNotChannel(t, "uid2", int64(2), "notifier2", false, 0)},
+			expContactPairs: []*migmodels.ContactPair{
+				{
+					Channel:      createNotChannel(t, "uid1", int64(1), "notifier1", false, 0),
+					ContactPoint: createPostableGrafanaReceiver("uid1", "notifier1"),
+					Route:        &apimodels.Route{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+				},
+				{
+					Channel:      createNotChannel(t, "uid2", int64(2), "notifier2", false, 0),
+					ContactPoint: createPostableGrafanaReceiver("uid2", "notifier2"),
+					Route:        &apimodels.Route{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+				},
 			},
 		},
 		{
-			name: "when given multiple default notification channels migrate them to a single receiver with RepeatInterval set to be the minimum of all channel frequencies",
-			defaultChannels: []*legacymodels.AlertNotification{
-				createNotChannelWithReminder(t, "uid1", int64(1), "name1", time.Duration(42)),
-				createNotChannelWithReminder(t, "uid2", int64(2), "name2", time.Duration(100000)),
-			},
-			expRecv: createPostableApiReceiver("autogen-contact-point-default", []string{"name1", "name2"}),
-			expRoute: &apimodels.Route{
-				Receiver:       "autogen-contact-point-default",
-				Routes:         make([]*apimodels.Route, 0),
-				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-				RepeatInterval: durationPointer(model.Duration(42)),
-			},
-		},
-		{
-			name:            "when given no default notification channels create a single empty receiver for default",
-			defaultChannels: []*legacymodels.AlertNotification{},
-			expRecv:         createPostableApiReceiver("autogen-contact-point-default", nil),
-			expRoute: &apimodels.Route{
-				Receiver:       "autogen-contact-point-default",
-				Routes:         make([]*apimodels.Route, 0),
-				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-				RepeatInterval: nil,
+			name:     "when given default notification channels migrate them to a routes with catchall matcher",
+			channels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "notifier1", false, 0), createNotChannel(t, "uid2", int64(2), "notifier2", true, 0)},
+			expContactPairs: []*migmodels.ContactPair{
+				{
+					Channel:      createNotChannel(t, "uid1", int64(1), "notifier1", false, 0),
+					ContactPoint: createPostableGrafanaReceiver("uid1", "notifier1"),
+					Route:        &apimodels.Route{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+				},
+				{
+					Channel:      createNotChannel(t, "uid2", int64(2), "notifier2", true, 0),
+					ContactPoint: createPostableGrafanaReceiver("uid2", "notifier2"),
+					Route:        &apimodels.Route{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchRegexp, Name: model.AlertNameLabel, Value: ".+"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+				},
 			},
 		},
 		{
-			name:            "when given a single default notification channels don't create a new default receiver",
-			defaultChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name1")},
-			expRecv:         nil,
-			expRoute: &apimodels.Route{
-				Receiver:       "name1",
-				Routes:         make([]*apimodels.Route, 0),
-				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-				RepeatInterval: durationPointer(DisabledRepeatInterval),
-			},
-		},
-		{
-			name:            "when given a single default notification channel with SendReminder=true, use the channels Frequency as the RepeatInterval",
-			defaultChannels: []*legacymodels.AlertNotification{createNotChannelWithReminder(t, "uid1", int64(1), "name1", time.Duration(42))},
-			expRecv:         nil,
-			expRoute: &apimodels.Route{
-				Receiver:       "name1",
-				Routes:         make([]*apimodels.Route, 0),
-				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-				RepeatInterval: durationPointer(model.Duration(42)),
+			name:     "when given notification channels with SendReminder true migrate them to a route with frequency set",
+			channels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "notifier1", false, time.Duration(42)), createNotChannel(t, "uid2", int64(2), "notifier2", false, time.Duration(43))},
+			expContactPairs: []*migmodels.ContactPair{
+				{
+					Channel:      createNotChannel(t, "uid1", int64(1), "notifier1", false, time.Duration(42)),
+					ContactPoint: createPostableGrafanaReceiver("uid1", "notifier1"),
+					Route:        &apimodels.Route{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(42)},
+				},
+				{
+					Channel:      createNotChannel(t, "uid2", int64(2), "notifier2", false, time.Duration(43)),
+					ContactPoint: createPostableGrafanaReceiver("uid2", "notifier2"),
+					Route:        &apimodels.Route{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(43)},
+				},
 			},
 		},
 	}
 
-	sqlStore := db.InitTestDB(t)
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
+			sqlStore := db.InitTestDB(t)
+
 			service := NewTestMigrationService(t, sqlStore, nil)
 			m := service.newOrgMigration(1)
-			recv, route, err := m.createDefaultRouteAndReceiver(tt.defaultChannels)
+			pairs, err := m.migrateChannels(tt.channels, m.log)
 			if tt.expErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expErr.Error())
 				return
 			}
-
 			require.NoError(t, err)
 
-			// We ignore certain fields for the purposes of this test
-			if recv != nil {
-				for _, not := range recv.GrafanaManagedReceivers {
-					not.UID = ""
-					not.Settings = nil
-					not.SecureSettings = nil
-				}
-			}
+			require.Lenf(t, pairs, len(tt.expContactPairs), "Unexpected number of migrated channels: %v", len(pairs))
 
-			require.Equal(t, tt.expRecv, recv)
-			require.Equal(t, tt.expRoute, route)
+			opts := []cmp.Option{
+				cmpopts.IgnoreUnexported(labels.Matcher{}),
+				cmpopts.IgnoreFields(legacymodels.AlertNotification{}, "Settings"),
+				cmpopts.SortSlices(func(a, b *migmodels.ContactPair) bool { return a.Channel.ID < b.Channel.ID }),
+			}
+			if !cmp.Equal(pairs, tt.expContactPairs, opts...) {
+				t.Errorf("Unexpected Config: %v", cmp.Diff(pairs, tt.expContactPairs, opts...))
+			}
 		})
 	}
 }
 
-func createPostableApiReceiver(name string, integrationNames []string) *apimodels.PostableApiReceiver {
-	integrations := make([]*apimodels.PostableGrafanaReceiver, 0, len(integrationNames))
-	for _, integrationName := range integrationNames {
-		integrations = append(integrations, &apimodels.PostableGrafanaReceiver{Name: integrationName})
-	}
-	return &apimodels.PostableApiReceiver{
-		Receiver: config.Receiver{
-			Name: name,
-		},
-		PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: integrations,
-		},
+func createPostableGrafanaReceiver(uid string, name string) *apimodels.PostableGrafanaReceiver {
+	return &apimodels.PostableGrafanaReceiver{
+		UID:            uid,
+		Type:           "email",
+		Name:           name,
+		Settings:       apimodels.RawMessage("{}"),
+		SecureSettings: map[string]string{},
 	}
 }
 

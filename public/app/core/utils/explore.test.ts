@@ -187,7 +187,7 @@ describe('hasNonEmptyQuery', () => {
 });
 
 describe('getTimeRange', () => {
-  describe('should flip from and to when from is after to', () => {
+  describe('should not flip from and to when from is after to', () => {
     const rawRange = {
       from: 'now',
       to: 'now-6h',
@@ -195,7 +195,7 @@ describe('getTimeRange', () => {
 
     const range = getTimeRange('utc', rawRange, 0);
 
-    expect(range.from.isBefore(range.to)).toBe(true);
+    expect(range.from.isBefore(range.to)).toBe(false);
   });
 });
 

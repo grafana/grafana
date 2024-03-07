@@ -158,8 +158,24 @@ describe('BarChart utils', () => {
   });
 
   describe('prepareGraphableFrames', () => {
-    it('will warn when there is no data in the response', () => {
+    it('will warn when there is no frames in the response', () => {
       const result = prepareBarChartDisplayValues([], createTheme(), { stacking: StackingMode.None } as Options);
+      const warning = assertIsDefined('warn' in result ? result : null);
+
+      expect(warning.warn).toEqual('No data in response');
+    });
+
+    it('will warn when there is no data in the response', () => {
+      const result = prepareBarChartDisplayValues(
+        [
+          {
+            length: 0,
+            fields: [],
+          },
+        ],
+        createTheme(),
+        { stacking: StackingMode.None } as Options
+      );
       const warning = assertIsDefined('warn' in result ? result : null);
 
       expect(warning.warn).toEqual('No data in response');
@@ -241,9 +257,9 @@ describe('BarChart utils', () => {
       } as Options);
       const displayLegendValuesAsc = assertIsDefined('legend' in resultAsc ? resultAsc : null).legend;
 
+      expect(displayLegendValuesAsc.fields[0].config.unit).toBeUndefined();
       expect(displayLegendValuesAsc.fields[1].config.unit).toBeUndefined();
       expect(displayLegendValuesAsc.fields[2].config.unit).toBeUndefined();
-      expect(displayLegendValuesAsc.fields[3].config.unit).toBeUndefined();
     });
   });
 });

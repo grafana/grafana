@@ -3,7 +3,10 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
-import { Input, useStyles2 } from '@grafana/ui';
+import { Alert, Input, useStyles2 } from '@grafana/ui';
+
+import { type CloudWatchDatasource } from '../../datasource';
+import { useEnsureVariableHasSingleSelection } from '../../hooks';
 
 import { MultiFilterCondition } from './MultiFilter';
 
@@ -12,11 +15,13 @@ export interface Props {
   onChange: (value: MultiFilterCondition) => void;
   onDelete: () => void;
   keyPlaceholder?: string;
+  datasource: CloudWatchDatasource;
 }
 
-export const MultiFilterItem = ({ filter, onChange, onDelete, keyPlaceholder }: Props) => {
+export const MultiFilterItem = ({ filter, onChange, onDelete, keyPlaceholder, datasource }: Props) => {
   const [localKey, setLocalKey] = useState(filter.key || '');
   const [localValue, setLocalValue] = useState(filter.value?.join(', ') || '');
+  const error = useEnsureVariableHasSingleSelection(datasource, filter.key);
   const styles = useStyles2(getOperatorStyles);
 
   return (
@@ -54,6 +59,7 @@ export const MultiFilterItem = ({ filter, onChange, onDelete, keyPlaceholder }: 
 
         <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
       </InputGroup>
+      {error && <Alert title={error} severity="error" topSpacing={1} />}
     </div>
   );
 };

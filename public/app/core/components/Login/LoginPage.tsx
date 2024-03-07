@@ -4,10 +4,10 @@ import React from 'react';
 
 // Components
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
-import config from 'app/core/config';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { ChangePassword } from '../ForgottenPassword/ChangePassword';
 
@@ -48,13 +48,15 @@ export const LoginPage = () => {
               {!disableLoginForm && (
                 <LoginForm onSubmit={login} loginHint={loginHint} passwordHint={passwordHint} isLoggingIn={isLoggingIn}>
                   <HorizontalGroup justify="flex-end">
-                    <LinkButton
-                      className={styles.forgottenPassword}
-                      fill="text"
-                      href={`${config.appSubUrl}/user/password/send-reset-email`}
-                    >
-                      Forgot your password?
-                    </LinkButton>
+                    {!config.auth.disableLogin && (
+                      <LinkButton
+                        className={styles.forgottenPassword}
+                        fill="text"
+                        href={`${config.appSubUrl}/user/password/send-reset-email`}
+                      >
+                        <Trans i18nKey="login.forgot-password">Forgot your password?</Trans>
+                      </LinkButton>
+                    )}
                   </HorizontalGroup>
                 </LoginForm>
               )}

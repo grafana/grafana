@@ -23,12 +23,13 @@ import (
 
 func ProvideDiscoveryStage(cfg *config.Cfg, pf finder.Finder, pr registry.Service) *discovery.Discovery {
 	return discovery.New(cfg, discovery.Opts{
-		FindFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
-			return pf.Find(ctx, src)
-		},
+		FindFunc: pf.Find,
 		FindFilterFuncs: []discovery.FindFilterFunc{
+			discovery.NewPermittedPluginTypesFilterStep([]plugins.Type{
+				plugins.TypeDataSource, plugins.TypeApp, plugins.TypePanel, plugins.TypeSecretsManager,
+			}),
 			func(ctx context.Context, _ plugins.Class, b []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-				return discovery.NewDuplicatePluginFilterStep(pr).Filter(ctx, b)
+				return NewDuplicatePluginIDFilterStep(pr).Filter(ctx, b)
 			},
 			func(_ context.Context, _ plugins.Class, b []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 				return NewDisablePluginsStep(cfg).Filter(b)

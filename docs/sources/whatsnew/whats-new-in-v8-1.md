@@ -3,7 +3,7 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v8-1/
-description: Feature and improvement highlights for Grafana v8.1
+description: Learn about new and updated features in Grafana v8.1
 keywords:
   - grafana
   - new

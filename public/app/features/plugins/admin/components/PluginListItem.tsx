@@ -4,6 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 
 import { CatalogPlugin, PluginIconName, PluginListDisplayMode } from '../types';
 
@@ -18,7 +19,7 @@ type Props = {
   displayMode?: PluginListDisplayMode;
 };
 
-export function PluginListItem({ plugin, pathName, displayMode = PluginListDisplayMode.Grid }: Props) {
+function PluginListItemComponent({ plugin, pathName, displayMode = PluginListDisplayMode.Grid }: Props) {
   const styles = useStyles2(getStyles);
   const isList = displayMode === PluginListDisplayMode.List;
 
@@ -37,12 +38,15 @@ export function PluginListItem({ plugin, pathName, displayMode = PluginListDispl
   );
 }
 
-const PluginListItemSkeleton = ({ displayMode = PluginListDisplayMode.Grid }: Pick<Props, 'displayMode'>) => {
+const PluginListItemSkeleton: SkeletonComponent<Pick<Props, 'displayMode'>> = ({
+  displayMode = PluginListDisplayMode.Grid,
+  rootProps,
+}) => {
   const styles = useStyles2(getStyles);
   const isList = displayMode === PluginListDisplayMode.List;
 
   return (
-    <div className={cx(styles.container, { [styles.list]: isList })}>
+    <div className={cx(styles.container, { [styles.list]: isList })} {...rootProps}>
       <Skeleton
         containerClassName={cx(
           styles.pluginLogo,
@@ -72,7 +76,7 @@ const PluginListItemSkeleton = ({ displayMode = PluginListDisplayMode.Grid }: Pi
   );
 };
 
-PluginListItem.Skeleton = PluginListItemSkeleton;
+export const PluginListItem = attachSkeleton(PluginListItemComponent, PluginListItemSkeleton);
 
 // Styles shared between the different type of list items
 export const getStyles = (theme: GrafanaTheme2) => {

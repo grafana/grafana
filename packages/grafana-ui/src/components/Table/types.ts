@@ -70,8 +70,10 @@ export interface TableFooterCalc {
 }
 
 export interface GrafanaTableState extends TableState {
-  lastExpandedIndex?: number;
-  toggleRowExpandedCounter: number;
+  // We manually track this to know where to reset the row heights. This is needed because react-table removed the
+  // collapsed IDs/indexes from the state.expanded map so when collapsing we would have to do a diff of current and
+  // previous state.expanded to know what changed.
+  lastExpandedOrCollapsedIndex?: number;
 }
 
 export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
@@ -97,6 +99,9 @@ export interface Props {
   cellHeight?: schema.TableCellHeight;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
+  enableSharedCrosshair?: boolean;
+  // The index of the field value that the table will initialize scrolled to
+  initialRowIndex?: number;
 }
 
 /**

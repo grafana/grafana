@@ -419,6 +419,10 @@ providers:
 To provision dashboards to the root level, store them in the root of your `path`.
 {{% /admonition %}}
 
+{{< admonition type="note" >}}
+This feature doesn't currently allow you to create nested folder structures, that is, where you have folders within folders.
+{{< /admonition >}}
+
 ## Alerting
 
 For information on provisioning Grafana Alerting, refer to [Provision Grafana Alerting resources]({{< relref "../../alerting/set-up/provision-alerting-resources/"  >}}).

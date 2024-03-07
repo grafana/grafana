@@ -9,7 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +26,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
 	mng := tlsManager{
-		logger:          log.New("tsdb.postgres"),
+		logger:          backend.NewLoggerWith("logger", "tsdb.postgres"),
 		dsCacheInstance: datasourceCacheManager{locker: newLocker()},
 		dataPath:        cfg.DataPath,
 	}
@@ -242,7 +243,7 @@ func TestGetTLSSettings(t *testing.T) {
 			var settings tlsSettings
 			var err error
 			mng := tlsManager{
-				logger:          log.New("tsdb.postgres"),
+				logger:          backend.NewLoggerWith("logger", "tsdb.postgres"),
 				dsCacheInstance: datasourceCacheManager{locker: newLocker()},
 				dataPath:        cfg.DataPath,
 			}

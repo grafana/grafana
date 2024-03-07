@@ -303,5 +303,29 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			require.Equal(t, query.renderMeasurement(), ` FROM "policy"./apa/`)
 		})
+
+		t.Run("can render single quoted tag value when regexed value has been sent", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: ">", Value: `/^12.2$/`, Key: "key"}}}
+
+			require.Equal(t, `"key" > '12.2'`, strings.Join(query.renderTags(), ""))
+		})
+	})
+}
+
+func TestRemoveRegexWrappers(t *testing.T) {
+	t.Run("remove regex wrappers", func(t *testing.T) {
+		wrappedText := `/^someValue$/`
+		expected := `'someValue'`
+		result := removeRegexWrappers(wrappedText, `'`)
+
+		require.Equal(t, expected, result)
+	})
+
+	t.Run("return same value if the value is not wrapped by regex wrappers", func(t *testing.T) {
+		wrappedText := `someValue`
+		expected := `someValue`
+		result := removeRegexWrappers(wrappedText, "")
+
+		require.Equal(t, expected, result)
 	})
 }

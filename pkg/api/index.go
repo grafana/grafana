@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -61,7 +60,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		locale = parts[0]
 	}
 
-	appURL := setting.AppUrl
+	appURL := hs.Cfg.AppURL
 	appSubURL := hs.Cfg.AppSubURL
 
 	// @PERCONA
@@ -85,31 +84,18 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	theme := hs.getThemeForIndexData(prefs.Theme, c.Query("theme"))
-	assets, err := webassets.GetWebAssets(hs.Cfg)
+	assets, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
-	}
-
-	userOrgCount := 1
-	userOrgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: userID})
-	if err != nil {
-		hs.log.Error("Failed to count user orgs", "error", err)
-	}
-
-	if len(userOrgs) > 0 {
-		userOrgCount = len(userOrgs)
 	}
 
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
-	cdnURL, err := hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix())
-	if err != nil {
-		return nil, err
-	}
 
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         userID,
+			UID:                        c.UserUID, // << not set yet
 			IsSignedIn:                 c.IsSignedIn,
 			Login:                      c.Login,
 			Email:                      c.SignedInUser.GetEmail(),
@@ -117,8 +103,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			OrgId:                      c.SignedInUser.GetOrgID(),
 			OrgName:                    c.OrgName,
 			OrgRole:                    c.SignedInUser.GetOrgRole(),
-			OrgCount:                   userOrgCount,
-			GravatarUrl:                dtos.GetGravatarUrl(c.SignedInUser.GetEmail()),
+			OrgCount:                   hs.getUserOrgCount(c, userID),
+			GravatarUrl:                dtos.GetGravatarUrl(hs.Cfg, c.SignedInUser.GetEmail()),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			Theme:                      theme.ID,
 			LightTheme:                 theme.Type == "light",
@@ -128,14 +114,14 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
-			Analytics:                  hs.buildUserAnalyticsSettings(c.Req.Context(), c.SignedInUser),
-			AuthenticatedBy:            c.SignedInUser.AuthenticatedBy,
+			Analytics:                  hs.buildUserAnalyticsSettings(c),
+			AuthenticatedBy:            hs.getUserAuthenticatedBy(c, userID),
 		},
 		Settings:                            settings,
 		ThemeType:                           theme.Type,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
-		NewsFeedEnabled:                     setting.NewsFeedEnabled,
+		NewsFeedEnabled:                     hs.Cfg.NewsFeedEnabled,
 		GoogleAnalyticsId:                   settings.GoogleAnalyticsId,
 		GoogleAnalytics4Id:                  settings.GoogleAnalytics4Id,
 		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
@@ -151,7 +137,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
-		ContentDeliveryURL:                  cdnURL,
 		LoadingLogo:                         "public/img/grafana_icon.svg",
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,
@@ -164,7 +149,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		data.CSPEnabled = true
 		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
 	}
-
 	userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
 	if err != nil {
 		return nil, err
@@ -172,7 +156,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
 
-	if setting.DisableGravatar {
+	if hs.Cfg.DisableGravatar {
 		data.User.GravatarUrl = hs.Cfg.AppSubURL + "/public/img/user_profile.png"
 	}
 
@@ -188,22 +172,27 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	return &data, nil
 }
 
-func (hs *HTTPServer) buildUserAnalyticsSettings(ctx context.Context, signedInUser identity.Requester) dtos.AnalyticsSettings {
-	namespace, id := signedInUser.GetNamespacedID()
+func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dtos.AnalyticsSettings {
+	namespace, id := c.SignedInUser.GetNamespacedID()
+
 	// Anonymous users do not have an email or auth info
 	if namespace != identity.NamespaceUser {
-		return dtos.AnalyticsSettings{Identifier: "@" + setting.AppUrl}
+		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppURL}
+	}
+
+	if !c.IsSignedIn {
+		return dtos.AnalyticsSettings{}
 	}
 
 	userID, err := identity.IntIdentifier(namespace, id)
 	if err != nil {
 		hs.log.Error("Failed to parse user ID", "error", err)
-		return dtos.AnalyticsSettings{Identifier: "@" + setting.AppUrl}
+		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppURL}
 	}
 
-	identifier := signedInUser.GetEmail() + "@" + setting.AppUrl
+	identifier := c.SignedInUser.GetEmail() + "@" + hs.Cfg.AppURL
 
-	authInfo, err := hs.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: userID})
+	authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID})
 	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		hs.log.Error("Failed to get auth info for analytics", "error", err)
 	}
@@ -216,6 +205,46 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(ctx context.Context, signedInUs
 		Identifier:         identifier,
 		IntercomIdentifier: hashUserIdentifier(identifier, hs.Cfg.IntercomSecret),
 	}
+}
+
+func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) int {
+	if userID == 0 {
+		return 1
+	}
+
+	userOrgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: userID})
+	if err != nil {
+		hs.log.FromContext(c.Req.Context()).Error("Failed to count user orgs", "userId", userID, "error", err)
+		return 1
+	}
+
+	return len(userOrgs)
+}
+
+// getUserAuthenticatedBy returns external authentication method used for user.
+// If user does not have an external authentication method an empty string is returned
+func (hs *HTTPServer) getUserAuthenticatedBy(c *contextmodel.ReqContext, userID int64) string {
+	if userID == 0 {
+		return ""
+	}
+
+	// Special case for image renderer. Frontend relies on this information
+	// to render dashboards in a bit different way.
+	if c.IsRenderCall {
+		return login.RenderModule
+	}
+
+	info, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID})
+	// we ignore errors where a user does not have external user auth
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
+		hs.log.FromContext(c.Req.Context()).Error("Failed to fetch auth info", "userId", c.SignedInUser.UserID, "error", err)
+	}
+
+	if err != nil {
+		return ""
+	}
+
+	return info.AuthModule
 }
 
 func hashUserIdentifier(identifier string, secret string) string {

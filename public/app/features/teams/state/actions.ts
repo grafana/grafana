@@ -41,7 +41,10 @@ export function loadTeams(initial = false): ThunkResult<void> {
       noTeams = response.teams.length === 0;
     }
 
-    if (contextSrv.licensedAccessControlEnabled()) {
+    if (
+      contextSrv.licensedAccessControlEnabled() &&
+      contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList)
+    ) {
       dispatch(rolesFetchBegin());
       const teamIds = response?.teams.map((t: Team) => t.id);
       const roles = await getBackendSrv().post(`/api/access-control/teams/roles/search`, { teamIds });

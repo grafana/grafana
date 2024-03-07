@@ -106,7 +106,7 @@ export const NotificationChannelForm = ({
           <Button type="button" variant="secondary" onClick={() => onTestChannel(getValues())}>
             Test
           </Button>
-          <a href={`${config.appSubUrl}/alerting/notifications`}>
+          <a href={`${config.appSubUrl}/alerting-legacy/notifications`}>
             <Button type="button" variant="secondary">
               Back
             </Button>

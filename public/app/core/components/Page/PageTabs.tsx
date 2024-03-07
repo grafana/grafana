@@ -26,6 +26,7 @@ export function PageTabs({ navItem }: Props) {
                 counter={child.tabCounter}
                 href={child.url}
                 suffix={child.tabSuffix}
+                onChangeTab={child.onClick}
               />
             )
           );

@@ -1,10 +1,13 @@
 import { Observable } from 'rxjs';
 
 import {
+  arrayToDataFrame,
+  createDataFrame,
   DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  DataTopic,
   dateTimeParse,
   FieldType,
   LoadingState,
@@ -14,10 +17,11 @@ import {
   LogsMetaKind,
   LogsVolumeCustomMetaData,
   LogsVolumeType,
-  MutableDataFrame,
   sortDataFrame,
   toDataFrame,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { getMockFrames } from 'app/plugins/datasource/loki/__mocks__/frames';
 
 import { MockObservableDataSourceApi } from '../../../test/mocks/datasource_srv';
 
@@ -27,6 +31,7 @@ import {
   dedupLogRows,
   filterLogLevels,
   getSeriesProperties,
+  infiniteScrollRefId,
   LIMIT_LABEL,
   logRowToSingleRowDataFrame,
   logSeriesToLogsModel,
@@ -228,7 +233,7 @@ const emptyLogsModel = {
 
 describe('dataFrameToLogsModel', () => {
   it('given empty series should return empty logs model', () => {
-    expect(dataFrameToLogsModel([] as DataFrame[], 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel([], 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without correct series name should return empty logs model', () => {
@@ -242,7 +247,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given series without a time field should return empty logs model', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'message',
@@ -257,7 +262,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given series without a string field should return empty logs model', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -272,7 +277,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series should return expected logs model', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -356,9 +361,48 @@ describe('dataFrameToLogsModel', () => {
     });
   });
 
+  it('with infinite scrolling enabled it should return expected logs model', () => {
+    config.featureToggles.logsInfiniteScrolling = true;
+
+    const series: DataFrame[] = [
+      createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['t=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server'],
+            labels: {},
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['foo'],
+          },
+        ],
+        meta: {
+          limit: 1000,
+        },
+        refId: 'A',
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: LIMIT_LABEL,
+      value: `1000 (1 displayed)`,
+      kind: LogsMetaKind.String,
+    });
+
+    config.featureToggles.logsInfiniteScrolling = false;
+  });
+
   it('given one series with limit as custom meta property should return correct limit', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -400,7 +444,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series with labels-field should return expected logs model', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'labels',
@@ -514,15 +558,15 @@ describe('dataFrameToLogsModel', () => {
       type: FieldType.string,
       values: ['line1'],
     };
-    const frame1 = new MutableDataFrame({
+    const frame1 = createDataFrame({
       fields: [labels, time, line],
     });
 
-    const frame2 = new MutableDataFrame({
+    const frame2 = createDataFrame({
       fields: [time, labels, line],
     });
 
-    const frame3 = new MutableDataFrame({
+    const frame3 = createDataFrame({
       fields: [time, line, labels],
     });
 
@@ -541,7 +585,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series with error should return expected logs model', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -617,7 +661,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series without labels should return expected logs model', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -908,7 +952,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('should return expected line limit meta info when returned number of series equal the log limit', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -973,6 +1017,51 @@ describe('dataFrameToLogsModel', () => {
     ];
     const logsModel = dataFrameToLogsModel(series, 1);
     expect(logsModel.rows[0].uid).toBe('A_0');
+  });
+
+  describe('infinite scrolling', () => {
+    let frameA: DataFrame, frameB: DataFrame;
+    beforeEach(() => {
+      const { logFrameA, logFrameB } = getMockFrames();
+      logFrameA.refId = `${infiniteScrollRefId}-A`;
+      logFrameA.fields[0].values = [1, 1];
+      logFrameA.fields[1].values = ['line', 'line'];
+      logFrameA.fields[3].values = ['3000000', '3000000'];
+      logFrameA.fields[4].values = ['id', 'id'];
+      logFrameB.refId = `${infiniteScrollRefId}-B`;
+      logFrameB.fields[0].values = [2, 2];
+      logFrameB.fields[1].values = ['line 2', 'line 2'];
+      logFrameB.fields[3].values = ['4000000', '4000000'];
+      logFrameB.fields[4].values = ['id2', 'id2'];
+      frameA = logFrameA;
+      frameB = logFrameB;
+    });
+
+    it('deduplicates repeated log frames when invoked from infinite scrolling results', () => {
+      const logsModel = dataFrameToLogsModel([frameA, frameB], 1, { from: 1556270591353, to: 1556289770991 }, [
+        { refId: `${infiniteScrollRefId}-A` },
+        { refId: `${infiniteScrollRefId}-B` },
+      ]);
+
+      expect(logsModel.rows).toHaveLength(2);
+      expect(logsModel.rows[0].entry).toBe(frameA.fields[1].values[0]);
+      expect(logsModel.rows[1].entry).toBe(frameB.fields[1].values[0]);
+    });
+
+    it('does not remove repeated log frames when invoked from other contexts', () => {
+      frameA.refId = 'A';
+      frameB.refId = 'B';
+      const logsModel = dataFrameToLogsModel([frameA, frameB], 1, { from: 1556270591353, to: 1556289770991 }, [
+        { refId: 'A' },
+        { refId: 'B' },
+      ]);
+
+      expect(logsModel.rows).toHaveLength(4);
+      expect(logsModel.rows[0].entry).toBe(frameA.fields[1].values[0]);
+      expect(logsModel.rows[1].entry).toBe(frameA.fields[1].values[1]);
+      expect(logsModel.rows[2].entry).toBe(frameB.fields[1].values[0]);
+      expect(logsModel.rows[3].entry).toBe(frameB.fields[1].values[1]);
+    });
   });
 });
 
@@ -1228,16 +1317,22 @@ describe('logs volume', () => {
         { refId: 'B', target: 'volume query 2' },
       ],
       scopedVars: {},
-    } as unknown as DataQueryRequest<TestDataQuery>;
-    volumeProvider = queryLogsVolume(datasource, request, {
-      extractLevel: (dataFrame: DataFrame) => {
-        return dataFrame.fields[1]!.labels!.level === 'error' ? LogLevel.error : LogLevel.unknown;
-      },
+      requestId: '',
+      interval: '',
+      intervalMs: 0,
       range: {
         from: FROM,
         to: TO,
-        raw: { from: '0', to: '1' },
+        raw: {
+          from: FROM,
+          to: TO,
+        },
       },
+      timezone: '',
+      app: '',
+      startTime: 0,
+    };
+    volumeProvider = queryLogsVolume(datasource, request, {
       targets: request.targets,
     });
   }
@@ -1278,6 +1373,33 @@ describe('logs volume', () => {
       {
         state: LoadingState.Done,
         data: [resultAFrame1, resultAFrame2],
+      },
+    ]);
+  }
+
+  function setupLogsVolumeWithAnnotations() {
+    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5], 'A');
+    const loadingFrame = arrayToDataFrame([
+      {
+        time: 100,
+        timeEnd: 200,
+        isRegion: true,
+        color: 'rgba(120, 120, 120, 0.1)',
+      },
+    ]);
+    loadingFrame.name = 'annotation';
+    loadingFrame.meta = {
+      dataTopic: DataTopic.Annotations,
+    };
+
+    datasource = new MockObservableDataSourceApi('loki', [
+      {
+        state: LoadingState.Streaming,
+        data: [resultAFrame1, loadingFrame],
+      },
+      {
+        state: LoadingState.Done,
+        data: [resultAFrame1],
       },
     ]);
   }
@@ -1361,6 +1483,55 @@ describe('logs volume', () => {
         },
         'Error message',
       ]);
+    });
+  });
+
+  it('handles annotations in responses', async () => {
+    setup(setupLogsVolumeWithAnnotations);
+
+    const logVolumeCustomMeta: LogsVolumeCustomMetaData = {
+      sourceQuery: { refId: 'A', target: 'volume query 1' } as DataQuery,
+      datasourceName: 'loki',
+      logsVolumeType: LogsVolumeType.FullRange,
+      absoluteRange: {
+        from: FROM.valueOf(),
+        to: TO.valueOf(),
+      },
+    };
+
+    await expect(volumeProvider).toEmitValuesWith((received) => {
+      expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
+      expect(received).toContainEqual({
+        state: LoadingState.Streaming,
+        error: undefined,
+        data: [
+          expect.objectContaining({
+            fields: expect.anything(),
+            meta: {
+              custom: logVolumeCustomMeta,
+            },
+          }),
+          expect.objectContaining({
+            fields: expect.anything(),
+            meta: {
+              dataTopic: DataTopic.Annotations,
+            },
+            name: 'annotation',
+          }),
+        ],
+      });
+      expect(received).toContainEqual({
+        state: LoadingState.Done,
+        error: undefined,
+        data: [
+          expect.objectContaining({
+            fields: expect.anything(),
+            meta: {
+              custom: logVolumeCustomMeta,
+            },
+          }),
+        ],
+      });
     });
   });
 });
@@ -1471,6 +1642,7 @@ const mockLogRow = {
       },
       { name: 'labels', type: FieldType.other, values: [{ app: 'app01' }, { app: 'app02' }] },
     ],
+    refId: 'Z',
   }),
   rowIndex: 0,
 } as unknown as LogRowModel;
@@ -1508,5 +1680,10 @@ describe('logRowToDataFrame', () => {
     const result = logRowToSingleRowDataFrame({ ...mockLogRow, rowIndex: invalidRowIndex });
 
     expect(result).toBe(null);
+  });
+
+  it('should use refId from original DataFrame', () => {
+    const result = logRowToSingleRowDataFrame(mockLogRow);
+    expect(result?.refId).toBe(mockLogRow.dataFrame.refId);
   });
 });

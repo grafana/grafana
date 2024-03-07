@@ -374,7 +374,7 @@
         0
       ],
       "description": "A Grafana dashboard.",
-      "grafanaMaturityCount": 103,
+      "grafanaMaturityCount": 105,
       "lineageIsGroup": false,
       "links": {
         "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/dashboard/schema-reference",
@@ -459,7 +459,7 @@
     "datagridpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -600,31 +600,26 @@
     },
     "folder": {
       "category": "core",
-      "codeowners": [
-        "grafana/grafana-as-code",
-        "grafana/grafana-frontend-platform",
-        "grafana/plugins-platform-frontend"
-      ],
+      "codeowners": [],
       "crd": {
         "dummySchema": false,
-        "group": "folder.core.grafana.com",
-        "scope": "Namespaced"
+        "group": "",
+        "scope": ""
       },
       "currentVersion": [
         0,
         0
       ],
-      "description": "A folder is a collection of resources that are grouped together and can share permissions.",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/folder/schema-reference",
-        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/folder",
-        "schema": "https://github.com/grafana/grafana/tree/main/kinds/folder/folder_kind.cue",
-        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/folder/x/folder_types.gen.ts"
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
       },
       "machineName": "folder",
-      "maturity": "merged",
+      "maturity": "planned",
       "name": "Folder",
       "pluralMachineName": "folders",
       "pluralName": "Folders"
@@ -1512,6 +1507,72 @@
       "pluralName": "PrometheusDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
+    "ptsummarydataquery": {
+      "category": "composable",
+      "codeowners": [],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "ptsummarydataquery",
+      "maturity": "planned",
+      "name": "PTSummaryDataQuery",
+      "pluralMachineName": "ptsummarydataquerys",
+      "pluralName": "PTSummaryDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "ptsummarydatasourcecfg": {
+      "category": "composable",
+      "codeowners": [],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "ptsummarydatasourcecfg",
+      "maturity": "planned",
+      "name": "PTSummaryDataSourceCfg",
+      "pluralMachineName": "ptsummarydatasourcecfgs",
+      "pluralName": "PTSummaryDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
+    },
+    "ptsummarypanelcfg": {
+      "category": "composable",
+      "codeowners": [],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "ptsummarypanelcfg",
+      "maturity": "planned",
+      "name": "PTSummaryPanelCfg",
+      "pluralMachineName": "ptsummarypanelcfgs",
+      "pluralName": "PTSummaryPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
     "publicdashboard": {
       "category": "core",
       "codeowners": [
@@ -1780,7 +1841,7 @@
     "tablepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -2223,6 +2284,9 @@
           "postgresqldatasourcecfg",
           "prometheusdataquery",
           "prometheusdatasourcecfg",
+          "ptsummarydataquery",
+          "ptsummarydatasourcecfg",
+          "ptsummarypanelcfg",
           "statetimelinepanelcfg",
           "statpanelcfg",
           "statushistorypanelcfg",
@@ -2241,7 +2305,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 73
+        "count": 76
       },
       "core": {
         "name": "core",
@@ -2316,7 +2380,6 @@
           "accesspolicy",
           "alertgroupspanelcfg",
           "azuremonitordataquery",
-          "folder",
           "googlecloudmonitoringdataquery",
           "heatmappanelcfg",
           "preferences",
@@ -2327,7 +2390,7 @@
           "timeseriespanelcfg",
           "trendpanelcfg"
         ],
-        "count": 13
+        "count": 12
       },
       "planned": {
         "name": "planned",
@@ -2343,6 +2406,7 @@
           "datasource",
           "elasticsearchdatasourcecfg",
           "flamegraphpanelcfg",
+          "folder",
           "gettingstartedpanelcfg",
           "googlecloudmonitoringdatasourcecfg",
           "grafanadataquery",
@@ -2366,6 +2430,9 @@
           "postgresqldataquery",
           "postgresqldatasourcecfg",
           "prometheusdatasourcecfg",
+          "ptsummarydataquery",
+          "ptsummarydatasourcecfg",
+          "ptsummarypanelcfg",
           "query",
           "queryhistory",
           "serviceaccount",
@@ -2379,7 +2446,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 46
+        "count": 50
       },
       "stable": {
         "name": "stable",

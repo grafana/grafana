@@ -27,16 +27,18 @@ const conversions: Record<string, number> = {
   month: 1000 * 60 * 60 * 24 * 30,
   week: 1000 * 60 * 60 * 24 * 7,
   day: 1000 * 60 * 60 * 24,
-  hour: 1000 * 60 * 60,
-  minute: 1000 * 60,
-  second: 1000,
-  millisecond: 1,
+  h: 1000 * 60 * 60,
+  m: 1000 * 60,
+  s: 1000,
+  ms: 1,
 };
+
+const noPluralize = new Set(['ms', 's', 'm', 'h']);
 
 // @TODO: display "~ 1 year/month"?
 export const formatMilliseconds = (milliseconds: number) => {
   let value = 1;
-  let unit = 'millisecond';
+  let unit = 'ms';
 
   for (unit in conversions) {
     if (milliseconds >= conversions[unit]) {
@@ -45,7 +47,8 @@ export const formatMilliseconds = (milliseconds: number) => {
     }
   }
 
-  const unitString = value === 1 ? unit : unit + 's';
+  const plural = value !== 1 && !noPluralize.has(unit);
+  const unitString = plural ? unit + 's' : unit;
 
   return `${value} ${unitString}`;
 };

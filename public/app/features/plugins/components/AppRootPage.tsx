@@ -21,10 +21,11 @@ import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound'
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
+import { getMessageFromError } from 'app/core/utils/errors';
 
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
-import { buildPluginSectionNav } from '../utils';
+import { buildPluginSectionNav, pluginsLogger } from '../utils';
 
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
 
@@ -100,7 +101,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   // if the user has permissions to see the plugin page.
   const userHasPermissionsToPluginPage = () => {
     // Check if plugin does not have any configurations or the user is Grafana Admin
-    if (!plugin.meta?.includes || contextSrv.isGrafanaAdmin || contextSrv.user.orgRole === OrgRole.Admin) {
+    if (!plugin.meta?.includes) {
       return true;
     }
 
@@ -109,6 +110,16 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     if (!pluginInclude) {
       return true;
     }
+
+    // Check if action exists and give access if user has the required permission.
+    if (pluginInclude?.action && config.featureToggles.accessControlOnCall) {
+      return contextSrv.hasPermission(pluginInclude.action);
+    }
+
+    if (contextSrv.isGrafanaAdmin || contextSrv.user.orgRole === OrgRole.Admin) {
+      return true;
+    }
+
     const pathRole: string = pluginInclude?.role || '';
     // Check if role exists  and give access to Editor to be able to see Viewer pages
     if (!pathRole || (contextSrv.isEditor && pathRole === OrgRole.Viewer)) {
@@ -191,6 +202,9 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
         pluginNav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
       })
     );
+    const error = err instanceof Error ? err : new Error(getMessageFromError(err));
+    pluginsLogger.logError(error);
+    console.error(error);
   }
 }
 

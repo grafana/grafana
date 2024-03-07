@@ -15,7 +15,7 @@ import { useStyles2, Tooltip, Stack } from '@grafana/ui';
 
 import { DataTrail, DataTrailState } from './DataTrail';
 import { VAR_FILTERS } from './shared';
-import { getTrailFor } from './utils';
+import { getTrailFor, isSceneTimeRangeState } from './utils';
 
 export interface DataTrailsHistoryState extends SceneObjectState {
   currentStep: number;
@@ -68,6 +68,14 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
     trail.subscribeToEvent(SceneObjectStateChangedEvent, (evt) => {
       if (evt.payload.changedObject instanceof SceneTimeRange) {
+        const { prevState, newState } = evt.payload;
+
+        if (isSceneTimeRangeState(prevState) && isSceneTimeRangeState(newState)) {
+          if (prevState.from === newState.from && prevState.to === newState.to) {
+            return;
+          }
+        }
+
         this.addTrailStep(trail, 'time');
       }
     });
@@ -139,7 +147,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
     return (
       <div className={styles.container}>
-        <div className={styles.heading}>Trail</div>
+        <div className={styles.heading}>History</div>
         {steps.map((step, index) => (
           <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
             <button

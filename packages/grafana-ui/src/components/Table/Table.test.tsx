@@ -89,6 +89,7 @@ function getTestContext(propOverrides: Partial<Props> = {}) {
     onSortByChange,
     onCellFilterAdded,
     onColumnResize,
+    initialRowIndex: undefined,
   };
 
   Object.assign(props, propOverrides);
@@ -655,6 +656,21 @@ describe('Table', () => {
       await userEvent.click(within(rows[1]).getByLabelText('Expand row'));
       subTable = screen.getAllByRole('table')[2];
       expect(subTable.style.height).toBe('108px');
+    });
+  });
+
+  describe('when mounted with scrolled to specific row', () => {
+    it('the row should be visible', async () => {
+      getTestContext({
+        initialRowIndex: 2,
+      });
+      expect(getTable()).toBeInTheDocument();
+
+      const rows = within(getTable()).getAllByRole('row');
+      expect(rows).toHaveLength(5);
+
+      let selected = within(getTable()).getByRole('row', { selected: true });
+      expect(selected).toBeVisible();
     });
   });
 });

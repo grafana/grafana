@@ -38,7 +38,7 @@ type ContactPointService interface {
 }
 
 type TemplateService interface {
-	GetTemplates(ctx context.Context, orgID int64) (map[string]string, error)
+	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
 	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
 	DeleteTemplate(ctx context.Context, orgID int64, name string) error
 }
@@ -51,8 +51,9 @@ type NotificationPolicyService interface {
 
 type MuteTimingService interface {
 	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error)
-	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*definitions.MuteTimeInterval, error)
-	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*definitions.MuteTimeInterval, error)
+	GetMuteTiming(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error)
+	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
+	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
 	DeleteMuteTiming(ctx context.Context, name string, orgID int64) error
 }
 
@@ -200,11 +201,7 @@ func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) respon
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	result := make([]definitions.NotificationTemplate, 0, len(templates))
-	for k, v := range templates {
-		result = append(result, definitions.NotificationTemplate{Name: k, Template: v})
-	}
-	return response.JSON(http.StatusOK, result)
+	return response.JSON(http.StatusOK, templates)
 }
 
 func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name string) response.Response {
@@ -212,8 +209,10 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name st
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	if tmpl, ok := templates[name]; ok {
-		return response.JSON(http.StatusOK, definitions.NotificationTemplate{Name: name, Template: tmpl})
+	for _, tmpl := range templates {
+		if tmpl.Name == name {
+			return response.JSON(http.StatusOK, tmpl)
+		}
 	}
 	return response.Empty(http.StatusNotFound)
 }
@@ -243,13 +242,22 @@ func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, name
 }
 
 func (srv *ProvisioningSrv) RouteGetMuteTiming(c *contextmodel.ReqContext, name string) response.Response {
+	timing, err := srv.muteTimings.GetMuteTiming(c.Req.Context(), name, c.SignedInUser.GetOrgID())
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get mute timing by name", err)
+	}
+	return response.JSON(http.StatusOK, timing)
+}
+
+func (srv *ProvisioningSrv) RouteGetMuteTimingExport(c *contextmodel.ReqContext, name string) response.Response {
 	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get mute timings", err)
 	}
 	for _, timing := range timings {
 		if name == timing.Name {
-			return response.JSON(http.StatusOK, timing)
+			e := AlertingFileExportFromMuteTimings(c.SignedInUser.GetOrgID(), []definitions.MuteTimeInterval{timing})
+			return exportResponse(c, e)
 		}
 	}
 	return response.Empty(http.StatusNotFound)
@@ -258,19 +266,25 @@ func (srv *ProvisioningSrv) RouteGetMuteTiming(c *contextmodel.ReqContext, name 
 func (srv *ProvisioningSrv) RouteGetMuteTimings(c *contextmodel.ReqContext) response.Response {
 	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get mute timings", err)
 	}
 	return response.JSON(http.StatusOK, timings)
+}
+
+func (srv *ProvisioningSrv) RouteGetMuteTimingsExport(c *contextmodel.ReqContext) response.Response {
+	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get mute timings", err)
+	}
+	e := AlertingFileExportFromMuteTimings(c.SignedInUser.GetOrgID(), timings)
+	return exportResponse(c, e)
 }
 
 func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval) response.Response {
 	mt.Provenance = determineProvenance(c)
 	created, err := srv.muteTimings.CreateMuteTiming(c.Req.Context(), mt, c.SignedInUser.GetOrgID())
 	if err != nil {
-		if errors.Is(err, provisioning.ErrValidation) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create mute timing", err)
 	}
 	return response.JSON(http.StatusCreated, created)
 }
@@ -280,13 +294,7 @@ func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt de
 	mt.Provenance = determineProvenance(c)
 	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.SignedInUser.GetOrgID())
 	if err != nil {
-		if errors.Is(err, provisioning.ErrValidation) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-	if updated == nil {
-		return response.Empty(http.StatusNotFound)
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update mute timing", err)
 	}
 	return response.JSON(http.StatusAccepted, updated)
 }
@@ -294,7 +302,7 @@ func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt de
 func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *contextmodel.ReqContext, name string) response.Response {
 	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.SignedInUser.GetOrgID())
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to delete mute timing", err)
 	}
 	return response.JSON(http.StatusNoContent, nil)
 }
@@ -551,36 +559,53 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 }
 
 func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {
-	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies))
-	for idx, group := range body.Groups {
-		gr := group
-		resources = append(resources, hcl.Resource{
-			Type: "grafana_rule_group",
-			Name: fmt.Sprintf("rule_group_%04d", idx),
-			Body: &gr,
-		})
-	}
-	for idx, cp := range body.ContactPoints {
-		upd, err := ContactPointFromContactPointExport(cp)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "failed to convert contact points to HCL", err)
+	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies)+len(body.MuteTimings))
+	convertToResources := func() error {
+		for idx, group := range body.Groups {
+			gr := group
+			resources = append(resources, hcl.Resource{
+				Type: "grafana_rule_group",
+				Name: fmt.Sprintf("rule_group_%04d", idx),
+				Body: &gr,
+			})
 		}
-		resources = append(resources, hcl.Resource{
-			Type: "grafana_contact_point",
-			Name: fmt.Sprintf("contact_point_%d", idx),
-			Body: &upd,
-		})
-	}
+		for idx, cp := range body.ContactPoints {
+			upd, err := ContactPointFromContactPointExport(cp)
+			if err != nil {
+				return fmt.Errorf("failed to convert contact points to HCL:%w", err)
+			}
+			resources = append(resources, hcl.Resource{
+				Type: "grafana_contact_point",
+				Name: fmt.Sprintf("contact_point_%d", idx),
+				Body: &upd,
+			})
+		}
 
-	for idx, cp := range body.Policies {
-		policy := cp.RouteExport
-		resources = append(resources, hcl.Resource{
-			Type: "grafana_notification_policy",
-			Name: fmt.Sprintf("notification_policy_%d", idx+1),
-			Body: policy,
-		})
-	}
+		for idx, cp := range body.Policies {
+			policy := cp.RouteExport
+			resources = append(resources, hcl.Resource{
+				Type: "grafana_notification_policy",
+				Name: fmt.Sprintf("notification_policy_%d", idx+1),
+				Body: policy,
+			})
+		}
 
+		for idx, mt := range body.MuteTimings {
+			mthcl, err := MuteTimingIntervalToMuteTimeIntervalHclExport(mt)
+			if err != nil {
+				return fmt.Errorf("failed to convert mute timing [%s] to HCL:%w", mt.Name, err)
+			}
+			resources = append(resources, hcl.Resource{
+				Type: "grafana_mute_timing",
+				Name: fmt.Sprintf("mute_timing_%d", idx+1),
+				Body: mthcl,
+			})
+		}
+		return nil
+	}
+	if err := convertToResources(); err != nil {
+		return response.Error(500, "failed to convert to HCL resources", err)
+	}
 	hclBody, err := hcl.Encode(resources...)
 	if err != nil {
 		return response.Error(500, "body hcl encode", err)

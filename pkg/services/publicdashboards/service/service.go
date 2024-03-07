@@ -8,18 +8,20 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -74,6 +76,7 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Cont
 		return nil, err
 	}
 
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.PublicDashboards).Inc()
 	meta := dtos.DashboardMeta{
 		Slug:                   dash.Slug,
 		Type:                   dashboards.DashTypeDB,
@@ -358,7 +361,7 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, da
 func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
 	if dashboard.IsFolder {
 		// get all pubdashes for the folder
-		pubdashes, err := pd.store.FindByDashboardFolder(ctx, dashboard)
+		pubdashes, err := pd.store.FindByFolder(ctx, dashboard.OrgID, dashboard.UID)
 		if err != nil {
 			return err
 		}

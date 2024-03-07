@@ -1,63 +1,62 @@
 import { css } from '@emotion/css';
-import React from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useMemo } from 'react';
 
-import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Button, useStyles2 } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
-import { Page } from 'app/core/components/Page/Page';
-import { useSelector } from 'app/types/store';
+import { Splitter, useStyles2 } from '@grafana/ui';
+
+import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
-  const { body, controls, drawer } = model.useState();
+  const dashboard = getDashboardSceneFor(model);
+  const { optionsPane, vizManager, dataPane, optionsPaneSize } = model.useState();
+  const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
-  const location = useLocation();
-  const navIndex = useSelector((state) => state.navIndex);
-  const pageNav = model.getPageNav(location, navIndex);
+  const [vizPaneStyles, optionsPaneStyles] = useMemo(() => {
+    if (optionsPaneSize > 0) {
+      return [{ flexGrow: 1 - optionsPaneSize }, { minWidth: 'unset', overflow: 'hidden', flexGrow: optionsPaneSize }];
+    } else {
+      return [{ flexGrow: 1 }, { minWidth: 'unset', flexGrow: 0 }];
+    }
+  }, [optionsPaneSize]);
 
-  return (
-    <Page navId="scenes" pageNav={pageNav} layout={PageLayoutType.Custom}>
-      <AppChromeUpdate actions={getToolbarActions(model)} />
-      <div className={styles.canvasContent}>
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-          </div>
-        )}
-        <div className={styles.body}>
-          <body.Component model={body} />
-        </div>
-      </div>
-      {drawer && <drawer.Component model={drawer} />}
-    </Page>
-  );
-}
-
-function getToolbarActions(editor: PanelEditor) {
   return (
     <>
-      <NavToolbarSeparator leftActionsSeparator key="separator" />
-
-      <Button
-        onClick={editor.onDiscard}
-        tooltip=""
-        key="panel-edit-discard"
-        variant="destructive"
-        fill="outline"
-        size="sm"
+      <NavToolbarActions dashboard={dashboard} />
+      <Splitter
+        direction="row"
+        dragPosition="end"
+        initialSize={0.75}
+        primaryPaneStyles={vizPaneStyles}
+        secondaryPaneStyles={optionsPaneStyles}
+        onResizing={model.onOptionsPaneResizing}
+        onSizeChanged={model.onOptionsPaneSizeChanged}
       >
-        Discard
-      </Button>
-
-      <Button onClick={editor.onApply} tooltip="" key="panel-edit-apply" variant="primary" size="sm">
-        Apply
-      </Button>
+        <div className={styles.body}>
+          <div className={styles.canvasContent}>
+            {controls && (
+              <div className={styles.controls}>
+                {controls.map((control) => (
+                  <control.Component key={control.state.key} model={control} />
+                ))}
+              </div>
+            )}
+            <Splitter
+              direction="column"
+              primaryPaneStyles={{ minHeight: 0, paddingBottom: !dataPane ? 16 : 0 }}
+              secondaryPaneStyles={{ minHeight: 0, overflow: 'hidden' }}
+              dragPosition="start"
+            >
+              <vizManager.Component model={vizManager} />
+              {dataPane && <dataPane.Component model={dataPane} />}
+            </Splitter>
+          </div>
+        </div>
+        {optionsPane && <optionsPane.Component model={optionsPane} />}
+      </Splitter>
     </>
   );
 }
@@ -68,7 +67,6 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(0, 2),
       flexBasis: '100%',
       flexGrow: 1,
       minHeight: 0,
@@ -81,14 +79,13 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       minHeight: 0,
       gap: '8px',
-      marginBottom: theme.spacing(2),
     }),
     controls: css({
       display: 'flex',
       flexWrap: 'wrap',
       alignItems: 'center',
       gap: theme.spacing(1),
-      padding: theme.spacing(2, 0),
+      padding: theme.spacing(2, 0, 2, 2),
     }),
   };
 }

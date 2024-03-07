@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
-import { isEmpty, sortBy, take, uniq } from 'lodash';
+import { fromPairs, isEmpty, sortBy, take, uniq } from 'lodash';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataFrame, dateTime, GrafanaTheme2, TimeRange } from '@grafana/data';
-import { Alert, Button, Field, Icon, Input, Label, TagList, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, Label, Tooltip, useStyles2, Stack } from '@grafana/ui';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
+import { AlertLabels } from '../../AlertLabels';
 import { HoverCard } from '../../HoverCard';
 
 import { LogRecordViewerByTimestamp } from './LogRecordViewer';
@@ -119,8 +120,8 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
             <Tooltip content="Common labels are the ones attached to all of the alert instances">
               <Icon name="info-circle" />
             </Tooltip>
+            <AlertLabels labels={fromPairs(commonLabels)} size="sm" />
           </Stack>
-          <TagList tags={commonLabels.map((label) => label.join('='))} />
         </div>
       )}
       {isEmpty(frameSubset) ? (

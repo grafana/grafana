@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.2.3";
+export const pluginVersion = "10.4.0-pre";
 
 export interface Options extends common.OptionsWithTimezones {
   legend: common.VizLegendOptions;

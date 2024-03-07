@@ -30,18 +30,15 @@ const mssqlPlugin = async () =>
 const testDataDSPlugin = async () =>
   await import(/* webpackChunkName: "testDataDSPlugin" */ '@grafana-plugins/grafana-testdata-datasource/module');
 const cloudMonitoringPlugin = async () =>
-  await import(/* webpackChunkName: "cloudMonitoringPlugin" */ 'app/plugins/datasource/cloud-monitoring/module');
+  await import(/* webpackChunkName: "cloudMonitoringPlugin" */ '@grafana-plugins/stackdriver/module');
 const azureMonitorPlugin = async () =>
-  await import(/* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/azuremonitor/module');
-const tempoPlugin = async () =>
-  await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
+  await import(/* webpackChunkName: "azureMonitorPlugin" */ '@grafana-plugins/grafana-azure-monitor-datasource/module');
+const tempoPlugin = async () => await import(/* webpackChunkName: "tempoPlugin" */ '@grafana-plugins/tempo/module');
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 const pyroscopePlugin = async () =>
-  await import(/* webpackChunkName: "pyroscopePlugin" */ 'app/plugins/datasource/grafana-pyroscope-datasource/module');
-const parcaPlugin = async () =>
-  await import(/* webpackChunkName: "parcaPlugin" */ 'app/plugins/datasource/parca/module');
-// @PERCONA
+  await import(/* webpackChunkName: "pyroscopePlugin" */ '@grafana-plugins/grafana-pyroscope-datasource/module');
+const parcaPlugin = async () => await import(/* webpackChunkName: "parcaPlugin" */ '@grafana-plugins/parca/module');
 const pmmPTSummaryDatasource = async () =>
   await import(
     /* webpackChunkName: "pmmPTSummaryDatasource" */ 'app/plugins/datasource/pmm-pt-summary-datasource/module'
@@ -63,7 +60,6 @@ import * as histogramPanel from 'app/plugins/panel/histogram/module';
 import * as livePanel from 'app/plugins/panel/live/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
-import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
 import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 // @PERCONA
 import * as pmmCheckPanel from 'app/plugins/panel/pmm-check/module';
@@ -88,6 +84,9 @@ const heatmapPanel = async () =>
   await import(/* webpackChunkName: "heatmapPanel" */ 'app/plugins/panel/heatmap/module');
 const tableOldPanel = async () =>
   await import(/* webpackChunkName: "tableOldPlugin" */ 'app/plugins/panel/table-old/module');
+
+const nodeGraph = async () =>
+  await import(/* webpackChunkName: "nodeGraphPanel" */ 'app/plugins/panel/nodeGraph/module');
 
 const builtInPlugins: Record<string, System.Module | (() => Promise<System.Module>)> = {
   // datasources

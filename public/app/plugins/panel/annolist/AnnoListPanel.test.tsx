@@ -7,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../core/services/backend_srv';
-import { setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { DashboardSrv, setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import { AnnoListPanel, Props } from './AnnoListPanel';
 import { Options } from './panelcfg.gen';
@@ -30,7 +30,7 @@ const defaultOptions: Options = {
   tags: ['tag A', 'tag B'],
 };
 
-const defaultResult: any = {
+const defaultResult = {
   text: 'Result text',
   userId: 1,
   login: 'Result login',
@@ -40,7 +40,7 @@ const defaultResult: any = {
   time: Date.UTC(2021, 0, 1, 0, 0, 0, 0),
   panelId: 13,
   dashboardId: 14, // deliberately different from panelId
-  id: 14,
+  id: '14',
   uid: '7MeksYbmk',
   dashboardUID: '7MeksYbmk',
   url: '/d/asdkjhajksd/some-dash',
@@ -55,8 +55,8 @@ async function setupTestContext({
   const getMock = jest.spyOn(backendSrv, 'get');
   getMock.mockResolvedValue(results);
 
-  const dash: any = { uid: 'srx16xR4z', formatDate: (time: number) => new Date(time).toISOString() };
-  const dashSrv: any = { getCurrent: () => dash };
+  const dash = { uid: 'srx16xR4z', formatDate: (time: number) => new Date(time).toISOString() };
+  const dashSrv = { getCurrent: () => dash } as DashboardSrv;
   setDashboardSrv(dashSrv);
   const pushSpy = jest.spyOn(locationService, 'push');
 
@@ -64,10 +64,9 @@ async function setupTestContext({
     data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
     eventBus: {
       subscribe: jest.fn(),
-      getStream: () =>
-        ({
-          subscribe: jest.fn(),
-        }) as any,
+      getStream: jest.fn().mockImplementation(() => ({
+        subscribe: jest.fn(),
+      })),
       publish: jest.fn(),
       removeAllListeners: jest.fn(),
       newScopedBus: jest.fn(),

@@ -142,7 +142,7 @@ describe('PromVariableQueryEditor', () => {
           metrics: [],
           metricsMetadata: {},
           getLabelValues: jest.fn().mockImplementation(() => ['that']),
-          fetchSeriesLabelsMatch: jest.fn().mockImplementation(() => Promise.resolve({ those: 'those' })),
+          fetchLabelsWithMatch: jest.fn().mockImplementation(() => Promise.resolve({ those: 'those' })),
         } as Partial<PrometheusLanguageProvider> as PrometheusLanguageProvider,
         getInitHints: () => [],
         getDebounceTimeInMilliseconds: jest.fn(),
@@ -236,11 +236,10 @@ describe('PromVariableQueryEditor', () => {
 
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Metrics');
     const metricInput = screen.getByLabelText('Metric selector');
-    await userEvent.type(metricInput, 'a').then((prom) => {
-      const queryType = screen.getByLabelText('Query type');
-      // click elsewhere to trigger the onBlur
-      return userEvent.click(queryType);
-    });
+    await userEvent.type(metricInput, 'a');
+    const queryType = screen.getByLabelText('Query type');
+    // click elsewhere to trigger the onBlur
+    await userEvent.click(queryType);
 
     await waitFor(() =>
       expect(onChange).toHaveBeenCalledWith({

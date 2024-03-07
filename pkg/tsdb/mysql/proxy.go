@@ -7,15 +7,14 @@ import (
 	"net"
 
 	"github.com/go-sql-driver/mysql"
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"golang.org/x/net/proxy"
 )
 
 // registerProxyDialerContext registers a new dialer context to be used by mysql when the proxy network is
 // specified in the connection string
-func registerProxyDialerContext(protocol, cnnstr string, opts *sdkproxy.Options) (string, error) {
-	// the dialer contains the true network used behind the scenes
-	dialer, err := getProxyDialerContext(protocol, opts)
+func registerProxyDialerContext(protocol, cnnstr string, dialer proxy.Dialer) (string, error) {
+	// the mysqlDialer contains the true network used behind the scenes
+	mysqlDialer, err := getProxyDialerContext(protocol, dialer)
 	if err != nil {
 		return "", err
 	}
@@ -24,7 +23,7 @@ func registerProxyDialerContext(protocol, cnnstr string, opts *sdkproxy.Options)
 	// have a unique network per connection string
 	hash := fmt.Sprintf("%x", md5.Sum([]byte(cnnstr)))
 	network := "proxy-" + hash
-	mysql.RegisterDialContext(network, dialer.DialContext)
+	mysql.RegisterDialContext(network, mysqlDialer.DialContext)
 
 	return network, nil
 }
@@ -36,14 +35,10 @@ type mySQLContextDialer struct {
 }
 
 // getProxyDialerContext returns a context dialer that will send the request through to the secure socks proxy
-func getProxyDialerContext(actualNetwork string, opts *sdkproxy.Options) (*mySQLContextDialer, error) {
-	dialer, err := sdkproxy.New(opts).NewSecureSocksProxyContextDialer()
-	if err != nil {
-		return nil, err
-	}
+func getProxyDialerContext(actualNetwork string, dialer proxy.Dialer) (*mySQLContextDialer, error) {
 	contextDialer, ok := dialer.(proxy.ContextDialer)
 	if !ok {
-		return nil, err
+		return nil, fmt.Errorf("mysql proxy creation failed")
 	}
 	return &mySQLContextDialer{dialer: contextDialer, network: actualNetwork}, nil
 }

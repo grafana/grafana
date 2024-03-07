@@ -1,14 +1,19 @@
-import { css } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
+import { css, cx } from '@emotion/css';
+import React, { useLayoutEffect, useRef, useReducer, CSSProperties, useContext, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
+import { LayoutItemContext } from '../../Layout/LayoutItemContext';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
+
+export const DEFAULT_TOOLTIP_WIDTH = undefined;
+export const DEFAULT_TOOLTIP_HEIGHT = undefined;
+export const TOOLTIP_OFFSET = 10;
 
 // todo: barchart? histogram?
 export const enum TooltipHoverMode {
@@ -34,8 +39,14 @@ interface TooltipPlugin2Props {
     dataIdxs: Array<number | null>,
     seriesIdx: number | null,
     isPinned: boolean,
-    dismiss: () => void
+    dismiss: () => void,
+    // selected time range (for annotation triggering)
+    timeRange: TimeRange2 | null,
+    viaSync: boolean
   ) => React.ReactNode;
+
+  maxWidth?: number;
+  maxHeight?: number;
 }
 
 interface TooltipContainerState {
@@ -51,6 +62,11 @@ interface TooltipContainerSize {
   observer: ResizeObserver;
   width: number;
   height: number;
+}
+
+export interface TimeRange2 {
+  from: number;
+  to: number;
 }
 
 function mergeState(prevState: TooltipContainerState, nextState: Partial<TooltipContainerState>) {
@@ -81,14 +97,27 @@ const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e
 /**
  * @alpha
  */
-export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, queryZoom }: TooltipPlugin2Props) => {
+export const TooltipPlugin2 = ({
+  config,
+  hoverMode,
+  render,
+  clientZoom = false,
+  queryZoom,
+  maxWidth,
+  maxHeight,
+}: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
 
+  const { boostZIndex } = useContext(LayoutItemContext);
+  useEffect(() => (isPinned ? boostZIndex() : undefined), [isPinned]);
+
   const sizeRef = useRef<TooltipContainerSize>();
 
-  const styles = useStyles2(getStyles);
+  maxWidth = isPinned ? DEFAULT_TOOLTIP_WIDTH : maxWidth ?? DEFAULT_TOOLTIP_WIDTH;
+  maxHeight ??= DEFAULT_TOOLTIP_HEIGHT;
+  const styles = useStyles2(getStyles, maxWidth, maxHeight);
 
   const renderRef = useRef(render);
   renderRef.current = render;
@@ -117,22 +146,28 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
 
     let _plot = plot;
     let _isHovering = isHovering;
+    let _someSeriesIdx = false;
     let _isPinned = isPinned;
     let _style = style;
+
+    const updateHovering = () => {
+      _isHovering = closestSeriesIdx != null || (hoverMode === TooltipHoverMode.xAll && _someSeriesIdx);
+    };
 
     let offsetX = 0;
     let offsetY = 0;
 
-    let htmlEl = document.documentElement;
-    let winWidth = htmlEl.clientWidth - 16;
-    let winHeight = htmlEl.clientHeight - 16;
+    let containRect = {
+      lft: 0,
+      top: 0,
+      rgt: screen.width,
+      btm: screen.height,
+    };
 
-    window.addEventListener('resize', (e) => {
-      winWidth = htmlEl.clientWidth - 5;
-      winHeight = htmlEl.clientHeight - 5;
-    });
-
+    let selectedRange: TimeRange2 | null = null;
+    let seriesIdxs: Array<number | null> = plot?.cursor.idxs!.slice()!;
     let closestSeriesIdx: number | null = null;
+    let viaSync = false;
 
     let pendingRender = false;
     let pendingPinned = false;
@@ -157,9 +192,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
     // in some ways this is similar to ClickOutsideWrapper.tsx
     const downEventOutside = (e: Event) => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      let isOutside = (e.target as HTMLDivElement).closest(`.${styles.tooltipWrapper}`) !== domRef.current;
-
-      if (isOutside) {
+      if (!domRef.current!.contains(e.target as Node)) {
         dismiss();
       }
     };
@@ -169,8 +202,6 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
 
       if (pendingPinned) {
         _style = { pointerEvents: _isPinned ? 'all' : 'none' };
-
-        domRef.current!.closest<HTMLDivElement>('.react-grid-item')?.classList.toggle('context-menu-open', _isPinned);
 
         // @ts-ignore
         _plot!.cursor._lock = _isPinned;
@@ -190,20 +221,25 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
         style: _style,
         isPinned: _isPinned,
         isHovering: _isHovering,
-        contents: _isHovering
-          ? renderRef.current(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss)
-          : null,
+        contents:
+          _isHovering || selectedRange != null
+            ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss, selectedRange, viaSync)
+            : null,
         dismiss,
       };
 
       setState(state);
+
+      selectedRange = null;
+      viaSync = false;
     };
 
     const dismiss = () => {
+      let prevIsPinned = _isPinned;
       _isPinned = false;
       _isHovering = false;
       _plot!.setCursor({ left: -10, top: -10 });
-      scheduleRender(true);
+      scheduleRender(prevIsPinned);
     };
 
     config.addHook('init', (u) => {
@@ -239,12 +275,69 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
 
       // this handles pinning
       u.over.addEventListener('click', (e) => {
-        // only pinnable tooltip is visible *and* is within proximity to series/point
-        if (_isHovering && closestSeriesIdx != null && !_isPinned && e.target === u.over) {
-          _isPinned = true;
-          scheduleRender(true);
+        if (e.target === u.over) {
+          if (e.ctrlKey || e.metaKey) {
+            let xVal = u.posToVal(u.cursor.left!, 'x');
+
+            selectedRange = {
+              from: xVal,
+              to: xVal,
+            };
+
+            scheduleRender(false);
+          }
+          // only pinnable tooltip is visible *and* is within proximity to series/point
+          else if (_isHovering && closestSeriesIdx != null && !_isPinned) {
+            _isPinned = true;
+            scheduleRender(true);
+          }
         }
       });
+
+      const haltAncestorId = 'pageContent';
+      const scrollbarWidth = 16;
+
+      // if we're in a container that can clip the tooltip, we should try to stay within that rather than window edges
+      u.over.addEventListener(
+        'mouseenter',
+        () => {
+          // clamp to viewport bounds
+          let htmlEl = document.documentElement;
+          let winWid = htmlEl.clientWidth - scrollbarWidth;
+          let winHgt = htmlEl.clientHeight - scrollbarWidth;
+
+          let lft = 0,
+            top = 0,
+            rgt = winWid,
+            btm = winHgt;
+
+          // find nearest scrollable container where overflow is not visible, (stop at #pageContent)
+          let par: HTMLElement | null = u.root;
+
+          while (par != null && par.id !== haltAncestorId) {
+            let style = getComputedStyle(par);
+            let overflowX = style.getPropertyValue('overflow-x');
+            let overflowY = style.getPropertyValue('overflow-y');
+
+            if (overflowX !== 'visible' || overflowY !== 'visible') {
+              let rect = par.getBoundingClientRect();
+              lft = Math.max(rect.x, lft);
+              top = Math.max(rect.y, top);
+              rgt = Math.min(lft + rect.width, rgt);
+              btm = Math.min(top + rect.height, btm);
+              break;
+            }
+
+            par = par.parentElement;
+          }
+
+          containRect.lft = lft;
+          containRect.top = top;
+          containRect.rgt = rgt;
+          containRect.btm = btm;
+        },
+        { capture: true }
+      );
     });
 
     config.addHook('setSelect', (u) => {
@@ -275,6 +368,13 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
               yZoomed = false;
             }
           }
+        } else {
+          selectedRange = {
+            from: u.posToVal(u.select.left!, 'x'),
+            to: u.posToVal(u.select.left! + u.select.width, 'x'),
+          };
+
+          scheduleRender(true);
         }
       }
 
@@ -320,87 +420,81 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
       yDrag = false;
     });
 
-    // fires on data value hovers/unhovers (before setSeries)
-    config.addHook('setLegend', (u) => {
-      let hoveredSeriesIdx = _plot!.cursor.idxs!.findIndex((v, i) => i > 0 && v != null);
-      let _isHoveringNow = hoveredSeriesIdx !== -1;
-
-      // in mode: 2 uPlot won't fire the proximity-based setSeries (below)
-      // so we set closestSeriesIdx here instead
-      // TODO: setSeries only fires for TimeSeries & Trend...not state timeline or statsus history
-      if (hoverMode === TooltipHoverMode.xyOne) {
-        closestSeriesIdx = hoveredSeriesIdx;
-      }
-
-      if (_isHoveringNow) {
-        // create
-        if (!_isHovering) {
-          _isHovering = true;
-        }
-      } else {
-        // destroy...TODO: debounce this
-        if (_isHovering) {
-          _isHovering = false;
-        }
-      }
-
-      scheduleRender();
-    });
-
     // fires on series focus/proximity changes
     // e.g. to highlight the hovered/closest series
     // TODO: we only need this for multi/all mode?
     config.addHook('setSeries', (u, seriesIdx) => {
-      // don't jiggle focused series styling when there's only one series
-      // const isMultiSeries = u.series.length > 2;
-
-      // if (hoverModeRef.current === TooltipHoverMode.xAll && closestSeriesIdx !== seriesIdx) {
       closestSeriesIdx = seriesIdx;
+      updateHovering();
       scheduleRender();
-      // }
+    });
+
+    // fires on data value hovers/unhovers
+    config.addHook('setLegend', (u) => {
+      seriesIdxs = _plot?.cursor!.idxs!.slice()!;
+      _someSeriesIdx = seriesIdxs.some((v, i) => i > 0 && v != null);
+
+      updateHovering();
+      scheduleRender();
     });
 
     // fires on mousemoves
     config.addHook('setCursor', (u) => {
-      let { left = -10, top = -10 } = u.cursor;
+      let { left = -10, top = -10, event } = u.cursor;
 
       if (left >= 0 || top >= 0) {
-        let { width, height } = sizeRef.current!;
+        viaSync = event == null;
 
-        let clientX = u.rect.left + left;
-        let clientY = u.rect.top + top;
+        let transform = '';
 
-        if (offsetY) {
-          if (clientY + height < winHeight || clientY - height < 0) {
-            offsetY = 0;
-          } else if (offsetY !== -height) {
-            offsetY = -height;
-          }
+        // this means it's a synthetic event from uPlot's sync
+        if (viaSync) {
+          // TODO: smarter positioning here to avoid viewport clipping?
+          transform = `translateX(${left}px) translateY(${u.rect.height / 2}px) translateY(-50%)`;
         } else {
-          if (clientY + height > winHeight && clientY - height >= 0) {
-            offsetY = -height;
+          let { width, height } = sizeRef.current!;
+
+          width += TOOLTIP_OFFSET;
+          height += TOOLTIP_OFFSET;
+
+          let clientX = u.rect.left + left;
+          let clientY = u.rect.top + top;
+
+          if (offsetY !== 0) {
+            if (clientY + height < containRect.btm || clientY - height < 0) {
+              offsetY = 0;
+            } else if (offsetY !== -height) {
+              offsetY = -height;
+            }
+          } else {
+            if (clientY + height > containRect.btm && clientY - height >= 0) {
+              offsetY = -height;
+            }
           }
+
+          if (offsetX !== 0) {
+            if (clientX + width < containRect.rgt || clientX - width < 0) {
+              offsetX = 0;
+            } else if (offsetX !== -width) {
+              offsetX = -width;
+            }
+          } else {
+            if (clientX + width > containRect.rgt && clientX - width >= 0) {
+              offsetX = -width;
+            }
+          }
+
+          const shiftX = left + (offsetX === 0 ? TOOLTIP_OFFSET : -TOOLTIP_OFFSET);
+          const shiftY = top + (offsetY === 0 ? TOOLTIP_OFFSET : -TOOLTIP_OFFSET);
+
+          const reflectX = offsetX === 0 ? '' : 'translateX(-100%)';
+          const reflectY = offsetY === 0 ? '' : 'translateY(-100%)';
+
+          // TODO: to a transition only when switching sides
+          // transition: transform 100ms;
+
+          transform = `translateX(${shiftX}px) ${reflectX} translateY(${shiftY}px) ${reflectY}`;
         }
-
-        if (offsetX) {
-          if (clientX + width < winWidth || clientX - width < 0) {
-            offsetX = 0;
-          } else if (offsetX !== -width) {
-            offsetX = -width;
-          }
-        } else {
-          if (clientX + width > winWidth && clientX - width >= 0) {
-            offsetX = -width;
-          }
-        }
-
-        const shiftX = offsetX !== 0 ? 'translateX(-100%)' : '';
-        const shiftY = offsetY !== 0 ? 'translateY(-100%)' : '';
-
-        // TODO: to a transition only when switching sides
-        // transition: transform 100ms;
-
-        const transform = `${shiftX} translateX(${left}px) ${shiftY} translateY(${top}px)`;
 
         if (_isHovering) {
           if (domRef.current != null) {
@@ -424,7 +518,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
 
   if (plot && isHovering) {
     return createPortal(
-      <div className={styles.tooltipWrapper} style={style} ref={domRef}>
+      <div className={cx(styles.tooltipWrapper, isPinned && styles.pinned)} style={style} ref={domRef}>
         {isPinned && <CloseButton onClick={dismiss} />}
         {contents}
       </div>,
@@ -435,7 +529,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth?: number, maxHeight?: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
@@ -445,7 +539,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
+    boxShadow: theme.shadows.z2,
     userSelect: 'text',
+    maxWidth: maxWidth ?? 'none',
+    maxHeight: maxHeight ?? 'none',
+    overflowY: 'auto',
+  }),
+  pinned: css({
+    boxShadow: theme.shadows.z3,
   }),
 });

@@ -19,8 +19,8 @@ import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
+import { IntervalInput } from '@grafana/o11y-ds-frontend';
 import { Collapse, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
-import { IntervalInput } from 'app/core/components/IntervalInput/IntervalInput';
 
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
 import SearchBarInput from '../../common/SearchBarInput';
@@ -439,24 +439,26 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                         value={tag.value}
                       />
                     </span>
-                    <AccessoryButton
-                      aria-label="Remove tag"
-                      variant="secondary"
-                      icon="times"
-                      onClick={() => removeTag(tag.id)}
-                      title="Remove tag"
-                    />
-                    <span className={styles.addTag}>
-                      {search?.tags?.length && i === search.tags.length - 1 && (
+                    {(tag.key || tag.value || search.tags.length > 1) && (
+                      <AccessoryButton
+                        aria-label="Remove tag"
+                        variant="secondary"
+                        icon="times"
+                        onClick={() => removeTag(tag.id)}
+                        tooltip="Remove tag"
+                      />
+                    )}
+                    {(tag.key || tag.value) && i === search.tags.length - 1 && (
+                      <span className={styles.addTag}>
                         <AccessoryButton
                           aria-label="Add tag"
                           variant="secondary"
                           icon="plus"
                           onClick={addTag}
-                          title="Add tag"
+                          tooltip="Add tag"
                         />
-                      )}
-                    </span>
+                      </span>
+                    )}
                   </HorizontalGroup>
                 </div>
               ))}
@@ -508,9 +510,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       justifyContent: 'space-between',
     }),
-    addTag: css`
-      margin: 0 0 0 10px;
-    `,
+    addTag: css({
+      marginLeft: theme.spacing(1),
+    }),
     intervalInput: css`
       margin: 0 -4px 0 0;
     `,

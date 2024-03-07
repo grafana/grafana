@@ -35,6 +35,51 @@ func addFolderMigrations(mg *migrator.Migrator) {
 		Type: migrator.UniqueIndex,
 		Cols: []string{"title", "parent_uid", "org_id"},
 	}))
+
+	mg.AddMigration("Sync dashboard and folder table", migrator.NewRawSQLMigration("").
+		Mysql(`
+			INSERT INTO folder (uid, org_id, title, created, updated)
+			SELECT * FROM (SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1) AS derived
+			ON DUPLICATE KEY UPDATE title=derived.title, updated=derived.updated
+		`).Postgres(`
+			INSERT INTO folder (uid, org_id, title, created, updated)
+			SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
+			ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
+		`).SQLite(`
+			INSERT INTO folder (uid, org_id, title, created, updated)
+			SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1
+			ON CONFLICT DO UPDATE SET title=excluded.title, updated=excluded.updated
+		`))
+
+	mg.AddMigration("Remove ghost folders from the folder table", migrator.NewRawSQLMigration(`
+			DELETE FROM folder WHERE NOT EXISTS
+				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
+	`))
+
+	mg.AddMigration("Remove unique index UQE_folder_uid_org_id", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"uid", "org_id"},
+	}))
+
+	mg.AddMigration("Add unique index UQE_folder_org_id_uid", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"org_id", "uid"},
+	}))
+
+	mg.AddMigration("Remove unique index UQE_folder_title_parent_uid_org_id", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"title", "parent_uid", "org_id"},
+	}))
+
+	mg.AddMigration("Add unique index UQE_folder_org_id_parent_uid_title", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"org_id", "parent_uid", "title"},
+	}))
+
+	// No need to introduce IDX_folder_org_id_parent_uid because is covered by UQE_folder_org_id_parent_uid_title
+	mg.AddMigration("Remove index IDX_folder_parent_uid_org_id", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
+		Cols: []string{"parent_uid", "org_id"},
+	}))
 }
 
 func folderv1() migrator.Table {

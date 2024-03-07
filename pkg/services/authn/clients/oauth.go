@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"net/http"
+	"net/url"
 	"strings"
 
 	"golang.org/x/oauth2"
@@ -16,8 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -30,12 +32,16 @@ const (
 	codeChallengeMethodParamName = "code_challenge_method"
 	codeChallengeMethod          = "S256"
 
-	oauthStateQueryName  = "state"
-	oauthStateCookieName = "oauth_state"
-	oauthPKCECookieName  = "oauth_code_verifier"
+	oauthStateQueryName          = "state"
+	oauthStateCookieName         = "oauth_state"
+	oauthPKCECookieName          = "oauth_code_verifier"
+	oauthPostLogoutRedirectParam = "post_logout_redirect_uri"
 )
 
 var (
+	errOAuthClientDisabled = errutil.BadRequest("auth.oauth.disabled", errutil.WithPublicMessage("OAuth client is disabled"))
+	errOAuthInternal       = errutil.Internal("auth.oauth.internal", errutil.WithPublicMessage("An internal error occurred in the OAuth client"))
+
 	errOAuthGenPKCE     = errutil.Internal("auth.oauth.pkce.internal", errutil.WithPublicMessage("An internal error occurred"))
 	errOAuthMissingPKCE = errutil.BadRequest("auth.oauth.pkce.missing", errutil.WithPublicMessage("Missing required pkce cookie"))
 
@@ -54,26 +60,30 @@ func fromSocialErr(err *connectors.SocialError) error {
 	return errutil.Unauthorized("auth.oauth.userinfo.failed", errutil.WithPublicMessage(err.Error())).Errorf("%w", err)
 }
 
+var _ authn.LogoutClient = new(OAuth)
 var _ authn.RedirectClient = new(OAuth)
 
 func ProvideOAuth(
-	name string, cfg *setting.Cfg, oauthCfg *social.OAuthInfo,
-	connector social.SocialConnector, httpClient *http.Client,
+	name string, cfg *setting.Cfg, oauthService oauthtoken.OAuthTokenService,
+	socialService social.Service, settingsProviderService setting.Provider,
 ) *OAuth {
+	providerName := strings.TrimPrefix(name, "auth.client.")
 	return &OAuth{
-		name, fmt.Sprintf("oauth_%s", strings.TrimPrefix(name, "auth.client.")),
-		log.New(name), cfg, oauthCfg, connector, httpClient,
+		name, fmt.Sprintf("oauth_%s", providerName), providerName,
+		log.New(name), cfg, settingsProviderService, oauthService, socialService,
 	}
 }
 
 type OAuth struct {
-	name       string
-	moduleName string
-	log        log.Logger
-	cfg        *setting.Cfg
-	oauthCfg   *social.OAuthInfo
-	connector  social.SocialConnector
-	httpClient *http.Client
+	name         string
+	moduleName   string
+	providerName string
+	log          log.Logger
+	cfg          *setting.Cfg
+
+	settingsProviderSvc setting.Provider
+	oauthService        oauthtoken.OAuthTokenService
+	socialService       social.Service
 }
 
 func (c *OAuth) Name() string {
@@ -82,6 +92,12 @@ func (c *OAuth) Name() string {
 
 func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	r.SetMeta(authn.MetaKeyAuthModule, c.moduleName)
+
+	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
+	if !oauthCfg.Enabled {
+		return nil, errOAuthClientDisabled.Errorf("oauth client is disabled: %s", c.providerName)
+	}
+
 	// get hashed state stored in cookie
 	stateCookie, err := r.HTTPRequest.Cookie(oauthStateCookieName)
 	if err != nil {
@@ -93,7 +109,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	// get state returned by the idp and hash it
-	stateQuery := hashOAuthState(r.HTTPRequest.URL.Query().Get(oauthStateQueryName), c.cfg.SecretKey, c.oauthCfg.ClientSecret)
+	stateQuery := hashOAuthState(r.HTTPRequest.URL.Query().Get(oauthStateQueryName), c.cfg.SecretKey, oauthCfg.ClientSecret)
 	// compare the state returned by idp against the one we stored in cookie
 	if stateQuery != stateCookie.Value {
 		return nil, errOAuthInvalidState.Errorf("provided state did not match stored state")
@@ -101,23 +117,29 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 	var opts []oauth2.AuthCodeOption
 	// if pkce is enabled for client validate we have the cookie and set it as url param
-	if c.oauthCfg.UsePKCE {
+	if oauthCfg.UsePKCE {
 		pkceCookie, err := r.HTTPRequest.Cookie(oauthPKCECookieName)
 		if err != nil {
 			return nil, errOAuthMissingPKCE.Errorf("no pkce cookie found: %w", err)
 		}
-		opts = append(opts, oauth2.SetAuthURLParam(codeVerifierParamName, pkceCookie.Value))
+		opts = append(opts, oauth2.VerifierOption(pkceCookie.Value))
 	}
 
-	clientCtx := context.WithValue(ctx, oauth2.HTTPClient, c.httpClient)
+	connector, errConnector := c.socialService.GetConnector(c.providerName)
+	httpClient, errHTTPClient := c.socialService.GetOAuthHttpClient(c.providerName)
+	if errConnector != nil || errHTTPClient != nil {
+		return nil, errOAuthInternal.Errorf("failed to get %s oauth client: %w", c.name, errors.Join(errConnector, errHTTPClient))
+	}
+
+	clientCtx := context.WithValue(ctx, oauth2.HTTPClient, httpClient)
 	// exchange auth code to a valid token
-	token, err := c.connector.Exchange(clientCtx, r.HTTPRequest.URL.Query().Get("code"), opts...)
+	token, err := connector.Exchange(clientCtx, r.HTTPRequest.URL.Query().Get("code"), opts...)
 	if err != nil {
 		return nil, errOAuthTokenExchange.Errorf("failed to exchange code to token: %w", err)
 	}
 	token.TokenType = "Bearer"
 
-	userInfo, err := c.connector.UserInfo(ctx, c.connector.Client(clientCtx, token), token)
+	userInfo, err := connector.UserInfo(ctx, connector.Client(clientCtx, token), token)
 	if err != nil {
 		var sErr *connectors.SocialError
 		if errors.As(err, &sErr) {
@@ -126,11 +148,16 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errOAuthUserInfo.Errorf("failed to get user info: %w", err)
 	}
 
+	// Implement in Grafana 11
+	// if userInfo.Id == "" {
+	// 	return nil, errors.New("idP did not return a user id")
+	// }
+
 	if userInfo.Email == "" {
 		return nil, errOAuthMissingRequiredEmail.Errorf("required attribute email was not provided")
 	}
 
-	if !c.connector.IsEmailAllowed(userInfo.Email) {
+	if !connector.IsEmailAllowed(userInfo.Email) {
 		return nil, errOAuthEmailNotAllowed.Errorf("provided email is not allowed")
 	}
 
@@ -142,7 +169,8 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	})
 
 	lookupParams := login.UserLookupParams{}
-	if c.cfg.OAuthAllowInsecureEmailLookup {
+	allowInsecureEmailLookup := c.settingsProviderSvc.KeyValue("auth", "oauth_allow_insecure_email_lookup").MustBool(false)
+	if allowInsecureEmailLookup {
 		lookupParams.Email = &userInfo.Email
 	}
 
@@ -161,7 +189,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			SyncTeams:       true,
 			FetchSyncedUser: true,
 			SyncPermissions: true,
-			AllowSignUp:     c.connector.IsSignupAllowed(),
+			AllowSignUp:     connector.IsSignupAllowed(),
 			// skip org role flag is checked and handled in the connector. For now we can skip the hook if no roles are passed
 			SyncOrgRoles: len(orgRoles) > 0,
 			LookUpParams: lookupParams,
@@ -172,31 +200,38 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
 	var opts []oauth2.AuthCodeOption
 
-	if c.oauthCfg.HostedDomain != "" {
-		opts = append(opts, oauth2.SetAuthURLParam(hostedDomainParamName, c.oauthCfg.HostedDomain))
+	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
+	if !oauthCfg.Enabled {
+		return nil, errOAuthClientDisabled.Errorf("oauth client is disabled: %s", c.providerName)
+	}
+
+	if oauthCfg.HostedDomain != "" {
+		opts = append(opts, oauth2.SetAuthURLParam(hostedDomainParamName, oauthCfg.HostedDomain))
 	}
 
 	var plainPKCE string
-	if c.oauthCfg.UsePKCE {
-		pkce, hashedPKCE, err := genPKCECode()
+	if oauthCfg.UsePKCE {
+		verifier, err := genPKCECodeVerifier()
 		if err != nil {
 			return nil, errOAuthGenPKCE.Errorf("failed to generate pkce: %w", err)
 		}
 
-		plainPKCE = pkce
-		opts = append(opts,
-			oauth2.SetAuthURLParam(codeChallengeParamName, hashedPKCE),
-			oauth2.SetAuthURLParam(codeChallengeMethodParamName, codeChallengeMethod),
-		)
+		plainPKCE = verifier
+		opts = append(opts, oauth2.S256ChallengeOption(plainPKCE))
 	}
 
-	state, hashedSate, err := genOAuthState(c.cfg.SecretKey, c.oauthCfg.ClientSecret)
+	state, hashedSate, err := genOAuthState(c.cfg.SecretKey, oauthCfg.ClientSecret)
 	if err != nil {
 		return nil, errOAuthGenState.Errorf("failed to generate state: %w", err)
 	}
 
+	connector, err := c.socialService.GetConnector(c.providerName)
+	if err != nil {
+		return nil, errOAuthInternal.Errorf("failed to get %s oauth connector: %w", c.name, err)
+	}
+
 	return &authn.Redirect{
-		URL: c.connector.AuthCodeURL(state, opts...),
+		URL: connector.AuthCodeURL(state, opts...),
 		Extra: map[string]string{
 			authn.KeyOAuthState: hashedSate,
 			authn.KeyOAuthPKCE:  plainPKCE,
@@ -204,8 +239,37 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	}, nil
 }
 
-// genPKCECode returns a random URL-friendly string and it's base64 URL encoded SHA256 digest.
-func genPKCECode() (string, string, error) {
+func (c *OAuth) Logout(ctx context.Context, user identity.Requester, info *login.UserAuth) (*authn.Redirect, bool) {
+	token := c.oauthService.GetCurrentOAuthToken(ctx, user)
+
+	if err := c.oauthService.InvalidateOAuthTokens(ctx, info); err != nil {
+		namespace, id := user.GetNamespacedID()
+		c.log.FromContext(ctx).Error("Failed to invalidate tokens", "namespace", namespace, "id", id, "error", err)
+	}
+
+	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
+	if !oauthCfg.Enabled {
+		c.log.FromContext(ctx).Debug("OAuth client is disabled")
+		return nil, false
+	}
+
+	redirectURL := getOAuthSignoutRedirectURL(c.cfg, oauthCfg)
+	if redirectURL == "" {
+		c.log.FromContext(ctx).Debug("No signout redirect url configured")
+		return nil, false
+	}
+
+	if isOICDLogout(redirectURL) && token != nil && token.Valid() {
+		if idToken, ok := token.Extra("id_token").(string); ok {
+			redirectURL = withIDTokenHint(redirectURL, idToken)
+		}
+	}
+
+	return &authn.Redirect{URL: redirectURL}, true
+}
+
+// genPKCECodeVerifier returns code verifier that 128 characters random URL-friendly string.
+func genPKCECodeVerifier() (string, error) {
 	// IETF RFC 7636 specifies that the code verifier should be 43-128
 	// characters from a set of unreserved URI characters which is
 	// almost the same as the set of characters in base64url.
@@ -220,14 +284,12 @@ func genPKCECode() (string, string, error) {
 	raw := make([]byte, 96)
 	_, err := rand.Read(raw)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	ascii := make([]byte, 128)
 	base64.RawURLEncoding.Encode(ascii, raw)
 
-	shasum := sha256.Sum256(ascii)
-	pkce := base64.RawURLEncoding.EncodeToString(shasum[:])
-	return string(ascii), pkce, nil
+	return string(ascii), nil
 }
 
 func genOAuthState(secret, seed string) (string, string, error) {
@@ -242,4 +304,44 @@ func genOAuthState(secret, seed string) (string, string, error) {
 func hashOAuthState(state, secret, seed string) string {
 	hashBytes := sha256.Sum256([]byte(state + secret + seed))
 	return hex.EncodeToString(hashBytes[:])
+}
+
+func getOAuthSignoutRedirectURL(cfg *setting.Cfg, oauthCfg *social.OAuthInfo) string {
+	if oauthCfg.SignoutRedirectUrl != "" {
+		return oauthCfg.SignoutRedirectUrl
+	}
+
+	return cfg.SignoutRedirectUrl
+}
+
+func withIDTokenHint(redirectURL string, idToken string) string {
+	if idToken == "" {
+		return redirectURL
+	}
+
+	u, err := url.Parse(redirectURL)
+	if err != nil {
+		return redirectURL
+	}
+
+	q := u.Query()
+	q.Set("id_token_hint", idToken)
+	u.RawQuery = q.Encode()
+
+	return u.String()
+}
+
+func isOICDLogout(redirectUrl string) bool {
+	if redirectUrl == "" {
+		return false
+	}
+
+	u, err := url.Parse(redirectUrl)
+	if err != nil {
+		return false
+	}
+
+	q := u.Query()
+	_, ok := q[oauthPostLogoutRedirectParam]
+	return ok
 }

@@ -34,17 +34,23 @@ import (
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func setupTestServer(
 	t *testing.T,
 	cfg *setting.Cfg,
-	features *featuremgmt.FeatureManager,
 	service publicdashboards.Service,
-	db db.DB,
 	user *user.SignedInUser,
+	ffEnabled bool,
 ) *web.Mux {
+	t.Helper()
+
 	// build router to register routes
 	rr := routing.NewRouteRegister()
 
@@ -56,9 +62,18 @@ func setupTestServer(
 	// set initial context
 	m.Use(contextProvider(&testContext{user}))
 
-	// build api, this will mount the routes at the same time if
-	// featuremgmt.FlagPublicDashboard is enabled
-	ProvideApi(service, rr, ac, features, &Middleware{})
+	features := featuremgmt.WithFeatures()
+	if ffEnabled {
+		features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
+	}
+
+	if cfg == nil {
+		cfg = setting.NewCfg()
+		cfg.PublicDashboardsEnabled = true
+	}
+
+	// build api, this will mount the routes at the same time if the feature is enabled
+	ProvideApi(service, rr, ac, features, &Middleware{}, cfg)
 
 	// connect routes to mux
 	rr.Register(m.Router)
@@ -130,7 +145,8 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 					},
 				},
 			},
-		}, ds, pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), fakes.NewFakeLicensingService(),
+		}, &fakeDatasources.FakeCacheService{}, ds,
+		pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), fakes.NewFakeLicensingService(),
 		&config.Cfg{})
 
 	return query.ProvideService(

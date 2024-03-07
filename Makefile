@@ -141,11 +141,6 @@ build-js: ## Build frontend assets.
 	yarn run build-max-memory
 	yarn run plugins:build-bundled
 
-build-plugins-go: ## Build decoupled plugins
-	@echo "build plugins"
-	@cd pkg/tsdb; \
-	mage -v
-
 PLUGIN_ID ?=
 
 build-plugin-go: ## Build decoupled plugins
@@ -265,7 +260,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg BASE_IMAGE=ubuntu:22.04 \
-	--build-arg GO_IMAGE=golang:1.21.3 \
+	--build-arg GO_IMAGE=golang:1.21.8 \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 
@@ -312,7 +307,6 @@ protobuf: ## Compile protobuf definitions
 	bash pkg/plugins/backendplugin/pluginextensionv2/generate.sh
 	bash pkg/plugins/backendplugin/secretsmanagerplugin/generate.sh
 	bash pkg/services/store/entity/generate.sh
-	bash pkg/infra/grn/generate.sh
 
 clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"

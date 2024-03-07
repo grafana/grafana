@@ -18,9 +18,11 @@ weight: 300
 The LDAP integration in Grafana allows your Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP
 group memberships and Grafana Organization user roles.
 
-> [Enhanced LDAP authentication]({{< relref "../enhanced-ldap" >}}) is available in [Grafana Cloud](/docs/grafana-cloud/) and in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}).
+{{% admonition type="note" %}}
+[Enhanced LDAP authentication]({{< relref "../enhanced-ldap" >}}) is available in [Grafana Cloud](/docs/grafana-cloud/) and in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}).
+{{% /admonition %}}
 
-> Refer to [Role-based access control]({{< relref "../../../../administration/roles-and-permissions/access-control" >}}) to understand how you can control access with role-based permissions.
+Refer to [Role-based access control]({{< relref "../../../../administration/roles-and-permissions/access-control" >}}) to understand how you can control access with role-based permissions.
 
 ## Supported LDAP Servers
 
@@ -127,6 +129,10 @@ member_of = "memberOf"
 email =  "email"
 ```
 
+{{% admonition type="note" %}}
+Whenever you modify the ldap.toml file, you must restart Grafana in order for the change(s) to take effect.
+{{% /admonition %}}
+
 ### Using environment variables
 
 You can interpolate variables in the TOML configuration from environment variables. For instance, you could externalize your `bind_password` that way:
@@ -135,17 +141,19 @@ You can interpolate variables in the TOML configuration from environment variabl
 bind_password = "${LDAP_ADMIN_PASSWORD}"
 ```
 
-## LDAP Debug View
+## LDAP debug view
 
-> Only available in Grafana v6.4+
+{{% admonition type="note" %}}
+Available in Grafana v6.4+
+{{% /admonition %}}
 
-Grafana has an LDAP debug view built-in which allows you to test your LDAP configuration directly within Grafana. At the moment of writing, only Grafana admins can use the LDAP debug view.
+Grafana has an LDAP debug view built-in which allows you to test your LDAP configuration directly within Grafana. Only Grafana admins can use the LDAP debug view.
 
 Within this view, you'll be able to see which LDAP servers are currently reachable and test your current configuration.
 
 {{< figure src="/static/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
 
-To use the debug view:
+To use the debug view, complete the following steps:
 
 1.  Type the username of a user that exists within any of your LDAP server(s)
 1.  Then, press "Run"
@@ -157,9 +165,7 @@ To use the debug view:
 
 {{< figure src="/static/img/docs/ldap_sync_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
 
-### Bind
-
-#### Bind and Bind Password
+### Bind and bind password
 
 By default the configuration expects you to specify a bind DN and bind password. This should be a read only user that can perform LDAP searches.
 When the user DN is found a second bind is performed with the user provided username and password (in the normal Grafana login form).
@@ -169,7 +175,7 @@ bind_dn = "cn=admin,dc=grafana,dc=org"
 bind_password = "grafana"
 ```
 
-#### Single Bind Example
+#### Single bind example
 
 If you can provide a single bind expression that matches all possible users, you can skip the second bind and bind against the user DN directly.
 This allows you to not specify a bind_password in the configuration file.
@@ -183,7 +189,7 @@ The search filter and search bases settings are still needed to perform the LDAP
 
 ### POSIX schema
 
-If your LDAP server does not support the memberOf attribute add these options:
+If your LDAP server does not support the `memberOf` attribute, add the following options:
 
 ```bash
 ## Group search filter, to retrieve the groups of which the user is a member (only set if memberOf attribute is not available)
@@ -194,7 +200,7 @@ group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
 group_search_filter_user_attribute = "uid"
 ```
 
-### Group Mappings
+### Group mappings
 
 In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role. These will be synced every time the user logs in, with LDAP being the authoritative source.
 
@@ -231,8 +237,12 @@ org_role = "Viewer"
 | `org_id`        | No       | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs                    | `1` (default org id) |
 | `grafana_admin` | No       | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users. Available in Grafana v5.3 and above | `false`              |
 
-Note: Commenting out a group mapping requires also commenting out the header of
-said group or it will fail validation as an empty mapping. Example:
+{{% admonition type="note" %}}
+Commenting out a group mapping requires also commenting out the header of
+said group or it will fail validation as an empty mapping.
+{{% /admonition %}}
+
+Example:
 
 ```bash
 [[servers]]
@@ -265,7 +275,7 @@ To configure `group_search_filter`:
 **Active Directory example:**
 
 Active Directory groups store the Distinguished Names (DNs) of members, so your filter will need to know the DN for the user based only on the submitted username.
-Multiple DN templates can be searched by combining filters with the LDAP OR-operator. Two examples:
+Multiple DN templates are searched by combining filters with the LDAP OR-operator. Two examples:
 
 ```bash
 group_search_filter = "(member:1.2.840.113556.1.4.1941:=%s)"
@@ -281,9 +291,11 @@ group_search_filter_user_attribute = "cn"
 
 For more information on AD searches see [Microsoft's Search Filter Syntax](https://docs.microsoft.com/en-us/windows/desktop/adsi/search-filter-syntax) documentation.
 
-For troubleshooting, by changing `member_of` in `[servers.attributes]` to "dn" it will show you more accurate group memberships when [debug is enabled](#troubleshooting).
+For troubleshooting, changing `member_of` in `[servers.attributes]` to "dn" will show you more accurate group memberships when [debug is enabled](#troubleshooting).
 
 ## Configuration examples
+
+The following examples describe different LDAP configuration options.
 
 ### OpenLDAP
 

@@ -3,7 +3,7 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v7-4/
-description: Feature and improvement highlights for Grafana v7.4
+description: Learn about new and updated features in Grafana v7.4
 keywords:
   - grafana
   - new
@@ -169,7 +169,7 @@ Many thanks to [mtanda](https://github.com/mtanda) this contribution!
 
 Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services. These curated dashboards are based on similar dashboards in the GCP dashboard samples repository. In this release, we have expanded the set of pre-configured dashboards.
 
-{{< figure src="/static/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" alt="Google Cloud Monitoring pre-configured dashboards" >}}
 
 If you want to customize a dashboard, we recommend that you save it under a different name. Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 

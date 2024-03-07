@@ -1,10 +1,10 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 
-import { Checkbox, FilterInput, Label, VerticalGroup } from '..';
+import { ButtonSelect, Checkbox, FilterInput, HorizontalGroup, Label, VerticalGroup } from '..';
 import { useStyles2, useTheme2 } from '../../themes';
 
 interface Props {
@@ -12,23 +12,122 @@ interface Props {
   options: SelectableValue[];
   onChange: (options: SelectableValue[]) => void;
   caseSensitive?: boolean;
+  showOperators?: boolean;
 }
 
 const ITEM_HEIGHT = 28;
 const MIN_HEIGHT = ITEM_HEIGHT * 5;
 
-export const FilterList = ({ options, values, caseSensitive, onChange }: Props) => {
+const operatorSelectableValues: { [key: string]: SelectableValue<string> } = {
+  Contains: { label: 'Contains', value: 'Contains', description: 'Contains' },
+  '=': { label: '=', value: '=', description: 'Equals' },
+  '!=': { label: '!=', value: '!=', description: 'Not equals' },
+  '>': { label: '>', value: '>', description: 'Greater' },
+  '>=': { label: '>=', value: '>=', description: 'Greater or Equal' },
+  '<': { label: '<', value: '<', description: 'Less' },
+  '<=': { label: '<=', value: '<=', description: 'Less or Equal' },
+  Expression: {
+    label: 'Expression',
+    value: 'Expression',
+    description: 'Bool Expression (Char $ represents the column value in the expression, e.g. "$ >= 10 && $ <= 12")',
+  },
+};
+const OPERATORS = Object.values(operatorSelectableValues);
+const REGEX_OPERATOR = operatorSelectableValues['Contains'];
+const XPR_OPERATOR = operatorSelectableValues['Expression'];
+
+const comparableValue = (value: string): string | number | Date | boolean => {
+  value = value.trim().replace(/\\/g, '');
+
+  // Does it look like a Date (Starting with pattern YYYY-MM-DD* or YYYY/MM/DD*)?
+  if (/^(\d{4}-\d{2}-\d{2}|\d{4}\/\d{2}\/\d{2})/.test(value)) {
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      const fmt = getValueFormat('dateTimeAsIso');
+      return formattedValueToString(fmt(date.getTime()));
+    }
+  }
+  // Does it look like a Number?
+  const num = parseFloat(value);
+  if (!isNaN(num)) {
+    return num;
+  }
+  // Does it look like a Bool?
+  const lvalue = value.toLowerCase();
+  if (lvalue === 'true' || lvalue === 'false') {
+    return lvalue === 'true';
+  }
+  // Anything else
+  return value;
+};
+
+export const FilterList = ({ options, values, caseSensitive, showOperators, onChange }: Props) => {
+  const [operator, setOperator] = useState<SelectableValue<string>>(REGEX_OPERATOR);
   const [searchFilter, setSearchFilter] = useState('');
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
     () =>
       options.filter((option) => {
-        if (option.label === undefined) {
+        if (!showOperators || !searchFilter || operator.value === REGEX_OPERATOR.value) {
+          if (option.label === undefined) {
+            return false;
+          }
+          return regex.test(option.label);
+        } else if (operator.value === XPR_OPERATOR.value) {
+          if (option.value === undefined) {
+            return false;
+          }
+          try {
+            const xpr = searchFilter.replace(/\\/g, '');
+            const fnc = new Function('$', `'use strict'; return ${xpr};`);
+            const val = comparableValue(option.value);
+            return fnc(val);
+          } catch (_) {}
+          return false;
+        } else {
+          if (option.value === undefined) {
+            return false;
+          }
+
+          const value1 = comparableValue(option.value);
+          const value2 = comparableValue(searchFilter);
+
+          switch (operator.value) {
+            case '=':
+              return value1 === value2;
+            case '!=':
+              return value1 !== value2;
+            case '>':
+              return value1 > value2;
+            case '>=':
+              return value1 >= value2;
+            case '<':
+              return value1 < value2;
+            case '<=':
+              return value1 <= value2;
+          }
           return false;
         }
-        return regex.test(option.label);
       }),
-    [options, regex]
+    [options, regex, showOperators, operator, searchFilter]
+  );
+  const selectedItems = useMemo(() => items.filter((item) => values.includes(item)), [items, values]);
+
+  const selectCheckValue = useMemo(() => items.length === selectedItems.length, [items, selectedItems]);
+  const selectCheckIndeterminate = useMemo(
+    () => selectedItems.length > 0 && items.length > selectedItems.length,
+    [items, selectedItems]
+  );
+  const selectCheckLabel = useMemo(
+    () => (selectedItems.length ? `${selectedItems.length} selected` : `Select all`),
+    [selectedItems]
+  );
+  const selectCheckDescription = useMemo(
+    () =>
+      items.length !== selectedItems.length
+        ? 'Add all displayed values to the filter'
+        : 'Remove all displayed values from the filter',
+    [items, selectedItems]
   );
 
   const styles = useStyles2(getStyles);
@@ -47,9 +146,31 @@ export const FilterList = ({ options, values, caseSensitive, onChange }: Props) 
     [onChange, values]
   );
 
+  const onSelectChanged = useCallback(() => {
+    if (items.length === selectedItems.length) {
+      const newValues = values.filter((item) => !items.includes(item));
+      onChange(newValues);
+    } else {
+      const newValues = [...new Set([...values, ...items])];
+      onChange(newValues);
+    }
+  }, [onChange, values, items, selectedItems]);
+
   return (
     <VerticalGroup spacing="md">
-      <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
+      {!showOperators && <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />}
+      {showOperators && (
+        <HorizontalGroup>
+          <ButtonSelect<string>
+            variant="canvas"
+            options={OPERATORS}
+            onChange={setOperator}
+            value={operator}
+            tooltip={operator.description}
+          />
+          <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
+        </HorizontalGroup>
+      )}
       {!items.length && <Label>No values</Label>}
       {items.length && (
         <List
@@ -72,6 +193,20 @@ export const FilterList = ({ options, values, caseSensitive, onChange }: Props) 
           }}
         </List>
       )}
+      {items.length && (
+        <VerticalGroup spacing="xs">
+          <div className={cx(styles.selectDivider)} />
+          <div className={cx(styles.filterListRow)}>
+            <Checkbox
+              value={selectCheckValue}
+              indeterminate={selectCheckIndeterminate}
+              label={selectCheckLabel}
+              description={selectCheckDescription}
+              onChange={onSelectChanged}
+            />
+          </div>
+        </VerticalGroup>
+      )}
     </VerticalGroup>
   );
 };
@@ -91,5 +226,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     ':hover': {
       backgroundColor: theme.colors.action.hover,
     },
+  }),
+  selectDivider: css({
+    label: 'selectDivider',
+    width: '100%',
+    borderTop: `1px solid ${theme.colors.border.medium}`,
+    padding: theme.spacing(0.5, 2),
   }),
 });

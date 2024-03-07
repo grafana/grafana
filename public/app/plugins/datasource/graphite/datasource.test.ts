@@ -2,7 +2,14 @@ import { isArray } from 'lodash';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import { AbstractLabelMatcher, AbstractLabelOperator, getFrameDisplayName, dateTime } from '@grafana/data';
+import {
+  AbstractLabelMatcher,
+  AbstractLabelOperator,
+  getFrameDisplayName,
+  dateTime,
+  DataQueryRequest,
+  MetricFindValue,
+} from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -120,7 +127,7 @@ describe('graphiteDatasource', () => {
       maxDataPoints: 500,
     };
 
-    let response: any;
+    let response: unknown;
     let requestOptions: BackendSrvRequest;
 
     beforeEach(() => {
@@ -139,7 +146,7 @@ describe('graphiteDatasource', () => {
         );
       });
 
-      response = ctx.ds.query(query as any);
+      response = ctx.ds.query(query as unknown as DataQueryRequest<GraphiteQuery>);
     });
 
     it('X-Dashboard and X-Panel headers to be set!', () => {
@@ -411,7 +418,7 @@ describe('graphiteDatasource', () => {
   });
 
   describe('querying for template variables', () => {
-    let results: any;
+    let results: MetricFindValue[];
     let requestOptions: BackendSrvRequest;
 
     beforeEach(() => {
@@ -503,7 +510,7 @@ describe('graphiteDatasource', () => {
           current: { value: ['bar'] },
         },
       ]);
-      ctx.ds.metricFindQuery('[[foo]]').then((data: any) => {
+      ctx.ds.metricFindQuery('[[foo]]').then((data) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');

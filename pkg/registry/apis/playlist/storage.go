@@ -6,8 +6,8 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
+	grafanaregistry "github.com/grafana/grafana/pkg/services/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/services/apiserver/rest"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -19,12 +19,13 @@ type storage struct {
 func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, legacy *legacyStorage) (*storage, error) {
 	strategy := grafanaregistry.NewStrategy(scheme)
 
+	resource := playlist.PlaylistResourceInfo
 	store := &genericregistry.Store{
-		NewFunc:                   func() runtime.Object { return &playlist.Playlist{} },
-		NewListFunc:               func() runtime.Object { return &playlist.PlaylistList{} },
+		NewFunc:                   resource.NewFunc,
+		NewListFunc:               resource.NewListFunc,
 		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  legacy.DefaultQualifiedResource,
-		SingularQualifiedResource: legacy.SingularQualifiedResource,
+		DefaultQualifiedResource:  resource.GroupResource(),
+		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		TableConvertor:            legacy.tableConverter,
 
 		CreateStrategy: strategy,

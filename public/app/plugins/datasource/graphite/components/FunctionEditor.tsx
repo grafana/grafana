@@ -14,12 +14,12 @@ interface FunctionEditorProps extends FunctionEditorControlsProps {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    icon: css`
-      margin-right: ${theme.spacing(0.5)};
-    `,
+    icon: css({
+      marginRight: theme.spacing(0.5),
+    }),
     label: css({
       fontWeight: theme.typography.fontWeightMedium,
-      fontSize: theme.typography.bodySmall.fontSize, // to match .gf-form-label
+      fontSize: theme.typography.bodySmall.fontSize,
       cursor: 'pointer',
       display: 'inline-block',
     }),

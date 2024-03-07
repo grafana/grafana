@@ -12,8 +12,8 @@ jobs:
       - uses: grafana/writers-toolkit/update-make-docs@update-make-docs/v1
         with:
           pr_options: >
-            --label 'backport v10.0.x'
             --label 'backport v10.1.x'
             --label 'backport v10.2.x'
+            --label 'backport v10.3.x'
             --label no-changelog
             --label type/docs

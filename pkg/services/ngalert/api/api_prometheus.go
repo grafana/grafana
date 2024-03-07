@@ -304,7 +304,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
-		File: folder.Title,
+		File: folder.Fullpath,
 	}
 
 	rulesTotals := make(map[string]int64, len(rules))

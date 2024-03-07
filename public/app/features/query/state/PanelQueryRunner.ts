@@ -1,4 +1,4 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep, merge } from 'lodash';
 import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
@@ -28,6 +28,7 @@ import {
   preProcessPanelData,
   ApplyFieldOverrideOptions,
   StreamingDataFrame,
+  DataTopic,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
@@ -49,6 +50,7 @@ export interface QueryRunnerOptions<
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
+  panelPluginType?: string;
   dashboardUID?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
@@ -138,9 +140,14 @@ export class PanelQueryRunner {
 
             if (withFieldConfig && data.series?.length) {
               if (lastConfigRev === this.dataConfigSource.configRev) {
-                const streamingDataFrame = data.series.find((data) => isStreamingDataFrame(data)) as
-                  | StreamingDataFrame
-                  | undefined;
+                let streamingDataFrame: StreamingDataFrame | undefined;
+
+                for (const frame of data.series) {
+                  if (isStreamingDataFrame(frame)) {
+                    streamingDataFrame = frame;
+                    break;
+                  }
+                }
 
                 if (
                   streamingDataFrame &&
@@ -213,7 +220,8 @@ export class PanelQueryRunner {
   private applyTransformations(data: PanelData): Observable<PanelData> {
     const transformations = this.dataConfigSource.getTransformations();
 
-    if (!transformations || transformations.length === 0) {
+    const allTransformationsDisabled = transformations && transformations.every((t) => t.disabled);
+    if (allTransformationsDisabled || !transformations || transformations.length === 0) {
       return of(data);
     }
 
@@ -221,8 +229,18 @@ export class PanelQueryRunner {
       interpolate: (v: string) => this.templateSrv.replace(v, data?.request?.scopedVars),
     };
 
-    return transformDataFrame(transformations, data.series, ctx).pipe(
-      map((series) => ({ ...data, series })),
+    let seriesTransformations = transformations.filter((t) => t.topic == null || t.topic === DataTopic.Series);
+    let annotationsTransformations = transformations.filter((t) => t.topic === DataTopic.Annotations);
+
+    let seriesStream = transformDataFrame(seriesTransformations, data.series, ctx);
+    let annotationsStream = transformDataFrame(annotationsTransformations, data.annotations ?? [], ctx);
+
+    return merge(seriesStream, annotationsStream).pipe(
+      map((frames) => {
+        let isAnnotations = frames.some((f) => f.meta?.dataTopic === DataTopic.Annotations);
+        let transformed = isAnnotations ? { annotations: frames } : { series: frames };
+        return { ...data, ...transformed };
+      }),
       catchError((err) => {
         console.warn('Error running transformation:', err);
         return of({
@@ -240,6 +258,7 @@ export class PanelQueryRunner {
       timezone,
       datasource,
       panelId,
+      panelPluginType,
       dashboardUID,
       timeRange,
       timeInfo,
@@ -261,6 +280,7 @@ export class PanelQueryRunner {
       requestId: getNextRequestId(),
       timezone,
       panelId,
+      panelPluginType,
       dashboardUID,
       range: timeRange,
       timeInfo,
@@ -336,9 +356,31 @@ export class PanelQueryRunner {
 
     this.subscription = panelData.subscribe({
       next: (data) => {
-        this.lastResult = skipPreProcess ? data : preProcessPanelData(data, this.lastResult);
+        const last = this.lastResult;
+        const next = skipPreProcess ? data : preProcessPanelData(data, last);
+
+        if (last != null && next.state !== LoadingState.Streaming) {
+          let sameSeries = compareArrayValues(last.series ?? [], next.series ?? [], (a, b) => a === b);
+          let sameAnnotations = compareArrayValues(last.annotations ?? [], next.annotations ?? [], (a, b) => a === b);
+          let sameState = last.state === next.state;
+
+          if (sameSeries) {
+            next.series = last.series;
+          }
+
+          if (sameAnnotations) {
+            next.annotations = last.annotations;
+          }
+
+          if (sameSeries && sameAnnotations && sameState) {
+            return;
+          }
+        }
+
+        this.lastResult = next;
+
         // Store preprocessed query results for applying overrides later on in the pipeline
-        this.subject.next(this.lastResult);
+        this.subject.next(next);
       },
     });
   }

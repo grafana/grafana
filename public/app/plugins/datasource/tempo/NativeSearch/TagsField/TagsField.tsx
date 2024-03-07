@@ -4,9 +4,9 @@ import React, { useEffect, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
-import { createErrorNotification } from '../../../../../core/copy/appNotification';
-import { notifyApp } from '../../../../../core/reducers/appNotification';
-import { dispatch } from '../../../../../store/store';
+import { notifyApp } from '../../_importedDependencies/actions/appNotification';
+import { createErrorNotification } from '../../_importedDependencies/core/appNotification';
+import { dispatch } from '../../_importedDependencies/store';
 import { TempoDatasource } from '../../datasource';
 
 import { CompletionProvider } from './autocomplete';
@@ -166,17 +166,17 @@ interface EditorStyles {
 
 const getStyles = (theme: GrafanaTheme2, placeholder: string): EditorStyles => {
   return {
-    queryField: css`
-      border-radius: ${theme.shape.radius.default};
-      border: 1px solid ${theme.components.input.borderColor};
-      flex: 1;
-    `,
-    placeholder: css`
-      ::after {
-        content: '${placeholder}';
-        font-family: ${theme.typography.fontFamilyMonospace};
-        opacity: 0.3;
-      }
-    `,
+    queryField: css({
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.components.input.borderColor}`,
+      flex: 1,
+    }),
+    placeholder: css({
+      '::after': {
+        content: `'${placeholder}'`,
+        fontFamily: theme.typography.fontFamilyMonospace,
+        opacity: 0.3,
+      },
+    }),
   };
 };

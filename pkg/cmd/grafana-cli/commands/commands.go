@@ -30,7 +30,7 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.
 	}
 }
 
-func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) error) func(context *cli.Context) error {
+func runDbCommand(command func(commandLine utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
 		runner, err := initializeRunner(cmd)
@@ -38,8 +38,9 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) er
 			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
 
+		cfg := runner.Cfg
 		sqlStore := runner.SQLStore
-		if err := command(cmd, sqlStore); err != nil {
+		if err := command(cmd, cfg, sqlStore); err != nil {
 			return err
 		}
 

@@ -15,7 +15,7 @@ import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBui
 import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { findRect, intersects, pointWithin, Quadtree, Rect } from './quadtree';
+import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -289,11 +289,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     radius: pctStacked
       ? 0
       : !isStacked
-      ? barRadius
-      : (u: uPlot, seriesIdx: number) => {
-          let isTopmostSeries = seriesIdx === u.data.length - 1;
-          return isTopmostSeries ? [barRadius, 0] : [0, 0];
-        },
+        ? barRadius
+        : (u: uPlot, seriesIdx: number) => {
+            let isTopmostSeries = seriesIdx === u.data.length - 1;
+            return isTopmostSeries ? [barRadius, 0] : [0, 0];
+          },
     disp: {
       x0: {
         unit: 2,
@@ -470,14 +470,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-            if (isStacked) {
-              // choose the smallest hovered rect (when stacked bigger ones overlap smaller ones)
-              if (hRect == null || o.h * o.w < hRect.h * hRect.w) {
-                hRect = o;
-              }
-            } else {
-              hRect = o;
-            }
+            hRect = o;
           }
         });
       }
@@ -489,26 +482,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       bbox: (u, seriesIdx) => {
         let isHovered = hRect && seriesIdx === hRect.sidx;
 
-        let heightReduce = 0;
-        let widthReduce = 0;
-
-        // get height of bar rect at same index of the series below the hovered one
-        if (isStacked && isHovered) {
-          const rect = hRect && hRect.sidx > 1 && findRect(qt, hRect.sidx - 1, hRect.didx);
-          if (rect) {
-            if (isXHorizontal) {
-              heightReduce = rect.h;
-            } else {
-              widthReduce = rect.w;
-            }
-          }
-        }
-
         return {
-          left: isHovered ? (hRect!.x + widthReduce) / uPlot.pxRatio : -10,
+          left: isHovered ? hRect!.x / uPlot.pxRatio : -10,
           top: isHovered ? hRect!.y / uPlot.pxRatio : -10,
-          width: isHovered ? (hRect!.w - widthReduce) / uPlot.pxRatio : 0,
-          height: isHovered ? (hRect!.h - heightReduce) / uPlot.pxRatio : 0,
+          width: isHovered ? hRect!.w / uPlot.pxRatio : 0,
+          height: isHovered ? hRect!.h / uPlot.pxRatio : 0,
         };
       },
     },

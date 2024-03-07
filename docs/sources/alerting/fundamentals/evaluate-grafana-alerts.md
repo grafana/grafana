@@ -3,7 +3,7 @@ aliases:
   - ../metrics/
   - ../unified-alerting/fundamentals/evaluate-grafana-alerts/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/evaluate-grafana-alerts/
-description: How to alert on numeric data
+description: Learn how how Grafana-managed alerts are evaluated by the backend engine as well as how Grafana handles alerting on numeric rather than time series data
 labels:
   products:
     - cloud
@@ -109,6 +109,6 @@ When this query is used as the **condition** in an alert rule, then the non-zero
 
 {{% docs/reference %}}
 
-[set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
-[set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
+[set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring"
+[set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring"
 {{% /docs/reference %}}

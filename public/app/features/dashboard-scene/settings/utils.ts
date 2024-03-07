@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
-import { SceneObject, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
+import { SceneObject, SceneObjectState } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'app/types';
@@ -11,11 +11,12 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { AnnotationsEditView } from './AnnotationsEditView';
 import { DashboardLinksEditView } from './DashboardLinksEditView';
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
+import { JsonModelEditView } from './JsonModelEditView';
+import { PermissionsEditView } from './PermissionsEditView';
 import { VariablesEditView } from './VariablesEditView';
+import { VersionsEditView } from './VersionsEditView';
 
-export interface DashboardEditViewState extends SceneObjectState {
-  dashboardRef: SceneObjectRef<DashboardScene>;
-}
+export interface DashboardEditViewState extends SceneObjectState {}
 
 export interface DashboardEditListViewState extends DashboardEditViewState {
   /** Index of the list item to edit */
@@ -56,6 +57,21 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
         url: locationUtil.getUrlForPartial(location, { editview: 'links', editIndex: null }),
         active: currentEditView === 'links',
       },
+      {
+        text: t('dashboard-settings.versions.title', 'Versions'),
+        url: locationUtil.getUrlForPartial(location, { editview: 'versions', editIndex: null }),
+        active: currentEditView === 'versions',
+      },
+      {
+        text: t('dashboard-settings.permissions.title', 'Permissions'),
+        url: locationUtil.getUrlForPartial(location, { editview: 'permissions', editIndex: null }),
+        active: currentEditView === 'permissions',
+      },
+      {
+        text: t('dashboard-settings.json-editor.title', 'JSON Model'),
+        url: locationUtil.getUrlForPartial(location, { editview: 'json-model', editIndex: null }),
+        active: currentEditView === 'json-model',
+      },
     ],
     parentItem: dashboardPageNav,
   };
@@ -63,19 +79,22 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
   return { navModel, pageNav };
 }
 
-export function createDashboardEditViewFor(
-  editview: string,
-  dashboardRef: SceneObjectRef<DashboardScene>
-): DashboardEditView {
+export function createDashboardEditViewFor(editview: string): DashboardEditView {
   switch (editview) {
     case 'annotations':
-      return new AnnotationsEditView({ dashboardRef });
+      return new AnnotationsEditView({});
     case 'variables':
-      return new VariablesEditView({ dashboardRef });
+      return new VariablesEditView({});
     case 'links':
-      return new DashboardLinksEditView({ dashboardRef });
+      return new DashboardLinksEditView({});
+    case 'versions':
+      return new VersionsEditView({});
+    case 'json-model':
+      return new JsonModelEditView({});
+    case 'permissions':
+      return new PermissionsEditView({});
     case 'settings':
     default:
-      return new GeneralSettingsEditView({ dashboardRef });
+      return new GeneralSettingsEditView({});
   }
 }

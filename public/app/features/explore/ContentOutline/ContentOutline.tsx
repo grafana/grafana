@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import React from 'react';
-import { useToggle } from 'react-use';
+import React, { useEffect, useRef, useState } from 'react';
+import { useToggle, useScroll } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -33,9 +33,12 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
-  const [expanded, toggleExpanded] = useToggle(false);
-  const styles = useStyles2((theme) => getStyles(theme));
   const { outlineItems } = useContentOutlineContext();
+  const [expanded, toggleExpanded] = useToggle(false);
+  const [activeItemId, setActiveItemId] = useState<string | undefined>(outlineItems[0]?.id);
+  const styles = useStyles2((theme) => getStyles(theme));
+  const scrollerRef = useRef(scroller || null);
+  const { y: verticalScroll } = useScroll(scrollerRef);
 
   const scrollIntoView = (ref: HTMLElement | null, buttonTitle: string) => {
     let scrollValue = 0;
@@ -50,6 +53,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       top: scrollValue,
       behavior: 'smooth',
     });
+
     reportInteraction('explore_toolbar_contentoutline_clicked', {
       item: 'select_section',
       type: buttonTitle,
@@ -64,6 +68,24 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     });
   };
 
+  useEffect(() => {
+    const activeItem = outlineItems.find((item) => {
+      const top = item?.ref?.getBoundingClientRect().top;
+
+      if (!top) {
+        return false;
+      }
+
+      return top >= 0;
+    });
+
+    if (!activeItem) {
+      return;
+    }
+
+    setActiveItemId(activeItem.id);
+  }, [outlineItems, verticalScroll]);
+
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
       <CustomScrollbar>
@@ -77,16 +99,19 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
             aria-expanded={expanded}
           />
 
-          {outlineItems.map((item) => (
-            <ContentOutlineItemButton
-              key={item.id}
-              title={expanded ? item.title : undefined}
-              className={styles.buttonStyles}
-              icon={item.icon}
-              onClick={() => scrollIntoView(item.ref, item.title)}
-              tooltip={!expanded ? item.title : undefined}
-            />
-          ))}
+          {outlineItems.map((item) => {
+            return (
+              <ContentOutlineItemButton
+                key={item.id}
+                title={expanded ? item.title : undefined}
+                className={styles.buttonStyles}
+                icon={item.icon}
+                onClick={() => scrollIntoView(item.ref, item.title)}
+                tooltip={!expanded ? item.title : undefined}
+                isActive={activeItemId === item.id}
+              />
+            );
+          })}
         </div>
       </CustomScrollbar>
     </PanelContainer>

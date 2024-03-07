@@ -42,6 +42,7 @@ labels:
     - oss
 menuTitle: Manage variables
 title: Add and manage variables
+description: Learn about the types of variables you can add to dashboards and how
 weight: 100
 ---
 

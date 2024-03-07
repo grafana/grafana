@@ -11,6 +11,7 @@ import (
 	"github.com/ory/fosite/handler/oauth2"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -224,7 +225,8 @@ func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest f
 
 // filteredUserPermissions gets the user permissions and applies the actions filter
 func (s *OAuth2ServiceImpl) filteredUserPermissions(ctx context.Context, userID int64, actionsFilter map[string]bool) ([]ac.Permission, error) {
-	permissions, err := s.acService.SearchUserPermissions(ctx, oauthserver.TmpOrgID, ac.SearchOptions{UserID: userID})
+	permissions, err := s.acService.SearchUserPermissions(ctx, oauthserver.TmpOrgID,
+		ac.SearchOptions{NamespacedID: fmt.Sprintf("%s:%d", identity.NamespaceUser, userID)})
 	if err != nil {
 		return nil, &fosite.RFC6749Error{
 			DescriptionField: "The permissions scope could not be processed.",

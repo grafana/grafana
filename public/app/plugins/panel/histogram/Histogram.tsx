@@ -37,6 +37,7 @@ function incrRoundUp(num: number, incr: number) {
 export interface HistogramProps extends Themeable2 {
   options: Options; // used for diff
   alignedFrame: DataFrame; // This could take HistogramFields
+  bucketCount?: number;
   bucketSize: number;
   width: number;
   height: number;
@@ -100,8 +101,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     distribution: isOrdinalX
       ? ScaleDistribution.Ordinal
       : useLogScale
-      ? ScaleDistribution.Log
-      : ScaleDistribution.Linear,
+        ? ScaleDistribution.Log
+        : ScaleDistribution.Linear,
     log: 2,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
@@ -118,20 +119,13 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
             wantedMax = xScaleMax;
           }
 
-          let fullRangeMin = u.data[0][0];
           let fullRangeMax = u.data[0][u.data[0].length - 1];
 
-          // snap to bucket divisors...
-
-          if (wantedMax === fullRangeMax) {
-            wantedMax += bucketSize;
-          } else {
-            wantedMax = incrRoundUp(wantedMax, bucketSize);
-          }
-
-          if (wantedMin > fullRangeMin) {
-            wantedMin = incrRoundDn(wantedMin, bucketSize);
-          }
+          // isOrdinalX is when we have classic histograms, which are LE, ordinal X, and already have 0 dummy bucket prepended
+          // else we have calculated histograms which are GE and cardinal+linear X, and have no next dummy bucket appended
+          wantedMin = incrRoundUp(wantedMin, bucketSize);
+          wantedMax =
+            !isOrdinalX && wantedMax === fullRangeMax ? wantedMax + bucketSize : incrRoundDn(wantedMax, bucketSize);
 
           return [wantedMin, wantedMax];
         },
@@ -143,6 +137,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     distribution: ScaleDistribution.Linear,
     orientation: ScaleOrientation.Vertical,
     direction: ScaleDirection.Up,
+    softMin: 0,
   });
 
   const fmt = frame.fields[0].display!;
@@ -287,7 +282,9 @@ export class Histogram extends React.Component<HistogramProps, State> {
   }
 
   prepState(props: HistogramProps, withConfig = true) {
-    let state: State = null as any;
+    let state: State = {
+      alignedData: [],
+    };
 
     const { alignedFrame } = props;
     if (alignedFrame) {
@@ -314,13 +311,14 @@ export class Histogram extends React.Component<HistogramProps, State> {
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
-    const { structureRev, alignedFrame, bucketSize } = this.props;
+    const { structureRev, alignedFrame, bucketSize, bucketCount } = this.props;
 
     if (alignedFrame !== prevProps.alignedFrame) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
         const shouldReconfig =
+          bucketCount !== prevProps.bucketCount ||
           bucketSize !== prevProps.bucketSize ||
           this.props.options !== prevProps.options ||
           this.state.config === undefined ||

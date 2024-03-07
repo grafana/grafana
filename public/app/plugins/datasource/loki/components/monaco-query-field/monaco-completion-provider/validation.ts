@@ -1,7 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { LRParser } from '@lezer/lr';
 
-import { ErrorId } from 'app/plugins/datasource/prometheus/querybuilder/shared/parsingUtils';
+import { ErrorId } from '../../../querybuilder/parsingUtils';
 
 interface ParserErrorBoundary {
   startLineNumber: number;

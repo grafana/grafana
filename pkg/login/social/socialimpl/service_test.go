@@ -3,12 +3,93 @@ package socialimpl
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	secretsfake "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func TestSocialService_ProvideService(t *testing.T) {
+	type testEnv struct {
+		features featuremgmt.FeatureToggles
+	}
+	testCases := []struct {
+		name                                string
+		setup                               func(t *testing.T, env *testEnv)
+		expectedSocialMapLength             int
+		expectedGenericOAuthSkipOrgRoleSync bool
+	}{
+		{
+			name:                                "should load only enabled social connectors when ssoSettingsApi is disabled",
+			setup:                               nil,
+			expectedSocialMapLength:             1,
+			expectedGenericOAuthSkipOrgRoleSync: false,
+		},
+		{
+			name: "should load all social connectors when ssoSettingsApi is enabled",
+			setup: func(t *testing.T, env *testEnv) {
+				env.features = featuremgmt.WithFeatures(featuremgmt.FlagSsoSettingsApi)
+			},
+			expectedSocialMapLength:             7,
+			expectedGenericOAuthSkipOrgRoleSync: false,
+		},
+	}
+	iniContent := `
+	[auth.azuread]
+	enabled = true
+	skip_org_role_sync = true
+
+	[auth.generic_oauth]
+	enabled = false
+	skip_org_role_sync = false
+	`
+	iniFile, err := ini.Load([]byte(iniContent))
+	require.NoError(t, err)
+
+	cfg := setting.NewCfg()
+	cfg.Raw = iniFile
+
+	secrets := secretsfake.NewMockService(t)
+	accessControl := acimpl.ProvideAccessControl(cfg)
+	sqlStore := db.InitTestDB(t)
+
+	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			env := &testEnv{
+				features: featuremgmt.WithFeatures(),
+			}
+			if tc.setup != nil {
+				tc.setup(t, env)
+			}
+
+			socialService := ProvideService(cfg, env.features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), ssoSettingsSvc)
+			require.Equal(t, tc.expectedSocialMapLength, len(socialService.socialMap))
+
+			genericOAuthInfo := socialService.GetOAuthInfoProvider("generic_oauth")
+			if genericOAuthInfo != nil {
+				require.Equal(t, tc.expectedGenericOAuthSkipOrgRoleSync, genericOAuthInfo.SkipOrgRoleSync)
+			}
+		})
+	}
+}
 
 func TestMapping_IniSectionOAuthInfo(t *testing.T) {
 	iniContent := `

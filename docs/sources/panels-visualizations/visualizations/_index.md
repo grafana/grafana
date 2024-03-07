@@ -12,6 +12,7 @@ labels:
     - enterprise
     - oss
 title: Visualizations
+description: Apply visualizations to your data
 weight: 10
 ---
 
@@ -75,11 +76,11 @@ A [stat][] shows one large stat value with an optional graph sparkline. You can 
 
 If you want to present a value as it relates to a min and max value you have two options. First a standard radial [gauge][] shown below.
 
-{{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="700px" >}}
+{{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="700px" alt="A gauge visualization" >}}
 
 Secondly Grafana also has a horizontal or vertical [bar gauge][] with three different distinct display modes.
 
-{{< figure src="/static/img/docs/v66/bar_gauge_lcd.png" max-width="700px" >}}
+{{< figure src="/static/img/docs/v66/bar_gauge_lcd.png" max-width="700px" alt="A bar gauge visualization" >}}
 
 ### Table
 

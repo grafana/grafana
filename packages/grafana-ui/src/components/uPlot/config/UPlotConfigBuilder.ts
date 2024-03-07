@@ -58,6 +58,8 @@ export class UPlotConfigBuilder {
   private tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
   private padding?: Padding = undefined;
 
+  private cachedConfig?: PlotConfig;
+
   prepData: PrepData | undefined = undefined;
 
   constructor(timeZone: TimeZone = DefaultTimeZone) {
@@ -190,6 +192,10 @@ export class UPlotConfigBuilder {
   }
 
   getConfig() {
+    if (this.cachedConfig) {
+      return this.cachedConfig;
+    }
+
     const config: PlotConfig = {
       ...DEFAULT_PLOT_CONFIG,
       mode: this.mode,
@@ -244,17 +250,17 @@ export class UPlotConfigBuilder {
       config.padding = this.padding;
     }
 
-    if (this.stackingGroups.length) {
-      this.stackingGroups.forEach((group) => {
-        getStackingBands(group).forEach((band) => {
-          this.addBand(band);
-        });
+    this.stackingGroups.forEach((group) => {
+      getStackingBands(group).forEach((band) => {
+        this.addBand(band);
       });
-    }
+    });
 
     if (this.bands.length) {
       config.bands = this.bands;
     }
+
+    this.cachedConfig = config;
 
     return config;
   }
@@ -307,6 +313,7 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
   // Identifies the shared key for uPlot cursor sync
   eventsScope?: string;
+  hoverProximity?: number;
 } & T;
 
 /** @alpha */

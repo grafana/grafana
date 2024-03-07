@@ -3,13 +3,9 @@ package model
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type LibraryConnectionKind int
@@ -83,32 +79,6 @@ type LibraryElementDTO struct {
 	Version       int64                 `json:"version"`
 	Meta          LibraryElementDTOMeta `json:"meta"`
 	SchemaVersion int64                 `json:"schemaVersion,omitempty"`
-}
-
-func (dto *LibraryElementDTO) ToResource() kinds.GrafanaResource[simplejson.Json, simplejson.Json] {
-	body := &simplejson.Json{}
-	_ = body.FromDB(dto.Model)
-	parent := librarypanel.NewK8sResource(dto.UID, nil)
-	res := kinds.GrafanaResource[simplejson.Json, simplejson.Json]{
-		Kind:       parent.Kind,
-		APIVersion: parent.APIVersion,
-		Metadata: kinds.GrafanaResourceMetadata{
-			Name:              dto.UID,
-			Annotations:       make(map[string]string),
-			Labels:            make(map[string]string),
-			ResourceVersion:   fmt.Sprintf("%d", dto.Version),
-			CreationTimestamp: v1.NewTime(dto.Meta.Created),
-		},
-		Spec: body,
-	}
-
-	if dto.FolderUID != "" {
-		res.Metadata.SetFolder(dto.FolderUID)
-	}
-	res.Metadata.SetCreatedBy(fmt.Sprintf("user:%d", dto.Meta.CreatedBy.Id))
-	res.Metadata.SetUpdatedBy(fmt.Sprintf("user:%d", dto.Meta.UpdatedBy.Id))
-	res.Metadata.SetUpdatedTimestamp(&dto.Meta.Updated)
-	return res
 }
 
 // LibraryElementSearchResult is the search result for entities.
