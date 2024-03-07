@@ -7,8 +7,8 @@ interface Props {
   query: string;
 }
 
-const PrometheusQueryPreview = ({ query }: Props) => {
+const LokiQueryPreview = ({ query }: Props) => {
   return <RawQuery query={query} language={{ grammar: lokiGrammar, name: 'promql' }} />;
 };
 
-export default PrometheusQueryPreview;
+export default LokiQueryPreview;
