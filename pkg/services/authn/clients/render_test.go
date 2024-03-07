@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestRender_Authenticate(t *testing.T) {
@@ -22,7 +21,6 @@ func TestRender_Authenticate(t *testing.T) {
 		renderKey         string
 		req               *authn.Request
 		expectedErr       error
-		expectedUsr       *user.SignedInUser
 		expectedIdentity  *authn.Identity
 		expectedRenderUsr *rendering.RenderUser
 	}
