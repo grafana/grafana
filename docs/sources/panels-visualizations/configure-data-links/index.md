@@ -76,7 +76,7 @@ These variables allow you to include the current time range in the data link URL
 | `__from`           | For more information, refer to [Global variables][].                |
 | `__to`             | For more information, refer to [Global variables][].                |
 
-When you create data links using time range variables in the URL, like `__url_time_range`, you have to form the query parameter syntax yourself; that is, you must add the question mark (`?`) and ampersand (`&`). These characters aren't automatically generated.
+When you create data links using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must add the question mark (`?`) and ampersand (`&`). These characters aren't automatically generated.
 
 ### Series variables
 
@@ -109,7 +109,7 @@ Value-specific variables are available under `__value` namespace:
 
 Using value-specific variables in data links can show different results depending on the set option of Tooltip mode.
 
-When you create data links using time range variables in the URL, like `__value.time`, you have to form the query parameter syntax yourself; that is, you must add the question mark (`?`) and ampersand (`&`). These characters aren't automatically generated.
+When you create data links using time range variables like `__value.time` in the URL, you have to form the query parameter syntax yourself; that is, you must add the question mark (`?`) and ampersand (`&`). These characters aren't automatically generated.
 
 ### Data variables
 
