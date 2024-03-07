@@ -32,6 +32,7 @@ import { LokiDatasource } from './datasource';
 import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId, replaceVariables, returnVariables } from './querybuilder/parsingUtils';
 import { LokiQuery, LokiQueryType } from './types';
+import {LokiDataQuery} from "./dataquery.gen";
 
 /**
  * Returns search terms from a LogQL query.
@@ -94,14 +95,14 @@ export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
   return nodes;
 }
 
-export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
+export function getNormalizedLokiQuery(query: LokiDataQuery): LokiQuery {
   const queryType = getLokiQueryType(query);
   // instant and range are deprecated, we want to remove them
   const { instant, range, ...rest } = query;
   return { ...rest, queryType };
 }
 
-export function getLokiQueryType(query: LokiQuery): LokiQueryType {
+export function getLokiQueryType(query: LokiDataQuery): LokiQueryType {
   // we are migrating from `.instant` and `.range` to `.queryType`
   // this function returns the correct query type
   const { queryType } = query;
@@ -296,7 +297,7 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   return labelMatchers;
 }
 
-export function requestSupportsSplitting(allQueries: LokiQuery[]) {
+export function requestSupportsSplitting(allQueries: LokiDataQuery[]) {
   const queries = allQueries
     .filter((query) => !query.hide)
     .filter((query) => !query.refId.includes('do-not-chunk'))
@@ -305,16 +306,16 @@ export function requestSupportsSplitting(allQueries: LokiQuery[]) {
   return queries.length > 0;
 }
 
-export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
+export const isLokiQuery = (query: DataQuery): query is LokiDataQuery => {
   if (!query) {
     return false;
   }
 
-  const lokiQuery = query as LokiQuery;
+  const lokiQuery = query as LokiDataQuery;
   return lokiQuery.expr !== undefined;
 };
 
-export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefined => {
+export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiDataQuery | undefined => {
   if (!query || !isLokiQuery(query)) {
     return undefined;
   }

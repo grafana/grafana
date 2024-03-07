@@ -12,6 +12,7 @@ import pluginJson from './plugin.json';
 import { getNormalizedLokiQuery, isLogsQuery, obfuscate } from './queryUtils';
 import { variableRegex } from './querybuilder/parsingUtils';
 import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
+import {LokiDataQuery} from "./dataquery.gen";
 
 type LokiOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;
@@ -58,7 +59,7 @@ export type LokiTrackingSettings = {
 
 export const onDashboardLoadedHandler = ({
   payload: { dashboardId, orgId, grafanaVersion, queries },
-}: DashboardLoadedEvent<LokiQuery>) => {
+}: DashboardLoadedEvent<LokiDataQuery>) => {
   try {
     // We only want to track visible Loki queries
     const lokiQueries = queries[pluginJson.id]
