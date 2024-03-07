@@ -390,7 +390,7 @@ For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### ssl_sni
 
-For Postgres, set to `0` to disable [“Server Name Indication”](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLSNI) (enabled by default on SSL-enabled connections).
+For Postgres, set to `0` to disable [Server Name Indication](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLSNI). This is enabled by default on SSL-enabled connections.
 
 ### isolation_level
 
