@@ -42,28 +42,62 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 	})
 	require.Equal(t, "test", ds.UID)
 
-	t.Run("Call query", func(t *testing.T) {
+	t.Run("Call query with expression", func(t *testing.T) {
 		client := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
 			Group:   "query.grafana.app",
 			Version: "v0alpha1",
 		})
 
-		q := data.DataQuery{
+		q1 := data.DataQuery{
 			CommonQueryProperties: data.CommonQueryProperties{
+				RefID: "X",
 				Datasource: &data.DataSourceRef{
 					Type: "grafana-testdata-datasource",
 					UID:  ds.UID,
 				},
 			},
 		}
-		q.Set("csvContent", "a,b,c\n1,hello,true")
-		q.Set("scenarioId", `csv_content`)
-		body, err := json.Marshal(&data.QueryDataRequest{
-			Queries: []data.DataQuery{q},
-		})
-		require.NoError(t, err)
+		q1.Set("scenarioId", "csv_content")
+		q1.Set("csvContent", "a\n1")
 
-		fmt.Printf("%s\n", string(body))
+		q2 := data.DataQuery{
+			CommonQueryProperties: data.CommonQueryProperties{
+				RefID: "Y",
+				Datasource: &data.DataSourceRef{
+					UID: "__expr__",
+				},
+			},
+		}
+		q2.Set("type", "math")
+		q2.Set("expression", "$X + 2")
+
+		body, err := json.Marshal(&data.QueryDataRequest{
+			Queries: []data.DataQuery{
+				q1, q2,
+				// https://github.com/grafana/grafana-plugin-sdk-go/pull/921
+				// data.NewDataQuery(map[string]any{
+				// 	"refId": "X",
+				// 	"datasource": data.DataSourceRef{
+				// 		Type: "grafana-testdata-datasource",
+				// 		UID:  ds.UID,
+				// 	},
+				// 	"scenarioId": "csv_content",
+				// 	"csvContent": "a\n1",
+				// }),
+				// data.NewDataQuery(map[string]any{
+				// 	"refId": "Y",
+				// 	"datasource": data.DataSourceRef{
+				// 		UID: "__expr__",
+				// 	},
+				// 	"type":       "math",
+				// 	"expression": "$X + 2",
+				// }),
+			},
+		})
+
+		//fmt.Printf("%s", string(body))
+
+		require.NoError(t, err)
 
 		result := client.Post().
 			Namespace("default").
@@ -81,28 +115,15 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 		rsp := &backend.QueryDataResponse{}
 		err = json.Unmarshal(body, rsp)
 		require.NoError(t, err)
-		require.Equal(t, 1, len(rsp.Responses))
+		require.Equal(t, 2, len(rsp.Responses))
 
-		frame := rsp.Responses["A"].Frames[0]
-		disp, err := frame.StringTable(100, 10)
-		require.NoError(t, err)
-		fmt.Printf("%s\n", disp)
+		frameX := rsp.Responses["X"].Frames[0]
+		frameY := rsp.Responses["Y"].Frames[0]
 
-		type expect struct {
-			idx  int
-			name string
-			val  any
-		}
-		for _, check := range []expect{
-			{0, "a", int64(1)},
-			{1, "b", "hello"},
-			{2, "c", true},
-		} {
-			field := frame.Fields[check.idx]
-			require.Equal(t, check.name, field.Name)
+		vX, _ := frameX.Fields[0].ConcreteAt(0)
+		vY, _ := frameY.Fields[0].ConcreteAt(0)
 
-			v, _ := field.ConcreteAt(0)
-			require.Equal(t, check.val, v)
-		}
+		require.Equal(t, int64(1), vX)
+		require.Equal(t, float64(3), vY) // 1 + 2, but always float64
 	})
 }

@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -15,6 +16,7 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -38,6 +40,12 @@ func (b *QueryAPIBuilder) doQuery(w http.ResponseWriter, r *http.Request) {
 	// Parses the request and splits it into multiple sub queries (if necessary)
 	req, err := b.parser.parseRequest(ctx, raw)
 	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			errhttp.Write(ctx, errutil.BadRequest(
+				"query.datasource.notfound",
+				errutil.WithPublicMessage(err.Error())), w)
+			return
+		}
 		errhttp.Write(ctx, errutil.BadRequest(
 			"query.parse",
 			errutil.WithPublicMessage("Error parsing query")).

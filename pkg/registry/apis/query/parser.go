@@ -204,6 +204,9 @@ func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *data.DataSo
 		if ds.UID == "" {
 			return nil, fmt.Errorf("missing name/uid in data source reference")
 		}
+		if ds.UID == expr.DatasourceType {
+			return ds, nil
+		}
 		if p.legacy == nil {
 			return nil, fmt.Errorf("legacy datasource lookup unsupported (name:%s)", ds.UID)
 		}
