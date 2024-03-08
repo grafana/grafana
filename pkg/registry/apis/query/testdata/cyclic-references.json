@@ -10,8 +10,8 @@
           "type": "",
           "uid": "__expr__"
         },
-        "queryType": "math",
-        "expression": "$B"
+        "expression": "$B",
+        "type": "math"
       },
       {
         "refId": "B",
@@ -19,11 +19,11 @@
           "type": "",
           "uid": "__expr__"
         },
-        "queryType": "math",
+        "type": "math",
         "expression": "$A"
       }
     ]
   },
   "expect": {},
-  "error": "missing type"
+  "error": "cyclic references in query"
 }

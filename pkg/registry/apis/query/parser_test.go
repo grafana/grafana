@@ -45,7 +45,7 @@ func TestQuerySplitting(t *testing.T) {
 		require.Empty(t, split.Requests)
 	})
 
-	t.Run("applies default timerage", func(t *testing.T) {
+	t.Run("applies default time range", func(t *testing.T) {
 		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
 			QueryDataRequest: data.QueryDataRequest{
 				TimeRange: data.TimeRange{}, // missing

@@ -10,11 +10,11 @@
           "type": "",
           "uid": "__expr__"
         },
-        "queryType": "math",
+        "type": "math",
         "expression": "$A"
       }
     ]
   },
   "expect": {},
-  "error": "missing type"
+  "error": "expression [A] can not depend on itself"
 }
