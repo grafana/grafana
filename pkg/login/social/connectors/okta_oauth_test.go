@@ -114,6 +114,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 					AutoAssignOrgRole:          tt.autoAssignOrgRole,
 					OAuthSkipOrgRoleUpdateSync: false,
 				},
+				nil,
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
@@ -282,7 +283,7 @@ func TestSocialOkta_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewOktaProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewOktaProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -362,7 +363,7 @@ func TestSocialOkta_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewOktaProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewOktaProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
