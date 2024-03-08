@@ -15,10 +15,6 @@ export interface Props {
   showAutoMigrateLink?: boolean;
 }
 
-function readDeprecationNotice() {
-  window.open('https://grafana.com/docs/grafana/latest/developers/angular_deprecation/');
-}
-
 function tryMigration() {
   const autoMigrateParam = '__feature.autoMigrateOldPanels';
   const url = new URL(window.location.toString());
@@ -46,9 +42,18 @@ export function AngularDeprecationNotice({ dashboardUid, showAutoMigrateLink }: 
               }}
             >
               <div className="markdown-html">
-                <Button fill="outline" size="sm" style={{ marginRight: 10 }} onClick={readDeprecationNotice}>
-                  Read our deprecation notice and migration advice
-                </Button>
+                <ul>
+                  <li>
+                    <a
+                      href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
+                      className="external-link"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Read our deprecation notice and migration advice.
+                    </a>
+                  </li>
+                </ul>
                 {showAutoMigrateLink && (
                   <Button fill="outline" size="sm" onClick={tryMigration}>
                     Try migration

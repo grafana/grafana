@@ -17,12 +17,6 @@ interface Props {
   dashboardUid: string;
 }
 
-const reportIssueLink = () => {
-  window.open(
-    'https://github.com/grafana/grafana/issues/new?assignees=&labels=&projects=&template=0-bug-report.yaml&title=Product+Area%3A+Short+description+of+bug'
-  );
-};
-
 const revertAutoMigrateUrlFlag = () => {
   const url = new URL(window.location.toString());
   const urlParams = new URLSearchParams(url.search);
@@ -56,9 +50,18 @@ export function AngularMigrationNotice({ dashboardUid }: Props) {
               onRemove={() => onDismiss(true)}
             >
               <div className="markdown-html">
-                <Button fill="outline" size="sm" className={styles.linkButton} onClick={reportIssueLink}>
-                  Report issue
-                </Button>
+                <ul>
+                  <li>
+                    <a
+                      href="https://github.com/grafana/grafana/issues/new?assignees=&labels=&projects=&template=0-bug-report.yaml&title=Product+Area%3A+Short+description+of+bug"
+                      className="external-link"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Report issue.
+                    </a>
+                  </li>
+                </ul>
                 <Button fill="outline" size="sm" className={styles.linkButton} onClick={revertAutoMigrateUrlFlag}>
                   Revert migration
                 </Button>
