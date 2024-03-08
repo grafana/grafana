@@ -1159,11 +1159,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Do not use any type assertions.", "9"],
-      [0, 0, 0, "Do not use any type assertions.", "10"],
-      [0, 0, 0, "Do not use any type assertions.", "11"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
+      [0, 0, 0, "Do not use any type assertions.", "8"],
+      [0, 0, 0, "Do not use any type assertions.", "9"]
     ],
     "public/app/core/components/GraphNG/hooks.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
