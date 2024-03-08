@@ -235,7 +235,7 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 ##@ Docker
 
 TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
-PLATFORM=linux/amd64
+PLATFORM=linux/arm64
 
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
