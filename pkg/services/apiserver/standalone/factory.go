@@ -89,7 +89,9 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 			plugins.JSONData{
 				ID: "grafana-testdata-datasource",
 			},
-			testdatasource.ProvideService(), // the client
+			func(ctx context.Context) (datasource.PluginClient, error) {
+				return testdatasource.ProvideService(), nil
+			},
 			&pluginDatasourceImpl{
 				startup: v1.Now(),
 			},

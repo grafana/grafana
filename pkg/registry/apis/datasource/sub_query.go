@@ -62,7 +62,12 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		qdr, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
+		client, err := r.builder.clientProvider(ctx)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		qdr, err := client.QueryData(ctx, &backend.QueryDataRequest{
 			PluginContext: pluginCtx,
 			Queries:       queries,
 		})

@@ -66,7 +66,12 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 		}
 
 		path := req.URL.Path[idx+len("/resource"):]
-		err = r.builder.client.CallResource(ctx, &backend.CallResourceRequest{
+		client, err := r.builder.clientProvider(ctx)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		err = client.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: pluginCtx,
 			Path:          path,
 			Method:        req.Method,

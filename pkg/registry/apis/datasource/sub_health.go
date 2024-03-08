@@ -51,7 +51,11 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 	}
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 
-	healthResponse, err := r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
+	client, err := r.builder.clientProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	healthResponse, err := client.CheckHealth(ctx, &backend.CheckHealthRequest{
 		PluginContext: pluginCtx,
 	})
 	if err != nil {
