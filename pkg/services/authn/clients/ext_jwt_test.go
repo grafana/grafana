@@ -41,6 +41,19 @@ var (
 		DelegatedEntitlements: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
 		Entitlements:          []string{"fixed:folders:reader"},
 	}
+	validIDPayload = ExtendedJWTClaims{
+		Claims: jwt.Claims{
+			Issuer:   "http://localhost:3000",
+			Subject:  "user:2",
+			Audience: jwt.Audience{"http://localhost:3000"},
+			ID:       "1234567890",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Scopes:                []string{"profile", "groups"},
+		DelegatedEntitlements: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+		Entitlements:          []string{"fixed:folders:reader"},
+	}
 	pk, _ = rsa.GenerateKey(rand.Reader, 4096)
 )
 
@@ -126,26 +139,17 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 	type testCase struct {
 		name        string
 		payload     ExtendedJWTClaims
+		idPayload   *ExtendedJWTClaims
 		orgID       int64
 		want        *authn.Identity
 		initTestEnv func(env *testEnv)
-		wantErr     bool
+		wantErr     error
 	}
 	testCases := []testCase{
 		{
 			name:    "successful authentication as service",
 			payload: validPayload,
 			orgID:   1,
-			initTestEnv: func(env *testEnv) {
-				env.userSvc.ExpectedSignedInUser = &user.SignedInUser{
-					UserID:  2,
-					OrgID:   1,
-					OrgRole: roletype.RoleAdmin,
-					Name:    "John Doe",
-					Email:   "johndoe@grafana.com",
-					Login:   "johndoe",
-				}
-			},
 			want: &authn.Identity{OrgID: 1, OrgName: "",
 				OrgRoles: map[int64]roletype.RoleType(nil),
 				ID:       "access-policy:this-uid", Login: "", Name: "", Email: "",
@@ -161,10 +165,43 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 						Email: (*string)(nil), Login: (*string)(nil)}, SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{ActionsLookup: []string(nil), Roles: []string{"fixed:folders:reader"}}},
 				Permissions: map[int64]map[string][]string(nil), IDToken: ""},
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
-			name: "should return error when the user cannot be parsed from the Subject claim",
+			name:      "successful authentication as user",
+			payload:   validPayload,
+			idPayload: &validIDPayload,
+			orgID:     1,
+			initTestEnv: func(env *testEnv) {
+				env.userSvc.ExpectedSignedInUser = &user.SignedInUser{
+					UserID:  2,
+					OrgID:   1,
+					OrgRole: roletype.RoleAdmin,
+					Name:    "John Doe",
+					Email:   "johndoe@grafana.com",
+					Login:   "johndoe",
+				}
+			},
+			want: &authn.Identity{OrgID: 1, OrgName: "",
+				OrgRoles: map[int64]roletype.RoleType(nil), ID: "user:2",
+				Login: "", Name: "", Email: "",
+				IsGrafanaAdmin: (*bool)(nil), AuthenticatedBy: "extendedjwt",
+				AuthID: "access-policy:this-uid", IsDisabled: false, HelpFlags1: 0x0,
+				LastSeenAt: time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC),
+				Teams:      []int64(nil), Groups: []string(nil),
+				OAuthToken: (*oauth2.Token)(nil), SessionToken: (*usertoken.UserToken)(nil),
+				ClientParams: authn.ClientParams{SyncUser: false, AllowSignUp: false,
+					EnableUser: false, FetchSyncedUser: true, SyncTeams: false,
+					SyncOrgRoles: false, CacheAuthProxyKey: "",
+					LookUpParams:    login.UserLookupParams{UserID: (*int64)(nil), Email: (*string)(nil), Login: (*string)(nil)},
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{ActionsLookup: []string{"dashboards:create",
+						"folders:read", "datasources:explore", "datasources.insights:read"},
+						Roles: []string(nil)}}, Permissions: map[int64]map[string][]string(nil), IDToken: ""},
+			wantErr: nil,
+		},
+		{
+			name: "should return error when the subject is not an access-policy",
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
@@ -174,65 +211,45 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				},
-				Scopes: []string{"profile", "groups"},
+				Entitlements: []string{"fixed:folders:reader"},
 			},
 			orgID:   1,
 			want:    nil,
-			wantErr: true,
+			wantErr: errJWTInvalid.Errorf("Failed to parse sub: %s", "invalid subject format"),
 		},
 		{
 			name: "should return error when the OrgId is not the ID of the default org",
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
-					Subject:  "user:2",
+					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				},
-				Scopes: []string{"profile", "groups"},
+				Entitlements: []string{"fixed:folders:reader"},
 			},
 			orgID:   0,
 			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "should return error when the user cannot be found",
-			payload: ExtendedJWTClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "user:2",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
-				Scopes: []string{"profile", "groups"},
-			},
-			orgID: 1,
-			want:  nil,
-			initTestEnv: func(env *testEnv) {
-				env.userSvc.ExpectedError = user.ErrUserNotFound
-			},
-			wantErr: true,
+			wantErr: errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported"),
 		},
 		{
 			name: "should return error when entitlements claim is missing",
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
-					Subject:  "user:2",
+					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				},
-				Scopes: []string{"profile", "groups"},
+				Entitlements: []string{},
 			},
 			orgID:   1,
 			want:    nil,
-			wantErr: true,
+			wantErr: errJWTInvalid.Errorf("Entitlements claim is missing"),
 		},
 	}
 
@@ -249,6 +266,10 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				},
 			}
 
+			if tc.idPayload != nil {
+				validHTTPReq.Header.Add(extJWTAuthorizationHeaderName, generateToken(*tc.idPayload, pk, jose.RS256, "jwt"))
+			}
+
 			mockTimeNow(time.Date(2023, 5, 2, 0, 1, 0, 0, time.UTC))
 
 			id, err := env.s.Authenticate(context.Background(), &authn.Request{
@@ -256,8 +277,8 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				HTTPRequest: validHTTPReq,
 				Resp:        nil,
 			})
-			if tc.wantErr {
-				require.Error(t, err)
+			if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
 			} else {
 				require.NoError(t, err)
 				assert.EqualValues(t, tc.want, id, fmt.Sprintf("%+v", id))
@@ -280,7 +301,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 			name: "missing iss",
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
-					Subject:  "user:id:2",
+					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
@@ -294,7 +315,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
+					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
 					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -307,7 +328,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
+					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -321,7 +342,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
+					Subject:  "access-policy:this-uid",
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -334,7 +355,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
+					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://some-other-host:3000"},
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
@@ -342,6 +363,21 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 				},
 				Scopes: []string{"profile", "groups"},
 			},
+		},
+		{
+			name: "wrong typ",
+			payload: ExtendedJWTClaims{
+				Claims: jwt.Claims{
+					Issuer:   "http://localhost:3000",
+					Subject:  "access-policy:this-uid",
+					Audience: jwt.Audience{"http://some-other-host:3000"},
+					ID:       "1234567890",
+					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				},
+				Scopes: []string{"profile", "groups"},
+			},
+			typ: "jwt",
 		},
 		{
 			name: "missing sub",
@@ -361,7 +397,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
+					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
@@ -374,7 +410,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
+					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
@@ -388,7 +424,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
+					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),

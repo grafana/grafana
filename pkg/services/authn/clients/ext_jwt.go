@@ -28,9 +28,9 @@ var (
 )
 
 const (
-	rfc9068ShortMediaType = "at+jwt"
-	authenticationHeader  = "X-Access-Token"
-	authorizationHeader   = "X-Grafana-Id"
+	rfc9068ShortMediaType          = "at+jwt"
+	extJWTAuthenticationHeaderName = "X-Access-Token"
+	extJWTAuthorizationHeaderName  = "X-Grafana-Id"
 )
 
 func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg,
@@ -179,7 +179,7 @@ func (s *ExtendedJWT) Priority() uint {
 
 // retrieveAuthenticationToken retrieves the JWT token from the request.
 func (s *ExtendedJWT) retrieveAuthenticationToken(httpRequest *http.Request) string {
-	jwtToken := httpRequest.Header.Get(authenticationHeader)
+	jwtToken := httpRequest.Header.Get(extJWTAuthenticationHeaderName)
 
 	// Strip the 'Bearer' prefix if it exists.
 	return strings.TrimPrefix(jwtToken, "Bearer ")
@@ -187,7 +187,7 @@ func (s *ExtendedJWT) retrieveAuthenticationToken(httpRequest *http.Request) str
 
 // retrieveAuthorizationToken retrieves the JWT token from the request.
 func (s *ExtendedJWT) retrieveAuthorizationToken(httpRequest *http.Request) string {
-	jwtToken := httpRequest.Header.Get(authorizationHeader)
+	jwtToken := httpRequest.Header.Get(extJWTAuthorizationHeaderName)
 
 	// Strip the 'Bearer' prefix if it exists.
 	return strings.TrimPrefix(jwtToken, "Bearer ")
