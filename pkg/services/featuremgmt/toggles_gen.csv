@@ -156,11 +156,11 @@ sqlExpressions,experimental,@grafana/grafana-app-platform-squad,false,false,fals
 nodeGraphDotLayout,experimental,@grafana/observability-traces-and-profiling,false,false,true
 groupToNestedTableTransformation,preview,@grafana/dataviz-squad,false,false,true
 newPDFRendering,experimental,@grafana/sharing-squad,false,false,false
+tlsMemcached,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 expressionParser,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 betterPageScrolling,GA,@grafana/grafana-frontend-platform,false,false,true
 alertingUpgradeDryrunOnStart,GA,@grafana/alerting-squad,false,true,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
-tlsMemcached,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 emailVerificationEnforcement,experimental,@grafana/identity-access-team,false,false,false
