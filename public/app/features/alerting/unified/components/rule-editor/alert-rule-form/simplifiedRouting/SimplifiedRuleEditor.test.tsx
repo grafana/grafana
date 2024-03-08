@@ -33,7 +33,7 @@ import {
 } from 'app/features/alerting/unified/utils/datasource';
 import { getDefaultQueries } from 'app/features/alerting/unified/utils/rule-form';
 import { searchFolders } from 'app/features/manage-dashboards/state/actions';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -170,21 +170,55 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
     mocks.api.fetchRulerRules.mockResolvedValue({
       'Folder A': [
         {
+          interval: '1m',
           name: 'group1',
-          rules: [],
+          rules: [
+            {
+              annotations: { description: 'some description', summary: 'some summary' },
+              labels: { severity: 'warn', team: 'the a-team' },
+              for: '5m',
+              grafana_alert: {
+                uid: '23',
+                namespace_uid: 'abcd',
+                condition: 'B',
+                data: getDefaultQueries(),
+                exec_err_state: GrafanaAlertStateDecision.Error,
+                no_data_state: GrafanaAlertStateDecision.NoData,
+                title: 'my great new rule',
+              },
+            },
+          ],
         },
       ],
       namespace2: [
         {
-          name: 'group2',
-          rules: [],
+          interval: '1m',
+          name: 'group1',
+          rules: [
+            {
+              annotations: { description: 'some description', summary: 'some summary' },
+              labels: { severity: 'warn', team: 'the a-team' },
+              for: '5m',
+              grafana_alert: {
+                uid: '23',
+                namespace_uid: 'b',
+                condition: 'B',
+                data: getDefaultQueries(),
+                exec_err_state: GrafanaAlertStateDecision.Error,
+                no_data_state: GrafanaAlertStateDecision.NoData,
+                title: 'my great new rule',
+              },
+            },
+          ],
         },
       ],
     });
     mocks.searchFolders.mockResolvedValue([
       {
         title: 'Folder A',
+        uid: 'abcd',
         id: 1,
+        type: DashboardSearchItemType.DashDB,
       },
       {
         title: 'Folder B',
@@ -193,6 +227,8 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       {
         title: 'Folder / with slash',
         id: 2,
+        uid: 'b',
+        type: DashboardSearchItemType.DashDB,
       },
     ] as DashboardSearchHit[]);
 
@@ -260,29 +296,67 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
     mocks.api.fetchRulerRules.mockResolvedValue({
       'Folder A': [
         {
+          interval: '1m',
           name: 'group1',
-          rules: [],
+          rules: [
+            {
+              annotations: { description: 'some description', summary: 'some summary' },
+              labels: { severity: 'warn', team: 'the a-team' },
+              for: '5m',
+              grafana_alert: {
+                uid: '23',
+                namespace_uid: 'abcd',
+                condition: 'B',
+                data: getDefaultQueries(),
+                exec_err_state: GrafanaAlertStateDecision.Error,
+                no_data_state: GrafanaAlertStateDecision.NoData,
+                title: 'my great new rule',
+              },
+            },
+          ],
         },
       ],
       namespace2: [
         {
-          name: 'group2',
-          rules: [],
+          interval: '1m',
+          name: 'group1',
+          rules: [
+            {
+              annotations: { description: 'some description', summary: 'some summary' },
+              labels: { severity: 'warn', team: 'the a-team' },
+              for: '5m',
+              grafana_alert: {
+                uid: '23',
+                namespace_uid: 'b',
+                condition: 'B',
+                data: getDefaultQueries(),
+                exec_err_state: GrafanaAlertStateDecision.Error,
+                no_data_state: GrafanaAlertStateDecision.NoData,
+                title: 'my great new rule',
+              },
+            },
+          ],
         },
       ],
     });
     mocks.searchFolders.mockResolvedValue([
       {
         title: 'Folder A',
+        uid: 'abcd',
         id: 1,
+        type: DashboardSearchItemType.DashDB,
       },
       {
         title: 'Folder B',
         id: 2,
+        uid: 'b',
+        type: DashboardSearchItemType.DashDB,
       },
       {
         title: 'Folder / with slash',
+        uid: 'c',
         id: 2,
+        type: DashboardSearchItemType.DashDB,
       },
     ] as DashboardSearchHit[]);
 
@@ -314,7 +388,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      'Folder A',
+      'abcd',
       {
         interval: '1m',
         name: 'group1',
