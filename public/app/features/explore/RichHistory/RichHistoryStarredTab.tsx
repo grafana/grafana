@@ -109,7 +109,11 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
   }, []);
 
   const { value: datasourceFilterApis, loading: loadingDs } = useAsync(async () => {
-    const dsGetProm = await richHistorySearchFilters?.datasourceFilters.map(async (dsf) => {
+    const datasourcesToGet =
+      richHistorySearchFilters?.datasourceFilters && richHistorySearchFilters?.datasourceFilters.length > 0
+        ? richHistorySearchFilters?.datasourceFilters
+        : listOfDatasources.map((ds) => ds.uid);
+    const dsGetProm = await datasourcesToGet.map(async (dsf) => {
       try {
         // this get works off datasource names
         return getDataSourceSrv().get(dsf);
