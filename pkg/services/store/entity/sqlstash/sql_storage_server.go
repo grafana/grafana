@@ -81,8 +81,13 @@ func (s *sqlEntityServer) Init() error {
 
 	// set up the broadcaster
 	s.broadcaster, err = NewBroadcaster(context.Background(), func(stream chan *entity.Entity) error {
-		// start the poller
-		go s.poller(stream)
+		// subscribe to new events
+		if engine.DriverName() == "postgres" {
+			go s.pgWatcher(stream)
+		} else {
+			// start the poller
+			go s.poller(stream)
+		}
 
 		return nil
 	})
