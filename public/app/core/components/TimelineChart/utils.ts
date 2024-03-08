@@ -4,9 +4,6 @@ import uPlot from 'uplot';
 import {
   DataFrame,
   DashboardCursorSync,
-  DataHoverPayload,
-  DataHoverEvent,
-  DataHoverClearEvent,
   FALLBACK_COLOR,
   Field,
   FieldColorModeId,
@@ -98,7 +95,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   timeZones,
   getTimeRange,
   mode,
-  eventBus,
   sync,
   rowHeight,
   colWidth,
@@ -111,7 +107,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
-  const xScaleUnit = 'time';
   const xScaleKey = 'x';
 
   const isDiscrete = (field: Field) => {
@@ -176,16 +171,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   let hoveredDataIdx: number | null = null;
 
   const coreConfig = getConfig(opts);
-  const payload: DataHoverPayload = {
-    point: {
-      [xScaleUnit]: null,
-      [FIXED_UNIT]: null,
-    },
-    data: frame,
-  };
-
-  const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
-  const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
@@ -293,23 +278,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
     cursor.sync = {
       key: eventsScope,
-      filters: {
-        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-          if (sync && sync() === DashboardCursorSync.Off) {
-            return false;
-          }
-          payload.rowIndex = dataIdx;
-          if (x < 0 && y < 0) {
-            eventBus.publish(clearEvent);
-          } else {
-            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
-            payload.point.panelRelY = y > 0 ? y / h : 1; // used for old graph panel to position tooltip
-            payload.down = undefined;
-            eventBus.publish(hoverEvent);
-          }
-          return true;
-        },
-      },
       scales: [xScaleKey, null],
     };
     builder.setSync();
