@@ -4,42 +4,41 @@
   "queries": [
     {
       "refId": "A",
-      "queryType": "math",
       "maxDataPoints": 1000,
       "intervalMs": 5,
-      "expression": "$A + 10"
+      "expression": "$A + 10",
+      "type": "math"
     },
     {
       "refId": "B",
-      "queryType": "math",
       "maxDataPoints": 1000,
       "intervalMs": 5,
+      "type": "math",
       "expression": "$A - $B"
     },
     {
       "refId": "C",
-      "queryType": "reduce",
       "maxDataPoints": 1000,
       "intervalMs": 5,
       "expression": "$A",
       "reducer": "max",
       "settings": {
         "mode": "dropNN"
-      }
+      },
+      "type": "reduce"
     },
     {
       "refId": "D",
-      "queryType": "resample",
       "maxDataPoints": 1000,
       "intervalMs": 5,
-      "downsampler": "last",
-      "expression": "$A",
       "upsampler": "pad",
-      "window": "1d"
+      "type": "resample",
+      "expression": "$A",
+      "window": "1d",
+      "downsampler": "last"
     },
     {
       "refId": "E",
-      "queryType": "classic_conditions",
       "maxDataPoints": 1000,
       "intervalMs": 5,
       "conditions": [
@@ -62,13 +61,14 @@
             "type": "max"
           }
         }
-      ]
+      ],
+      "type": "classic_conditions"
     },
     {
       "refId": "F",
-      "queryType": "threshold",
       "maxDataPoints": 1000,
       "intervalMs": 5,
+      "expression": "A",
       "conditions": [
         {
           "evaluator": {
@@ -79,11 +79,10 @@
           }
         }
       ],
-      "expression": "A"
+      "type": "threshold"
     },
     {
       "refId": "G",
-      "queryType": "threshold",
       "maxDataPoints": 1000,
       "intervalMs": 5,
       "expression": "B",
@@ -134,14 +133,15 @@
             "type": "lt"
           }
         }
-      ]
+      ],
+      "type": "threshold"
     },
     {
       "refId": "H",
-      "queryType": "sql",
       "maxDataPoints": 1000,
       "intervalMs": 5,
-      "expression": "SELECT * FROM A limit 1"
+      "expression": "SELECT * FROM A limit 1",
+      "type": "sql"
     }
   ]
 }

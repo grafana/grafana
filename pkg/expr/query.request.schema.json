@@ -24,7 +24,7 @@
             "type": "object",
             "required": [
               "expression",
-              "queryType",
+              "type",
               "refId"
             ],
             "properties": {
@@ -69,8 +69,8 @@
                 "type": "integer"
               },
               "queryType": {
-                "type": "string",
-                "pattern": "^math$"
+                "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+                "type": "string"
               },
               "refId": {
                 "description": "RefID is the unique identifier of the query, set by the frontend call.",
@@ -143,6 +143,10 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "type": {
+                "type": "string",
+                "pattern": "^math$"
               }
             },
             "additionalProperties": false,
@@ -153,7 +157,7 @@
             "required": [
               "expression",
               "reducer",
-              "queryType",
+              "type",
               "refId"
             ],
             "properties": {
@@ -197,8 +201,8 @@
                 "type": "integer"
               },
               "queryType": {
-                "type": "string",
-                "pattern": "^reduce$"
+                "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+                "type": "string"
               },
               "reducer": {
                 "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
@@ -266,13 +270,11 @@
                 ],
                 "properties": {
                   "mode": {
-                    "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers\n - `\"__expr__\"` \n - `\"-100\"` ",
+                    "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
                     "type": "string",
                     "enum": [
                       "dropNN",
-                      "replaceNN",
-                      "__expr__",
-                      "-100"
+                      "replaceNN"
                     ],
                     "x-enum-description": {
                       "dropNN": "Drop non-numbers",
@@ -312,6 +314,10 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "type": {
+                "type": "string",
+                "pattern": "^reduce$"
               }
             },
             "additionalProperties": false,
@@ -325,7 +331,7 @@
               "window",
               "downsampler",
               "upsampler",
-              "queryType",
+              "type",
               "refId"
             ],
             "properties": {
@@ -383,8 +389,8 @@
                 "type": "integer"
               },
               "queryType": {
-                "type": "string",
-                "pattern": "^resample$"
+                "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+                "type": "string"
               },
               "refId": {
                 "description": "RefID is the unique identifier of the query, set by the frontend call.",
@@ -458,6 +464,10 @@
                 },
                 "additionalProperties": false
               },
+              "type": {
+                "type": "string",
+                "pattern": "^resample$"
+              },
               "upsampler": {
                 "description": "The upsample function\n\n\nPossible enum values:\n - `\"pad\"` Use the last seen value\n - `\"backfilling\"` backfill\n - `\"fillna\"` Do not fill values (nill)",
                 "type": "string",
@@ -489,7 +499,7 @@
             "type": "object",
             "required": [
               "conditions",
-              "queryType",
+              "type",
               "refId"
             ],
             "properties": {
@@ -605,8 +615,8 @@
                 "type": "integer"
               },
               "queryType": {
-                "type": "string",
-                "pattern": "^classic_conditions$"
+                "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+                "type": "string"
               },
               "refId": {
                 "description": "RefID is the unique identifier of the query, set by the frontend call.",
@@ -679,6 +689,10 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "type": {
+                "type": "string",
+                "pattern": "^classic_conditions$"
               }
             },
             "additionalProperties": false,
@@ -689,7 +703,7 @@
             "required": [
               "expression",
               "conditions",
-              "queryType",
+              "type",
               "refId"
             ],
             "properties": {
@@ -805,8 +819,8 @@
                 "type": "integer"
               },
               "queryType": {
-                "type": "string",
-                "pattern": "^threshold$"
+                "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+                "type": "string"
               },
               "refId": {
                 "description": "RefID is the unique identifier of the query, set by the frontend call.",
@@ -879,6 +893,10 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "type": {
+                "type": "string",
+                "pattern": "^threshold$"
               }
             },
             "additionalProperties": false,
@@ -889,7 +907,7 @@
             "type": "object",
             "required": [
               "expression",
-              "queryType",
+              "type",
               "refId"
             ],
             "properties": {
@@ -932,8 +950,8 @@
                 "type": "integer"
               },
               "queryType": {
-                "type": "string",
-                "pattern": "^sql$"
+                "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+                "type": "string"
               },
               "refId": {
                 "description": "RefID is the unique identifier of the query, set by the frontend call.",
@@ -1006,6 +1024,10 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "type": {
+                "type": "string",
+                "pattern": "^sql$"
               }
             },
             "additionalProperties": false,

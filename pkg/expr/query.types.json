@@ -8,13 +8,13 @@
     {
       "metadata": {
         "name": "math",
-        "resourceVersion": "1709232058029",
+        "resourceVersion": "1709915973363",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
         "discriminators": [
           {
-            "field": "queryType",
+            "field": "type",
             "value": "math"
           }
         ],
@@ -56,13 +56,13 @@
     {
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1709793147924",
+        "resourceVersion": "1709915979242",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
         "discriminators": [
           {
-            "field": "queryType",
+            "field": "type",
             "value": "reduce"
           }
         ],
@@ -96,12 +96,10 @@
               "description": "Reducer Options",
               "properties": {
                 "mode": {
-                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers\n - `\"__expr__\"` \n - `\"-100\"` ",
+                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
                   "enum": [
                     "dropNN",
-                    "replaceNN",
-                    "__expr__",
-                    "-100"
+                    "replaceNN"
                   ],
                   "type": "string",
                   "x-enum-description": {
@@ -143,13 +141,13 @@
     {
       "metadata": {
         "name": "resample",
-        "resourceVersion": "1709232058029",
+        "resourceVersion": "1709915973363",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
         "discriminators": [
           {
-            "field": "queryType",
+            "field": "type",
             "value": "resample"
           }
         ],
@@ -228,13 +226,13 @@
     {
       "metadata": {
         "name": "classic_conditions",
-        "resourceVersion": "1709792695246",
+        "resourceVersion": "1709915973363",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
         "discriminators": [
           {
-            "field": "queryType",
+            "field": "type",
             "value": "classic_conditions"
           }
         ],
@@ -361,13 +359,13 @@
     {
       "metadata": {
         "name": "threshold",
-        "resourceVersion": "1709793141311",
+        "resourceVersion": "1709915973363",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
         "discriminators": [
           {
-            "field": "queryType",
+            "field": "type",
             "value": "threshold"
           }
         ],
@@ -539,13 +537,13 @@
     {
       "metadata": {
         "name": "sql",
-        "resourceVersion": "1709232058029",
+        "resourceVersion": "1709915973363",
         "creationTimestamp": "2024-02-29T00:58:00Z"
       },
       "spec": {
         "discriminators": [
           {
-            "field": "queryType",
+            "field": "type",
             "value": "sql"
           }
         ],

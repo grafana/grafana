@@ -19,7 +19,7 @@ import (
 type ExpressionQuery struct {
 	GraphID   int64     `json:"id,omitempty"`
 	RefID     string    `json:"refId"`
-	QueryType QueryType `json:"queryType"`
+	QueryType QueryType `json:"type"`
 
 	// The typed query parameters
 	Properties any `json:"properties"`
@@ -46,16 +46,16 @@ func NewExpressionQueryReader(features featuremgmt.FeatureToggles) *ExpressionQu
 // nolint:gocyclo
 func (h *ExpressionQueryReader) ReadQuery(
 	// Properties that have been parsed off the same node
-	common data.CommonQueryProperties,
+	common data.DataQuery,
 	// An iterator with context for the full node (include common values)
 	iter *jsoniter.Iterator,
 ) (eq ExpressionQuery, err error) {
 	referenceVar := ""
 	eq.RefID = common.RefID
-	if common.QueryType == "" {
-		return eq, fmt.Errorf("missing queryType")
+	eq.QueryType = QueryType(common.GetString("type"))
+	if eq.QueryType == "" {
+		return eq, fmt.Errorf("missing type")
 	}
-	eq.QueryType = QueryType(common.QueryType)
 	switch eq.QueryType {
 	case QueryTypeMath:
 		q := &MathQuery{}
@@ -112,7 +112,8 @@ func (h *ExpressionQueryReader) ReadQuery(
 				AbsoluteTimeRange{
 					From: tr.GetFromAsTimeUTC(),
 					To:   tr.GetToAsTimeUTC(),
-				})
+				},
+			)
 		}
 
 	case QueryTypeClassic:

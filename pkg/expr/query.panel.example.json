@@ -7,8 +7,8 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "queryType": "math",
-      "expression": "$A + 10"
+      "expression": "$A + 10",
+      "type": "math"
     },
     {
       "refId": "B",
@@ -16,7 +16,7 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "queryType": "math",
+      "type": "math",
       "expression": "$A - $B"
     },
     {
@@ -25,7 +25,7 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "queryType": "reduce",
+      "type": "reduce",
       "expression": "$A",
       "reducer": "max",
       "settings": {
@@ -38,11 +38,11 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "queryType": "resample",
-      "downsampler": "last",
       "expression": "$A",
+      "window": "1d",
+      "downsampler": "last",
       "upsampler": "pad",
-      "window": "1d"
+      "type": "resample"
     },
     {
       "refId": "E",
@@ -50,7 +50,6 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "queryType": "classic_conditions",
       "conditions": [
         {
           "evaluator": {
@@ -71,7 +70,8 @@
             "type": "max"
           }
         }
-      ]
+      ],
+      "type": "classic_conditions"
     },
     {
       "refId": "F",
@@ -79,7 +79,6 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "queryType": "threshold",
       "expression": "A",
       "conditions": [
         {
@@ -90,7 +89,8 @@
             "type": "gt"
           }
         }
-      ]
+      ],
+      "type": "threshold"
     },
     {
       "refId": "G",
@@ -98,7 +98,6 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "queryType": "threshold",
       "expression": "B",
       "conditions": [
         {
@@ -147,7 +146,8 @@
             "type": "lt"
           }
         }
-      ]
+      ],
+      "type": "threshold"
     },
     {
       "refId": "H",
@@ -155,8 +155,8 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "queryType": "sql",
-      "expression": "SELECT * FROM A limit 1"
+      "expression": "SELECT * FROM A limit 1",
+      "type": "sql"
     }
   ]
 }

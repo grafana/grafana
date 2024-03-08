@@ -32,7 +32,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	require.NoError(t, err)
 	err = builder.AddQueries(
 		schemabuilder.QueryTypeInfo{
-			Discriminators: data.NewDiscriminators("queryType", QueryTypeMath),
+			Discriminators: data.NewDiscriminators("type", QueryTypeMath),
 			GoType:         reflect.TypeOf(&MathQuery{}),
 			Examples: []data.QueryExample{
 				{
@@ -50,7 +50,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schemabuilder.QueryTypeInfo{
-			Discriminators: data.NewDiscriminators("queryType", QueryTypeReduce),
+			Discriminators: data.NewDiscriminators("type", QueryTypeReduce),
 			GoType:         reflect.TypeOf(&ReduceQuery{}),
 			Examples: []data.QueryExample{
 				{
@@ -66,7 +66,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schemabuilder.QueryTypeInfo{
-			Discriminators: data.NewDiscriminators("queryType", QueryTypeResample),
+			Discriminators: data.NewDiscriminators("type", QueryTypeResample),
 			GoType:         reflect.TypeOf(&ResampleQuery{}),
 			Examples: []data.QueryExample{
 				{
@@ -81,7 +81,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schemabuilder.QueryTypeInfo{
-			Discriminators: data.NewDiscriminators("queryType", QueryTypeSQL),
+			Discriminators: data.NewDiscriminators("type", QueryTypeSQL),
 			GoType:         reflect.TypeOf(&SQLExpression{}),
 			Examples: []data.QueryExample{
 				{
@@ -93,7 +93,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schemabuilder.QueryTypeInfo{
-			Discriminators: data.NewDiscriminators("queryType", QueryTypeClassic),
+			Discriminators: data.NewDiscriminators("type", QueryTypeClassic),
 			GoType:         reflect.TypeOf(&ClassicQuery{}),
 			Examples: []data.QueryExample{
 				{
@@ -121,7 +121,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schemabuilder.QueryTypeInfo{
-			Discriminators: data.NewDiscriminators("queryType", QueryTypeThreshold),
+			Discriminators: data.NewDiscriminators("type", QueryTypeThreshold),
 			GoType:         reflect.TypeOf(&ThresholdQuery{}),
 			Examples: []data.QueryExample{
 				{

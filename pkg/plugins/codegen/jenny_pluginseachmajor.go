@@ -42,8 +42,8 @@ func (j *pleJenny) Generate(decl *pfs.PluginDecl) (codejen.Files, error) {
 	}
 
 	version := "export const pluginVersion = \"%s\";"
-	if decl.PluginMeta.Info.Version != nil {
-		version = fmt.Sprintf(version, *decl.PluginMeta.Info.Version)
+	if decl.PluginMeta.Version != nil {
+		version = fmt.Sprintf(version, *decl.PluginMeta.Version)
 	} else {
 		version = fmt.Sprintf(version, getGrafanaVersion())
 	}
