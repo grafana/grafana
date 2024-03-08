@@ -31,7 +31,7 @@ var (
 	validPayload = ExtendedJWTClaims{
 		Claims: jwt.Claims{
 			Issuer:   "http://localhost:3000",
-			Subject:  "service-account:id:2",
+			Subject:  "access-policy:this-uid",
 			Audience: jwt.Audience{"http://localhost:3000"},
 			ID:       "1234567890",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
@@ -148,9 +148,9 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 			want: &authn.Identity{OrgID: 1, OrgName: "",
 				OrgRoles: map[int64]roletype.RoleType(nil),
-				ID:       "service-account:id:2", Login: "", Name: "", Email: "",
+				ID:       "access-policy:this-uid", Login: "", Name: "", Email: "",
 				IsGrafanaAdmin: (*bool)(nil), AuthenticatedBy: "extendedjwt",
-				AuthID: "service-account:id:2", IsDisabled: false, HelpFlags1: 0x0,
+				AuthID: "access-policy:this-uid", IsDisabled: false, HelpFlags1: 0x0,
 				LastSeenAt: time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC),
 				Teams:      []int64(nil), Groups: []string(nil),
 				OAuthToken: (*oauth2.Token)(nil), SessionToken: (*usertoken.UserToken)(nil),
@@ -185,7 +185,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
+					Subject:  "user:2",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
@@ -202,7 +202,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
+					Subject:  "user:2",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
@@ -222,7 +222,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
+					Subject:  "user:2",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
@@ -272,6 +272,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		name    string
 		payload ExtendedJWTClaims
 		alg     jose.SignatureAlgorithm
+		typ     string
 	}
 
 	testCases := []testCase{
@@ -461,5 +462,3 @@ func mockTimeNow(timeSeed time.Time) {
 		return timeSeed
 	}
 }
-
-// TODO: add AuthenticateAsUser tests and user namespace should not be service-account, maybe?

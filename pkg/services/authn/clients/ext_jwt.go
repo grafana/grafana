@@ -85,7 +85,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 func (s *ExtendedJWT) authenticateAsUser(idTokenClaims,
 	accessTokenClaims *ExtendedJWTClaims, r *authn.Request) (*authn.Identity, error) {
-	_, err := strconv.ParseInt(strings.TrimPrefix(idTokenClaims.Subject, fmt.Sprintf("%s:id:", authn.NamespaceUser)), 10, 64)
+	_, err := strconv.ParseInt(strings.TrimPrefix(idTokenClaims.Subject, fmt.Sprintf("%s:", authn.NamespaceUser)), 10, 64)
 	if err != nil {
 		s.log.Error("Failed to parse sub", "error", err)
 		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
@@ -114,29 +114,15 @@ func (s *ExtendedJWT) authenticateAsUser(idTokenClaims,
 
 func (s *ExtendedJWT) authenticateService(ctx context.Context,
 	claims *ExtendedJWTClaims, r *authn.Request) (*authn.Identity, error) {
-	userID, err := strconv.ParseInt(strings.TrimPrefix(claims.Subject,
-		fmt.Sprintf("%s:uid:", authn.NamespaceAccessPolicy)), 10, 64)
-	if err != nil {
-		s.log.Error("Failed to parse sub", "error", err)
-		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
+	if !strings.HasPrefix(claims.Subject, fmt.Sprintf("%s:", authn.NamespaceAccessPolicy)) {
+		s.log.Error("Invalid subject", "subject", claims.Subject)
+		return nil, errJWTInvalid.Errorf("Failed to parse sub: %s", "invalid subject format")
 	}
 
-	// FIX multi org support
 	defaultOrgID := s.getDefaultOrgID()
 	if r.OrgID != defaultOrgID {
 		s.log.Error("Failed to verify the Organization: OrgID is not the default")
 		return nil, errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported")
-	}
-
-	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx,
-		&user.GetSignedInUserQuery{OrgID: defaultOrgID, UserID: userID})
-	if err != nil {
-		s.log.Error("Failed to get user", "error", err)
-		return nil, errJWTInvalid.Errorf("Failed to get user: %w", err)
-	}
-
-	if signedInUser.Permissions == nil {
-		signedInUser.Permissions = make(map[int64]map[string][]string)
 	}
 
 	if len(claims.Entitlements) == 0 {
