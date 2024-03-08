@@ -106,11 +106,12 @@ type BasicUserInfo struct {
 	Email          string
 	Login          string
 	Role           org.RoleType
+	OrgRoles       map[int64]org.RoleType
 	IsGrafanaAdmin *bool // nil will avoid overriding user's set server admin setting
 	Groups         []string
 }
 
 func (b *BasicUserInfo) String() string {
-	return fmt.Sprintf("Id: %s, Name: %s, Email: %s, Login: %s, Role: %s, Groups: %v",
-		b.Id, b.Name, b.Email, b.Login, b.Role, b.Groups)
+	return fmt.Sprintf("Id: %s, Name: %s, Email: %s, Login: %s, Role: %s, Groups: %v, OrgRoles: %v",
+		b.Id, b.Name, b.Email, b.Login, b.Role, b.Groups, b.OrgRoles)
 }

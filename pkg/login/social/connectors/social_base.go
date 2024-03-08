@@ -178,6 +178,14 @@ func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, 
 	return "", false
 }
 
+func (s *SocialBase) extractOrgs(rawJSON []byte) ([]string, error) {
+	if s.info.OrgAttributePath == "" {
+		return []string{}, nil
+	}
+
+	return util.SearchJSONForStringSliceAttr(s.info.OrgAttributePath, rawJSON)
+}
+
 // defaultRole returns the default role for the user based on the autoAssignOrgRole setting
 // if legacy is enabled "" is returned indicating the previous role assignment is used.
 func (s *SocialBase) defaultRole() org.RoleType {

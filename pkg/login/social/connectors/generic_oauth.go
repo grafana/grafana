@@ -231,6 +231,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	userInfo := &social.BasicUserInfo{}
+	var externalOrgs []string
 	for _, data := range toCheck {
 		s.log.Debug("Processing external user info", "source", data.source, "data", data)
 
@@ -265,6 +266,15 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 			}
 		}
 
+		if len(externalOrgs) == 0 && !s.info.SkipOrgRoleSync {
+			var err error
+			externalOrgs, err = s.extractOrgs(data.rawJSON)
+			if err != nil {
+				s.log.Warn("Failed to extract orgs", "err", err)
+				return nil, err
+			}
+		}
+
 		if len(userInfo.Groups) == 0 {
 			groups, err := s.extractGroups(data)
 			if err != nil {
@@ -275,12 +285,12 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 			}
 		}
 	}
+	if !s.info.SkipOrgRoleSync {
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, userInfo.Role)
+	}
 
-	if userInfo.Role == "" && !s.info.SkipOrgRoleSync {
-		if s.info.RoleAttributeStrict {
-			return nil, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute")
-		}
-		userInfo.Role = s.defaultRole()
+	if len(userInfo.OrgRoles) == 0 && !s.info.SkipOrgRoleSync {
+		return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 	}
 
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
