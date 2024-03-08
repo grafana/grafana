@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
@@ -46,9 +47,9 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
+func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgService org.Service, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
 	provider := &SocialOkta{
-		SocialBase: newSocialBase(social.OktaProviderName, info, features, cfg),
+		SocialBase: newSocialBase(social.OktaProviderName, orgService, info, features, cfg),
 	}
 
 	if info.UseRefreshToken {

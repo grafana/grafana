@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
@@ -48,9 +49,9 @@ type googleUserData struct {
 	rawJSON       []byte `json:"-"`
 }
 
-func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
+func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgService org.Service, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
 	provider := &SocialGoogle{
-		SocialBase: newSocialBase(social.GoogleProviderName, info, features, cfg),
+		SocialBase: newSocialBase(social.GoogleProviderName, orgService, info, features, cfg),
 		validateHD: MustBool(info.Extra[validateHDKey], true),
 	}
 

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
@@ -58,12 +59,12 @@ var (
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
 
-func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGithub {
+func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgService org.Service, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGithub {
 	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
 	teamIds := mustInts(teamIdsSplitted)
 
 	provider := &SocialGithub{
-		SocialBase:           newSocialBase(social.GitHubProviderName, info, features, cfg),
+		SocialBase:           newSocialBase(social.GitHubProviderName, orgService, info, features, cfg),
 		teamIds:              teamIds,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}

@@ -206,6 +206,8 @@ If no valid role is found, the user is assigned the role specified by [the `auto
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 This setting denies user access if no role or an invalid role is returned.
 
+You can use the `org_attribute_path` and `org_mapping` configuration options to add roles to other orgs. For more information, refer to [Org roles mapping examples]({{< relref "#org-roles-mapping-examples" >}}).
+
 To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
 
 #### Role mapping examples
@@ -296,6 +298,43 @@ role_attribute_path = "'Viewer'"
 skip_org_role_sync = false
 ```
 
+#### Org roles mapping examples
+
+This section includes examples of configuration settings used for org to role mapping.
+
+##### Map organization roles
+
+In this example, the user has been granted the role of a `Viewer` in the `org_foo` org, and the role of an `Editor` in the `org_bar` and `org_baz` orgs.
+
+If the user was a member of the `admin` group, they would be granted the Grafana server administrator role.
+
+Payload:
+
+```json
+{
+    ...
+    "info": {
+        ...
+        "roles": [
+            "org_foo",
+            "org_bar",
+            "another_org'
+        ],
+        ...
+    },
+    ...
+}
+```
+
+Config:
+
+```ini
+role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || 'None'
+allow_assign_grafana_admin = true
+org_attribute_path = info.roles
+org_mapping = org_foo:org_foo:Viewer org_bar:org_bar:Editor *:org_baz:Editor
+```
+
 ### Configure team synchronization
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
@@ -359,6 +398,8 @@ The following table outlines the various generic OAuth2 configuration options. Y
 | `email_attribute_name`       | No       | Name of the key to use for user email lookup within the `attributes` map of OAuth2 ID token. For more information on how user email is retrieved, refer to [Configure email address]({{< relref "#configure-email-address" >}}).                                                                                                                                                                                                                                                                                                                                                                           | `email:primary` |
 | `role_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana role lookup. Grafana will first evaluate the expression using the OAuth2 ID token. If no role is found, the expression will be evaluated using the user information obtained from the UserInfo endpoint. The result of the evaluation should be a valid Grafana role (`Viewer`, `Editor`, `Admin` or `GrafanaAdmin`). For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                  |                 |
 | `role_attribute_strict`      | No       | Set to `true` to deny user login if the Grafana role cannot be extracted using `role_attribute_path`. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                                                                                                                                                                                                                                                                                                              | `false`         |
+| `org_attribute_path`         | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana org to role lookup. Grafana will first evaluate the expression using the OAuth2 ID token. If no value is returned, the expression will be evaluated using the user information obtained from the UserInfo endpoint. The result of the evaluation will be mapped to org roles based on `org_mapping`. For more information on org to role mapping, refer to [Org roles mapping examples]({{< relref "#org-roles-mapping-examples" >}}).                                                                                         |                 |
+| `org_mapping`                | No       | List of comma- or space-separated Value:OrgIdOrName:Role mappings. Value can be `*` meaning "All users". Role is optional and can have the following values: `Viewer`, `Editor` or `Admin`. For more information on org to role mapping, refer to [Org roles mapping examples]({{< relref "#org-roles-mapping-examples" >}}).                                                                                                                                                                                                                                                                              |                 |
 | `allow_assign_grafana_admin` | No       | Set to `true` to enable automatic sync of the Grafana server administrator role. If this option is set to `true` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user the server administrator privileges and organization administrator role. If this option is set to `false` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user only organization administrator role. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}). | `false`         |
 | `skip_org_role_sync`         | No       | Set to `true` to stop automatically syncing user roles. This will allow you to set organization roles for your users from within Grafana manually.                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `false`         |
 | `groups_attribute_path`      | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user group lookup. Grafana will first evaluate the expression using the OAuth2 ID token. If no groups are found, the expression will be evaluated using the user information obtained from the UserInfo endpoint. The result of the evaluation should be a string array of groups.                                                                                                                                                                                                                                                     |                 |
