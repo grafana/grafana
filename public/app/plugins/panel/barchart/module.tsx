@@ -236,10 +236,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
       description: 'Use the color value for a sibling field to color each bar value.',
     });
 
-    if (!context.options?.fullHighlight || context.options?.stacking === StackingMode.None) {
-      commonOptionsBuilder.addTooltipOptions(builder);
-    }
-
+    commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
     commonOptionsBuilder.addTextSizeOptions(builder, false);
   })
