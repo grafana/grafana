@@ -4,7 +4,7 @@ import uPlot from 'uplot';
 import {
   DashboardCursorSync,
   DataFrame,
-  DataHoverClearEvent,
+  // DataHoverClearEvent,
   DataHoverEvent,
   DataHoverPayload,
   FieldConfig,
@@ -629,13 +629,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           if (x < 0 && y < 0) {
             payload.point[xScaleUnit] = null;
             payload.point[yScaleKey] = null;
-            eventBus.publish(new DataHoverClearEvent());
+            // eventBus.publish(new DataHoverClearEvent());
           } else {
             // convert the points
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
             payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
             payload.point.panelRelY = y > 0 ? y / h : 1; // used by old graph panel to position tooltip
-            eventBus.publish(hoverEvent);
+            // eventBus.publish(hoverEvent);
             hoverEvent.payload.down = undefined;
           }
           return true;
