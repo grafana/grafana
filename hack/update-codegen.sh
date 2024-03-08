@@ -24,11 +24,11 @@ grafana::codegen:run() {
   local generate_root=$1
   local skipped="true"
   for api_pkg in $(grafana:codegen:lsdirs ./${generate_root}/apis); do
-    echo "Generating code for ${generate_root}/apis/${api_pkg}..."
-    echo "============================================="
     if [[ "${selected_pkg}" != "" && ${api_pkg} != $selected_pkg ]]; then
       continue
     fi
+    echo "Generating code for ${generate_root}/apis/${api_pkg}..."
+    echo "============================================="
     skipped="false"
     include_common_input_dirs=$([[ ${api_pkg} == "common" ]] && echo "true" || echo "false")
 

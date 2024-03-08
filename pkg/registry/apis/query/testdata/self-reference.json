@@ -1,0 +1,20 @@
+{
+  "description": "self dependencies",
+  "input": {
+    "from": "now-6",
+    "to": "now",
+    "queries": [
+      {
+        "refId": "A",
+        "datasource": {
+          "type": "",
+          "uid": "__expr__"
+        },
+        "type": "math",
+        "expression": "$A"
+      }
+    ]
+  },
+  "expect": {},
+  "error": "expression [A] can not depend on itself"
+}

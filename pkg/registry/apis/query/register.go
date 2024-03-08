@@ -1,9 +1,9 @@
 package query
 
 import (
-	"encoding/json"
-	"net/http"
-
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,13 +16,17 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
+	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -35,22 +39,39 @@ type QueryAPIBuilder struct {
 	concurrentQueryLimit   int
 	userFacingDefaultError string
 	returnMultiStatus      bool // from feature toggle
+	features               featuremgmt.FeatureToggles
 
-	runner   v0alpha1.QueryRunner
-	registry v0alpha1.DataSourceApiServerRegistry
+	tracer    tracing.Tracer
+	metrics   *metrics
+	parser    *queryParser
+	client    DataSourceClientSupplier
+	registry  v0alpha1.DataSourceApiServerRegistry
+	converter *expr.ResultConverter
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
-	runner v0alpha1.QueryRunner,
+	client DataSourceClientSupplier,
 	registry v0alpha1.DataSourceApiServerRegistry,
-) *QueryAPIBuilder {
+	legacy service.LegacyDataSourceLookup,
+	registerer prometheus.Registerer,
+	tracer tracing.Tracer,
+) (*QueryAPIBuilder, error) {
+	reader := expr.NewExpressionQueryReader(features)
 	return &QueryAPIBuilder{
-		concurrentQueryLimit: 4, // from config?
+		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
 		returnMultiStatus:    features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryMultiStatus),
-		runner:               runner,
+		client:               client,
 		registry:             registry,
-	}
+		parser:               newQueryParser(reader, legacy, tracer),
+		metrics:              newMetrics(registerer),
+		tracer:               tracer,
+		features:             features,
+		converter: &expr.ResultConverter{
+			Features: features,
+			Tracer:   tracer,
+		},
+	}, nil
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles,
@@ -60,28 +81,24 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl,
 	pluginClient plugins.Client,
 	pCtxProvider *plugincontext.Provider,
-) *QueryAPIBuilder {
+	registerer prometheus.Registerer,
+	tracer tracing.Tracer,
+	legacy service.LegacyDataSourceLookup,
+) (*QueryAPIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
+		return nil, nil // skip registration unless opting into experimental apis
 	}
 
-	builder := NewQueryAPIBuilder(
+	builder, err := NewQueryAPIBuilder(
 		features,
-		runner.NewDirectQueryRunner(pluginClient, pCtxProvider),
-		runner.NewDirectRegistry(pluginStore, dataSourcesService),
+		&CommonDataSourceClientSupplier{
+			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider),
+		},
+		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
+		legacy, registerer, tracer,
 	)
-
-	// ONLY testdata...
-	if false {
-		builder = NewQueryAPIBuilder(
-			features,
-			runner.NewDummyTestRunner(),
-			runner.NewDummyRegistry(),
-		)
-	}
-
 	apiregistration.RegisterAPI(builder)
-	return builder
+	return builder, err
 }
 
 func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -92,7 +109,11 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&v0alpha1.DataSourceApiServer{},
 		&v0alpha1.DataSourceApiServerList{},
+		&v0alpha1.QueryDataRequest{},
 		&v0alpha1.QueryDataResponse{},
+		&v0alpha1.QueryTypeDefinition{},
+		&v0alpha1.QueryTypeDefinitionList{},
+		&example.DummySubresource{},
 	)
 }
 
@@ -126,50 +147,7 @@ func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 
 // Register additional routes with the server
 func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	defs := v0alpha1.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
-	querySchema := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryRequest"].Schema
-	responseSchema := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse"].Schema
-
-	var randomWalkQuery any
-	var randomWalkTable any
-	_ = json.Unmarshal([]byte(`{
-		"queries": [
-		  {
-			"refId": "A",
-			"scenarioId": "random_walk",
-			"seriesCount": 1,
-			"datasource": {
-			  "type": "grafana-testdata-datasource",
-			  "uid": "PD8C576611E62080A"
-			},
-			"intervalMs": 60000,
-			"maxDataPoints": 20
-		  }
-		],
-		"from": "1704893381544",
-		"to": "1704914981544"
-	  }`), &randomWalkQuery)
-
-	_ = json.Unmarshal([]byte(`{
-		  "queries": [
-			{
-			  "refId": "A",
-			  "scenarioId": "random_walk_table",
-			  "seriesCount": 1,
-			  "datasource": {
-				"type": "grafana-testdata-datasource",
-				"uid": "PD8C576611E62080A"
-			  },
-			  "intervalMs": 60000,
-			  "maxDataPoints": 20
-			}
-		  ],
-		  "from": "1704893381544",
-		  "to": "1704914981544"
-		}`), &randomWalkTable)
-
-	return &builder.APIRoutes{
-		Root: []builder.APIRouteHandler{},
+	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
 				Path: "query",
@@ -177,38 +155,81 @@ func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							Tags:        []string{"query"},
-							Description: "query across multiple datasources with expressions.  This api matches the legacy /ds/query endpoint",
+							Summary:     "Query",
+							Description: "longer description here?",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
 										Name:        "namespace",
-										Description: "object name and auth scope, such as for teams and projects",
 										In:          "path",
 										Required:    true,
-										Schema:      spec.StringProperty(),
 										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
 									},
 								},
 							},
 							RequestBody: &spec3.RequestBody{
 								RequestBodyProps: spec3.RequestBodyProps{
-									Required:    true,
-									Description: "the query array",
 									Content: map[string]*spec3.MediaType{
 										"application/json": {
 											MediaTypeProps: spec3.MediaTypeProps{
-												Schema: querySchema.WithExample(randomWalkQuery),
+												Schema: spec.RefSchema("#/components/schemas/" + QueryRequestSchemaKey),
 												Examples: map[string]*spec3.Example{
-													"random_walk": {
+													"A": {
 														ExampleProps: spec3.ExampleProps{
-															Summary: "random walk",
-															Value:   randomWalkQuery,
+															Summary:     "Random walk (testdata)",
+															Description: "Use testdata to execute a random walk query",
+															Value: `{
+																"queries": [
+																	{
+																		"refId": "A",
+																		"scenarioId": "random_walk_table",
+																		"seriesCount": 1,
+																		"datasource": {
+																		"type": "grafana-testdata-datasource",
+																		"uid": "PD8C576611E62080A"
+																		},
+																		"intervalMs": 60000,
+																		"maxDataPoints": 20
+																	}
+																],
+																"from": "now-6h",
+																"to": "now"
+															}`,
 														},
 													},
-													"random_walk_table": {
+													"B": {
 														ExampleProps: spec3.ExampleProps{
-															Summary: "random walk (table)",
-															Value:   randomWalkTable,
+															Summary:     "With deprecated datasource name",
+															Description: "Includes an old style string for datasource reference",
+															Value: `{
+																"queries": [
+																	{
+																		"refId": "A",
+																		"datasource": {
+																			"type": "grafana-googlesheets-datasource",
+																			"uid": "b1808c48-9fc9-4045-82d7-081781f8a553"
+																		},
+																		"cacheDurationSeconds": 300,
+																		"spreadsheet": "spreadsheetID",
+																		"datasourceId": 4,
+																		"intervalMs": 30000,
+																		"maxDataPoints": 794
+																	},
+																	{
+																		"refId": "Z",
+																		"datasource": "old",
+																		"maxDataPoints": 10,
+																		"timeRange": {
+																			"from": "100",
+																			"to": "200"
+																		}
+																	}
+																],
+																"from": "now-6h",
+																"to": "now"
+															}`,
 														},
 													},
 												},
@@ -220,25 +241,12 @@ func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
 									StatusCodeResponses: map[int]*spec3.Response{
-										http.StatusOK: {
+										200: {
 											ResponseProps: spec3.ResponseProps{
-												Description: "Query results",
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &responseSchema,
-														},
-													},
-												},
-											},
-										},
-										http.StatusMultiStatus: {
-											ResponseProps: spec3.ResponseProps{
-												Description: "Errors exist in the downstream results",
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &responseSchema,
+															Schema: spec.StringProperty(), // TODO!!!
 														},
 													},
 												},
@@ -250,12 +258,47 @@ func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: b.handleQuery,
+				Handler: b.doQuery,
 			},
 		},
 	}
+	return routes
 }
 
 func (b *QueryAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return nil // default is OK
+}
+
+const QueryRequestSchemaKey = "QueryRequestSchema"
+const QueryPayloadSchemaKey = "QueryPayloadSchema"
+
+func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// The plugin description
+	oas.Info.Description = "Query service"
+
+	// The root api URL
+	root := "/apis/" + b.GetGroupVersion().String() + "/"
+
+	var err error
+	opts := schemabuilder.QuerySchemaOptions{
+		PluginID:   []string{""},
+		QueryTypes: []data.QueryTypeDefinition{},
+		Mode:       schemabuilder.SchemaTypeQueryPayload,
+	}
+	oas.Components.Schemas[QueryPayloadSchemaKey], err = schemabuilder.GetQuerySchema(opts)
+	if err != nil {
+		return oas, err
+	}
+	opts.Mode = schemabuilder.SchemaTypeQueryRequest
+	oas.Components.Schemas[QueryRequestSchemaKey], err = schemabuilder.GetQuerySchema(opts)
+	if err != nil {
+		return oas, err
+	}
+
+	// The root API discovery list
+	sub := oas.Paths.Paths[root]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, nil
 }

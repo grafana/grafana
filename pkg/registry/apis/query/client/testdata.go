@@ -1,59 +1,46 @@
-package runner
+package client
 
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	testdata "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 type testdataDummy struct{}
 
-var _ v0alpha1.QueryRunner = (*testdataDummy)(nil)
-var _ v0alpha1.DataSourceApiServerRegistry = (*testdataDummy)(nil)
+var _ data.QueryDataClient = (*testdataDummy)(nil)
+var _ query.DataSourceApiServerRegistry = (*testdataDummy)(nil)
 
-// NewDummyTestRunner creates a runner that only works with testdata
-func NewDummyTestRunner() v0alpha1.QueryRunner {
+// NewTestDataClient creates a runner that only works with testdata
+func NewTestDataClient() data.QueryDataClient {
 	return &testdataDummy{}
 }
 
-func NewDummyRegistry() v0alpha1.DataSourceApiServerRegistry {
+// NewTestDataRegistry returns a registry that only knows about testdata
+func NewTestDataRegistry() query.DataSourceApiServerRegistry {
 	return &testdataDummy{}
 }
 
 // ExecuteQueryData implements QueryHelper.
-func (d *testdataDummy) ExecuteQueryData(ctx context.Context,
-	// The k8s group for the datasource (pluginId)
-	datasource schema.GroupVersion,
-
-	// The datasource name/uid
-	name string,
-
-	// The raw backend query objects
-	query []v0alpha1.GenericDataQuery,
-) (*backend.QueryDataResponse, error) {
-	if datasource.Group != "testdata.datasource.grafana.app" {
-		return nil, fmt.Errorf("expecting testdata requests")
-	}
-
-	queries, _, err := legacydata.ToDataSourceQueries(v0alpha1.GenericQueryRequest{
-		Queries: query,
-	})
+func (d *testdataDummy) QueryData(ctx context.Context, req data.QueryDataRequest) (int, *backend.QueryDataResponse, error) {
+	queries, _, err := legacydata.ToDataSourceQueries(req)
 	if err != nil {
-		return nil, err
+		return http.StatusBadRequest, nil, err
 	}
 
-	return testdata.ProvideService().QueryData(ctx, &backend.QueryDataRequest{
-		Queries: queries,
-	})
+	qdr := &backend.QueryDataRequest{Queries: queries}
+	rsp, err := testdata.ProvideService().QueryData(ctx, qdr)
+	return query.GetResponseCode(rsp), rsp, err
 }
 
 // GetDatasourceAPI implements DataSourceRegistry.
@@ -68,12 +55,12 @@ func (*testdataDummy) GetDatasourceGroupVersion(pluginId string) (schema.GroupVe
 }
 
 // GetDatasourcePlugins implements QueryHelper.
-func (d *testdataDummy) GetDatasourceApiServers(ctx context.Context) (*v0alpha1.DataSourceApiServerList, error) {
-	return &v0alpha1.DataSourceApiServerList{
+func (d *testdataDummy) GetDatasourceApiServers(ctx context.Context) (*query.DataSourceApiServerList, error) {
+	return &query.DataSourceApiServerList{
 		ListMeta: metav1.ListMeta{
 			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
 		},
-		Items: []v0alpha1.DataSourceApiServer{
+		Items: []query.DataSourceApiServer{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "grafana-testdata-datasource",

@@ -2,9 +2,9 @@ package template
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	apidata "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
 type QueryTemplate struct {
@@ -36,7 +36,7 @@ type Target struct {
 	Variables map[string][]VariableReplacement `json:"variables"`
 
 	// Query target
-	Properties query.GenericDataQuery `json:"properties"`
+	Properties apidata.DataQuery `json:"properties"`
 }
 
 // TemplateVariable is the definition of a variable that will be interpolated
