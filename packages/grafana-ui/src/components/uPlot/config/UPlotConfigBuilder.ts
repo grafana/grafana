@@ -1,15 +1,7 @@
 import { merge } from 'lodash';
 import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
 
-import {
-  DataFrame,
-  DefaultTimeZone,
-  Field,
-  getTimeZoneInfo,
-  GrafanaTheme2,
-  TimeRange,
-  TimeZone,
-} from '@grafana/data';
+import { DataFrame, DefaultTimeZone, Field, getTimeZoneInfo, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
 import { AxisPlacement, VizOrientation } from '@grafana/schema';
 
 import { FacetedData, PlotConfig, PlotTooltipInterpolator } from '../types';
