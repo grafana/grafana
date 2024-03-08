@@ -40,7 +40,7 @@ const props = {
 describe('Signup Page', () => {
   it('renders correctly', () => {
     render(<SignupPage {...props} />);
-    expect(screen.getByRole('heading', { name: 'Welcome to Grafana' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Welcome to Oodle' })).toBeInTheDocument();
 
     expect(screen.getByRole('textbox', { name: 'Your name' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Email' })).toBeInTheDocument();
