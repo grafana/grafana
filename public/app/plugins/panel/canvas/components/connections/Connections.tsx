@@ -296,6 +296,7 @@ export class Connections {
     const sourceRect = this.selection.value!.source.div!.getBoundingClientRect();
 
     // calculate relative coordinates based on source and target coorindates of connection
+    // TODO account for zoom properly
     const { x1, y1, x2, y2 } = calculateCoordinates(
       sourceRect,
       parentBoundingRect,
@@ -327,18 +328,39 @@ export class Connections {
     this.connectionSVGVertex!.style.display = 'block';
 
     if (!event.buttons) {
-      console.log('done vertexing');
       this.scene.selecto?.rootContainer?.removeEventListener('mousemove', this.vertexListener);
       this.scene.selecto?.rootContainer?.removeEventListener('mouseup', this.vertexListener);
       this.scene.selecto!.rootContainer!.style.cursor = 'auto';
       this.connectionSVGVertex!.style.display = 'none';
 
       // call onChange here and update appropriate index of connection vertices array
+      const connectionIndex = this.selection.value?.index;
+      const vertexIndex = this.vertexIndex;
 
-      //console.log(this.connectionSource?.options.connections);
+      if (connectionIndex !== undefined && vertexIndex !== undefined) {
+        const currentSource = this.scene.connections.state[connectionIndex].source;
+        if (currentSource.options.connections) {
+          const currentConnections = [...currentSource.options.connections];
+          if (currentConnections[connectionIndex].vertices) {
+            const currentVertices = [...currentConnections[connectionIndex].vertices!];
+            const currentVertex = { ...currentVertices[vertexIndex] };
 
-      this.updateState();
-      this.scene.save();
+            currentVertex.x = (x - x1) / (x2 - x1);
+            currentVertex.y = (y - y1) / (y2 - y1);
+
+            currentVertices[vertexIndex] = currentVertex;
+            currentConnections[connectionIndex] = {
+              ...currentConnections[connectionIndex],
+              vertices: currentVertices,
+            };
+
+            currentSource.onChange({ ...currentSource.options, connections: currentConnections });
+
+            this.updateState();
+            this.scene.save();
+          }
+        }
+      }
     }
   };
 
