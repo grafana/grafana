@@ -107,7 +107,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 			if err != nil {
 				return rsp, err
 			}
-			exp, err := p.reader.ReadQuery(q.CommonQueryProperties, iter)
+			exp, err := p.reader.ReadQuery(q, iter)
 			if err != nil {
 				return rsp, err
 			}

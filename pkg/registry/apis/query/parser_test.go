@@ -62,7 +62,7 @@ func TestQuerySplitting(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, split.Requests, 1)
-		require.Equal(t, "now-6", split.Requests[0].Request.From)
+		require.Equal(t, "now-6h", split.Requests[0].Request.From)
 		require.Equal(t, "now", split.Requests[0].Request.To)
 	})
 

@@ -25,5 +25,5 @@
     ]
   },
   "expect": {},
-  "error": "cyclic references in query"
+  "error": "missing type"
 }

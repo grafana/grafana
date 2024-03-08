@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -10,111 +11,66 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/middleware/requestmeta"
-	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
+	"github.com/grafana/grafana/pkg/web"
 )
-
-type subQueryREST struct {
-	builder *QueryAPIBuilder
-}
-
-var (
-	_ rest.Storage              = (*subQueryREST)(nil)
-	_ rest.SingularNameProvider = (*subQueryREST)(nil)
-	_ rest.Creater              = (*subQueryREST)(nil)
-	_ rest.StorageMetadata      = (*subQueryREST)(nil)
-	_ rest.Scoper               = (*subQueryREST)(nil)
-)
-
-func (r *subQueryREST) New() runtime.Object {
-	return &query.QueryDataRequest{}
-}
-
-func (r *subQueryREST) Destroy() {}
-
-func (r *subQueryREST) ProducesMIMETypes(verb string) []string {
-	return []string{"application/json"} // and parquet!
-}
-
-func (r *subQueryREST) ProducesObject(verb string) interface{} {
-	return &query.QueryDataResponse{}
-}
-
-func (r *subQueryREST) NamespaceScoped() bool {
-	return true
-}
-
-func (r *subQueryREST) GetSingularName() string {
-	return "query"
-}
 
 // The query method (not really a create)
-func (r *subQueryREST) Create(ctx context.Context, obj runtime.Object, validator rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
-	ctx, span := r.builder.tracer.Start(ctx, "QueryService.Query")
+func (b *QueryAPIBuilder) doQuery(w http.ResponseWriter, r *http.Request) {
+	ctx, span := b.tracer.Start(r.Context(), "QueryService.Query")
 	defer span.End()
 
-	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	raw := &query.QueryDataRequest{}
+	err := web.Bind(r, raw)
 	if err != nil {
-		return nil, err
-	}
-	// We use the orgId from ctx, so need to make sure it was the same one requested
-	if info.OrgID < 1 {
-		return nil, fmt.Errorf("invalid namespace")
-	}
-
-	raw, ok := obj.(*query.QueryDataRequest)
-	if !ok {
-		return nil, fmt.Errorf("error reading request")
+		errhttp.Write(ctx, errutil.BadRequest(
+			"query.bind",
+			errutil.WithPublicMessage("Error reading query")).
+			Errorf("error reading: %w", err), w)
+		return
 	}
 
 	// Parses the request and splits it into multiple sub queries (if necessary)
-	req, err := r.builder.parser.parseRequest(ctx, raw)
+	req, err := b.parser.parseRequest(ctx, raw)
 	if err != nil {
-		return nil, err
+		errhttp.Write(ctx, errutil.BadRequest(
+			"query.parse",
+			errutil.WithPublicMessage("Error parsing query")).
+			Errorf("error parsing: %w", err), w)
+		return
 	}
 
 	// Actually run the query
-	rsp, err := r.execute(ctx, req)
+	rsp, err := b.execute(ctx, req)
 	if err != nil {
-		return nil, err
+		errhttp.Write(ctx, errutil.Internal(
+			"query.execution",
+			errutil.WithPublicMessage("Error executing query")).
+			Errorf("execution error: %w", err), w)
+		return
 	}
 
-	statusCode := http.StatusOK
-	for _, res := range rsp.Responses {
-		if res.Error != nil {
-			statusCode = http.StatusBadRequest
-			if r.builder.returnMultiStatus {
-				statusCode = http.StatusMultiStatus
-			}
-		}
-	}
-	if statusCode != http.StatusOK {
-		requestmeta.WithDownstreamStatusSource(ctx)
-	}
-	return &query.QueryDataResponse{
-		QueryDataResponse: *rsp,
-	}, err
+	w.WriteHeader(query.GetResponseCode(rsp))
+	_ = json.NewEncoder(w).Encode(rsp)
 }
 
-func (r *subQueryREST) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
+func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
 	switch len(req.Requests) {
 	case 0:
 		break // nothing to do
 	case 1:
-		qdr, err = r.builder.handleQuerySingleDatasource(ctx, req.Requests[0])
+		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
 	default:
-		qdr, err = r.builder.executeConcurrentQueries(ctx, req.Requests)
+		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
 	}
 
 	if len(req.Expressions) > 0 {
-		qdr, err = r.builder.handleExpressions(ctx, req, qdr)
+		qdr, err = b.handleExpressions(ctx, req, qdr)
 	}
 
 	// Remove hidden results

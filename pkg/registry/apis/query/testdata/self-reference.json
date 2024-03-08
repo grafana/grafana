@@ -15,5 +15,6 @@
       }
     ]
   },
-  "error": "expression [A] can not depend on itself"
+  "expect": {},
+  "error": "missing type"
 }

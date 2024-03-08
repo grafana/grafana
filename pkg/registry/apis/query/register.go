@@ -1,6 +1,8 @@
 package query
 
 import (
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -12,6 +14,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
@@ -133,7 +136,6 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 
 	storage := map[string]rest.Storage{}
 	storage[plugins.resourceInfo.StoragePath()] = plugins
-	storage["query"] = &subQueryREST{builder: b}
 
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 	return &apiGroupInfo, nil
@@ -145,12 +147,130 @@ func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 
 // Register additional routes with the server
 func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
+	routes := &builder.APIRoutes{
+		Namespace: []builder.APIRouteHandler{
+			{
+				Path: "query",
+				Spec: &spec3.PathProps{
+					Post: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Tags:        []string{"query"},
+							Summary:     "Query",
+							Description: "longer description here?",
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										In:          "path",
+										Required:    true,
+										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
+									},
+								},
+							},
+							RequestBody: &spec3.RequestBody{
+								RequestBodyProps: spec3.RequestBodyProps{
+									Content: map[string]*spec3.MediaType{
+										"application/json": {
+											MediaTypeProps: spec3.MediaTypeProps{
+												Schema: spec.RefSchema("#/components/schemas/" + QueryRequestSchemaKey),
+												Examples: map[string]*spec3.Example{
+													"A": {
+														ExampleProps: spec3.ExampleProps{
+															Summary:     "Random walk (testdata)",
+															Description: "Use testdata to execute a random walk query",
+															Value: `{
+																"queries": [
+																	{
+																		"refId": "A",
+																		"scenarioId": "random_walk_table",
+																		"seriesCount": 1,
+																		"datasource": {
+																		"type": "grafana-testdata-datasource",
+																		"uid": "PD8C576611E62080A"
+																		},
+																		"intervalMs": 60000,
+																		"maxDataPoints": 20
+																	}
+																],
+																"from": "now-6h",
+																"to": "now"
+															}`,
+														},
+													},
+													"B": {
+														ExampleProps: spec3.ExampleProps{
+															Summary:     "With deprecated datasource name",
+															Description: "Includes an old style string for datasource reference",
+															Value: `{
+																"queries": [
+																	{
+																		"refId": "A",
+																		"datasource": {
+																			"type": "grafana-googlesheets-datasource",
+																			"uid": "b1808c48-9fc9-4045-82d7-081781f8a553"
+																		},
+																		"cacheDurationSeconds": 300,
+																		"spreadsheet": "spreadsheetID",
+																		"datasourceId": 4,
+																		"intervalMs": 30000,
+																		"maxDataPoints": 794
+																	},
+																	{
+																		"refId": "Z",
+																		"datasource": "old",
+																		"maxDataPoints": 10,
+																		"timeRange": {
+																			"from": "100",
+																			"to": "200"
+																		}
+																	}
+																],
+																"from": "now-6h",
+																"to": "now"
+															}`,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: spec.StringProperty(), // TODO!!!
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: b.doQuery,
+			},
+		},
+	}
+	return routes
 }
 
 func (b *QueryAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return nil // default is OK
 }
+
+const QueryRequestSchemaKey = "QueryRequestSchema"
+const QueryPayloadSchemaKey = "QueryPayloadSchema"
 
 func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	// The plugin description
@@ -159,86 +279,24 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	// The root api URL
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 
-	// Adding in sample queries
-	sub := oas.Paths.Paths[root+"namespaces/{namespace}/query"]
-	if sub != nil && sub.Post != nil {
-		params := []*spec3.Parameter{}
-		for _, p := range sub.Parameters {
-			if p.Name == "namespace" { // maybe pretty & dryRun?
-				p.Schema.Default = "default"
-				params = append(params, p)
-			}
-		}
-		sub.Parameters = params
-		content := sub.Post.RequestBody.Content
-		content["application/json"] = &spec3.MediaType{
-			MediaTypeProps: spec3.MediaTypeProps{
-				Schema: content["*/*"].Schema,
-				Examples: map[string]*spec3.Example{
-					"A": {
-						ExampleProps: spec3.ExampleProps{
-							Summary:     "Random walk (testdata)",
-							Description: "Use testdata to execute a random walk query",
-							Value: `{
-								"queries": [
-									{
-										"refId": "A",
-										"scenarioId": "random_walk_table",
-										"seriesCount": 1,
-										"datasource": {
-										"type": "grafana-testdata-datasource",
-										"uid": "PD8C576611E62080A"
-										},
-										"intervalMs": 60000,
-										"maxDataPoints": 20
-									}
-								],
-								"from": "now-6h",
-								"to": "now"
-							}`,
-						},
-					},
-					"B": {
-						ExampleProps: spec3.ExampleProps{
-							Summary:     "With deprecated datasource name",
-							Description: "Includes an old style string for datasource reference",
-							Value: `{
-								"queries": [
-									{
-										"refId": "A",
-										"datasource": {
-											"type": "grafana-googlesheets-datasource",
-											"uid": "b1808c48-9fc9-4045-82d7-081781f8a553"
-										},
-										"cacheDurationSeconds": 300,
-										"spreadsheet": "spreadsheetID",
-										"datasourceId": 4,
-										"intervalMs": 30000,
-										"maxDataPoints": 794
-									},
-									{
-										"refId": "Z",
-										"datasource": "old",
-										"maxDataPoints": 10,
-										"timeRange": {
-											"from": "100",
-											"to": "200"
-										}
-									}
-								],
-								"from": "now-6h",
-								"to": "now"
-							}`,
-						},
-					},
-				},
-			},
-		}
-		delete(content, "*/*") // does not accept anything
+	var err error
+	opts := schemabuilder.QuerySchemaOptions{
+		PluginID:   []string{""},
+		QueryTypes: []data.QueryTypeDefinition{},
+		Mode:       schemabuilder.SchemaTypeQueryPayload,
+	}
+	oas.Components.Schemas[QueryPayloadSchemaKey], err = schemabuilder.GetQuerySchema(opts)
+	if err != nil {
+		return oas, err
+	}
+	opts.Mode = schemabuilder.SchemaTypeQueryRequest
+	oas.Components.Schemas[QueryRequestSchemaKey], err = schemabuilder.GetQuerySchema(opts)
+	if err != nil {
+		return oas, err
 	}
 
 	// The root API discovery list
-	sub = oas.Paths.Paths[root]
+	sub := oas.Paths.Paths[root]
 	if sub != nil && sub.Get != nil {
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}

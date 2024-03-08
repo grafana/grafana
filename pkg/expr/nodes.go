@@ -134,10 +134,10 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		if err != nil {
 			return nil, err
 		}
-		q, err := reader.ReadQuery(data.CommonQueryProperties{
-			RefID:     rn.RefID,
-			QueryType: rn.QueryType,
-		}, iter)
+		q, err := reader.ReadQuery(data.NewDataQuery(map[string]any{
+			"refId": rn.RefID,
+			"type":  rn.QueryType,
+		}), iter)
 		if err != nil {
 			return nil, err
 		}
