@@ -81,7 +81,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   theme,
   timeZones,
   getTimeRange,
-  eventBus,
   sync,
   allFrames,
   renderers,

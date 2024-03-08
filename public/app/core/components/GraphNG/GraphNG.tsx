@@ -89,8 +89,6 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   static contextType = PanelContextRoot;
   private plotInstance: React.RefObject<uPlot>;
 
-  // private subscription = new Subscription();
-
   constructor(props: GraphNGProps) {
     super(props);
     let state = this.prepState(props);

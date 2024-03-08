@@ -4,7 +4,6 @@ import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from
 import {
   DataFrame,
   DefaultTimeZone,
-  EventBus,
   Field,
   getTimeZoneInfo,
   GrafanaTheme2,
@@ -306,7 +305,6 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   theme: GrafanaTheme2;
   timeZones: TimeZone[];
   getTimeRange: () => TimeRange;
-  eventBus: EventBus;
   allFrames: DataFrame[];
   renderers?: Renderers;
   tweakScale?: (opts: ScaleProps, forField: Field) => ScaleProps;
