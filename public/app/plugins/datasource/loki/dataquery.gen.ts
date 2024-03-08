@@ -48,10 +48,6 @@ export interface LokiDataQuery extends common.DataQuery {
    */
   legendFormat?: string;
   /**
-   * Used to override the name of the series.
-   */
-  legendUrlFormat?: string;
-  /**
    * Used to limit the number of log rows returned.
    */
   maxLines?: number;

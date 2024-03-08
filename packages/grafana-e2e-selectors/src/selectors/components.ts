@@ -86,7 +86,6 @@ export const Components = {
         editorToggle: 'data-testid QueryEditorModeToggle', // wrapper for toggle
         options: 'data-testid prometheus options', // wrapper for options group
         legend: 'data-testid prometheus legend wrapper', // wrapper for multiple compomnents
-        legendUrl: 'data-testid prometheus legendUrl wrapper', // wrapper for multiple compomnents
         format: 'data-testid prometheus format',
         step: 'prometheus-step', // id for autosize component
         type: 'data-testid prometheus type', //wrapper for radio button group

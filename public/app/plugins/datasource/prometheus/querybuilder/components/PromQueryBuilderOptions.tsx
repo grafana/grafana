@@ -12,7 +12,6 @@ import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 
 import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from './PromQueryEditorSelector';
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
-import { getLegendUrlModeLabel, PromQueryLegendUrlEditor } from './PromQueryLegendUrlEditor';
 
 export interface UIOptions {
   exemplars: boolean;
@@ -20,7 +19,6 @@ export interface UIOptions {
   format: boolean;
   minStep: boolean;
   legend: boolean;
-  legendUrl: boolean;
   resolution: boolean;
 }
 
@@ -61,6 +59,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
   const formatOption = FORMAT_OPTIONS.find((option) => option.value === query.format) || FORMAT_OPTIONS[0];
   const queryTypeValue = getQueryTypeValue(query);
   const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryTypeValue)!.label;
+
   return (
     <EditorRow>
       <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.options}>
@@ -71,11 +70,6 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
           <PromQueryLegendEditor
             legendFormat={query.legendFormat}
             onChange={(legendFormat) => onChange({ ...query, legendFormat })}
-            onRunQuery={onRunQuery}
-          />
-          <PromQueryLegendUrlEditor
-            legendUrlFormat={query.legendUrlFormat}
-            onChange={(legendUrlFormat) => onChange({ ...query, legendUrlFormat })}
             onRunQuery={onRunQuery}
           />
           <EditorField
@@ -151,7 +145,6 @@ function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: str
   const items: string[] = [];
 
   items.push(`Legend: ${getLegendModeLabel(query.legendFormat)}`);
-  items.push(`URL: ${getLegendUrlModeLabel(query.legendUrlFormat)}`);
   items.push(`Format: ${formatOption}`);
   items.push(`Step: ${query.interval ?? 'auto'}`);
   items.push(`Type: ${queryType}`);
