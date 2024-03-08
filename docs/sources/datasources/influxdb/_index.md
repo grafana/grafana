@@ -203,9 +203,8 @@ datasources:
     access: proxy
     url: http://localhost:8086
     jsonData:
-      version: SQL
-      metadata:
-        - database: <bucket-name>
+      dbName: site
+      httpHeaderName1: 'Authorization'
     secureJsonData:
       httpHeaderValue1: 'Token <token>'
 ```
@@ -216,7 +215,7 @@ datasources:
 apiVersion: 1
 
 datasources:
-  - name: InfluxDB_v2_InfluxQL
+  - name: InfluxDB_v3_InfluxQL
     type: influxdb
     access: proxy
     url: http://localhost:8086
