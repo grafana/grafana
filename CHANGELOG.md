@@ -4,6 +4,7 @@
 
 ### Features and enhancements
 
+- **PrometheusAPI:** Support "gzip" header for prometheus api.[#](https://github.com/grafana/grafana/issues/84116),[@wanghaao](https://github.com/wanghaao)
 - **Chore:** Improve domain validation for Google OAuth - Backport 83229 to v10.4.x. [#83726](https://github.com/grafana/grafana/issues/83726), [@linoman](https://github.com/linoman)
 - **DataQuery:** Track panel plugin id not type. [#83164](https://github.com/grafana/grafana/issues/83164), [@torkelo](https://github.com/torkelo)
 - **AuthToken:** Remove client token rotation feature toggle. [#82886](https://github.com/grafana/grafana/issues/82886), [@kalleep](https://github.com/kalleep)

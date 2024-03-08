@@ -2,6 +2,7 @@ package querydata
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"io"
 	"net/http"
@@ -27,6 +28,23 @@ func TestQueryData_parseResponse(t *testing.T) {
 	t.Run("resultType is after the result field must parsed normally", func(t *testing.T) {
 		resBody := `{"data":{"result":[{"metric":{"__name__":"some_name","environment":"some_env","id":"some_id","instance":"some_instance:1234","job":"some_job","name":"another_name","region":"some_region"},"value":[1.1,"2"]}],"resultType":"vector"},"status":"success"}`
 		res := &http.Response{Body: io.NopCloser(bytes.NewBufferString(resBody))}
+		result := qd.parseResponse(context.Background(), &models.Query{}, res, false)
+		assert.Nil(t, result.Error)
+		assert.Len(t, result.Frames, 1)
+	})
+
+	t.Run("unGzip response data", func(t *testing.T) {
+		resBody := `{"data":{"result":[{"metric":{"__name__":"some_name","environment":"some_env","id":"some_id","instance":"some_instance:1234","job":"some_job","name":"another_name","region":"some_region"},"value":[1.1,"2"]}],"resultType":"vector"},"status":"success"}`
+		bytsBody := []byte(resBody)
+		buffer := bytes.NewBuffer(make([]byte, 0, 1024))
+		gzipW := gzip.NewWriter(buffer)
+		_, err := gzipW.Write(bytsBody)
+		assert.Nil(t, err)
+		err = gzipW.Close()
+		assert.Nil(t, err)
+		res := &http.Response{Body: io.NopCloser(bytes.NewBuffer(buffer.Bytes()))}
+		res.Header = make(http.Header)
+		res.Header.Add("Content-Encoding", "gzip")
 		result := qd.parseResponse(context.Background(), &models.Query{}, res, false)
 		assert.Nil(t, result.Error)
 		assert.Len(t, result.Frames, 1)
