@@ -5,17 +5,19 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
-	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
+	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -73,9 +75,14 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 	case "query.grafana.app":
 		return query.NewQueryAPIBuilder(
 			featuremgmt.WithFeatures(),
-			runner.NewDummyTestRunner(),
-			runner.NewDummyRegistry(),
-		), nil
+			&query.CommonDataSourceClientSupplier{
+				Client: client.NewTestDataClient(),
+			},
+			client.NewTestDataRegistry(),
+			nil,                               // legacy lookup
+			prometheus.NewRegistry(),          // ???
+			tracing.InitializeTracerForTest(), // ???
+		)
 
 	case "featuretoggle.grafana.app":
 		return featuretoggle.NewFeatureFlagAPIBuilder(

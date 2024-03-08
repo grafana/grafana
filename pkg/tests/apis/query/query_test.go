@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -49,16 +48,22 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 			Version: "v0alpha1",
 		})
 
-		q := query.GenericDataQuery{
-			Datasource: &query.DataSourceRef{
-				Type: "grafana-testdata-datasource",
-				UID:  ds.UID,
+		q := data.DataQuery{
+			CommonQueryProperties: data.CommonQueryProperties{
+				Datasource: &data.DataSourceRef{
+					Type: "grafana-testdata-datasource",
+					UID:  ds.UID,
+				},
 			},
 		}
-		q.AdditionalProperties()["csvContent"] = "a,b,c\n1,hello,true"
-		q.AdditionalProperties()["scenarioId"] = "csv_content"
-		body, err := json.Marshal(&query.GenericQueryRequest{Queries: []query.GenericDataQuery{q}})
+		q.Set("csvContent", "a,b,c\n1,hello,true")
+		q.Set("scenarioId", `csv_content`)
+		body, err := json.Marshal(&data.QueryDataRequest{
+			Queries: []data.DataQuery{q},
+		})
 		require.NoError(t, err)
+
+		fmt.Printf("%s\n", string(body))
 
 		result := client.Post().
 			Namespace("default").

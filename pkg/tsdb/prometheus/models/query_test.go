@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/intervalv2"
@@ -17,6 +19,47 @@ var (
 	now                = time.Now()
 	intervalCalculator = intervalv2.NewCalculator()
 )
+
+func TestQueryTypeDefinitions(t *testing.T) {
+	builder, err := schemabuilder.NewSchemaBuilder(
+		schemabuilder.BuilderOptions{
+			PluginID: []string{"prometheus"},
+			ScanCode: []schemabuilder.CodePaths{{
+				BasePackage: "github.com/grafana/grafana/pkg/tsdb/prometheus/models",
+				CodePath:    "./",
+			}},
+			Enums: []reflect.Type{
+				reflect.TypeOf(models.PromQueryFormatTimeSeries), // pick an example value (not the root)
+				reflect.TypeOf(models.QueryEditorModeCode),       // pick an example value (not the root)
+			},
+		})
+	require.NoError(t, err)
+	err = builder.AddQueries(
+		schemabuilder.QueryTypeInfo{
+			Name:   "default",
+			GoType: reflect.TypeOf(&models.PrometheusQueryProperties{}),
+			Examples: []data.QueryExample{
+				{
+					Name: "example timeseries",
+					SaveModel: data.AsUnstructured(models.PrometheusQueryProperties{
+						Format: models.PromQueryFormatTimeSeries,
+						Expr:   "???",
+					}),
+				},
+				{
+					Name: "example table",
+					SaveModel: data.AsUnstructured(models.PrometheusQueryProperties{
+						Format: models.PromQueryFormatTable,
+						Expr:   "something",
+					}),
+				},
+			},
+		},
+	)
+
+	require.NoError(t, err)
+	builder.UpdateQueryDefinition(t, "./")
+}
 
 func TestParse(t *testing.T) {
 	t.Run("parsing query from unified alerting", func(t *testing.T) {
