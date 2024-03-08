@@ -2,7 +2,7 @@
 
 ARG BASE_IMAGE=alpine:3.18.3
 ARG JS_IMAGE=node:20-alpine3.18
-ARG JS_PLATFORM=linux/amd64
+ARG JS_PLATFORM=linux/arm64
 ARG GO_IMAGE=golang:1.21.5-alpine3.18
 
 ARG GO_SRC=go-builder
@@ -19,6 +19,8 @@ COPY .yarn .yarn
 COPY packages packages
 COPY plugins-bundled plugins-bundled
 COPY public public
+
+RUN apk add --no-cache git make clang build-base python3
 
 RUN yarn install --immutable
 
