@@ -23,6 +23,10 @@ weight: 1000
 
 This topic describes how to configure GitLab OAuth2 authentication.
 
+{{% admonition type="note" %}}
+If Users use the same email address in GitLab that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
+{{% /admonition %}}
+
 ## Before you begin
 
 Ensure you know how to create a GitLab OAuth application. Consult GitLab's documentation on [creating a GitLab OAuth application](https://docs.gitlab.com/ee/integration/oauth_provider.html) for more information.
