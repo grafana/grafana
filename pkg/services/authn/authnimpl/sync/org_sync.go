@@ -72,7 +72,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 			// update role
 			cmd := &org.UpdateOrgUserCommand{OrgID: orga.OrgID, UserID: userID, Role: extRole}
 			if err := s.orgService.UpdateOrgUser(ctx, cmd); err != nil {
-				s.log.FromContext(ctx).Error("Failed to update active org user", "id", id.ID, "error", err)
+				ctxLogger.Error("Failed to update active org user", "id", id.ID, "error", err)
 				return err
 			}
 		}
@@ -90,7 +90,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		cmd := &org.AddOrgUserCommand{UserID: userID, Role: orgRole, OrgID: orgId}
 		err := s.orgService.AddOrgUser(ctx, cmd)
 		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
-			s.log.FromContext(ctx).Error("Failed to update active org for user", "id", id.ID, "error", err)
+			ctxLogger.Error("Failed to update active org for user", "id", id.ID, "error", err)
 			return err
 		}
 	}
@@ -100,7 +100,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		ctxLogger.Debug("Removing user's organization membership as part of syncing with OAuth login", "id", id.ID, "orgId", orgID)
 		cmd := &org.RemoveOrgUserCommand{OrgID: orgID, UserID: userID}
 		if err := s.orgService.RemoveOrgUser(ctx, cmd); err != nil {
-			s.log.FromContext(ctx).Error("Failed to remove user from org", "id", id.ID, "orgId", orgID, "error", err)
+			ctxLogger.Error("Failed to remove user from org", "id", id.ID, "orgId", orgID, "error", err)
 			if errors.Is(err, org.ErrLastOrgAdmin) {
 				continue
 			}
