@@ -446,8 +446,21 @@ export function prepareTimelineFields(
   const frames: DataFrame[] = [];
 
   for (let frame of series) {
-    let startFieldIdx = frame.fields.findIndex((f) => f.type === FieldType.time);
-    let endFieldIdx = frame.fields.findLastIndex((f) => f.type === FieldType.time);
+    let startFieldIdx = -1;
+    let endFieldIdx = -1;
+
+    for (let i = 0; i < frame.fields.length; i++) {
+      let f = frame.fields[i];
+
+      if (f.type === FieldType.time) {
+        if (startFieldIdx === -1) {
+          startFieldIdx = i;
+        } else if (endFieldIdx === -1) {
+          endFieldIdx = i;
+          break;
+        }
+      }
+    }
 
     let isTimeseries = startFieldIdx !== -1;
     let changed = false;
@@ -455,7 +468,7 @@ export function prepareTimelineFields(
 
     // if we have a second time field, assume it is state end timestamps
     // and insert nulls into the data at the end timestamps
-    if (endFieldIdx !== -1 && endFieldIdx !== startFieldIdx) {
+    if (endFieldIdx !== -1) {
       let startFrame: DataFrame = {
         ...frame,
         fields: frame.fields.filter((f, i) => i !== endFieldIdx),
