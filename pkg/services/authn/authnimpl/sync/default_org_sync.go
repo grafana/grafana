@@ -61,10 +61,10 @@ func (s *DefaultOrgSync) SetDefaultOrg(ctx context.Context, currentIdentity *aut
 	return nil
 }
 
-func (h *DefaultOrgSync) validateUsingOrg(ctx context.Context, userID int64, orgID int64) bool {
+func (s *DefaultOrgSync) validateUsingOrg(ctx context.Context, userID int64, orgID int64) bool {
 	query := org.GetUserOrgListQuery{UserID: userID}
 
-	result, err := h.orgService.GetUserOrgList(ctx, &query)
+	result, err := s.orgService.GetUserOrgList(ctx, &query)
 	if err != nil {
 		return false
 	}
