@@ -113,7 +113,6 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
       }
 
       let spanNulls = field.config.custom?.spanNulls;
-
       return spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND;
     },
   });
