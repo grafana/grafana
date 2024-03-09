@@ -1,4 +1,14 @@
-import { createTheme, FieldType, ThresholdsMode, TimeRange, toDataFrame, dateTime, DataFrame, fieldMatchers, FieldMatcherID } from '@grafana/data';
+import {
+  createTheme,
+  FieldType,
+  ThresholdsMode,
+  TimeRange,
+  toDataFrame,
+  dateTime,
+  DataFrame,
+  fieldMatchers,
+  FieldMatcherID,
+} from '@grafana/data';
 import { LegendDisplayMode, VizLegendOptions } from '@grafana/schema';
 
 import { preparePlotFrame } from '../GraphNG/utils';
@@ -121,45 +131,24 @@ describe('prepare timeline graph', () => {
 
     const info = prepareTimelineFields(frames, true, timeRange2, theme);
 
+    let joined = preparePlotFrame(
+      info.frames!,
+      {
+        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        y: fieldMatchers.get(FieldMatcherID.byType).get('string'),
+      },
+      timeRange2
+    );
 
-    let joined = preparePlotFrame(info.frames!, {
-      x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-      y: fieldMatchers.get(FieldMatcherID.byType).get('string'),
-    }, timeRange2);
-
-    let vals = joined!.fields.map(f => f.values);
+    let vals = joined!.fields.map((f) => f.values);
 
     expect(vals).toEqual([
-        [
-          1709107200000,
-          1709110800000,
-          1709114400000,
-          1709116200000,
-          1709118000000,
-          1709123400000,
-          1709127000000,
-          1709128800000,
-        ],
-        [
-          "OK",
-          undefined,
-          null,
-          undefined,
-          "NO_DATA",
-          undefined,
-          undefined,
-          null,
-        ],
-        [
-          undefined,
-          "ERROR",
-          undefined,
-          null,
-          undefined,
-          "WARNING",
-          null,
-          undefined,
-        ],
+      [
+        1709107200000, 1709110800000, 1709114400000, 1709116200000, 1709118000000, 1709123400000, 1709127000000,
+        1709128800000,
+      ],
+      ['OK', undefined, null, undefined, 'NO_DATA', undefined, undefined, null],
+      [undefined, 'ERROR', undefined, null, undefined, 'WARNING', null, undefined],
     ]);
   });
 });

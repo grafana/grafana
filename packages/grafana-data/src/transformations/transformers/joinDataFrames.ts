@@ -101,7 +101,8 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   }
 
   const nullMode =
-    options.nullMode ?? ((field: Field) => {
+    options.nullMode ??
+    ((field: Field) => {
       let spanNulls = field.config.custom?.spanNulls;
       return spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND;
     });

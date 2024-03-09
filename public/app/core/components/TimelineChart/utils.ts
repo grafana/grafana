@@ -469,7 +469,7 @@ export function prepareTimelineFields(
       frame = outerJoinDataFrames({
         frames: [startFrame, endFrame],
         keepDisplayNames: true,
-        nullMode: () => NULL_RETAIN
+        nullMode: () => NULL_RETAIN,
       })!;
 
       frame.fields.forEach((f, i) => {
