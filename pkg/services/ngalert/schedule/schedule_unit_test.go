@@ -360,9 +360,10 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 	t.Run("when rule exists", func(t *testing.T) {
 		t.Run("it should stop evaluation loop and remove the controller from registry", func(t *testing.T) {
 			sch := setupScheduler(t, nil, nil, nil, nil, nil)
+			ruleFactory := ruleFactoryFromScheduler(sch)
 			rule := models.AlertRuleGen()()
 			key := rule.GetKey()
-			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
+			info, _ := sch.registry.getOrCreateInfo(context.Background(), key, ruleFactory)
 			sch.deleteAlertRule(key)
 			require.ErrorIs(t, info.ctx.Err(), errRuleDeleted)
 			require.False(t, sch.registry.exists(key))

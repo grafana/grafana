@@ -23,7 +23,7 @@ After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the
 
 The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ change this file.
 
-Depending on your OS, your custom configuration file is either the `$WORKING_DIR/conf/defaults.ini` file or the `/usr/local/etc/grafana/grafana.ini` file. The custom configuration file path can be overridden using the `--config` parameter.
+Depending on your OS, your custom configuration file is either the `$WORKING_DIR/conf/custom.ini` file or the `/usr/local/etc/grafana/grafana.ini` file. The custom configuration file path can be overridden using the `--config` parameter.
 
 ### Linux
 
@@ -833,7 +833,7 @@ The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For
 
 ### verify_email_enabled
 
-Require email validation before sign up completes. Default is `false`.
+Require email validation before sign up completes or when updating a user email address. Default is `false`.
 
 ### login_default_org_id
 
@@ -881,6 +881,12 @@ Default is `false`.
 The duration in time a user invitation remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
+
+### verification_email_max_lifetime_duration
+
+The duration in time a verification email, used to update the email address of a user, remains valid before expiring.
+This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
+Default is 1h (1 hour).
 
 ### hidden_users
 
@@ -1606,11 +1612,11 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ### execute_alerts
 
-Enable or disable alerting rule execution. The default value is `true`. The alerting UI remains visible. This option has a [legacy version in the alerting section]({{< relref "#execute_alerts-1" >}}) that takes precedence.
+Enable or disable alerting rule execution. The default value is `true`. The alerting UI remains visible.
 
 ### evaluation_timeout
 
-Sets the alert evaluation timeout when fetching data from the data source. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds" >}}) that takes precedence.
+Sets the alert evaluation timeout when fetching data from the data source. The default value is `30s`.
 
 The timeout string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
@@ -1620,7 +1626,7 @@ Sets a maximum number of times we'll attempt to evaluate an alert rule before gi
 
 ### min_interval
 
-Sets the minimum interval to enforce between rule evaluations. The default value is `10s` which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as we'll schedule fewer evaluations over time. This option has [a legacy version in the alerting section]({{< relref "#min_interval_seconds" >}}) that takes precedence.
+Sets the minimum interval to enforce between rule evaluations. The default value is `10s` which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as we'll schedule fewer evaluations over time.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
@@ -1685,68 +1691,6 @@ If `false` or unset, existing Grafana Alerting data is not changed or deleted wh
 {{% admonition type="note" %}}
 It should be kept false when not needed, as it may cause unintended data loss if left enabled.
 {{% /admonition %}}
-
-<hr>
-
-## [alerting]
-
-For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts](/docs/grafana/v8.5/alerting/old-alerting/).
-
-### enabled
-
-Set to `true` to [enable legacy dashboard alerting]({{< relref "#unified_alerting" >}}). The default value is `false`.
-
-### execute_alerts
-
-Turns off alert rule execution, but alerting is still visible in the Grafana UI.
-
-### error_or_timeout
-
-Default setting for new alert rules. Defaults to categorize error and timeouts as alerting. (alerting, keep_state)
-
-### nodata_or_nullvalues
-
-Defines how Grafana handles nodata or null values in alerting. Options are `alerting`, `no_data`, `keep_state`, and `ok`. Default is `no_data`.
-
-### concurrent_render_limit
-
-Alert notifications can include images, but rendering many images at the same time can overload the server.
-This limit protects the server from render overloading and ensures notifications are sent out quickly. Default value is `5`.
-
-### evaluation_timeout_seconds
-
-Sets the alert calculation timeout. Default value is `30`.
-
-### notification_timeout_seconds
-
-Sets the alert notification timeout. Default value is `30`.
-
-### max_attempts
-
-Sets a maximum limit on attempts to sending alert notifications. Default value is `3`.
-
-### min_interval_seconds
-
-Sets the minimum interval between rule evaluations. Default value is `1`.
-
-> **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
-
-### max_annotation_age
-
-{{% admonition type="note" %}}
-This option is deprecated - See `max_age` option in [unified_alerting.state_history.annotations]({{< relref "#unified_alertingstate_historyannotations" >}}) instead.
-{{% /admonition %}}
-
-Configures for how long alert annotations are stored. Default is 0, which keeps them forever.
-This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
-
-### max_annotations_to_keep
-
-{{% admonition type="note" %}}
-This option is deprecated - See `max_annotations_to_keep` option in [unified_alerting.state_history.annotations]({{< relref "#unified_alertingstate_historyannotations" >}}) instead.
-{{% /admonition %}}
-
-Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
 
 <hr>
 
@@ -2214,7 +2158,11 @@ Set to `true` if you want to test alpha panels that are not yet ready for genera
 
 ### disable_sanitize_html
 
-If set to true Grafana will allow script tags in text panels. Not recommended as it enables XSS vulnerabilities. Default is false. This setting was introduced in Grafana v6.0.
+{{% admonition type="note" %}}
+This configuration is not available in Grafana Cloud instances.
+{{% /admonition %}}
+
+If set to true Grafana will allow script tags in text panels. Not recommended as it enables XSS vulnerabilities. Default is false.
 
 ## [plugins]
 
