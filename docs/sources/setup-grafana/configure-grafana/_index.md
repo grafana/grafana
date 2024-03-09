@@ -837,7 +837,7 @@ Require email validation before sign up completes. Default is `false`.
 
 ### login_default_org_id
 
-Set the default organization for users when they log in. The default is `-1`.
+Set the default organization for users when they sign in. The default is `-1`.
 
 ### login_hint
 
