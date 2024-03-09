@@ -545,6 +545,7 @@ export function prepareTimelineFields(
               },
             },
           };
+          changed = true;
           fields.push(field);
           break;
         default:
