@@ -33,7 +33,11 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
-import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import {
+  buildGridItemForLibPanel,
+  buildGridItemForPanel,
+  transformSaveModelToScene,
+} from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
@@ -57,6 +61,7 @@ import {
 import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
 import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
+import { LibraryVizPanel } from './LibraryVizPanel';
 import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
@@ -480,7 +485,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       return;
     }
 
-    const gridItem = vizPanel.parent;
+    let gridItem = vizPanel.parent;
+
+    if (vizPanel.parent instanceof LibraryVizPanel) {
+      const libraryVizPanel = vizPanel.parent;
+
+      if (!libraryVizPanel.parent) {
+        return;
+      }
+
+      gridItem = libraryVizPanel.parent;
+    }
 
     const jsonData = gridItemToPanel(gridItem);
 
@@ -497,8 +512,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const jsonData = store.get(LS_PANEL_COPY_KEY);
     const jsonObj = JSON.parse(jsonData);
     const panelModel = new PanelModel(jsonObj);
+    const gridItem = !panelModel.libraryPanel
+      ? buildGridItemForPanel(panelModel)
+      : buildGridItemForLibPanel(panelModel);
 
-    const gridItem = buildGridItemForPanel(panelModel);
     const sceneGridLayout = this.state.body;
 
     if (!(gridItem instanceof SceneGridItem) && !(gridItem instanceof PanelRepeaterGridItem)) {
@@ -507,7 +524,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     const panelId = dashboardSceneGraph.getNextPanelId(this);
 
-    if (gridItem instanceof SceneGridItem && gridItem.state.body) {
+    if (gridItem instanceof SceneGridItem && gridItem.state.body instanceof LibraryVizPanel) {
+      const panelKey = getVizPanelKeyForPanelId(panelId);
+
+      gridItem.state.body.setState({ panelKey });
+
+      const vizPanel = gridItem.state.body.state.panel;
+
+      if (vizPanel instanceof VizPanel) {
+        vizPanel.setState({ key: panelKey });
+      }
+    } else if (gridItem instanceof SceneGridItem && gridItem.state.body) {
       gridItem.state.body.setState({
         key: getVizPanelKeyForPanelId(panelId),
       });
@@ -531,6 +558,66 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     this.setState({ hasCopiedPanel: false });
     store.delete(LS_PANEL_COPY_KEY);
+  }
+
+  public removePanel(panel: VizPanel) {
+    const panels: SceneObject[] = [];
+    const key = panel.parent instanceof LibraryVizPanel ? panel.parent.parent?.state.key : panel.parent?.state.key;
+
+    if (!key) {
+      return;
+    }
+
+    let row: SceneGridRow | undefined;
+
+    try {
+      row = sceneGraph.getAncestor(panel, SceneGridRow);
+    } catch {
+      row = undefined;
+    }
+
+    if (row) {
+      row.forEachChild((child: SceneObject) => {
+        if (child.state.key !== key) {
+          panels.push(child);
+        }
+      });
+
+      row.setState({ children: panels });
+
+      this.state.body.forceRender();
+
+      return;
+    }
+
+    this.state.body.forEachChild((child: SceneObject) => {
+      if (child.state.key !== key) {
+        panels.push(child);
+      }
+    });
+
+    const layout = this.state.body;
+
+    if (layout instanceof SceneGridLayout || layout instanceof SceneFlexLayout) {
+      layout.setState({ children: panels });
+    }
+  }
+
+  public unlinkLibraryPanel(panel: LibraryVizPanel) {
+    if (!panel.parent) {
+      return;
+    }
+
+    const gridItem = panel.parent;
+
+    if (!(gridItem instanceof SceneGridItem || gridItem instanceof PanelRepeaterGridItem)) {
+      console.error('Trying to duplicate a panel in a layout that is not SceneGridItem or PanelRepeaterGridItem');
+      return;
+    }
+
+    gridItem?.setState({
+      body: panel.state.panel?.clone(),
+    });
   }
 
   public showModal(modal: SceneObject) {

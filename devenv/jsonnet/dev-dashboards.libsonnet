@@ -91,6 +91,7 @@
     "table_sparkline_cell": (import '../dev-dashboards/panel-table/table_sparkline_cell.json'),
     "table_tests": (import '../dev-dashboards/panel-table/table_tests.json'),
     "table_tests_new": (import '../dev-dashboards/panel-table/table_tests_new.json'),
+    "tall_dashboard": (import '../dev-dashboards/scenarios/tall_dashboard.json'),
     "templating-dashboard-links-and-variables": (import '../dev-dashboards/feature-templating/templating-dashboard-links-and-variables.json'),
     "templating-repeating-panels": (import '../dev-dashboards/feature-templating/templating-repeating-panels.json'),
     "templating-repeating-rows": (import '../dev-dashboards/feature-templating/templating-repeating-rows.json'),

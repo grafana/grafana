@@ -105,7 +105,8 @@ func (claims *OktaClaims) extractEmail() string {
 }
 
 func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
 
 	idToken := token.Extra("id_token")
 	if idToken == nil {
@@ -133,25 +134,25 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 		return nil, err
 	}
 
-	groups := s.GetGroups(&data)
-	if !s.IsGroupMember(groups) {
+	groups := s.getGroups(&data)
+	if !s.isGroupMember(groups) {
 		return nil, errMissingGroupMembership
 	}
 
 	var role roletype.RoleType
 	var isGrafanaAdmin *bool
-	if !info.SkipOrgRoleSync {
+	if !s.info.SkipOrgRoleSync {
 		var grafanaAdmin bool
 		role, grafanaAdmin, err = s.extractRoleAndAdmin(data.rawJSON, groups)
 		if err != nil {
 			return nil, err
 		}
 
-		if info.AllowAssignGrafanaAdmin {
+		if s.info.AllowAssignGrafanaAdmin {
 			isGrafanaAdmin = &grafanaAdmin
 		}
 	}
-	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
+	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
@@ -167,11 +168,9 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 }
 
 func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, client *http.Client) error {
-	info := s.GetOAuthInfo()
-
-	rawUserInfoResponse, err := s.httpGet(ctx, client, info.ApiUrl)
+	rawUserInfoResponse, err := s.httpGet(ctx, client, s.info.ApiUrl)
 	if err != nil {
-		s.log.Debug("Error getting user info response", "url", info.ApiUrl, "error", err)
+		s.log.Debug("Error getting user info response", "url", s.info.ApiUrl, "error", err)
 		return fmt.Errorf("error getting user info response: %w", err)
 	}
 	data.rawJSON = rawUserInfoResponse.Body
@@ -187,7 +186,7 @@ func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, cli
 	return nil
 }
 
-func (s *SocialOkta) GetGroups(data *OktaUserInfoJson) []string {
+func (s *SocialOkta) getGroups(data *OktaUserInfoJson) []string {
 	groups := make([]string, 0)
 	if len(data.Groups) > 0 {
 		groups = data.Groups
@@ -196,14 +195,12 @@ func (s *SocialOkta) GetGroups(data *OktaUserInfoJson) []string {
 }
 
 // TODO: remove this in a separate PR and use the isGroupMember from the social.go
-func (s *SocialOkta) IsGroupMember(groups []string) bool {
-	info := s.GetOAuthInfo()
-
-	if len(info.AllowedGroups) == 0 {
+func (s *SocialOkta) isGroupMember(groups []string) bool {
+	if len(s.info.AllowedGroups) == 0 {
 		return true
 	}
 
-	for _, allowedGroup := range info.AllowedGroups {
+	for _, allowedGroup := range s.info.AllowedGroups {
 		for _, group := range groups {
 			if group == allowedGroup {
 				return true
