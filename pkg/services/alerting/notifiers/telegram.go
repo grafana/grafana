@@ -17,6 +17,7 @@ import (
 
 const (
 	captionLengthLimit = 1024
+	messageLengthLimit = 4096
 )
 
 var (
@@ -102,22 +103,39 @@ func (tn *TelegramNotifier) buildMessage(evalContext *alerting.EvalContext, send
 	return tn.buildMessageLinkedImage(evalContext)
 }
 
-func (tn *TelegramNotifier) buildMessageLinkedImage(evalContext *alerting.EvalContext) (*notifications.SendWebhookSync, error) {
+func generateLinkedImageMessage(evalContext *alerting.EvalContext, ruleURL string, metrics string) string {
 	message := fmt.Sprintf("<b>%s</b>\nState: %s\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Name, evalContext.Rule.Message)
 
-	ruleURL, err := evalContext.GetRuleURL()
-	if err == nil {
-		message += fmt.Sprintf("URL: %s\n", ruleURL)
+	if len(message) > messageLengthLimit {
+		message = message[0:messageLengthLimit]
+	}
+
+	if len(ruleURL) > 0 {
+		urlLine := fmt.Sprintf("URL: %s\n", ruleURL)
+		message = appendIfPossible(evalContext.Log, message, urlLine, messageLengthLimit)
 	}
 
 	if evalContext.ImagePublicURL != "" {
-		message += fmt.Sprintf("Image: %s\n", evalContext.ImagePublicURL)
+		imageURL := fmt.Sprintf("Image: %s\n", evalContext.ImagePublicURL)
+		message = appendIfPossible(evalContext.Log, message, imageURL, messageLengthLimit)
+	}
+
+	if metrics != "" {
+		metricsLines := fmt.Sprintf("\n<i>Metrics:</i>%s", metrics)
+		message = appendIfPossible(evalContext.Log, message, metricsLines, messageLengthLimit)
+	}
+
+	return message
+}
+
+func (tn *TelegramNotifier) buildMessageLinkedImage(evalContext *alerting.EvalContext) (*notifications.SendWebhookSync, error) {
+	ruleURL, err := evalContext.GetRuleURL()
+	if err != nil {
+		return nil, err
 	}
 
 	metrics := generateMetricsMessage(evalContext)
-	if metrics != "" {
-		message += fmt.Sprintf("\n<i>Metrics:</i>%s", metrics)
-	}
+	message := generateLinkedImageMessage(evalContext, ruleURL, metrics)
 
 	return tn.generateTelegramCmd(message, "text", "sendMessage", func(w *multipart.Writer) {
 		fw, err := w.CreateFormField("parse_mode")
