@@ -168,6 +168,7 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryVizPanel)
           return (
             <Input
               id="LibraryPanelFrameName"
+              data-testid="library panel name input"
               defaultValue={libraryPanel.state.name}
               onBlur={(e) => libraryPanel.setState({ name: e.currentTarget.value })}
             />
