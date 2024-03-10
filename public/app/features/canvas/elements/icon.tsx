@@ -2,11 +2,13 @@ import { css } from '@emotion/css';
 import { isString } from 'lodash';
 import React, { CSSProperties } from 'react';
 
+import { LinkModel } from '@grafana/data';
 import { ColorDimensionConfig, ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
+import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
 import { LineConfig } from '../types';
@@ -22,6 +24,7 @@ interface IconData {
   fill: string;
   strokeColor?: string;
   stroke?: number;
+  links?: LinkModel[];
 }
 
 // When a stoke is defined, we want the path to be in page units
@@ -103,7 +106,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
       }
     }
 
-    // TODO: Add support for data links here
+    data.links = getDataLinks(dimensionContext, elementOptions, data.path);
 
     return data;
   },

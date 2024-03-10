@@ -112,12 +112,12 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
  */
 const addDataLinkForField = (
   field: Field<unknown>,
-  textData: string | undefined,
+  data: string | undefined,
   linkLookup: Set<string>,
   links: Array<LinkModel<Field>>
 ): void => {
   if (field?.getLinks) {
-    const disp = field.display ? field.display(textData) : { text: `${textData}`, numeric: +textData! };
+    const disp = field.display ? field.display(data) : { text: `${data}`, numeric: +data! };
     field.getLinks({ calculatedValue: disp }).forEach((link) => {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
@@ -131,7 +131,7 @@ const addDataLinkForField = (
 export function getDataLinks(
   dimensionContext: DimensionContext,
   elementOptions: CanvasElementOptions,
-  textData: string | undefined
+  data: string | undefined
 ): LinkModel[] {
   const panelData = dimensionContext.getPanelData();
   const frames = panelData?.series;
@@ -139,47 +139,79 @@ export function getDataLinks(
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
-  const textConfig = elementOptions.config;
+  const elementConfig = elementOptions.config;
 
   frames?.forEach((frame) => {
     const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
 
     // Text config
-    const isConfigTextTiedToFieldData =
-      textConfig.text?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === textConfig.text?.field);
-    const isConfigTextColorTiedToFieldData =
-      textConfig.color?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === textConfig.color?.field);
+    const isTextTiedToFieldData =
+      elementConfig.text?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig.text?.field);
+    const isTextColorTiedToFieldData =
+      elementConfig.color?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig.color?.field);
 
     // General element config
     const isElementBackgroundColorTiedToFieldData =
       elementOptions?.background?.color?.field &&
       visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.background?.color?.field);
+    const isElementBackgroundImageTiedToFieldData =
+      elementOptions?.background?.image?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.background?.image?.field);
     const isElementBorderColorTiedToFieldData =
       elementOptions?.border?.color?.field &&
       visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.border?.color?.field);
 
-    if (isConfigTextTiedToFieldData) {
-      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === textConfig.text?.field)[0];
-      addDataLinkForField(field, textData, linkLookup, links);
+    // Icon config
+    const isIconSVGTiedToFieldData =
+      elementConfig.path?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig.path?.field);
+    const isIconColorTiedToFieldData =
+      elementConfig.fill?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig.fill?.field);
+
+    if (isTextTiedToFieldData) {
+      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === elementConfig.text?.field)[0];
+      addDataLinkForField(field, data, linkLookup, links);
     }
 
-    if (isConfigTextColorTiedToFieldData) {
-      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === textConfig.color?.field)[0];
-      addDataLinkForField(field, textData, linkLookup, links);
+    if (isTextColorTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementConfig.color?.field
+      )[0];
+      addDataLinkForField(field, data, linkLookup, links);
     }
+
     if (isElementBackgroundColorTiedToFieldData) {
       const field = visibleFields.filter(
         (field) => getFieldDisplayName(field, frame) === elementOptions?.background?.color?.field
       )[0];
-      addDataLinkForField(field, textData, linkLookup, links);
+      addDataLinkForField(field, data, linkLookup, links);
     }
+
+    if (isElementBackgroundImageTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementOptions?.background?.image?.field
+      )[0];
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
     if (isElementBorderColorTiedToFieldData) {
       const field = visibleFields.filter(
         (field) => getFieldDisplayName(field, frame) === elementOptions?.border?.color?.field
       )[0];
-      addDataLinkForField(field, textData, linkLookup, links);
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
+    if (isIconSVGTiedToFieldData) {
+      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === elementConfig.path?.field)[0];
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
+    if (isIconColorTiedToFieldData) {
+      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === elementConfig.fill?.field)[0];
+      addDataLinkForField(field, data, linkLookup, links);
     }
   });
 
