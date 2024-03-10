@@ -9,7 +9,6 @@ import {
   CanvasElementItem,
   canvasElementRegistry,
   CanvasElementOptions,
-  TextConfig,
   CanvasConnection,
 } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
@@ -131,7 +130,7 @@ const addDataLinkForField = (
 
 export function getDataLinks(
   dimensionContext: DimensionContext,
-  textConfig: TextConfig,
+  elementOptions: CanvasElementOptions,
   textData: string | undefined
 ): LinkModel[] {
   const panelData = dimensionContext.getPanelData();
@@ -140,15 +139,26 @@ export function getDataLinks(
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
+  const textConfig = elementOptions.config;
+
   frames?.forEach((frame) => {
     const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
 
+    // Text config
     const isConfigTextTiedToFieldData =
       textConfig.text?.field &&
       visibleFields.some((field) => getFieldDisplayName(field, frame) === textConfig.text?.field);
     const isConfigTextColorTiedToFieldData =
       textConfig.color?.field &&
       visibleFields.some((field) => getFieldDisplayName(field, frame) === textConfig.color?.field);
+
+    // General element config
+    const isElementBackgroundColorTiedToFieldData =
+      elementOptions?.background?.color?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.background?.color?.field);
+    const isElementBorderColorTiedToFieldData =
+      elementOptions?.border?.color?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.border?.color?.field);
 
     if (isConfigTextTiedToFieldData) {
       const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === textConfig.text?.field)[0];
@@ -157,6 +167,18 @@ export function getDataLinks(
 
     if (isConfigTextColorTiedToFieldData) {
       const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === textConfig.color?.field)[0];
+      addDataLinkForField(field, textData, linkLookup, links);
+    }
+    if (isElementBackgroundColorTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementOptions?.background?.color?.field
+      )[0];
+      addDataLinkForField(field, textData, linkLookup, links);
+    }
+    if (isElementBorderColorTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementOptions?.border?.color?.field
+      )[0];
       addDataLinkForField(field, textData, linkLookup, links);
     }
   });

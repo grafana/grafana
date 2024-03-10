@@ -7,7 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
-import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
 
 interface WindTurbineData {
   rpm?: number;
@@ -92,10 +92,14 @@ export const windTurbineItem: CanvasElementItem = {
   }),
 
   // Called when data changes
-  prepareData: (ctx: DimensionContext, cfg: WindTurbineConfig) => {
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<WindTurbineConfig>) => {
+    const windTurbineConfig = elementOptions.config;
+
     const data: WindTurbineData = {
-      rpm: cfg?.rpm ? ctx.getScalar(cfg.rpm).value() : 0,
+      rpm: windTurbineConfig?.rpm ? dimensionContext.getScalar(windTurbineConfig.rpm).value() : 0,
     };
+
+    // TODO: Add support for data links here?
 
     return data;
   },

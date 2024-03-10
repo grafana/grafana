@@ -8,7 +8,13 @@ import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimen
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
-import { CanvasElementItem, CanvasElementProps, defaultBgColor, defaultTextColor } from '../element';
+import {
+  CanvasElementItem,
+  CanvasElementOptions,
+  CanvasElementProps,
+  defaultBgColor,
+  defaultTextColor,
+} from '../element';
 import { Align, VAlign, EllipseConfig, EllipseData } from '../types';
 
 class EllipseDisplay extends PureComponent<CanvasElementProps<EllipseConfig, EllipseData>> {
@@ -80,26 +86,28 @@ export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
     },
   }),
 
-  prepareData: (ctx: DimensionContext, cfg: EllipseConfig) => {
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<EllipseConfig>) => {
+    const ellipseConfig = elementOptions.config;
+
     const data: EllipseData = {
-      width: cfg.width,
-      text: cfg.text ? ctx.getText(cfg.text).value() : '',
-      align: cfg.align ?? Align.Center,
-      valign: cfg.valign ?? VAlign.Middle,
-      size: cfg.size,
+      width: ellipseConfig?.width,
+      text: ellipseConfig?.text ? dimensionContext.getText(ellipseConfig.text).value() : '',
+      align: ellipseConfig?.align ?? Align.Center,
+      valign: ellipseConfig?.valign ?? VAlign.Middle,
+      size: ellipseConfig?.size,
     };
 
-    if (cfg.backgroundColor) {
-      data.backgroundColor = ctx.getColor(cfg.backgroundColor).value();
+    if (ellipseConfig?.backgroundColor) {
+      data.backgroundColor = dimensionContext.getColor(ellipseConfig.backgroundColor).value();
     }
-    if (cfg.borderColor) {
-      data.borderColor = ctx.getColor(cfg.borderColor).value();
+    if (ellipseConfig?.borderColor) {
+      data.borderColor = dimensionContext.getColor(ellipseConfig.borderColor).value();
     }
-    if (cfg.color) {
-      data.color = ctx.getColor(cfg.color).value();
+    if (ellipseConfig?.color) {
+      data.color = dimensionContext.getColor(ellipseConfig.color).value();
     }
 
-    data.links = getDataLinks(ctx, cfg, data.text);
+    data.links = getDataLinks(dimensionContext, elementOptions, data.text);
 
     return data;
   },

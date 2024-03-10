@@ -7,7 +7,7 @@ import config from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions';
 import { ColorDimensionEditor, ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
-import { CanvasElementItem, CanvasElementProps } from '../../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps } from '../../element';
 
 import { ServerDatabase } from './types/database';
 import { ServerSingle } from './types/single';
@@ -85,12 +85,16 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
   }),
 
   // Called when data changes
-  prepareData: (ctx: DimensionContext, cfg: ServerConfig) => {
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<ServerConfig>) => {
+    const serverConfig = elementOptions.config;
+
     const data: ServerData = {
-      blinkRate: cfg?.blinkRate ? ctx.getScalar(cfg.blinkRate).value() : 0,
-      statusColor: cfg?.statusColor ? ctx.getColor(cfg.statusColor).value() : 'transparent',
-      bulbColor: cfg?.bulbColor ? ctx.getColor(cfg.bulbColor).value() : 'green',
-      type: cfg.type,
+      blinkRate: serverConfig?.blinkRate ? dimensionContext.getScalar(serverConfig.blinkRate).value() : 0,
+      statusColor: serverConfig?.statusColor
+        ? dimensionContext.getColor(serverConfig.statusColor).value()
+        : 'transparent',
+      bulbColor: serverConfig?.bulbColor ? dimensionContext.getColor(serverConfig.bulbColor).value() : 'green',
+      type: serverConfig?.type ?? ServerType.Single,
     };
 
     return data;
