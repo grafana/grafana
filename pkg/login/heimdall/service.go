@@ -51,7 +51,8 @@ type AuthorizationResult struct {
 const (
 	AuthorizePath      = "/api/v1/authorize"
 	ContentType        = "application/json"
-	DataosAdminTagsKey = "DATAOS_ADMIN_ACCESS_TAGS"
+	GrafanaAdminTags   = "GRAFANA_ADMIN_ACCESS_TAGS"
+	GrafanaViewerTags  = "GRAFANA_VIEWER_ACCESS_TAGS"
 	HeimdallUseUnsafe  = "HEIMDALL_USE_UNSAFE"
 	HeimdallBaseUrlKey = "HEIMDALL_BASE_URL"
 )
@@ -117,17 +118,26 @@ func AuthorizeUser(token string, userInfo *BasicUserInfo) (*BasicUserInfo, error
 		logger.Warn(fmt.Sprintf("environment variable %s not configured", HeimdallBaseUrlKey))
 		return nil, errors.New(fmt.Sprintf("environment variable %s not configured", HeimdallBaseUrlKey))
 	}
-	adminTag := strings.ReplaceAll(os.Getenv(DataosAdminTagsKey), " ", "")
+	adminTag := strings.ReplaceAll(os.Getenv(GrafanaAdminTags), " ", "")
 	if len(adminTag) <= 0 {
-		logger.Warn(fmt.Sprintf("environment variable %s not configured", DataosAdminTagsKey))
-		return nil, errors.New(fmt.Sprintf("environment variable %s not configured", DataosAdminTagsKey))
+		logger.Warn(fmt.Sprintf("environment variable %s not configured", GrafanaAdminTags))
+		return nil, errors.New(fmt.Sprintf("environment variable %s not configured", GrafanaAdminTags))
 	}
 	adminTags := strings.Split(adminTag, ",")
 	if len(adminTags) < 1 {
 		logger.Warn("no admin tags provided")
 		return nil, errors.New("no admin tags provided")
 	}
-
+	viewerTag := strings.ReplaceAll(os.Getenv(GrafanaViewerTags), " ", "")
+	if len(viewerTag) <= 0 {
+		logger.Warn(fmt.Sprintf("environment variable %s not configured", GrafanaViewerTags))
+		return nil, errors.New(fmt.Sprintf("environment variable %s not configured", GrafanaViewerTags))
+	}
+	viewerTags := strings.Split(viewerTag, ",")
+	if len(viewerTags) < 1 {
+		logger.Warn("no viewer tags provided")
+		return nil, errors.New("no viewer tags provided")
+	}
 	authorizeUrl := strings.TrimSuffix(heimdallBaseUrl, "/") + AuthorizePath
 	req := AuthorizationRequest{
 		Token: token,
@@ -147,30 +157,44 @@ func AuthorizeUser(token string, userInfo *BasicUserInfo) (*BasicUserInfo, error
 		return nil, errors.New("no tags found for the user")
 	}
 
-	var admin = false
-	userInfo.Role = org.RoleNone
-	userInfo.IsGrafanaAdmin = &admin
-
-	fmt.Println("you are not authorize to login")
-
-	if findCommonTag(ar.Result.Tags, adminTags) {
+	// Determine user role based on tags
+	if adminCommonTag(ar.Result.Tags, adminTags) {
 		admin = true
 		userInfo.Role = org.RoleAdmin
+		userInfo.IsGrafanaAdmin = &admin
+	} else if viewerCommonTag(ar.Result.Tags, viewerTags) {
+		userInfo.Role = org.RoleViewer
+		admin = false // Reset admin status
 		userInfo.IsGrafanaAdmin = &admin
 	}
 
 	return userInfo, nil
 }
 
-// findCommonTag checks if there are any common tags between the user tags and admin tags.
-// It returns true if a common tag is found; otherwise, it returns false.
-func findCommonTag(userTags, adminTags []string) bool {
+// adminCommonTag checks if there are any common tags between the user tags and admin tags.
+// It returns true if a admin tag is found; otherwise, it returns false.
+func adminCommonTag(userTags, adminTags []string) bool {
 	adminTagsMap := make(map[string]bool)
 	for _, adminTag := range adminTags {
 		adminTagsMap[adminTag] = true
 	}
 	for _, userTag := range userTags {
 		if adminTagsMap[userTag] {
+			return true
+		}
+	}
+	return false
+}
+
+// viewerCommonTag checks if there are any common tags between the user tags and viewer tags.
+// It returns true if a viewer tag is found; otherwise, it returns false.
+func viewerCommonTag(userTags, viewerTags []string) bool {
+	viewerTagsMap := make(map[string]bool)
+	for _, viewerTag := range viewerTags {
+		viewerTagsMap[viewerTag] = true
+	}
+	for _, userTag := range userTags {
+		if viewerTagsMap[userTag] {
 			return true
 		}
 	}
