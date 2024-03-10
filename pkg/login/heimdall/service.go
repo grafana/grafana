@@ -19,6 +19,7 @@ import (
 
 var (
 	logger = log.New("dataos.heimdall")
+	admin  = false
 )
 
 type BasicUserInfo struct {
@@ -147,8 +148,10 @@ func AuthorizeUser(token string, userInfo *BasicUserInfo) (*BasicUserInfo, error
 	}
 
 	var admin = false
-	userInfo.Role = org.RoleViewer
+	userInfo.Role = org.RoleNone
 	userInfo.IsGrafanaAdmin = &admin
+
+	fmt.Println("you are not authorize to login")
 
 	if findCommonTag(ar.Result.Tags, adminTags) {
 		admin = true
