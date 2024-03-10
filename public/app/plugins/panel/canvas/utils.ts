@@ -107,8 +107,34 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
   }
 }
 
-export function getDataLinks(ctx: DimensionContext, cfg: TextConfig, textData: string | undefined): LinkModel[] {
-  const panelData = ctx.getPanelData();
+/*
+ * Provided a given field add any matching data links
+ * Mutates the links object in place which is then returned by the `getDataLinks` function downstream
+ */
+const addDataLinkForField = (
+  field: Field<unknown>,
+  textData: string | undefined,
+  linkLookup: Set<string>,
+  links: Array<LinkModel<Field>>
+): void => {
+  if (field?.getLinks) {
+    const disp = field.display ? field.display(textData) : { text: `${textData}`, numeric: +textData! };
+    field.getLinks({ calculatedValue: disp }).forEach((link) => {
+      const key = `${link.title}/${link.href}`;
+      if (!linkLookup.has(key)) {
+        links.push(link);
+        linkLookup.add(key);
+      }
+    });
+  }
+};
+
+export function getDataLinks(
+  dimensionContext: DimensionContext,
+  textConfig: TextConfig,
+  textData: string | undefined
+): LinkModel[] {
+  const panelData = dimensionContext.getPanelData();
   const frames = panelData?.series;
 
   const links: Array<LinkModel<Field>> = [];
@@ -117,18 +143,21 @@ export function getDataLinks(ctx: DimensionContext, cfg: TextConfig, textData: s
   frames?.forEach((frame) => {
     const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
 
-    if (cfg.text?.field && visibleFields.some((f) => getFieldDisplayName(f, frame) === cfg.text?.field)) {
-      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === cfg.text?.field)[0];
-      if (field?.getLinks) {
-        const disp = field.display ? field.display(textData) : { text: `${textData}`, numeric: +textData! };
-        field.getLinks({ calculatedValue: disp }).forEach((link) => {
-          const key = `${link.title}/${link.href}`;
-          if (!linkLookup.has(key)) {
-            links.push(link);
-            linkLookup.add(key);
-          }
-        });
-      }
+    const isConfigTextTiedToFieldData =
+      textConfig.text?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === textConfig.text?.field);
+    const isConfigTextColorTiedToFieldData =
+      textConfig.color?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === textConfig.color?.field);
+
+    if (isConfigTextTiedToFieldData) {
+      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === textConfig.text?.field)[0];
+      addDataLinkForField(field, textData, linkLookup, links);
+    }
+
+    if (isConfigTextColorTiedToFieldData) {
+      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === textConfig.color?.field)[0];
+      addDataLinkForField(field, textData, linkLookup, links);
     }
   });
 
