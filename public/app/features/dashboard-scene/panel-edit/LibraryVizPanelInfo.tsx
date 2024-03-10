@@ -10,7 +10,7 @@ interface Props {
   libraryPanel: LibraryVizPanel;
 }
 
-export const LibraryVizPanelInformation = ({ libraryPanel }: Props) => {
+export const LibraryVizPanelInfo = ({ libraryPanel }: Props) => {
   const styles = useStyles2(getStyles);
 
   const libraryPanelState = libraryPanel.useState();
@@ -29,13 +29,7 @@ export const LibraryVizPanelInformation = ({ libraryPanel }: Props) => {
       <div className={styles.libraryPanelInfo}>
         {dateTimeFormat(meta.updated, { format: 'L', timeZone: tz })} by
         {meta.updatedBy.avatarUrl && (
-          <img
-            width="22"
-            height="22"
-            className={styles.userAvatar}
-            src={meta.updatedBy.avatarUrl}
-            alt={`Avatar for ${meta.updatedBy.name}`}
-          />
+          <img className={styles.userAvatar} src={meta.updatedBy.avatarUrl} alt={`Avatar for ${meta.updatedBy.name}`} />
         )}
         {meta.updatedBy.name}
       </div>

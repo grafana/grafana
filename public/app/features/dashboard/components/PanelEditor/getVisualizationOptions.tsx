@@ -17,7 +17,7 @@ import {
 } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
-import { LibraryVizPanelInformation } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
+import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { LibraryVizPanel } from 'app/features/dashboard-scene/scene/LibraryVizPanel';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -180,7 +180,7 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryVizPanel)
       new OptionsPaneItemDescriptor({
         title: 'Information',
         render: function renderLibraryPanelInformation() {
-          return <LibraryVizPanelInformation libraryPanel={libraryPanel} />;
+          return <LibraryVizPanelInfo libraryPanel={libraryPanel} />;
         },
       })
     );

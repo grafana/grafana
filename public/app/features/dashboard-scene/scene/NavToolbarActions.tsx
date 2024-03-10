@@ -321,11 +321,11 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditingPanel && isEditingLibraryPanel && !editview && !meta.isNew && !isViewingPanel,
+    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
     render: () => (
       <Button
         onClick={editPanel?.onDiscard}
-        tooltip="Save library panel"
+        tooltip="Discard library panel changes"
         size="sm"
         key="discardLibraryPanel"
         fill="outline"
@@ -338,12 +338,10 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditingPanel && isEditingLibraryPanel && !editview && !meta.isNew && !isViewingPanel,
+    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
     render: () => (
       <Button
-        onClick={() => {
-          editPanel?.onSaveLibraryPanel();
-        }}
+        onClick={() => editPanel?.onSaveLibraryPanel()}
         tooltip="Save library panel"
         size="sm"
         key="saveLibraryPanel"

@@ -103,15 +103,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const panelManager = this.state.vizManager;
     const sourcePanel = panelManager.state.sourcePanel.resolve();
     const sourcePanelParent = sourcePanel!.parent;
-    if (sourcePanelParent instanceof LibraryVizPanel) {
-      // Library panels handled separately
-      return;
-    }
 
     const normalToRepeat = !this._initialRepeatOptions.repeat && panelManager.state.repeat;
     const repeatToNormal = this._initialRepeatOptions.repeat && !panelManager.state.repeat;
 
-    if (sourcePanelParent instanceof SceneGridItem) {
+    if (sourcePanelParent instanceof LibraryVizPanel) {
+      // Library panels handled separately
+      return;
+    } else if (sourcePanelParent instanceof SceneGridItem) {
       if (normalToRepeat) {
         this.replaceSceneGridItemWithPanelRepeater(sourcePanelParent);
       } else {
