@@ -1,17 +1,18 @@
-package runner
+package client
 
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -20,14 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-type directRunner struct {
+type pluginClient struct {
 	pluginClient plugins.Client
 	pCtxProvider *plugincontext.Provider
 }
 
-type directRegistry struct {
+type pluginRegistry struct {
 	pluginsMu     sync.Mutex
-	plugins       *v0alpha1.DataSourceApiServerList
+	plugins       *query.DataSourceApiServerList
 	apis          map[string]schema.GroupVersion
 	groupToPlugin map[string]string
 	pluginStore   pluginstore.Store
@@ -36,68 +37,67 @@ type directRegistry struct {
 	dataSourcesService datasources.DataSourceService
 }
 
-var _ v0alpha1.QueryRunner = (*directRunner)(nil)
-var _ v0alpha1.DataSourceApiServerRegistry = (*directRegistry)(nil)
+var _ data.QueryDataClient = (*pluginClient)(nil)
+var _ query.DataSourceApiServerRegistry = (*pluginRegistry)(nil)
 
 // NewDummyTestRunner creates a runner that only works with testdata
-func NewDirectQueryRunner(
-	pluginClient plugins.Client,
-	pCtxProvider *plugincontext.Provider) v0alpha1.QueryRunner {
-	return &directRunner{
-		pluginClient: pluginClient,
-		pCtxProvider: pCtxProvider,
+func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider) data.QueryDataClient {
+	return &pluginClient{
+		pluginClient: p,
+		pCtxProvider: ctx,
 	}
 }
 
-func NewDirectRegistry(pluginStore pluginstore.Store,
+func NewDataSourceRegistryFromStore(pluginStore pluginstore.Store,
 	dataSourcesService datasources.DataSourceService,
-) v0alpha1.DataSourceApiServerRegistry {
-	return &directRegistry{
+) query.DataSourceApiServerRegistry {
+	return &pluginRegistry{
 		pluginStore:        pluginStore,
 		dataSourcesService: dataSourcesService,
 	}
 }
 
 // ExecuteQueryData implements QueryHelper.
-func (d *directRunner) ExecuteQueryData(ctx context.Context,
-	// The k8s group for the datasource (pluginId)
-	datasource schema.GroupVersion,
-
-	// The datasource name/uid
-	name string,
-
-	// The raw backend query objects
-	query []v0alpha1.GenericDataQuery,
-) (*backend.QueryDataResponse, error) {
-	queries, dsRef, err := legacydata.ToDataSourceQueries(v0alpha1.GenericQueryRequest{
-		Queries: query,
-	})
+func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (int, *backend.QueryDataResponse, error) {
+	queries, dsRef, err := legacydata.ToDataSourceQueries(req)
 	if err != nil {
-		return nil, err
+		return http.StatusBadRequest, nil, err
 	}
-	if dsRef != nil && dsRef.UID != name {
-		return nil, fmt.Errorf("expected query body datasource and request to match")
+	if dsRef == nil {
+		return http.StatusBadRequest, nil, fmt.Errorf("expected single datasource request")
 	}
 
 	// NOTE: this depends on uid unique across datasources
-	settings, err := d.pCtxProvider.GetDataSourceInstanceSettings(ctx, name)
+	settings, err := d.pCtxProvider.GetDataSourceInstanceSettings(ctx, dsRef.UID)
 	if err != nil {
-		return nil, err
+		return http.StatusBadRequest, nil, err
 	}
 
-	pCtx, err := d.pCtxProvider.PluginContextForDataSource(ctx, settings)
+	qdr := &backend.QueryDataRequest{
+		Queries: queries,
+	}
+	qdr.PluginContext, err = d.pCtxProvider.PluginContextForDataSource(ctx, settings)
 	if err != nil {
-		return nil, err
+		return http.StatusBadRequest, nil, err
 	}
 
-	return d.pluginClient.QueryData(ctx, &backend.QueryDataRequest{
-		PluginContext: pCtx,
-		Queries:       queries,
-	})
+	code := http.StatusOK
+	rsp, err := d.pluginClient.QueryData(ctx, qdr)
+	if err == nil {
+		for _, v := range rsp.Responses {
+			if v.Error != nil {
+				code = http.StatusMultiStatus
+				break
+			}
+		}
+	} else {
+		code = http.StatusInternalServerError
+	}
+	return code, rsp, err
 }
 
 // GetDatasourceAPI implements DataSourceRegistry.
-func (d *directRegistry) GetDatasourceGroupVersion(pluginId string) (schema.GroupVersion, error) {
+func (d *pluginRegistry) GetDatasourceGroupVersion(pluginId string) (schema.GroupVersion, error) {
 	d.pluginsMu.Lock()
 	defer d.pluginsMu.Unlock()
 
@@ -117,7 +117,7 @@ func (d *directRegistry) GetDatasourceGroupVersion(pluginId string) (schema.Grou
 }
 
 // GetDatasourcePlugins no namespace? everything that is available
-func (d *directRegistry) GetDatasourceApiServers(ctx context.Context) (*v0alpha1.DataSourceApiServerList, error) {
+func (d *pluginRegistry) GetDatasourceApiServers(ctx context.Context) (*query.DataSourceApiServerList, error) {
 	d.pluginsMu.Lock()
 	defer d.pluginsMu.Unlock()
 
@@ -132,10 +132,10 @@ func (d *directRegistry) GetDatasourceApiServers(ctx context.Context) (*v0alpha1
 }
 
 // This should be called when plugins change
-func (d *directRegistry) updatePlugins() error {
+func (d *pluginRegistry) updatePlugins() error {
 	groupToPlugin := map[string]string{}
 	apis := map[string]schema.GroupVersion{}
-	result := &v0alpha1.DataSourceApiServerList{
+	result := &query.DataSourceApiServerList{
 		ListMeta: metav1.ListMeta{
 			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
 		},
@@ -159,7 +159,7 @@ func (d *directRegistry) updatePlugins() error {
 		}
 		groupToPlugin[group] = dsp.ID
 
-		ds := v0alpha1.DataSourceApiServer{
+		ds := query.DataSourceApiServer{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              dsp.ID,
 				CreationTimestamp: metav1.NewTime(time.UnixMilli(ts)),
