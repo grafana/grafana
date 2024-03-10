@@ -44,7 +44,7 @@ export const AutoEditor = ({
     <div key={i}>
       <Field label="Frame">
         <Select
-          placeholder='All frames'
+          placeholder="All frames"
           isClearable={true}
           options={context.data.map((frame, index) => ({
             value: index,
@@ -91,7 +91,10 @@ export const AutoEditor = ({
             name: 'x',
             settings: {
               filter: (field) => field.type === FieldType.number,
-              baseNameMode: FieldNamePickerBaseNameMode.OnlyBaseNames,
+              baseNameMode:
+              context.data.length === 1
+                ? FieldNamePickerBaseNameMode.IncludeAll
+                : FieldNamePickerBaseNameMode.OnlyBaseNames,
               placeholderText: 'First number field in each frame',
             },
           }}
@@ -123,7 +126,10 @@ export const AutoEditor = ({
               settings: {
                 // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
                 filter: (field) => field.type === FieldType.number && field.name !== series.x?.matcher.options,
-                baseNameMode: FieldNamePickerBaseNameMode.OnlyBaseNames,
+                baseNameMode:
+                  context.data.length === 1
+                    ? FieldNamePickerBaseNameMode.IncludeAll
+                    : FieldNamePickerBaseNameMode.OnlyBaseNames,
                 placeholderText: 'Remaining number fields in each frame',
               },
             }}

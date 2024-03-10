@@ -5,7 +5,26 @@ import { SeriesMapping } from './panelcfg.gen';
 
 // panel save model
 export interface XYSeriesConfig {
-  name?: string;
+  name?: {
+    value?: string; // (if explicitly defined in manual mode)
+
+  /*
+    replace?: {
+      // default: 'field'
+      source: 'field' | 'frame';
+      // default: whatever is matched for y field
+      matcher: common.MatcherConfig;
+      // default: 'displayName'
+      prop: 'displayName' | 'name' | 'query' | 'target';
+
+      // similar to renameByRegex & RenameByRegexTransformerOptions
+      // default: '(.*)'
+      regex: string;
+      // default: '$1'
+      rename: string;
+    }
+  */
+  }
 
   // required in manual mode (can match same frame multiple times)
   frame?: {
@@ -28,14 +47,15 @@ export interface XYSeriesConfig {
 
 // materialized series (internal)
 export interface XYSeries {
-  name: string;
-
   showPoints: common.VisibilityMode;
 
   showLine: boolean;
   lineWidth: number;
   lineStyle: common.LineStyle;
 
+  name: {
+    value: string;
+  };
   x: {
     field: Field;
   };

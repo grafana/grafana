@@ -64,9 +64,9 @@ export const XYChartPanel2 = (props: Props2) => {
       if (!custom.hideFrom?.legend) {
         items.push({
           yAxis: 1, // TODO: pull from y field
-          label: s.name,
+          label: s.name.value,
           color: alpha(s.color.fixed!, 1),
-          getItemKey: () => s.name,
+          getItemKey: () => s.name.value,
         });
       }
     });

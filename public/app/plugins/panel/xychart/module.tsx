@@ -30,7 +30,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
         path: 'series',
         name: '',
         editor: AutoEditor,
-        // defaultValue: [{}],
+        defaultValue: [{}],
         showIf: (cfg) => cfg.mapping === 'auto',
       })
       .addCustomEditor({

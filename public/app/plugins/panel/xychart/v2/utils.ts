@@ -39,6 +39,10 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
 
   let series: XYSeries[] = [];
 
+  if (mappedSeries.length === 0) {
+    mappedSeries = [{}];
+  }
+
   const { palette, getColorByName } = config.theme2.visualization;
 
   mappedSeries.forEach((seriesCfg) => {
@@ -104,7 +108,9 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
 
             let ser: XYSeries = {
               // these typically come from y field
-              name,
+              name: {
+                value: name,
+              },
 
               showPoints: y.config.custom.show === ScatterShow.Lines ? VisibilityMode.Never : VisibilityMode.Always,
 
@@ -179,22 +185,76 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
       }
     });
 
-    // strip common prefix from names
-    let parts = series[0].name.split(' ');
+    // TODO: conditionally
+    autoNameSeries(series);
 
-    if (parts.length > 1 && series.every((s) => s.name.startsWith(parts[0]))) {
-      series.forEach((s, i) => {
-        s.name = s.name.slice(parts[0].length);
-      });
+    // TODO: re-assign y display names?
+    // y.state = {
+    //   ...y.state,
+    //   seriesIndex: series.length + ,
+    // };
+    // y.display = getDisplayProcessor({ field, theme });
+  }
+
+  return series;
+}
+
+// strip common prefixes and suffixes from y field names
+function autoNameSeries(series: XYSeries[]) {
+  let names = series.map((s) => s.name.value.split(/\s+/g));
+
+  let commonPrefixLen = Infinity;
+  let commonSuffixLen = Infinity;
+
+  // if auto naming strategy, rename fields by stripping common prefixes and suffixes
+  let segs0: string[] = names[0];
+
+  for (let i = 1; i < names.length; i++) {
+    if (names[i].length < segs0.length) {
+      segs0 = names[i];
     }
   }
 
-  // TODO: regenerate display names?
-  // y.state = {
-  //   ...y.state,
-  //   seriesIndex: series.length + ,
-  // };
-  // y.display = getDisplayProcessor({ field, theme });
+  for (let i = 1; i < names.length; i++) {
+    let segs = names[i];
 
-  return series;
+    if (segs !== segs0) {
+      // prefixes
+      let preLen = 0;
+      for (let j = 0; j < segs0.length; j++) {
+        if (segs[j] === segs0[j]) {
+          preLen++;
+        } else {
+          break;
+        }
+      }
+
+      if (preLen < commonPrefixLen) {
+        commonPrefixLen = preLen;
+      }
+
+      // suffixes
+      let sufLen = 0;
+      for (let j = segs0.length - 1; j >= 0; j--) {
+        if (segs[j] === segs0[j]) {
+          sufLen++;
+        } else {
+          break;
+        }
+      }
+
+      if (sufLen < commonSuffixLen) {
+        commonSuffixLen = sufLen;
+      }
+    }
+  }
+
+  if (commonPrefixLen < Infinity || commonSuffixLen < Infinity) {
+    series.forEach((s, i) => {
+      s.name.value = names[i].slice(
+        commonPrefixLen < Infinity ? commonPrefixLen : 0,
+        commonSuffixLen < Infinity ? names[i].length - commonSuffixLen : undefined
+      ).join(' ');
+    });
+  }
 }
