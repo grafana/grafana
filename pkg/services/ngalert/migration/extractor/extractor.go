@@ -21,10 +21,6 @@ import (
 )
 
 var (
-	legacyLogger = log.New("alerting.testnotification")
-)
-
-var (
 	valueFormatRegex = regexp.MustCompile(`^\d+`)
 	isDigitRegex     = regexp.MustCompile(`^[0-9]+$`)
 	unitFormatRegex  = regexp.MustCompile(`[a-z]+`)
