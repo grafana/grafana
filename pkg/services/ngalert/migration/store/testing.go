@@ -9,18 +9,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
-	legacyalerting "github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	datasourceGuardian "github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
-	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -95,17 +92,10 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 	require.NoError(t, err)
 
 	return &migrationStore{
-		log:                            &logtest.Fake{},
-		cfg:                            cfg,
-		store:                          sqlStore,
-		kv:                             kvstore.ProvideService(sqlStore),
-		alertingStore:                  &alertingStore,
-		dashboardService:               dashboardService,
-		folderService:                  folderService,
-		dataSourceCache:                datasourceService.ProvideCacheService(cache, sqlStore, datasourceGuardian.ProvideGuardian()),
-		folderPermissions:              folderPermissions,
-		dashboardPermissions:           dashboardPermissions,
-		orgService:                     orgService,
-		legacyAlertNotificationService: legacyalerting.ProvideService(cfg, sqlStore, encryptionservice.SetupTestService(t), nil),
+		log:              &logtest.Fake{},
+		cfg:              cfg,
+		store:            sqlStore,
+		dashboardService: dashboardService,
+		dataSourceCache:  datasourceService.ProvideCacheService(cache, sqlStore, datasourceGuardian.ProvideGuardian()),
 	}
 }
