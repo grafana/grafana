@@ -6,6 +6,8 @@ import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardModelCompatibilityWrapper } from 'app/features/dashboard-scene/utils/DashboardModelCompatibilityWrapper';
 import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
 import { DashboardMeta } from 'app/types';
 
@@ -39,6 +41,7 @@ interface SaveDashboardResponse {
 
 export class DashboardSrv {
   dashboard?: DashboardModel;
+  #scene?: DashboardScene;
 
   constructor() {
     appEvents.subscribe(RemovePanelEvent, (e) => this.onRemovePanel(e.payload));
@@ -54,6 +57,16 @@ export class DashboardSrv {
 
   getCurrent(): DashboardModel | undefined {
     return this.dashboard;
+  }
+
+  setCurrentScene(scene: DashboardScene) {
+    this.#scene = scene;
+    // @ts-expect-error
+    this.dashboard = new DashboardModelCompatibilityWrapper(scene);
+  }
+
+  getScene(): DashboardScene | undefined {
+    return this.#scene;
   }
 
   onRemovePanel = (panelId: number) => {

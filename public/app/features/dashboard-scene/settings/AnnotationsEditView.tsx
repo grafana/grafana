@@ -77,14 +77,9 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
     const data = dashboardSceneGraph.getDataLayers(this._dashboard);
 
-    const layers = [...data.state.layers];
+    const layers = [...data.state.layers, newAnnotation];
 
-    //keep annotation layers together
-    layers.splice(this.getAnnotationsLength(), 0, newAnnotation);
-
-    data.setState({
-      layers,
-    });
+    data.setState({ layers });
 
     newAnnotation.activate();
 
