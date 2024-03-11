@@ -2,6 +2,7 @@ import { Registry } from '@grafana/data';
 
 import { CanvasElementItem, CanvasElementOptions } from './element';
 import { buttonItem } from './elements/button';
+import { cloudItem } from './elements/cloud';
 import { droneFrontItem } from './elements/droneFront';
 import { droneSideItem } from './elements/droneSide';
 import { droneTopItem } from './elements/droneTop';
@@ -29,6 +30,7 @@ export const defaultElementItems = [
   iconItem,
   serverItem,
   triangleItem,
+  cloudItem,
 ];
 
 export const advancedElementItems = [buttonItem, windTurbineItem, droneTopItem, droneFrontItem, droneSideItem];
