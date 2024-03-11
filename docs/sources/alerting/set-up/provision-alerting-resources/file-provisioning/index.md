@@ -774,7 +774,7 @@ contactPoints:
           addresses: $EMAIL
 ```
 
-In this example, provisioning will replace `$EMAIL` with the value of the `EMAIL` environment variable or an empty string if it is not present. For more information, refer to [Using environment variables in the Provision documentation][provisioning_env_vars].
+In this example, provisioning replaces `$EMAIL` with the value of the `EMAIL` environment variable or an empty string if it is not present. For more information, refer to [Using environment variables in the Provision documentation][provisioning_env_vars].
 
 Note that the provisioning interpolation may unexpectedly substitute template variables in alerting resources.
 
