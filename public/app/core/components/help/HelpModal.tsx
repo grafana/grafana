@@ -154,7 +154,7 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   const shortcuts = useMemo(() => getShortcuts(modKey), [modKey]);
   return (
     <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-      <Grid columns={{ xs: 1, sm: 2 }} gap={3}>
+      <Grid columns={{ xs: 1, sm: 2 }} gap={3} tabIndex={0}>
         {Object.values(shortcuts).map(({ category, shortcuts }) => (
           <section key={category}>
             <table className={styles.table}>
@@ -224,7 +224,7 @@ function replaceCustomKeyNames(key: string) {
 
   return key.replace(
     displayName,
-    `<span aria-label="${srName}"><span aria-hidden="true" role="none">${displayName}</span></span>`
+    `<span class="sr-only">${srName}</span><span aria-hidden="true" role="none">${displayName}</span>`
   );
 }
 
