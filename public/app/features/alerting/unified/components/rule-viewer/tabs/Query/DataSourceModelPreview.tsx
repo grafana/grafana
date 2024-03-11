@@ -1,11 +1,12 @@
 import { dump } from 'js-yaml';
 import React from 'react';
 
-import { ReactMonacoEditor } from '@grafana/ui';
 import { AlertDataQuery } from 'app/types/unified-alerting-dto';
 
 import { DataSourceType } from '../../../../utils/datasource';
 import { isPromOrLokiQuery } from '../../../../utils/rule-form';
+
+import { isSQLLikeQuery, SQLQueryPreview } from './SQLQueryPreview';
 
 const PrometheusQueryPreview = React.lazy(() => import('./PrometheusQueryPreview'));
 const LokiQueryPreview = React.lazy(() => import('./LokiQueryPreview'));
@@ -26,25 +27,7 @@ function DatasourceModelPreview({ model }: DatasourceModelPreviewProps): React.R
   }
 
   if (isSQLLikeQuery(model)) {
-    return (
-      <ReactMonacoEditor
-        options={{
-          readOnly: true,
-          minimap: {
-            enabled: false,
-          },
-          scrollBeyondLastColumn: 0,
-          scrollBeyondLastLine: false,
-          lineNumbers: 'off',
-          cursorWidth: 0,
-          overviewRulerLanes: 0,
-        }}
-        defaultLanguage="sql"
-        height={80}
-        defaultValue={model.rawSql}
-        width="100%"
-      />
-    );
+    return <SQLQueryPreview expression={model.rawSql} />;
   }
 
   return (
@@ -52,15 +35,6 @@ function DatasourceModelPreview({ model }: DatasourceModelPreviewProps): React.R
       <code>{dump(model)}</code>
     </pre>
   );
-}
-
-interface SQLLike {
-  refId: string;
-  rawSql: string;
-}
-
-function isSQLLikeQuery(model: AlertDataQuery): model is SQLLike {
-  return 'rawSql' in model;
 }
 
 export { DatasourceModelPreview };
