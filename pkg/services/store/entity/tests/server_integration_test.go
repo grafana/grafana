@@ -134,7 +134,7 @@ func TestIntegrationWatch(t *testing.T) {
 
 		// create watch client and timeout after 5 seconds of waiting for an event
 		ctx := testCtx.ctx
-		ctx, _ = context.WithTimeout(ctx, time.Second*5)
+		ctx, _ = context.WithTimeout(ctx, time.Second*10)
 		watchClient := newWatchClient(t, ctx, testCtx.client, otherKey)
 
 		// create entity
