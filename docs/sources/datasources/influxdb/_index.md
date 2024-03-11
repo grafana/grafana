@@ -220,6 +220,7 @@ datasources:
     access: proxy
     url: http://localhost:8086
     jsonData:
+      version: SQL
       dbName: site
       httpMode: POST
     secureJsonData:
