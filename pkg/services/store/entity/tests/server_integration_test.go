@@ -128,7 +128,7 @@ func TestIntegrationWatch(t *testing.T) {
 		resource := "jsonobjs"
 		namespace := "default"
 		body := []byte("{\"name\":\"John\"}")
-		name := "key"
+		name := "test1"
 		key := "/" + group + "/" + resource + "/" + namespace + "/" + name
 		otherKey := "/" + group + "/" + resource + "/" + namespace + "/" + "otherName"
 
@@ -171,7 +171,7 @@ func TestIntegrationWatch(t *testing.T) {
 		resource := "jsonobjs"
 		namespace := "default"
 		body := []byte("{\"name\":\"John\"}")
-		name := "key1"
+		name := "test2"
 		key := "/" + group + "/" + resource + "/" + namespace + "/" + name
 
 		// create watch client and listen for events
