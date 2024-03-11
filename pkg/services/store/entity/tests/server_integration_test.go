@@ -112,6 +112,10 @@ func requireVersionMatch(t *testing.T, obj *entity.Entity, m objectVersionMatche
 }
 
 func TestIntegration_WatchOnlyGetsEventsForKeysItIsWatching(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	testCtx := createTestContext(t)
 	testCtx.ctx = appcontext.WithUser(testCtx.ctx, testCtx.user)
 
@@ -159,6 +163,10 @@ func TestIntegration_WatchOnlyGetsEventsForKeysItIsWatching(t *testing.T) {
 }
 
 func TestIntegration_Watch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	testCtx := createTestContext(t)
 	testCtx.ctx = appcontext.WithUser(testCtx.ctx, testCtx.user)
 
