@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 title: Notification policies
-weight: 410
+weight: 113
 ---
 
 # Notification policies

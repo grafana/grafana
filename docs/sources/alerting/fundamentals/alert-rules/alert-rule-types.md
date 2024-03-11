@@ -1,4 +1,5 @@
 ---
+## TODO: alias from /fundamentals/data-source-alerting/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/
 description: Learn about the different alert rule types that Grafana Alerting supports
 keywords:
@@ -34,10 +35,15 @@ The following diagram shows how Grafana-managed alerting works.
 
 1. Alerts are delivered using the internal Grafana Alertmanager.
 
-**Note:**
+   Note that you can also configure alerts to be delivered using an external Alertmanager; or use both internal and external alertmanagers.
 
-You can also configure alerts to be delivered using an external Alertmanager; or use both internal and external alertmanagers.
-For more information, see Add an external Alertmanager.
+### Supported data sources
+
+Grafana-managed alert rules can query the following backend data sources that have alerting enabled:
+
+- built-in data sources or those developed and maintained by Grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
+  `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, `TestData`, and `Azure Monitor`.
+- community data sources specifying `{"alerting": true, “backend”: true}` in the [plugin.json](/developers/plugin-tools/reference-plugin-json)
 
 ## Data source-managed alert rules
 
@@ -75,3 +81,56 @@ When choosing which alert rule type to use, consider the following comparison be
 **Note:**
 
 If you are using non-Prometheus data, we recommend choosing Grafana-managed alert rules. Otherwise, choose Grafana Mimir or Grafana Loki alert rules where possible.
+
+{{% docs/reference %}}
+[Grafana data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources"
+[Grafana data sources]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources"
+
+[AWS CloudWatch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch"
+[AWS CloudWatch]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/aws-cloudwatch"
+
+[Azure Monitor]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor"
+[Azure Monitor]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/azure-monitor"
+
+[Elasticsearch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch"
+[Elasticsearch]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/elasticsearch"
+
+[Google Cloud Monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring"
+[Google Cloud Monitoring]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/google-cloud-monitoring"
+
+[Graphite]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/graphite"
+[Graphite]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/graphite"
+
+[InfluxDB]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/influxdb"
+[InfluxDB]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/influxdb"
+
+[Loki]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/loki"
+[Loki]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/loki"
+
+[Microsoft SQL Server (MSSQL)]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/mssql"
+[Microsoft SQL Server (MSSQL)]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/mssql"
+
+[MySQL]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/mysql"
+[MySQL]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/mysql"
+
+[Open TSDB]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb"
+[Open TSDB]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/opentsdb"
+
+[PostgreSQL]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/postgres"
+[PostgreSQL]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/postgres"
+
+[Prometheus]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus"
+[Prometheus]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus"
+
+[Jaeger]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/jaeger"
+[Jaeger]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/jaeger"
+
+[Zipkin]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/zipkin"
+[Zipkin]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/zipkin"
+
+[Tempo]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/tempo"
+[Tempo]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo"
+
+[Testdata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/testdata"
+[Testdata]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/testdata"
+{{% /docs/reference %}}

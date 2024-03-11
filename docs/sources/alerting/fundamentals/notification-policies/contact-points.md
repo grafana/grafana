@@ -1,5 +1,6 @@
 ---
 aliases:
+  ## TODO alias and canonical
   - /docs/grafana/latest/alerting/contact-points/
   - /docs/grafana/latest/alerting/unified-alerting/contact-points/
   - /docs/grafana/latest/alerting/fundamentals/contact-points/contact-point-types/
@@ -18,7 +19,7 @@ labels:
     - enterprise
     - oss
 title: Contact points
-weight: 120
+weight: 112
 ---
 
 # Contact points

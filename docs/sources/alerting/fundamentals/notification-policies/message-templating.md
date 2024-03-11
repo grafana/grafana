@@ -1,9 +1,10 @@
 ---
 aliases:
+  ## TODO: alias and templating
   - ../../contact-points/message-templating/
   - ../../alert-rules/message-templating/
   - ../../unified-alerting/message-templating/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/message-templating/
+canonical: https://grafana.com/docs/grafana/latest/alerting/notification-policies/message-templating/
 description: Learn about notification templating
 keywords:
   - grafana
@@ -17,7 +18,7 @@ labels:
     - enterprise
     - oss
 title: Notification templates
-weight: 125
+weight: 114
 ---
 
 # Notification templates
