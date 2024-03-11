@@ -59,9 +59,9 @@ Lets you choose what unit a field should use. Click in the **Unit** field, then 
 
 #### Custom units
 
-You can use the unit dropdown to also specify custom units, custom prefix or suffix and date time formats.
+You can use the unit drop-down to also specify custom units, custom prefix or suffix and date time formats.
 
-To select a custom unit enter the unit and select the last `Custom: xxx` option in the dropdown.
+To select a custom unit enter the unit and select the last `Custom: xxx` option in the drop-down.
 
 - `suffix:<suffix>` for custom unit that should go after value.
 - `prefix:<prefix>` for custom unit that should go before value.
@@ -123,27 +123,31 @@ The color options and their effect on the visualization depends on the visualiza
 You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 Continuous color interpolates a color using the percentage of a value relative to min and max.
 
+<!-- By default, the graph uses the standard [Color scheme][] option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
+color this way automatically creates an override rule that set's a specific color for a specific series. -->
+
 Select one of the following palettes:
 
 <div class="clearfix"></div>
 
-| Color mode                           | Description                                                                                                                                              |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Single color**                     | Specify a single color, useful in an override rule                                                                                                       |
-| **Shades of a color**                | Selects shades of a single color, useful in an override rule                                                                                             |
-| **From thresholds**                  | Informs Grafana to take the color from the matching threshold                                                                                            |
-| **Classic palette**                  | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
-| **Classic palette (by series name)** | Grafana will assign color based on the name of the series. Useful when the series names to be visualized depend on the available data.                   |
-| **Green-Yellow-Red (by value)**      | Continuous color scheme                                                                                                                                  |
-| **Red-Yellow-Green (by value)**      | Continuous color scheme                                                                                                                                  |
-| **Blue-Yellow-Red (by value)**       | Continuous color scheme                                                                                                                                  |
-| **Yellow-Red (by value)**            | Continuous color scheme                                                                                                                                  |
-| **Blue-Purple (by value)**           | Continuous color scheme                                                                                                                                  |
-| **Yellow-Blue (by value)**           | Continuous color scheme                                                                                                                                  |
-| **Blues (by value)**                 | Continuous color scheme (panel background to blue)                                                                                                       |
-| **Reds (by value)**                  | Continuous color scheme (panel background color to red)                                                                                                  |
-| **Greens (by value)**                | Continuous color scheme (panel background color to green)                                                                                                |
-| **Purples (by value)**               | Continuous color scheme (panel background color to purple)                                                                                               |
+| Color mode                           | Description                                                                                                                                               |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Single color**                     | Specify a single color, useful in an override rule.                                                                                                       |
+| **Shades of a color**                | Selects shades of a single color, useful in an override rule                                                                                              |
+| **From thresholds**                  | Informs Grafana to take the color from the matching threshold.                                                                                            |
+|  |
+| **Classic palette**                  | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations. |
+| **Classic palette (by series name)** | Grafana will assign color based on the name of the series. Useful when the series names to be visualized depend on the available data.                    |
+| **Green-Yellow-Red (by value)**      | Continuous color. scheme                                                                                                                                  |
+| **Red-Yellow-Green (by value)**      | Continuous color scheme                                                                                                                                   |
+| **Blue-Yellow-Red (by value)**       | Continuous color scheme                                                                                                                                   |
+| **Yellow-Red (by value)**            | Continuous color scheme                                                                                                                                   |
+| **Blue-Purple (by value)**           | Continuous color scheme                                                                                                                                   |
+| **Yellow-Blue (by value)**           | Continuous color scheme                                                                                                                                   |
+| **Blues (by value)**                 | Continuous color scheme (panel background to blue)                                                                                                        |
+| **Reds (by value)**                  | Continuous color scheme (panel background color to red)                                                                                                   |
+| **Greens (by value)**                | Continuous color scheme (panel background color to green)                                                                                                 |
+| **Purples (by value)**               | Continuous color scheme (panel background color to purple)                                                                                                |
 
 {{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" >}}
 
@@ -195,5 +199,5 @@ Enter what Grafana should display if the field value is empty or null. The defau
 [trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
 
 [variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables"
 {{% /docs/reference %}}
