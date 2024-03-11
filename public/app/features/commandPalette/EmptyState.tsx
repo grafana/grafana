@@ -11,7 +11,7 @@ export const EmptyState = ({}: Props) => {
   return (
     <Box paddingY={8}>
       <Stack direction="column" alignItems="center">
-        <GrotNotFound width={200} />
+        <GrotNotFound width={300} />
         <Text variant="h5">
           <Trans i18nKey="command-palette.empty-state.title">No results found</Trans>
         </Text>

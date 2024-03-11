@@ -3,9 +3,10 @@ import React, { SVGProps } from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import notFoundSvg from '../../../../img/grot-not-found.svg';
+import dark404 from '../../../../img/grot-404-dark.svg';
+import light404 from '../../../../img/grot-404-light.svg';
 
 import useMousePosition from './useMousePosition';
 
@@ -17,17 +18,19 @@ const MAX_ARM_TRANSLATION = 5;
 export interface Props {
   width?: SVGProps<SVGElement>['width'];
   height?: SVGProps<SVGElement>['height'];
+  show404?: boolean;
 }
 
-export const GrotNotFound = ({ width, height }: Props) => {
+export const GrotNotFound = ({ width = 'auto', height, show404 = false }: Props) => {
+  const theme = useTheme2();
   const { x, y } = useMousePosition();
-  const styles = useStyles2(getStyles, x, y);
-  return <SVG src={notFoundSvg} className={styles.svg} height={height} width={width} />;
+  const styles = useStyles2(getStyles, x, y, show404);
+  return <SVG src={theme.isDark ? dark404 : light404} className={styles.svg} height={height} width={width} />;
 };
 
 GrotNotFound.displayName = 'GrotNotFound';
 
-const getStyles = (theme: GrafanaTheme2, xPos: number | null, yPos: number | null) => {
+const getStyles = (theme: GrafanaTheme2, xPos: number | null, yPos: number | null, show404: boolean) => {
   const { innerWidth, innerHeight } = window;
   const heightRatio = yPos && yPos / innerHeight;
   const widthRatio = xPos && xPos / innerWidth;
@@ -37,10 +40,13 @@ const getStyles = (theme: GrafanaTheme2, xPos: number | null, yPos: number | nul
 
   return {
     svg: css({
-      '#grot-not-found-arm, #grot-not-found-magnifier': {
+      '#grot-404-arm, #grot-404-magnifier': {
         transform: `rotate(${rotation}deg) translateX(${translation}%)`,
         transformOrigin: 'center',
         transition: 'transform 50ms linear',
+      },
+      '#grot-404-text': {
+        display: show404 ? 'block' : 'none',
       },
     }),
   };
