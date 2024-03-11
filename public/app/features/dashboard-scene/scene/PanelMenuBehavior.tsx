@@ -43,7 +43,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
 
     const items: PanelMenuItem[] = [];
     const moreSubMenu: PanelMenuItem[] = [];
-    const panelId = getPanelIdForVizPanel(panel);
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
     const exploreMenuItem = await getExploreMenuItem(panel);
@@ -72,7 +71,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         iconClassName: 'eye',
         shortcut: 'e',
         onClick: () => DashboardInteractions.panelMenuItemClicked('edit'),
-        href: getEditPanelUrl(panelId),
+        href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
       });
     }
 

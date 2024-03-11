@@ -18,6 +18,7 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
+import { LibraryVizPanel } from './LibraryVizPanel';
 
 interface Props {
   dashboard: DashboardScene;
@@ -56,6 +57,9 @@ export function ToolbarActions({ dashboard }: Props) {
   const buttonWithExtraMargin = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
+  const isEditingLibraryPanel = Boolean(
+    editPanel?.state.vizManager.state.sourcePanel.resolve().parent instanceof LibraryVizPanel
+  );
   const hasCopiedPanel = Boolean(copiedPanel);
 
   toolbarActions.push({
@@ -233,7 +237,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'back-button',
-    condition: isViewingPanel || isEditingPanel,
+    condition: (isViewingPanel || isEditingPanel) && !isEditingLibraryPanel,
     render: () => (
       <Button
         onClick={() => {
@@ -347,7 +351,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditingPanel && !editview && !meta.isNew && !isViewingPanel,
+    condition: isEditingPanel && !isEditingLibraryPanel && !editview && !meta.isNew && !isViewingPanel,
     render: () => (
       <Button
         onClick={editPanel?.onDiscard}
@@ -364,7 +368,41 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && (meta.canSave || canSaveAs),
+    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
+    render: () => (
+      <Button
+        onClick={editPanel?.onDiscard}
+        tooltip="Discard library panel changes"
+        size="sm"
+        key="discardLibraryPanel"
+        fill="outline"
+        variant="destructive"
+      >
+        Discard library panel changes
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
+    render: () => (
+      <Button
+        onClick={editPanel?.onSaveLibraryPanel}
+        tooltip="Save library panel"
+        size="sm"
+        key="saveLibraryPanel"
+        fill="outline"
+        variant="primary"
+      >
+        Save library panel
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: isEditing && !isEditingLibraryPanel && (meta.canSave || canSaveAs),
     render: () => {
       // if we  only can save
       if (meta.isNew) {
