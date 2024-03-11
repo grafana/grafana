@@ -57,7 +57,7 @@ type AlertEngine struct {
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
 func (e *AlertEngine) IsDisabled() bool {
-	return e.Cfg.UnifiedAlerting.IsEnabled()
+	return true
 }
 
 // ProvideAlertEngine returns a new AlertEngine.
