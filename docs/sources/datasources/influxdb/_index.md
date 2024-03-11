@@ -130,7 +130,7 @@ Configure these options if you select the SQL query language:
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Database** | Sets the ID of the bucket to query. Copy this from the Buckets page of the InfluxDB UI.                                                                                                                                       |
 | **Token**    | API token used for SQL queries. It can be generated on InfluxDB Cloud dashboard under [Load Data > API Tokens](https://docs.influxdata.com/influxdb/cloud-serverless/get-started/setup/#create-an-all-access-api-token) menu. |
-| **Insecure gRPC** | Disable gRPC TLS security.                                                                                                                                 |
+| **Insecure Connection** | Disable gRPC TLS security.                                                                                                                                 |
 
 ### Configure Flux
 
