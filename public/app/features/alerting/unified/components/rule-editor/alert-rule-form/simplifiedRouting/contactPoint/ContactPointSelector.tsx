@@ -78,7 +78,7 @@ export function ContactPointSelector({
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
-        <Field label="Contact point">
+        <Field label="Contact point" data-testid="contact-point-picker">
           <InputControl
             render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
               <>
