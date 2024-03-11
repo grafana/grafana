@@ -109,6 +109,7 @@ export interface DashboardSceneState extends SceneObjectState {
   overlay?: SceneObject;
   /** True when a user copies a panel in the dashboard */
   hasCopiedPanel?: boolean;
+  /** The dashboard doesn't have panels */
   isEmpty?: boolean;
 }
 

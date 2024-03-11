@@ -57,6 +57,11 @@ export const Pages = {
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
       shareButton: 'data-testid share-button',
+      playlistControls: {
+        prev: 'data-testid playlist previous dashboard button',
+        stop: 'data-testid playlist stop dashboard button',
+        next: 'data-testid playlist next dashboard button',
+      },
     },
     SubMenu: {
       submenu: 'Dashboard submenu',

@@ -177,7 +177,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const isPlaylistRunning = () => {
-    return playlistSrv.isPlaying;
+    return playlistSrv.state.isPlaying;
   };
 
   const renderLeftActions = () => {

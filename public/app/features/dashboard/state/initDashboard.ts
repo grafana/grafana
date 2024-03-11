@@ -97,7 +97,7 @@ async function fetchDashboard(
           }
         }
 
-        if (args.fixUrl && dashDTO.meta.url && !playlistSrv.isPlaying) {
+        if (args.fixUrl && dashDTO.meta.url && !playlistSrv.state.isPlaying) {
           // check if the current url is correct (might be old slug)
           const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
           const currentPath = locationService.getLocation().pathname;

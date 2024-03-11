@@ -57,6 +57,15 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('app/features/playlist/PlaylistSrv', () => ({
+  ...jest.requireActual('app/features/playlist/PlaylistSrv'),
+  playlistSrv: {
+    isPlaying: false,
+    next: jest.fn(),
+    prev: jest.fn(),
+    stop: jest.fn(),
+  },
+}));
 const worker = createWorker();
 mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
 
