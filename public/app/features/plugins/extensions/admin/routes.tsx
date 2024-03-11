@@ -28,5 +28,14 @@ export function getRoutes(): RouteDescriptor[] {
         ['Admin', 'ServerAdmin']
       ),
     },
+    {
+      path: '/extensions/explore/:id?',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "ExtensionsAdmin" */ './pages/Extensions')),
+      roles: evaluateAccess(
+        // TODO: maybe we should have a separate permission for this
+        [AccessControlAction.PluginsInstall, AccessControlAction.PluginsWrite],
+        ['Admin', 'ServerAdmin']
+      ),
+    },
   ];
 }

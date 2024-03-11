@@ -46,22 +46,6 @@ export function getRepl() {}
 // Update the repl for the current user (the content of the REPL)
 export function setRepl() {}
 
-// This one is used to generate a unique id for a plugin extension
-// (We don't yet have a way to have unique ids for plugin extensions (TODO - explain why))
-export async function generateSHA256Hash(str: string) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-
-  return hashHex;
-}
-
-export async function generateIdForExtension(extension: PluginExtensionConfig) {}
-
-export async function generateIdForCapability(extension: PluginExtensionConfig) {}
-
 export function getCoreExtensionPoints(regsitry?: PluginExtensionRegistry): ExtensionPointConfig[] {
   const availableIds = Object.values(PluginExtensionPoints);
   const coreExtensionPoints = availableIds.map((id) => ({
