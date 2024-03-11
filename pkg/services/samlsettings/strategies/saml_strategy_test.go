@@ -86,7 +86,7 @@ func TestGetProviderConfig(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Raw = configurationFile
 
-	strategy := NewSAMLStrategy(cfg)
+	strategy := NewSAMLStrategy(cfg, &setting.OSSImpl{Cfg: cfg})
 
 	result, err := strategy.GetProviderConfig(context.Background(), "saml")
 	require.NoError(t, err)
