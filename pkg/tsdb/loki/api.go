@@ -23,8 +23,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/promlib/converter"
 	"github.com/grafana/grafana/pkg/tsdb/loki/instrumentation"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/converter"
 )
 
 type LokiAPI struct {

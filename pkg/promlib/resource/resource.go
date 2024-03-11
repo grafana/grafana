@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana-azure-sdk-go/util/maputil"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
+	"github.com/grafana/grafana/pkg/promlib/client"
+	"github.com/grafana/grafana/pkg/promlib/utils"
 )
 
 type Resource struct {

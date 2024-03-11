@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 )
@@ -23,26 +22,5 @@ func TestCreateTransportOptions(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, map[string]string{"foo": "bar"}, opts.Headers)
 		require.Equal(t, 2, len(opts.Middlewares))
-	})
-
-	t.Run("add azure credentials if configured", func(t *testing.T) {
-		cfg := backend.NewGrafanaCfg(map[string]string{
-			azsettings.AzureCloud:       azsettings.AzurePublic,
-			azsettings.AzureAuthEnabled: "true",
-		})
-		settings := backend.DataSourceInstanceSettings{
-			BasicAuthEnabled: false,
-			BasicAuthUser:    "",
-			JSONData: []byte(`{
-				"azureCredentials": {
-					"authType": "msi"
-				}
-			}`),
-			DecryptedSecureJSONData: map[string]string{},
-		}
-		ctx := backend.WithGrafanaConfig(context.Background(), cfg)
-		opts, err := CreateTransportOptions(ctx, settings, backend.NewLoggerWith("logger", "test"))
-		require.NoError(t, err)
-		require.Equal(t, 3, len(opts.Middlewares))
 	})
 }

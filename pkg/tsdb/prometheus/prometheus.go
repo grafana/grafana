@@ -2,145 +2,67 @@ package prometheus
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"strings"
-	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/patrickmn/go-cache"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/instrumentation"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/resource"
+	"github.com/grafana/grafana/pkg/promlib"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/azureauth"
 )
 
 type Service struct {
-	im     instancemgmt.InstanceManager
-	logger log.Logger
+	lib *promlib.Service
 }
 
-type instance struct {
-	queryData    *querydata.QueryData
-	resource     *resource.Resource
-	versionCache *cache.Cache
-}
-
-func ProvideService(httpClientProvider *httpclient.Provider) *Service {
+func ProvideService(httpClientProvider *sdkhttpclient.Provider) *Service {
 	plog := backend.NewLoggerWith("logger", "tsdb.prometheus")
 	plog.Debug("Initializing")
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, plog)),
-		logger: plog,
-	}
-}
-
-func newInstanceSettings(httpClientProvider *httpclient.Provider, log log.Logger) datasource.InstanceFactoryFunc {
-	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		// Creates a http roundTripper.
-		opts, err := client.CreateTransportOptions(ctx, settings, log)
-		if err != nil {
-			return nil, fmt.Errorf("error creating transport options: %v", err)
-		}
-		httpClient, err := httpClientProvider.New(*opts)
-		if err != nil {
-			return nil, fmt.Errorf("error creating http client: %v", err)
-		}
-
-		// New version using custom client and better response parsing
-		qd, err := querydata.New(httpClient, settings, log)
-		if err != nil {
-			return nil, err
-		}
-
-		// Resource call management using new custom client same as querydata
-		r, err := resource.New(httpClient, settings, log)
-		if err != nil {
-			return nil, err
-		}
-
-		return instance{
-			queryData:    qd,
-			resource:     r,
-			versionCache: cache.New(time.Minute*1, time.Minute*5),
-		}, nil
+		lib: promlib.NewService(httpClientProvider, plog, extendClientOpts),
 	}
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if len(req.Queries) == 0 {
-		err := fmt.Errorf("query contains no queries")
-		instrumentation.UpdateQueryDataMetrics(err, nil)
-		return &backend.QueryDataResponse{}, err
-	}
-
-	i, err := s.getInstance(ctx, req.PluginContext)
-	if err != nil {
-		instrumentation.UpdateQueryDataMetrics(err, nil)
-		return nil, err
-	}
-
-	qd, err := i.queryData.Execute(ctx, req)
-	instrumentation.UpdateQueryDataMetrics(err, qd)
-
-	return qd, err
+	return s.lib.QueryData(ctx, req)
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	i, err := s.getInstance(ctx, req.PluginContext)
-	if err != nil {
-		return err
+	return s.lib.CallResource(ctx, req, sender)
+}
+
+func (s *Service) GetBuildInfo(ctx context.Context, req promlib.BuildInfoRequest) (*promlib.BuildInfoResponse, error) {
+	return s.lib.GetBuildInfo(ctx, req)
+}
+
+func (s *Service) GetHeuristics(ctx context.Context, req promlib.HeuristicsRequest) (*promlib.Heuristics, error) {
+	return s.lib.GetHeuristics(ctx, req)
+}
+
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
+	error) {
+	return s.lib.CheckHealth(ctx, req)
+}
+
+func extendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error {
+	// Set SigV4 service namespace
+	if clientOpts.SigV4 != nil {
+		clientOpts.SigV4.Service = "aps"
 	}
 
-	if strings.EqualFold(req.Path, "version-detect") {
-		versionObj, found := i.versionCache.Get("version")
-		if found {
-			return sender.Send(versionObj.(*backend.CallResourceResponse))
-		}
+	azureSettings, err := azsettings.ReadSettings(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to read Azure settings from Grafana: %v", err)
+	}
 
-		vResp, err := i.resource.DetectVersion(ctx, req)
+	// Set Azure authentication
+	if azureSettings.AzureAuthEnabled {
+		err = azureauth.ConfigureAzureAuthentication(settings, azureSettings, clientOpts)
 		if err != nil {
-			return err
+			return fmt.Errorf("error configuring Azure auth: %v", err)
 		}
-		i.versionCache.Set("version", vResp, cache.DefaultExpiration)
-		return sender.Send(vResp)
 	}
 
-	resp, err := i.resource.Execute(ctx, req)
-	if err != nil {
-		return err
-	}
-
-	return sender.Send(resp)
-}
-
-func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*instance, error) {
-	i, err := s.im.Get(ctx, pluginCtx)
-	if err != nil {
-		return nil, err
-	}
-	in := i.(instance)
-	return &in, nil
-}
-
-// IsAPIError returns whether err is or wraps a Prometheus error.
-func IsAPIError(err error) bool {
-	// Check if the right error type is in err's chain.
-	var e *apiv1.Error
-	return errors.As(err, &e)
-}
-
-func ConvertAPIError(err error) error {
-	var e *apiv1.Error
-	if errors.As(err, &e) {
-		return fmt.Errorf("%s: %s", e.Msg, e.Detail)
-	}
-	return err
+	return nil
 }

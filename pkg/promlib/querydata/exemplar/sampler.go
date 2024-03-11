@@ -4,7 +4,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/promlib/models"
 )
 
 type Sampler interface {

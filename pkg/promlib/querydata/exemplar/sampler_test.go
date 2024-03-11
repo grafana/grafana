@@ -6,8 +6,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata/exemplar"
+	"github.com/grafana/grafana/pkg/promlib/models"
+	"github.com/grafana/grafana/pkg/promlib/querydata/exemplar"
 )
 
 const update = true

@@ -10,7 +10,7 @@ include .bingo/Variables.mk
 .PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
 
 GO = go
-GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/...
+GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
