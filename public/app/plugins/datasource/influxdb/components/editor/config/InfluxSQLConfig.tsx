@@ -60,7 +60,7 @@ export const InfluxSqlConfig = (props: Props) => {
       <Field horizontal label={<InlineLabel width={WIDTH_SHORT}>Insecure Connection</InlineLabel>} className={styles.horizontalField}>
         <InlineSwitch
           id={`${htmlPrefix}-insecure-grpc`}
-          value={jsonData.insecureGrpc}
+          value={jsonData.insecureGrpc ?? false}
           onChange={(event) => {
             onOptionsChange({
               ...options,
