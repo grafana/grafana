@@ -162,3 +162,4 @@ groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 betterPageScrolling,GA,@grafana/grafana-frontend-platform,false,false,true
 alertingUpgradeDryrunOnStart,GA,@grafana/alerting-squad,false,true,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
+emailVerificationEnforcement,experimental,@grafana/identity-access-team,false,false,false

@@ -2100,6 +2100,20 @@
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true
       }
+    },
+    {
+      "metadata": {
+        "name": "emailVerificationEnforcement",
+        "resourceVersion": "1710164083965",
+        "creationTimestamp": "2024-03-11T13:34:43Z"
+      },
+      "spec": {
+        "description": "Force email verification for users, even when authenticating through sso.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
     }
   ]
 }
