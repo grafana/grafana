@@ -46,7 +46,7 @@
     "fast_array_intersect": "1.1.0",
     "history": "4.10.1",
     "lodash": "4.17.21",
-    "marked": "12.0.0",
+    "marked": "12.0.1",
     "marked-mangle": "1.1.7",
     "moment": "2.30.1",
     "moment-timezone": "0.5.45",
