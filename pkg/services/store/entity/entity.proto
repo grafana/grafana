@@ -300,6 +300,9 @@ message EntityListRequest {
 
   // Return the full body in each payload
   bool with_status = 10;
+
+  // list deleted entities instead of active ones
+  bool deleted = 12;
 }
 
 message ReferenceRequest {
