@@ -10,12 +10,23 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-var queryConditionFactory = func(model *simplejson.Json, index int) (Condition, error) {
-	return newQueryCondition(model, index)
+func init() {
+	RegisterCondition("query", func(model *simplejson.Json, index int) (Condition, error) {
+		return newQueryCondition(model, index)
+	})
 }
 
-type ConditionResultStub struct {
+// ConditionFactory is the function signature for creating `Conditions`.
+type ConditionFactory func(model *simplejson.Json, index int) (Condition, error)
+
+var conditionFactories = make(map[string]ConditionFactory)
+
+// RegisterCondition adds support for alerting conditions.
+func RegisterCondition(typeName string, factory ConditionFactory) {
+	conditionFactories[typeName] = factory
 }
+
+type ConditionResultStub struct{}
 
 // Condition is a stub interface for alert conditions.
 type Condition interface {

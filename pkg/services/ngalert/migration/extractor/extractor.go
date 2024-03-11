@@ -403,12 +403,11 @@ func NewRuleFromDBAlert(ctx context.Context, ruleDef *models.Alert, logTranslati
 	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {
 		conditionModel := simplejson.NewFromAny(condition)
 		conditionType := conditionModel.Get("type").MustString()
-
-		if conditionType != "query" {
+		factory, exist := conditionFactories[conditionType]
+		if !exist {
 			return nil, ValidationError{Reason: "Unknown alert condition: " + conditionType, DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
 		}
-
-		queryCondition, err := queryConditionFactory(conditionModel, index)
+		queryCondition, err := factory(conditionModel, index)
 		if err != nil {
 			return nil, ValidationError{Err: err, DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
 		}

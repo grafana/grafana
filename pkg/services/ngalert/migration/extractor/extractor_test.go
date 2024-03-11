@@ -22,6 +22,10 @@ func (f *FakeCondition) Eval(context *EvalContextStub, reqHandler legacydata.Req
 }
 
 func TestAlertRuleExtraction(t *testing.T) {
+	RegisterCondition("query", func(model *simplejson.Json, index int) (Condition, error) {
+		return &FakeCondition{}, nil
+	})
+
 	// mock data
 	defaultDs := &datasources.DataSource{ID: 12, OrgID: 1, Name: "I am default", IsDefault: true, UID: "def-uid"}
 	graphite2Ds := &datasources.DataSource{ID: 15, OrgID: 1, Name: "graphite2", UID: "graphite2-uid"}
