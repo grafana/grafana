@@ -441,15 +441,6 @@ export enum ExploreMode {
   Tracing = 'Tracing',
 }
 
-/**
- * @deprecated use QueryEditorProps instead
- */
-export type ExploreQueryFieldProps<
-  DSType extends DataSourceApi<TQuery, TOptions>,
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData,
-> = QueryEditorProps<DSType, TQuery, TOptions>;
-
 export interface QueryEditorHelpProps<TQuery extends DataQuery = DataQuery> {
   datasource: DataSourceApi<TQuery>;
   query: TQuery;
