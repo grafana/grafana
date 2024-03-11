@@ -39,7 +39,7 @@ You can apply standard options to most built-in Grafana panels. Some older panel
 
 TBA
 
-## Standard options definitions
+## Standard options
 
 This section explains all available standard options.
 
