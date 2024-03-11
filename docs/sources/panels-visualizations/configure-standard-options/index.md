@@ -31,7 +31,9 @@ Field options allow you to change how the data is displayed in your visualizatio
 
 For a complete list of field formatting options, refer to [Standard options definitions](#standard-options-definitions).
 
-> You can apply standard options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
+{{< admonition type="note" >}}
+You can apply standard options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
+{{< /admonition >}}
 
 ## Standard options definitions
 
