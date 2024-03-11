@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Subscription } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -61,19 +61,23 @@ export const PanelEditorTabs = React.memo(({ panel, dashboard, tabs, onChangeTab
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar} hideBorder>
         {tabs.map((tab) => {
-          const showAlertingTab = alertingEnabled && tab.id === PanelEditorTabId.Alert;
-
-          return showAlertingTab ? (
-            <PanelAlertTab
-              key={tab.id}
-              label={tab.text}
-              active={tab.active}
-              onChangeTab={() => onChangeTab(tab)}
-              icon={toIconName(tab.icon)}
-              panel={panel}
-              dashboard={dashboard}
-            />
-          ) : (
+          if (tab.id === PanelEditorTabId.Alert) {
+            if (!alertingEnabled) {
+              return null;
+            }
+            return (
+              <PanelAlertTab
+                key={tab.id}
+                label={tab.text}
+                active={tab.active}
+                onChangeTab={() => onChangeTab(tab)}
+                icon={toIconName(tab.icon)}
+                panel={panel}
+                dashboard={dashboard}
+              />
+            );
+          }
+          return (
             <Tab
               key={tab.id}
               label={tab.text}
