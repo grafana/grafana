@@ -1195,6 +1195,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
 	cfg.readAuthJWTSettings()
+	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
 	if err := cfg.readSmtpSettings(); err != nil {
