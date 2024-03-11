@@ -14,6 +14,8 @@ import { ToolbarActions } from './NavToolbarActions';
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
   playlistSrv: {
+    useState: jest.fn().mockReturnValue({ isPlaying: false }),
+    setState: jest.fn(),
     isPlaying: true,
     start: jest.fn(),
     next: jest.fn(),
@@ -34,12 +36,21 @@ describe('NavToolbarActions', () => {
       expect(screen.queryByLabelText('Add library panel')).not.toBeInTheDocument();
       expect(await screen.findByText('Edit')).toBeInTheDocument();
       expect(await screen.findByText('Share')).toBeInTheDocument();
+    });
+
+    it('Should the correct buttons when playing a playlist', async () => {
+      jest.mocked(playlistSrv).useState.mockReturnValueOnce({ isPlaying: true });
+      setup();
+
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
+      expect(screen.queryByText('Edit')).not.toBeInTheDocument();
+      expect(screen.queryByText('Share')).not.toBeInTheDocument();
     });
 
     it('Should call the playlist srv when using playlist controls', async () => {
+      jest.mocked(playlistSrv).useState.mockReturnValueOnce({ isPlaying: true });
       setup();
 
       // Previous dashboard
@@ -56,7 +67,6 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
       await userEvent.click(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop));
       expect(playlistSrv.stop).toHaveBeenCalledTimes(1);
-      expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).not.toBeInTheDocument();
     });
 
     it('Should hide the playlist controls when it is not playing', async () => {
