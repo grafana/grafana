@@ -29,4 +29,12 @@ export const DESCRIPTIONS: Record<RuleFormType, FormDescriptions> = {
       'An alert rule consists of one or more queries and expressions that select the data you want to measure. Define queries and/or expressions and then choose one of them as the alert rule condition. This is the threshold that an alert rule must meet or exceed in order to fire. For more information on queries and expressions, see Query and transform data.',
     helpLink: 'https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/',
   },
+  // @PERCONA - will be removed when templated alerts are merged
+  [RuleFormType.templated]: {
+    sectionTitle: 'Define query and alert condition',
+    helpLabel: 'Define query and alert condition',
+    helpContent:
+      'An alert rule consists of one or more queries and expressions that select the data you want to measure. Define queries and/or expressions and then choose one of them as the alert rule condition. This is the threshold that an alert rule must meet or exceed in order to fire. For more information on queries and expressions, see Query and transform data.',
+    helpLink: 'https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/',
+  }
 };

@@ -93,12 +93,18 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
             <div
               className={cx(styles.labelWrapper, {
                 [styles.hasActiveChild]: hasActiveChild,
-                [styles.labelWrapperWithIcon]: Boolean(level === 0 && link.icon),
+                // @PERCONA - show icons for inner items
+                [styles.labelWrapperWithIcon]: Boolean(level <= 1 && link.icon),
               })}
             >
-              {level === 0 && link.icon && (
+              {/* @PERCONA - show icons for inner items */}
+              {level <= 1 && link.icon && (
                 <FeatureHighlightWrapper>
-                  <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" />
+                  <Icon
+                    className={styles.icon}
+                    name={toIconName(link.icon) ?? 'link'}
+                    size={level === 0 ? 'lg' : 'md'}
+                  />
                 </FeatureHighlightWrapper>
               )}
               <Text truncate>{link.text}</Text>

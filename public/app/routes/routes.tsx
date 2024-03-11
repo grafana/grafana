@@ -768,7 +768,6 @@ export function getAppRoutes(): RouteDescriptor[] {
           )
       ),
     },
-    ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
     ...getAlertingRoutes(),

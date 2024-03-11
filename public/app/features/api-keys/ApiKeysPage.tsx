@@ -4,14 +4,12 @@ import { connect, ConnectedProps } from 'react-redux';
 // Utils
 import { InlineField, InlineSwitch, VerticalGroup, Modal, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { WarningBlock } from 'app/percona/shared/components/Elements/WarningBlock';
 import { AccessControlAction, ApiKey, ApikeyMigrationResult, StoreState } from 'app/types';
 
 import { Messages } from './ApiKeys.messages';
-import { getStyles } from './ApiKeys.styles';
 import { ApiKeysActionBar } from './ApiKeysActionBar';
 import { ApiKeysTable } from './ApiKeysTable';
 import { MigrateToServiceAccountsCard } from './MigrateToServiceAccountsCard';
@@ -136,7 +134,9 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                   <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
                 </InlineField>
                 {/* @PERCONA */}
-                <WarningBlock className={styles.deleteWarning} message={Messages.apiKeysDeleteWarning} type="warning" />
+                <div style={styles.deleteWarning}>
+                  <WarningBlock message={Messages.apiKeysDeleteWarning} type="warning" />
+                </div>
                 <ApiKeysTable
                   apiKeys={apiKeys}
                   timeZone={timeZone}
@@ -176,6 +176,10 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   summaryParagraph: {
     margin: '10px 0',
+  },
+  // @PERCONA
+  deleteWarning: {
+    marginTop: '20px',
   },
 };
 
