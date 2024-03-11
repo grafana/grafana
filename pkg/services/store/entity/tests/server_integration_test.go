@@ -1,6 +1,7 @@
 package entity_server_tests
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -110,17 +111,9 @@ func requireVersionMatch(t *testing.T, obj *entity.Entity, m objectVersionMatche
 	require.True(t, len(mismatches) == 0, mismatches)
 }
 
-func TestIntegrationWatch(t *testing.T) {
+func TestIntegration_WatchOnlyGetsEventsForKeysItIsWatching(t *testing.T) {
 	testCtx := createTestContext(t)
 	testCtx.ctx = appcontext.WithUser(testCtx.ctx, testCtx.user)
-
-	// truncate tables after each table test
-	truncateTables := func() {
-		err := testCtx.testEnv.SQLStore.Dialect.TruncateDBTables(testCtx.testEnv.SQLStore.GetEngine())
-		if err != nil {
-			t.Errorf("failed to clean up db")
-		}
-	}
 
 	// Update env with entity_api db config
 	dbType := os.Getenv("GRAFANA_TEST_DB")
@@ -130,108 +123,113 @@ func TestIntegrationWatch(t *testing.T) {
 	group := "test.grafana.app"
 	resource := "jsonobjs"
 	namespace := "default"
-	name := "my-test-entity"
-	testKey := "/" + group + "/" + resource + "/" + namespace + "/" + name
+	body := []byte("{\"name\":\"John\"}")
+	name := "key"
+	key := "/" + group + "/" + resource + "/" + namespace + "/" + name
+	otherKey := "/" + group + "/" + resource + "/" + namespace + "/" + "otherName"
+	ctx := testCtx.ctx
+
+	// create watch client and timeout after 5 seconds of waiting for an event
+	ctx, _ = context.WithTimeout(ctx, time.Second*5)
+	watchClient := newWatchClient(t, ctx, testCtx.client, otherKey)
+
+	// create entity
+	createReq := &entity.CreateEntityRequest{
+		Entity: &entity.Entity{
+			Key:       key,
+			Group:     group,
+			Resource:  resource,
+			Namespace: namespace,
+			Name:      name,
+			Body:      body,
+			Message:   "first entity!",
+		},
+	}
+	_, err = testCtx.client.Create(ctx, createReq)
+	require.NoError(t, err)
+
+	//delete entity
+	_, err = testCtx.client.Delete(ctx, &entity.DeleteEntityRequest{Key: key})
+	require.NoError(t, err)
+
+	// watch client should receive nothing and timeout after 5 seconds
+	_, err = watchClient.Recv()
+	require.Error(t, err)
+	require.ErrorContainsf(t, err, "context deadline exceeded", err.Error())
+}
+
+func TestIntegration_Watch(t *testing.T) {
+	testCtx := createTestContext(t)
+	testCtx.ctx = appcontext.WithUser(testCtx.ctx, testCtx.user)
+
+	// Update env with entity_api db config
+	dbType := os.Getenv("GRAFANA_TEST_DB")
+	err := addUnifiedStorageConfig(t, testCtx, dbType)
+	require.NoError(t, err)
+
+	group := "test.grafana.app"
+	resource := "jsonobjs"
+	namespace := "default"
 	body := []byte("{\"name\":\"John\"}")
 
-	t.Run("watch will not receive events for keys its not watching", func(t *testing.T) {
-		defer truncateTables()
-		otherKey := "/" + group + "/" + resource + "/" + namespace + "/" + "otherName"
-		watchClient := newWatchClient(t, testCtx, otherKey)
-		events := make(chan *entity.EntityWatchResponse)
+	name := "key1"
+	key := "/" + group + "/" + resource + "/" + namespace + "/" + name
 
-		// listen for any watch events
-		go func() {
-			resp, err := watchClient.Recv()
-			require.NoError(t, err)
-			events <- resp
-		}()
+	// create watch client and listen for events
+	watchClient := newWatchClient(t, testCtx.ctx, testCtx.client, key)
 
-		// create entity
-		createReq := &entity.CreateEntityRequest{
-			Entity: &entity.Entity{
-				Key:       testKey,
-				Group:     group,
-				Resource:  resource,
-				Namespace: namespace,
-				Name:      name,
-				Body:      body,
-				Message:   "first entity!",
-			},
-		}
-		_, err = testCtx.client.Create(testCtx.ctx, createReq)
-		require.NoError(t, err)
+	// create entity
+	createReq := &entity.CreateEntityRequest{
+		Entity: &entity.Entity{
+			Key:       key,
+			Group:     group,
+			Resource:  resource,
+			Namespace: namespace,
+			Name:      name,
+			Body:      body,
+			Message:   "first entity!",
+		},
+	}
+	_, err = testCtx.client.Create(testCtx.ctx, createReq)
+	require.NoError(t, err)
 
-		// fail if we receive any watch events
-		for {
-			select {
-			case event := <-events:
-				t.Errorf("Received event for key %s", event.Entity.Key)
-			case <-time.After(5 * time.Second):
-				return
-			}
-		}
+	// watch client receives create
+	res, err := watchClient.Recv()
+	require.NoError(t, err)
+	require.Equal(t, key, res.Entity.Key)
+	require.Equal(t, entity.Entity_CREATED, res.Entity.Action)
+
+	// update entity
+	body2 := []byte("{\"name\":\"John2\"}")
+	updateReq := &entity.UpdateEntityRequest{
+		Entity: &entity.Entity{
+			Key:     key,
+			Body:    body2,
+			Message: "update1",
+		},
+	}
+	updateResp, err := testCtx.client.Update(testCtx.ctx, updateReq)
+	require.NoError(t, err)
+	require.Equal(t, entity.Entity_UPDATED, updateResp.Entity.Action)
+
+	// watch client receives update
+	res, err = watchClient.Recv()
+	require.NoError(t, err)
+	require.Equal(t, key, res.Entity.Key)
+	require.Equal(t, entity.Entity_UPDATED, res.Entity.Action)
+
+	// delete entity
+	_, err = testCtx.client.Delete(testCtx.ctx, &entity.DeleteEntityRequest{
+		Key:             key,
+		PreviousVersion: res.Entity.ResourceVersion,
 	})
+	require.NoError(t, err)
 
-	t.Run("watch will receive create and update", func(t *testing.T) {
-		defer truncateTables()
-
-		// create watch client and listen for events
-		watchClient := newWatchClient(t, testCtx, testKey)
-
-		// create entity
-		createReq := &entity.CreateEntityRequest{
-			Entity: &entity.Entity{
-				Key:       testKey,
-				Group:     group,
-				Resource:  resource,
-				Namespace: namespace,
-				Name:      name,
-				Body:      body,
-				Message:   "first entity!",
-			},
-		}
-		_, err = testCtx.client.Create(testCtx.ctx, createReq)
-		require.NoError(t, err)
-
-		// watch client receives create
-		res, err := watchClient.Recv()
-		require.NoError(t, err)
-		require.Equal(t, testKey, res.Entity.Key)
-		require.Equal(t, entity.Entity_CREATED, res.Entity.Action)
-
-		// update entity
-		body2 := []byte("{\"name\":\"John2\"}")
-		updateReq := &entity.UpdateEntityRequest{
-			Entity: &entity.Entity{
-				Key:     testKey,
-				Body:    body2,
-				Message: "update1",
-			},
-		}
-		updateResp, err := testCtx.client.Update(testCtx.ctx, updateReq)
-		require.NoError(t, err)
-		require.Equal(t, entity.Entity_UPDATED, updateResp.Entity.Action)
-
-		// watch client receives update
-		res, err = watchClient.Recv()
-		require.NoError(t, err)
-		require.Equal(t, testKey, res.Entity.Key)
-		require.Equal(t, entity.Entity_UPDATED, res.Entity.Action)
-
-		// delete entity
-		_, err = testCtx.client.Delete(testCtx.ctx, &entity.DeleteEntityRequest{
-			Key:             testKey,
-			PreviousVersion: res.Entity.ResourceVersion,
-		})
-		require.NoError(t, err)
-
-		// watch client receives delete
-		res, err = watchClient.Recv()
-		require.NoError(t, err)
-		require.Equal(t, testKey, res.Entity.Key)
-		require.Equal(t, entity.Entity_DELETED, res.Entity.Action)
-	})
+	// watch client receives delete
+	res, err = watchClient.Recv()
+	require.NoError(t, err)
+	require.Equal(t, key, res.Entity.Key)
+	require.Equal(t, entity.Entity_DELETED, res.Entity.Action)
 }
 
 func addUnifiedStorageConfig(t *testing.T, testCtx testContext, dbType string) error {
@@ -702,13 +700,12 @@ func TestIntegrationEntityServer(t *testing.T) {
 	})
 }
 
-func newWatchClient(t *testing.T, testCtx testContext, key string) entity.EntityStore_WatchClient {
-	// create watch client
+func newWatchClient(t *testing.T, ctx context.Context, client entity.EntityStoreClient, key string) entity.EntityStore_WatchClient {
 	watchReq := &entity.EntityWatchRequest{
 		Since: 0,
 		Key:   []string{key},
 	}
-	watchClient, err := testCtx.client.Watch(testCtx.ctx, watchReq)
+	watchClient, err := client.Watch(ctx, watchReq)
 	require.NoError(t, err)
 
 	return watchClient
