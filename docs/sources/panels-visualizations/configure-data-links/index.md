@@ -76,7 +76,7 @@ These variables allow you to include the current time range in the data link URL
 | `__from`           | For more information, refer to [Global variables][].                |
 | `__to`             | For more information, refer to [Global variables][].                |
 
-When you create data links using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must add the question mark (`?`) and ampersand (`&`). These characters aren't automatically generated.
+When you create data links using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must format the URL by appending query parameters using the question mark (`?`) and ampersand (`&`) syntax. These characters aren't automatically generated.
 
 ### Series variables
 
