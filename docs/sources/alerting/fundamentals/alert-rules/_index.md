@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
 title: Alert rules
-weight: 130
+weight: 100
 ---
 
 # Alert rules

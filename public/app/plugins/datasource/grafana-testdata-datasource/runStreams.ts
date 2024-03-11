@@ -20,7 +20,7 @@ import {
 } from '@grafana/data';
 
 import { getRandomLine } from './LogIpsum';
-import { TestData, StreamingQuery } from './dataquery.gen';
+import { TestDataDataQuery, StreamingQuery } from './dataquery.gen';
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
@@ -30,7 +30,10 @@ export const defaultStreamQuery: StreamingQuery = {
   bands: 1,
 };
 
-export function runStream(target: TestData, req: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
+export function runStream(
+  target: TestDataDataQuery,
+  req: DataQueryRequest<TestDataDataQuery>
+): Observable<DataQueryResponse> {
   const query = defaults(target.stream, defaultStreamQuery);
   switch (query.type) {
     case 'signal':
@@ -46,9 +49,9 @@ export function runStream(target: TestData, req: DataQueryRequest<TestData>): Ob
 }
 
 export function runSignalStream(
-  target: TestData,
+  target: TestDataDataQuery,
   query: StreamingQuery,
-  req: DataQueryRequest<TestData>
+  req: DataQueryRequest<TestDataDataQuery>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `signal-${req.panelId || 'explore'}-${target.refId}`;
@@ -128,9 +131,9 @@ export function runSignalStream(
 }
 
 export function runLogsStream(
-  target: TestData,
+  target: TestDataDataQuery,
   query: StreamingQuery,
-  req: DataQueryRequest<TestData>
+  req: DataQueryRequest<TestDataDataQuery>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `logs-${req.panelId || 'explore'}-${target.refId}`;
@@ -174,9 +177,9 @@ export function runLogsStream(
 }
 
 export function runFetchStream(
-  target: TestData,
+  target: TestDataDataQuery,
   query: StreamingQuery,
-  req: DataQueryRequest<TestData>
+  req: DataQueryRequest<TestDataDataQuery>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `fetch-${req.panelId || 'explore'}-${target.refId}`;
@@ -252,9 +255,9 @@ export function runFetchStream(
 }
 
 export function runTracesStream(
-  target: TestData,
+  target: TestDataDataQuery,
   query: StreamingQuery,
-  req: DataQueryRequest<TestData>
+  req: DataQueryRequest<TestDataDataQuery>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `traces-${req.panelId || 'explore'}-${target.refId}`;
@@ -285,7 +288,7 @@ export function runTracesStream(
   });
 }
 
-function createMainTraceFrame(target: TestData, maxDataPoints = 1000) {
+function createMainTraceFrame(target: TestDataDataQuery, maxDataPoints = 1000) {
   const data = new CircularDataFrame({
     append: 'head',
     capacity: maxDataPoints,

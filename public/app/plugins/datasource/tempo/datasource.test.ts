@@ -954,11 +954,19 @@ describe('Tempo service graph view', () => {
               refId: 'A',
               filters: [
                 {
+                  id: 'service-namespace',
+                  operator: '=',
+                  scope: 'resource',
+                  tag: 'service.namespace',
+                  value: '${__data.fields.targetNamespace}',
+                  valueType: 'string',
+                },
+                {
                   id: 'service-name',
                   operator: '=',
                   scope: 'resource',
                   tag: 'service.name',
-                  value: '${__data.fields.target}',
+                  value: '${__data.fields.targetName}',
                   valueType: 'string',
                 },
               ],
@@ -1033,8 +1041,8 @@ describe('Tempo service graph view', () => {
     ]);
   });
 
-  it('should make tempo link correctly', () => {
-    const tempoLink = makeTempoLink('Tempo', '', '"${__data.fields[0]}"', 'gdev-tempo');
+  it('should make tempo link correctly without namespace', () => {
+    const tempoLink = makeTempoLink('Tempo', undefined, '', '"${__data.fields[0]}"', 'gdev-tempo');
     expect(tempoLink).toEqual({
       url: '',
       title: 'Tempo',
@@ -1043,6 +1051,40 @@ describe('Tempo service graph view', () => {
           queryType: 'traceqlSearch',
           refId: 'A',
           filters: [
+            {
+              id: 'span-name',
+              operator: '=',
+              scope: 'span',
+              tag: 'name',
+              value: '"${__data.fields[0]}"',
+              valueType: 'string',
+            },
+          ],
+        },
+        datasourceUid: 'gdev-tempo',
+        datasourceName: 'Tempo',
+      },
+    });
+  });
+
+  it('should make tempo link correctly with namespace', () => {
+    const tempoLink = makeTempoLink('Tempo', '"${__data.fields.subtitle}"', '', '"${__data.fields[0]}"', 'gdev-tempo');
+    expect(tempoLink).toEqual({
+      url: '',
+      title: 'Tempo',
+      internal: {
+        query: {
+          queryType: 'traceqlSearch',
+          refId: 'A',
+          filters: [
+            {
+              id: 'service-namespace',
+              operator: '=',
+              scope: 'resource',
+              tag: 'service.namespace',
+              value: '"${__data.fields.subtitle}"',
+              valueType: 'string',
+            },
             {
               id: 'span-name',
               operator: '=',
@@ -1156,6 +1198,59 @@ describe('label values', () => {
     });
 
     expect(response).toEqual([]);
+  });
+});
+
+describe('should provide functionality for ad-hoc filters', () => {
+  let datasource: TempoDatasource;
+
+  beforeEach(() => {
+    datasource = createTempoDatasource();
+    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
+      createMetadataRequest({
+        data: {
+          scopes: [{ name: 'span', tags: ['label1', 'label2'] }],
+          tagValues: [
+            {
+              type: 'value1',
+              value: 'value1',
+              label: 'value1',
+            },
+            {
+              type: 'value2',
+              value: 'value2',
+              label: 'value2',
+            },
+          ],
+        },
+      })
+    );
+  });
+
+  it('for getTagKeys', async () => {
+    const response = await datasource.getTagKeys();
+    expect(response).toEqual([{ text: 'span.label1' }, { text: 'span.label2' }]);
+  });
+
+  it('for getTagValues', async () => {
+    const now = dateTime('2021-04-20T15:55:00Z');
+    const options = {
+      key: 'span.label1',
+      filters: [],
+      timeRange: {
+        from: now,
+        to: now,
+        raw: {
+          from: 'now-15m',
+          to: 'now',
+        },
+      },
+    };
+    const response = await datasource.getTagValues(options);
+    expect(response).toEqual([
+      { text: { type: 'value1', value: 'value1', label: 'value1' } },
+      { text: { type: 'value2', value: 'value2', label: 'value2' } },
+    ]);
   });
 });
 
@@ -1404,7 +1499,7 @@ const serviceGraphLinks = [
             operator: '=',
             scope: 'resource',
             tag: 'service.name',
-            value: '${__data.fields[0]}',
+            value: '${__data.fields.id}',
             valueType: 'string',
           },
         ],

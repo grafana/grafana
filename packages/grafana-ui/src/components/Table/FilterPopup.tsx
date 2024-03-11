@@ -15,9 +15,21 @@ interface Props {
   tableStyles: TableStyles;
   onClose: () => void;
   field?: Field;
+  searchFilter: string;
+  setSearchFilter: (value: string) => void;
+  operator: SelectableValue<string>;
+  setOperator: (item: SelectableValue<string>) => void;
 }
 
-export const FilterPopup = ({ column: { preFilteredRows, filterValue, setFilter }, onClose, field }: Props) => {
+export const FilterPopup = ({
+  column: { preFilteredRows, filterValue, setFilter },
+  onClose,
+  field,
+  searchFilter,
+  setSearchFilter,
+  operator,
+  setOperator,
+}: Props) => {
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
@@ -73,6 +85,10 @@ export const FilterPopup = ({ column: { preFilteredRows, filterValue, setFilter 
               options={options}
               caseSensitive={matchCase}
               showOperators={true}
+              searchFilter={searchFilter}
+              setSearchFilter={setSearchFilter}
+              operator={operator}
+              setOperator={setOperator}
             />
           </VerticalGroup>
           <HorizontalGroup spacing="lg">
