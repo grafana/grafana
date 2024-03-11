@@ -107,8 +107,14 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
     // prevent minesweeper-expansion of nulls (gaps) when joining bars
     // since bar width is determined from the minimum distance between non-undefined values
     // (this strategy will still retain any original pre-join nulls, though)
-    nullMode: (field) =>
-      isVisibleBarField(field) ? NULL_RETAIN : field.config.custom?.spanNulls === true ? NULL_REMOVE : NULL_EXPAND,
+    nullMode: (field) => {
+      if (isVisibleBarField(field)) {
+        return NULL_RETAIN;
+      }
+
+      let spanNulls = field.config.custom?.spanNulls;
+      return spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND;
+    },
   });
 
   if (alignedFrame) {

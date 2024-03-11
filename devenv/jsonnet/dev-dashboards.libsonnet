@@ -105,6 +105,8 @@
     "testdata_alerts": (import '../dev-dashboards/alerting/testdata_alerts.json'),
     "text-options": (import '../dev-dashboards/panel-text/text-options.json'),
     "time_zone_support": (import '../dev-dashboards/scenarios/time_zone_support.json'),
+    "timeline-align-endtime": (import '../dev-dashboards/panel-timeline/timeline-align-endtime.json'),
+    "timeline-align-nulls-retain": (import '../dev-dashboards/panel-timeline/timeline-align-nulls-retain.json'),
     "timeline-demo": (import '../dev-dashboards/panel-timeline/timeline-demo.json'),
     "timeline-modes": (import '../dev-dashboards/panel-timeline/timeline-modes.json'),
     "timeline-thresholds-mappings": (import '../dev-dashboards/panel-timeline/timeline-thresholds-mappings.json'),
