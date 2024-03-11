@@ -149,12 +149,15 @@
     {
       "metadata": {
         "name": "traceQLStreaming",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710172794391",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-11 15:59:54.391734 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables response streaming of TraceQL queries of the Tempo data source",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true
       }
