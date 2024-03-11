@@ -46,3 +46,5 @@ export { getLinksSupplier } from './field/fieldOverrides';
 
 // deprecated
 export { CircularVector } from './vector/CircularVector';
+export { vectorator } from './vector/FunctionalVector';
+export { ArrayVector } from './vector/ArrayVector';

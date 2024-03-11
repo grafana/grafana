@@ -94,8 +94,8 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.AuthProxyAutoSignUp = true
-			cfg.AuthProxyHeaderProperty = tt.proxyProperty
+			cfg.AuthProxy.AutoSignUp = true
+			cfg.AuthProxy.HeaderProperty = tt.proxyProperty
 			c := ProvideGrafana(cfg, usertest.NewUserServiceFake())
 
 			identity, err := c.AuthenticateProxy(context.Background(), tt.req, tt.username, tt.additional)

@@ -403,7 +403,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     }
   }
 
-  const getBucket = (v: number) => incrRoundDn(v - bucketOffset, bucketSize!) + bucketOffset;
+  const getBucket = (v: number) => roundDecimals(incrRoundDn(v - bucketOffset, bucketSize!) + bucketOffset, 9);
 
   // guess number of decimals
   let bucketDecimals = (('' + bucketSize).match(/\.\d+$/) ?? ['.'])[0].length - 1;
@@ -482,7 +482,12 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
         name: 'count',
         values: vals,
         type: FieldType.number,
-        state: undefined,
+        state: {
+          ...counts[0].state,
+          displayName: 'Count',
+          multipleFrames: false,
+          origin: { frameIndex: 0, fieldIndex: 2 },
+        },
       },
     ];
   } else {

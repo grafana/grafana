@@ -12,6 +12,7 @@ import * as common from '@grafana/schema';
 
 export interface Options extends common.OptionsWithTimezones {
   legend: common.VizLegendOptions;
+  orientation?: common.VizOrientation;
   tooltip: common.VizTooltipOptions;
 }
 
