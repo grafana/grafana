@@ -206,7 +206,7 @@
     "react-test-renderer": "18.2.0",
     "redux-mock-store": "1.5.4",
     "rimraf": "5.0.5",
-    "rudder-sdk-js": "2.48.2",
+    "rudder-sdk-js": "2.48.3",
     "sass": "1.70.0",
     "sass-loader": "14.1.1",
     "style-loader": "3.3.4",
