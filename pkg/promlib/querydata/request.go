@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/grafana/grafana-azure-sdk-go/util/maputil"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
