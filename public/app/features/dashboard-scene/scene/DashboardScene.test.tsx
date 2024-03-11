@@ -338,6 +338,47 @@ describe('DashboardScene', () => {
         expect(gridRow.state.children.length).toBe(0);
       });
 
+      it('Should remove a row and move its children to the grid layout', () => {
+        const body = scene.state.body as SceneGridLayout;
+        const row = body.state.children[2] as SceneGridRow;
+
+        scene.removeRow(row);
+
+        const vizPanel = (body.state.children[2] as SceneGridItem).state.body as VizPanel;
+
+        expect(body.state.children.length).toBe(6);
+        expect(vizPanel.state.key).toBe('panel-4');
+      });
+
+      it('Should remove a row and its children', () => {
+        const body = scene.state.body as SceneGridLayout;
+        const row = body.state.children[2] as SceneGridRow;
+
+        scene.removeRow(row, true);
+
+        expect(body.state.children.length).toBe(4);
+      });
+
+      it('Should remove an empty row from the layout', () => {
+        const row = new SceneGridRow({
+          key: 'panel-1',
+        });
+
+        const scene = buildTestScene({
+          body: new SceneGridLayout({
+            children: [row],
+          }),
+        });
+
+        const body = scene.state.body as SceneGridLayout;
+
+        expect(body.state.children.length).toBe(1);
+
+        scene.removeRow(row);
+
+        expect(body.state.children.length).toBe(0);
+      });
+
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
         const vizPanel = new VizPanel({
           title: 'Panel Title',
