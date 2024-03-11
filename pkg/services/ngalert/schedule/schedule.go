@@ -47,7 +47,7 @@ type schedule struct {
 	// base tick rate (fastest possible configured check)
 	baseInterval time.Duration
 
-	// each alert rule gets its own channel and routine
+	// each rule gets its own channel and routine
 	registry ruleRegistry
 
 	maxAttempts int64
