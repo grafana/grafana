@@ -125,7 +125,7 @@ function getCellStyle(
     bgColor,
     !disableOverflowOnHover,
     isStringValue,
-    shouldWrapText
+    shouldWrapText,
   );
 }
 

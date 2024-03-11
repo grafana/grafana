@@ -55,7 +55,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         wordBreak: textShouldWrap ? 'break-word' : undefined,
         whiteSpace: textShouldWrap && overflowOnHover ? 'normal' : 'nowrap',
         boxShadow: overflowOnHover ? `0 0 2px ${theme.colors.primary.main}` : undefined,
-        background: overflowOnHover ? background ?? 'rgba(0, 0, 0, 0.1)' : undefined,
+        background: 'inherit',
         zIndex: 1,
         '.cellActions': {
           visibility: 'visible',
