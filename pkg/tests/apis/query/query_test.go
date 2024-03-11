@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -43,21 +42,61 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 	})
 	require.Equal(t, "test", ds.UID)
 
-	t.Run("Call query", func(t *testing.T) {
+	t.Run("Call query with expression", func(t *testing.T) {
 		client := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
 			Group:   "query.grafana.app",
 			Version: "v0alpha1",
 		})
 
-		q := query.GenericDataQuery{
-			Datasource: &query.DataSourceRef{
-				Type: "grafana-testdata-datasource",
-				UID:  ds.UID,
+		q1 := data.DataQuery{
+			CommonQueryProperties: data.CommonQueryProperties{
+				RefID: "X",
+				Datasource: &data.DataSourceRef{
+					Type: "grafana-testdata-datasource",
+					UID:  ds.UID,
+				},
 			},
 		}
-		q.AdditionalProperties()["csvContent"] = "a,b,c\n1,hello,true"
-		q.AdditionalProperties()["scenarioId"] = "csv_content"
-		body, err := json.Marshal(&query.GenericQueryRequest{Queries: []query.GenericDataQuery{q}})
+		q1.Set("scenarioId", "csv_content")
+		q1.Set("csvContent", "a\n1")
+
+		q2 := data.DataQuery{
+			CommonQueryProperties: data.CommonQueryProperties{
+				RefID: "Y",
+				Datasource: &data.DataSourceRef{
+					UID: "__expr__",
+				},
+			},
+		}
+		q2.Set("type", "math")
+		q2.Set("expression", "$X + 2")
+
+		body, err := json.Marshal(&data.QueryDataRequest{
+			Queries: []data.DataQuery{
+				q1, q2,
+				// https://github.com/grafana/grafana-plugin-sdk-go/pull/921
+				// data.NewDataQuery(map[string]any{
+				// 	"refId": "X",
+				// 	"datasource": data.DataSourceRef{
+				// 		Type: "grafana-testdata-datasource",
+				// 		UID:  ds.UID,
+				// 	},
+				// 	"scenarioId": "csv_content",
+				// 	"csvContent": "a\n1",
+				// }),
+				// data.NewDataQuery(map[string]any{
+				// 	"refId": "Y",
+				// 	"datasource": data.DataSourceRef{
+				// 		UID: "__expr__",
+				// 	},
+				// 	"type":       "math",
+				// 	"expression": "$X + 2",
+				// }),
+			},
+		})
+
+		//fmt.Printf("%s", string(body))
+
 		require.NoError(t, err)
 
 		result := client.Post().
@@ -76,28 +115,15 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 		rsp := &backend.QueryDataResponse{}
 		err = json.Unmarshal(body, rsp)
 		require.NoError(t, err)
-		require.Equal(t, 1, len(rsp.Responses))
+		require.Equal(t, 2, len(rsp.Responses))
 
-		frame := rsp.Responses["A"].Frames[0]
-		disp, err := frame.StringTable(100, 10)
-		require.NoError(t, err)
-		fmt.Printf("%s\n", disp)
+		frameX := rsp.Responses["X"].Frames[0]
+		frameY := rsp.Responses["Y"].Frames[0]
 
-		type expect struct {
-			idx  int
-			name string
-			val  any
-		}
-		for _, check := range []expect{
-			{0, "a", int64(1)},
-			{1, "b", "hello"},
-			{2, "c", true},
-		} {
-			field := frame.Fields[check.idx]
-			require.Equal(t, check.name, field.Name)
+		vX, _ := frameX.Fields[0].ConcreteAt(0)
+		vY, _ := frameY.Fields[0].ConcreteAt(0)
 
-			v, _ := field.ConcreteAt(0)
-			require.Equal(t, check.val, v)
-		}
+		require.Equal(t, int64(1), vX)
+		require.Equal(t, float64(3), vY) // 1 + 2, but always float64
 	})
 }

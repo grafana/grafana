@@ -34,7 +34,7 @@ func TestAlertRuleInfo(t *testing.T) {
 
 	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
 		t.Run("update should send to updateCh", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
+			r := blankRuleInfoForTests(context.Background())
 			resultCh := make(chan bool)
 			go func() {
 				resultCh <- r.update(ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
@@ -47,7 +47,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			}
 		})
 		t.Run("update should drop any concurrent sending to updateCh", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
+			r := blankRuleInfoForTests(context.Background())
 			version1 := ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
 			version2 := ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
 
@@ -73,7 +73,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			}
 		})
 		t.Run("eval should send to evalCh", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
+			r := blankRuleInfoForTests(context.Background())
 			expected := time.Now()
 			resultCh := make(chan evalResponse)
 			data := &evaluation{
@@ -96,7 +96,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			}
 		})
 		t.Run("eval should drop any concurrent sending to evalCh", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
+			r := blankRuleInfoForTests(context.Background())
 			time1 := time.UnixMilli(rand.Int63n(math.MaxInt64))
 			time2 := time.UnixMilli(rand.Int63n(math.MaxInt64))
 			resultCh1 := make(chan evalResponse)
@@ -142,7 +142,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			}
 		})
 		t.Run("eval should exit when context is cancelled", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
+			r := blankRuleInfoForTests(context.Background())
 			resultCh := make(chan evalResponse)
 			data := &evaluation{
 				scheduledAt: time.Now(),
@@ -166,13 +166,13 @@ func TestAlertRuleInfo(t *testing.T) {
 	})
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
 		t.Run("Update should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
+			r := blankRuleInfoForTests(context.Background())
 			r.stop(errRuleDeleted)
 			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
 			require.False(t, r.update(ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
+			r := blankRuleInfoForTests(context.Background())
 			r.stop(nil)
 			data := &evaluation{
 				scheduledAt: time.Now(),
@@ -184,19 +184,19 @@ func TestAlertRuleInfo(t *testing.T) {
 			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 		})
 		t.Run("stop should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
+			r := blankRuleInfoForTests(context.Background())
 			r.stop(nil)
 			r.stop(nil)
 		})
 		t.Run("stop should do nothing if parent context stopped", func(t *testing.T) {
 			ctx, cancelFn := context.WithCancel(context.Background())
-			r := newAlertRuleInfo(ctx)
+			r := blankRuleInfoForTests(ctx)
 			cancelFn()
 			r.stop(nil)
 		})
 	})
 	t.Run("should be thread-safe", func(t *testing.T) {
-		r := newAlertRuleInfo(context.Background())
+		r := blankRuleInfoForTests(context.Background())
 		wg := sync.WaitGroup{}
 		go func() {
 			for {
@@ -240,6 +240,11 @@ func TestAlertRuleInfo(t *testing.T) {
 	})
 }
 
+func blankRuleInfoForTests(ctx context.Context) *alertRuleInfo {
+	factory := newRuleFactory(nil, false, 0, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	return factory.new(context.Background())
+}
+
 func TestRuleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
@@ -269,11 +274,12 @@ func TestRuleRoutine(t *testing.T) {
 			rule := models.AlertRuleGen(withQueryForState(t, evalState))()
 			ruleStore.PutRule(context.Background(), rule)
 			folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
+			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			ruleInfo := newAlertRuleInfo(ctx)
+			ruleInfo := factory.new(ctx)
 			go func() {
-				_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
+				_ = ruleInfo.run(rule.GetKey())
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
@@ -418,10 +424,11 @@ func TestRuleRoutine(t *testing.T) {
 			expectedStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.NotEmpty(t, expectedStates)
 
+			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
-			ruleInfo := newAlertRuleInfo(ctx)
+			ruleInfo := factory.new(ctx)
 			go func() {
-				err := ruleInfo.ruleRoutine(models.AlertRuleKey{}, sch)
+				err := ruleInfo.run(models.AlertRuleKey{})
 				stoppedChan <- err
 			}()
 
@@ -438,9 +445,10 @@ func TestRuleRoutine(t *testing.T) {
 			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil)
 			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 
-			ruleInfo := newAlertRuleInfo(context.Background())
+			factory := ruleFactoryFromScheduler(sch)
+			ruleInfo := factory.new(context.Background())
 			go func() {
-				err := ruleInfo.ruleRoutine(rule.GetKey(), sch)
+				err := ruleInfo.run(rule.GetKey())
 				stoppedChan <- err
 			}()
 
@@ -465,12 +473,13 @@ func TestRuleRoutine(t *testing.T) {
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
 		ruleStore.PutRule(context.Background(), rule)
 		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := newAlertRuleInfo(ctx)
+		ruleInfo := factory.new(ctx)
 
 		go func() {
-			_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
+			_ = ruleInfo.run(rule.GetKey())
 		}()
 
 		// init evaluation loop so it got the rule version
@@ -546,12 +555,13 @@ func TestRuleRoutine(t *testing.T) {
 		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, sender)
 		sch.maxAttempts = 3
 		ruleStore.PutRule(context.Background(), rule)
+		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := newAlertRuleInfo(ctx)
+		ruleInfo := factory.new(ctx)
 
 		go func() {
-			_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
+			_ = ruleInfo.run(rule.GetKey())
 		}()
 
 		ruleInfo.evalCh <- &evaluation{
@@ -651,12 +661,13 @@ func TestRuleRoutine(t *testing.T) {
 
 			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
 			ruleStore.PutRule(context.Background(), rule)
+			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			ruleInfo := newAlertRuleInfo(ctx)
+			ruleInfo := factory.new(ctx)
 
 			go func() {
-				_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
+				_ = ruleInfo.run(rule.GetKey())
 			}()
 
 			ruleInfo.evalCh <- &evaluation{
@@ -684,12 +695,13 @@ func TestRuleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
 		ruleStore.PutRule(context.Background(), rule)
+		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := newAlertRuleInfo(ctx)
+		ruleInfo := factory.new(ctx)
 
 		go func() {
-			_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
+			_ = ruleInfo.run(rule.GetKey())
 		}()
 
 		ruleInfo.evalCh <- &evaluation{
@@ -703,4 +715,8 @@ func TestRuleRoutine(t *testing.T) {
 
 		require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 	})
+}
+
+func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
+	return newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, &sch.schedulableAlertRules, sch.clock, sch.metrics, sch.log, sch.tracer, sch.evalAppliedFunc, sch.stopAppliedFunc)
 }
