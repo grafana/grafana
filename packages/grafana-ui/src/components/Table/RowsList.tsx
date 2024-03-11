@@ -201,18 +201,17 @@ export const RowsList = (props: RowsListProps) => {
     [tableState.pageIndex, tableState.pageSize]
   );
 
-
   let rowBg: Function | undefined = undefined;
   for (const field of data.fields) {
     const fieldOptions = field.config.custom as TableFieldOptions;
 
     if (
-        fieldOptions.cellOptions?.type === TableCellDisplayMode.ColorBackground &&
-        fieldOptions.cellOptions.applyToRow
+      fieldOptions.cellOptions?.type === TableCellDisplayMode.ColorBackground &&
+      fieldOptions.cellOptions.applyToRow
     ) {
       rowBg = (rowIndex: number): CellColors => {
-          const display = field.display!(field.values.get(rowIndex));
-          return getCellColors(tableStyles, fieldOptions.cellOptions, display);   
+        const display = field.display!(field.values.get(rowIndex));
+        return getCellColors(tableStyles, fieldOptions.cellOptions, display);
       };
     }
   }
@@ -286,7 +285,7 @@ export const RowsList = (props: RowsListProps) => {
       theme.components.table.rowHoverBackground,
       timeRange,
       width,
-      rowBg
+      rowBg,
     ]
   );
 

@@ -53,7 +53,7 @@ export function CellActions({ field, cell, previewMode, showFilters, onCellFilte
           {inspectEnabled && (
             <IconButton
               name="eye"
-              tooltip="Inspect value"        
+              tooltip="Inspect value"
               onClick={() => {
                 setIsInspecting(true);
               }}

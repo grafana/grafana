@@ -47,7 +47,7 @@ import {
   FooterItem,
   GrafanaTableColumn,
   TableFooterCalc,
-  CellColors
+  CellColors,
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
@@ -135,7 +135,7 @@ export function getColumns(
 
     const Cell = getCellComponent(fieldTableOptions.cellOptions?.type, field);
     columns.push({
-      // @ts-expect-error 
+      // @ts-expect-error
       // TODO fix type error here
       Cell,
       id: fieldIndex.toString(),
@@ -589,12 +589,12 @@ export function calculateAroundPointThreshold(timeField: Field): number {
 
 /**
  * Retrieve colors for a table cell (or table row).
- * 
- * @param tableStyles 
+ *
+ * @param tableStyles
  *  Styles for the table
- * @param cellOptions 
+ * @param cellOptions
  *  Table cell configuration options
- * @param displayValue 
+ * @param displayValue
  *  The value that will be displayed
  * @returns CellColors
  */
@@ -603,29 +603,29 @@ export function getCellColors(
   cellOptions: TableCellOptions,
   displayValue: DisplayValue
 ): CellColors {
-// How much to darken elements depends upon if we're in dark mode
-const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
+  // How much to darken elements depends upon if we're in dark mode
+  const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
 
-// Setup color variables
-let textColor: string | undefined = undefined;
-let bgColor: string | undefined = undefined;
+  // Setup color variables
+  let textColor: string | undefined = undefined;
+  let bgColor: string | undefined = undefined;
 
-if (cellOptions.type === TableCellDisplayMode.ColorText) {
-  textColor = displayValue.color;
-} else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
-  const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
+  if (cellOptions.type === TableCellDisplayMode.ColorText) {
+    textColor = displayValue.color;
+  } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
+    const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
 
-  if (mode === TableCellBackgroundDisplayMode.Basic) {
-    textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
-    bgColor = tinycolor(displayValue.color).toRgbString();
-  } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
-    const bgColor2 = tinycolor(displayValue.color)
-      .darken(10 * darkeningFactor)
-      .spin(5);
-    textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
-    bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
+    if (mode === TableCellBackgroundDisplayMode.Basic) {
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = tinycolor(displayValue.color).toRgbString();
+    } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
+      const bgColor2 = tinycolor(displayValue.color)
+        .darken(10 * darkeningFactor)
+        .spin(5);
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
+    }
   }
-}
 
-  return {textColor, bgColor};
+  return { textColor, bgColor };
 }

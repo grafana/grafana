@@ -25,7 +25,7 @@ export const ColorBackgroundCellOptionsEditor = ({
   const onColorRowChange = () => {
     cellOptions.applyToRow = !cellOptions.applyToRow;
     onChange(cellOptions);
-  }
+  };
 
   return (
     <>
@@ -36,13 +36,11 @@ export const ColorBackgroundCellOptionsEditor = ({
           options={colorBackgroundOpts}
         />
       </Field>
-      <Field 
-        label="Apply to entire row" 
-        description="If selected the entire row will be colored as this cell would be.">
-        <Switch 
-          value={cellOptions.applyToRow} 
-          onChange={onColorRowChange}
-        />
+      <Field
+        label="Apply to entire row"
+        description="If selected the entire row will be colored as this cell would be."
+      >
+        <Switch value={cellOptions.applyToRow} onChange={onColorRowChange} />
       </Field>
     </>
   );
