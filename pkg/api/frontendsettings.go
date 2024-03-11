@@ -94,6 +94,8 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 }
 
 // getFrontendSettings returns a json object with all the settings needed for front end initialisation.
+//
+//nolint:gocyclo
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
 	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
@@ -161,6 +163,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
+	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigrationIsTarget
 
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                   defaultDS,
@@ -218,6 +221,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:             hs.Cfg.PublicDashboardsEnabled,
+		CloudMigrationIsTarget:              isCloudMigrationTarget,
 		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
 		RootFolderUID:                       accesscontrol.GeneralFolderUID,
 		LocalFileSystemAvailable:            hs.Cfg.LocalFileSystemAvailable,
