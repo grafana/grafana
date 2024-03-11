@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { autoUpdate, flip, shift, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import React, { ChangeEvent, useState } from 'react';
 
-import { dateTime } from '@grafana/data';
+import { GrafanaTheme2, dateTime } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { Props as InputProps, Input } from '../../Input/Input';
@@ -100,7 +100,7 @@ export const DatePickerWithInput = ({
   );
 };
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       position: 'relative',
@@ -113,7 +113,7 @@ const getStyles = () => {
       },
     }),
     popover: css({
-      zIndex: 1,
+      zIndex: theme.zIndex.tooltip,
     }),
   };
 };
