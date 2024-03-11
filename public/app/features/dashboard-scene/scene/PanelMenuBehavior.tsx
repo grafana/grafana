@@ -86,14 +86,16 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       shortcut: 'p s',
     });
 
-    moreSubMenu.push({
-      text: t('panel.header-menu.duplicate', `Duplicate`),
-      onClick: () => {
-        DashboardInteractions.panelMenuItemClicked('duplicate');
-        dashboard.duplicatePanel(panel);
-      },
-      shortcut: 'p d',
-    });
+    if (dashboard.state.isEditing) {
+      moreSubMenu.push({
+        text: t('panel.header-menu.duplicate', `Duplicate`),
+        onClick: () => {
+          DashboardInteractions.panelMenuItemClicked('duplicate');
+          dashboard.duplicatePanel(panel);
+        },
+        shortcut: 'p d',
+      });
+    }
 
     moreSubMenu.push({
       text: t('panel.header-menu.copy', `Copy`),
@@ -103,32 +105,34 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       },
     });
 
-    if (parent instanceof LibraryVizPanel) {
-      moreSubMenu.push({
-        text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
-        onClick: () => {
-          DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
-          dashboard.showModal(
-            new UnlinkLibraryPanelModal({
-              panelRef: parent.getRef(),
-            })
-          );
-        },
-      });
-    } else {
-      moreSubMenu.push({
-        text: t('panel.header-menu.create-library-panel', `Create library panel`),
-        onClick: () => {
-          DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
-          dashboard.showModal(
-            new ShareModal({
-              panelRef: panel.getRef(),
-              dashboardRef: dashboard.getRef(),
-              activeTab: shareDashboardType.libraryPanel,
-            })
-          );
-        },
-      });
+    if (dashboard.state.isEditing) {
+      if (parent instanceof LibraryVizPanel) {
+        moreSubMenu.push({
+          text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
+          onClick: () => {
+            DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
+            dashboard.showModal(
+              new UnlinkLibraryPanelModal({
+                panelRef: parent.getRef(),
+              })
+            );
+          },
+        });
+      } else {
+        moreSubMenu.push({
+          text: t('panel.header-menu.create-library-panel', `Create library panel`),
+          onClick: () => {
+            DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
+            dashboard.showModal(
+              new ShareModal({
+                panelRef: panel.getRef(),
+                dashboardRef: dashboard.getRef(),
+                activeTab: shareDashboardType.libraryPanel,
+              })
+            );
+          },
+        });
+      }
     }
 
     moreSubMenu.push({
@@ -196,20 +200,22 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    items.push({
-      text: '',
-      type: 'divider',
-    });
+    if (dashboard.state.isEditing) {
+      items.push({
+        text: '',
+        type: 'divider',
+      });
 
-    items.push({
-      text: t('panel.header-menu.remove', `Remove`),
-      iconClassName: 'trash-alt',
-      onClick: () => {
-        DashboardInteractions.panelMenuItemClicked('remove');
-        onRemovePanel(dashboard, panel);
-      },
-      shortcut: 'p r',
-    });
+      items.push({
+        text: t('panel.header-menu.remove', `Remove`),
+        iconClassName: 'trash-alt',
+        onClick: () => {
+          DashboardInteractions.panelMenuItemClicked('remove');
+          onRemovePanel(dashboard, panel);
+        },
+        shortcut: 'p r',
+      });
+    }
 
     menu.setState({ items });
   };
