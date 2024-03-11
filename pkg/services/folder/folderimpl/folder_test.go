@@ -1863,8 +1863,8 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	}}
 
 	// no view permission
-	// 	|_ with view permission
-	// 	|_ with view permissionn & with edit permission
+	// 	|_ subfolder under no view permission with view permission
+	// 	|_ subfolder under no view permission with view permissionn and with edit permission
 	// with edit permission
 	//	|_ subfolder under with edit permission
 	// no edit permission
@@ -1881,7 +1881,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	f, err := folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
 		OrgID:        orgID,
 		ParentUID:    noViewPermission.UID,
-		Title:        "with view permission",
+		Title:        "subfolder under no view permission with view permission",
 		SignedInUser: &signedInAdminUser,
 	})
 	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
@@ -1891,7 +1891,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	f, err = folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
 		OrgID:        orgID,
 		ParentUID:    noViewPermission.UID,
-		Title:        "with view permission and with edit permission",
+		Title:        "subfolder under no view permission with view permission and with edit permission",
 		SignedInUser: &signedInAdminUser,
 	})
 	require.NoError(t, err)
@@ -1959,7 +1959,10 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 				OrgID:        orgID,
 				SignedInUser: &viewer,
 			},
-			expectedFolders: []string{"Shared with me", "no edit permission", "with edit permission"},
+			expectedFolders: []string{
+				"Shared with me",
+				"no edit permission",
+				"with edit permission"},
 		},
 		{
 			name: "should return subfolders with view permission",
@@ -1968,7 +1971,9 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 				SignedInUser: &viewer,
 				UID:          noEditPermission.UID,
 			},
-			expectedFolders: []string{"subfolder under no edit permission", "subfolder under no edit permission with edit permission"},
+			expectedFolders: []string{
+				"subfolder under no edit permission",
+				"subfolder under no edit permission with edit permission"},
 		},
 		{
 			name: "should return shared with me folders with view permission",
@@ -1977,7 +1982,9 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 				SignedInUser: &viewer,
 				UID:          folder.SharedWithMeFolderUID,
 			},
-			expectedFolders: []string{"with view permission", "with view permission and with edit permission"},
+			expectedFolders: []string{
+				"subfolder under no view permission with view permission",
+				"subfolder under no view permission with view permission and with edit permission"},
 		},
 		{
 			name: "should return root folders with edit permission",
@@ -1986,7 +1993,9 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 				SignedInUser: &viewer,
 				Permission:   dashboardaccess.PERMISSION_EDIT,
 			},
-			expectedFolders: []string{"Shared with me", "with edit permission"},
+			expectedFolders: []string{
+				"Shared with me",
+				"with edit permission"},
 		},
 		{
 			name: "should return subfolders with edit permission",
@@ -1996,7 +2005,9 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 				Permission:   dashboardaccess.PERMISSION_EDIT,
 				UID:          noEditPermission.UID,
 			},
-			expectedFolders: []string{"subfolder under no edit permission with edit permission"},
+			expectedFolders: []string{
+				"subfolder under no edit permission with edit permission",
+			},
 		},
 		{
 			name: "should return shared with me folders with edit permission",
@@ -2006,7 +2017,10 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 				Permission:   dashboardaccess.PERMISSION_EDIT,
 				UID:          folder.SharedWithMeFolderUID,
 			},
-			expectedFolders: []string{"with view permission", "with view permission and with edit permission"},
+			expectedFolders: []string{
+				"subfolder under no edit permission with edit permission",
+				"subfolder under no view permission with view permission and with edit permission",
+			},
 		},
 	}
 
