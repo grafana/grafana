@@ -345,7 +345,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       applyMode: 'auto',
       filters: variable.filters ?? [],
       baseFilters: variable.baseFilters ?? [],
-      staticKeys: variable.staticKeys,
+      defaultKeys: variable.defaultKeys,
     });
   }
   if (variable.type === 'custom') {

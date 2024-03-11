@@ -12,16 +12,16 @@ export interface AdHocVariableFormProps {
   datasource?: DataSourceRef;
   onDataSourceChange: (dsSettings: DataSourceInstanceSettings) => void;
   infoText?: string;
-  staticKeys?: MetricFindValue[];
-  onStaticKeysChange?: (keys?: MetricFindValue[]) => void;
+  defaultKeys?: MetricFindValue[];
+  onDefaultKeysChange?: (keys?: MetricFindValue[]) => void;
 }
 
 export function AdHocVariableForm({
   datasource,
   infoText,
   onDataSourceChange,
-  onStaticKeysChange,
-  staticKeys,
+  onDefaultKeysChange,
+  defaultKeys,
 }: AdHocVariableFormProps) {
   const updateStaticKeys = useCallback(
     (csvContent: string) => {
@@ -31,9 +31,9 @@ export function AdHocVariableForm({
         options.push({ text: df.fields[0].values[i], value: df.fields[1].values[i] });
       }
 
-      onStaticKeysChange?.(options);
+      onDefaultKeysChange?.(options);
     },
-    [onStaticKeysChange]
+    [onDefaultKeysChange]
   );
 
   return (
@@ -51,27 +51,27 @@ export function AdHocVariableForm({
         />
       ) : null}
 
-      {onStaticKeysChange && (
+      {onDefaultKeysChange && (
         <>
           <Field label="Use static key dimensions" description="Provide dimensions as CSV: dimensionName, dimensionId">
             <Switch
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle}
-              value={staticKeys !== undefined}
+              value={defaultKeys !== undefined}
               onChange={(e) => {
-                if (staticKeys === undefined) {
-                  onStaticKeysChange([]);
+                if (defaultKeys === undefined) {
+                  onDefaultKeysChange([]);
                 } else {
-                  onStaticKeysChange(undefined);
+                  onDefaultKeysChange(undefined);
                 }
               }}
             />
           </Field>
 
-          {staticKeys !== undefined && (
+          {defaultKeys !== undefined && (
             <CodeEditor
               height={300}
               language="csv"
-              value={staticKeys.map((o) => `${o.text},${o.value}`).join('\n')}
+              value={defaultKeys.map((o) => `${o.text},${o.value}`).join('\n')}
               onBlur={updateStaticKeys}
               onSave={updateStaticKeys}
               showMiniMap={false}

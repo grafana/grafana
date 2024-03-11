@@ -15,7 +15,7 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const { datasource: datasourceRef, staticKeys } = variable.useState();
+  const { datasource: datasourceRef, defaultKeys } = variable.useState();
 
   const { value: datasourceSettings } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
@@ -36,9 +36,9 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     });
   };
 
-  const onStaticKeysChange = (staticKeys?: MetricFindValue[]) => {
+  const onDefaultKeysChange = (defaultKeys?: MetricFindValue[]) => {
     variable.setState({
-      staticKeys,
+      defaultKeys,
     });
   };
 
@@ -47,8 +47,8 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       datasource={datasourceRef ?? undefined}
       infoText={message}
       onDataSourceChange={onDataSourceChange}
-      staticKeys={staticKeys}
-      onStaticKeysChange={onStaticKeysChange}
+      defaultKeys={defaultKeys}
+      onDefaultKeysChange={onDefaultKeysChange}
     />
   );
 }

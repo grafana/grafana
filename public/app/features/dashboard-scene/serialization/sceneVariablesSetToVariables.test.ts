@@ -398,19 +398,19 @@ describe('sceneVariablesSetToVariables', () => {
       ],
       "label": "test-label",
       "name": "test",
-      "staticKeys": undefined,
+      "defaultKeys": undefined,
       "type": "adhoc",
     }
     `);
   });
 
-  it('should handle AdHocFiltersVariable with staticKeys', () => {
+  it('should handle AdHocFiltersVariable with defaultKeys', () => {
     const variable = new AdHocFiltersVariable({
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
       datasource: { uid: 'fake-std', type: 'fake-std' },
-      staticKeys: [
+      defaultKeys: [
         {
           text: 'some',
           value: '1',
@@ -469,7 +469,7 @@ describe('sceneVariablesSetToVariables', () => {
       ],
       "label": "test-label",
       "name": "test",
-      "staticKeys": [
+      "defaultKeys": [
         {
           "text": "some",
           "value": "1",

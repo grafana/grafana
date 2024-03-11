@@ -130,7 +130,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         // @ts-expect-error
         baseFilters: variable.state.baseFilters,
         filters: variable.state.filters,
-        staticKeys: variable.state.staticKeys,
+        defaultKeys: variable.state.defaultKeys,
       });
     } else {
       throw new Error('Unsupported variable type');

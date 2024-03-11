@@ -63,28 +63,28 @@ describe('AdHocVariableForm', () => {
     expect(onDataSourceChange).toHaveBeenCalledWith(promDatasource, undefined);
   });
 
-  it('should not render code editor when no static keys provided', async () => {
+  it('should not render code editor when no default keys provided', async () => {
     await setup(defaultProps);
 
     expect(screen.queryByTestId(selectors.components.CodeEditor.container)).not.toBeInTheDocument();
   });
 
-  it('should render code editor when staticKeys and onStaticKeysChange are provided', async () => {
+  it('should render code editor when defaultKeys and onDefaultKeysChange are provided', async () => {
     const mockOnStaticKeysChange = jest.fn();
     await setup({
       ...defaultProps,
-      staticKeys: [{ text: 'test', value: 'test' }],
-      onStaticKeysChange: mockOnStaticKeysChange,
+      defaultKeys: [{ text: 'test', value: 'test' }],
+      onDefaultKeysChange: mockOnStaticKeysChange,
     });
 
     expect(await screen.findByTestId(selectors.components.CodeEditor.container)).toBeInTheDocument();
   });
 
-  it('should call onStaticKeysChange when toggling on static options', async () => {
+  it('should call onDefaultKeysChange when toggling on default options', async () => {
     const mockOnStaticKeysChange = jest.fn();
     await setup({
       ...defaultProps,
-      onStaticKeysChange: mockOnStaticKeysChange,
+      onDefaultKeysChange: mockOnStaticKeysChange,
     });
 
     await userEvent.click(
@@ -94,12 +94,12 @@ describe('AdHocVariableForm', () => {
     expect(mockOnStaticKeysChange).toHaveBeenCalledWith([]);
   });
 
-  it('should call onStaticKeysChange when toggling off static options', async () => {
+  it('should call onDefaultKeysChange when toggling off default options', async () => {
     const mockOnStaticKeysChange = jest.fn();
     await setup({
       ...defaultProps,
-      staticKeys: [{ text: 'test', value: 'test' }],
-      onStaticKeysChange: mockOnStaticKeysChange,
+      defaultKeys: [{ text: 'test', value: 'test' }],
+      onDefaultKeysChange: mockOnStaticKeysChange,
     });
 
     await userEvent.click(

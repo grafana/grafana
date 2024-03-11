@@ -966,7 +966,7 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
-    it('should migrate adhoc variable with static keys', () => {
+    it('should migrate adhoc variable with default keys', () => {
       const variable: TypedVariableModel = {
         id: 'adhoc',
         global: false,
@@ -996,7 +996,7 @@ describe('transformSaveModelToScene', () => {
             value: 'test',
           },
         ],
-        staticKeys: [
+        defaultKeys: [
           {
             text: 'some',
             value: '1',
@@ -1031,7 +1031,7 @@ describe('transformSaveModelToScene', () => {
         baseFilters: [{ key: 'baseFilterTest', operator: '=', value: 'test' }],
         datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         applyMode: 'auto',
-        staticKeys: [
+        defaultKeys: [
           {
             text: 'some',
             value: '1',
