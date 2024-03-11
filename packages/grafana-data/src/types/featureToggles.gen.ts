@@ -110,6 +110,7 @@ export interface FeatureToggles {
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
+  aiGeneratedDashboardChanges?: boolean;
   reportingRetries?: boolean;
   sseGroupByDatasource?: boolean;
   libraryPanelRBAC?: boolean;
@@ -177,5 +178,8 @@ export interface FeatureToggles {
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
+  betterPageScrolling?: boolean;
   alertingUpgradeDryrunOnStart?: boolean;
+  scopeFilters?: boolean;
+  emailVerificationEnforcement?: boolean;
 }

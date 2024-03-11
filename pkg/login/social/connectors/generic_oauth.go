@@ -139,14 +139,12 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 }
 
 // TODOD: remove this in the next PR and use the isGroupMember from social.go
-func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
-	info := s.GetOAuthInfo()
-
-	if len(info.AllowedGroups) == 0 {
+func (s *SocialGenericOAuth) isGroupMember(groups []string) bool {
+	if len(s.info.AllowedGroups) == 0 {
 		return true
 	}
 
-	for _, allowedGroup := range info.AllowedGroups {
+	for _, allowedGroup := range s.info.AllowedGroups {
 		for _, group := range groups {
 			if group == allowedGroup {
 				return true
@@ -157,12 +155,12 @@ func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
 	return false
 }
 
-func (s *SocialGenericOAuth) IsTeamMember(ctx context.Context, client *http.Client) bool {
+func (s *SocialGenericOAuth) isTeamMember(ctx context.Context, client *http.Client) bool {
 	if len(s.teamIds) == 0 {
 		return true
 	}
 
-	teamMemberships, err := s.FetchTeamMemberships(ctx, client)
+	teamMemberships, err := s.fetchTeamMemberships(ctx, client)
 	if err != nil {
 		return false
 	}
@@ -178,12 +176,12 @@ func (s *SocialGenericOAuth) IsTeamMember(ctx context.Context, client *http.Clie
 	return false
 }
 
-func (s *SocialGenericOAuth) IsOrganizationMember(ctx context.Context, client *http.Client) bool {
+func (s *SocialGenericOAuth) isOrganizationMember(ctx context.Context, client *http.Client) bool {
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
 
-	organizations, ok := s.FetchOrganizations(ctx, client)
+	organizations, ok := s.fetchOrganizations(ctx, client)
 	if !ok {
 		return false
 	}
@@ -219,6 +217,9 @@ func (info *UserInfoJson) String() string {
 }
 
 func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	s.log.Debug("Getting user info")
 	toCheck := make([]*UserInfoJson, 0, 2)
 
@@ -228,8 +229,6 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	if apiData := s.extractFromAPI(ctx, client); apiData != nil {
 		toCheck = append(toCheck, apiData)
 	}
-
-	info := s.GetOAuthInfo()
 
 	userInfo := &social.BasicUserInfo{}
 	for _, data := range toCheck {
@@ -254,13 +253,13 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 			}
 		}
 
-		if userInfo.Role == "" && !info.SkipOrgRoleSync {
+		if userInfo.Role == "" && !s.info.SkipOrgRoleSync {
 			role, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, []string{})
 			if err != nil {
 				s.log.Warn("Failed to extract role", "err", err)
 			} else {
 				userInfo.Role = role
-				if info.AllowAssignGrafanaAdmin {
+				if s.info.AllowAssignGrafanaAdmin {
 					userInfo.IsGrafanaAdmin = &grafanaAdmin
 				}
 			}
@@ -277,20 +276,20 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		}
 	}
 
-	if userInfo.Role == "" && !info.SkipOrgRoleSync {
-		if info.RoleAttributeStrict {
+	if userInfo.Role == "" && !s.info.SkipOrgRoleSync {
+		if s.info.RoleAttributeStrict {
 			return nil, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute")
 		}
 		userInfo.Role = s.defaultRole()
 	}
 
-	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
+	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	if userInfo.Email == "" {
 		var err error
-		userInfo.Email, err = s.FetchPrivateEmail(ctx, client)
+		userInfo.Email, err = s.fetchPrivateEmail(ctx, client)
 		if err != nil {
 			return nil, err
 		}
@@ -302,15 +301,15 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		userInfo.Login = userInfo.Email
 	}
 
-	if !s.IsTeamMember(ctx, client) {
+	if !s.isTeamMember(ctx, client) {
 		return nil, errors.New("user not a member of one of the required teams")
 	}
 
-	if !s.IsOrganizationMember(ctx, client) {
+	if !s.isOrganizationMember(ctx, client) {
 		return nil, errors.New("user not a member of one of the required organizations")
 	}
 
-	if !s.IsGroupMember(userInfo.Groups) {
+	if !s.isGroupMember(userInfo.Groups) {
 		return nil, errMissingGroupMembership
 	}
 
@@ -352,17 +351,15 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 }
 
 func (s *SocialGenericOAuth) extractFromAPI(ctx context.Context, client *http.Client) *UserInfoJson {
-	info := s.GetOAuthInfo()
-
 	s.log.Debug("Getting user info from API")
-	if info.ApiUrl == "" {
+	if s.info.ApiUrl == "" {
 		s.log.Debug("No api url configured")
 		return nil
 	}
 
-	rawUserInfoResponse, err := s.httpGet(ctx, client, info.ApiUrl)
+	rawUserInfoResponse, err := s.httpGet(ctx, client, s.info.ApiUrl)
 	if err != nil {
-		s.log.Debug("Error getting user info from API", "url", info.ApiUrl, "error", err)
+		s.log.Debug("Error getting user info from API", "url", s.info.ApiUrl, "error", err)
 		return nil
 	}
 
@@ -469,7 +466,7 @@ func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson) ([]string, error)
 	return util.SearchJSONForStringSliceAttr(s.groupsAttributePath, data.rawJSON)
 }
 
-func (s *SocialGenericOAuth) FetchPrivateEmail(ctx context.Context, client *http.Client) (string, error) {
+func (s *SocialGenericOAuth) fetchPrivateEmail(ctx context.Context, client *http.Client) (string, error) {
 	type Record struct {
 		Email       string `json:"email"`
 		Primary     bool   `json:"primary"`
@@ -478,11 +475,9 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(ctx context.Context, client *http
 		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	info := s.GetOAuthInfo()
-
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(info.ApiUrl+"/emails"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/emails"))
 	if err != nil {
-		s.log.Error("Error getting email address", "url", info.ApiUrl+"/emails", "error", err)
+		s.log.Error("Error getting email address", "url", s.info.ApiUrl+"/emails", "error", err)
 		return "", fmt.Errorf("%v: %w", "Error getting email address", err)
 	}
 
@@ -518,7 +513,7 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(ctx context.Context, client *http
 	return email, nil
 }
 
-func (s *SocialGenericOAuth) FetchTeamMemberships(ctx context.Context, client *http.Client) ([]string, error) {
+func (s *SocialGenericOAuth) fetchTeamMemberships(ctx context.Context, client *http.Client) ([]string, error) {
 	var err error
 	var ids []string
 
@@ -542,11 +537,9 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx cont
 		Id int `json:"id"`
 	}
 
-	info := s.GetOAuthInfo()
-
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(info.ApiUrl+"/teams"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/teams"))
 	if err != nil {
-		s.log.Error("Error getting team memberships", "url", info.ApiUrl+"/teams", "error", err)
+		s.log.Error("Error getting team memberships", "url", s.info.ApiUrl+"/teams", "error", err)
 		return []string{}, err
 	}
 
@@ -580,16 +573,14 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(ctx context.Contex
 	return util.SearchJSONForStringSliceAttr(s.teamIdsAttributePath, response.Body)
 }
 
-func (s *SocialGenericOAuth) FetchOrganizations(ctx context.Context, client *http.Client) ([]string, bool) {
+func (s *SocialGenericOAuth) fetchOrganizations(ctx context.Context, client *http.Client) ([]string, bool) {
 	type Record struct {
 		Login string `json:"login"`
 	}
 
-	info := s.GetOAuthInfo()
-
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(info.ApiUrl+"/orgs"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/orgs"))
 	if err != nil {
-		s.log.Error("Error getting organizations", "url", info.ApiUrl+"/orgs", "error", err)
+		s.log.Error("Error getting organizations", "url", s.info.ApiUrl+"/orgs", "error", err)
 		return nil, false
 	}
 
@@ -612,6 +603,9 @@ func (s *SocialGenericOAuth) FetchOrganizations(ctx context.Context, client *htt
 }
 
 func (s *SocialGenericOAuth) SupportBundleContent(bf *bytes.Buffer) error {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	bf.WriteString("## GenericOAuth specific configuration\n\n")
 	bf.WriteString("```ini\n")
 	bf.WriteString(fmt.Sprintf("name_attribute_path = %s\n", s.nameAttributePath))
@@ -622,5 +616,5 @@ func (s *SocialGenericOAuth) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("allowed_organizations = %v\n", s.allowedOrganizations))
 	bf.WriteString("```\n\n")
 
-	return s.SocialBase.SupportBundleContent(bf)
+	return s.SocialBase.getBaseSupportBundleContent(bf)
 }

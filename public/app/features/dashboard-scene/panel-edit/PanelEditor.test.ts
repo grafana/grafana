@@ -13,6 +13,7 @@ jest.mock('@grafana/runtime', () => ({
     getPanelPluginFromCache: jest.fn(() => pluginToLoad),
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     panels: {
       text: {
         skipDataQuery: true,

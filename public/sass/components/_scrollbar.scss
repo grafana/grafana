@@ -115,6 +115,7 @@
 }
 
 // Scrollbars
+// Note, this is not applied by default if the `betterPageScrolling` feature flag is applied
 .no-overlay-scrollbar {
   ::-webkit-scrollbar {
     width: 8px;

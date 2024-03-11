@@ -64,6 +64,27 @@ func TestAzureSettings(t *testing.T) {
 		}
 	})
 
+	t.Run("prometheus", func(t *testing.T) {
+		t.Run("should enable azure auth", func(t *testing.T) {
+			cfg := NewCfg()
+
+			authSection, err := cfg.Raw.NewSection("auth")
+			require.NoError(t, err)
+			_, err = authSection.NewKey("azure_auth_enabled", "true")
+			require.NoError(t, err)
+
+			cfg.readAzureSettings()
+			require.NotNil(t, cfg.Azure.AzureAuthEnabled)
+			assert.True(t, cfg.Azure.AzureAuthEnabled)
+		})
+		t.Run("should default to disabled", func(t *testing.T) {
+			cfg := NewCfg()
+
+			cfg.readAzureSettings()
+			require.NotNil(t, cfg.Azure.AzureAuthEnabled)
+			assert.False(t, cfg.Azure.AzureAuthEnabled)
+		})
+	})
 	t.Run("User Identity", func(t *testing.T) {
 		t.Run("should be disabled by default", func(t *testing.T) {
 			cfg := NewCfg()

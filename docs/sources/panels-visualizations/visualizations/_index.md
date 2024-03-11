@@ -20,6 +20,8 @@ weight: 10
 
 Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in visualizations, their options and typical usage.
 
+{{< youtube id="JwF6FgeotaU" >}}
+
 {{% admonition type="note" %}}
 If you are unsure which visualization to pick, Grafana can provide visualization suggestions based on the panel query. When you select a visualization, Grafana will show a preview with that visualization applied.
 {{% /admonition %}}
@@ -50,6 +52,10 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Alert list][] can list alerts.
   - [Text][] can show markdown and html.
   - [News][] can show RSS feeds.
+
+The following video shows you how to create gauge, time series line graph, stats, logs, and node graph visualizations:
+
+{{< youtube id="yNRnLyVntUw" >}}
 
 ## Get more
 

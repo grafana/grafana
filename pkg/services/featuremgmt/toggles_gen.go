@@ -375,6 +375,10 @@ const (
 	// Enable AI powered features in dashboards
 	FlagDashgpt = "dashgpt"
 
+	// FlagAiGeneratedDashboardChanges
+	// Enable AI powered features for dashboards to auto-summary changes when saving
+	FlagAiGeneratedDashboardChanges = "aiGeneratedDashboardChanges"
+
 	// FlagReportingRetries
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
@@ -643,7 +647,19 @@ const (
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
 
+	// FlagBetterPageScrolling
+	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
+	FlagBetterPageScrolling = "betterPageScrolling"
+
 	// FlagAlertingUpgradeDryrunOnStart
 	// When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.
 	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
+
+	// FlagScopeFilters
+	// Enables the use of scope filters in Grafana
+	FlagScopeFilters = "scopeFilters"
+
+	// FlagEmailVerificationEnforcement
+	// Force email verification for users, even when authenticating through sso.
+	FlagEmailVerificationEnforcement = "emailVerificationEnforcement"
 )

@@ -127,7 +127,7 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 ### Data links
 
-Canvases support [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/). You can create a data link for a metric-value element and display it for all elements that use the field name by following these steps:
+Canvases support [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/), but only for metric-value, text, rectangle, and ellipse elements. You can add a data link by following these steps:
 
 1. Set an element to be tied to a field value.
 1. Turn off the inline editing toggle.
