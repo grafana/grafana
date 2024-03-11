@@ -18544,7 +18544,7 @@ __metadata:
     node-forge: "npm:^1.3.1"
     node-notifier: "npm:10.0.1"
     ol: "npm:7.4.0"
-    ol-ext: "npm:4.0.15"
+    ol-ext: "npm:4.0.16"
     papaparse: "npm:5.4.1"
     pluralize: "npm:^8.0.0"
     postcss: "npm:8.4.35"
@@ -23896,12 +23896,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-ext@npm:4.0.15":
-  version: 4.0.15
-  resolution: "ol-ext@npm:4.0.15"
+"ol-ext@npm:4.0.16":
+  version: 4.0.16
+  resolution: "ol-ext@npm:4.0.16"
   peerDependencies:
     ol: ">= 5.3.0"
-  checksum: 10/d9b313c3e4ed3d61ab4ad35b0be1fdf1456a2f253a581a2f9c28859ba0f22d8d86378ade6d8a18b4eb65c9916d9a277db2a1fde73aec4cbb816abe251d38e68a
+  checksum: 10/d5ebdbbb66649865282c7dbf1245a0a4b9a9d051b6e7d13d10a25658b3fa7b2bdf92dd257bb27241e5cc66900f5080c371add46c40a34e7f16a889b2017622b8
   languageName: node
   linkType: hard
 
