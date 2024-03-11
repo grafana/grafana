@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { SVGProps } from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -15,8 +15,8 @@ const MIN_ARM_TRANSLATION = -5;
 const MAX_ARM_TRANSLATION = 5;
 
 export interface Props {
-  width?: number;
-  height?: number;
+  width?: SVGProps<SVGElement>['width'];
+  height?: SVGProps<SVGElement>['height'];
 }
 
 export const GrotNotFound = ({ width, height }: Props) => {
