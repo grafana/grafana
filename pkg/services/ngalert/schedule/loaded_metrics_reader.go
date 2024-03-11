@@ -10,7 +10,7 @@ import (
 
 var _ eval.AlertingResultsReader = AlertingResultsFromRuleState{}
 
-func (a *alertRuleInfo) newLoadedMetricsReader(rule *ngmodels.AlertRule) eval.AlertingResultsReader {
+func (a *alertRule) newLoadedMetricsReader(rule *ngmodels.AlertRule) eval.AlertingResultsReader {
 	return &AlertingResultsFromRuleState{
 		Manager: a.stateManager,
 		Rule:    rule,

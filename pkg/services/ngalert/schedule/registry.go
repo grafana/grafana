@@ -18,65 +18,69 @@ import (
 var errRuleDeleted = errors.New("rule deleted")
 
 type ruleFactory interface {
-	new(context.Context) *alertRuleInfo
+	new(context.Context) Rule
 }
 
-type alertRuleInfoRegistry struct {
-	mu            sync.Mutex
-	alertRuleInfo map[models.AlertRuleKey]*alertRuleInfo
+type ruleRegistry struct {
+	mu    sync.Mutex
+	rules map[models.AlertRuleKey]Rule
 }
 
-// getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
-// Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
-func (r *alertRuleInfoRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey, factory ruleFactory) (*alertRuleInfo, bool) {
+func newRuleRegistry() ruleRegistry {
+	return ruleRegistry{rules: make(map[models.AlertRuleKey]Rule)}
+}
+
+// getOrCreate gets rule routine from registry by the key. If it does not exist, it creates a new one.
+// Returns a pointer to the rule routine and a flag that indicates whether it is a new struct or not.
+func (r *ruleRegistry) getOrCreate(context context.Context, key models.AlertRuleKey, factory ruleFactory) (Rule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	info, ok := r.alertRuleInfo[key]
+	rule, ok := r.rules[key]
 	if !ok {
-		info = factory.new(context)
-		r.alertRuleInfo[key] = info
+		rule = factory.new(context)
+		r.rules[key] = rule
 	}
-	return info, !ok
+	return rule, !ok
 }
 
-func (r *alertRuleInfoRegistry) exists(key models.AlertRuleKey) bool {
+func (r *ruleRegistry) exists(key models.AlertRuleKey) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	_, ok := r.alertRuleInfo[key]
+	_, ok := r.rules[key]
 	return ok
 }
 
-// del removes pair that has specific key from alertRuleInfo.
+// del removes pair that has specific key from the registry.
 // Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
-func (r *alertRuleInfoRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
+func (r *ruleRegistry) del(key models.AlertRuleKey) (Rule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	info, ok := r.alertRuleInfo[key]
+	rule, ok := r.rules[key]
 	if ok {
-		delete(r.alertRuleInfo, key)
+		delete(r.rules, key)
 	}
-	return info, ok
+	return rule, ok
 }
 
-func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
+func (r *ruleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	definitionsIDs := make(map[models.AlertRuleKey]struct{}, len(r.alertRuleInfo))
-	for k := range r.alertRuleInfo {
+	definitionsIDs := make(map[models.AlertRuleKey]struct{}, len(r.rules))
+	for k := range r.rules {
 		definitionsIDs[k] = struct{}{}
 	}
 	return definitionsIDs
 }
 
-type ruleVersionAndPauseStatus struct {
+type RuleVersionAndPauseStatus struct {
 	Fingerprint fingerprint
 	IsPaused    bool
 }
 
-type evaluation struct {
+type Evaluation struct {
 	scheduledAt time.Time
 	rule        *models.AlertRule
 	folderTitle string
