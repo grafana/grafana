@@ -33,6 +33,12 @@ const revertAutoMigrateUrlFlag = () => {
   window.location.href = new URL(url.origin + url.pathname + '?' + urlParams.toString()).toString();
 };
 
+const reportIssue = () => {
+  window.open(
+    'https://github.com/grafana/grafana/issues/new?assignees=&labels=&projects=&template=0-bug-report.yaml&title=Product+Area%3A+Short+description+of+bug'
+  );
+};
+
 export function AngularMigrationNotice({ dashboardUid }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -50,18 +56,9 @@ export function AngularMigrationNotice({ dashboardUid }: Props) {
               onRemove={() => onDismiss(true)}
             >
               <div className="markdown-html">
-                <ul>
-                  <li>
-                    <a
-                      href="https://github.com/grafana/grafana/issues/new?assignees=&labels=&projects=&template=0-bug-report.yaml&title=Product+Area%3A+Short+description+of+bug"
-                      className="external-link"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Report issue.
-                    </a>
-                  </li>
-                </ul>
+                <Button fill="outline" size="sm" className={styles.linkButton} onClick={reportIssue}>
+                  Report issue
+                </Button>
                 <Button fill="outline" size="sm" className={styles.linkButton} onClick={revertAutoMigrateUrlFlag}>
                   Revert migration
                 </Button>

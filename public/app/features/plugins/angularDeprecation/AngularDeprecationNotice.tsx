@@ -42,20 +42,18 @@ export function AngularDeprecationNotice({ dashboardUid, showAutoMigrateLink }: 
               }}
             >
               <div className="markdown-html">
-                <ul>
-                  <li>
-                    <a
-                      href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
-                      className="external-link"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Read our deprecation notice and migration advice.
-                    </a>
-                  </li>
-                </ul>
+                <a
+                  href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
+                  className="external-link"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Read our deprecation notice and migration advice.
+                </a>
+                <br />
+
                 {showAutoMigrateLink && (
-                  <Button fill="outline" size="sm" onClick={tryMigration}>
+                  <Button fill="outline" size="sm" onClick={tryMigration} style={{ marginTop: 10 }}>
                     Try migration
                   </Button>
                 )}
