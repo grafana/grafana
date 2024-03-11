@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	iniContent = `
+	iniSAMLContent = `
 	[auth.saml]
 	enabled = true
 	single_logout = true
@@ -79,8 +79,15 @@ var (
 	}
 )
 
-func TestGetProviderConfig(t *testing.T) {
-	configurationFile, err := ini.Load([]byte(iniContent))
+func TestSAMLIsMatch(t *testing.T) {
+	cfg := setting.NewCfg()
+	strategy := NewSAMLStrategy(cfg, &setting.OSSImpl{Cfg: cfg})
+	require.True(t, strategy.IsMatch("saml"))
+	require.False(t, strategy.IsMatch("oauth"))
+}
+
+func TestSAMLGetProviderConfig(t *testing.T) {
+	configurationFile, err := ini.Load([]byte(iniSAMLContent))
 	require.NoError(t, err)
 
 	cfg := setting.NewCfg()
