@@ -20,13 +20,16 @@ interface Props {
 }
 
 export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMode }) => {
-  const { panel, sourcePanel } = vizManager.useState();
+  const { panel, sourcePanel, repeat } = vizManager.useState();
   const parent = sourcePanel.resolve().parent;
   const { data } = sceneGraph.getData(panel).useState();
   const { options, fieldConfig } = panel.useState();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const panelFrameOptions = useMemo(() => getPanelFrameCategory2(vizManager), [vizManager, panel]);
+  const panelFrameOptions = useMemo(
+    () => getPanelFrameCategory2(vizManager, panel, repeat),
+    [vizManager, panel, repeat]
+  );
 
   const visualizationOptions = useMemo(() => {
     const plugin = panel.getPlugin();
