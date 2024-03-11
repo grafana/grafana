@@ -65,7 +65,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
     indentRoot: css(baseIndentStyle),
     indentChildren: css({
       ...baseIndentStyle,
-      marginLeft: expanded ? INDENT_LEVELS.CHILD_EXPANDED : INDENT_LEVELS.CHILD_COLLAPSED, // override the marginLeft property
+      marginLeft: expanded ? INDENT_LEVELS.CHILD_EXPANDED : INDENT_LEVELS.CHILD_COLLAPSED,
     }),
   };
 };
@@ -75,7 +75,10 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   const [sectionExpanded, toggleSectionExpanded] = useToggle(false);
   const styles = useStyles2((theme) => getStyles(theme, contentOutlineExpanded));
   const { outlineItems } = useContentOutlineContext();
-  const [activeItemId, setActiveItemId] = useState<string | undefined>(outlineItems[0]?.id);
+  const [activeSectionId, setActiveSectionId] = useState<string | undefined>(outlineItems[0]?.id);
+  const [activeSectionChildId, setActiveSectionChildId] = useState<string | undefined>(
+    outlineItems[0]?.children?.[0]?.id
+  );
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
 
@@ -121,16 +124,14 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   const outlineItemsHaveChildren = outlineItems.some((item) => item.children);
 
   useEffect(() => {
-    let activeItem = null;
+    let activeItem;
 
-    // Loop through each item
     for (const item of outlineItems) {
       let top = item?.ref?.getBoundingClientRect().top;
 
       // Check item
       if (top && top >= 0) {
         activeItem = item;
-        break;
       }
 
       // Check children
@@ -140,16 +141,17 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       });
 
       if (activeChild) {
-        activeItem = activeChild;
+        setActiveSectionChildId(activeChild.id);
+        setActiveSectionId(item.id);
+        break;
+      }
+
+      if (activeItem) {
+        setActiveSectionId(activeItem.id);
+        setActiveSectionChildId(undefined);
         break;
       }
     }
-
-    if (!activeItem) {
-      return;
-    }
-
-    setActiveItemId(activeItem.id);
   }, [outlineItems, verticalScroll, sectionExpanded]);
 
   return (
@@ -180,7 +182,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                   collapsible={item.children && item.children.length > 0 ? true : undefined}
                   collapsed={sectionExpanded}
                   toggleCollapsed={toggleSection}
-                  isActive={activeItemId === item.id}
+                  isActive={activeSectionId === item.id}
                 />
               </div>
               {item.children &&
@@ -193,7 +195,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                     className={styles.indentChildren}
                     onClick={() => scrollIntoView(child.ref, child.panelId)}
                     tooltip={!contentOutlineExpanded ? child.title : undefined}
-                    isActive={activeItemId === child.id}
+                    isActive={activeSectionChildId === child.id}
                   />
                 ))}
             </React.Fragment>
