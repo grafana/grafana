@@ -388,6 +388,7 @@ describe('sceneVariablesSetToVariables', () => {
         "type": "fake-std",
         "uid": "fake-std",
       },
+      "defaultKeys": undefined,
       "description": "test-desc",
       "filters": [
         {
@@ -398,7 +399,6 @@ describe('sceneVariablesSetToVariables', () => {
       ],
       "label": "test-label",
       "name": "test",
-      "defaultKeys": undefined,
       "type": "adhoc",
     }
     `);
@@ -459,6 +459,20 @@ describe('sceneVariablesSetToVariables', () => {
         "type": "fake-std",
         "uid": "fake-std",
       },
+      "defaultKeys": [
+        {
+          "text": "some",
+          "value": "1",
+        },
+        {
+          "text": "static",
+          "value": "2",
+        },
+        {
+          "text": "keys",
+          "value": "3",
+        },
+      ],
       "description": "test-desc",
       "filters": [
         {
@@ -469,18 +483,6 @@ describe('sceneVariablesSetToVariables', () => {
       ],
       "label": "test-label",
       "name": "test",
-      "defaultKeys": [
-        {
-          "text": "some",
-          "value": "1",
-        }, {
-          "text": "static",
-          "value": "2",
-        }, {
-          "text": "keys",
-          "value": "3",
-        }
-      ],
       "type": "adhoc",
     }
     `);
