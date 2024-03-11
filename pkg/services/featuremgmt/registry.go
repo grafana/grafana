@@ -1217,8 +1217,8 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "ssoEmailVerification",
-			Description:       "Force email verification for sso users",
+			Name:              "emailVerificationEnforcement",
+			Description:       "Force email verification for users, even when authenticating through sso.",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
