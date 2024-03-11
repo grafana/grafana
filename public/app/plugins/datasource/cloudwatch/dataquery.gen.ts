@@ -4,7 +4,7 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     PluginTSTypesJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
@@ -304,4 +304,4 @@ export interface CloudWatchAnnotationQuery extends common.DataQuery, MetricStat 
   queryMode: CloudWatchQueryMode;
 }
 
-export interface CloudWatch {}
+export interface CloudWatchDataQuery {}

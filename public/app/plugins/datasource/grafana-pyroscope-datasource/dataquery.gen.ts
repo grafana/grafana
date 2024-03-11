@@ -4,7 +4,7 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     PluginTSTypesJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
@@ -14,7 +14,7 @@ export type PyroscopeQueryType = ('metrics' | 'profile' | 'both');
 
 export const defaultPyroscopeQueryType: PyroscopeQueryType = 'both';
 
-export interface GrafanaPyroscope extends common.DataQuery {
+export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
   /**
    * Allows to group the results.
    */
@@ -37,7 +37,7 @@ export interface GrafanaPyroscope extends common.DataQuery {
   spanSelector?: Array<string>;
 }
 
-export const defaultGrafanaPyroscope: Partial<GrafanaPyroscope> = {
+export const defaultGrafanaPyroscopeDataQuery: Partial<GrafanaPyroscopeDataQuery> = {
   groupBy: [],
   labelSelector: '{}',
   spanSelector: [],
