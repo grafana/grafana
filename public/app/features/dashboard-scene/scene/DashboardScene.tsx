@@ -1,12 +1,9 @@
 import * as H from 'history';
-import { Unsubscribable } from 'rxjs';
 
 import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
-  dataLayers,
   getUrlSyncManager,
-  SceneDataLayers,
   SceneFlexLayout,
   sceneGraph,
   SceneGridItem,
@@ -15,9 +12,6 @@ import {
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
-  SceneObjectStateChangedEvent,
-  SceneRefreshPicker,
-  SceneTimeRange,
   sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
@@ -36,9 +30,14 @@ import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
+import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
-import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import {
+  buildGridItemForLibPanel,
+  buildGridItemForPanel,
+  transformSaveModelToScene,
+} from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
@@ -62,11 +61,12 @@ import {
 import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
 import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
+import { LibraryVizPanel } from './LibraryVizPanel';
 import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
-export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links'];
+export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta'];
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
@@ -109,6 +109,7 @@ export interface DashboardSceneState extends SceneObjectState {
   overlay?: SceneObject;
   /** True when a user copies a panel in the dashboard */
   hasCopiedPanel?: boolean;
+  /** The dashboard doesn't have panels */
   isEmpty?: boolean;
 }
 
@@ -138,9 +139,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   private _initialUrlState?: H.Location;
   /**
-   * change tracking subscription
+   * Dashboard changes tracker
    */
-  private _changeTrackerSub?: Unsubscribable;
+  private _changeTracker: DashboardSceneChangeTracker;
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -153,6 +154,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       ...state,
     });
 
+    this._changeTracker = new DashboardSceneChangeTracker(this);
+
     this.addActivationHandler(() => this._activationHandler());
   }
 
@@ -162,7 +165,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     window.__grafanaSceneContext = this;
 
     if (this.state.isEditing) {
-      this.startTrackingChanges();
+      this._changeTracker.startTrackingChanges();
     }
 
     if (!this.state.meta.isEmbedded && this.state.uid) {
@@ -179,7 +182,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return () => {
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
-      this.stopTrackingChanges();
+      this._changeTracker.terminate();
       this.stopUrlSync();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
@@ -206,7 +209,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     // Propagate change edit mode change to children
     this.propagateEditModeChange();
-    this.startTrackingChanges();
+
+    this._changeTracker.startTrackingChanges();
   };
 
   public saveCompleted(saveModel: Dashboard, result: SaveDashboardResponseDTO, folderUid?: string) {
@@ -217,7 +221,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       version: result.version,
     };
 
-    this.stopTrackingChanges();
+    this._changeTracker.stopTrackingChanges();
     this.setState({
       version: result.version,
       isDirty: false,
@@ -231,7 +235,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         folderUid: folderUid,
       },
     });
-    this.startTrackingChanges();
+    this._changeTracker.startTrackingChanges();
   }
 
   private propagateEditModeChange() {
@@ -265,7 +269,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   private exitEditModeConfirmed() {
     // No need to listen to changes anymore
-    this.stopTrackingChanges();
+    this._changeTracker.stopTrackingChanges();
     // Stop url sync before updating url
     this.stopUrlSync();
 
@@ -380,53 +384,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this.state.viewPanelScene ?? this.state.body;
   }
 
-  private startTrackingChanges() {
-    this._changeTrackerSub = this.subscribeToEvent(
-      SceneObjectStateChangedEvent,
-      (event: SceneObjectStateChangedEvent) => {
-        if (event.payload.changedObject instanceof SceneRefreshPicker) {
-          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'intervals')) {
-            this.setIsDirty();
-          }
-        }
-        if (event.payload.changedObject instanceof SceneDataLayers) {
-          this.setIsDirty();
-        }
-        if (event.payload.changedObject instanceof dataLayers.AnnotationsDataLayer) {
-          if (!Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'data')) {
-            this.setIsDirty();
-          }
-        }
-        if (event.payload.changedObject instanceof SceneGridItem) {
-          this.setIsDirty();
-        }
-        if (event.payload.changedObject instanceof DashboardScene) {
-          if (Object.keys(event.payload.partialUpdate).some((key) => PERSISTED_PROPS.includes(key))) {
-            this.setIsDirty();
-          }
-        }
-        if (event.payload.changedObject instanceof SceneTimeRange) {
-          this.setIsDirty();
-        }
-        if (event.payload.changedObject instanceof DashboardControls) {
-          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'hideTimeControls')) {
-            this.setIsDirty();
-          }
-        }
-      }
-    );
-  }
-
-  private setIsDirty() {
-    if (!this.state.isDirty) {
-      this.setState({ isDirty: true });
-    }
-  }
-
-  private stopTrackingChanges() {
-    this._changeTrackerSub?.unsubscribe();
-  }
-
   public getInitialState(): DashboardSceneState | undefined {
     return this._initialState;
   }
@@ -454,6 +411,25 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     sceneGridLayout.setState({
       children: [row, ...sceneGridLayout.state.children],
     });
+  }
+
+  public removeRow(row: SceneGridRow, removePanels = false) {
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    const children = sceneGridLayout.state.children.filter((child) => child.state.key !== row.state.key);
+
+    if (!removePanels) {
+      const rowChildren = row.state.children.map((child) => child.clone());
+      const indexOfRow = sceneGridLayout.state.children.findIndex((child) => child.state.key === row.state.key);
+
+      children.splice(indexOfRow, 0, ...rowChildren);
+    }
+
+    sceneGridLayout.setState({ children });
   }
 
   public addPanel(vizPanel: VizPanel): void {
@@ -529,7 +505,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       return;
     }
 
-    const gridItem = vizPanel.parent;
+    let gridItem = vizPanel.parent;
+
+    if (vizPanel.parent instanceof LibraryVizPanel) {
+      const libraryVizPanel = vizPanel.parent;
+
+      if (!libraryVizPanel.parent) {
+        return;
+      }
+
+      gridItem = libraryVizPanel.parent;
+    }
 
     const jsonData = gridItemToPanel(gridItem);
 
@@ -546,8 +532,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const jsonData = store.get(LS_PANEL_COPY_KEY);
     const jsonObj = JSON.parse(jsonData);
     const panelModel = new PanelModel(jsonObj);
+    const gridItem = !panelModel.libraryPanel
+      ? buildGridItemForPanel(panelModel)
+      : buildGridItemForLibPanel(panelModel);
 
-    const gridItem = buildGridItemForPanel(panelModel);
     const sceneGridLayout = this.state.body;
 
     if (!(gridItem instanceof SceneGridItem) && !(gridItem instanceof PanelRepeaterGridItem)) {
@@ -556,7 +544,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     const panelId = dashboardSceneGraph.getNextPanelId(this);
 
-    if (gridItem instanceof SceneGridItem && gridItem.state.body) {
+    if (gridItem instanceof SceneGridItem && gridItem.state.body instanceof LibraryVizPanel) {
+      const panelKey = getVizPanelKeyForPanelId(panelId);
+
+      gridItem.state.body.setState({ panelKey });
+
+      const vizPanel = gridItem.state.body.state.panel;
+
+      if (vizPanel instanceof VizPanel) {
+        vizPanel.setState({ key: panelKey });
+      }
+    } else if (gridItem instanceof SceneGridItem && gridItem.state.body) {
       gridItem.state.body.setState({
         key: getVizPanelKeyForPanelId(panelId),
       });
@@ -580,6 +578,66 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     this.setState({ hasCopiedPanel: false });
     store.delete(LS_PANEL_COPY_KEY);
+  }
+
+  public removePanel(panel: VizPanel) {
+    const panels: SceneObject[] = [];
+    const key = panel.parent instanceof LibraryVizPanel ? panel.parent.parent?.state.key : panel.parent?.state.key;
+
+    if (!key) {
+      return;
+    }
+
+    let row: SceneGridRow | undefined;
+
+    try {
+      row = sceneGraph.getAncestor(panel, SceneGridRow);
+    } catch {
+      row = undefined;
+    }
+
+    if (row) {
+      row.forEachChild((child: SceneObject) => {
+        if (child.state.key !== key) {
+          panels.push(child);
+        }
+      });
+
+      row.setState({ children: panels });
+
+      this.state.body.forceRender();
+
+      return;
+    }
+
+    this.state.body.forEachChild((child: SceneObject) => {
+      if (child.state.key !== key) {
+        panels.push(child);
+      }
+    });
+
+    const layout = this.state.body;
+
+    if (layout instanceof SceneGridLayout || layout instanceof SceneFlexLayout) {
+      layout.setState({ children: panels });
+    }
+  }
+
+  public unlinkLibraryPanel(panel: LibraryVizPanel) {
+    if (!panel.parent) {
+      return;
+    }
+
+    const gridItem = panel.parent;
+
+    if (!(gridItem instanceof SceneGridItem || gridItem instanceof PanelRepeaterGridItem)) {
+      console.error('Trying to duplicate a panel in a layout that is not SceneGridItem or PanelRepeaterGridItem');
+      return;
+    }
+
+    gridItem?.setState({
+      body: panel.state.panel?.clone(),
+    });
   }
 
   public showModal(modal: SceneObject) {

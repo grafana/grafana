@@ -42,7 +42,8 @@ export const CandlestickPanel = ({
   onChangeTimeRange,
   replaceVariables,
 }: CandlestickPanelProps) => {
-  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds } = usePanelContext();
+  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, dataLinkPostProcessor } =
+    usePanelContext();
 
   const theme = useTheme2();
 
@@ -256,6 +257,8 @@ export const CandlestickPanel = ({
       tweakAxis={tweakAxis}
       tweakScale={tweakScale}
       options={options}
+      replaceVariables={replaceVariables}
+      dataLinkPostProcessor={dataLinkPostProcessor}
     >
       {(uplotConfig, alignedDataFrame) => {
         alignedDataFrame.fields.forEach((field) => {

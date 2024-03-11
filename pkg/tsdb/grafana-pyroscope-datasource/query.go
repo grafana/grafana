@@ -215,7 +215,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 
 		// If we still have levels to go, this should not happen. Something is probably wrong with the flamebearer data.
 		if len(parentsStack) == 0 {
-			logger.Error("ParentsStack is empty but we are not at the the last level", "currentLevel", currentLevel, "function", logEntrypoint())
+			logger.Error("ParentsStack is empty but we are not at the last level", "currentLevel", currentLevel, "function", logEntrypoint())
 			break
 		}
 

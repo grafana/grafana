@@ -196,7 +196,7 @@ func (ff *Float64Field) GetValue(idx int) *float64 {
 	return &f
 }
 
-// Len returns the the length of the field.
+// Len returns the length of the field.
 func (ff *Float64Field) Len() int {
 	df := data.Field(*ff)
 	return df.Len()

@@ -17,7 +17,7 @@ import { GRAFANA_DATASOURCE_NAME } from '../../../features/alerting/unified/util
 import { AlertList } from './AlertList';
 import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { GroupBy } from './GroupByWithLoading';
-import { UnifiedAlertList } from './UnifiedAlertList';
+import { UnifiedAlertListPanel } from './UnifiedAlertList';
 import { AlertListSuggestionsSupplier } from './suggestions';
 import { AlertListOptions, GroupMode, ShowOption, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 
@@ -156,7 +156,7 @@ const alertList = new PanelPlugin<AlertListOptions>(AlertList)
   .setMigrationHandler(alertListPanelMigrationHandler)
   .setSuggestionsSupplier(new AlertListSuggestionsSupplier());
 
-const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertList).setPanelOptions((builder) => {
+const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertListPanel).setPanelOptions((builder) => {
   builder
     .addRadio({
       path: 'viewMode',

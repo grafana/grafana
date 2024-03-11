@@ -91,6 +91,7 @@ influxdbSqlSupport,GA,@grafana/observability-metrics,false,true,false
 alertingNoDataErrorExecution,GA,@grafana/alerting-squad,false,true,false
 angularDeprecationUI,GA,@grafana/plugins-platform-backend,false,false,true
 dashgpt,preview,@grafana/dashboards-squad,false,false,true
+aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,false,true,false
 sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false
 libraryPanelRBAC,experimental,@grafana/dashboards-squad,false,true,false
@@ -112,7 +113,7 @@ kubernetesQueryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,t
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
 recoveryThreshold,GA,@grafana/alerting-squad,false,true,false
 lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
-teamHttpHeaders,experimental,@grafana/identity-access-team,false,false,false
+teamHttpHeaders,preview,@grafana/identity-access-team,false,false,false
 awsDatasourcesNewFormStyling,preview,@grafana/aws-datasources,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 panelTitleSearchInV1,experimental,@grafana/backend-platform,true,false,false
@@ -158,4 +159,6 @@ newPDFRendering,experimental,@grafana/sharing-squad,false,false,false
 kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 expressionParser,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
+betterPageScrolling,GA,@grafana/grafana-frontend-platform,false,false,true
 alertingUpgradeDryrunOnStart,GA,@grafana/alerting-squad,false,true,false
+scopeFilters,experimental,@grafana/dashboards-squad,false,false,false

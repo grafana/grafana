@@ -1,6 +1,7 @@
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
+  CustomVariable,
   MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
@@ -16,6 +17,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { RowActions } from '../scene/row-actions/RowActions';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
 
@@ -93,7 +95,7 @@ export function forceRenderChildren(model: SceneObject, recursive?: boolean) {
   });
 }
 
-export function getMultiVariableValues(variable: MultiValueVariable) {
+export function getMultiVariableValues(variable: MultiValueVariable | CustomVariable) {
   const { value, text, options } = variable.state;
 
   if (variable.hasAllValue()) {
@@ -232,6 +234,7 @@ export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
   return new SceneGridRow({
     key: getVizPanelKeyForPanelId(id),
     title: 'Row title',
+    actions: new RowActions({}),
     y: 0,
   });
 }
