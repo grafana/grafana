@@ -1,21 +1,12 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useWindowSize } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { FieldSet } from '@grafana/ui';
-import {
-  Button,
-  ButtonGroup,
-  Field,
-  Input,
-  InputControl,
-  RadioButtonGroup,
-  Spinner,
-  useStyles2,
-} from '@grafana/ui/src';
+import { Button, ButtonGroup, Field, Input, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui/src';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
@@ -156,7 +147,7 @@ export const EmailSharingConfiguration = () => {
           label={t('public-dashboard.config.can-view-dashboard-radio-button-label', 'Can view dashboard')}
           className={styles.field}
         >
-          <InputControl
+          <Controller
             name="shareType"
             control={control}
             render={({ field }) => {
