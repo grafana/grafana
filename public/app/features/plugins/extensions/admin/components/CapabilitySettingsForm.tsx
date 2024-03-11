@@ -1,8 +1,8 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Icon, InlineSwitch, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, InlineSwitch, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PluginExtensionRegistry } from '../../types';
 
