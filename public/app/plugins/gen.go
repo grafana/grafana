@@ -14,12 +14,11 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/kindsys"
-
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
 
@@ -50,11 +49,7 @@ func main() {
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
 		codegen.PluginGoTypesJenny("pkg/tsdb"),
-		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
-		kind2pd(rt, corecodegen.DocsJenny(
-			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
-		)),
-		codegen.PluginTSEachMajor(rt),
+		codegen.PluginTSTypesJenny("public/app/plugins"),
 	)
 
 	schifs := kindsys.SchemaInterfaces(rt.Context())
@@ -89,7 +84,7 @@ func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneTo
 		return corecodegen.SchemaForGen{
 			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
 			Schema:  pd.Lineage.Latest(),
-			IsGroup: pd.SchemaInterface.IsGroup(),
+			IsGroup: pd.SchemaInterface.IsGroup,
 		}
 	})
 }

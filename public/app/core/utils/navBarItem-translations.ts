@@ -253,7 +253,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'migrate-to-cloud':
       return t(
         'nav.migrate-to-cloud.subtitle',
-        'Copy data sources, dashboards, and alerts from this installation to a cloud stack'
+        'Copy configuration from your self-managed installation to a cloud stack'
       );
     case 'support-bundles':
       return t('nav.support-bundles.subtitle', 'Download support bundles');

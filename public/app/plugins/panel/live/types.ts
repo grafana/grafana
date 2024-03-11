@@ -7,9 +7,15 @@ export enum MessageDisplayMode {
   None = 'none', // do not display
 }
 
+export enum MessagePublishMode {
+  None = 'none', // do not display
+  JSON = 'json', // formatted JSON
+  Influx = 'influx', // influx line protocol
+}
+
 export interface LivePanelOptions {
   channel?: LiveChannelAddress;
-  message?: MessageDisplayMode;
-  publish?: boolean;
-  json?: any; // object
+  display?: MessageDisplayMode;
+  publish?: MessagePublishMode;
+  message?: string | object; // likely JSON
 }

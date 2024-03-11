@@ -10,7 +10,7 @@ labels:
     - enterprise
     - oss
 title: Alerting on numeric data
-weight: 110
+weight: 160
 ---
 
 # Alerting on numeric data

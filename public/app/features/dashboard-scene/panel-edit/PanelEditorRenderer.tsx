@@ -6,9 +6,10 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanel } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
+import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
@@ -57,7 +58,9 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
 function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
-  const { vizManager, dataPane } = model.useState();
+  const { vizManager, dataPane, showLibraryPanelSaveModal } = model.useState();
+  const { sourcePanel } = vizManager.useState();
+  const libraryPanel = getLibraryPanel(sourcePanel.resolve());
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
@@ -82,6 +85,14 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         <div {...primaryProps}>
           <vizManager.Component model={vizManager} />
         </div>
+        {showLibraryPanelSaveModal && libraryPanel && (
+          <SaveLibraryVizPanelModal
+            libraryPanel={libraryPanel}
+            onDismiss={model.onDismissLibraryPanelModal}
+            onConfirm={model.onConfirmSaveLibraryPanel}
+            onDiscard={model.onDiscard}
+          ></SaveLibraryVizPanelModal>
+        )}
         {dataPane && (
           <>
             <div {...splitterProps} />
@@ -126,13 +137,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       minHeight: 0,
       gap: '8px',
-    }),
-    controls: css({
-      display: 'flex',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      padding: theme.spacing(2, 0, 2, 2),
     }),
     optionsPane: css({
       flexDirection: 'column',

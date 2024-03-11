@@ -253,7 +253,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodPost + "/api/v1/provisioning/alert-rules",
 		http.MethodPut + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}",
-		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
+		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
+		http.MethodDelete + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		eval = ac.EvalPermission(ac.ActionAlertingProvisioningWrite) // organization scope
 	case http.MethodGet + "/api/v1/notifications/time-intervals/{name}",
 		http.MethodGet + "/api/v1/notifications/time-intervals":

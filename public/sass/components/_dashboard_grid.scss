@@ -13,7 +13,6 @@
   &:hover {
     .react-resizable-handle {
       visibility: visible;
-      z-index: $zindex-active-panel;
     }
   }
 }
@@ -86,22 +85,11 @@
   }
 }
 
-// Hack to prevent panel overlap during drag/hover (due to descending z-index assignment)
-.react-grid-item:not(.context-menu-open, .resizing) {
-  &:hover,
-  &:active,
-  &:focus {
-    z-index: $zindex-active-panel !important;
-  }
-}
-
 // Hack for preventing panel menu overlapping.
-.react-grid-item.context-menu-open,
-.react-grid-item.resizing,
 .react-grid-item.resizing.panel,
 .react-grid-item.panel.dropdown-menu-open,
 .react-grid-item.react-draggable-dragging.panel {
-  z-index: $zindex-dropdown !important;
+  z-index: $zindex-dropdown;
 }
 
 // Disable animation on initial rendering and enable it when component has been mounted.
