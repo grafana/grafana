@@ -2,8 +2,9 @@ import type { PluginExtensionConfig } from '@grafana/data';
 
 // The information that is stored in the registry
 export type PluginExtensionRegistryItem = {
-  // Any additional meta information that we would like to store about the extension in the registry
-  pluginId: string;
+  pluginId: string; // The id of the plugin that registered the extension
+  enabled?: boolean; // If the extension is enabled
+  isDev?: boolean; // Set to true if the extension is added from the developer console
 
   config: PluginExtensionConfig;
 };

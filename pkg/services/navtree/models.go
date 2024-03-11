@@ -155,6 +155,7 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 
 		pluginsNodeLinks := []*NavLink{}
 		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("plugins"))
+		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("extensions"))
 		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("datasources"))
 		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("recordedQueries"))
 		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("correlations"))

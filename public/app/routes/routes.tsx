@@ -15,6 +15,7 @@ import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
+import { getRoutes as getExtensionAdminRoutes } from 'app/features/plugins/extensions/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
@@ -498,6 +499,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
       ),
     },
+    ...getExtensionAdminRoutes(),
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
     ...getAlertingRoutes(),
