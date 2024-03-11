@@ -105,7 +105,6 @@ describe('DashboardScene', () => {
 
       it('Exiting already saved dashboard should not restore initial state', () => {
         scene.setState({ title: 'Updated title' });
-
         expect(scene.state.isDirty).toBe(true);
 
         scene.saveCompleted({} as Dashboard, {
@@ -118,8 +117,7 @@ describe('DashboardScene', () => {
         });
 
         expect(scene.state.isDirty).toBe(false);
-
-        scene.exitEditMode({ skipConfirm: false });
+        scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.title).toEqual('Updated title');
       });
 
