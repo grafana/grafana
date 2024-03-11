@@ -15,12 +15,15 @@ import {
   MultiValueVariable,
   LocalValueVariable,
   CustomVariable,
+  VizPanelMenu,
+  VizPanelState,
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { getMultiVariableValues } from '../utils/utils';
 
 import { LibraryVizPanel } from './LibraryVizPanel';
+import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 interface PanelRepeaterGridItemState extends SceneGridItemStateLike {
@@ -107,15 +110,20 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
 
     // Loop through variable values and create repeats
     for (let index = 0; index < values.length; index++) {
-      const clone = panelToRepeat.clone({
+      const cloneState: Partial<VizPanelState> = {
         $variables: new SceneVariableSet({
           variables: [
             new LocalValueVariable({ name: variable.state.name, value: values[index], text: String(texts[index]) }),
           ],
         }),
         key: `${panelToRepeat.state.key}-clone-${index}`,
-      });
-
+      };
+      if (index > 0) {
+        cloneState.menu = new VizPanelMenu({
+          $behaviors: [repeatPanelMenuBehavior],
+        });
+      }
+      const clone = panelToRepeat.clone(cloneState);
       repeatedPanels.push(clone);
     }
 
