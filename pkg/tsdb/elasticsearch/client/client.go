@@ -56,7 +56,7 @@ type Client interface {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, ds *DatasourceInfo, queries []backend.DataQuery, logger log.Logger, tracer tracing.Tracer) (Client, error) {
+var NewClient = func(ctx context.Context, ds *DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (Client, error) {
 	logger = logger.New("entity", "client")
 
 	ip, err := newIndexPattern(ds.Interval, ds.Database)
