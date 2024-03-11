@@ -44,6 +44,15 @@ func LoadCloudWatchSettings(ctx context.Context, config backend.DataSourceInstan
 	}
 
 	instance.GrafanaSettings = *awsds.ReadAuthSettings(ctx)
+	if len(instance.GrafanaSettings.AllowedAuthProviders) > 0 {
+		authType, err := awsds.ToAuthType(instance.GrafanaSettings.AllowedAuthProviders[0])
+		if err != nil {
+			logger := backend.Logger.FromContext(ctx)
+			logger.Error("Failed to convert auth type", "error", err)
+			return CloudWatchSettings{}, err
+		}
+		instance.AuthType = authType
+	}
 
 	return instance, nil
 }

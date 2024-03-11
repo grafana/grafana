@@ -149,18 +149,21 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 	instance, err := e.getInstance(ctx, pluginCtx)
 	if region == defaultRegion {
 		if err != nil {
+			e.logger.Error("Error getting instance in getRequestContext", "err", err)
 			return models.RequestContext{}, err
 		}
 		r = instance.Settings.Region
 	}
 
-	ec2Client, err := e.getEC2Client(ctx, pluginCtx, defaultRegion)
+	ec2Client, err := e.getEC2Client(ctx, pluginCtx, r)
 	if err != nil {
+		e.logger.Error("Error getting EC2 client in getRequestContext", "err", err)
 		return models.RequestContext{}, err
 	}
 
 	sess, err := instance.newSession(r)
 	if err != nil {
+		e.logger.Error("Error getting session in getRequestContext", "err", err)
 		return models.RequestContext{}, err
 	}
 
@@ -324,6 +327,7 @@ func (ds *DataSource) newSession(region string) (*session.Session, error) {
 func (e *cloudWatchExecutor) newSessionFromContext(ctx context.Context, pluginCtx backend.PluginContext, region string) (*session.Session, error) {
 	instance, err := e.getInstance(ctx, pluginCtx)
 	if err != nil {
+		e.logger.Error("Error getting instance in newSessionFromContext", "err", err)
 		return nil, err
 	}
 
@@ -362,6 +366,7 @@ func (e *cloudWatchExecutor) getCWLogsClient(ctx context.Context, pluginCtx back
 func (e *cloudWatchExecutor) getEC2Client(ctx context.Context, pluginCtx backend.PluginContext, region string) (models.EC2APIProvider, error) {
 	sess, err := e.newSessionFromContext(ctx, pluginCtx, region)
 	if err != nil {
+		e.logger.Error("Error getting session in getEC2Client", "err", err)
 		return nil, err
 	}
 

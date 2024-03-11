@@ -15,8 +15,10 @@ type ExternalIdResponse struct {
 }
 
 func ExternalIdHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
-	reqCtx, err := reqCtxFactory(ctx, pluginCtx, "default")
+	logger := backend.Logger.FromContext(ctx)
+	reqCtx, err := reqCtxFactory(ctx, pluginCtx, "us-east-2")
 	if err != nil {
+		logger.Error("error in ExternalIdHandler when calling reqCtxFactory", "error", err)
 		return nil, models.NewHttpError("error in ExternalIdHandler", http.StatusInternalServerError, err)
 	}
 
@@ -25,6 +27,7 @@ func ExternalIdHandler(ctx context.Context, pluginCtx backend.PluginContext, req
 	}
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
+		logger.Error("error in ExternalIdHandler when marshalling response", "error", err)
 		return nil, models.NewHttpError("error in ExternalIdHandler", http.StatusInternalServerError, err)
 	}
 
