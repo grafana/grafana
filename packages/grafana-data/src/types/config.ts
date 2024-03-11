@@ -264,4 +264,5 @@ export interface AuthSettings {
   GenericOAuthSkipOrgRoleSync?: boolean;
 
   disableLogin?: boolean;
+  basicAuthStrongPasswordPolicy?: boolean;
 }
