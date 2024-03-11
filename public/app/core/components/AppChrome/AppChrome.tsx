@@ -82,7 +82,7 @@ export function AppChrome({ children }: Props) {
           <LinkButton className={styles.skipLink} href="#pageContent">
             Skip to main content
           </LinkButton>
-          <div className={cx(styles.topNav)}>
+          <header className={cx(styles.topNav)}>
             {!searchBarHidden && <TopSearchBar />}
             <NavToolbar
               searchBarHidden={searchBarHidden}
@@ -93,19 +93,19 @@ export function AppChrome({ children }: Props) {
               onToggleMegaMenu={handleMegaMenu}
               onToggleKioskMode={chrome.onToggleKioskMode}
             />
-          </div>
+          </header>
         </>
       )}
-      <main className={contentClass}>
+      <div className={contentClass}>
         <div className={styles.panes}>
           {!state.chromeless && state.megaMenuDocked && state.megaMenuOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
-          <div className={styles.pageContainer} id="pageContent">
+          <main className={styles.pageContainer} id="pageContent">
             {children}
-          </div>
+          </main>
         </div>
-      </main>
+      </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (

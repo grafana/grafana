@@ -49,8 +49,7 @@ func main() {
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
 		codegen.PluginGoTypesJenny("pkg/tsdb"),
-		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
-		codegen.PluginTSEachMajor(rt),
+		codegen.PluginTSTypesJenny("public/app/plugins"),
 	)
 
 	schifs := kindsys.SchemaInterfaces(rt.Context())
