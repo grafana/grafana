@@ -146,12 +146,9 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 	}
 
 	remoteServicesConfig := &RemoteServicesConfig{
-		// TODO: determine if we can switch to commandOptions.ExtraOptions.DevMode for Insecure flag below
-		// without insecure, aggregator is checking the referrer / externalname service name
-		// such as v0alpha1.{MT_SERVICE_GROUP_NAME}.grafana.app.stack-{STACK_ID}.svc
-		// against the TLS cert, which it will obviously fail
-		// This disables server cert validation for the aggregated servers
-		// Client certificate validation is still active on their side
+		// TODO: in practice, we should only use the insecure flag when commandOptions.ExtraOptions.DevMode == true
+		// But given the bug in K8s, we are forced to set it to true until the below PR is merged and available
+		// https://github.com/kubernetes/kubernetes/pull/123808
 		InsecureSkipTLSVerify:  true,
 		ExternalNamesNamespace: externalNamesNamespace,
 		CABundle:               caBundlePEM,
