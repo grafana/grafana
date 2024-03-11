@@ -39,6 +39,6 @@ type HealthCheckResult struct {
 	// Optional description for the data source
 	Message string `json:"message,omitempty"`
 
-	// Spec depends on the the plugin
+	// Spec depends on the plugin
 	Details *common.Unstructured `json:"details,omitempty"`
 }
