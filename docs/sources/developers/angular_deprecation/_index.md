@@ -22,17 +22,19 @@ AngularJS is an old frontend framework whose active development stopped many yea
 
 ## When will Angular plugins stop working?
 
-Our goal is to transfer all the remaining Angular code to the core of Grafana before Grafana 10 is released in Summer 2023. Once this is done, the option "[angular_support_enabled](https://github.com/grafana/grafana/blob/d61bcdf4ca5e69489e0067c56fbe7f0bfdf84ee4/conf/defaults.ini#L362)" will be disabled by default for new Grafana Cloud users, resulting in the inability to use Angular plugins. In case you still rely on AngularJS-based plugins developed internally or by the community, you will need to enable this option to continue using them. Following the release of Grafana 10 we will be migrating Grafana Cloud users where possible and disabling Angular support when appropriate, we will also be introducing new features to help all users identify how they are impacted and to warn of the use of deprecated plugins within the Grafana UI.
+In Grafana 11, which will be released in preview in April 2024 and generally available in May, we will change the default behavior of the [angular_support_enabled](https://github.com/grafana/grafana/blob/d61bcdf4ca5e69489e0067c56fbe7f0bfdf84ee4/conf/defaults.ini#L362) configuration parameter to turn off support for AngularJS based plugins. In case you still rely on [AngularJS-based plugins]({{< relref "./angular-plugins/" >}}) developed internally or by the community, you will need to enable this option to continue using them.
+
+New Grafana Cloud users will be unable to request for support to be added to their instance.
 
 ## When will we remove Angular support completely?
 
-Our plan is to completely remove support for Angular plugins in version 11, which will be released in 2024. This means that all plugins that depend on Angular will stop working and the temporary option introduced in version 10 to enable Angular will be removed.
+Our current plan is to completely remove any remaining support for Angular plugins in version 12. Including the removal of the [angular_support_enabled](https://github.com/grafana/grafana/blob/d61bcdf4ca5e69489e0067c56fbe7f0bfdf84ee4/conf/defaults.ini#L362) configuration parameter.
 
 ## How do I migrate an Angular plugin to React?
 
 Depending on if it’s a data source plugin, panel plugin, or app plugin the process will differ.
 
-For panels, the rendering logic could in some cases be easily preserved but all options need to be redone to use the declarative options framework. For data source plugins the query editor and config options will likely need a total rewrite.
+For panels, the rendering logic could in some cases be easily preserved, but all options need to be redone to use the declarative options framework. For data source plugins the query editor and config options will likely need a total rewrite.
 
 ## How do I encourage a community plugin to migrate?
 
