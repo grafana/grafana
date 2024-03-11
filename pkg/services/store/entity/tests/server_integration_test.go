@@ -114,6 +114,14 @@ func TestIntegrationWatch(t *testing.T) {
 	testCtx := createTestContext(t)
 	testCtx.ctx = appcontext.WithUser(testCtx.ctx, testCtx.user)
 
+	// truncate tables after each table test
+	truncateTables := func() {
+		err := testCtx.testEnv.SQLStore.Dialect.TruncateDBTables(testCtx.testEnv.SQLStore.GetEngine())
+		if err != nil {
+			t.Errorf("failed to clean up db")
+		}
+	}
+
 	// Update env with entity_api db config
 	dbType := os.Getenv("GRAFANA_TEST_DB")
 	err := addUnifiedStorageConfig(t, testCtx, dbType)
@@ -127,6 +135,7 @@ func TestIntegrationWatch(t *testing.T) {
 	body := []byte("{\"name\":\"John\"}")
 
 	t.Run("watch will not receive events for keys its not watching", func(t *testing.T) {
+		defer truncateTables()
 		otherKey := "/" + group + "/" + resource + "/" + namespace + "/" + "otherName"
 		watchClient := newWatchClient(t, testCtx, otherKey)
 		events := make(chan *entity.EntityWatchResponse)
@@ -165,6 +174,9 @@ func TestIntegrationWatch(t *testing.T) {
 	})
 
 	t.Run("watch will receive create and update", func(t *testing.T) {
+		defer truncateTables()
+
+		// create watch client and listen for events
 		watchClient := newWatchClient(t, testCtx, testKey)
 
 		// create entity
@@ -199,8 +211,7 @@ func TestIntegrationWatch(t *testing.T) {
 		}
 		updateResp, err := testCtx.client.Update(testCtx.ctx, updateReq)
 		require.NoError(t, err)
-		fmt.Println(updateResp)
-		//require.Equal(t, entity.Entity_UPDATED, updateResp.Entity.Action)
+		require.Equal(t, entity.Entity_UPDATED, updateResp.Entity.Action)
 
 		// watch client receives update
 		res, err = watchClient.Recv()
