@@ -89,7 +89,7 @@
     "@testing-library/user-event": "14.5.2",
     "@types/d3": "7.4.3",
     "@types/debounce-promise": "3.1.9",
-    "@types/eslint": "8.56.3",
+    "@types/eslint": "8.56.5",
     "@types/jest": "29.5.12",
     "@types/jquery": "3.5.29",
     "@types/lodash": "4.14.202",
