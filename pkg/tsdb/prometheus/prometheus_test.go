@@ -1,7 +1,10 @@
 package prometheus
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"testing"
@@ -13,9 +16,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type fakeSender struct{}
+type fakeSender struct {
+	resp *backend.CallResourceResponse
+}
 
 func (sender *fakeSender) Send(resp *backend.CallResourceResponse) error {
+	sender.resp = resp
 	return nil
 }
 
@@ -25,11 +31,16 @@ type fakeRoundtripper struct {
 
 func (rt *fakeRoundtripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	rt.Req = req
+	reqBody, _ := io.ReadAll(req.Body)
+	respHeader := make(http.Header)
+	if req.Header.Get("Accept-Encoding") == "gzip" {
+		respHeader.Add("Content-Encoding", "gzip")
+	}
 	return &http.Response{
 		Status:        "200",
 		StatusCode:    200,
-		Header:        nil,
-		Body:          nil,
+		Header:        respHeader,
+		Body:          io.NopCloser(bytes.NewReader(reqBody)),
 		ContentLength: 0,
 	}, nil
 }
@@ -107,9 +118,46 @@ func TestService(t *testing.T) {
 					},
 					f.Roundtripper.Req.Header)
 				require.Equal(t, http.MethodPost, f.Roundtripper.Req.Method)
-				body, err := io.ReadAll(f.Roundtripper.Req.Body)
+				require.Equal(t, []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"), sender.resp.Body)
+				require.Equal(t, "http://localhost:9090/api/v1/series", f.Roundtripper.Req.URL.String())
+			})
+
+			t.Run("unGzip response of resource api", func(t *testing.T) {
+				f := &fakeHTTPClientProvider{}
+				httpProvider := getMockPromTestSDKProvider(f)
+				service := &Service{
+					im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"))),
+				}
+
+				rawData := []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008")
+				buffer := bytes.NewBuffer(make([]byte, 0, 1024))
+				gzipW := gzip.NewWriter(buffer)
+				_, err := gzipW.Write(rawData)
+				assert.Nil(t, err)
+				err = gzipW.Close()
+				assert.Nil(t, err)
+
+				req := &backend.CallResourceRequest{
+					PluginContext: backend.PluginContext{
+						DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+							URL:      "http://localhost:9090",
+							JSONData: []byte(`{"httpHeaderName1": "Accept-Encoding"}`),
+							DecryptedSecureJSONData: map[string]string{
+								"httpHeaderValue1": "gzip",
+							},
+						},
+					},
+					Path:   "/api/v1/series",
+					Method: http.MethodPost,
+					URL:    "/api/v1/series",
+					Body:   buffer.Bytes(),
+				}
+
+				sender := &fakeSender{}
+				err = service.CallResource(context.Background(), req, sender)
 				require.NoError(t, err)
-				require.Equal(t, []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"), body)
+				require.Equal(t, http.MethodPost, f.Roundtripper.Req.Method)
+				require.Equal(t, []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"), sender.resp.Body)
 				require.Equal(t, "http://localhost:9090/api/v1/series", f.Roundtripper.Req.URL.String())
 			})
 		})

@@ -1,8 +1,11 @@
 package client
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"testing"
@@ -52,6 +55,39 @@ func TestClient(t *testing.T) {
 			require.NotNil(t, doer.Req)
 			require.Equal(t, http.MethodPost, doer.Req.Method)
 			body, err := io.ReadAll(doer.Req.Body)
+			require.NoError(t, err)
+			require.Equal(t, []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"), body)
+			require.Equal(t, "http://localhost:9090/api/v1/series", doer.Req.URL.String())
+		})
+
+		t.Run("unGzip response data", func(t *testing.T) {
+			rawData := []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008")
+			buffer := bytes.NewBuffer(make([]byte, 0, 1024))
+			gzipW := gzip.NewWriter(buffer)
+			_, err := gzipW.Write(rawData)
+			assert.Nil(t, err)
+			err = gzipW.Close()
+			assert.Nil(t, err)
+
+			req := &backend.CallResourceRequest{
+				PluginContext: backend.PluginContext{},
+				Path:          "/api/v1/series",
+				Method:        http.MethodPost,
+				URL:           "/api/v1/series",
+				Body:          buffer.Bytes(),
+			}
+			res, err := client.QueryResource(context.Background(), req)
+			defer func() {
+				if res != nil && res.Body != nil {
+					if err := res.Body.Close(); err != nil {
+						fmt.Println("Error", "err", err)
+					}
+				}
+			}()
+			require.NoError(t, err)
+			require.NotNil(t, doer.Req)
+			require.Equal(t, http.MethodPost, doer.Req.Method)
+			body, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 			require.Equal(t, []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"), body)
 			require.Equal(t, "http://localhost:9090/api/v1/series", doer.Req.URL.String())

@@ -2,8 +2,10 @@ package resource
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/grafana/grafana-azure-sdk-go/util/maputil"
@@ -60,9 +62,28 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 		}
 	}()
 
+	gunzip := false
+	for k, vs := range resp.Header {
+		for _, v := range vs {
+			if k == "Content-Encoding" && v == "gzip" {
+				gunzip = true
+				break
+			}
+		}
+	}
+
 	var buf bytes.Buffer
-	// Should be more efficient than ReadAll. See https://github.com/prometheus/client_golang/pull/976
-	_, err = buf.ReadFrom(resp.Body)
+	if gunzip {
+		var unzipReader io.Reader
+		unzipReader, err = gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		_, err = buf.ReadFrom(unzipReader)
+	} else {
+		// Should be more efficient than ReadAll. See https://github.com/prometheus/client_golang/pull/976
+		_, err = buf.ReadFrom(resp.Body)
+	}
 	body := buf.Bytes()
 	if err != nil {
 		return nil, err

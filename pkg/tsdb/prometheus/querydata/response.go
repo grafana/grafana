@@ -1,6 +1,7 @@
 package querydata
 
 import (
+	"compress/gzip"
 	"context"
 	"fmt"
 	"net/http"
@@ -28,7 +29,27 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	ctx, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.parseResponse")
 	defer endSpan()
 
-	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
+	gunzip := false
+	for k, vs := range res.Header {
+		for _, v := range vs {
+			if k == "Content-Encoding" && v == "gzip" {
+				gunzip = true
+				break
+			}
+		}
+	}
+
+	var iter *jsoniter.Iterator
+	if gunzip {
+		reader, err := gzip.NewReader(res.Body)
+		if err != nil {
+			return backend.DataResponse{Error: err}
+		}
+		iter = jsoniter.Parse(jsoniter.ConfigDefault, reader, 1024*1024)
+	} else {
+		iter = jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
+	}
+
 	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
 		Dataplane: enablePrometheusDataplaneFlag,
 	})
