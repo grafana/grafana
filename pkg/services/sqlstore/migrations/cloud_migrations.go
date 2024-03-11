@@ -31,6 +31,6 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 	// - migration data
 	// - stack name
 
-	mg.AddMigration("cloud_migration table", NewAddTableMigration(migrationTable))
-	mg.AddMigration("cloud_migration_run table", NewAddTableMigration(migrationRunTable))
+	mg.AddMigration("create cloud_migration table v1", NewAddTableMigration(migrationTable))
+	mg.AddMigration("create cloud_migration_run table v1", NewAddTableMigration(migrationRunTable))
 }
