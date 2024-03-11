@@ -1263,35 +1263,6 @@
         }
       }
     },
-    "/admin/provisioning/notifications/reload": {
-      "post": {
-        "security": [
-          {
-            "basic": []
-          }
-        ],
-        "description": "Reloads the provisioning config files for legacy alert notifiers again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:notifications`.",
-        "tags": [
-          "admin_provisioning"
-        ],
-        "summary": "Reload legacy alert notifier provisioning configurations.",
-        "operationId": "adminProvisioningReloadNotifications",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/admin/provisioning/plugins/reload": {
       "post": {
         "security": [
