@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/intervalv2"
+	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 )
 
 // PromQueryFormat defines model for PromQueryFormat.
