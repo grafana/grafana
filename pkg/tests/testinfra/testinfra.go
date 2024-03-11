@@ -416,6 +416,7 @@ type GrafanaOpts struct {
 	PluginAdminEnabled                    bool
 	PluginAdminExternalManageEnabled      bool
 	AppModeProduction                     bool
+	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
 	EnableLog                             bool
