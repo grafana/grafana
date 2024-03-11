@@ -48,8 +48,7 @@ func main() {
 
 	pluginKindGen.Append(
 		codegen.PluginGoTypesJenny("pkg/tsdb"),
-		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
-		codegen.PluginTSEachMajor(rt),
+		codegen.PluginTSTypesJenny("public/app/plugins"),
 	)
 
 	schifs := kindsys.SchemaInterfaces(rt.Context())
@@ -93,7 +92,7 @@ func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneTo
 		return corecodegen.SchemaForGen{
 			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
 			Schema:  pd.Lineage.Latest(),
-			IsGroup: pd.SchemaInterface.IsGroup(),
+			IsGroup: pd.SchemaInterface.IsGroup,
 		}
 	})
 }
