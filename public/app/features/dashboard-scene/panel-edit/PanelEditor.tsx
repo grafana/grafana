@@ -203,18 +203,18 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     });
   }
 
-  public onSaveLibraryPanel() {
+  public onSaveLibraryPanel = () => {
     this.setState({ showLibraryPanelSaveModal: true });
-  }
+  };
 
-  public onConfirmSaveLibraryPanel() {
+  public onConfirmSaveLibraryPanel = () => {
     this.state.vizManager.commitChanges();
     locationService.partial({ editPanel: null });
-  }
+  };
 
-  public onDismissLibraryPanelModal() {
+  public onDismissLibraryPanelModal = () => {
     this.setState({ showLibraryPanelSaveModal: false });
-  }
+  };
 }
 
 export function buildPanelEditScene(panel: VizPanel): PanelEditor {

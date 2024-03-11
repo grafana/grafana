@@ -341,7 +341,7 @@ export function ToolbarActions({ dashboard }: Props) {
     condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
     render: () => (
       <Button
-        onClick={() => editPanel?.onSaveLibraryPanel()}
+        onClick={editPanel?.onSaveLibraryPanel}
         tooltip="Save library panel"
         size="sm"
         key="saveLibraryPanel"

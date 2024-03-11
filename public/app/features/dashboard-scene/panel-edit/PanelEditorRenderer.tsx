@@ -88,15 +88,9 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         {showLibraryPanelSaveModal && libraryPanel && (
           <SaveLibraryVizPanelModal
             libraryPanel={libraryPanel}
-            onDismiss={() => {
-              model.onDismissLibraryPanelModal();
-            }}
-            onConfirm={() => {
-              model.onConfirmSaveLibraryPanel();
-            }}
-            onDiscard={() => {
-              model.onDiscard();
-            }}
+            onDismiss={model.onDismissLibraryPanelModal}
+            onConfirm={model.onConfirmSaveLibraryPanel}
+            onDiscard={model.onDiscard}
           ></SaveLibraryVizPanelModal>
         )}
         {dataPane && (
