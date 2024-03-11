@@ -73,8 +73,6 @@ You can use an encryption key from AWS Key Management Service to encrypt secrets
    available_encryption_providers = awskms.example-encryption-key
    ```
 
-   **> Note:** The encryption key that is stored in the `secret_key` field is still used by Grafana’s legacy alerting system to encrypt secrets, for decrypting existing secrets, or it is used as the default provider when external providers are not configured. Do not change or remove that value when adding a new KMS provider.
-
 7. [Restart Grafana](/docs/grafana/latest/installation/restart-grafana/).
 
 8. (Optional) From the command line and the root directory of Grafana, re-encrypt all of the secrets within the Grafana database with the new key using the following command:

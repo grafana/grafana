@@ -71,8 +71,6 @@ You can use an encryption key from Azure Key Vault to encrypt secrets in the Gra
    available_encryption_providers =  azurekv.example-encryption-key
    ```
 
-   **> Note:** The encryption key stored in the `secret_key` field is still used by Grafana’s legacy alerting system to encrypt secrets. Do not change or remove that value.
-
 9. [Restart Grafana](/docs/grafana/latest/installation/restart-grafana/).
 
 10. (Optional) From the command line and the root directory of Grafana Enterprise, re-encrypt all of the secrets within the Grafana database with the new key using the following command:
