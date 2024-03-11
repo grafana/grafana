@@ -21,7 +21,7 @@ function tryMigration() {
   if (!url.searchParams.has(autoMigrateParam)) {
     url.searchParams.append(autoMigrateParam, 'true');
   }
-  window.open(url.toString());
+  window.open(url.toString(), '_self');
 }
 
 export function AngularDeprecationNotice({ dashboardUid, showAutoMigrateLink }: Props) {
