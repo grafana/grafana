@@ -173,12 +173,10 @@ func (s *OrgSync) validateUsingOrg(ctx context.Context, userID int64, orgID int6
 	}
 
 	// validate that the org id in the list
-	valid := false
 	for _, other := range result {
 		if other.OrgID == orgID {
-			valid = true
+			return true
 		}
 	}
-
-	return valid
+	return false
 }
