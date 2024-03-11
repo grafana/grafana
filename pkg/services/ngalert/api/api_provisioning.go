@@ -335,9 +335,9 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 	}
 	provenance := determineProvenance(c)
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), c.SignedInUser, upstreamModel, alerting_models.Provenance(provenance))
-		if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
+	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
 	if err != nil {
 		if errors.Is(err, alerting_models.ErrAlertRuleUniqueConstraintViolation) {
 			return ErrResp(http.StatusBadRequest, err, "")
