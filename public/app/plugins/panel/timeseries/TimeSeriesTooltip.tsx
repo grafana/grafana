@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-import { DataFrame, FieldType, LinkModel, Field, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, FieldType, getFieldDisplayName } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 
 import { getDataLinks } from '../status-history/utils';
@@ -56,29 +56,29 @@ export const TimeSeriesTooltip = ({
     seriesIdx,
     mode,
     sortOrder,
-    (field) => field.type === FieldType.number
+    (field) => field.type === FieldType.number || field.type === FieldType.enum
   );
 
-  let links: Array<LinkModel<Field>> = [];
+  let footer: ReactNode;
 
-  if (seriesIdx != null) {
+  if (isPinned && seriesIdx != null) {
     const field = seriesFrame.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
-    links = getDataLinks(field, dataIdx);
+    const links = getDataLinks(field, dataIdx);
+
+    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} />;
   }
 
-  const headerItem: LabelValue = {
+  const headerItem: VizTooltipItem = {
     label: xField.type === FieldType.time ? '' : getFieldDisplayName(xField, seriesFrame, frames),
     value: xVal,
   };
 
   return (
-    <div>
-      <div className={styles.wrapper}>
-        <VizTooltipHeader headerLabel={headerItem} isPinned={isPinned} />
-        <VizTooltipContent contentLabelValue={contentItems} isPinned={isPinned} scrollable={scrollable} />
-        {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
-      </div>
+    <div className={styles.wrapper}>
+      <VizTooltipHeader item={headerItem} isPinned={isPinned} />
+      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} />
+      {footer}
     </div>
   );
 };

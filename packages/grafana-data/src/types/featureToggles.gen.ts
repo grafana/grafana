@@ -31,7 +31,6 @@ export interface FeatureToggles {
   correlations?: boolean;
   exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
-  traceToMetrics?: boolean;
   autoMigrateOldPanels?: boolean;
   autoMigrateGraphPanel?: boolean;
   autoMigrateTablePanel?: boolean;
@@ -44,7 +43,6 @@ export interface FeatureToggles {
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
-  dataConnectionsConsole?: boolean;
   topnav?: boolean;
   returnToPrevious?: boolean;
   grpcServer?: boolean;
@@ -78,7 +76,6 @@ export interface FeatureToggles {
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
-  externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   faroDatasourceSelector?: boolean;
@@ -106,7 +103,6 @@ export interface FeatureToggles {
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
-  splitScopes?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
@@ -114,6 +110,7 @@ export interface FeatureToggles {
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
+  aiGeneratedDashboardChanges?: boolean;
   reportingRetries?: boolean;
   sseGroupByDatasource?: boolean;
   libraryPanelRBAC?: boolean;
@@ -163,7 +160,6 @@ export interface FeatureToggles {
   pluginsSkipHostEnvVars?: boolean;
   tableSharedCrosshair?: boolean;
   regressionTransformation?: boolean;
-  displayAnonymousStats?: boolean;
   lokiQueryHints?: boolean;
   kubernetesFeatureToggles?: boolean;
   alertingPreviewUpgrade?: boolean;
@@ -175,11 +171,14 @@ export interface FeatureToggles {
   onPremToCloudMigrations?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
+  sqlExpressions?: boolean;
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
+  betterPageScrolling?: boolean;
   alertingUpgradeDryrunOnStart?: boolean;
+  scopeFilters?: boolean;
 }

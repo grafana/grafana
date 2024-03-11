@@ -37,7 +37,7 @@ func NewLocalFinder(devMode bool, features featuremgmt.FeatureToggles) *Local {
 	}
 }
 
-func ProvideLocalFinder(cfg *config.Cfg) *Local {
+func ProvideLocalFinder(cfg *config.PluginManagementCfg) *Local {
 	return NewLocalFinder(cfg.DevMode, cfg.Features)
 }
 

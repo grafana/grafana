@@ -32,7 +32,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       buildDependencies: {
         config: [__filename],
       },
-      cacheDirectory: path.resolve(__dirname, '../../node_modules/webpack', path.basename(process.cwd())),
+      cacheDirectory: path.resolve(__dirname, '../../node_modules/.cache/webpack', path.basename(process.cwd())),
     },
 
     context: process.cwd(),
@@ -144,6 +144,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       },
       path: path.resolve(process.cwd(), DIST_DIR),
       publicPath: `public/plugins/${pluginJson.id}/`,
+      uniqueName: pluginJson.id,
     },
 
     plugins: [

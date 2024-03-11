@@ -11,6 +11,7 @@ import {
   DataQueryResponse,
   DataQueryResponseData,
   DataSourceApi,
+  DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
@@ -211,6 +212,23 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     );
   }
 
+  // Allows to retrieve the list of tags for ad-hoc filters
+  async getTagKeys(): Promise<Array<{ text: string }>> {
+    await this.languageProvider.fetchTags();
+    const tags = this.languageProvider.tagsV2 || [];
+    return tags
+      .map(({ name, tags }) =>
+        tags.filter((tag) => tag !== undefined).map((t) => (name !== 'intrinsic' ? `${name}.${t}` : `${t}`))
+      )
+      .flat()
+      .map((tag) => ({ text: tag }));
+  }
+
+  // Allows to retrieve the list of tag values for ad-hoc filters
+  getTagValues(options: DataSourceGetTagValuesOptions): Promise<Array<{ text: string }>> {
+    return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''));
+  }
+
   init = async () => {
     const response = await lastValueFrom(
       this._request('/api/status/buildinfo').pipe(
@@ -377,9 +395,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     if (targets.traceqlSearch?.length) {
       try {
         if (config.featureToggles.metricsSummary) {
-          const groupBy = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
-          if (groupBy) {
-            subQueries.push(this.handleMetricsSummary(groupBy, generateQueryFromFilters(groupBy.filters), options));
+          const target = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
+          if (target) {
+            const appliedQuery = this.applyVariables(target, options.scopedVars);
+            subQueries.push(
+              this.handleMetricsSummary(appliedQuery, generateQueryFromFilters(appliedQuery.filters), options)
+            );
           }
         }
 
@@ -387,25 +408,23 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           ? targets.traceqlSearch.filter((t) => !this.hasGroupBy(t))
           : targets.traceqlSearch;
         if (traceqlSearchTargets.length > 0) {
-          const queryValueFromFilters = generateQueryFromFilters(traceqlSearchTargets[0].filters);
-
-          // We want to support template variables also in Search for consistency with other data sources
-          const queryValue = this.templateSrv.replace(queryValueFromFilters, options.scopedVars);
+          const appliedQuery = this.applyVariables(traceqlSearchTargets[0], options.scopedVars);
+          const queryValueFromFilters = generateQueryFromFilters(appliedQuery.filters);
 
           reportInteraction('grafana_traces_traceql_search_queried', {
             datasourceType: 'tempo',
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
-            query: queryValue ?? '',
+            query: queryValueFromFilters ?? '',
             streaming: config.featureToggles.traceQLStreaming,
           });
 
           if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
-            subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValue));
+            subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValueFromFilters));
           } else {
             subQueries.push(
               this._request('/api/search', {
-                q: queryValue,
+                q: queryValueFromFilters,
                 limit: options.targets[0].limit ?? DEFAULT_LIMIT,
                 spss: options.targets[0].spss ?? DEFAULT_SPSS,
                 start: options.range.from.unix(),
@@ -520,6 +539,24 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         ...query.linkedQuery,
         expr: this.templateSrv.replace(query.linkedQuery?.expr ?? '', scopedVars),
       };
+    }
+
+    if (query.filters) {
+      expandedQuery.filters = query.filters.map((filter) => {
+        const updatedFilter = {
+          ...filter,
+          tag: this.templateSrv.replace(filter.tag ?? '', scopedVars),
+        };
+
+        if (filter.value) {
+          updatedFilter.value =
+            typeof filter.value === 'string'
+              ? this.templateSrv.replace(filter.value ?? '', scopedVars, VariableFormatID.Pipe)
+              : filter.value.map((v) => this.templateSrv.replace(v ?? '', scopedVars, VariableFormatID.Pipe));
+        }
+
+        return updatedFilter;
+      });
     }
 
     return {
@@ -677,7 +714,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }).pipe(
       map((response) => {
         return {
-          data: formatTraceQLMetrics(response.data),
+          data: formatTraceQLMetrics(queryValue, response.data),
         };
       }),
       catchError((err) => {
@@ -1091,13 +1128,35 @@ export function getFieldConfig(
         datasourceUid,
         false
       ),
-      makeTempoLink('View traces', `\${${tempoField}}`, '', tempoDatasourceUid),
+      makeTempoLink(
+        'View traces',
+        namespaceFields !== undefined ? `\${${namespaceFields.targetNamespace}}` : '',
+        `\${${targetField}}`,
+        '',
+        tempoDatasourceUid
+      ),
     ],
   };
 }
 
-export function makeTempoLink(title: string, serviceName: string, spanName: string, datasourceUid: string) {
+export function makeTempoLink(
+  title: string,
+  serviceNamespace: string | undefined,
+  serviceName: string,
+  spanName: string,
+  datasourceUid: string
+) {
   let query: TempoQuery = { refId: 'A', queryType: 'traceqlSearch', filters: [] };
+  if (serviceNamespace !== undefined && serviceNamespace !== '') {
+    query.filters.push({
+      id: 'service-namespace',
+      scope: TraceqlSearchScope.Resource,
+      tag: 'service.namespace',
+      value: serviceNamespace,
+      operator: '=',
+      valueType: 'string',
+    });
+  }
   if (serviceName !== '') {
     query.filters.push({
       id: 'service-name',
@@ -1301,7 +1360,7 @@ function getServiceGraphView(
         return 'Tempo';
       }),
       config: {
-        links: [makeTempoLink('Tempo', '', `\${__data.fields[0]}`, tempoDatasourceUid)],
+        links: [makeTempoLink('Tempo', undefined, '', `\${__data.fields[0]}`, tempoDatasourceUid)],
       },
     });
   }
