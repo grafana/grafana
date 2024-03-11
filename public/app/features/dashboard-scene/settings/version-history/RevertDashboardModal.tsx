@@ -1,22 +1,30 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { ConfirmModal } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { useDashboardRestore } from './useDashboardRestore';
+import { DecoratedRevisionModel } from '../VersionsEditView';
+
 export interface RevertDashboardModalProps {
   hideModal: () => void;
-  version: number;
+  onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
+  version: DecoratedRevisionModel;
 }
 
-export const RevertDashboardModal = ({ hideModal, version }: RevertDashboardModalProps) => {
-  // TODO: how should state.error be handled?
-  const { state, onRestoreDashboard } = useDashboardRestore(version);
+export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDashboardModalProps) => {
+  const notifyApp = useAppNotification();
 
-  useEffect(() => {
-    if (!state.loading && state.value) {
-      hideModal();
+  const onRestoreDashboard = async () => {
+    const success = await onRestore(version);
+
+    if (success) {
+      notifyApp.success('Dashboard restored', `Restored from version ${version.version}`);
+    } else {
+      notifyApp.error('Dashboard restore failed', `Failed to restore from version ${version.version}`);
     }
-  }, [state, hideModal]);
+
+    hideModal();
+  };
 
   return (
     <ConfirmModal
@@ -26,9 +34,11 @@ export const RevertDashboardModal = ({ hideModal, version }: RevertDashboardModa
       onDismiss={hideModal}
       onConfirm={onRestoreDashboard}
       body={
-        <p>Are you sure you want to restore the dashboard to version {version}? All unsaved changes will be lost.</p>
+        <p>
+          Are you sure you want to restore the dashboard to version {version.version}? All unsaved changes will be lost.
+        </p>
       }
-      confirmText={`Yes, restore to version ${version}`}
+      confirmText={`Yes, restore to version ${version.version}`}
     />
   );
 };

@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -9,7 +11,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
-import { Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Container, CustomScrollbar, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { shouldShowAlertingTab } from 'app/features/dashboard/components/PanelEditor/state/selectors';
 
 import { VizPanelManager } from '../VizPanelManager';
@@ -17,11 +19,11 @@ import { VizPanelManager } from '../VizPanelManager';
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
-import { PanelDataPaneTab } from './types';
+import { PanelDataPaneTab, TabId } from './types';
 
 export interface PanelDataPaneState extends SceneObjectState {
   tabs?: PanelDataPaneTab[];
-  tab?: string;
+  tab?: TabId;
 }
 
 export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
@@ -42,13 +44,14 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       return;
     }
     if (typeof values.tab === 'string') {
-      this.setState({ tab: values.tab });
+      this.setState({ tab: values.tab as TabId });
     }
   }
 
   constructor(panelMgr: VizPanelManager) {
     super({
-      tab: 'queries',
+      tab: TabId.Queries,
+      tabs: [],
     });
 
     this.panelManager = panelMgr;
@@ -95,6 +98,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   private buildTabs() {
     const panelManager = this.panelManager;
     const panel = panelManager.state.panel;
+
     const runner = this.panelManager.queryRunner;
     const tabs: PanelDataPaneTab[] = [];
 
@@ -102,7 +106,6 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       const plugin = panel.getPlugin();
 
       if (!plugin) {
-        this.setState({ tabs });
         return;
       }
 
@@ -132,6 +135,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tab, tabs } = model.useState();
+  const styles = useStyles2(getStyles);
 
   if (!tabs) {
     return;
@@ -140,22 +144,50 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const currentTab = tabs.find((t) => t.tabId === tab);
 
   return (
-    <div>
-      <TabsBar hideBorder={true}>
+    <div className={styles.dataPane}>
+      <TabsBar hideBorder={true} className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
-            <Tab
+            <t.TabComponent
               key={`${t.getTabLabel()}-${index}`}
-              label={t.getTabLabel()}
-              icon={t.icon}
-              counter={t.getItemsCount?.()}
               active={t.tabId === tab}
               onChangeTab={() => model.onChangeTab(t)}
-            />
+            ></t.TabComponent>
           );
         })}
       </TabsBar>
-      <TabContent>{currentTab && <currentTab.Component model={currentTab} />}</TabContent>
+      <CustomScrollbar className={styles.scroll}>
+        <TabContent className={styles.tabContent}>
+          <Container>{currentTab && <currentTab.Component model={currentTab} />}</Container>
+        </TabContent>
+      </CustomScrollbar>
     </div>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    dataPane: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      minHeight: 0,
+      height: '100%',
+    }),
+    tabContent: css({
+      padding: theme.spacing(2),
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderLeft: 'none',
+      borderBottom: 'none',
+      borderTopRightRadius: theme.shape.radius.default,
+      flexGrow: 1,
+    }),
+    tabsBar: css({
+      flexShrink: 0,
+      paddingLeft: theme.spacing(2),
+    }),
+    scroll: css({
+      background: theme.colors.background.primary,
+    }),
+  };
 }

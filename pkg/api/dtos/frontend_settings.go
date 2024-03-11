@@ -30,7 +30,8 @@ type FrontendSettingsAuthDTO struct {
 	// Deprecated: this is no longer used and will be removed in Grafana 11
 	OktaSkipOrgRoleSync bool `json:"OktaSkipOrgRoleSync"`
 
-	DisableLogin bool `json:"disableLogin"`
+	DisableLogin                  bool `json:"disableLogin"`
+	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {
@@ -208,6 +209,9 @@ type FrontendSettingsDTO struct {
 	AnonymousDeviceLimit             int64                          `json:"anonymousDeviceLimit"`
 	RendererAvailable                bool                           `json:"rendererAvailable"`
 	RendererVersion                  string                         `json:"rendererVersion"`
+	RendererDefaultImageWidth        int                            `json:"rendererDefaultImageWidth"`
+	RendererDefaultImageHeight       int                            `json:"rendererDefaultImageHeight"`
+	RendererDefaultImageScale        float64                        `json:"rendererDefaultImageScale"`
 	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`
 	Http2Enabled                     bool                           `json:"http2Enabled"`
 	GrafanaJavascriptAgent           setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent"`
@@ -235,12 +239,15 @@ type FrontendSettingsDTO struct {
 	SamlName                string                             `json:"samlName"`
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
 	SharedWithMeFolderUID   string                             `json:"sharedWithMeFolderUID"`
+	RootFolderUID           string                             `json:"rootFolderUID"`
 
 	GeomapDefaultBaseLayerConfig *map[string]any `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`
 
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 	PublicDashboardsEnabled    bool   `json:"publicDashboardsEnabled"`
+
+	CloudMigrationIsTarget bool `json:"cloudMigrationIsTarget"`
 
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 
@@ -256,4 +263,9 @@ type FrontendSettingsDTO struct {
 	// Enterprise
 	Licensing     *FrontendSettingsLicensingDTO     `json:"licensing,omitempty"`
 	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
+
+	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
+	// Experimental Scope settings
+	ListScopesEndpoint          string `json:"listScopesEndpoint"`
+	ListDashboardScopesEndpoint string `json:"listDashboardScopesEndpoint"`
 }

@@ -22,7 +22,6 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
 import { TraceKeyValuePair, TraceLink, TNil } from '../../types';
-import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
 
 import jsonMarkup from './jsonMarkup';
 
@@ -38,6 +37,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       max-height: 450px;
       overflow: auto;
     `,
+    table: css({
+      width: '100%',
+    }),
     body: css`
       label: body;
       vertical-align: baseline;
@@ -70,6 +72,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       vertical-align: middle;
       font-weight: bold;
     `,
+    jsonTable: css({
+      display: 'inline-block',
+    }),
   };
 };
 
@@ -109,13 +114,13 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
   const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.KeyValueTable)} data-testid="KeyValueTable">
-      <table className={uWidth100}>
+      <table className={styles.table}>
         <tbody className={styles.body}>
           {data.map((row, i) => {
             const markup = {
               __html: jsonMarkup(parseIfComplexJson(row.value)),
             };
-            const jsonTable = <div className={ubInlineBlock} dangerouslySetInnerHTML={markup} />;
+            const jsonTable = <div className={styles.jsonTable} dangerouslySetInnerHTML={markup} />;
             const links = linksGetter ? linksGetter(data, i) : null;
             let valueMarkup;
             if (links && links.length) {

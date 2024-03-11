@@ -69,7 +69,15 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 	}
 }
 
+func (r *LokiHistorianStore) Type() string {
+	return "loki"
+}
+
 func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+	if query.Type == "annotation" {
+		return make([]*annotations.ItemDTO, 0), nil
+	}
+
 	rule := &ngmodels.AlertRule{}
 	if query.AlertID != 0 {
 		var err error
@@ -120,6 +128,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 		err := json.Unmarshal([]byte(sample.V), &entry)
 		if err != nil {
 			// bad data, skip
+			r.log.Debug("failed to unmarshal loki entry", "error", err, "entry", sample.V)
 			continue
 		}
 
@@ -131,6 +140,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 		transition, err := buildTransition(entry)
 		if err != nil {
 			// bad data, skip
+			r.log.Debug("failed to build transition", "error", err, "entry", entry)
 			continue
 		}
 
@@ -203,6 +213,10 @@ type number interface {
 
 // numericMap converts a simplejson map[string]any to a map[string]N, where N is numeric (int or float).
 func numericMap[N number](j *simplejson.Json) (map[string]N, error) {
+	if j == nil {
+		return nil, fmt.Errorf("unexpected nil value")
+	}
+
 	m, err := j.Map()
 	if err != nil {
 		return nil, err
@@ -290,5 +304,6 @@ func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.Fe
 	}
 
 	// We should only query Loki if annotations do not exist in the database.
-	return backend == historian.BackendTypeLoki
+	// To be doubly sure, ensure that the feature toggle to only use Loki is enabled.
+	return backend == historian.BackendTypeLoki && ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiOnly)
 }

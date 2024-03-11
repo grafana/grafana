@@ -10,7 +10,7 @@ export const ListNewButton = ({ children, ...restProps }: Props) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.buttonWrapper}>
-      <Button icon="plus" variant="secondary" {...restProps}>
+      <Button icon="plus" {...restProps}>
         {children}
       </Button>
     </div>

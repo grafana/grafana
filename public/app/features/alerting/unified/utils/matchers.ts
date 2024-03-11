@@ -108,4 +108,42 @@ export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
   return matchers;
 };
 
+/**
+ * Quotes string and escapes double quote and backslash characters
+ */
+export function quoteWithEscape(input: string) {
+  const escaped = input.replace(/[\\"]/g, (c) => `\\${c}`);
+  return `"${escaped}"`;
+}
+
+/**
+ * Unquotes and unescapes a string **if it has been quoted**
+ */
+export function unquoteWithUnescape(input: string) {
+  if (!/^"(.*)"$/.test(input)) {
+    return input;
+  }
+
+  return input
+    .replace(/^"(.*)"$/, '$1')
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, '\\');
+}
+
+export const matcherFormatter = {
+  default: ([name, operator, value]: ObjectMatcher): string => {
+    // Value can be an empty string which we want to display as ""
+    const formattedValue = value || '';
+    return `${name} ${operator} ${formattedValue}`;
+  },
+  unquote: ([name, operator, value]: ObjectMatcher): string => {
+    const unquotedName = unquoteWithUnescape(name);
+    // Unquoted value can be an empty string which we want to display as ""
+    const unquotedValue = unquoteWithUnescape(value) || '""';
+    return `${unquotedName} ${operator} ${unquotedValue}`;
+  },
+} as const;
+
+export type MatcherFormatter = keyof typeof matcherFormatter;
+
 export type Label = [string, string];

@@ -1,7 +1,5 @@
-import { isNumber } from 'lodash';
-
 import { getBackendSrv } from '@grafana/runtime';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { Dashboard } from '@grafana/schema';
 
 export interface HistoryListOpts {
   limit: number;
@@ -11,18 +9,13 @@ export interface HistoryListOpts {
 export interface RevisionsModel {
   id: number;
   checked: boolean;
-  dashboardUID: string;
+  uid: string;
   parentVersion: number;
   version: number;
   created: Date;
   createdBy: string;
   message: string;
-}
-
-export interface DiffTarget {
-  dashboardUID: string;
-  version: number;
-  unsavedDashboard?: DashboardModel; // when doing diffs against unsaved dashboard version
+  data: Dashboard;
 }
 
 export class HistorySrv {
@@ -34,15 +27,22 @@ export class HistorySrv {
     return getBackendSrv().get(`api/dashboards/uid/${dashboardUID}/versions`, options);
   }
 
-  getDashboardVersion(uid: string, version: number) {
-    return getBackendSrv().get(`api/dashboards/uid/${uid}/versions/${version}`);
+  getDashboardVersion(dashboardUID: string, version: number) {
+    if (typeof dashboardUID !== 'string') {
+      return Promise.resolve({});
+    }
+
+    return getBackendSrv().get(`api/dashboards/uid/${dashboardUID}/versions/${version}`);
   }
 
-  restoreDashboard(dashboard: DashboardModel, version: number) {
-    const uid = dashboard && dashboard.uid ? dashboard.uid : void 0;
-    const url = `api/dashboards/uid/${uid}/restore`;
+  restoreDashboard(dashboardUID: string, version: number) {
+    if (typeof dashboardUID !== 'string') {
+      return Promise.resolve({});
+    }
 
-    return uid && isNumber(version) ? getBackendSrv().post(url, { version }) : Promise.resolve({});
+    const url = `api/dashboards/uid/${dashboardUID}/restore`;
+
+    return getBackendSrv().post(url, { version });
   }
 }
 

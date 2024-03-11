@@ -54,6 +54,10 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 	}
 }
 
+func (r *xormRepositoryImpl) Type() string {
+	return "sql"
+}
+
 func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) error {
 	tags := tag.ParseTagPairs(item.Tags)
 	item.Tags = tag.JoinTagPairs(tags)
@@ -531,11 +535,8 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 			if err != nil {
 				return 0, err
 			}
-			r.log.Error("Annotations to clean by time", "count", len(ids), "ids", ids, "cond", cond, "err", err)
 
-			x, y := r.deleteByIDs(ctx, "annotation", ids)
-			r.log.Error("cleaned annotations by time", "count", len(ids), "affected", x, "err", y)
-			return x, y
+			return r.deleteByIDs(ctx, "annotation", ids)
 		})
 		totalAffected += affected
 		if err != nil {
@@ -551,11 +552,8 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 			if err != nil {
 				return 0, err
 			}
-			r.log.Error("Annotations to clean by count", "count", len(ids), "ids", ids, "cond", cond, "err", err)
 
-			x, y := r.deleteByIDs(ctx, "annotation", ids)
-			r.log.Error("cleaned annotations by count", "count", len(ids), "affected", x, "err", y)
-			return x, y
+			return r.deleteByIDs(ctx, "annotation", ids)
 		})
 		totalAffected += affected
 		if err != nil {
@@ -573,11 +571,8 @@ func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (i
 		if err != nil {
 			return 0, err
 		}
-		r.log.Error("Tags to clean", "count", len(ids), "ids", ids, "cond", cond, "err", err)
 
-		x, y := r.deleteByIDs(ctx, "annotation_tag", ids)
-		r.log.Error("cleaned tags", "count", len(ids), "affected", x, "err", y)
-		return x, y
+		return r.deleteByIDs(ctx, "annotation_tag", ids)
 	})
 }
 

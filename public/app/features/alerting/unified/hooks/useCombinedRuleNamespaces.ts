@@ -91,6 +91,13 @@ export function useCombinedRuleNamespaces(
             name: namespaceName,
             groups: [],
           };
+
+          // We need to set the namespace_uid for grafana rules as it's required to obtain the rule's groups
+          // All rules from all groups have the same namespace_uid so we're taking the first one.
+          if (isGrafanaRulerRule(groups[0].rules[0])) {
+            namespace.uid = groups[0].rules[0].grafana_alert.namespace_uid;
+          }
+
           namespaces[namespaceName] = namespace;
           addRulerGroupsToCombinedNamespace(namespace, groups);
         });
@@ -366,28 +373,28 @@ function rulerRuleToCombinedRule(
         filteredInstanceTotals: {},
       }
     : isRecordingRulerRule(rule)
-    ? {
-        name: rule.record,
-        query: rule.expr,
-        labels: rule.labels || {},
-        annotations: {},
-        rulerRule: rule,
-        namespace,
-        group,
-        instanceTotals: {},
-        filteredInstanceTotals: {},
-      }
-    : {
-        name: rule.grafana_alert.title,
-        query: '',
-        labels: rule.labels || {},
-        annotations: rule.annotations || {},
-        rulerRule: rule,
-        namespace,
-        group,
-        instanceTotals: {},
-        filteredInstanceTotals: {},
-      };
+      ? {
+          name: rule.record,
+          query: rule.expr,
+          labels: rule.labels || {},
+          annotations: {},
+          rulerRule: rule,
+          namespace,
+          group,
+          instanceTotals: {},
+          filteredInstanceTotals: {},
+        }
+      : {
+          name: rule.grafana_alert.title,
+          query: '',
+          labels: rule.labels || {},
+          annotations: rule.annotations || {},
+          rulerRule: rule,
+          namespace,
+          group,
+          instanceTotals: {},
+          filteredInstanceTotals: {},
+        };
 }
 
 // find existing rule in group that matches the given prom rule

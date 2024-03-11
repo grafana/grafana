@@ -13,7 +13,6 @@ import {
   dateTimeForTimeZone,
   hasQueryExportSupport,
   hasQueryImportSupport,
-  HistoryItem,
   LoadingState,
   LogsVolumeType,
   PanelEvents,
@@ -22,6 +21,7 @@ import {
   SupplementaryQueryType,
   toLegacyResponseData,
 } from '@grafana/data';
+import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import store from 'app/core/store';
@@ -34,11 +34,12 @@ import {
   getTimeRange,
   hasNonEmptyQuery,
   stopQueryState,
-  updateHistory,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { infiniteScrollRefId } from 'app/features/logs/logsModel';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
+import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
   createAsyncThunk,
@@ -55,7 +56,7 @@ import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { visualisationTypeKey } from '../Logs/utils/logs';
-import { decorateData, mergeDataSeries } from '../utils/decorators';
+import { decorateData } from '../utils/decorators';
 import {
   getSupplementaryQueryProvider,
   storeSupplementaryQueryEnabled,
@@ -64,7 +65,7 @@ import {
 
 import { getCorrelations } from './correlations';
 import { saveCorrelationsAction } from './explorePane';
-import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
+import { addHistoryItem, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
 import {
@@ -478,16 +479,18 @@ export function modifyQueries(
 async function handleHistory(
   dispatch: ThunkDispatch,
   state: ExploreState,
-  history: Array<HistoryItem<DataQuery>>,
   datasource: DataSourceApi,
-  queries: DataQuery[],
-  exploreId: string
+  queries: DataQuery[]
 ) {
-  const datasourceId = datasource.meta.id;
-  const nextHistory = updateHistory(history, datasourceId, queries);
-  dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-
-  dispatch(addHistoryItem(datasource.uid, datasource.name, queries));
+  /*
+  Always write to local storage. If query history is enabled, we will use local storage for autocomplete only (and want to hide errors)
+  If query history is disabled, we will use local storage for query history as well, and will want to show errors
+  */
+  dispatch(addHistoryItem(true, datasource.uid, datasource.name, queries, config.queryHistoryEnabled));
+  if (config.queryHistoryEnabled) {
+    // write to remote if flag enabled
+    dispatch(addHistoryItem(false, datasource.uid, datasource.name, queries, false));
+  }
 
   // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
   // used filters. Instead, we refresh the query history list.
@@ -547,7 +550,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     }));
 
     if (datasourceInstance != null) {
-      handleHistory(dispatch, getState().explore, exploreItemState.history, datasourceInstance, queries, exploreId);
+      handleHistory(dispatch, getState().explore, datasourceInstance, queries);
     }
 
     const cachedValue = getResultsFromCache(cache, absoluteRange);
@@ -722,13 +725,18 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
 
     let newQuerySource: Observable<ExplorePanelData>;
 
-    const logQueries = queryResponse.logsResult?.queries || [];
-    const queries = logQueries.map((query: DataQuery) => ({
-      ...query,
-      datasource: query.datasource || datasourceInstance?.getRef(),
-    }));
+    const queries = queryResponse.logsResult?.queries || [];
+    const logRefIds = queryResponse.logsFrames.map((frame) => frame.refId);
+    const logQueries = queries
+      .filter((query) => logRefIds.includes(query.refId))
+      .map((query: DataQuery) => ({
+        ...query,
+        datasource: query.datasource || datasourceInstance?.getRef(),
+        refId: `${infiniteScrollRefId}${query.refId}`,
+        supportingQueryType: SupportingQueryType.InfiniteScroll,
+      }));
 
-    if (!hasNonEmptyQuery(queries) || !datasourceInstance) {
+    if (!hasNonEmptyQuery(logQueries) || !datasourceInstance) {
       return;
     }
 
@@ -746,24 +754,29 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
       },
       getFiscalYearStartMonth(getState().user)
     );
-    const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, false, timeZone, scopedVars);
+    const transaction = buildQueryTransaction(exploreId, logQueries, queryOptions, range, false, timeZone, scopedVars);
 
     dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
     newQuerySource = combineLatest([runRequest(datasourceInstance, transaction.request), correlations$]).pipe(
-      mergeMap(([data, correlations]) =>
-        decorateData(
-          // Query splitting, otherwise duplicates results
-          data.state === LoadingState.Done ? mergeDataSeries(queryResponse, data) : data,
+      mergeMap(([data, correlations]) => {
+        // For query splitting, otherwise duplicates results
+        if (data.state !== LoadingState.Done) {
+          // While loading, return the previous response and override state, otherwise it's set to Done
+          return of({ ...queryResponse, state: LoadingState.Loading });
+        }
+        return decorateData(
+          // This shouldn't be needed after https://github.com/grafana/grafana/issues/57327 is fixed
+          combinePanelData(queryResponse, data),
           queryResponse,
           absoluteRange,
           undefined,
-          queries,
+          logQueries,
           correlations,
           showCorrelationEditorLinks,
           defaultCorrelationEditorDatasource
-        )
-      )
+        );
+      })
     );
 
     newQuerySource.subscribe({

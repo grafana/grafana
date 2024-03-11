@@ -5,7 +5,6 @@ import { DecimalCount, DisplayProcessor, DisplayValue, DisplayValueAlignmentFact
 import { FieldColor } from './fieldColor';
 import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
-import { Vector } from './vector';
 
 /** @public */
 export enum FieldType {
@@ -13,13 +12,17 @@ export enum FieldType {
   number = 'number',
   string = 'string',
   boolean = 'boolean',
+
   // Used to detect that the value is some kind of trace data to help with the visualisation and processing.
   trace = 'trace',
   geo = 'geo',
   enum = 'enum',
   other = 'other', // Object, Array, etc
   frame = 'frame', // DataFrame
-  nestedFrames = 'nestedFrames', // @alpha Nested DataFrames
+
+  // @alpha Nested DataFrames. This is for example used with tables where expanding a row will show a nested table.
+  // The value should be DataFrame[] even if it is a single frame.
+  nestedFrames = 'nestedFrames',
 }
 
 /**
@@ -68,7 +71,6 @@ export interface FieldConfig<TOptions = any> {
 
   // Numeric Options
   unit?: string;
-  unitScale?: boolean;
   decimals?: DecimalCount; // Significant digits (for display)
   min?: number | null;
   max?: number | null;
@@ -130,7 +132,7 @@ export interface ValueLinkConfig {
   valueRowIndex?: number;
 }
 
-export interface Field<T = any, V = Vector<T>> {
+export interface Field<T = any> {
   /**
    * Name of the field (column)
    */
@@ -146,10 +148,8 @@ export interface Field<T = any, V = Vector<T>> {
 
   /**
    * The raw field values
-   * In Grafana 10, this accepts both simple arrays and the Vector interface
-   * In Grafana 11, the Vector interface will be removed
    */
-  values: V | T[];
+  values: T[];
 
   /**
    * When type === FieldType.Time, this can optionally store
@@ -261,7 +261,7 @@ export interface FieldDTO<T = any> {
   name: string; // The column name
   type?: FieldType;
   config?: FieldConfig;
-  values?: Vector<T> | T[]; // toJSON will always be T[], input could be either
+  values?: T[];
   labels?: Labels;
 }
 

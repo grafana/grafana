@@ -107,7 +107,7 @@ func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) (bool, error) {
 			}
 
 			if status != http.StatusOK {
-				if status/400 == 1 {
+				if status >= 400 && status < 500 {
 					am.logger.Debug("Ready check failed with non-retriable status code", "attempt", attempts, "status", status)
 					return false, fmt.Errorf("ready check failed with non-retriable status code %d", status)
 				}

@@ -6,6 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	pubdash "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -80,15 +81,6 @@ var (
 	// MAlertingNotificationSent is a metric counter for how many alert notifications that failed
 	MAlertingNotificationFailed *prometheus.CounterVec
 
-	// MAwsCloudWatchGetMetricStatistics is a metric counter for getting metric statistics from aws
-	MAwsCloudWatchGetMetricStatistics prometheus.Counter
-
-	// MAwsCloudWatchListMetrics is a metric counter for getting list of metrics from aws
-	MAwsCloudWatchListMetrics prometheus.Counter
-
-	// MAwsCloudWatchGetMetricData is a metric counter for getting metric data time series from aws
-	MAwsCloudWatchGetMetricData prometheus.Counter
-
 	// MDBDataSourceQueryByID is a metric counter for getting datasource by id
 	MDBDataSourceQueryByID prometheus.Counter
 
@@ -104,11 +96,23 @@ var (
 	// MAccessEvaluationCount is a metric gauge for total number of evaluation requests
 	MAccessEvaluationCount prometheus.Counter
 
+	// MAccessPermissionsCacheUsage is a metric counter for cache usage
+	MAccessPermissionsCacheUsage *prometheus.CounterVec
+
+	// MAccessSearchUserPermissionsCacheUsage is a metric counter for cache usage
+	MAccessSearchUserPermissionsCacheUsage *prometheus.CounterVec
+
 	// MPublicDashboardRequestCount is a metric counter for public dashboards requests
 	MPublicDashboardRequestCount prometheus.Counter
 
 	// MPublicDashboardDatasourceQuerySuccess is a metric counter for successful queries labelled by datasource
 	MPublicDashboardDatasourceQuerySuccess *prometheus.CounterVec
+
+	// MFolderIDsAPICount is a metric counter for folder ids count in the api package
+	MFolderIDsAPICount *prometheus.CounterVec
+
+	// MFolderIDsServicesCount is a metric counter for folder ids count in the services package
+	MFolderIDsServiceCount *prometheus.CounterVec
 )
 
 // Timers
@@ -212,9 +216,39 @@ var (
 	MStatTotalCorrelations prometheus.Gauge
 )
 
+const (
+	// FolderID API
+	GetAlerts                 string = "GetAlerts"
+	GetDashboard              string = "GetDashboard"
+	RestoreDashboardVersion   string = "RestoreDashboardVersion"
+	GetFolderByID             string = "GetFolderByID"
+	GetFolderDescendantCounts string = "GetFolderDescendantCounts"
+	SearchFolders             string = "searchFolders"
+	GetFolderPermissionList   string = "GetFolderPermissionList"
+	UpdateFolderPermissions   string = "UpdateFolderPermissions"
+	GetFolderACL              string = "getFolderACL"
+	Search                    string = "Search"
+	GetDashboardACL           string = "getDashboardACL"
+	NewToFolderDTO            string = "newToFolderDto"
+	GetFolders                string = "GetFolders"
+	// FolderID services
+	Folder           string = "folder"
+	Dashboard        string = "dashboards"
+	LibraryElements  string = "libraryelements"
+	LibraryPanels    string = "librarypanels"
+	NGAlerts         string = "ngalert"
+	Provisioning     string = "provisioning"
+	PublicDashboards string = "publicdashboards"
+	AccessControl    string = "accesscontrol"
+	Guardian         string = "guardian"
+	DashboardImport  string = "dashboardimport"
+)
+
 func init() {
 	httpStatusCodes := []string{"200", "404", "500", "unknown"}
 	objectiveMap := map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001}
+	apiFolderIDMethods := []string{GetAlerts, GetDashboard, RestoreDashboardVersion, GetFolderByID, GetFolderDescendantCounts, SearchFolders, GetFolderPermissionList, UpdateFolderPermissions, GetFolderACL, Search, GetDashboardACL, NewToFolderDTO, GetFolders}
+	folderIDServices := []string{Folder, Dashboard, LibraryElements, LibraryPanels, NGAlerts, Provisioning, PublicDashboards, AccessControl, Guardian, Search, DashboardImport}
 
 	MInstanceStart = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "instance_start_total",
@@ -354,24 +388,6 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"type"})
 
-	MAwsCloudWatchGetMetricStatistics = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "aws_cloudwatch_get_metric_statistics_total",
-		Help:      "counter for getting metric statistics from aws",
-		Namespace: ExporterName,
-	})
-
-	MAwsCloudWatchListMetrics = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "aws_cloudwatch_list_metrics_total",
-		Help:      "counter for getting list of metrics from aws",
-		Namespace: ExporterName,
-	})
-
-	MAwsCloudWatchGetMetricData = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "aws_cloudwatch_get_metric_data_total",
-		Help:      "counter for getting metric data time series from aws",
-		Namespace: ExporterName,
-	})
-
 	MDBDataSourceQueryByID = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "db_datasource_query_by_id_total",
 		Help:      "counter for getting datasource by id",
@@ -451,6 +467,18 @@ func init() {
 		Help:      "counter for queries to public dashboard datasources labelled by datasource type and success status success/failed",
 		Namespace: ExporterName,
 	}, []string{"datasource", "status"}, map[string][]string{"status": pubdash.QueryResultStatuses})
+
+	MFolderIDsAPICount = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "folder_id_api_count",
+		Help:      "counter for folder id usage in api package",
+		Namespace: ExporterName,
+	}, []string{"method"}, map[string][]string{"method": apiFolderIDMethods})
+
+	MFolderIDsServiceCount = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "folder_id_service_count",
+		Help:      "counter for folder id usage in service package",
+		Namespace: ExporterName,
+	}, []string{"service"}, map[string][]string{"service": folderIDServices})
 
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
@@ -587,8 +615,20 @@ func init() {
 	MAccessSearchPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name:    "access_search_permissions_duration",
 		Help:    "Histogram for the runtime of permissions search function",
-		Buckets: prometheus.ExponentialBuckets(0.001, 4, 5),
+		Buckets: prometheus.ExponentialBuckets(0.001, 10, 6),
 	})
+
+	MAccessPermissionsCacheUsage = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "access_permissions_cache_usage",
+		Help:      "access control permissions cache hit/miss",
+		Namespace: ExporterName,
+	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
+
+	MAccessSearchUserPermissionsCacheUsage = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "access_search_user_permissions_cache_usage",
+		Help:      "access control search user permissions cache hit/miss",
+		Namespace: ExporterName,
+	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
 
 	StatsTotalLibraryPanels = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_library_panels",
@@ -696,9 +736,6 @@ func initMetricVars(reg prometheus.Registerer) {
 		MAlertingResultState,
 		MAlertingNotificationSent,
 		MAlertingNotificationFailed,
-		MAwsCloudWatchGetMetricStatistics,
-		MAwsCloudWatchListMetrics,
-		MAwsCloudWatchGetMetricData,
 		MDBDataSourceQueryByID,
 		LDAPUsersSyncExecutionTime,
 		MRenderingRequestTotal,
@@ -708,6 +745,9 @@ func initMetricVars(reg prometheus.Registerer) {
 		MAccessPermissionsSummary,
 		MAccessEvaluationsSummary,
 		MAccessSearchPermissionsSummary,
+		MAccessEvaluationCount,
+		MAccessPermissionsCacheUsage,
+		MAccessSearchUserPermissionsCacheUsage,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalFolders,
@@ -728,7 +768,6 @@ func initMetricVars(reg prometheus.Registerer) {
 		StatsTotalAnnotations,
 		StatsTotalAlertRules,
 		StatsTotalRuleGroups,
-		MAccessEvaluationCount,
 		StatsTotalLibraryPanels,
 		StatsTotalLibraryVariables,
 		StatsTotalDataKeys,
@@ -736,5 +775,7 @@ func initMetricVars(reg prometheus.Registerer) {
 		MPublicDashboardRequestCount,
 		MPublicDashboardDatasourceQuerySuccess,
 		MStatTotalCorrelations,
+		MFolderIDsAPICount,
+		MFolderIDsServiceCount,
 	)
 }

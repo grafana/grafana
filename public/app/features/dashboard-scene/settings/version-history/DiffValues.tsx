@@ -28,10 +28,10 @@ export const DiffValues = ({ diff }: DiffProps) => {
 
 const getStyles = (theme: GrafanaTheme2) =>
   css({
-    'background-color': theme.colors.action.hover,
-    'border-radius': theme.shape.radius.default,
+    backgroundColor: theme.colors.action.hover,
+    borderRadius: theme.shape.radius.default,
     color: theme.colors.text.primary,
-    'font-size': theme.typography.body.fontSize,
-    margin: `0 ${theme.spacing(0.5)}`,
-    padding: theme.spacing(0.5, 1),
+    fontSize: theme.typography.body.fontSize,
+    margin: theme.spacing(0, 0.5),
+    padding: theme.spacing(0.25, 0.5),
   });

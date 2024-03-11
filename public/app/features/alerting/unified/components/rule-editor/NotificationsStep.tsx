@@ -37,8 +37,8 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
   return (
     <RuleEditorSection
-      stepNo={type === RuleFormType.cloudRecording ? 4 : 5}
-      title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Labels and notifications'}
+      stepNo={4}
+      title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure labels and notifications'}
       description={
         <Stack direction="row" gap={0.5} alignItems="baseline">
           {type === RuleFormType.cloudRecording ? (
@@ -59,7 +59,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       <LabelsField dataSourceName={dataSourceName} />
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
-          <Text element="h5">Configure notifications</Text>
+          <Text element="h5">Notifications</Text>
           <Text variant="bodySmall" color="secondary">
             Select who should receive a notification when an alert rule fires.
           </Text>

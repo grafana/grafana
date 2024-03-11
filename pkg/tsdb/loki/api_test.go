@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 	"github.com/stretchr/testify/require"
 )
 
@@ -77,6 +78,30 @@ func TestApiLogVolume(t *testing.T) {
 		}, true)
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsVolume, QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+	})
+}
+
+func TestInfiniteScroll(t *testing.T) {
+	response := []byte(`
+	{
+		"status": "success",
+		"data": {
+			"resultType" : "matrix",
+			"result": []
+		}
+	}
+	`)
+
+	t.Run("infinite scrolling queries should set infinite scroll http header", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
+			called = true
+			require.Equal(t, "Source=infinitescroll", req.Header.Get("X-Query-Tags"))
+		}, false)
+
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: dataquery.SupportingQueryTypeInfiniteScroll, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
 		require.True(t, called)
 	})

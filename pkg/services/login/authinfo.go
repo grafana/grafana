@@ -76,7 +76,7 @@ func IsExternallySynced(cfg *setting.Cfg, authModule string, oauthInfo *social.O
 	case LDAPAuthModule:
 		return !cfg.LDAPSkipOrgRoleSync
 	case JWTModule:
-		return !cfg.JWTAuthSkipOrgRoleSync
+		return !cfg.JWTAuth.SkipOrgRoleSync
 	}
 	// then check the rest of the oauth providers
 	// FIXME: remove this once we remove the setting
@@ -104,7 +104,7 @@ func IsGrafanaAdminExternallySynced(cfg *setting.Cfg, oauthInfo *social.OAuthInf
 
 	switch authModule {
 	case JWTModule:
-		return cfg.JWTAuthAllowAssignGrafanaAdmin
+		return cfg.JWTAuth.AllowAssignGrafanaAdmin
 	case SAMLAuthModule:
 		return cfg.SAMLRoleValuesGrafanaAdmin != ""
 	case LDAPAuthModule:
@@ -121,7 +121,7 @@ func IsProviderEnabled(cfg *setting.Cfg, authModule string, oauthInfo *social.OA
 	case LDAPAuthModule:
 		return cfg.LDAPAuthEnabled
 	case JWTModule:
-		return cfg.JWTAuthEnabled
+		return cfg.JWTAuth.Enabled
 	case GoogleAuthModule, OktaAuthModule, AzureADAuthModule, GitLabAuthModule, GithubAuthModule, GrafanaComAuthModule, GenericOAuthModule:
 		if oauthInfo == nil {
 			return false

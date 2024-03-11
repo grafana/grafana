@@ -18,7 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationDeviceService_tag(t *testing.T) {
 	type tagReq struct {
@@ -179,6 +184,8 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 }
 
 func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
+	fixedTime := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC) // Fixed timestamp for testing
+
 	testCases := []struct {
 		name           string
 		insertDevices  []*anonstore.Device
@@ -193,19 +200,19 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 					DeviceID:  "32mdo31deeqwes",
 					ClientIP:  "",
 					UserAgent: "test",
-					UpdatedAt: time.Now().UTC(),
 				},
 				{
 					DeviceID:  "32mdo31deeqwes2",
 					ClientIP:  "",
 					UserAgent: "test2",
-					UpdatedAt: time.Now().UTC(),
 				},
 			},
 			searchQuery: anonstore.SearchDeviceQuery{
 				Query: "",
 				Page:  1,
 				Limit: 1,
+				From:  fixedTime,
+				To:    fixedTime.Add(1 * time.Hour),
 			},
 			expectedCount: 1,
 		},
@@ -216,36 +223,40 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 					DeviceID:  "32mdo31deeqwes",
 					ClientIP:  "192.168.0.2:10",
 					UserAgent: "",
-					UpdatedAt: time.Now().UTC(),
 				},
 				{
 					DeviceID:  "32mdo31deeqwes2",
 					ClientIP:  "192.268.1.3:200",
 					UserAgent: "",
-					UpdatedAt: time.Now().UTC(),
 				},
 			},
 			searchQuery: anonstore.SearchDeviceQuery{
 				Query: "192.1",
 				Page:  1,
 				Limit: 50,
+				From:  fixedTime,
+				To:    fixedTime.Add(1 * time.Hour),
 			},
 			expectedCount: 1,
 			expectedDevice: &anonstore.Device{
 				DeviceID:  "32mdo31deeqwes",
 				ClientIP:  "192.168.0.2:10",
 				UserAgent: "",
-				UpdatedAt: time.Now().UTC(),
 			},
 		},
 	}
 	store := db.InitTestDB(t)
-	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
+	cfg := setting.NewCfg()
+	cfg.AnonymousEnabled = true
+	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
 
 	for _, tc := range testCases {
+		err := store.Reset()
+		assert.NoError(t, err)
 		t.Run(tc.name, func(t *testing.T) {
 			for _, device := range tc.insertDevices {
+				device.CreatedAt = fixedTime.Add(-10 * time.Hour) // Use fixed time
+				device.UpdatedAt = fixedTime
 				err := anonService.anonStore.CreateOrUpdateDevice(context.Background(), device)
 				require.NoError(t, err)
 			}

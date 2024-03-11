@@ -159,6 +159,7 @@ const (
 	VariableTypeConstant   VariableType = "constant"
 	VariableTypeCustom     VariableType = "custom"
 	VariableTypeDatasource VariableType = "datasource"
+	VariableTypeGroupby    VariableType = "groupby"
 	VariableTypeInterval   VariableType = "interval"
 	VariableTypeQuery      VariableType = "query"
 	VariableTypeSystem     VariableType = "system"
@@ -504,6 +505,9 @@ type MatcherConfig struct {
 
 // Dashboard panels are the basic visualization building blocks.
 type Panel struct {
+	// Sets panel queries cache timeout.
+	CacheTimeout *string `json:"cacheTimeout,omitempty"`
+
 	// Ref to a DataSource instance
 	Datasource *DataSourceRef `json:"datasource,omitempty"`
 
@@ -551,15 +555,15 @@ type Panel struct {
 	// The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
 	PluginVersion *string `json:"pluginVersion,omitempty"`
 
+	// Overrides the data source configured time-to-live for a query cache item in milliseconds
+	QueryCachingTTL *float32 `json:"queryCachingTTL,omitempty"`
+
 	// Name of template variable to repeat for.
 	Repeat *string `json:"repeat,omitempty"`
 
 	// Direction to repeat in if 'repeat' is set.
 	// `h` for horizontal, `v` for vertical.
 	RepeatDirection *PanelRepeatDirection `json:"repeatDirection,omitempty"`
-
-	// Tags for the panel.
-	Tags []string `json:"tags,omitempty"`
 
 	// Depends on the panel plugin. See the plugin documentation for details.
 	Targets []Target `json:"targets,omitempty"`
@@ -696,6 +700,9 @@ type Snapshot struct {
 	// OrgId org id of the snapshot
 	OrgId int `json:"orgId"`
 
+	// OriginalUrl original url, url of the dashboard that was snapshotted
+	OriginalUrl string `json:"originalUrl"`
+
 	// Updated last time when the snapshot was updated
 	Updated time.Time `json:"updated"`
 
@@ -747,7 +754,7 @@ type Spec struct {
 	Panels []any `json:"panels,omitempty"`
 
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-	Refresh *any `json:"refresh,omitempty"`
+	Refresh *string `json:"refresh,omitempty"`
 
 	// This property should only be used in dashboards defined by plugins.  It is a quick check
 	// to see if the version has changed since the last time.
@@ -856,16 +863,16 @@ type ThresholdsMode string
 // It defines the default config for the time picker and the refresh picker for the specific dashboard.
 type TimePickerConfig struct {
 	// Whether timepicker is visible or not.
-	Hidden bool `json:"hidden"`
+	Hidden *bool `json:"hidden,omitempty"`
 
 	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
 	NowDelay *string `json:"nowDelay,omitempty"`
 
 	// Interval options available in the refresh picker dropdown.
-	RefreshIntervals []string `json:"refresh_intervals"`
+	RefreshIntervals []string `json:"refresh_intervals,omitempty"`
 
 	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-	TimeOptions []string `json:"time_options"`
+	TimeOptions []string `json:"time_options,omitempty"`
 }
 
 // Maps text values to a color or different display text and color.
@@ -900,6 +907,9 @@ type VariableHide int
 
 // A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
 type VariableModel struct {
+	// Custom all value
+	AllValue *string `json:"allValue,omitempty"`
+
 	// Option to be selected in a variable.
 	Current *VariableOption `json:"current,omitempty"`
 
@@ -912,6 +922,9 @@ type VariableModel struct {
 	// Determine if the variable shows on dashboard
 	// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
 	Hide *VariableHide `json:"hide,omitempty"`
+
+	// Whether all value option is available or not
+	IncludeAll *bool `json:"includeAll,omitempty"`
 
 	// Optional display name
 	Label *string `json:"label,omitempty"`
@@ -933,6 +946,10 @@ type VariableModel struct {
 	// `1`: Queries the data source every time the dashboard loads.
 	// `2`: Queries the data source when the dashboard time range changes.
 	Refresh *VariableRefresh `json:"refresh,omitempty"`
+
+	// Optional field, if you want to extract part of a series name or metric node segment.
+	// Named capture groups can be used to separate the display text and value.
+	Regex *string `json:"regex,omitempty"`
 
 	// Whether the variable value should be managed by URL query params or not
 	SkipUrlSync *bool `json:"skipUrlSync,omitempty"`

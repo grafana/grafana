@@ -84,7 +84,7 @@ func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) respons
 		resDevices = append(resDevices, &deviceDTO{
 			Device:     *device,
 			LastSeenAt: util.GetAgeString(device.UpdatedAt),
-			AvatarUrl:  dtos.GetGravatarUrl(device.DeviceID),
+			AvatarUrl:  dtos.GetGravatarUrl(api.cfg, device.DeviceID),
 		})
 	}
 

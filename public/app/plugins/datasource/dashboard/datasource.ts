@@ -1,4 +1,4 @@
-import { Observable, map, of } from 'rxjs';
+import { Observable, defer, finalize, map, of } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -8,12 +8,7 @@ import {
   TestDataSourceResponse,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
-import { PanelEditor } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
-import {
-  findVizPanelByKey,
-  getQueryRunnerFor,
-  getVizPanelKeyForPanelId,
-} from 'app/features/dashboard-scene/utils/utils';
+import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 
 import { DashboardQuery } from './types';
 
@@ -53,44 +48,39 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return of({ data: [], error: { message: 'Could not find source panel' } });
     }
 
-    let sourceDataProvider: SceneDataProvider | undefined = getQueryRunnerFor(sourcePanel);
+    let sourceDataProvider: SceneDataProvider | undefined = sourcePanel.state.$data;
+
+    if (!query.withTransforms && sourceDataProvider instanceof SceneDataTransformer) {
+      sourceDataProvider = sourceDataProvider.state.$data;
+    }
 
     if (!sourceDataProvider || !sourceDataProvider.getResultsStream) {
       return of({ data: [] });
     }
 
-    if (query.withTransforms && sourceDataProvider.parent) {
-      const transformer = sourceDataProvider.parent;
-      if (transformer && transformer instanceof SceneDataTransformer) {
-        sourceDataProvider = transformer;
+    return defer(() => {
+      if (!sourceDataProvider!.isActive && sourceDataProvider?.setContainerWidth) {
+        sourceDataProvider?.setContainerWidth(500);
       }
-    }
 
-    if (!sourceDataProvider?.isActive) {
-      sourceDataProvider?.activate();
-      sourceDataProvider.setContainerWidth!(500);
-    }
+      const cleanUp = sourceDataProvider!.activate();
 
-    return sourceDataProvider.getResultsStream!().pipe(
-      map((result) => {
-        return {
-          data: result.data.series,
-          state: result.data.state,
-          errors: result.data.errors,
-          error: result.data.error,
-        };
-      })
-    );
+      return sourceDataProvider!.getResultsStream!().pipe(
+        map((result) => {
+          return {
+            data: result.data.series,
+            state: result.data.state,
+            errors: result.data.errors,
+            error: result.data.error,
+          };
+        }),
+        finalize(cleanUp)
+      );
+    });
   }
 
   private findSourcePanel(scene: SceneObject, panelId: number) {
-    let sceneToSearch = scene.getRoot();
-
-    if (sceneToSearch instanceof PanelEditor) {
-      sceneToSearch = sceneToSearch.state.dashboardRef.resolve();
-    }
-
-    return findVizPanelByKey(sceneToSearch, getVizPanelKeyForPanelId(panelId));
+    return findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {

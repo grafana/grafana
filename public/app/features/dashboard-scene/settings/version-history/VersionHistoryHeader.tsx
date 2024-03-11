@@ -33,9 +33,9 @@ export const VersionHistoryHeader = ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   header: css({
-    'font-size': theme.typography.h3.fontSize,
+    fontSize: theme.typography.h3.fontSize,
     display: 'flex',
     gap: theme.spacing(2),
-    'margin-bottom': theme.spacing(3),
+    marginBottom: theme.spacing(2),
   }),
 });

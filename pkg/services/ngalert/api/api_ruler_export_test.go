@@ -52,7 +52,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 
 		response.WriteTo(rc)
 
@@ -64,7 +64,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Form.Set("format", "yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -75,7 +75,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Form.Set("format", "foo")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -86,7 +86,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/json")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -97,7 +97,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -108,7 +108,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Form.Set("download", "true")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -119,7 +119,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Form.Set("download", "false")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -129,7 +129,7 @@ func TestExportFromPayload(t *testing.T) {
 	t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
 		rc := createRequest()
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -143,7 +143,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/json")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 		t.Log(string(response.Body()))
 
@@ -158,7 +158,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 		require.Equal(t, 200, response.Status())
 		require.Equal(t, string(expectedResponse), string(response.Body()))
@@ -172,7 +172,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc.Context.Req.Form.Set("format", "hcl")
 		rc.Context.Req.Form.Set("download", "false")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -184,7 +184,7 @@ func TestExportFromPayload(t *testing.T) {
 			rc.Context.Req.Form.Set("format", "hcl")
 			rc.Context.Req.Form.Set("download", "true")
 
-			response := srv.ExportFromPayload(rc, body, folder.Title)
+			response := srv.ExportFromPayload(rc, body, folder.UID)
 			response.WriteTo(rc)
 
 			require.Equal(t, 200, response.Status())

@@ -89,20 +89,15 @@ const AnnotationsStep = () => {
   };
 
   function getAnnotationsSectionDescription() {
-    const docsLink =
-      'https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation';
-
     return (
       <Stack direction="row" gap={0.5} alignItems="baseline">
         <Text variant="bodySmall" color="secondary">
-          Add annotations to provide more context in your alert notifications.
+          Add more context in your notification messages.
         </Text>
         <NeedHelpInfo
-          contentText={`Annotations add metadata to provide more information on the alert in your alert notifications.
-          For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
+          contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages. 
+          For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on. 
           Annotations can contain a combination of text and template code.`}
-          externalLink={docsLink}
-          linkText={`Read about annotations`}
           title="Annotations"
         />
       </Stack>
@@ -110,7 +105,7 @@ const AnnotationsStep = () => {
   }
 
   return (
-    <RuleEditorSection stepNo={4} title="Add annotations" description={getAnnotationsSectionDescription()} fullWidth>
+    <RuleEditorSection stepNo={5} title="Add annotations" description={getAnnotationsSectionDescription()} fullWidth>
       <Stack direction="column" gap={1}>
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');

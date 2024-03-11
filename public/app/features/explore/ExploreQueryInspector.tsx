@@ -1,17 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { CoreApp, LoadingState } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
 import { defaultTimeZone, TimeZone } from '@grafana/schema';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
+import { requestIdGenerator } from 'app/core/utils/explore';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
 import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
+import { mixedRequestId } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState, ExploreItemState } from 'app/types';
+
+import { GetDataOptions } from '../query/state/PanelQueryRunner';
 
 import { runQueries } from './state/query';
 
@@ -20,12 +24,17 @@ interface DispatchProps {
   exploreId: string;
   timeZone: TimeZone;
   onClose: () => void;
+  isMixed: boolean;
 }
 
 type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
-  const { width, onClose, queryResponse, timeZone } = props;
+  const { width, onClose, queryResponse, timeZone, isMixed, exploreId } = props;
+  const [dataOptions, setDataOptions] = useState<GetDataOptions>({
+    withTransforms: false,
+    withFieldConfig: true,
+  });
   const dataFrames = queryResponse?.series || [];
   let errors = queryResponse?.errors;
   if (!errors?.length && queryResponse?.error) {
@@ -59,9 +68,11 @@ export function ExploreQueryInspector(props: Props) {
         data={dataFrames}
         dataName={'Explore'}
         isLoading={queryResponse.state === LoadingState.Loading}
-        options={{ withTransforms: false, withFieldConfig: false }}
+        options={dataOptions}
         timeZone={timeZone}
         app={CoreApp.Explore}
+        formattedDataDescription="Matches the format in the panel"
+        onOptionsChange={setDataOptions}
       />
     ),
   };
@@ -71,7 +82,11 @@ export function ExploreQueryInspector(props: Props) {
     value: 'query',
     icon: 'info-circle',
     content: (
-      <QueryInspector data={queryResponse} onRefreshQuery={() => props.runQueries({ exploreId: props.exploreId })} />
+      <QueryInspector
+        instanceId={isMixed ? mixedRequestId(0, requestIdGenerator(exploreId)) : requestIdGenerator(exploreId)}
+        data={queryResponse}
+        onRefreshQuery={() => props.runQueries({ exploreId })}
+      />
     ),
   };
 

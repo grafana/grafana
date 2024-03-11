@@ -105,6 +105,7 @@ export interface AnalyticsSettings {
 export interface CurrentUserDTO {
   isSignedIn: boolean;
   id: number;
+  uid: string;
   externalUserId: string;
   login: string;
   email: string;
@@ -224,6 +225,9 @@ export interface GrafanaConfig {
   rudderstackIntegrationsUrl: string | undefined;
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID?: string;
+  rootFolderUID?: string;
+  localFileSystemAvailable?: boolean;
+  cloudMigrationIsTarget?: boolean;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;
@@ -261,4 +265,5 @@ export interface AuthSettings {
   GenericOAuthSkipOrgRoleSync?: boolean;
 
   disableLogin?: boolean;
+  basicAuthStrongPasswordPolicy?: boolean;
 }

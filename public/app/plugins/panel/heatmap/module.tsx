@@ -53,15 +53,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         // NOTE: this feels like overkill/expensive just to assert if we have an ordinal y
         // can probably simplify without doing full dataprep
         const palette = quantizeScheme(opts.color, config.theme2);
-        const v = prepareHeatmapData(
-          context.data,
-          undefined,
-          opts,
-          palette,
-          config.theme2,
-          undefined,
-          context.replaceVariables
-        );
+        const v = prepareHeatmapData(context.data, undefined, opts, palette, config.theme2);
         isOrdinalY = readHeatmapRowsCustomMeta(v.heatmap).yOrdinalDisplay != null;
       } catch {}
     }
@@ -411,7 +403,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       name: 'Show histogram (Y axis)',
       defaultValue: defaultOptions.tooltip.yHistogram,
       category,
-      showIf: (opts) => opts.tooltip.mode !== TooltipDisplayMode.None,
+      showIf: (opts) => opts.tooltip.mode === TooltipDisplayMode.Single,
     });
 
     builder.addBooleanSwitch({
@@ -419,7 +411,28 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       name: 'Show color scale',
       defaultValue: defaultOptions.tooltip.showColorScale,
       category,
-      showIf: (opts) => opts.tooltip.mode !== TooltipDisplayMode.None && config.featureToggles.newVizTooltips,
+      showIf: (opts) => opts.tooltip.mode === TooltipDisplayMode.Single && config.featureToggles.newVizTooltips,
+    });
+
+    builder.addNumberInput({
+      path: 'tooltip.maxWidth',
+      name: 'Max width',
+      category,
+      settings: {
+        integer: true,
+      },
+      showIf: (options) => false, // config.featureToggles.newVizTooltips && options.tooltip?.mode !== TooltipDisplayMode.None,
+    });
+
+    builder.addNumberInput({
+      path: 'tooltip.maxHeight',
+      name: 'Max height',
+      category,
+      defaultValue: 600,
+      settings: {
+        integer: true,
+      },
+      showIf: (options) => false, // config.featureToggles.newVizTooltips && options.tooltip?.mode !== TooltipDisplayMode.None,
     });
 
     category = ['Legend'];

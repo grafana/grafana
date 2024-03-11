@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useReducer } from 'react';
 import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, GrafanaTheme2 } from '@grafana/data';
+import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { DEFAULT_ANNOTATION_COLOR, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
+import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
 
@@ -65,11 +65,17 @@ export const AnnotationsPlugin2 = ({
 }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
 
+  const [portalRoot] = useState(() => getPortalContainer());
+
   const styles = useStyles2(getStyles);
   const getColorByName = useTheme2().visualization.getColorByName;
 
+  const [_, forceUpdate] = useReducer((x) => x + 1, 0);
+
   const annos = useMemo(() => {
-    let annos = annotations.slice();
+    let annos = annotations.filter(
+      (frame) => frame.name !== 'exemplar' && frame.length > 0 && frame.fields.some((f) => f.name === 'time')
+    );
 
     if (newRange) {
       let isRegion = newRange.to > newRange.from;
@@ -163,6 +169,13 @@ export const AnnotationsPlugin2 = ({
   useEffect(() => {
     if (plot) {
       plot.redraw();
+
+      // this forces a second redraw after uPlot is updated (in the Plot.tsx didUpdate) with new data/scales
+      // and ensures the anno marker positions in the dom are re-rendered in correct places
+      // (this is temp fix until uPlot integrtion is refactored)
+      setTimeout(() => {
+        forceUpdate();
+      }, 0);
     }
   }, [annos, plot]);
 
@@ -210,9 +223,10 @@ export const AnnotationsPlugin2 = ({
               annoVals={vals}
               className={className}
               style={style}
-              timezone={timeZone}
+              timeZone={timeZone}
               key={`${frameIdx}:${i}`}
               exitWipEdit={isWip ? exitWipEdit : null}
+              portalRoot={portalRoot}
             />
           );
         }
@@ -227,14 +241,14 @@ export const AnnotationsPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   annoMarker: css({
     position: 'absolute',
     width: 0,
     height: 0,
-    borderLeft: '6px solid transparent',
-    borderRight: '6px solid transparent',
-    borderBottomWidth: '6px',
+    borderLeft: '5px solid transparent',
+    borderRight: '5px solid transparent',
+    borderBottomWidth: '5px',
     borderBottomStyle: 'solid',
     transform: 'translateX(-50%)',
     cursor: 'pointer',

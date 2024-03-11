@@ -25,7 +25,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 // This is to ensure that the interface contract is held by the implementation
 func Test_InterfaceContractValidity(t *testing.T) {
@@ -80,7 +85,7 @@ func TestMetrics(t *testing.T) {
 			AnonymousEnabled:     true,
 			BasicAuthEnabled:     true,
 			LDAPAuthEnabled:      true,
-			AuthProxyEnabled:     true,
+			AuthProxy:            setting.AuthProxySettings{Enabled: true},
 			Packaging:            "deb",
 			ReportingDistributor: "hosted-grafana",
 		}

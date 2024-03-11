@@ -154,15 +154,15 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     prometheusRuleNamespaces: build.query<
       RuleNamespace[],
-      { ruleSourceName: string; namespace?: string; groupName?: string; ruleName?: string }
+      { ruleSourceName: string; namespace?: string; groupName?: string; ruleName?: string; dashboardUid?: string }
     >({
-      query: ({ ruleSourceName, namespace, groupName, ruleName }) => {
-        const queryParams: Record<string, string | undefined> = {};
-        // if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
-        queryParams['file'] = namespace;
-        queryParams['rule_group'] = groupName;
-        queryParams['rule_name'] = ruleName;
-        // }
+      query: ({ ruleSourceName, namespace, groupName, ruleName, dashboardUid }) => {
+        const queryParams: Record<string, string | undefined> = {
+          file: namespace,
+          rule_group: groupName,
+          rule_name: ruleName,
+          dashboard_uid: dashboardUid, // Supported only by Grafana managed rules
+        };
 
         return {
           url: `api/prometheus/${getDatasourceAPIUid(ruleSourceName)}/api/v1/rules`,
@@ -229,10 +229,10 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     }),
     exportModifiedRuleGroup: build.mutation<
       string,
-      { payload: ModifyExportPayload; format: ExportFormats; nameSpace: string }
+      { payload: ModifyExportPayload; format: ExportFormats; nameSpaceUID: string }
     >({
-      query: ({ payload, format, nameSpace }) => ({
-        url: `/api/ruler/grafana/api/v1/rules/${nameSpace}/export/`,
+      query: ({ payload, format, nameSpaceUID }) => ({
+        url: `/api/ruler/grafana/api/v1/rules/${nameSpaceUID}/export/`,
         params: { format: format },
         responseType: 'text',
         data: payload,

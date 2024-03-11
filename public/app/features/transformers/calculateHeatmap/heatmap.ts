@@ -323,8 +323,8 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
       xBucketsCfg.mode === HeatmapCalculationMode.Size
         ? durationToMilliseconds(parseDuration(xBucketsCfg.value ?? ''))
         : xBucketsCfg.value
-        ? +xBucketsCfg.value
-        : undefined,
+          ? +xBucketsCfg.value
+          : undefined,
     yMode: yBucketsCfg.mode,
     ySize: yBucketsCfg.value ? +yBucketsCfg.value : undefined,
     yLog:

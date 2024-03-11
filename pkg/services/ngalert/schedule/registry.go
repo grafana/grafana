@@ -13,10 +13,13 @@ import (
 	"unsafe"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var errRuleDeleted = errors.New("rule deleted")
+
+type ruleFactory interface {
+	new(context.Context) *alertRuleInfo
+}
 
 type alertRuleInfoRegistry struct {
 	mu            sync.Mutex
@@ -25,13 +28,13 @@ type alertRuleInfoRegistry struct {
 
 // getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
 // Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
-func (r *alertRuleInfoRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey) (*alertRuleInfo, bool) {
+func (r *alertRuleInfoRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey, factory ruleFactory) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	info, ok := r.alertRuleInfo[key]
 	if !ok {
-		info = newAlertRuleInfo(context)
+		info = factory.new(context)
 		r.alertRuleInfo[key] = info
 	}
 	return info, !ok
@@ -73,59 +76,6 @@ type ruleVersionAndPauseStatus struct {
 	IsPaused    bool
 }
 
-type alertRuleInfo struct {
-	evalCh   chan *evaluation
-	updateCh chan ruleVersionAndPauseStatus
-	ctx      context.Context
-	stop     func(reason error)
-}
-
-func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
-	ctx, stop := util.WithCancelCause(parent)
-	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan ruleVersionAndPauseStatus), ctx: ctx, stop: stop}
-}
-
-// eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
-// Before sending a message into the channel, it does non-blocking read to make sure that there is no concurrent send operation.
-// Returns a tuple where first element is
-//   - true when message was sent
-//   - false when the send operation is stopped
-//
-// the second element contains a dropped message that was sent by a concurrent sender.
-func (a *alertRuleInfo) eval(eval *evaluation) (bool, *evaluation) {
-	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
-	var droppedMsg *evaluation
-	select {
-	case droppedMsg = <-a.evalCh:
-	default:
-	}
-
-	select {
-	case a.evalCh <- eval:
-		return true, droppedMsg
-	case <-a.ctx.Done():
-		return false, droppedMsg
-	}
-}
-
-// update sends an instruction to the rule evaluation routine to update the scheduled rule to the specified version. The specified version must be later than the current version, otherwise no update will happen.
-func (a *alertRuleInfo) update(lastVersion ruleVersionAndPauseStatus) bool {
-	// check if the channel is not empty.
-	select {
-	case <-a.updateCh:
-	case <-a.ctx.Done():
-		return false
-	default:
-	}
-
-	select {
-	case a.updateCh <- lastVersion:
-		return true
-	case <-a.ctx.Done():
-		return false
-	}
-}
-
 type evaluation struct {
 	scheduledAt time.Time
 	rule        *models.AlertRule
@@ -134,12 +84,12 @@ type evaluation struct {
 
 type alertRulesRegistry struct {
 	rules        map[models.AlertRuleKey]*models.AlertRule
-	folderTitles map[string]string
+	folderTitles map[models.FolderKey]string
 	mu           sync.Mutex
 }
 
 // all returns all rules in the registry.
-func (r *alertRulesRegistry) all() ([]*models.AlertRule, map[string]string) {
+func (r *alertRulesRegistry) all() ([]*models.AlertRule, map[models.FolderKey]string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	result := make([]*models.AlertRule, 0, len(r.rules))
@@ -156,7 +106,7 @@ func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
 }
 
 // set replaces all rules in the registry. Returns difference between previous and the new current version of the registry
-func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[string]string) diff {
+func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[models.FolderKey]string) diff {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	rulesMap := make(map[models.AlertRuleKey]*models.AlertRule)
@@ -334,6 +284,11 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 		writeInt(1)
 	} else {
 		writeInt(0)
+	}
+
+	for _, setting := range rule.NotificationSettings {
+		binary.LittleEndian.PutUint64(tmp, uint64(setting.Fingerprint()))
+		writeBytes(tmp)
 	}
 
 	// fields that do not affect the state.

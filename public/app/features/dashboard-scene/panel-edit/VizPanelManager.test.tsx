@@ -1,8 +1,8 @@
 import { map, of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
+import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
@@ -95,7 +95,7 @@ const instance2SettingsMock = {
 jest.mock('app/core/store', () => ({
   exists: jest.fn(),
   get: jest.fn(),
-  getObject: jest.fn(),
+  getObject: jest.fn((_a, b) => b),
   setObject: jest.fn(),
 }));
 
@@ -140,7 +140,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('VizPanelManager', () => {
-  describe('changePluginType', () => {
+  describe('When changing plugin', () => {
     it('Should successfully change from one viz type to another', () => {
       const { vizPanelManager } = setupTest('panel-1');
       expect(vizPanelManager.state.panel.state.pluginId).toBe('timeseries');
@@ -169,7 +169,7 @@ describe('VizPanelManager', () => {
         },
       });
 
-      const vizPanelManager = new VizPanelManager(vizPanel);
+      const vizPanelManager = VizPanelManager.createFor(vizPanel);
 
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
       expect(vizPanelManager.state.panel.state.fieldConfig.overrides).toBe(overrides);
@@ -193,7 +193,7 @@ describe('VizPanelManager', () => {
         fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
       });
 
-      const vizPanelManager = new VizPanelManager(vizPanel);
+      const vizPanelManager = VizPanelManager.createFor(vizPanel);
 
       vizPanelManager.changePluginType('timeseries');
       //@ts-ignore
@@ -244,7 +244,7 @@ describe('VizPanelManager', () => {
         await Promise.resolve();
 
         await vizPanelManager.changePanelDataSource(
-          { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' } as any,
+          { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' } as DataSourceInstanceSettings,
           []
         );
 
@@ -408,6 +408,30 @@ describe('VizPanelManager', () => {
           expect(dataObj.state.minInterval).toBe('1s');
         });
       });
+
+      describe('query caching', () => {
+        it('updates cacheTimeout and queryCachingTTL', async () => {
+          const { vizPanelManager } = setupTest('panel-1');
+          vizPanelManager.activate();
+          await Promise.resolve();
+
+          const dataObj = vizPanelManager.queryRunner;
+
+          vizPanelManager.changeQueryOptions({
+            cacheTimeout: '60',
+            queryCachingTTL: 200000,
+            dataSource: {
+              name: 'grafana-testdata',
+              type: 'grafana-testdata-datasource',
+              default: true,
+            },
+            queries: [],
+          });
+
+          expect(dataObj.state.cacheTimeout).toBe('60');
+          expect(dataObj.state.queryCachingTTL).toBe(200000);
+        });
+      });
     });
 
     describe('query inspection', () => {
@@ -439,7 +463,7 @@ describe('VizPanelManager', () => {
             module: 'prometheus',
             id: 'grafana-prometheus-datasource',
           },
-        } as any);
+        } as DataSourceInstanceSettings);
 
         expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: 'gdev-prometheus',
@@ -466,7 +490,7 @@ describe('VizPanelManager', () => {
             module: 'prometheus',
             id: DASHBOARD_DATASOURCE_PLUGIN_ID,
           },
-        } as any);
+        } as DataSourceInstanceSettings);
 
         expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: SHARED_DASHBOARD_QUERY,
@@ -493,13 +517,31 @@ describe('VizPanelManager', () => {
             module: 'prometheus',
             id: 'grafana-prometheus-datasource',
           },
-        } as any);
+        } as DataSourceInstanceSettings);
 
         expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: 'gdev-prometheus',
           type: 'grafana-prometheus-datasource',
         });
       });
+    });
+  });
+
+  describe('change transformations', () => {
+    it('should update and reprocess transformations', () => {
+      const { scene, panel } = setupTest('panel-3');
+      scene.setState({ editPanel: buildPanelEditScene(panel) });
+
+      const vizPanelManager = scene.state.editPanel!.state.vizManager;
+      vizPanelManager.activate();
+      vizPanelManager.state.panel.state.$data?.activate();
+
+      const reprocessMock = jest.fn();
+      vizPanelManager.dataTransformer.reprocessTransformations = reprocessMock;
+      vizPanelManager.changeTransformations([{ id: 'calculateField', options: {} }]);
+
+      expect(reprocessMock).toHaveBeenCalledTimes(1);
+      expect(vizPanelManager.dataTransformer.state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
     });
   });
 
@@ -540,10 +582,9 @@ describe('VizPanelManager', () => {
     describe('dashboard queries', () => {
       it('should update queries', () => {
         const { scene, panel } = setupTest('panel-3');
+        scene.setState({ editPanel: buildPanelEditScene(panel) });
 
-        const panelEditScene = buildPanelEditScene(scene, panel);
-
-        const vizPanelManager = panelEditScene.state.panelRef.resolve();
+        const vizPanelManager = scene.state.editPanel!.state.vizManager;
         vizPanelManager.activate();
         vizPanelManager.state.panel.state.$data?.activate();
 
@@ -557,7 +598,7 @@ describe('VizPanelManager', () => {
             panelId: panelWithTransformations.id,
           },
         ]);
-        expect(vizPanelManager.panelData).toBeInstanceOf(SceneDataTransformer);
+
         expect(vizPanelManager.queryRunner.state.queries[0].panelId).toEqual(panelWithTransformations.id);
 
         // Changing dashboard query to a panel with queries only
@@ -571,7 +612,6 @@ describe('VizPanelManager', () => {
           },
         ]);
 
-        expect(vizPanelManager.panelData).toBeInstanceOf(SceneDataTransformer);
         expect(vizPanelManager.queryRunner.state.queries[0].panelId).toBe(panelWithQueriesOnly.id);
       });
     });
@@ -579,11 +619,10 @@ describe('VizPanelManager', () => {
 });
 
 const setupTest = (panelId: string) => {
-  const scene = transformSaveModelToScene({ dashboard: testDashboard as any, meta: {} });
+  const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
-  const vizPanelManager = new VizPanelManager(panel.clone());
-
+  const vizPanelManager = VizPanelManager.createFor(panel);
   // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
   // @ts-expect-error
   getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));

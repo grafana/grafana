@@ -15,14 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 )
 
-var (
-	azurePrometheusScopes = map[string][]string{
-		azsettings.AzurePublic:       {"https://prometheus.monitor.azure.com/.default"},
-		azsettings.AzureChina:        {"https://prometheus.monitor.azure.cn/.default"},
-		azsettings.AzureUSGovernment: {"https://prometheus.monitor.azure.us/.default"},
-	}
-)
-
 func ConfigureAzureAuthentication(settings backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, clientOpts *sdkhttpclient.Options) error {
 	jsonData, err := utils.GetJsonData(settings)
 	if err != nil {
@@ -82,11 +74,28 @@ func getPrometheusScopes(settings *azsettings.AzureSettings, credentials azcrede
 		return nil, err
 	}
 
-	// Get scopes for the given cloud
-	if scopes, ok := azurePrometheusScopes[azureCloud]; !ok {
-		err := fmt.Errorf("the Azure cloud '%s' not supported by Prometheus datasource", azureCloud)
+	cloudSettings, err := settings.GetCloud(azureCloud)
+	if err != nil {
 		return nil, err
-	} else {
-		return scopes, nil
 	}
+
+	// Get scopes for the given cloud
+	resourceIdS, ok := cloudSettings.Properties["prometheusResourceId"]
+	if !ok {
+		err := fmt.Errorf("the Azure cloud '%s' doesn't have configuration for Prometheus", azureCloud)
+		return nil, err
+	}
+	return audienceToScopes(resourceIdS)
+}
+
+func audienceToScopes(audience string) ([]string, error) {
+	resourceId, err := url.Parse(audience)
+	if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
+		err = fmt.Errorf("endpoint resource ID (audience) '%s' invalid", audience)
+		return nil, err
+	}
+
+	resourceId.Path = path.Join(resourceId.Path, ".default")
+	scopes := []string{resourceId.String()}
+	return scopes, nil
 }

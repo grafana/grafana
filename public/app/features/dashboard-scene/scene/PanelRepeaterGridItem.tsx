@@ -6,7 +6,6 @@ import {
   VizPanel,
   SceneObjectBase,
   VariableDependencyConfig,
-  SceneVariable,
   SceneGridLayout,
   SceneVariableSet,
   SceneComponentProps,
@@ -15,19 +14,24 @@ import {
   sceneGraph,
   MultiValueVariable,
   LocalValueVariable,
+  CustomVariable,
+  VizPanelMenu,
+  VizPanelState,
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { getMultiVariableValues } from '../utils/utils';
 
+import { LibraryVizPanel } from './LibraryVizPanel';
+import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 interface PanelRepeaterGridItemState extends SceneGridItemStateLike {
-  source: VizPanel;
+  source: VizPanel | LibraryVizPanel;
   repeatedPanels?: VizPanel[];
   variableName: string;
   itemHeight?: number;
-  repeatDirection?: RepeatDirection | string;
+  repeatDirection?: RepeatDirection;
   maxPerRow?: number;
 }
 
@@ -36,10 +40,8 @@ export type RepeatDirection = 'v' | 'h';
 export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItemState> implements SceneGridItemLike {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [this.state.variableName],
-    onVariableUpdatesCompleted: this._onVariableChanged.bind(this),
+    onVariableUpdateCompleted: this._onVariableUpdateCompleted.bind(this),
   });
-
-  private _isWaitingForVariables = false;
 
   public constructor(state: PanelRepeaterGridItemState) {
     super(state);
@@ -49,26 +51,11 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
 
   private _activationHandler() {
     this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
-
-    // If we our variable is ready we can process repeats on activation
-    if (sceneGraph.hasVariableDependencyInLoadingState(this)) {
-      this._isWaitingForVariables = true;
-    } else {
-      this._performRepeat();
-    }
+    this._performRepeat();
   }
 
-  private _onVariableChanged(changedVariables: Set<SceneVariable>, dependencyChanged: boolean): void {
-    if (dependencyChanged) {
-      this._performRepeat();
-      return;
-    }
-
-    // If we are waiting for variables and the variable is no longer loading then we are ready to repeat as well
-    if (this._isWaitingForVariables && !sceneGraph.hasVariableDependencyInLoadingState(this)) {
-      this._isWaitingForVariables = false;
-      this._performRepeat();
-    }
+  private _onVariableUpdateCompleted(): void {
+    this._performRepeat();
   }
 
   /**
@@ -97,32 +84,46 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
   }
 
   private _performRepeat() {
-    const variable = sceneGraph.lookupVariable(this.state.variableName, this);
-    if (!variable) {
-      console.error('SceneGridItemRepeater: Variable not found');
+    if (this._variableDependency.hasDependencyInLoadingState()) {
       return;
     }
+
+    const variable =
+      sceneGraph.lookupVariable(this.state.variableName, this) ??
+      new CustomVariable({
+        name: '_____default_sys_repeat_var_____',
+        options: [],
+        value: '',
+        text: '',
+        query: 'A',
+      });
 
     if (!(variable instanceof MultiValueVariable)) {
       console.error('PanelRepeaterGridItem: Variable is not a MultiValueVariable');
       return;
     }
 
-    const panelToRepeat = this.state.source;
+    let panelToRepeat =
+      this.state.source instanceof LibraryVizPanel ? this.state.source.state.panel! : this.state.source;
     const { values, texts } = getMultiVariableValues(variable);
     const repeatedPanels: VizPanel[] = [];
 
-    // Loop through variable values and create repeates
+    // Loop through variable values and create repeats
     for (let index = 0; index < values.length; index++) {
-      const clone = panelToRepeat.clone({
+      const cloneState: Partial<VizPanelState> = {
         $variables: new SceneVariableSet({
           variables: [
             new LocalValueVariable({ name: variable.state.name, value: values[index], text: String(texts[index]) }),
           ],
         }),
         key: `${panelToRepeat.state.key}-clone-${index}`,
-      });
-
+      };
+      if (index > 0) {
+        cloneState.menu = new VizPanelMenu({
+          $behaviors: [repeatPanelMenuBehavior],
+        });
+      }
+      const clone = panelToRepeat.clone(cloneState);
       repeatedPanels.push(clone);
     }
 

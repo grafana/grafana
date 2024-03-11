@@ -2,14 +2,22 @@ import { Unsubscribable } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
+import {
+  SceneObjectBase,
+  SceneObjectState,
+  SceneObjectUrlSyncHandler,
+  SceneObjectUrlValues,
+  VizPanel,
+} from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
-import { findVizPanelByKey, isPanelClone } from '../utils/utils';
+import { findVizPanelByKey, getDashboardSceneFor, isLibraryPanelChild, isPanelClone } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
+import { LibraryVizPanel } from './LibraryVizPanel';
 import { ViewPanelScene } from './ViewPanelScene';
 import { DashboardRepeatsProcessedEvent } from './types';
 
@@ -19,7 +27,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editview'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -28,14 +36,15 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       inspect: state.inspectPanelKey,
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
+      editPanel: state.editPanel?.getUrlKey() || undefined,
     };
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { inspectPanelKey, viewPanelScene, meta, isEditing } = this._scene.state;
+    const { inspectPanelKey, viewPanelScene, isEditing, editPanel } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
 
-    if (typeof values.editview === 'string' && meta.canEdit) {
+    if (typeof values.editview === 'string' && this._scene.canEditDashboard()) {
       update.editview = createDashboardEditViewFor(values.editview);
 
       // If we are not in editing (for example after full page reload)
@@ -50,15 +59,31 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     // Handle inspect object state
     if (typeof values.inspect === 'string') {
-      const panel = findVizPanelByKey(this._scene, values.inspect);
+      let panel = findVizPanelByKey(this._scene, values.inspect);
       if (!panel) {
         appEvents.emit(AppEvents.alertError, ['Panel not found']);
         locationService.partial({ inspect: null });
         return;
       }
 
+      if (isLibraryPanelChild(panel)) {
+        this._handleLibraryPanel(panel, (p) => {
+          if (p.state.key === undefined) {
+            // Inspect drawer require a panel key to be set
+            throw new Error('library panel key is undefined');
+          }
+          const drawer = new PanelInspectDrawer({
+            $behaviors: [new ResolveInspectPanelByKey({ panelKey: p.state.key })],
+          });
+          this._scene.setState({ overlay: drawer, inspectPanelKey: p.state.key });
+        });
+        return;
+      }
+
       update.inspectPanelKey = values.inspect;
-      update.overlay = new PanelInspectDrawer({ panelRef: panel.getRef() });
+      update.overlay = new PanelInspectDrawer({
+        $behaviors: [new ResolveInspectPanelByKey({ panelKey: values.inspect })],
+      });
     } else if (inspectPanelKey) {
       update.inspectPanelKey = undefined;
       update.overlay = undefined;
@@ -67,6 +92,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // Handle view panel state
     if (typeof values.viewPanel === 'string') {
       const panel = findVizPanelByKey(this._scene, values.viewPanel);
+
       if (!panel) {
         // // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
         if (isPanelClone(values.viewPanel)) {
@@ -79,13 +105,58 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
+      if (isLibraryPanelChild(panel)) {
+        this._handleLibraryPanel(panel, (p) => this._buildLibraryPanelViewScene(p));
+        return;
+      }
+
       update.viewPanelScene = new ViewPanelScene({ panelRef: panel.getRef() });
-    } else if (viewPanelScene) {
+    } else if (viewPanelScene && values.viewPanel === null) {
       update.viewPanelScene = undefined;
+    }
+
+    // Handle edit panel state
+    if (typeof values.editPanel === 'string') {
+      const panel = findVizPanelByKey(this._scene, values.editPanel);
+      if (!panel) {
+        return;
+      }
+
+      // If we are not in editing (for example after full page reload)
+      if (!isEditing) {
+        this._scene.onEnterEditMode();
+      }
+      if (isLibraryPanelChild(panel)) {
+        this._handleLibraryPanel(panel, (p) => {
+          this._scene.setState({ editPanel: buildPanelEditScene(p) });
+        });
+      }
+      update.editPanel = buildPanelEditScene(panel);
+    } else if (editPanel && values.editPanel === null) {
+      update.editPanel = undefined;
     }
 
     if (Object.keys(update).length > 0) {
       this._scene.setState(update);
+    }
+  }
+
+  private _buildLibraryPanelViewScene(vizPanel: VizPanel) {
+    this._scene.setState({ viewPanelScene: new ViewPanelScene({ panelRef: vizPanel.getRef() }) });
+  }
+
+  private _handleLibraryPanel(vizPanel: VizPanel, cb: (p: VizPanel) => void): void {
+    if (!(vizPanel.parent instanceof LibraryVizPanel)) {
+      throw new Error('Panel is not a child of a LibraryVizPanel');
+    }
+    const libraryPanel = vizPanel.parent;
+    if (libraryPanel.state.isLoaded) {
+      cb(vizPanel);
+    } else {
+      libraryPanel.subscribeToState((n) => {
+        cb(n.panel!);
+      });
+      libraryPanel.activate();
     }
   }
 
@@ -100,4 +171,42 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       });
     }
   }
+}
+
+interface ResolveInspectPanelByKeyState extends SceneObjectState {
+  panelKey: string;
+}
+
+class ResolveInspectPanelByKey extends SceneObjectBase<ResolveInspectPanelByKeyState> {
+  constructor(state: ResolveInspectPanelByKeyState) {
+    super(state);
+    this.addActivationHandler(this._onActivate);
+  }
+
+  private _onActivate = () => {
+    const parent = this.parent;
+
+    if (!parent || !(parent instanceof PanelInspectDrawer)) {
+      throw new Error('ResolveInspectPanelByKey must be attached to a PanelInspectDrawer');
+    }
+
+    const dashboard = getDashboardSceneFor(parent);
+    if (!dashboard) {
+      return;
+    }
+    const panelId = this.state.panelKey;
+    let panel = findVizPanelByKey(dashboard, panelId);
+
+    if (dashboard.state.editPanel) {
+      panel = dashboard.state.editPanel.state.vizManager.state.panel;
+    }
+
+    if (dashboard.state.viewPanelScene && dashboard.state.viewPanelScene.state.body) {
+      panel = dashboard.state.viewPanelScene.state.body;
+    }
+
+    if (panel) {
+      parent.setState({ panelRef: panel.getRef() });
+    }
+  };
 }

@@ -2,102 +2,86 @@ package datasource
 
 import (
 	"context"
-	"encoding/json"
-	"io"
+	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type subQueryREST struct {
 	builder *DataSourceAPIBuilder
 }
 
-var _ = rest.Connecter(&subQueryREST{})
+var (
+	_ rest.Storage         = (*subQueryREST)(nil)
+	_ rest.Connecter       = (*subQueryREST)(nil)
+	_ rest.StorageMetadata = (*subQueryREST)(nil)
+)
 
 func (r *subQueryREST) New() runtime.Object {
-	return &metav1.Status{}
+	// This is added as the "ResponseType" regarless what ProducesObject() says :)
+	return &query.QueryDataResponse{}
 }
 
-func (r *subQueryREST) Destroy() {
+func (r *subQueryREST) Destroy() {}
+
+func (r *subQueryREST) ProducesMIMETypes(verb string) []string {
+	return []string{"application/json"} // and parquet!
+}
+
+func (r *subQueryREST) ProducesObject(verb string) interface{} {
+	return &query.QueryDataResponse{}
 }
 
 func (r *subQueryREST) ConnectMethods() []string {
-	return []string{"POST", "GET"}
+	return []string{"POST"}
 }
 
 func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, false, ""
-}
-
-func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, error) {
-	// Simple URL to JSON mapping
-	if req.Method == http.MethodGet {
-		body := make(map[string]any, 0)
-		for k, v := range req.URL.Query() {
-			switch len(v) {
-			case 0:
-				body[k] = true
-			case 1:
-				body[k] = v[0] // TODO, convert numbers
-			default:
-				body[k] = v // TODO, convert numbers
-			}
-		}
-
-		var err error
-		dq := backend.DataQuery{
-			RefID: "A",
-			TimeRange: backend.TimeRange{
-				From: time.Now().Add(-1 * time.Hour), // last hour
-				To:   time.Now(),
-			},
-			MaxDataPoints: 1000,
-			Interval:      time.Second * 10,
-		}
-		dq.JSON, err = json.Marshal(body)
-		return []backend.DataQuery{dq}, err
-	}
-
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		return nil, err
-	}
-	return readQueries(body)
+	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	pluginCtx, err := r.builder.getDataSourcePluginContext(ctx, name)
+	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		queries, err := r.readQueries(req)
+		dqr := data.QueryDataRequest{}
+		err := web.Bind(req, &dqr)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		queryResponse, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
-			PluginContext: *pluginCtx,
+		queries, dsRef, err := legacydata.ToDataSourceQueries(dqr)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		if dsRef != nil && dsRef.UID != name {
+			responder.Error(fmt.Errorf("expected query body datasource and request to match"))
+		}
+
+		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+		rsp, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
 			Queries:       queries,
-			//  Headers: // from context
+			PluginContext: pluginCtx,
 		})
 		if err != nil {
-			return
-		}
-
-		jsonRsp, err := json.Marshal(queryResponse)
-		if err != nil {
 			responder.Error(err)
 			return
 		}
-		w.WriteHeader(200)
-		_, _ = w.Write(jsonRsp)
+		responder.Object(query.GetResponseCode(rsp),
+			&query.QueryDataResponse{QueryDataResponse: *rsp},
+		)
 	}), nil
 }

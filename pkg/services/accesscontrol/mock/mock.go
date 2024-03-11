@@ -21,6 +21,7 @@ type fullAccessControl interface {
 type Calls struct {
 	Evaluate                       []interface{}
 	GetUserPermissions             []interface{}
+	GetUserPermissionsInOrg        []interface{}
 	ClearUserPermissionCache       []interface{}
 	DeclareFixedRoles              []interface{}
 	DeclarePluginRoles             []interface{}
@@ -28,6 +29,7 @@ type Calls struct {
 	RegisterFixedRoles             []interface{}
 	RegisterAttributeScopeResolver []interface{}
 	DeleteUserPermissions          []interface{}
+	DeleteTeamPermissions          []interface{}
 	SearchUsersPermissions         []interface{}
 	SearchUserPermissions          []interface{}
 	SaveExternalServiceRole        []interface{}
@@ -46,6 +48,7 @@ type Mock struct {
 	// Override functions
 	EvaluateFunc                       func(context.Context, identity.Requester, accesscontrol.Evaluator) (bool, error)
 	GetUserPermissionsFunc             func(context.Context, identity.Requester, accesscontrol.Options) ([]accesscontrol.Permission, error)
+	GetUserPermissionsInOrgFunc        func(context.Context, identity.Requester, int64) ([]accesscontrol.Permission, error)
 	ClearUserPermissionCacheFunc       func(identity.Requester)
 	DeclareFixedRolesFunc              func(...accesscontrol.RoleRegistration) error
 	DeclarePluginRolesFunc             func(context.Context, string, string, []plugins.RoleRegistration) error
@@ -53,10 +56,12 @@ type Mock struct {
 	RegisterFixedRolesFunc             func() error
 	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
 	DeleteUserPermissionsFunc          func(context.Context, int64) error
+	DeleteTeamPermissionsFunc          func(context.Context, int64) error
 	SearchUsersPermissionsFunc         func(context.Context, identity.Requester, int64, accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
 	SearchUserPermissionsFunc          func(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error)
 	SaveExternalServiceRoleFunc        func(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error
 	DeleteExternalServiceRoleFunc      func(ctx context.Context, externalServiceID string) error
+	SyncUserRolesFunc                  func(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error
 
 	scopeResolvers accesscontrol.Resolvers
 }
@@ -137,6 +142,16 @@ func (m *Mock) GetUserPermissions(ctx context.Context, user identity.Requester, 
 	return m.permissions, nil
 }
 
+func (m *Mock) GetUserPermissionsInOrg(ctx context.Context, user identity.Requester, orgID int64) ([]accesscontrol.Permission, error) {
+	m.Calls.GetUserPermissionsInOrg = append(m.Calls.GetUserPermissionsInOrg, []interface{}{ctx, user, orgID})
+	// Use override if provided
+	if m.GetUserPermissionsInOrgFunc != nil {
+		return m.GetUserPermissionsInOrgFunc(ctx, user, orgID)
+	}
+	// Otherwise return the Permissions list
+	return m.permissions, nil
+}
+
 func (m *Mock) ClearUserPermissionCache(user identity.Requester) {
 	m.Calls.ClearUserPermissionCache = append(m.Calls.ClearUserPermissionCache, []interface{}{user})
 	// Use override if provided
@@ -198,6 +213,15 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 	return nil
 }
 
+func (m *Mock) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error {
+	m.Calls.DeleteTeamPermissions = append(m.Calls.DeleteTeamPermissions, []interface{}{ctx, orgID, teamID})
+	// Use override if provided
+	if m.DeleteTeamPermissionsFunc != nil {
+		return m.DeleteTeamPermissionsFunc(ctx, teamID)
+	}
+	return nil
+}
+
 // SearchUsersPermissions returns all users' permissions filtered by an action prefix
 func (m *Mock) SearchUsersPermissions(ctx context.Context, usr identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	user := usr.(*user.SignedInUser)
@@ -232,6 +256,13 @@ func (m *Mock) DeleteExternalServiceRole(ctx context.Context, externalServiceID 
 	// Use override if provided
 	if m.DeleteExternalServiceRoleFunc != nil {
 		return m.DeleteExternalServiceRoleFunc(ctx, externalServiceID)
+	}
+	return nil
+}
+
+func (m *Mock) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
+	if m.SyncUserRolesFunc != nil {
+		return m.SyncUserRolesFunc(ctx, orgID, cmd)
 	}
 	return nil
 }

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { useAsyncFn } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
-import { Form, Field, Input, Button, Legend, Alert } from '@grafana/ui';
+import { Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -27,6 +28,11 @@ const AdminEditOrgPage = ({ match }: Props) => {
   const [totalPages, setTotalPages] = useState(1);
 
   const [orgState, fetchOrg] = useAsyncFn(() => getOrg(orgId), []);
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+  } = useForm<OrgNameDTO>();
   const [, fetchOrgUsers] = useAsyncFn(async (page) => {
     const result = await getOrgUsers(orgId, page);
 
@@ -45,8 +51,8 @@ const AdminEditOrgPage = ({ match }: Props) => {
     fetchOrgUsers(page);
   }, [fetchOrg, fetchOrgUsers, page]);
 
-  const onUpdateOrgName = async (name: string) => {
-    await updateOrgName(name, orgId);
+  const onUpdateOrgName = async ({ orgName }: OrgNameDTO) => {
+    await updateOrgName(orgName, orgId);
   };
 
   const renderMissingPermissionMessage = () => (
@@ -82,21 +88,18 @@ const AdminEditOrgPage = ({ match }: Props) => {
         <>
           <Legend>Edit organization</Legend>
           {orgState.value && (
-            <Form
-              defaultValues={{ orgName: orgState.value.name }}
-              onSubmit={(values: OrgNameDTO) => onUpdateOrgName(values.orgName)}
-            >
-              {({ register, errors }) => (
-                <>
-                  <Field label="Name" invalid={!!errors.orgName} error="Name is required" disabled={!canWriteOrg}>
-                    <Input {...register('orgName', { required: true })} id="org-name-input" />
-                  </Field>
-                  <Button type="submit" disabled={!canWriteOrg}>
-                    Update
-                  </Button>
-                </>
-              )}
-            </Form>
+            <form onSubmit={handleSubmit(onUpdateOrgName)} style={{ maxWidth: '600px' }}>
+              <Field label="Name" invalid={!!errors.orgName} error="Name is required" disabled={!canWriteOrg}>
+                <Input
+                  {...register('orgName', { required: true })}
+                  id="org-name-input"
+                  defaultValue={orgState.value.name}
+                />
+              </Field>
+              <Button type="submit" disabled={!canWriteOrg}>
+                Update
+              </Button>
+            </form>
           )}
 
           <div style={{ marginTop: '20px' }}>

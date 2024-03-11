@@ -19,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -41,11 +41,9 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 	{
 		oldVersion := setting.BuildVersion
 		oldCommit := setting.BuildCommit
-		oldEnv := setting.Env
 		t.Cleanup(func() {
 			setting.BuildVersion = oldVersion
 			setting.BuildCommit = oldCommit
-			setting.Env = oldEnv
 		})
 	}
 
@@ -73,7 +71,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		grafanaUpdateChecker: &updatechecker.GrafanaService{},
 		AccessControl:        accesscontrolmock.New(),
 		PluginSettings:       pluginsSettings,
-		pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
+		pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
 			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
 			PluginSettings:        cfg.PluginSettings,
 		}),
@@ -83,7 +81,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 
 	m := web.New()
 	m.Use(getContextHandler(t, cfg).Middleware)
-	m.UseMiddleware(web.Renderer(filepath.Join(setting.StaticRootPath, "views"), "[[", "]]"))
+	m.UseMiddleware(web.Renderer(filepath.Join("", "views"), "[[", "]]"))
 	m.Get("/api/frontend/settings/", hs.GetFrontendSettings)
 
 	return m, hs
@@ -111,7 +109,6 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	// TODO: Remove
 	setting.BuildVersion = cfg.BuildVersion
 	setting.BuildCommit = cfg.BuildCommit
-	setting.Env = cfg.Env
 
 	tests := []struct {
 		desc        string
@@ -125,7 +122,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 				BuildInfo: buildInfo{
 					Version: setting.BuildVersion,
 					Commit:  setting.BuildCommit,
-					Env:     setting.Env,
+					Env:     cfg.Env,
 				},
 			},
 		},
@@ -136,7 +133,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 				BuildInfo: buildInfo{
 					Version: "",
 					Commit:  "",
-					Env:     setting.Env,
+					Env:     cfg.Env,
 				},
 			},
 		},

@@ -36,8 +36,8 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 		` + filter
 
 		if len(query.RolePrefixes) > 0 {
-			q += " WHERE ( " + strings.Repeat("role.name LIKE ? OR ", len(query.RolePrefixes))
-			q = q[:len(q)-4] + " )" // remove last " OR "
+			q += " WHERE ( " + strings.Repeat("role.name LIKE ? OR ", len(query.RolePrefixes)-1)
+			q += "role.name LIKE ? )"
 			for i := range query.RolePrefixes {
 				params = append(params, query.RolePrefixes[i]+"%")
 			}
@@ -53,7 +53,7 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	return result, err
 }
 
-// SearchUsersPermissions returns the list of user permissions indexed by UserID
+// SearchUsersPermissions returns the list of user permissions in specific organization indexed by UserID
 func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	type UserRBACPermission struct {
 		UserID int64  `xorm:"user_id"`
@@ -61,7 +61,13 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		Scope  string `xorm:"scope"`
 	}
 	dbPerms := make([]UserRBACPermission, 0)
+
 	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		roleNameFilterJoin := ""
+		if len(options.RolePrefixes) > 0 {
+			roleNameFilterJoin = "INNER JOIN role AS r on up.role_id = r.id"
+		}
+
 		// Find permissions
 		q := `
 		SELECT
@@ -69,21 +75,21 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 			action,
 			scope
 		FROM (
-			SELECT ur.user_id, ur.org_id, p.action, p.scope
+			SELECT ur.user_id, ur.org_id, p.action, p.scope, ur.role_id
 				FROM permission AS p
 				INNER JOIN user_role AS ur on ur.role_id = p.role_id
 			UNION ALL
-				SELECT tm.user_id, tr.org_id, p.action, p.scope
+				SELECT tm.user_id, tr.org_id, p.action, p.scope, tr.role_id
 					FROM permission AS p
 					INNER JOIN team_role AS tr ON tr.role_id = p.role_id
 					INNER JOIN team_member AS tm ON tm.team_id = tr.team_id
 			UNION ALL
-				SELECT ou.user_id, ou.org_id, p.action, p.scope
+				SELECT ou.user_id, ou.org_id, p.action, p.scope, br.role_id
 					FROM permission AS p
 					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
 					INNER JOIN org_user AS ou ON ou.role = br.role
 			UNION ALL
-				SELECT sa.user_id, br.org_id, p.action, p.scope
+				SELECT sa.user_id, br.org_id, p.action, p.scope, br.role_id
 					FROM permission AS p
 					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
 					INNER JOIN (
@@ -91,8 +97,8 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 						FROM ` + s.sql.GetDialect().Quote("user") + ` AS u WHERE u.is_admin
 					) AS sa ON 1 = 1
 					WHERE br.role = ?
-		) AS up
-		WHERE (org_id = ? OR org_id = ?)
+		) AS up ` + roleNameFilterJoin + `
+		WHERE (up.org_id = ? OR up.org_id = ?)
 		`
 
 		params := []any{accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID}
@@ -106,17 +112,30 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 			params = append(params, options.Action)
 		}
 		if options.Scope != "" {
-			q += ` AND scope = ?`
-			params = append(params, options.Scope)
+			// Search for scope and wildcard that include the scope
+			scopes := append(options.Wildcards(), options.Scope)
+			q += ` AND scope IN ( ? ` + strings.Repeat(", ?", len(scopes)-1) + ")"
+			for i := range scopes {
+				params = append(params, scopes[i])
+			}
 		}
-
-		if options.UserID != 0 {
+		if options.NamespacedID != "" {
+			userID, err := options.ComputeUserID()
+			if err != nil {
+				return err
+			}
 			q += ` AND user_id = ?`
-			params = append(params, options.UserID)
+			params = append(params, userID)
+		}
+		if len(options.RolePrefixes) > 0 {
+			q += " AND ( " + strings.Repeat("r.name LIKE ? OR ", len(options.RolePrefixes)-1)
+			q += "r.name LIKE ? )"
+			for _, prefix := range options.RolePrefixes {
+				params = append(params, prefix+"%")
+			}
 		}
 
-		return sess.SQL(q, params...).
-			Find(&dbPerms)
+		return sess.SQL(q, params...).Find(&dbPerms)
 	}); err != nil {
 		return nil, err
 	}
@@ -226,6 +245,61 @@ func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, u
 			managedRoleDeleteParams = append(managedRoleDeleteParams, id)
 		}
 		// Delete managed user roles
+		if _, err := sess.Exec(managedRoleDeleteParams...); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	return err
+}
+
+func (s *AccessControlStore) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error {
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		roleDeleteQuery := "DELETE FROM team_role WHERE team_id = ? AND org_id = ?"
+		roleDeleteParams := []any{roleDeleteQuery, teamID, orgID}
+
+		// Delete team role assignments
+		if _, err := sess.Exec(roleDeleteParams...); err != nil {
+			return err
+		}
+
+		// Delete permissions that are scoped to the team
+		if _, err := sess.Exec("DELETE FROM permission WHERE scope = ?", accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))); err != nil {
+			return err
+		}
+
+		// Delete the team managed role
+		roleQuery := "SELECT id FROM role WHERE name = ? AND org_id = ?"
+		roleParams := []any{accesscontrol.ManagedTeamRoleName(teamID), orgID}
+
+		var roleIDs []int64
+		if err := sess.SQL(roleQuery, roleParams...).Find(&roleIDs); err != nil {
+			return err
+		}
+
+		if len(roleIDs) == 0 {
+			return nil
+		}
+
+		permissionDeleteQuery := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
+		permissionDeleteParams := make([]any, 0, len(roleIDs)+1)
+		permissionDeleteParams = append(permissionDeleteParams, permissionDeleteQuery)
+		for _, id := range roleIDs {
+			permissionDeleteParams = append(permissionDeleteParams, id)
+		}
+
+		// Delete managed team permissions
+		if _, err := sess.Exec(permissionDeleteParams...); err != nil {
+			return err
+		}
+
+		managedRoleDeleteQuery := "DELETE FROM role WHERE id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
+		managedRoleDeleteParams := []any{managedRoleDeleteQuery}
+		for _, id := range roleIDs {
+			managedRoleDeleteParams = append(managedRoleDeleteParams, id)
+		}
+		// Delete managed team role
 		if _, err := sess.Exec(managedRoleDeleteParams...); err != nil {
 			return err
 		}

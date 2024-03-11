@@ -173,7 +173,7 @@ Supermajority votes must be called explicitly in a separate thread on the approp
 
 Votes may take the form of a single proposal, with the option to vote yes or no, or the form of multiple alternatives.
 
-A vote on a single proposal is considered successful if at least two thirds of those eligible to vote vote in favor.
+A vote on a single proposal is considered successful if at least two thirds of those eligible to vote in favor.
 
 If there are multiple alternatives, members may vote for one or more alternatives, or vote “no” to object to all alternatives. A vote on multiple alternatives is considered decided in favor of one alternative if it has received the most votes in favor, and a vote from at least two thirds of those eligible to vote. Should no alternative reach this quorum, another vote on a reduced number of options may be called separately.
 
