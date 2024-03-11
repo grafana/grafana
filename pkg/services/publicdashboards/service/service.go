@@ -8,19 +8,21 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -37,6 +39,7 @@ type PublicDashboardServiceImpl struct {
 	ac                 accesscontrol.AccessControl
 	serviceWrapper     publicdashboards.ServiceWrapper
 	dashboardService   dashboards.DashboardService
+	license            licensing.Licensing
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -55,6 +58,7 @@ func ProvideService(
 	ac accesscontrol.AccessControl,
 	serviceWrapper publicdashboards.ServiceWrapper,
 	dashboardService dashboards.DashboardService,
+	license licensing.Licensing,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
@@ -66,6 +70,7 @@ func ProvideService(
 		ac:                 ac,
 		serviceWrapper:     serviceWrapper,
 		dashboardService:   dashboardService,
+		license:            license,
 	}
 }
 
@@ -153,6 +158,10 @@ func (pd *PublicDashboardServiceImpl) FindEnabledPublicDashboardAndDashboardByAc
 		return nil, nil, ErrPublicDashboardNotEnabled.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Public dashboard is not enabled accessToken: %s", accessToken)
 	}
 
+	if !pd.license.FeatureEnabled(FeaturePublicDashboardsEmailSharing) && pubdash.Share == EmailShareType {
+		return nil, nil, ErrPublicDashboardNotFound.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Dashboard not found accessToken: %s", accessToken)
+	}
+
 	return pubdash, dash, err
 }
 
@@ -196,6 +205,12 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 	}
 
 	if existingPubdash != nil {
+		// If there is no license and the public dashboard was email-shared, we should update it to public
+		if !pd.license.FeatureEnabled(FeaturePublicDashboardsEmailSharing) && existingPubdash.Share == EmailShareType {
+			dto.Uid = existingPubdash.Uid
+			dto.PublicDashboard.Share = PublicShareType
+			return pd.Update(ctx, u, dto)
+		}
 		return nil, ErrDashboardIsPublic.Errorf("Create: public dashboard for dashboard %s already exists", dto.DashboardUid)
 	}
 

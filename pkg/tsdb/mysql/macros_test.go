@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
 )
@@ -194,7 +193,7 @@ func TestMacroEngine(t *testing.T) {
 }
 
 func TestMacroEngineConcurrency(t *testing.T) {
-	engine := newMysqlMacroEngine(backend.NewLoggerWith("logger", "test"), setting.NewCfg())
+	engine := newMysqlMacroEngine(backend.NewLoggerWith("logger", "test"), "error")
 	query1 := backend.DataQuery{
 		JSON: []byte{},
 	}

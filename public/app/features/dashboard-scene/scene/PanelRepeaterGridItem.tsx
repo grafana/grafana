@@ -14,19 +14,24 @@ import {
   sceneGraph,
   MultiValueVariable,
   LocalValueVariable,
+  CustomVariable,
+  VizPanelMenu,
+  VizPanelState,
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { getMultiVariableValues } from '../utils/utils';
 
+import { LibraryVizPanel } from './LibraryVizPanel';
+import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 interface PanelRepeaterGridItemState extends SceneGridItemStateLike {
-  source: VizPanel;
+  source: VizPanel | LibraryVizPanel;
   repeatedPanels?: VizPanel[];
   variableName: string;
   itemHeight?: number;
-  repeatDirection?: RepeatDirection | string;
+  repeatDirection?: RepeatDirection;
   maxPerRow?: number;
 }
 
@@ -83,32 +88,42 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
       return;
     }
 
-    const variable = sceneGraph.lookupVariable(this.state.variableName, this);
-    if (!variable) {
-      console.error('SceneGridItemRepeater: Variable not found');
-      return;
-    }
+    const variable =
+      sceneGraph.lookupVariable(this.state.variableName, this) ??
+      new CustomVariable({
+        name: '_____default_sys_repeat_var_____',
+        options: [],
+        value: '',
+        text: '',
+        query: 'A',
+      });
 
     if (!(variable instanceof MultiValueVariable)) {
       console.error('PanelRepeaterGridItem: Variable is not a MultiValueVariable');
       return;
     }
 
-    const panelToRepeat = this.state.source;
+    let panelToRepeat =
+      this.state.source instanceof LibraryVizPanel ? this.state.source.state.panel! : this.state.source;
     const { values, texts } = getMultiVariableValues(variable);
     const repeatedPanels: VizPanel[] = [];
 
-    // Loop through variable values and create repeates
+    // Loop through variable values and create repeats
     for (let index = 0; index < values.length; index++) {
-      const clone = panelToRepeat.clone({
+      const cloneState: Partial<VizPanelState> = {
         $variables: new SceneVariableSet({
           variables: [
             new LocalValueVariable({ name: variable.state.name, value: values[index], text: String(texts[index]) }),
           ],
         }),
         key: `${panelToRepeat.state.key}-clone-${index}`,
-      });
-
+      };
+      if (index > 0) {
+        cloneState.menu = new VizPanelMenu({
+          $behaviors: [repeatPanelMenuBehavior],
+        });
+      }
+      const clone = panelToRepeat.clone(cloneState);
       repeatedPanels.push(clone);
     }
 

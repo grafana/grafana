@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/lib/pq"
@@ -21,7 +20,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 )
 
 func ProvideService(cfg *setting.Cfg) *Service {
@@ -30,7 +28,7 @@ func ProvideService(cfg *setting.Cfg) *Service {
 		tlsManager: newTLSManager(logger, cfg.DataPath),
 		logger:     logger,
 	}
-	s.im = datasource.NewInstanceManager(s.newInstanceSettings(cfg))
+	s.im = datasource.NewInstanceManager(s.newInstanceSettings())
 	return s
 }
 
@@ -57,29 +55,34 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return dsInfo.QueryData(ctx, req)
 }
 
-func newPostgres(cfg *setting.Cfg, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger) (*sql.DB, *sqleng.DataSourceHandler, error) {
+func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*sql.DB, *sqleng.DataSourceHandler, error) {
 	connector, err := pq.NewConnector(cnnstr)
 	if err != nil {
 		logger.Error("postgres connector creation failed", "error", err)
 		return nil, nil, fmt.Errorf("postgres connector creation failed")
 	}
 
-	// use the proxy-dialer if the secure socks proxy is enabled
-	proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
-	if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
-		dialer, err := newPostgresProxyDialer(proxyOpts)
+	proxyClient, err := settings.ProxyClient(ctx)
+	if err != nil {
+		logger.Error("postgres proxy creation failed", "error", err)
+		return nil, nil, fmt.Errorf("postgres proxy creation failed")
+	}
+
+	if proxyClient.SecureSocksProxyEnabled() {
+		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
 		if err != nil {
 			logger.Error("postgres proxy creation failed", "error", err)
 			return nil, nil, fmt.Errorf("postgres proxy creation failed")
 		}
+		postgresDialer := newPostgresProxyDialer(dialer)
 		// update the postgres dialer with the proxy dialer
-		connector.Dialer(dialer)
+		connector.Dialer(postgresDialer)
 	}
 
 	config := sqleng.DataPluginConfiguration{
 		DSInfo:            dsInfo,
 		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-		RowLimit:          cfg.DataProxyRowLimit,
+		RowLimit:          rowLimit,
 	}
 
 	queryResultTransformer := postgresQueryResultTransformer{}
@@ -90,7 +93,7 @@ func newPostgres(cfg *setting.Cfg, dsInfo sqleng.DataSourceInfo, cnnstr string, 
 	db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
 	db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
-	handler, err := sqleng.NewQueryDataHandler(cfg, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
+	handler, err := sqleng.NewQueryDataHandler(userFacingDefaultError, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 		logger)
 	if err != nil {
 		logger.Error("Failed connecting to Postgres", "err", err)
@@ -101,20 +104,25 @@ func newPostgres(cfg *setting.Cfg, dsInfo sqleng.DataSourceInfo, cnnstr string, 
 	return db, handler, nil
 }
 
-func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
+func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 	logger := s.logger
-	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		logger.Debug("Creating Postgres query endpoint")
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		cfg := backend.GrafanaConfigFromContext(ctx)
+		sqlCfg, err := cfg.SQL()
+		if err != nil {
+			return nil, err
+		}
+
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:        cfg.SqlDatasourceMaxOpenConnsDefault,
-			MaxIdleConns:        cfg.SqlDatasourceMaxIdleConnsDefault,
-			ConnMaxLifetime:     cfg.SqlDatasourceMaxConnLifetimeDefault,
+			MaxOpenConns:        sqlCfg.DefaultMaxOpenConns,
+			MaxIdleConns:        sqlCfg.DefaultMaxIdleConns,
+			ConnMaxLifetime:     sqlCfg.DefaultMaxConnLifetimeSeconds,
 			Timescaledb:         false,
 			ConfigurationMethod: "file-path",
 			SecureDSProxy:       false,
 		}
 
-		err := json.Unmarshal(settings.JSONData, &jsonData)
+		err = json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
@@ -140,7 +148,12 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 			return nil, err
 		}
 
-		_, handler, err := newPostgres(cfg, dsInfo, cnnstr, logger)
+		userFacingDefaultError, err := cfg.UserFacingDefaultError()
+		if err != nil {
+			return nil, err
+		}
+
+		_, handler, err := newPostgres(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
 
 		if err != nil {
 			logger.Error("Failed connecting to Postgres", "err", err)

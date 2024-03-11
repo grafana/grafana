@@ -45,7 +45,7 @@ describe('__url_time_range', () => {
         from: 1607687293000,
         to: 1607687293100,
       }),
-    } as any);
+    } as unknown as TimeSrv);
   });
 
   it('should interpolate to url params', () => {

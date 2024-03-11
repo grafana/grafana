@@ -12,6 +12,7 @@ import { filterFramesByRefIdTransformRegistryItem } from './editors/FilterByRefI
 import { formatStringTransformerRegistryItem } from './editors/FormatStringTransformerEditor';
 import { formatTimeTransformerRegistryItem } from './editors/FormatTimeTransformerEditor';
 import { groupByTransformRegistryItem } from './editors/GroupByTransformerEditor';
+import { groupToNestedTableTransformRegistryItem } from './editors/GroupToNestedTableTransformerEditor';
 import { groupingToMatrixTransformRegistryItem } from './editors/GroupingToMatrixTransformerEditor';
 import { histogramTransformRegistryItem } from './editors/HistogramTransformerEditor';
 import { joinByFieldTransformerRegistryItem } from './editors/JoinByFieldTransformerEditor';
@@ -64,6 +65,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     partitionByValuesTransformRegistryItem,
     ...(config.featureToggles.formatString ? [formatStringTransformerRegistryItem] : []),
     ...(config.featureToggles.regressionTransformation ? [regressionTransformerRegistryItem] : []),
+    ...(config.featureToggles.groupToNestedTableTransformation ? [groupToNestedTableTransformRegistryItem] : []),
     formatTimeTransformerRegistryItem,
     timeSeriesTableTransformRegistryItem,
   ];

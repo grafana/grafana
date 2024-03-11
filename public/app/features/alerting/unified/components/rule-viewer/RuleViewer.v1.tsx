@@ -154,7 +154,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             <RuleDetailsDataSources rule={rule} rulesSource={rulesSource} />
             {isFederatedRule && <RuleDetailsFederatedSources group={rule.group} />}
             <DetailsField label="Namespace / Group" className={styles.rightSideDetails}>
-              {decodeGrafanaNamespace(rule.namespace)} / {rule.group.name}
+              {decodeGrafanaNamespace(rule.namespace).name} / {rule.group.name}
             </DetailsField>
             {isGrafanaRulerRule(rule.rulerRule) && <GrafanaRuleUID rule={rule.rulerRule.grafana_alert} />}
           </div>

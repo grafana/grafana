@@ -4,7 +4,7 @@ import React, { Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
-import { config, locationService, useReturnToPrevious } from '@grafana/runtime';
+import { config, useReturnToPrevious } from '@grafana/runtime';
 import {
   Button,
   ClipboardButton,
@@ -135,33 +135,22 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   }
   if (rule.annotations[Annotation.dashboardUID]) {
     const dashboardUID = rule.annotations[Annotation.dashboardUID];
+    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
     if (dashboardUID) {
       buttons.push(
-        config.featureToggles.returnToPrevious ? (
-          <LinkButton
-            size="sm"
-            key="dashboard"
-            variant="primary"
-            icon="apps"
-            href={`d/${encodeURIComponent(dashboardUID)}`}
-            onClick={() => {
-              setReturnToPrevious({ title: rule.name, href: locationService.getLocation().pathname });
-            }}
-          >
-            Go to dashboard
-          </LinkButton>
-        ) : (
-          <LinkButton
-            size="sm"
-            key="dashboard"
-            variant="primary"
-            icon="apps"
-            target="_blank"
-            href={`d/${encodeURIComponent(dashboardUID)}`}
-          >
-            Go to dashboard
-          </LinkButton>
-        )
+        <LinkButton
+          size="sm"
+          key="dashboard"
+          variant="primary"
+          icon="apps"
+          target={isReturnToPreviousEnabled ? undefined : '_blank'}
+          href={`d/${encodeURIComponent(dashboardUID)}`}
+          onClick={() => {
+            setReturnToPrevious(rule.name);
+          }}
+        >
+          Go to dashboard
+        </LinkButton>
       );
       const panelId = rule.annotations[Annotation.panelID];
       if (panelId) {
@@ -171,8 +160,11 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
             key="panel"
             variant="primary"
             icon="apps"
-            target="_blank"
+            target={isReturnToPreviousEnabled ? undefined : '_blank'}
             href={`d/${encodeURIComponent(dashboardUID)}?viewPanel=${encodeURIComponent(panelId)}`}
+            onClick={() => {
+              setReturnToPrevious(rule.name);
+            }}
           >
             Go to panel
           </LinkButton>

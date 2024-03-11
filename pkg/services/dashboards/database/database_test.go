@@ -26,11 +26,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// run tests with cleanup
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
 	if testing.Short() {
@@ -104,11 +111,35 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.ErrorIs(t, err, dashboards.ErrDashboardIdentifierNotSet)
 	})
 
+	t.Run("Should be able to get root dashboard by title", func(t *testing.T) {
+		setup()
+		query := dashboards.GetDashboardQuery{
+			Title:     util.Pointer("test dash 67"),
+			FolderUID: util.Pointer(""),
+			OrgID:     1,
+		}
+
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
+		require.Error(t, err)
+	})
+
+	t.Run("Should be able to get dashboard by title and folderID", func(t *testing.T) {
+		setup()
+		query := dashboards.GetDashboardQuery{
+			Title:    util.Pointer("test dash 23"),
+			FolderID: &savedDash.ID,
+			OrgID:    1,
+		}
+
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
+		require.Error(t, err)
+	})
+
 	t.Run("Should be able to get dashboard by title and folderUID", func(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
 			Title:     util.Pointer("test dash 23"),
-			FolderUID: savedFolder.UID,
+			FolderUID: util.Pointer(savedFolder.UID),
 			OrgID:     1,
 		}
 		queryResult, err := dashboardStore.GetDashboard(context.Background(), &query)
@@ -160,7 +191,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
 			Title:     util.Pointer("test dash 23"),
-			FolderUID: "",
+			FolderUID: util.Pointer(""),
 			OrgID:     1,
 		}
 
@@ -682,7 +713,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 
 	ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features, nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -799,7 +830,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 
 	ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features, nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	user := &user.SignedInUser{
 		OrgID: 1,

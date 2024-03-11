@@ -17,7 +17,7 @@ If the item needs more rationale and you feel like a single sentence is inedequa
 ## Refactoring
 
 - Get rid of "+ Add new" in drop-downs : Let's see if is there a way we can make it work with `<Select allowCustomValue />`
-- There is a lot of overlap between `RuleActionButtons` and `RuleDetailsActionButtons`. As these components contain a lot of logic it would be nice to extract that logic into hoooks
+- There is a lot of overlap between `RuleActionButtons` and `RuleDetailsActionButtons`. As these components contain a lot of logic it would be nice to extract that logic into hooks
 - Create a shared timings form that can be used in both `EditDefaultPolicyForm.tsx` and `EditNotificationPolicyForm.tsx`
 
 ## Testing

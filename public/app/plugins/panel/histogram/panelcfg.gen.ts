@@ -4,13 +4,17 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     PluginTSTypesJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as common from '@grafana/schema';
 
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
+  /**
+   * Bucket count (approx)
+   */
+  bucketCount?: number;
   /**
    * Offset buckets by this amount
    */
@@ -26,6 +30,7 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
 }
 
 export const defaultOptions: Partial<Options> = {
+  bucketCount: 30,
   bucketOffset: 0,
 };
 

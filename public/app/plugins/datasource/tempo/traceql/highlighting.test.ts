@@ -126,8 +126,8 @@ describe('Highlighting', () => {
       ['{.foo=1} | avg(.foo) > ', 'Invalid value after comparison operator.'],
       ['{.foo=1} | avg() < 1s', 'Invalid expression for aggregator operator.'],
       ['{.foo=1} | max() = 3', 'Invalid expression for aggregator operator.'],
-      ['{.foo=1} | by()', 'Invalid expression for aggregator operator.'],
-      ['{.foo=1} | select()', 'Invalid expression for aggregator operator.'],
+      ['{.foo=1} | by()', 'Invalid expression for by operator.'],
+      ['{.foo=1} | select()', 'Invalid expression for select operator.'],
       ['{foo}', 'Invalid expression for spanset.'],
       ['{.}', 'Invalid expression for spanset.'],
       ['{ resource. }', 'Invalid expression for spanset.'],
@@ -169,6 +169,8 @@ describe('Highlighting', () => {
       ['{span.s"t\\\\at"us}'],
       ['{ span.s"tat"us" = "GET123 }'], // weird query, but technically valid
       ['{ duration = 123.456us}'],
+      ['{ .foo = `GET` && .bar = `P\'O"S\\T` }'],
+      ['{ .foo = `GET` } | by(.foo, name)'],
     ])('valid query - %s', (query: string) => {
       expect(getErrorNodes(query)).toStrictEqual([]);
     });

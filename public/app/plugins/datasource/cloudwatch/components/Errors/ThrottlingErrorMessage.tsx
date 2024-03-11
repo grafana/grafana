@@ -20,7 +20,7 @@ export const ThrottlingErrorMessage = ({ region }: Props) => (
       target="_blank"
       rel="noreferrer"
       className="text-link"
-      href="https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#service-quotas"
+      href="https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#manage-service-quotas"
     >
       documentation
     </a>

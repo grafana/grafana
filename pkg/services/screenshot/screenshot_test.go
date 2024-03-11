@@ -54,7 +54,7 @@ func TestHeadlessScreenshotService(t *testing.T) {
 		Height:          DefaultHeight,
 		Theme:           DefaultTheme,
 		Path:            "d-solo/foo/bar?from=now-6h&orgId=2&panelId=4&to=now-2h",
-		ConcurrentLimit: cfg.AlertingRenderLimit,
+		ConcurrentLimit: cfg.RendererConcurrentRequestLimit,
 	}
 
 	opts.From = "now-6h"
@@ -62,7 +62,7 @@ func TestHeadlessScreenshotService(t *testing.T) {
 	opts.DashboardUID = "foo"
 	opts.PanelID = 4
 	r.EXPECT().
-		Render(ctx, renderOpts, nil).
+		Render(ctx, rendering.RenderPNG, renderOpts, nil).
 		Return(&rendering.RenderResult{FilePath: "panel.png"}, nil)
 	screenshot, err = s.Take(ctx, opts)
 	require.NoError(t, err)
@@ -70,7 +70,7 @@ func TestHeadlessScreenshotService(t *testing.T) {
 
 	// a timeout should return error
 	r.EXPECT().
-		Render(ctx, renderOpts, nil).
+		Render(ctx, rendering.RenderPNG, renderOpts, nil).
 		Return(nil, rendering.ErrTimeout)
 	screenshot, err = s.Take(ctx, opts)
 	assert.EqualError(t, err, fmt.Sprintf("failed to take screenshot: %s", rendering.ErrTimeout))

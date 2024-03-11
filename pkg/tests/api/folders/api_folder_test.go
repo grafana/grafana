@@ -25,6 +25,42 @@ import (
 
 const orgID = 1
 
+func TestIntegrationUpdateFolder(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+		EnableQuota:      true,
+	})
+
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	// Create user
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
+	resp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
+		Title: "folder",
+	})
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.Code())
+
+	t.Run("update folder should succeed", func(t *testing.T) {
+		resp, err := adminClient.Folders.UpdateFolder(resp.Payload.UID, &models.UpdateFolderCommand{
+			Title:   "new title",
+			Version: resp.Payload.Version,
+		})
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.Code())
+		require.Equal(t, "new title", resp.Payload.Title)
+	})
+}
+
 func TestIntegrationCreateFolder(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

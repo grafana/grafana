@@ -15,9 +15,12 @@ import (
 	"sort"
 	"strings"
 
+	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
+	"github.com/grafana/cuetsy/ts"
+	"github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/kindsys"
 
 	"github.com/grafana/grafana/pkg/codegen"
@@ -38,16 +41,13 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		&codegen.ResourceGoTypesJenny{},
-		&codegen.SubresourceGoTypesJenny{},
+		&codegen.GoSpecJenny{},
 		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
 		codegen.LatestMajorsOrXJenny(
 			cuectx.TSCoreKindParentPath,
-			true, // forcing group so that we ignore the top level resource (for now)
-			codegen.TSResourceJenny{}),
+			codegen.TSTypesJenny{ApplyFuncs: []codegen.ApplyFunc{renameSpecNode}}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
-		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
 
 	header := codegen.SlashHeaderMapper("kinds/gen.go")
@@ -93,6 +93,16 @@ func main() {
 	commfsys := elsedie(genCommon(filepath.Join(groot, "pkg", "kindsys")))("common schemas failed")
 	commfsys = elsedie(commfsys.Map(header))("failed gen header on common fsys")
 	if err = jfs.Merge(commfsys); err != nil {
+		die(err)
+	}
+
+	// Merging k8 resources
+	k8Resources, err := genK8Resources(kinddirs)
+	if err != nil {
+		die(err)
+	}
+
+	if err = jfs.Merge(k8Resources); err != nil {
 		die(err)
 	}
 
@@ -181,4 +191,90 @@ func elsedie[T any](t T, err error) func(msg string) T {
 func die(err error) {
 	fmt.Fprint(os.Stderr, err, "\n")
 	os.Exit(1)
+}
+
+func genK8Resources(dirs []os.DirEntry) (*codejen.FS, error) {
+	jenny := codejen.JennyListWithNamer[[]cue.Value](func(_ []cue.Value) string {
+		return "K8Resources"
+	})
+
+	jenny.Append(&codegen.K8ResourcesJenny{})
+
+	header := codegen.SlashHeaderMapper("kinds/gen.go")
+	jenny.AddPostprocessors(header)
+
+	return jenny.GenerateFS(loadCueFiles(dirs))
+}
+
+func loadCueFiles(dirs []os.DirEntry) []cue.Value {
+	ctx := cuectx.GrafanaCUEContext()
+	values := make([]cue.Value, 0)
+	for _, dir := range dirs {
+		if !dir.IsDir() {
+			continue
+		}
+
+		entries, err := os.ReadDir(dir.Name())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error opening %s directory: %s", dir, err)
+			os.Exit(1)
+		}
+
+		// It's assuming that we only have one file in each folder
+		entry := filepath.Join(dir.Name(), entries[0].Name())
+		cueFile, err := os.ReadFile(entry)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "unable to open %s/%s file: %s", dir, entries[0].Name(), err)
+			os.Exit(1)
+		}
+
+		values = append(values, ctx.CompileBytes(cueFile))
+	}
+
+	return values
+}
+
+// renameSpecNode rename spec node from the TS file result
+func renameSpecNode(sfg codegen.SchemaForGen, tf *ast.File) {
+	specidx, specdefidx := -1, -1
+	for idx, def := range tf.Nodes {
+		// Peer through export keywords
+		if ex, is := def.(ast.ExportKeyword); is {
+			def = ex.Decl
+		}
+
+		switch x := def.(type) {
+		case ast.TypeDecl:
+			if x.Name.Name == "spec" {
+				specidx = idx
+				x.Name.Name = sfg.Name
+				tf.Nodes[idx] = x
+			}
+		case ast.VarDecl:
+			// Before:
+			//   export const defaultspec: Partial<spec> = {
+			// After:
+			// /  export const defaultPlaylist: Partial<Playlist> = {
+			if x.Names.Idents[0].Name == "defaultspec" {
+				specdefidx = idx
+				x.Names.Idents[0].Name = "default" + sfg.Name
+				tt := x.Type.(ast.TypeTransformExpr)
+				tt.Expr = ts.Ident(sfg.Name)
+				x.Type = tt
+				tf.Nodes[idx] = x
+			}
+		}
+	}
+
+	if specidx != -1 {
+		decl := tf.Nodes[specidx]
+		tf.Nodes = append(append(tf.Nodes[:specidx], tf.Nodes[specidx+1:]...), decl)
+	}
+	if specdefidx != -1 {
+		if specdefidx > specidx {
+			specdefidx--
+		}
+		decl := tf.Nodes[specdefidx]
+		tf.Nodes = append(append(tf.Nodes[:specdefidx], tf.Nodes[specdefidx+1:]...), decl)
+	}
 }

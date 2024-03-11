@@ -252,6 +252,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 		ApplyRoute(req.Context(), req, proxy.proxyPath, proxy.matchedRoute, DSInfo{
 			ID:                      proxy.ds.ID,
+			URL:                     proxy.ds.URL,
 			Updated:                 proxy.ds.Updated,
 			JSONData:                jsonData,
 			DecryptedSecureJSONData: decryptedValues,
@@ -343,7 +344,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		}
 	}
 
-	panelPluginType := proxy.ctx.Req.Header.Get("X-Panel-Plugin-Type")
+	panelPluginId := proxy.ctx.Req.Header.Get("X-Panel-Plugin-Id")
 
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	ctxLogger.Info("Proxying incoming request",
@@ -353,7 +354,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"datasource", proxy.ds.Type,
 		"uri", proxy.ctx.Req.RequestURI,
 		"method", proxy.ctx.Req.Method,
-		"panelPluginType", panelPluginType,
+		"panelPluginId", panelPluginId,
 		"body", body)
 }
 

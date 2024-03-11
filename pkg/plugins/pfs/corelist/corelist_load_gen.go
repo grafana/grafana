@@ -34,7 +34,7 @@ func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
 	return []pfs.ParsedPlugin{
 		parsePluginOrPanic("public/app/plugins/datasource/alertmanager", "alertmanager", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/azuremonitor", "grafana_azure_monitor_datasource", rt),
-		parsePluginOrPanic("public/app/plugins/datasource/cloud-monitoring", "grafana_cloud_monitoring_datasource", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/cloud-monitoring", "stackdriver", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/cloudwatch", "cloudwatch", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/dashboard", "dashboard", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/elasticsearch", "elasticsearch", rt),

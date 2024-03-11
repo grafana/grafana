@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 
 	_ "github.com/lib/pq"
@@ -139,13 +138,9 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 				sqleng.Interpolate = origInterpolate
 			})
 
-			sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-				return sql, nil
+			sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+				return sql
 			}
-
-			cfg := setting.NewCfg()
-			cfg.DataPath = t.TempDir()
-			cfg.DataProxyRowLimit = 10000
 
 			jsonData := sqleng.JsonData{
 				MaxOpenConns:        0,
@@ -164,7 +159,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 
 			cnnstr := getCnnStr()
 
-			db, handler, err := newPostgres(cfg, dsInfo, cnnstr, logger)
+			db, handler, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 			t.Cleanup((func() {
 				_, err := db.Exec("DROP TABLE tbl")

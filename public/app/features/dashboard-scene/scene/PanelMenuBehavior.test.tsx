@@ -23,6 +23,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { GetExploreUrlArguments } from 'app/core/utils/explore';
 
 import { DashboardScene } from './DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelMenuBehavior } from './PanelMenuBehavior';
 
 const mocks = {
@@ -469,6 +470,43 @@ describe('panelMenuBehavior', () => {
       );
     });
 
+    it('it should not contain remove and duplicate menu items when not in edit mode', async () => {
+      const { menu, panel } = await buildTestScene({});
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((i) => i.text === 'Remove')).toBeUndefined();
+      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      expect(moreMenu?.find((i) => i.text === 'Duplicate')).toBeUndefined();
+      expect(moreMenu?.find((i) => i.text === 'Create library panel')).toBeUndefined();
+    });
+
+    it('it should contain remove and duplicate menu items when in edit mode', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ isEditing: true });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((i) => i.text === 'Remove')).toBeDefined();
+      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      expect(moreMenu?.find((i) => i.text === 'Duplicate')).toBeDefined();
+      expect(moreMenu?.find((i) => i.text === 'Create library panel')).toBeDefined();
+    });
+
     it('should only contain explore when embedded', async () => {
       const { menu, panel } = await buildTestScene({ isEmbedded: true });
 
@@ -501,6 +539,7 @@ async function buildTestScene(options: SceneOptions) {
     pluginId: 'table',
     key: 'panel-12',
     menu,
+    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     $variables: new SceneVariableSet({
       variables: [new LocalValueVariable({ name: 'a', value: 'a', text: 'a' })],
     }),

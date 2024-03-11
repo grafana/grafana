@@ -14,30 +14,33 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*FeatureFlagAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*FeatureFlagAPIBuilder)(nil)
 
 var gv = v0alpha1.SchemeGroupVersion
 
 // This is used just so wire has something unique to return
 type FeatureFlagAPIBuilder struct {
-	features *featuremgmt.FeatureManager
+	features      *featuremgmt.FeatureManager
+	accessControl accesscontrol.AccessControl
+	cfg           *setting.Cfg
 }
 
-func NewFeatureFlagAPIBuilder(features *featuremgmt.FeatureManager) *FeatureFlagAPIBuilder {
-	return &FeatureFlagAPIBuilder{features}
+func NewFeatureFlagAPIBuilder(features *featuremgmt.FeatureManager, accessControl accesscontrol.AccessControl, cfg *setting.Cfg) *FeatureFlagAPIBuilder {
+	return &FeatureFlagAPIBuilder{features, accessControl, cfg}
 }
 
 func RegisterAPIService(features *featuremgmt.FeatureManager,
-	apiregistration grafanaapiserver.APIRegistrar,
+	accessControl accesscontrol.AccessControl,
+	apiregistration builder.APIRegistrar,
+	cfg *setting.Cfg,
 ) *FeatureFlagAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
-	}
-	builder := NewFeatureFlagAPIBuilder(features)
+	builder := NewFeatureFlagAPIBuilder(features, accessControl, cfg)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -78,11 +81,12 @@ func (b *FeatureFlagAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
+	_ generic.RESTOptionsGetter,
+	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	featureStore := NewFeaturesStorage(b.features.GetFlags())
+	featureStore := NewFeaturesStorage()
 	toggleStore := NewTogglesStorage(b.features)
 
 	storage := map[string]rest.Storage{}
@@ -102,13 +106,13 @@ func (b *FeatureFlagAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 // Register additional routes with the server
-func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	defs := v0alpha1.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
 	stateSchema := defs["github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1.ResolvedToggleState"].Schema
 
 	tags := []string{"Editor"}
-	return &grafanaapiserver.APIRoutes{
-		Root: []grafanaapiserver.APIRouteHandler{
+	return &builder.APIRoutes{
+		Root: []builder.APIRouteHandler{
 			{
 				Path: "current",
 				Spec: &spec3.PathProps{
@@ -160,7 +164,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 													"enable-auto-migrate": {
 														ExampleProps: spec3.ExampleProps{
 															Summary:     "enable auto-migrate panels",
-															Description: "example descr",
+															Description: "enable description",
 															Value: &v0alpha1.ResolvedToggleState{
 																Enabled: map[string]bool{
 																	featuremgmt.FlagAutoMigrateOldPanels: true,
@@ -171,7 +175,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 													"disable-auto-migrate": {
 														ExampleProps: spec3.ExampleProps{
 															Summary:     "disable auto-migrate panels",
-															Description: "disable descr",
+															Description: "disable description",
 															Value: &v0alpha1.ResolvedToggleState{
 																Enabled: map[string]bool{
 																	featuremgmt.FlagAutoMigrateOldPanels: false,

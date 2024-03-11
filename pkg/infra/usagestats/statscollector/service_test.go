@@ -145,7 +145,7 @@ func TestCollectingUsageStats(t *testing.T) {
 		AnonymousEnabled:     true,
 		BasicAuthEnabled:     true,
 		LDAPAuthEnabled:      true,
-		AuthProxyEnabled:     true,
+		AuthProxy:            setting.AuthProxySettings{Enabled: true},
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
 		RemoteCacheOptions: &setting.RemoteCacheOptions{

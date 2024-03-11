@@ -32,10 +32,11 @@ func schema_pkg_apis_playlist_v0alpha1_Item(ref common.ReferenceCallback) common
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type of the item.",
+							Description: "Type of the item.\n\nPossible enum values:\n - `\"dashboard_by_id\"` Deprecated -- should use UID\n - `\"dashboard_by_tag\"`\n - `\"dashboard_by_uid\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
+							Enum:        []interface{}{"dashboard_by_id", "dashboard_by_tag", "dashboard_by_uid"},
 						},
 					},
 					"value": {

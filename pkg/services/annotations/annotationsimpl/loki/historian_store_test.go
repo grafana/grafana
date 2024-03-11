@@ -27,10 +27,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 	if testing.Short() {
@@ -369,7 +374,23 @@ func TestHasAccess(t *testing.T) {
 	})
 }
 
-func TestFloat64Map(t *testing.T) {
+func TestNumericMap(t *testing.T) {
+	t.Run("should return error for nil value", func(t *testing.T) {
+		var jsonMap *simplejson.Json
+		_, err := numericMap[float64](jsonMap)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unexpected nil value")
+	})
+
+	t.Run("should return error for nil interface value", func(t *testing.T) {
+		jsonMap := simplejson.NewFromAny(map[string]any{
+			"key1": nil,
+		})
+		_, err := numericMap[float64](jsonMap)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unexpected value type")
+	})
+
 	t.Run(`should convert json string:float kv to Golang map[string]float64`, func(t *testing.T) {
 		jsonMap := simplejson.NewFromAny(map[string]any{
 			"key1": json.Number("1.0"),

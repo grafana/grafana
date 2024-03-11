@@ -1,4 +1,4 @@
-import { AdHocVariableModel, TypedVariableModel, VariableModel } from '@grafana/data';
+import { DataFrameDTO, DataFrameJSON, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -24,18 +24,20 @@ import {
   SceneDataLayers,
   SceneDataLayerProvider,
   SceneDataLayerControls,
-  AdHocFilterSet,
   TextBoxVariable,
   UserActionEvent,
+  GroupByVariable,
+  AdHocFiltersVariable,
+  SceneFlexLayout,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
+import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -45,6 +47,7 @@ import { PanelNotices } from '../scene/PanelNotices';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
@@ -55,6 +58,7 @@ import {
 } from '../utils/utils';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
+import { GRAFANA_DATASOURCE_REF } from './const';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -68,9 +72,7 @@ export interface SaveModelToSceneOptions {
 
 export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
-  const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
-    autoMigrateOldPanels: false,
-  });
+  const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
   const scene = createDashboardSceneFromDashboardModel(oldModel);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
@@ -108,12 +110,36 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
           currentRowPanels = [];
         }
       }
+    } else if (panel.type === 'add-library-panel') {
+      const gridItem = buildGridItemForLibraryPanelWidget(panel);
+
+      if (!gridItem) {
+        continue;
+      }
+
+      if (currentRow) {
+        currentRowPanels.push(gridItem);
+      } else {
+        panels.push(gridItem);
+      }
     } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
       const gridItem = buildGridItemForLibPanel(panel);
-      if (gridItem) {
+
+      if (!gridItem) {
+        continue;
+      }
+
+      if (currentRow) {
+        currentRowPanels.push(gridItem);
+      } else {
         panels.push(gridItem);
       }
     } else {
+      // when rendering a snapshot created with the legacy Dashboards convert data to new snapshot format to be compatible with Scenes
+      if (panel.snapshotData) {
+        convertOldSnapshotToScenesSnapshot(panel);
+      }
+
       const panelObject = buildGridItemForPanel(panel);
 
       // when processing an expanded row, collect its panels
@@ -141,6 +167,25 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
         if (!(saveModel instanceof PanelModel)) {
           saveModel = new PanelModel(saveModel);
         }
+
+        if (saveModel.type === 'add-library-panel') {
+          const gridItem = buildGridItemForLibraryPanelWidget(saveModel);
+
+          if (!gridItem) {
+            throw new Error('Failed to build grid item for library panel widget');
+          }
+
+          return gridItem;
+        } else if (saveModel.libraryPanel?.uid && !('model' in saveModel.libraryPanel)) {
+          const gridItem = buildGridItemForLibPanel(saveModel);
+
+          if (!gridItem) {
+            throw new Error('Failed to build grid item for library panel');
+          }
+
+          return gridItem;
+        }
+
         return buildGridItemForPanel(saveModel);
       });
     }
@@ -167,30 +212,18 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
     isCollapsed: row.collapsed,
     children: children,
     $behaviors: behaviors,
+    actions: new RowActions({}),
   });
 }
 
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
   let layers: SceneDataLayerProvider[] = [];
-  let filtersSets: AdHocFilterSet[] = [];
 
   if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
       .map((v) => {
         try {
-          if (isAdhocVariable(v)) {
-            filtersSets.push(
-              new AdHocFilterSet({
-                name: v.name,
-                datasource: v.datasource,
-                filters: v.filters ?? [],
-                baseFilters: v.baseFilters ?? [],
-              })
-            );
-            return null;
-          }
-
           return createSceneVariableFromVariableModel(v);
         } catch (err) {
           console.error(err);
@@ -211,7 +244,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
-  if (oldModel.annotations?.list?.length) {
+  if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
@@ -266,12 +299,14 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     }),
     $variables: variables,
     $behaviors: [
-      registerDashboardMacro,
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
+      new behaviors.SceneQueryController(),
+      registerDashboardMacro,
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
+      trackIfIsEmpty,
     ],
     $data:
       layers.length > 0
@@ -279,20 +314,16 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
             layers,
           })
         : undefined,
-    controls: [
-      new DashboardControls({
-        variableControls: [new VariableValueSelectors({}), ...filtersSets, new SceneDataLayerControls()],
-        timeControls: [
-          new SceneTimePicker({}),
-          new SceneRefreshPicker({
-            refresh: oldModel.refresh,
-            intervals: oldModel.timepicker.refresh_intervals,
-          }),
-        ],
-        linkControls: new DashboardLinksControls({}),
-        hideTimeControls: oldModel.timepicker.hidden,
+    controls: new DashboardControls({
+      variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
+      timePicker: new SceneTimePicker({}),
+      refreshPicker: new SceneRefreshPicker({
+        refresh: oldModel.refresh,
+        intervals: oldModel.timepicker.refresh_intervals,
+        withText: true,
       }),
-    ],
+      hideTimeControls: oldModel.timepicker.hidden,
+    }),
   });
 
   return dashboardScene;
@@ -302,13 +333,26 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   const commonProperties = {
     name: variable.name,
     label: variable.label,
+    description: variable.description,
   };
+  if (variable.type === 'adhoc') {
+    return new AdHocFiltersVariable({
+      ...commonProperties,
+      description: variable.description,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      datasource: variable.datasource,
+      applyMode: 'auto',
+      filters: variable.filters ?? [],
+      baseFilters: variable.baseFilters ?? [],
+    });
+  }
   if (variable.type === 'custom') {
     return new CustomVariable({
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-      description: variable.description,
+
       query: variable.query,
       isMulti: variable.multi,
       allValue: variable.allValue || undefined,
@@ -322,7 +366,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-      description: variable.description,
+
       query: variable.query,
       datasource: variable.datasource,
       sort: variable.sort,
@@ -341,7 +385,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-      description: variable.description,
       regex: variable.regex,
       pluginId: variable.query,
       allValue: variable.allValue || undefined,
@@ -357,7 +400,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     return new IntervalVariable({
       ...commonProperties,
       value: currentInterval,
-      description: variable.description,
       intervals: intervals,
       autoEnabled: variable.auto,
       autoStepCount: variable.auto_count,
@@ -369,7 +411,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'constant') {
     return new ConstantVariable({
       ...commonProperties,
-      description: variable.description,
       value: variable.query,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
@@ -377,14 +418,42 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'textbox') {
     return new TextBoxVariable({
       ...commonProperties,
-      description: variable.description,
-      value: variable.query,
+      value: variable?.current?.value?.[0] ?? variable.query,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
+    });
+  } else if (config.featureToggles.groupByVariable && variable.type === 'groupby') {
+    return new GroupByVariable({
+      ...commonProperties,
+      datasource: variable.datasource,
+      value: variable.current?.value || [],
+      text: variable.current?.text || [],
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      // @ts-expect-error
+      defaultOptions: variable.options,
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
   }
+}
+
+export function buildGridItemForLibraryPanelWidget(panel: PanelModel) {
+  if (panel.type !== 'add-library-panel') {
+    return null;
+  }
+
+  const body = new AddLibraryPanelWidget({
+    key: getVizPanelKeyForPanelId(panel.id),
+  });
+
+  return new SceneGridItem({
+    body,
+    y: panel.gridPos.y,
+    x: panel.gridPos.x,
+    width: panel.gridPos.w,
+    height: panel.gridPos.h,
+  });
 }
 
 export function buildGridItemForLibPanel(panel: PanelModel) {
@@ -396,7 +465,7 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     title: panel.title,
     uid: panel.libraryPanel.uid,
     name: panel.libraryPanel.name,
-    key: getVizPanelKeyForPanelId(panel.id),
+    panelKey: getVizPanelKeyForPanelId(panel.id),
   });
 
   return new SceneGridItem({
@@ -450,7 +519,8 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   }
 
   if (panel.repeat) {
-    const repeatDirection = panel.repeatDirection ?? 'h';
+    const repeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
+
     return new PanelRepeaterGridItem({
       key: `grid-item-${panel.id}`,
       x: panel.gridPos.x,
@@ -461,7 +531,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
       source: new VizPanel(vizPanelState),
       variableName: panel.repeat,
       repeatedPanels: [],
-      repeatDirection: panel.repeatDirection,
+      repeatDirection: repeatDirection,
       maxPerRow: panel.maxPerRow,
     });
   }
@@ -477,8 +547,6 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     body,
   });
 }
-
-const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
 
 const getLimitedDescriptionReporter = () => {
   const reportedPanels: string[] = [];
@@ -526,3 +594,53 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
     }
   });
 }
+
+export function trackIfIsEmpty(parent: DashboardScene) {
+  updateIsEmpty(parent);
+
+  parent.state.body.subscribeToState(() => {
+    updateIsEmpty(parent);
+  });
+}
+
+function updateIsEmpty(parent: DashboardScene) {
+  const { body } = parent.state;
+  if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
+    parent.setState({ isEmpty: body.state.children.length === 0 });
+  }
+}
+
+const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
+  return snapshotData.map((data) => {
+    return {
+      data: {
+        values: data.fields.map((field) => field.values).filter((values): values is unknown[] => values !== undefined),
+      },
+      schema: {
+        fields: data.fields.map((field) => ({
+          name: field.name,
+          type: field.type,
+          config: field.config,
+        })),
+      },
+    };
+  });
+};
+
+// override panel datasource and targets with snapshot data using the Grafana datasource
+export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
+  // only old snapshots created with old dashboards contains snapshotData
+  if (panel.snapshotData) {
+    panel.datasource = GRAFANA_DATASOURCE_REF;
+    panel.targets = [
+      {
+        refId: panel.snapshotData[0]?.refId ?? '',
+        datasource: panel.datasource,
+        queryType: 'snapshot',
+        // @ts-ignore
+        snapshot: convertSnapshotData(panel.snapshotData),
+      },
+    ];
+    panel.snapshotData = [];
+  }
+};

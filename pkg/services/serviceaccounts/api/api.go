@@ -48,7 +48,7 @@ func NewServiceAccountsAPI(
 		RouterRegister:       routerRegister,
 		log:                  log.New("serviceaccounts.api"),
 		permissionService:    permissionService,
-		isExternalSAEnabled:  features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth),
+		isExternalSAEnabled:  features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 }
 

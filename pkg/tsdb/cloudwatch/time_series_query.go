@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 type responseWrapper struct {
@@ -18,8 +18,8 @@ type responseWrapper struct {
 	RefId        string
 }
 
-func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger.Debug("Executing time series query")
+func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	e.logger.FromContext(ctx).Debug("Executing time series query")
 	resp := backend.NewQueryDataResponse()
 
 	if len(req.Queries) == 0 {
@@ -37,7 +37,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 		return nil, err
 	}
 
-	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, instance.Settings.Region, logger,
+	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, instance.Settings.Region, e.logger.FromContext(ctx),
 		features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying))
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 
 		batches := [][]*models.CloudWatchQuery{regionQueries}
 		if features.IsEnabled(ctx, features.FlagCloudWatchBatchQueries) {
-			batches = getMetricQueryBatches(regionQueries, logger)
+			batches = getMetricQueryBatches(regionQueries, e.logger.FromContext(ctx))
 		}
 
 		for _, batch := range batches {
@@ -70,7 +70,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 			eg.Go(func() error {
 				defer func() {
 					if err := recover(); err != nil {
-						logger.Error("Execute Get Metric Data Query Panic", "error", err, "stack", log.Stack(1))
+						e.logger.FromContext(ctx).Error("Execute Get Metric Data Query Panic", "error", err, "stack", utils.Stack(1))
 						if theErr, ok := err.(error); ok {
 							resultChan <- &responseWrapper{
 								DataResponse: &backend.DataResponse{
@@ -86,7 +86,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 					return err
 				}
 
-				metricDataInput, err := e.buildMetricDataInput(logger, startTime, endTime, requestQueries)
+				metricDataInput, err := e.buildMetricDataInput(startTime, endTime, requestQueries)
 				if err != nil {
 					return err
 				}
@@ -97,7 +97,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 				}
 
 				if features.IsEnabled(ctx, features.FlagCloudWatchWildCardDimensionValues) {
-					requestQueries, err = e.getDimensionValuesForWildcards(ctx, req.PluginContext, region, client, requestQueries, instance.tagValueCache, logger)
+					requestQueries, err = e.getDimensionValuesForWildcards(ctx, req.PluginContext, region, client, requestQueries, instance.tagValueCache, instance.Settings.GrafanaSettings.ListMetricsPageLimit)
 					if err != nil {
 						return err
 					}

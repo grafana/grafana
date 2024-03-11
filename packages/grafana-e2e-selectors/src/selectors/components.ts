@@ -285,7 +285,7 @@ export const Components = {
     rows: 'Query editor row',
   },
   QueryEditorRow: {
-    actionButton: (title: string) => `${title}`,
+    actionButton: (title: string) => `data-testid ${title}`,
     title: (refId: string) => `Query editor row title ${refId}`,
     container: (refId: string) => `Query editor row ${refId}`,
   },
@@ -392,7 +392,7 @@ export const Components = {
      */
     container: 'Folder picker select container',
     containerV2: 'data-testid Folder picker select container',
-    input: 'Select a folder',
+    input: 'data-testid folder-picker-input',
   },
   ReadonlyFolderPicker: {
     container: 'data-testid Readonly folder picker select container',
@@ -404,6 +404,11 @@ export const Components = {
      */
     input: () => 'input[id="data-source-picker"]',
     inputV2: 'data-testid Select a data source',
+    dataSourceList: 'data-testid Data source list dropdown',
+    advancedModal: {
+      dataSourceList: 'data-testid Data source list',
+      builtInDataSourceList: 'data-testid Built in data source list',
+    },
   },
   TimeZonePicker: {
     /**
@@ -411,6 +416,7 @@ export const Components = {
      */
     container: 'Time zone picker select container',
     containerV2: 'data-testid Time zone picker select container',
+    changeTimeSettingsButton: 'data-testid Time zone picker Change time settings button',
   },
   WeekStartPicker: {
     /**

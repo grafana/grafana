@@ -360,18 +360,10 @@ export function getNumCharsToDelete(
   const text = cleanText ? cleanText(typeaheadText) : typeaheadText;
   const offset = typeaheadText.indexOf(typeaheadPrefix);
 
-  let forward: number;
-
-  if (window.grafanaBootData?.settings.featureToggles['slateAutocomplete']) {
-    const suffixLength =
-      offset > -1 ? text.length - offset - typeaheadPrefix.length : text.length - typeaheadPrefix.length;
-    const midWord = Boolean((typeaheadPrefix && suffixLength > 0) || suggestionText === typeaheadText);
-    forward = midWord && !preserveSuffix ? suffixLength + offset : 0;
-  } else {
-    const suffixLength = text.length - typeaheadPrefix.length;
-    const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestionText === typeaheadText);
-    forward = midWord && !preserveSuffix ? suffixLength + offset : 0;
-  }
+  const suffixLength =
+    offset > -1 ? text.length - offset - typeaheadPrefix.length : text.length - typeaheadPrefix.length;
+  const midWord = Boolean((typeaheadPrefix && suffixLength > 0) || suggestionText === typeaheadText);
+  const forward = midWord && !preserveSuffix ? suffixLength + offset : 0;
 
   return {
     forward,
