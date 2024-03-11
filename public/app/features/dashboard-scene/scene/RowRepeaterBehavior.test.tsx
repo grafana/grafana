@@ -50,6 +50,19 @@ describe('RowRepeaterBehavior', () => {
       expect(rowAtTheBottom.state.y).toBe(40);
     });
 
+    it('Should push row at the bottom down and also offset its children', () => {
+      const rowAtTheBottom = grid.state.children[6] as SceneGridRow;
+      const rowChildOne = rowAtTheBottom.state.children[0] as SceneGridItem;
+      const rowChildTwo = rowAtTheBottom.state.children[1] as SceneGridItem;
+
+      expect(rowAtTheBottom.state.title).toBe('Row at the bottom');
+
+      // Panel at the top is 10, each row is (1+5)*5 = 30, so the grid item below it should be 40
+      expect(rowAtTheBottom.state.y).toBe(40);
+      expect(rowChildOne.state.y).toBe(41);
+      expect(rowChildTwo.state.y).toBe(49);
+    });
+
     it('Should handle second repeat cycle and update remove old repeats', async () => {
       // trigger another repeat cycle by changing the variable
       const variable = scene.state.$variables!.state.variables[0] as TestVariable;
@@ -111,6 +124,26 @@ function buildScene(options: SceneOptions) {
         width: 24,
         height: 5,
         title: 'Row at the bottom',
+        children: [
+          new SceneGridItem({
+            key: 'griditem-2',
+            x: 0,
+            y: 17,
+            body: new SceneCanvasText({
+              key: 'canvas-2',
+              text: 'Panel inside row, server = $server',
+            }),
+          }),
+          new SceneGridItem({
+            key: 'griditem-3',
+            x: 0,
+            y: 25,
+            body: new SceneCanvasText({
+              key: 'canvas-3',
+              text: 'Panel inside row, server = $server',
+            }),
+          }),
+        ],
       }),
     ],
   });
