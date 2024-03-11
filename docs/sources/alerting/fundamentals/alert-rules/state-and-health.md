@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: State and health of alert rules
-weight: 405
+weight: 109
 ---
 
 # State and health of alert rules

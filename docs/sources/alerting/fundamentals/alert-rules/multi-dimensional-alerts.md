@@ -13,7 +13,7 @@ labels:
     - enterprise
     - oss
 title: Multi-dimensional alerts
-weight: 105
+weight: 110
 ---
 
 # Multi-dimensional alerts

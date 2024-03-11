@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Namespaces, folders, and groups
-weight: 105
+weight: 107
 ---
 
 ## Namespaces, folders, and groups
