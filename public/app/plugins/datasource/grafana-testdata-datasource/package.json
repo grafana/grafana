@@ -28,7 +28,7 @@
     "@types/jest": "29.5.12",
     "@types/lodash": "4.14.202",
     "@types/node": "20.11.25",
-    "@types/react": "18.2.60",
+    "@types/react": "18.2.64",
     "@types/testing-library__jest-dom": "5.14.9",
     "@types/uuid": "9.0.8",
     "ts-node": "10.9.2",
