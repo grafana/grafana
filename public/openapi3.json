@@ -220,6 +220,29 @@
         "description": "(empty)"
       },
       "deleteAlertNotificationChannelResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "id": {
+                  "description": "ID Identifier of the deleted notification channel.",
+                  "example": 65,
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "message": {
+                  "description": "Message Message of the deleted notificatiton channel.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "message"
+              ],
+              "type": "object"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "deleteCorrelationResponse": {
@@ -282,13 +305,22 @@
         "description": "(empty)"
       },
       "getAlertNotificationChannelResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AlertNotification"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getAlertNotificationChannelsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {},
+              "items": {
+                "$ref": "#/components/schemas/AlertNotification"
+              },
               "type": "array"
             }
           }
@@ -299,7 +331,9 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {},
+              "items": {
+                "$ref": "#/components/schemas/AlertNotificationLookup"
+              },
               "type": "array"
             }
           }
@@ -12857,362 +12891,6 @@
         "summary": "Revoke auth token for user.",
         "tags": [
           "admin_users"
-        ]
-      }
-    },
-    "/alert-notifications": {
-      "get": {
-        "description": "Returns all notification channels that the authenticated user has permission to view.",
-        "operationId": "getAlertNotificationChannels",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationChannelsResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get all notification channels.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      },
-      "post": {
-        "description": "You can find the full list of [supported notifiers](https://grafana.com/docs/grafana/latest/alerting/old-alerting/notifications/#list-of-supported-notifiers) on the alert notifiers page.",
-        "operationId": "createAlertNotificationChannel",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/components/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Create notification channel.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      }
-    },
-    "/alert-notifications/lookup": {
-      "get": {
-        "description": "Returns all notification channels, but with less detailed information. Accessible by any authenticated user and is mainly used by providing alert notification channels in Grafana UI when configuring alert rule.",
-        "operationId": "getAlertNotificationLookup",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationLookupResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get all notification channels (lookup).",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      }
-    },
-    "/alert-notifications/test": {
-      "post": {
-        "description": "Sends a test notification to the channel.",
-        "operationId": "notificationChannelTest",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "412": {
-            "$ref": "#/components/responses/SMTPNotEnabledError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Test notification channel.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      }
-    },
-    "/alert-notifications/uid/{notification_channel_uid}": {
-      "delete": {
-        "description": "Deletes an existing notification channel identified by UID.",
-        "operationId": "deleteAlertNotificationChannelByUID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "notification_channel_uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/deleteAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Delete alert notification by UID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      },
-      "get": {
-        "description": "Returns the notification channel given the notification channel UID.",
-        "operationId": "getAlertNotificationChannelByUID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "notification_channel_uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get notification channel by UID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      },
-      "put": {
-        "description": "Updates an existing notification channel identified by uid.",
-        "operationId": "updateAlertNotificationChannelByUID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "notification_channel_uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Update notification channel by UID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      }
-    },
-    "/alert-notifications/{notification_channel_id}": {
-      "delete": {
-        "description": "Deletes an existing notification channel identified by ID.",
-        "operationId": "deleteAlertNotificationChannel",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "notification_channel_id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Delete alert notification by ID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      },
-      "get": {
-        "description": "Returns the notification channel given the notification channel ID.",
-        "operationId": "getAlertNotificationChannelByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "notification_channel_id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get notification channel by ID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      },
-      "put": {
-        "description": "Updates an existing notification channel identified by ID.",
-        "operationId": "updateAlertNotificationChannel",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "notification_channel_id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Update notification channel by ID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
         ]
       }
     },

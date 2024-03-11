@@ -1777,342 +1777,6 @@
         }
       }
     },
-    "/alert-notifications": {
-      "get": {
-        "description": "Returns all notification channels that the authenticated user has permission to view.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Get all notification channels.",
-        "operationId": "getAlertNotificationChannels",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationChannelsResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "You can find the full list of [supported notifiers](https://grafana.com/docs/grafana/latest/alerting/old-alerting/notifications/#list-of-supported-notifiers) on the alert notifiers page.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Create notification channel.",
-        "operationId": "createAlertNotificationChannel",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {}
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alert-notifications/lookup": {
-      "get": {
-        "description": "Returns all notification channels, but with less detailed information. Accessible by any authenticated user and is mainly used by providing alert notification channels in Grafana UI when configuring alert rule.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Get all notification channels (lookup).",
-        "operationId": "getAlertNotificationLookup",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationLookupResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alert-notifications/test": {
-      "post": {
-        "description": "Sends a test notification to the channel.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Test notification channel.",
-        "operationId": "notificationChannelTest",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {}
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "412": {
-            "$ref": "#/responses/SMTPNotEnabledError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alert-notifications/uid/{notification_channel_uid}": {
-      "get": {
-        "description": "Returns the notification channel given the notification channel UID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Get notification channel by UID.",
-        "operationId": "getAlertNotificationChannelByUID",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "notification_channel_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "put": {
-        "description": "Updates an existing notification channel identified by uid.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Update notification channel by UID.",
-        "operationId": "updateAlertNotificationChannelByUID",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {}
-          },
-          {
-            "type": "string",
-            "name": "notification_channel_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "Deletes an existing notification channel identified by UID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Delete alert notification by UID.",
-        "operationId": "deleteAlertNotificationChannelByUID",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "notification_channel_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/deleteAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alert-notifications/{notification_channel_id}": {
-      "get": {
-        "description": "Returns the notification channel given the notification channel ID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Get notification channel by ID.",
-        "operationId": "getAlertNotificationChannelByID",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "notification_channel_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "put": {
-        "description": "Updates an existing notification channel identified by ID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Update notification channel by ID.",
-        "operationId": "updateAlertNotificationChannel",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {}
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "notification_channel_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "Deletes an existing notification channel identified by ID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Delete alert notification by ID.",
-        "operationId": "deleteAlertNotificationChannel",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "notification_channel_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/annotations": {
       "get": {
         "description": "Starting in Grafana v6.4 regions annotations are now returned in one entity that now includes the timeEnd property.",
@@ -21133,7 +20797,26 @@
       }
     },
     "deleteAlertNotificationChannelResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID Identifier of the deleted notification channel.",
+            "type": "integer",
+            "format": "int64",
+            "example": 65
+          },
+          "message": {
+            "description": "Message Message of the deleted notificatiton channel.",
+            "type": "string"
+          }
+        }
+      }
     },
     "deleteCorrelationResponse": {
       "description": "(empty)"
@@ -21183,20 +20866,27 @@
       }
     },
     "getAlertNotificationChannelResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/AlertNotification"
+      }
     },
     "getAlertNotificationChannelsResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/AlertNotification"
+        }
       }
     },
     "getAlertNotificationLookupResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/AlertNotificationLookup"
+        }
       }
     },
     "getAlertResponse": {
