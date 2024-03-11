@@ -509,14 +509,6 @@ func (hs *HTTPServer) registerRoutes() {
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.getDSQueryEndpoint())
 
-		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
-			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
-			alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(hs.PauseAlert()))
-			alertsRoute.Get("/:alertId", hs.ValidateOrgAlert, routing.Wrap(hs.GetAlert))
-			alertsRoute.Get("/", routing.Wrap(hs.GetAlerts))
-			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
-		}, requestmeta.SetOwner(requestmeta.TeamAlerting))
-
 		// Unified Alerting
 		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
 			hs.GetAlertNotifiers()),
@@ -578,7 +570,6 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/settings", authorize(ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetSettings))
 		adminRoute.Get("/settings-verbose", authorize(ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetVerboseSettings))
 		adminRoute.Get("/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
-		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts()))
 
 		adminRoute.Post("/encryption/rotate-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminRotateDataEncryptionKeys))
 		adminRoute.Post("/encryption/reencrypt-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptEncryptionKeys))
