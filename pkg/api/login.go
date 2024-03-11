@@ -125,8 +125,8 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if enable_login_token = true
-		if hs.Cfg.AuthProxyEnabled &&
-			hs.Cfg.AuthProxyEnableLoginToken &&
+		if hs.Cfg.AuthProxy.Enabled &&
+			hs.Cfg.AuthProxy.EnableLoginToken &&
 			c.SignedInUser.AuthenticatedBy == loginservice.AuthProxyAuthModule {
 			user := &user.User{ID: c.SignedInUser.UserID, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
 			err := hs.loginUserWithUser(user, c)
@@ -287,7 +287,7 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *contextmodel.ReqContext, cookie
 		return err
 	}
 
-	cookies.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), 60, hs.CookieOptionsFromCfg)
+	cookies.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), maxAge, hs.CookieOptionsFromCfg)
 
 	return nil
 }

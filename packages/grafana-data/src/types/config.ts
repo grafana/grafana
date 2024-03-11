@@ -225,6 +225,7 @@ export interface GrafanaConfig {
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
+  localFileSystemAvailable?: boolean;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;
@@ -262,4 +263,5 @@ export interface AuthSettings {
   GenericOAuthSkipOrgRoleSync?: boolean;
 
   disableLogin?: boolean;
+  basicAuthStrongPasswordPolicy?: boolean;
 }
