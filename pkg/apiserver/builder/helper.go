@@ -20,6 +20,8 @@ import (
 	"k8s.io/apiserver/pkg/util/openapi"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/kube-openapi/pkg/common"
+
+	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 )
 
 func SetupConfig(
@@ -70,7 +72,11 @@ func SetupConfig(
 		if err != nil {
 			panic(fmt.Sprintf("could not build handler chain func: %s", err.Error()))
 		}
-		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
+
+		handler := genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
+		handler = filters.WithAcceptHeader(handler)
+
+		return handler
 	}
 
 	k8sVersion, err := getK8sApiserverVersion()
