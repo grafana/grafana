@@ -3,14 +3,13 @@ package extractor
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/stretchr/testify/require"
 )
 
 func TestQueryCondition(t *testing.T) {
 	setup := func() *queryConditionTestContext {
 		ctx := &queryConditionTestContext{}
-		db := dbtest.NewFakeDB()
 		ctx.reducer = `{"type":"avg"}`
 		ctx.evaluator = `{"type":"gt","params":[100]}`
 		return ctx
@@ -18,8 +17,23 @@ func TestQueryCondition(t *testing.T) {
 
 	t.Run("Can read query condition from json model", func(t *testing.T) {
 		ctx := setup()
-		_, err := ctx.exec(t)
+
+		jsonModel, err := simplejson.NewJson([]byte(`{
+            "type": "query",
+            "query":  {
+              "params": ["A", "5m", "now"],
+              "datasourceId": 1,
+              "model": {"target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}
+            },
+            "reducer":` + ctx.reducer + `,
+            "evaluator":` + ctx.evaluator + `
+          }`))
 		require.Nil(t, err)
+
+		condition, err := newQueryCondition(jsonModel, 0)
+		require.Nil(t, err)
+
+		ctx.condition = condition
 
 		require.Equal(t, "5m", ctx.condition.Query.From)
 		require.Equal(t, "now", ctx.condition.Query.To)
