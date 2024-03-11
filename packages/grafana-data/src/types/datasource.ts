@@ -429,10 +429,6 @@ export interface QueryEditorProps<
    */
   data?: PanelData;
   range?: TimeRange;
-  /**
-   * @deprecated This is not used anymore and will be removed in a future release.
-   */
-  exploreId?: string;
   history?: Array<HistoryItem<TQuery>>;
   queries?: DataQuery[];
   app?: CoreApp;
