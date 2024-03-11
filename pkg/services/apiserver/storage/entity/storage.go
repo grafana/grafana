@@ -298,7 +298,6 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		NextPageToken: opts.Predicate.Continue,
 		Limit:         opts.Predicate.Limit,
 		Labels:        map[string]string{},
-		// TODO push label/field matching down to storage
 	}
 
 	// translate grafana.app/* label selectors into field requirements
@@ -311,6 +310,9 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 	if len(requirements.SortBy) > 0 {
 		req.Sort = requirements.SortBy
+	}
+	if requirements.ListDeleted {
+		req.Deleted = true
 	}
 	// Update the selector to remove the unneeded requirements
 	opts.Predicate.Label = newSelector
