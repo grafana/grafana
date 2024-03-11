@@ -28,13 +28,9 @@ func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardU
 		lbls[t.Key] = t.Value
 	}
 
-	// Add a label for routing
-	lbls[ngmodels.MigratedUseLegacyChannelsLabel] = "true"
-
 	annotations := make(data.Labels, 4)
 	annotations[ngmodels.DashboardUIDAnnotation] = dashboardUID
 	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", alert.PanelID)
-	annotations[ngmodels.MigratedAlertIdAnnotation] = fmt.Sprintf("%v", alert.ID)
 
 	message := MigrateTmpl(l.New("field", "message"), alert.Message)
 	annotations[ngmodels.MigratedMessageAnnotation] = message
@@ -93,8 +89,6 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 		NoDataState:     transNoData(l, parsedSettings.NoDataState),
 		ExecErrState:    transExecErr(l, parsedSettings.ExecutionErrorState),
 	}
-
-	om.silences.handleSilenceLabels(ar, parsedSettings)
 
 	// We do some validation and pre-save operations early in order to track these errors as part of the migration state.
 	if err := ar.ValidateAlertRule(om.cfg.UnifiedAlerting); err != nil {

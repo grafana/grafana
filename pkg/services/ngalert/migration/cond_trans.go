@@ -11,9 +11,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 	"github.com/grafana/grafana/pkg/util"
@@ -65,10 +68,17 @@ type evaluator struct {
 	Type   string    `json:"type"` // e.g. "gt"
 }
 
+// getMigrationUser returns a background user for the given orgID with permissions to execute migration-related tasks.
+func getDatasourceReader(orgID int64) identity.Requester {
+	return accesscontrol.BackgroundUser("ngalert_migration", orgID, org.RoleAdmin, []accesscontrol.Permission{
+		{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
+	})
+}
+
 //nolint:gocyclo
 func transConditions(ctx context.Context, l log.Logger, set dashAlertSettings, orgID int64, store migrationStore.ReadStore) (*condition, error) {
 	// TODO: needs a significant refactor to reduce complexity.
-	usr := getMigrationUser(orgID)
+	usr := getDatasourceReader(orgID)
 
 	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index
 	for i, cond := range set.Conditions {

@@ -108,16 +108,16 @@ func TestAddMigrationInfo(t *testing.T) {
 				"alertRuleTags": []string{"one", "two", "three", "four"},
 			})},
 			dashboard:           "dashboard",
-			expectedLabels:      data.Labels{models.MigratedUseLegacyChannelsLabel: "true"},
-			expectedAnnotations: data.Labels{models.MigratedAlertIdAnnotation: "43", models.DashboardUIDAnnotation: "dashboard", models.PanelIDAnnotation: "42", "message": "message"},
+			expectedLabels:      data.Labels{},
+			expectedAnnotations: data.Labels{models.DashboardUIDAnnotation: "dashboard", models.PanelIDAnnotation: "42", "message": "message"},
 		},
 		{
 			name: "when alert rule tags are a JSON object",
 			alert: &legacymodels.Alert{ID: 43, PanelID: 42, Message: "message", Settings: simplejson.NewFromAny(map[string]any{
 				"alertRuleTags": map[string]any{"key": "value", "key2": "value2"},
 			})}, dashboard: "dashboard",
-			expectedLabels:      data.Labels{models.MigratedUseLegacyChannelsLabel: "true", "key": "value", "key2": "value2"},
-			expectedAnnotations: data.Labels{models.MigratedAlertIdAnnotation: "43", models.DashboardUIDAnnotation: "dashboard", models.PanelIDAnnotation: "42", "message": "message"},
+			expectedLabels:      data.Labels{"key": "value", "key2": "value2"},
+			expectedAnnotations: data.Labels{models.DashboardUIDAnnotation: "dashboard", models.PanelIDAnnotation: "42", "message": "message"},
 		},
 	}
 
@@ -264,30 +264,6 @@ func TestMakeAlertRule(t *testing.T) {
 		require.Len(t, ar.RuleGroup, store.AlertRuleMaxRuleGroupNameLength)
 		suffix := fmt.Sprintf(" - %ds", ar.IntervalSeconds)
 		require.Equal(t, fmt.Sprintf("%s%s", strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-len(suffix)), suffix), ar.RuleGroup)
-	})
-
-	t.Run("keep last state error dash alert is silenced", func(t *testing.T) {
-		service := NewTestMigrationService(t, sqlStore, nil)
-		m := service.newOrgMigration(1)
-		da := createTestDashAlert()
-		da.Settings.Set("executionErrorState", "keep_state")
-
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
-		require.NoError(t, err)
-
-		require.Equal(t, ar.Labels[models.MigratedSilenceLabelErrorKeepState], "true")
-	})
-
-	t.Run("keep last state nodata dash alert is silenced", func(t *testing.T) {
-		service := NewTestMigrationService(t, sqlStore, nil)
-		m := service.newOrgMigration(1)
-		da := createTestDashAlert()
-		da.Settings.Set("noDataState", "keep_state")
-
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
-		require.NoError(t, err)
-
-		require.Equal(t, ar.Labels[models.MigratedSilenceLabelNodataKeepState], "true")
 	})
 }
 
