@@ -108,6 +108,10 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 
 		require.NoError(t, result.Error())
 
+		contentType := "?"
+		result.ContentType(&contentType)
+		require.Equal(t, "application/json", contentType)
+
 		body, err = result.Raw()
 		require.NoError(t, err)
 		fmt.Printf("OUT: %s", string(body))
