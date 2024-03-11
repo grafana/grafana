@@ -117,22 +117,24 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
 
   // toggle all panel legends (TODO)
   // delete panel
-  if (scene.state.isEditing) {
-    keybindings.addBinding({
-      key: 'p r',
-      onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+  keybindings.addBinding({
+    key: 'p r',
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+      if (scene.state.isEditing) {
         onRemovePanel(scene, vizPanel);
-      }),
-    });
+      }
+    }),
+  });
 
-    // duplicate panel
-    keybindings.addBinding({
-      key: 'p d',
-      onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+  // duplicate panel
+  keybindings.addBinding({
+    key: 'p d',
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+      if (scene.state.isEditing) {
         scene.duplicatePanel(vizPanel);
-      }),
-    });
-  }
+      }
+    }),
+  });
 
   // toggle all exemplars (TODO)
   // collapse all rows (TODO)
