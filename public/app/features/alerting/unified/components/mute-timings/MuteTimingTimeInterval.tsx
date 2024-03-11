@@ -4,9 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, FieldSet, Icon, Input, useStyles2, Stack } from '@grafana/ui';
+import { Button, Field, FieldSet, Icon, InlineField, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
 
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { MuteTimingFields } from '../../types/mute-timing-form';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DAYS_OF_THE_WEEK, defaultTimeInterval, MONTHS, validateArrayField } from '../../utils/mute-timings';
 
 import { MuteTimingTimeRange } from './MuteTimingTimeRange';
@@ -22,6 +24,8 @@ export const MuteTimingTimeInterval = () => {
   } = useFieldArray({
     name: 'time_intervals',
   });
+  const { selectedAlertmanager } = useAlertmanager();
+  const isGrafanaAlertManager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
 
   return (
     <FieldSet label="Time intervals">
@@ -131,15 +135,22 @@ export const MuteTimingTimeInterval = () => {
                     data-testid="mute-timing-years"
                   />
                 </Field>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  fill="outline"
-                  icon="trash-alt"
-                  onClick={() => removeTimeInterval(timeIntervalIndex)}
-                >
-                  Remove time interval
-                </Button>
+                <Stack direction="row" gap={2}>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    fill="outline"
+                    icon="trash-alt"
+                    onClick={() => removeTimeInterval(timeIntervalIndex)}
+                  >
+                    Remove time interval
+                  </Button>
+                  {!isGrafanaAlertManager && (
+                    <InlineField label="Disable">
+                      <InlineSwitch transparent {...register(`time_intervals.${timeIntervalIndex}.disable`)} />
+                    </InlineField>
+                  )}
+                </Stack>
               </div>
             );
           })}

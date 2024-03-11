@@ -1,6 +1,6 @@
-import { omitBy, isUndefined } from 'lodash';
+import { isUndefined, omitBy } from 'lodash';
 
-import { MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { MuteTimeInterval, TimeInterval, TimeRange } from 'app/plugins/datasource/alertmanager/types';
 
 import { MuteTimingFields, MuteTimingIntervalFields } from '../types/mute-timing-form';
 
@@ -28,9 +28,14 @@ export const defaultTimeInterval: MuteTimingIntervalFields = {
   months: '',
   years: '',
   location: '',
+  disable: false,
 };
 
-export const validateArrayField = (value: string, validateValue: (input: string) => boolean, invalidText: string) => {
+export const validateArrayField = (
+  value: string | undefined,
+  validateValue: (input: string) => boolean,
+  invalidText: string
+) => {
   if (value) {
     return (
       value
@@ -43,15 +48,15 @@ export const validateArrayField = (value: string, validateValue: (input: string)
   }
 };
 
-const convertStringToArray = (str: string) => {
+const convertStringToArray = (str?: string) => {
   return str ? str.split(',').map((s) => s.trim()) : undefined;
 };
 
 export const createMuteTiming = (fields: MuteTimingFields): MuteTimeInterval => {
   const timeIntervals: TimeInterval[] = fields.time_intervals.map(
-    ({ times, weekdays, days_of_month, months, years, location }) => {
+    ({ times, weekdays, days_of_month, months, years, location, disable }) => {
       const interval = {
-        times: times.filter(({ start_time, end_time }) => !!start_time && !!end_time),
+        times: convertTimesToDto(times, disable),
         weekdays: convertStringToArray(weekdays)?.map((v) => v.toLowerCase()),
         days_of_month: convertStringToArray(days_of_month),
         months: convertStringToArray(months),
@@ -68,3 +73,38 @@ export const createMuteTiming = (fields: MuteTimingFields): MuteTimeInterval => 
     time_intervals: timeIntervals,
   };
 };
+
+/*
+ * Convert times from form to dto, if disable is true, then return an empty array as times
+ If the times array is empty and disable is false, then return undefined
+ * @param muteTimeInterval
+ * @returns MuteTimingFields
+ *
+ */
+function convertTimesToDto(times: TimeRange[] | undefined, disable: boolean) {
+  if (disable) {
+    return [];
+  }
+  const timesToReturn = times?.filter(({ start_time, end_time }) => !!start_time && !!end_time);
+  return timesToReturn?.length ? timesToReturn : undefined;
+}
+
+/*
+ * Get disable field from dto, if any of the lists is an empty array, then the disable field is true
+ * @param muteTimeInterval
+ * @returns MuteTimingFields
+ *
+ */
+
+export function getDisabledFromDto(intervals: TimeInterval): boolean {
+  if (
+    intervals.times?.length === 0 ||
+    intervals.weekdays?.length === 0 ||
+    intervals.days_of_month?.length === 0 ||
+    intervals.months?.length === 0 ||
+    intervals.years?.length === 0
+  ) {
+    return true;
+  }
+  return false;
+}
