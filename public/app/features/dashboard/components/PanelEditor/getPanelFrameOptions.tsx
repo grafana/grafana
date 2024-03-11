@@ -2,6 +2,7 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { VizPanelManager, VizPanelManagerState } from 'app/features/dashboard-scene/panel-edit/VizPanelManager';
 import { VizPanelLinks } from 'app/features/dashboard-scene/scene/PanelLinks';
@@ -176,8 +177,11 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     );
 }
 
-export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPaneCategoryDescriptor {
-  const { panel } = panelManager.state;
+export function getPanelFrameCategory2(
+  panelManager: VizPanelManager,
+  panel: VizPanel,
+  repeat?: string
+): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',
@@ -185,7 +189,7 @@ export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPa
   });
 
   const panelLinksObject = dashboardSceneGraph.getPanelLinks(panel);
-  const links = panelLinksObject.state.rawLinks;
+  const links = panelLinksObject?.state.rawLinks ?? [];
 
   return descriptor
     .addItem(
@@ -251,7 +255,7 @@ export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPa
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: 'Panel links',
-          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject} />,
+          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
         })
       )
     )
@@ -270,7 +274,8 @@ export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPa
               return (
                 <RepeatRowSelect2
                   id="repeat-by-variable-select"
-                  panelManager={panelManager}
+                  parent={panel}
+                  repeat={repeat}
                   onChange={(value?: string) => {
                     const stateUpdate: Partial<VizPanelManagerState> = { repeat: value };
                     if (value && !panelManager.state.repeatDirection) {
@@ -323,16 +328,16 @@ export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPa
 }
 
 interface ScenePanelLinksEditorProps {
-  panelLinks: VizPanelLinks;
+  panelLinks?: VizPanelLinks;
 }
 
 function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
-  const { rawLinks: links } = panelLinks.useState();
+  const { rawLinks: links } = panelLinks ? panelLinks.useState() : { rawLinks: [] };
 
   return (
     <DataLinksInlineEditor
       links={links}
-      onChange={(links) => panelLinks.setState({ rawLinks: links })}
+      onChange={(links) => panelLinks?.setState({ rawLinks: links })}
       getSuggestions={getPanelLinksVariableSuggestions}
       data={[]}
     />

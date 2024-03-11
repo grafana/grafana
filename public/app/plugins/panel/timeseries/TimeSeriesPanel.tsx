@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 
 import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { TooltipDisplayMode } from '@grafana/schema';
+import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { KeyboardPlugin, TooltipPlugin, TooltipPlugin2, usePanelContext, ZoomPlugin } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
@@ -18,7 +18,7 @@ import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getTimezones, isTooltipScrollable, prepareGraphableFields, regenerateLinksSupplier } from './utils';
+import { getTimezones, isTooltipScrollable, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -36,7 +36,9 @@ export const TimeSeriesPanel = ({
 }: TimeSeriesPanelProps) => {
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, dataLinkPostProcessor } =
     usePanelContext();
-
+  // Vertical orientation is not available for users through config.
+  // It is simplified version of horizontal time series panel and it does not support all plugins.
+  const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
@@ -94,18 +96,10 @@ export const TimeSeriesPanel = ({
       height={height}
       legend={options.legend}
       options={options}
+      replaceVariables={replaceVariables}
+      dataLinkPostProcessor={dataLinkPostProcessor}
     >
       {(uplotConfig, alignedDataFrame) => {
-        if (alignedDataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
-          alignedDataFrame = regenerateLinksSupplier(
-            alignedDataFrame,
-            frames,
-            replaceVariables,
-            timeZone,
-            dataLinkPostProcessor
-          );
-        }
-
         return (
           <>
             <KeyboardPlugin config={uplotConfig} />
@@ -169,7 +163,7 @@ export const TimeSeriesPanel = ({
               </>
             )}
             {/* Renders annotation markers*/}
-            {showNewVizTooltips ? (
+            {!isVerticallyOriented && showNewVizTooltips ? (
               <AnnotationsPlugin2
                 annotations={data.annotations ?? []}
                 config={uplotConfig}
@@ -178,6 +172,7 @@ export const TimeSeriesPanel = ({
                 setNewRange={setNewAnnotationRange}
               />
             ) : (
+              !isVerticallyOriented &&
               data.annotations && (
                 <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
               )
@@ -185,7 +180,7 @@ export const TimeSeriesPanel = ({
 
             {/*Enables annotations creation*/}
             {!showNewVizTooltips ? (
-              enableAnnotationCreation ? (
+              enableAnnotationCreation && !isVerticallyOriented ? (
                 <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={uplotConfig}>
                   {({ startAnnotating }) => {
                     return (
@@ -226,7 +221,7 @@ export const TimeSeriesPanel = ({
                 />
               )
             ) : undefined}
-            {data.annotations && (
+            {data.annotations && !isVerticallyOriented && (
               <ExemplarsPlugin
                 visibleSeries={getVisibleLabels(uplotConfig, frames)}
                 config={uplotConfig}
@@ -235,7 +230,7 @@ export const TimeSeriesPanel = ({
               />
             )}
 
-            {((canEditThresholds && onThresholdsChange) || showThresholds) && (
+            {((canEditThresholds && onThresholdsChange) || showThresholds) && !isVerticallyOriented && (
               <ThresholdControlsPlugin
                 config={uplotConfig}
                 fieldConfig={fieldConfig}

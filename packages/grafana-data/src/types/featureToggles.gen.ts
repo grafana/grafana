@@ -43,7 +43,6 @@ export interface FeatureToggles {
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
-  dataConnectionsConsole?: boolean;
   topnav?: boolean;
   returnToPrevious?: boolean;
   grpcServer?: boolean;
@@ -111,6 +110,7 @@ export interface FeatureToggles {
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
+  aiGeneratedDashboardChanges?: boolean;
   reportingRetries?: boolean;
   sseGroupByDatasource?: boolean;
   libraryPanelRBAC?: boolean;
@@ -171,11 +171,14 @@ export interface FeatureToggles {
   onPremToCloudMigrations?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
+  sqlExpressions?: boolean;
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
+  betterPageScrolling?: boolean;
   alertingUpgradeDryrunOnStart?: boolean;
+  scopeFilters?: boolean;
 }

@@ -2,13 +2,15 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
@@ -37,12 +39,24 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel } = dashboard.useState();
+  const {
+    isEditing,
+    viewPanelScene,
+    isDirty,
+    uid,
+    meta,
+    editview,
+    editPanel,
+    hasCopiedPanel: copiedPanel,
+  } = dashboard.useState();
+  const { isPlaying } = playlistSrv.useState();
+
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
   const buttonWithExtraMargin = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
+  const hasCopiedPanel = Boolean(copiedPanel);
 
   toolbarActions.push({
     group: 'icon-actions',
@@ -56,6 +70,55 @@ export function ToolbarActions({ dashboard }: Props) {
           const id = dashboard.onCreateNewPanel();
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
           locationService.partial({ editPanel: id });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="add-library-panel"
+        tooltip={'Add library panel'}
+        icon="library-panel"
+        onClick={() => {
+          dashboard.onCreateLibPanelWidget();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="add-row"
+        tooltip={'Add row'}
+        icon="wrap-text"
+        onClick={() => {
+          dashboard.onCreateNewRow();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="paste-panel"
+        disabled={!hasCopiedPanel}
+        tooltip={'Paste panel'}
+        icon="copy"
+        onClick={() => {
+          dashboard.pastePanel();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
         }}
       />
     ),
@@ -108,6 +171,49 @@ export function ToolbarActions({ dashboard }: Props) {
     condition: meta.isSnapshot && !isEditing,
     render: () => (
       <GoToSnapshotOriginButton originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''} />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'playlist-actions',
+    condition: isPlaying && !editview && !isEditingPanel && !isEditing,
+    render: () => (
+      <ToolbarButton
+        key="play-list-prev"
+        data-testid={selectors.pages.Dashboard.DashNav.playlistControls.prev}
+        tooltip={t('dashboard.toolbar.playlist-previous', 'Go to previous dashboard')}
+        icon="backward"
+        onClick={() => playlistSrv.prev()}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'playlist-actions',
+    condition: isPlaying && !editview && !isEditingPanel && !isEditing,
+    render: () => (
+      <ToolbarButton
+        key="play-list-stop"
+        onClick={() => playlistSrv.stop()}
+        data-testid={selectors.pages.Dashboard.DashNav.playlistControls.stop}
+      >
+        <Trans i18nKey="dashboard.toolbar.playlist-stop">Stop playlist</Trans>
+      </ToolbarButton>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'playlist-actions',
+    condition: isPlaying && !editview && !isEditingPanel && !isEditing,
+    render: () => (
+      <ToolbarButton
+        key="play-list-next"
+        data-testid={selectors.pages.Dashboard.DashNav.playlistControls.next}
+        tooltip={t('dashboard.toolbar.playlist-next', 'Go to next dashboard')}
+        icon="forward"
+        onClick={() => playlistSrv.next()}
+        narrow
+      />
     ),
   });
 
@@ -166,7 +272,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && !isEditing && !meta.isSnapshot,
+    condition: uid && !isEditing && !meta.isSnapshot && !isPlaying,
     render: () => (
       <Button
         key="share-dashboard-button"
@@ -186,7 +292,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditingPanel,
+    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditingPanel && !isPlaying,
     render: () => (
       <Button
         onClick={() => {

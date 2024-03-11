@@ -15,11 +15,11 @@ import {
   MovingAverage as SchemaMovingAverage,
   BucketAggregation,
   Logs as SchemaLogs,
-  Elasticsearch,
+  ElasticsearchDataQuery,
 } from './dataquery.gen';
 
 export * from './dataquery.gen';
-export { Elasticsearch as ElasticsearchQuery } from './dataquery.gen';
+export { ElasticsearchDataQuery as ElasticsearchQuery } from './dataquery.gen';
 
 // We want to extend the settings of the Logs query with additional properties that
 // are not part of the schema. This is a workaround, because exporting LogsSettings
@@ -127,7 +127,7 @@ export type DataLinkConfig = {
 };
 
 export interface ElasticsearchAnnotationQuery {
-  target: Elasticsearch;
+  target: ElasticsearchDataQuery;
   timeField?: string;
   titleField?: string;
   timeEndField?: string;
