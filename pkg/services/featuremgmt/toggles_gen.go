@@ -658,4 +658,8 @@ const (
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
+
+	// FlagEmailVerificationEnforcement
+	// Force email verification for users, even when authenticating through sso.
+	FlagEmailVerificationEnforcement = "emailVerificationEnforcement"
 )
