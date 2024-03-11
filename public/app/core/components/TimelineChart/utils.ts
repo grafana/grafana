@@ -19,8 +19,9 @@ import {
   ThresholdsMode,
   TimeRange,
   cacheFieldDisplayNames,
+  outerJoinDataFrames,
 } from '@grafana/data';
-import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
 import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
 import {
@@ -413,15 +414,61 @@ export function prepareTimelineFields(
   const frames: DataFrame[] = [];
 
   for (let frame of series) {
-    let isTimeseries = false;
+    let startFieldIdx = -1;
+    let endFieldIdx = -1;
+
+    for (let i = 0; i < frame.fields.length; i++) {
+      let f = frame.fields[i];
+
+      if (f.type === FieldType.time) {
+        if (startFieldIdx === -1) {
+          startFieldIdx = i;
+        } else if (endFieldIdx === -1) {
+          endFieldIdx = i;
+          break;
+        }
+      }
+    }
+
+    let isTimeseries = startFieldIdx !== -1;
     let changed = false;
-    let maybeSortedFrame = maybeSortFrame(
-      frame,
-      frame.fields.findIndex((f) => f.type === FieldType.time)
-    );
+    frame = maybeSortFrame(frame, startFieldIdx);
+
+    // if we have a second time field, assume it is state end timestamps
+    // and insert nulls into the data at the end timestamps
+    if (endFieldIdx !== -1) {
+      let startFrame: DataFrame = {
+        ...frame,
+        fields: frame.fields.filter((f, i) => i !== endFieldIdx),
+      };
+
+      let endFrame: DataFrame = {
+        length: frame.length,
+        fields: [frame.fields[endFieldIdx]],
+      };
+
+      frame = outerJoinDataFrames({
+        frames: [startFrame, endFrame],
+        keepDisplayNames: true,
+        nullMode: () => NULL_RETAIN,
+      })!;
+
+      frame.fields.forEach((f, i) => {
+        if (i > 0) {
+          let vals = f.values;
+          for (let i = 0; i < vals.length; i++) {
+            if (vals[i] == null) {
+              vals[i] = null;
+            }
+          }
+        }
+      });
+
+      changed = true;
+    }
 
     let nulledFrame = applyNullInsertThreshold({
-      frame: maybeSortedFrame,
+      frame,
       refFieldPseudoMin: timeRange.from.valueOf(),
       refFieldPseudoMax: timeRange.to.valueOf(),
     });
@@ -430,8 +477,10 @@ export function prepareTimelineFields(
       changed = true;
     }
 
+    frame = nullToValue(nulledFrame);
+
     const fields: Field[] = [];
-    for (let field of nullToValue(nulledFrame).fields) {
+    for (let field of frame.fields) {
       if (field.config.custom?.hideFrom?.viz) {
         continue;
       }
@@ -464,6 +513,7 @@ export function prepareTimelineFields(
               },
             },
           };
+          changed = true;
           fields.push(field);
           break;
         default:
@@ -474,11 +524,11 @@ export function prepareTimelineFields(
       hasTimeseries = true;
       if (changed) {
         frames.push({
-          ...maybeSortedFrame,
+          ...frame,
           fields,
         });
       } else {
-        frames.push(maybeSortedFrame);
+        frames.push(frame);
       }
     }
   }
@@ -489,6 +539,7 @@ export function prepareTimelineFields(
   if (!frames.length) {
     return { warn: 'No graphable fields' };
   }
+
   return { frames };
 }
 
