@@ -23,7 +23,6 @@ A state timeline panel displays data in a way that shows the state changes over 
 
 As an example, if you're monitoring the CPU usage of a server, a state timeline can be used to visualize the different states over time, such as “low,” “normal,” “high,” or “critical.” Each state can be represented in different colors and lengths. The lengths represent the duration of time that the server remained in that state.
 
-
 {{< figure src="/static/img/docs/state-timeline-panel/state-timeline-panel.png" max-width="1025px" caption="State timeline with string states" alt="A state timeline panel showing CPU usage in a Grafana dashboard" >}}
 
 The state timeline panel is useful when you need to monitor and analyze changes in states or statuses of various entities over time. A state timeline panel is useful when:
@@ -39,20 +38,20 @@ The state timeline panel is useful when you need to monitor and analyze changes 
 The state timeline panel works best if you have data capturing various entities' states over time, which should include:
 
 - Timestamps - to indicate when each state change occurred.
-- Entity name/identifier - to represent the name of the entity you are trying to monitor. 
+- Entity name/identifier - to represent the name of the entity you are trying to monitor.
 - State value - to represent the state value of the entity you are monitoring. These could be string, numerical, or boolean states.
 
 ### Example
 
 For example, the visualization works best if you have the following data in a table format.
 
-   | Timestamps  |  Server A   | Server B    | 
-   |------------------- |-------------|-------------|
-   | 2024-02-29 8:00:00 | Up          | Up          |
-   | 2024-02-29 8:15:00 | Down        | Up          |
-   | 2024-02-29 8:30:00 | Warning     | Up          |
-   | 2024-02-29 8:45:00 | Up          | Up          |
-   | 2024-02-29 9:00:00 | Up          | Up          |
+| Timestamps         | Server A | Server B |
+| ------------------ | -------- | -------- |
+| 2024-02-29 8:00:00 | Up       | Up       |
+| 2024-02-29 8:15:00 | Down     | Up       |
+| 2024-02-29 8:30:00 | Warning  | Up       |
+| 2024-02-29 8:45:00 | Up       | Up       |
+| 2024-02-29 9:00:00 | Up       | Up       |
 
 If your query isn’t in the table format above, especially time-series data, then you can always apply [transformations](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/) to achieve the desired result.
 
