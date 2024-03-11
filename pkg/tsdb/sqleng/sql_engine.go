@@ -20,7 +20,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -115,7 +114,7 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 	return e.queryResultTransformer.TransformQueryError(logger, err)
 }
 
-func NewQueryDataHandler(cfg *setting.Cfg, db *sql.DB, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
+func NewQueryDataHandler(userFacingDefaultError string, db *sql.DB, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
 	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
 	queryDataHandler := DataSourceHandler{
 		queryResultTransformer: queryResultTransformer,
@@ -124,7 +123,7 @@ func NewQueryDataHandler(cfg *setting.Cfg, db *sql.DB, config DataPluginConfigur
 		log:                    log,
 		dsInfo:                 config.DSInfo,
 		rowLimit:               config.RowLimit,
-		userError:              cfg.UserFacingDefaultError,
+		userError:              userFacingDefaultError,
 	}
 
 	if len(config.TimeColumnNames) > 0 {

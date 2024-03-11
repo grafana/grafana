@@ -17,7 +17,7 @@ import (
 
 func TestProvideService(t *testing.T) {
 	t.Run("uses hardcoded inspector if feature flag is not present", func(t *testing.T) {
-		pCfg := &config.Cfg{Features: featuremgmt.WithFeatures()}
+		pCfg := &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()}
 		dynamic, err := angulardetectorsprovider.ProvideDynamic(
 			pCfg,
 			angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
@@ -33,7 +33,7 @@ func TestProvideService(t *testing.T) {
 	})
 
 	t.Run("uses dynamic inspector with hardcoded fallback if feature flag is present", func(t *testing.T) {
-		pCfg := &config.Cfg{Features: featuremgmt.WithFeatures(
+		pCfg := &config.PluginManagementCfg{Features: featuremgmt.WithFeatures(
 			featuremgmt.FlagPluginsDynamicAngularDetectionPatterns,
 		)}
 		dynamic, err := angulardetectorsprovider.ProvideDynamic(

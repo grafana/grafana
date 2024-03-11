@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	mssql "github.com/microsoft/go-mssqldb"
@@ -26,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -67,7 +65,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.InstanceFactoryFunc {
-	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:      cfg.SqlDatasourceMaxOpenConnsDefault,
 			MaxIdleConns:      cfg.SqlDatasourceMaxIdleConnsDefault,
@@ -113,14 +111,22 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			driverName = "azuresql"
 		}
 
+		proxyClient, err := settings.ProxyClient(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		// register a new proxy driver if the secure socks proxy is enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo, settings.Name, settings.Type)
-		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
+		if proxyClient.SecureSocksProxyEnabled() {
+			dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
+			if err != nil {
+				return nil, err
+			}
 			URL, err := ParseURL(dsInfo.URL, logger)
 			if err != nil {
 				return nil, err
 			}
-			driverName, err = createMSSQLProxyDriver(cnnstr, URL.Hostname(), proxyOpts)
+			driverName, err = createMSSQLProxyDriver(cnnstr, URL.Hostname(), dialer)
 			if err != nil {
 				return nil, err
 			}
@@ -145,7 +151,7 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
 		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
-		return sqleng.NewQueryDataHandler(cfg, db, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+		return sqleng.NewQueryDataHandler(cfg.UserFacingDefaultError, db, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	}
 }
 

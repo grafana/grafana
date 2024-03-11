@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { behaviors, SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
@@ -61,21 +61,15 @@ export class GeneralSettingsEditView
   }
 
   public getRefreshPicker() {
-    return dashboardSceneGraph.getRefreshPicker(this._dashboard);
+    return this.getDashboardControls().state.refreshPicker;
   }
 
   public getCursorSync() {
-    const cursorSync = this._dashboard.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
-
-    if (cursorSync instanceof behaviors.CursorSync) {
-      return cursorSync;
-    }
-
-    return;
+    return dashboardSceneGraph.getCursorSync(this._dashboard);
   }
 
   public getDashboardControls() {
-    return dashboardSceneGraph.getDashboardControls(this._dashboard);
+    return this._dashboard.state.controls!;
   }
 
   public onTitleChange = (value: string) => {
@@ -151,8 +145,8 @@ export class GeneralSettingsEditView
     const { title, description, tags, meta, editable } = model.getDashboard().useState();
     const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
     const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
-    const { intervals } = model.getRefreshPicker()?.useState() || {};
-    const { hideTimeControls } = model.getDashboardControls()?.useState() || {};
+    const { intervals } = model.getRefreshPicker().useState();
+    const { hideTimeControls } = model.getDashboardControls().useState();
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>

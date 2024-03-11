@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import leven from 'leven';
 import { debounce } from 'lodash';
 import React, { useCallback } from 'react';
 
@@ -16,21 +15,21 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
-  SceneQueryRunner,
   SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
-import { Input, useStyles2, InlineSwitch, Field, Alert, Icon, LoadingPlaceholder } from '@grafana/ui';
+import { Input, InlineSwitch, Field, Alert, Icon, useStyles2 } from '@grafana/ui';
 
-import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
+import { getPreviewPanelFor } from './AutomaticMetricQueries/previewPanel';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
 import { MetricScene } from './MetricScene';
 import { SelectMetricAction } from './SelectMetricAction';
-import { hideEmptyPreviews } from './hideEmptyPreviews';
+import { StatusWrapper } from './StatusWrapper';
+import { sortRelatedMetrics } from './relatedMetrics';
 import { getVariablesWithMetricConstant, trailDS, VAR_DATASOURCE, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
-import { getColorByIndex, getTrailFor } from './utils';
+import { getFilters, getTrailFor } from './utils';
 
 interface MetricPanel {
   name: string;
@@ -74,8 +73,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     this.addActivationHandler(this._onActivate.bind(this));
   }
-
-  // private justChangedTimeRange = false;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_METRIC_NAMES, VAR_DATASOURCE],
@@ -248,7 +245,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const children: SceneFlexItem[] = [];
 
-    const metricsList = this.sortedPreviewMetrics(); //!this.justChangedTimeRange ? this.sortedPreviewMetrics() : Object.values(this.previewCache);
+    const metricsList = this.sortedPreviewMetrics();
+
+    // Get the current filters to determine the count of them
+    // Which is required for `getPreviewPanelFor`
+    const filters = getFilters(this);
+    const currentFilterCount = filters?.length || 0;
+
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
 
@@ -257,7 +260,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           children.push(metric.itemRef.resolve());
           continue;
         }
-        const panel = getPreviewPanelFor(metric.name, index);
+        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount);
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
         children.push(panel);
@@ -324,14 +327,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const tooStrict = children.length === 0 && (searchQuery || prefixFilter);
     const noMetrics = !metricNamesStatus.isLoading && model.currentMetricNames.size === 0;
 
-    const status =
-      (metricNamesStatus.isLoading && children.length === 0 && (
-        <LoadingPlaceholder className={styles.statusMessage} text="Loading..." />
-      )) ||
-      (noMetrics && 'There are no results found. Try a different time range or a different data source.') ||
-      (tooStrict && 'There are no results found. Try adjusting your search or filters.');
+    const isLoading = metricNamesStatus.isLoading && children.length === 0;
 
-    const showStatus = status && <div className={styles.statusMessage}>{status}</div>;
+    const blockingMessage = isLoading
+      ? undefined
+      : (noMetrics && 'There are no results found. Try a different time range or a different data source.') ||
+        (tooStrict && 'There are no results found. Try adjusting your search or filters.') ||
+        undefined;
 
     const prefixError =
       prefixFilter && metricsAfterSearch != null && !metricsAfterFilter?.length
@@ -376,8 +378,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
             <div>({metricNamesStatus.error})</div>
           </Alert>
         )}
-        {showStatus}
-        <model.state.body.Component model={model.state.body} />
+        <StatusWrapper {...{ isLoading, blockingMessage }}>
+          <model.state.body.Component model={model.state.body} />
+        </StatusWrapper>
       </div>
     );
   };
@@ -400,51 +403,12 @@ function getMetricNamesVariableSet() {
   });
 }
 
-function getPreviewPanelFor(metric: string, index: number) {
-  const autoQuery = getAutoQueriesForMetric(metric);
-
-  const vizPanel = autoQuery.preview
-    .vizBuilder()
-    .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
-    .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
-    .build();
-
-  return new SceneCSSGridItem({
-    $variables: new SceneVariableSet({
-      variables: getVariablesWithMetricConstant(metric),
-    }),
-    $behaviors: [hideEmptyPreviews(metric)],
-    $data: new SceneQueryRunner({
-      datasource: trailDS,
-      maxDataPoints: 200,
-      queries: autoQuery.preview.queries,
-    }),
-    body: vizPanel,
-  });
-}
-
 function getCardPanelFor(metric: string) {
   return PanelBuilders.text()
     .setTitle(metric)
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .setOption('content', '')
     .build();
-}
-
-// Computes the Levenshtein distance between two strings, twice, once for the first half and once for the whole string.
-function sortRelatedMetrics(metricList: string[], metric: string) {
-  return metricList.sort((aValue, bValue) => {
-    const aSplit = aValue.split('_');
-    const aHalf = aSplit.slice(0, aSplit.length / 2).join('_');
-
-    const bSplit = bValue.split('_');
-    const bHalf = bSplit.slice(0, bSplit.length / 2).join('_');
-
-    return (
-      (leven(aHalf, metric!) || 0 + (leven(aValue, metric!) || 0)) -
-      (leven(bHalf, metric!) || 0 + (leven(bValue, metric!) || 0))
-    );
-  });
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -463,11 +427,6 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(2),
       marginBottom: theme.spacing(1),
       alignItems: 'flex-end',
-    }),
-    statusMessage: css({
-      fontStyle: 'italic',
-      marginTop: theme.spacing(7),
-      textAlign: 'center',
     }),
     searchField: css({
       flexGrow: 1,
@@ -500,7 +459,7 @@ function createSearchRegExp(spaceSeparatedMetricNames?: string) {
 }
 
 function useVariableStatus(name: string, sceneObject: SceneObject) {
-  const variable = sceneGraph.lookupVariable(VAR_METRIC_NAMES, sceneObject);
+  const variable = sceneGraph.lookupVariable(name, sceneObject);
 
   const useVariableState = useCallback(() => {
     if (variable) {

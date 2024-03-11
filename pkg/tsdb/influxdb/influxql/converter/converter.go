@@ -7,11 +7,11 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	sdkjsoniter "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
-	"github.com/grafana/grafana/pkg/util/converter/jsonitere"
 )
 
 func rspErr(e error) *backend.DataResponse {
@@ -19,7 +19,7 @@ func rspErr(e error) *backend.DataResponse {
 }
 
 func ReadInfluxQLStyleResult(jIter *jsoniter.Iterator, query *models.Query) *backend.DataResponse {
-	iter := jsonitere.NewIterator(jIter)
+	iter := sdkjsoniter.NewIterator(jIter)
 	var rsp *backend.DataResponse
 
 l1Fields:
@@ -51,7 +51,7 @@ l1Fields:
 	return rsp
 }
 
-func readResults(iter *jsonitere.Iterator, query *models.Query) *backend.DataResponse {
+func readResults(iter *sdkjsoniter.Iterator, query *models.Query) *backend.DataResponse {
 	rsp := &backend.DataResponse{Frames: make(data.Frames, 0)}
 l1Fields:
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
@@ -79,7 +79,7 @@ l1Fields:
 	return rsp
 }
 
-func readSeries(iter *jsonitere.Iterator, query *models.Query) *backend.DataResponse {
+func readSeries(iter *sdkjsoniter.Iterator, query *models.Query) *backend.DataResponse {
 	var (
 		measurement   string
 		tags          map[string]string
@@ -179,7 +179,7 @@ func readSeries(iter *jsonitere.Iterator, query *models.Query) *backend.DataResp
 	return rsp
 }
 
-func readTags(iter *jsonitere.Iterator) (map[string]string, error) {
+func readTags(iter *sdkjsoniter.Iterator) (map[string]string, error) {
 	tags := make(map[string]string)
 	for l1Field, err := iter.ReadObject(); l1Field != ""; l1Field, err = iter.ReadObject() {
 		if err != nil {
@@ -194,7 +194,7 @@ func readTags(iter *jsonitere.Iterator) (map[string]string, error) {
 	return tags, nil
 }
 
-func readColumns(iter *jsonitere.Iterator) (columns []string, err error) {
+func readColumns(iter *sdkjsoniter.Iterator) (columns []string, err error) {
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
 			return nil, err
@@ -209,7 +209,7 @@ func readColumns(iter *jsonitere.Iterator) (columns []string, err error) {
 	return columns, nil
 }
 
-func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.Fields, err error) {
+func readValues(iter *sdkjsoniter.Iterator, hasTimeColumn bool) (valueFields data.Fields, err error) {
 	if hasTimeColumn {
 		valueFields = append(valueFields, data.NewField("Time", nil, make([]time.Time, 0)))
 	}

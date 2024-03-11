@@ -80,11 +80,10 @@ export const getCardContainerStyles = (
       display: 'grid',
       position: 'relative',
       gridTemplateColumns: 'auto 1fr auto',
-      gridTemplateRows: 'auto 1fr auto auto auto',
+      gridTemplateRows: '1fr auto auto auto',
       gridAutoColumns: '1fr',
       gridAutoFlow: 'row',
       gridTemplateAreas: `
-        "Figure Overline Tags"
         "Figure Heading Tags"
         "Figure Meta Tags"
         "Figure Description Tags"

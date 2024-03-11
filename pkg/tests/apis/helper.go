@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -54,6 +55,7 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	t.Helper()
 	dir, path := testinfra.CreateGrafDir(t, opts)
 	_, env := testinfra.StartGrafanaEnv(t, dir, path)
+
 	c := &K8sTestHelper{
 		env:        *env,
 		t:          t,
@@ -63,14 +65,26 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	c.Org1 = c.createTestUsers("Org1")
 	c.OrgB = c.createTestUsers("OrgB")
 
-	// Read the API groups
-	rsp := DoRequest(c, RequestParams{
-		User: c.Org1.Viewer,
-		Path: "/apis",
-		// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
-	}, &metav1.APIGroupList{})
-	c.groups = rsp.Result.Groups
+	c.loadAPIGroups()
+
 	return c
+}
+
+func (c *K8sTestHelper) loadAPIGroups() {
+	for {
+		rsp := DoRequest(c, RequestParams{
+			User: c.Org1.Viewer,
+			Path: "/apis",
+			// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
+		}, &metav1.APIGroupList{})
+
+		if rsp.Response.StatusCode == http.StatusOK {
+			c.groups = rsp.Result.Groups
+			return
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func (c *K8sTestHelper) Shutdown() {
@@ -377,7 +391,9 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	store.Cfg.AutoAssignOrg = true
 	store.Cfg.AutoAssignOrgId = int(orgId)
 
-	teamSvc := teamimpl.ProvideService(store, store.Cfg)
+	teamSvc, err := teamimpl.ProvideService(store, store.Cfg)
+	require.NoError(c.t, err)
+
 	cache := localcache.ProvideService()
 	userSvc, err := userimpl.ProvideService(store,
 		orgService, store.Cfg, teamSvc, cache, quotaService,
@@ -388,7 +404,7 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	createUser := func(key string, role org.RoleType) User {
 		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
 			DefaultOrgRole: string(role),
-			Password:       key,
+			Password:       user.Password(key),
 			Login:          fmt.Sprintf("%s-%d", key, orgId),
 			OrgID:          orgId,
 		})

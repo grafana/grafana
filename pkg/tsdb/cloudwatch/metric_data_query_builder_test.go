@@ -13,7 +13,7 @@ import (
 func TestMetricDataQueryBuilder(t *testing.T) {
 	t.Run("buildMetricDataQuery", func(t *testing.T) {
 		t.Run("should use metric stat", func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeBuilder
 			query.MetricQueryType = models.MetricQueryTypeSearch
@@ -25,7 +25,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should pass AccountId in metric stat query", func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeBuilder
 			query.MetricQueryType = models.MetricQueryTypeSearch
@@ -36,7 +36,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should leave AccountId in metric stat query", func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeBuilder
 			query.MetricQueryType = models.MetricQueryTypeSearch
@@ -46,7 +46,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should use custom built expression", func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeBuilder
 			query.MetricQueryType = models.MetricQueryTypeSearch
@@ -58,7 +58,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should use sql expression", func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeRaw
 			query.MetricQueryType = models.MetricQueryTypeQuery
@@ -70,7 +70,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should use user defined math expression", func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeRaw
 			query.MetricQueryType = models.MetricQueryTypeSearch
@@ -82,7 +82,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should set period in user defined expression", func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeRaw
 			query.MetricQueryType = models.MetricQueryTypeSearch
@@ -96,7 +96,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should set label", func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := getBaseQuery()
 			query.Label = "some label"
 
@@ -108,7 +108,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should not set label for empty string query label", func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := getBaseQuery()
 			query.Label = ""
 
@@ -119,7 +119,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run(`should not specify accountId when it is "all"`, func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
@@ -137,7 +137,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should set accountId when it is specified", func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",

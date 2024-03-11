@@ -81,14 +81,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/d-solo/:uid/:slug',
+      path: '/d-solo/:uid/:slug?',
       pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
         config.featureToggles.dashboardSceneSolo
           ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
-          : import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
+          : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
       ),
     },
     // This route handles embedding of snapshot/scripted dashboard panels
@@ -360,6 +360,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/admin/stats',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
+      ),
+    },
+    config.featureToggles.onPremToCloudMigrations && {
+      path: '/admin/migrate-to-cloud',
+      roles: () => ['ServerAdmin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/admin/migrate-to-cloud/MigrateToCloud')
       ),
     },
     // LOGIN / SIGNUP

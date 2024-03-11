@@ -8,6 +8,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
 const defaultAlertmanagerConfigJSON = `
@@ -138,4 +139,11 @@ func (a *alertmanagerConfigStoreFake) Save(ctx context.Context, revision *cfgRev
 		return a.SaveFn(ctx, revision)
 	}
 	return nil
+}
+
+type NotificationSettingsValidatorProviderFake struct {
+}
+
+func (n *NotificationSettingsValidatorProviderFake) Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error) {
+	return notifier.NoValidation{}, nil
 }

@@ -3,10 +3,12 @@ package connectors
 import (
 	"bytes"
 	"compress/zlib"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"regexp"
 	"strings"
 	"sync"
@@ -20,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -50,11 +52,58 @@ func newSocialBase(name string,
 	}
 }
 
+func (s *SocialBase) updateInfo(name string, info *social.OAuthInfo) {
+	s.Config = createOAuthConfig(info, s.cfg, name)
+	s.info = info
+}
+
 type groupStruct struct {
 	Groups []string `json:"groups"`
 }
 
 func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.getBaseSupportBundleContent(bf)
+}
+
+func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.info
+}
+
+func (s *SocialBase) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.Config.AuthCodeURL(state, opts...)
+}
+
+func (s *SocialBase) Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.Config.Exchange(ctx, code, opts...)
+}
+
+func (s *SocialBase) Client(ctx context.Context, t *oauth2.Token) *http.Client {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.Config.Client(ctx, t)
+}
+
+func (s *SocialBase) TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.Config.TokenSource(ctx, t)
+}
+
+func (s *SocialBase) getBaseSupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString("## Client configuration\n\n")
 	bf.WriteString("```ini\n")
 	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.info.AllowAssignGrafanaAdmin))
@@ -72,14 +121,8 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("redirect_url = %v\n", s.Config.RedirectURL))
 	bf.WriteString(fmt.Sprintf("scopes = %v\n", s.Config.Scopes))
 	bf.WriteString("```\n\n")
+
 	return nil
-}
-
-func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
-	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
-
-	return s.info
 }
 
 func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
@@ -223,17 +266,8 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 }
 
 func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
-	if info.ClientId == "" {
-		return ssosettings.ErrInvalidOAuthConfig("Client Id is empty.")
-	}
-
-	if info.AllowAssignGrafanaAdmin && !requester.GetIsGrafanaAdmin() {
-		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin can only be updated by Grafana Server Admins.")
-	}
-
-	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
-		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin and Skip org role sync are both set thus Grafana Admin role will not be synced. Consider setting one or the other.")
-	}
-
-	return nil
+	return validation.Validate(info, requester,
+		validation.RequiredValidator(info.ClientId, "Client Id"),
+		validation.AllowAssignGrafanaAdminValidator,
+		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator)
 }

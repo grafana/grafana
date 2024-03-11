@@ -1,9 +1,10 @@
 import React from 'react';
 
 import { NavModelItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { Alert, withErrorBoundary } from '@grafana/ui';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -52,7 +53,7 @@ const RuleViewerV2Wrapper = (props: RuleViewerProps) => {
   if (error) {
     return (
       <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
-        <Alert title={'Something went wrong loading the rule'}>{stringifyErrorLike(error)}</Alert>
+        <ErrorMessage error={error} />
       </AlertingPageWrapper>
     );
   }
@@ -73,7 +74,24 @@ const RuleViewerV2Wrapper = (props: RuleViewerProps) => {
     );
   }
 
-  return null;
+  // if we get here assume we can't find the rule
+  return (
+    <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+      <EntityNotFound entity="Rule" />
+    </AlertingPageWrapper>
+  );
 };
+
+interface ErrorMessageProps {
+  error: unknown;
+}
+
+function ErrorMessage({ error }: ErrorMessageProps) {
+  if (isFetchError(error) && error.status === 404) {
+    return <EntityNotFound entity="Rule" />;
+  }
+
+  return <Alert title={'Something went wrong loading the rule'}>{stringifyErrorLike(error)}</Alert>;
+}
 
 export default withErrorBoundary(RuleViewer, { style: 'page' });

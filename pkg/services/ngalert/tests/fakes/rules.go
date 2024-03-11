@@ -315,7 +315,7 @@ func (f *RuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceU
 	return nil
 }
 
-func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersionAndPauseStatus, error) {
+func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersion, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -324,18 +324,15 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 		Params: []any{orgID, namespaceUID},
 	})
 
-	var result []models.AlertRuleKeyWithVersionAndPauseStatus
+	var result []models.AlertRuleKeyWithVersion
 
 	for _, rule := range f.Rules[orgID] {
 		if rule.NamespaceUID == namespaceUID && rule.OrgID == orgID {
 			rule.Version++
 			rule.Updated = time.Now()
-			result = append(result, models.AlertRuleKeyWithVersionAndPauseStatus{
-				IsPaused: rule.IsPaused,
-				AlertRuleKeyWithVersion: models.AlertRuleKeyWithVersion{
-					Version:      rule.Version,
-					AlertRuleKey: rule.GetKey(),
-				},
+			result = append(result, models.AlertRuleKeyWithVersion{
+				Version:      rule.Version,
+				AlertRuleKey: rule.GetKey(),
 			})
 		}
 	}

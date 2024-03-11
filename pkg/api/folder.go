@@ -31,7 +31,7 @@ const REDACTED = "redacted"
 //
 // Get all folders.
 //
-// Returns all folders that the authenticated user has permission to view.
+// It returns all folders that the authenticated user has permission to view.
 // If nested folders are enabled, it expects an additional query parameter with the parent folder UID
 // and returns the immediate subfolders that the authenticated user has permission to view.
 // If the parameter is not supplied then it returns immediate subfolders under the root
@@ -298,7 +298,7 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		if errors.Is(err, model.ErrFolderHasConnectedLibraryElements) {
-			return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
+			return response.Error(http.StatusForbidden, "Folder could not be deleted because it contains library elements in use", err)
 		}
 		return apierrors.ToFolderErrorResponse(err)
 	}

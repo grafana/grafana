@@ -1,7 +1,6 @@
 package setting
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -46,7 +45,7 @@ const (
 `
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
-	schedulereDefaultExecuteAlerts          = true
+	schedulerDefaultExecuteAlerts           = true
 	schedulerDefaultMaxAttempts             = 1
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
@@ -101,6 +100,7 @@ type UnifiedAlertingSettings struct {
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency   int
 	StatePeriodicSaveInterval time.Duration
+	RulesPerRuleGroupLimit    int64
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -165,49 +165,13 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	// At present an invalid value is considered the same as no value. This means that a
 	// spelling mistake in the string "false" could enable unified alerting rather
 	// than disable it. This issue can be found here
-	hasEnabled := section.Key("enabled").Value() != ""
-	if !hasEnabled {
-		// TODO: Remove in Grafana v10
-		if cfg.IsFeatureToggleEnabled("ngalert") {
-			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
-			// feature flag overrides the legacy alerting setting
-			legacyAlerting := false
-			cfg.AlertingEnabled = &legacyAlerting
-			unifiedAlerting := true
-			return &unifiedAlerting, nil
-		}
-
-		// if legacy alerting has not been configured then enable unified alerting
-		if cfg.AlertingEnabled == nil {
-			unifiedAlerting := true
-			return &unifiedAlerting, nil
-		}
-
-		// enable unified alerting and disable legacy alerting
-		legacyAlerting := false
-		cfg.AlertingEnabled = &legacyAlerting
-		unifiedAlerting := true
-		return &unifiedAlerting, nil
+	if section.Key("enabled").Value() == "" {
+		return util.Pointer(true), nil
 	}
-
 	unifiedAlerting, err := section.Key("enabled").Bool()
 	if err != nil {
-		// the value for unified alerting is invalid so disable all alerting
-		legacyAlerting := false
-		cfg.AlertingEnabled = &legacyAlerting
 		return nil, fmt.Errorf("invalid value %s, should be either true or false", section.Key("enabled"))
 	}
-
-	// If both legacy and unified alerting are enabled then return an error
-	if cfg.AlertingEnabled != nil && *(cfg.AlertingEnabled) && unifiedAlerting {
-		return nil, errors.New("legacy and unified alerting cannot both be enabled at the same time, please disable one of them and restart Grafana")
-	}
-
-	if cfg.AlertingEnabled == nil {
-		legacyAlerting := !unifiedAlerting
-		cfg.AlertingEnabled = &legacyAlerting
-	}
-
 	return &unifiedAlerting, nil
 }
 
@@ -276,9 +240,9 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	alerting := iniFile.Section("alerting")
 
-	uaExecuteAlerts := ua.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
+	uaExecuteAlerts := ua.Key("execute_alerts").MustBool(schedulerDefaultExecuteAlerts)
 	if uaExecuteAlerts { // unified option equals the default (true)
-		legacyExecuteAlerts := alerting.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
+		legacyExecuteAlerts := alerting.Key("execute_alerts").MustBool(schedulerDefaultExecuteAlerts)
 		if !legacyExecuteAlerts {
 			cfg.Logger.Warn("falling back to legacy setting of 'execute_alerts'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
 		}
@@ -351,6 +315,9 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
 		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
 	}
+
+	quotas := iniFile.Section("quota")
+	uaCfg.RulesPerRuleGroupLimit = quotas.Key("alerting_rule_group_rules").MustInt64(100)
 
 	remoteAlertmanager := iniFile.Section("remote.alertmanager")
 	uaCfgRemoteAM := RemoteAlertmanagerSettings{
