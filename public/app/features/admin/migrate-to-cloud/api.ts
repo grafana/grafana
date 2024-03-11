@@ -29,9 +29,15 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
 
 interface MigrateToCloudStatusDTO {
   enabled: boolean;
+  stackURL?: string;
 }
 
 interface CreateMigrationTokenResponseDTO {
+  token: string;
+}
+
+export interface ConnectStackDTO {
+  stackURL: string;
   token: string;
 }
 
@@ -39,6 +45,8 @@ interface CreateMigrationTokenResponseDTO {
 const MOCK_DELAY_MS = 1000;
 const MOCK_TOKEN = 'TODO_thisWillBeABigLongToken';
 let HAS_MIGRATION_TOKEN = false;
+let HAS_STACK_DETAILS = false;
+let STACK_URL: string | undefined;
 
 function dataWithMockDelay<T>(data: T): Promise<{ data: T }> {
   return new Promise((resolve) => {
@@ -49,13 +57,35 @@ function dataWithMockDelay<T>(data: T): Promise<{ data: T }> {
 }
 
 export const migrateToCloudAPI = createApi({
-  tagTypes: ['migrationToken'],
+  tagTypes: ['migrationToken', 'stackDetails'],
   reducerPath: 'migrateToCloudAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     // TODO :)
     getStatus: builder.query<MigrateToCloudStatusDTO, void>({
-      queryFn: () => dataWithMockDelay({ enabled: true }),
+      providesTags: ['stackDetails'],
+      queryFn: () => {
+        const responseData: MigrateToCloudStatusDTO = { enabled: HAS_STACK_DETAILS };
+        if (STACK_URL) {
+          responseData.stackURL = STACK_URL;
+        }
+        return dataWithMockDelay(responseData);
+      },
+    }),
+    connectStack: builder.mutation<void, ConnectStackDTO>({
+      invalidatesTags: ['stackDetails'],
+      queryFn: async ({ stackURL }) => {
+        HAS_STACK_DETAILS = true;
+        STACK_URL = stackURL;
+        return dataWithMockDelay(undefined);
+      },
+    }),
+    disconnectStack: builder.mutation<void, void>({
+      invalidatesTags: ['stackDetails'],
+      queryFn: async () => {
+        HAS_STACK_DETAILS = false;
+        return dataWithMockDelay(undefined);
+      },
     }),
 
     createMigrationToken: builder.mutation<CreateMigrationTokenResponseDTO, void>({
@@ -85,6 +115,8 @@ export const migrateToCloudAPI = createApi({
 
 export const {
   useGetStatusQuery,
+  useConnectStackMutation,
+  useDisconnectStackMutation,
   useCreateMigrationTokenMutation,
   useDeleteMigrationTokenMutation,
   useHasMigrationTokenQuery,

@@ -62,7 +62,7 @@ export { PromQail } from './querybuilder/components/promQail/PromQail';
 export { PrometheusDatasource } from './datasource';
 // The parts
 export { addLabelToQuery } from './add_label_to_query';
-export { type QueryEditorMode, type PromQueryFormat, type Prometheus } from './dataquery.gen';
+export { type QueryEditorMode, type PromQueryFormat, type Prometheus } from './dataquery';
 export { PrometheusMetricFindQuery } from './metric_find_query';
 export { promqlGrammar } from './promql';
 export { getQueryHints, getInitHints } from './query_hints';

@@ -3,8 +3,12 @@ package datasource
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,12 +18,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 	"k8s.io/utils/strings/slices"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -28,6 +32,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
+
+const QueryRequestSchemaKey = "QueryRequestSchema"
+const QueryPayloadSchemaKey = "QueryPayloadSchema"
 
 var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 
@@ -40,6 +47,7 @@ type DataSourceAPIBuilder struct {
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
+	queryTypes      *query.QueryTypeDefinitionList
 }
 
 func RegisterAPIService(
@@ -61,6 +69,7 @@ func RegisterAPIService(
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
 	ids := []string{
 		"grafana-testdata-datasource",
+		//	"prometheus",
 	}
 
 	for _, ds := range all {
@@ -117,11 +126,12 @@ func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&v0alpha1.DataSourceConnection{},
-		&v0alpha1.DataSourceConnectionList{},
-		&v0alpha1.HealthCheckResult{},
+		&datasource.DataSourceConnection{},
+		&datasource.DataSourceConnectionList{},
+		&datasource.HealthCheckResult{},
 		&unstructured.Unstructured{},
 		// Query handler
+		&query.QueryDataRequest{},
 		&query.QueryDataResponse{},
 		&metav1.Status{},
 	)
@@ -152,7 +162,7 @@ func resourceFromPluginID(pluginID string) (common.ResourceInfo, error) {
 	if err != nil {
 		return common.ResourceInfo{}, err
 	}
-	return v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
+	return datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
 }
 
 func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
@@ -177,7 +187,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 				{Name: "Created At", Type: "date"},
 			},
 			func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*v0alpha1.DataSourceConnection)
+				m, ok := obj.(*datasource.DataSourceConnection)
 				if !ok {
 					return nil, fmt.Errorf("expected connection")
 				}
@@ -220,14 +230,125 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
 		defs := query.GetOpenAPIDefinitions(ref) // required when running standalone
-		for k, v := range v0alpha1.GetOpenAPIDefinitions(ref) {
+		for k, v := range datasource.GetOpenAPIDefinitions(ref) {
 			defs[k] = v
 		}
 		return defs
 	}
 }
 
+func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// The plugin description
+	oas.Info.Description = b.pluginJSON.Info.Description
+
+	// The root api URL
+	root := "/apis/" + b.connectionResourceInfo.GroupVersion().String() + "/"
+
+	// Hide the ability to list all connections across tenants
+	delete(oas.Paths.Paths, root+b.connectionResourceInfo.GroupResource().Resource)
+
+	var err error
+	opts := schemabuilder.QuerySchemaOptions{
+		PluginID:   []string{b.pluginJSON.ID},
+		QueryTypes: []data.QueryTypeDefinition{},
+		Mode:       schemabuilder.SchemaTypeQueryPayload,
+	}
+	if b.pluginJSON.AliasIDs != nil {
+		opts.PluginID = append(opts.PluginID, b.pluginJSON.AliasIDs...)
+	}
+	if b.queryTypes != nil {
+		for _, qt := range b.queryTypes.Items {
+			// The SDK type and api type are not the same so we recreate it here
+			opts.QueryTypes = append(opts.QueryTypes, data.QueryTypeDefinition{
+				ObjectMeta: data.ObjectMeta{
+					Name: qt.Name,
+				},
+				Spec: qt.Spec,
+			})
+		}
+	}
+	oas.Components.Schemas[QueryPayloadSchemaKey], err = schemabuilder.GetQuerySchema(opts)
+	if err != nil {
+		return oas, err
+	}
+	opts.Mode = schemabuilder.SchemaTypeQueryRequest
+	oas.Components.Schemas[QueryRequestSchemaKey], err = schemabuilder.GetQuerySchema(opts)
+	if err != nil {
+		return oas, err
+	}
+
+	// Update the request object
+	sub := oas.Paths.Paths[root+"namespaces/{namespace}/connections/{name}/query"]
+	if sub != nil && sub.Post != nil {
+		sub.Post.Description = "Execute queries"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Required: true,
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema:   spec.RefSchema("#/components/schemas/" + QueryRequestSchemaKey),
+							Examples: getExamples(b.queryTypes),
+						},
+					},
+				},
+			},
+		}
+		okrsp, ok := sub.Post.Responses.StatusCodeResponses[200]
+		if ok {
+			sub.Post.Responses.StatusCodeResponses[http.StatusMultiStatus] = &spec3.Response{
+				ResponseProps: spec3.ResponseProps{
+					Description: "Query executed, but errors may exist in the datasource.  See the payload for more details.",
+					Content:     okrsp.Content,
+				},
+			}
+		}
+	}
+
+	// The root API discovery list
+	sub = oas.Paths.Paths[root]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, err
+}
+
 // Register additional routes with the server
 func (b *DataSourceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
+}
+
+func getExamples(queryTypes *query.QueryTypeDefinitionList) map[string]*spec3.Example {
+	if queryTypes == nil {
+		return nil
+	}
+
+	tr := data.TimeRange{From: "now-1h", To: "now"}
+	examples := map[string]*spec3.Example{}
+	for _, queryType := range queryTypes.Items {
+		for idx, example := range queryType.Spec.Examples {
+			q := data.NewDataQuery(example.SaveModel.Object)
+			q.RefID = "A"
+			for _, dis := range queryType.Spec.Discriminators {
+				_ = q.Set(dis.Field, dis.Value)
+			}
+			if q.MaxDataPoints < 1 {
+				q.MaxDataPoints = 1000
+			}
+			if q.IntervalMS < 1 {
+				q.IntervalMS = 5000 // 5s
+			}
+			examples[fmt.Sprintf("%s-%d", example.Name, idx)] = &spec3.Example{
+				ExampleProps: spec3.ExampleProps{
+					Summary:     example.Name,
+					Description: example.Description,
+					Value: data.QueryDataRequest{
+						TimeRange: tr,
+						Queries:   []data.DataQuery{q},
+					},
+				},
+			}
+		}
+	}
+	return examples
 }
