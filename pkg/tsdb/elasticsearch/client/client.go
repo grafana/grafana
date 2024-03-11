@@ -56,7 +56,7 @@ type Client interface {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.TimeRange, logger log.Logger, tracer tracing.Tracer) (Client, error) {
+var NewClient = func(ctx context.Context, ds *DatasourceInfo, queries []backend.DataQuery, logger log.Logger, tracer tracing.Tracer) (Client, error) {
 	logger = logger.New("entity", "client")
 
 	ip, err := newIndexPattern(ds.Interval, ds.Database)
@@ -65,19 +65,12 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.
 		return nil, err
 	}
 
-	indices, err := ip.GetIndices(timeRange)
-	if err != nil {
-		return nil, err
-	}
-	logger.Debug("Creating new client", "configuredFields", fmt.Sprintf("%#v", ds.ConfiguredFields), "indices", strings.Join(indices, ", "), "interval", ds.Interval, "index", ds.Database)
-
 	return &baseClientImpl{
 		logger:           logger,
 		ctx:              ctx,
 		ds:               ds,
 		configuredFields: ds.ConfiguredFields,
-		indices:          indices,
-		timeRange:        timeRange,
+		indexPattern:     ip,
 		tracer:           tracer,
 	}, nil
 }
@@ -86,8 +79,7 @@ type baseClientImpl struct {
 	ctx              context.Context
 	ds               *DatasourceInfo
 	configuredFields ConfiguredFields
-	indices          []string
-	timeRange        backend.TimeRange
+	indexPattern     IndexPattern
 	logger           log.Logger
 	tracer           tracing.Tracer
 }
@@ -239,11 +231,16 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 	multiRequests := []*multiRequest{}
 
 	for _, searchReq := range searchRequests {
+		indices, err := c.indexPattern.GetIndices(searchReq.TimeRange)
+		if err != nil {
+			c.logger.Error("Failed to get indices from index pattern", "error", err)
+			continue
+		}
 		mr := multiRequest{
 			header: map[string]any{
 				"search_type":        "query_then_fetch",
 				"ignore_unavailable": true,
-				"index":              strings.Join(c.indices, ","),
+				"index":              strings.Join(indices, ","),
 			},
 			body:     searchReq,
 			interval: searchReq.Interval,
