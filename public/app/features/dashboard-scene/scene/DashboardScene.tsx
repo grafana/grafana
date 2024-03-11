@@ -3,19 +3,19 @@ import * as H from 'history';
 import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
-  getUrlSyncManager,
   SceneFlexLayout,
-  sceneGraph,
   SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
-  sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
   VizPanel,
+  getUrlSyncManager,
+  sceneGraph,
+  sceneUtils,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -51,6 +51,7 @@ import {
   NEW_PANEL_WIDTH,
   forceRenderChildren,
   getClosestVizPanel,
+  getDashboardSceneFor,
   getDefaultRow,
   getDefaultVizPanel,
   getPanelIdForVizPanel,
@@ -575,6 +576,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     } catch {
       row = undefined;
     }
+
+    const dashboard = getDashboardSceneFor(panel);
+    dashboard.onEnterEditMode();
 
     if (row) {
       row.forEachChild((child: SceneObject) => {
