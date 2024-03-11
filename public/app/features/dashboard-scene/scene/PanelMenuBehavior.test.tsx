@@ -70,7 +70,7 @@ describe('panelMenuBehavior', () => {
 
     await new Promise((r) => setTimeout(r, 1));
 
-    expect(menu.state.items?.length).toBe(8);
+    expect(menu.state.items?.length).toBe(6);
     // verify view panel url keeps url params and adds viewPanel=<panel-key>
     expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=panel-12');
     // verify edit url keeps url time range
@@ -119,7 +119,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(9);
+      expect(menu.state.items?.length).toBe(7);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -158,7 +158,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(9);
+      expect(menu.state.items?.length).toBe(7);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -199,7 +199,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(9);
+      expect(menu.state.items?.length).toBe(7);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
       const menuItem = extensionsSubMenu?.find((i) => (i.text = 'Declare incident when...'));
@@ -347,7 +347,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(9);
+      expect(menu.state.items?.length).toBe(7);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -392,7 +392,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(9);
+      expect(menu.state.items?.length).toBe(7);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -445,7 +445,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(9);
+      expect(menu.state.items?.length).toBe(7);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -468,6 +468,43 @@ describe('panelMenuBehavior', () => {
           }),
         ])
       );
+    });
+
+    it('it should not contain remove and duplicate menu items when not in edit mode', async () => {
+      const { menu, panel } = await buildTestScene({});
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((i) => i.text === 'Remove')).toBeUndefined();
+      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      expect(moreMenu?.find((i) => i.text === 'Duplicate')).toBeUndefined();
+      expect(moreMenu?.find((i) => i.text === 'Create library panel')).toBeUndefined();
+    });
+
+    it('it should contain remove and duplicate menu items when in edit mode', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ isEditing: true });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((i) => i.text === 'Remove')).toBeDefined();
+      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      expect(moreMenu?.find((i) => i.text === 'Duplicate')).toBeDefined();
+      expect(moreMenu?.find((i) => i.text === 'Create library panel')).toBeDefined();
     });
 
     it('should only contain explore when embedded', async () => {

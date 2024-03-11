@@ -1234,11 +1234,15 @@ steps:
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
   - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
-    elif git checkout main; then echo "git checkout main"; else git checkout main;
-    fi
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd ./grafana-enterprise
+  - ./build.sh
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1250,9 +1254,9 @@ steps:
   - make swagger-clean && make openapi3-gen
   - for f in public/api-merged.json public/openapi3.json; do git add $f; done
   - if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to
-    date!"; else echo "Please ensure the branch is up-to-date, then regenerate the
-    specification by running make swagger-clean && make openapi3-gen" && return 1;
-    fi
+    date!"; else git diff --cached && echo "Please ensure the branch is up-to-date,
+    then regenerate the specification by running make swagger-clean && make openapi3-gen"
+    && return 1; fi
   depends_on:
   - clone-enterprise
   environment:
@@ -1263,12 +1267,6 @@ steps:
 trigger:
   event:
   - pull_request
-  paths:
-    exclude:
-    - docs/**
-    - '*.md'
-    include:
-    - pkg/**
 type: docker
 volumes:
 - host:
@@ -4926,6 +4924,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 32b6ed2f5819225842aa94379423bcf4354dde154e91af3e293bc919594c10b9
+hmac: 3fa4360bd3c21fbc95bd3c2b63130541f9ea7c0aa56eb95dfe49c4f579aac4bb
 
 ...

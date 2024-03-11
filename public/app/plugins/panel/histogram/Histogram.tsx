@@ -312,7 +312,9 @@ export class Histogram extends React.Component<HistogramProps, State> {
       return null;
     }
 
-    return <PlotLegend data={this.props.rawSeries!} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+    const frames = this.props.options.combine ? [this.props.alignedFrame] : this.props.rawSeries!;
+
+    return <PlotLegend data={frames} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
