@@ -25,7 +25,7 @@ const comments = `
 // Run yarn icons:create to update.
 `;
 const imports = `
-import React from 'react';
+import React, { memo } from 'react';
 
 import { IconBase, IconProps } from '../IconBase';
 `;

@@ -8,6 +8,7 @@ module.exports = {
   outDir: './src/icons-gen',
   template: require('./templates/icon'),
   indexTemplate: require('./templates/index'),
+  memo: true,
   svgoConfig: {
     plugins: [
       // Sanitise the SVGs
