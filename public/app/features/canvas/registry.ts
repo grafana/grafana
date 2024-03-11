@@ -9,6 +9,7 @@ import { droneTopItem } from './elements/droneTop';
 import { ellipseItem } from './elements/ellipse';
 import { iconItem } from './elements/icon';
 import { metricValueItem } from './elements/metricValue';
+import { parallelogramItem } from './elements/parallelogram';
 import { rectangleItem } from './elements/rectangle';
 import { serverItem } from './elements/server/server';
 import { textItem } from './elements/text';
@@ -31,6 +32,7 @@ export const defaultElementItems = [
   serverItem,
   triangleItem,
   cloudItem,
+  parallelogramItem,
 ];
 
 export const advancedElementItems = [buttonItem, windTurbineItem, droneTopItem, droneFrontItem, droneSideItem];
