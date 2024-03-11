@@ -94,6 +94,8 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 }
 
 // getFrontendSettings returns a json object with all the settings needed for front end initialisation.
+//
+//nolint:gocyclo
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
 	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
