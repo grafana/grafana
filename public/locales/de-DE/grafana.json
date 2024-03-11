@@ -1208,7 +1208,8 @@
       "new-password-same-as-old": "Neues Passwort kann nicht das gleiche sein wie das alte.",
       "old-password-label": "Altes Passwort",
       "old-password-required": "Altes Passwort ist erforderlich",
-      "passwords-must-match": "Passwörter müssen übereinstimmen"
+      "passwords-must-match": "Passwörter müssen übereinstimmen",
+      "strong-password-validation-register": ""
     }
   },
   "public-dashboard": {
