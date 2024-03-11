@@ -52,7 +52,7 @@
     "plugins:build-bundled": "find plugins-bundled -name package.json -not -path '*/node_modules/*' -execdir yarn build \\;",
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci",
-    "ci:test-percona-frontend": "yarn run i18n:compile && yarn run prettier:check && yarn run packages:typecheck && yarn run typecheck && yarn run jest-percona-ci",
+    "ci:test-percona-frontend": "yarn run prettier:check && yarn run packages:typecheck && yarn run typecheck && yarn run jest-percona-ci",
     "i18n:clean": "rimraf public/locales/en-US/grafana.json",
     "i18n:extract": "yarn run i18next -c public/locales/i18next-parser.config.js 'public/**/*.{tsx,ts}' 'packages/grafana-ui/**/*.{tsx,ts}' && yarn i18n:pseudo",
     "i18n:pseudo": "node ./public/locales/pseudo.js",

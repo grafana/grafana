@@ -79,8 +79,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     const type = ruleType
       ? ruleType
       : result && !!result.alertingEnabled
-      ? RuleFormType.templated
-      : RuleFormType.grafana;
+        ? RuleFormType.templated
+        : RuleFormType.grafana;
 
     return {
       ...getDefaultFormValues(),
