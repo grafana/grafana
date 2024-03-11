@@ -10,6 +10,7 @@ import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/Na
 import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
@@ -46,9 +47,10 @@ export function ToolbarActions({ dashboard }: Props) {
     meta,
     editview,
     editPanel,
-    isPlaying,
     hasCopiedPanel: copiedPanel,
   } = dashboard.useState();
+  const { isPlaying } = playlistSrv.useState();
+
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
   const buttonWithExtraMargin = useStyles2(getStyles);
@@ -181,7 +183,7 @@ export function ToolbarActions({ dashboard }: Props) {
         data-testid={selectors.pages.Dashboard.DashNav.playlistControls.prev}
         tooltip={t('dashboard.toolbar.playlist-previous', 'Go to previous dashboard')}
         icon="backward"
-        onClick={() => dashboard.prevDashboardInPlaylist()}
+        onClick={() => playlistSrv.prev()}
       />
     ),
   });
@@ -192,7 +194,7 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <ToolbarButton
         key="play-list-stop"
-        onClick={() => dashboard.stopPlaylist()}
+        onClick={() => playlistSrv.stop()}
         data-testid={selectors.pages.Dashboard.DashNav.playlistControls.stop}
       >
         <Trans i18nKey="dashboard.toolbar.playlist-stop">Stop playlist</Trans>
@@ -209,7 +211,7 @@ export function ToolbarActions({ dashboard }: Props) {
         data-testid={selectors.pages.Dashboard.DashNav.playlistControls.next}
         tooltip={t('dashboard.toolbar.playlist-next', 'Go to next dashboard')}
         icon="forward"
-        onClick={() => dashboard.nextDashboardInPlaylist()}
+        onClick={() => playlistSrv.next()}
         narrow
       />
     ),
@@ -270,7 +272,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && !isEditing && !meta.isSnapshot,
+    condition: uid && !isEditing && !meta.isSnapshot && !isPlaying,
     render: () => (
       <Button
         key="share-dashboard-button"
@@ -290,7 +292,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditingPanel,
+    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditingPanel && !isPlaying,
     render: () => (
       <Button
         onClick={() => {
