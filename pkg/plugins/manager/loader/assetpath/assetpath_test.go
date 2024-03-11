@@ -124,46 +124,4 @@ func TestService(t *testing.T) {
 			})
 		})
 	}
-
-	t.Run("App Sub URL has no effect on the path", func(t *testing.T) {
-		for _, tc := range []struct {
-			appSubURL string
-		}{
-			{
-				appSubURL: "grafana",
-			},
-			{
-				appSubURL: "/grafana",
-			},
-			{
-				appSubURL: "grafana/",
-			},
-			{
-				appSubURL: "/grafana/",
-			},
-		} {
-			cfg := &config.PluginManagementCfg{GrafanaAppSubURL: tc.appSubURL}
-			svc := ProvideService(cfg, pluginscdn.ProvideService(cfg))
-
-			dir := "/plugins/test-datasource"
-			p := plugins.JSONData{ID: "test-datasource"}
-			fs := fakes.NewFakePluginFiles(dir)
-
-			base, err := svc.Base(NewPluginInfo(p, plugins.ClassExternal, fs))
-			require.NoError(t, err)
-			require.Equal(t, "public/plugins/test-datasource", base)
-
-			mod, err := svc.Module(NewPluginInfo(p, plugins.ClassExternal, fs))
-			require.NoError(t, err)
-			require.Equal(t, "public/plugins/test-datasource/module.js", mod)
-
-			base, err = svc.Base(NewPluginInfo(p, plugins.ClassCore, fs))
-			require.NoError(t, err)
-			require.Equal(t, "public/app/plugins/test-datasource", base)
-
-			mod, err = svc.Module(NewPluginInfo(p, plugins.ClassCore, fs))
-			require.NoError(t, err)
-			require.Equal(t, "core:plugin/test-datasource", mod)
-		}
-	})
 }

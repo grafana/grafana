@@ -22,11 +22,6 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		allowedUnsigned = strings.Split(plugins.KeyValue("allow_loading_unsigned_plugins").Value(), ",")
 	}
 
-	tracingCfg, err := newTracingCfg(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("new opentelemetry cfg: %w", err)
-	}
-
 	return config.NewPluginManagementCfg(
 		settingProvider.KeyValue("", "app_mode").MustBool(cfg.Env == setting.Dev),
 		cfg.PluginsPath,
@@ -34,8 +29,6 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		allowedUnsigned,
 		cfg.PluginsCDNURLTemplate,
 		cfg.AppURL,
-		cfg.AppSubURL,
-		tracingCfg,
 		features,
 		cfg.AngularSupportEnabled,
 		cfg.GrafanaComURL,
