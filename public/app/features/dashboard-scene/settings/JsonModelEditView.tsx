@@ -7,7 +7,6 @@ import { Dashboard } from '@grafana/schema';
 import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans } from 'app/core/internationalization';
-import LegacyAlertsDeprecationNotice from 'app/features/alerting/unified/integration/LegacyAlertsDeprecationNotice';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { DashboardDTO } from 'app/types';
 
@@ -73,7 +72,6 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     const { jsonText } = model.useState();
 
     const styles = useStyles2(getStyles);
-    const saveModel = model.getSaveModel();
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
@@ -83,7 +81,6 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
             The JSON model below is the data structure that defines the dashboard. This includes dashboard settings,
             panel settings, layout, queries, and so on.
           </Trans>
-          <LegacyAlertsDeprecationNotice dashboard={saveModel} />
           <CodeEditor
             width="100%"
             value={jsonText}

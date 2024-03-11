@@ -166,9 +166,6 @@ export interface GrafanaConfig {
   allowOrgCreate: boolean;
   disableLoginForm: boolean;
   defaultDatasource: string;
-  alertingErrorOrTimeout: string;
-  alertingNoDataOrNullValues: string;
-  alertingMinInterval: number;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
   queryHistoryEnabled: boolean;

@@ -388,17 +388,12 @@ export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
     panelHasAlert = true;
   }
 
-  const text2 =
-    panelHasAlert && !config.unifiedAlertingEnabled
-      ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
-      : undefined;
   const confirmText = panelHasAlert ? 'YES' : undefined;
 
   appEvents.publish(
     new ShowConfirmModalEvent({
       title: 'Remove panel',
       text: 'Are you sure you want to remove this panel?',
-      text2: text2,
       icon: 'trash-alt',
       confirmText: confirmText,
       yesText: 'Remove',

@@ -1,4 +1,4 @@
-package alerting
+package extractor
 
 import (
 	"context"
@@ -9,22 +9,19 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-func TestAlertRuleExtraction(t *testing.T) {
-	RegisterCondition("query", func(model *simplejson.Json, index int) (Condition, error) {
-		return &FakeCondition{}, nil
-	})
+type FakeCondition struct{}
 
+func (f *FakeCondition) Eval(context *EvalContextStub, reqHandler legacydata.RequestHandler) (*ConditionResultStub, error) {
+	return &ConditionResultStub{}, nil
+}
+
+func TestAlertRuleExtraction(t *testing.T) {
 	// mock data
 	defaultDs := &datasources.DataSource{ID: 12, OrgID: 1, Name: "I am default", IsDefault: true, UID: "def-uid"}
 	graphite2Ds := &datasources.DataSource{ID: 15, OrgID: 1, Name: "graphite2", UID: "graphite2-uid"}
@@ -35,10 +32,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	dsGuardian := guardian.ProvideGuardian()
 
 	dsService := &fakeDatasourceService{ExpectedDatasource: defaultDs}
-	db := dbtest.NewFakeDB()
-	cfg := &setting.Cfg{}
-	store := ProvideAlertStore(db, localcache.ProvideService(), cfg, nil, featuremgmt.WithFeatures())
-	extractor := ProvideDashAlertExtractorService(dsGuardian, dsService, store)
+	extractor := ProvideDashAlertExtractorService(dsGuardian, dsService)
 
 	t.Run("Parsing alert rules from dashboard json", func(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
@@ -196,42 +190,6 @@ func TestAlertRuleExtraction(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Len(t, alerts, 2)
-	})
-
-	t.Run("Alert notifications are in DB", func(t *testing.T) {
-		sqlStore := sqlStore{db: sqlstore.InitTestDB(t)}
-
-		firstNotification := models.CreateAlertNotificationCommand{UID: "notifier1", OrgID: 1, Name: "1"}
-		_, err = sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
-		require.Nil(t, err)
-
-		secondNotification := models.CreateAlertNotificationCommand{UID: "notifier2", OrgID: 1, Name: "2"}
-		_, err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
-		require.Nil(t, err)
-
-		json, err := os.ReadFile("./testdata/influxdb-alert.json")
-		require.Nil(t, err)
-
-		dashJSON, err := simplejson.NewJson(json)
-		require.Nil(t, err)
-
-		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
-			User:  nil,
-			Dash:  dashboards.NewDashboardFromJson(dashJSON),
-			OrgID: 1,
-		})
-		require.Nil(t, err)
-
-		require.Len(t, alerts, 1)
-
-		for _, alert := range alerts {
-			require.EqualValues(t, alert.DashboardID, 4)
-
-			conditions := alert.Settings.Get("conditions").MustArray()
-			cond := simplejson.NewFromAny(conditions[0])
-
-			require.Equal(t, cond.Get("query").Get("model").Get("interval").MustString(), ">10s")
-		}
 	})
 
 	t.Run("Should be able to extract collapsed panels", func(t *testing.T) {

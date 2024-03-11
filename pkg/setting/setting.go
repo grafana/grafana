@@ -499,12 +499,6 @@ type Cfg struct {
 	FeatureManagement FeatureMgmtSettings
 
 	// Alerting
-	AlertingEnabled            *bool
-	ExecuteAlerts              bool
-	AlertingRenderLimit        int
-	AlertingErrorOrTimeout     string
-	AlertingNoDataOrNullValues string
-
 	AlertingEvaluationTimeout   time.Duration
 	AlertingNotificationTimeout time.Duration
 	AlertingMaxAttempts         int
@@ -1758,7 +1752,7 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 // IsLegacyAlertingEnabled returns whether the legacy alerting is enabled or not.
 // It's safe to be used only after readAlertingSettings() and ReadUnifiedAlertingSettings() are executed.
 func (cfg *Cfg) IsLegacyAlertingEnabled() bool {
-	return cfg.AlertingEnabled != nil && *(cfg.AlertingEnabled)
+	return false
 }
 
 func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {

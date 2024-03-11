@@ -240,12 +240,6 @@ func (hs *HTTPServer) GetAlert(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &res)
 }
 
-func (hs *HTTPServer) GetLegacyAlertNotifiers() func(*contextmodel.ReqContext) response.Response {
-	return func(_ *contextmodel.ReqContext) response.Response {
-		return response.JSON(http.StatusOK, alerting.GetNotifiers())
-	}
-}
-
 func (hs *HTTPServer) GetAlertNotifiers() func(*contextmodel.ReqContext) response.Response {
 	return func(_ *contextmodel.ReqContext) response.Response {
 		return response.JSON(http.StatusOK, channels_config.GetAvailableNotifiers())
@@ -682,13 +676,7 @@ func (hs *HTTPServer) NotificationTest(c *contextmodel.ReqContext) response.Resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *contextmodel.ReqContext) response.Response {
-	if legacyAlertingEnabled == nil || !*legacyAlertingEnabled {
-		return func(_ *contextmodel.ReqContext) response.Response {
-			return response.Error(http.StatusBadRequest, "legacy alerting is disabled, so this call has no effect.", nil)
-		}
-	}
-
+func (hs *HTTPServer) PauseAlert() func(c *contextmodel.ReqContext) response.Response {
 	return func(c *contextmodel.ReqContext) response.Response {
 		dto := dtos.PauseAlertCommand{}
 		if err := web.Bind(c.Req, &dto); err != nil {
@@ -765,12 +753,7 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *contextmod
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) PauseAllAlerts(legacyAlertingEnabled *bool) func(c *contextmodel.ReqContext) response.Response {
-	if legacyAlertingEnabled == nil || !*legacyAlertingEnabled {
-		return func(_ *contextmodel.ReqContext) response.Response {
-			return response.Error(http.StatusBadRequest, "legacy alerting is disabled, so this call has no effect.", nil)
-		}
-	}
+func (hs *HTTPServer) PauseAllAlerts() func(c *contextmodel.ReqContext) response.Response {
 
 	return func(c *contextmodel.ReqContext) response.Response {
 		dto := dtos.PauseAllAlertsCommand{}

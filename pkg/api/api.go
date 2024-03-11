@@ -511,7 +511,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
-			alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(hs.PauseAlert(hs.Cfg.AlertingEnabled)))
+			alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(hs.PauseAlert()))
 			alertsRoute.Get("/:alertId", hs.ValidateOrgAlert, routing.Wrap(hs.GetAlert))
 			alertsRoute.Get("/", routing.Wrap(hs.GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
@@ -520,11 +520,6 @@ func (hs *HTTPServer) registerRoutes() {
 		// Unified Alerting
 		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
 			hs.GetAlertNotifiers()),
-		)
-
-		// Legacy
-		apiRoute.Get("/alert-notifiers-legacy", reqEditorRole, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
-			hs.GetLegacyAlertNotifiers()),
 		)
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
@@ -583,7 +578,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/settings", authorize(ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetSettings))
 		adminRoute.Get("/settings-verbose", authorize(ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetVerboseSettings))
 		adminRoute.Get("/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
-		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts(hs.Cfg.AlertingEnabled)))
+		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts()))
 
 		adminRoute.Post("/encryption/rotate-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminRotateDataEncryptionKeys))
 		adminRoute.Post("/encryption/reencrypt-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptEncryptionKeys))

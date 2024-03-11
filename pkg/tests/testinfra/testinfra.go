@@ -319,12 +319,6 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = usersSection.NewKey("viewers_can_edit", "true")
 			require.NoError(t, err)
 		}
-		if o.DisableLegacyAlerting {
-			alertingSection, err := cfg.GetSection("alerting")
-			require.NoError(t, err)
-			_, err = alertingSection.NewKey("enabled", "false")
-			require.NoError(t, err)
-		}
 		if o.EnableUnifiedAlerting {
 			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
 			require.NoError(t, err)
@@ -422,7 +416,6 @@ type GrafanaOpts struct {
 	PluginAdminEnabled                    bool
 	PluginAdminExternalManageEnabled      bool
 	AppModeProduction                     bool
-	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
 	EnableLog                             bool

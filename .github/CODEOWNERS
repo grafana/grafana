@@ -46,7 +46,6 @@
 /docs/sources/fundamentals                                                        @chri2547
 /docs/sources/getting-started/                                                    @chri2547
 /docs/sources/introduction/                                                       @chri2547
-/docs/sources/old-alerting/                                                       @brendamuir
 /docs/sources/panels-visualizations/                                              @imatwawana
 /docs/sources/release-notes/                                                      @Eve832 @GrafanaWriter
 /docs/sources/setup-grafana/                                                      @chri2547
@@ -283,7 +282,6 @@
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-backend-product
 /pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-backend-product
-/pkg/services/alerting/ @grafana/alerting-backend-product
 /pkg/tests/api/alerting/ @grafana/alerting-backend-product
 /public/app/features/alerting/ @grafana/alerting-frontend
 
@@ -434,7 +432,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/transformers/timeSeriesTable/ @grafana/dataviz-squad @grafana/app-o11y-visualizations
 /public/app/features/users/ @grafana/identity-access-team
 /public/app/features/variables/ @grafana/dashboards-squad
-/public/app/plugins/panel/alertGroups/ @grafana/alerting-frontend
 /public/app/plugins/panel/alertlist/ @grafana/alerting-frontend
 /public/app/plugins/panel/annolist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/barchart/ @grafana/dataviz-squad

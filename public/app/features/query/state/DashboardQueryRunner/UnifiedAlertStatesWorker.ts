@@ -20,6 +20,11 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
   private hasAlertRules: Record<string, boolean> = {};
 
   canWork({ dashboard, range }: DashboardQueryRunnerOptions): boolean {
+    // if alerting is disabled, we don't have to check for alert states
+    if (config.unifiedAlertingEnabled) {
+      return false;
+    }
+
     if (!dashboard.uid) {
       return false;
     }
