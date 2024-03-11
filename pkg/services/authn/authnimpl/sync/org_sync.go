@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -150,33 +151,39 @@ func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.
 		return nil
 	}
 
-	if !s.validateUsingOrg(ctx, userID, s.cfg.LoginDefaultOrgId) {
+	hasAssignedToOrg, err := s.validateUsingOrg(ctx, userID, s.cfg.LoginDefaultOrgId)
+	if err != nil {
+		ctxLogger.Error("Skipping default org sync, failed to validate user's organizations", "id", currentIdentity.ID, "err", err)
+		return nil
+	}
+
+	if !hasAssignedToOrg {
 		ctxLogger.Debug("Skipping default org sync, user is not assigned to org", "id", currentIdentity.ID, "org", s.cfg.LoginDefaultOrgId)
 		return nil
 	}
 
 	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: s.cfg.LoginDefaultOrgId}
 	if err := s.userService.SetUsingOrg(ctx, &cmd); err != nil {
-		ctxLogger.Warn("Failed to set default org", "id", currentIdentity.ID, "err", err)
+		ctxLogger.Error("Failed to set default org", "id", currentIdentity.ID, "err", err)
 		return err
 	}
 
 	return nil
 }
 
-func (s *OrgSync) validateUsingOrg(ctx context.Context, userID int64, orgID int64) bool {
+func (s *OrgSync) validateUsingOrg(ctx context.Context, userID int64, orgID int64) (bool, error) {
 	query := org.GetUserOrgListQuery{UserID: userID}
 
 	result, err := s.orgService.GetUserOrgList(ctx, &query)
 	if err != nil {
-		return false
+		return false, fmt.Errorf("failed to get user's organizations: %w", err)
 	}
 
 	// validate that the org id in the list
 	for _, other := range result {
 		if other.OrgID == orgID {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }

@@ -133,7 +133,7 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 		name              string
 		defaultOrgSetting int64
 		identity          *authn.Identity
-		setupMock         func(*usertest.MockService)
+		setupMock         func(*usertest.MockService, *orgtest.FakeOrgService)
 
 		wantErr bool
 	}{
@@ -141,42 +141,50 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 			name:              "should set default org",
 			defaultOrgSetting: 2,
 			identity:          &authn.Identity{ID: "user:1"},
-			setupMock: func(userService *usertest.MockService) {
+			setupMock: func(userService *usertest.MockService, orgService *orgtest.FakeOrgService) {
 				userService.On("SetUsingOrg", mock.Anything, mock.MatchedBy(func(cmd *user.SetUsingOrgCommand) bool {
 					return cmd.UserID == 1 && cmd.OrgID == 2
 				})).Return(nil)
 			},
 		},
 		{
-			name:              "should not set default org when default org is not set",
+			name:              "should skip setting the default org when default org is not set",
 			defaultOrgSetting: -1,
 			identity:          &authn.Identity{ID: "user:1"},
 		},
 		{
-			name:              "should not set default org when identity is nil",
+			name:              "should skip setting the default org when identity is nil",
 			defaultOrgSetting: -1,
 			identity:          nil,
 		},
 		{
-			name:              "should not set default org when identity is not a user",
+			name:              "should skip setting the default org when identity is not a user",
 			defaultOrgSetting: 2,
 			identity:          &authn.Identity{ID: "service-account:1"},
 		},
 		{
-			name:              "should not set default org when user id is not valid",
+			name:              "should skip setting the default org when user id is not valid",
 			defaultOrgSetting: 2,
 			identity:          &authn.Identity{ID: "user:invalid"},
 		},
 		{
-			name:              "should not set default org when user is not allowed to use the configured default org",
+			name:              "should skip setting the default org when user is not allowed to use the configured default org",
 			defaultOrgSetting: 3,
 			identity:          &authn.Identity{ID: "user:1"},
+		},
+		{
+			name:              "should skip setting the default org when validateUsingOrg returns error",
+			defaultOrgSetting: 2,
+			identity:          &authn.Identity{ID: "user:1"},
+			setupMock: func(userService *usertest.MockService, orgService *orgtest.FakeOrgService) {
+				orgService.ExpectedError = fmt.Errorf("error")
+			},
 		},
 		{
 			name:              "should return error when the user org update was unsuccessful",
 			defaultOrgSetting: 2,
 			identity:          &authn.Identity{ID: "user:1"},
-			setupMock: func(userService *usertest.MockService) {
+			setupMock: func(userService *usertest.MockService, orgService *orgtest.FakeOrgService) {
 				userService.On("SetUsingOrg", mock.Anything, mock.Anything).Return(fmt.Errorf("error"))
 			},
 			wantErr: true,
@@ -190,12 +198,12 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 			userService := &usertest.MockService{}
 			defer userService.AssertExpectations(t)
 
-			if tt.setupMock != nil {
-				tt.setupMock(userService)
-			}
-
 			orgService := &orgtest.FakeOrgService{
 				ExpectedUserOrgDTO: []*org.UserOrgDTO{{OrgID: 2}},
+			}
+
+			if tt.setupMock != nil {
+				tt.setupMock(userService, orgService)
 			}
 
 			s := &OrgSync{
