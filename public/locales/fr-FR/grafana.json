@@ -1208,7 +1208,8 @@
       "new-password-same-as-old": "Le nouveau mot de passe ne peut pas être le même que l'ancien.",
       "old-password-label": "Ancien mot de passe",
       "old-password-required": "Vous devez saisir l'ancien mot de passe",
-      "passwords-must-match": "Les mots de passe doivent être identiques"
+      "passwords-must-match": "Les mots de passe doivent être identiques",
+      "strong-password-validation-register": ""
     }
   },
   "public-dashboard": {

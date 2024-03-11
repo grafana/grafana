@@ -1202,7 +1202,8 @@
       "new-password-same-as-old": "新密码不能和旧密码相同。",
       "old-password-label": "旧密码",
       "old-password-required": "旧密码是必需项",
-      "passwords-must-match": "密码必须一致"
+      "passwords-must-match": "密码必须一致",
+      "strong-password-validation-register": ""
     }
   },
   "public-dashboard": {
