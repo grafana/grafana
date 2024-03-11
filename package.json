@@ -149,7 +149,7 @@
     "@types/yargs": "17.0.32",
     "@typescript-eslint/eslint-plugin": "6.21.0",
     "@typescript-eslint/parser": "6.21.0",
-    "autoprefixer": "10.4.17",
+    "autoprefixer": "10.4.18",
     "blob-polyfill": "7.0.20220408",
     "browserslist": "^4.21.4",
     "chance": "^1.0.10",
