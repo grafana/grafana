@@ -61,13 +61,16 @@ export const setPaneState = createAction<SetPaneStateActionPayload>('explore/set
 export const clearPanes = createAction('explore/clearPanes');
 
 /**
- * Ensure Explore doesn't exceed supported number of panes and initializes the new pane.
+ * Creates a new Explore pane.
+ * If 2 panes already exist, the last one (right) is closed before creating a new one.
  */
 export const splitOpen = createAsyncThunk(
   'explore/splitOpen',
   async (options: SplitOpenOptions | undefined, { getState, dispatch }) => {
     // we currently support showing only 2 panes in explore, so if this action is dispatched we know it has been dispatched from the "first" pane.
     const originState = Object.values(getState().explore.panes)[0];
+
+    const queries = options?.queries ?? originState?.queries ?? [];
 
     Object.keys(getState().explore.panes).forEach((paneId, index) => {
       // Only 2 panes are supported. Remove panes before create a new one.
@@ -88,7 +91,7 @@ export const splitOpen = createAsyncThunk(
       createNewSplitOpenPane({
         exploreId: newPaneId,
         datasource: options?.datasourceUid || originState?.datasourceInstance?.getRef(),
-        queries: options?.queries ? withUniqueRefIds(options.queries) : [],
+        queries: withUniqueRefIds(queries),
         range: splitRange,
         panelsState: options?.panelsState || originState?.panelsState,
         correlationHelperData: options?.correlationHelperData,
