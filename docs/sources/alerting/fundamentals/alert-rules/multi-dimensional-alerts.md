@@ -1,6 +1,8 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-instances/
-description: Learn about alert instances
+aliases:
+  - ../alert-rules/alert-instances/ # /latest/alerting/fundamentals/alert-rules/alert-instances/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/multi-dimensional-alerts/
+description: Learn about multi-dimensional alerts
 keywords:
   - grafana
   - alerting
@@ -10,11 +12,11 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Alert instances
+title: Multi-dimensional alerts
 weight: 105
 ---
 
-# Alert instances
+# Multi-dimensional alerts
 
 Grafana managed alerts support multi-dimensional alerting. Each alert rule can create multiple alert instances. This is exceptionally powerful if you are observing multiple series in a single expression.
 

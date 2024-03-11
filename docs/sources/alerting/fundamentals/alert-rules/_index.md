@@ -23,13 +23,13 @@ While queries and expressions select the data set to evaluate, a condition sets 
 An interval specifies how frequently an alert rule is evaluated. Duration, when configured, indicates how long a condition must be met. The alert rules can also define alerting behavior in the absence of data.
 
 - [Alert rule types][alert-rule-types]
-- [Alert instances][alert-instances]
+- [Multi-dimensional alerts][multi-dimensional-alerts]
 - [Organising alert rules][organising-alerts]
 - [Annotation and labels][annotation-label]
 
 {{% docs/reference %}}
-[alert-instances]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/alert-instances"
-[alert-instances]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/alert-instances"
+[multi-dimensional-alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/multi-dimensional-alerts"
+[multi-dimensional-alerts]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/multi-dimensional-alerts"
 
 [alert-rule-types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/alert-rule-types"
 [alert-rule-types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/alert-rule-types"
