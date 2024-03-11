@@ -787,7 +787,7 @@ In alerting resources, you can use template variables with the same `$variable` 
 
 Properties that omit the provisioning interpolation, like annotation or notification templates, do not require changes. For the others, if you’ve defined a template variable such as `$variable`, **use `$$variable` to avoid interpolation.**
 
-For example, considering a `subject` property in the `contactPoints.receivers.settings` object alongside an undefined environment variable.
+For example, you could use a `subject` property in the `contactPoints.receivers.settings` object alongside an undefined environment variable.
 
 1. `subject: '{{ $labels }}'` will convert to `subject: '{{ }}'` which is incorrect.
 1. `subject: '{{ $$labels }}'` will convert to `subject: '{{ $labels }}'` as desired.
