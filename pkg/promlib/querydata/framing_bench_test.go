@@ -17,11 +17,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/promlib/models"
 )
 
 // when memory-profiling this benchmark, these commands are recommended:
-// - go test -benchmem -run=^$ -bench ^BenchmarkExemplarJson$ github.com/grafana/grafana/pkg/tsdb/prometheus/querydata -memprofile memprofile.out -count 6 | tee old.txt
+// - go test -benchmem -run=^$ -bench ^BenchmarkExemplarJson$ github.com/grafana/grafana/pkg/promlib/querydata -memprofile memprofile.out -count 6 | tee old.txt
 // - go tool pprof -http=localhost:6061 memprofile.out
 func BenchmarkExemplarJson(b *testing.B) {
 	queryFileName := filepath.Join("../testdata", "exemplar.query.json")
@@ -55,7 +55,7 @@ func BenchmarkExemplarJson(b *testing.B) {
 var resp *backend.QueryDataResponse
 
 // when memory-profiling this benchmark, these commands are recommended:
-// - go test -benchmem -run=^$ -bench ^BenchmarkRangeJson$ github.com/grafana/grafana/pkg/tsdb/prometheus/querydata -memprofile memprofile.out -count 6 | tee old.txt
+// - go test -benchmem -run=^$ -bench ^BenchmarkRangeJson$ github.com/grafana/grafana/pkg/promlib/querydata -memprofile memprofile.out -count 6 | tee old.txt
 // - go tool pprof -http=localhost:6061 memprofile.out
 // - benchstat old.txt new.txt
 func BenchmarkRangeJson(b *testing.B) {

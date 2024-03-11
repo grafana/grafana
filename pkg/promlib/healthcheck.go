@@ -1,4 +1,4 @@
-package prometheus
+package promlib
 
 import (
 	"context"
@@ -8,16 +8,15 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/promlib/models"
 )
 
 const (
 	refID = "__healthcheck__"
 )
 
-var logger log.Logger = backend.NewLoggerWith("logger", "tsdb.prometheus")
+var logger = backend.NewLoggerWith("logger", "tsdb.prometheus")
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
