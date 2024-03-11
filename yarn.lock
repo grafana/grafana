@@ -3927,7 +3927,7 @@ __metadata:
     "@reduxjs/toolkit": "npm:1.9.5"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
-    "@swc/core": "npm:1.4.6"
+    "@swc/core": "npm:1.4.2"
     "@swc/helpers": "npm:0.5.6"
     "@testing-library/dom": "npm:9.3.4"
     "@testing-library/jest-dom": "npm:6.4.2"
@@ -8358,90 +8358,90 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/core-darwin-arm64@npm:1.4.6":
-  version: 1.4.6
-  resolution: "@swc/core-darwin-arm64@npm:1.4.6"
+"@swc/core-darwin-arm64@npm:1.4.2":
+  version: 1.4.2
+  resolution: "@swc/core-darwin-arm64@npm:1.4.2"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@swc/core-darwin-x64@npm:1.4.6":
-  version: 1.4.6
-  resolution: "@swc/core-darwin-x64@npm:1.4.6"
+"@swc/core-darwin-x64@npm:1.4.2":
+  version: 1.4.2
+  resolution: "@swc/core-darwin-x64@npm:1.4.2"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm-gnueabihf@npm:1.4.6":
-  version: 1.4.6
-  resolution: "@swc/core-linux-arm-gnueabihf@npm:1.4.6"
+"@swc/core-linux-arm-gnueabihf@npm:1.4.2":
+  version: 1.4.2
+  resolution: "@swc/core-linux-arm-gnueabihf@npm:1.4.2"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm64-gnu@npm:1.4.6":
-  version: 1.4.6
-  resolution: "@swc/core-linux-arm64-gnu@npm:1.4.6"
+"@swc/core-linux-arm64-gnu@npm:1.4.2":
+  version: 1.4.2
+  resolution: "@swc/core-linux-arm64-gnu@npm:1.4.2"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm64-musl@npm:1.4.6":
-  version: 1.4.6
-  resolution: "@swc/core-linux-arm64-musl@npm:1.4.6"
+"@swc/core-linux-arm64-musl@npm:1.4.2":
+  version: 1.4.2
+  resolution: "@swc/core-linux-arm64-musl@npm:1.4.2"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@swc/core-linux-x64-gnu@npm:1.4.6":
-  version: 1.4.6
-  resolution: "@swc/core-linux-x64-gnu@npm:1.4.6"
+"@swc/core-linux-x64-gnu@npm:1.4.2":
+  version: 1.4.2
+  resolution: "@swc/core-linux-x64-gnu@npm:1.4.2"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/core-linux-x64-musl@npm:1.4.6":
-  version: 1.4.6
-  resolution: "@swc/core-linux-x64-musl@npm:1.4.6"
+"@swc/core-linux-x64-musl@npm:1.4.2":
+  version: 1.4.2
+  resolution: "@swc/core-linux-x64-musl@npm:1.4.2"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@swc/core-win32-arm64-msvc@npm:1.4.6":
-  version: 1.4.6
-  resolution: "@swc/core-win32-arm64-msvc@npm:1.4.6"
+"@swc/core-win32-arm64-msvc@npm:1.4.2":
+  version: 1.4.2
+  resolution: "@swc/core-win32-arm64-msvc@npm:1.4.2"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@swc/core-win32-ia32-msvc@npm:1.4.6":
-  version: 1.4.6
-  resolution: "@swc/core-win32-ia32-msvc@npm:1.4.6"
+"@swc/core-win32-ia32-msvc@npm:1.4.2":
+  version: 1.4.2
+  resolution: "@swc/core-win32-ia32-msvc@npm:1.4.2"
   conditions: os=win32 & cpu=ia32
   languageName: node
   linkType: hard
 
-"@swc/core-win32-x64-msvc@npm:1.4.6":
-  version: 1.4.6
-  resolution: "@swc/core-win32-x64-msvc@npm:1.4.6"
+"@swc/core-win32-x64-msvc@npm:1.4.2":
+  version: 1.4.2
+  resolution: "@swc/core-win32-x64-msvc@npm:1.4.2"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@swc/core@npm:1.4.6, @swc/core@npm:^1.3.49":
-  version: 1.4.6
-  resolution: "@swc/core@npm:1.4.6"
+"@swc/core@npm:1.4.2, @swc/core@npm:^1.3.49":
+  version: 1.4.2
+  resolution: "@swc/core@npm:1.4.2"
   dependencies:
-    "@swc/core-darwin-arm64": "npm:1.4.6"
-    "@swc/core-darwin-x64": "npm:1.4.6"
-    "@swc/core-linux-arm-gnueabihf": "npm:1.4.6"
-    "@swc/core-linux-arm64-gnu": "npm:1.4.6"
-    "@swc/core-linux-arm64-musl": "npm:1.4.6"
-    "@swc/core-linux-x64-gnu": "npm:1.4.6"
-    "@swc/core-linux-x64-musl": "npm:1.4.6"
-    "@swc/core-win32-arm64-msvc": "npm:1.4.6"
-    "@swc/core-win32-ia32-msvc": "npm:1.4.6"
-    "@swc/core-win32-x64-msvc": "npm:1.4.6"
+    "@swc/core-darwin-arm64": "npm:1.4.2"
+    "@swc/core-darwin-x64": "npm:1.4.2"
+    "@swc/core-linux-arm-gnueabihf": "npm:1.4.2"
+    "@swc/core-linux-arm64-gnu": "npm:1.4.2"
+    "@swc/core-linux-arm64-musl": "npm:1.4.2"
+    "@swc/core-linux-x64-gnu": "npm:1.4.2"
+    "@swc/core-linux-x64-musl": "npm:1.4.2"
+    "@swc/core-win32-arm64-msvc": "npm:1.4.2"
+    "@swc/core-win32-ia32-msvc": "npm:1.4.2"
+    "@swc/core-win32-x64-msvc": "npm:1.4.2"
     "@swc/counter": "npm:^0.1.2"
     "@swc/types": "npm:^0.1.5"
   peerDependencies:
@@ -8470,7 +8470,7 @@ __metadata:
   peerDependenciesMeta:
     "@swc/helpers":
       optional: true
-  checksum: 10/acf826107e5c72d2cf436fb80b4799b5fd2981e4493bcf573cdcc2c6abd02b29942df8f6b15f6c67a1d39bb709ac9e67194879f0dd7d36bdb41782a3ca612841
+  checksum: 10/750c09e35fb14317b1ff7f8f528eebd732988ce34736c3404805e70ff44e08a19ec6d0c16b9468fab602b596eb39cc6d2771f0483a62efd614768e046323b5f4
   languageName: node
   linkType: hard
 
@@ -18364,7 +18364,7 @@ __metadata:
     "@reduxjs/toolkit": "npm:1.9.5"
     "@remix-run/router": "npm:^1.5.0"
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
-    "@swc/core": "npm:1.4.6"
+    "@swc/core": "npm:1.4.2"
     "@swc/helpers": "npm:0.5.6"
     "@testing-library/dom": "npm:9.3.4"
     "@testing-library/jest-dom": "npm:6.4.2"
