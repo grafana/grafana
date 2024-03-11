@@ -57,7 +57,7 @@ export const InfluxSqlConfig = (props: Props) => {
           isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
         />
       </Field>
-      <Field horizontal label={<InlineLabel width={WIDTH_SHORT}>Insecure gRPC</InlineLabel>} className={styles.horizontalField}>
+      <Field horizontal label={<InlineLabel width={WIDTH_SHORT}>Insecure Connection</InlineLabel>} className={styles.horizontalField}>
         <InlineSwitch
           id={`${htmlPrefix}-insecure-grpc`}
           value={jsonData.insecureGrpc}
