@@ -1,5 +1,5 @@
+import { throttle } from 'lodash';
 import { useState, useEffect } from 'react';
-import { useThrottle } from 'react-use';
 
 interface MousePosition {
   x: number | null;
@@ -11,20 +11,19 @@ const DEFAULT_THROTTLE_INTERVAL_MS = 50;
 
 const useMousePosition = (throttleInterval = DEFAULT_THROTTLE_INTERVAL_MS) => {
   const [mousePosition, setMousePosition] = useState<MousePosition>({ x: null, y: null });
-  const throttledValue = useThrottle(mousePosition, throttleInterval);
 
   useEffect(() => {
-    const updateMousePosition = (event: MouseEvent) => {
+    const updateMousePosition = throttle((event: MouseEvent) => {
       setMousePosition({ x: event.clientX, y: event.clientY });
-    };
+    }, throttleInterval);
     window.addEventListener('mousemove', updateMousePosition);
 
     return () => {
       window.removeEventListener('mousemove', updateMousePosition);
     };
-  }, []);
+  }, [throttleInterval]);
 
-  return throttleInterval ? throttledValue : mousePosition;
+  return mousePosition;
 };
 
 export default useMousePosition;

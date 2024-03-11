@@ -9,6 +9,11 @@ import notFoundSvg from '../../../../img/grot-not-found.svg';
 
 import useMousePosition from './useMousePosition';
 
+const MIN_ARM_ROTATION = -20;
+const MAX_ARM_ROTATION = 5;
+const MIN_ARM_TRANSLATION = -5;
+const MAX_ARM_TRANSLATION = 5;
+
 export interface Props {
   width?: number;
   height?: number;
@@ -26,8 +31,9 @@ const getStyles = (theme: GrafanaTheme2, xPos: number | null, yPos: number | nul
   const { innerWidth, innerHeight } = window;
   const heightRatio = yPos && yPos / innerHeight;
   const widthRatio = xPos && xPos / innerWidth;
-  const rotation = heightRatio !== null ? getIntermediateValue(heightRatio, -20, 5) : 0;
-  const translation = widthRatio !== null ? getIntermediateValue(widthRatio, -5, 5) : 0;
+  const rotation = heightRatio !== null ? getIntermediateValue(heightRatio, MIN_ARM_ROTATION, MAX_ARM_ROTATION) : 0;
+  const translation =
+    widthRatio !== null ? getIntermediateValue(widthRatio, MIN_ARM_TRANSLATION, MAX_ARM_TRANSLATION) : 0;
 
   return {
     svg: css({
