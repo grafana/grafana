@@ -22,12 +22,6 @@ func shouldRecord(transition state.StateTransition) bool {
 		return false
 	}
 
-	// Do not log transitions when keeping last state
-	toKeepLast := strings.Contains(transition.StateReason, models.StateReasonKeepLast) && !strings.Contains(transition.PreviousStateReason, models.StateReasonKeepLast)
-	if toKeepLast {
-		return false
-	}
-
 	// Do not log not transitioned states normal states if it was marked as stale
 	if transition.StateReason == models.StateReasonMissingSeries && transition.PreviousState == eval.Normal && transition.State.State == eval.Normal {
 		return false
@@ -44,6 +38,12 @@ func shouldRecord(transition state.StateTransition) bool {
 // This is stricter than shouldRecord to avoid cluttering panels with state transitions.
 func ShouldRecordAnnotation(t state.StateTransition) bool {
 	if !shouldRecord(t) {
+		return false
+	}
+
+	// Do not log transitions when keeping last state
+	toKeepLast := strings.Contains(t.StateReason, models.StateReasonKeepLast) && !strings.Contains(t.PreviousStateReason, models.StateReasonKeepLast)
+	if toKeepLast {
 		return false
 	}
 
