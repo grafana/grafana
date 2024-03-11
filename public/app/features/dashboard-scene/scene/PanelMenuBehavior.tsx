@@ -86,7 +86,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       shortcut: 'p s',
     });
 
-    if (dashboard.state.isEditing || !isRepeat) {
+    if (dashboard.state.isEditing && !isRepeat) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),
         onClick: () => {
@@ -105,7 +105,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       },
     });
 
-    if (dashboard.state.isEditing || !isRepeat) {
+    if (dashboard.state.isEditing && !isRepeat) {
       if (parent instanceof LibraryVizPanel) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
@@ -200,7 +200,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (dashboard.state.isEditing || !isRepeat) {
+    if (dashboard.state.isEditing && !isRepeat) {
       items.push({
         text: '',
         type: 'divider',
