@@ -20,7 +20,7 @@ export default function FeatureTogglePage() {
       <Page.Contents>
         <pre>
           {`[unified_alerting]
-enable = true
+enabled = true
 `}
         </pre>
       </Page.Contents>
