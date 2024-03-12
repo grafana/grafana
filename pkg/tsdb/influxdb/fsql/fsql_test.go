@@ -57,13 +57,13 @@ func (suite *FSQLTestSuite) TestIntegration_QueryData() {
 		resp, err := Query(
 			context.Background(),
 			&models.DatasourceInfo{
-				HTTPClient: nil,
-				Token:      "secret",
-				URL:        "http://localhost:12345",
-				DbName:     "influxdb",
-				Version:    "test",
-				HTTPMode:   "proxy",
-				SecureGrpc: false,
+				HTTPClient:   nil,
+				Token:        "secret",
+				URL:          "http://localhost:12345",
+				DbName:       "influxdb",
+				Version:      "test",
+				HTTPMode:     "proxy",
+				InsecureGrpc: true,
 			},
 			backend.QueryDataRequest{
 				Queries: []backend.DataQuery{

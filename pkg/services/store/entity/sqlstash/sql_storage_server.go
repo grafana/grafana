@@ -1079,6 +1079,12 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
 
+	// if we are looking for deleted entities, we list "deleted" entries from the entity_history table
+	if r.Deleted {
+		entityQuery.from = "entity_history"
+		entityQuery.addWhere("action", entity.Entity_DELETED)
+	}
+
 	// TODO fix this
 	// entityQuery.addWhere("namespace", user.OrgID)
 
@@ -1132,20 +1138,28 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	}
 
 	if len(r.Labels) > 0 {
-		var args []any
-		var conditions []string
-		for labelKey, labelValue := range r.Labels {
-			args = append(args, labelKey)
-			args = append(args, labelValue)
-			conditions = append(conditions, "(label = ? AND value = ?)")
-		}
-		query := "SELECT guid FROM entity_labels" +
-			" WHERE (" + strings.Join(conditions, " OR ") + ")" +
-			" GROUP BY guid" +
-			" HAVING COUNT(label) = ?"
-		args = append(args, len(r.Labels))
+		// if we are looking for deleted entities, we need to use the labels column
+		if r.Deleted {
+			for labelKey, labelValue := range r.Labels {
+				entityQuery.addWhere(s.dialect.Quote("labels")+" LIKE ?", "%\""+labelKey+"\":\""+labelValue+"\"%")
+			}
+			// for active entities, we can use the entity_labels table
+		} else {
+			var args []any
+			var conditions []string
+			for labelKey, labelValue := range r.Labels {
+				args = append(args, labelKey)
+				args = append(args, labelValue)
+				conditions = append(conditions, "(label = ? AND value = ?)")
+			}
+			query := "SELECT guid FROM entity_labels" +
+				" WHERE (" + strings.Join(conditions, " OR ") + ")" +
+				" GROUP BY guid" +
+				" HAVING COUNT(label) = ?"
+			args = append(args, len(r.Labels))
 
-		entityQuery.addWhereInSubquery("guid", query, args)
+			entityQuery.addWhereInSubquery("guid", query, args)
+		}
 	}
 	for _, sort := range r.Sort {
 		sortBy, err := ParseSortBy(sort)
@@ -1483,18 +1497,12 @@ func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
 		}
 	}
 
-	// must match at least one label/value pair if specified
-	// TODO should this require matching all label conditions?
+	// must match all specified label/value pairs
 	if len(r.Labels) > 0 {
-		matched := false
 		for labelKey, labelValue := range r.Labels {
-			if result.Labels[labelKey] == labelValue {
-				matched = true
-				break
+			if result.Labels[labelKey] != labelValue {
+				return false
 			}
-		}
-		if !matched {
-			return false
 		}
 	}
 
