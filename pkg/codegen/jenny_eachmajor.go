@@ -2,11 +2,11 @@ package codegen
 
 import (
 	"fmt"
-	"github.com/grafana/cuetsy/ts"
-	"github.com/grafana/cuetsy/ts/ast"
 	"path/filepath"
 
 	"github.com/grafana/codejen"
+	"github.com/grafana/cuetsy/ts"
+	"github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/kindsys"
 )
 
