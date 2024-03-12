@@ -41,7 +41,7 @@ export const getPluginLinkExtensions: GetPluginExtensions<PluginExtensionLink> =
   };
 };
 
-// This getter doesn't support the `context` option (contextual information can be passed in as component props) 
+// This getter doesn't support the `context` option (contextual information can be passed in as component props)
 export const getPluginComponentExtensions = <Props = {}>(options: {
   extensionPointId: string;
   limitPerPlugin?: number;
