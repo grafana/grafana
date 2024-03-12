@@ -1,4 +1,6 @@
 ---
+## alias
+## https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation/
 description: Learn about how to template labels and annotations
 keywords:
@@ -13,8 +15,7 @@ labels:
     - enterprise
     - oss
 title: Templating labels and annotations
-menuTitle: Templating
-weight: 106
+weight: 500
 ---
 
 # Templating labels and annotations
