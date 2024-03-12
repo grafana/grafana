@@ -69,10 +69,14 @@ function StatusCell(props: CellProps<MigrationResourceDTO>) {
 
 function getTypeName(type: string) {
   if (type === 'datasource') {
-    return t('migrate-to-cloud.table.type-datasource', 'Data source');
+    return t('migrate-to-cloud.resource-type.datasource', 'Data source');
   }
 
-  return t('migrate-to-cloud.table.type-unknown', 'Unknown');
+  if (type === 'dashboard') {
+    return t('migrate-to-cloud.resource-type.dashboard', 'Dashboard');
+  }
+
+  return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
 }
 
 function ResourceIcon({ resource }: { resource: MigrationResourceDTO }) {
