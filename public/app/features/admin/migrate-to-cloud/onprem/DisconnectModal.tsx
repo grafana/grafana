@@ -1,45 +1,56 @@
-import React, { useState } from 'react';
+import React, { useCallback } from 'react';
 
-import { Modal, Button, Text } from '@grafana/ui';
+import { Alert, ConfirmModal, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
+import { useDisconnectStackMutation } from '../api';
+
 interface Props {
-  hideModal: () => void;
-  onConfirm: () => Promise<{ data: void } | { error: unknown }>;
+  isOpen: boolean;
+  onDismiss: () => void;
 }
 
-export const DisconnectModal = ({ hideModal, onConfirm }: Props) => {
-  const [isDisconnecting, setIsDisconnecting] = useState(false);
+export const DisconnectModal = ({ isOpen, onDismiss }: Props) => {
+  const [disconnectStack, { isLoading, isError }] = useDisconnectStackMutation();
 
-  const onConfirmDisconnect = async () => {
-    setIsDisconnecting(true);
-    await onConfirm();
-    setIsDisconnecting(false);
-    hideModal();
-  };
+  const handleConfirm = useCallback(async () => {
+    const resp = await disconnectStack();
+    if (!('error' in resp)) {
+      onDismiss();
+    }
+  }, [disconnectStack, onDismiss]);
 
-  return (
-    <Modal
-      isOpen
-      title={t('migrate-to-cloud.disconnect-modal.title', 'Disconnect from cloud stack')}
-      onDismiss={hideModal}
-    >
-      <Text color="secondary">
+  const confirmBody = (
+    <Stack direction="column">
+      {isError && (
+        <Alert
+          severity="error"
+          title={t('migrate-to-cloud.disconnect-modal.error', 'There was an error disconnecting')}
+        />
+      )}
+      <div>
         <Trans i18nKey="migrate-to-cloud.disconnect-modal.body">
           This will remove the migration token from this installation. If you wish to upload more resources in the
           future, you will need to enter a new migration token.
         </Trans>
-      </Text>
-      <Modal.ButtonRow>
-        <Button variant="secondary" onClick={hideModal}>
-          <Trans i18nKey="migrate-to-cloud.disconnect-modal.cancel">Cancel</Trans>
-        </Button>
-        <Button disabled={isDisconnecting} onClick={onConfirmDisconnect}>
-          {isDisconnecting
-            ? t('migrate-to-cloud.disconnect-modal.disconnecting', 'Disconnecting...')
-            : t('migrate-to-cloud.disconnect-modal.disconnect', 'Disconnect')}
-        </Button>
-      </Modal.ButtonRow>
-    </Modal>
+      </div>
+    </Stack>
+  );
+
+  return (
+    <ConfirmModal
+      isOpen={isOpen}
+      title={t('migrate-to-cloud.disconnect-modal.title', 'Disconnect from cloud stack')}
+      body={<></>} // body is mandatory prop, but i don't wanna
+      description={confirmBody}
+      confirmText={
+        isLoading
+          ? t('migrate-to-cloud.disconnect-modal.disconnecting', 'Disconnecting...')
+          : t('migrate-to-cloud.disconnect-modal.disconnect', 'Disconnect')
+      }
+      dismissText={t('migrate-to-cloud.disconnect-modal.cancel', 'Cancel')}
+      onConfirm={handleConfirm}
+      onDismiss={onDismiss}
+    />
   );
 };
