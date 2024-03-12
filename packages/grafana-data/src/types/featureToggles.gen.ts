@@ -119,7 +119,6 @@ export interface FeatureToggles {
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
   idForwarding?: boolean;
-  cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
   panelMonitoring?: boolean;
   enableNativeHTTPHistogram?: boolean;
