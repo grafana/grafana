@@ -3,6 +3,7 @@ package ssosettingsimpl
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -168,6 +169,33 @@ func (s *Service) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSet
 func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requester identity.Requester) error {
 	if !s.isProviderConfigurable(settings.Provider) {
 		return ssosettings.ErrNotConfigurable
+	}
+
+	// TODO: the following code needs to be merged into the connector via a reloadable
+	if settings.Provider == "saml" {
+		// TODO: validate settings (reloadable)
+		samlStoredSettings, err := s.GetForProvider(ctx, settings.Provider)
+		if err != nil {
+			return err
+		}
+		// pretty print
+		b, err := json.MarshalIndent(samlStoredSettings, "", "\t")
+		if err != nil {
+			fmt.Println("error while pretty printing:", err)
+		}
+		fmt.Println(string(b))
+		// TODO: collectSecrets
+		// TODO: encryptSecrets
+		// TODO: upsert
+
+		err = s.store.Upsert(ctx, settings)
+		if err != nil {
+			return err
+		}
+
+		// TODO: make a copy of current settings for reload operation and apply overrides
+
+		return nil
 	}
 
 	social, ok := s.reloadables[settings.Provider]
