@@ -4,7 +4,7 @@ import { TimeZone } from '@grafana/schema';
 
 import { cacheFieldDisplayNames } from '../../field';
 import { DataFrame, TransformationApplicabilityLevels } from '../../types';
-import { DataTransformerInfo } from '../../types/transformations';
+import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';
 
 import { fieldToStringField } from './convertFieldType';
 import { DataTransformerID } from './ids';
@@ -35,10 +35,10 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
   },
   isApplicableDescription:
     'The Format time transformation requires a time field to work. No time field could be found.',
-  operator: (options) => (source) =>
+  operator: (options, ctx) => (source) =>
     source.pipe(
       map((data) => {
-        return applyFormatTime(options, data);
+        return applyFormatTime(options, data, ctx);
       })
     ),
 };
@@ -48,13 +48,16 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
  */
 export const applyFormatTime = (
   { timeField, outputFormat, timezone }: FormatTimeTransformerOptions,
-  data: DataFrame[]
+  data: DataFrame[],
+  ctx?: DataTransformContext
 ) => {
   if (!Array.isArray(data) || data.length === 0) {
     return data;
   }
 
   cacheFieldDisplayNames(data);
+
+  outputFormat = ctx?.interpolate(outputFormat) ?? outputFormat;
 
   return data.map((frame) => ({
     ...frame,
