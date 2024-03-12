@@ -61,10 +61,7 @@ export const PanelEditorTabs = React.memo(({ panel, dashboard, tabs, onChangeTab
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar} hideBorder>
         {tabs.map((tab) => {
-          if (tab.id === PanelEditorTabId.Alert) {
-            if (!alertingEnabled) {
-              return null;
-            }
+          if (tab.id === PanelEditorTabId.Alert && alertingEnabled) {
             return (
               <PanelAlertTab
                 key={tab.id}
