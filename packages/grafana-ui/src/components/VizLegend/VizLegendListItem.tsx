@@ -81,7 +81,7 @@ export const VizLegendListItem = <T = unknown,>({
         onClick={onClick}
         className={styles.label}
       >
-        {item.label}
+        {item.label} &quot; {item.url} &quot;
       </button>
 
       {item.getDisplayValues && <VizLegendStatsList stats={item.getDisplayValues()} />}

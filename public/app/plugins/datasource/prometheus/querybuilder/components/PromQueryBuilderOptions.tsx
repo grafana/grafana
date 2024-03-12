@@ -12,6 +12,8 @@ import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 
 import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from './PromQueryEditorSelector';
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
+import { getLegendUrlModeLabel, PromQueryLegendUrlEditor } from './PromQueryLegendUrlEditor';
+
 
 export interface UIOptions {
   exemplars: boolean;
@@ -19,6 +21,7 @@ export interface UIOptions {
   format: boolean;
   minStep: boolean;
   legend: boolean;
+  legendUrl: boolean;
   resolution: boolean;
 }
 
@@ -72,6 +75,12 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
             onChange={(legendFormat) => onChange({ ...query, legendFormat })}
             onRunQuery={onRunQuery}
           />
+          <PromQueryLegendUrlEditor
+            legendUrlFormat={query.legendUrlFormat}
+            onChange={(legendUrlFormat) => onChange({ ...query, legendUrlFormat })}
+            onRunQuery={onRunQuery}
+          />
+
           <EditorField
             label="Min step"
             tooltip={
@@ -145,6 +154,7 @@ function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: str
   const items: string[] = [];
 
   items.push(`Legend: ${getLegendModeLabel(query.legendFormat)}`);
+  items.push(`URL: ${getLegendUrlModeLabel(query.legendUrlFormat)}`);
   items.push(`Format: ${formatOption}`);
   items.push(`Step: ${query.interval ?? 'auto'}`);
   items.push(`Type: ${queryType}`);
