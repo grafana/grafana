@@ -79,16 +79,6 @@ func main() {
 	}
 }
 
-func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
-	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) corecodegen.SchemaForGen {
-		return corecodegen.SchemaForGen{
-			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
-			Schema:  pd.Lineage.Latest(),
-			IsGroup: pd.SchemaInterface.IsGroup,
-		}
-	})
-}
-
 func kind2pd(rt *thema.Runtime, j codejen.OneToOne[kindsys.Kind]) codejen.OneToOne[*pfs.PluginDecl] {
 	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) kindsys.Kind {
 		kd, err := kindsys.BindComposable(rt, pd.KindDecl)
