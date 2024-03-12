@@ -201,7 +201,7 @@ const EditorForQueryType = ({
             <>
               {type} was deprecated in Grafana 9. See the{' '}
               <a
-                href="https://grafana.com/docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/"
+                href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#application-insights-and-insights-analytics-removed"
                 target="_blank"
                 rel="noreferrer"
               >
@@ -221,7 +221,15 @@ const UserAuthAlert = () => {
     <Alert title="Unsupported authentication provider" data-testid={selectors.components.queryEditor.userAuthAlert}>
       <>
         Usage of this data source requires you to be authenticated via Azure Entra (formerly Azure Active Directory).
-        Please review the documentation for more information.
+        Please review the{' '}
+        <a
+          href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#configure-current-user-authentication"
+          target="_blank"
+          rel="noreferrer"
+        >
+          documentation
+        </a>{' '}
+        for more information.
       </>
     </Alert>
   );
@@ -235,8 +243,15 @@ const UserAuthFallbackAlert = () => {
     >
       <>
         Data source backend features (such as alerting) require service credentials to function. This data source is
-        either configured without service credential fallback or the fallback functionality is disabled. Please review
-        the documentation for more information.
+        configured without service credential fallback, or the fallback functionality is disabled. Please review the{' '}
+        <a
+          href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#configure-current-user-authentication"
+          target="_blank"
+          rel="noreferrer"
+        >
+          documentation
+        </a>{' '}
+        for more information.
       </>
     </Alert>
   );
