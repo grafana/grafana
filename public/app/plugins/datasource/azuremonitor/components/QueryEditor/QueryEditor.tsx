@@ -201,7 +201,7 @@ const EditorForQueryType = ({
             <>
               {type} was deprecated in Grafana 9. See the{' '}
               <a
-                href="https://grafana.com/docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/"
+                href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#application-insights-and-insights-analytics-removed"
                 target="_blank"
                 rel="noreferrer"
               >
