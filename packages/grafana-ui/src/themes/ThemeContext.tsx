@@ -4,6 +4,8 @@ import React, { useContext } from 'react';
 
 import { GrafanaTheme, GrafanaTheme2, ThemeContext } from '@grafana/data';
 
+import darkTheme from '../saga-themes/code/themes/dark';
+import { GrafanaTheme3, createTheme } from '../saga-themes/createTheme';
 import { Themeable, Themeable2 } from '../types/theme';
 
 import { stylesFactory } from './stylesFactory';
@@ -71,6 +73,11 @@ export function useTheme2(): GrafanaTheme2 {
   return useContext(ThemeContextMock || ThemeContext);
 }
 
+/** @public */
+export function useTheme3(): GrafanaTheme3 {
+  return useContext(React.createContext(createTheme(darkTheme)));
+}
+
 /**
  * Hook for using memoized styles with access to the theme.
  *
@@ -116,6 +123,22 @@ export function useStyles2<T extends unknown[], CSSReturnValue>(
   ...additionalArguments: T
 ): CSSReturnValue {
   const theme = useTheme2();
+
+  let memoizedStyleCreator: typeof getStyles = memoizedStyleCreators.get(getStyles);
+
+  if (!memoizedStyleCreator) {
+    memoizedStyleCreator = memoize(getStyles, { maxSize: 10 }); // each getStyles function will memoize 10 different sets of props
+    memoizedStyleCreators.set(getStyles, memoizedStyleCreator);
+  }
+
+  return memoizedStyleCreator(theme, ...additionalArguments);
+}
+
+export function useStyles3<T extends unknown[], CSSReturnValue>(
+  getStyles: (theme: GrafanaTheme3, ...args: T) => CSSReturnValue,
+  ...additionalArguments: T
+): CSSReturnValue {
+  const theme = useTheme3();
 
   let memoizedStyleCreator: typeof getStyles = memoizedStyleCreators.get(getStyles);
 

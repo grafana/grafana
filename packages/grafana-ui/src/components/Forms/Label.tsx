@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-
-import { useStyles2 } from '../../themes';
+import { GrafanaTheme3 } from '../../saga-themes/createTheme';
+import { useStyles3 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
@@ -13,7 +12,7 @@ export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> 
 }
 
 export const Label = ({ children, description, className, category, ...labelProps }: LabelProps) => {
-  const styles = useStyles2(getLabelStyles);
+  const styles = useStyles3(getLabelStyles);
   const categories = category?.map((c, i) => {
     return (
       <span className={styles.categories} key={`${c}/${i}`}>
@@ -36,14 +35,12 @@ export const Label = ({ children, description, className, category, ...labelProp
   );
 };
 
-export const getLabelStyles = (theme: GrafanaTheme2) => ({
+export const getLabelStyles = (theme: GrafanaTheme3) => ({
   label: css({
     label: 'Label',
-    fontSize: theme.typography.size.sm,
-    fontWeight: theme.typography.fontWeightMedium,
-    lineHeight: 1.25,
-    marginBottom: theme.spacing(0.5),
-    color: theme.colors.text.primary,
+    font: theme.font.bodySmallStrong,
+    marginBottom: theme.spacing[50],
+    color: theme.color.content.secondary,
     maxWidth: '480px',
   }),
   labelContent: css({
@@ -52,10 +49,9 @@ export const getLabelStyles = (theme: GrafanaTheme2) => ({
   }),
   description: css({
     label: 'Label-description',
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.size.sm,
-    fontWeight: theme.typography.fontWeightRegular,
-    marginTop: theme.spacing(0.25),
+    color: theme.color.content.disabled,
+    font: theme.font.bodySmall,
+    marginTop: theme.spacing[25],
     display: 'block',
   }),
   categories: css({
@@ -64,6 +60,6 @@ export const getLabelStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
   }),
   chevron: css({
-    margin: theme.spacing(0, 0.25),
+    margin: `${theme.spacing[0]} ${theme.spacing[25]}`,
   }),
 });
