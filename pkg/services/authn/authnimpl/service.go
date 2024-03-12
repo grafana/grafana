@@ -89,7 +89,7 @@ func ProvideService(
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
 
-	s.RegisterClient(clients.ProvideRender(userService, renderService))
+	s.RegisterClient(clients.ProvideRender(renderService))
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService))
 
 	if cfg.LoginCookieName != "" {
