@@ -39,6 +39,7 @@ import { initialAsyncRequestState } from './utils/redux';
 import {
   InsertPosition,
   addRouteToReferenceRoute,
+  cleanRouteIDs,
   mergePartialAmRouteWithRouteTree,
   omitRouteFromRouteTree,
 } from './utils/routeTree';
@@ -152,10 +153,13 @@ const AmRoutes = () => {
     updateRouteTree(newRouteTree);
   }
 
-  function updateRouteTree(routeTree: Route) {
+  function updateRouteTree(routeTree: Route | RouteWithID) {
     if (!result) {
       return;
     }
+
+    // make sure we omit all IDs from our routes
+    const newRouteTree = cleanRouteIDs(routeTree);
 
     setUpdatingTree(true);
 
@@ -165,7 +169,7 @@ const AmRoutes = () => {
           ...result,
           alertmanager_config: {
             ...result.alertmanager_config,
-            route: routeTree,
+            route: newRouteTree,
           },
         },
         oldConfig: result,
