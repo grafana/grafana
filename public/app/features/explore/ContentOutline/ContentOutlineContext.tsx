@@ -1,5 +1,5 @@
 import { uniqueId } from 'lodash';
-import React, { useState, useContext, createContext, ReactNode, useCallback } from 'react';
+import React, { useState, useContext, createContext, ReactNode, useCallback, useRef } from 'react';
 
 import { ContentOutlineItemBaseProps } from './ContentOutlineItem';
 
@@ -9,7 +9,7 @@ export interface ContentOutlineItemContextProps extends ContentOutlineItemBasePr
   children?: ContentOutlineItemContextProps[];
 }
 
-type RegisterFunction = ({ title, icon, ref }: Omit<ContentOutlineItemContextProps, 'id'>) => string;
+type RegisterFunction = (outlineItem: Omit<ContentOutlineItemContextProps, 'id'>) => string;
 
 export interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];
@@ -17,59 +17,79 @@ export interface ContentOutlineContextProps {
   unregister: (id: string) => void;
 }
 
+interface ParentlessItems {
+  [panelId: string]: ContentOutlineItemContextProps[];
+}
+
 const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
 
 export const ContentOutlineContextProvider = ({ children }: { children: ReactNode }) => {
   const [outlineItems, setOutlineItems] = useState<ContentOutlineItemContextProps[]>([]);
+  const parentlessItemsRef = useRef<ParentlessItems>({});
 
-  const register: RegisterFunction = useCallback(({ panelId, title, icon, ref }) => {
-    const id = uniqueId(`${panelId}-${title}-${icon}_`);
+  const register: RegisterFunction = useCallback((outlineItem) => {
+    const id = uniqueId(`${outlineItem.panelId}-${outlineItem.title}-${outlineItem.icon}_`);
 
     setOutlineItems((prevItems) => {
-      const matchIndex = prevItems.findIndex((item) => item.panelId === panelId);
-      const match = prevItems[matchIndex];
-
-      const matchIsParent = match && match.children;
-
-      let updatedItems = [...prevItems];
-
-      if (matchIsParent) {
-        match.children?.push({ id, panelId, title, icon, ref });
-        match.children?.sort(sortElementsByDocumentPosition);
-      } else if (match) {
-        const parent = {
-          ...match,
-          id: `section-${id}_`,
-          title: panelId,
-          children: [match, { id, panelId, title, icon, ref }],
-        };
-        parent.children.sort(sortElementsByDocumentPosition);
-        updatedItems.splice(matchIndex, 1, parent);
-      } else {
-        updatedItems = [...prevItems, { id, panelId, title, icon, ref }];
-        updatedItems.sort(sortElementsByDocumentPosition);
+      if (outlineItem.level === 'root') {
+        return [
+          ...prevItems,
+          {
+            ...outlineItem,
+            id,
+            children: parentlessItemsRef.current[outlineItem.panelId] || [],
+          },
+        ];
       }
 
-      return updatedItems;
+      if (outlineItem.level === 'child') {
+        const parent = prevItems.find((item) => item.panelId === outlineItem.panelId && item.level === 'root');
+        if (!parent) {
+          const parentlessItemSibling = Object.keys(parentlessItemsRef.current).find(
+            (key) => key === outlineItem.panelId
+          );
+
+          if (parentlessItemSibling) {
+            parentlessItemsRef.current[outlineItem.panelId].push({
+              ...outlineItem,
+              id,
+            });
+          } else {
+            parentlessItemsRef.current[outlineItem.panelId] = [
+              {
+                ...outlineItem,
+                id,
+              },
+            ];
+          }
+          return [...prevItems];
+        }
+
+        parent.children?.push({
+          ...outlineItem,
+          id,
+        });
+        parent.children?.sort(sortElementsByDocumentPosition);
+
+        return [...prevItems];
+      }
+
+      return prevItems;
     });
 
     return id;
   }, []);
 
   const unregister = useCallback((id: string) => {
-    setOutlineItems(
-      (prevItems) =>
-        prevItems
-          .filter((item) => item.id !== id)
-          .map((item) => {
-            if (item.children) {
-              item.children = item.children.filter((child) => child.id !== id);
-            }
-            return item;
-          })
-
-      //TODO: need logic here to remove section if it only has one child
-      // 1 child logic would work for queries, but not for logs because of pinned items and errors
+    setOutlineItems((prevItems) =>
+      prevItems
+        .filter((item) => item.id !== id)
+        .map((item) => {
+          if (item.children) {
+            item.children = item.children.filter((child) => child.id !== id);
+          }
+          return item;
+        })
     );
   }, []);
 

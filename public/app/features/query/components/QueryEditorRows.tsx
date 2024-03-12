@@ -160,7 +160,14 @@ export class QueryEditorRows extends PureComponent<Props> {
                     : undefined;
 
                   return (
-                    <ContentOutlineItem title={query.refId} icon="arrow" key={query.refId} panelId="Queries">
+                    <ContentOutlineItem
+                      title={query.refId}
+                      icon="arrow"
+                      key={query.refId}
+                      panelId="Queries"
+                      customTopOffset={-10}
+                      level="child"
+                    >
                       <QueryEditorRow
                         id={query.refId}
                         index={index}

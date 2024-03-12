@@ -12,10 +12,8 @@ import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 const INDENT_LEVELS = {
   ROOT: '32px',
   CHILD_COLLAPSED: '36px',
-  CHILD_EXPANDED: '62px',
+  CHILD_EXPANDED: '66px',
 };
-
-const QUERY_ROW_TOP_OFFSET = -10;
 
 const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
   const baseIndentStyle = {
@@ -39,6 +37,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
     }),
     content: css({
       label: 'content',
+      marginLeft: theme.spacing(0.5),
       top: 0,
     }),
     buttonStyles: css({
@@ -82,20 +81,17 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
 
-  const scrollIntoView = (ref: HTMLElement | null, itemPanelId: string) => {
+  const scrollIntoView = (ref: HTMLElement | null, itemPanelId: string, customOffsetTop = 0) => {
     let scrollValue = 0;
     let el: HTMLElement | null | undefined = ref;
 
-    // This is to handle ContentOutlineItem wrapping each QueryEditorRow
-    const customOffsetTop = itemPanelId === 'Queries' ? QUERY_ROW_TOP_OFFSET : 0;
-
     do {
-      scrollValue += el?.offsetTop || customOffsetTop;
+      scrollValue += el?.offsetTop || 0;
       el = el?.offsetParent as HTMLElement;
     } while (el && el !== scroller);
 
     scroller?.scroll({
-      top: scrollValue,
+      top: scrollValue + customOffsetTop,
       behavior: 'smooth',
     });
 
@@ -122,6 +118,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   };
 
   const outlineItemsHaveChildren = outlineItems.some((item) => item.children);
+  console.log('outlineItemsHaveChildren', outlineItemsHaveChildren);
 
   useEffect(() => {
     let activeItem;
@@ -136,8 +133,9 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
 
       // Check children
       const activeChild = item.children?.find((child) => {
+        const offsetTop = child.customTopOffset || 0;
         let childTop = child?.ref?.getBoundingClientRect().top;
-        return childTop && childTop >= QUERY_ROW_TOP_OFFSET;
+        return childTop && childTop >= offsetTop;
       });
 
       if (activeChild) {
@@ -169,22 +167,20 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
 
           {outlineItems.map((item) => (
             <React.Fragment key={item.id}>
-              <div className={styles.sectionWrapper}>
-                <ContentOutlineItemButton
-                  key={item.id}
-                  title={contentOutlineExpanded ? item.title : undefined}
-                  className={cx(styles.buttonStyles, {
-                    [styles.indentRoot]: outlineItemsHaveChildren && !item.id.includes('section'),
-                  })}
-                  icon={item.icon}
-                  onClick={() => scrollIntoView(item.ref, item.panelId)}
-                  tooltip={!contentOutlineExpanded ? item.title : undefined}
-                  collapsible={item.children && item.children.length > 0 ? true : undefined}
-                  collapsed={sectionExpanded}
-                  toggleCollapsed={toggleSection}
-                  isActive={activeSectionId === item.id}
-                />
-              </div>
+              <ContentOutlineItemButton
+                key={item.id}
+                title={contentOutlineExpanded ? item.title : undefined}
+                className={cx(styles.buttonStyles, {
+                  [styles.indentRoot]: outlineItemsHaveChildren && item.children?.length === 0,
+                })}
+                icon={item.icon}
+                onClick={() => scrollIntoView(item.ref, item.panelId)}
+                tooltip={!contentOutlineExpanded ? item.title : undefined}
+                collapsible={item.children && item.children.length > 0 ? true : undefined}
+                collapsed={sectionExpanded}
+                toggleCollapsed={toggleSection}
+                isActive={activeSectionId === item.id}
+              />
               {item.children &&
                 sectionExpanded &&
                 item.children.map((child) => (
@@ -193,7 +189,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                     title={contentOutlineExpanded ? child.title : undefined}
                     icon={contentOutlineExpanded ? undefined : item.icon}
                     className={styles.indentChildren}
-                    onClick={() => scrollIntoView(child.ref, child.panelId)}
+                    onClick={() => scrollIntoView(child.ref, child.panelId, child.customTopOffset)}
                     tooltip={!contentOutlineExpanded ? child.title : undefined}
                     isActive={activeSectionChildId === child.id}
                   />
