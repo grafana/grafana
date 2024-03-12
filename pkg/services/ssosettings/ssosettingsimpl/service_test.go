@@ -193,16 +193,16 @@ func TestService_GetForProvider(t *testing.T) {
 					Settings: map[string]any{
 						"enabled":  true,
 						"auth_url": "",
-						"api_url":  "overwritten-api-url",
+						"api_url":  "https://overwritten-api-url.com/user",
 					},
 					Source: models.DB,
 				}
 				env.fallbackStrategy.ExpectedIsMatch = true
 				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
 					"github": {
-						"auth_url":  "https://accounts.google.com/o/oauth2/v2/auth",
-						"token_url": "https://oauth2.googleapis.com/token",
-						"api_url":   "https://openidconnect.googleapis.com/v1/userinfo",
+						"auth_url":  "https://github.com/login/oauth/authorize",
+						"token_url": "https://github.com/login/oauth/access_token",
+						"api_url":   "https://api.github.com/user",
 					},
 				}
 			},
@@ -210,9 +210,9 @@ func TestService_GetForProvider(t *testing.T) {
 				Provider: "github",
 				Settings: map[string]any{
 					"enabled":   true,
-					"auth_url":  "https://accounts.google.com/o/oauth2/v2/auth",
-					"token_url": "https://oauth2.googleapis.com/token",
-					"api_url":   "overwritten-api-url",
+					"auth_url":  "https://github.com/login/oauth/authorize",
+					"token_url": "https://github.com/login/oauth/access_token",
+					"api_url":   "https://overwritten-api-url.com/user",
 				},
 				Source: models.DB,
 			},
