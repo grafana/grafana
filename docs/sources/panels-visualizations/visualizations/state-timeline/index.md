@@ -21,7 +21,7 @@ weight: 100
 
 A state timeline visualization displays data in a way that shows state changes over time. In a state timeline, the data is presented as a series of bars or bands called _state regions_. State regions can be rendered with or without values, and the region length indicates the duration or frequency of a state within a given time range.
 
-For example, if you're monitoring the CPU usage of a server, you can use a state timeline to visualize the different states, such as “low,” “normal,” “high,” or “critical,”  over time. Each state is represented by a different color and the lengths represent the duration of time that the server remained in that state:
+For example, if you're monitoring the CPU usage of a server, you can use a state timeline to visualize the different states, such as “low,” “normal,” “high,” or “critical,” over time. Each state is represented by a different color and the lengths represent the duration of time that the server remained in that state:
 
 {{< figure src="/static/img/docs/state-timeline-panel/state-timeline-panel.png" max-width="1025px" caption="State timeline with string states" alt="A state timeline panel showing CPU usage in a Grafana dashboard" >}}
 
@@ -50,7 +50,7 @@ Each state ends when the next state begins or when there is a `null` value.
 The following table is an example of the type of data you need for a state timeline visualization and how it should be formatted:
 
 | Timestamps          | Server A | Server B |
-|---------------------|----------|----------|
+| ------------------- | -------- | -------- |
 | 2024-02-29 8:00:00  | Up       | Up       |
 | 2024-02-29 8:15:00  | null     | Up       |
 | 2024-02-29 8:30:00  | Down     | null     |
