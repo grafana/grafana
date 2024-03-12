@@ -10,3 +10,4 @@ Prometheus Library (a.k.a. promlib) is the foundation of the Grafana Prometheus 
 - Run `git push origin <VERSION>`
 - Verify that the tag was created successfully [here](https://github.com/grafana/grafana/tags)
 - DO NOT RELEASE anything! Tagging is enough.
+- After tagging and waiting 5-10 minutes for go module registry to catch up just bump the `promlib` version on grafana/grafana
