@@ -43,6 +43,7 @@ export const ConnectionSVG = ({
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
   const defaultArrowColor = config.theme2.colors.text.primary;
   const defaultArrowSize = 2;
+  const maximumVertices = 10;
 
   const [selectedConnection, setSelectedConnection] = useState<ConnectionState | undefined>(undefined);
 
@@ -218,23 +219,24 @@ export const ConnectionSVG = ({
                         />
                       );
                     })}
-                    {futureVertices.map((value, index) => {
-                      const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
-                      return (
-                        <circle
-                          id={`vertexFuture`}
-                          data-index={index}
-                          key={`vertexFuture${index}_${idx}`}
-                          cx={x}
-                          cy={y}
-                          r={4}
-                          stroke={strokeColor}
-                          style={futureVertexStyles}
-                          cursor={'crosshair'}
-                          pointerEvents="auto"
-                        />
-                      );
-                    })}
+                    {vertices.length < maximumVertices &&
+                      futureVertices.map((value, index) => {
+                        const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
+                        return (
+                          <circle
+                            id={`vertexFuture`}
+                            data-index={index}
+                            key={`vertexFuture${index}_${idx}`}
+                            cx={x}
+                            cy={y}
+                            r={4}
+                            stroke={strokeColor}
+                            style={futureVertexStyles}
+                            cursor={'crosshair'}
+                            pointerEvents="auto"
+                          />
+                        );
+                      })}
                   </g>
                 )}
               </g>
