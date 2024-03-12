@@ -1420,7 +1420,8 @@
       "metadata": {
         "name": "exploreScrollableLogsContainer",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-12T14:02:07Z"
       },
       "spec": {
         "description": "Improves the scrolling behavior of logs in Explore",
