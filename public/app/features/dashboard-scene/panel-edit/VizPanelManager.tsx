@@ -340,7 +340,10 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   public commitChanges() {
     const sourcePanel = this.state.sourcePanel.resolve();
+    this.commitChangesTo(sourcePanel);
+  }
 
+  public commitChangesTo(sourcePanel: VizPanel) {
     if (sourcePanel.parent instanceof SceneGridItem) {
       sourcePanel.parent.setState({
         body: this.state.panel.clone({
