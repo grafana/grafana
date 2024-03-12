@@ -43,7 +43,7 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { dashboardSceneGraph, getLibraryVizPanelFromVizPanel } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import {
@@ -459,7 +459,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       return;
     }
 
-    const gridItem = vizPanel.parent;
+    const libraryPanel = getLibraryVizPanelFromVizPanel(vizPanel);
+
+    const gridItem = libraryPanel ? libraryPanel.parent : vizPanel.parent;
 
     if (!(gridItem instanceof SceneGridItem || gridItem instanceof PanelRepeaterGridItem)) {
       console.error('Trying to duplicate a panel in a layout that is not SceneGridItem or PanelRepeaterGridItem');
@@ -468,25 +470,44 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     let panelState;
     let panelData;
-    if (gridItem instanceof PanelRepeaterGridItem) {
-      const { key, ...gridRepeaterSourceState } = sceneUtils.cloneSceneObjectState(gridItem.state.source.state);
-      panelState = { ...gridRepeaterSourceState };
-      panelData = sceneGraph.getData(gridItem.state.source).clone();
+    let newGridItem;
+    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
+
+    if (libraryPanel) {
+      const gridItemToDuplicateState = sceneUtils.cloneSceneObjectState(gridItem.state);
+
+      newGridItem = new SceneGridItem({
+        x: gridItemToDuplicateState.x,
+        y: gridItemToDuplicateState.y,
+        width: gridItemToDuplicateState.width,
+        height: gridItemToDuplicateState.height,
+        body: new LibraryVizPanel({
+          title: libraryPanel.state.title,
+          uid: libraryPanel.state.uid,
+          name: libraryPanel.state.name,
+          panelKey: getVizPanelKeyForPanelId(newPanelId),
+        }),
+      });
     } else {
-      const { key, ...gridItemPanelState } = sceneUtils.cloneSceneObjectState(vizPanel.state);
-      panelState = { ...gridItemPanelState };
-      panelData = sceneGraph.getData(vizPanel).clone();
+      if (gridItem instanceof PanelRepeaterGridItem) {
+        panelState = sceneUtils.cloneSceneObjectState(gridItem.state.source.state);
+        panelData = sceneGraph.getData(gridItem.state.source).clone();
+      } else {
+        panelState = sceneUtils.cloneSceneObjectState(vizPanel.state);
+        panelData = sceneGraph.getData(vizPanel).clone();
+      }
+
+      // when we duplicate a panel we don't want to clone the alert state
+      delete panelData.state.data?.alertState;
+
+      newGridItem = new SceneGridItem({
+        x: gridItem.state.x,
+        y: gridItem.state.y,
+        height: NEW_PANEL_HEIGHT,
+        width: NEW_PANEL_WIDTH,
+        body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
+      });
     }
-
-    // when we duplicate a panel we don't want to clone the alert state
-    delete panelData.state.data?.alertState;
-
-    const { key: gridItemKey, ...gridItemToDuplicateState } = sceneUtils.cloneSceneObjectState(gridItem.state);
-
-    const newGridItem = new SceneGridItem({
-      ...gridItemToDuplicateState,
-      body: new VizPanel({ ...panelState, $data: panelData }),
-    });
 
     if (!(this.state.body instanceof SceneGridLayout)) {
       console.error('Trying to duplicate a panel in a layout that is not SceneGridLayout ');
@@ -494,6 +515,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     const sceneGridLayout = this.state.body;
+
+    if (gridItem.parent instanceof SceneGridRow) {
+      const row = gridItem.parent;
+
+      row.setState({
+        children: [...row.state.children, newGridItem],
+      });
+
+      sceneGridLayout.forceRender();
+
+      return;
+    }
 
     sceneGridLayout.setState({
       children: [...sceneGridLayout.state.children, newGridItem],
