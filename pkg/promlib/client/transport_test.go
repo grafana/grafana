@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -20,7 +21,7 @@ func TestCreateTransportOptions(t *testing.T) {
 		}
 		opts, err := CreateTransportOptions(context.Background(), settings, backend.NewLoggerWith("logger", "test"))
 		require.NoError(t, err)
-		require.Equal(t, map[string]string{"foo": "bar"}, opts.Headers)
+		require.Equal(t, http.Header{"Foo": []string{"bar"}}, opts.Header)
 		require.Equal(t, 2, len(opts.Middlewares))
 	})
 }
