@@ -25,7 +25,7 @@ For example, if you're monitoring the CPU usage of a server, you can use a state
 
 {{< figure src="/static/img/docs/state-timeline-panel/state-timeline-panel.png" max-width="1025px" caption="State timeline with string states" alt="A state timeline panel showing CPU usage in a Grafana dashboard" >}}
 
-The state timeline visualization is useful when you need to monitor and analyze changes in states or statuses of various entities over time. You can use one when you to:
+The state timeline visualization is useful when you need to monitor and analyze changes in states or statuses of various entities over time. You can use one when you need to:
 
 - Monitor the status of a server, application, or service to know when your infrastructure is experiencing issues over time.
 - Identify operational trends over time.
@@ -39,23 +39,33 @@ The state timeline visualization is useful when you need to monitor and analyze 
 
 The state timeline panel works best if you have data capturing the various states of entities over time, formatted as a table. The data must include:
 
-- Timestamps - To indicate when each state change occurred.
+- Timestamps - To indicate when each state change occurred. This could also be the start time for the state change. An optional additional timestamp can also be added to indicate the end time for the state change.
 - Entity name/identifier - To represent the name of the entity you're trying to monitor.
 - State value - To represent the state value of the entity you're monitoring. These could be string, numerical, or boolean states.
+
+Each state ends when the next state begins or when there is a `null` value.
 
 ### Example
 
 The following table is an example of the type of data you need for a state timeline visualization and how it should be formatted:
 
-| Timestamps         | Server A | Server B |
-| ------------------ | -------- | -------- |
-| 2024-02-29 8:00:00 | Up       | Up       |
-| 2024-02-29 8:15:00 | Down     | Up       |
-| 2024-02-29 8:30:00 | Warning  | Up       |
-| 2024-02-29 8:45:00 | Up       | Up       |
-| 2024-02-29 9:00:00 | Up       | Up       |
+| Timestamps          | Server A | Server B |
+|---------------------|----------|----------|
+| 2024-02-29 8:00:00  | Up       | Up       |
+| 2024-02-29 8:15:00  | null     | Up       |
+| 2024-02-29 8:30:00  | Down     | null     |
+| 2024-02-29 8:45:00  |          | Up       |
+| 2024-02-29 9:00:00  | Up       |          |
+| 2024-02-29 9:15:00  | Up       | Down     |
+| 2024-02-29 9:30:00  | Up       | Down     |
+| 2024-02-29 10:00:00 | Down     | Down     |
+| 2024-02-29 10:30:00 | Warning  | Down     |
 
-If your query results aren't in a table format like the preceding example, especially for time-series data, you can apply [transformations](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/) to achieve this.
+> **Note**: If your query results aren't in a table format like the preceding example, especially for time-series data, you can apply [transformations](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/) to achieve this.
+
+The data is converted as follows, with the [null and empty values visualized as gaps](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/state-timeline/#connect-null-values) in the state timeline:
+
+{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-null-values.png" max-width="1025px" caption="State timeline with null values" alt="A state timeline panel showing the status of two servers in a Grafana dashboard" >}}
 
 ## State timeline options
 
