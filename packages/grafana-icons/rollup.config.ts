@@ -20,7 +20,7 @@ export default [
     ],
   },
   {
-    input: './compiled/index.d.ts',
+    input: 'src/index.ts',
     plugins: [dts()],
     output: {
       file: pkg.publishConfig.types,
