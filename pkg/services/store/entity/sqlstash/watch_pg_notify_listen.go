@@ -50,32 +50,30 @@ func (s *sqlEntityServer) pgWatcher(stream chan *entity.Entity) {
 			}
 			s.log.Debug("received postgres notification", "channel", n.Channel, "payload", n.Extra)
 
-			go func() {
-				var ne pgNotifyPayload
-				if err := json.NewDecoder(strings.NewReader(n.Extra)).Decode(&ne); err != nil {
-					s.log.Error("error decoding postgres notification with JSON payload %q: %w", n.Extra, err)
-					return
-				}
+			var ne pgNotifyPayload
+			if err := json.NewDecoder(strings.NewReader(n.Extra)).Decode(&ne); err != nil {
+				s.log.Error("error decoding postgres notification with JSON payload %q: %w", n.Extra, err)
+				return
+			}
 
-				rv, err := strconv.ParseInt(ne.ResourceVersion, 10, 64)
-				if err != nil {
-					s.log.Error("error parsing resource version from postgres notification payload %q: %w", n.Extra, err)
-					return
-				}
+			rv, err := strconv.ParseInt(ne.ResourceVersion, 10, 64)
+			if err != nil {
+				s.log.Error("error parsing resource version from postgres notification payload %q: %w", n.Extra, err)
+				return
+			}
 
-				r, err := s.Read(ctx, &entity.ReadEntityRequest{
-					Key:             ne.Key,
-					ResourceVersion: rv,
-					WithBody:        true,
-					WithStatus:      true,
-				})
-				if err != nil {
-					s.log.Error("error reading entity for postgres notification payload %q: %w", n.Extra, err)
-					return
-				}
+			r, err := s.Read(ctx, &entity.ReadEntityRequest{
+				Key:             ne.Key,
+				ResourceVersion: rv,
+				WithBody:        true,
+				WithStatus:      true,
+			})
+			if err != nil {
+				s.log.Error("error reading entity for postgres notification payload %q: %w", n.Extra, err)
+				return
+			}
 
-				stream <- r
-			}()
+			stream <- r
 		})
 
 		return nil
@@ -114,12 +112,18 @@ loop:
 			break loop
 		case <-t.C:
 			// this keeps the connection warm and ensures that we actually get notifications
-			ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			err := conn.PingContext(ctx)
+			cancel()
 			if err != nil {
 				s.log.Error("postgres listener ping error", "error", err)
 			}
 		}
+	}
+
+	_, err = conn.ExecContext(ctx, `UNLISTEN unifiedstorage;`)
+	if err != nil {
+		s.log.Error("error unlistening to postgres channel: %w", err)
 	}
 
 	s.log.Info("watch: postgres LISTEN/NOTIFY connection terminated")
