@@ -69,7 +69,7 @@ export const EventBusPlugin = ({ config, eventBus, sync, frame }: EventBusPlugin
 
           // used by old graph panel to position tooltip
           let top = u!.cursor.top!;
-          payload.point.panelRelY = top >= 0 ? top / u!.rect.height : 1;
+          payload.point.panelRelY = top === 0 ? 0.001 : top > 0 ? top / u!.rect.height : 1;
 
           throttledHover();
         }
