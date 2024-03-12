@@ -71,7 +71,7 @@ interface Props extends PanelProps<Options> {}
 
 export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZone, id, replaceVariables }: Props) => {
   const theme = useTheme2();
-  const { eventBus, dataLinkPostProcessor } = usePanelContext();
+  const { dataLinkPostProcessor } = usePanelContext();
 
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
   const isToolTipOpen = useRef<boolean>(false);
@@ -288,7 +288,6 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       timeZone,
       theme,
       timeZones: [timeZone],
-      eventBus,
       orientation,
       barWidth,
       barRadius,

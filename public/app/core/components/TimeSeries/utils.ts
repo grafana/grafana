@@ -4,9 +4,6 @@ import uPlot from 'uplot';
 import {
   DashboardCursorSync,
   DataFrame,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  DataHoverPayload,
   FieldConfig,
   FieldType,
   formattedValueToString,
@@ -83,7 +80,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   theme,
   timeZones,
   getTimeRange,
-  eventBus,
   sync,
   allFrames,
   renderers,
@@ -113,7 +109,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   }
 
   const xScaleKey = 'x';
-  let xScaleUnit = '_x';
   let yScaleKey = '';
 
   const xFieldAxisPlacement =
@@ -125,7 +120,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   const xFieldAxisShow = xField.config.custom?.axisPlacement !== AxisPlacement.Hidden;
 
   if (xField.type === FieldType.time) {
-    xScaleUnit = 'time';
     builder.addScale({
       scaleKey: xScaleKey,
       orientation: isHorizontal ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
@@ -185,11 +179,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       });
     }
   } else {
-    // Not time!
-    if (xField.config.unit) {
-      xScaleUnit = xField.config.unit;
-    }
-
     builder.addScale({
       scaleKey: xScaleKey,
       orientation: isHorizontal ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
@@ -597,40 +586,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     },
   };
 
-  if (sync && sync() !== DashboardCursorSync.Off && xField.type === FieldType.time) {
-    const payload: DataHoverPayload = {
-      point: {
-        [xScaleKey]: null,
-        [yScaleKey]: null,
-      },
-      data: frame,
-    };
-
-    const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
-    const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
-
+  if (xField.type === FieldType.time && sync && sync() !== DashboardCursorSync.Off) {
     cursor.sync = {
       key: eventsScope,
-      filters: {
-        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-          if (sync && sync() === DashboardCursorSync.Off) {
-            return false;
-          }
-
-          payload.rowIndex = dataIdx;
-          if (x < 0 && y < 0) {
-            eventBus.publish(clearEvent);
-          } else {
-            // convert the points
-            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
-            payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
-            payload.point.panelRelY = y > 0 ? y / h : 1; // used by old graph panel to position tooltip
-            eventBus.publish(hoverEvent);
-            hoverEvent.payload.down = undefined;
-          }
-          return true;
-        },
-      },
       scales: [xScaleKey, null],
       // match: [() => true, () => false],
     };

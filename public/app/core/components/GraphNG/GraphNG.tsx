@@ -1,12 +1,8 @@
 import React, { Component } from 'react';
-import { Subscription } from 'rxjs';
-import { throttleTime } from 'rxjs/operators';
 import uPlot, { AlignedData } from 'uplot';
 
 import {
   DataFrame,
-  DataHoverClearEvent,
-  DataHoverEvent,
   DataLinkPostProcessor,
   Field,
   FieldMatcherID,
@@ -14,17 +10,16 @@ import {
   FieldType,
   getLinksSupplier,
   InterpolateFunction,
-  LegacyGraphHoverEvent,
   TimeRange,
   TimeZone,
 } from '@grafana/data';
 import { VizLegendOptions } from '@grafana/schema';
-import { Themeable2, PanelContext, PanelContextRoot, VizLayout } from '@grafana/ui';
+import { Themeable2, PanelContextRoot, VizLayout } from '@grafana/ui';
 import { UPlotChart } from '@grafana/ui/src/components/uPlot/Plot';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { Renderers, UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
-import { findMidPointYPosition, pluginLog } from '@grafana/ui/src/components/uPlot/utils';
+import { pluginLog } from '@grafana/ui/src/components/uPlot/utils';
 
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
@@ -92,10 +87,7 @@ export interface GraphNGState {
  */
 export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   static contextType = PanelContextRoot;
-  panelContext: PanelContext = {} as PanelContext;
   private plotInstance: React.RefObject<uPlot>;
-
-  private subscription = new Subscription();
 
   constructor(props: GraphNGProps) {
     super(props);
@@ -180,82 +172,6 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
     return state;
   }
 
-  handleCursorUpdate(evt: DataHoverEvent | LegacyGraphHoverEvent) {
-    // ignore uplot-emitted events, since we already use uPlot's sync
-    if (evt.tags?.has('uplot')) {
-      return;
-    }
-
-    const time = evt.payload?.point?.time;
-    const u = this.plotInstance.current;
-    if (u && time) {
-      // Try finding left position on time axis
-      const left = u.valToPos(time, 'x');
-      let top;
-      if (left) {
-        // find midpoint between points at current idx
-        top = findMidPointYPosition(u, u.posToIdx(left));
-      }
-
-      if (!top || !left) {
-        return;
-      }
-
-      u.setCursor({
-        left,
-        top,
-      });
-    }
-  }
-
-  componentDidMount() {
-    this.panelContext = this.context as PanelContext;
-    const { eventBus } = this.panelContext;
-
-    this.subscription.add(
-      eventBus
-        .getStream(DataHoverEvent)
-        .pipe(throttleTime(50))
-        .subscribe({
-          next: (evt) => {
-            if (eventBus === evt.origin) {
-              return;
-            }
-            this.handleCursorUpdate(evt);
-          },
-        })
-    );
-
-    // Legacy events (from flot graph)
-    this.subscription.add(
-      eventBus
-        .getStream(LegacyGraphHoverEvent)
-        .pipe(throttleTime(50))
-        .subscribe({
-          next: (evt) => this.handleCursorUpdate(evt),
-        })
-    );
-
-    this.subscription.add(
-      eventBus
-        .getStream(DataHoverClearEvent)
-        .pipe(throttleTime(50))
-        .subscribe({
-          next: () => {
-            const u = this.plotInstance?.current;
-
-            // @ts-ignore
-            if (u && !u.cursor._lock) {
-              u.setCursor({
-                left: -10,
-                top: -10,
-              });
-            }
-          },
-        })
-    );
-  }
-
   componentDidUpdate(prevProps: GraphNGProps) {
     const { frames, structureRev, timeZone, propsToDiff } = this.props;
 
@@ -282,10 +198,6 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
         this.setState(newState);
       }
     }
-  }
-
-  componentWillUnmount() {
-    this.subscription.unsubscribe();
   }
 
   render() {
