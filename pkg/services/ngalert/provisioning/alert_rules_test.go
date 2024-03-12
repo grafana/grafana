@@ -533,7 +533,6 @@ func TestAlertRuleService(t *testing.T) {
 
 		require.ErrorIs(t, err, models.ErrQuotaReached)
 	})
-
 }
 
 func TestCreateAlertRule(t *testing.T) {
