@@ -19,31 +19,33 @@ weight: 100
 
 # State timeline
 
-A state timeline panel displays data in a way that shows the state changes over time. When using a state timeline, the data is presented as a series of horizontal bars or bands called state regions. State regions can be rendered with or without values, and the state region’s length indicates a particular state's duration or frequency within a given time range.
+A state timeline visualization displays data in a way that shows state changes over time. In a state timeline, the data is presented as a series of bars or bands called _state regions_. State regions can be rendered with or without values, and the region length indicates the duration or frequency of a state within a given time range.
 
-As an example, if you're monitoring the CPU usage of a server, a state timeline can be used to visualize the different states over time, such as “low,” “normal,” “high,” or “critical.” Each state can be represented in different colors and lengths. The lengths represent the duration of time that the server remained in that state.
+For example, if you're monitoring the CPU usage of a server, you can use a state timeline to visualize the different states, such as “low,” “normal,” “high,” or “critical,”  over time. Each state is represented by a different color and the lengths represent the duration of time that the server remained in that state:
 
 {{< figure src="/static/img/docs/state-timeline-panel/state-timeline-panel.png" max-width="1025px" caption="State timeline with string states" alt="A state timeline panel showing CPU usage in a Grafana dashboard" >}}
 
-The state timeline panel is useful when you need to monitor and analyze changes in states or statuses of various entities over time. A state timeline panel is useful when:
+The state timeline visualization is useful when you need to monitor and analyze changes in states or statuses of various entities over time. You can use one when you to:
 
-- You have to monitor the status of a server, application, or service to know when your infrastructure is experiencing issues over time.
-- You want to identify operational trends over time.
-- You want to spot any recurring issues with the health of your applications.
+- Monitor the status of a server, application, or service to know when your infrastructure is experiencing issues over time.
+- Identify operational trends over time.
+- Spot any recurring issues with the health of your applications.
 
 ## Configure a state timeline
 
+<!-- video TBA here -->
+
 ## Supported data formats
 
-The state timeline panel works best if you have data capturing various entities' states over time, which should include:
+The state timeline panel works best if you have data capturing the various states of entities over time, formatted as a table. The data must include:
 
-- Timestamps - to indicate when each state change occurred.
-- Entity name/identifier - to represent the name of the entity you are trying to monitor.
-- State value - to represent the state value of the entity you are monitoring. These could be string, numerical, or boolean states.
+- Timestamps - To indicate when each state change occurred.
+- Entity name/identifier - To represent the name of the entity you're trying to monitor.
+- State value - To represent the state value of the entity you're monitoring. These could be string, numerical, or boolean states.
 
 ### Example
 
-For example, the visualization works best if you have the following data in a table format.
+The following table is an example of the type of data you need for a state timeline visualization and how it should be formatted:
 
 | Timestamps         | Server A | Server B |
 | ------------------ | -------- | -------- |
@@ -53,7 +55,7 @@ For example, the visualization works best if you have the following data in a ta
 | 2024-02-29 8:45:00 | Up       | Up       |
 | 2024-02-29 9:00:00 | Up       | Up       |
 
-If your query isn’t in the table format above, especially time-series data, then you can always apply [transformations](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/) to achieve the desired result.
+If your query results aren't in a table format like the preceding example, especially for time-series data, you can apply [transformations](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/) to achieve this.
 
 ## State timeline options
 
