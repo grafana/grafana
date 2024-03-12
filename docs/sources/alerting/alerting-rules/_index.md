@@ -1,6 +1,5 @@
 ---
 aliases:
-  - old-alerting/create-alerts/
   - rules/
   - unified-alerting/alerting-rules/
   - ./create-alerts/

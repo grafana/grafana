@@ -30,7 +30,8 @@ type FrontendSettingsAuthDTO struct {
 	// Deprecated: this is no longer used and will be removed in Grafana 11
 	OktaSkipOrgRoleSync bool `json:"OktaSkipOrgRoleSync"`
 
-	DisableLogin bool `json:"disableLogin"`
+	DisableLogin                  bool `json:"disableLogin"`
+	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {
@@ -245,6 +246,8 @@ type FrontendSettingsDTO struct {
 
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 	PublicDashboardsEnabled    bool   `json:"publicDashboardsEnabled"`
+
+	CloudMigrationIsTarget bool `json:"cloudMigrationIsTarget"`
 
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 

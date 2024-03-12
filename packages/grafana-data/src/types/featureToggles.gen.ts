@@ -88,7 +88,6 @@ export interface FeatureToggles {
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
   cloudWatchLogsMonacoEditor?: boolean;
-  exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
   vizAndWidgetSplit?: boolean;
@@ -178,6 +177,8 @@ export interface FeatureToggles {
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
+  betterPageScrolling?: boolean;
   alertingUpgradeDryrunOnStart?: boolean;
   scopeFilters?: boolean;
+  emailVerificationEnforcement?: boolean;
 }

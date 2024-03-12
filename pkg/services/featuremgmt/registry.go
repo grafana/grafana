@@ -524,13 +524,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:         "exploreScrollableLogsContainer",
-			Description:  "Improves the scrolling behavior of logs in Explore",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
@@ -592,7 +585,7 @@ var (
 		{
 			Name:         "traceQLStreaming",
 			Description:  "Enables response streaming of TraceQL queries of the Tempo data source",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
@@ -1189,6 +1182,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:         "betterPageScrolling",
+			Description:  "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
+			Stage:        FeatureStageGeneralAvailability,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "true", // enabled by default
+		},
+		{
 			Name:            "alertingUpgradeDryrunOnStart",
 			Description:     "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
 			FrontendOnly:    false,
@@ -1205,6 +1206,14 @@ var (
 			Owner:             grafanaDashboardsSquad,
 			RequiresRestart:   false,
 			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "emailVerificationEnforcement",
+			Description:       "Force email verification for users, even when authenticating through sso.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},

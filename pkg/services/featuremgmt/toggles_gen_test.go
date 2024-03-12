@@ -126,7 +126,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 						item.Annotations[utils.AnnoKeyUpdatedTimestamp] = created.String()
 						item.Spec = v // the current value
 					}
-				} else {
+				} else if item.DeletionTimestamp == nil {
 					item.DeletionTimestamp = &created
 					fmt.Printf("mark feature as deleted")
 				}

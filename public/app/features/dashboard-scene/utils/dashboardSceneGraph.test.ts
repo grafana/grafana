@@ -16,6 +16,7 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 
 import { dashboardSceneGraph, getNextPanelId } from './dashboardSceneGraph';
 import { findVizPanelByKey } from './utils';
@@ -123,7 +124,7 @@ describe('dashboardSceneGraph', () => {
       expect(id).toBe(4);
     });
 
-    it('should take library panels into account', () => {
+    it('should take library panels, panels in rows and panel repeaters into account', () => {
       const scene = buildTestScene({
         body: new SceneGridLayout({
           children: [
@@ -150,6 +151,17 @@ describe('dashboardSceneGraph', () => {
                 key: 'panel-2-clone-1',
                 pluginId: 'table',
               }),
+            }),
+            new PanelRepeaterGridItem({
+              source: new VizPanel({
+                title: 'Panel C',
+                key: 'panel-4',
+                pluginId: 'table',
+              }),
+              variableName: 'repeat',
+              repeatedPanels: [],
+              repeatDirection: 'h',
+              maxPerRow: 1,
             }),
             new SceneGridRow({
               key: 'key',
@@ -178,7 +190,7 @@ describe('dashboardSceneGraph', () => {
 
       const id = getNextPanelId(scene);
 
-      expect(id).toBe(4);
+      expect(id).toBe(5);
     });
 
     it('should get next panel id in a layout with rows', () => {
