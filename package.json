@@ -254,6 +254,7 @@
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
+    "@grafana/saga-icons": "workspace:*",
     "@grafana/scenes": "^3.11.0",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
