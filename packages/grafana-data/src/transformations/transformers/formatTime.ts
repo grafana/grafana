@@ -2,7 +2,8 @@ import { map } from 'rxjs/operators';
 
 import { TimeZone } from '@grafana/schema';
 
-import { DataFrame, Field, TransformationApplicabilityLevels } from '../../types';
+import { cacheFieldDisplayNames } from '../../field';
+import { DataFrame, TransformationApplicabilityLevels } from '../../types';
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { fieldToStringField } from './convertFieldType';
@@ -37,18 +38,7 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
-        // If a field and a format are configured
-        // then format the time output
-        const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.timezone);
-
-        if (!Array.isArray(data) || data.length === 0) {
-          return data;
-        }
-
-        return data.map((frame) => ({
-          ...frame,
-          fields: formatter(frame.fields),
-        }));
+        return applyFormatTime(options, data);
       })
     ),
 };
@@ -56,21 +46,24 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
 /**
  * @internal
  */
-export const createTimeFormatter = (timeField: string, outputFormat: string, timezone: string) => (fields: Field[]) => {
-  return fields.map((field) => {
-    // Find the configured field
-    if (field.name === timeField) {
-      // Update values to use the configured format
-      let formattedField = null;
-      if (timezone) {
-        formattedField = fieldToStringField(field, outputFormat, { timeZone: timezone });
-      } else {
-        formattedField = fieldToStringField(field, outputFormat);
+export const applyFormatTime = (
+  { timeField, outputFormat, timezone }: FormatTimeTransformerOptions,
+  data: DataFrame[]
+) => {
+  if (!Array.isArray(data) || data.length === 0) {
+    return data;
+  }
+
+  cacheFieldDisplayNames(data);
+
+  return data.map((frame) => ({
+    ...frame,
+    fields: frame.fields.map((field) => {
+      if (field.state?.displayName === timeField) {
+        field = fieldToStringField(field, outputFormat, { timeZone: timezone });
       }
 
-      return formattedField;
-    }
-
-    return field;
-  });
+      return field;
+    }),
+  }));
 };
