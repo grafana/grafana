@@ -2,5 +2,5 @@
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "npmClient": "yarn",
   "version": "11.0.0-pre",
-  "packages": ["packages/*", "packages/!(grafana-icons)/**", "plugins-bundled/internal/*", "public/app/plugins/*/*"]
+  "packages": ["packages/*", "plugins-bundled/internal/*", "public/app/plugins/*/*"]
 }
