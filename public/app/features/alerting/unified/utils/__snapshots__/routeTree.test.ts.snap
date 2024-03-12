@@ -1,0 +1,87 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`addRouteToReferenceRoute should be able to add above 1`] = `
+{
+  "id": "route-1",
+  "routes": [
+    {
+      "id": "route-2",
+    },
+    {
+      "continue": undefined,
+      "group_by": undefined,
+      "group_interval": undefined,
+      "group_wait": undefined,
+      "match": undefined,
+      "match_re": undefined,
+      "matchers": undefined,
+      "mute_time_intervals": undefined,
+      "object_matchers": undefined,
+      "receiver": "new-route",
+      "repeat_interval": undefined,
+      "routes": undefined,
+    },
+    {
+      "id": "route-3",
+    },
+  ],
+}
+`;
+
+exports[`addRouteToReferenceRoute should be able to add as child 1`] = `
+{
+  "id": "route-1",
+  "routes": [
+    {
+      "id": "route-2",
+    },
+    {
+      "id": "route-3",
+      "routes": [
+        {
+          "continue": undefined,
+          "group_by": undefined,
+          "group_interval": undefined,
+          "group_wait": undefined,
+          "match": undefined,
+          "match_re": undefined,
+          "matchers": undefined,
+          "mute_time_intervals": undefined,
+          "object_matchers": undefined,
+          "receiver": "new-route",
+          "repeat_interval": undefined,
+          "routes": undefined,
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`addRouteToReferenceRoute should be able to add below 1`] = `
+{
+  "id": "route-1",
+  "routes": [
+    {
+      "id": "route-2",
+    },
+    {
+      "id": "route-3",
+    },
+    {
+      "continue": undefined,
+      "group_by": undefined,
+      "group_interval": undefined,
+      "group_wait": undefined,
+      "match": undefined,
+      "match_re": undefined,
+      "matchers": undefined,
+      "mute_time_intervals": undefined,
+      "object_matchers": undefined,
+      "receiver": "new-route",
+      "repeat_interval": undefined,
+      "routes": undefined,
+    },
+  ],
+}
+`;
