@@ -1,29 +1,29 @@
 ---
 aliases:
-  - ../../../auth/grafana-com/
-description: Grafana Com Authentication
+  - ../../../auth/grafana-cloud/
+description: Grafana Cloud Authentication
 labels:
   products:
     - cloud
-menuTitle: Grafana Com OAuth2
-title: Configure Grafana Com authentication
+menuTitle: Grafana Cloud OAuth2
+title: Configure Grafana Cloud authentication
 weight: 1200
 ---
 
-# Configure Grafana Com authentication
+# Configure Grafana Cloud authentication
 
-To enable GrafanaCom as your authentication provider, you configure it to generate a client ID and a secret key.
+To enable Grafana Cloud as the Identity Provider for a Grafana instance, generate a client ID and client secret and apply the configuration to Grafana.
 
-## Create GrafanaCom OAuth keys
+## Create Grafana Cloud OAuth Client Credentials
 
-To use GrafanaCom authentication:
+To use Grafana Cloud authentication:
 
-1. Log in to [GrafanaCom](/).
+1. Log in to [Grafana Cloud](/).
 1. To create an OAuth client, locate your organization and click **OAuth Clients**.
 1. Click **Add OAuth Client Application**.
 1. Add the name and URL of your running Grafana instance.
 1. Click **Add OAuth Client**.
-1. Copy the client ID and secret key or the configuration that has been generated.
+1. Copy the client ID and client secret or the configuration that has been generated.
 
 The following snippet shows an example configuration:
 
@@ -50,7 +50,7 @@ auto_login = true
 
 ## Skip organization role sync
 
-If a user signs in with their Grafana.com credentials, their assigned org role overrides the role defined in the Grafana instance. To prevent Grafana.com roles from synchronizing, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+If a user signs in with their Grafana Cloud credentials, their assigned org role overrides the role defined in the Grafana instance. To prevent Grafana Cloud roles from synchronizing, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
 
 ```ini
 [auth.grafana_com]
