@@ -2,7 +2,6 @@ package strategies
 
 import (
 	"context"
-	"maps"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -12,21 +11,15 @@ import (
 type SAMLStrategy struct {
 	cfg              *setting.Cfg
 	settingsProvider setting.Provider
-	settings         map[string]any
 }
 
 var _ ssosettings.FallbackStrategy = (*SAMLStrategy)(nil)
 
 func NewSAMLStrategy(cfg *setting.Cfg, settingsProvider setting.Provider) *SAMLStrategy {
-	samlStrategy := &SAMLStrategy{
+	return &SAMLStrategy{
 		cfg:              cfg,
 		settingsProvider: settingsProvider,
-		settings:         make(map[string]any),
 	}
-
-	samlStrategy.settings = samlStrategy.loadSAMLSettings()
-
-	return samlStrategy
 }
 
 func (s *SAMLStrategy) IsMatch(provider string) bool {
@@ -34,9 +27,7 @@ func (s *SAMLStrategy) IsMatch(provider string) bool {
 }
 
 func (s *SAMLStrategy) GetProviderConfig(_ context.Context, provider string) (map[string]any, error) {
-	result := make(map[string]any, len(s.settings))
-	maps.Copy(result, s.settings)
-	return result, nil
+	return s.loadSAMLSettings(), nil
 }
 
 func (s *SAMLStrategy) loadSAMLSettings() map[string]any {
