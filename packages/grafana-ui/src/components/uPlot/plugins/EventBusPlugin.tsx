@@ -13,8 +13,6 @@ import {
 } from '@grafana/data';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
-import { FIXED_UNIT } from '../types';
-// import { findMidPointYPosition } from '../utils';
 
 interface EventBusPluginProps {
   config: UPlotConfigBuilder;
@@ -36,7 +34,6 @@ export const EventBusPlugin = ({ config, eventBus, sync, frame }: EventBusPlugin
     const payload: DataHoverPayload = {
       point: {
         time: null,
-        [FIXED_UNIT]: null,
       },
       data: frameRef.current,
     };
@@ -70,10 +67,11 @@ export const EventBusPlugin = ({ config, eventBus, sync, frame }: EventBusPlugin
           payload.columnIndex = colIdx ?? undefined;
           payload.data = frameRef.current;
 
-          // payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
-          // payload.point.panelRelY = y > 0 ? y / h : 1; // used by old graph panel to position tooltip
+          // used by old graph panel to position tooltip
+          let top = u!.cursor.top!;
+          payload.point.panelRelY = top >= 0 ? top / u!.rect.height : 1;
+
           throttledHover();
-          // hoverEvent.payload.down = undefined;
         }
       }
     });
