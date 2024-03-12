@@ -20,7 +20,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "cloud_migration_uid", Type: DB_NVarchar, Length: 40, Nullable: true}, // get from the cloud service
-			{Name: "result", Type: DB_Text, Nullable: false},                             // encrypted
+			{Name: "result", Type: DB_Text, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 			{Name: "finished", Type: DB_DateTime, Nullable: true},
