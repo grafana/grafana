@@ -1,0 +1,35 @@
+name: Comment that the modified features toggles file shouldn't be edited manually.
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const hiddenPrefix = "<!-- MODIFIED FEATURE TOGGLES MESSAGE -->"
+            const hiddenPrefixRegExp = new RegExp(`^${hiddenPrefix}`;
+            const {data: comments} = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            if (!comments.some((comment) => comment.body.match(hiddenPrefixRegExp)))) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `${hiddenPrefix}
+            Thank you for your contribution!
+
+            Unfortunately, the 'docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md' file you have modified is auto-generated.
+
+            To make your intended changes, you instead need to modify https://github.com/grafana/grafana/blob/main/pkg/services/featuremgmt/registry.go and follow the instructions there to regenerate the documentation and other feature toggles files.`,
+              })
+            }
