@@ -123,6 +123,7 @@ export interface CurrentUserDTO {
   language: string;
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;
+  authenticatedBy: string;
 
   /** @deprecated Use theme instead */
   lightTheme: boolean;

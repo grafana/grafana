@@ -58,10 +58,11 @@ export interface AzureClientSecretCredentials extends AzureCredentialsBase {
 }
 export interface AadCurrentUserCredentials extends AzureCredentialsBase {
   authType: 'currentuser';
-  azureCloud?: string;
-  tenantId?: string;
-  clientId?: string;
-  clientSecret?: string | ConcealedSecret;
+  serviceCredentials?:
+    | AzureClientSecretCredentials
+    | AzureManagedIdentityCredentials
+    | AzureWorkloadIdentityCredentials;
+  serviceCredentialsEnabled?: boolean;
 }
 
 export type AzureCredentials =
@@ -79,6 +80,7 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   clientId?: string;
   subscriptionId?: string;
   oauthPassThru?: boolean;
+  azureCredentials?: AzureCredentials;
 
   // logs
   /** @deprecated Azure Logs credentials */

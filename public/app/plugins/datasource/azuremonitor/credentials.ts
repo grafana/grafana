@@ -1,7 +1,9 @@
 import { config } from '@grafana/runtime';
 
 import {
+  AadCurrentUserCredentials,
   AzureAuthType,
+  AzureClientSecretCredentials,
   AzureCloud,
   AzureCredentials,
   AzureDataSourceInstanceSettings,
@@ -89,8 +91,19 @@ export function isCredentialsComplete(credentials: AzureCredentials): boolean {
   }
 }
 
+export function instanceOfAzureCredential<T extends AzureCredentials>(
+  authType: AzureAuthType,
+  object?: AzureCredentials
+): object is T {
+  if (!object) {
+    return false;
+  }
+  return object.authType === authType;
+}
+
 export function getCredentials(options: AzureDataSourceSettings): AzureCredentials {
   const authType = getAuthType(options);
+  const credentials = options.jsonData.azureCredentials;
   switch (authType) {
     case 'msi':
     case 'workloadidentity':
@@ -109,7 +122,6 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
           azureCloud: getDefaultAzureCloud(),
         };
       }
-    case 'currentuser':
     case 'clientsecret':
       return {
         authType,
@@ -119,6 +131,25 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
         clientSecret: getSecret(options),
       };
   }
+  if (instanceOfAzureCredential<AadCurrentUserCredentials>(authType, credentials)) {
+    if (instanceOfAzureCredential<AzureClientSecretCredentials>('clientsecret', credentials.serviceCredentials)) {
+      const serviceCredentials = { ...credentials.serviceCredentials, clientSecret: getSecret(options) };
+      return {
+        authType,
+        serviceCredentialsEnabled: credentials.serviceCredentialsEnabled,
+        serviceCredentials,
+      };
+    }
+    return {
+      authType,
+      serviceCredentialsEnabled: credentials.serviceCredentialsEnabled,
+      serviceCredentials: credentials.serviceCredentials,
+    };
+  }
+  return {
+    authType: 'clientsecret',
+    azureCloud: getDefaultAzureCloud(),
+  };
 }
 
 export function updateCredentials(
@@ -140,13 +171,13 @@ export function updateCredentials(
         jsonData: {
           ...options.jsonData,
           azureAuthType: credentials.authType,
+          azureCredentials: undefined,
         },
       };
 
       return options;
 
     case 'clientsecret':
-    case 'currentuser':
       options = {
         ...options,
         jsonData: {
@@ -155,7 +186,7 @@ export function updateCredentials(
           cloudName: credentials.azureCloud || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
-          oauthPassThru: credentials.authType === 'currentuser',
+          azureCredentials: undefined,
         },
         secureJsonData: {
           ...options.secureJsonData,
@@ -166,7 +197,37 @@ export function updateCredentials(
           clientSecret: typeof credentials.clientSecret === 'symbol',
         },
       };
-
-      return options;
   }
+  if (instanceOfAzureCredential<AadCurrentUserCredentials>('currentuser', credentials)) {
+    const serviceCredentials = credentials.serviceCredentials;
+    let clientSecret: string | symbol | undefined;
+    if (instanceOfAzureCredential<AzureClientSecretCredentials>('clientsecret', serviceCredentials)) {
+      clientSecret = serviceCredentials.clientSecret;
+      // Do this to not expose the secret in unencrypted JSON data
+      delete serviceCredentials.clientSecret;
+    }
+    options = {
+      ...options,
+      jsonData: {
+        ...options.jsonData,
+        azureAuthType: credentials.authType,
+        azureCredentials: {
+          authType: 'currentuser',
+          serviceCredentialsEnabled: credentials.serviceCredentialsEnabled,
+          serviceCredentials,
+        },
+        oauthPassThru: true,
+        disableGrafanaCache: true,
+      },
+      secureJsonData: {
+        ...options.secureJsonData,
+        clientSecret: typeof clientSecret === 'string' ? clientSecret : undefined,
+      },
+      secureJsonFields: {
+        ...options.secureJsonFields,
+        clientSecret: typeof clientSecret === 'symbol',
+      },
+    };
+  }
+  return options;
 }

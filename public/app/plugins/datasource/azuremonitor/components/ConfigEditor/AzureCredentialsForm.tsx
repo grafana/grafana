@@ -8,6 +8,7 @@ import { selectors } from '../../e2e/selectors';
 import { AzureAuthType, AzureCredentials } from '../../types';
 
 import { AppRegistrationCredentials } from './AppRegistrationCredentials';
+import CurrentUserFallbackCredentials from './CurrentUserFallbackCredentials';
 
 export interface Props {
   managedIdentityEnabled: boolean;
@@ -15,6 +16,7 @@ export interface Props {
   userIdentityEnabled: boolean;
   credentials: AzureCredentials;
   azureCloudOptions?: SelectableValue[];
+  legacyAzureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
   disabled?: boolean;
   children?: JSX.Element;
@@ -24,6 +26,7 @@ export const AzureCredentialsForm = (props: Props) => {
   const {
     credentials,
     azureCloudOptions,
+    legacyAzureCloudOptions,
     onCredentialsChange,
     disabled,
     managedIdentityEnabled,
@@ -96,15 +99,26 @@ export const AzureCredentialsForm = (props: Props) => {
           />
         </Field>
       )}
-      {(credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') && (
+      {credentials.authType === 'clientsecret' && (
         <AppRegistrationCredentials
           credentials={credentials}
-          azureCloudOptions={azureCloudOptions}
+          azureCloudOptions={legacyAzureCloudOptions}
           onCredentialsChange={onCredentialsChange}
           disabled={disabled}
         />
       )}
       {props.children}
+      {credentials.authType === 'currentuser' && (
+        <CurrentUserFallbackCredentials
+          credentials={credentials}
+          azureCloudOptions={azureCloudOptions}
+          onCredentialsChange={onCredentialsChange}
+          disabled={disabled}
+          managedIdentityEnabled={managedIdentityEnabled}
+          workloadIdentityEnabled={workloadIdentityEnabled}
+          userIdentityEnabled={userIdentityEnabled}
+        />
+      )}
     </ConfigSection>
   );
 };

@@ -1,13 +1,13 @@
 import React, { ChangeEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Field, Select, Input, Button, Alert, VerticalGroup } from '@grafana/ui';
+import { Field, Select, Input, Button } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AadCurrentUserCredentials, AzureClientSecretCredentials, AzureCredentials } from '../../types';
+import { AzureClientSecretCredentials, AzureCredentials } from '../../types';
 
 export interface AppRegistrationCredentialsProps {
-  credentials: AadCurrentUserCredentials | AzureClientSecretCredentials;
+  credentials: AzureClientSecretCredentials;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
   disabled?: boolean;
@@ -17,75 +17,47 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
   const { azureCloudOptions, disabled, credentials, onCredentialsChange } = props;
 
   const onAzureCloudChange = (selected: SelectableValue<string>) => {
-    if (credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        azureCloud: selected.value,
-      };
-      onCredentialsChange(updated);
-    }
+    const updated: AzureCredentials = {
+      ...credentials,
+      azureCloud: selected.value,
+    };
+    onCredentialsChange(updated);
   };
 
   const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        tenantId: event.target.value,
-      };
-      onCredentialsChange(updated);
-    }
+    const updated: AzureCredentials = {
+      ...credentials,
+      tenantId: event.target.value,
+    };
+    onCredentialsChange(updated);
   };
 
   const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        clientId: event.target.value,
-      };
-      onCredentialsChange(updated);
-    }
+    const updated: AzureCredentials = {
+      ...credentials,
+      clientId: event.target.value,
+    };
+    onCredentialsChange(updated);
   };
 
   const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        clientSecret: event.target.value,
-      };
-      onCredentialsChange(updated);
-    }
+    const updated: AzureCredentials = {
+      ...credentials,
+      clientSecret: event.target.value,
+    };
+    onCredentialsChange(updated);
   };
 
   const onClientSecretReset = () => {
-    if (credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        clientSecret: '',
-      };
-      onCredentialsChange(updated);
-    }
+    const updated: AzureCredentials = {
+      ...credentials,
+      clientSecret: '',
+    };
+    onCredentialsChange(updated);
   };
 
   return (
     <>
-      {credentials.authType === 'currentuser' && (
-        <Alert severity="info" title="Service Principal Credentials">
-          <VerticalGroup>
-            <div>
-              User-based authentication does not support Grafana features that make requests to the data source without
-              a users details available to the request. An example of this is alerting. If you wish to ensure that
-              features that do not have a user in the context of the request still function as expected then please
-              provide App Registration credentials below.
-            </div>
-            <div>
-              <b>
-                Note: Features like alerting will be restricted to the access level of the app registration rather than
-                the user. This may present confusion for users and should be clarified.
-              </b>
-            </div>
-          </VerticalGroup>
-        </Alert>
-      )}
       {azureCloudOptions && (
         <Field
           label="Azure Cloud"
@@ -139,7 +111,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
       </Field>
       {!disabled &&
         (typeof credentials.clientSecret === 'symbol' ? (
-          <Field label="Client Secret" htmlFor="client-secret" required={credentials.authType === 'clientsecret'}>
+          <Field label="Client Secret" htmlFor="client-secret" required>
             <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
               <Input
                 aria-label="Client Secret"
@@ -156,9 +128,9 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
           <Field
             label="Client Secret"
             data-testid={selectors.components.configEditor.clientSecret.input}
-            required={credentials.authType === 'clientsecret'}
+            required
             htmlFor="client-secret"
-            invalid={credentials.authType === 'clientsecret' && !credentials.clientSecret}
+            invalid={!credentials.clientSecret}
             error={'Client secret is required'}
           >
             <Input
