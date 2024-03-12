@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	apiModels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/migration/legacymodels"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 

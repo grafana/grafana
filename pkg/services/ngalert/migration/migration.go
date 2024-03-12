@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/ngalert/migration/legacymodels"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )

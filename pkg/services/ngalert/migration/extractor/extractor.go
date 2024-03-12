@@ -12,11 +12,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
+	"github.com/grafana/grafana/pkg/services/ngalert/migration/legacymodels"
 	"github.com/grafana/grafana/pkg/services/tag"
 )
 
@@ -57,9 +57,9 @@ type Rule struct {
 	Message             string
 	LastStateChange     time.Time
 	For                 time.Duration
-	NoDataState         models.NoDataOption
-	ExecutionErrorState models.ExecutionErrorOption
-	State               models.AlertStateType
+	NoDataState         legacymodels.NoDataOption
+	ExecutionErrorState legacymodels.ExecutionErrorOption
+	State               legacymodels.AlertStateType
 	Conditions          []Condition
 	Notifications       []string
 	AlertRuleTags       []*tag.Tag
@@ -105,7 +105,7 @@ func (e ValidationError) Error() string {
 }
 
 type DashAlertExtractor interface {
-	GetAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) ([]*models.Alert, error)
+	GetAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) ([]*legacymodels.Alert, error)
 	ValidateAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) error
 }
 
@@ -178,8 +178,8 @@ func copyJSON(in json.Marshaler) (*simplejson.Json, error) {
 	return simplejson.NewJson(rawJSON)
 }
 
-func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) error, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
-	ret := make([]*models.Alert, 0)
+func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, jsonWithPanels *simplejson.Json, validateAlertFunc func(*legacymodels.Alert) error, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*legacymodels.Alert, error) {
+	ret := make([]*legacymodels.Alert, 0)
 
 	for _, panelObj := range jsonWithPanels.Get("panels").MustArray() {
 		panel := simplejson.NewFromAny(panelObj)
@@ -246,7 +246,7 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 			return nil, addIdentifiersToValidationError(err)
 		}
 
-		alert := &models.Alert{
+		alert := &legacymodels.Alert{
 			DashboardID: dashAlertInfo.Dash.ID,
 			OrgID:       dashAlertInfo.OrgID,
 			PanelID:     panelID,
@@ -309,7 +309,7 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 	return ret, nil
 }
 
-func validateAlertRule(alert *models.Alert) error {
+func validateAlertRule(alert *legacymodels.Alert) error {
 	if !alert.ValidDashboardPanel() {
 		return ValidationError{Reason: fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelID)}
 	}
@@ -320,17 +320,17 @@ func validateAlertRule(alert *models.Alert) error {
 }
 
 // GetAlerts extracts alerts from the dashboard json and does full validation on the alert json data.
-func (e *DashAlertExtractorService) GetAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
+func (e *DashAlertExtractorService) GetAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) ([]*legacymodels.Alert, error) {
 	return e.extractAlerts(ctx, validateAlertRule, true, dashAlertInfo)
 }
 
-func (e *DashAlertExtractorService) extractAlerts(ctx context.Context, validateFunc func(alert *models.Alert) error, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
+func (e *DashAlertExtractorService) extractAlerts(ctx context.Context, validateFunc func(alert *legacymodels.Alert) error, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*legacymodels.Alert, error) {
 	dashboardJSON, err := copyJSON(dashAlertInfo.Dash.Data)
 	if err != nil {
 		return nil, err
 	}
 
-	alerts := make([]*models.Alert, 0)
+	alerts := make([]*legacymodels.Alert, 0)
 
 	// We extract alerts from rows to be backwards compatible
 	// with the old dashboard json model.
@@ -361,7 +361,7 @@ func (e *DashAlertExtractorService) extractAlerts(ctx context.Context, validateF
 // ValidateAlerts validates alerts in the dashboard json but does not require a valid dashboard id
 // in the first validation pass.
 func (e *DashAlertExtractorService) ValidateAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) error {
-	_, err := e.extractAlerts(ctx, func(alert *models.Alert) error {
+	_, err := e.extractAlerts(ctx, func(alert *legacymodels.Alert) error {
 		if alert.OrgID == 0 || alert.PanelID == 0 {
 			return errors.New("missing OrgId, PanelId or both")
 		}
@@ -372,7 +372,7 @@ func (e *DashAlertExtractorService) ValidateAlerts(ctx context.Context, dashAler
 
 // NewRuleFromDBAlert maps a db version of
 // alert to an in-memory version.
-func NewRuleFromDBAlert(ctx context.Context, ruleDef *models.Alert, logTranslationFailures bool) (*Rule, error) {
+func NewRuleFromDBAlert(ctx context.Context, ruleDef *legacymodels.Alert, logTranslationFailures bool) (*Rule, error) {
 	model := &Rule{}
 	model.ID = ruleDef.ID
 	model.OrgID = ruleDef.OrgID
@@ -383,8 +383,8 @@ func NewRuleFromDBAlert(ctx context.Context, ruleDef *models.Alert, logTranslati
 	model.State = ruleDef.State
 	model.LastStateChange = ruleDef.NewStateDate
 	model.For = ruleDef.For
-	model.NoDataState = models.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
-	model.ExecutionErrorState = models.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
+	model.NoDataState = legacymodels.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
+	model.ExecutionErrorState = legacymodels.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
 	model.StateChanges = ruleDef.StateChanges
 
 	model.Frequency = ruleDef.Frequency

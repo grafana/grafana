@@ -26,11 +26,10 @@ func TestDashboardService(t *testing.T) {
 		folderSvc := foldertest.NewFakeService()
 
 		service := &DashboardServiceImpl{
-			cfg:                setting.NewCfg(),
-			log:                log.New("test.logger"),
-			dashboardStore:     &fakeStore,
-			folderService:      folderSvc,
-			dashAlertExtractor: &dummyDashAlertExtractor{},
+			cfg:            setting.NewCfg(),
+			log:            log.New("test.logger"),
+			dashboardStore: &fakeStore,
+			folderService:  folderSvc,
 		}
 
 		origNewDashboardGuardian := guardian.New
@@ -78,7 +77,7 @@ func TestDashboardService(t *testing.T) {
 					if tc.Error == nil {
 						fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
 					}
-					_, err := service.BuildSaveDashboardCommand(context.Background(), dto, true, false)
+					_, err := service.BuildSaveDashboardCommand(context.Background(), dto, false)
 					require.Equal(t, err, tc.Error)
 				}
 			})

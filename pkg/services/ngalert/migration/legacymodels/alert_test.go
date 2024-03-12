@@ -1,4 +1,4 @@
-package models
+package legacymodels
 
 import (
 	"testing"

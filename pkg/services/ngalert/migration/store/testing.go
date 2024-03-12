@@ -80,7 +80,7 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 	require.NoError(t, err)
 
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, nil,
+		cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
 		folderService,
 		nil,

@@ -18,9 +18,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/migration/legacymodels"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -39,7 +39,7 @@ func TestDashAlertMigration(t *testing.T) {
 	t.Run("when migrated rules contain duplicate titles", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
-		alerts := []*models.Alert{
+		alerts := []*legacymodels.Alert{
 			createAlert(t, 1, 1, 1, "alert1", []string{}),
 			createAlert(t, 1, 1, 2, "alert1", []string{}),
 			createAlert(t, 1, 2, 3, "alert1", []string{}),
@@ -59,7 +59,7 @@ func TestDashAlertMigration(t *testing.T) {
 		}
 
 		for dashIndex := range expected {
-			dashAlerts := make([]*models.Alert, 0)
+			dashAlerts := make([]*legacymodels.Alert, 0)
 			for _, a := range alerts {
 				if a.DashboardID == dashes[dashIndex].ID {
 					dashAlerts = append(dashAlerts, a)
@@ -82,7 +82,7 @@ func TestDashAlertMigration(t *testing.T) {
 	t.Run("when migrated rules contain titles that are too long", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
-		alerts := []*models.Alert{
+		alerts := []*legacymodels.Alert{
 			createAlert(t, 1, 1, 1, strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1), []string{}),
 			createAlert(t, 1, 1, 2, strings.Repeat("a", store.AlertDefinitionMaxTitleLength+2), []string{}),
 		}
@@ -206,7 +206,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 
 	type testcase struct {
 		name      string
-		alerts    []*models.Alert
+		alerts    []*legacymodels.Alert
 		dashboard *dashboards.Dashboard
 
 		expectedFolder *dashboards.Dashboard
@@ -217,7 +217,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 	tc := []testcase{
 		{
 			name: "simple query and condition",
-			alerts: []*models.Alert{
+			alerts: []*legacymodels.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
 					[]dashAlertCondition{createCondition("A", "max", "gt", 42, 1, "5m", "now")}),
 			},
@@ -233,7 +233,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		},
 		{
 			name: "multiple conditions",
-			alerts: []*models.Alert{
+			alerts: []*legacymodels.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
 					[]dashAlertCondition{
 						createCondition("A", "avg", "gt", 42, 1, "5m", "now"),
@@ -258,7 +258,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		},
 		{
 			name: "multiple conditions on same query with same timerange should not create multiple queries",
-			alerts: []*models.Alert{
+			alerts: []*legacymodels.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
 					[]dashAlertCondition{
 						createCondition("A", "max", "gt", 42, 1, "5m", "now"),
@@ -279,7 +279,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		},
 		{
 			name: "multiple conditions on same query with different timeranges should create multiple queries",
-			alerts: []*models.Alert{
+			alerts: []*legacymodels.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
 					[]dashAlertCondition{
 						createCondition("A", "max", "gt", 42, 1, "5m", "now"),
@@ -301,7 +301,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		},
 		{
 			name: "multiple conditions custom refIds",
-			alerts: []*models.Alert{
+			alerts: []*legacymodels.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
 					[]dashAlertCondition{
 						createCondition("Q1", "avg", "gt", 42, 1, "5m", "now"),
@@ -326,7 +326,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		},
 		{
 			name: "multiple conditions out of order refIds, queries should be sorted by refId and conditions should be in original order",
-			alerts: []*models.Alert{
+			alerts: []*legacymodels.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
 					[]dashAlertCondition{
 						createCondition("B", "avg", "gt", 42, 1, "5m", "now"),
@@ -351,7 +351,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		},
 		{
 			name: "multiple conditions out of order with duplicate refIds",
-			alerts: []*models.Alert{
+			alerts: []*legacymodels.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
 					[]dashAlertCondition{
 						createCondition("C", "avg", "gt", 42, 1, "5m", "now"),
@@ -379,7 +379,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		},
 		{
 			name: "alerts with unknown datasource id migrates with empty datasource uid",
-			alerts: []*models.Alert{
+			alerts: []*legacymodels.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
 					[]dashAlertCondition{createCondition("A", "max", "gt", 42, 123, "5m", "now")}), // Unknown datasource id.
 			},
@@ -395,7 +395,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		},
 		{
 			name: "failed alert migration fails upgrade",
-			alerts: []*models.Alert{
+			alerts: []*legacymodels.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
 					[]dashAlertCondition{{}}),
 			},
@@ -404,7 +404,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		},
 		{
 			name: "simple query with interval, calculates intervalMs using it as min interval",
-			alerts: []*models.Alert{
+			alerts: []*legacymodels.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
 					[]dashAlertCondition{
 						withQueryModel(
@@ -425,7 +425,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		},
 		{
 			name: "simple query with interval as variable, calculates intervalMs using default as min interval",
-			alerts: []*models.Alert{
+			alerts: []*legacymodels.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
 					[]dashAlertCondition{
 						withQueryModel(
@@ -559,12 +559,12 @@ func createCondition(refId string, reducer string, evalType string, thresh float
 }
 
 // createAlert creates a legacy alert rule for inserting into the test database.
-func createAlert(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string) *models.Alert {
+func createAlert(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string) *legacymodels.Alert {
 	return createAlertWithCond(t, orgId, dashboardId, panelsId, name, notifierUids, []dashAlertCondition{})
 }
 
 // createAlert creates a legacy alert rule for inserting into the test database.
-func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string, cond []dashAlertCondition) *models.Alert {
+func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string, cond []dashAlertCondition) *legacymodels.Alert {
 	t.Helper()
 
 	var settings = simplejson.New()
@@ -578,7 +578,7 @@ func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int,
 	}
 	settings.Set("conditions", cond)
 
-	return &models.Alert{
+	return &legacymodels.Alert{
 		OrgID:        int64(orgId),
 		DashboardID:  int64(dashboardId),
 		PanelID:      int64(panelsId),
@@ -586,7 +586,7 @@ func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int,
 		Message:      "message",
 		Frequency:    int64(60),
 		For:          60 * time.Second,
-		State:        models.AlertStateOK,
+		State:        legacymodels.AlertStateOK,
 		Settings:     settings,
 		NewStateDate: now,
 		Created:      now,

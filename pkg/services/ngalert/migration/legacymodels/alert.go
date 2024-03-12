@@ -1,12 +1,10 @@
-package models
+package legacymodels
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/tag"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type AlertStateType string
@@ -33,11 +31,6 @@ const (
 	ExecutionErrorSetOk       ExecutionErrorOption = "ok"
 	ExecutionErrorSetAlerting ExecutionErrorOption = "alerting"
 	ExecutionErrorKeepState   ExecutionErrorOption = "keep_state"
-)
-
-var (
-	ErrCannotChangeStateOnPausedAlert = fmt.Errorf("cannot change state on pause alert")
-	ErrRequiresNewState               = fmt.Errorf("update alert state requires a new state")
 )
 
 func (s AlertStateType) IsValid() bool {
@@ -138,69 +131,4 @@ func (a *Alert) GetTagsFromSettings() []*tag.Tag {
 		}
 	}
 	return tags
-}
-
-type PauseAlertCommand struct {
-	OrgID       int64   `xorm:"org_id"`
-	AlertIDs    []int64 `xorm:"alert_ids"`
-	ResultCount int64
-	Paused      bool
-}
-
-type PauseAllAlertCommand struct {
-	ResultCount int64
-	Paused      bool
-}
-
-type SetAlertStateCommand struct {
-	AlertID  int64 `xorm:"alert_id"`
-	OrgID    int64 `xorm:"org_id"`
-	State    AlertStateType
-	Error    string
-	EvalData *simplejson.Json
-}
-
-// Queries
-type GetAlertsQuery struct {
-	OrgID        int64 `xorm:"org_id"`
-	State        []string
-	DashboardIDs []int64 `xorm:"dashboard_ids"`
-	PanelID      int64   `xorm:"panel_id"`
-	Limit        int64
-	Query        string
-	User         *user.SignedInUser
-}
-
-type GetAllAlertsQuery struct{}
-
-type GetAlertByIdQuery struct {
-	ID int64 `xorm:"id"`
-}
-
-type GetAlertStatesForDashboardQuery struct {
-	OrgID       int64 `xorm:"org_id"`
-	DashboardID int64 `xorm:"dashboard_id"`
-}
-
-type AlertListItemDTO struct {
-	ID             int64            `json:"id" xorm:"id"`
-	DashboardID    int64            `json:"dashboardId" xorm:"dashboard_id"`
-	DashboardUID   string           `json:"dashboardUid" xorm:"dashboard_uid"`
-	DashboardSlug  string           `json:"dashboardSlug"`
-	PanelID        int64            `json:"panelId" xorm:"panel_id"`
-	Name           string           `json:"name"`
-	State          AlertStateType   `json:"state"`
-	NewStateDate   time.Time        `json:"newStateDate"`
-	EvalDate       time.Time        `json:"evalDate"`
-	EvalData       *simplejson.Json `json:"evalData"`
-	ExecutionError string           `json:"executionError"`
-	URL            string           `json:"url" xorm:"url"`
-}
-
-type AlertStateInfoDTO struct {
-	ID           int64          `json:"id" xorm:"id"`
-	DashboardID  int64          `json:"dashboardId" xorm:"dashboard_id"`
-	PanelID      int64          `json:"panelId" xorm:"panel_id"`
-	State        AlertStateType `json:"state"`
-	NewStateDate time.Time      `json:"newStateDate"`
 }
