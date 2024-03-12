@@ -143,12 +143,8 @@ export const ConnectionSVG = ({
       const selectedStyles = { stroke: '#44aaff', strokeOpacity: 0.6, strokeWidth: strokeWidth + 5 };
 
       const CONNECTION_HEAD_ID = `connectionHead-${headId + Math.random()}`;
-      //const vertices: Vertex[] = [];
       const futureVertices: ConnectionCoordinates[] = [];
 
-      //vertices.push({ x: 0.25, y: 0 });
-      //vertices.push({ x: 0.5, y: 1 });
-      //vertices.length = 0;
       let pathString = `M${x1} ${y1} `;
       if (vertices?.length) {
         vertices.map((value, index) => {
@@ -160,9 +156,9 @@ export const ConnectionSVG = ({
           } else {
             const previousVertex = vertices[index - 1];
             futureVertices.push(calculateMidpoint(previousVertex.x, previousVertex.y, x, y));
-            if (index === vertices.length - 1) {
-              futureVertices.push(calculateMidpoint(1, 1, x, y));
-            }
+          }
+          if (index === vertices.length - 1) {
+            futureVertices.push(calculateMidpoint(1, 1, x, y));
           }
         });
         pathString += `L${x2} ${y2}`;
@@ -226,6 +222,8 @@ export const ConnectionSVG = ({
                       const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
                       return (
                         <circle
+                          id={`vertexFuture`}
+                          data-index={index}
                           key={`vertexFuture${index}_${idx}`}
                           cx={x}
                           cy={y}
@@ -268,6 +266,8 @@ export const ConnectionSVG = ({
                 />
                 {isSelected && (
                   <circle
+                    id={`vertexFuture`}
+                    data-index={0}
                     fill={'gray'}
                     cx={midpoint.x}
                     cy={midpoint.y}

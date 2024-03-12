@@ -2,7 +2,7 @@ import React from 'react';
 import { BehaviorSubject } from 'rxjs';
 
 import { config } from '@grafana/runtime';
-import { CanvasConnection, ConnectionPath } from 'app/features/canvas';
+import { CanvasConnection, ConnectionCoordinates, ConnectionPath } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
@@ -364,6 +364,99 @@ export class Connections {
     }
   };
 
+  vertexFutureListener = (event: MouseEvent) => {
+    event.preventDefault();
+
+    if (!(this.connectionVertex && this.scene.div && this.scene.div.parentElement)) {
+      return;
+    }
+
+    const transformScale = this.scene.scale;
+    const parentBoundingRect = getParentBoundingClientRect(this.scene);
+
+    if (!parentBoundingRect) {
+      return;
+    }
+
+    const x = event.pageX - parentBoundingRect.x ?? 0;
+    const y = event.pageY - parentBoundingRect.y ?? 0;
+
+    this.connectionVertex?.setAttribute('cx', `${x / transformScale}`);
+    this.connectionVertex?.setAttribute('cy', `${y / transformScale}`);
+
+    const sourceRect = this.selection.value!.source.div!.getBoundingClientRect();
+
+    // calculate relative coordinates based on source and target coorindates of connection
+    // TODO account for zoom properly
+    const { x1, y1, x2, y2 } = calculateCoordinates(
+      sourceRect,
+      parentBoundingRect,
+      this.selection.value?.info!,
+      this.selection.value!.target,
+      transformScale
+    );
+
+    let vx1 = x1;
+    let vy1 = y1;
+    let vx2 = x2;
+    let vy2 = y2;
+    if (this.selection.value && this.selection.value.vertices) {
+      if (this.vertexIndex !== undefined && this.vertexIndex > 0) {
+        vx1 += this.selection.value.vertices[this.vertexIndex - 1].x * (x2 - x1);
+        vy1 += this.selection.value.vertices[this.vertexIndex - 1].y * (y2 - y1);
+      }
+      if (this.vertexIndex !== undefined && this.vertexIndex < this.selection.value.vertices.length) {
+        vx2 = this.selection.value.vertices[this.vertexIndex].x * (x2 - x1) + x1;
+        vy2 = this.selection.value.vertices[this.vertexIndex].y * (y2 - y1) + y1;
+      }
+    }
+
+    this.connectionVertexPath?.setAttribute(
+      'd',
+      `M${vx1 / transformScale} ${vy1 / transformScale} L${x / transformScale} ${y / transformScale} L${vx2 / transformScale} ${vy2 / transformScale}`
+    );
+
+    this.connectionSVGVertex!.style.display = 'block';
+
+    if (!event.buttons) {
+      this.scene.selecto?.rootContainer?.removeEventListener('mousemove', this.vertexFutureListener);
+      this.scene.selecto?.rootContainer?.removeEventListener('mouseup', this.vertexFutureListener);
+      this.scene.selecto!.rootContainer!.style.cursor = 'auto';
+      this.connectionSVGVertex!.style.display = 'none';
+
+      // call onChange here and update appropriate index of connection vertices array
+      const connectionIndex = this.selection.value?.index;
+      const vertexIndex = this.vertexIndex;
+
+      if (connectionIndex !== undefined && vertexIndex !== undefined) {
+        const currentSource = this.scene.connections.state[connectionIndex].source;
+        if (currentSource.options.connections) {
+          const currentConnections = [...currentSource.options.connections];
+          const newVertex = { x: (x - x1) / (x2 - x1), y: (y - y1) / (y2 - y1) };
+          if (currentConnections[connectionIndex].vertices) {
+            const currentVertices = [...currentConnections[connectionIndex].vertices!];
+            currentVertices.splice(vertexIndex, 0, newVertex);
+            currentConnections[connectionIndex] = {
+              ...currentConnections[connectionIndex],
+              vertices: currentVertices,
+            };
+          } else {
+            // For first vertex creation
+            const currentVertices: ConnectionCoordinates[] = [newVertex];
+            currentConnections[connectionIndex] = {
+              ...currentConnections[connectionIndex],
+              vertices: currentVertices,
+            };
+          }
+          currentSource.onChange({ ...currentSource.options, connections: currentConnections });
+
+          this.updateState();
+          this.scene.save();
+        }
+      }
+    }
+  };
+
   handleConnectionDragStart = (selectedTarget: HTMLElement, clientX: number, clientY: number) => {
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
     if (this.connectionSVG && this.connectionLine && this.scene.div && this.scene.div.parentElement) {
@@ -402,6 +495,14 @@ export class Connections {
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.vertexListener);
     this.scene.selecto?.rootContainer?.addEventListener('mouseup', this.vertexListener);
+  };
+
+  handleVertexFutureDragStart = (selectedTarget: HTMLElement) => {
+    this.vertexIndex = Number(selectedTarget.getAttribute('data-index'));
+    this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
+
+    this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.vertexFutureListener);
+    this.scene.selecto?.rootContainer?.addEventListener('mouseup', this.vertexFutureListener);
   };
 
   onChange = (current: ConnectionState, update: CanvasConnection) => {
