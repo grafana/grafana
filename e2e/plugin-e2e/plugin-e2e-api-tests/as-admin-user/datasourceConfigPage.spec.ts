@@ -30,7 +30,7 @@ test.describe('test data source with frontend only health check', () => {
     selectors,
   }) => {
     const configPage = await createDataSourceConfigPage({ type: 'zipkin' });
-    const healthCheckPath = `${selectors.apis.DataSource.proxy(configPage.datasource.uid)}/api/v2/services`;
+    const healthCheckPath = `${selectors.apis.DataSource.proxy(configPage.datasource.uid)}/api/v2/servicess`;
     await page.route(healthCheckPath, async (route) => {
       await route.fulfill({ status: 200, body: 'OK' });
     });
