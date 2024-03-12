@@ -60,8 +60,16 @@ function setup(loadMoreMock: () => void, startPosition: number, rows: LogRowMode
     act(() => {
       events['scroll'](new Event('scroll'));
     });
+
+    // When scrolling top, we wait for the user to reach the top, and then for a new scrolling event
+    // in the same direction before triggering a new query.
+    if (position === 0) {
+      wheel(-1);
+    }
   }
   function wheel(deltaY: number) {
+    element.scrollTop += deltaY;
+
     act(() => {
       const event = new WheelEvent('wheel', { deltaY });
       events['wheel'](event);
@@ -128,7 +136,7 @@ describe('InfiniteScroll', () => {
         'Requests more logs when scrolling %s',
         async (direction: string, startPosition: number, endPosition: number) => {
           const loadMoreMock = jest.fn();
-          const { scrollTo, element } = setup(loadMoreMock, startPosition, rows, order);
+          const { scrollTo, element, wheel } = setup(loadMoreMock, startPosition, rows, order);
 
           expect(await screen.findByTestId('contents')).toBeInTheDocument();
 
@@ -255,6 +263,19 @@ describe('InfiniteScroll', () => {
             expect(await screen.findByTestId('end-of-range')).toBeInTheDocument();
           }
         );
+      });
+
+      describe('Scrolling to the top', () => {
+        test(
+          'Waits for the user to reach the edge before triggering a new query', async () => {
+            const loadMoreMock = jest.fn();
+            const { wheel } = setup(loadMoreMock, 10, rows, order);
+  
+            wheel(-10);
+            expect(loadMoreMock).not.toHaveBeenCalled();
+            wheel(-5);
+            expect(loadMoreMock).toHaveBeenCalled();
+        });
       });
     }
   );
