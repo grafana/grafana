@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../notifications/ # /docs/grafana/latest/alerting/notifications/
-  - ../old-alerting/notifications/ # /docs/grafana/latest/alerting/old-alerting/notifications/
   - ../unified-alerting/notifications/ # /docs/grafana/latest/alerting/unified-alerting/notifications/
   - ../alerting-rules/create-notification-policy/ # /docs/grafana/latest/alerting/alerting-rules/create-notification-policy/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/create-notification-policy/
