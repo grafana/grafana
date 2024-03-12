@@ -50,9 +50,9 @@ The following diagram shows how Grafana-managed alerting works.
 
 Grafana-managed alert rules can query the following backend data sources that have alerting enabled:
 
-- built-in data sources or those developed and maintained by Grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
+- Built-in data sources or those developed and maintained by Grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
   `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, `TestData`, and `Azure Monitor`.
-- community data sources specifying `{"alerting": true, “backend”: true}` in the [plugin.json](/developers/plugin-tools/reference-plugin-json)
+- Community data sources specifying `{"alerting": true, “backend”: true}` in the [plugin.json](/developers/plugin-tools/reference-plugin-json)
 
 ### Multi-dimensional alerts
 
