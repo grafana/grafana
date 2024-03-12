@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
@@ -50,6 +51,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         render: function renderTitle() {
           return (
             <Input
+              data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
               id="PanelFrameTitle"
               defaultValue={panel.title}
               onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)}
@@ -67,6 +69,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         render: function renderDescription() {
           return (
             <TextArea
+              data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Description')}
               id="description-text-area"
               defaultValue={panel.description}
               onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}
@@ -84,6 +87,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         render: function renderTransparent() {
           return (
             <Switch
+              data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Transparent background')}
               value={panel.transparent}
               id="transparent-background"
               onChange={(e) => onPanelConfigChange('transparent', e.currentTarget.checked)}
