@@ -18,13 +18,13 @@ const columns = [
 ];
 
 export function ResourcesTable({ resources }: ResourcesTableProps) {
-  return <InteractiveTable columns={columns} data={resources} getRowId={(r) => r.uid} pageSize={20} />;
+  return <InteractiveTable columns={columns} data={resources} getRowId={(r) => r.uid} pageSize={15} />;
 }
 
 function NameCell(props: CellProps<MigrationResourceDTO>) {
   const data = props.row.original;
   return (
-    <Stack direction="row" gap={2}>
+    <Stack direction="row" gap={2} alignItems="center">
       <ResourceIcon resource={data} />
 
       <Stack direction="column" gap={0}>
@@ -36,8 +36,17 @@ function NameCell(props: CellProps<MigrationResourceDTO>) {
 }
 
 function TypeCell(props: CellProps<MigrationResourceDTO>) {
-  const data = props.row.original;
-  return <span>{getTypeName(data.type)}</span>;
+  const { type } = props.row.original;
+
+  if (type === 'datasource') {
+    return t('migrate-to-cloud.resource-type.datasource', 'Data source');
+  }
+
+  if (type === 'dashboard') {
+    return t('migrate-to-cloud.resource-type.dashboard', 'Dashboard');
+  }
+
+  return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
 }
 
 function StatusCell(props: CellProps<MigrationResourceDTO>) {
@@ -65,18 +74,6 @@ function StatusCell(props: CellProps<MigrationResourceDTO>) {
   }
 
   return <Text color="secondary">{t('migrate-to-cloud.resource-status.unknown', 'Unknown')}</Text>;
-}
-
-function getTypeName(type: string) {
-  if (type === 'datasource') {
-    return t('migrate-to-cloud.resource-type.datasource', 'Data source');
-  }
-
-  if (type === 'dashboard') {
-    return t('migrate-to-cloud.resource-type.dashboard', 'Dashboard');
-  }
-
-  return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
 }
 
 function ResourceIcon({ resource }: { resource: MigrationResourceDTO }) {

@@ -21,14 +21,12 @@ export const Page = () => {
 
   return (
     <>
-      <Stack direction="column">
-        <div>
-          {status.stackURL && <Text variant="h4">{status.stackURL}</Text>}
+      <Stack direction="column" alignItems="flex-start">
+        {status.stackURL && <Text variant="h4">{status.stackURL}</Text>}
 
-          <Button disabled={isFetching || isDisconnecting} variant="secondary" onClick={() => setIsDisconnecting(true)}>
-            <Trans i18nKey="migrate-to-cloud.resources.disconnect">Disconnect</Trans>
-          </Button>
-        </div>
+        <Button disabled={isFetching || isDisconnecting} variant="secondary" onClick={() => setIsDisconnecting(true)}>
+          <Trans i18nKey="migrate-to-cloud.resources.disconnect">Disconnect</Trans>
+        </Button>
 
         {resources && <ResourcesTable resources={resources} />}
       </Stack>
