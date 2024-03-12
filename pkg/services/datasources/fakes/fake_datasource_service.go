@@ -134,6 +134,6 @@ func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *datas
 	return "", nil
 }
 
-func (s *FakeDataSourceService) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+func (s *FakeDataSourceService) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (http.Header, error) {
 	return nil, nil
 }

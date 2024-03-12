@@ -72,18 +72,18 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			},
 		}
 
-		res := map[string]string{
-			"GrafanaHeader": "GrafanaValue",
-			"AzureHeader":   "AzureValue",
+		res := http.Header{
+			"Grafanaheader": {"GrafanaValue"},
+			"Azureheader":   {"AzureValue"},
 		}
 		_, err := newHTTPClient(context.Background(), route, model, settings, azureSettings, provider)
 		require.NoError(t, err)
 
 		assert.NotNil(t, provider.opts)
 
-		if provider.opts.Headers != nil {
-			assert.Len(t, provider.opts.Headers, 2)
-			assert.Equal(t, res, provider.opts.Headers)
+		if provider.opts.Header != nil {
+			assert.Len(t, provider.opts.Header, 2)
+			assert.Equal(t, res, provider.opts.Header)
 		}
 	})
 }

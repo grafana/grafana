@@ -43,7 +43,7 @@ type ExternalAlertmanager struct {
 
 type ExternalAMcfg struct {
 	URL     string
-	Headers map[string]string
+	Headers http.Header
 }
 
 type Option func(*ExternalAlertmanager)
@@ -177,9 +177,9 @@ func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 
-func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[string]map[string]string, error) {
+func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[string]http.Header, error) {
 	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
-	headers := map[string]map[string]string{}
+	headers := map[string]http.Header{}
 	for i, am := range alertmanagers {
 		u, err := url.Parse(am.URL)
 		if err != nil {
