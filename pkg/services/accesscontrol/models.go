@@ -16,6 +16,8 @@ import (
 const (
 	CacheHit  = "hit"
 	CacheMiss = "miss"
+
+	ModeBasic = "basic"
 )
 
 var (
