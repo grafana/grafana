@@ -136,7 +136,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		return NewConfig(aggregatorConfig, sharedInformerFactory, nil), nil
 	}
 
-	caBundlePEM, err := readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
+	_, err = readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
 	if err != nil {
 		return nil, err
 	}
@@ -151,9 +151,10 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		// https://github.com/kubernetes/kubernetes/pull/123808
 		InsecureSkipTLSVerify:  true,
 		ExternalNamesNamespace: externalNamesNamespace,
-		CABundle:               caBundlePEM,
-		Services:               remoteServices,
-		serviceClientSet:       serviceClient,
+		// TODO: CABundle can't be set when insecure is true
+		// CABundle: caBundlePEM,
+		Services:         remoteServices,
+		serviceClientSet: serviceClient,
 	}
 
 	return NewConfig(aggregatorConfig, sharedInformerFactory, remoteServicesConfig), nil
