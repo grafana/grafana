@@ -89,8 +89,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	ngmigration "github.com/grafana/grafana/pkg/services/ngalert/migration"
-	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -241,8 +239,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,
 	ngimage.ProvideDeleteExpiredService,
-	ngmigration.ProvideService,
-	migrationStore.ProvideMigrationStore,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
 	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
