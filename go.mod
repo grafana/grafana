@@ -469,6 +469,7 @@ require (
 	github.com/apache/thrift v0.18.1 // indirect
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/promlib v0.0.1 // @grafana/observability-metrics
 )
 
 require (
