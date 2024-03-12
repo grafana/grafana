@@ -20,7 +20,7 @@
     "@grafana/runtime": "11.0.0-pre",
     "@grafana/ui": "11.0.0-pre",
     "@react-awesome-query-builder/ui": "6.4.2",
-    "@types/lodash": "4.14.202",
+    "@types/lodash": "4.17.0",
     "@types/react-virtualized-auto-sizer": "1.0.4",
     "@types/uuid": "9.0.8",
     "immutable": "4.3.5",
