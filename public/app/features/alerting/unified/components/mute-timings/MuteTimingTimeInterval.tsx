@@ -4,7 +4,18 @@ import React, { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, FieldSet, Icon, InlineField, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  FieldSet,
+  Icon,
+  InlineField,
+  InlineSwitch,
+  Input,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { MuteTimingFields } from '../../types/mute-timing-form';
@@ -146,9 +157,14 @@ export const MuteTimingTimeInterval = () => {
                     Remove time interval
                   </Button>
                   {!isGrafanaAlertManager && (
-                    <InlineField label="Disable">
-                      <InlineSwitch transparent {...register(`time_intervals.${timeIntervalIndex}.disable`)} />
-                    </InlineField>
+                    <Stack direction="row" gap={0} alignItems="center">
+                      <Tooltip placement="top" content="Disable this time interval" theme="info">
+                        <Icon name="info-circle" className={styles.infoIcon} />
+                      </Tooltip>
+                      <InlineField label="Disable">
+                        <InlineSwitch transparent {...register(`time_intervals.${timeIntervalIndex}.disable`)} />
+                      </InlineField>
+                    </Stack>
                   )}
                 </Stack>
               </div>
@@ -261,4 +277,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: ${theme.colors.primary.transparent};
     }
   `,
+  infoIcon: css({
+    marginTop: theme.spacing(-0.5),
+  }),
 });
