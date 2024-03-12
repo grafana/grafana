@@ -235,7 +235,7 @@ const UserAuthFallbackAlert = () => {
     >
       <>
         Data source backend features (such as alerting) require service credentials to function. This data source is
-        either configured without service credential fallback or the fallback functionality is disabled. Please review
+        configured without service credential fallback, or the fallback functionality is disabled. Please review
         the documentation for more information.
       </>
     </Alert>
