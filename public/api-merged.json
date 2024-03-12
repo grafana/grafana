@@ -2368,7 +2368,7 @@
         "tags": [
           "legacy_alerts"
         ],
-        "summary": "Get alert by ID.",
+        "summary": "Get alert by internal ID.",
         "operationId": "getAlertByID",
         "parameters": [
           {
@@ -4926,7 +4926,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
+        "description": "It returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
         "tags": [
           "folders"
         ],
@@ -15287,7 +15287,7 @@
       }
     },
     "FrameType": {
-      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
       "type": "string"
     },
     "FrameTypeVersion": {
@@ -16180,8 +16180,8 @@
       }
     },
     "JSONWebKey": {
+      "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
       "type": "object",
-      "title": "JSONWebKey represents a public or private key in JWK format.",
       "properties": {
         "Algorithm": {
           "description": "Key algorithm, parsed from `alg` header.",
@@ -16214,7 +16214,7 @@
           "$ref": "#/definitions/URL"
         },
         "Key": {
-          "description": "Cryptographic key, can be a symmetric or asymmetric key."
+          "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\ned25519.PublicKey\ned25519.PrivateKey\necdsa.PublicKey\necdsa.PrivateKey\nrsa.PublicKey\nrsa.PrivateKey\n[]byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
         },
         "KeyID": {
           "description": "Key identifier, parsed from `kid` header.",
@@ -17045,6 +17045,7 @@
     },
     "ObjectMatchers": {
       "type": "array",
+      "title": "ObjectMatchers is a list of matchers that can be used to filter alerts.",
       "items": {
         "$ref": "#/definitions/ObjectMatcher"
       }
@@ -18458,7 +18459,7 @@
       "type": "object",
       "title": "QueryDataResponse contains the results from a QueryDataRequest.",
       "properties": {
-        "Responses": {
+        "results": {
           "$ref": "#/definitions/Responses"
         }
       }
@@ -21795,6 +21796,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -21818,6 +21820,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -21950,6 +21953,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -22012,6 +22016,7 @@
       }
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -22066,6 +22071,7 @@
       }
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",

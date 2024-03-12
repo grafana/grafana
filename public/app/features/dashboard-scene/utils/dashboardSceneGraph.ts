@@ -11,6 +11,7 @@ import {
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks } from '../scene/PanelLinks';
+import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 
 import { getPanelIdForLibraryVizPanel, getPanelIdForVizPanel } from './utils';
 
@@ -85,6 +86,21 @@ export function getNextPanelId(dashboard: DashboardScene): number {
   }
 
   for (const child of body.state.children) {
+    if (child instanceof PanelRepeaterGridItem) {
+      const vizPanel = child.state.source;
+
+      if (vizPanel) {
+        const panelId =
+          vizPanel instanceof LibraryVizPanel
+            ? getPanelIdForLibraryVizPanel(vizPanel)
+            : getPanelIdForVizPanel(vizPanel);
+
+        if (panelId > max) {
+          max = panelId;
+        }
+      }
+    }
+
     if (child instanceof SceneGridItem) {
       const vizPanel = child.state.body;
 
@@ -129,6 +145,19 @@ export function getNextPanelId(dashboard: DashboardScene): number {
 
   return max + 1;
 }
+
+// Returns the LibraryVizPanel that corresponds to the given VizPanel if it exists
+export const getLibraryVizPanelFromVizPanel = (vizPanel: VizPanel): LibraryVizPanel | null => {
+  if (vizPanel.parent instanceof LibraryVizPanel) {
+    return vizPanel.parent;
+  }
+
+  if (vizPanel.parent instanceof PanelRepeaterGridItem && vizPanel.parent.state.source instanceof LibraryVizPanel) {
+    return vizPanel.parent.state.source;
+  }
+
+  return null;
+};
 
 export const dashboardSceneGraph = {
   getTimePicker,
