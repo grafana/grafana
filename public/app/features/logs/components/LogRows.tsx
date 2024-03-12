@@ -121,9 +121,15 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (!this.logRowsRef.current) {
       return false;
     }
+
+    const MENU_WIDTH = 270;
+    const MENU_HEIGHT = 105;
+    const x = (e.clientX + MENU_WIDTH) > window.innerWidth ? window.innerWidth - MENU_WIDTH : e.clientX;
+    const y = (e.clientY + MENU_HEIGHT) > window.innerHeight ? window.innerHeight - MENU_HEIGHT : e.clientY;
+
     this.setState({
       selection,
-      popoverMenuCoordinates: { x: e.clientX, y: e.clientY },
+      popoverMenuCoordinates: { x, y },
       selectedRow: row,
     });
     document.addEventListener('click', this.handleDeselection);
