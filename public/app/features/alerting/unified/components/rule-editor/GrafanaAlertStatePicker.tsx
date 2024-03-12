@@ -15,6 +15,7 @@ const options: SelectableValue[] = [
   { value: GrafanaAlertStateDecision.NoData, label: 'No Data' },
   { value: GrafanaAlertStateDecision.OK, label: 'OK' },
   { value: GrafanaAlertStateDecision.Error, label: 'Error' },
+  { value: GrafanaAlertStateDecision.KeepLast, label: 'Keep Last State' },
 ];
 
 export const GrafanaAlertStatePicker = ({ includeNoData, includeError, ...props }: Props) => {
