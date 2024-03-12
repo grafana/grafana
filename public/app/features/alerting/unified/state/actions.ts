@@ -2,6 +2,7 @@ import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
+import { logMeasurement } from '@grafana/runtime/src/utils/logging';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -36,6 +37,8 @@ import { backendSrv } from '../../../../core/services/backend_srv';
 import {
   logInfo,
   LogMessages,
+  trackSwitchToPoliciesRouting,
+  trackSwitchToSimplifiedRouting,
   withPerformanceLogging,
   withPromRulesMetadataLogging,
   withRulerRulesMetadataLogging,
@@ -78,7 +81,7 @@ import { makeAMLink } from '../utils/misc';
 import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
-import { getAlertInfo, isRulerNotSupportedResponse } from '../utils/rules';
+import { getAlertInfo, isGrafanaRulerRule, isRulerNotSupportedResponse } from '../utils/rules';
 import { safeParseDurationstr } from '../utils/time';
 
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
@@ -122,11 +125,10 @@ export const fetchPromRulesAction = createAsyncThunk(
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
-    const fetchRulesWithLogging = withPromRulesMetadataLogging(
-      fetchRules,
-      `[${rulesSourceName}] Prometheus rules loaded`,
-      { dataSourceName: rulesSourceName, thunk: 'unifiedalerting/fetchPromRules' }
-    );
+    const fetchRulesWithLogging = withPromRulesMetadataLogging('unifiedalerting/fetchPromRules', fetchRules, {
+      dataSourceName: rulesSourceName,
+      thunk: 'unifiedalerting/fetchPromRules',
+    });
 
     return await withSerializedError(
       fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state, identifier)
@@ -164,8 +166,8 @@ export const fetchRulerRulesAction = createAsyncThunk(
     const rulerConfig = getDataSourceRulerConfig(getState, rulesSourceName);
 
     const fetchRulerRulesWithLogging = withRulerRulesMetadataLogging(
+      'unifiedalerting/fetchRulerRules',
       fetchRulerRules,
-      `[${rulesSourceName}] Ruler rules loaded`,
       {
         dataSourceName: rulesSourceName,
         thunk: 'unifiedalerting/fetchRulerRules',
@@ -205,14 +207,9 @@ export function fetchPromAndRulerRulesAction({
 export const fetchSilencesAction = createAsyncThunk(
   'unifiedalerting/fetchSilences',
   (alertManagerSourceName: string): Promise<Silence[]> => {
-    const fetchSilencesWithLogging = withPerformanceLogging(
-      fetchSilences,
-      `[${alertManagerSourceName}] Silences loaded`,
-      {
-        dataSourceName: alertManagerSourceName,
-        thunk: 'unifiedalerting/fetchSilences',
-      }
-    );
+    const fetchSilencesWithLogging = withPerformanceLogging('unifiedalerting/fetchSilences', fetchSilences, {
+      dataSourceName: alertManagerSourceName,
+    });
 
     return withSerializedError(fetchSilencesWithLogging(alertManagerSourceName));
   }
@@ -265,8 +262,8 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
         const { id, name } = ds;
 
         const discoverFeaturesWithLogging = withPerformanceLogging(
+          'unifiedalerting/fetchPromBuildinfo',
           discoverFeatures,
-          `[${rulesSourceName}] Rules source features discovered`,
           {
             dataSourceName: rulesSourceName,
             thunk: 'unifiedalerting/fetchPromBuildinfo',
@@ -338,8 +335,8 @@ export function fetchAllPromAndRulerRulesAction(
       })
     );
 
-    logInfo('All Prom and Ruler rules loaded', {
-      loadTimeMs: (performance.now() - allStartLoadingTs).toFixed(0),
+    logMeasurement('unifiedalerting/fetchAllPromAndRulerRulesAction', {
+      loadTimeMs: performance.now() - allStartLoadingTs,
     });
   };
 }
@@ -457,6 +454,7 @@ export const saveRuleFormAction = createAsyncThunk(
             const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, GRAFANA_RULES_SOURCE_NAME);
             const rulerClient = getRulerClient(rulerConfig);
             identifier = await rulerClient.saveGrafanaRule(values, evaluateEvery, existing);
+            reportSwitchingRoutingType(values, existing);
             await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
           } else {
             throw new Error('Unexpected rule form type');
@@ -490,6 +488,24 @@ export const saveRuleFormAction = createAsyncThunk(
       }
     )
 );
+
+function reportSwitchingRoutingType(values: RuleFormValues, existingRule: RuleWithLocation<RulerRuleDTO> | undefined) {
+  // track if the user switched from simplified routing to policies routing or vice versa
+  if (isGrafanaRulerRule(existingRule?.rule)) {
+    const ga = existingRule?.rule.grafana_alert;
+    const existingWasUsingSimplifiedRouting = Boolean(ga?.notification_settings?.receiver);
+    const newValuesUsesSimplifiedRouting = values.manualRouting;
+    const shouldTrackSwitchToSimplifiedRouting = !existingWasUsingSimplifiedRouting && newValuesUsesSimplifiedRouting;
+    const shouldTrackSwitchToPoliciesRouting = existingWasUsingSimplifiedRouting && !newValuesUsesSimplifiedRouting;
+
+    if (shouldTrackSwitchToSimplifiedRouting) {
+      trackSwitchToSimplifiedRouting();
+    }
+    if (shouldTrackSwitchToPoliciesRouting) {
+      trackSwitchToPoliciesRouting();
+    }
+  }
+}
 
 export const fetchGrafanaNotifiersAction = createAsyncThunk(
   'unifiedalerting/fetchGrafanaNotifiers',

@@ -28,20 +28,21 @@ import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
+import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
  */
-export function panelMenuBehavior(menu: VizPanelMenu) {
+export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
   const asyncFunc = async () => {
     // hm.. add another generic param to SceneObject to specify parent type?
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const panel = menu.parent as VizPanel;
+    const parent = panel.parent;
     const plugin = panel.getPlugin();
 
     const items: PanelMenuItem[] = [];
     const moreSubMenu: PanelMenuItem[] = [];
-    const panelId = getPanelIdForVizPanel(panel);
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
     const exploreMenuItem = await getExploreMenuItem(panel);
@@ -62,7 +63,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       href: getViewPanelUrl(panel),
     });
 
-    if (dashboard.canEditDashboard()) {
+    if (dashboard.canEditDashboard() && !isRepeat) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
@@ -70,7 +71,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'eye',
         shortcut: 'e',
         onClick: () => DashboardInteractions.panelMenuItemClicked('edit'),
-        href: getEditPanelUrl(panelId),
+        href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
       });
     }
 
@@ -84,14 +85,16 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       shortcut: 'p s',
     });
 
-    moreSubMenu.push({
-      text: t('panel.header-menu.duplicate', `Duplicate`),
-      onClick: () => {
-        DashboardInteractions.panelMenuItemClicked('duplicate');
-        dashboard.duplicatePanel(panel);
-      },
-      shortcut: 'p d',
-    });
+    if (dashboard.state.isEditing && !isRepeat) {
+      moreSubMenu.push({
+        text: t('panel.header-menu.duplicate', `Duplicate`),
+        onClick: () => {
+          DashboardInteractions.panelMenuItemClicked('duplicate');
+          dashboard.duplicatePanel(panel);
+        },
+        shortcut: 'p d',
+      });
+    }
 
     moreSubMenu.push({
       text: t('panel.header-menu.copy', `Copy`),
@@ -101,22 +104,34 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       },
     });
 
-    if (panel.parent instanceof LibraryVizPanel) {
-      // TODO: Implement lib panel unlinking
-    } else {
-      moreSubMenu.push({
-        text: t('panel.header-menu.create-library-panel', `Create library panel`),
-        onClick: () => {
-          DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
-          dashboard.showModal(
-            new ShareModal({
-              panelRef: panel.getRef(),
-              dashboardRef: dashboard.getRef(),
-              activeTab: shareDashboardType.libraryPanel,
-            })
-          );
-        },
-      });
+    if (dashboard.state.isEditing && !isRepeat) {
+      if (parent instanceof LibraryVizPanel) {
+        moreSubMenu.push({
+          text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
+          onClick: () => {
+            DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
+            dashboard.showModal(
+              new UnlinkLibraryPanelModal({
+                panelRef: parent.getRef(),
+              })
+            );
+          },
+        });
+      } else {
+        moreSubMenu.push({
+          text: t('panel.header-menu.create-library-panel', `Create library panel`),
+          onClick: () => {
+            DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
+            dashboard.showModal(
+              new ShareModal({
+                panelRef: panel.getRef(),
+                dashboardRef: dashboard.getRef(),
+                activeTab: shareDashboardType.libraryPanel,
+              })
+            );
+          },
+        });
+      }
     }
 
     moreSubMenu.push({
@@ -137,7 +152,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (dashboard.canEditDashboard() && plugin && !plugin.meta.skipDataQuery) {
+    if (dashboard.canEditDashboard() && plugin && !plugin.meta.skipDataQuery && !isRepeat) {
       moreSubMenu.push({
         text: t('panel.header-menu.get-help', 'Get help'),
         onClick: (e: React.MouseEvent) => {
@@ -184,26 +199,30 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    items.push({
-      text: '',
-      type: 'divider',
-    });
+    if (dashboard.state.isEditing && !isRepeat) {
+      items.push({
+        text: '',
+        type: 'divider',
+      });
 
-    items.push({
-      text: t('panel.header-menu.remove', `Remove`),
-      iconClassName: 'trash-alt',
-      onClick: () => {
-        DashboardInteractions.panelMenuItemClicked('remove');
-        onRemovePanel(dashboard, panel);
-      },
-      shortcut: 'p r',
-    });
+      items.push({
+        text: t('panel.header-menu.remove', `Remove`),
+        iconClassName: 'trash-alt',
+        onClick: () => {
+          DashboardInteractions.panelMenuItemClicked('remove');
+          onRemovePanel(dashboard, panel);
+        },
+        shortcut: 'p r',
+      });
+    }
 
     menu.setState({ items });
   };
 
   asyncFunc();
 }
+
+export const repeatPanelMenuBehavior = (menu: VizPanelMenu) => panelMenuBehavior(menu, true);
 
 async function getExploreMenuItem(panel: VizPanel): Promise<PanelMenuItem | undefined> {
   const exploreUrl = await tryGetExploreUrlForPanel(panel);
