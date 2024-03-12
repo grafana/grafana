@@ -513,3 +513,5 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 // Use our fork xorm. go.work currently overrides this and points to the local ./pkg/util/xorm directory.
 replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
+
+replace github.com/grafana/grafana/pkg/promlib => ./pkg/promlib
