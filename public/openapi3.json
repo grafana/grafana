@@ -423,32 +423,6 @@
         },
         "description": "(empty)"
       },
-      "deleteAlertNotificationChannelResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "id": {
-                  "description": "ID Identifier of the deleted notification channel.",
-                  "example": 65,
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "description": "Message Message of the deleted notificatiton channel.",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "id",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "deleteCorrelationResponse": {
         "content": {
           "application/json": {
@@ -638,65 +612,6 @@
         },
         "description": "(empty)"
       },
-      "getAlertNotificationChannelResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/AlertNotification"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getAlertNotificationChannelsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AlertNotification"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getAlertNotificationLookupResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AlertNotificationLookup"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getAlertResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/LegacyAlert"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getAlertsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AlertListItemDTO"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "getAllRolesResponse": {
         "content": {
           "application/json": {
@@ -803,19 +718,6 @@
         "description": "(empty)"
       },
       "getDashboardSnapshotResponse": {
-        "description": "(empty)"
-      },
-      "getDashboardStatesResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AlertStateInfoDTO"
-              },
-              "type": "array"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getDashboardsTagsResponse": {
@@ -1621,61 +1523,6 @@
         },
         "description": "An OKResponse is returned if the request was successful."
       },
-      "pauseAlertResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "alertId": {
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "state": {
-                  "description": "Alert result state\nrequired true",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "alertId",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "pauseAlertsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "alertsAffected": {
-                  "description": "AlertsAffected is the number of the affected alerts.",
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "state": {
-                  "description": "Alert result state\nrequired true",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "alertsAffected",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "postAPIkeyResponse": {
         "content": {
           "application/json": {
@@ -1988,16 +1835,6 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/RoleAssignmentsDTO"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "testAlertResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/AlertTestResult"
             }
           }
         },
@@ -2534,52 +2371,6 @@
         },
         "type": "object"
       },
-      "AlertListItemDTO": {
-        "properties": {
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardSlug": {
-            "type": "string"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
-          "evalData": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "evalDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "executionError": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "newStateDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "panelId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "state": {
-            "$ref": "#/components/schemas/AlertStateType"
-          },
-          "url": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "AlertManager": {
         "properties": {
           "url": {
@@ -2608,74 +2399,6 @@
           }
         },
         "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
-        "type": "object"
-      },
-      "AlertNotification": {
-        "properties": {
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "disableResolveMessage": {
-            "type": "boolean"
-          },
-          "frequency": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "secureFields": {
-            "additionalProperties": {
-              "type": "boolean"
-            },
-            "type": "object"
-          },
-          "sendReminder": {
-            "type": "boolean"
-          },
-          "settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "type": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "updated": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "AlertNotificationLookup": {
-        "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
         "type": "object"
       },
       "AlertQuery": {
@@ -2947,86 +2670,6 @@
           }
         },
         "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
-        "type": "object"
-      },
-      "AlertStateInfoDTO": {
-        "properties": {
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "newStateDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "panelId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "state": {
-            "$ref": "#/components/schemas/AlertStateType"
-          }
-        },
-        "type": "object"
-      },
-      "AlertStateType": {
-        "type": "string"
-      },
-      "AlertTestCommand": {
-        "properties": {
-          "dashboard": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "panelId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "AlertTestResult": {
-        "properties": {
-          "conditionEvals": {
-            "type": "string"
-          },
-          "error": {
-            "type": "string"
-          },
-          "firing": {
-            "type": "boolean"
-          },
-          "logs": {
-            "items": {
-              "$ref": "#/components/schemas/AlertTestResultLog"
-            },
-            "type": "array"
-          },
-          "matches": {
-            "items": {
-              "$ref": "#/components/schemas/EvalMatch"
-            },
-            "type": "array"
-          },
-          "state": {
-            "$ref": "#/components/schemas/AlertStateType"
-          },
-          "timeMs": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "AlertTestResultLog": {
-        "properties": {
-          "data": {},
-          "message": {
-            "type": "string"
-          }
-        },
         "type": "object"
       },
       "AlertingFileExport": {
@@ -4037,41 +3680,6 @@
         "format": "uint8",
         "title": "CounterResetHint contains the known information about a counter reset,",
         "type": "integer"
-      },
-      "CreateAlertNotificationCommand": {
-        "properties": {
-          "disableResolveMessage": {
-            "type": "boolean"
-          },
-          "frequency": {
-            "type": "string"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "secureSettings": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "sendReminder": {
-            "type": "boolean"
-          },
-          "settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "type": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
-        "type": "object"
       },
       "CreateCorrelationCommand": {
         "description": "CreateCorrelationCommand is the command for creating a correlation",
@@ -5219,23 +4827,6 @@
           },
           "now": {
             "format": "date-time",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "EvalMatch": {
-        "properties": {
-          "metric": {
-            "type": "string"
-          },
-          "tags": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "value": {
             "type": "string"
           }
         },
@@ -6681,82 +6272,6 @@
         },
         "type": "array"
       },
-      "LegacyAlert": {
-        "properties": {
-          "Created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "DashboardID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "EvalData": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "ExecutionError": {
-            "type": "string"
-          },
-          "For": {
-            "$ref": "#/components/schemas/Duration"
-          },
-          "Frequency": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Handler": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "ID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Message": {
-            "type": "string"
-          },
-          "Name": {
-            "type": "string"
-          },
-          "NewStateDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "OrgID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "PanelID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "Severity": {
-            "type": "string"
-          },
-          "Silenced": {
-            "type": "boolean"
-          },
-          "State": {
-            "$ref": "#/components/schemas/AlertStateType"
-          },
-          "StateChanges": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Updated": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "Version": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
       "LibraryElementArrayResponse": {
         "properties": {
           "result": {
@@ -7333,39 +6848,6 @@
         },
         "type": "array"
       },
-      "NotificationTestCommand": {
-        "properties": {
-          "disableResolveMessage": {
-            "type": "boolean"
-          },
-          "frequency": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "secureSettings": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "sendReminder": {
-            "type": "boolean"
-          },
-          "settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "type": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "NotifierConfig": {
         "properties": {
           "send_resolved": {
@@ -7820,26 +7302,6 @@
           "comment": {
             "description": "Updated comment",
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "PauseAlertCommand": {
-        "properties": {
-          "alertId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "paused": {
-            "type": "boolean"
-          }
-        },
-        "type": "object"
-      },
-      "PauseAllAlertsCommand": {
-        "properties": {
-          "paused": {
-            "type": "boolean"
           }
         },
         "type": "object"
@@ -11309,80 +10771,6 @@
         },
         "type": "object"
       },
-      "UpdateAlertNotificationCommand": {
-        "properties": {
-          "disableResolveMessage": {
-            "type": "boolean"
-          },
-          "frequency": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "secureSettings": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "sendReminder": {
-            "type": "boolean"
-          },
-          "settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "type": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "UpdateAlertNotificationWithUidCommand": {
-        "properties": {
-          "disableResolveMessage": {
-            "type": "boolean"
-          },
-          "frequency": {
-            "type": "string"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "secureSettings": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "sendReminder": {
-            "type": "boolean"
-          },
-          "settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "type": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "UpdateAnnotationsCmd": {
         "properties": {
           "data": {
@@ -12147,7 +11535,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -12366,6 +11753,7 @@
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12414,6 +11802,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -12564,6 +11953,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
