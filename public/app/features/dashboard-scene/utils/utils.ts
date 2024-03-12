@@ -239,6 +239,9 @@ export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
   });
 }
 
-export function isLibraryPanelChild(vizPanel: VizPanel) {
-  return vizPanel.parent instanceof LibraryVizPanel;
+export function getLibraryPanel(vizPanel: VizPanel): LibraryVizPanel | undefined {
+  if (vizPanel.parent instanceof LibraryVizPanel) {
+    return vizPanel.parent;
+  }
+  return;
 }

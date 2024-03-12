@@ -4,6 +4,7 @@ use (
 	.
 	./pkg/apimachinery
 	./pkg/apiserver
+	./pkg/promlib
 	./pkg/util/xorm
 )
 
