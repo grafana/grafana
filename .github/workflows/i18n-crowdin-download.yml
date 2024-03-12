@@ -113,3 +113,18 @@ jobs:
 
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+
+      - name: Get pull request number
+        if: steps.crowdin-download.outputs.pull_request_url
+        shell: bash
+        run: |
+          pr_number=$(gh pr view ${{ steps.crowdin-download.outputs.pull_request_url }} --json number -q .number)
+          echo "PULL_REQUEST_NUMBER=$pr_number" >> "$GITHUB_ENV"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run auto-milestone
+        uses: grafana/grafana-github-actions-go/auto-milestone@main
+        with:
+          pr: ${{ env.PULL_REQUEST_NUMBER }}
+          token: ${{ secrets.GITHUB_TOKEN }}
