@@ -18544,7 +18544,7 @@ __metadata:
     webpack-assets-manifest: "npm:^5.1.0"
     webpack-bundle-analyzer: "npm:4.10.1"
     webpack-cli: "npm:5.1.4"
-    webpack-dev-server: "npm:5.0.2"
+    webpack-dev-server: "npm:5.0.3"
     webpack-manifest-plugin: "npm:5.0.0"
     webpack-merge: "npm:5.10.0"
     whatwg-fetch: "npm:3.6.20"
@@ -31094,9 +31094,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-dev-server@npm:5.0.2":
-  version: 5.0.2
-  resolution: "webpack-dev-server@npm:5.0.2"
+"webpack-dev-server@npm:5.0.3":
+  version: 5.0.3
+  resolution: "webpack-dev-server@npm:5.0.3"
   dependencies:
     "@types/bonjour": "npm:^3.5.13"
     "@types/connect-history-api-fallback": "npm:^1.5.4"
@@ -31137,7 +31137,7 @@ __metadata:
       optional: true
   bin:
     webpack-dev-server: bin/webpack-dev-server.js
-  checksum: 10/f47205b56a562c72083ad979fceb499dc60ef35a75a72b6fbcbccd258b6b304ab3a977877dc6ce68aa5fb90cee8ab9387e22ceb8e374a019e3d4ce77ad0c9493
+  checksum: 10/39e8cccbe981338695067faf9242d70b8d3b5c0640545c2d4099dd30a13b86f516826af7ba130f18648617ea51dae257efce6685b25358db180f41d7344a7d4f
   languageName: node
   linkType: hard
 
