@@ -174,6 +174,23 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 	}, nil
 }
 
+// getRequestContextOnlySettings is useful for resource endpoints that are called before auth has been configured such as external-id that need access to settings but nothing else
+func (e *cloudWatchExecutor) getRequestContextOnlySettings(ctx context.Context, pluginCtx backend.PluginContext, _ string) (models.RequestContext, error) {
+	instance, err := e.getInstance(ctx, pluginCtx)
+	if err != nil {
+		return models.RequestContext{}, err
+	}
+
+	return models.RequestContext{
+		OAMAPIProvider:        nil,
+		MetricsClientProvider: nil,
+		LogsAPIProvider:       nil,
+		EC2APIProvider:        nil,
+		Settings:              instance.Settings,
+		Logger:                e.logger.FromContext(ctx),
+	}, nil
+}
+
 func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	ctx = instrumentContext(ctx, "callResource", req.PluginContext)
 	return e.resourceHandler.CallResource(ctx, req, sender)
