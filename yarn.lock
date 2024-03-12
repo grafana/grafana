@@ -3233,7 +3233,7 @@ __metadata:
     "@types/lodash": "npm:4.14.202"
     "@types/node": "npm:20.11.26"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     fast-deep-equal: "npm:^3.1.3"
     i18next: "npm:^23.0.0"
@@ -3270,7 +3270,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.14.202"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/react-dom": "npm:18.2.21"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     css-loader: "npm:6.10.0"
@@ -3311,7 +3311,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.14.202"
     "@types/node": "npm:20.11.26"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/uuid": "npm:9.0.8"
     d3-random: "npm:^3.0.1"
@@ -3365,7 +3365,7 @@ __metadata:
     "@testing-library/react": "npm:14.2.1"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/lodash": "npm:4.14.202"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     lodash: "npm:4.17.21"
     monaco-editor: "npm:0.34.0"
     react: "npm:18.2.0"
@@ -3400,7 +3400,7 @@ __metadata:
     "@types/lodash": "npm:4.14.202"
     "@types/node": "npm:20.11.26"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/react-test-renderer": "npm:18.0.7"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     debounce-promise: "npm:3.1.2"
@@ -3452,7 +3452,7 @@ __metadata:
     "@types/lodash": "npm:4.14.202"
     "@types/node": "npm:20.11.26"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/react-dom": "npm:18.2.21"
     "@types/semver": "npm:7.5.8"
     "@types/uuid": "npm:9.0.8"
@@ -3497,7 +3497,7 @@ __metadata:
     "@testing-library/react": "npm:14.2.1"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.14.202"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     react-use: "npm:17.5.0"
@@ -3544,7 +3544,7 @@ __metadata:
     "@types/marked": "npm:5.0.2"
     "@types/node": "npm:20.11.26"
     "@types/papaparse": "npm:5.3.14"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/react-dom": "npm:18.2.21"
     "@types/string-hash": "npm:1.1.3"
     "@types/tinycolor2": "npm:1.4.6"
@@ -3737,12 +3737,12 @@ __metadata:
   linkType: hard
 
 "@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.3.9":
-  version: 1.3.9
-  resolution: "@grafana/faro-core@npm:1.3.9"
+  version: 1.4.2
+  resolution: "@grafana/faro-core@npm:1.4.2"
   dependencies:
     "@opentelemetry/api": "npm:^1.7.0"
     "@opentelemetry/otlp-transformer": "npm:^0.48.0"
-  checksum: 10/ca3d500592c8112019d5b7ac5f0ca9b317eb3c6dc4343e33a41d76d7c2c356a52547e4f8661cb94a218b41e4dacef5327a1f9563bbcd46ad1153f34de19ba69d
+  checksum: 10/f5df1136b8189cd731f68f4fa52e607c2bbccb0bb6c3458cd8cb32005d75b16b53068c14baca6c14efabf4bc350d6f330f6b037c39f6fdcee6c072d82ee17081
   languageName: node
   linkType: hard
 
@@ -3776,7 +3776,7 @@ __metadata:
     "@types/d3": "npm:^7"
     "@types/jest": "npm:^29.5.4"
     "@types/lodash": "npm:4.14.202"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
     "@types/tinycolor2": "npm:1.4.6"
     babel-jest: "npm:29.7.0"
@@ -3857,7 +3857,7 @@ __metadata:
     "@testing-library/react": "npm:14.2.1"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:^29.5.4"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/systemjs": "npm:6.13.5"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     jest: "npm:^29.6.4"
@@ -3943,7 +3943,7 @@ __metadata:
     "@types/node": "npm:20.11.26"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-dom": "npm:18.2.21"
     "@types/react-highlight-words": "npm:0.16.7"
@@ -4036,7 +4036,7 @@ __metadata:
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.14.202"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/react-dom": "npm:18.2.21"
     "@types/systemjs": "npm:6.13.5"
     esbuild: "npm:0.18.12"
@@ -4119,7 +4119,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:^29.5.4"
     "@types/lodash": "npm:4.14.202"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
     "@types/systemjs": "npm:6.13.5"
     "@types/testing-library__jest-dom": "npm:5.14.9"
@@ -4206,7 +4206,7 @@ __metadata:
     "@types/mock-raf": "npm:1.0.6"
     "@types/node": "npm:20.11.26"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-calendar": "npm:3.9.0"
     "@types/react-color": "npm:3.0.12"
@@ -9837,14 +9837,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*, @types/react@npm:18.2.64, @types/react@npm:>=16":
-  version: 18.2.64
-  resolution: "@types/react@npm:18.2.64"
+"@types/react@npm:*, @types/react@npm:18.2.65, @types/react@npm:>=16":
+  version: 18.2.65
+  resolution: "@types/react@npm:18.2.65"
   dependencies:
     "@types/prop-types": "npm:*"
     "@types/scheduler": "npm:*"
     csstype: "npm:^3.0.2"
-  checksum: 10/e82bd16660030c9aabdb5027bb9bf69570a90813e4a894c17bfb288978c2b80251def5754e455d72aa3485d99136e1b11b694f78c586e5918e10b3bb09b91b3c
+  checksum: 10/8022689f6c68e76b5e7b3c95af794fb3d128d5b2ccac408adaa80b117724c48b04dd4a2750e5c2ca29cd70ac7719b4ed5c5b1c12cb739d6f1d52188c09fb3060
   languageName: node
   linkType: hard
 
@@ -18317,7 +18317,7 @@ __metadata:
     "@types/papaparse": "npm:5.3.14"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.64"
+    "@types/react": "npm:18.2.65"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-dom": "npm:18.2.21"
     "@types/react-grid-layout": "npm:1.3.5"
@@ -18458,7 +18458,7 @@ __metadata:
     node-forge: "npm:^1.3.1"
     node-notifier: "npm:10.0.1"
     ol: "npm:7.4.0"
-    ol-ext: "npm:4.0.16"
+    ol-ext: "npm:4.0.17"
     papaparse: "npm:5.4.1"
     pluralize: "npm:^8.0.0"
     postcss: "npm:8.4.35"
@@ -23794,12 +23794,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-ext@npm:4.0.16":
-  version: 4.0.16
-  resolution: "ol-ext@npm:4.0.16"
+"ol-ext@npm:4.0.17":
+  version: 4.0.17
+  resolution: "ol-ext@npm:4.0.17"
   peerDependencies:
     ol: ">= 5.3.0"
-  checksum: 10/d5ebdbbb66649865282c7dbf1245a0a4b9a9d051b6e7d13d10a25658b3fa7b2bdf92dd257bb27241e5cc66900f5080c371add46c40a34e7f16a889b2017622b8
+  checksum: 10/38bb78706914adccf622d0fa06c5d25bfca2375faa8d1bb36598bfc52699b92a39167e29a8250637971e5d255afd6ab6c4dcca0d713741889b33b6485d7f73bc
   languageName: node
   linkType: hard
 
