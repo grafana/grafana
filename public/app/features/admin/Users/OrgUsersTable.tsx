@@ -15,6 +15,7 @@ import {
   Pagination,
   Stack,
   Tag,
+  Text,
   Tooltip,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
@@ -107,7 +108,9 @@ export const OrgUsersTable = ({
       {
         id: 'lastSeenAtAge',
         header: 'Last active',
-        cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => value,
+        cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
+          return <>{value && value === '10 years' ? <Text color={'disabled'}>Never</Text> : value}</>;
+        },
         sortType: (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime(),
       },
       {
