@@ -4,7 +4,6 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { match, Router } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
-import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -70,12 +69,6 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
 }));
-
-jest.mock('react-virtualized-auto-sizer', () => {
-  // The size of the children need to be small enough to be outside the view.
-  // So it does not trigger the query to be run by the PanelQueryRunner.
-  return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
-});
 
 function getTestDashboard(overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
   const data = Object.assign(
@@ -313,10 +306,12 @@ describe('DashboardPage', () => {
   });
 
   describe('No kiosk mode tv', () => {
-    it('should render dashboard page toolbar and submenu', async () => {
-      setup({ dashboard: getTestDashboard() });
+    it('should render dashboard page toolbar with no submenu', async () => {
+      setup({
+        dashboard: getTestDashboard(),
+      });
       expect(await screen.findAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(1);
-      expect(screen.getAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(1);
+      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
     });
   });
 

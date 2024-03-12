@@ -61,15 +61,16 @@ export const setPaneState = createAction<SetPaneStateActionPayload>('explore/set
 export const clearPanes = createAction('explore/clearPanes');
 
 /**
- * Ensure Explore doesn't exceed supported number of panes and initializes the new pane.
+ * Creates a new Explore pane.
+ * If 2 panes already exist, the last one (right) is closed before creating a new one.
  */
 export const splitOpen = createAsyncThunk(
   'explore/splitOpen',
-  async (options: SplitOpenOptions | undefined, { getState, dispatch, requestId }) => {
+  async (options: SplitOpenOptions | undefined, { getState, dispatch }) => {
     // we currently support showing only 2 panes in explore, so if this action is dispatched we know it has been dispatched from the "first" pane.
     const originState = Object.values(getState().explore.panes)[0];
 
-    const queries = options?.queries ?? (options?.query ? [options?.query] : originState?.queries || []);
+    const queries = options?.queries ?? originState?.queries ?? [];
 
     Object.keys(getState().explore.panes).forEach((paneId, index) => {
       // Only 2 panes are supported. Remove panes before create a new one.
@@ -80,9 +81,15 @@ export const splitOpen = createAsyncThunk(
 
     const splitRange = options?.range || originState?.range.raw || DEFAULT_RANGE;
 
+    let newPaneId = generateExploreId();
+    // in case we have a duplicate id, generate a new one
+    while (getState().explore.panes[newPaneId]) {
+      newPaneId = generateExploreId();
+    }
+
     await dispatch(
       createNewSplitOpenPane({
-        exploreId: requestId,
+        exploreId: newPaneId,
         datasource: options?.datasourceUid || originState?.datasourceInstance?.getRef(),
         queries: withUniqueRefIds(queries),
         range: splitRange,
@@ -95,9 +102,6 @@ export const splitOpen = createAsyncThunk(
     if (originState?.range) {
       await dispatch(syncTimesAction({ syncedTimes: isEqual(originState.range.raw, splitRange) })); // if time ranges are equal, mark times as synced
     }
-  },
-  {
-    idGenerator: generateExploreId,
   }
 );
 

@@ -21,7 +21,7 @@ type Manager struct {
 	log log.PrettyLogger
 }
 
-func ProvideService(cfg *config.Cfg) (*Manager, error) {
+func ProvideService(cfg *config.PluginManagementCfg) (*Manager, error) {
 	baseURL, err := url.JoinPath(cfg.GrafanaComURL, "/api/plugins")
 	if err != nil {
 		return nil, err

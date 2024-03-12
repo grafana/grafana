@@ -3,6 +3,7 @@ package featuremgmt
 import (
 	"bytes"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
@@ -16,7 +17,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/olekukonko/tablewriter"
 	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	featuretoggleapi "github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 )
 
@@ -26,6 +30,9 @@ func TestFeatureToggleFiles(t *testing.T) {
 	}
 
 	t.Run("check registry constraints", func(t *testing.T) {
+		invalidNames := make([]string, 0)
+
+		// Check that all flags set in code are valid
 		for _, flag := range standardFeatureFlags {
 			if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
 				t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
@@ -42,22 +49,108 @@ func TestFeatureToggleFiles(t *testing.T) {
 			if flag.Name != strings.TrimSpace(flag.Name) {
 				t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
 			}
-			if flag.AllowSelfServe && flag.Stage != FeatureStageGeneralAvailability {
-				t.Errorf("only allow self-serving GA toggles")
+			if flag.AllowSelfServe && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStagePublicPreview || flag.Stage == FeatureStageDeprecated) {
+				t.Errorf("only allow self-serving GA, PublicPreview and Deprecated toggles")
 			}
-			if flag.Created.Year() < 2021 {
-				t.Errorf("flag requires a reasonable created date.  See: %s (%s)",
-					flag.Name, flag.Created.Format(time.DateOnly))
-			}
-		}
-	})
-
-	t.Run("all new features should have an owner", func(t *testing.T) {
-		for _, flag := range standardFeatureFlags {
 			if flag.Owner == "" {
 				t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
 			}
+			// Check camel case names
+			if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
+				invalidNames = append(invalidNames, flag.Name)
+			}
 		}
+
+		// Make sure the names are valid
+		require.Empty(t, invalidNames, "%s feature names should be camel cased", invalidNames)
+		// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
+
+		// Now that we know they are valid, update the json database
+		t.Run("update k8s resource list", func(t *testing.T) {
+			created := v1.NewTime(time.Now().UTC())
+			resourceVersion := fmt.Sprintf("%d", created.UnixMilli())
+
+			featuresFile := "toggles_gen.json"
+			current := featuretoggleapi.FeatureList{
+				TypeMeta: v1.TypeMeta{
+					Kind:       "FeatureList",
+					APIVersion: featuretoggleapi.APIVERSION,
+				},
+			}
+			existing := featuretoggleapi.FeatureList{}
+			body, err := os.ReadFile(featuresFile)
+			if err == nil {
+				_ = json.Unmarshal(body, &existing)
+				current.ListMeta = existing.ListMeta
+			}
+
+			lookup := map[string]featuretoggleapi.FeatureSpec{}
+			for _, flag := range standardFeatureFlags {
+				lookup[flag.Name] = featuretoggleapi.FeatureSpec{
+					Description:       flag.Description,
+					Stage:             flag.Stage.String(),
+					Owner:             string(flag.Owner),
+					RequiresDevMode:   flag.RequiresDevMode,
+					FrontendOnly:      flag.FrontendOnly,
+					RequiresRestart:   flag.RequiresRestart,
+					AllowSelfServe:    flag.AllowSelfServe,
+					HideFromAdminPage: flag.HideFromAdminPage,
+					HideFromDocs:      flag.HideFromDocs,
+					// EnabledVersion: ???,
+				}
+
+				// Replace them all
+				// current.Items = append(current.Items, featuretoggleapi.Feature{
+				// 	ObjectMeta: v1.ObjectMeta{
+				// 		Name:              flag.Name,
+				// 		CreationTimestamp: v1.NewTime(flag.Created),
+				// 		ResourceVersion:   fmt.Sprintf("%d", flag.Created.UnixMilli()),
+				// 	},
+				// 	Spec: lookup[flag.Name],
+				// })
+				// current.ListMeta.ResourceVersion = resourceVersion
+			}
+
+			// Check for changes in any existing values
+			for _, item := range existing.Items {
+				v, ok := lookup[item.Name]
+				if ok {
+					delete(lookup, item.Name)
+					a, e1 := json.Marshal(v)
+					b, e2 := json.Marshal(item.Spec)
+					if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
+						item.ResourceVersion = resourceVersion
+						if item.Annotations == nil {
+							item.Annotations = make(map[string]string)
+						}
+						item.Annotations[utils.AnnoKeyUpdatedTimestamp] = created.String()
+						item.Spec = v // the current value
+					}
+				} else if item.DeletionTimestamp == nil {
+					item.DeletionTimestamp = &created
+					fmt.Printf("mark feature as deleted")
+				}
+				current.Items = append(current.Items, item)
+			}
+
+			// New flags not in the existing list
+			for k, v := range lookup {
+				current.Items = append(current.Items, featuretoggleapi.Feature{
+					ObjectMeta: v1.ObjectMeta{
+						Name:              k,
+						CreationTimestamp: created,
+						ResourceVersion:   fmt.Sprintf("%d", created.UnixMilli()),
+					},
+					Spec: v,
+				})
+			}
+
+			out, err := json.MarshalIndent(current, "", "  ")
+			require.NoError(t, err)
+
+			err = os.WriteFile(featuresFile, out, 0644)
+			require.NoError(t, err, "error writing file")
+		})
 	})
 
 	t.Run("verify files", func(t *testing.T) {
@@ -84,22 +177,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 			"toggles_gen.csv",
 			generateCSV(),
 		)
-	})
-
-	t.Run("check feature naming convention", func(t *testing.T) {
-		invalidNames := make([]string, 0)
-		for _, f := range standardFeatureFlags {
-			if legacyNames[f.Name] {
-				continue
-			}
-
-			if f.Name != strcase.ToLowerCamel(f.Name) {
-				invalidNames = append(invalidNames, f.Name)
-			}
-		}
-
-		require.Empty(t, invalidNames, "%s feature names should be camel cased", invalidNames)
-		// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
 	})
 }
 
@@ -214,22 +291,13 @@ func generateCSV() string {
 	w := csv.NewWriter(&buf)
 	if err := w.Write([]string{
 		"Name",
-		"Stage", //flag.Stage.String(),
-		"Owner", //string(flag.Owner),
-		"Created",
+		"Stage",           //flag.Stage.String(),
+		"Owner",           //string(flag.Owner),
 		"requiresDevMode", //strconv.FormatBool(flag.RequiresDevMode),
-		"RequiresLicense", //strconv.FormatBool(flag.RequiresLicense),
 		"RequiresRestart", //strconv.FormatBool(flag.RequiresRestart),
 		"FrontendOnly",    //strconv.FormatBool(flag.FrontendOnly),
 	}); err != nil {
 		log.Fatalln("error writing record to csv:", err)
-	}
-
-	dateFormatter := func(t time.Time) string {
-		if t.Year() < 2020 { // fake year
-			return ""
-		}
-		return t.Format(time.DateOnly)
 	}
 
 	for _, flag := range standardFeatureFlags {
@@ -237,9 +305,7 @@ func generateCSV() string {
 			flag.Name,
 			flag.Stage.String(),
 			string(flag.Owner),
-			dateFormatter(flag.Created),
 			strconv.FormatBool(flag.RequiresDevMode),
-			strconv.FormatBool(flag.RequiresLicense),
 			strconv.FormatBool(flag.RequiresRestart),
 			strconv.FormatBool(flag.FrontendOnly),
 		}); err != nil {

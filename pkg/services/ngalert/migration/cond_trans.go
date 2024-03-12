@@ -66,7 +66,7 @@ type evaluator struct {
 }
 
 //nolint:gocyclo
-func transConditions(ctx context.Context, l log.Logger, set dashAlertSettings, orgID int64, store migrationStore.Store) (*condition, error) {
+func transConditions(ctx context.Context, l log.Logger, set dashAlertSettings, orgID int64, store migrationStore.ReadStore) (*condition, error) {
 	// TODO: needs a significant refactor to reduce complexity.
 	usr := getMigrationUser(orgID)
 

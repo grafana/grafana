@@ -3,8 +3,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { dateTime, GrafanaTheme2, LogRowModel, renderMarkdown, SelectableValue } from '@grafana/data';
+import { RawQuery } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import {
+  Alert,
   Button,
   Collapse,
   Icon,
@@ -18,9 +20,7 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import store from 'app/core/store';
 
-import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
 import {
   LogContextProvider,
   LOKI_LOG_CONTEXT_PRESERVED_LABELS,
@@ -28,7 +28,6 @@ import {
   SHOULD_INCLUDE_PIPELINE_OPERATIONS,
 } from '../LogContextProvider';
 import { escapeLabelValueInSelector } from '../languageUtils';
-import { isQueryWithParser } from '../queryUtils';
 import { lokiGrammar } from '../syntax';
 import { ContextFilter, LokiQuery } from '../types';
 
@@ -81,6 +80,12 @@ function getStyles(theme: GrafanaTheme2) {
       background-color: ${theme.colors.background.secondary};
       padding: ${theme.spacing(2)};
     `,
+    notification: css({
+      position: 'absolute',
+      zIndex: theme.zIndex.portal,
+      top: 0,
+      right: 0,
+    }),
     rawQuery: css`
       display: inline;
     `,
@@ -112,12 +117,13 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
+  const [showPreservedFiltersAppliedNotification, setShowPreservedFiltersAppliedNotification] = useState(false);
 
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(store.getBool(IS_LOKI_LOG_CONTEXT_UI_OPEN, false));
+  const [isOpen, setIsOpen] = useState(window.localStorage.getItem(IS_LOKI_LOG_CONTEXT_UI_OPEN) === 'true');
   const [includePipelineOperations, setIncludePipelineOperations] = useState(
-    store.getBool(SHOULD_INCLUDE_PIPELINE_OPERATIONS, false)
+    window.localStorage.getItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true'
   );
 
   const timerHandle = React.useRef<number>();
@@ -126,7 +132,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   const isInitialState = useMemo(() => {
     // Initial query has all regular labels enabled and all parsed labels disabled
-    if (initialized && contextFilters.some((filter) => filter.fromParser === filter.enabled)) {
+    if (initialized && contextFilters.some((filter) => filter.nonIndexed === filter.enabled)) {
       return false;
     }
 
@@ -149,7 +155,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
       return;
     }
 
-    if (contextFilters.filter(({ enabled, fromParser }) => enabled && !fromParser).length === 0) {
+    if (contextFilters.filter(({ enabled, nonIndexed }) => enabled && !nonIndexed).length === 0) {
       setContextFilters(previousContextFilters.current);
       return;
     }
@@ -169,18 +175,18 @@ export function LokiContextUi(props: LokiContextUiProps) {
         selectedExtractedLabels: [],
       };
 
-      contextFilters.forEach(({ enabled, fromParser, label }) => {
+      contextFilters.forEach(({ enabled, nonIndexed, label }) => {
         // We only want to store real labels that were removed from the initial query
-        if (!enabled && !fromParser) {
+        if (!enabled && !nonIndexed) {
           preservedLabels.removedLabels.push(label);
         }
         // Or extracted labels that were added to the initial query
-        if (enabled && fromParser) {
+        if (enabled && nonIndexed) {
           preservedLabels.selectedExtractedLabels.push(label);
         }
       });
 
-      store.set(LOKI_LOG_CONTEXT_PRESERVED_LABELS, JSON.stringify(preservedLabels));
+      window.localStorage.setItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS, JSON.stringify(preservedLabels));
       setLoading(false);
     }, 1500);
 
@@ -204,11 +210,20 @@ export function LokiContextUi(props: LokiContextUiProps) {
       to: dateTime(row.timeEpochMs),
       raw: { from: dateTime(row.timeEpochMs), to: dateTime(row.timeEpochMs) },
     });
-    setContextFilters(initContextFilters);
-
+    setContextFilters(initContextFilters.contextFilters);
+    setShowPreservedFiltersAppliedNotification(initContextFilters.preservedFiltersApplied);
     setInitialized(true);
     setLoading(false);
   });
+
+  // To hide previousContextFiltersApplied notification after 2 seconds
+  useEffect(() => {
+    if (showPreservedFiltersAppliedNotification) {
+      setTimeout(() => {
+        setShowPreservedFiltersAppliedNotification(false);
+      }, 2000);
+    }
+  }, [showPreservedFiltersAppliedNotification]);
 
   useEffect(() => {
     reportInteraction('grafana_explore_logs_loki_log_context_loaded', {
@@ -224,10 +239,10 @@ export function LokiContextUi(props: LokiContextUiProps) {
     };
   }, [row.uid]);
 
-  const realLabels = contextFilters.filter(({ fromParser }) => !fromParser);
+  const realLabels = contextFilters.filter(({ nonIndexed }) => !nonIndexed);
   const realLabelsEnabled = realLabels.filter(({ enabled }) => enabled);
 
-  const parsedLabels = contextFilters.filter(({ fromParser }) => fromParser);
+  const parsedLabels = contextFilters.filter(({ nonIndexed }) => nonIndexed);
   const parsedLabelsEnabled = parsedLabels.filter(({ enabled }) => enabled);
 
   const contextFilterToSelectFilter = useCallback((contextFilter: ContextFilter): SelectableValue<string> => {
@@ -237,8 +252,8 @@ export function LokiContextUi(props: LokiContextUiProps) {
     };
   }, []);
 
-  // Currently we support adding of parser and showing parsed labels only if there is 1 parser
-  const showParsedLabels = origQuery && isQueryWithParser(origQuery.expr).parserCount === 1 && parsedLabels.length > 0;
+  // If there's any nonIndexed labels, that includes structured metadata and parsed labels, we show the nonIndexed labels input
+  const showNonIndexedLabels = parsedLabels.length > 0;
 
   let queryExpr = logContextProvider.prepareExpression(
     contextFilters.filter(({ enabled }) => enabled),
@@ -246,6 +261,14 @@ export function LokiContextUi(props: LokiContextUiProps) {
   );
   return (
     <div className={styles.wrapper}>
+      {showPreservedFiltersAppliedNotification && (
+        <Alert
+          className={styles.notification}
+          title="Previously used filters have been applied."
+          severity="info"
+          elevated={true}
+        ></Alert>
+      )}
       <Tooltip content={'Revert to initial log context query.'}>
         <div className={styles.iconButton}>
           <Button
@@ -261,12 +284,12 @@ export function LokiContextUi(props: LokiContextUiProps) {
                 return contextFilters.map((contextFilter) => ({
                   ...contextFilter,
                   // For revert to initial query we need to enable all labels and disable all parsed labels
-                  enabled: !contextFilter.fromParser,
+                  enabled: !contextFilter.nonIndexed,
                 }));
               });
               // We are removing the preserved labels from local storage so we can preselect the labels in the UI
-              store.delete(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
-              store.delete(SHOULD_INCLUDE_PIPELINE_OPERATIONS);
+              window.localStorage.removeItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
+              window.localStorage.removeItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS);
               setIncludePipelineOperations(false);
             }}
           />
@@ -277,7 +300,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
         collapsible={true}
         isOpen={isOpen}
         onToggle={() => {
-          store.set(IS_LOKI_LOG_CONTEXT_UI_OPEN, !isOpen);
+          window.localStorage.setItem(IS_LOKI_LOG_CONTEXT_UI_OPEN, (!isOpen).toString());
           setIsOpen((isOpen) => !isOpen);
           reportInteraction('grafana_explore_logs_loki_log_context_toggled', {
             logRowUid: row.uid,
@@ -288,7 +311,11 @@ export function LokiContextUi(props: LokiContextUiProps) {
           <div className={styles.rawQueryContainer}>
             {initialized ? (
               <>
-                <RawQuery lang={{ grammar: lokiGrammar, name: 'loki' }} query={queryExpr} className={styles.rawQuery} />
+                <RawQuery
+                  language={{ grammar: lokiGrammar, name: 'loki' }}
+                  query={queryExpr}
+                  className={styles.rawQuery}
+                />
                 <Tooltip content="The initial log context query is created from all labels defining the stream for the selected log line. Use the editor below to customize the log context query.">
                   <Icon name="info-circle" size="sm" className={styles.queryDescription} />
                 </Tooltip>
@@ -330,7 +357,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               }
               return setContextFilters(
                 contextFilters.map((filter) => {
-                  if (filter.fromParser) {
+                  if (filter.nonIndexed) {
                     return filter;
                   }
                   filter.enabled = keys.some((key) => key.value === filter.label);
@@ -339,7 +366,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               );
             }}
           />
-          {showParsedLabels && (
+          {showNonIndexedLabels && (
             <>
               <Label
                 className={styles.label}
@@ -372,7 +399,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                   }
                   setContextFilters(
                     contextFilters.map((filter) => {
-                      if (!filter.fromParser) {
+                      if (!filter.nonIndexed) {
                         return filter;
                       }
                       filter.enabled = keys.some((key) => key.value === filter.label);
@@ -404,7 +431,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                       logRowUid: row.uid,
                       action: e.currentTarget.checked ? 'enable' : 'disable',
                     });
-                    store.set(SHOULD_INCLUDE_PIPELINE_OPERATIONS, e.currentTarget.checked);
+                    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, e.currentTarget.checked.toString());
                     setIncludePipelineOperations(e.currentTarget.checked);
                     if (runContextQuery) {
                       runContextQuery();

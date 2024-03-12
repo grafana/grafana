@@ -6,22 +6,18 @@ import (
 	"net"
 	"path"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
-	"k8s.io/apiserver/pkg/util/openapi"
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-
-	"github.com/grafana/grafana/pkg/registry/apis/example"
-	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -29,30 +25,10 @@ const (
 	dataPath              = "data/grafana-apiserver" // same as grafana core
 )
 
-var (
-	Scheme = runtime.NewScheme()
-	Codecs = serializer.NewCodecFactory(Scheme)
-
-	unversionedVersion = schema.GroupVersion{Group: "", Version: "v1"}
-	unversionedTypes   = []runtime.Object{
-		&metav1.Status{},
-		&metav1.WatchEvent{},
-		&metav1.APIVersions{},
-		&metav1.APIGroupList{},
-		&metav1.APIGroup{},
-		&metav1.APIResourceList{},
-	}
-)
-
-func init() {
-	// we need to add the options to empty v1
-	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
-	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
-}
-
 // APIServerOptions contains the state for the apiserver
 type APIServerOptions struct {
-	builders           []grafanaAPIServer.APIGroupBuilder
+	factory            standalone.APIServerFactory
+	builders           []builder.APIGroupBuilder
 	RecommendedOptions *options.RecommendedOptions
 	AlternateDNS       []string
 
@@ -67,25 +43,23 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 	}
 }
 
-func (o *APIServerOptions) LoadAPIGroupBuilders(args []string) error {
-	o.builders = []grafanaAPIServer.APIGroupBuilder{}
-	for _, g := range args {
-		switch g {
-		// No dependencies for testing
-		case "example.grafana.app":
-			o.builders = append(o.builders, example.NewTestingAPIBuilder())
-		default:
-			return fmt.Errorf("unknown group: %s", g)
+func (o *APIServerOptions) loadAPIGroupBuilders(apis []schema.GroupVersion) error {
+	o.builders = []builder.APIGroupBuilder{}
+	for _, gv := range apis {
+		api, err := o.factory.MakeAPIServer(gv)
+		if err != nil {
+			return err
 		}
+		o.builders = append(o.builders, api)
 	}
 
 	if len(o.builders) < 1 {
-		return fmt.Errorf("expected group name(s) in the command line arguments")
+		return fmt.Errorf("no apis matched ")
 	}
 
 	// Install schemas
 	for _, b := range o.builders {
-		if err := b.InstallSchema(Scheme); err != nil {
+		if err := b.InstallSchema(grafanaAPIServer.Scheme); err != nil {
 			return err
 		}
 	}
@@ -116,9 +90,18 @@ func (o *APIServerOptions) ModifiedApplyTo(config *genericapiserver.RecommendedC
 	if err := o.RecommendedOptions.Audit.ApplyTo(&config.Config); err != nil {
 		return err
 	}
-	//if err := o.RecommendedOptions.Features.ApplyTo(&config.Config); err != nil {
-	//	return err
-	//}
+
+	// TODO: determine whether we need flow control (API priority and fairness)
+	// We can't assume that a shared informers config was provided in standalone mode and will need a guard
+	// when enabling below
+	/* kubeClient, err := kubernetes.NewForConfig(config.ClientConfig)
+	if err != nil {
+		return err
+	}
+
+	if err := o.RecommendedOptions.Features.ApplyTo(&config.Config, kubeClient, config.SharedInformerFactory); err != nil {
+		return err
+	} */
 
 	if err := o.RecommendedOptions.CoreAPI.ApplyTo(config); err != nil {
 		return err
@@ -128,6 +111,7 @@ func (o *APIServerOptions) ModifiedApplyTo(config *genericapiserver.RecommendedC
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -139,7 +123,11 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 	}
 
 	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
-	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
+
+	// TODO: determine authorization, currently insecure because Authorization provided by recommended options doesn't work
+	// reason: an aggregated server won't be able to post subjectaccessreviews (Grafana doesn't have this kind)
+	// exact error: the server could not find the requested resource (post subjectaccessreviews.authorization.k8s.io)
+	o.RecommendedOptions.Authorization = nil
 
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.Etcd = nil
@@ -148,7 +136,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		o.RecommendedOptions.CoreAPI = nil
 	}
 
-	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
+	serverConfig := genericapiserver.NewRecommendedConfig(grafanaAPIServer.Codecs)
 
 	if o.RecommendedOptions.CoreAPI == nil {
 		if err := o.ModifiedApplyTo(serverConfig); err != nil {
@@ -160,17 +148,20 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		}
 	}
 
+	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
+	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
+
 	// Add OpenAPI specs for each group+version
-	defsGetter := grafanaAPIServer.GetOpenAPIDefinitions(o.builders)
-	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
-		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
-		openapinamer.NewDefinitionNamer(Scheme))
-
-	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
-		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
-		openapinamer.NewDefinitionNamer(Scheme))
-
-	return serverConfig, nil
+	err := builder.SetupConfig(
+		grafanaAPIServer.Scheme,
+		serverConfig,
+		o.builders,
+		setting.BuildStamp,
+		setting.BuildVersion,
+		setting.BuildCommit,
+		setting.BuildBranch,
+	)
+	return serverConfig, err
 }
 
 // Validate validates APIServerOptions
@@ -179,6 +170,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 func (o *APIServerOptions) Validate(args []string) error {
 	errors := []error{}
 	errors = append(errors, o.RecommendedOptions.Validate()...)
+	errors = append(errors, o.factory.GetOptions().ValidateOptions()...)
 	return utilerrors.NewAggregate(errors)
 }
 
@@ -190,34 +182,24 @@ func (o *APIServerOptions) Complete() error {
 func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConfig, stopCh <-chan struct{}) error {
 	delegationTarget := genericapiserver.NewEmptyDelegate()
 	completedConfig := config.Complete()
+
 	server, err := completedConfig.New("example-apiserver", delegationTarget)
 	if err != nil {
 		return err
 	}
 
 	// Install the API Group+version
-	for _, b := range o.builders {
-		g, err := b.GetAPIGroupInfo(Scheme, Codecs, completedConfig.RESTOptionsGetter)
-		if err != nil {
-			return err
-		}
-		if g == nil || len(g.PrioritizedVersions) < 1 {
-			continue
-		}
-		err = server.InstallAPIGroup(g)
-		if err != nil {
-			return err
-		}
+	err = builder.InstallAPIs(grafanaAPIServer.Scheme, grafanaAPIServer.Codecs, server, config.RESTOptionsGetter, o.builders, true)
+	if err != nil {
+		return err
 	}
 
-	// in standalone mode, write the local config to disk
-	if o.RecommendedOptions.CoreAPI == nil {
-		if err = clientcmd.WriteToFile(
-			utils.FormatKubeConfig(server.LoopbackClientConfig),
-			path.Join(dataPath, "grafana.kubeconfig"),
-		); err != nil {
-			return err
-		}
+	// write the local config to disk
+	if err = clientcmd.WriteToFile(
+		utils.FormatKubeConfig(server.LoopbackClientConfig),
+		path.Join(dataPath, "apiserver.kubeconfig"),
+	); err != nil {
+		return err
 	}
 
 	return server.PrepareRun().Run(stopCh)

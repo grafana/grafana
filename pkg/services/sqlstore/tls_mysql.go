@@ -11,7 +11,7 @@ import (
 
 var tlslog = log.New("tls_mysql")
 
-func makeCert(config DatabaseConfig) (*tls.Config, error) {
+func makeCert(config *DatabaseConfig) (*tls.Config, error) {
 	rootCertPool := x509.NewCertPool()
 	pem, err := os.ReadFile(config.CaCertPath)
 	if err != nil {

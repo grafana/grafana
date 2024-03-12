@@ -26,13 +26,37 @@ weight: 80
 
 # Configure data links
 
-You can use data link variables or data links to create links between panels.
+Data links allow you to provide more granular context to your links. You can create links that include the series name or even the value under the cursor. For example, if your visualization shows four servers, you can add a data link to one or two of them. You can also link panels using data links.
+
+The link itself is accessible in different ways depending on the visualization. For the time series visualization you need to click a data point or line:
+
+![Time series visualization with a data link displayed](/media/docs/grafana/panels-visualizations/screenshot-time-series-data-link-v10.3.png)
+
+For visualizations like stat, gauge, or bar gauge you can click anywhere on the visualization to open the context menu:
+
+![Stat visualization with a data link displayed](/media/docs/grafana/panels-visualizations/screenshot-stat-data-link-v10.3.png)
+
+If there's only one data link in the visualization, clicking anywhere on the visualization opens the link rather than the context menu.
+
+## Supported visualizations
+
+You can configure data links for the following visualizations:
+
+|                            |                        |                                  |
+| -------------------------- | ---------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [Geomap][geomap]       | [State timeline][state timeline] |
+| [Bar gauge][bar gauge]     | [Heatmap][heatmap]     | [Status history][status history] |
+| [Candlestick][candlestick] | [Histogram][histogram] | [Table][table]                   |
+| [Canvas][canvas]           | [Pie chart][pie chart] | [Time series][time series]       |
+| [Gauge][gauge]             | [Stat][stat]           | [Trend][trend]                   |
+
+<!--Also xy chart -->
 
 ## Data link variables
 
-You can use variables in data links to refer to series fields, labels, and values. For more information about data links, refer to [Data links](#data-links).
+Variables in data links let you send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a label, time range, series, or variable selection.
 
-To see a list of available variables, type `$` in the data link **URL** field to see a list of variables that you can use.
+To see a list of available variables, enter `$` in the data link **URL** field.
 
 {{% admonition type="note" %}}
 These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
@@ -40,50 +64,61 @@ These variables changed in 6.4 so if you have an older version of Grafana, then 
 
 Azure Monitor, [CloudWatch][], and [Google Cloud Monitoring][] have pre-configured data links called _deep links_.
 
-You can also use template variables in your data links URLs, refer to [Templates and variables][] for more information on template variables.
+You can also use template variables in your data links URLs. For more information, refer to [Templates and variables][].
 
-## Time range panel variables
+### Time range panel variables
 
-These variables allow you to include the current time range in the data link URL.
+These variables allow you to include the current time range in the data link URL:
 
-- `__url_time_range` - current dashboard's time range (i.e. `?from=now-6h&to=now`)
-- `$__from and $__to` - For more information, refer to [Global variables][].
+| Variable           | Description                                                         |
+| ------------------ | ------------------------------------------------------------------- |
+| `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`) |
+| `__from`           | For more information, refer to [Global variables][].                |
+| `__to`             | For more information, refer to [Global variables][].                |
 
-## Series variables
+### Series variables
 
 Series-specific variables are available under `__series` namespace:
 
-- `__series.name` - series name to the URL
+| Variable        | Description            |
+| --------------- | ---------------------- |
+| `__series.name` | Series name to the URL |
 
-## Field variables
+### Field variables
 
 Field-specific variables are available under `__field` namespace:
 
-- `__field.name` - the name of the field
-- `__field.labels.<LABEL>` - label's value to the URL. If your label contains dots, then use `__field.labels["<LABEL>"]` syntax.
+| Variable                 | Description                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `__field.name`           | The name of the field                                                                               |
+| `__field.labels.<LABEL>` | Label's value to the URL. If your label contains dots, then use `__field.labels["<LABEL>"]` syntax. |
 
-## Value variables
+### Value variables
 
 Value-specific variables are available under `__value` namespace:
 
-- `__value.time` - value's timestamp (Unix ms epoch) to the URL (i.e. `?time=1560268814105`)
-- `__value.raw` - raw value
-- `__value.numeric` - numeric representation of a value
-- `__value.text` - text representation of a value
-- `__value.calc` - calculation name if the value is result of calculation
+| Variable          | Description                                                                       |
+| ----------------- | --------------------------------------------------------------------------------- |
+| `__value.time`    | Value's timestamp (Unix ms epoch) to the URL (for example, `?time=1560268814105`) |
+| `__value.raw`     | Raw value                                                                         |
+| `__value.numeric` | Numeric representation of a value                                                 |
+| `__value.text`    | Text representation of a value                                                    |
+| `__value.calc`    | Calculation name if the value is result of calculation                            |
 
 Using value-specific variables in data links can show different results depending on the set option of Tooltip mode.
 
-## Data variables
+### Data variables
 
 To access values and labels from other fields use:
 
-- `${__data.fields[i]}` - value of field `i` (on the same row)
-- `${__data.fields["NameOfField"]}` - value of field using name instead of index
-- `${__data.fields["NameOfField"]}` - value of field using name instead of index
-- `${__data.fields[1].labels.cluster}` - access labels of another field
+| Variable                          | Description                                |
+| --------------------------------- | ------------------------------------------ |
+| `__data.fields[i]`                | Value of field `i` (on the same row)       |
+| `__data.fields["NameOfField"]`    | Value of field using name instead of index |
+| `__data.fields["NameOfField"]`    | Value of field using name instead of index |
+| `__data.fields[1].labels.cluster` | Access labels of another field             |
 
-## Template variables
+### Template variables
 
 When linking to another dashboard that uses template variables, select variable values for whoever clicks the link.
 
@@ -97,54 +132,69 @@ When linking to another dashboard that uses template variables, select variable 
 
 If you want to add all of the current dashboard's variables to the URL, then use `${__all_variables}`.
 
-## Data links
+## Add a data link
 
-Data links allow you to provide more granular context to your links. You can create links that include the series name or even the value under the cursor. For example, if your visualization showed four servers, you could add a data link to one or two of them.
-
-The link itself is accessible in different ways depending on the visualization. For the Graph you need to click on a data point or line, for a panel like
-Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open the context menu.
-
-You can use variables in data links to send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a time range, series, and variable selection. For more information, refer to [Data link variables](#data-link-variables).
-
-### Typeahead suggestions
-
-When creating or updating a data link, press Cmd+Space or Ctrl+Space on your keyboard to open the typeahead suggestions to more easily add variables to your URL.
-
-{{< figure src="/static/img/docs/data_link_typeahead.png"  max-width= "800px" alt="Drop-down list with variable suggestions open from the URL field" >}}
-
-### Add a data link
-
-1. Hover over any part of the panel you want to which you want to add the data link to display the actions menu on the top right corner.
-1. Click the menu and select **Edit**.
-
-   To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
-
-1. Scroll down to the Data links section and expand it.
+1. Navigate to the panel to which you want to add the data link.
+1. Hover over any part of the panel to display the menu icon in the upper-right corner.
+1. Click the menu icon and select **Edit** to open the panel editor.
+1. In the panel edit pane, scroll down to the **Data links** section and expand it.
 1. Click **Add link**.
-1. Enter a **Title**. **Title** is a human-readable label for the link that will be displayed in the UI.
-1. Enter the **URL** you want to link to.
+1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link, which will be displayed in the UI.
+1. Enter the **URL** or variable to which you want to link.
 
-   You can even add one of the template variables defined in the dashboard. Click in the **URL** field and then type `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. By adding template variables to your panel link, the link sends the user to the right context, with the relevant variables already set. For more information, refer to [Data link variables](#data-link-variables).
+   To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
 
-1. If you want the link to open in a new tab, then select **Open in a new tab**.
-1. Click **Save** to save changes and close the window.
-1. Click **Save** in the upper right to save your changes to the dashboard.
-
-### Update a data link
-
-1. Scroll down to the Data links section, expand it, and find the link that you want to make changes to.
-1. Click the Edit (pencil) icon to open the Edit link window.
-1. Make any necessary changes.
-1. Click **Save** to save changes and close the window.
-1. Click **Save** in the upper right to save your changes to the dashboard.
-
-### Delete a data link
-
-1. Scroll down to the Data links section, expand it, and find the link that you want to delete.
-1. Click the **X** icon next to the link you want to delete.
-1. Click **Save** in the upper right to save your changes to the dashboard.
+1. If you want the link to open in a new tab, then toggle the **Open in a new tab** switch.
+1. Click **Save** to save changes and close the dialog box.
+1. Click **Apply** to see your changes in the dashboard.
+1. Click the **Save dashboard** icon to save your changes to the dashboard.
 
 {{% docs/reference %}}
+[bar chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-chart"
+[bar chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/bar-chart"
+
+[bar gauge]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-gauge"
+[bar gauge]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/bar-gauge"
+
+[candlestick]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/candlestick"
+[candlestick]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/candlestick"
+
+[canvas]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/canvas"
+[canvas]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/canvas"
+
+[gauge]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
+[gauge]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/gauge"
+
+[geomap]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
+[geomap]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/geomap"
+
+[heatmap]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
+[heatmap]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/heatmap"
+
+[histogram]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram"
+[histogram]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/histogram"
+
+[pie chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/pie-chart"
+[pie chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/pie-chart"
+
+[stat]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
+[stat]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/stat"
+
+[state timeline]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
+[state timeline]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/state-timeline"
+
+[status history]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/status-history"
+[status history]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/status-history"
+
+[table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+[table]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table"
+
+[time series]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+[time series]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series"
+
+[trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
+[trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
+
 [Cloudwatch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
 [Cloudwatch]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
 
@@ -152,8 +202,8 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 [Google Cloud Monitoring]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/google-cloud-monitoring/query-editor#deep-link-from-grafana-panels-to-the-google-cloud-console-metrics-explorer"
 
 [Templates and variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[Templates and variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[Templates and variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables"
 
 [Global variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#**from-and-**to"
-[Global variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#**from-and-**to"
+[Global variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables#**from-and-**to"
 {{% /docs/reference %}}

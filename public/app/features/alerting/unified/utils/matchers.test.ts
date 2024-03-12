@@ -1,6 +1,12 @@
 import { MatcherOperator, Route } from '../../../../plugins/datasource/alertmanager/types';
 
-import { getMatcherQueryParams, normalizeMatchers, parseQueryParamMatchers } from './matchers';
+import {
+  getMatcherQueryParams,
+  normalizeMatchers,
+  parseQueryParamMatchers,
+  quoteWithEscape,
+  unquoteWithUnescape,
+} from './matchers';
 
 describe('Unified Alerting matchers', () => {
   describe('getMatcherQueryParams tests', () => {
@@ -59,5 +65,39 @@ describe('Unified Alerting matchers', () => {
         ['foo', MatcherOperator.equal, 'bar'],
       ]);
     });
+  });
+});
+
+describe('quoteWithEscape', () => {
+  const samples: string[][] = [
+    ['bar', '"bar"'],
+    ['b"ar"', '"b\\"ar\\""'],
+    ['b\\ar\\', '"b\\\\ar\\\\"'],
+    ['wa{r}ni$ng!', '"wa{r}ni$ng!"'],
+  ];
+
+  it.each(samples)('should escape and quote %s to %s', (raw, quoted) => {
+    const quotedMatcher = quoteWithEscape(raw);
+    expect(quotedMatcher).toBe(quoted);
+  });
+});
+
+describe('unquoteWithUnescape', () => {
+  const samples: string[][] = [
+    ['bar', 'bar'],
+    ['"bar"', 'bar'],
+    ['"b\\"ar\\""', 'b"ar"'],
+    ['"b\\\\ar\\\\"', 'b\\ar\\'],
+    ['"wa{r}ni$ng!"', 'wa{r}ni$ng!'],
+  ];
+
+  it.each(samples)('should unquote and unescape %s to %s', (quoted, raw) => {
+    const unquotedMatcher = unquoteWithUnescape(quoted);
+    expect(unquotedMatcher).toBe(raw);
+  });
+
+  it('should not unescape unquoted string', () => {
+    const unquoted = unquoteWithUnescape('un\\"quo\\\\ted');
+    expect(unquoted).toBe('un\\"quo\\\\ted');
   });
 });

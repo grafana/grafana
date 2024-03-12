@@ -4,7 +4,7 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     PluginTSTypesJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
@@ -107,6 +107,10 @@ export interface Options {
    */
   inlineEditing: boolean;
   /**
+   * Enable pan and zoom
+   */
+  panZoom: boolean;
+  /**
    * The root element of canvas (frame), where all canvas elements are nested
    * TODO: Figure out how to define a default value for this
    */
@@ -132,5 +136,6 @@ export interface Options {
 
 export const defaultOptions: Partial<Options> = {
   inlineEditing: true,
+  panZoom: true,
   showAdvancedTypes: true,
 };

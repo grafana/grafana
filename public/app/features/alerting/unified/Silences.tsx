@@ -112,7 +112,7 @@ function SilencesPage() {
   const pageNav = useSilenceNavData();
 
   return (
-    <AlertmanagerPageWrapper pageId="silences" pageNav={pageNav} accessType="instance">
+    <AlertmanagerPageWrapper navId="silences" pageNav={pageNav} accessType="instance">
       <Silences />
     </AlertmanagerPageWrapper>
   );

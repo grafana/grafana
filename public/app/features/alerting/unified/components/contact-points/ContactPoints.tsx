@@ -9,21 +9,21 @@ import { useToggle } from 'react-use';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import {
-  Text,
-  LinkButton,
-  TabsBar,
-  TabContent,
-  Tab,
-  Pagination,
-  Button,
-  Stack,
   Alert,
-  LoadingPlaceholder,
-  useStyles2,
-  Menu,
+  Button,
   Dropdown,
-  Tooltip,
   Icon,
+  LinkButton,
+  LoadingPlaceholder,
+  Menu,
+  Pagination,
+  Stack,
+  Tab,
+  TabContent,
+  TabsBar,
+  Text,
+  Tooltip,
+  useStyles2,
 } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
@@ -80,6 +80,9 @@ const ContactPoints = () => {
   );
   const [exportContactPointsSupported, exportContactPointsAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.ExportContactPoint
+  );
+  const [createTemplateSupported, createTemplateAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.CreateNotificationTemplate
   );
 
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
@@ -177,9 +180,16 @@ const ContactPoints = () => {
                       Create notification templates to customize your notifications.
                     </Text>
                     <Spacer />
-                    <LinkButton icon="plus" variant="primary" href="/alerting/notifications/templates/new">
-                      Add notification template
-                    </LinkButton>
+                    {createTemplateSupported && (
+                      <LinkButton
+                        icon="plus"
+                        variant="primary"
+                        href="/alerting/notifications/templates/new"
+                        disabled={!createTemplateAllowed}
+                      >
+                        Add notification template
+                      </LinkButton>
+                    )}
                   </Stack>
                   <NotificationTemplates />
                 </>
@@ -455,34 +465,55 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
   const { name, type, description, diagnostics, pluginMetadata, sendingResolved = true } = props;
   const styles = useStyles2(getStyles);
 
-  const iconName = INTEGRATION_ICONS[type];
   const hasMetadata = diagnostics !== undefined;
 
   return (
     <div className={styles.integrationWrapper}>
       <Stack direction="column" gap={0.5}>
-        <Stack direction="row" alignItems="center" gap={1}>
-          <Stack direction="row" alignItems="center" gap={0.5}>
-            {iconName && <Icon name={iconName} />}
-            {pluginMetadata ? (
-              <ReceiverMetadataBadge metadata={pluginMetadata} />
-            ) : (
-              <Text variant="body" color="primary">
-                {name}
-              </Text>
-            )}
-          </Stack>
-          {description && (
-            <Text variant="bodySmall" color="secondary">
-              {description}
-            </Text>
-          )}
-        </Stack>
+        <ContactPointReceiverTitleRow
+          name={name}
+          type={type}
+          description={description}
+          pluginMetadata={pluginMetadata}
+        />
         {hasMetadata && <ContactPointReceiverMetadataRow diagnostics={diagnostics} sendingResolved={sendingResolved} />}
       </Stack>
     </div>
   );
 };
+
+export interface ContactPointReceiverTitleRowProps {
+  name: string;
+  type: GrafanaNotifierType | string;
+  description?: ReactNode;
+  pluginMetadata?: ReceiverPluginMetadata;
+}
+
+export function ContactPointReceiverTitleRow(props: ContactPointReceiverTitleRowProps) {
+  const { name, type, description, pluginMetadata } = props;
+
+  const iconName = INTEGRATION_ICONS[type];
+
+  return (
+    <Stack direction="row" alignItems="center" gap={1}>
+      <Stack direction="row" alignItems="center" gap={0.5}>
+        {iconName && <Icon name={iconName} />}
+        {pluginMetadata ? (
+          <ReceiverMetadataBadge metadata={pluginMetadata} />
+        ) : (
+          <Text variant="body" color="primary">
+            {name}
+          </Text>
+        )}
+      </Stack>
+      {description && (
+        <Text variant="bodySmall" color="secondary">
+          {description}
+        </Text>
+      )}
+    </Stack>
+  );
+}
 
 interface ContactPointReceiverMetadata {
   sendingResolved: boolean;

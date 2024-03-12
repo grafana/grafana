@@ -33,7 +33,10 @@ export const PanelHeaderMenuItem = (props: Props & PanelMenuItem) => {
         >
           <a onClick={props.onClick} href={props.href} role="menuitem">
             {icon && <Icon name={icon} className={styles.menuIconClassName} />}
-            <span className="dropdown-item-text" aria-label={selectors.components.Panels.Panel.headerItems(props.text)}>
+            <span
+              className="dropdown-item-text"
+              data-testid={selectors.components.Panels.Panel.headerItems(props.text)}
+            >
               {props.text}
               {isSubMenu && <Icon name="angle-right" className={styles.shortcutIconClassName} />}
             </span>

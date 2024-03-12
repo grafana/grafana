@@ -55,18 +55,18 @@ export function SupplementaryResultError(props: Props) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    supplementaryErrorContainer: css`
-      width: 50%;
-      min-width: ${theme.breakpoints.values.sm}px;
-      margin: 0 auto;
-    `,
-    suggestedActionWrapper: css`
-      height: ${theme.spacing(6)};
-      button {
-        position: absolute;
-        right: ${theme.spacing(2)};
-        top: ${theme.spacing(7)};
-      }
-    `,
+    supplementaryErrorContainer: css({
+      width: '50%',
+      minWidth: `${theme.breakpoints.values.sm}px`,
+      margin: '0 auto',
+    }),
+    suggestedActionWrapper: css({
+      height: theme.spacing(6),
+      ['button']: {
+        position: 'absolute',
+        right: theme.spacing(2),
+        top: theme.spacing(7),
+      },
+    }),
   };
 };

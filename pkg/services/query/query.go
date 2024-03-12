@@ -28,10 +28,11 @@ import (
 )
 
 const (
-	HeaderPluginID       = "X-Plugin-Id"         // can be used for routing
-	HeaderDatasourceUID  = "X-Datasource-Uid"    // can be used for routing/ load balancing
-	HeaderDashboardUID   = "X-Dashboard-Uid"     // mainly useful for debugging slow queries
-	HeaderPanelID        = "X-Panel-Id"          // mainly useful for debugging slow queries
+	HeaderPluginID       = "X-Plugin-Id"      // can be used for routing
+	HeaderDatasourceUID  = "X-Datasource-Uid" // can be used for routing/ load balancing
+	HeaderDashboardUID   = "X-Dashboard-Uid"  // mainly useful for debugging slow queries
+	HeaderPanelID        = "X-Panel-Id"       // mainly useful for debugging slow queries
+	HeaderPanelPluginId  = "X-Panel-Plugin-Id"
 	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
 	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries
 )
@@ -305,12 +306,12 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			req.parsedQueries[ds.UID] = []parsedQuery{}
 		}
 
-		s.log.Debug("Processing metrics query", "query", query)
-
 		modelJSON, err := query.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
+
+		s.log.Debug("Processing metrics query", "query", string(modelJSON))
 
 		req.parsedQueries[ds.UID] = append(req.parsedQueries[ds.UID], parsedQuery{
 			datasource: ds,

@@ -42,7 +42,7 @@ import { RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 
-interface Props<TQuery extends DataQuery> {
+export interface Props<TQuery extends DataQuery> {
   data: PanelData;
   query: TQuery;
   queries: TQuery[];
@@ -405,6 +405,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     return (
       <Badge
+        key="query-warning"
         color="orange"
         icon="exclamation-triangle"
         text={
@@ -510,7 +511,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const { query, index, visualization, collapsable } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isDisabled = query.hide;
-
+    const error =
+      data?.error && data.error.refId === query.refId ? data.error : data?.errors?.find((e) => e.refId === query.refId);
     const rowClasses = classNames('query-editor-row', {
       'query-editor-row--disabled': isDisabled,
       'gf-form-disabled': isDisabled,
@@ -547,7 +549,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               )}
               {editor}
             </ErrorBoundaryAlert>
-            {data?.error && data.error.refId === query.refId && <QueryErrorAlert error={data.error} />}
+            {error && <QueryErrorAlert error={error} />}
             {visualization}
           </div>
         </QueryOperationRow>

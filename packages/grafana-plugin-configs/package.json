@@ -2,19 +2,19 @@
   "name": "@grafana/plugin-configs",
   "description": "Shared dependencies and files for core plugins",
   "private": true,
-  "version": "10.3.0-pre",
+  "version": "11.0.0-pre",
   "dependencies": {
-    "tslib": "2.6.0"
+    "tslib": "2.6.2"
   },
   "devDependencies": {
-    "@grafana/tsconfig": "^1.2.0-rc1",
-    "copy-webpack-plugin": "11.0.0",
+    "@grafana/tsconfig": "^1.3.0-rc1",
+    "copy-webpack-plugin": "12.0.2",
     "eslint-webpack-plugin": "4.0.1",
-    "fork-ts-checker-webpack-plugin": "8.0.0",
-    "glob": "10.3.3",
+    "fork-ts-checker-webpack-plugin": "9.0.2",
+    "glob": "10.3.10",
     "replace-in-file-webpack-plugin": "1.0.6",
-    "swc-loader": "0.2.3",
-    "webpack": "5.89.0"
+    "swc-loader": "0.2.6",
+    "webpack": "5.90.3"
   },
-  "packageManager": "yarn@3.6.0"
+  "packageManager": "yarn@4.1.0"
 }

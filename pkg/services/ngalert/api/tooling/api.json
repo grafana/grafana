@@ -1,5 +1,5 @@
 {
- "basePath": "/api/v1",
+ "basePath": "/api",
  "consumes": [
   "application/json"
  ],
@@ -94,6 +94,20 @@
     }
    },
    "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
+   "type": "object"
+  },
+  "AlertPair": {
+   "properties": {
+    "alertRule": {
+     "$ref": "#/definitions/AlertRuleUpgrade"
+    },
+    "error": {
+     "type": "string"
+    },
+    "legacyAlert": {
+     "$ref": "#/definitions/LegacyAlert"
+    }
+   },
    "type": "object"
   },
   "AlertQuery": {
@@ -211,6 +225,9 @@
      ],
      "type": "string"
     },
+    "notification_settings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettingsExport"
+    },
     "panelId": {
      "format": "int64",
      "type": "integer"
@@ -276,6 +293,107 @@
     "interval": {
      "format": "int64",
      "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "AlertRuleNotificationSettings": {
+   "properties": {
+    "group_by": {
+     "default": [
+      "alertname",
+      "grafana_folder"
+     ],
+     "description": "Override the labels by which incoming alerts are grouped together. For example, multiple alerts coming in for\ncluster=A and alertname=LatencyHigh would be batched into a single group. To aggregate by all possible labels\nuse the special value '...' as the sole label name.\nThis effectively disables aggregation entirely, passing through all alerts as-is. This is unlikely to be what\nyou want, unless you have a very low alert volume or your upstream notification system performs its own grouping.\nMust include 'alertname' and 'grafana_folder' if not using '...'.",
+     "example": [
+      "alertname",
+      "grafana_folder",
+      "cluster"
+     ],
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "group_interval": {
+     "description": "Override how long to wait before sending a notification about new alerts that are added to a group of alerts for\nwhich an initial notification has already been sent. (Usually ~5m or more.)",
+     "example": "5m",
+     "type": "string"
+    },
+    "group_wait": {
+     "description": "Override how long to initially wait to send a notification for a group of alerts. Allows to wait for an\ninhibiting alert to arrive or collect more initial alerts for the same group. (Usually ~0s to few minutes.)",
+     "example": "30s",
+     "type": "string"
+    },
+    "mute_time_intervals": {
+     "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
+     "example": [
+      "maintenance"
+     ],
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "receiver": {
+     "description": "Name of the receiver to send notifications to.",
+     "example": "grafana-default-email",
+     "type": "string"
+    },
+    "repeat_interval": {
+     "description": "Override how long to wait before sending a notification again if it has already been sent successfully for an\nalert. (Usually ~3h or more).\nNote that this parameter is implicitly bound by Alertmanager's `--data.retention` configuration flag.\nNotifications will be resent after either repeat_interval or the data retention period have passed, whichever\noccurs first. `repeat_interval` should not be less than `group_interval`.",
+     "example": "4h",
+     "type": "string"
+    }
+   },
+   "required": [
+    "receiver"
+   ],
+   "type": "object"
+  },
+  "AlertRuleNotificationSettingsExport": {
+   "properties": {
+    "group_by": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "group_interval": {
+     "type": "string"
+    },
+    "group_wait": {
+     "type": "string"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "receiver": {
+     "type": "string"
+    },
+    "repeat_interval": {
+     "type": "string"
+    }
+   },
+   "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
+   "type": "object"
+  },
+  "AlertRuleUpgrade": {
+   "properties": {
+    "sendsTo": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "title": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -543,6 +661,7 @@
      "type": "array"
     },
     "mute_time_intervals": {
+     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
      },
@@ -556,9 +675,29 @@
       "type": "string"
      },
      "type": "array"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array"
     }
    },
    "title": "Config is the top-level configuration for Alertmanager's config files.",
+   "type": "object"
+  },
+  "ContactPair": {
+   "properties": {
+    "contactPoint": {
+     "$ref": "#/definitions/ContactPointUpgrade"
+    },
+    "error": {
+     "type": "string"
+    },
+    "legacyChannel": {
+     "$ref": "#/definitions/LegacyChannel"
+    }
+   },
    "type": "object"
   },
   "ContactPointExport": {
@@ -580,6 +719,20 @@
    "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
    "type": "object"
   },
+  "ContactPointUpgrade": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "routeMatchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
+    "type": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "ContactPoints": {
    "items": {
     "$ref": "#/definitions/EmbeddedContactPoint"
@@ -591,6 +744,48 @@
    "format": "uint8",
    "title": "CounterResetHint contains the known information about a counter reset,",
    "type": "integer"
+  },
+  "DashboardUpgrade": {
+   "properties": {
+    "dashboardId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "dashboardName": {
+     "type": "string"
+    },
+    "dashboardUid": {
+     "type": "string"
+    },
+    "error": {
+     "type": "string"
+    },
+    "folderName": {
+     "type": "string"
+    },
+    "folderUid": {
+     "type": "string"
+    },
+    "migratedAlerts": {
+     "items": {
+      "$ref": "#/definitions/AlertPair"
+     },
+     "type": "array"
+    },
+    "newFolderName": {
+     "type": "string"
+    },
+    "newFolderUid": {
+     "type": "string"
+    },
+    "provisioned": {
+     "type": "boolean"
+    },
+    "warning": {
+     "type": "string"
+    }
+   },
+   "type": "object"
   },
   "DataLink": {
    "description": "DataLink define what",
@@ -651,6 +846,9 @@
     },
     "webhook_url": {
      "$ref": "#/definitions/SecretURL"
+    },
+    "webhook_url_file": {
+     "type": "string"
     }
    },
    "title": "DiscordConfig configures notifications via Discord.",
@@ -1155,13 +1353,22 @@
     },
     "typeVersion": {
      "$ref": "#/definitions/FrameTypeVersion"
+    },
+    "uniqueRowIdFields": {
+     "description": "Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID\nbut that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially\nwith streaming data with frequent updates.",
+     "example": "TraceID in Tempo, table name + primary key in SQL",
+     "items": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "array"
     }
    },
    "title": "FrameMeta matches:",
    "type": "object"
   },
   "FrameType": {
-   "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+   "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
    "type": "string"
   },
   "FrameTypeVersion": {
@@ -1179,6 +1386,14 @@
    },
    "title": "Frames is a slice of Frame pointers.",
    "type": "array"
+  },
+  "GenericPublicError": {
+   "properties": {
+    "body": {
+     "$ref": "#/definitions/PublicError"
+    }
+   },
+   "type": "object"
   },
   "GettableAlertmanagers": {
    "properties": {
@@ -1209,6 +1424,7 @@
      "type": "object"
     },
     "mute_time_intervals": {
+     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
      },
@@ -1227,6 +1443,12 @@
     "templates": {
      "items": {
       "type": "string"
+     },
+     "type": "array"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
      },
      "type": "array"
     }
@@ -1442,6 +1664,9 @@
      ],
      "type": "string"
     },
+    "notification_settings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
     "orgId": {
      "format": "int64",
      "type": "integer"
@@ -1556,6 +1781,23 @@
     "uptime",
     "versionInfo"
    ],
+   "type": "object"
+  },
+  "GettableTimeIntervals": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalItem"
+     },
+     "type": "array"
+    }
+   },
    "type": "object"
   },
   "GettableUserConfig": {
@@ -1833,6 +2075,41 @@
    },
    "type": "array"
   },
+  "LegacyAlert": {
+   "properties": {
+    "dashboardId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "name": {
+     "type": "string"
+    },
+    "panelId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "LegacyChannel": {
+   "properties": {
+    "id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "name": {
+     "type": "string"
+    },
+    "type": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "LinkTransformationConfig": {
    "properties": {
     "expression": {
@@ -1858,6 +2135,9 @@
     "send_resolved": {
      "type": "boolean"
     },
+    "summary": {
+     "type": "string"
+    },
     "text": {
      "type": "string"
     },
@@ -1866,6 +2146,9 @@
     },
     "webhook_url": {
      "$ref": "#/definitions/SecretURL"
+    },
+    "webhook_url_file": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2126,9 +2409,18 @@
    "title": "OAuth2 is the oauth2 client configuration.",
    "type": "object"
   },
+  "ObjectMatcher": {
+   "items": {
+    "type": "string"
+   },
+   "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+   "type": "array"
+  },
   "ObjectMatchers": {
-   "$ref": "#/definitions/Matchers",
-   "description": "ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects\nthat have already been parsed."
+   "items": {
+    "$ref": "#/definitions/ObjectMatcher"
+   },
+   "type": "array"
   },
   "OpsGenieConfig": {
    "properties": {
@@ -2205,6 +2497,50 @@
     },
     "username": {
      "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "OrgMigrationState": {
+   "properties": {
+    "migratedChannels": {
+     "items": {
+      "$ref": "#/definitions/ContactPair"
+     },
+     "type": "array"
+    },
+    "migratedDashboards": {
+     "items": {
+      "$ref": "#/definitions/DashboardUpgrade"
+     },
+     "type": "array"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "OrgMigrationSummary": {
+   "properties": {
+    "hasErrors": {
+     "type": "boolean"
+    },
+    "newAlerts": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "newChannels": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "newDashboards": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "removed": {
+     "type": "boolean"
     }
    },
    "type": "object"
@@ -2308,24 +2644,6 @@
   "PermissionDenied": {
    "type": "object"
   },
-  "Point": {
-   "description": "If H is not nil, then this is a histogram point and only (T, H) is valid.\nIf H is nil, then only (T, V) is valid.",
-   "properties": {
-    "H": {
-     "$ref": "#/definitions/FloatHistogram"
-    },
-    "T": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "V": {
-     "format": "double",
-     "type": "number"
-    }
-   },
-   "title": "Point represents a single data point for a given timestamp.",
-   "type": "object"
-  },
   "PostableApiAlertingConfig": {
    "properties": {
     "global": {
@@ -2338,6 +2656,7 @@
      "type": "array"
     },
     "mute_time_intervals": {
+     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
      },
@@ -2356,6 +2675,12 @@
     "templates": {
      "items": {
       "type": "string"
+     },
+     "type": "array"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
      },
      "type": "array"
     }
@@ -2580,6 +2905,9 @@
      ],
      "type": "string"
     },
+    "notification_settings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
     "title": {
      "type": "string"
     },
@@ -2613,6 +2941,20 @@
     "rules": {
      "items": {
       "$ref": "#/definitions/PostableExtendedRuleNode"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "PostableTimeIntervals": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalItem"
      },
      "type": "array"
     }
@@ -2741,6 +3083,9 @@
       "OK"
      ],
      "type": "string"
+    },
+    "notification_settings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
     },
     "orgID": {
      "format": "int64",
@@ -3422,7 +3767,12 @@
    "type": "object"
   },
   "Sample": {
+   "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
    "properties": {
+    "F": {
+     "format": "double",
+     "type": "number"
+    },
     "H": {
      "$ref": "#/definitions/FloatHistogram"
     },
@@ -3432,13 +3782,8 @@
     "T": {
      "format": "int64",
      "type": "integer"
-    },
-    "V": {
-     "format": "double",
-     "type": "number"
     }
    },
-   "title": "Sample is a single sample belonging to a metric.",
    "type": "object"
   },
   "Secret": {
@@ -3931,7 +4276,21 @@
    "type": "string"
   },
   "TimeInterval": {
-   "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array"
+    }
+   },
+   "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
+   "type": "object"
+  },
+  "TimeIntervalItem": {
    "properties": {
     "days_of_month": {
      "items": {
@@ -3950,7 +4309,7 @@
     },
     "times": {
      "items": {
-      "$ref": "#/definitions/TimeRange"
+      "$ref": "#/definitions/TimeIntervalTimeRange"
      },
      "type": "array"
     },
@@ -3965,6 +4324,17 @@
       "type": "string"
      },
      "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "TimeIntervalTimeRange": {
+   "properties": {
+    "end_time": {
+     "type": "string"
+    },
+    "start_time": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -3984,6 +4354,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -4019,7 +4390,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "UpdateRuleGroupResponse": {
@@ -4072,7 +4443,7 @@
    "type": "array"
   },
   "Vector": {
-   "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
+   "description": "Vector is basically only an alias for []Sample, but the contract is that\nin a Vector, all Samples have the same timestamp.",
    "items": {
     "$ref": "#/definitions/Sample"
    },
@@ -4225,6 +4596,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4248,6 +4620,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4408,12 +4781,14 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4468,6 +4843,7 @@
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4611,7 +4987,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4769,7 +5144,7 @@
   "version": "1.1.0"
  },
  "paths": {
-  "/api/v1/provisioning/alert-rules": {
+  "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
     "responses": {
@@ -4824,7 +5199,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/export": {
+  "/v1/provisioning/alert-rules/export": {
    "get": {
     "operationId": "RouteGetAlertRulesExport",
     "parameters": [
@@ -4881,7 +5256,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}": {
+  "/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
     "parameters": [
@@ -4981,7 +5356,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}/export": {
+  "/v1/provisioning/alert-rules/{UID}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleExport",
     "parameters": [
@@ -5029,7 +5404,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points": {
+  "/v1/provisioning/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
     "parameters": [
@@ -5092,7 +5467,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/export": {
+  "/v1/provisioning/contact-points/export": {
    "get": {
     "operationId": "RouteGetContactpointsExport",
     "parameters": [
@@ -5144,7 +5519,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/{UID}": {
+  "/v1/provisioning/contact-points/{UID}": {
    "delete": {
     "consumes": [
      "application/json"
@@ -5215,7 +5590,45 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+   "delete": {
+    "description": "Delete rule group",
+    "operationId": "RouteDeleteAlertRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": " The alert rule group was deleted successfully."
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "tags": [
+     "provisioning"
+    ]
+   },
    "get": {
     "operationId": "RouteGetAlertRuleGroup",
     "parameters": [
@@ -5299,7 +5712,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleGroupExport",
     "parameters": [
@@ -5352,7 +5765,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings": {
+  "/v1/provisioning/mute-timings": {
    "get": {
     "operationId": "RouteGetMuteTimings",
     "responses": {
@@ -5407,7 +5820,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/export": {
+  "/v1/provisioning/mute-timings/export": {
    "get": {
     "operationId": "RouteExportMuteTimings",
     "parameters": [
@@ -5446,7 +5859,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/{name}": {
+  "/v1/provisioning/mute-timings/{name}": {
    "delete": {
     "operationId": "RouteDeleteMuteTiming",
     "parameters": [
@@ -5461,6 +5874,12 @@
     "responses": {
      "204": {
       "description": " The mute timing was deleted successfully."
+     },
+     "409": {
+      "description": "GenericPublicError",
+      "schema": {
+       "$ref": "#/definitions/GenericPublicError"
+      }
      }
     },
     "summary": "Delete a mute timing.",
@@ -5522,7 +5941,7 @@
      }
     ],
     "responses": {
-     "200": {
+     "202": {
       "description": "MuteTimeInterval",
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
@@ -5541,7 +5960,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/{name}/export": {
+  "/v1/provisioning/mute-timings/{name}/export": {
    "get": {
     "operationId": "RouteExportMuteTiming",
     "parameters": [
@@ -5587,7 +6006,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies": {
+  "/v1/provisioning/policies": {
    "delete": {
     "consumes": [
      "application/json"
@@ -5661,7 +6080,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies/export": {
+  "/v1/provisioning/policies/export": {
    "get": {
     "operationId": "RouteGetPolicyTreeExport",
     "responses": {
@@ -5684,7 +6103,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates": {
+  "/v1/provisioning/templates": {
    "get": {
     "operationId": "RouteGetTemplates",
     "responses": {
@@ -5704,7 +6123,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates/{name}": {
+  "/v1/provisioning/templates/{name}": {
    "delete": {
     "operationId": "RouteDeleteTemplate",
     "parameters": [
@@ -5804,6 +6223,36 @@
   "application/json"
  ],
  "responses": {
+  "GetAllIntervalsResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/GettableTimeIntervals"
+    },
+    "type": "array"
+   }
+  },
+  "GetIntervalsByNameResponse": {
+   "description": "",
+   "schema": {
+    "$ref": "#/definitions/GettableTimeIntervals"
+   }
+  },
+  "GetReceiverResponse": {
+   "description": "",
+   "schema": {
+    "$ref": "#/definitions/GettableApiReceiver"
+   }
+  },
+  "GetReceiversResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/GettableApiReceiver"
+    },
+    "type": "array"
+   }
+  },
   "GettableHistoricUserConfigs": {
    "description": "",
    "schema": {

@@ -138,7 +138,8 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *stor
 }
 
 func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]int64, []int64) {
-	teamSvc := teamimpl.ProvideService(db, db.Cfg)
+	teamSvc, err := teamimpl.ProvideService(db, db.Cfg)
+	require.NoError(b, err)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
 	qs := quotatest.New(false, nil)
@@ -169,7 +170,7 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 			globalUserId++
 			userIds = append(userIds, userId)
 
-			err = teamSvc.AddTeamMember(userId, 1, teamId, false, 1)
+			err = teamSvc.AddTeamMember(context.Background(), userId, 1, teamId, false, 1)
 			require.NoError(b, err)
 		}
 	}

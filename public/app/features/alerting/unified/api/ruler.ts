@@ -41,8 +41,8 @@ export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
       path: `${rulerPath}/${encodeURIComponent(namespace)}`,
       params: Object.fromEntries(rulerSearchParams),
     }),
-    namespaceGroup: (namespace: string, group: string): RulerRequestUrl => ({
-      path: `${rulerPath}/${encodeURIComponent(namespace)}/${encodeURIComponent(group)}`,
+    namespaceGroup: (namespaceUID: string, group: string): RulerRequestUrl => ({
+      path: `${rulerPath}/${encodeURIComponent(namespaceUID)}/${encodeURIComponent(group)}`,
       params: Object.fromEntries(rulerSearchParams),
     }),
   };
@@ -51,10 +51,10 @@ export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
 // upsert a rule group. use this to update rule
 export async function setRulerRuleGroup(
   rulerConfig: RulerDataSourceConfig,
-  namespace: string,
+  namespaceIdentifier: string,
   group: PostableRulerRuleGroupDTO
 ): Promise<void> {
-  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
+  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespaceIdentifier);
   await lastValueFrom(
     getBackendSrv().fetch<unknown>({
       method: 'POST',
@@ -102,10 +102,10 @@ export async function fetchTestRulerRulesGroup(dataSourceName: string): Promise<
 
 export async function fetchRulerRulesGroup(
   rulerConfig: RulerDataSourceConfig,
-  namespace: string,
+  namespaceIdentifier: string, // can be the namespace name or namespace UID
   group: string
 ): Promise<RulerRuleGroupDTO | null> {
-  const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
+  const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespaceIdentifier, group);
   return rulerGetRequest<RulerRuleGroupDTO | null>(path, null, params);
 }
 

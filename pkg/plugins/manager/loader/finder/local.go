@@ -26,10 +26,10 @@ var (
 type Local struct {
 	log        log.Logger
 	production bool
-	features   plugins.FeatureToggles
+	features   featuremgmt.FeatureToggles
 }
 
-func NewLocalFinder(devMode bool, features plugins.FeatureToggles) *Local {
+func NewLocalFinder(devMode bool, features featuremgmt.FeatureToggles) *Local {
 	return &Local{
 		production: !devMode,
 		log:        log.New("local.finder"),
@@ -37,7 +37,7 @@ func NewLocalFinder(devMode bool, features plugins.FeatureToggles) *Local {
 	}
 }
 
-func ProvideLocalFinder(cfg *config.Cfg) *Local {
+func ProvideLocalFinder(cfg *config.PluginManagementCfg) *Local {
 	return NewLocalFinder(cfg.DevMode, cfg.Features)
 }
 

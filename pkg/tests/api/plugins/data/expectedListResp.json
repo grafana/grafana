@@ -13,13 +13,14 @@
       "description": "Shows list of alerts and their current status",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg",
-        "large": "/public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg"
+        "small": "public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg",
+        "large": "public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -47,7 +48,7 @@
         "name": "Prometheus alertmanager",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Add external Alertmanagers (supports Prometheus and Mimir implementations) so you can use the Grafana Alerting UI to manage silences, contact points, and notification policies.",
       "links": [
         {
           "name": "Learn more",
@@ -55,13 +56,21 @@
         }
       ],
       "logos": {
-        "small": "/public/app/plugins/datasource/alertmanager/img/logo.svg",
-        "large": "/public/app/plugins/datasource/alertmanager/img/logo.svg"
+        "small": "public/app/plugins/datasource/alertmanager/img/logo.svg",
+        "large": "public/app/plugins/datasource/alertmanager/img/logo.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "alerts",
+        "alerting",
+        "prometheus",
+        "alertmanager",
+        "mimir",
+        "cortex"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -92,13 +101,14 @@
       "description": "List annotations",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/annolist/img/icn-annolist-panel.svg",
-        "large": "/public/app/plugins/panel/annolist/img/icn-annolist-panel.svg"
+        "small": "public/app/plugins/panel/annolist/img/icn-annolist-panel.svg",
+        "large": "public/app/plugins/panel/annolist/img/icn-annolist-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -138,30 +148,37 @@
         }
       ],
       "logos": {
-        "small": "/public/app/plugins/datasource/azuremonitor/img/logo.jpg",
-        "large": "/public/app/plugins/datasource/azuremonitor/img/logo.jpg"
+        "small": "public/app/plugins/datasource/azuremonitor/img/logo.jpg",
+        "large": "public/app/plugins/datasource/azuremonitor/img/logo.jpg"
       },
       "build": {},
       "screenshots": [
         {
           "name": "Azure Contoso Loans",
-          "path": "/public/app/plugins/datasource/azuremonitor/img/contoso_loans_grafana_dashboard.png"
+          "path": "public/app/plugins/datasource/azuremonitor/img/contoso_loans_grafana_dashboard.png"
         },
         {
           "name": "Azure Monitor Network",
-          "path": "/public/app/plugins/datasource/azuremonitor/img/azure_monitor_network.png"
+          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_network.png"
         },
         {
           "name": "Azure Monitor CPU",
-          "path": "/public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
+          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "1.0.0",
-      "updated": ""
+      "version": "",
+      "updated": "",
+      "keywords": [
+        "azure",
+        "monitor",
+        "Application Insights",
+        "Log Analytics",
+        "App Insights"
+      ]
     },
     "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "5.2.x",
+      "grafanaDependency": "\u003e=10.3.0",
+      "grafanaVersion": "*",
       "plugins": []
     },
     "latestVersion": "",
@@ -188,13 +205,14 @@
       "description": "Categorical charts with group support",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/barchart/img/barchart.svg",
-        "large": "/public/app/plugins/panel/barchart/img/barchart.svg"
+        "small": "public/app/plugins/panel/barchart/img/barchart.svg",
+        "large": "public/app/plugins/panel/barchart/img/barchart.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -225,13 +243,14 @@
       "description": "Horizontal and vertical gauges",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg",
-        "large": "/public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg"
+        "small": "public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg",
+        "large": "public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -259,16 +278,22 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Graphical representation of price movements of a security, derivative, or currency.",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/candlestick/img/candlestick.svg",
-        "large": "/public/app/plugins/panel/candlestick/img/candlestick.svg"
+        "small": "public/app/plugins/panel/candlestick/img/candlestick.svg",
+        "large": "public/app/plugins/panel/candlestick/img/candlestick.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "financial",
+        "price",
+        "currency",
+        "k-line"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -299,13 +324,14 @@
       "description": "Explicit element placement",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/canvas/img/icn-canvas.svg",
-        "large": "/public/app/plugins/panel/canvas/img/icn-canvas.svg"
+        "small": "public/app/plugins/panel/canvas/img/icn-canvas.svg",
+        "large": "public/app/plugins/panel/canvas/img/icn-canvas.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -336,13 +362,14 @@
       "description": "Data source for Amazon AWS monitoring service",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-        "large": "/public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
+        "small": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+        "large": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -373,13 +400,14 @@
       "description": "List of dynamic links to other dashboards",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg",
-        "large": "/public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg"
+        "small": "public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg",
+        "large": "public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -410,13 +438,14 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/datagrid/img/icn-table-panel.svg",
-        "large": "/public/app/plugins/panel/datagrid/img/icn-table-panel.svg"
+        "small": "public/app/plugins/panel/datagrid/img/icn-table-panel.svg",
+        "large": "public/app/plugins/panel/datagrid/img/icn-table-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -452,13 +481,16 @@
         }
       ],
       "logos": {
-        "small": "/public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg",
-        "large": "/public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg"
+        "small": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg",
+        "large": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "elasticsearch"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -489,13 +521,14 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg",
-        "large": "/public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg"
+        "small": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg",
+        "large": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -526,13 +559,14 @@
       "description": "Standard gauge visualization",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/gauge/img/icon_gauge.svg",
-        "large": "/public/app/plugins/panel/gauge/img/icon_gauge.svg"
+        "small": "public/app/plugins/panel/gauge/img/icon_gauge.svg",
+        "large": "public/app/plugins/panel/gauge/img/icon_gauge.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -563,13 +597,14 @@
       "description": "Geomap panel",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/geomap/img/icn-geomap.svg",
-        "large": "/public/app/plugins/panel/geomap/img/icn-geomap.svg"
+        "small": "public/app/plugins/panel/geomap/img/icn-geomap.svg",
+        "large": "public/app/plugins/panel/geomap/img/icn-geomap.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -600,13 +635,14 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg",
-        "large": "/public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg"
+        "small": "public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg",
+        "large": "public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -637,13 +673,14 @@
       "description": "Data source for Google's monitoring service (formerly named Stackdriver)",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg",
-        "large": "/public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg"
+        "small": "public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg",
+        "large": "public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "1.0.0",
-      "updated": ""
+      "version": "",
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -679,16 +716,25 @@
         }
       ],
       "logos": {
-        "small": "/public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg",
-        "large": "/public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg"
+        "small": "public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg",
+        "large": "public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "grafana",
+        "datasource",
+        "phlare",
+        "flamegraph",
+        "profiling",
+        "continuous profiling",
+        "pyroscope"
+      ]
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -716,13 +762,14 @@
       "description": "The old default graph panel",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/graph/img/icn-graph-panel.svg",
-        "large": "/public/app/plugins/panel/graph/img/icn-graph-panel.svg"
+        "small": "public/app/plugins/panel/graph/img/icn-graph-panel.svg",
+        "large": "public/app/plugins/panel/graph/img/icn-graph-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -762,13 +809,14 @@
         }
       ],
       "logos": {
-        "small": "/public/app/plugins/datasource/graphite/img/graphite_logo.png",
-        "large": "/public/app/plugins/datasource/graphite/img/graphite_logo.png"
+        "small": "public/app/plugins/datasource/graphite/img/graphite_logo.png",
+        "large": "public/app/plugins/datasource/graphite/img/graphite_logo.png"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -799,13 +847,14 @@
       "description": "Like a histogram over time",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg",
-        "large": "/public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg"
+        "small": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg",
+        "large": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -833,16 +882,22 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Distribution of values presented as a bar chart.",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/histogram/img/histogram.svg",
-        "large": "/public/app/plugins/panel/histogram/img/histogram.svg"
+        "small": "public/app/plugins/panel/histogram/img/histogram.svg",
+        "large": "public/app/plugins/panel/histogram/img/histogram.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "distribution",
+        "bar chart",
+        "frequency",
+        "proportional"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -873,13 +928,14 @@
       "description": "Open source time series database",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/datasource/influxdb/img/influxdb_logo.svg",
-        "large": "/public/app/plugins/datasource/influxdb/img/influxdb_logo.svg"
+        "small": "public/app/plugins/datasource/influxdb/img/influxdb_logo.svg",
+        "large": "public/app/plugins/datasource/influxdb/img/influxdb_logo.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -919,13 +975,14 @@
         }
       ],
       "logos": {
-        "small": "/public/app/plugins/datasource/jaeger/img/jaeger_logo.svg",
-        "large": "/public/app/plugins/datasource/jaeger/img/jaeger_logo.svg"
+        "small": "public/app/plugins/datasource/jaeger/img/jaeger_logo.svg",
+        "large": "public/app/plugins/datasource/jaeger/img/jaeger_logo.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -956,13 +1013,14 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/logs/img/icn-logs-panel.svg",
-        "large": "/public/app/plugins/panel/logs/img/icn-logs-panel.svg"
+        "small": "public/app/plugins/panel/logs/img/icn-logs-panel.svg",
+        "large": "public/app/plugins/panel/logs/img/icn-logs-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1002,13 +1060,14 @@
         }
       ],
       "logos": {
-        "small": "/public/app/plugins/datasource/loki/img/loki_icon.svg",
-        "large": "/public/app/plugins/datasource/loki/img/loki_icon.svg"
+        "small": "public/app/plugins/datasource/loki/img/loki_icon.svg",
+        "large": "public/app/plugins/datasource/loki/img/loki_icon.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1039,13 +1098,14 @@
       "description": "Data source for Microsoft SQL Server compatible databases",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/datasource/mssql/img/sql_server_logo.svg",
-        "large": "/public/app/plugins/datasource/mssql/img/sql_server_logo.svg"
+        "small": "public/app/plugins/datasource/mssql/img/sql_server_logo.svg",
+        "large": "public/app/plugins/datasource/mssql/img/sql_server_logo.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1076,13 +1136,14 @@
       "description": "Data source for MySQL databases",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/datasource/mysql/img/mysql_logo.svg",
-        "large": "/public/app/plugins/datasource/mysql/img/mysql_logo.svg"
+        "small": "public/app/plugins/datasource/mysql/img/mysql_logo.svg",
+        "large": "public/app/plugins/datasource/mysql/img/mysql_logo.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1113,13 +1174,14 @@
       "description": "RSS feed reader",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/news/img/news.svg",
-        "large": "/public/app/plugins/panel/news/img/news.svg"
+        "small": "public/app/plugins/panel/news/img/news.svg",
+        "large": "public/app/plugins/panel/news/img/news.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1150,13 +1212,14 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg",
-        "large": "/public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg"
+        "small": "public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg",
+        "large": "public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1187,13 +1250,14 @@
       "description": "Open source time series database",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png",
-        "large": "/public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png"
+        "small": "public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png",
+        "large": "public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1229,16 +1293,22 @@
         }
       ],
       "logos": {
-        "small": "/public/app/plugins/datasource/parca/img/logo-small.svg",
-        "large": "/public/app/plugins/datasource/parca/img/logo-small.svg"
+        "small": "public/app/plugins/datasource/parca/img/logo-small.svg",
+        "large": "public/app/plugins/datasource/parca/img/logo-small.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "grafana",
+        "datasource",
+        "parca",
+        "profiling"
+      ]
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -1266,13 +1336,14 @@
       "description": "The new core pie chart visualization",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/piechart/img/icon_piechart.svg",
-        "large": "/public/app/plugins/panel/piechart/img/icon_piechart.svg"
+        "small": "public/app/plugins/panel/piechart/img/icon_piechart.svg",
+        "large": "public/app/plugins/panel/piechart/img/icon_piechart.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1303,13 +1374,14 @@
       "description": "Data source for PostgreSQL and compatible databases",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/datasource/grafana-postgresql-datasource/img/postgresql_logo.svg",
-        "large": "/public/app/plugins/datasource/grafana-postgresql-datasource/img/postgresql_logo.svg"
+        "small": "public/app/plugins/datasource/grafana-postgresql-datasource/img/postgresql_logo.svg",
+        "large": "public/app/plugins/datasource/grafana-postgresql-datasource/img/postgresql_logo.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1345,13 +1417,14 @@
         }
       ],
       "logos": {
-        "small": "/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg",
-        "large": "/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
+        "small": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg",
+        "large": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1382,13 +1455,14 @@
       "description": "Big stat values \u0026 sparklines",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/stat/img/icn-singlestat-panel.svg",
-        "large": "/public/app/plugins/panel/stat/img/icn-singlestat-panel.svg"
+        "small": "public/app/plugins/panel/stat/img/icn-singlestat-panel.svg",
+        "large": "public/app/plugins/panel/stat/img/icn-singlestat-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1419,13 +1493,14 @@
       "description": "State changes and durations",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/state-timeline/img/timeline.svg",
-        "large": "/public/app/plugins/panel/state-timeline/img/timeline.svg"
+        "small": "public/app/plugins/panel/state-timeline/img/timeline.svg",
+        "large": "public/app/plugins/panel/state-timeline/img/timeline.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1456,13 +1531,14 @@
       "description": "Periodic status history",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/status-history/img/status.svg",
-        "large": "/public/app/plugins/panel/status-history/img/status.svg"
+        "small": "public/app/plugins/panel/status-history/img/status.svg",
+        "large": "public/app/plugins/panel/status-history/img/status.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1493,13 +1569,14 @@
       "description": "Supports many column styles",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/table/img/icn-table-panel.svg",
-        "large": "/public/app/plugins/panel/table/img/icn-table-panel.svg"
+        "small": "public/app/plugins/panel/table/img/icn-table-panel.svg",
+        "large": "public/app/plugins/panel/table/img/icn-table-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1530,13 +1607,14 @@
       "description": "Table Panel for Grafana",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/table-old/img/icn-table-panel.svg",
-        "large": "/public/app/plugins/panel/table-old/img/icn-table-panel.svg"
+        "small": "public/app/plugins/panel/table-old/img/icn-table-panel.svg",
+        "large": "public/app/plugins/panel/table-old/img/icn-table-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1572,16 +1650,17 @@
         }
       ],
       "logos": {
-        "small": "/public/app/plugins/datasource/tempo/img/tempo_logo.svg",
-        "large": "/public/app/plugins/datasource/tempo/img/tempo_logo.svg"
+        "small": "public/app/plugins/datasource/tempo/img/tempo_logo.svg",
+        "large": "public/app/plugins/datasource/tempo/img/tempo_logo.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -1609,16 +1688,17 @@
       "description": "Generates test data in different forms",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg",
-        "large": "/public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg"
+        "small": "public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg",
+        "large": "public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": ">=10.3.0-0",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -1646,13 +1726,14 @@
       "description": "Supports markdown and html content",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/text/img/icn-text-panel.svg",
-        "large": "/public/app/plugins/panel/text/img/icn-text-panel.svg"
+        "small": "public/app/plugins/panel/text/img/icn-text-panel.svg",
+        "large": "public/app/plugins/panel/text/img/icn-text-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1683,13 +1764,14 @@
       "description": "Time based line, area and bar charts",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg",
-        "large": "/public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg"
+        "small": "public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg",
+        "large": "public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1720,13 +1802,14 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/traces/img/traces-panel.svg",
-        "large": "/public/app/plugins/panel/traces/img/traces-panel.svg"
+        "small": "public/app/plugins/panel/traces/img/traces-panel.svg",
+        "large": "public/app/plugins/panel/traces/img/traces-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1757,13 +1840,14 @@
       "description": "Like timeseries, but when x != time",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/trend/img/trend.svg",
-        "large": "/public/app/plugins/panel/trend/img/trend.svg"
+        "small": "public/app/plugins/panel/trend/img/trend.svg",
+        "large": "public/app/plugins/panel/trend/img/trend.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1794,13 +1878,14 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg",
-        "large": "/public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg"
+        "small": "public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg",
+        "large": "public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1828,16 +1913,20 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Supports arbitrary X vs Y in a graph to visualize the relationship between two variables.",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/panel/xychart/img/icn-xychart.svg",
-        "large": "/public/app/plugins/panel/xychart/img/icn-xychart.svg"
+        "small": "public/app/plugins/panel/xychart/img/icn-xychart.svg",
+        "large": "public/app/plugins/panel/xychart/img/icn-xychart.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "scatter",
+        "plot"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1873,16 +1962,17 @@
         }
       ],
       "logos": {
-        "small": "/public/app/plugins/datasource/zipkin/img/zipkin-logo.svg",
-        "large": "/public/app/plugins/datasource/zipkin/img/zipkin-logo.svg"
+        "small": "public/app/plugins/datasource/zipkin/img/zipkin-logo.svg",
+        "large": "public/app/plugins/datasource/zipkin/img/zipkin-logo.svg"
       },
       "build": {},
       "screenshots": null,
       "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },

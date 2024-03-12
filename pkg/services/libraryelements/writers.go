@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 )
 
@@ -84,6 +85,7 @@ func parseFolderFilter(query model.SearchLibraryElementsQuery) FolderFilter {
 	hasFolderFilter := len(strings.TrimSpace(query.FolderFilter)) > 0
 	hasFolderFilterUID := len(strings.TrimSpace(query.FolderFilterUIDs)) > 0
 
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	result := FolderFilter{
 		includeGeneralFolder: true,
 		folderIDs:            folderIDs, // nolint:staticcheck
@@ -99,6 +101,7 @@ func parseFolderFilter(query model.SearchLibraryElementsQuery) FolderFilter {
 	if hasFolderFilter {
 		result.includeGeneralFolder = false
 		folderIDs = strings.Split(query.FolderFilter, ",")
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		// nolint:staticcheck
 		result.folderIDs = folderIDs
 		for _, filter := range folderIDs {
@@ -132,6 +135,7 @@ func parseFolderFilter(query model.SearchLibraryElementsQuery) FolderFilter {
 func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *db.SQLBuilder) error {
 	var sql bytes.Buffer
 	params := make([]any, 0)
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	// nolint:staticcheck
 	for _, filter := range f.folderIDs {
 		folderID, err := strconv.ParseInt(filter, 10, 64)

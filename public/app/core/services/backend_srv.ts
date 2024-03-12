@@ -19,7 +19,7 @@ import { AppEvents, DataQueryErrorType } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
-import { getSessionExpiry } from 'app/core/utils/auth';
+import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
@@ -55,11 +55,16 @@ export interface FolderRequestOptions {
 
 const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
 
+export interface InspectorStream {
+  response: FetchResponse | FetchError;
+  requestId?: string;
+}
+
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
-  private inspectorStream: Subject<FetchResponse | FetchError> = new Subject<FetchResponse | FetchError>();
+  private inspectorStream: Subject<InspectorStream> = new Subject<InspectorStream>();
   private readonly fetchQueue: FetchQueue;
   private readonly responseQueue: ResponseQueue;
   private _tokenRotationInProgress?: Observable<FetchResponse> | null = null;
@@ -333,7 +338,7 @@ export class BackendSrv implements BackendService {
       }, 50);
     }
 
-    this.inspectorStream.next(err);
+    this.inspectorStream.next({ response: err, requestId: options.requestId });
     return err;
   }
 
@@ -356,7 +361,7 @@ export class BackendSrv implements BackendService {
         }),
         tap((response) => {
           this.showSuccessAlert(response);
-          this.inspectorStream.next(response);
+          this.inspectorStream.next({ response: response, requestId: options.requestId });
         })
       );
   }
@@ -385,10 +390,11 @@ export class BackendSrv implements BackendService {
                 }
 
                 let authChecker = this.loginPing();
-
-                const expired = getSessionExpiry() * 1000 < Date.now();
-                if (config.featureToggles.clientTokenRotation && expired) {
-                  authChecker = this.rotateToken();
+                if (hasSessionExpiry()) {
+                  const expired = getSessionExpiry() * 1000 < Date.now();
+                  if (expired) {
+                    authChecker = this.rotateToken();
+                  }
                 }
 
                 return from(authChecker).pipe(
@@ -446,7 +452,7 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  getInspectorStream(): Observable<FetchResponse | FetchError> {
+  getInspectorStream(): Observable<InspectorStream> {
     return this.inspectorStream;
   }
 

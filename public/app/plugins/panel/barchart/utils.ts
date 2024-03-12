@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
@@ -16,11 +17,12 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { config as runtimeConfig } from '@grafana/runtime';
 import {
   AxisColorMode,
   AxisPlacement,
   GraphTransform,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   ScaleDirection,
   ScaleDistribution,
   ScaleOrientation,
@@ -31,6 +33,8 @@ import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_A
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
+
+import { setClassicPaletteIdxs } from '../timeseries/utils';
 
 import { BarsOptions, getConfig } from './bars';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
@@ -59,6 +63,7 @@ export interface BarChartOptionsEX extends Options {
   getColor?: (seriesIdx: number, valueIdx: number, value: unknown) => string | null;
   timeZone?: TimeZone;
   fillOpacity?: number;
+  hoverMulti?: boolean;
 }
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
@@ -81,6 +86,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   legend,
   timeZone,
   fullHighlight,
+  hoverMulti,
 }) => {
   const builder = new UPlotConfigBuilder();
 
@@ -121,6 +127,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
     fullHighlight,
+    hoverMulti,
   };
 
   const config = getConfig(opts, theme);
@@ -131,7 +138,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   builder.addHook('drawClear', config.drawClear);
   builder.addHook('draw', config.draw);
 
-  builder.setTooltipInterpolator(config.interpolateTooltip);
+  const showNewVizTooltips = Boolean(runtimeConfig.featureToggles.newVizTooltips);
+  !showNewVizTooltips && builder.setTooltipInterpolator(config.interpolateTooltip);
 
   if (xTickLabelRotation !== 0) {
     // these are the amount of space we already have available between plot edge and first label
@@ -208,8 +216,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
     // Render thresholds in graph
     if (customConfig.thresholdsStyle && field.config.thresholds) {
-      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphTresholdsStyleMode.Off;
-      if (thresholdDisplay !== GraphTresholdsStyleMode.Off) {
+      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphThresholdsStyleMode.Off;
+      if (thresholdDisplay !== GraphThresholdsStyleMode.Off) {
         builder.addThresholds({
           config: customConfig.thresholdsStyle,
           thresholds: field.config.thresholds,
@@ -388,7 +396,8 @@ export function prepareBarChartDisplayValues(
           series[0],
           series[0].fields.findIndex((f) => f.type === FieldType.time)
         )
-      : outerJoinDataFrames({ frames: series });
+      : outerJoinDataFrames({ frames: series, keepDisplayNames: true });
+
   if (!frame) {
     return { warn: 'Unable to join data' };
   }
@@ -477,6 +486,13 @@ export function prepareBarChartDisplayValues(
     };
   }
 
+  // if both string and time fields exist, remove unused leftover time field
+  if (frame.fields[0].type === FieldType.time && frame.fields[0] !== firstField) {
+    frame.fields.shift();
+  }
+
+  setClassicPaletteIdxs([frame], theme, 0);
+
   if (!fields.length) {
     return {
       warn: 'No numeric fields found',
@@ -491,9 +507,10 @@ export function prepareBarChartDisplayValues(
     }
   }
 
-  // If stacking is percent, we need to correct the fields unit and display
+  // If stacking is percent, we need to correct the legend fields unit and display
+  let legendFields: Field[] = cloneDeep(fields);
   if (options.stacking === StackingMode.Percent) {
-    fields.map((field) => {
+    legendFields.map((field) => {
       const alignedFrameField = frame.fields.find(
         (f) => getFieldDisplayName(f, frame) === getFieldDisplayName(f, frame)
       );
@@ -503,18 +520,23 @@ export function prepareBarChartDisplayValues(
     });
   }
 
-  // String field is first
+  // String field is first, make sure fields / legend fields indexes match
   fields.unshift(firstField);
+  legendFields.unshift(firstField);
 
   return {
     aligned: frame,
     colorByField,
     viz: [
       {
-        length: firstField.values.length,
         fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
+        length: firstField.values.length,
       },
     ],
+    legend: {
+      fields: legendFields,
+      length: firstField.values.length,
+    },
   };
 }
 

@@ -19,6 +19,35 @@ type fakeConfigStore struct {
 
 	// historicConfigs stores configs by orgID.
 	historicConfigs map[int64][]*models.HistoricAlertConfiguration
+
+	// notificationSettings stores notification settings by orgID.
+	notificationSettings map[int64]map[models.AlertRuleKey][]models.NotificationSettings
+}
+
+func (f *fakeConfigStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+	settings, ok := f.notificationSettings[q.OrgID]
+	if !ok {
+		return nil, nil
+	}
+	if q.ReceiverName != "" {
+		filteredSettings := make(map[models.AlertRuleKey][]models.NotificationSettings)
+		for key, notificationSettings := range settings {
+			// Current semantics is that we only key entries where any of the settings match the receiver name.
+			var found bool
+			for _, setting := range notificationSettings {
+				if q.ReceiverName == setting.Receiver {
+					found = true
+					break
+				}
+			}
+			if found {
+				filteredSettings[key] = notificationSettings
+			}
+		}
+		return filteredSettings, nil
+	}
+
+	return settings, nil
 }
 
 // Saves the image or returns an error.
@@ -180,10 +209,10 @@ type FakeOrgStore struct {
 	orgs []int64
 }
 
-func NewFakeOrgStore(t *testing.T, orgs []int64) FakeOrgStore {
+func NewFakeOrgStore(t *testing.T, orgs []int64) *FakeOrgStore {
 	t.Helper()
 
-	return FakeOrgStore{
+	return &FakeOrgStore{
 		orgs: orgs,
 	}
 }
@@ -198,4 +227,11 @@ type fakeState struct {
 
 func (fs *fakeState) MarshalBinary() ([]byte, error) {
 	return []byte(fs.data), nil
+}
+
+type NoValidation struct {
+}
+
+func (n NoValidation) Validate(_ models.NotificationSettings) error {
+	return nil
 }

@@ -10,10 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,11 +28,9 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 
 	t.Run("DescribeAlarmsForMetric is called with minimum parameters", func(t *testing.T) {
 		client = fakeCWAnnotationsClient{describeAlarmsForMetricOutput: &cloudwatch.DescribeAlarmsForMetricOutput{}}
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
-		})
+		im := defaultTestInstanceManager()
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, log.NewNullLogger())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -65,11 +60,9 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 
 	t.Run("DescribeAlarms is called when prefixMatching is true", func(t *testing.T) {
 		client = fakeCWAnnotationsClient{describeAlarmsOutput: &cloudwatch.DescribeAlarmsOutput{}}
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
-		})
+		im := defaultTestInstanceManager()
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, log.NewNullLogger())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},

@@ -2,12 +2,16 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"hash"
 	"net/http"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -24,6 +28,61 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// Returns a file that is easy to check for changes
+// Any changes to the file means we should refresh the frontend
+func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
+	hash := sha256.New()
+	keys := map[string]any{}
+
+	// BuildVersion
+	hash.Reset()
+	_, _ = hash.Write([]byte(setting.BuildVersion))
+	_, _ = hash.Write([]byte(setting.BuildCommit))
+	_, _ = hash.Write([]byte(fmt.Sprintf("%d", setting.BuildStamp)))
+	keys["version"] = fmt.Sprintf("%x", hash.Sum(nil))
+
+	// Plugin configs
+	plugins := []string{}
+	for _, p := range hs.pluginStore.Plugins(c.Req.Context()) {
+		plugins = append(plugins, fmt.Sprintf("%s@%s", p.Name, p.Info.Version))
+	}
+	keys["plugins"] = sortedHash(plugins, hash)
+
+	// Feature flags
+	enabled := []string{}
+	for flag, set := range hs.Features.GetEnabled(c.Req.Context()) {
+		if set {
+			enabled = append(enabled, flag)
+		}
+	}
+	keys["flags"] = sortedHash(enabled, hash)
+
+	// Assets
+	hash.Reset()
+	dto, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
+	if err == nil && dto != nil {
+		_, _ = hash.Write([]byte(dto.ContentDeliveryURL))
+		_, _ = hash.Write([]byte(dto.Dark))
+		_, _ = hash.Write([]byte(dto.Light))
+		for _, f := range dto.JSFiles {
+			_, _ = hash.Write([]byte(f.FilePath))
+			_, _ = hash.Write([]byte(f.Integrity))
+		}
+	}
+	keys["assets"] = fmt.Sprintf("%x", hash.Sum(nil))
+
+	c.JSON(http.StatusOK, keys)
+}
+
+func sortedHash(vals []string, hash hash.Hash) string {
+	hash.Reset()
+	sort.Strings(vals)
+	for _, v := range vals {
+		_, _ = hash.Write([]byte(v))
+	}
+	return fmt.Sprintf("%x", hash.Sum(nil))
+}
+
 func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 	settings, err := hs.getFrontendSettings(c)
 	if err != nil {
@@ -35,6 +94,8 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 }
 
 // getFrontendSettings returns a json object with all the settings needed for front end initialisation.
+//
+//nolint:gocyclo
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
 	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
@@ -102,33 +163,34 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
+	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigrationIsTarget
 
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                   defaultDS,
 		Datasources:                         dataSources,
-		MinRefreshInterval:                  setting.MinRefreshInterval,
+		MinRefreshInterval:                  hs.Cfg.MinRefreshInterval,
 		Panels:                              panels,
 		Apps:                                apps,
 		AppUrl:                              hs.Cfg.AppURL,
 		AppSubUrl:                           hs.Cfg.AppSubURL,
-		AllowOrgCreate:                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		AuthProxyEnabled:                    hs.Cfg.AuthProxyEnabled,
+		AllowOrgCreate:                      (hs.Cfg.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		AuthProxyEnabled:                    hs.Cfg.AuthProxy.Enabled,
 		LdapEnabled:                         hs.Cfg.LDAPAuthEnabled,
-		JwtHeaderName:                       hs.Cfg.JWTAuthHeaderName,
-		JwtUrlLogin:                         hs.Cfg.JWTAuthURLLogin,
-		AlertingErrorOrTimeout:              setting.AlertingErrorOrTimeout,
-		AlertingNoDataOrNullValues:          setting.AlertingNoDataOrNullValues,
-		AlertingMinInterval:                 setting.AlertingMinInterval,
+		JwtHeaderName:                       hs.Cfg.JWTAuth.HeaderName,
+		JwtUrlLogin:                         hs.Cfg.JWTAuth.URLLogin,
+		AlertingErrorOrTimeout:              hs.Cfg.AlertingErrorOrTimeout,
+		AlertingNoDataOrNullValues:          hs.Cfg.AlertingNoDataOrNullValues,
+		AlertingMinInterval:                 hs.Cfg.AlertingMinInterval,
 		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
 		AutoAssignOrg:                       hs.Cfg.AutoAssignOrg,
-		VerifyEmailEnabled:                  setting.VerifyEmailEnabled,
-		SigV4AuthEnabled:                    setting.SigV4AuthEnabled,
-		AzureAuthEnabled:                    setting.AzureAuthEnabled,
+		VerifyEmailEnabled:                  hs.Cfg.VerifyEmailEnabled,
+		SigV4AuthEnabled:                    hs.Cfg.SigV4AuthEnabled,
+		AzureAuthEnabled:                    hs.Cfg.AzureAuthEnabled,
 		RbacEnabled:                         true,
-		ExploreEnabled:                      setting.ExploreEnabled,
-		HelpEnabled:                         setting.HelpEnabled,
-		ProfileEnabled:                      setting.ProfileEnabled,
-		NewsFeedEnabled:                     setting.NewsFeedEnabled,
+		ExploreEnabled:                      hs.Cfg.ExploreEnabled,
+		HelpEnabled:                         hs.Cfg.HelpEnabled,
+		ProfileEnabled:                      hs.Cfg.ProfileEnabled,
+		NewsFeedEnabled:                     hs.Cfg.NewsFeedEnabled,
 		QueryHistoryEnabled:                 hs.Cfg.QueryHistoryEnabled,
 		GoogleAnalyticsId:                   hs.Cfg.GoogleAnalyticsID,
 		GoogleAnalytics4Id:                  hs.Cfg.GoogleAnalytics4ID,
@@ -142,12 +204,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
 		DisableLoginForm:                    hs.Cfg.DisableLoginForm,
-		DisableUserSignUp:                   !setting.AllowUserSignUp,
-		LoginHint:                           setting.LoginHint,
-		PasswordHint:                        setting.PasswordHint,
-		ExternalUserMngInfo:                 setting.ExternalUserMngInfo,
-		ExternalUserMngLinkUrl:              setting.ExternalUserMngLinkUrl,
-		ExternalUserMngLinkName:             setting.ExternalUserMngLinkName,
+		DisableUserSignUp:                   !hs.Cfg.AllowUserSignUp,
+		LoginHint:                           hs.Cfg.LoginHint,
+		PasswordHint:                        hs.Cfg.PasswordHint,
+		ExternalUserMngInfo:                 hs.Cfg.ExternalUserMngInfo,
+		ExternalUserMngLinkUrl:              hs.Cfg.ExternalUserMngLinkUrl,
+		ExternalUserMngLinkName:             hs.Cfg.ExternalUserMngLinkName,
 		ViewersCanEdit:                      hs.Cfg.ViewersCanEdit,
 		AngularSupportEnabled:               hs.Cfg.AngularSupportEnabled,
 		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
@@ -159,7 +221,10 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:             hs.Cfg.PublicDashboardsEnabled,
+		CloudMigrationIsTarget:              isCloudMigrationTarget,
 		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
+		RootFolderUID:                       accesscontrol.GeneralFolderUID,
+		LocalFileSystemAvailable:            hs.Cfg.LocalFileSystemAvailable,
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
@@ -169,7 +234,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Edition:       hs.License.Edition(),
 			LatestVersion: hs.grafanaUpdateChecker.LatestVersion(),
 			HasUpdate:     hs.grafanaUpdateChecker.UpdateAvailable(),
-			Env:           setting.Env,
+			Env:           hs.Cfg.Env,
 		},
 
 		LicenseInfo: dtos.FrontendSettingsLicenseInfoDTO{
@@ -185,6 +250,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		AnonymousDeviceLimit:             hs.Cfg.AnonymousDeviceLimit,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
 		RendererVersion:                  hs.RenderService.Version(),
+		RendererDefaultImageWidth:        hs.Cfg.RendererDefaultImageWidth,
+		RendererDefaultImageHeight:       hs.Cfg.RendererDefaultImageHeight,
+		RendererDefaultImageScale:        hs.Cfg.RendererDefaultImageScale,
 		SecretsManagerPluginEnabled:      secretsManagerPluginEnabled,
 		Http2Enabled:                     hs.Cfg.Protocol == setting.HTTP2Scheme,
 		GrafanaJavascriptAgent:           hs.Cfg.GrafanaJavascriptAgent,
@@ -244,8 +312,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
 	}
 
-	if setting.AlertingEnabled != nil {
-		frontendSettings.AlertingEnabled = *setting.AlertingEnabled
+	if hs.Cfg.AlertingEnabled != nil {
+		frontendSettings.AlertingEnabled = *(hs.Cfg.AlertingEnabled)
 	}
 
 	// It returns false if the provider is not enabled or the skip org role sync is false.
@@ -258,18 +326,20 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	oauthProviders := hs.SocialService.GetOAuthInfoProviders()
 	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
-		AuthProxyEnableLoginToken:   hs.Cfg.AuthProxyEnableLoginToken,
-		OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-		SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
-		LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
-		JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuthSkipOrgRoleSync,
-		GoogleSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
-		GrafanaComSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
-		GenericOAuthSkipOrgRoleSync: parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
-		AzureADSkipOrgRoleSync:      parseSkipOrgRoleSyncEnabled(oauthProviders[social.AzureADProviderName]),
-		GithubSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
-		GitLabSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
-		OktaSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
+		AuthProxyEnableLoginToken:     hs.Cfg.AuthProxy.EnableLoginToken,
+		OAuthSkipOrgRoleUpdateSync:    hs.Cfg.OAuthSkipOrgRoleUpdateSync,
+		SAMLSkipOrgRoleSync:           hs.Cfg.SAMLSkipOrgRoleSync,
+		LDAPSkipOrgRoleSync:           hs.Cfg.LDAPSkipOrgRoleSync,
+		JWTAuthSkipOrgRoleSync:        hs.Cfg.JWTAuth.SkipOrgRoleSync,
+		GoogleSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
+		GrafanaComSkipOrgRoleSync:     parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
+		GenericOAuthSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
+		AzureADSkipOrgRoleSync:        parseSkipOrgRoleSyncEnabled(oauthProviders[social.AzureADProviderName]),
+		GithubSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
+		GitLabSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
+		OktaSkipOrgRoleSync:           parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
+		DisableLogin:                  hs.Cfg.DisableLogin,
+		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
@@ -290,6 +360,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	// Set the kubernetes namespace
 	frontendSettings.Namespace = hs.namespacer(c.SignedInUser.OrgID)
+
+	// experimental scope features
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagScopeFilters) {
+		frontendSettings.ListScopesEndpoint = hs.Cfg.ScopesListScopesURL
+		frontendSettings.ListDashboardScopesEndpoint = hs.Cfg.ScopesListDashboardsURL
+	}
 
 	return frontendSettings, nil
 }

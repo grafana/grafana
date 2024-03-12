@@ -36,13 +36,13 @@ func (f *{{classname}}Handler) {{nickname}}(ctx *contextmodel.ReqContext) respon
 func (api *API) Register{{classname}}Endpoints(srv {{classname}}, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
 	group.{{httpMethod}}(
-		toMacaronPath("{{{path}}}"),
+		toMacaronPath("/api{{{path}}}"),
 		requestmeta.SetOwner(requestmeta.TeamAlerting),
 		requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
-		api.authorize(http.Method{{httpMethod}}, "{{{path}}}"),
+		api.authorize(http.Method{{httpMethod}}, "/api{{{path}}}"),
 		metrics.Instrument(
 			http.Method{{httpMethod}},
-			"{{{path}}}",
+			"/api{{{path}}}",
 			api.Hooks.Wrap(srv.{{nickname}}),
 			m,
 		),

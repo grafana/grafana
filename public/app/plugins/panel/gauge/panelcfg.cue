@@ -30,8 +30,8 @@ composableKinds: PanelCfg: {
 					showThresholdLabels:  bool | *false
 					showThresholdMarkers: bool | *true
 					sizing:               common.BarGaugeSizing & (*"auto" | _)
-					minVizWidth:          uint32 | *200
-					minVizHeight:         uint32 | *200
+					minVizWidth:          uint32 | *75
+					minVizHeight:         uint32 | *75
 				} @cuetsy(kind="interface")
 			}
 		}]

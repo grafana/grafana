@@ -11,28 +11,27 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/converter"
 	jsoniter "github.com/json-iterator/go"
-
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/util/converter"
 )
 
 func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, any, string, error) {
+	s *Service, dsInfo datasourceInfo, logger log.Logger) (*backend.DataResponse, any, string, error) {
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, promQLQ.parameters.ProjectName)
 	if err != nil {
 		dr.Error = err
 		return dr, promResponse{}, "", nil
 	}
-	r, err := createRequest(ctx, promQLQ.logger, &dsInfo, path.Join("/v1/projects", projectName, "location/global/prometheus/api/v1/query_range"), nil)
+	r, err := createRequest(ctx, &dsInfo, path.Join("/v1/projects", projectName, "location/global/prometheus/api/v1/query_range"), nil)
 	if err != nil {
 		dr.Error = err
 		return dr, promResponse{}, "", nil
 	}
 
-	span := traceReq(ctx, tracer, req, dsInfo, r, "")
+	span := traceReq(ctx, req, dsInfo, r, "")
 	defer span.End()
 
 	requestBody := map[string]any{
@@ -43,15 +42,16 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 	}
 
 	res, err := doRequestProm(r, dsInfo, requestBody)
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			promQLQ.logger.Error("Failed to close response body", "err", err)
-		}
-	}()
 	if err != nil {
 		dr.Error = err
 		return dr, promResponse{}, "", nil
 	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			s.logger.Error("Failed to close response body", "err", err)
+		}
+	}()
 
 	return dr, parseProm(res), r.URL.RawQuery, nil
 }
@@ -83,7 +83,7 @@ func parseProm(res *http.Response) backend.DataResponse {
 // We are not parsing the response in this function. ReadPrometheusStyleResult needs an open reader and we cannot
 // pass an open reader to this function because lint complains as it is unsafe
 func (promQLQ *cloudMonitoringProm) parseResponse(queryRes *backend.DataResponse,
-	response any, executedQueryString string) error {
+	response any, executedQueryString string, logger log.Logger) error {
 	r := response.(backend.DataResponse)
 	// Add frame to attach metadata
 	if len(r.Frames) == 0 {

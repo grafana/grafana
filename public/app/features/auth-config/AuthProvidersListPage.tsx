@@ -1,11 +1,14 @@
-import React, { JSX, useEffect } from 'react';
+import React, { JSX, useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { reportInteraction } from '@grafana/runtime';
-import { Grid, TextLink } from '@grafana/ui';
+import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { config } from 'app/core/config';
 import { StoreState } from 'app/types';
 
+import { AuthDrawer } from './AuthDrawer';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
@@ -41,10 +44,12 @@ export const AuthConfigPageUnconnected = ({
     loadSettings();
   }, [loadSettings]);
 
+  const [showDrawer, setShowDrawer] = useState(false);
+
   const authProviders = getRegisteredAuthProviders();
   const availableProviders = authProviders.filter((p) => !providerStatuses[p.id]?.hide);
-  const onProviderCardClick = (providerType: string) => {
-    reportInteraction('authentication_ui_provider_clicked', { provider: providerType });
+  const onProviderCardClick = (providerType: string, enabled: boolean) => {
+    reportInteraction('authentication_ui_provider_clicked', { provider: providerType, enabled });
   };
 
   const providerList = availableProviders.length
@@ -62,11 +67,21 @@ export const AuthConfigPageUnconnected = ({
       subTitle={
         <>
           Manage your auth settings and configure single sign-on. Find out more in our{' '}
-          <TextLink href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication">
+          <TextLink
+            external={true}
+            href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication"
+          >
             documentation
           </TextLink>
           .
         </>
+      }
+      actions={
+        config.buildInfo.edition !== GrafanaEdition.OpenSource && (
+          <ToolbarButton icon="cog" variant="canvas" onClick={() => setShowDrawer(true)}>
+            Auth settings
+          </ToolbarButton>
+        )
       }
     >
       <Page.Contents isLoading={isLoading}>
@@ -75,19 +90,20 @@ export const AuthConfigPageUnconnected = ({
         ) : (
           <Grid gap={3} minColumnWidth={34}>
             {providerList
-              // Temporarily filter providers that don't have the UI implemented
-              .filter(({ provider }) => !['grafana_com', 'generic_oauth'].includes(provider))
+              // Temporarily filter out providers that don't have the UI implemented
+              .filter(({ provider }) => !['grafana_com'].includes(provider))
               .map(({ provider, settings }) => (
                 <ProviderCard
                   key={provider}
                   authType={settings.type || 'OAuth'}
                   providerId={provider}
                   enabled={settings.enabled}
-                  onClick={() => onProviderCardClick(provider)}
+                  onClick={() => onProviderCardClick(provider, settings.enabled)}
                   //@ts-expect-error Remove legacy types
                   configPath={settings.configPath}
                 />
               ))}
+            {showDrawer && <AuthDrawer onClose={() => setShowDrawer(false)}></AuthDrawer>}
           </Grid>
         )}
       </Page.Contents>

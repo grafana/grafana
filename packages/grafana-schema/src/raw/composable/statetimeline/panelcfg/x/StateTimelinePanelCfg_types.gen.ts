@@ -4,14 +4,13 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "10.3.0-pre";
+export const pluginVersion = "11.0.0-pre";
 
 export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
   /**

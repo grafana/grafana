@@ -4,7 +4,7 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     PluginTSTypesJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
@@ -16,6 +16,7 @@ export interface Options {
   prettifyLogMessage: boolean;
   showCommonLabels: boolean;
   showLabels: boolean;
+  showLogContextToggle: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
   wrapLogMessage: boolean;

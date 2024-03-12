@@ -122,11 +122,11 @@ HideableFieldConfig: {
 } @cuetsy(kind="interface")
 
 // TODO docs
-GraphTresholdsStyleMode: "off" | "line" | "dashed" | "area" | "line+area" | "dashed+area" | "series" @cuetsy(kind="enum",memberNames="Off|Line|Dashed|Area|LineAndArea|DashedAndArea|Series")
+GraphThresholdsStyleMode: "off" | "line" | "dashed" | "area" | "line+area" | "dashed+area" | "series" @cuetsy(kind="enum",memberNames="Off|Line|Dashed|Area|LineAndArea|DashedAndArea|Series")
 
 // TODO docs
 GraphThresholdsStyleConfig: {
-	mode: GraphTresholdsStyleMode
+	mode: GraphThresholdsStyleMode
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -256,6 +256,8 @@ BarGaugeSizing: "auto" | "manual" @cuetsy(kind="enum")
 VizTooltipOptions: {
 	mode: TooltipDisplayMode
 	sort: SortOrder
+	maxWidth?: number
+	maxHeight?: number
 } @cuetsy(kind="interface")
 
 Labels: {

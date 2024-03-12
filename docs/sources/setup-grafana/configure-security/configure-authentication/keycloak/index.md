@@ -24,6 +24,10 @@ Keycloak OAuth2 authentication allows users to log in to Grafana using their Key
 
 Refer to [Generic OAuth authentication]({{< relref "../generic-oauth" >}}) for extra configuration options available for this provider.
 
+{{% admonition type="note" %}}
+If Users use the same email address in Keycloak that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
+{{% /admonition %}}
+
 You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy.
 
@@ -137,14 +141,15 @@ To enable Single Logout, you need to add the following option to the configurati
 
 ```ini
 [auth.generic_oauth]
-signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2<GRAFANA_DOMAIN>%2Flogin
+signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F<GRAFANA_DOMAIN>%2Flogin
 ```
 
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`,
 `<REALM_NAME>` can be `grafana` and `<GRAFANA_DOMAIN>` can be `play.grafana.org`.
 
-> **Note**: Grafana does not support `id_token_hints`. From keycloak 18, it is necessary to disable `id_token_hints` enforcement in keycloak for
-> single logout to work. [Documentation reference](https://www.keycloak.org/2022/04/keycloak-1800-released#_openid_connect_logout).
+{{% admonition type="note" %}}
+Grafana supports ID token hints for single logout. Grafana automatically adds the `id_token_hint` parameter to the logout request if it detects OAuth as the authentication method.
+{{% /admonition %}}
 
 ## Allow assigning Grafana Admin
 

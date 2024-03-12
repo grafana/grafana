@@ -3,15 +3,15 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func deserializeAlertmanagerConfig(config []byte) (*definitions.PostableUserConfig, error) {
 	result := definitions.PostableUserConfig{}
 	if err := json.Unmarshal(config, &result); err != nil {
-		return nil, fmt.Errorf("failed to deserialize alertmanager configuration: %w", err)
+		return nil, makeErrBadAlertmanagerConfiguration(err)
 	}
 	return &result, nil
 }
@@ -33,7 +33,7 @@ func getLastConfiguration(ctx context.Context, orgID int64, store AMConfigStore)
 	}
 
 	if alertManagerConfig == nil {
-		return nil, fmt.Errorf("no alertmanager configuration present in this org")
+		return nil, ErrNoAlertmanagerConfiguration.Errorf("")
 	}
 
 	concurrencyToken := alertManagerConfig.ConfigurationHash
@@ -47,4 +47,32 @@ func getLastConfiguration(ctx context.Context, orgID int64, store AMConfigStore)
 		concurrencyToken: concurrencyToken,
 		version:          alertManagerConfig.ConfigurationVersion,
 	}, nil
+}
+
+type alertmanagerConfigStore interface {
+	Get(ctx context.Context, orgID int64) (*cfgRevision, error)
+	Save(ctx context.Context, revision *cfgRevision, orgID int64) error
+}
+
+type alertmanagerConfigStoreImpl struct {
+	store AMConfigStore
+}
+
+func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*cfgRevision, error) {
+	return getLastConfiguration(ctx, orgID, a.store)
+}
+
+func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *cfgRevision, orgID int64) error {
+	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
+	if err != nil {
+		return err
+	}
+	cmd := models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(serialized),
+		ConfigurationVersion:      revision.version,
+		FetchedConfigurationHash:  revision.concurrencyToken,
+		Default:                   false,
+		OrgID:                     orgID,
+	}
+	return PersistConfig(ctx, a.store, &cmd)
 }

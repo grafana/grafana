@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
@@ -32,8 +32,8 @@ const (
 )
 
 func interpolateVariables(expr string, interval time.Duration, timeRange time.Duration, queryType dataquery.LokiQueryType, step time.Duration) string {
-	intervalText := intervalv2.FormatDuration(interval)
-	stepText := intervalv2.FormatDuration(step)
+	intervalText := gtime.FormatInterval(interval)
+	stepText := gtime.FormatInterval(step)
 	intervalMsText := strconv.FormatInt(int64(interval/time.Millisecond), 10)
 
 	rangeMs := timeRange.Milliseconds()
@@ -112,6 +112,8 @@ func parseSupportingQueryType(jsonPointerValue *string) (SupportingQueryType, er
 			return SupportingQueryLogsSample, nil
 		case "dataSample":
 			return SupportingQueryDataSample, nil
+		case "infiniteScroll":
+			return SupportingQueryInfiniteScroll, nil
 		default:
 			return SupportingQueryNone, fmt.Errorf("invalid supportingQueryType: %s", jsonValue)
 		}

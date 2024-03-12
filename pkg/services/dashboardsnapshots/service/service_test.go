@@ -2,35 +2,44 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashsnapdb "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestDashboardSnapshotsService(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
-	dsStore := dashsnapdb.ProvideStore(sqlStore, setting.NewCfg())
+	cfg := setting.NewCfg()
+	dsStore := dashsnapdb.ProvideStore(sqlStore, cfg)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	s := ProvideService(dsStore, secretsService)
 
-	origSecret := setting.SecretKey
-	setting.SecretKey = "dashboard_snapshot_service_test"
+	origSecret := cfg.SecretKey
+	cfg.SecretKey = "dashboard_snapshot_service_test"
 	t.Cleanup(func() {
-		setting.SecretKey = origSecret
+		cfg.SecretKey = origSecret
 	})
 
 	dashboardKey := "12345"
 
+	dashboard := &common.Unstructured{}
 	rawDashboard := []byte(`{"id":123}`)
-	dashboard, err := simplejson.NewJson(rawDashboard)
+	err := json.Unmarshal(rawDashboard, dashboard)
 	require.NoError(t, err)
 
 	t.Run("create dashboard snapshot should encrypt the dashboard", func(t *testing.T) {
@@ -39,7 +48,9 @@ func TestDashboardSnapshotsService(t *testing.T) {
 		cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 			Key:       dashboardKey,
 			DeleteKey: dashboardKey,
-			Dashboard: dashboard,
+			DashboardCreateCommand: dashboardsnapshot.DashboardCreateCommand{
+				Dashboard: dashboard,
+			},
 		}
 
 		result, err := s.CreateDashboardSnapshot(ctx, &cmd)

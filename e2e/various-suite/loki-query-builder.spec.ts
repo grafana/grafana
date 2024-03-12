@@ -43,6 +43,10 @@ describe('Loki query builder', () => {
       req.reply({ status: 'success', data: ['instance1', 'instance2'] });
     }).as('valuesRequest');
 
+    cy.intercept(/index\/stats/, (req) => {
+      req.reply({ streams: 2, chunks: 2660, bytes: 2721792, entries: 14408 });
+    });
+
     // Go to Explore and choose Loki data source
     e2e.pages.Explore.visit();
     e2e.components.DataSourcePicker.container().should('be.visible').click();
@@ -68,21 +72,20 @@ describe('Loki query builder', () => {
     // Add labels to remove error
     e2e.components.QueryBuilder.labelSelect().should('be.visible').click();
     // wait until labels are loaded and set on the component before starting to type
+    e2e.components.QueryBuilder.labelSelect().children('div').children('input').type('i');
     cy.wait('@labelsRequest');
-    e2e.components.QueryBuilder.labelSelect().children('div').children('input').type('instance{enter}');
+    e2e.components.QueryBuilder.labelSelect().children('div').children('input').type('nstance{enter}');
     e2e.components.QueryBuilder.matchOperatorSelect()
       .should('be.visible')
-      .click()
+      .click({ force: true })
       .children('div')
       .children('input')
       .type('=~{enter}', { force: true });
     e2e.components.QueryBuilder.valueSelect().should('be.visible').click();
+    e2e.components.QueryBuilder.valueSelect().children('div').children('input').type('instance1{enter}');
     cy.wait('@valuesRequest');
-    e2e.components.QueryBuilder.valueSelect()
-      .children('div')
-      .children('input')
-      .type('instance1{enter}')
-      .type('instance2{enter}');
+    e2e.components.QueryBuilder.valueSelect().children('div').children('input').type('instance2{enter}');
+
     cy.contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
     cy.contains(finalQuery).should('be.visible');
 

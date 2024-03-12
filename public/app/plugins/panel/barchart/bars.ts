@@ -1,6 +1,6 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { DataFrame, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import {
   StackingMode,
@@ -11,11 +11,13 @@ import {
   VizLegendOptions,
 } from '@grafana/schema';
 import { measureText, PlotTooltipInterpolator } from '@grafana/ui';
-import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+import { timeUnitSize } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
+const intervals = systemDateFormats.interval;
+
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { findRect, intersects, pointWithin, Quadtree, Rect } from './quadtree';
+import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -56,6 +58,7 @@ export interface BarsOptions {
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
+  hoverMulti?: boolean;
   legend?: VizLegendOptions;
   xSpacing?: number;
   xTimeAuto?: boolean;
@@ -128,6 +131,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     fillOpacity = 1,
     showValue,
     xSpacing = 0,
+    hoverMulti = false,
+    timeZone = 'browser',
   } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
@@ -141,6 +146,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   }
 
   let qt: Quadtree;
+  const numSeries = 30; // !!
+  const hovered: Array<Rect | null> = Array(numSeries).fill(null);
   let hRect: Rect | null;
 
   // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
@@ -175,22 +182,25 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   // the splits passed into here are data[0] values looked up by the indices returned from splits()
   const xValues: Axis.Values = (u, splits, axisIdx, foundSpace, foundIncr) => {
     if (opts.xTimeAuto) {
-      // bit of a hack:
-      // temporarily set x scale range to temporal (as expected by formatTime()) rather than ordinal
-      let xScale = u.scales.x;
-      let oMin = xScale.min;
-      let oMax = xScale.max;
+      let format = intervals.year;
 
-      xScale.min = u.data[0][0];
-      xScale.max = u.data[0][u.data[0].length - 1];
+      if (foundIncr < timeUnitSize.second) {
+        format = intervals.millisecond;
+      } else if (foundIncr < timeUnitSize.minute) {
+        format = intervals.second;
+      } else if (foundIncr < timeUnitSize.hour) {
+        format = intervals.minute;
+      } else if (foundIncr < timeUnitSize.day) {
+        format = intervals.hour;
+      } else if (foundIncr < timeUnitSize.month) {
+        format = intervals.day;
+      } else if (foundIncr < timeUnitSize.year) {
+        format = intervals.month;
+      } else {
+        format = intervals.year;
+      }
 
-      let vals = formatTime(u, splits, axisIdx, foundSpace, foundIncr);
-
-      // revert
-      xScale.min = oMin;
-      xScale.max = oMax;
-
-      return vals;
+      return splits.map((v) => (v == null ? '' : dateTimeFormat(v, { format, timeZone })));
     }
 
     return splits.map((v) => (isXHorizontal ? formatShortValue(0, v) : formatValue(0, v)));
@@ -289,11 +299,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     radius: pctStacked
       ? 0
       : !isStacked
-      ? barRadius
-      : (u: uPlot, seriesIdx: number) => {
-          let isTopmostSeries = seriesIdx === u.data.length - 1;
-          return isTopmostSeries ? [barRadius, 0] : [0, 0];
-        },
+        ? barRadius
+        : (u: uPlot, seriesIdx: number) => {
+            let isTopmostSeries = seriesIdx === u.data.length - 1;
+            return isTopmostSeries ? [barRadius, 0] : [0, 0];
+          },
     disp: {
       x0: {
         unit: 2,
@@ -324,7 +334,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
 
-      if (opts.fullHighlight) {
+      if (!isStacked && opts.fullHighlight) {
         if (opts.xOri === ScaleOrientation.Horizontal) {
           barRect.y = 0;
           barRect.h = u.bbox.height;
@@ -443,8 +453,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   });
 
   const init = (u: uPlot) => {
-    let over = u.over;
-    over.style.overflow = 'hidden';
     u.root.querySelectorAll<HTMLDivElement>('.u-cursor-pt').forEach((el) => {
       el.style.borderRadius = '0';
 
@@ -462,7 +470,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       y: false,
     },
     dataIdx: (u, seriesIdx) => {
-      if (seriesIdx === 1) {
+      if (seriesIdx === 0) {
+        hovered.fill(null);
         hRect = null;
 
         let cx = u.cursor.left! * uPlot.pxRatio;
@@ -470,47 +479,36 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-            if (isStacked) {
-              // choose the smallest hovered rect (when stacked bigger ones overlap smaller ones)
-              if (hRect == null || o.h * o.w < hRect.h * hRect.w) {
-                hRect = o;
-              }
-            } else {
-              hRect = o;
-            }
+            hRect = hovered[0] = o;
+            hovered[hRect.sidx] = hRect;
+
+            hoverMulti &&
+              findRects(qt, undefined, hRect.didx).forEach((r) => {
+                hovered[r.sidx] = r;
+              });
           }
         });
       }
 
-      return hRect && seriesIdx === hRect.sidx ? hRect.didx : null;
+      return hovered[seriesIdx]?.didx;
     },
     points: {
       fill: 'rgba(255,255,255,0.4)',
       bbox: (u, seriesIdx) => {
-        let isHovered = hRect && seriesIdx === hRect.sidx;
-
-        let heightReduce = 0;
-        let widthReduce = 0;
-
-        // get height of bar rect at same index of the series below the hovered one
-        if (isStacked && isHovered) {
-          const rect = hRect && hRect.sidx > 1 && findRect(qt, hRect.sidx - 1, hRect.didx);
-          if (rect) {
-            if (isXHorizontal) {
-              heightReduce = rect.h;
-            } else {
-              widthReduce = rect.w;
-            }
-          }
-        }
+        let hRect2 = hovered[seriesIdx];
+        let isHovered = hRect2 != null;
 
         return {
-          left: isHovered ? (hRect!.x + widthReduce) / uPlot.pxRatio : -10,
-          top: isHovered ? hRect!.y / uPlot.pxRatio : -10,
-          width: isHovered ? (hRect!.w - widthReduce) / uPlot.pxRatio : 0,
-          height: isHovered ? (hRect!.h - heightReduce) / uPlot.pxRatio : 0,
+          left: isHovered ? hRect2!.x / uPlot.pxRatio : -10,
+          top: isHovered ? hRect2!.y / uPlot.pxRatio : -10,
+          width: isHovered ? hRect2!.w / uPlot.pxRatio : 0,
+          height: isHovered ? hRect2!.h / uPlot.pxRatio : 0,
         };
       },
+    },
+    focus: {
+      prox: 1e3,
+      dist: (u, seriesIdx) => (hRect?.sidx === seriesIdx ? 0 : Infinity),
     },
   };
 

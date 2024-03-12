@@ -58,7 +58,7 @@ export const NotificationChannelOptions = ({
             label={option.label}
             description={option.description}
             invalid={errors.settings && !!errors.settings[option.propertyName]}
-            error={errors.settings && errors.settings[option.propertyName]?.message}
+            error={errors.settings && String(errors.settings[option.propertyName]?.message || '')}
           >
             {secureFields && secureFields[option.propertyName] ? (
               <Input

@@ -1,6 +1,17 @@
 import React, { useMemo } from 'react';
 
-import { Avatar, CellProps, Column, InteractiveTable, Stack, Badge, Tooltip } from '@grafana/ui';
+import {
+  Avatar,
+  CellProps,
+  Column,
+  InteractiveTable,
+  Stack,
+  Badge,
+  Tooltip,
+  Pagination,
+  FetchDataFunc,
+} from '@grafana/ui';
+import { EmptyArea } from 'app/features/alerting/unified/components/EmptyArea';
 import { UserAnonymousDeviceDTO } from 'app/types';
 
 type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO> = CellProps<
@@ -48,9 +59,22 @@ const UserAgentCell = ({ value }: UserAgentCellProps) => {
 
 interface AnonUsersTableProps {
   devices: UserAnonymousDeviceDTO[];
+  // for pagination
+  showPaging?: boolean;
+  totalPages: number;
+  onChangePage: (page: number) => void;
+  currentPage: number;
+  fetchData?: FetchDataFunc<UserAnonymousDeviceDTO>;
 }
 
-export const AnonUsersDevicesTable = ({ devices }: AnonUsersTableProps) => {
+export const AnonUsersDevicesTable = ({
+  devices,
+  showPaging,
+  totalPages,
+  onChangePage,
+  currentPage,
+  fetchData,
+}: AnonUsersTableProps) => {
   const columns: Array<Column<UserAnonymousDeviceDTO>> = useMemo(
     () => [
       {
@@ -70,9 +94,9 @@ export const AnonUsersDevicesTable = ({ devices }: AnonUsersTableProps) => {
         sortType: 'string',
       },
       {
-        id: 'lastSeenAt',
+        id: 'updatedAt',
         header: 'Last active',
-        cell: ({ cell: { value } }: Cell<'lastSeenAt'>) => value,
+        cell: ({ cell: { value } }: Cell<'updatedAt'>) => value,
         sortType: (a, b) => new Date(a.original.updatedAt).getTime() - new Date(b.original.updatedAt).getTime(),
       },
       {
@@ -85,7 +109,17 @@ export const AnonUsersDevicesTable = ({ devices }: AnonUsersTableProps) => {
   );
   return (
     <Stack direction={'column'} gap={2}>
-      <InteractiveTable columns={columns} data={devices} getRowId={(user) => user.deviceId} />
+      <InteractiveTable columns={columns} data={devices} getRowId={(user) => user.deviceId} fetchData={fetchData} />
+      {showPaging && (
+        <Stack justifyContent={'flex-end'}>
+          <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />
+        </Stack>
+      )}
+      {devices.length === 0 && (
+        <EmptyArea>
+          <span>No anonymous users found.</span>
+        </EmptyArea>
+      )}
     </Stack>
   );
 };

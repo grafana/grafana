@@ -31,13 +31,13 @@ import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
+import { ShareModal } from '../components/ShareModal';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
-import { calculateNewPanelGridPos } from '../utils/panel';
 
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
@@ -265,29 +265,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return updateStatePageNavFromProps(props, updatedState);
   }
 
-  // Todo: Remove this when we remove the emptyDashboardPage toggle
-  onAddPanel = () => {
-    const { dashboard } = this.props;
-
-    if (!dashboard) {
-      return;
-    }
-
-    // Return if the "Add panel" exists already
-    if (dashboard.panels.length > 0 && dashboard.panels[0].type === 'add-panel') {
-      return;
-    }
-
-    dashboard.addPanel({
-      type: 'add-panel',
-      gridPos: calculateNewPanelGridPos(dashboard),
-      title: 'Panel Title',
-    });
-
-    // scroll to top after adding panel
-    this.setState({ updateScrollTop: 0 });
-  };
-
   setScrollRef = (scrollElement: HTMLDivElement): void => {
     this.setState({ scrollElement });
   };
@@ -311,6 +288,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return inspectPanel;
   }
 
+  onCloseShareModal = () => {
+    locationService.partial({ shareView: null });
+  };
+
   render() {
     const { dashboard, initError, queryParams } = this.props;
     const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
@@ -321,7 +302,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
 
     const inspectPanel = this.getInspectPanel();
-    const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
+    const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview && dashboard.isSubMenuVisible();
 
     const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview;
 
@@ -355,7 +336,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
                 title={dashboard.title}
                 folderTitle={dashboard.meta.folderTitle}
                 isFullscreen={!!viewPanel}
-                onAddPanel={this.onAddPanel}
                 kioskMode={kioskMode}
                 hideTimePicker={dashboard.timepicker.hidden}
               />
@@ -379,6 +359,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+          {queryParams.shareView && <ShareModal dashboard={dashboard} onDismiss={this.onCloseShareModal} />}
         </Page>
         {editPanel && (
           <PanelEditor

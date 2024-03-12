@@ -71,7 +71,7 @@ func TestNotificationService(t *testing.T) {
 
 	notificationServiceScenario(t, "Given alert rule with upload image enabled and render times out should send notification",
 		evalCtx, true, func(sc *scenarioContext) {
-			setting.AlertingNotificationTimeout = 200 * time.Millisecond
+			sc.notificationService.cfg.AlertingNotificationTimeout = 200 * time.Millisecond
 			sc.renderProvider = func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error) {
 				wait := make(chan bool)
 
@@ -101,7 +101,7 @@ func TestNotificationService(t *testing.T) {
 
 	notificationServiceScenario(t, "Given alert rule with upload image enabled and upload times out should send notification",
 		evalCtx, true, func(sc *scenarioContext) {
-			setting.AlertingNotificationTimeout = 200 * time.Millisecond
+			sc.notificationService.cfg.AlertingNotificationTimeout = 200 * time.Millisecond
 			sc.uploadProvider = func(ctx context.Context, path string) (string, error) {
 				wait := make(chan bool)
 
@@ -204,8 +204,6 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			}, nil
 		}
 
-		setting.AlertingNotificationTimeout = 30 * time.Second
-
 		scenarioCtx := &scenarioContext{
 			t:       t,
 			evalCtx: evalCtx,
@@ -229,7 +227,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 		}
 
 		origNewImageUploaderProvider := newImageUploaderProvider
-		newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
+		newImageUploaderProvider = func(cfg *setting.Cfg) (imguploader.ImageUploader, error) {
 			return imageUploader, nil
 		}
 		defer func() {
@@ -258,7 +256,8 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			},
 		}
 
-		scenarioCtx.notificationService = newNotificationService(renderService, store, nil, nil)
+		scenarioCtx.notificationService = newNotificationService(setting.NewCfg(), renderService, store, nil, nil)
+		scenarioCtx.notificationService.cfg.AlertingNotificationTimeout = 30 * time.Second
 		fn(scenarioCtx)
 	})
 }
@@ -274,7 +273,7 @@ type testNotifier struct {
 	Frequency             time.Duration
 }
 
-func newTestNotifier(model *alertmodels.AlertNotification, _ GetDecryptedValueFn, ns notifications.Service) (Notifier, error) {
+func newTestNotifier(_ *setting.Cfg, model *alertmodels.AlertNotification, _ GetDecryptedValueFn, ns notifications.Service) (Notifier, error) {
 	uploadImage := true
 	value, exist := model.Settings.CheckGet("uploadImage")
 	if exist {
@@ -356,7 +355,7 @@ func (s *testRenderService) IsAvailable(ctx context.Context) bool {
 	return true
 }
 
-func (s *testRenderService) Render(ctx context.Context, opts rendering.Opts, session rendering.Session) (*rendering.RenderResult, error) {
+func (s *testRenderService) Render(ctx context.Context, _ rendering.RenderType, opts rendering.Opts, _ rendering.Session) (*rendering.RenderResult, error) {
 	if s.renderProvider != nil {
 		return s.renderProvider(ctx, opts)
 	}
