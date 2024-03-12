@@ -64,10 +64,6 @@ export class AppChromeService {
   }
 
   public update(update: Partial<AppChromeState>) {
-    if (update.kioskMode !== undefined) {
-      // debugger;
-    }
-
     const current = this.state.getValue();
     const newState: AppChromeState = {
       ...current,
