@@ -42,15 +42,16 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 	}
 
 	res, err := doRequestProm(r, dsInfo, requestBody)
+	if err != nil {
+		dr.Error = err
+		return dr, promResponse{}, "", nil
+	}
+
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.logger.Error("Failed to close response body", "err", err)
 		}
 	}()
-	if err != nil {
-		dr.Error = err
-		return dr, promResponse{}, "", nil
-	}
 
 	return dr, parseProm(res), r.URL.RawQuery, nil
 }
