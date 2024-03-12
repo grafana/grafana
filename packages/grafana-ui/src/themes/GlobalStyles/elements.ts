@@ -26,6 +26,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
       position: 'absolute',
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.background.canvas,
+      overflow: 'auto',
       ...getVariantStyles(theme.typography.body),
     },
 
