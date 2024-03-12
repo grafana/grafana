@@ -123,7 +123,6 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}
 
 	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
-		WorkingDirectory:   filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID))),
 		ExternalURL:        cfg.AppURL,
 		AlertStoreCallback: nil,
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
@@ -321,38 +320,28 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu
 // It is not safe to call concurrently.
 func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, error) {
 	// First, let's make sure this config is not already loaded
-	var amConfigChanged bool
-	rawConfig, err := json.Marshal(cfg.AlertmanagerConfig)
+	rawConfig, err := json.Marshal(cfg)
 	if err != nil {
 		// In theory, this should never happen.
 		return false, err
 	}
 
-	if am.Base.ConfigHash() != md5.Sum(rawConfig) {
-		amConfigChanged = true
-	}
-
-	if cfg.TemplateFiles == nil {
-		cfg.TemplateFiles = map[string]string{}
-	}
-	cfg.TemplateFiles["__default__.tmpl"] = alertingTemplates.DefaultTemplateString
-
-	// next, we need to make sure we persist the templates to disk.
-	paths, templatesChanged, err := PersistTemplates(am.logger, cfg, am.Base.WorkingDirectory())
-	if err != nil {
-		return false, err
-	}
-	cfg.AlertmanagerConfig.Templates = paths
-
-	// If neither the configuration nor templates have changed, we've got nothing to do.
-	if !amConfigChanged && !templatesChanged {
-		am.logger.Debug("Neither config nor template have changed, skipping configuration sync.")
+	// If configuration hasn't changed, we've got nothing to do.
+	configHash := md5.Sum(rawConfig)
+	if am.Base.ConfigHash() == configHash {
+		am.logger.Debug("Config hasn't changed, skipping configuration sync.")
 		return false, nil
 	}
 
+	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%x", configHash))
 	err = am.Base.ApplyConfig(AlertingConfiguration{
 		rawAlertmanagerConfig:    rawConfig,
-		alertmanagerConfig:       cfg.AlertmanagerConfig,
+		configHash:               configHash,
+		route:                    cfg.AlertmanagerConfig.Route.AsAMRoute(),
+		inhibitRules:             cfg.AlertmanagerConfig.InhibitRules,
+		muteTimeIntervals:        cfg.AlertmanagerConfig.MuteTimeIntervals,
+		timeIntervals:            cfg.AlertmanagerConfig.TimeIntervals,
+		templates:                ToTemplateDefinitions(cfg),
 		receivers:                PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
 		receiverIntegrationsFunc: am.buildReceiverIntegrations,
 	})

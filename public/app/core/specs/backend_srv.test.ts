@@ -86,6 +86,11 @@ const getTestContext = (overides?: object, mockFromFetch = true) => {
   };
 };
 
+jest.mock('app/core/utils/auth', () => ({
+  getSessionExpiry: () => 1,
+  hasSessionExpiry: () => true,
+}));
+
 describe('backendSrv', () => {
   describe('parseRequestOptions', () => {
     it.each`

@@ -172,6 +172,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   sharedWithMeFolderUID: string | undefined;
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
+  cloudMigrationIsTarget: boolean | undefined;
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
@@ -203,10 +204,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    if (this.buildInfo.env === 'development') {
-      overrideFeatureTogglesFromUrl(this);
-    }
-
+    overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
     if (this.featureToggles.disableAngular) {
@@ -243,11 +241,28 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     return;
   }
 
+  const isLocalDevEnv = config.buildInfo.env === 'development';
+
+  const prodUrlAllowedFeatureFlags = new Set([
+    'autoMigrateOldPanels',
+    'autoMigrateGraphPanel',
+    'autoMigrateTablePanel',
+    'autoMigratePiechartPanel',
+    'autoMigrateWorldmapPanel',
+    'autoMigrateStatPanel',
+    'disableAngular',
+  ]);
+
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
+
+      if (!isLocalDevEnv && !prodUrlAllowedFeatureFlags.has(featureName)) {
+        return;
+      }
+
       const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
       if (toggleState !== featureToggles[key]) {
         featureToggles[featureName] = toggleState;
