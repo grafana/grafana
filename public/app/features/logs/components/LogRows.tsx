@@ -121,10 +121,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (!this.logRowsRef.current) {
       return false;
     }
-    const parentBounds = this.logRowsRef.current?.getBoundingClientRect();
     this.setState({
       selection,
-      popoverMenuCoordinates: { x: e.clientX - parentBounds.left, y: e.clientY - parentBounds.top },
+      popoverMenuCoordinates: { x: e.clientX, y: e.clientY },
       selectedRow: row,
     });
     document.addEventListener('click', this.handleDeselection);
