@@ -181,7 +181,6 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		bodyString := requestBody.String()
 		require.Contains(t, bodyString, "metrics-2018.05.15")
 		require.Contains(t, bodyString, "metrics-2018.05.17")
-
 	})
 }
 
