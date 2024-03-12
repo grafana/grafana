@@ -48,7 +48,7 @@ require (
 	github.com/go-openapi/strfmt v0.22.0 // @grafana/alerting-squad-backend
 	github.com/go-redis/redis/v8 v8.11.5 // @grafana/backend-platform
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // @grafana/backend-platform
-	github.com/go-sql-driver/mysql v1.7.1 // @grafana/backend-platform
+	github.com/go-sql-driver/mysql v1.8.0 // @grafana/backend-platform
 	github.com/go-stack/stack v1.8.1 // @grafana/backend-platform
 	github.com/gobwas/glob v0.2.3 // @grafana/backend-platform
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
@@ -64,6 +64,7 @@ require (
 	github.com/grafana/grafana-aws-sdk v0.24.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.12.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-plugin-sdk-go v0.214.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana/pkg/promlib v0.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
@@ -293,6 +294,7 @@ require github.com/apache/arrow/go/v15 v15.0.0 // @grafana/observability-metrics
 require (
 	cloud.google.com/go v0.112.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
@@ -302,7 +304,9 @@ require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
+	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
+	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
 	github.com/bwmarrin/snowflake v0.3.0 // @grafan/grafana-app-platform-squad
 	github.com/centrifugal/protocol v0.10.0 // indirect
@@ -340,6 +344,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect; @grafana/alerting-squad-backend
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/invopop/jsonschema v0.12.0 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
@@ -369,6 +374,7 @@ require (
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
 	github.com/unknwon/log v0.0.0-20150304194804-e617c87089d3 // indirect
+	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	github.com/yuin/gopher-lua v1.1.0 // indirect
 	github.com/zclconf/go-cty v1.13.0 // indirect
@@ -486,13 +492,6 @@ require (
 	github.com/mithrandie/go-text v1.5.4 // indirect
 	github.com/mithrandie/ternary v1.1.1 // indirect
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // @grafana/grafana-app-platform-squad
-)
-
-require (
-	github.com/bahlo/generic-list-go v0.2.0 // indirect
-	github.com/buger/jsonparser v1.1.1 // indirect
-	github.com/invopop/jsonschema v0.12.0 // indirect
-	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
