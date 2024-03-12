@@ -108,8 +108,8 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
           <div>
             User-based authentication does not inherently support Grafana features that make requests to the data source
             without a users details available to the request. An example of this is alerting. If you wish to ensure that
-            features that do not have a user in the context of the request still function as expected then please
-            provide fallback credentials below.
+            features that do not have a user in the context of the request still function,
+            please provide fallback credentials below.
           </div>
           <div>
             <b>
