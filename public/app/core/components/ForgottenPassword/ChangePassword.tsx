@@ -2,6 +2,7 @@ import React, { SyntheticEvent, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Tooltip, Field, VerticalGroup, Button, Alert, useStyles2 } from '@grafana/ui';
 
 import { getStyles } from '../Login/LoginForm';
@@ -85,7 +86,7 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
           Submit
         </Button>
 
-        {onSkip && (
+        {!config.auth.basicAuthStrongPasswordPolicy && onSkip && (
           <Tooltip
             content="If you skip you will be prompted to change password next time you log in."
             placement="bottom"
