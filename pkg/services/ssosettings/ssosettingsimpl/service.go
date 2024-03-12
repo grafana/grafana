@@ -432,8 +432,8 @@ func removeSecrets(settings map[string]any) map[string]any {
 }
 
 // mergeSettings merges two maps in a way that the values from the first map are preserved
-// and the values from the second map are added only if they don't exist in the first map,
-// or if they are empty
+// and the values from the second map are added only if they don't exist in the first map
+// or if they contain empty URLs.
 func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any {
 	settings := make(map[string]any)
 
