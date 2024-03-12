@@ -28,7 +28,7 @@ func newHTTPClient(ctx context.Context, route types.AzRoute, model types.Datasou
 	}
 
 	for header, value := range route.Headers {
-		clientOpts.Headers[header] = value
+		clientOpts.Header.Add(header, value)
 	}
 
 	// Use Azure credentials if the route has OAuth scopes configured
