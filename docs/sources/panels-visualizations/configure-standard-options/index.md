@@ -29,6 +29,8 @@ The data model used in Grafana, namely the [data frame](https://grafana.com/deve
 
 Field options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, they change how Grafana displays the data. When you change an option, it is applied to all fields, meaning all series or columns. For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages.
 
+You can set these options in the **Standard options** section of the panel editor pane.
+
 For a complete list of field formatting options, refer to [Standard options definitions](#standard-options-definitions).
 
 ## Supported visualizations
@@ -47,7 +49,7 @@ You can configure standard options for the following visualizations:
 
 This section explains all available standard options.
 
-Most field options won't affect the visualization until you click outside of the field option box you are editing or press Enter.
+To set these options, expand the **Standard options** section in the panel editor pane. Most field options won't affect the visualization until you click outside of the field option box you are editing or press Enter.
 
 {{% admonition type="note" %}}
 Not all of the options listed apply to all visualizations with standard options.
@@ -135,7 +137,7 @@ Select one of the following palettes:
 | **Single color**                     | Specify a single color, useful in an override rule.                                                                                                       |
 | **Shades of a color**                | Selects shades of a single color, useful in an override rule                                                                                              |
 | **From thresholds**                  | Informs Grafana to take the color from the matching threshold.                                                                                            |
-|  |
+|                                      |
 | **Classic palette**                  | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations. |
 | **Classic palette (by series name)** | Grafana will assign color based on the name of the series. Useful when the series names to be visualized depend on the available data.                    |
 | **Green-Yellow-Red (by value)**      | Continuous color. scheme                                                                                                                                  |
