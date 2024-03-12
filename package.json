@@ -112,7 +112,7 @@
     "@types/jquery": "3.5.29",
     "@types/js-yaml": "^4.0.5",
     "@types/jsurl": "^1.2.28",
-    "@types/lodash": "4.14.202",
+    "@types/lodash": "4.17.0",
     "@types/logfmt": "^1.2.3",
     "@types/lucene": "^2",
     "@types/marked": "5.0.2",
