@@ -32,9 +32,9 @@ export type PluginExtensionLink = PluginExtensionBase & {
   category?: string;
 };
 
-export type PluginExtensionComponent = PluginExtensionBase & {
+export type PluginExtensionComponent<Props = {}> = PluginExtensionBase & {
   type: PluginExtensionTypes.component;
-  component: React.ComponentType;
+  component: React.ComponentType<Props>;
 };
 
 export type PluginExtension = PluginExtensionLink | PluginExtensionComponent;
