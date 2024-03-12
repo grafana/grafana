@@ -9,12 +9,10 @@ type TempoOnDashboardLoadedTrackingEvent = {
   dashboard_id?: string;
   org_id?: number;
   native_search_query_count: number;
-  search_query_count: number;
   service_map_query_count: number;
   traceql_query_count: number;
   upload_query_count: number;
   native_search_queries_with_template_variables_count: number;
-  search_queries_with_template_variables_count: number;
   service_map_queries_with_template_variables_count: number;
   traceql_queries_with_template_variables_count: number;
 };
@@ -34,12 +32,10 @@ export const onDashboardLoadedHandler = ({
       dashboard_id: dashboardId,
       org_id: orgId,
       native_search_query_count: 0,
-      search_query_count: 0,
       service_map_query_count: 0,
       traceql_query_count: 0,
       upload_query_count: 0,
       native_search_queries_with_template_variables_count: 0,
-      search_queries_with_template_variables_count: 0,
       service_map_queries_with_template_variables_count: 0,
       traceql_queries_with_template_variables_count: 0,
     };

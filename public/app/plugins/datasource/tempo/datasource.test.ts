@@ -288,7 +288,7 @@ describe('Tempo data source', () => {
     const templateSrv = { replace: jest.fn().mockReturnValue(duration) } as unknown as TemplateSrv;
     const ds = new TempoDatasource(defaultSettings, templateSrv);
     const tempoQuery: TempoQuery = {
-      queryType: 'search',
+      queryType: 'nativeSearch',
       refId: 'A',
       query: '',
       serviceName: 'frontend',
@@ -323,7 +323,7 @@ describe('Tempo data source', () => {
   it('should include a default limit', () => {
     const ds = new TempoDatasource(defaultSettings);
     const tempoQuery: TempoQuery = {
-      queryType: 'search',
+      queryType: 'nativeSearch',
       refId: 'A',
       query: '',
       search: '',
@@ -339,7 +339,7 @@ describe('Tempo data source', () => {
   it('should include time range if provided', () => {
     const ds = new TempoDatasource(defaultSettings);
     const tempoQuery: TempoQuery = {
-      queryType: 'search',
+      queryType: 'nativeSearch',
       refId: 'A',
       query: '',
       search: '',
