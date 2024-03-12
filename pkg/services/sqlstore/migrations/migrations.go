@@ -112,6 +112,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 		accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
 	}
 
+	addCloudMigrationsMigrations(mg)
+
 	addKVStoreMySQLValueTypeLongTextMigration(mg)
 
 	ualert.AddRuleNotificationSettingsColumns(mg)
