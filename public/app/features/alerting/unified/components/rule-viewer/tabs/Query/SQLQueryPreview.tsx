@@ -7,27 +7,25 @@ interface Props {
   expression: string;
 }
 
-export const SQLQueryPreview = ({ expression }: Props) => {
-  return (
-    <ReactMonacoEditor
-      options={{
-        readOnly: true,
-        minimap: {
-          enabled: false,
-        },
-        scrollBeyondLastColumn: 0,
-        scrollBeyondLastLine: false,
-        lineNumbers: 'off',
-        cursorWidth: 0,
-        overviewRulerLanes: 0,
-      }}
-      defaultLanguage="sql"
-      height={80}
-      defaultValue={expression}
-      width="100%"
-    />
-  );
-};
+export const SQLQueryPreview = ({ expression }: Props) => (
+  <ReactMonacoEditor
+    options={{
+      readOnly: true,
+      minimap: {
+        enabled: false,
+      },
+      scrollBeyondLastColumn: 0,
+      scrollBeyondLastLine: false,
+      lineNumbers: 'off',
+      cursorWidth: 0,
+      overviewRulerLanes: 0,
+    }}
+    defaultLanguage="sql"
+    height={80}
+    defaultValue={expression}
+    width="100%"
+  />
+);
 
 export interface SQLLike {
   refId: string;

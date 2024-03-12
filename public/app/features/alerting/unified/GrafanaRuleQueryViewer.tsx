@@ -6,7 +6,7 @@ import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2, PanelData, ur
 import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
 import { config } from '@grafana/runtime';
 import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
-import { Badge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { AlertDataQuery, AlertQuery } from '../../../types/unified-alerting-dto';
@@ -141,7 +141,9 @@ export function QueryPreview({
     <>
       <QueryBox refId={refId} headerItems={headerItems} exploreLink={exploreLink}>
         <div className={styles.queryPreviewWrapper}>
-          {model && dataSource && <DatasourceModelPreview model={model} dataSource={dataSource} />}
+          <ErrorBoundaryAlert>
+            {model && dataSource && <DatasourceModelPreview model={model} dataSource={dataSource} />}
+          </ErrorBoundaryAlert>
         </div>
       </QueryBox>
       {dataSource && <RuleViewerVisualization data={queryData} thresholds={thresholds} />}
