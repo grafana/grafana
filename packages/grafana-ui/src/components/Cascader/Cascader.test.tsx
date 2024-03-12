@@ -173,7 +173,7 @@ describe('Cascader', () => {
   it('should be properly associated with the Field label', () => {
     render(
       <Field label={'Cascader label'}>
-        <Cascader placeholder={placeholder} options={options} onSelect={jest.fn()} id={'cascader'} />
+        <Cascader options={options} onSelect={jest.fn()} id={'cascader'} />
       </Field>
     );
 
