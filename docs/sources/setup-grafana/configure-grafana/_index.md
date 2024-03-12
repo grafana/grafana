@@ -693,7 +693,6 @@ The core features that depend on angular are:
 
 - Old graph panel
 - Old table panel
-- Legacy alerting edit rule UI
 
 These features each have supported alternatives, and we recommend using them.
 
@@ -820,6 +819,10 @@ The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For
 ### verify_email_enabled
 
 Require email validation before sign up completes or when updating a user email address. Default is `false`.
+
+### login_default_org_id
+
+Set the default organization for users when they sign in. The default is `-1`.
 
 ### login_hint
 
@@ -1506,9 +1509,9 @@ For more information about the Grafana alerts, refer to [About Grafana Alerting]
 
 ### enabled
 
-Enable or disable Grafana Alerting. If disabled, all your legacy alerting data will be available again. The default value is `true`.
+Enable or disable Grafana Alerting. The default value is `true`.
 
-Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
+Alerting rules migrated from dashboards and panels will include a link back via the `annotations`.
 
 ### disabled_orgs
 

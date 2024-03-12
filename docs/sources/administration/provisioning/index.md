@@ -427,6 +427,185 @@ This feature doesn't currently allow you to create nested folder structures, tha
 
 For information on provisioning Grafana Alerting, refer to [Provision Grafana Alerting resources]({{< relref "../../alerting/set-up/provision-alerting-resources/"  >}}).
 
+### Supported Settings
+
+The following sections detail the supported settings and secure settings for each alert notification type. Secure settings are stored encrypted in the database and you add them to `secure_settings` in the YAML file instead of `settings`.
+
+{{% admonition type="note" %}}
+Secure settings is supported since Grafana v7.2.
+{{% /admonition %}}
+
+#### Alert notification `pushover`
+
+| Name       | Secure setting |
+| ---------- | -------------- |
+| apiToken   | yes            |
+| userKey    | yes            |
+| device     |                |
+| priority   |                |
+| okPriority |                |
+| retry      |                |
+| expire     |                |
+| sound      |                |
+| okSound    |                |
+
+#### Alert notification `discord`
+
+| Name                 | Secure setting |
+| -------------------- | -------------- |
+| url                  | yes            |
+| avatar_url           |                |
+| content              |                |
+| use_discord_username |                |
+
+#### Alert notification `slack`
+
+| Name           | Secure setting |
+| -------------- | -------------- |
+| url            | yes            |
+| recipient      |                |
+| username       |                |
+| icon_emoji     |                |
+| icon_url       |                |
+| uploadImage    |                |
+| mentionUsers   |                |
+| mentionGroups  |                |
+| mentionChannel |                |
+| token          | yes            |
+
+#### Alert notification `victorops`
+
+| Name        |
+| ----------- |
+| url         |
+| autoResolve |
+
+#### Alert notification `kafka`
+
+| Name           |
+| -------------- |
+| kafkaRestProxy |
+| kafkaTopic     |
+
+#### Alert notification `LINE`
+
+| Name  | Secure setting |
+| ----- | -------------- |
+| token | yes            |
+
+#### Alert notification `pagerduty`
+
+| Name           | Secure setting |
+| -------------- | -------------- |
+| integrationKey | yes            |
+| autoResolve    |                |
+
+#### Alert notification `sensu`
+
+| Name     | Secure setting |
+| -------- | -------------- |
+| url      |                |
+| source   |                |
+| handler  |                |
+| username |                |
+| password | yes            |
+
+#### Alert notification `sensugo`
+
+| Name      | Secure setting |
+| --------- | -------------- |
+| url       |                |
+| apikey    | yes            |
+| entity    |                |
+| check     |                |
+| handler   |                |
+| namespace |                |
+
+#### Alert notification `prometheus-alertmanager`
+
+| Name              | Secure setting |
+| ----------------- | -------------- |
+| url               |                |
+| basicAuthUser     |                |
+| basicAuthPassword | yes            |
+
+#### Alert notification `teams`
+
+| Name |
+| ---- |
+| url  |
+
+#### Alert notification `dingding`
+
+| Name |
+| ---- |
+| url  |
+
+#### Alert notification `email`
+
+| Name        |
+| ----------- |
+| singleEmail |
+| addresses   |
+
+#### Alert notification `hipchat`
+
+| Name   |
+| ------ |
+| url    |
+| apikey |
+| roomid |
+
+#### Alert notification `opsgenie`
+
+| Name             | Secure setting |
+| ---------------- | -------------- |
+| apiKey           | yes            |
+| apiUrl           |                |
+| autoClose        |                |
+| overridePriority |                |
+| sendTagsAs       |                |
+
+#### Alert notification `telegram`
+
+| Name        | Secure setting |
+| ----------- | -------------- |
+| bottoken    | yes            |
+| chatid      |                |
+| uploadImage |                |
+
+#### Alert notification `threema`
+
+| Name         | Secure setting |
+| ------------ | -------------- |
+| gateway_id   |                |
+| recipient_id |                |
+| api_secret   | yes            |
+
+#### Alert notification `webhook`
+
+| Name       | Secure setting |
+| ---------- | -------------- |
+| url        |                |
+| httpMethod |                |
+| username   |                |
+| password   | yes            |
+
+#### Alert notification `googlechat`
+
+| Name |
+| ---- |
+| url  |
+
+#### Alert notification `Cisco Webex Teams`
+
+| Name      | Secure setting |
+| --------- | -------------- |
+| message   |                |
+| room_id   |                |
+| api_url   |                |
+| bot_token | yes            |
+
 ## Grafana Enterprise
 
 Grafana Enterprise supports:

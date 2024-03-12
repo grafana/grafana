@@ -14,7 +14,7 @@ import appEvents from 'app/core/app_events';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
-import { findVizPanelByKey, getDashboardSceneFor, isLibraryPanelChild, isPanelClone } from '../utils/utils';
+import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanel, isPanelClone } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
@@ -66,7 +66,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      if (isLibraryPanelChild(panel)) {
+      if (getLibraryPanel(panel)) {
         this._handleLibraryPanel(panel, (p) => {
           if (p.state.key === undefined) {
             // Inspect drawer require a panel key to be set
@@ -105,7 +105,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      if (isLibraryPanelChild(panel)) {
+      if (getLibraryPanel(panel)) {
         this._handleLibraryPanel(panel, (p) => this._buildLibraryPanelViewScene(p));
         return;
       }
@@ -119,6 +119,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     if (typeof values.editPanel === 'string') {
       const panel = findVizPanelByKey(this._scene, values.editPanel);
       if (!panel) {
+        console.warn(`Panel ${values.editPanel} not found`);
         return;
       }
 
@@ -126,10 +127,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       if (!isEditing) {
         this._scene.onEnterEditMode();
       }
-      if (isLibraryPanelChild(panel)) {
+      if (getLibraryPanel(panel)) {
         this._handleLibraryPanel(panel, (p) => {
           this._scene.setState({ editPanel: buildPanelEditScene(p) });
         });
+        return;
       }
       update.editPanel = buildPanelEditScene(panel);
     } else if (editPanel && values.editPanel === null) {
