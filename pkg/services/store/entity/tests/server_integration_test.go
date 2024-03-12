@@ -129,8 +129,8 @@ func TestIntegrationWatch(t *testing.T) {
 		namespace := "default"
 		body := []byte("{\"name\":\"John\"}")
 		name := "test1"
-		key := "/" + group + "/" + resource + "/" + namespace + "/" + name
-		otherKey := "/" + group + "/" + resource + "/" + namespace + "/" + "otherName"
+		key := "/" + group + "/" + resource + "/namespaces/" + namespace + "/" + name
+		otherKey := "/" + group + "/" + resource + "/namespaces/" + namespace + "/" + "otherName"
 
 		// create watch client and timeout after 5 seconds of waiting for an event
 		ctx := testCtx.ctx
@@ -157,7 +157,8 @@ func TestIntegrationWatch(t *testing.T) {
 		require.NoError(t, err)
 
 		// watch client should receive nothing and timeout after 5 seconds
-		_, err = watchClient.Recv()
+		resp, err := watchClient.Recv()
+		require.Nil(t, resp)
 		require.Error(t, err)
 		require.ErrorContainsf(t, err, "context deadline exceeded", err.Error())
 	})
@@ -263,8 +264,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 	resource2 := "playlists"
 	namespace := "default"
 	name := "my-test-entity"
-	testKey := "/" + group + "/" + resource + "/" + namespace + "/" + name
-	testKey2 := "/" + group + "/" + resource2 + "/" + namespace + "/" + name
+	testKey := "/" + group + "/" + resource + "/namespaces/" + namespace + "/" + name
+	testKey2 := "/" + group + "/" + resource2 + "/namespaces/" + namespace + "/" + name
 	body := []byte("{\"name\":\"John\"}")
 
 	t.Run("should not retrieve non-existent objects", func(t *testing.T) {
@@ -618,7 +619,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 	t.Run("should be able to filter objects based on their labels", func(t *testing.T) {
 		_, err := testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				Key:  "/dashboards.grafana.app/dashboards/default/blue-green",
+				Key:  "/dashboards.grafana.app/dashboards/namespaces/default/blue-green",
 				Body: []byte(dashboardWithTagsBlueGreen),
 				Labels: map[string]string{
 					"blue":  "",
@@ -630,7 +631,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 
 		_, err = testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				Key:  "/dashboards.grafana.app/dashboards/default/red-green",
+				Key:  "/dashboards.grafana.app/dashboards/namespaces/default/red-green",
 				Body: []byte(dashboardWithTagsRedGreen),
 				Labels: map[string]string{
 					"red":   "",
@@ -641,7 +642,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NoError(t, err)
 
 		resp, err := testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
+			Key:      []string{"/dashboards.grafana.app/dashboards/namespaces/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"red": "",
@@ -653,7 +654,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Equal(t, resp.Results[0].Name, "red-green")
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
+			Key:      []string{"/dashboards.grafana.app/dashboards/namespaces/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"red":   "",
@@ -666,7 +667,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Equal(t, resp.Results[0].Name, "red-green")
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
+			Key:      []string{"/dashboards.grafana.app/dashboards/namespaces/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"red": "invalid",
@@ -677,7 +678,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Len(t, resp.Results, 0)
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
+			Key:      []string{"/dashboards.grafana.app/dashboards/namespaces/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"green": "",
@@ -688,7 +689,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Len(t, resp.Results, 2)
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
+			Key:      []string{"/dashboards.grafana.app/dashboards/namespaces/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"yellow": "",
