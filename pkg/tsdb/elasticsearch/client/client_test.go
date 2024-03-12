@@ -175,7 +175,9 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 
 		ms, err := createMultisearchWithMultipleQueriesForTest(t, c, timeRange, timeRange2)
 		require.NoError(t, err)
-		c.ExecuteMultisearch(ms)
+		_, err = c.ExecuteMultisearch(ms)
+		require.NoError(t, err)
+
 		require.NotNil(t, requestBody)
 
 		bodyString := requestBody.String()
