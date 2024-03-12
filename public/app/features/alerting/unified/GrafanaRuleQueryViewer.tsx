@@ -140,7 +140,9 @@ export function QueryPreview({
   return (
     <>
       <QueryBox refId={refId} headerItems={headerItems} exploreLink={exploreLink}>
-        <div className={styles.queryPreviewWrapper}>{model && <DatasourceModelPreview model={model} />}</div>
+        <div className={styles.queryPreviewWrapper}>
+          {model && dataSource && <DatasourceModelPreview model={model} dataSource={dataSource} />}
+        </div>
       </QueryBox>
       {dataSource && <RuleViewerVisualization data={queryData} thresholds={thresholds} />}
     </>

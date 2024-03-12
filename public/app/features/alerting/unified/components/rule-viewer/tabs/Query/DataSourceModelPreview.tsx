@@ -1,6 +1,7 @@
 import { dump } from 'js-yaml';
 import React from 'react';
 
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { AlertDataQuery } from 'app/types/unified-alerting-dto';
 
 import { DataSourceType } from '../../../../utils/datasource';
@@ -13,16 +14,15 @@ const LokiQueryPreview = React.lazy(() => import('./LokiQueryPreview'));
 
 interface DatasourceModelPreviewProps {
   model: AlertDataQuery;
+  dataSource: DataSourceInstanceSettings;
 }
 
-function DatasourceModelPreview({ model }: DatasourceModelPreviewProps): React.ReactNode {
-  const { datasource } = model;
-
-  if (datasource?.type === DataSourceType.Prometheus && isPromOrLokiQuery(model)) {
+function DatasourceModelPreview({ model, dataSource: datasource }: DatasourceModelPreviewProps): React.ReactNode {
+  if (datasource.type === DataSourceType.Prometheus && isPromOrLokiQuery(model)) {
     return <PrometheusQueryPreview query={model.expr} />;
   }
 
-  if (datasource?.type === DataSourceType.Loki && isPromOrLokiQuery(model)) {
+  if (datasource.type === DataSourceType.Loki && isPromOrLokiQuery(model)) {
     return <LokiQueryPreview query={model.expr ?? ''} />;
   }
 
