@@ -38,6 +38,8 @@ export interface CascaderProps {
       cascader is hidden after selection. */
   hideActiveLevelLabel?: boolean;
   disabled?: boolean;
+  /** ID for the underlying Select/Cascader component */
+  id?: string;
 }
 
 interface CascaderState {
@@ -210,7 +212,8 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
   };
 
   render() {
-    const { allowCustomValue, formatCreateLabel, placeholder, width, changeOnSelect, options, disabled } = this.props;
+    const { allowCustomValue, formatCreateLabel, placeholder, width, changeOnSelect, options, disabled, id } =
+      this.props;
     const { focusCascade, isSearching, rcValue, activeLabel } = this.state;
 
     const searchableOptions = this.getSearchableOptions(options);
@@ -230,6 +233,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
             width={width}
             onInputChange={this.onSelectInputChange}
             disabled={disabled}
+            inputId={id}
           />
         ) : (
           <RCCascader
@@ -259,6 +263,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
                   )
                 }
                 disabled={disabled}
+                id={id}
               />
             </div>
           </RCCascader>
