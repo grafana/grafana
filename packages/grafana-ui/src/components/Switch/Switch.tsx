@@ -9,8 +9,6 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
-  /** Make inline switch's background and border transparent */
-  transparent?: boolean;
   /** Show an invalid state around the input */
   invalid?: boolean;
 }
@@ -46,7 +44,10 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
 Switch.displayName = 'Switch';
 
 export interface InlineSwitchProps extends Props {
+  /** Label to show next to the switch */
   showLabel?: boolean;
+  /** Make inline switch's background and border transparent */
+  transparent?: boolean;
 }
 
 export const InlineSwitch = React.forwardRef<HTMLInputElement, InlineSwitchProps>(
