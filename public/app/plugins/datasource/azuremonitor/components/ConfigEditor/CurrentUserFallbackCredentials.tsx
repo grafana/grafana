@@ -93,8 +93,8 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
     return (
       <Alert severity="info" title="Fallback Credentials Disabled">
         <>
-          Fallback credentials have been disabled. As user-based authentication does not inherently support requests
-          without a user in scope, features such as alerting, recorded queries, or reporting will not function as
+          Fallback credentials have been disabled. As user-based authentication only inherently supports requests
+          with a user in scope, features such as alerting, recorded queries, or reporting will not function as
           expected. Please review the documentation for more details.
         </>
       </Alert>
