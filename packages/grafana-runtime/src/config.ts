@@ -172,6 +172,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   sharedWithMeFolderUID: string | undefined;
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
+  cloudMigrationIsTarget: boolean | undefined;
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
