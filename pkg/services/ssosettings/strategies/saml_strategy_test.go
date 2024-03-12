@@ -3,6 +3,7 @@ package strategies
 import (
 	"context"
 	"testing"
+	"time"
 
 	"gopkg.in/ini.v1"
 
@@ -58,8 +59,8 @@ var (
 		"idp_metadata":               "dGhpcyBpcyBteSBwcml2YXRlIGtleSB0aGF0IEkgd2FudCB0byBnZXQgZW5jb2RlZCBpbiBiYXNlIDY0",
 		"idp_metadata_path":          "/path/to/metadata",
 		"idp_metadata_url":           "http://localhost:8086/realms/grafana/protocol/saml/descriptor",
-		"max_issue_delay":            "90s",
-		"metadata_valid_duration":    "48h",
+		"max_issue_delay":            90 * time.Second,
+		"metadata_valid_duration":    48 * time.Hour,
 		"allow_idp_initiated":        false,
 		"relay_state":                "relay_state",
 		"assertion_attribute_name":   "name",
