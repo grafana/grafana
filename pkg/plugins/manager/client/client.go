@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
@@ -29,13 +28,11 @@ var (
 
 type Service struct {
 	pluginRegistry registry.Service
-	cfg            *config.PluginManagementCfg
 }
 
-func ProvideService(pluginRegistry registry.Service, cfg *config.PluginManagementCfg) *Service {
+func ProvideService(pluginRegistry registry.Service) *Service {
 	return &Service{
 		pluginRegistry: pluginRegistry,
-		cfg:            cfg,
 	}
 }
 
