@@ -388,21 +388,11 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
 }
 
 export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
-  const vizPanelData = sceneGraph.getData(panel);
-  let panelHasAlert = false;
-
-  if (vizPanelData.state.data?.alertState) {
-    panelHasAlert = true;
-  }
-
-  const confirmText = panelHasAlert ? 'YES' : undefined;
-
   appEvents.publish(
     new ShowConfirmModalEvent({
       title: 'Remove panel',
       text: 'Are you sure you want to remove this panel?',
       icon: 'trash-alt',
-      confirmText: confirmText,
       yesText: 'Remove',
       onConfirm: () => dashboard.removePanel(panel),
     })
