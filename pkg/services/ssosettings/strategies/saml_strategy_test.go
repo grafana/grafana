@@ -82,7 +82,7 @@ var (
 
 func TestSAMLIsMatch(t *testing.T) {
 	cfg := setting.NewCfg()
-	strategy := NewSAMLStrategy(cfg, &setting.OSSImpl{Cfg: cfg})
+	strategy := NewSAMLStrategy(&setting.OSSImpl{Cfg: cfg})
 	require.True(t, strategy.IsMatch("saml"))
 	require.False(t, strategy.IsMatch("oauth"))
 }
@@ -94,7 +94,7 @@ func TestSAMLGetProviderConfig(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Raw = configurationFile
 
-	strategy := NewSAMLStrategy(cfg, &setting.OSSImpl{Cfg: cfg})
+	strategy := NewSAMLStrategy(&setting.OSSImpl{Cfg: cfg})
 
 	result, err := strategy.GetProviderConfig(context.Background(), "saml")
 	require.NoError(t, err)
