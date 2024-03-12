@@ -1,6 +1,5 @@
 {
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "npmClient": "yarn",
-  "version": "11.0.0-pre",
-  "packages": ["packages/*", "plugins-bundled/internal/*", "public/app/plugins/*/*"]
+  "version": "11.0.0-pre"
 }
