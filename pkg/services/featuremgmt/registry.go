@@ -592,7 +592,7 @@ var (
 		{
 			Name:         "traceQLStreaming",
 			Description:  "Enables response streaming of TraceQL queries of the Tempo data source",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
@@ -1213,6 +1213,14 @@ var (
 			Owner:             grafanaDashboardsSquad,
 			RequiresRestart:   false,
 			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "emailVerificationEnforcement",
+			Description:       "Force email verification for users, even when authenticating through sso.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
