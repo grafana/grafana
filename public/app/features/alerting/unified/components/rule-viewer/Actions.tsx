@@ -5,12 +5,12 @@ import { Dropdown, LinkButton, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
-import { AlertRuleAction, useAlertRuleAbility } from '../../../hooks/useAbilities';
-import { createShareLink, isLocalDevEnv, isOpenSourceEdition, makeRuleBasedSilenceLink } from '../../../utils/misc';
-import * as ruleId from '../../../utils/rule-id';
-import { createUrl } from '../../../utils/url';
-import MoreButton from '../../MoreButton';
-import { DeclareIncidentMenuItem } from '../../bridges/DeclareIncidentButton';
+import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
+import { createShareLink, isLocalDevEnv, isOpenSourceEdition, makeRuleBasedSilenceLink } from '../../utils/misc';
+import * as ruleId from '../../utils/rule-id';
+import { createUrl } from '../../utils/url';
+import MoreButton from '../MoreButton';
+import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 import { useAlertRule } from './RuleContext';
 

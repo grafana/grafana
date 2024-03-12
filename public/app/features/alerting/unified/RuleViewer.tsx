@@ -7,8 +7,8 @@ import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound'
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { AlertRuleProvider } from './components/rule-viewer/v2/RuleContext';
-import DetailView from './components/rule-viewer/v2/RuleViewer.v2';
+import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
+import DetailView from './components/rule-viewer/RuleViewer';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';

@@ -4,9 +4,9 @@ import { Stack, Text } from '@grafana/ui';
 import { RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { AlertStateDot } from '../../AlertStateDot';
+import { AlertStateDot } from '../AlertStateDot';
 
-import { isErrorHealth } from './RuleViewer.v2';
+import { isErrorHealth } from './RuleViewer';
 
 interface RecordingBadgeProps {
   health?: RuleHealth;
