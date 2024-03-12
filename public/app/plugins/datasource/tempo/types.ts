@@ -23,9 +23,6 @@ export interface TempoJsonData extends DataSourceJsonData {
     filters?: TraceqlFilter[];
   };
   nodeGraph?: NodeGraphOptions;
-  lokiSearch?: {
-    datasourceUid?: string;
-  };
   spanBar?: {
     tag: string;
   };
