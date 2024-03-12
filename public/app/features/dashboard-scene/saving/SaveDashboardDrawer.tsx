@@ -17,6 +17,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveTimeRange?: boolean;
   saveVariables?: boolean;
   saveAsCopy?: boolean;
+  onSaveSuccess?: () => void;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {

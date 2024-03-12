@@ -8,6 +8,8 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types';
 
+import { DashboardPrompt } from '../saving/DashboardPrompt';
+
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {}
@@ -51,7 +53,12 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
     );
   }
 
-  return <dashboard.Component model={dashboard} />;
+  return (
+    <>
+      <dashboard.Component model={dashboard} />
+      <DashboardPrompt dashboard={dashboard} />
+    </>
+  );
 }
 
 export default DashboardScenePage;
