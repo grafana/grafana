@@ -3583,17 +3583,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@npm:10.3.3":
-  version: 10.3.3
-  resolution: "@grafana/e2e-selectors@npm:10.3.3"
-  dependencies:
-    "@grafana/tsconfig": "npm:^1.2.0-rc1"
-    tslib: "npm:2.6.0"
-    typescript: "npm:5.2.2"
-  checksum: 10/11fcbf80d61d30a1ab5a99a6c24c5044c187bf6bb52c5d0a1c99b46ed6b28ea5865ff0b9fdfc66c22a744ba5fe9ea2f5030256d952f3b76302cc8cb8ffc01a73
-  languageName: node
-  linkType: hard
-
 "@grafana/e2e-selectors@npm:11.0.0-pre, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
@@ -4062,25 +4051,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^3.11.0":
-  version: 3.11.0
-  resolution: "@grafana/scenes@npm:3.11.0"
-  dependencies:
-    "@grafana/e2e-selectors": "npm:10.3.3"
-    react-grid-layout: "npm:1.3.4"
-    react-use: "npm:17.4.0"
-    react-virtualized-auto-sizer: "npm:1.0.7"
-    uuid: "npm:^9.0.0"
-  peerDependencies:
-    "@grafana/data": ^10.0.3
-    "@grafana/runtime": ^10.0.3
-    "@grafana/schema": ^10.0.3
-    "@grafana/ui": ^10.0.3
-    react: ^18.0.0
-    react-dom: ^18.0.0
-  checksum: 10/47629dd3f5129b8f803d54c512d10f921edf9b138b878fbebe664e2537d6813c72ea5119e28216daf7e426ef764400356db9b1532c601a3e029ae12baceb248d
+"@grafana/scenes@link:/Users/juanignaciocabanas/Git/scenes/packages/scenes::locator=grafana%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@grafana/scenes@link:/Users/juanignaciocabanas/Git/scenes/packages/scenes::locator=grafana%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@grafana/schema@npm:11.0.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
@@ -4141,13 +4116,6 @@ __metadata:
     "@grafana/runtime": 10.4.0-pre
   languageName: unknown
   linkType: soft
-
-"@grafana/tsconfig@npm:^1.2.0-rc1":
-  version: 1.2.0-rc1
-  resolution: "@grafana/tsconfig@npm:1.2.0-rc1"
-  checksum: 10/621a400a762b97a33aade0c03eb8e7bdd1aa1635fab9eb2c03cd7cb7d80fb56e0fbdfc68b74a2abafacc623ad118e2ccaaf46164ee577b9c9c186a83a923d01d
-  languageName: node
-  linkType: hard
 
 "@grafana/tsconfig@npm:^1.3.0-rc1":
   version: 1.3.0-rc1
@@ -18243,7 +18211,7 @@ __metadata:
     "@grafana/plugin-e2e": "npm:0.18.0"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^3.11.0"
+    "@grafana/scenes": "link:/Users/juanignaciocabanas/Git/scenes/packages/scenes"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -21838,13 +21806,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash.isequal@npm:^4.0.0":
-  version: 4.5.0
-  resolution: "lodash.isequal@npm:4.5.0"
-  checksum: 10/82fc58a83a1555f8df34ca9a2cd300995ff94018ac12cc47c349655f0ae1d4d92ba346db4c19bbfc90510764e0c00ddcc985a358bdcd4b3b965abf8f2a48a214
-  languageName: node
-  linkType: hard
-
 "lodash.ismatch@npm:^4.4.0":
   version: 4.4.0
   resolution: "lodash.ismatch@npm:4.4.0"
@@ -23065,7 +23026,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nano-css@npm:^5.3.1, nano-css@npm:^5.6.1":
+"nano-css@npm:^5.6.1":
   version: 5.6.1
   resolution: "nano-css@npm:5.6.1"
   dependencies:
@@ -25977,7 +25938,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-draggable@npm:4.4.6, react-draggable@npm:^4.0.0, react-draggable@npm:^4.0.3, react-draggable@npm:^4.4.5":
+"react-draggable@npm:4.4.6, react-draggable@npm:^4.0.3, react-draggable@npm:^4.4.5":
   version: 4.4.6
   resolution: "react-draggable@npm:4.4.6"
   dependencies:
@@ -26050,22 +26011,6 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
   checksum: 10/f3954737c2677e82f72ecedcdcf5f187d2a1b86a6c5b915f7300796ac153437581ee0111c9f524e7c18124d25d0d31391d54cdee318ea390722ca57e66813ed7
-  languageName: node
-  linkType: hard
-
-"react-grid-layout@npm:1.3.4":
-  version: 1.3.4
-  resolution: "react-grid-layout@npm:1.3.4"
-  dependencies:
-    clsx: "npm:^1.1.1"
-    lodash.isequal: "npm:^4.0.0"
-    prop-types: "npm:^15.8.1"
-    react-draggable: "npm:^4.0.0"
-    react-resizable: "npm:^3.0.4"
-  peerDependencies:
-    react: ">= 16.3.0"
-    react-dom: ">= 16.3.0"
-  checksum: 10/944ab133e59bfaa5633625f57be9f69133b5cec2de0232d9581e2c988e257ebafe010ee9bbbff6c2754f9d7d8bb0053072bac103f20fc232be2a58e15d14fc64
   languageName: node
   linkType: hard
 
@@ -26374,7 +26319,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-resizable@npm:3.0.5, react-resizable@npm:^3.0.4, react-resizable@npm:^3.0.5":
+"react-resizable@npm:3.0.5, react-resizable@npm:^3.0.5":
   version: 3.0.5
   resolution: "react-resizable@npm:3.0.5"
   dependencies:
@@ -26659,31 +26604,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-use@npm:17.4.0":
-  version: 17.4.0
-  resolution: "react-use@npm:17.4.0"
-  dependencies:
-    "@types/js-cookie": "npm:^2.2.6"
-    "@xobotyi/scrollbar-width": "npm:^1.9.5"
-    copy-to-clipboard: "npm:^3.3.1"
-    fast-deep-equal: "npm:^3.1.3"
-    fast-shallow-equal: "npm:^1.0.0"
-    js-cookie: "npm:^2.2.1"
-    nano-css: "npm:^5.3.1"
-    react-universal-interface: "npm:^0.6.2"
-    resize-observer-polyfill: "npm:^1.5.1"
-    screenfull: "npm:^5.1.0"
-    set-harmonic-interval: "npm:^1.0.1"
-    throttle-debounce: "npm:^3.0.1"
-    ts-easing: "npm:^0.2.0"
-    tslib: "npm:^2.1.0"
-  peerDependencies:
-    react: ^16.8.0  || ^17.0.0 || ^18.0.0
-    react-dom: ^16.8.0  || ^17.0.0 || ^18.0.0
-  checksum: 10/98566c4817b00251107824743ea9dff41f167b548bd5f249f6eb9e2ec09388a2de1e89988e4432cead3f8aa83cf706e0255db8a20c0615768c670751973d2761
-  languageName: node
-  linkType: hard
-
 "react-use@npm:17.5.0, react-use@npm:^17.4.2":
   version: 17.5.0
   resolution: "react-use@npm:17.5.0"
@@ -26727,16 +26647,6 @@ __metadata:
     react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
     react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
   checksum: 10/02101a340bdbe3e40c49dbc52e524eb7ca18832690e91f045a25675600d7adc0a63e800a4ace6a014132adcdcce0e12a8137971de408427a5a3112d7c87c9f3e
-  languageName: node
-  linkType: hard
-
-"react-virtualized-auto-sizer@npm:1.0.7":
-  version: 1.0.7
-  resolution: "react-virtualized-auto-sizer@npm:1.0.7"
-  peerDependencies:
-    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc
-    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc
-  checksum: 10/a16d8ac11a0efa20d44f36a5cf3854027895b806363a409f2ddc07ff92bfc92aaf5b8eee21f3e1b153cee2273db5e5383b6334d4b530d934ed08808ecfb45b9f
   languageName: node
   linkType: hard
 

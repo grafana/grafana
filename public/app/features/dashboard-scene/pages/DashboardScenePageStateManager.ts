@@ -79,7 +79,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
           break;
         case DashboardRoutes.Public: {
-          return await dashboardLoaderSrv.loadDashboard('public', '', uid);
+          rsp = await dashboardLoaderSrv.loadDashboard('public', '', uid);
+          // rsp.meta.isEmbedded = true;
+          return rsp;
         }
         default:
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);

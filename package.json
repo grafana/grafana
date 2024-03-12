@@ -254,7 +254,7 @@
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^3.11.0",
+    "@grafana/scenes": "link:/Users/juanignaciocabanas/Git/scenes/packages/scenes",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",

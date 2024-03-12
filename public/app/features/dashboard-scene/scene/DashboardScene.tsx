@@ -1,7 +1,7 @@
 import * as H from 'history';
 
 import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
   SceneFlexLayout,
@@ -190,7 +190,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public startUrlSync() {
-    if (!this.state.meta.isEmbedded) {
+    if (
+      !this.state.meta.isEmbedded &&
+      !(config.publicDashboardAccessToken && this.state.controls?.state.hideTimeControls)
+    ) {
       getUrlSyncManager().initSync(this);
     }
   }
@@ -381,6 +384,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    * Returns the body (layout) or the full view panel
    */
   public getBodyToRender(): SceneObject {
+    console.log('view panel', this.state.body);
     return this.state.viewPanelScene ?? this.state.body;
   }
 

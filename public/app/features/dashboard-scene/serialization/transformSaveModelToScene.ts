@@ -245,6 +245,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   }
 
   if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
+    console.log('executing');
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
@@ -272,12 +273,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       })
     );
   }
-
-  const variableControls: SceneObject[] = [];
-  if (!config.publicDashboardAccessToken) {
-    variableControls.push(new VariableValueSelectors({}));
-  }
-  variableControls.push(new SceneDataLayerControls());
 
   const dashboardScene = new DashboardScene({
     title: oldModel.title,
@@ -321,7 +316,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
           })
         : undefined,
     controls: new DashboardControls({
-      variableControls: variableControls,
+      variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
       timePicker: new SceneTimePicker({}),
       refreshPicker: new SceneRefreshPicker({
         refresh: oldModel.refresh,
@@ -507,14 +502,17 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     // To be replaced with it's own option persited option instead derived
     hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
     $data: createPanelDataProvider(panel),
-    menu: new VizPanelMenu({
-      $behaviors: [panelMenuBehavior],
-    }),
     titleItems,
 
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
   };
+
+  if (!config.publicDashboardAccessToken) {
+    vizPanelState.menu = new VizPanelMenu({
+      $behaviors: [panelMenuBehavior],
+    });
+  }
 
   if (panel.timeFrom || panel.timeShift) {
     vizPanelState.$timeRange = new PanelTimeRange({
