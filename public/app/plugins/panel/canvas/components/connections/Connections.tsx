@@ -287,11 +287,11 @@ export class Connections {
       return;
     }
 
-    const x = event.pageX - parentBoundingRect.x ?? 0;
-    const y = event.pageY - parentBoundingRect.y ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / transformScale ?? 0;
+    const y = (event.pageY - parentBoundingRect.y) / transformScale ?? 0;
 
-    this.connectionVertex?.setAttribute('cx', `${x / transformScale}`);
-    this.connectionVertex?.setAttribute('cy', `${y / transformScale}`);
+    this.connectionVertex?.setAttribute('cx', `${x}`);
+    this.connectionVertex?.setAttribute('cy', `${y}`);
 
     const sourceRect = this.selection.value!.source.div!.getBoundingClientRect();
 
@@ -320,10 +320,7 @@ export class Connections {
       }
     }
 
-    this.connectionVertexPath?.setAttribute(
-      'd',
-      `M${vx1 / transformScale} ${vy1 / transformScale} L${x / transformScale} ${y / transformScale} L${vx2 / transformScale} ${vy2 / transformScale}`
-    );
+    this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${x} ${y} L${vx2} ${vy2}`);
 
     this.connectionSVGVertex!.style.display = 'block';
 
@@ -378,11 +375,11 @@ export class Connections {
       return;
     }
 
-    const x = event.pageX - parentBoundingRect.x ?? 0;
-    const y = event.pageY - parentBoundingRect.y ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / transformScale ?? 0;
+    const y = (event.pageY - parentBoundingRect.y) / transformScale ?? 0;
 
-    this.connectionVertex?.setAttribute('cx', `${x / transformScale}`);
-    this.connectionVertex?.setAttribute('cy', `${y / transformScale}`);
+    this.connectionVertex?.setAttribute('cx', `${x}`);
+    this.connectionVertex?.setAttribute('cy', `${y}`);
 
     const sourceRect = this.selection.value!.source.div!.getBoundingClientRect();
 
@@ -411,10 +408,7 @@ export class Connections {
       }
     }
 
-    this.connectionVertexPath?.setAttribute(
-      'd',
-      `M${vx1 / transformScale} ${vy1 / transformScale} L${x / transformScale} ${y / transformScale} L${vx2 / transformScale} ${vy2 / transformScale}`
-    );
+    this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${x} ${y} L${vx2} ${vy2}`);
 
     this.connectionSVGVertex!.style.display = 'block';
 
