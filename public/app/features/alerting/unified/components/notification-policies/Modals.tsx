@@ -12,6 +12,7 @@ import {
 
 import { FormAmRoute } from '../../types/amroutes';
 import { MatcherFormatter } from '../../utils/matchers';
+import { InsertPosition } from '../../utils/routeTree';
 import { AlertGroup } from '../alert-groups/AlertGroup';
 import { useGetAmRouteReceiverWithGrafanaAppTypes } from '../receivers/grafanaAppReceivers/grafanaApp';
 
@@ -21,24 +22,28 @@ import { AmRoutesExpandedForm } from './EditNotificationPolicyForm';
 import { Matchers } from './Matchers';
 
 type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
+type AddModalHook<T = undefined> = [JSX.Element, (item: T, position: InsertPosition) => void, () => void];
 type EditModalHook = [JSX.Element, (item: RouteWithID, isDefaultRoute?: boolean) => void, () => void];
 
 const useAddPolicyModal = (
   receivers: Receiver[] = [],
-  handleAdd: (route: Partial<FormAmRoute>, parentRoute: RouteWithID) => void,
+  handleAdd: (route: Partial<FormAmRoute>, referenceRoute: RouteWithID, position: InsertPosition) => void,
   loading: boolean
-): ModalHook<RouteWithID> => {
+): AddModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState(false);
-  const [parentRoute, setParentRoute] = useState<RouteWithID>();
+  const [insertPosition, setInsertPosition] = useState<InsertPosition | undefined>(undefined);
+  const [referenceRoute, setReferenceRoute] = useState<RouteWithID>();
   const AmRouteReceivers = useGetAmRouteReceiverWithGrafanaAppTypes(receivers);
 
   const handleDismiss = useCallback(() => {
-    setParentRoute(undefined);
+    setReferenceRoute(undefined);
+    setInsertPosition(undefined);
     setShowModal(false);
   }, []);
 
-  const handleShow = useCallback((parentRoute: RouteWithID) => {
-    setParentRoute(parentRoute);
+  const handleShow = useCallback((referenceRoute: RouteWithID, position: InsertPosition) => {
+    setReferenceRoute(referenceRoute);
+    setInsertPosition(position);
     setShowModal(true);
   }, []);
 
@@ -57,9 +62,13 @@ const useAddPolicyModal = (
           <AmRoutesExpandedForm
             receivers={AmRouteReceivers}
             defaults={{
-              groupBy: parentRoute?.group_by,
+              groupBy: referenceRoute?.group_by,
             }}
-            onSubmit={(newRoute) => parentRoute && handleAdd(newRoute, parentRoute)}
+            onSubmit={(newRoute) => {
+              if (referenceRoute && insertPosition) {
+                handleAdd(newRoute, referenceRoute, insertPosition);
+              }
+            }}
             actionButtons={
               <Modal.ButtonRow>
                 <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
@@ -71,7 +80,7 @@ const useAddPolicyModal = (
           />
         </Modal>
       ),
-    [AmRouteReceivers, handleAdd, handleDismiss, loading, parentRoute, showModal]
+    [AmRouteReceivers, handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];

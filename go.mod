@@ -463,6 +463,11 @@ require github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
 
 require github.com/fullstorydev/grpchan v1.1.1 // @grafana/backend-platform
 
+// This needs to be here for other projects that import grafana/grafana
+// For local development grafana/grafana will always use the local files
+// Check go.work file for details
+require github.com/grafana/grafana/pkg/promlib v0.0.1 // @grafana/observability-metrics
+
 require (
 	github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c // indirect
 	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
@@ -513,3 +518,4 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 // Use our fork xorm. go.work currently overrides this and points to the local ./pkg/util/xorm directory.
 replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
+
