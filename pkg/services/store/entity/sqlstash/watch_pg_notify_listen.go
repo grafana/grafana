@@ -93,7 +93,8 @@ create or replace function tgf_notify_entity_history() returns trigger as $BODY$
 	end
 $BODY$ language plpgsql;
 
-create or replace trigger tg_notify_entity_history after insert on entity_history for each row execute function tgf_notify_entity_history();
+drop trigger if exists tg_notify_entity_history on entity_history;
+create trigger tg_notify_entity_history after insert on entity_history for each row execute function tgf_notify_entity_history();
 
 LISTEN unifiedstorage;`)
 	if err != nil {
