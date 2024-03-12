@@ -113,6 +113,24 @@ describe('DashboardScene', () => {
         expect(scene.state.isEditing).toBe(true);
       });
 
+      it('Exiting already saved dashboard should not restore initial state', () => {
+        scene.setState({ title: 'Updated title' });
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.saveCompleted({} as Dashboard, {
+          id: 1,
+          slug: 'slug',
+          uid: 'dash-1',
+          url: 'sss',
+          version: 2,
+          status: 'aaa',
+        });
+
+        expect(scene.state.isDirty).toBe(false);
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.title).toEqual('Updated title');
+      });
+
       it('Should start the detect changes worker', () => {
         expect(worker.onmessage).toBeDefined();
       });
