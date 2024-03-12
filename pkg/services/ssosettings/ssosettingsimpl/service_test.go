@@ -193,7 +193,8 @@ func TestService_GetForProvider(t *testing.T) {
 					Settings: map[string]any{
 						"enabled":  true,
 						"auth_url": "",
-						"api_url":  "https://overwritten-api-url.com/user",
+						"api_url":  "https://overwritten-api.com/user",
+						"team_ids": "",
 					},
 					Source: models.DB,
 				}
@@ -203,6 +204,7 @@ func TestService_GetForProvider(t *testing.T) {
 						"auth_url":  "https://github.com/login/oauth/authorize",
 						"token_url": "https://github.com/login/oauth/access_token",
 						"api_url":   "https://api.github.com/user",
+						"team_ids":  "10,11,12",
 					},
 				}
 			},
@@ -212,7 +214,8 @@ func TestService_GetForProvider(t *testing.T) {
 					"enabled":   true,
 					"auth_url":  "https://github.com/login/oauth/authorize",
 					"token_url": "https://github.com/login/oauth/access_token",
-					"api_url":   "https://overwritten-api-url.com/user",
+					"api_url":   "https://overwritten-api.com/user",
+					"team_ids":  "",
 				},
 				Source: models.DB,
 			},
