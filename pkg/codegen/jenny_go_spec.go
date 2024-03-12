@@ -1,14 +1,13 @@
 package codegen
 
 import (
-	"fmt"
-
 	"cuelang.org/go/cue"
+	"fmt"
+	"github.com/grafana/grafana/pkg/codegen/generators"
+
 	"github.com/dave/dst/dstutil"
 	"github.com/grafana/codejen"
 	"github.com/grafana/kindsys"
-	"github.com/grafana/thema/encoding/gocode"
-	"github.com/grafana/thema/encoding/openapi"
 )
 
 type GoSpecJenny struct {
@@ -23,12 +22,12 @@ func (jenny *GoSpecJenny) Generate(kinds ...kindsys.Kind) (codejen.Files, error)
 	files := make(codejen.Files, len(kinds))
 	for i, v := range kinds {
 		name := v.Lineage().Name()
-		b, err := gocode.GenerateTypesOpenAPI(v.Lineage().Latest(),
-			&gocode.TypeConfigOpenAPI{
-				Config: &openapi.Config{
-					Group:    false,
+		b, err := generators.GenerateTypesGo(v.Lineage().Latest(),
+			&generators.GoConfig{
+				Config: &generators.OpenApiConfig{
+					IsGroup:  false,
 					RootName: "Spec",
-					Subpath:  cue.MakePath(cue.Str("spec")),
+					SubPath:  cue.MakePath(cue.Str("spec")),
 				},
 				PackageName: name,
 				ApplyFuncs:  append(jenny.ApplyFuncs, PrefixDropper(v.Props().Common().Name)),
