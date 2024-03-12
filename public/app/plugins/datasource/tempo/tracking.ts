@@ -60,11 +60,6 @@ export const onDashboardLoadedHandler = ({
         ) {
           stats.native_search_queries_with_template_variables_count++;
         }
-      } else if (query.queryType === 'search') {
-        stats.search_query_count++;
-        if (query.linkedQuery && query.linkedQuery.expr && hasTemplateVariables(query.linkedQuery.expr)) {
-          stats.search_queries_with_template_variables_count++;
-        }
       } else if (query.queryType === 'serviceMap') {
         stats.service_map_query_count++;
         if (query.serviceMapQuery && hasTemplateVariables(query.serviceMapQuery)) {

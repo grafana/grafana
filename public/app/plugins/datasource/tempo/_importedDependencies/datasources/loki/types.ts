@@ -17,36 +17,30 @@ import { Loki as LokiQueryFromSchema, LokiQueryType, SupportingQueryType, LokiQu
 
 export { LokiQueryType };
 
-export enum LokiResultType {
-  Stream = 'streams',
-  Vector = 'vector',
-  Matrix = 'matrix',
-}
+// export interface LokiQuery extends LokiQueryFromSchema {
+//   direction?: LokiQueryDirection;
+//   /** Used only to identify supporting queries, e.g. logs volume, logs sample and data sample */
+//   supportingQueryType?: SupportingQueryType;
+//   // CUE autogenerates `queryType` as `?string`, as that's how it is defined
+//   // in the parent-interface (in DataQuery).
+//   // the temporary fix (until this gets improved in the codegen), is to
+//   // override it here
+//   queryType?: LokiQueryType;
 
-export interface LokiQuery extends LokiQueryFromSchema {
-  direction?: LokiQueryDirection;
-  /** Used only to identify supporting queries, e.g. logs volume, logs sample and data sample */
-  supportingQueryType?: SupportingQueryType;
-  // CUE autogenerates `queryType` as `?string`, as that's how it is defined
-  // in the parent-interface (in DataQuery).
-  // the temporary fix (until this gets improved in the codegen), is to
-  // override it here
-  queryType?: LokiQueryType;
+//   /**
+//    * This is a property for the experimental query splitting feature.
+//    * @experimental
+//    */
+//   splitDuration?: string;
+// }
 
-  /**
-   * This is a property for the experimental query splitting feature.
-   * @experimental
-   */
-  splitDuration?: string;
-}
-
-export interface LokiOptions extends DataSourceJsonData {
-  maxLines?: string;
-  derivedFields?: DerivedFieldConfig[];
-  alertmanager?: string;
-  keepCookies?: string[];
-  predefinedOperations?: string;
-}
+// export interface LokiOptions extends DataSourceJsonData {
+//   maxLines?: string;
+//   derivedFields?: DerivedFieldConfig[];
+//   alertmanager?: string;
+//   keepCookies?: string[];
+//   predefinedOperations?: string;
+// }
 
 export type DerivedFieldConfig = {
   matcherRegex: string;
@@ -66,25 +60,25 @@ export interface QueryStats {
   message?: string;
 }
 
-export type LokiDatasource = {
-  name: string;
-  id: number;
-  type: string;
-  uid: string;
-  query: (request: DataQueryRequest<any>) => Observable<DataQueryResponse> | Promise<DataQueryResponse>;
-  testDatasource: () => Promise<TestDataSourceResponse>;
-  meta: DataSourcePluginMeta<{}>;
-  getRef: () => DataSourceRef;
-  metadataRequest: (
-    url: string,
-    params?: Record<string, string | number>,
-    options?: Partial<BackendSrvRequest>
-  ) => Promise<any>;
-  getTimeRangeParams: () => any;
-  interpolateString: (string: string, scopedVars?: ScopedVars) => string;
-  getDataSamples: (query: LokiQuery) => Promise<DataFrame[]>;
-  languageProvider: any;
-};
+// export type LokiDatasource = {
+//   name: string;
+//   id: number;
+//   type: string;
+//   uid: string;
+//   query: (request: DataQueryRequest<any>) => Observable<DataQueryResponse> | Promise<DataQueryResponse>;
+//   testDatasource: () => Promise<TestDataSourceResponse>;
+//   meta: DataSourcePluginMeta<{}>;
+//   getRef: () => DataSourceRef;
+//   metadataRequest: (
+//     url: string,
+//     params?: Record<string, string | number>,
+//     options?: Partial<BackendSrvRequest>
+//   ) => Promise<any>;
+//   getTimeRangeParams: () => any;
+//   interpolateString: (string: string, scopedVars?: ScopedVars) => string;
+//   getDataSamples: (query: LokiQuery) => Promise<DataFrame[]>;
+//   languageProvider: any;
+// };
 
 export interface ParserAndLabelKeysResult {
   extractedLabelKeys: string[];

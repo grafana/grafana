@@ -34,9 +34,6 @@ export interface TempoJsonData extends DataSourceJsonData {
 }
 
 export interface TempoQuery extends TempoBase {
-  // Query to find list of traces, e.g., via Loki
-  // Improvement: change this field to the schema type when LokiQuery exists in the schema
-  linkedQuery?: LokiQuery;
   queryType: TempoQueryType;
 }
 

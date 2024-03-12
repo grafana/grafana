@@ -172,14 +172,14 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             </HorizontalGroup>
           </InlineField>
         </InlineFieldRow>
-        {query.queryType === 'search' && (
+        {/* {query.queryType === 'search' && (
           <LokiSearch
             logsDatasourceUid={logsDatasourceUid}
             query={query}
             onRunQuery={this.onRunLinkedQuery}
             onChange={this.onChangeLinkedQuery}
           />
-        )}
+        )} */}
         {query.queryType === 'nativeSearch' && (
           <NativeSearch
             datasource={this.props.datasource}

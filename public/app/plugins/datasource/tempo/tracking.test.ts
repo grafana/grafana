@@ -37,17 +37,11 @@ jest.mock('@grafana/runtime', () => {
                 {
                   datasource: { type: 'tempo', uid: 'abc' },
                   queryType: 'search',
-                  linkedQuery: {
-                    expr: '{}',
-                  },
                   refId: 'A',
                 },
                 {
                   datasource: { type: 'tempo', uid: 'abc' },
                   queryType: 'search',
-                  linkedQuery: {
-                    expr: '{$var}',
-                  },
                   refId: 'A',
                 },
                 {
