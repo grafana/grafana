@@ -264,3 +264,19 @@ You can find more information and how to configure the plugin [on Github](https:
 {{< figure src="/media/images/dashboards/surrealdb-dashboard-example.png" >}}
 
 [Documentation](https://grafana.com/grafana/plugins/grafana-surrealdb-datasource/)
+
+## Table Visualization for Logs
+
+<!-- #observability-logs -->
+
+_Generally available in all editions of Grafana_
+
+The table visualization for logs, announced in public preview for Grafana 10.3, is generally available in Cloud (all editions) and with Grafana 10.4.
+
+New to the table visualization with 10.4:
+
+- the ability to sort columns
+- data type autodetection of fields
+- autodetection and clean formatting of json fields
+
+Try it out today!
