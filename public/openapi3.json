@@ -1696,20 +1696,6 @@
         },
         "type": "object"
       },
-      "AlertPair": {
-        "properties": {
-          "alertRule": {
-            "$ref": "#/components/schemas/AlertRuleUpgrade"
-          },
-          "error": {
-            "type": "string"
-          },
-          "legacyAlert": {
-            "$ref": "#/components/schemas/LegacyAlert"
-          }
-        },
-        "type": "object"
-      },
       "AlertQuery": {
         "properties": {
           "datasourceUid": {
@@ -1979,23 +1965,6 @@
           }
         },
         "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
-        "type": "object"
-      },
-      "AlertRuleUpgrade": {
-        "properties": {
-          "sendsTo": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "title": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
         "type": "object"
       },
       "AlertStateInfoDTO": {
@@ -2846,20 +2815,6 @@
         "title": "Config is the top-level configuration for Alertmanager's config files.",
         "type": "object"
       },
-      "ContactPair": {
-        "properties": {
-          "contactPoint": {
-            "$ref": "#/components/schemas/ContactPointUpgrade"
-          },
-          "error": {
-            "type": "string"
-          },
-          "legacyChannel": {
-            "$ref": "#/components/schemas/LegacyChannel"
-          }
-        },
-        "type": "object"
-      },
       "ContactPointExport": {
         "properties": {
           "name": {
@@ -2877,20 +2832,6 @@
           }
         },
         "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
-        "type": "object"
-      },
-      "ContactPointUpgrade": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "routeMatchers": {
-            "$ref": "#/components/schemas/ObjectMatchers"
-          },
-          "type": {
-            "type": "string"
-          }
-        },
         "type": "object"
       },
       "ContactPoints": {
@@ -3397,48 +3338,6 @@
             "type": "integer"
           },
           "term": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "DashboardUpgrade": {
-        "properties": {
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardName": {
-            "type": "string"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
-          "error": {
-            "type": "string"
-          },
-          "folderName": {
-            "type": "string"
-          },
-          "folderUid": {
-            "type": "string"
-          },
-          "migratedAlerts": {
-            "items": {
-              "$ref": "#/components/schemas/AlertPair"
-            },
-            "type": "array"
-          },
-          "newFolderName": {
-            "type": "string"
-          },
-          "newFolderUid": {
-            "type": "string"
-          },
-          "provisioned": {
-            "type": "boolean"
-          },
-          "warning": {
             "type": "string"
           }
         },
@@ -4341,7 +4240,7 @@
         "title": "FrameMeta matches:"
       },
       "FrameType": {
-        "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+        "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
         "type": "string"
       },
       "FrameTypeVersion": {
@@ -5209,7 +5108,6 @@
         "type": "object"
       },
       "JSONWebKey": {
-        "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
         "properties": {
           "Algorithm": {
             "description": "Key algorithm, parsed from `alg` header.",
@@ -5242,7 +5140,7 @@
             "$ref": "#/components/schemas/URL"
           },
           "Key": {
-            "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\ned25519.PublicKey\ned25519.PrivateKey\necdsa.PublicKey\necdsa.PrivateKey\nrsa.PublicKey\nrsa.PrivateKey\n[]byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
+            "description": "Cryptographic key, can be a symmetric or asymmetric key."
           },
           "KeyID": {
             "description": "Key identifier, parsed from `kid` header.",
@@ -5253,6 +5151,7 @@
             "type": "string"
           }
         },
+        "title": "JSONWebKey represents a public or private key in JWK format.",
         "type": "object"
       },
       "Json": {
@@ -5302,21 +5201,6 @@
         "type": "array"
       },
       "LegacyAlert": {},
-      "LegacyChannel": {
-        "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "LibraryElementArrayResponse": {
         "properties": {
           "result": {
@@ -6044,50 +5928,6 @@
         },
         "type": "object"
       },
-      "OrgMigrationState": {
-        "properties": {
-          "migratedChannels": {
-            "items": {
-              "$ref": "#/components/schemas/ContactPair"
-            },
-            "type": "array"
-          },
-          "migratedDashboards": {
-            "items": {
-              "$ref": "#/components/schemas/DashboardUpgrade"
-            },
-            "type": "array"
-          },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "OrgMigrationSummary": {
-        "properties": {
-          "hasErrors": {
-            "type": "boolean"
-          },
-          "newAlerts": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "newChannels": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "newDashboards": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "removed": {
-            "type": "boolean"
-          }
-        },
-        "type": "object"
-      },
       "OrgUserDTO": {
         "properties": {
           "accessControl": {
@@ -6539,6 +6379,7 @@
         "type": "object"
       },
       "PostableApiAlertingConfig": {
+        "description": "nolint:revive",
         "properties": {
           "global": {
             "$ref": "#/components/schemas/GlobalConfig"
@@ -6582,6 +6423,7 @@
         "type": "object"
       },
       "PostableApiReceiver": {
+        "description": "nolint:revive",
         "properties": {
           "discord_configs": {
             "items": {
@@ -10335,7 +10177,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -10555,7 +10396,6 @@
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10604,6 +10444,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -10754,6 +10595,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",

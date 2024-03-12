@@ -11344,20 +11344,6 @@
         }
       }
     },
-    "AlertPair": {
-      "type": "object",
-      "properties": {
-        "alertRule": {
-          "$ref": "#/definitions/AlertRuleUpgrade"
-        },
-        "error": {
-          "type": "string"
-        },
-        "legacyAlert": {
-          "$ref": "#/definitions/LegacyAlert"
-        }
-      }
-    },
     "AlertQuery": {
       "type": "object",
       "title": "AlertQuery represents a single query associated with an alert definition.",
@@ -11625,23 +11611,6 @@
           "type": "string"
         },
         "repeat_interval": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertRuleUpgrade": {
-      "type": "object",
-      "properties": {
-        "sendsTo": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "title": {
-          "type": "string"
-        },
-        "uid": {
           "type": "string"
         }
       }
@@ -12494,20 +12463,6 @@
         }
       }
     },
-    "ContactPair": {
-      "type": "object",
-      "properties": {
-        "contactPoint": {
-          "$ref": "#/definitions/ContactPointUpgrade"
-        },
-        "error": {
-          "type": "string"
-        },
-        "legacyChannel": {
-          "$ref": "#/definitions/LegacyChannel"
-        }
-      }
-    },
     "ContactPointExport": {
       "type": "object",
       "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
@@ -12524,20 +12479,6 @@
           "items": {
             "$ref": "#/definitions/ReceiverExport"
           }
-        }
-      }
-    },
-    "ContactPointUpgrade": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "routeMatchers": {
-          "$ref": "#/definitions/ObjectMatchers"
-        },
-        "type": {
-          "type": "string"
         }
       }
     },
@@ -13046,48 +12987,6 @@
           "format": "int64"
         },
         "term": {
-          "type": "string"
-        }
-      }
-    },
-    "DashboardUpgrade": {
-      "type": "object",
-      "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardName": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        },
-        "folderName": {
-          "type": "string"
-        },
-        "folderUid": {
-          "type": "string"
-        },
-        "migratedAlerts": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AlertPair"
-          }
-        },
-        "newFolderName": {
-          "type": "string"
-        },
-        "newFolderUid": {
-          "type": "string"
-        },
-        "provisioned": {
-          "type": "boolean"
-        },
-        "warning": {
           "type": "string"
         }
       }
@@ -13989,7 +13888,7 @@
       "title": "FrameMeta matches:"
     },
     "FrameType": {
-      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
       "type": "string"
     },
     "FrameTypeVersion": {
@@ -14857,8 +14756,8 @@
       }
     },
     "JSONWebKey": {
-      "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
       "type": "object",
+      "title": "JSONWebKey represents a public or private key in JWK format.",
       "properties": {
         "Algorithm": {
           "description": "Key algorithm, parsed from `alg` header.",
@@ -14891,7 +14790,7 @@
           "$ref": "#/definitions/URL"
         },
         "Key": {
-          "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\ned25519.PublicKey\ned25519.PrivateKey\necdsa.PublicKey\necdsa.PrivateKey\nrsa.PublicKey\nrsa.PrivateKey\n[]byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
+          "description": "Cryptographic key, can be a symmetric or asymmetric key."
         },
         "KeyID": {
           "description": "Key identifier, parsed from `kid` header.",
@@ -14950,21 +14849,6 @@
       }
     },
     "LegacyAlert": {},
-    "LegacyChannel": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        }
-      }
-    },
     "LibraryElementArrayResponse": {
       "type": "object",
       "title": "LibraryElementArrayResponse is a response struct for an array of LibraryElementDTO.",
@@ -15692,50 +15576,6 @@
         }
       }
     },
-    "OrgMigrationState": {
-      "type": "object",
-      "properties": {
-        "migratedChannels": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ContactPair"
-          }
-        },
-        "migratedDashboards": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DashboardUpgrade"
-          }
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "OrgMigrationSummary": {
-      "type": "object",
-      "properties": {
-        "hasErrors": {
-          "type": "boolean"
-        },
-        "newAlerts": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "newChannels": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "newDashboards": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "removed": {
-          "type": "boolean"
-        }
-      }
-    },
     "OrgUserDTO": {
       "type": "object",
       "properties": {
@@ -16187,6 +16027,7 @@
       }
     },
     "PostableApiAlertingConfig": {
+      "description": "nolint:revive",
       "type": "object",
       "properties": {
         "global": {
@@ -16230,6 +16071,7 @@
       }
     },
     "PostableApiReceiver": {
+      "description": "nolint:revive",
       "type": "object",
       "properties": {
         "discord_configs": {
@@ -19984,7 +19826,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -20204,7 +20045,6 @@
       }
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -20253,6 +20093,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -20403,6 +20244,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
