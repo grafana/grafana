@@ -117,7 +117,7 @@ export const UsersTable = ({
           iconName: 'question-circle',
         },
         cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
-          return <>{value && value === '10 years' ? <Text color={'disabled'}>Never</Text> : value}</>;
+          return <>{value && <>{value === '10 years' ? <Text color={'disabled'}>Never</Text> : value}</>}</>;
         },
         sortType: (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime(),
       },
