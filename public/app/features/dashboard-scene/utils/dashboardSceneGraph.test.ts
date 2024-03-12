@@ -6,7 +6,9 @@ import {
   SceneQueryRunner,
   SceneTimeRange,
   VizPanel,
+  behaviors,
 } from '@grafana/scenes';
+import { DashboardCursorSync } from '@grafana/schema';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -14,16 +16,17 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 
 import { dashboardSceneGraph, getNextPanelId } from './dashboardSceneGraph';
 import { findVizPanelByKey } from './utils';
 
 describe('dashboardSceneGraph', () => {
   describe('getPanelLinks', () => {
-    it('should throw if no links object defined', () => {
+    it('should return null if no links object defined', () => {
       const scene = buildTestScene();
       const panelWithNoLinks = findVizPanelByKey(scene, 'panel-1')!;
-      expect(() => dashboardSceneGraph.getPanelLinks(panelWithNoLinks)).toThrow();
+      expect(dashboardSceneGraph.getPanelLinks(panelWithNoLinks)).toBeNull();
     });
 
     it('should resolve VizPanelLinks object', () => {
@@ -121,7 +124,7 @@ describe('dashboardSceneGraph', () => {
       expect(id).toBe(4);
     });
 
-    it('should take library panels into account', () => {
+    it('should take library panels, panels in rows and panel repeaters into account', () => {
       const scene = buildTestScene({
         body: new SceneGridLayout({
           children: [
@@ -148,6 +151,17 @@ describe('dashboardSceneGraph', () => {
                 key: 'panel-2-clone-1',
                 pluginId: 'table',
               }),
+            }),
+            new PanelRepeaterGridItem({
+              source: new VizPanel({
+                title: 'Panel C',
+                key: 'panel-4',
+                pluginId: 'table',
+              }),
+              variableName: 'repeat',
+              repeatedPanels: [],
+              repeatDirection: 'h',
+              maxPerRow: 1,
             }),
             new SceneGridRow({
               key: 'key',
@@ -176,7 +190,7 @@ describe('dashboardSceneGraph', () => {
 
       const id = getNextPanelId(scene);
 
-      expect(id).toBe(4);
+      expect(id).toBe(5);
     });
 
     it('should get next panel id in a layout with rows', () => {
@@ -199,6 +213,22 @@ describe('dashboardSceneGraph', () => {
       expect(() => getNextPanelId(scene)).toThrow('Dashboard body is not a SceneGridLayout');
     });
   });
+
+  describe('getCursorSync', () => {
+    it('should return cursor sync behavior', () => {
+      const scene = buildTestScene();
+      const cursorSync = dashboardSceneGraph.getCursorSync(scene);
+
+      expect(cursorSync).toBeInstanceOf(behaviors.CursorSync);
+    });
+
+    it('should return undefined if no cursor sync behavior', () => {
+      const scene = buildTestScene({ $behaviors: [] });
+      const cursorSync = dashboardSceneGraph.getCursorSync(scene);
+
+      expect(cursorSync).toBeUndefined();
+    });
+  });
 });
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
@@ -207,6 +237,11 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
     uid: 'dash-1',
     $timeRange: new SceneTimeRange({}),
     controls: new DashboardControls({}),
+    $behaviors: [
+      new behaviors.CursorSync({
+        sync: DashboardCursorSync.Crosshair,
+      }),
+    ],
     $data: new SceneDataLayers({
       layers: [
         new DashboardAnnotationsDataLayer({

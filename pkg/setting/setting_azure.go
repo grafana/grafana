@@ -9,6 +9,10 @@ func (cfg *Cfg) readAzureSettings() {
 	azureSettings := &azsettings.AzureSettings{}
 
 	azureSection := cfg.Raw.Section("azure")
+	authSection := cfg.Raw.Section("auth")
+
+	// This setting is specific to Prometheus
+	azureSettings.AzureAuthEnabled = authSection.Key("azure_auth_enabled").MustBool(false)
 
 	// Cloud
 	cloudName := azureSection.Key("cloud").MustString(azsettings.AzurePublic)

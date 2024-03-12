@@ -12,7 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 )
@@ -22,9 +22,10 @@ type VersionsREST struct {
 }
 
 var _ = rest.Connecter(&VersionsREST{})
+var _ = rest.StorageMetadata(&VersionsREST{})
 
 func (r *VersionsREST) New() runtime.Object {
-	return &v0alpha1.DashboardVersionsInfo{}
+	return &dashboard.DashboardVersionList{}
 }
 
 func (r *VersionsREST) Destroy() {
@@ -32,6 +33,14 @@ func (r *VersionsREST) Destroy() {
 
 func (r *VersionsREST) ConnectMethods() []string {
 	return []string{"GET"}
+}
+
+func (r *VersionsREST) ProducesMIMETypes(verb string) []string {
+	return nil
+}
+
+func (r *VersionsREST) ProducesObject(verb string) interface{} {
+	return &dashboard.DashboardVersionList{}
 }
 
 func (r *VersionsREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -68,7 +77,7 @@ func (r *VersionsREST) Connect(ctx context.Context, uid string, opts runtime.Obj
 			data, _ := dto.Data.Map()
 
 			// Convert the version to a regular dashboard
-			dash := &v0alpha1.Dashboard{
+			dash := &dashboard.Dashboard{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              uid,
 					CreationTimestamp: metav1.NewTime(dto.Created),
@@ -88,9 +97,9 @@ func (r *VersionsREST) Connect(ctx context.Context, uid string, opts runtime.Obj
 			responder.Error(err)
 			return
 		}
-		versions := &v0alpha1.DashboardVersionsInfo{}
+		versions := &dashboard.DashboardVersionList{}
 		for _, v := range rsp {
-			info := v0alpha1.DashboardVersionInfo{
+			info := dashboard.DashboardVersionInfo{
 				Version: v.Version,
 				Created: v.Created.UnixMilli(),
 				Message: v.Message,

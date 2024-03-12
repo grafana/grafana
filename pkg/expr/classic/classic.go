@@ -54,7 +54,7 @@ type condition struct {
 	// Operator is the logical operator to use when there are two conditions in ConditionsCmd.
 	// If there are more than two conditions in ConditionsCmd then operator is used to compare
 	// the outcome of this condition with that of the condition before it.
-	Operator string
+	Operator ConditionOperatorType
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -216,7 +216,7 @@ func (cmd *ConditionsCmd) executeCond(_ context.Context, _ time.Time, cond condi
 	return isCondFiring, isCondNoData, matches, nil
 }
 
-func compareWithOperator(b1, b2 bool, operator string) bool {
+func compareWithOperator(b1, b2 bool, operator ConditionOperatorType) bool {
 	if operator == "or" {
 		return b1 || b2
 	} else {
@@ -262,8 +262,17 @@ type ConditionEvalJSON struct {
 	Type   string    `json:"type"` // e.g. "gt"
 }
 
+// The reducer function
+// +enum
+type ConditionOperatorType string
+
+const (
+	ConditionOperatorAnd ConditionOperatorType = "and"
+	ConditionOperatorOr  ConditionOperatorType = "or"
+)
+
 type ConditionOperatorJSON struct {
-	Type string `json:"type"`
+	Type ConditionOperatorType `json:"type"`
 }
 
 type ConditionQueryJSON struct {
