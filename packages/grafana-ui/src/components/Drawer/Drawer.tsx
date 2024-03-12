@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
-import { useOverlay } from '@react-aria/overlays';
+import { usePreventScroll, useOverlay } from '@react-aria/overlays';
 import RcDrawer from 'rc-drawer';
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 
@@ -63,6 +63,7 @@ export function Drawer({
   tabs,
 }: Props) {
   const [drawerWidth, onMouseDown, onTouchStart] = useResizebleDrawer();
+  usePreventScroll();
 
   const styles = useStyles2(getStyles);
   const sizeStyles = useStyles2(getSizeStyles, size, drawerWidth ?? width);

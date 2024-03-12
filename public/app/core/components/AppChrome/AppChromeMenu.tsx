@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
-import { OverlayContainer, useOverlay } from '@react-aria/overlays';
+import { OverlayContainer, useOverlay, usePreventScroll } from '@react-aria/overlays';
 import React, { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
@@ -17,6 +17,7 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 interface Props {}
 
 export function AppChromeMenu({}: Props) {
+  usePreventScroll();
   const theme = useTheme2();
   const { chrome } = useGrafana();
   const state = chrome.useState();
