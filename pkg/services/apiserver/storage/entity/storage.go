@@ -289,6 +289,53 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
+	// translate grafana.app/* label selectors into field requirements
+	requirements, newSelector, err := ReadLabelSelectors(opts.Predicate.Label)
+	if err != nil {
+		return err
+	}
+
+	if requirements.ListHistory != "" {
+		k.Name = requirements.ListHistory
+
+		req := &entityStore.EntityHistoryRequest{
+			Key:           k.String(),
+			WithBody:      true,
+			WithStatus:    true,
+			NextPageToken: opts.Predicate.Continue,
+			Limit:         opts.Predicate.Limit,
+		}
+
+		rsp, err := s.store.History(ctx, req)
+		if err != nil {
+			return apierrors.NewInternalError(err)
+		}
+
+		for _, r := range rsp.Versions {
+			res := s.newFunc()
+
+			err := entityToResource(r, res, s.codec)
+			if err != nil {
+				return apierrors.NewInternalError(err)
+			}
+
+			v.Set(reflect.Append(v, reflect.ValueOf(res).Elem()))
+		}
+
+		listAccessor, err := meta.ListAccessor(listObj)
+		if err != nil {
+			return err
+		}
+
+		if rsp.NextPageToken != "" {
+			listAccessor.SetContinue(rsp.NextPageToken)
+		}
+
+		listAccessor.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
+
+		return nil
+	}
+
 	req := &entityStore.EntityListRequest{
 		Key: []string{
 			k.String(),
@@ -300,11 +347,6 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		Labels:        map[string]string{},
 	}
 
-	// translate grafana.app/* label selectors into field requirements
-	requirements, newSelector, err := ReadLabelSelectors(opts.Predicate.Label)
-	if err != nil {
-		return err
-	}
 	if requirements.Folder != nil {
 		req.Folder = *requirements.Folder
 	}
