@@ -3,6 +3,7 @@ package strategies
 import (
 	"context"
 	"maps"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,8 +24,7 @@ func NewSAMLStrategy(cfg *setting.Cfg, settingsProvider setting.Provider) *SAMLS
 		settings:         make(map[string]any),
 	}
 
-	section := samlStrategy.settingsProvider.Section("auth.saml")
-	samlStrategy.settings = samlStrategy.loadSAMLSettings(section)
+	samlStrategy.settings = samlStrategy.loadSAMLSettings()
 
 	return samlStrategy
 }
@@ -39,7 +39,8 @@ func (s *SAMLStrategy) GetProviderConfig(_ context.Context, provider string) (ma
 	return result, nil
 }
 
-func (s *SAMLStrategy) loadSAMLSettings(section setting.Section) map[string]any {
+func (s *SAMLStrategy) loadSAMLSettings() map[string]any {
+	section := s.settingsProvider.Section("auth.saml")
 	result := map[string]any{
 		"enabled":                    section.KeyValue("enabled").MustBool(false),
 		"single_logout":              section.KeyValue("single_logout").MustBool(false),
@@ -53,8 +54,8 @@ func (s *SAMLStrategy) loadSAMLSettings(section setting.Section) map[string]any 
 		"idp_metadata":               section.KeyValue("idp_metadata").MustString(""),
 		"idp_metadata_path":          section.KeyValue("idp_metadata_path").MustString(""),
 		"idp_metadata_url":           section.KeyValue("idp_metadata_url").MustString(""),
-		"max_issue_delay":            section.KeyValue("max_issue_delay").MustString(""),
-		"metadata_valid_duration":    section.KeyValue("metadata_valid_duration").MustString(""),
+		"max_issue_delay":            section.KeyValue("max_issue_delay").MustDuration(90 * time.Second),
+		"metadata_valid_duration":    section.KeyValue("metadata_valid_duration").MustDuration(48 * time.Hour),
 		"allow_idp_initiated":        section.KeyValue("allow_idp_initiated").MustBool(false),
 		"relay_state":                section.KeyValue("relay_state").MustString(""),
 		"assertion_attribute_name":   section.KeyValue("assertion_attribute_name").MustString(""),
