@@ -431,10 +431,13 @@ describe('PanelQueryRunner', () => {
     'shouldAddErrorwhenDatasourceVariableIsMultiple',
     (ctx) => {
       it('should add error when datasource variable is multiple and not repeated', async () => {
-        // scopedVars is an objet that represent the variables repeated in a panel
+        // scopedVars is an object that represent the variables repeated in a panel
         const scopedVars = {
           server: { text: 'Server1', value: 'server-1' },
         };
+
+        // We are spying on the replace method of the TemplateSrvMock to check if the custom format function is being called
+        const spyReplace = jest.spyOn(TemplateSrvMock.prototype, 'replace');
 
         const response = {
           data: [
@@ -460,9 +463,12 @@ describe('PanelQueryRunner', () => {
           testDatasource: jest.fn(),
         } as unknown as DataSourceApi;
 
-        const shouldAddError = ctx.runner.shouldAddErrorWhenDatasourceVariableIsMultiple(datasource, scopedVars);
+        ctx.runner.shouldAddErrorWhenDatasourceVariableIsMultiple(datasource, scopedVars);
 
-        expect(shouldAddError).toBe(true);
+        // the test is checking implementation details :(, but it is the only way to check if the error will be added
+        // if the getTemplateSrv.replace is called with the custom format function,it means we will check
+        // if the error should be added
+        expect(spyReplace.mock.calls[0][2]).toBeInstanceOf(Function);
       });
     },
     {
