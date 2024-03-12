@@ -31,7 +31,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "lint": "eslint --ext .ts,.tsx ./src",
     "prettier:check": "prettier --check --list-different=false --log-level=warn \"**/*.{ts,tsx,scss,md,mdx,json}\"",
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
+    "build": "yarn generate && tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "bundle": "rollup -c rollup.config.ts"
   },
   "devDependencies": {
