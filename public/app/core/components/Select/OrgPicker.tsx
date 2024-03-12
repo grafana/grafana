@@ -45,8 +45,11 @@ export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOr
       className={className}
       isLoading={orgOptionsState.loading}
       defaultOptions={true}
-      isSearchable={false}
       loadOptions={getOrgOptions}
+      filterOption={(option, rawInput) => {
+        const input = rawInput.toLowerCase();
+        return !!option.value?.name.toLowerCase().includes(input);
+      }}
       onChange={onSelected}
       placeholder="Select organization"
       noOptionsMessage="No organizations found"
