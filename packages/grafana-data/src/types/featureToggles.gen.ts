@@ -153,7 +153,6 @@ export interface FeatureToggles {
   canvasPanelPanZoom?: boolean;
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
-  alertingDetailsViewV2?: boolean;
   datatrails?: boolean;
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
