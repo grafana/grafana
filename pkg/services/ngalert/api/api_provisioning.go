@@ -397,10 +397,7 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *contextmodel.ReqContext, UID
 func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *contextmodel.ReqContext, folder string, group string) response.Response {
 	g, err := srv.alertRules.GetRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), folder, group)
 	if err != nil {
-		if errors.Is(err, store.ErrAlertRuleGroupNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusOK, ApiAlertRuleGroupFromAlertRuleGroup(g))
 }
@@ -446,10 +443,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqContext, folder string, group string) response.Response {
 	g, err := srv.alertRules.GetAlertRuleGroupWithFolderTitle(c.Req.Context(), c.SignedInUser.GetOrgID(), folder, group)
 	if err != nil {
-		if errors.Is(err, store.ErrAlertRuleGroupNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rule group")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rule group", err)
 	}
 
 	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{g})
@@ -510,10 +504,7 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRuleGroup(c *contextmodel.ReqContext
 	provenance := determineProvenance(c)
 	err := srv.alertRules.DeleteRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), folderUID, group, alerting_models.Provenance(provenance))
 	if err != nil {
-		if errors.Is(err, store.ErrAlertRuleGroupNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusNoContent, "")
 }

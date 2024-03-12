@@ -33,8 +33,7 @@ const AlertRuleMaxTitleLength = 190
 const AlertRuleMaxRuleGroupNameLength = 190
 
 var (
-	ErrAlertRuleGroupNotFound = errors.New("rulegroup not found")
-	ErrOptimisticLock         = errors.New("version conflict while updating a record in the database with optimistic locking")
+	ErrOptimisticLock = errors.New("version conflict while updating a record in the database with optimistic locking")
 )
 
 func getAlertRuleByUID(sess *db.Session, alertRuleUID string, orgID int64) (*ngmodels.AlertRule, error) {
@@ -446,7 +445,7 @@ func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 			ngmodels.AlertRule{OrgID: orgID, RuleGroup: ruleGroup, NamespaceUID: namespaceUID},
 		)
 		if len(ruleGroups) == 0 {
-			return ErrAlertRuleGroupNotFound
+			return ngmodels.ErrAlertRuleGroupNotFound.Errorf("")
 		}
 		interval = ruleGroups[0].IntervalSeconds
 		return err

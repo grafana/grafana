@@ -134,8 +134,8 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", rule.UID, err))
 	}
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
-	// if the alert group does not exists we just use the default interval
-	if err != nil && errors.Is(err, store.ErrAlertRuleGroupNotFound) {
+	// if the alert group does not exist we just use the default interval
+	if err != nil && errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		interval = service.defaultIntervalSeconds
 	} else if err != nil {
 		return models.AlertRule{}, err
@@ -199,7 +199,7 @@ func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, 
 		return models.AlertRuleGroup{}, err
 	}
 	if len(ruleList) == 0 {
-		return models.AlertRuleGroup{}, store.ErrAlertRuleGroupNotFound
+		return models.AlertRuleGroup{}, models.ErrAlertRuleGroupNotFound.Errorf("")
 	}
 	res := models.AlertRuleGroup{
 		Title:     ruleList[0].RuleGroup,
@@ -288,7 +288,7 @@ func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, orgID int6
 		return err
 	}
 	if len(ruleList) == 0 {
-		return store.ErrAlertRuleGroupNotFound
+		return models.ErrAlertRuleGroupNotFound.Errorf("")
 	}
 
 	// Check provenance for all rules in the group. Fail to delete if any deletions aren't allowed.
@@ -530,7 +530,7 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 		return models.AlertRuleGroupWithFolderTitle{}, err
 	}
 	if len(ruleList) == 0 {
-		return models.AlertRuleGroupWithFolderTitle{}, store.ErrAlertRuleGroupNotFound
+		return models.AlertRuleGroupWithFolderTitle{}, models.ErrAlertRuleGroupNotFound.Errorf("")
 	}
 
 	dq := dashboards.GetDashboardQuery{
