@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { behaviors, SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
@@ -22,6 +22,7 @@ import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteD
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
@@ -64,13 +65,7 @@ export class GeneralSettingsEditView
   }
 
   public getCursorSync() {
-    const cursorSync = this._dashboard.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
-
-    if (cursorSync instanceof behaviors.CursorSync) {
-      return cursorSync;
-    }
-
-    return;
+    return dashboardSceneGraph.getCursorSync(this._dashboard);
   }
 
   public getDashboardControls() {

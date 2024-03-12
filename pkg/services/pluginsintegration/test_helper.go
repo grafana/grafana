@@ -70,7 +70,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	require.NoError(t, err)
 
 	return &IntegrationTestCtx{
-		PluginClient:   client.ProvideService(reg, pCfg),
+		PluginClient:   client.ProvideService(reg),
 		PluginStore:    ps,
 		PluginRegistry: reg,
 	}
