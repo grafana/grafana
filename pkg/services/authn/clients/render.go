@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -22,12 +21,11 @@ const (
 
 var _ authn.ContextAwareClient = new(Render)
 
-func ProvideRender(userService user.Service, renderService rendering.Service) *Render {
-	return &Render{userService, renderService}
+func ProvideRender(renderService rendering.Service) *Render {
+	return &Render{renderService}
 }
 
 type Render struct {
-	userService   user.Service
 	renderService rendering.Service
 }
 
@@ -42,26 +40,23 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		return nil, errInvalidRenderKey.Errorf("found no render user for key: %s", key)
 	}
 
-	var identity *authn.Identity
 	if renderUsr.UserID <= 0 {
-		identity = &authn.Identity{
-			ID:           authn.NamespacedID(authn.NamespaceRenderService, 0),
-			OrgID:        renderUsr.OrgID,
-			OrgRoles:     map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
-			ClientParams: authn.ClientParams{SyncPermissions: true},
-		}
-	} else {
-		usr, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{UserID: renderUsr.UserID, OrgID: renderUsr.OrgID})
-		if err != nil {
-			return nil, err
-		}
-
-		identity = authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{SyncPermissions: true}, login.RenderModule)
+		return &authn.Identity{
+			ID:              authn.NamespacedID(authn.NamespaceRenderService, 0),
+			OrgID:           renderUsr.OrgID,
+			OrgRoles:        map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
+			ClientParams:    authn.ClientParams{SyncPermissions: true},
+			LastSeenAt:      time.Now(),
+			AuthenticatedBy: login.RenderModule,
+		}, nil
 	}
 
-	identity.LastSeenAt = time.Now()
-	identity.AuthenticatedBy = login.RenderModule
-	return identity, nil
+	return &authn.Identity{
+		ID:              authn.NamespacedID(authn.NamespaceUser, renderUsr.UserID),
+		LastSeenAt:      time.Now(),
+		AuthenticatedBy: login.RenderModule,
+		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
+	}, nil
 }
 
 func (c *Render) Test(ctx context.Context, r *authn.Request) bool {

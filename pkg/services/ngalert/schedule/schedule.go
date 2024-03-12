@@ -47,8 +47,8 @@ type schedule struct {
 	// base tick rate (fastest possible configured check)
 	baseInterval time.Duration
 
-	// each alert rule gets its own channel and routine
-	registry alertRuleInfoRegistry
+	// each rule gets its own channel and routine
+	registry ruleRegistry
 
 	maxAttempts int64
 
@@ -116,7 +116,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	}
 
 	sch := schedule{
-		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
+		registry:              newRuleRegistry(),
 		maxAttempts:           cfg.MaxAttempts,
 		clock:                 cfg.C,
 		baseInterval:          cfg.BaseInterval,
@@ -165,13 +165,13 @@ func (sch *schedule) deleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 			sch.log.Info("Alert rule cannot be removed from the scheduler as it is not scheduled", key.LogContext()...)
 		}
 		// Delete the rule routine
-		ruleInfo, ok := sch.registry.del(key)
+		ruleRoutine, ok := sch.registry.del(key)
 		if !ok {
 			sch.log.Info("Alert rule cannot be stopped as it is not running", key.LogContext()...)
 			continue
 		}
 		// stop rule evaluation
-		ruleInfo.stop(errRuleDeleted)
+		ruleRoutine.Stop(errRuleDeleted)
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
 	alertRules, _ := sch.schedulableAlertRules.all()
@@ -202,8 +202,8 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 }
 
 type readyToRunItem struct {
-	ruleInfo *alertRuleInfo
-	evaluation
+	ruleRoutine Rule
+	Evaluation
 }
 
 // TODO refactor to accept a callback for tests that will be called with things that are returned currently, and return nothing.
@@ -252,7 +252,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	)
 	for _, item := range alertRules {
 		key := item.GetKey()
-		ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key, ruleFactory)
+		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, key, ruleFactory)
 
 		// enforce minimum evaluation interval
 		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
@@ -264,7 +264,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		if newRoutine && !invalidInterval {
 			dispatcherGroup.Go(func() error {
-				return ruleInfo.run(key)
+				return ruleRoutine.Run(key)
 			})
 		}
 
@@ -291,7 +291,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		if isReadyToRun {
 			sch.log.Debug("Rule is ready to run on the current tick", "uid", item.UID, "tick", tickNum, "frequency", itemFrequency, "offset", offset)
-			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
+			readyToRun = append(readyToRun, readyToRunItem{ruleRoutine: ruleRoutine, Evaluation: Evaluation{
 				scheduledAt: tick,
 				rule:        item,
 				folderTitle: folderTitle,
@@ -300,12 +300,12 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		if _, isUpdated := updated[key]; isUpdated && !isReadyToRun {
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
 			sch.log.Debug("Rule has been updated. Notifying evaluation routine", key.LogContext()...)
-			go func(ri *alertRuleInfo, rule *ngmodels.AlertRule) {
-				ri.update(ruleVersionAndPauseStatus{
+			go func(routine Rule, rule *ngmodels.AlertRule) {
+				routine.Update(RuleVersionAndPauseStatus{
 					Fingerprint: ruleWithFolder{rule: rule, folderTitle: folderTitle}.Fingerprint(),
 					IsPaused:    rule.IsPaused,
 				})
-			}(ruleInfo, item)
+			}(ruleRoutine, item)
 			updatedRules = append(updatedRules, ngmodels.AlertRuleKeyWithVersion{
 				Version:      item.Version,
 				AlertRuleKey: item.GetKey(),
@@ -330,7 +330,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		time.AfterFunc(time.Duration(int64(i)*step), func() {
 			key := item.rule.GetKey()
-			success, dropped := item.ruleInfo.eval(&item.evaluation)
+			success, dropped := item.ruleRoutine.Eval(&item.Evaluation)
 			if !success {
 				sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", tick)...)
 				return
