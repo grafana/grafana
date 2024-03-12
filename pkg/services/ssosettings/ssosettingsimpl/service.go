@@ -432,7 +432,8 @@ func removeSecrets(settings map[string]any) map[string]any {
 }
 
 // mergeSettings merges two maps in a way that the values from the first map are preserved
-// and the values from the second map are added only if they don't exist in the first map
+// and the values from the second map are added only if they don't exist in the first map,
+// or if they are empty
 func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any {
 	settings := make(map[string]any)
 
@@ -442,6 +443,11 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 
 	for k, v := range systemSettings {
 		if _, ok := settings[k]; !ok {
+			settings[k] = v
+		} else if _, ok = settings[k].(string); ok && settings[k] == "" {
+			// Overwrite all DB settings containing an empty string with their value from the system settings.
+			// This fixes an issue with empty auth_url, api_url and token_url from the DB
+			// not being replaced with their values defined in the system settings.
 			settings[k] = v
 		}
 	}
