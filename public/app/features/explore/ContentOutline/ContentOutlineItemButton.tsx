@@ -6,13 +6,14 @@ import { Icon, useStyles2, Tooltip, IconSize } from '@grafana/ui';
 
 type CommonProps = {
   title?: string;
-  icon?: string;
+  icon?: IconName | React.ReactNode;
   tooltip?: string;
   className?: string;
   collapsible?: boolean;
   collapsed?: boolean;
   toggleCollapsed?: () => void;
   isActive?: boolean;
+  iconRight?: boolean;
 };
 
 export type ContentOutlineItemButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -26,6 +27,7 @@ export function ContentOutlineItemButton({
   collapsed,
   toggleCollapsed,
   isActive,
+  iconRight,
   ...rest
 }: ContentOutlineItemButtonProps) {
   const styles = useStyles2(getStyles);
@@ -42,6 +44,7 @@ export function ContentOutlineItemButton({
       <button
         className={cx(buttonStyles, {
           [styles.active]: isActive,
+          [styles.iconRight]: iconRight,
         })}
         aria-label={tooltip}
         {...rest}
@@ -132,6 +135,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         width: theme.spacing(0.5),
         left: '2px',
       },
+    }),
+    iconRight: css({
+      justifyContent: 'flex-end',
     }),
   };
 };
