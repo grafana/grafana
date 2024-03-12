@@ -136,7 +136,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		return NewConfig(aggregatorConfig, sharedInformerFactory, nil), nil
 	}
 
-	caBundlePEM, err := readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
+	_, err = readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		InsecureSkipTLSVerify:  true,
 		ExternalNamesNamespace: externalNamesNamespace,
 		// TODO: CABundle can't be set when insecure is true
-		// CABundle:               caBundlePEM,
+		// CABundle: caBundlePEM,
 		Services:         remoteServices,
 		serviceClientSet: serviceClient,
 	}
