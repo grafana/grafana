@@ -9,7 +9,6 @@ import (
 )
 
 type SAMLStrategy struct {
-	cfg              *setting.Cfg
 	settingsProvider setting.Provider
 }
 
@@ -17,7 +16,6 @@ var _ ssosettings.FallbackStrategy = (*SAMLStrategy)(nil)
 
 func NewSAMLStrategy(cfg *setting.Cfg, settingsProvider setting.Provider) *SAMLStrategy {
 	return &SAMLStrategy{
-		cfg:              cfg,
 		settingsProvider: settingsProvider,
 	}
 }
