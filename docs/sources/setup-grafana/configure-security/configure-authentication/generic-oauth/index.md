@@ -27,7 +27,7 @@ Grafana provides OAuth2 integrations for the following auth providers:
 - [GitHub OAuth]({{< relref "../github" >}})
 - [GitLab OAuth]({{< relref "../gitlab" >}})
 - [Google OAuth]({{< relref "../google" >}})
-- [Grafana Com OAuth]({{< relref "../grafana-com" >}})
+- [Grafana Com OAuth]({{< relref "../grafana-cloud" >}})
 - [Keycloak OAuth]({{< relref "../keycloak" >}})
 - [Okta OAuth]({{< relref "../okta" >}})
 
