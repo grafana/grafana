@@ -27,7 +27,14 @@ export const AlertInstanceExtensionPoint = ({
     return null;
   }
 
-  const menu = <AlertExtensionPointMenu extensions={extensions} onSelect={setSelectedExtension} />;
+  const menu = (
+    <AlertExtensionPointMenu
+      extensions={extensions}
+      onSelect={setSelectedExtension}
+      onComponentSelect={() => {}}
+      extensionComponents={[]}
+    />
+  );
   return (
     <>
       <Dropdown placement="bottom-start" overlay={menu}>

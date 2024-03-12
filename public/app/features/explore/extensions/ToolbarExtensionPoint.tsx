@@ -1,9 +1,15 @@
 import React, { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
 
-import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange, getTimeZone } from '@grafana/data';
-import { getPluginLinkExtensions, config } from '@grafana/runtime';
+import {
+  type PluginExtensionLink,
+  PluginExtensionPoints,
+  RawTimeRange,
+  getTimeZone,
+  PluginExtensionComponent,
+} from '@grafana/data';
+import { getPluginLinkExtensions, config, getPluginComponentExtensions } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { Dropdown, ToolbarButton } from '@grafana/ui';
+import { Dropdown, Modal, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, ExplorePanelData, useSelector } from 'app/types';
 
@@ -19,16 +25,23 @@ const AddToDashboard = lazy(() =>
 type Props = {
   exploreId: string;
   timeZone: TimeZone;
+  changeQuery?: (query: DataQuery) => void;
 };
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const { exploreId } = props;
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
+  const [selectedExtensionComponent, setSelectedExtensionComponent] = useState<PluginExtensionComponent | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
   const extensions = useExtensionLinks(context);
+  const extensionComponents = useExtensionComponents(context);
   const selectExploreItem = getExploreItemSelector(exploreId);
   const noQueriesInPane = useSelector(selectExploreItem)?.queries?.length;
+
+  // @ts-ignore
+  const ExtensionComponent: React.ComponentType<{ context?: PluginExtensionExploreContext }> =
+    selectedExtensionComponent?.component;
 
   // If we only have the explore core extension point registered we show the old way of
   // adding a query to a dashboard.
@@ -48,7 +61,14 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
     );
   }
 
-  const menu = <ToolbarExtensionPointMenu extensions={extensions} onSelect={setSelectedExtension} />;
+  const menu = (
+    <ToolbarExtensionPointMenu
+      extensions={extensions}
+      extensionComponents={extensionComponents}
+      onSelect={setSelectedExtension}
+      onComponentSelect={setSelectedExtensionComponent}
+    />
+  );
 
   return (
     <>
@@ -64,6 +84,23 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
           onDismiss={() => setSelectedExtension(undefined)}
         />
       )}
+      {selectedExtensionComponent && (
+        <Modal
+          title={selectedExtensionComponent.title}
+          isOpen={!!selectedExtensionComponent}
+          onDismiss={() => setSelectedExtensionComponent(undefined)}
+        >
+          <ExtensionComponent
+            context={{
+              ...context,
+              changeQuery: (query: DataQuery) => {
+                context.changeQuery?.(query);
+                setSelectedExtensionComponent(undefined);
+              },
+            }}
+          />
+        </Modal>
+      )}
     </>
   );
 }
@@ -75,10 +112,11 @@ export type PluginExtensionExploreContext = {
   timeRange: RawTimeRange;
   timeZone: TimeZone;
   shouldShowAddCorrelation: boolean;
+  changeQuery: (query: DataQuery) => void;
 };
 
 function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
-  const { exploreId, timeZone } = props;
+  const { exploreId, timeZone, changeQuery } = props;
   const isCorrelationDetails = useSelector(selectCorrelationDetails);
   const isCorrelationsEditorMode = isCorrelationDetails?.editorMode || false;
   const { queries, queryResponse, range } = useSelector(getExploreItemSelector(exploreId))!;
@@ -101,9 +139,13 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
         !isCorrelationsEditorMode &&
         isLeftPane &&
         numUniqueIds === 1,
+      changeQuery: (query: DataQuery) => {
+        changeQuery?.(query);
+      },
     };
   }, [
     exploreId,
+    changeQuery,
     queries,
     queryResponse,
     range.raw,
@@ -121,6 +163,18 @@ function useExtensionLinks(context: PluginExtensionExploreContext): PluginExtens
       extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
       context: context,
       limitPerPlugin: 3,
+    });
+
+    return extensions;
+  }, [context]);
+}
+
+function useExtensionComponents(context: PluginExtensionExploreContext): PluginExtensionComponent[] {
+  return useMemo(() => {
+    const { extensions } = getPluginComponentExtensions({
+      extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+      context: context,
+      limitPerPlugin: 1,
     });
 
     return extensions;

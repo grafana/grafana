@@ -3,7 +3,7 @@ import { pick } from 'lodash';
 import React, { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
-import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2, DataQuery } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
 import {
   defaultIntervals,
@@ -37,7 +37,7 @@ import {
   evenPaneResizeAction,
   changeCorrelationEditorDetails,
 } from './state/main';
-import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
+import { cancelQueries, runQueries, selectIsWaitingForData, setQueries } from './state/query';
 import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
@@ -139,6 +139,11 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     } else {
       return dispatch(runQueries({ exploreId }));
     }
+  };
+
+  const changeQuery = async (query: DataQuery) => {
+    await dispatch(changeDatasource({ exploreId, datasource: query.datasource?.uid || '' }));
+    return dispatch(setQueries(exploreId, [query]));
   };
 
   const onChangeTimeZone = (timezone: string) => dispatch(updateTimeZoneForSession(timezone));
@@ -273,7 +278,12 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
               </ToolbarButton>
             </ButtonGroup>
           ),
-          <ToolbarExtensionPoint key="toolbar-extension-point" exploreId={exploreId} timeZone={timeZone} />,
+          <ToolbarExtensionPoint
+            key="toolbar-extension-point"
+            exploreId={exploreId}
+            timeZone={timeZone}
+            changeQuery={changeQuery}
+          />,
           !isLive && (
             <ExploreTimeControls
               key="timeControls"
