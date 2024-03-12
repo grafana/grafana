@@ -14,7 +14,8 @@ import { config } from '@grafana/runtime';
 import { SceneGridItem, VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { gridItemToPanel } from '../../serialization/transformSceneToSaveModel';
+import { LibraryVizPanel } from '../../scene/LibraryVizPanel';
+import { gridItemToPanel, vizPanelToPanel } from '../../serialization/transformSceneToSaveModel';
 import { getQueryRunnerFor } from '../../utils/utils';
 
 import { Randomize, randomizeData } from './randomizer';
@@ -36,6 +37,7 @@ export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
       frames.push(json);
     }
   }
+
   return frames;
 }
 
@@ -59,10 +61,20 @@ export function getGithubMarkdown(panel: VizPanel, snapshot: string): string {
 }
 
 export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRange: TimeRange) {
-  const saveModel = gridItemToPanel(panel.parent as SceneGridItem);
+  let saveModel;
+
+  if (panel.parent instanceof LibraryVizPanel && panel.parent.parent instanceof SceneGridItem) {
+    saveModel = {
+      ...gridItemToPanel(panel.parent.parent),
+      ...vizPanelToPanel(panel),
+    };
+  } else {
+    saveModel = gridItemToPanel(panel.parent as SceneGridItem);
+  }
+
   const dashboard = cloneDeep(embeddedDataTemplate);
   const info = {
-    panelType: saveModel.type,
+    panelType: panel.state.pluginId,
     datasource: '??',
   };
 
@@ -79,6 +91,7 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
   const frames = randomizeData(getPanelDataFrames(data), rand);
   const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
   const queries = queryRunner.state.queries ?? [];
+  const annotationsCount = data.annotations ? data.annotations.reduce((acc, c) => c.length + acc, 0) : 0;
   const html = `<table width="100%">
     <tr>
       <th width="2%">Panel</th>
@@ -119,6 +132,9 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
     ],
   };
 
+  // delete library panel not to load the panel from the db
+  delete dashboard.panels[0].libraryPanel;
+
   if (saveModel.transformations?.length) {
     const last = dashboard.panels[dashboard.panels.length - 1];
     last.title = last.title + ' (after transformations)';
@@ -131,7 +147,7 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
     dashboard.panels.push(before);
   }
 
-  if (data.annotations?.length) {
+  if (annotationsCount > 0) {
     dashboard.panels.push({
       id: 7,
       gridPos: {
@@ -216,7 +232,7 @@ function getAnnotationsRow(data: PanelData): string {
 
   return `<tr>
   <th>Annotations</th>
-  <td>${data.annotations.map((a, idx) => `<span>${a.length}</span>`)}</td>
+  <td>${data.annotations.reduce((acc, c) => c.length + acc, 0)}</td>
 </tr>`;
 }
 
