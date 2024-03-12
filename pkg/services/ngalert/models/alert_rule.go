@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -53,6 +54,8 @@ func NoDataStateFromString(state string) (NoDataState, error) {
 		return NoData, nil
 	case string(OK):
 		return OK, nil
+	case string(KeepLast):
+		return KeepLast, nil
 	default:
 		return "", fmt.Errorf("unknown NoData state option %s", state)
 	}
@@ -62,6 +65,7 @@ const (
 	Alerting NoDataState = "Alerting"
 	NoData   NoDataState = "NoData"
 	OK       NoDataState = "OK"
+	KeepLast NoDataState = "KeepLast"
 )
 
 // swagger:enum ExecutionErrorState
@@ -79,6 +83,8 @@ func ErrStateFromString(opt string) (ExecutionErrorState, error) {
 		return ErrorErrState, nil
 	case string(OkErrState):
 		return OkErrState, nil
+	case string(KeepLastErrState):
+		return KeepLastErrState, nil
 	default:
 		return "", fmt.Errorf("unknown Error state option %s", opt)
 	}
@@ -88,6 +94,7 @@ const (
 	AlertingErrState ExecutionErrorState = "Alerting"
 	ErrorErrState    ExecutionErrorState = "Error"
 	OkErrState       ExecutionErrorState = "OK"
+	KeepLastErrState ExecutionErrorState = "KeepLast"
 )
 
 const (
@@ -137,7 +144,12 @@ const (
 	StateReasonPaused        = "Paused"
 	StateReasonUpdated       = "Updated"
 	StateReasonRuleDeleted   = "RuleDeleted"
+	StateReasonKeepLast      = "KeepLast"
 )
+
+func ConcatReasons(reasons ...string) string {
+	return strings.Join(reasons, ", ")
+}
 
 var (
 	// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.

@@ -36,7 +36,12 @@ import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
 import { computeInheritedTree } from './utils/notification-policies';
 import { initialAsyncRequestState } from './utils/redux';
-import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
+import {
+  InsertPosition,
+  addRouteToReferenceRoute,
+  mergePartialAmRouteWithRouteTree,
+  omitRouteFromRouteTree,
+} from './utils/routeTree';
 
 enum ActiveTab {
   NotificationPolicies = 'notification_policies',
@@ -132,12 +137,18 @@ const AmRoutes = () => {
     updateRouteTree(newRouteTree);
   }
 
-  function handleAdd(partialRoute: Partial<FormAmRoute>, parentRoute: RouteWithID) {
+  function handleAdd(partialRoute: Partial<FormAmRoute>, referenceRoute: RouteWithID, insertPosition: InsertPosition) {
     if (!rootRoute) {
       return;
     }
 
-    const newRouteTree = addRouteToParentRoute(selectedAlertmanager ?? '', partialRoute, parentRoute, rootRoute);
+    const newRouteTree = addRouteToReferenceRoute(
+      selectedAlertmanager ?? '',
+      partialRoute,
+      referenceRoute,
+      rootRoute,
+      insertPosition
+    );
     updateRouteTree(newRouteTree);
   }
 

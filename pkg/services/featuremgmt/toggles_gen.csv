@@ -78,7 +78,7 @@ logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,false,false,false
 transformationsRedesign,GA,@grafana/observability-metrics,false,false,true
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false
-traceQLStreaming,experimental,@grafana/observability-traces-and-profiling,false,false,true
+traceQLStreaming,GA,@grafana/observability-traces-and-profiling,false,false,true
 metricsSummary,experimental,@grafana/observability-traces-and-profiling,false,false,true
 grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false

@@ -404,6 +404,7 @@ github.com/grafana/e2e v0.1.1-0.20221018202458-cffd2bb71c7b/go.mod h1:3UsooRp7yW
 github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586 h1:/of8Z8taCPftShATouOrBVy6GaTTjgQd/VfNiZp/VXQ=
 github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586/go.mod h1:PGk3RjYHpxMM8HFPhKKo+vve3DdlPUELZLSDEFehPuU=
 github.com/grafana/grafana-plugin-sdk-go v0.212.0/go.mod h1:qsI4ktDf0lig74u8SLPJf9zRdVxWV/W4Wi+Ox6gifgs=
+github.com/grafana/grafana/pkg/promlib v0.0.1/go.mod h1:zkmF4NeKJs/y65xc3/XXc53LY0J8E7YUsZnn+FSrcq4=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 h1:pdN6V1QBWetyv/0+wjACpqVH+eVULgEjkurDLq3goeM=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1/go.mod h1:YvJ2f6MplWDhfxiUC3KpyTy76kYUZA4W3pTv/wdKQ9Y=
 github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 h1:MJG/KsmcqMwFAkh8mTnAwhyKoB+sTAnY4CACC110tbU=
