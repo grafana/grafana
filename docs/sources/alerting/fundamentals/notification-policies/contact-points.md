@@ -1,10 +1,10 @@
 ---
 aliases:
-  ## TODO alias and canonical
-  - /docs/grafana/latest/alerting/contact-points/
-  - /docs/grafana/latest/alerting/unified-alerting/contact-points/
-  - /docs/grafana/latest/alerting/fundamentals/contact-points/contact-point-types/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/contact-points/
+  - ../../fundamentals/contact-points/
+  - ../../fundamentals/contact-points/contact-point-types/
+  - ../../contact-points/
+  - ../../unified-alerting/contact-points/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/contact-points/
 description: Learn about contact points and the supported contact point integrations
 keywords:
   - grafana

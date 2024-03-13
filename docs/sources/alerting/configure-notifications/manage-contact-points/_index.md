@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/
   - ../contact-points/create-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/create-contact-point/
   - ../contact-points/delete-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/delete-contact-point/
   - ../contact-points/edit-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/edit-contact-point/
