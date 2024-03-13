@@ -313,7 +313,7 @@ func TestFinder_Find(t *testing.T) {
 func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 	t.Run("When scanning a folder that doesn't exists shouldn't return an error", func(t *testing.T) {
 		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
 			return walkFn(path, nil, os.ErrNotExist)
 		}
 		t.Cleanup(func() {
@@ -321,14 +321,14 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		})
 
 		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
-		paths, err := finder.getAbsPluginJSONPaths("test", true)
+		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
 	})
 
 	t.Run("When scanning a folder that lacks permission shouldn't return an error", func(t *testing.T) {
 		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
 			return walkFn(path, nil, os.ErrPermission)
 		}
 		t.Cleanup(func() {
@@ -336,14 +336,14 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		})
 
 		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
-		paths, err := finder.getAbsPluginJSONPaths("test", true)
+		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
 	})
 
 	t.Run("When scanning a folder that returns a non-handled error should return that error", func(t *testing.T) {
 		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
 			return walkFn(path, nil, errors.New("random error"))
 		}
 		t.Cleanup(func() {
@@ -351,43 +351,9 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		})
 
 		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
-		paths, err := finder.getAbsPluginJSONPaths("test", true)
+		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.Error(t, err)
 		require.Empty(t, paths)
-	})
-
-	t.Run("The followDistFolder state controls whether certain folders are followed", func(t *testing.T) {
-		dir, err := filepath.Abs("../../testdata/pluginRootWithDist")
-		require.NoError(t, err)
-
-		tcs := []struct {
-			name       string
-			followDist bool
-			expected   []string
-		}{
-			{
-				name:       "When followDistFolder is enabled, only the nested dist folder will be followed",
-				followDist: true,
-				expected: []string{
-					filepath.Join(dir, "dist/plugin.json"),
-				},
-			},
-			{
-				name:       "When followDistFolder is disabled, no dist folders will be followed",
-				followDist: false,
-				expected: []string{
-					filepath.Join(dir, "datasource/plugin.json"),
-					filepath.Join(dir, "panel/src/plugin.json"),
-				},
-			},
-		}
-		for _, tc := range tcs {
-			pluginBundles, err := NewLocalFinder(false, featuremgmt.WithFeatures()).getAbsPluginJSONPaths(dir, tc.followDist)
-			require.NoError(t, err)
-
-			sort.Strings(pluginBundles)
-			require.Equal(t, tc.expected, pluginBundles)
-		}
 	})
 }
 

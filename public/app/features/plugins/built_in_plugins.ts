@@ -15,7 +15,6 @@ const influxdbPlugin = async () =>
 const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */ 'app/plugins/datasource/loki/module');
 const jaegerPlugin = async () =>
   await import(/* webpackChunkName: "jaegerPlugin" */ 'app/plugins/datasource/jaeger/module');
-const zipkinPlugin = async () => await import(/* webpackChunkName: "zipkinPlugin" */ '@grafana-plugins/zipkin/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
 const mysqlPlugin = async () =>
@@ -26,18 +25,8 @@ const prometheusPlugin = async () =>
   await import(/* webpackChunkName: "prometheusPlugin" */ 'app/plugins/datasource/prometheus/module');
 const mssqlPlugin = async () =>
   await import(/* webpackChunkName: "mssqlPlugin" */ 'app/plugins/datasource/mssql/module');
-const testDataDSPlugin = async () =>
-  await import(/* webpackChunkName: "testDataDSPlugin" */ '@grafana-plugins/grafana-testdata-datasource/module');
-const cloudMonitoringPlugin = async () =>
-  await import(/* webpackChunkName: "cloudMonitoringPlugin" */ '@grafana-plugins/stackdriver/module');
-const azureMonitorPlugin = async () =>
-  await import(/* webpackChunkName: "azureMonitorPlugin" */ '@grafana-plugins/grafana-azure-monitor-datasource/module');
-const tempoPlugin = async () => await import(/* webpackChunkName: "tempoPlugin" */ '@grafana-plugins/tempo/module');
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
-const pyroscopePlugin = async () =>
-  await import(/* webpackChunkName: "pyroscopePlugin" */ '@grafana-plugins/grafana-pyroscope-datasource/module');
-const parcaPlugin = async () => await import(/* webpackChunkName: "parcaPlugin" */ '@grafana-plugins/parca/module');
 
 import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
@@ -90,19 +79,12 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/influxdb': influxdbPlugin,
   'core:plugin/loki': lokiPlugin,
   'core:plugin/jaeger': jaegerPlugin,
-  'core:plugin/zipkin': zipkinPlugin,
   'core:plugin/mixed': mixedPlugin,
   'core:plugin/mysql': mysqlPlugin,
   'core:plugin/grafana-postgresql-datasource': postgresPlugin,
   'core:plugin/mssql': mssqlPlugin,
   'core:plugin/prometheus': prometheusPlugin,
-  'core:plugin/grafana-testdata-datasource': testDataDSPlugin,
-  'core:plugin/cloud-monitoring': cloudMonitoringPlugin,
-  'core:plugin/azuremonitor': azureMonitorPlugin,
-  'core:plugin/tempo': tempoPlugin,
   'core:plugin/alertmanager': alertmanagerPlugin,
-  'core:plugin/grafana-pyroscope-datasource': pyroscopePlugin,
-  'core:plugin/parca': parcaPlugin,
   // panels
   'core:plugin/text': textPanel,
   'core:plugin/timeseries': timeseriesPanel,

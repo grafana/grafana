@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Service provides methods for constructing asset paths for plugins.
@@ -58,9 +57,7 @@ func (s *Service) Base(n PluginInfo) (string, error) {
 // Module returns the module.js path for the specified plugin.
 func (s *Service) Module(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
-		if s.cfg.Features != nil &&
-			s.cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins) &&
-			filepath.Base(n.dir) == "dist" {
+		if filepath.Base(n.dir) == "dist" {
 			// The core plugin has been built externally, use the module from the dist folder
 		} else {
 			baseDir := getBaseDir(n.dir)

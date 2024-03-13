@@ -213,6 +213,8 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       unsafeCache: true,
     },
 
+    stats: 'minimal',
+
     watchOptions: {
       ignored: ['**/node_modules', '**/dist', '**/.yarn'],
     },
