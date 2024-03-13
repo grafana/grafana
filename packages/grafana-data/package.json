@@ -70,7 +70,7 @@
     "@types/node": "20.11.26",
     "@types/papaparse": "5.3.14",
     "@types/react": "18.2.65",
-    "@types/react-dom": "18.2.21",
+    "@types/react-dom": "18.2.22",
     "@types/tinycolor2": "1.4.6",
     "esbuild": "0.18.12",
     "react": "18.2.0",
