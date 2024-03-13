@@ -17,6 +17,7 @@ export type Props = {
   scrollElement?: HTMLDivElement;
   sortOrder: LogsSortOrder;
   timeZone: TimeZone;
+  topScrollEnabled?: boolean;
 };
 
 export const InfiniteScroll = ({
@@ -28,6 +29,7 @@ export const InfiniteScroll = ({
   scrollElement,
   sortOrder,
   timeZone,
+  topScrollEnabled = false
 }: Props) => {
   const [upperOutOfRange, setUpperOutOfRange] = useState(false);
   const [lowerOutOfRange, setLowerOutOfRange] = useState(false);
@@ -85,7 +87,7 @@ export const InfiniteScroll = ({
       lastScroll.current = scrollElement.scrollTop;
       if (scrollDirection === ScrollDirection.NoScroll) {
         return;
-      } else if (scrollDirection === ScrollDirection.Top) {
+      } else if (scrollDirection === ScrollDirection.Top && topScrollEnabled) {
         scrollTop();
       } else {
         scrollBottom();

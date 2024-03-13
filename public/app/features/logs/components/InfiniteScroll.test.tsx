@@ -43,7 +43,7 @@ function ScrollWithWrapper({ children, ...props }: Props) {
   return (
     <div style={{ height: 40, overflowY: 'scroll' }} ref={scrollRef} data-testid="scroll-element">
       {initialized && (
-        <InfiniteScroll {...props} scrollElement={scrollRef.current!}>
+        <InfiniteScroll {...props} scrollElement={scrollRef.current!} topScrollEnabled>
           {children}
         </InfiniteScroll>
       )}
@@ -83,6 +83,7 @@ function setup(loadMoreMock: () => void, startPosition: number, rows: LogRowMode
       rows={rows}
       scrollElement={element as unknown as HTMLDivElement}
       loadMoreLogs={loadMoreMock}
+      topScrollEnabled
     >
       <div data-testid="contents" style={{ height: 100 }} />
     </InfiniteScroll>
@@ -136,7 +137,7 @@ describe('InfiniteScroll', () => {
         'Requests more logs when scrolling %s',
         async (direction: string, startPosition: number, endPosition: number) => {
           const loadMoreMock = jest.fn();
-          const { scrollTo, element, wheel } = setup(loadMoreMock, startPosition, rows, order);
+          const { scrollTo, element } = setup(loadMoreMock, startPosition, rows, order);
 
           expect(await screen.findByTestId('contents')).toBeInTheDocument();
 
