@@ -3890,16 +3890,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:^0.19.0":
-  version: 0.19.0
-  resolution: "@grafana/plugin-e2e@npm:0.19.0"
+"@grafana/plugin-e2e@npm:^0.21.0":
+  version: 0.21.0
+  resolution: "@grafana/plugin-e2e@npm:0.21.0"
   dependencies:
     semver: "npm:^7.5.4"
     uuid: "npm:^9.0.1"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/d47913d4abd07b245892d834b06ca44ecec767151134575d9e2679b93fad190cd6957542f6f0ddd12eaa4199b3282b557ddbb0ba88df13eb107986e35ed17d62
+  checksum: 10/0c158508e425ed1fe1219dde66149f23ede1a6d39219a688e351ac8cdac9938aeea65d922d0fd0965203069c8a7844afc3bac4f04c5f78f6bee3535b7de9b1ac
   languageName: node
   linkType: hard
 
@@ -18397,7 +18397,7 @@ __metadata:
     "@grafana/lezer-logql": "npm:0.2.3"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:^0.19.0"
+    "@grafana/plugin-e2e": "npm:^0.21.0"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:^3.11.0"
