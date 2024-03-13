@@ -118,7 +118,7 @@ export const ContextMenuPlugin = ({
 interface ContextMenuViewProps {
   data: DataFrame;
   frames?: DataFrame[];
-  defaultItems?: MenuItemsGroup[];
+  defaultItems?: Array<MenuItemsGroup<MenuItemProps>>;
   timeZone: TimeZone;
   onClose?: () => void;
   selection: {

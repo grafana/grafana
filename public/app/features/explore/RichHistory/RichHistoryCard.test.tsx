@@ -124,8 +124,7 @@ const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
     deleteHistoryItem: deleteRichHistoryMock,
     commentHistoryItem: jest.fn(),
     setQueries: jest.fn(),
-    exploreId: 'left',
-    datasourceInstance: dsStore.loki,
+    datasourceInstances: [dsStore.loki],
   };
 
   Object.assign(props, propOverrides);

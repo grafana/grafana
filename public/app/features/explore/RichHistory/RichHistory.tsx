@@ -2,7 +2,6 @@ import { debounce } from 'lodash';
 import React, { useState, useEffect } from 'react';
 
 import { DataSourceApi, SelectableValue } from '@grafana/data';
-import { DataSourceRef } from '@grafana/schema';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';

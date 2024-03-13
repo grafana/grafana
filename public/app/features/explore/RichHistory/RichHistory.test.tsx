@@ -20,9 +20,7 @@ jest.mock('@grafana/runtime', () => ({
 
 const setup = (propOverrides?: Partial<RichHistoryProps>) => {
   const props: RichHistoryProps = {
-    exploreId: 'left',
     height: 100,
-    activeDatasourceInstance: 'Test datasource',
     richHistory: [],
     richHistoryTotal: 0,
     firstTab: Tabs.RichHistory,

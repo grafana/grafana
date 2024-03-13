@@ -11,7 +11,6 @@ const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
     queries: [],
     totalQueries: 0,
     loading: false,
-    activeDatasourceInstance: 'test-ds',
     updateFilters: jest.fn(),
     clearRichHistoryResults: jest.fn(),
     loadMoreRichHistory: jest.fn(),
@@ -29,7 +28,6 @@ const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
       lastUsedDatasourceFilters: [],
       starredTabAsFirstTab: false,
     },
-    exploreId: 'left',
     height: 100,
   };
 

@@ -65,7 +65,7 @@ import {
 
 import { getCorrelations } from './correlations';
 import { saveCorrelationsAction } from './explorePane';
-import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
+import { addHistoryItem, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
 import {

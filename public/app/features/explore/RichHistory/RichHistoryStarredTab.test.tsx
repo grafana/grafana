@@ -21,11 +21,9 @@ const setup = (propOverrides?: Partial<RichHistoryStarredTabProps>) => {
     queries: [],
     loading: false,
     totalQueries: 0,
-    activeDatasourceInstance: '',
     updateFilters: jest.fn(),
     loadMoreRichHistory: jest.fn(),
     clearRichHistoryResults: jest.fn(),
-    exploreId: 'left',
     richHistorySettings: {
       retentionPeriod: 7,
       starredTabAsFirstTab: false,
