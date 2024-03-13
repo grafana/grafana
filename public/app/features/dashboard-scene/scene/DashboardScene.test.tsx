@@ -830,7 +830,6 @@ describe('DashboardScene', () => {
 
         expect(scene.state.version).toBe(newVersion);
         expect(scene.state.title).toBe('new name');
-        expect(scene.state.isEditing).toBe(false);
       });
     });
 

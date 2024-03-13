@@ -93,6 +93,12 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     return sceneGraph.getTimeRange(this._dashboard);
   }
 
+  public restoreDashboard = async (version: DecoratedRevisionModel) => {
+    this._dashboard.exitEditMode({ skipConfirm: true, restoreIntialState: false });
+
+    return await this._dashboard.onRestore(version);
+  };
+
   public fetchVersions = (append = false): void => {
     const uid = this._dashboard.state.uid;
 
@@ -205,7 +211,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
           baseInfo={baseInfo!}
           isNewLatest={isNewLatest!}
           diffData={model.diffData}
-          onRestore={dashboard.onRestore}
+          onRestore={model.restoreDashboard}
         />
       )}
     </>
@@ -220,7 +226,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
           versions={model.versions}
           onCheck={model.onCheck}
           canCompare={canCompare}
-          onRestore={dashboard.onRestore}
+          onRestore={model.restoreDashboard}
         />
       )}
       {isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
