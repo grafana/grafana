@@ -345,7 +345,7 @@ func UseGlobalOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 		return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
 	}
 
-	if query.Global == true {
+	if query.Global {
 		return GlobalOrgID, nil
 	}
 
