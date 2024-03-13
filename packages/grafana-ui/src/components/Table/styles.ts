@@ -40,7 +40,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       alignItems: 'center',
       borderRight: `1px solid ${borderColor}`,
 
-      color: color ?? undefined,
+      color: rowStyled ? 'inherit' : color ?? undefined,
       background: rowStyled ? undefined : background ?? undefined,
       backgroundClip: 'padding-box',
 
