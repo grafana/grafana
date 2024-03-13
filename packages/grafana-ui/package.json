@@ -139,7 +139,7 @@
     "@types/jquery": "3.5.29",
     "@types/lodash": "4.17.0",
     "@types/mock-raf": "1.0.6",
-    "@types/node": "20.11.26",
+    "@types/node": "20.11.27",
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.65",
     "@types/react-beautiful-dnd": "13.1.8",
