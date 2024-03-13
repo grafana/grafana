@@ -81,18 +81,15 @@ type KeyValue interface {
 	MustDuration(defaultVal time.Duration) time.Duration
 }
 
-// Deprecated: This interface will be replaced by the SSOSettingsService
 // ReloadHandler defines the expected behaviour from a
 // service that have support for configuration reloads.
 type ReloadHandler interface {
-	// Deprecated: This method will be replaced by the SSOSettingsService.Reload
 	// Reload handles reloading of configuration changes.
-	HandlerReload(section Section) error
+	ReloadSection(section Section) error
 
-	// Deprecated: This method will be replaced by the SSOSettingsService.Validate
 	// Validate validates the configuration, if the validation
 	// fails the configuration will not be updated neither reloaded.
-	HandlerValidate(section Section) error
+	ValidateSection(section Section) error
 }
 
 type SettingsBag map[string]map[string]string
