@@ -339,7 +339,6 @@ export class Connections {
       // Display temporary vertex during drag
       this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${x} ${y} L${vx2} ${vy2}`);
       this.connectionSVGVertex!.style.display = 'block';
-      this.connectionVertexPath!.style.stroke = 'white';
     }
 
     // Handle mouseup
