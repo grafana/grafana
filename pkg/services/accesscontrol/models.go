@@ -564,5 +564,6 @@ var OrgsCreateAccessEvaluator = EvalAll(
 var ApiKeyAccessEvaluator = EvalPermission(ActionAPIKeyRead)
 
 type QueryWithOrg struct {
-	OrgId *int64 `json:"orgId"`
+	OrgId  *int64 `json:"orgId"`
+	Global bool   `json:"global"`
 }

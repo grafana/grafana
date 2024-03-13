@@ -324,16 +324,10 @@ func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
 // UseOrgFromRequestData returns the organization from the request data.
 // If no org is specified, then the org where user is logged in is returned.
 func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
-	query := QueryWithOrg{}
-
-	req, err := CloneRequest(c.Req)
+	query, err := getOrgQueryFromRequest(c)
 	if err != nil {
-		return 0, err
-	}
-
-	if err := web.Bind(req, &query); err != nil {
 		// Special case of macaron handling invalid params
-		return 0, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+		return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
 	}
 
 	if query.OrgId == nil {
@@ -341,6 +335,37 @@ func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 	}
 
 	return *query.OrgId, nil
+}
+
+// UseGlobalOrgFromRequestData returns global org if `global` flag is set or the org where user is logged in.
+func UseGlobalOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
+	query, err := getOrgQueryFromRequest(c)
+	if err != nil {
+		// Special case of macaron handling invalid params
+		return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+	}
+
+	if query.Global == true {
+		return GlobalOrgID, nil
+	}
+
+	return c.SignedInUser.GetOrgID(), nil
+}
+
+func getOrgQueryFromRequest(c *contextmodel.ReqContext) (*QueryWithOrg, error) {
+	query := &QueryWithOrg{}
+
+	req, err := CloneRequest(c.Req)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := web.Bind(req, query); err != nil {
+		// Special case of macaron handling invalid params
+		return nil, err
+	}
+
+	return query, nil
 }
 
 // CloneRequest creates request copy including request body
@@ -355,7 +380,7 @@ func CloneRequest(req *http.Request) (*http.Request, error) {
 	return reqCopy, nil
 }
 
-// CopyRequestBody returns copy of request body and keep the original one to prevent error when reading closed body
+// CopyRequestBody returns copy of request body and keeps the original one to prevent error when reading closed body
 func CopyRequestBody(req *http.Request) (io.ReadCloser, error) {
 	if req.Body == nil {
 		return nil, nil
