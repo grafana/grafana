@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -318,6 +319,83 @@ func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
 		}
 		return GlobalOrgID, nil
 	}
+}
+
+// UseOrgFromRequestData returns the organization from the request data.
+// If no org is specified, then the org where user is logged in is returned.
+func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
+	query, err := getOrgQueryFromRequest(c)
+	if err != nil {
+		// Special case of macaron handling invalid params
+		return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+	}
+
+	if query.OrgId == nil {
+		return c.SignedInUser.GetOrgID(), nil
+	}
+
+	return *query.OrgId, nil
+}
+
+// UseGlobalOrgFromRequestData returns global org if `global` flag is set or the org where user is logged in.
+func UseGlobalOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
+	query, err := getOrgQueryFromRequest(c)
+	if err != nil {
+		// Special case of macaron handling invalid params
+		return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+	}
+
+	if query.Global {
+		return GlobalOrgID, nil
+	}
+
+	return c.SignedInUser.GetOrgID(), nil
+}
+
+func getOrgQueryFromRequest(c *contextmodel.ReqContext) (*QueryWithOrg, error) {
+	query := &QueryWithOrg{}
+
+	req, err := CloneRequest(c.Req)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := web.Bind(req, query); err != nil {
+		// Special case of macaron handling invalid params
+		return nil, err
+	}
+
+	return query, nil
+}
+
+// CloneRequest creates request copy including request body
+func CloneRequest(req *http.Request) (*http.Request, error) {
+	// Get copy of body to prevent error when reading closed body in request handler
+	bodyCopy, err := CopyRequestBody(req)
+	if err != nil {
+		return nil, err
+	}
+	reqCopy := req.Clone(req.Context())
+	reqCopy.Body = bodyCopy
+	return reqCopy, nil
+}
+
+// CopyRequestBody returns copy of request body and keeps the original one to prevent error when reading closed body
+func CopyRequestBody(req *http.Request) (io.ReadCloser, error) {
+	if req.Body == nil {
+		return nil, nil
+	}
+
+	body := req.Body
+	var buf bytes.Buffer
+	if _, err := buf.ReadFrom(body); err != nil {
+		return nil, err
+	}
+	if err := body.Close(); err != nil {
+		return nil, err
+	}
+	req.Body = io.NopCloser(&buf)
+	return io.NopCloser(bytes.NewReader(buf.Bytes())), nil
 }
 
 // scopeParams holds the parameters used to fill in scope templates
