@@ -19,7 +19,6 @@ import {
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { MuteTimingFields } from '../../types/mute-timing-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DAYS_OF_THE_WEEK, defaultTimeInterval, MONTHS, validateArrayField } from '../../utils/mute-timings';
 
 import { MuteTimingTimeRange } from './MuteTimingTimeRange';
@@ -35,8 +34,7 @@ export const MuteTimingTimeInterval = () => {
   } = useFieldArray({
     name: 'time_intervals',
   });
-  const { selectedAlertmanager } = useAlertmanager();
-  const isGrafanaAlertManager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
+  const { isGrafanaAlertmanager } = useAlertmanager();
 
   return (
     <FieldSet label="Time intervals">
@@ -156,7 +154,7 @@ export const MuteTimingTimeInterval = () => {
                   >
                     Remove time interval
                   </Button>
-                  {!isGrafanaAlertManager && (
+                  {!isGrafanaAlertmanager && (
                     <Stack direction="row" gap={0} alignItems="center">
                       <Tooltip placement="top" content="Disable this time interval" theme="info">
                         <Icon name="info-circle" className={styles.infoIcon} />

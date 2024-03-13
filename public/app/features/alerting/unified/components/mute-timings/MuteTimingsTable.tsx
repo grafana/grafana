@@ -13,6 +13,7 @@ import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { deleteMuteTimingAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
+import { isDisabled } from '../../utils/mute-timings';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { ProvisioningBadge } from '../Provisioning';
@@ -208,7 +209,7 @@ function useColumns(
         renderCell: function renderActions({ data }) {
           return (
             <ActionsAndBadge
-              data={data}
+              muteTiming={data}
               alertManagerSourceName={alertManagerSourceName}
               setMuteTimingName={setMuteTimingName}
             />
@@ -251,42 +252,29 @@ function useColumns(
   ]);
 }
 
-function isDisabled(muteTiming: MuteTimeInterval) {
-  const allTimeIntervalsDisabled = muteTiming.time_intervals.every((timeInterval) => {
-    return (
-      timeInterval.times?.length === 0 ||
-      timeInterval.weekdays?.length === 0 ||
-      timeInterval.days_of_month?.length === 0 ||
-      timeInterval.months?.length === 0 ||
-      timeInterval.years?.length === 0
-    );
-  });
-  return allTimeIntervalsDisabled;
-}
-
 interface ActionsAndBadgeProps {
-  data: MuteTimeInterval;
+  muteTiming: MuteTimeInterval;
   alertManagerSourceName: string;
   setMuteTimingName: (name: string) => void;
 }
 
-function ActionsAndBadge({ data, alertManagerSourceName, setMuteTimingName }: ActionsAndBadgeProps) {
+function ActionsAndBadge({ muteTiming, alertManagerSourceName, setMuteTimingName }: ActionsAndBadgeProps) {
   const styles = useStyles2(getStyles);
   const isGrafanaDataSource = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   {
-    isDisabled(data) && <Badge text="Disabled" color="red" className={styles.disabledBadge} />;
+    isDisabled(muteTiming) && <Badge text="Disabled" color="orange" className={styles.disabledBadge} />;
   }
 
-  if (data.provenance) {
+  if (muteTiming.provenance) {
     return (
       <Stack direction="row" alignItems="center" justifyContent="flex-end">
-        {isDisabled(data) && !isGrafanaDataSource && (
-          <Badge text="Disabled" color="red" className={styles.disabledBadge} />
+        {isDisabled(muteTiming) && !isGrafanaDataSource && (
+          <Badge text="Disabled" color="orange" className={styles.disabledBadge} />
         )}
         <Link
           href={makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
-            muteName: data.name,
+            muteName: muteTiming.name,
           })}
         >
           <IconButton name="file-alt" tooltip="View mute timing" />
@@ -296,20 +284,20 @@ function ActionsAndBadge({ data, alertManagerSourceName, setMuteTimingName }: Ac
   }
   return (
     <Stack direction="row" alignItems="center" justifyContent="flex-end">
-      {isDisabled(data) && !isGrafanaDataSource && (
-        <Badge text="Disabled" color="red" className={styles.disabledBadge} />
+      {isDisabled(muteTiming) && !isGrafanaDataSource && (
+        <Badge text="Disabled" color="orange" className={styles.disabledBadge} />
       )}
       <Authorize actions={[AlertmanagerAction.UpdateMuteTiming]}>
         <Link
           href={makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
-            muteName: data.name,
+            muteName: muteTiming.name,
           })}
         >
           <IconButton name="edit" tooltip="Edit mute timing" className={styles.editButton} />
         </Link>
       </Authorize>
       <Authorize actions={[AlertmanagerAction.DeleteMuteTiming]}>
-        <IconButton name="trash-alt" tooltip="Delete mute timing" onClick={() => setMuteTimingName(data.name)} />
+        <IconButton name="trash-alt" tooltip="Delete mute timing" onClick={() => setMuteTimingName(muteTiming.name)} />
       </Authorize>
     </Stack>
   );

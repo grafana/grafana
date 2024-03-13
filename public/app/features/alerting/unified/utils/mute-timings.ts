@@ -96,7 +96,7 @@ function convertTimesToDto(times: TimeRange[] | undefined, disable: boolean) {
  *
  */
 
-export function getDisabledFromDto(intervals: TimeInterval): boolean {
+export function isTimeIntervalDisabled(intervals: TimeInterval): boolean {
   if (
     intervals.times?.length === 0 ||
     intervals.weekdays?.length === 0 ||
@@ -107,4 +107,13 @@ export function getDisabledFromDto(intervals: TimeInterval): boolean {
     return true;
   }
   return false;
+}
+
+/*
+   Return true if all the time intervals are disabled
+  * @param muteTimeInterval
+  * @returns MuteTimingFields
+  * */
+export function isDisabled(muteTiming: MuteTimeInterval) {
+  return muteTiming.time_intervals.every((timeInterval) => isTimeIntervalDisabled(timeInterval));
 }

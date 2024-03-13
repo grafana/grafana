@@ -14,7 +14,7 @@ import { MuteTimingFields } from '../../types/mute-timing-form';
 import { renameMuteTimings } from '../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
-import { createMuteTiming, defaultTimeInterval, getDisabledFromDto } from '../../utils/mute-timings';
+import { createMuteTiming, defaultTimeInterval, isTimeIntervalDisabled } from '../../utils/mute-timings';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
@@ -44,7 +44,7 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
     months: interval.months?.join(', '),
     years: interval.years?.join(', '),
     location: interval.location ?? defaultTimeInterval.location,
-    disable: getDisabledFromDto(interval),
+    disable: isTimeIntervalDisabled(interval),
   }));
 
   return {
