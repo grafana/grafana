@@ -4116,7 +4116,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:6.21.0"
     copy-webpack-plugin: "npm:12.0.2"
     css-loader: "npm:6.10.0"
-    d3: "npm:7.8.5"
+    d3: "npm:7.9.0"
     date-fns: "npm:3.3.1"
     debounce-promise: "npm:3.1.2"
     esbuild: "npm:0.18.12"
@@ -4391,7 +4391,7 @@ __metadata:
     core-js: "npm:3.36.0"
     css-loader: "npm:6.10.0"
     csstype: "npm:3.1.3"
-    d3: "npm:7.8.5"
+    d3: "npm:7.9.0"
     date-fns: "npm:3.3.1"
     esbuild: "npm:0.18.12"
     expose-loader: "npm:5.0.0"
@@ -14843,13 +14843,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-scale-chromatic@npm:3, d3-scale-chromatic@npm:3.0.0":
-  version: 3.0.0
-  resolution: "d3-scale-chromatic@npm:3.0.0"
+"d3-scale-chromatic@npm:3, d3-scale-chromatic@npm:3.1.0":
+  version: 3.1.0
+  resolution: "d3-scale-chromatic@npm:3.1.0"
   dependencies:
     d3-color: "npm:1 - 3"
     d3-interpolate: "npm:1 - 3"
-  checksum: 10/e4d23a7d2ba48ad5de1d06dcc488f7278304def0ea28a268528923b1d74971260636b5c8fe0e27bc2c51b2a3f95542c248e35028bdb0b7c19ac804eee235d340
+  checksum: 10/25df6a7c621b9171df8b2225e98e41c0a6bcac4de02deb4807280b31116e8f495c5ac93301796098ee5b698cb690154e8138d90d72fd1fe36744c60e02a3d8c4
   languageName: node
   linkType: hard
 
@@ -14944,9 +14944,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3@npm:7.8.5, d3@npm:^7.8.5":
-  version: 7.8.5
-  resolution: "d3@npm:7.8.5"
+"d3@npm:7.9.0, d3@npm:^7.8.5":
+  version: 7.9.0
+  resolution: "d3@npm:7.9.0"
   dependencies:
     d3-array: "npm:3"
     d3-axis: "npm:3"
@@ -14978,7 +14978,7 @@ __metadata:
     d3-timer: "npm:3"
     d3-transition: "npm:3"
     d3-zoom: "npm:3"
-  checksum: 10/d5a0581fae34ce06f065c36bfe4045d2877ec23c413bb40d5b8cc005df9f8ef5ac44ccc13ffae4c4e5159827bb92c09da07e7283c1b7a507072e88b9047a848a
+  checksum: 10/b0b418996bdf279b01f5c7a0117927f9ad3e833c9ce4657550ce6f6ace70b70cf829c4144b01df0be5a0f716d4e5f15ab0cadc5ff1ce1561d7be29ac86493d83
   languageName: node
   linkType: hard
 
@@ -18791,9 +18791,9 @@ __metadata:
     css-minimizer-webpack-plugin: "npm:6.0.0"
     cypress: "npm:13.1.0"
     cypress-file-upload: "npm:5.0.8"
-    d3: "npm:7.8.5"
+    d3: "npm:7.9.0"
     d3-force: "npm:3.0.0"
-    d3-scale-chromatic: "npm:3.0.0"
+    d3-scale-chromatic: "npm:3.1.0"
     dangerously-set-html-content: "npm:1.1.0"
     date-fns: "npm:3.3.1"
     debounce-promise: "npm:3.1.2"
