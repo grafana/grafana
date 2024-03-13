@@ -248,3 +248,8 @@ At the moment we only support single Redis node.
 > ```
 >
 > Next, point Grafana Live to Haproxy address:port.
+
+
+## Grafana Live limitations
+
+When configuring panels to display real-time data, it is possible to set up multiple streaming queries within a single panel. While this setup may function, we currently advise against it due to potential unpredictable behaviors. Instead of configuring a panel with multiple streaming queries, we recommend joining the data at its source.
