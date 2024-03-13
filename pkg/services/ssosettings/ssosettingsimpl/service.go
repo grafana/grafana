@@ -115,14 +115,14 @@ func (s *Service) GetForProviderWithRedactedSecrets(ctx context.Context, provide
 }
 
 func (s *Service) List(ctx context.Context) ([]*models.SSOSettings, error) {
-	result := make([]*models.SSOSettings, 0, len(ssosettings.AllOAuthProviders))
+	result := make([]*models.SSOSettings, 0, len(ssosettings.AllProviders))
 	storedSettings, err := s.store.List(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, provider := range ssosettings.AllOAuthProviders {
+	for _, provider := range ssosettings.AllProviders {
 		dbSettings := getSettingByProvider(provider, storedSettings)
 		if dbSettings != nil {
 			// Settings are coming from the database thus secrets are encrypted
