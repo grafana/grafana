@@ -3,6 +3,7 @@ package elasticsearch
 import (
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -16,6 +17,7 @@ type Query struct {
 	IntervalMs    int64
 	RefID         string
 	MaxDataPoints int64
+	TimeRange     backend.TimeRange
 }
 
 // BucketAgg represents a bucket aggregation of the time series query model of the datasource
