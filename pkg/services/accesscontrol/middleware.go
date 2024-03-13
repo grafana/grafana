@@ -322,7 +322,7 @@ func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
 }
 
 // UseOrgFromRequestData returns the organization from the request data.
-// If no org specified, then org where user is logged in returned.
+// If no org is specified, then the org where user is logged in is returned.
 func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 	query := QueryWithOrg{}
 
