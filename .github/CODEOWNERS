@@ -46,7 +46,6 @@
 /docs/sources/fundamentals                                                        @chri2547
 /docs/sources/getting-started/                                                    @chri2547
 /docs/sources/introduction/                                                       @chri2547
-/docs/sources/old-alerting/                                                       @brendamuir
 /docs/sources/panels-visualizations/                                              @imatwawana
 /docs/sources/release-notes/                                                      @Eve832 @GrafanaWriter
 /docs/sources/setup-grafana/                                                      @chri2547
@@ -351,6 +350,8 @@
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
 /package.json @grafana/frontend-ops
+/nx.json @grafana/frontend-ops
+/project.json @grafana/frontend-ops
 /tsconfig.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
