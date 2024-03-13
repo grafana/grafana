@@ -352,9 +352,22 @@ export function graphToTimeseriesOptions(angular: any): {
 
   if (angular.stack) {
     graph.stacking = {
-      mode: StackingMode.Normal,
+      mode: angular.percentage ? StackingMode.Percent : StackingMode.Normal,
       group: defaultGraphConfig.stacking!.group,
     };
+
+    if (angular.percentage) {
+      if (angular.yaxis) {
+        delete y1.min;
+        delete y1.max;
+
+        // TimeSeries currently uses 0-1 for percent, so allowing zero leaves only top and bottom ticks.
+        // removing it feels better. probably should fix in TimeSeries, but let's kick it down the road
+        if (y1.decimals === 0) {
+          delete y1.decimals;
+        }
+      }
+    }
   }
 
   y1.custom = omitBy(graph, isNil);
