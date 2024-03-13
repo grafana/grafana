@@ -28971,7 +28971,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"std-env@npm:^3.6.0":
+"std-env@npm:^3.7.0":
   version: 3.7.0
   resolution: "std-env@npm:3.7.0"
   checksum: 10/6ee0cca1add3fd84656b0002cfbc5bfa20340389d9ba4720569840f1caa34bce74322aef4c93f046391583e50649d0cf81a5f8fe1d411e50b659571690a45f12
@@ -31542,8 +31542,8 @@ __metadata:
   linkType: hard
 
 "webpackbar@npm:^6.0.0":
-  version: 6.0.0
-  resolution: "webpackbar@npm:6.0.0"
+  version: 6.0.1
+  resolution: "webpackbar@npm:6.0.1"
   dependencies:
     ansi-escapes: "npm:^4.3.2"
     chalk: "npm:^4.1.2"
@@ -31551,11 +31551,11 @@ __metadata:
     figures: "npm:^3.2.0"
     markdown-table: "npm:^2.0.0"
     pretty-time: "npm:^1.1.0"
-    std-env: "npm:^3.6.0"
+    std-env: "npm:^3.7.0"
     wrap-ansi: "npm:^7.0.0"
   peerDependencies:
     webpack: 3 || 4 || 5
-  checksum: 10/aa26c2dff6c2384f39b77e57375af52a65fbd3c54b9a5a8e1c53e79b0c25eaabc8602469ec3742bf93f7d178f5a96e3d6bd4fcbb256808e730eecb91091df466
+  checksum: 10/9da47f8dcbc9173b19e41e3e1049fa451b0c02095ffa003e8c09c56aa2cc544334d1c6fff0797162a807b29090db9cf9a269cd5ec453196142543f9275cbbf70
   languageName: node
   linkType: hard
 
