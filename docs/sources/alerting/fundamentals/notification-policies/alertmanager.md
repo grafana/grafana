@@ -1,10 +1,8 @@
 ---
 aliases:
-  ## TODO: alias and canonical
-  - ../fundamentals/alertmanager/
-  - ../metrics/
-  - ../unified-alerting/fundamentals/alertmanager/
-  - alerting/manage-notifications/alertmanager/
+  - ../../fundamentals/alertmanager/
+  - ../../unified-alerting/fundamentals/alertmanager/
+  - ../../manage-notifications/alertmanager/
 canonical: https://grafana.com/docs/grafana/latest/alerting/notification-policies/alertmanager/
 description: Learn about Alertmanagers and the Alertmanager options for Grafana Alerting
 labels:
