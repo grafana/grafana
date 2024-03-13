@@ -20,7 +20,7 @@ title: Configure high availability
 weight: 600
 ---
 
-# Configure High Availability
+# Configure high availability
 
 Grafana Alerting uses the Prometheus model of separating the evaluation of alert rules from the delivering of notifications. In this model, the evaluation of alert rules is done in the alert generator and the delivering of notifications is done in the alert receiver. In Grafana Alerting, the alert generator is the Scheduler and the receiver is the Alertmanager.
 
