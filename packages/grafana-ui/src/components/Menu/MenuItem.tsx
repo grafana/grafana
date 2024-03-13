@@ -35,8 +35,8 @@ export interface MenuItemProps<T = unknown> {
   /** Handler for the click behaviour */
   onClick?: (event: React.MouseEvent<HTMLElement>, payload?: T) => void;
   /** Handler for the hover behaviour */
-  onMouseEnterEvt?: (event: React.MouseEvent, payload?: T) => void;
-  onMouseLeaveEvt?: (event: React.MouseEvent, payload?: T) => void;
+  onMouseEnterEvt?: (event?: React.MouseEvent) => void;
+  onMouseLeaveEvt?: (event?: React.MouseEvent) => void;
   /** Custom MenuItem styles*/
   className?: string;
   /** Active */
