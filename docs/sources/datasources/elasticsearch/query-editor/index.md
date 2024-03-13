@@ -27,7 +27,7 @@ Grafana provides a query editor for Elasticsearch. Elasticsearch queries are in 
 See [Lucene query syntax](https://www.elastic.co/guide/en/kibana/current/lucene-query.html) and [Query string syntax](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/query-dsl-query-string-query.html#query-string-syntax) if you are new to working with Lucene queries in Elasticsearch.
 
 {{% admonition type="note" %}}
-When composing Lucene queries, ensure that you use uppercase boolean operators: AND, OR, and NOT. Lowercase versions of these operators are not correctly parsed by Elasticsearch.
+When composing Lucene queries, ensure that you use uppercase boolean operators: `AND`, `OR`, and `NOT`. Lowercase versions of these operators are not supported by the Lucene query language.
 {{% /admonition %}}
 
 {{< figure src="/static/img/docs/elasticsearch/elastic-query-editor-10.1.png" max-width="800px" class="docs-image--no-shadow" caption="Elasticsearch query editor" >}}
