@@ -1,11 +1,12 @@
 package options
 
 import (
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericfeatures "k8s.io/apiserver/pkg/features"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
@@ -14,11 +15,6 @@ import (
 	apiregistrationv1beta1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
-	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
-	"k8s.io/kube-openapi/pkg/common"
-
-	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
@@ -32,11 +28,6 @@ type AggregatorServerOptions struct {
 
 func NewAggregatorServerOptions() *AggregatorServerOptions {
 	return &AggregatorServerOptions{}
-}
-
-func (o *AggregatorServerOptions) getMergedOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-	aggregatorAPIs := aggregatoropenapi.GetOpenAPIDefinitions(ref)
-	return aggregatorAPIs
 }
 
 func (o *AggregatorServerOptions) AddFlags(fs *pflag.FlagSet) {
@@ -109,11 +100,6 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 	aggregatorConfig.ExtraConfig.ProxyClientCertFile = o.ProxyClientCertFile
 	aggregatorConfig.ExtraConfig.ProxyClientKeyFile = o.ProxyClientKeyFile
 
-	namer := openapinamer.NewDefinitionNamer(aggregatorscheme.Scheme)
-	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(o.getMergedOpenAPIDefinitions, namer)
-	genericConfig.OpenAPIV3Config.Info.Title = "Kubernetes"
-	genericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(o.getMergedOpenAPIDefinitions, namer)
-	genericConfig.OpenAPIConfig.Info.Title = "Kubernetes"
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
 
 	// These hooks use v1 informers, which are not available in the grafana aggregator.
