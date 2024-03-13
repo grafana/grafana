@@ -22,7 +22,7 @@ import { getLocationMatchers } from 'app/features/geo/utils/location';
 export interface PhotoConfig {
   kind: 'square' | 'circle' | 'anchored' | 'folio';
   border: number; // Sets border width around images
-  shadow: boolean; // Renders drop shadow behind images
+  shadow: number; // Renders drop shadow behind images
   crop: boolean; // Crops images to fill shape
   src?: string; // Image source field
   radius: number; // Image radius
@@ -32,7 +32,7 @@ export interface PhotoConfig {
 const defaultOptions: PhotoConfig = {
   kind: 'square',
   border: 2,
-  shadow: true,
+  shadow: 0,
   crop: true,
   radius: 20,
   color: 'rgb(200, 200, 200)',
@@ -105,7 +105,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           radius: config.radius,
           crop: config.crop,
           kind: config.kind,
-          shadow: false,
+          shadow: undefined,
           stroke: new Stroke({
             width: 0,
             color: 'rgba(0,0,0,0)',
@@ -140,7 +140,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           radius: config.radius,
           crop: false,
           kind: config.kind,
-          shadow: false,
+          shadow: undefined,
           stroke: new Stroke({
             width: 0,
             color: 'rgba(0,0,0,0)',
@@ -217,10 +217,13 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
             settings: {},
             defaultValue: defaultOptions.crop,
           })
-          .addBooleanSwitch({
+          .addSliderInput({
             path: 'config.shadow',
             name: 'Shadow',
-            settings: {},
+            settings: {
+              min: 0,
+              max: 10,
+            },
             defaultValue: defaultOptions.shadow,
           })
           .addSliderInput({
