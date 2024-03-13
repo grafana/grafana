@@ -658,4 +658,8 @@ const (
 	// FlagEmailVerificationEnforcement
 	// Force email verification for users, even when authenticating through sso.
 	FlagEmailVerificationEnforcement = "emailVerificationEnforcement"
+
+	// FlagAuthAPIAccessTokenAuth
+	// Enables the use of Auth API access tokens for authentication
+	FlagAuthAPIAccessTokenAuth = "authAPIAccessTokenAuth"
 )

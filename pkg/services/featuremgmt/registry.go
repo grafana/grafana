@@ -1217,6 +1217,14 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:              "authAPIAccessTokenAuth",
+			Description:       "Enables the use of Auth API access tokens for authentication",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 

@@ -135,7 +135,7 @@ func ProvideService(
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
-	if s.cfg.ExtJWTAuth.Enabled {
+	if s.cfg.ExtJWTAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagAuthAPIAccessTokenAuth) {
 		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService))
 	}
 
