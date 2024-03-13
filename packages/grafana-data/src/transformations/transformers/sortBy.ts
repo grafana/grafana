@@ -43,7 +43,7 @@ export const sortByTransformer: DataTransformerInfo<SortByTransformerOptions> = 
     ),
 };
 
-export function sortDataFrames(data: DataFrame[], sort: SortByField[], ctx: DataTransformContext): DataFrame[] {
+function sortDataFrames(data: DataFrame[], sort: SortByField[], ctx: DataTransformContext): DataFrame[] {
   return data.map((frame) => {
     const s = attachFieldIndex(frame, sort, ctx);
     if (s.length && s[0].index != null) {

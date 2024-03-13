@@ -439,11 +439,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
-    "packages/grafana-data/src/vector/ArrayVector.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
     "packages/grafana-data/src/vector/CircularVector.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1164,11 +1159,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Do not use any type assertions.", "9"],
-      [0, 0, 0, "Do not use any type assertions.", "10"],
-      [0, 0, 0, "Do not use any type assertions.", "11"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
+      [0, 0, 0, "Do not use any type assertions.", "8"],
+      [0, 0, 0, "Do not use any type assertions.", "9"]
     ],
     "public/app/core/components/GraphNG/hooks.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -2529,9 +2522,20 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataPane.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/dashboard-scene/saving/DashboardPrompt.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/dashboard-scene/saving/DetectChangesWorker.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
     "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
+    "public/app/features/dashboard-scene/saving/getDashboardChanges.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/dashboard-scene/saving/getSaveDashboardChange.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3003,6 +3007,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard/state/actions.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/dashboard/state/getPanelPluginToMigrateTo.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/state/initDashboard.test.ts:5381": [
@@ -3665,17 +3672,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
-    "public/app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"]
-    ],
     "public/app/features/library-panels/components/LibraryPanelsView/actions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -3995,9 +3991,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"]
-    ],
-    "public/app/features/profile/ChangePasswordForm.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/query/components/QueryEditorRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5841,12 +5834,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"],
       [0, 0, 0, "Styles should be written using objects.", "4"]
-    ],
-    "public/app/plugins/panel/gettingstarted/components/Step.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
     "public/app/plugins/panel/gettingstarted/components/TutorialCard.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],

@@ -15,20 +15,17 @@ import (
 // verify-full - use tls, verify root cert
 // (for all the options except `disable`, you can optionally use client certificates)
 
-var errNoRootCert = errors.New("tls: missing root certificate")
-
-func getTLSConfigRequire(certs *Certs) (*tls.Config, error) {
-	// we may have a client-cert, we do not have a root-cert
-
+func getTLSConfigRequire(certs *Certs, serverName string) (*tls.Config, error) {
 	// see https://www.postgresql.org/docs/12/libpq-ssl.html ,
 	// mode=require + provided root-cert should behave as mode=verify-ca
 	if certs.rootCerts != nil {
-		return getTLSConfigVerifyCA(certs)
+		return getTLSConfigVerifyCA(certs, serverName)
 	}
 
 	return &tls.Config{
 		InsecureSkipVerify: true, // we do not verify the root cert
 		Certificates:       certs.clientCerts,
+		ServerName:         serverName,
 	}, nil
 }
 
@@ -59,13 +56,9 @@ func getTLSConfigRequire(certs *Certs) (*tls.Config, error) {
 //
 //	https://github.com/jackc/pgx/blob/5c63f646f820ca9696fc3515c1caf2a557d562e5/pgconn/config.go#L657-L690
 //		(unfortunately pgx only handles this for certificate-provided-as-path, so we cannot rely on it)
-func getTLSConfigVerifyCA(certs *Certs) (*tls.Config, error) {
-	// we must have a root certificate
-	if certs.rootCerts == nil {
-		return nil, errNoRootCert
-	}
-
+func getTLSConfigVerifyCA(certs *Certs, serverName string) (*tls.Config, error) {
 	conf := tls.Config{
+		ServerName:         serverName,
 		Certificates:       certs.clientCerts,
 		InsecureSkipVerify: true, // we turn off the default-verification, we'll do VerifyConnection instead
 		VerifyConnection: func(state tls.ConnectionState) error {
@@ -91,11 +84,6 @@ func getTLSConfigVerifyCA(certs *Certs) (*tls.Config, error) {
 }
 
 func getTLSConfigVerifyFull(certs *Certs, serverName string) (*tls.Config, error) {
-	// we must have a root certificate
-	if certs.rootCerts == nil {
-		return nil, errNoRootCert
-	}
-
 	conf := tls.Config{
 		Certificates: certs.clientCerts,
 		ServerName:   serverName,
@@ -134,11 +122,11 @@ func GetTLSConfig(dsInfo sqleng.DataSourceInfo, readFile ReadFileFunc, serverNam
 	// `disable` already handled
 	case "":
 		// for backward-compatibility reasons this is the same as `require`
-		return getTLSConfigRequire(certs)
+		return getTLSConfigRequire(certs, serverName)
 	case "require":
-		return getTLSConfigRequire(certs)
+		return getTLSConfigRequire(certs, serverName)
 	case "verify-ca":
-		return getTLSConfigVerifyCA(certs)
+		return getTLSConfigVerifyCA(certs, serverName)
 	case "verify-full":
 		return getTLSConfigVerifyFull(certs, serverName)
 	default:

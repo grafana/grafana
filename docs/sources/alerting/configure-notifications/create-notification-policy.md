@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../notifications/ # /docs/grafana/latest/alerting/notifications/
-  - ../old-alerting/notifications/ # /docs/grafana/latest/alerting/old-alerting/notifications/
   - ../unified-alerting/notifications/ # /docs/grafana/latest/alerting/unified-alerting/notifications/
   - ../alerting-rules/create-notification-policy/ # /docs/grafana/latest/alerting/alerting-rules/create-notification-policy/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/create-notification-policy/
@@ -36,10 +35,6 @@ You can configure Grafana-managed notification policies as well as notification 
 For more information on notification policies, see [fundamentals of Notification Policies][notification-policies].
 
 ## Edit default notification policy
-
-{{% admonition type="note" %}}
-Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organizations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 Alerts only if they have one organization. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
-{{% /admonition %}}
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.

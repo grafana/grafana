@@ -16,17 +16,17 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.AnnotationActions":     schema_pkg_apis_dashboard_v0alpha1_AnnotationActions(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.AnnotationPermission":  schema_pkg_apis_dashboard_v0alpha1_AnnotationPermission(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.Dashboard":             schema_pkg_apis_dashboard_v0alpha1_Dashboard(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardAccessInfo":   schema_pkg_apis_dashboard_v0alpha1_DashboardAccessInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardList":         schema_pkg_apis_dashboard_v0alpha1_DashboardList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardSummary":      schema_pkg_apis_dashboard_v0alpha1_DashboardSummary(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardSummaryList":  schema_pkg_apis_dashboard_v0alpha1_DashboardSummaryList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardSummarySpec":  schema_pkg_apis_dashboard_v0alpha1_DashboardSummarySpec(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardVersionInfo":  schema_pkg_apis_dashboard_v0alpha1_DashboardVersionInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardVersionsInfo": schema_pkg_apis_dashboard_v0alpha1_DashboardVersionsInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.VersionsQueryOptions":  schema_pkg_apis_dashboard_v0alpha1_VersionsQueryOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.AnnotationActions":    schema_pkg_apis_dashboard_v0alpha1_AnnotationActions(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.AnnotationPermission": schema_pkg_apis_dashboard_v0alpha1_AnnotationPermission(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.Dashboard":            schema_pkg_apis_dashboard_v0alpha1_Dashboard(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardAccessInfo":  schema_pkg_apis_dashboard_v0alpha1_DashboardAccessInfo(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardList":        schema_pkg_apis_dashboard_v0alpha1_DashboardList(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardSummary":     schema_pkg_apis_dashboard_v0alpha1_DashboardSummary(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardSummaryList": schema_pkg_apis_dashboard_v0alpha1_DashboardSummaryList(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardSummarySpec": schema_pkg_apis_dashboard_v0alpha1_DashboardSummarySpec(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardVersionInfo": schema_pkg_apis_dashboard_v0alpha1_DashboardVersionInfo(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardVersionList": schema_pkg_apis_dashboard_v0alpha1_DashboardVersionList(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.VersionsQueryOptions": schema_pkg_apis_dashboard_v0alpha1_VersionsQueryOptions(ref),
 	}
 }
 
@@ -380,34 +380,39 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardVersionInfo(ref common.Referenc
 				Properties: map[string]spec.Schema{
 					"version": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int32",
+							Description: "The internal ID for this version (will be replaced with resourceVersion)",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
 						},
 					},
 					"parentVersion": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int32",
+							Description: "If the dashboard came from a previous version, it is set here",
+							Type:        []string{"integer"},
+							Format:      "int32",
 						},
 					},
 					"created": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
-					"message": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "The creation timestamp for this version",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
 						},
 					},
 					"createdBy": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "The user who created this version",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Message passed while saving the version",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -417,7 +422,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardVersionInfo(ref common.Referenc
 	}
 }
 
-func schema_pkg_apis_dashboard_v0alpha1_DashboardVersionsInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v0alpha1_DashboardVersionList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
@@ -59,11 +60,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return dsInfo.QueryData(ctx, req)
 }
 
-func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, pgxConf *pgx.ConnConfig, logger log.Logger, settings backend.DataSourceInstanceSettings) (*sql.DB, *sqleng.DataSourceHandler, error) {
-	proxyClient, err := settings.ProxyClient(ctx)
+func newPostgres(userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, logger log.Logger, proxyClient proxy.Client) (*sql.DB, *sqleng.DataSourceHandler, error) {
+	pgxConf, err := generateConnectionConfig(dsInfo)
 	if err != nil {
-		logger.Error("postgres proxy creation failed", "error", err)
-		return nil, nil, fmt.Errorf("postgres proxy creation failed")
+		logger.Error("postgres config creation failed", "error", err)
+		return nil, nil, fmt.Errorf("postgres config creation failed")
 	}
 
 	if proxyClient.SecureSocksProxyEnabled() {
@@ -140,17 +141,17 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
 
-		pgxConf, err := generateConnectionConfig(dsInfo)
-		if err != nil {
-			return nil, err
-		}
-
 		userFacingDefaultError, err := cfg.UserFacingDefaultError()
 		if err != nil {
 			return nil, err
 		}
 
-		_, handler, err := newPostgres(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, pgxConf, logger, settings)
+		proxyClient, err := settings.ProxyClient(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		_, handler, err := newPostgres(userFacingDefaultError, sqlCfg.RowLimit, dsInfo, logger, proxyClient)
 
 		if err != nil {
 			logger.Error("Failed connecting to Postgres", "err", err)
@@ -222,6 +223,12 @@ func generateConnectionConfig(dsInfo sqleng.DataSourceInfo) (*pgx.ConnConfig, er
 		return nil, errors.New("tls: fallbacks configured, unable to set up TLS config")
 	}
 	conf.TLSConfig = tlsConf
+
+	// by default pgx resolves hostnames to ip addresses. we must avoid this.
+	// (certain socks-proxy related functionality relies on the hostname being preserved)
+	conf.LookupFunc = func(ctx context.Context, host string) ([]string, error) {
+		return []string{host}, nil
+	}
 
 	return conf, nil
 }

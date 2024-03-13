@@ -95,7 +95,8 @@ func TestTLSVerifyCA(t *testing.T) {
 	require.NotNil(t, c.RootCAs) // TODO: not the best, but nothing better available
 }
 
-func TestTLSVerifyCAMisingRootCert(t *testing.T) {
+func TestTLSVerifyCANoRootCertProvided(t *testing.T) {
+	// this is ok. go will use the default system certs
 	dsInfo := sqleng.DataSourceInfo{
 		JsonData: sqleng.JsonData{
 			Mode:                "verify-ca",
@@ -104,7 +105,7 @@ func TestTLSVerifyCAMisingRootCert(t *testing.T) {
 		DecryptedSecureJSONData: map[string]string{},
 	}
 	_, err := GetTLSConfig(dsInfo, noReadFile, "localhost")
-	require.ErrorIs(t, err, errNoRootCert)
+	require.NoError(t, err)
 }
 
 func TestTLSClientCert(t *testing.T) {
@@ -358,7 +359,8 @@ func TestTLSMethodEmpty(t *testing.T) {
 	require.NotNil(t, c.RootCAs) // TODO: not the best, but nothing better available
 }
 
-func TestTLSVerifyFullMisingRootCert(t *testing.T) {
+func TestTLSVerifyFullNoRootCertProvided(t *testing.T) {
+	// this is ok. go will use the default system certs
 	dsInfo := sqleng.DataSourceInfo{
 		JsonData: sqleng.JsonData{
 			Mode:                "verify-full",
@@ -367,7 +369,7 @@ func TestTLSVerifyFullMisingRootCert(t *testing.T) {
 		DecryptedSecureJSONData: map[string]string{},
 	}
 	_, err := GetTLSConfig(dsInfo, noReadFile, "localhost")
-	require.ErrorIs(t, err, errNoRootCert)
+	require.NoError(t, err)
 }
 
 func TestTLSInvalidMode(t *testing.T) {
@@ -379,4 +381,22 @@ func TestTLSInvalidMode(t *testing.T) {
 
 	_, err := GetTLSConfig(dsInfo, noReadFile, "localhost")
 	require.Error(t, err)
+}
+
+func TestTLSServerNameSetInEveryMode(t *testing.T) {
+	modes := []string{"require", "verify-ca", "verify-full"}
+
+	for _, mode := range modes {
+		t.Run(mode, func(t *testing.T) {
+			dsInfo := sqleng.DataSourceInfo{
+				JsonData: sqleng.JsonData{
+					Mode: mode,
+				},
+				DecryptedSecureJSONData: map[string]string{},
+			}
+			c, err := GetTLSConfig(dsInfo, noReadFile, "example.com")
+			require.NoError(t, err)
+			require.Equal(t, "example.com", c.ServerName)
+		})
+	}
 }
