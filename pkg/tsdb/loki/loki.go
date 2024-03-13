@@ -240,6 +240,11 @@ func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataR
 	defer span.End()
 
 	queryRes, err := runQuery(ctx, api, query, responseOpts, plog)
+	if queryRes == nil {
+		// we always want to return a backend.DataResponse object, even if we received just an error
+		queryRes = &backend.DataResponse{}
+	}
+
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
