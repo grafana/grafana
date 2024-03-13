@@ -37,7 +37,6 @@ The following guides will help you get started with Loki:
 This data source supports these versions of Loki:
 
 - v2.8+
-- v3.0+
 
 ## Adding a data source
 
