@@ -35,7 +35,6 @@ export const InfiniteScroll = ({
   const [lowerOutOfRange, setLowerOutOfRange] = useState(false);
   const [upperLoading, setUpperLoading] = useState(false);
   const [lowerLoading, setLowerLoading] = useState(false);
-  const [onTopEdge, setOnTopEdge] = useState(scrollElement?.scrollTop === 0 || false);
   const rowsRef = useRef<LogRowModel[]>(rows);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
 
@@ -81,7 +80,6 @@ export const InfiniteScroll = ({
       if (!scrollElement || !loadMoreLogs || !rows.length || loading || !config.featureToggles.logsInfiniteScrolling) {
         return;
       }
-      setOnTopEdge(scrollElement?.scrollTop === 0);
       event.stopImmediatePropagation();
       const scrollDirection = shouldLoadMore(event, scrollElement, lastScroll.current);
       lastScroll.current = scrollElement.scrollTop;
@@ -89,15 +87,12 @@ export const InfiniteScroll = ({
         return;
       } else if (scrollDirection === ScrollDirection.Top && topScrollEnabled) {
         scrollTop();
-      } else {
+      } else if (scrollDirection === ScrollDirection.Bottom) {
         scrollBottom();
       }
     }
 
     function scrollTop() {
-      if (!onTopEdge) {
-        return;
-      }
       const newRange = canScrollTop(getVisibleRange(rows), range, timeZone, sortOrder);
       if (!newRange) {
         setUpperOutOfRange(true);
@@ -134,7 +129,7 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [loadMoreLogs, loading, onTopEdge, range, rows, scrollElement, sortOrder, timeZone]);
+  }, [loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone, topScrollEnabled]);
 
   // We allow "now" to move when using relative time, so we hide the message so it doesn't flash.
   const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);
