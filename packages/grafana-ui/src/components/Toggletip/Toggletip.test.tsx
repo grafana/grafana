@@ -246,12 +246,12 @@ describe('Toggletip', () => {
 
     render(
       <>
-        <Toggletip placement="auto" content={outsideLinkButton} show>
+        <Toggletip placement="auto" content={insideLinkButton} show>
           <Button type="button" data-testid="myButton">
             Click me!
           </Button>
         </Toggletip>
-        {insideLinkButton}
+        {outsideLinkButton}
       </>
     );
 
