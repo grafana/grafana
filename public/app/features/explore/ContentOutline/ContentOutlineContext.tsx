@@ -113,7 +113,5 @@ function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps, b: Co
 }
 
 export function useContentOutlineContext() {
-  const ctx = useContext(ContentOutlineContext);
-
-  return ctx;
+  return useContext(ContentOutlineContext);
 }

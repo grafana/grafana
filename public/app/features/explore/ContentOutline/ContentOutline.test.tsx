@@ -45,15 +45,15 @@ describe('<ContentOutline />', () => {
   });
 
   it('toggles content on button click', () => {
-    let showContentOutlineButton = screen.getByLabelText('Expand content outline');
+    let showContentOutlineButton = screen.getByLabelText('Expand outline');
     expect(showContentOutlineButton).toBeInTheDocument();
 
     fireEvent.click(showContentOutlineButton);
-    const hideContentOutlineButton = screen.getByText('Collapse outline');
+    const hideContentOutlineButton = screen.getByLabelText('Collapse outline');
     expect(hideContentOutlineButton).toBeInTheDocument();
 
     fireEvent.click(hideContentOutlineButton);
-    showContentOutlineButton = screen.getByLabelText('Expand content outline');
+    showContentOutlineButton = screen.getByLabelText('Expand outline');
     expect(showContentOutlineButton).toBeInTheDocument();
   });
 

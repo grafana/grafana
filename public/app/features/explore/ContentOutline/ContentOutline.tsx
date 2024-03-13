@@ -59,7 +59,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       },
     }),
     toggleContentOutlineButton: css({
-      marginLeft: theme.spacing(0.2),
+      marginLeft: theme.spacing(0.1),
       '&:hover': {
         color: theme.colors.text.primary,
       },
@@ -165,6 +165,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
         <div className={styles.content}>
           <ContentOutlineItemButton
             icon={'arrow-from-right'}
+            tooltip={contentOutlineExpanded ? 'Collapse outline' : 'Expand outline'}
             onClick={toggle}
             className={styles.toggleContentOutlineButton}
             aria-expanded={contentOutlineExpanded}
