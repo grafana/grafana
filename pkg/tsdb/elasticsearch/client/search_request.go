@@ -3,6 +3,8 @@ package es
 import (
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 const (
@@ -22,15 +24,17 @@ type SearchRequestBuilder struct {
 	queryBuilder *QueryBuilder
 	aggBuilders  []AggBuilder
 	customProps  map[string]any
+	timeRange    backend.TimeRange
 }
 
 // NewSearchRequestBuilder create a new search request builder
-func NewSearchRequestBuilder(interval time.Duration) *SearchRequestBuilder {
+func NewSearchRequestBuilder(interval time.Duration, timeRange backend.TimeRange) *SearchRequestBuilder {
 	builder := &SearchRequestBuilder{
 		interval:    interval,
 		sort:        make(map[string]any),
 		customProps: make(map[string]any),
 		aggBuilders: make([]AggBuilder, 0),
+		timeRange:   timeRange,
 	}
 	return builder
 }
@@ -39,6 +43,7 @@ func NewSearchRequestBuilder(interval time.Duration) *SearchRequestBuilder {
 func (b *SearchRequestBuilder) Build() (*SearchRequest, error) {
 	sr := SearchRequest{
 		Index:       b.index,
+		TimeRange:   b.timeRange,
 		Interval:    b.interval,
 		Size:        b.size,
 		Sort:        b.sort,
@@ -164,8 +169,8 @@ func NewMultiSearchRequestBuilder() *MultiSearchRequestBuilder {
 }
 
 // Search initiates and returns a new search request builder
-func (m *MultiSearchRequestBuilder) Search(interval time.Duration) *SearchRequestBuilder {
-	b := NewSearchRequestBuilder(interval)
+func (m *MultiSearchRequestBuilder) Search(interval time.Duration, timeRange backend.TimeRange) *SearchRequestBuilder {
+	b := NewSearchRequestBuilder(interval, timeRange)
 	m.requestBuilders = append(m.requestBuilders, b)
 	return b
 }
