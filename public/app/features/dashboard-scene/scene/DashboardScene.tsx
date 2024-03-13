@@ -165,6 +165,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     window.__grafanaSceneContext = this;
 
     if (this.state.isEditing) {
+      this._initialState = sceneUtils.cloneSceneObjectState({ ...this.state, isDirty: false, isEditing: false });
+      this._initialUrlState = locationService.getLocation();
       this._changeTracker.startTrackingChanges();
     }
 
@@ -268,7 +270,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     );
   }
 
-  private exitEditModeConfirmed(restoreIntialState = true) {
+  private exitEditModeConfirmed(restoreInitialState = true) {
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
     // Stop url sync before updating url
@@ -287,7 +289,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       })
     );
 
-    if (restoreIntialState) {
+    if (restoreInitialState) {
       //  Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
     } else {
