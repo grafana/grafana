@@ -29,7 +29,7 @@ export class Connections {
   connectionSource?: ElementState;
   connectionTarget?: ElementState;
   isDrawingConnection?: boolean;
-  vertexIndex?: number;
+  selectedVertexIndex?: number;
   didConnectionLeaveHighlight?: boolean;
   state: ConnectionState[] = [];
   readonly selection = new BehaviorSubject<ConnectionState | undefined>(undefined);
@@ -273,6 +273,7 @@ export class Connections {
     }
   };
 
+  // Handles mousemove and mouseup events when dragging an existing vertex
   vertexListener = (event: MouseEvent) => {
     event.preventDefault();
 
@@ -296,7 +297,6 @@ export class Connections {
     const sourceRect = this.selection.value!.source.div!.getBoundingClientRect();
 
     // calculate relative coordinates based on source and target coorindates of connection
-    // TODO account for zoom properly
     const { x1, y1, x2, y2 } = calculateCoordinates(
       sourceRect,
       parentBoundingRect,
@@ -310,21 +310,26 @@ export class Connections {
     let vx2 = x2;
     let vy2 = y2;
     if (this.selection.value && this.selection.value.vertices) {
-      if (this.vertexIndex !== undefined && this.vertexIndex > 0) {
-        vx1 += this.selection.value.vertices[this.vertexIndex - 1].x * (x2 - x1);
-        vy1 += this.selection.value.vertices[this.vertexIndex - 1].y * (y2 - y1);
+      if (this.selectedVertexIndex !== undefined && this.selectedVertexIndex > 0) {
+        vx1 += this.selection.value.vertices[this.selectedVertexIndex - 1].x * (x2 - x1);
+        vy1 += this.selection.value.vertices[this.selectedVertexIndex - 1].y * (y2 - y1);
       }
-      if (this.vertexIndex !== undefined && this.vertexIndex < this.selection.value.vertices.length - 1) {
-        vx2 = this.selection.value.vertices[this.vertexIndex + 1].x * (x2 - x1) + x1;
-        vy2 = this.selection.value.vertices[this.vertexIndex + 1].y * (y2 - y1) + y1;
+      if (
+        this.selectedVertexIndex !== undefined &&
+        this.selectedVertexIndex < this.selection.value.vertices.length - 1
+      ) {
+        vx2 = this.selection.value.vertices[this.selectedVertexIndex + 1].x * (x2 - x1) + x1;
+        vy2 = this.selection.value.vertices[this.selectedVertexIndex + 1].y * (y2 - y1) + y1;
       }
     }
 
+    // Display temporary vertex during drag
     this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${x} ${y} L${vx2} ${vy2}`);
-
     this.connectionSVGVertex!.style.display = 'block';
 
+    // Handle mouseup
     if (!event.buttons) {
+      // Remove existing event listener
       this.scene.selecto?.rootContainer?.removeEventListener('mousemove', this.vertexListener);
       this.scene.selecto?.rootContainer?.removeEventListener('mouseup', this.vertexListener);
       this.scene.selecto!.rootContainer!.style.cursor = 'auto';
@@ -332,7 +337,7 @@ export class Connections {
 
       // call onChange here and update appropriate index of connection vertices array
       const connectionIndex = this.selection.value?.index;
-      const vertexIndex = this.vertexIndex;
+      const vertexIndex = this.selectedVertexIndex;
 
       if (connectionIndex !== undefined && vertexIndex !== undefined) {
         const currentSource = this.scene.connections.state[connectionIndex].source;
@@ -351,8 +356,8 @@ export class Connections {
               vertices: currentVertices,
             };
 
+            // Update save model
             currentSource.onChange({ ...currentSource.options, connections: currentConnections });
-
             this.updateState();
             this.scene.save();
           }
@@ -361,6 +366,7 @@ export class Connections {
     }
   };
 
+  // Handles mousemove and mouseup events when dragging a new vertex
   vertexAddListener = (event: MouseEvent) => {
     event.preventDefault();
 
@@ -384,7 +390,6 @@ export class Connections {
     const sourceRect = this.selection.value!.source.div!.getBoundingClientRect();
 
     // calculate relative coordinates based on source and target coorindates of connection
-    // TODO account for zoom properly
     const { x1, y1, x2, y2 } = calculateCoordinates(
       sourceRect,
       parentBoundingRect,
@@ -398,29 +403,31 @@ export class Connections {
     let vx2 = x2;
     let vy2 = y2;
     if (this.selection.value && this.selection.value.vertices) {
-      if (this.vertexIndex !== undefined && this.vertexIndex > 0) {
-        vx1 += this.selection.value.vertices[this.vertexIndex - 1].x * (x2 - x1);
-        vy1 += this.selection.value.vertices[this.vertexIndex - 1].y * (y2 - y1);
+      if (this.selectedVertexIndex !== undefined && this.selectedVertexIndex > 0) {
+        vx1 += this.selection.value.vertices[this.selectedVertexIndex - 1].x * (x2 - x1);
+        vy1 += this.selection.value.vertices[this.selectedVertexIndex - 1].y * (y2 - y1);
       }
-      if (this.vertexIndex !== undefined && this.vertexIndex < this.selection.value.vertices.length) {
-        vx2 = this.selection.value.vertices[this.vertexIndex].x * (x2 - x1) + x1;
-        vy2 = this.selection.value.vertices[this.vertexIndex].y * (y2 - y1) + y1;
+      if (this.selectedVertexIndex !== undefined && this.selectedVertexIndex < this.selection.value.vertices.length) {
+        vx2 = this.selection.value.vertices[this.selectedVertexIndex].x * (x2 - x1) + x1;
+        vy2 = this.selection.value.vertices[this.selectedVertexIndex].y * (y2 - y1) + y1;
       }
     }
 
+    // Display temporary vertex during drag
     this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${x} ${y} L${vx2} ${vy2}`);
-
     this.connectionSVGVertex!.style.display = 'block';
 
+    // Handle mouseup
     if (!event.buttons) {
+      // Remove existing event listener
       this.scene.selecto?.rootContainer?.removeEventListener('mousemove', this.vertexAddListener);
       this.scene.selecto?.rootContainer?.removeEventListener('mouseup', this.vertexAddListener);
       this.scene.selecto!.rootContainer!.style.cursor = 'auto';
       this.connectionSVGVertex!.style.display = 'none';
 
-      // call onChange here and update appropriate index of connection vertices array
+      // call onChange here and insert new vertex at appropriate index of connection vertices array
       const connectionIndex = this.selection.value?.index;
-      const vertexIndex = this.vertexIndex;
+      const vertexIndex = this.selectedVertexIndex;
 
       if (connectionIndex !== undefined && vertexIndex !== undefined) {
         const currentSource = this.scene.connections.state[connectionIndex].source;
@@ -442,8 +449,9 @@ export class Connections {
               vertices: currentVertices,
             };
           }
-          currentSource.onChange({ ...currentSource.options, connections: currentConnections });
 
+          // Update save model
+          currentSource.onChange({ ...currentSource.options, connections: currentConnections });
           this.updateState();
           this.scene.save();
         }
@@ -483,16 +491,20 @@ export class Connections {
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.connectionListener);
   };
 
+  // Add event listener at root container during existing vertex drag
   handleVertexDragStart = (selectedTarget: HTMLElement) => {
-    this.vertexIndex = Number(selectedTarget.getAttribute('data-index'));
+    // Get vertex index from selected target data
+    this.selectedVertexIndex = Number(selectedTarget.getAttribute('data-index'));
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.vertexListener);
     this.scene.selecto?.rootContainer?.addEventListener('mouseup', this.vertexListener);
   };
 
+  // Add event listener at root container during creation of new vertex
   handleVertexAddDragStart = (selectedTarget: HTMLElement) => {
-    this.vertexIndex = Number(selectedTarget.getAttribute('data-index'));
+    // Get vertex index from selected target data
+    this.selectedVertexIndex = Number(selectedTarget.getAttribute('data-index'));
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.vertexAddListener);
