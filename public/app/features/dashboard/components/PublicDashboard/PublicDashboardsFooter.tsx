@@ -24,7 +24,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     justifyContent: 'end',
     height: '30px',
-    padding: theme.spacing(0, 2, 0, 1),
+    backgroundColor: theme.colors.background.canvas,
+    position: 'sticky',
+    bottom: 0,
+    zIndex: theme.zIndex.navbarFixed,
+    padding: theme.spacing(0.5, 0),
   }),
   link: css({
     display: 'flex',

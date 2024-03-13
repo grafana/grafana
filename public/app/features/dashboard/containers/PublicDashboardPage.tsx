@@ -110,7 +110,9 @@ const PublicDashboardPage = (props: Props) => {
       <div className={styles.gridContainer}>
         <DashboardGrid dashboard={dashboard} isEditable={false} viewPanel={null} editPanel={null} hidePanelMenus />
       </div>
-      <PublicDashboardFooter />
+      <div className={styles.footer}>
+        <PublicDashboardFooter />
+      </div>
     </Page>
   );
 };
@@ -120,6 +122,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
     padding: theme.spacing(2, 2, 2, 2),
     overflow: 'auto',
+  }),
+  footer: css({
+    padding: theme.spacing(0, 2),
   }),
 });
 

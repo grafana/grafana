@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
@@ -55,22 +55,29 @@ export function PublicDashboardScenePage({ match, route }: Props) {
 }
 
 function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
+  const [isActive, setIsActive] = useState(false);
   const { controls, title } = model.useState();
   const { timePicker, refreshPicker, hideTimeControls } = controls!.useState();
   const bodyToRender = model.getBodyToRender();
   const styles = useStyles2(getStyles);
 
+  useEffect(() => {
+    setIsActive(true);
+    return model.activate();
+  }, [model]);
+
+  if (!isActive) {
+    return null;
+  }
+
   return (
-    // <div className={styles.canvas}>
-    //   <model.Component model={model} />
-    // <div className={styles.canvas}>
-    <Page layout={PageLayoutType.Canvas}>
-      <Stack justifyContent={'space-between'}>
+    <Page layout={PageLayoutType.Custom} className={styles.page}>
+      <div className={styles.controls}>
         <Stack alignItems="center">
-          <div className={styles.pageIcon}>
+          <div className={styles.iconTitle}>
             <Icon name="grafana" size="lg" aria-hidden />
           </div>
-          <span className={styles.truncateText}>{title}</span>
+          <span className={styles.title}>{title}</span>
         </Stack>
         {!hideTimeControls && (
           <Stack>
@@ -78,52 +85,53 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
             <refreshPicker.Component model={refreshPicker} />
           </Stack>
         )}
-      </Stack>
+      </div>
       <div className={styles.body}>
         <bodyToRender.Component model={bodyToRender} />
       </div>
       <PublicDashboardFooter />
     </Page>
-    //{' '}
-    // </div>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    titleContainer: css({
-      display: 'flex',
+    page: css({
+      padding: theme.spacing(0, 2),
     }),
-    pageIcon: css({
+    controls: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      position: 'sticky',
+      top: 0,
+      zIndex: theme.zIndex.navbarFixed,
+      background: theme.colors.background.canvas,
+      padding: theme.spacing(2, 0),
+      [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column',
+        gap: theme.spacing(1),
+        alignItems: 'stretch',
+      },
+    }),
+    iconTitle: css({
       display: 'none',
       [theme.breakpoints.up('sm')]: {
         display: 'flex',
         alignItems: 'center',
       },
     }),
-    truncateText: css({
+    title: css({
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
       display: 'flex',
-      fontSize: theme.typography.size.lg,
+      fontSize: theme.typography.h4.fontSize,
       margin: 0,
-    }),
-    canvas: css({
-      label: 'canvas',
-      display: 'flex',
-      flexDirection: 'column',
-      flexBasis: '100%',
-      flexGrow: 1,
-      padding: theme.spacing(2),
     }),
     body: css({
       label: 'body',
-      flexGrow: 1,
-      display: 'flex',
-      gap: '8px',
-      marginTop: theme.spacing(3),
-      marginBottom: theme.spacing(2),
+      marginBottom: theme.spacing(3),
     }),
   };
 }
