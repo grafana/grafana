@@ -33,9 +33,7 @@ test.describe('query editor query data', () => {
 });
 
 test.describe('query editor with mocked responses', () => {
-  test('and resource `scenarios` is mocked', async ({ page, selectors, grafanaVersion, request }) => {
-    const dashboardPage = new DashboardPage({ page, selectors, grafanaVersion, request });
-    await dashboardPage.goto();
+  test('and resource `scenarios` is mocked', async ({ selectors, dashboardPage }) => {
     await dashboardPage.mockResourceResponse('scenarios', scenarios);
     const panelEditPage = await dashboardPage.addPanel();
     await panelEditPage.datasource.set('gdev-testdata');
