@@ -120,7 +120,7 @@ export const ConnectionSVG = ({
   };
 
   const vertexStyles = { fill: '#44aaff', strokeWidth: 1 };
-  const futureVertexStyles = { fill: '#44aaff', opacity: 0.6, strokeWidth: 1 };
+  const addVertexStyles = { fill: '#44aaff', opacity: 0.6, strokeWidth: 1 };
 
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
@@ -146,7 +146,7 @@ export const ConnectionSVG = ({
       const selectedStyles = { stroke: '#44aaff', strokeOpacity: 0.6, strokeWidth: strokeWidth + 5 };
 
       const CONNECTION_HEAD_ID = `connectionHead-${headId + Math.random()}`;
-      const futureVertices: ConnectionCoordinates[] = [];
+      const addVertices: ConnectionCoordinates[] = [];
 
       let pathString = `M${x1} ${y1} `;
       if (vertices?.length) {
@@ -155,13 +155,13 @@ export const ConnectionSVG = ({
           const y = value.y;
           pathString += `L${x * (x2 - x1) + x1} ${y * (y2 - y1) + y1} `;
           if (index === 0) {
-            futureVertices.push(calculateMidpoint(0, 0, x, y));
+            addVertices.push(calculateMidpoint(0, 0, x, y));
           } else {
             const previousVertex = vertices[index - 1];
-            futureVertices.push(calculateMidpoint(previousVertex.x, previousVertex.y, x, y));
+            addVertices.push(calculateMidpoint(previousVertex.x, previousVertex.y, x, y));
           }
           if (index === vertices.length - 1) {
-            futureVertices.push(calculateMidpoint(1, 1, x, y));
+            addVertices.push(calculateMidpoint(1, 1, x, y));
           }
         });
         pathString += `L${x2} ${y2}`;
@@ -222,7 +222,7 @@ export const ConnectionSVG = ({
                       );
                     })}
                     {vertices.length < maximumVertices &&
-                      futureVertices.map((value, index) => {
+                      addVertices.map((value, index) => {
                         const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
                         return (
                           <circle
@@ -233,7 +233,7 @@ export const ConnectionSVG = ({
                             cy={y}
                             r={4}
                             stroke={strokeColor}
-                            style={futureVertexStyles}
+                            style={addVertexStyles}
                             cursor={'crosshair'}
                             pointerEvents="auto"
                           />
@@ -277,7 +277,7 @@ export const ConnectionSVG = ({
                     cy={midpoint.y}
                     r={4}
                     stroke={strokeColor}
-                    style={futureVertexStyles}
+                    style={addVertexStyles}
                     cursor={'crosshair'}
                     pointerEvents="auto"
                   />
