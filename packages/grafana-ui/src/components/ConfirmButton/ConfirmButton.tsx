@@ -138,7 +138,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       opacity: 1,
       pointerEvents: 'all',
-      position: 'absolute',
+      position: 'fixed',
       transform: 'translateX(0)',
       transition: 'opacity 0.08s ease-out, transform 0.1s ease-out',
       zIndex: 1,
@@ -147,7 +147,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       opacity: 0,
       pointerEvents: 'none',
       transform: 'translateX(100%)',
-      transition: 'opacity 0.12s ease-in, transform 0.14s ease-in, visibility 0s 0.12s',
+      transition: 'opacity 0.12s ease-in, transform 0.14s ease-in, visibility 0.12s ease-in',
       visibility: 'hidden',
     }),
   };
