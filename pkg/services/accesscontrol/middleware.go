@@ -321,10 +321,6 @@ func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
 	}
 }
 
-type QueryWithOrg struct {
-	OrgId *int64 `json:"orgId"`
-}
-
 // UseOrgFromRequestData returns the organization from the request data.
 // If no org specified, then org where user is logged in returned.
 func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {

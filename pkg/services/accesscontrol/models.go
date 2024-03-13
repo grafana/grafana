@@ -562,3 +562,7 @@ var OrgsCreateAccessEvaluator = EvalAll(
 
 // ApiKeyAccessEvaluator is used to protect the "Configuration > API keys" page access
 var ApiKeyAccessEvaluator = EvalPermission(ActionAPIKeyRead)
+
+type QueryWithOrg struct {
+	OrgId *int64 `json:"orgId"`
+}
