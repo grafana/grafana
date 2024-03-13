@@ -37,6 +37,8 @@ import { backendSrv } from '../../../../core/services/backend_srv';
 import {
   logInfo,
   LogMessages,
+  trackSwitchToPoliciesRouting,
+  trackSwitchToSimplifiedRouting,
   withPerformanceLogging,
   withPromRulesMetadataLogging,
   withRulerRulesMetadataLogging,
@@ -79,7 +81,7 @@ import { makeAMLink } from '../utils/misc';
 import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
-import { getAlertInfo, isRulerNotSupportedResponse } from '../utils/rules';
+import { getAlertInfo, isGrafanaRulerRule, isRulerNotSupportedResponse } from '../utils/rules';
 import { safeParseDurationstr } from '../utils/time';
 
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
@@ -452,6 +454,7 @@ export const saveRuleFormAction = createAsyncThunk(
             const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, GRAFANA_RULES_SOURCE_NAME);
             const rulerClient = getRulerClient(rulerConfig);
             identifier = await rulerClient.saveGrafanaRule(values, evaluateEvery, existing);
+            reportSwitchingRoutingType(values, existing);
             await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
           } else {
             throw new Error('Unexpected rule form type');
@@ -485,6 +488,24 @@ export const saveRuleFormAction = createAsyncThunk(
       }
     )
 );
+
+function reportSwitchingRoutingType(values: RuleFormValues, existingRule: RuleWithLocation<RulerRuleDTO> | undefined) {
+  // track if the user switched from simplified routing to policies routing or vice versa
+  if (isGrafanaRulerRule(existingRule?.rule)) {
+    const ga = existingRule?.rule.grafana_alert;
+    const existingWasUsingSimplifiedRouting = Boolean(ga?.notification_settings?.receiver);
+    const newValuesUsesSimplifiedRouting = values.manualRouting;
+    const shouldTrackSwitchToSimplifiedRouting = !existingWasUsingSimplifiedRouting && newValuesUsesSimplifiedRouting;
+    const shouldTrackSwitchToPoliciesRouting = existingWasUsingSimplifiedRouting && !newValuesUsesSimplifiedRouting;
+
+    if (shouldTrackSwitchToSimplifiedRouting) {
+      trackSwitchToSimplifiedRouting();
+    }
+    if (shouldTrackSwitchToPoliciesRouting) {
+      trackSwitchToPoliciesRouting();
+    }
+  }
+}
 
 export const fetchGrafanaNotifiersAction = createAsyncThunk(
   'unifiedalerting/fetchGrafanaNotifiers',

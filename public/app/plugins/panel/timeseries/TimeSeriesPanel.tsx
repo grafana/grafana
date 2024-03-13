@@ -3,7 +3,14 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
-import { KeyboardPlugin, TooltipPlugin, TooltipPlugin2, usePanelContext, ZoomPlugin } from '@grafana/ui';
+import {
+  EventBusPlugin,
+  KeyboardPlugin,
+  TooltipPlugin,
+  TooltipPlugin2,
+  usePanelContext,
+  ZoomPlugin,
+} from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
@@ -34,8 +41,15 @@ export const TimeSeriesPanel = ({
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
-  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, dataLinkPostProcessor } =
-    usePanelContext();
+  const {
+    sync,
+    canAddAnnotations,
+    onThresholdsChange,
+    canEditThresholds,
+    showThresholds,
+    dataLinkPostProcessor,
+    eventBus,
+  } = usePanelContext();
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
@@ -60,6 +74,12 @@ export const TimeSeriesPanel = ({
   // TODO: we should just re-init when this changes, and have this be a static setting
   const syncTooltip = useCallback(
     () => sync?.() === DashboardCursorSync.Tooltip,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const syncAny = useCallback(
+    () => sync?.() !== DashboardCursorSync.Off,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
@@ -99,10 +119,11 @@ export const TimeSeriesPanel = ({
       replaceVariables={replaceVariables}
       dataLinkPostProcessor={dataLinkPostProcessor}
     >
-      {(uplotConfig, alignedDataFrame) => {
+      {(uplotConfig, alignedFrame) => {
         return (
           <>
             <KeyboardPlugin config={uplotConfig} />
+            <EventBusPlugin config={uplotConfig} sync={syncAny} eventBus={eventBus} frame={alignedFrame} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <>
                 {showNewVizTooltips ? (
@@ -132,7 +153,7 @@ export const TimeSeriesPanel = ({
                         // not sure it header time here works for annotations, since it's taken from nearest datapoint index
                         <TimeSeriesTooltip
                           frames={frames}
-                          seriesFrame={alignedDataFrame}
+                          seriesFrame={alignedFrame}
                           dataIdxs={dataIdxs}
                           seriesIdx={seriesIdx}
                           mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
@@ -151,7 +172,7 @@ export const TimeSeriesPanel = ({
                     <ZoomPlugin config={uplotConfig} onZoom={onChangeTimeRange} withZoomY={true} />
                     <TooltipPlugin
                       frames={frames}
-                      data={alignedDataFrame}
+                      data={alignedFrame}
                       config={uplotConfig}
                       mode={options.tooltip.mode}
                       sortOrder={options.tooltip.sort}
@@ -181,11 +202,11 @@ export const TimeSeriesPanel = ({
             {/*Enables annotations creation*/}
             {!showNewVizTooltips ? (
               enableAnnotationCreation && !isVerticallyOriented ? (
-                <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={uplotConfig}>
+                <AnnotationEditorPlugin data={alignedFrame} timeZone={timeZone} config={uplotConfig}>
                   {({ startAnnotating }) => {
                     return (
                       <ContextMenuPlugin
-                        data={alignedDataFrame}
+                        data={alignedFrame}
                         config={uplotConfig}
                         timeZone={timeZone}
                         replaceVariables={replaceVariables}
@@ -212,7 +233,7 @@ export const TimeSeriesPanel = ({
                 </AnnotationEditorPlugin>
               ) : (
                 <ContextMenuPlugin
-                  data={alignedDataFrame}
+                  data={alignedFrame}
                   frames={frames}
                   config={uplotConfig}
                   timeZone={timeZone}

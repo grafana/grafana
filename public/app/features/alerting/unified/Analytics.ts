@@ -225,6 +225,13 @@ export function trackRulesSearchComponentInteraction(filter: keyof RulesFilter) 
 export function trackRulesListViewChange(payload: { view: string }) {
   reportInteraction('grafana_alerting_rules_list_mode', { ...payload });
 }
+export function trackSwitchToSimplifiedRouting() {
+  reportInteraction('grafana_alerting_switch_to_simplified_routing');
+}
+
+export function trackSwitchToPoliciesRouting() {
+  reportInteraction('grafana_alerting_switch_to_policies_routing');
+}
 
 export type AlertRuleTrackingProps = {
   user_id: number;
