@@ -19,7 +19,7 @@ const (
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
-	logger := backend.NewLoggerWith("endpoint", "CheckHealth")
+	logger := s.logger.With("endpoint", "CheckHealth")
 	ds, err := s.im.Get(ctx, req.PluginContext)
 	// check that the datasource exists
 	if err != nil {

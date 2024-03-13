@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
-var logger = backend.NewLoggerWith("tsdb.loki")
+var logger = backend.NewLoggerWith("logger", "tsdb.loki")
 
 type Service struct {
 	im       instancemgmt.InstanceManager
@@ -166,7 +166,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	logger := backend.NewLoggerWith("fromAlert", fromAlert).FromContext(ctx)
+	logger := logger.FromContext(ctx).With("fromAlert", fromAlert)
 	if err != nil {
 		logger.Error("Failed to get data source info", "err", err)
 		result := backend.NewQueryDataResponse()
