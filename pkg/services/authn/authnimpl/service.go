@@ -89,7 +89,7 @@ func ProvideService(
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
 
-	s.RegisterClient(clients.ProvideRender(userService, renderService))
+	s.RegisterClient(clients.ProvideRender(renderService))
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService))
 
 	if cfg.LoginCookieName != "" {
@@ -147,7 +147,7 @@ func ProvideService(
 
 	// FIXME (jguer): move to User package
 	userSyncService := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
-	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
+	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg)
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
 	s.RegisterPostAuthHook(userSyncService.EnableUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
@@ -161,6 +161,8 @@ func ProvideService(
 	}
 
 	s.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
+
+	s.RegisterPostAuthHook(orgUserSyncService.SetDefaultOrgHook, 130)
 
 	return s
 }
