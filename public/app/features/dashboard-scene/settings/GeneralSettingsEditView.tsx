@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
@@ -68,6 +68,10 @@ export class GeneralSettingsEditView
     return dashboardSceneGraph.getCursorSync(this._dashboard);
   }
 
+  public getLiveNowTimer(): behaviors.LiveNowTimer {
+    return sceneGraph.findObject(this._dashboard, (s) => s instanceof behaviors.LiveNowTimer) as behaviors.LiveNowTimer;
+  }
+
   public getDashboardControls() {
     return this._dashboard.state.controls!;
   }
@@ -132,8 +136,13 @@ export class GeneralSettingsEditView
     });
   };
 
-  public onLiveNowChange = (value: boolean) => {
-    // TODO: Figure out how to store liveNow in Dashboard Scene
+  public onLiveNowChange = (enable: boolean) => {
+    try {
+      const liveNow = this.getLiveNowTimer();
+      enable ? liveNow.enable() : liveNow.disable();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   public onTooltipChange = (value: number) => {
@@ -147,6 +156,7 @@ export class GeneralSettingsEditView
     const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker().useState();
     const { hideTimeControls } = model.getDashboardControls().useState();
+    const { enabled: liveNow } = model.getLiveNowTimer().useState();
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
@@ -229,9 +239,7 @@ export class GeneralSettingsEditView
             refreshIntervals={intervals}
             timePickerHidden={hideTimeControls}
             nowDelay={nowDelay || ''}
-            // TODO: Implement this in dashboard scene
-            // liveNow={liveNow}
-            liveNow={false}
+            liveNow={liveNow}
             timezone={timeZone || ''}
             weekStart={weekStart || ''}
           />
