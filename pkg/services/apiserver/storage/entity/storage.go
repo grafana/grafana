@@ -171,11 +171,54 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		Subresource: requestInfo.Subresource,
 	}
 
+	// check for metadata.name field selector
+	if k.Name == "" && opts.Predicate.Field != nil {
+		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.name"); ok {
+			// just watch the specific key if we have a name field selector
+			k.Name = v
+		}
+	}
+
+	// translate grafana.app/* label selectors into field requirements
+	requirements, newSelector, err := ReadLabelSelectors(opts.Predicate.Label)
+	if err != nil {
+		return nil, err
+	}
+
+	// if we got a listHistory label selector, watch the specified resource
+	if requirements.ListHistory != "" {
+		if k.Name != "" && k.Name != requirements.ListHistory {
+			return nil, apierrors.NewBadRequest("name field selector does not match listHistory")
+		}
+		k.Name = requirements.ListHistory
+	}
+
 	req := &entityStore.EntityWatchRequest{
 		Key: []string{
 			k.String(),
 		},
-		WithBody: true,
+		Labels:     map[string]string{},
+		WithBody:   true,
+		WithStatus: true,
+	}
+
+	if requirements.Folder != nil {
+		req.Folder = *requirements.Folder
+	}
+
+	// Update the selector to remove the unneeded requirements
+	opts.Predicate.Label = newSelector
+
+	// translate "equals" label selectors to storage label conditions
+	labelRequirements, selectable := opts.Predicate.Label.Requirements()
+	if !selectable {
+		return nil, apierrors.NewBadRequest("label selector is not selectable")
+	}
+
+	for _, r := range labelRequirements {
+		if r.Operator() == selection.Equals {
+			req.Labels[r.Key()] = r.Values().List()[0]
+		}
 	}
 
 	if opts.ResourceVersion != "" {
@@ -304,6 +347,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 			WithStatus:    true,
 			NextPageToken: opts.Predicate.Continue,
 			Limit:         opts.Predicate.Limit,
+			Sort:          requirements.SortBy,
 		}
 
 		rsp, err := s.store.History(ctx, req)
@@ -356,6 +400,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if requirements.ListDeleted {
 		req.Deleted = true
 	}
+
 	// Update the selector to remove the unneeded requirements
 	opts.Predicate.Label = newSelector
 

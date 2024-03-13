@@ -984,7 +984,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		}
 		entityQuery.addOrderBy(sortBy.Field, sortBy.Direction)
 	}
-	entityQuery.addOrderBy("resource_version", Descending)
+	entityQuery.addOrderBy("resource_version", Ascending)
 
 	query, args := entityQuery.toQuery()
 
@@ -1424,7 +1424,7 @@ func (s *sqlEntityServer) poller(stream chan *entity.Entity) {
 }
 
 func (s *sqlEntityServer) poll(since int64, out chan *entity.Entity) (int64, error) {
-	s.log.Debug("watch poll", "since", since)
+	// s.log.Debug("watch poll", "since", since)
 
 	rr := &entity.ReadEntityRequest{
 		WithBody:   true,
