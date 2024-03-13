@@ -1,27 +1,40 @@
 package plugins
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
 
-// Get the default API group name for from a plugin ID
+// GetDatasourceGroupNameFromPluginID returns the default API group name for a given plugin ID.
 // NOTE: this is a work in progress, and may change without notice
-func GetDatasourceGroupNameFromPluginID(pluginId string) (string, error) {
-	if pluginId == "" {
-		return "", fmt.Errorf("bad pluginID (empty)")
+func GetDatasourceGroupNameFromPluginID(pluginID string) (string, error) {
+	if pluginID == "" {
+		return "", errors.New("bad pluginID (empty)")
 	}
-	parts := strings.Split(pluginId, "-")
+	parts := strings.Split(pluginID, "-")
 	if len(parts) == 1 {
-		return fmt.Sprintf("%s.datasource.grafana.app", parts[0]), nil
+		return appendDataSourceGroupSuffix(parts[0]), nil
 	}
 
 	last := parts[len(parts)-1]
 	if last != "datasource" {
-		return "", fmt.Errorf("bad pluginID (%s)", pluginId)
+		return "", fmt.Errorf("bad pluginID (%s)", pluginID)
 	}
-	if parts[0] == "grafana" {
-		parts = parts[1:] // strip the first value
+
+	switch pluginID {
+	case "grafana-testdata-datasource":
+		return appendDataSourceGroupSuffix("testdata"), nil
+	default:
+		return appendDataSourceGroupSuffix(pluginID), nil
 	}
-	return fmt.Sprintf("%s.datasource.grafana.app", strings.Join(parts[:len(parts)-1], "-")), nil
+}
+
+// GetPluginIDFromDatasourceGroupName returns the plugin ID for a given datasource group name.
+func GetPluginIDFromDatasourceGroupName(group string) string {
+	return strings.Split(group, ".")[0]
+}
+
+func appendDataSourceGroupSuffix(group string) string {
+	return fmt.Sprintf("%s.datasource.grafana.app", group)
 }
