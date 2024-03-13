@@ -165,7 +165,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     window.__grafanaSceneContext = this;
 
     if (this.state.isEditing) {
-      this._initialState = sceneUtils.cloneSceneObjectState({ ...this.state, isDirty: false, isEditing: false });
       this._initialUrlState = locationService.getLocation();
       this._changeTracker.startTrackingChanges();
     }
@@ -248,14 +247,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   }
 
-  public exitEditMode({ skipConfirm, restoreIntialState }: { skipConfirm: boolean; restoreIntialState?: boolean }) {
+  public exitEditMode({ skipConfirm, restoreInitialState }: { skipConfirm: boolean; restoreInitialState?: boolean }) {
     if (!this.canDiscard()) {
       console.error('Trying to discard back to a state that does not exist, initialState undefined');
       return;
     }
 
     if (!this.state.isDirty || skipConfirm) {
-      this.exitEditModeConfirmed(restoreIntialState || this.state.isDirty);
+      this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
       return;
     }
 
@@ -322,7 +321,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     newState.version = versionRsp.version;
 
     this._initialState = newState;
-    this.exitEditMode({ skipConfirm: false, restoreIntialState: true });
+    this.exitEditMode({ skipConfirm: false, restoreInitialState: true });
 
     return true;
   };
