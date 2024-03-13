@@ -77,16 +77,14 @@ export type PluginExtensionLinkConfig<Context extends object = object> = {
   category?: string;
 };
 
-export type PluginExtensionComponentConfig<Context extends object = object> = {
+export type PluginExtensionComponentConfig<Props = {}> = {
   type: PluginExtensionTypes.component;
   title: string;
   description: string;
 
   // The React component that will be rendered as the extension
-  // (This component receives the context as a prop when it is rendered. You can just return `null` from the component to hide for certain contexts)
-  component: React.ComponentType<{
-    context?: Context;
-  }>;
+  // (This component receives contextual information as props when it is rendered. You can just return `null` from the component to hide it.)
+  component: React.ComponentType<Props>;
 
   // The unique identifier of the Extension Point
   // (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
