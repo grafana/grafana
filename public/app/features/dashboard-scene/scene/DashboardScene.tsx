@@ -333,8 +333,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 
-    this._initialState = newState;
-    this.exitEditMode({ skipConfirm: false, restoreInitialState: true });
+    this.setState(newState);
+    this.exitEditMode({ skipConfirm: true, restoreIntialState: false });
 
     return true;
   };

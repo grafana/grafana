@@ -630,7 +630,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
-/pkg/registry/corekind/ @grafana/grafana-as-code
+/pkg/registry/schemas/ @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code
 /cue.mod/ @grafana/grafana-as-code
 
