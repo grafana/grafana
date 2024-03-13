@@ -97,12 +97,12 @@ Grafana Enterprise offers an alternative to recorded rules in the form of record
 
 For more information on recording rules, refer to [Create recording rules][create-recording-rules].
 
-## Choose an alert rule type
+## Comparison between alert rule types
 
-When choosing which alert rule type to use, consider the following comparison between Grafana-managed alert rules and Grafana Mimir or Loki alert rules.
+When choosing which alert rule type to use, consider the following comparison between Grafana-managed and data source-managed alert rules.
 
 {{< responsive-table >}}
-| <div style="width:200px">Feature</div> | <div style="width:200px">Grafana-managed alert rule</div> | <div style="width:200px">Loki/Mimir-managed alert rule |
+| <div style="width:200px">Feature</div> | <div style="width:200px">Grafana-managed alert rule</div> | <div style="width:200px">Data source-managed alert rule |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Create alert rules<wbr /> based on data from any of our supported data sources | Yes | No: You can only create alert rules that are based on Prometheus data. The data source must have the Ruler API enabled. |
 | Mix and match data sources | Yes | No |
