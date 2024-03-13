@@ -23,7 +23,6 @@ const (
 	// legacy/old settings for the provider
 	GrafanaNetProviderName = "grafananet"
 	OktaProviderName       = "okta"
-	SAMLProviderName       = "saml"
 )
 
 var (
