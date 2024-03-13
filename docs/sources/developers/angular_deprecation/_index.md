@@ -15,10 +15,9 @@ weight: 500
 # Angular support deprecation
 
 Angular plugin support is deprecated and will be removed in a future release.
-There are legacy core Grafana visualizations and external plugins that rely on Grafana's Angular plugin support to work.
-The same is true for many internal plugins that have been developed by Grafana users over the years.
+There are legacy core Grafana visualizations and external plugins that rely on Grafana's Angular plugin support to work. The same is likely true for [private plugins](https://grafana.com/legal/plugins/) that have been developed by Grafana users for use on their own instances over the years.
 From Grafana v9 and onwards, there is a [server configuration option](https://github.com/grafana/grafana/blob/d61bcdf4ca5e69489e0067c56fbe7f0bfdf84ee4/conf/defaults.ini#L362) that's global to the entire instance and controls whether Angular plugin support is available or not.
-By default, Angular support is still enabled, but that will change after the migration of all Angular code in the core product.
+In Grafana 11, we will change the default value for the configuration to remove support.
 
 Warning messages are displayed if a dashboard depends on an a panel visualization or data source which requires AngularJS as shown in the following video:
 
