@@ -3392,7 +3392,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
-    "@types/node": "npm:20.11.26"
+    "@types/node": "npm:20.11.27"
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.65"
     "@types/testing-library__jest-dom": "npm:5.14.9"
@@ -3471,7 +3471,7 @@ __metadata:
     "@types/d3-random": "npm:^3.0.2"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
-    "@types/node": "npm:20.11.26"
+    "@types/node": "npm:20.11.27"
     "@types/react": "npm:18.2.65"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/uuid": "npm:9.0.8"
@@ -3559,7 +3559,7 @@ __metadata:
     "@types/debounce-promise": "npm:3.1.9"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
-    "@types/node": "npm:20.11.26"
+    "@types/node": "npm:20.11.27"
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.65"
     "@types/react-test-renderer": "npm:18.0.7"
@@ -3611,7 +3611,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
-    "@types/node": "npm:20.11.26"
+    "@types/node": "npm:20.11.27"
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.65"
     "@types/react-dom": "npm:18.2.22"
@@ -3703,7 +3703,7 @@ __metadata:
     "@types/history": "npm:4.7.11"
     "@types/lodash": "npm:4.17.0"
     "@types/marked": "npm:5.0.2"
-    "@types/node": "npm:20.11.26"
+    "@types/node": "npm:20.11.27"
     "@types/papaparse": "npm:5.3.14"
     "@types/react": "npm:18.2.65"
     "@types/react-dom": "npm:18.2.22"
@@ -3762,7 +3762,7 @@ __metadata:
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@rollup/plugin-commonjs": "npm:25.0.7"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
-    "@types/node": "npm:20.11.26"
+    "@types/node": "npm:20.11.27"
     esbuild: "npm:0.18.12"
     rimraf: "npm:5.0.5"
     rollup: "npm:2.79.1"
@@ -4101,7 +4101,7 @@ __metadata:
     "@types/jquery": "npm:3.5.29"
     "@types/lodash": "npm:4.17.0"
     "@types/marked": "npm:5.0.2"
-    "@types/node": "npm:20.11.26"
+    "@types/node": "npm:20.11.27"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.65"
@@ -4116,7 +4116,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:6.21.0"
     copy-webpack-plugin: "npm:12.0.2"
     css-loader: "npm:6.10.0"
-    d3: "npm:7.8.5"
+    d3: "npm:7.9.0"
     date-fns: "npm:3.3.1"
     debounce-promise: "npm:3.1.2"
     esbuild: "npm:0.18.12"
@@ -4224,8 +4224,8 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^3.11.0":
-  version: 3.11.0
-  resolution: "@grafana/scenes@npm:3.11.0"
+  version: 3.12.0
+  resolution: "@grafana/scenes@npm:3.12.0"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.3.3"
     react-grid-layout: "npm:1.3.4"
@@ -4239,7 +4239,7 @@ __metadata:
     "@grafana/ui": ^10.0.3
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/47629dd3f5129b8f803d54c512d10f921edf9b138b878fbebe664e2537d6813c72ea5119e28216daf7e426ef764400356db9b1532c601a3e029ae12baceb248d
+  checksum: 10/1466374d498362d9e021472333742bc8df3f7cc57b3a0394e7802dc7994de25ca7e0548c7dbe5d04ac3cce4ce13dc92fa8ec9099bf65af4dbeac2441b6268e99
   languageName: node
   linkType: hard
 
@@ -4365,7 +4365,7 @@ __metadata:
     "@types/jquery": "npm:3.5.29"
     "@types/lodash": "npm:4.17.0"
     "@types/mock-raf": "npm:1.0.6"
-    "@types/node": "npm:20.11.26"
+    "@types/node": "npm:20.11.27"
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.65"
     "@types/react-beautiful-dnd": "npm:13.1.8"
@@ -4391,7 +4391,7 @@ __metadata:
     core-js: "npm:3.36.0"
     css-loader: "npm:6.10.0"
     csstype: "npm:3.1.3"
-    d3: "npm:7.8.5"
+    d3: "npm:7.9.0"
     date-fns: "npm:3.3.1"
     esbuild: "npm:0.18.12"
     expose-loader: "npm:5.0.0"
@@ -9870,12 +9870,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:20.11.26, @types/node@npm:>=13.7.0, @types/node@npm:^20.11.16":
-  version: 20.11.26
-  resolution: "@types/node@npm:20.11.26"
+"@types/node@npm:*, @types/node@npm:20.11.27, @types/node@npm:>=13.7.0, @types/node@npm:^20.11.16":
+  version: 20.11.27
+  resolution: "@types/node@npm:20.11.27"
   dependencies:
     undici-types: "npm:~5.26.4"
-  checksum: 10/37a69017fc0e70bd52e106a7a0de21f78b29a869b2ab7b0539438ee6ce91cb9b49b80d6b68108e88fcc20e24cdc4dc00f6e8e1c28215d93412cb19a303572130
+  checksum: 10/4be53485d499dd7c7896190e76a0ce1f6c6917d1f4d0b4b240b3670160fcbc548daed32beaac0fc92429b37dbeaa2496fc56f460acaab969bddb77394318a89b
   languageName: node
   linkType: hard
 
@@ -14843,13 +14843,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-scale-chromatic@npm:3, d3-scale-chromatic@npm:3.0.0":
-  version: 3.0.0
-  resolution: "d3-scale-chromatic@npm:3.0.0"
+"d3-scale-chromatic@npm:3, d3-scale-chromatic@npm:3.1.0":
+  version: 3.1.0
+  resolution: "d3-scale-chromatic@npm:3.1.0"
   dependencies:
     d3-color: "npm:1 - 3"
     d3-interpolate: "npm:1 - 3"
-  checksum: 10/e4d23a7d2ba48ad5de1d06dcc488f7278304def0ea28a268528923b1d74971260636b5c8fe0e27bc2c51b2a3f95542c248e35028bdb0b7c19ac804eee235d340
+  checksum: 10/25df6a7c621b9171df8b2225e98e41c0a6bcac4de02deb4807280b31116e8f495c5ac93301796098ee5b698cb690154e8138d90d72fd1fe36744c60e02a3d8c4
   languageName: node
   linkType: hard
 
@@ -14944,9 +14944,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3@npm:7.8.5, d3@npm:^7.8.5":
-  version: 7.8.5
-  resolution: "d3@npm:7.8.5"
+"d3@npm:7.9.0, d3@npm:^7.8.5":
+  version: 7.9.0
+  resolution: "d3@npm:7.9.0"
   dependencies:
     d3-array: "npm:3"
     d3-axis: "npm:3"
@@ -14978,7 +14978,7 @@ __metadata:
     d3-timer: "npm:3"
     d3-transition: "npm:3"
     d3-zoom: "npm:3"
-  checksum: 10/d5a0581fae34ce06f065c36bfe4045d2877ec23c413bb40d5b8cc005df9f8ef5ac44ccc13ffae4c4e5159827bb92c09da07e7283c1b7a507072e88b9047a848a
+  checksum: 10/b0b418996bdf279b01f5c7a0117927f9ad3e833c9ce4657550ce6f6ace70b70cf829c4144b01df0be5a0f716d4e5f15ab0cadc5ff1ce1561d7be29ac86493d83
   languageName: node
   linkType: hard
 
@@ -18238,16 +18238,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"get-tsconfig@npm:^4.4.0":
-  version: 4.6.0
-  resolution: "get-tsconfig@npm:4.6.0"
-  dependencies:
-    resolve-pkg-maps: "npm:^1.0.0"
-  checksum: 10/a54e9f1e31e689d9cc9b66070d5448952eba718c7c2950678e169b966faa317ae3bfa0d497958d5cb7e4c86abd276501ca9b15405be27cf9b33c235b7bcece0e
-  languageName: node
-  linkType: hard
-
-"get-tsconfig@npm:^4.7.0":
+"get-tsconfig@npm:^4.4.0, get-tsconfig@npm:^4.7.0":
   version: 4.7.3
   resolution: "get-tsconfig@npm:4.7.3"
   dependencies:
@@ -18733,7 +18724,7 @@ __metadata:
     "@types/lucene": "npm:^2"
     "@types/marked": "npm:5.0.2"
     "@types/mousetrap": "npm:1.6.15"
-    "@types/node": "npm:20.11.26"
+    "@types/node": "npm:20.11.27"
     "@types/node-forge": "npm:^1"
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4"
     "@types/papaparse": "npm:5.3.14"
@@ -18800,9 +18791,9 @@ __metadata:
     css-minimizer-webpack-plugin: "npm:6.0.0"
     cypress: "npm:13.1.0"
     cypress-file-upload: "npm:5.0.8"
-    d3: "npm:7.8.5"
+    d3: "npm:7.9.0"
     d3-force: "npm:3.0.0"
-    d3-scale-chromatic: "npm:3.0.0"
+    d3-scale-chromatic: "npm:3.1.0"
     dangerously-set-html-content: "npm:1.1.0"
     date-fns: "npm:3.3.1"
     debounce-promise: "npm:3.1.2"
@@ -32187,14 +32178,14 @@ __metadata:
   linkType: hard
 
 "xss@npm:^1.0.14":
-  version: 1.0.14
-  resolution: "xss@npm:1.0.14"
+  version: 1.0.15
+  resolution: "xss@npm:1.0.15"
   dependencies:
     commander: "npm:^2.20.3"
     cssfilter: "npm:0.0.10"
   bin:
     xss: bin/xss
-  checksum: 10/dc97acaee35e5ed453fe5628841daf7b4aba5ed26b31ff4eadf831f42cded1ddebc218ff0db1d6a73e301bfada8a5236fec0c234233d66a20ecc319da542b357
+  checksum: 10/074ad54babac9dd5107466dbf30d3b871dbedae1f8e7b8f4e3b76d60da8b92bd0f66f18ccd26b8524545444ef784b78c526cee089a907aa904f83c8b8d7958f6
   languageName: node
   linkType: hard
 

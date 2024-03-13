@@ -1,16 +1,23 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
-import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans } from 'app/core/internationalization';
 import LegacyAlertsDeprecationNotice from 'app/features/alerting/unified/integration/LegacyAlertsDeprecationNotice';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
-import { DashboardDTO } from 'app/types';
+import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 
+import {
+  NameAlreadyExistsError,
+  isNameExistsError,
+  isPluginDashboardError,
+  isVersionMismatchError,
+} from '../saving/shared';
+import { useSaveDashboard } from '../saving/useSaveDashboard';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -24,7 +31,7 @@ export interface JsonModelEditViewState extends DashboardEditViewState {
 }
 
 export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> implements DashboardEditView {
-  constructor(state: Omit<JsonModelEditViewState, 'jsonText'>) {
+  constructor(state: Omit<JsonModelEditViewState, 'jsonText' | 'initialJsonText'>) {
     super({
       ...state,
       jsonText: '',
@@ -54,27 +61,120 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     this.setState({ jsonText: value });
   };
 
-  public onApplyChange = () => {
+  public onSaveSuccess = (result: SaveDashboardResponseDTO) => {
     const jsonModel = JSON.parse(this.state.jsonText);
     const dashboard = this.getDashboard();
+    jsonModel.version = result.version;
+
     const rsp: DashboardDTO = {
       dashboard: jsonModel,
       meta: dashboard.state.meta,
     };
     const newDashboardScene = transformSaveModelToScene(rsp);
     const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+
+    dashboard.pauseTrackingChanges();
+    dashboard.setInitialSaveModel(rsp.dashboard);
     dashboard.setState(newState);
+
+    this.setState({ jsonText: this.getJsonText() });
   };
 
   static Component = ({ model }: SceneComponentProps<JsonModelEditView>) => {
+    const { state, onSaveDashboard } = useSaveDashboard(false);
+    const [isSaving, setIsSaving] = useState(false);
+
     const dashboard = model.getDashboard();
+
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
     const canSave = dashboard.useState().meta.canSave;
     const { jsonText } = model.useState();
 
+    const onSave = async (overwrite: boolean) => {
+      const result = await onSaveDashboard(dashboard, JSON.parse(model.state.jsonText), {
+        folderUid: dashboard.state.meta.folderUid,
+        overwrite,
+      });
+
+      setIsSaving(true);
+      if (result.status === 'success') {
+        model.onSaveSuccess(result);
+        setIsSaving(false);
+      } else {
+        setIsSaving(true);
+      }
+    };
+
+    const saveButton = (overwrite: boolean) => (
+      <Button
+        type="submit"
+        onClick={() => {
+          onSave(overwrite);
+        }}
+        variant={overwrite ? 'destructive' : 'primary'}
+      >
+        {overwrite ? (
+          'Save and overwrite'
+        ) : (
+          <Trans i18nKey="dashboard-settings.json-editor.save-button">Save changes</Trans>
+        )}
+      </Button>
+    );
+
+    const cancelButton = (
+      <Button variant="secondary" onClick={() => setIsSaving(false)} fill="outline">
+        Cancel
+      </Button>
+    );
     const styles = useStyles2(getStyles);
     const saveModel = model.getSaveModel();
 
+    function renderSaveButtonAndError(error?: Error) {
+      if (error && isSaving) {
+        if (isVersionMismatchError(error)) {
+          return (
+            <Alert title="Someone else has updated this dashboard" severity="error">
+              <p>Would you still like to save this dashboard?</p>
+              <Box paddingTop={2}>
+                <Stack alignItems="center">
+                  {cancelButton}
+                  {saveButton(true)}
+                </Stack>
+              </Box>
+            </Alert>
+          );
+        }
+
+        if (isNameExistsError(error)) {
+          return <NameAlreadyExistsError saveButton={saveButton} cancelButton={cancelButton} />;
+        }
+
+        if (isPluginDashboardError(error)) {
+          return (
+            <Alert title="Plugin dashboard" severity="error">
+              <p>
+                Your changes will be lost when you update the plugin. Use <strong>Save As</strong> to create custom
+                version.
+              </p>
+              <Box paddingTop={2}>
+                <Stack alignItems="center">{saveButton(true)}</Stack>
+              </Box>
+            </Alert>
+          );
+        }
+      }
+
+      return (
+        <>
+          {error && isSaving && (
+            <Alert title="Failed to save dashboard" severity="error">
+              <p>{error.message}</p>
+            </Alert>
+          )}
+          <Stack alignItems="center">{saveButton(false)}</Stack>
+        </>
+      );
+    }
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
         <NavToolbarActions dashboard={dashboard} />
@@ -93,13 +193,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
             containerStyles={styles.codeEditor}
             onBlur={model.onCodeEditorBlur}
           />
-          {canSave && (
-            <div>
-              <Button type="submit" onClick={model.onApplyChange}>
-                <Trans i18nKey="dashboard-settings.json-editor.apply-button">Apply changes</Trans>
-              </Button>
-            </div>
-          )}
+          {canSave && <Box paddingTop={2}>{renderSaveButtonAndError(state.error)}</Box>}
         </div>
       </Page>
     );
