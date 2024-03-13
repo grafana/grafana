@@ -7,15 +7,16 @@ import (
 )
 
 func TestUtils(t *testing.T) {
-	// multiple flavors of the same idea
-	require.Equal(t, "tempo.datasource.grafana.app", getIDIgnoreError("tempo"))
-	require.Equal(t, "tempo.datasource.grafana.app", getIDIgnoreError("grafana-tempo-datasource"))
-	require.Equal(t, "tempo.datasource.grafana.app", getIDIgnoreError("tempo-datasource"))
+	// all other datasources use plugin ID as prefix (as long as is valid)
+	require.Equal(t, "name.datasource.grafana.app", getIDIgnoreError("name"), "single word is accepted")
+	require.Equal(t, "name-datasource.datasource.grafana.app", getIDIgnoreError("name-datasource"), "multiple words are accepted with '-datasource' suffix")
+	require.Error(t, getErrorIgnoreValue("org-name"), "multiple words are not accepted without '-datasource' suffix")
+	require.Equal(t, "org-name-datasource.datasource.grafana.app", getIDIgnoreError("org-name-datasource"))
+	require.Equal(t, "org-name-more-datasource.datasource.grafana.app", getIDIgnoreError("org-name-more-datasource"))
 
-	// Multiple dashes in the name
-	require.Equal(t, "org-name.datasource.grafana.app", getIDIgnoreError("org-name-datasource"))
-	require.Equal(t, "org-name-more.datasource.grafana.app", getIDIgnoreError("org-name-more-datasource"))
-	require.Equal(t, "org-name-more-more.datasource.grafana.app", getIDIgnoreError("org-name-more-more-datasource"))
+	// testdata gets special treatment
+	require.Equal(t, "testdata.datasource.grafana.app", getIDIgnoreError("grafana-testdata-datasource"))
+	require.Equal(t, "testdata.datasource.grafana.app", getIDIgnoreError("testdata-datasource"))
 
 	require.Error(t, getErrorIgnoreValue("graph-panel"))
 	require.Error(t, getErrorIgnoreValue("anything-notdatasource"))

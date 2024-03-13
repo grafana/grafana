@@ -23,7 +23,7 @@ func GetDatasourceGroupNameFromPluginID(pluginID string) (string, error) {
 	}
 
 	switch pluginID {
-	case "grafana-testdata-datasource":
+	case "grafana-testdata-datasource", "testdata-datasource":
 		return appendDataSourceGroupSuffix("testdata"), nil
 	default:
 		return appendDataSourceGroupSuffix(pluginID), nil
