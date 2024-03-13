@@ -99,7 +99,7 @@ export const cloudItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Triangle'];
+    const category = ['Cloud'];
     builder
       .addCustomEditor({
         category,
