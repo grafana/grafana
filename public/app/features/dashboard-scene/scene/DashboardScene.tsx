@@ -304,6 +304,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState !== undefined;
   }
 
+  public pauseTrackingChanges() {
+    this._changeTracker.stopTrackingChanges();
+  }
+
+  public resumeTrackingChanges() {
+    this._changeTracker.startTrackingChanges();
+  }
+
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
     const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
 
