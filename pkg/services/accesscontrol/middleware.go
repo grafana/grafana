@@ -326,13 +326,10 @@ func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
 func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 	query := QueryWithOrg{}
 
-	// Get copy of body to prevent error when reading closed body in request handler
-	bodyCopy, err := CopyReqBody(c.Req)
+	req, err := CloneRequest(c.Req)
 	if err != nil {
 		return 0, err
 	}
-	req := c.Req.Clone(c.Req.Context())
-	req.Body = bodyCopy
 
 	if err := web.Bind(req, &query); err != nil {
 		// Special case of macaron handling invalid params
@@ -346,8 +343,20 @@ func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 	return *query.OrgId, nil
 }
 
-// CopyReqBody returns copy of request body and keep the original one to prevent error when reading closed body
-func CopyReqBody(req *http.Request) (io.ReadCloser, error) {
+// CloneRequest creates request copy including request body
+func CloneRequest(req *http.Request) (*http.Request, error) {
+	// Get copy of body to prevent error when reading closed body in request handler
+	bodyCopy, err := CopyRequestBody(req)
+	if err != nil {
+		return nil, err
+	}
+	reqCopy := req.Clone(req.Context())
+	reqCopy.Body = bodyCopy
+	return reqCopy, nil
+}
+
+// CopyRequestBody returns copy of request body and keep the original one to prevent error when reading closed body
+func CopyRequestBody(req *http.Request) (io.ReadCloser, error) {
 	if req.Body == nil {
 		return nil, nil
 	}
