@@ -272,7 +272,9 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		if err != nil {
 			return nil, err
 		}
-		aggregatorServer.GenericAPIServer.InstallAPIGroup(serviceAPIGroupInfo)
+		if err := aggregatorServer.GenericAPIServer.InstallAPIGroup(serviceAPIGroupInfo); err != nil {
+			return nil, err
+		}
 	}
 
 	return aggregatorServer, nil
