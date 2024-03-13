@@ -6,7 +6,6 @@ import { GrafanaTheme2, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
-import { TitleItem } from '../PanelChrome/TitleItem';
 
 import { getIconRoot, getIconSubDir, getSvgSize } from './utils';
 
@@ -64,7 +63,7 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
 
     return (
       <SVG
-        aria-hidden={!TitleItem}
+        aria-hidden={!title}
         innerRef={ref}
         src={svgPath}
         width={svgWid}
