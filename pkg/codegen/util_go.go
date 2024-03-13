@@ -87,21 +87,6 @@ func PrefixDropper(prefix string) dstutil.ApplyFunc {
 	}).applyfunc
 }
 
-// PrefixReplacer returns a dstutil.ApplyFunc that removes the provided prefix
-// string when it appears as a leading sequence in type names, var names, and
-// comments in a generated Go file.
-//
-// When an exact match for prefix is found, the provided replace string
-// is substituted.
-func PrefixReplacer(prefix, replace string) dstutil.ApplyFunc {
-	return (&prefixmod{
-		prefix:  prefix,
-		replace: replace,
-		rxpsuff: regexp.MustCompile(fmt.Sprintf(`%s([a-zA-Z_]+)`, prefix)),
-		rxp:     regexp.MustCompile(fmt.Sprintf(`%s([\s.,;-])`, prefix)),
-	}).applyfunc
-}
-
 func depoint(e dst.Expr) dst.Expr {
 	if star, is := e.(*dst.StarExpr); is {
 		return star.X

@@ -1,12 +1,12 @@
 package codegen
 
 import (
-	"cuelang.org/go/cue"
 	"fmt"
-	"github.com/grafana/grafana/pkg/codegen/generators"
 
+	"cuelang.org/go/cue"
 	"github.com/dave/dst/dstutil"
 	"github.com/grafana/codejen"
+	"github.com/grafana/grafana/pkg/codegen/generators"
 	"github.com/grafana/kindsys"
 )
 
