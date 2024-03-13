@@ -142,21 +142,25 @@ export const ConnectionSVG = ({
       const selectedStyles = { stroke: '#44aaff', strokeOpacity: 0.6, strokeWidth: strokeWidth + 5 };
 
       const CONNECTION_HEAD_ID = `connectionHead-${headId + Math.random()}`;
-      const addVertices: ConnectionCoordinates[] = [];
 
+      // Create vertex path and populate array of add vertex controls
+      const addVertices: ConnectionCoordinates[] = [];
       let pathString = `M${x1} ${y1} `;
       if (vertices?.length) {
-        vertices.map((value, index) => {
-          const x = value.x;
-          const y = value.y;
+        vertices.map((vertex, index) => {
+          const x = vertex.x;
+          const y = vertex.y;
           pathString += `L${x * (x2 - x1) + x1} ${y * (y2 - y1) + y1} `;
           if (index === 0) {
+            // For first vertex
             addVertices.push(calculateMidpoint(0, 0, x, y));
           } else {
+            // For all other vertices
             const previousVertex = vertices[index - 1];
             addVertices.push(calculateMidpoint(previousVertex.x, previousVertex.y, x, y));
           }
           if (index === vertices.length - 1) {
+            // For last vertex
             addVertices.push(calculateMidpoint(1, 1, x, y));
           }
         });
@@ -209,7 +213,7 @@ export const ConnectionSVG = ({
                           key={`${CONNECTION_VERTEX_ID}${index}_${idx}`}
                           cx={x}
                           cy={y}
-                          r={4}
+                          r={5}
                           stroke={strokeColor}
                           className={styles.vertex}
                           cursor={'crosshair'}
@@ -268,7 +272,6 @@ export const ConnectionSVG = ({
                   <circle
                     id={CONNECTION_VERTEX_ADD_ID}
                     data-index={0}
-                    fill={'gray'}
                     cx={midpoint.x}
                     cy={midpoint.y}
                     r={4}
@@ -297,7 +300,7 @@ export const ConnectionSVG = ({
             refX="10"
             refY="3.5"
             orient="auto"
-            stroke={'defaultArrowColor'}
+            stroke={defaultArrowColor}
           >
             <polygon points="0 0, 10 3.5, 0 7" fill={defaultArrowColor} />
           </marker>
