@@ -24,7 +24,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   constructor() {
     super({
-      isLoading: false,
+      isLoading: true,
       pendingValue: undefined,
       scopes: [],
       value: undefined,

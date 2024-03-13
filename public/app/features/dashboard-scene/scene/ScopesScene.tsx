@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { ScopesDashboardsScene } from './ScopesDashboardsScene';
@@ -25,9 +25,12 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
     });
 
     this.addActivationHandler(() => {
+      this.state.filters.fetchScopes();
+
       const filtersValueSubscription = this.state.filters.subscribeToState((newState, prevState) => {
         if (newState.value !== prevState.value) {
           this.state.dashboards.fetchDashboards(newState.value);
+          sceneGraph.getTimeRange(this.parent!).onRefresh();
         }
       });
 
@@ -75,8 +78,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       alignItems: 'baseline',
-      flex: theme.spacing(40),
       gap: theme.spacing(1),
+      gridArea: 'scopes',
     }),
     containerExpanded: css({
       backgroundColor: theme.colors.background.primary,
@@ -84,6 +87,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     filtersContainer: css({
       display: 'flex',
       flexDirection: 'row',
+      padding: theme.spacing(2, 0, 2, 2),
     }),
     filtersContainerExpanded: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,

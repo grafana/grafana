@@ -9,15 +9,12 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   behaviors,
-  sceneGraph,
 } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
-import { ScopesFiltersScene } from '../scene/ScopesFiltersScene';
-import { ScopesScene } from '../scene/ScopesScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
@@ -25,7 +22,6 @@ import { DashboardChangeInfo } from './shared';
 
 export class DashboardSceneChangeTracker {
   private _changeTrackerSub: Unsubscribable | undefined;
-  private _scopesTrackerSub?: Unsubscribable | undefined;
   private _changesWorker?: Worker;
   private _dashboard: DashboardScene;
 
@@ -77,20 +73,6 @@ export class DashboardSceneChangeTracker {
     }
   }
 
-  private onScopesStateChanged({ payload }: SceneObjectStateChangedEvent) {
-    if (payload.changedObject instanceof ScopesScene) {
-      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'isExpanded')) {
-        this._dashboard.forceRender();
-      }
-    }
-
-    if (payload.changedObject instanceof ScopesFiltersScene) {
-      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'value')) {
-        sceneGraph.getTimeRange(this._dashboard).onRefresh();
-      }
-    }
-  }
-
   private detectChanges() {
     this._changesWorker?.postMessage({
       changed: transformSceneToSaveModel(this._dashboard),
@@ -134,20 +116,8 @@ export class DashboardSceneChangeTracker {
     this._changeTrackerSub?.unsubscribe();
   }
 
-  public startTrackingScopes() {
-    this._scopesTrackerSub = this._dashboard.subscribeToEvent(
-      SceneObjectStateChangedEvent,
-      this.onScopesStateChanged.bind(this)
-    );
-  }
-
-  public stopTrackingScopes() {
-    this._scopesTrackerSub?.unsubscribe();
-  }
-
   public terminate() {
     this.stopTrackingChanges();
     this._changesWorker?.terminate();
-    this.stopTrackingScopes();
   }
 }

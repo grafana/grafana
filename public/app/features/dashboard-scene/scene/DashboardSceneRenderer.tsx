@@ -44,19 +44,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
-        <div className={styles.pageContainer}>
-          {scopes && isScopesExpanded && <scopes.Component model={scopes} />}
-          <CustomScrollbar autoHeightMin={'100%'}>
-            <div className={styles.canvasContent}>
-              <NavToolbarActions dashboard={model} />
-              {(controls || scopes) && (
-                <div className={styles.controlsWrapper}>
-                  {scopes && !isScopesExpanded && <scopes.Component model={scopes} />}
-                  {controls && <controls.Component model={controls} />}
-                </div>
-              )}
-              {isEmpty ? emptyState : withPanels}
-            </div>
+        <div className={cx(styles.pageContainer, isScopesExpanded && styles.pageContainerExpanded)}>
+          {scopes && <scopes.Component model={scopes} />}
+          <NavToolbarActions dashboard={model} />
+          {controls && <controls.Component model={controls} />}
+          <CustomScrollbar autoHeightMin={'100%'} className={styles.scrollbarContainer}>
+            <div className={styles.canvasContent}>{isEmpty ? emptyState : withPanels}</div>
           </CustomScrollbar>
         </div>
       )}
@@ -68,11 +61,21 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 function getStyles(theme: GrafanaTheme2) {
   return {
     pageContainer: css({
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'nowrap',
+      display: 'grid',
+      gridTemplateAreas: `
+        "scopes controls"
+        "panels panels"`,
+      gridTemplateColumns: `${theme.spacing(40)} 1fr`,
       height: '100%',
-      overflow: 'hidden',
+    }),
+    pageContainerExpanded: css({
+      gridTemplateAreas: `
+        "scopes controls"
+        "scopes panels"`,
+      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
+    }),
+    scrollbarContainer: css({
+      gridArea: 'panels',
     }),
     canvasContent: css({
       label: 'canvas-content',
@@ -88,23 +91,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: '8px',
       marginBottom: theme.spacing(2),
-    }),
-    controlsWrapper: css({
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'nowrap',
-      gap: theme.spacing(1),
-      position: 'sticky',
-      top: 0,
-      background: theme.colors.background.canvas,
-      zIndex: theme.zIndex.activePanel,
-      padding: theme.spacing(2, 0),
-      marginLeft: 'auto',
-      [theme.breakpoints.down('sm')]: {
-        flexDirection: 'column-reverse',
-        alignItems: 'stretch',
-      },
-      width: '100%',
     }),
   };
 }

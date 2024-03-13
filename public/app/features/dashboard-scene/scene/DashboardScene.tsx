@@ -173,9 +173,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     if (this.state.scopes) {
-      this._changeTracker.startTrackingScopes();
-
-      this.state.scopes.fetchScopes();
+      // this.state.scopes.fetchScopes();
     }
 
     if (!this.state.meta.isEmbedded && this.state.uid) {

@@ -68,10 +68,24 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 function getStyles(theme: GrafanaTheme2) {
   return {
     controls: css({
+      gridArea: 'controls',
       display: 'flex',
       alignItems: 'flex-start',
       flex: '100%',
       gap: theme.spacing(1),
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      position: 'sticky',
+      top: 0,
+      background: theme.colors.background.canvas,
+      zIndex: theme.zIndex.activePanel,
+      padding: theme.spacing(2),
+      marginLeft: 'auto',
+      [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column-reverse',
+        alignItems: 'stretch',
+      },
+      width: '100%',
     }),
     embedded: css({
       background: 'unset',
