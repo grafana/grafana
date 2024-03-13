@@ -29,7 +29,7 @@ export const InfiniteScroll = ({
   scrollElement,
   sortOrder,
   timeZone,
-  topScrollEnabled = false
+  topScrollEnabled = false,
 }: Props) => {
   const [upperOutOfRange, setUpperOutOfRange] = useState(false);
   const [lowerOutOfRange, setLowerOutOfRange] = useState(false);
