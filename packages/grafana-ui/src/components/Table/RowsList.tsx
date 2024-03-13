@@ -206,7 +206,7 @@ export const RowsList = (props: RowsListProps) => {
     const fieldOptions = field.config.custom as TableFieldOptions;
 
     if (
-      fieldOptions !== undefined && 
+      fieldOptions !== undefined &&
       fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground &&
       fieldOptions.cellOptions.applyToRow
     ) {
