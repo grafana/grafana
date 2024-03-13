@@ -11,6 +11,6 @@ test('variable query with mocked response', async ({ variableEditPage, page }) =
   await variableEditPage.runQuery();
   await expect(
     variableEditPage,
-    formatExpectError('Expected variable edit page to display certain label names after query execution')
+    formatExpectError('Expected variable edit page to display certain label names after query execution ')
   ).toDisplayPreviews(prometheusLabels.data);
 });
