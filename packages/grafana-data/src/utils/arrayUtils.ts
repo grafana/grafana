@@ -7,6 +7,30 @@ export function moveItemImmutably<T>(arr: T[], from: number, to: number) {
   return clone;
 }
 
+/** @internal */
+export function insertBeforeImmutably<T>(array: T[], item: T, index: number): T[] {
+  if (index < 0 || index > array.length) {
+    throw new Error('Index out of bounds');
+  }
+
+  const clone = [...array];
+  clone.splice(index, 0, item);
+
+  return clone;
+}
+
+/** @internal */
+export function insertAfterImmutably<T>(array: T[], item: T, index: number): T[] {
+  if (index < 0 || index > array.length) {
+    throw new Error('Index out of bounds');
+  }
+
+  const clone = [...array];
+  clone.splice(index + 1, 0, item);
+
+  return clone;
+}
+
 /**
  * Given a sort order and a value, return a function that can be used to sort values
  * Null/undefined/empty string values are always sorted to the end regardless of the sort order provided

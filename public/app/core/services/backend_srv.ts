@@ -19,7 +19,7 @@ import { AppEvents, DataQueryErrorType } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
-import { getSessionExpiry } from 'app/core/utils/auth';
+import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
@@ -390,10 +390,11 @@ export class BackendSrv implements BackendService {
                 }
 
                 let authChecker = this.loginPing();
-
-                const expired = getSessionExpiry() * 1000 < Date.now();
-                if (expired) {
-                  authChecker = this.rotateToken();
+                if (hasSessionExpiry()) {
+                  const expired = getSessionExpiry() * 1000 < Date.now();
+                  if (expired) {
+                    authChecker = this.rotateToken();
+                  }
                 }
 
                 return from(authChecker).pipe(

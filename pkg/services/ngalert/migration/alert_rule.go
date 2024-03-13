@@ -235,7 +235,7 @@ func transNoData(l log.Logger, s string) ngmodels.NoDataState {
 	case legacymodels.NoDataSetAlerting:
 		return ngmodels.Alerting
 	case legacymodels.NoDataKeepState:
-		return ngmodels.NoData // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
+		return ngmodels.KeepLast
 	default:
 		l.Warn("Unable to translate execution of NoData state. Using default execution", "old", s, "new", ngmodels.NoData)
 		return ngmodels.NoData
@@ -247,9 +247,7 @@ func transExecErr(l log.Logger, s string) ngmodels.ExecutionErrorState {
 	case "", legacymodels.ExecutionErrorSetAlerting:
 		return ngmodels.AlertingErrState
 	case legacymodels.ExecutionErrorKeepState:
-		// Keep last state is translated to error as we now emit a
-		// DatasourceError alert when the state is error
-		return ngmodels.ErrorErrState
+		return ngmodels.KeepLastErrState
 	case legacymodels.ExecutionErrorSetOk:
 		return ngmodels.OkErrState
 	default:
