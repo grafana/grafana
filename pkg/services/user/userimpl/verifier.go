@@ -44,7 +44,7 @@ func (s *Verifier) VerifyEmail(ctx context.Context, cmd user.VerifyEmailCommand)
 
 	// invalidate any pending verifications for user
 	if err = s.ts.ExpirePreviousVerifications(
-		ctx, &tempuser.ExpirePreviousVerificationsCommand{InvitedByUserID: usr.ID},
+		ctx, &tempuser.ExpirePreviousVerificationsCommand{InvitedByUserID: cmd.User.ID},
 	); err != nil {
 		return fmt.Errorf("failed to expire previous verifications: %w", err)
 	}
@@ -54,14 +54,14 @@ func (s *Verifier) VerifyEmail(ctx context.Context, cmd user.VerifyEmailCommand)
 		// used to determine if the user was updating their email or username in the second step of the verification flow
 		Name: string(cmd.Action),
 		// used to fetch the User in the second step of the verification flow
-		InvitedByUserID: usr.ID,
+		InvitedByUserID: cmd.User.ID,
 		Email:           cmd.Email,
 		Code:            code,
 		Status:          tempuser.TmpUserEmailUpdateStarted,
 	})
 
 	if err != nil {
-		fmt.Errorf("failed to generate temp user for email verification: %w", err)
+		return fmt.Errorf("failed to generate temp user for email verification: %w", err)
 	}
 
 	if err := s.ns.SendVerificationEmail(ctx, &notifications.SendVerifyEmailCommand{
