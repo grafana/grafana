@@ -101,15 +101,15 @@ For more information on recording rules, refer to [Create recording rules][creat
 
 When choosing which alert rule type to use, consider the following comparison between Grafana-managed and data source-managed alert rules.
 
-| <div style="width:200px">Feature</div> | <div style="width:200px">Grafana-managed alert rule</div> | <div style="width:200px">Data source-managed alert rule |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Create alert rules<wbr /> based on data from any of our supported data sources | Yes | No: You can only create alert rules that are based on Prometheus data. The data source must have the Ruler API enabled. |
-| Mix and match data sources | Yes | No |
-| Includes support for recording rules | No | Yes |
-| Add expressions to transform<wbr /> your data and set alert conditions | Yes | No |
-| Use images in alert notifications | Yes | No |
-| Scaling | More resource intensive, depend on the database, and are likely to suffer from transient errors. They only scale vertically. | Store alert rules within the data source itself and allow for “infinite” scaling. Generate and send alert notifications from the location of your data. |
-| Alert rule evaluation and delivery | Alert rule evaluation and delivery is done from within Grafana, using an external Alertmanager; or both. | Alert rule evaluation and alert delivery is distributed, meaning there is no single point of failure. |
+| <div style="width:200px">Feature</div>                                         | <div style="width:200px">Grafana-managed alert rule</div>                                                                    | <div style="width:200px">Data source-managed alert rule                                                                                                 |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Create alert rules<wbr /> based on data from any of our supported data sources | Yes                                                                                                                          | No: You can only create alert rules that are based on Prometheus data. The data source must have the Ruler API enabled.                                 |
+| Mix and match data sources                                                     | Yes                                                                                                                          | No                                                                                                                                                      |
+| Includes support for recording rules                                           | No                                                                                                                           | Yes                                                                                                                                                     |
+| Add expressions to transform<wbr /> your data and set alert conditions         | Yes                                                                                                                          | No                                                                                                                                                      |
+| Use images in alert notifications                                              | Yes                                                                                                                          | No                                                                                                                                                      |
+| Scaling                                                                        | More resource intensive, depend on the database, and are likely to suffer from transient errors. They only scale vertically. | Store alert rules within the data source itself and allow for “infinite” scaling. Generate and send alert notifications from the location of your data. |
+| Alert rule evaluation and delivery                                             | Alert rule evaluation and delivery is done from within Grafana, using an external Alertmanager; or both.                     | Alert rule evaluation and alert delivery is distributed, meaning there is no single point of failure.                                                   |
 
 **Note:**
 
@@ -123,7 +123,7 @@ If you are using non-Prometheus data, we recommend choosing Grafana-managed aler
 [alert-rule-evaluation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/rule-evaluation/"
 [alert-rule-evaluation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/rule-evaluation/"
 
-[queries-and-conditions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/"
-[queries-and-conditions]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/"
+[queries-and-conditions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions"
+[queries-and-conditions]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions"
 
 {{% /docs/reference %}}
