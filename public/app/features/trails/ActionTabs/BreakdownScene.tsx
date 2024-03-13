@@ -327,9 +327,7 @@ function getLabelValue(frame: DataFrame) {
 }
 
 export function buildBreakdownActionScene() {
-  return new SceneFlexItem({
-    body: new BreakdownScene({}),
-  });
+  return new BreakdownScene({});
 }
 
 interface SelectLabelActionState extends SceneObjectState {

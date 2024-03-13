@@ -1,21 +1,18 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DashboardCursorSync, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneObjectState,
   SceneObjectBase,
   SceneComponentProps,
-  SceneFlexLayout,
-  SceneFlexItem,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   sceneGraph,
   SceneVariableSet,
   QueryVariable,
-  behaviors,
 } from '@grafana/scenes';
-import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2 } from '@grafana/ui';
+import { ToolbarButton, Stack, Icon, TabsBar, Tab, useStyles2 } from '@grafana/ui';
 
 import { getExploreUrl } from '../../core/utils/explore';
 
@@ -23,8 +20,8 @@ import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
 import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
-import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
 import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
+import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
 import { ShareTrailButton } from './ShareTrailButton';
 import { useBookmarkState } from './TrailStore/useBookmarkState';
 import {
@@ -40,7 +37,7 @@ import {
 import { getDataSource, getTrailFor } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
-  body: SceneFlexLayout;
+  body: MetricGraphScene;
   metric: string;
   actionView?: string;
 
@@ -55,7 +52,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
     const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric);
     super({
       $variables: state.$variables ?? getVariableSet(state.metric),
-      body: state.body ?? buildGraphScene(),
+      body: state.body ?? new MetricGraphScene({}),
       autoQuery,
       queryDef: state.queryDef ?? autoQuery.main,
       ...state,
@@ -93,13 +90,13 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
     if (actionViewDef && actionViewDef.value !== this.state.actionView) {
       // reduce max height for main panel to reduce height flicker
-      body.state.children[0].setState({ maxHeight: MAIN_PANEL_MIN_HEIGHT });
-      body.setState({ children: [...body.state.children.slice(0, 2), actionViewDef.getScene()] });
+      body.state.topView.state.children[0].setState({ maxHeight: MAIN_PANEL_MIN_HEIGHT });
+      body.setState({ selectedTab: actionViewDef.getScene() });
       this.setState({ actionView: actionViewDef.value });
     } else {
       // restore max height
-      body.state.children[0].setState({ maxHeight: MAIN_PANEL_MAX_HEIGHT });
-      body.setState({ children: body.state.children.slice(0, 2) });
+      body.state.topView.state.children[0].setState({ maxHeight: MAIN_PANEL_MAX_HEIGHT });
+      body.setState({ selectedTab: undefined });
       this.setState({ actionView: undefined });
     }
   }
@@ -235,34 +232,6 @@ function getVariableSet(metric: string) {
         query: { query: `label_names(${VAR_METRIC_EXPR})`, refId: 'A' },
         value: '',
         text: '',
-      }),
-    ],
-  });
-}
-
-const MAIN_PANEL_MIN_HEIGHT = 280;
-const MAIN_PANEL_MAX_HEIGHT = '40%';
-
-function buildGraphScene() {
-  const bodyAutoVizPanel = new AutoVizPanel({});
-
-  return new SceneFlexLayout({
-    direction: 'column',
-    $behaviors: [new behaviors.CursorSync({ key: 'metricCrosshairSync', sync: DashboardCursorSync.Crosshair })],
-    children: [
-      new SceneFlexItem({
-        minHeight: MAIN_PANEL_MIN_HEIGHT,
-        maxHeight: MAIN_PANEL_MAX_HEIGHT,
-        body: bodyAutoVizPanel,
-        overrides: {
-          position: 'sticky',
-          top: 70,
-          zIndex: 1000,
-        },
-      }),
-      new SceneFlexItem({
-        ySizing: 'content',
-        body: new MetricActionBar({}),
       }),
     ],
   });

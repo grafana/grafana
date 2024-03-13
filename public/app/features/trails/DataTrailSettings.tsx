@@ -13,7 +13,7 @@ export interface DataTrailSettingsState extends SceneObjectState {
 export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
   constructor(state: Partial<DataTrailSettingsState>) {
     super({
-      stickyMainGraph: state.stickyMainGraph ?? false,
+      stickyMainGraph: state.stickyMainGraph ?? true,
       isOpen: state.isOpen ?? false,
     });
   }
