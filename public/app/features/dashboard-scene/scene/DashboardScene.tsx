@@ -169,6 +169,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this._changeTracker.startTrackingChanges();
     }
 
+    if (this.state.meta.isNew) {
+      this.onEnterEditMode();
+      this.setState({ isDirty: true });
+    }
+
     if (!this.state.meta.isEmbedded && this.state.uid) {
       dashboardWatcher.watch(this.state.uid);
     }

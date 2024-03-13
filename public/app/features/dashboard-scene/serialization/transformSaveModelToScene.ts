@@ -325,11 +325,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     }),
   });
 
-  if (oldModel.meta.isNew) {
-    dashboardScene.onEnterEditMode();
-    dashboardScene.setState({ isDirty: true });
-  }
-
   return dashboardScene;
 }
 
