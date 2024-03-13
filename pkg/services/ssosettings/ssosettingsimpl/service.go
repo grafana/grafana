@@ -41,10 +41,11 @@ type Service struct {
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
-	secrets secrets.Service, usageStats usagestats.Service, registerer prometheus.Registerer) *Service {
+	secrets secrets.Service, usageStats usagestats.Service, registerer prometheus.Registerer,
+	settingsProvider setting.Provider) *Service {
 	strategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
-		// register other strategies here, for example SAML
+		strategies.NewSAMLStrategy(settingsProvider),
 	}
 
 	store := database.ProvideStore(sqlStore)
