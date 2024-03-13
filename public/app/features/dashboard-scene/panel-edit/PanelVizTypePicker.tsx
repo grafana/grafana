@@ -6,11 +6,14 @@ import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { CustomScrollbar, Field, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
+import { PanelModel } from 'app/features/dashboard/state';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypePicker } from 'app/features/panel/components/VizTypePicker/VizTypePicker';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { PanelModelCompatibilityWrapper } from '../utils/PanelModelCompatibilityWrapper';
 
 import { VizPanelManager } from './VizPanelManager';
@@ -22,7 +25,7 @@ export interface Props {
 }
 
 export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
-  const { panel } = vizManager.useState();
+  const { panel, sourcePanel } = vizManager.useState();
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -30,6 +33,12 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
   const tabKey = isWidgetEnabled ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
   const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
+
+  const parent =
+    sourcePanel.resolve().parent instanceof LibraryVizPanel
+      ? sourcePanel.resolve().parent?.parent
+      : sourcePanel.resolve().parent;
+  const panelJson = gridItemToPanel(parent!);
 
   const [listMode, setListMode] = useLocalStorage(tabKey, defaultTab);
 
@@ -76,7 +85,12 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
           />
         )}
         {listMode === VisualizationSelectPaneTab.LibraryPanels && (
-          <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panelModel} key="Panel Library" />
+          <PanelLibraryOptionsGroup
+            searchQuery={searchQuery}
+            panel={new PanelModel(panelJson)}
+            key="Panel Library"
+            vizPanel={sourcePanel.resolve()}
+          />
         )}
       </CustomScrollbar>
     </div>

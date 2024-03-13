@@ -6,9 +6,13 @@ import { VizPanel } from '@grafana/scenes';
 import { Button, VerticalGroup } from '@grafana/ui';
 import { PanelTypeFilter } from 'app/core/components/PanelTypeFilter/PanelTypeFilter';
 import { LibraryPanelsView } from 'app/features/library-panels/components/LibraryPanelsView/LibraryPanelsView';
+import { LibraryElementDTO } from 'app/features/library-panels/types';
 
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-import { getDashboardSceneFor } from '../utils/utils';
+import { LibraryVizPanel } from '../../scene/LibraryVizPanel';
+import { getDashboardSceneFor } from '../../utils/utils';
+
+import { AddLibraryPanelModal } from './AddLibraryPanelModal';
+import { ChangeLibraryPanelModal } from './ChangeLibraryPanelModal';
 
 interface Props {
   panel: VizPanel;
@@ -18,7 +22,8 @@ interface Props {
 
 export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false }: Props) => {
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
-  // const [changeToPanel, setChangeToPanel] = useState<LibraryElementDTO | undefined>(undefined);
+  // todo think this needs modifications
+  const [changeToPanel, setChangeToPanel] = useState<LibraryElementDTO | undefined>(undefined);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
 
   const onPanelFilterChange = useCallback(
@@ -30,24 +35,25 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false 
 
   const dashboard = getDashboardSceneFor(panel);
 
-  // const useLibraryPanel = async () => {
-  //   if (!changeToPanel) {
-  //     return;
-  //   }
-
-  //   setChangeToPanel(undefined);
-  //   dispatch(changeToLibraryPanel(panel, changeToPanel));
-  // };
+  const useLibraryPanel = async () => {
+    //TODO change library panel
+    // old code
+    // if (!changeToPanel) {
+    //   return;
+    // }
+    // setChangeToPanel(undefined);
+    // dispatch(changeToLibraryPanel(panel, changeToPanel));
+  };
 
   const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
 
   const onAddToPanelLibrary = () => setShowingAddPanelModal(true);
-  // const onDismissChangeToPanel = () => setChangeToPanel(undefined);
+  const onDismissChangeToPanel = () => setChangeToPanel(undefined);
   return (
     <VerticalGroup spacing="md">
       {!isLibraryPanel && (
         <VerticalGroup align="center">
-          <Button icon="plus" onClick={() => {}} variant="secondary" fullWidth>
+          <Button icon="plus" onClick={onAddToPanelLibrary} variant="secondary" fullWidth>
             Create new library panel
           </Button>
         </VerticalGroup>
@@ -60,7 +66,7 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false 
           currentPanelId={isLibraryPanel ? panel.parent.state.uid : undefined}
           searchString={searchQuery}
           panelFilter={panelFilter}
-          onClickCard={() => {}}
+          onClickCard={setChangeToPanel}
           showSecondaryActions
           isWidget={isWidget}
         />
@@ -75,9 +81,9 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false 
         />
       )}
 
-      {/* {changeToPanel && (
+      {changeToPanel && (
         <ChangeLibraryPanelModal panel={panel} onDismiss={onDismissChangeToPanel} onConfirm={useLibraryPanel} />
-      )} */}
+      )}
     </VerticalGroup>
   );
 };
