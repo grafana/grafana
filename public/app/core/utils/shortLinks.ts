@@ -39,6 +39,16 @@ export const createAndCopyShortLink = async (path: string) => {
   }
 };
 
+function getPreviousLog(row: LogRowModel, allLogs: LogRowModel[]): LogRowModel | null {
+  for (let i = allLogs.indexOf(row) - 1; i >= 0; i--) {
+    if (allLogs[i].timeEpochMs > row.timeEpochMs) {
+      return allLogs[i];
+    }
+  }
+
+  return null;
+}
+
 export function getPermalinkRange(row: LogRowModel, rows: LogRowModel[], absoluteRange: AbsoluteTimeRange) {
   const range = {
     from: absoluteRange.from,
@@ -51,7 +61,7 @@ export function getPermalinkRange(row: LogRowModel, rows: LogRowModel[], absolut
   // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
   // Look for the previous sibling log, and use its timestamp
   const allLogs = rows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
-  const prevLog = allLogs[allLogs.indexOf(row) - 1];
+  const prevLog = getPreviousLog(row, allLogs);
 
   if (row.timeEpochMs > absoluteRange.to && !prevLog) {
     // Because there's no sibling and the current `to` is oldest than the log, we have no reference we can use for the interval
