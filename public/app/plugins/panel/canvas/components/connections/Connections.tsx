@@ -361,7 +361,7 @@ export class Connections {
     }
   };
 
-  vertexFutureListener = (event: MouseEvent) => {
+  vertexAddListener = (event: MouseEvent) => {
     event.preventDefault();
 
     if (!(this.connectionVertex && this.scene.div && this.scene.div.parentElement)) {
@@ -413,8 +413,8 @@ export class Connections {
     this.connectionSVGVertex!.style.display = 'block';
 
     if (!event.buttons) {
-      this.scene.selecto?.rootContainer?.removeEventListener('mousemove', this.vertexFutureListener);
-      this.scene.selecto?.rootContainer?.removeEventListener('mouseup', this.vertexFutureListener);
+      this.scene.selecto?.rootContainer?.removeEventListener('mousemove', this.vertexAddListener);
+      this.scene.selecto?.rootContainer?.removeEventListener('mouseup', this.vertexAddListener);
       this.scene.selecto!.rootContainer!.style.cursor = 'auto';
       this.connectionSVGVertex!.style.display = 'none';
 
@@ -491,12 +491,12 @@ export class Connections {
     this.scene.selecto?.rootContainer?.addEventListener('mouseup', this.vertexListener);
   };
 
-  handleVertexFutureDragStart = (selectedTarget: HTMLElement) => {
+  handleVertexAddDragStart = (selectedTarget: HTMLElement) => {
     this.vertexIndex = Number(selectedTarget.getAttribute('data-index'));
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
 
-    this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.vertexFutureListener);
-    this.scene.selecto?.rootContainer?.addEventListener('mouseup', this.vertexFutureListener);
+    this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.vertexAddListener);
+    this.scene.selecto?.rootContainer?.addEventListener('mouseup', this.vertexAddListener);
   };
 
   onChange = (current: ConnectionState, update: CanvasConnection) => {

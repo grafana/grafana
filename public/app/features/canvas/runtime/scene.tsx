@@ -30,7 +30,7 @@ import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasCon
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
 import {
   CONNECTION_ANCHOR_DIV_ID,
-  CONNECTION_VERTEX_FUTURE_ID,
+  CONNECTION_VERTEX_ADD_ID,
   CONNECTION_VERTEX_ID,
 } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
 import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
@@ -626,9 +626,9 @@ export class Scene {
         return;
       }
 
-      // If selected target is a vertex, eject to handle vertex event
-      if (selectedTarget.id === CONNECTION_VERTEX_FUTURE_ID) {
-        this.connections.handleVertexFutureDragStart(selectedTarget);
+      // If selected target is an add vertex point, eject to handle add vertex event
+      if (selectedTarget.id === CONNECTION_VERTEX_ADD_ID) {
+        this.connections.handleVertexAddDragStart(selectedTarget);
         event.stop();
         return;
       }

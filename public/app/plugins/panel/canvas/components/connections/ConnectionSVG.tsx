@@ -16,6 +16,8 @@ import {
   getParentBoundingClientRect,
 } from '../../utils';
 
+import { CONNECTION_VERTEX_ADD_ID, CONNECTION_VERTEX_ID } from './ConnectionAnchors';
+
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
   setLineRef: (anchorElement: SVGLineElement) => void;
@@ -206,9 +208,9 @@ export const ConnectionSVG = ({
                       const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
                       return (
                         <circle
-                          id={`vertex`}
+                          id={CONNECTION_VERTEX_ID}
                           data-index={index}
-                          key={`vertex${index}_${idx}`}
+                          key={`${CONNECTION_VERTEX_ID}${index}_${idx}`}
                           cx={x}
                           cy={y}
                           r={4}
@@ -224,9 +226,9 @@ export const ConnectionSVG = ({
                         const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
                         return (
                           <circle
-                            id={`vertexFuture`}
+                            id={CONNECTION_VERTEX_ADD_ID}
                             data-index={index}
-                            key={`vertexFuture${index}_${idx}`}
+                            key={`${CONNECTION_VERTEX_ADD_ID}${index}_${idx}`}
                             cx={x}
                             cy={y}
                             r={4}
@@ -268,7 +270,7 @@ export const ConnectionSVG = ({
                 />
                 {isSelected && (
                   <circle
-                    id={`vertexFuture`}
+                    id={CONNECTION_VERTEX_ADD_ID}
                     data-index={0}
                     fill={'gray'}
                     cx={midpoint.x}
