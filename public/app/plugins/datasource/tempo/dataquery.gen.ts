@@ -68,9 +68,9 @@ export const defaultTempoQuery: Partial<TempoQuery> = {
 };
 
 /**
- * search = Loki search, nativeSearch = Tempo search for backwards compatibility
+ * nativeSearch = Tempo search for backwards compatibility
  */
-export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
+export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
 
 /**
  * The state of the TraceQL streaming search query

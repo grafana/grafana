@@ -287,10 +287,6 @@ const (
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
 
-	// FlagExploreScrollableLogsContainer
-	// Improves the scrolling behavior of logs in Explore
-	FlagExploreScrollableLogsContainer = "exploreScrollableLogsContainer"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
@@ -658,4 +654,8 @@ const (
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
+
+	// FlagEmailVerificationEnforcement
+	// Force email verification for users, even when authenticating through sso.
+	FlagEmailVerificationEnforcement = "emailVerificationEnforcement"
 )
