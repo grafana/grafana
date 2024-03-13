@@ -3,10 +3,12 @@ import { histogramFieldInfo } from '@grafana/data/src/transformations/transforme
 import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
 
 import { HistogramPanel } from './HistogramPanel';
+import { changeToHistogramPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { originalDataHasHistogram } from './utils';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
+  .setPanelChangeHandler(changeToHistogramPanelMigrationHandler)
   .setPanelOptions((builder) => {
     builder
       .addCustomEditor({
@@ -16,6 +18,16 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
         description: 'Showing frequencies that are calculated in the query',
         editor: () => null, // empty editor
         showIf: (opts, data) => originalDataHasHistogram(data),
+      })
+      .addNumberInput({
+        path: 'bucketCount',
+        name: histogramFieldInfo.bucketCount.name,
+        description: histogramFieldInfo.bucketCount.description,
+        settings: {
+          placeholder: `Default: ${defaultOptions.bucketCount}`,
+          min: 0,
+        },
+        showIf: (opts, data) => !originalDataHasHistogram(data),
       })
       .addNumberInput({
         path: 'bucketSize',
@@ -33,10 +45,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
         name: histogramFieldInfo.bucketOffset.name,
         description: histogramFieldInfo.bucketOffset.description,
         settings: {
-          placeholder: '0',
+          placeholder: `Default: ${defaultOptions.bucketOffset}`,
           min: 0,
         },
-        defaultValue: defaultOptions.bucketOffset,
         showIf: (opts, data) => !originalDataHasHistogram(data),
       })
       .addBooleanSwitch({
@@ -54,7 +65,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {
-          byValueSupport: true,
+          byValueSupport: false,
+          bySeriesSupport: true,
+          preferThresholdsMode: false,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,

@@ -9,6 +9,7 @@ import {
   Field,
   GrafanaTheme2,
   hasLogsContextSupport,
+  hasLogsContextUiSupport,
   Labels,
   LogRowContextOptions,
   LogRowModel,
@@ -60,9 +61,10 @@ export const LogsPanel = ({
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
-  const [closeCallback, setCloseCallback] = useState<(() => void) | null>(null);
   const timeRange = data.timeRange;
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
+  let closeCallback = useRef<() => void>();
 
   const { eventBus } = usePanelContext();
   const onLogRowHover = useCallback(
@@ -84,15 +86,18 @@ export const LogsPanel = ({
 
   const onCloseContext = useCallback(() => {
     setContextRow(null);
-    if (closeCallback) {
-      closeCallback();
+    if (closeCallback.current) {
+      closeCallback.current();
     }
   }, [closeCallback]);
 
-  const onOpenContext = useCallback((row: LogRowModel, onClose: () => void) => {
-    setContextRow(row);
-    setCloseCallback(onClose);
-  }, []);
+  const onOpenContext = useCallback(
+    (row: LogRowModel, onClose: () => void) => {
+      setContextRow(row);
+      closeCallback.current = onClose;
+    },
+    [closeCallback]
+  );
 
   const onPermalinkClick = useCallback(
     async (row: LogRowModel) => {
@@ -149,6 +154,31 @@ export const LogsPanel = ({
     [data.request?.targets, dataSourcesMap]
   );
 
+  const getLogRowContextUi = useCallback(
+    (origRow: LogRowModel, runContextQuery?: () => void): React.ReactNode => {
+      if (!origRow.dataFrame.refId || !dataSourcesMap) {
+        return <></>;
+      }
+
+      const query = data.request?.targets[0];
+      if (!query) {
+        return <></>;
+      }
+
+      const dataSource = dataSourcesMap.get(origRow.dataFrame.refId);
+      if (!hasLogsContextUiSupport(dataSource)) {
+        return <></>;
+      }
+
+      if (!dataSource.getLogRowContextUi) {
+        return <></>;
+      }
+
+      return dataSource.getLogRowContextUi(origRow, runContextQuery, query);
+    },
+    [data.request?.targets, dataSourcesMap]
+  );
+
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
     const logs = data
@@ -178,9 +208,15 @@ export const LogsPanel = ({
   /**
    * Scrolls the given row into view.
    */
-  const scrollIntoView = useCallback((row: HTMLElement) => {
-    row.scrollIntoView(true);
-  }, []);
+  const scrollIntoView = useCallback(
+    (row: HTMLElement) => {
+      scrollElement?.scrollTo({
+        top: row.offsetTop,
+        behavior: 'smooth',
+      });
+    },
+    [scrollElement]
+  );
 
   if (!data || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
@@ -203,9 +239,14 @@ export const LogsPanel = ({
           getRowContext={(row, options) => getLogRowContext(row, contextRow, options)}
           logsSortOrder={sortOrder}
           timeZone={timeZone}
+          getLogRowContextUi={getLogRowContextUi}
         />
       )}
-      <CustomScrollbar autoHide scrollTop={scrollTop}>
+      <CustomScrollbar
+        autoHide
+        scrollTop={scrollTop}
+        scrollRefCallback={(scrollElement) => setScrollElement(scrollElement)}
+      >
         <div className={style.container} ref={logsContainerRef}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <LogRows

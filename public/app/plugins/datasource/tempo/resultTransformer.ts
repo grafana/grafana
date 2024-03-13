@@ -3,32 +3,41 @@ import { collectorTypes } from '@opentelemetry/exporter-collector';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 import {
+  createDataFrame,
+  createTheme,
   DataFrame,
+  DataFrameDTO,
+  DataLink,
+  DataLinkConfigOrigin,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  DataSourceJsonData,
+  Field,
+  FieldDTO,
   FieldType,
+  getDisplayProcessor,
+  Labels,
   MutableDataFrame,
+  toDataFrame,
   TraceKeyValuePair,
   TraceLog,
   TraceSpanReference,
   TraceSpanRow,
-  FieldDTO,
-  createDataFrame,
-  getDisplayProcessor,
-  createTheme,
-  DataFrameDTO,
-  toDataFrame,
-  DataLink,
-  DataSourceJsonData,
-  Field,
-  DataLinkConfigOrigin,
 } from '@grafana/data';
 import { TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { SearchTableType } from './dataquery.gen';
 import { createGraphFrames } from './graphTransform';
-import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';
+import {
+  ProtoValue,
+  Span,
+  SpanAttributes,
+  Spanset,
+  TempoJsonData,
+  TraceqlMetricsResponse,
+  TraceSearchMetadata,
+} from './types';
 
 export function createTableFrame(
   logsFrame: DataFrame | DataFrameDTO,
@@ -623,6 +632,56 @@ function transformToTraceData(data: TraceSearchMetadata) {
   };
 }
 
+const metricsValueToString = (value: ProtoValue): string => {
+  if (value.stringValue) {
+    return `"${value.stringValue}"`;
+  }
+  return '' + (value.intValue || value.doubleValue || value.boolValue || '""');
+};
+
+export function formatTraceQLMetrics(query: string, data: TraceqlMetricsResponse) {
+  const frames = data.series.map((series, index) => {
+    const labels: Labels = {};
+    series.labels?.forEach((label) => {
+      labels[label.key] = metricsValueToString(label.value);
+    });
+    // If it's a single series, use the query as the displayName fallback
+    let name = data.series.length === 1 ? query : '';
+    if (series.labels) {
+      if (series.labels.length === 1) {
+        // For single label series, use the label value as the displayName to improve readability
+        name = metricsValueToString(series.labels[0].value);
+      } else {
+        // otherwise build a string using the label keys and values
+        name = `{${series.labels.map((label) => `${label.key}=${metricsValueToString(label.value)}`).join(', ')}}`;
+      }
+    }
+    return createDataFrame({
+      refId: name || `A${index}`,
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: series.samples.map((sample) => parseInt(sample.timestampMs, 10)),
+        },
+        {
+          name: name,
+          labels,
+          type: FieldType.number,
+          values: series.samples.map((sample) => sample.value),
+          config: {
+            displayNameFromDS: name,
+          },
+        },
+      ],
+      meta: {
+        preferredVisualisationType: 'graph',
+      },
+    });
+  });
+  return frames;
+}
+
 export function formatTraceQLResponse(
   data: TraceSearchMetadata[],
   instanceSettings: DataSourceInstanceSettings,
@@ -886,10 +945,6 @@ export function createTableFrameFromTraceQlQueryAsSpans(
  * @returns the spansets of the trace, if existing
  */
 const getSpanSets = (trace: TraceSearchMetadata): Spanset[] => {
-  if (trace.spanSets && trace.spanSet) {
-    console.warn('Both `spanSets` and `spanSet` are set. `spanSet` will be ignored');
-  }
-
   return trace.spanSets || (trace.spanSet ? [trace.spanSet] : []);
 };
 

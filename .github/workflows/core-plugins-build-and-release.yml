@@ -9,9 +9,12 @@ on:
         type: choice
         options:
           - grafana-azure-monitor-datasource
+          - grafana-pyroscope-datasource
           - grafana-testdata-datasource
           - parca
+          - stackdriver
           - tempo
+          - zipkin
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-${{ inputs.plugin_id }}
@@ -198,8 +201,7 @@ jobs:
           gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/darwin
           gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/any
       - name: Publish new plugin version on grafana.com
-        # TODO: This assumes that there are packages for all platforms
-        # which is not true for frontend only plugins
+        if: steps.check_backend.outputs.has_backend == 'true'
         working-directory: ${{ steps.get_dir.outputs.dir }}
         env:
           GCOM_TOKEN: ${{ env.PLUGINS_GCOM_TOKEN }}
@@ -233,6 +235,29 @@ jobs:
               \"darwin-arm64\": {
                 \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/darwin/${{ inputs.plugin_id }}-${VERSION}.darwin_arm64.zip\",
                 \"md5\": \"$(cat ci/packages/info-darwin_arm64.json | jq -r .plugin.md5)\"
+              }
+            }
+          }"`
+          if [[ "$(echo $result | jq -r .version)" == "null" ]]; then
+            echo "Failed to publish plugin version. Got:"
+            echo $result
+            exit 1
+          fi
+      - name: Publish new plugin version on grafana.com (frontend only)
+        if: steps.check_backend.outputs.has_backend == 'false'
+        working-directory: ${{ steps.get_dir.outputs.dir }}
+        env:
+          GCOM_TOKEN: ${{ env.PLUGINS_GCOM_TOKEN }}
+          VERSION: ${{ steps.build_frontend.outputs.version }}
+        run: |
+          echo "Publish new plugin version on grafana.com:"
+          echo "Plugin version: ${VERSION}"
+          result=`curl -H "Authorization: Bearer $GCOM_TOKEN" -H "Content-Type: application/json" ${{ env.GCOM_API}}/api/plugins -d "{
+            \"url\": \"https://github.com/grafana/grafana/tree/main/${{ steps.get_dir.outputs.dir }}\",
+            \"download\": {
+              \"any\": {
+                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/any/${{ inputs.plugin_id }}-${VERSION}.any.zip\",
+                \"md5\": \"$(cat ci/packages/info-any.json | jq -r .plugin.md5)\"
               }
             }
           }"`

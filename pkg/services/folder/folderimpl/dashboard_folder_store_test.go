@@ -15,7 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+// run tests with cleanup
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationDashboardFolderStore(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore

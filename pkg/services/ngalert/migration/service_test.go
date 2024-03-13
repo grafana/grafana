@@ -1398,6 +1398,7 @@ func TestCommonServicePatterns(t *testing.T) {
 						d1Copy := *d1
 						//nolint:staticcheck
 						d1Copy.FolderID = f2.ID
+						d1Copy.FolderUID = f2.UID
 						_, err := x.ID(d1.ID).Update(d1Copy)
 						return err
 					},

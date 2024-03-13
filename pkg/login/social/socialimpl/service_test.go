@@ -18,7 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestSocialService_ProvideService(t *testing.T) {
 	type testEnv struct {
@@ -43,15 +48,6 @@ func TestSocialService_ProvideService(t *testing.T) {
 			},
 			expectedSocialMapLength:             7,
 			expectedGenericOAuthSkipOrgRoleSync: false,
-		},
-		{
-			name: "should load Enabled and SkipOrgRoleSync parameters from environment variables when ssoSettingsApi is disabled",
-			setup: func(t *testing.T, env *testEnv) {
-				t.Setenv("GF_AUTH_GENERIC_OAUTH_ENABLED", "true")
-				t.Setenv("GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC", "true")
-			},
-			expectedSocialMapLength:             2,
-			expectedGenericOAuthSkipOrgRoleSync: true,
 		},
 	}
 	iniContent := `
@@ -91,6 +87,101 @@ func TestSocialService_ProvideService(t *testing.T) {
 			if genericOAuthInfo != nil {
 				require.Equal(t, tc.expectedGenericOAuthSkipOrgRoleSync, genericOAuthInfo.SkipOrgRoleSync)
 			}
+		})
+	}
+}
+
+func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
+	testCases := []struct {
+		name                        string
+		rawIniContent               string
+		expectedGrafanaComOAuthInfo *social.OAuthInfo
+	}{
+		{
+			name: "should setup the connector using auth.grafana_com section if it is enabled",
+			rawIniContent: `
+			[auth.grafana_com]
+			enabled = true
+			client_id = grafanaComClientId
+			
+			[auth.grafananet]
+			enabled = false
+			client_id = grafanaNetClientId`,
+			expectedGrafanaComOAuthInfo: &social.OAuthInfo{
+				AuthStyle: "inheader",
+				AuthUrl:   "/oauth2/authorize",
+				TokenUrl:  "/api/oauth2/token",
+				Enabled:   true,
+				ClientId:  "grafanaComClientId",
+			},
+		},
+		{
+			name: "should setup the connector using auth.grafananet section if it is enabled",
+			rawIniContent: `
+			[auth.grafana_com]
+			enabled = false
+			client_id = grafanaComClientId
+			
+			[auth.grafananet]
+			enabled = true
+			client_id = grafanaNetClientId`,
+			expectedGrafanaComOAuthInfo: &social.OAuthInfo{
+				AuthStyle: "inheader",
+				AuthUrl:   "/oauth2/authorize",
+				TokenUrl:  "/api/oauth2/token",
+				Enabled:   true,
+				ClientId:  "grafanaNetClientId",
+			},
+		},
+		{
+			name: "should setup the connector using auth.grafana_com section if both are enabled",
+			rawIniContent: `
+			[auth.grafana_com]
+			enabled = true
+			client_id = grafanaComClientId
+			
+			[auth.grafananet]
+			enabled = true
+			client_id = grafanaNetClientId`,
+			expectedGrafanaComOAuthInfo: &social.OAuthInfo{
+				AuthStyle: "inheader",
+				AuthUrl:   "/oauth2/authorize",
+				TokenUrl:  "/api/oauth2/token",
+				Enabled:   true,
+				ClientId:  "grafanaComClientId",
+			},
+		},
+		{
+			name: "should not setup the connector when both are disabled",
+			rawIniContent: `
+			[auth.grafana_com]
+			enabled = false
+			client_id = grafanaComClientId
+			
+			[auth.grafananet]
+			enabled = false
+			client_id = grafanaNetClientId`,
+			expectedGrafanaComOAuthInfo: nil,
+		},
+	}
+
+	cfg := setting.NewCfg()
+	secrets := secretsfake.NewMockService(t)
+	accessControl := acimpl.ProvideAccessControl(cfg)
+	sqlStore := db.InitTestDB(t)
+
+	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			iniFile, err := ini.Load([]byte(tc.rawIniContent))
+			require.NoError(t, err)
+
+			cfg := setting.NewCfg()
+			cfg.Raw = iniFile
+
+			socialService := ProvideService(cfg, featuremgmt.WithFeatures(), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), ssoSettingsSvc)
+			require.EqualValues(t, tc.expectedGrafanaComOAuthInfo, socialService.GetOAuthInfoProvider("grafana_com"))
 		})
 	}
 }

@@ -13,10 +13,37 @@ type SceneTransformWrapperProps = {
 export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransformWrapperProps) => {
   const onZoom = (zoomPanPinchRef: ReactZoomPanPinchRef) => {
     const scale = zoomPanPinchRef.state.scale;
+    scene.scale = scale;
+  };
+
+  const onZoomStop = (zoomPanPinchRef: ReactZoomPanPinchRef) => {
+    const scale = zoomPanPinchRef.state.scale;
+    scene.scale = scale;
+    updateMoveable(scale);
+  };
+
+  const onTransformed = (
+    _: ReactZoomPanPinchRef,
+    state: {
+      scale: number;
+      positionX: number;
+      positionY: number;
+    }
+  ) => {
+    const scale = state.scale;
+    scene.scale = scale;
+    updateMoveable(scale);
+  };
+
+  const updateMoveable = (scale: number) => {
     if (scene.moveable && scale > 0) {
       scene.moveable.zoom = 1 / scale;
+      if (scale === 1) {
+        scene.moveable.snappable = true;
+      } else {
+        scene.moveable.snappable = false;
+      }
     }
-    scene.scale = scale;
   };
 
   const onSceneContainerMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -38,9 +65,8 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
       doubleClick={{ mode: 'reset' }}
       ref={scene.transformComponentRef}
       onZoom={onZoom}
-      onTransformed={(_, state) => {
-        scene.scale = state.scale;
-      }}
+      onZoomStop={onZoomStop}
+      onTransformed={onTransformed}
       limitToBounds={true}
       disabled={!config.featureToggles.canvasPanelPanZoom || !scene.shouldPanZoom}
       panning={{ allowLeftClickPan: false }}

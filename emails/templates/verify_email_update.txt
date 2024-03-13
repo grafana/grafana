@@ -1,0 +1,6 @@
+[[HiddenSubject .Subject "Verify your new email - [[.Name]]"]]
+
+Hi [[.Name]],
+
+Copy and paste the following link directly in your browser to verify your email within [[.VerificationEmailLifetimeHours]] hour(s).
+[[.AppUrl]]user/email/update?code=[[.Code]]

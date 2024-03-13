@@ -146,11 +146,11 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
 
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
   const isFederated = isFederatedRuleGroup(rule.group);
+  const isGrafanaManagedAlertRule = isGrafanaRulerRule(rule.rulerRule);
 
   // if a rule is either provisioned or a federated rule, we don't allow it to be removed or edited
   const immutableRule = isProvisioned || isFederated;
 
-  // TODO refactor this hook maybe
   const {
     isEditable,
     isRemovable,
@@ -173,7 +173,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
     [AlertRuleAction.Delete]: [MaybeSupportedUnlessImmutable, isRemovable ?? false],
     [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
     [AlertRuleAction.Silence]: canSilence,
-    [AlertRuleAction.ModifyExport]: [MaybeSupported, exportAllowed],
+    [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
   };
 
   return abilities;

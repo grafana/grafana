@@ -8,6 +8,7 @@ import {
   getFieldColorModeForField,
   getFieldSeriesColor,
   GrafanaTheme2,
+  roundDecimals,
 } from '@grafana/data';
 import {
   histogramBucketSizes,
@@ -37,6 +38,7 @@ function incrRoundUp(num: number, incr: number) {
 export interface HistogramProps extends Themeable2 {
   options: Options; // used for diff
   alignedFrame: DataFrame; // This could take HistogramFields
+  bucketCount?: number;
   bucketSize: number;
   width: number;
   height: number;
@@ -48,12 +50,16 @@ export interface HistogramProps extends Themeable2 {
 
 export function getBucketSize(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  return frame.fields[0].type === FieldType.string ? 1 : frame.fields[1].values[0] - frame.fields[0].values[0];
+  return frame.fields[0].type === FieldType.string
+    ? 1
+    : roundDecimals(frame.fields[1].values[0] - frame.fields[0].values[0], 9);
 }
 
 export function getBucketSize1(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  return frame.fields[0].type === FieldType.string ? 1 : frame.fields[1].values[1] - frame.fields[0].values[1];
+  return frame.fields[0].type === FieldType.string
+    ? 1
+    : roundDecimals(frame.fields[1].values[1] - frame.fields[0].values[1], 9);
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
@@ -136,6 +142,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     distribution: ScaleDistribution.Linear,
     orientation: ScaleOrientation.Vertical,
     direction: ScaleDirection.Up,
+    softMin: 0,
   });
 
   const fmt = frame.fields[0].display!;
@@ -305,17 +312,20 @@ export class Histogram extends React.Component<HistogramProps, State> {
       return null;
     }
 
-    return <PlotLegend data={this.props.rawSeries!} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+    const frames = this.props.options.combine ? [this.props.alignedFrame] : this.props.rawSeries!;
+
+    return <PlotLegend data={frames} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
-    const { structureRev, alignedFrame, bucketSize } = this.props;
+    const { structureRev, alignedFrame, bucketSize, bucketCount } = this.props;
 
     if (alignedFrame !== prevProps.alignedFrame) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
         const shouldReconfig =
+          bucketCount !== prevProps.bucketCount ||
           bucketSize !== prevProps.bucketSize ||
           this.props.options !== prevProps.options ||
           this.state.config === undefined ||

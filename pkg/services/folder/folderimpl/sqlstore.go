@@ -83,11 +83,21 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	return foldr.WithURL(), err
 }
 
-func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
+func (ss *sqlStore) Delete(ctx context.Context, UIDs []string, orgID int64) error {
+	if len(UIDs) == 0 {
+		return nil
+	}
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("DELETE FROM folder WHERE uid=? AND org_id=?", uid, orgID)
+		// covered by UQE_folder_org_id_uid
+		s := fmt.Sprintf("DELETE FROM folder WHERE org_id=? AND uid IN (%s)", strings.Repeat("?, ", len(UIDs)-1)+"?")
+		sqlArgs := make([]any, 0, len(UIDs)+2)
+		sqlArgs = append(sqlArgs, s, orgID)
+		for _, uid := range UIDs {
+			sqlArgs = append(sqlArgs, uid)
+		}
+		_, err := sess.Exec(sqlArgs...)
 		if err != nil {
-			return folder.ErrDatabaseError.Errorf("failed to delete folder: %w", err)
+			return folder.ErrDatabaseError.Errorf("failed to delete folders: %w", err)
 		}
 		return nil
 	})
@@ -131,6 +141,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		}
 
 		sql.WriteString(strings.Join(columnsToUpdate, ", "))
+		// covered by UQE_folder_org_id_uid
 		sql.WriteString(" WHERE uid = ? AND org_id = ?")
 		args = append(args, cmd.UID, cmd.OrgID)
 
@@ -162,27 +173,58 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 	return foldr.WithURL(), err
 }
 
+// If WithFullpath is true it computes also the full path of a folder.
+// The full path is a string that contains the titles of all parent folders separated by a slash.
+// For example, if the folder structure is:
+//
+//	A
+//	└── B
+//	    └── C
+//
+// The full path of C is "A/B/C".
+// The full path of B is "A/B".
+// The full path of A is "A".
+// If a folder contains a slash in its title, it is escaped with a backslash.
+// For example, if the folder structure is:
+//
+//	A
+//	└── B/C
+//
+// The full path of C is "A/B\/C".
 func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
 	foldr := &folder.Folder{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exists := false
 		var err error
+		s := strings.Builder{}
+		s.WriteString("SELECT *")
+		if q.WithFullpath {
+			s.WriteString(fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect())))
+		}
+		s.WriteString(" FROM folder f0")
+		if q.WithFullpath {
+			s.WriteString(getFullpathJoinsSQL())
+		}
 		switch {
 		case q.UID != nil:
-			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", q.UID, q.OrgID).Get(foldr)
+			// covered UQE_folder_uid_org_id
+			s.WriteString(" WHERE f0.uid = ? AND f0.org_id = ?")
+			exists, err = sess.SQL(s.String(), q.UID, q.OrgID).Get(foldr)
 		// nolint:staticcheck
 		case q.ID != nil:
+			s.WriteString(" WHERE f0.id = ?")
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
+			// covered by primary key
+			exists, err = sess.SQL(s.String(), q.ID).Get(foldr)
 		case q.Title != nil:
-			s := strings.Builder{}
-			s.WriteString("SELECT * FROM folder WHERE title = ? AND org_id = ?")
+			// covered by UQE_folder_org_id_parent_uid_title
+			s.WriteString(" WHERE f0.title = ? AND f0.org_id = ?")
 			args := []any{*q.Title, q.OrgID}
 			if q.ParentUID != nil {
-				s.WriteString(" AND parent_uid = ?")
+				s.WriteString(" AND f0.parent_uid = ?")
 				args = append(args, *q.ParentUID)
 			} else {
-				s.WriteString(" AND parent_uid IS NULL")
+				s.WriteString(" AND f0.parent_uid IS NULL")
 			}
 			exists, err = sess.SQL(s.String(), args...).Get(foldr)
 		default:
@@ -198,6 +240,7 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		return nil
 	})
 
+	foldr.Fullpath = strings.TrimLeft(foldr.Fullpath, "/")
 	return foldr.WithURL(), err
 }
 
@@ -207,6 +250,7 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 	}
 	var folders []*folder.Folder
 
+	// covered by UQE_folder_org_id_uid
 	recQuery := `
 		WITH RECURSIVE RecQry AS (
 			SELECT * FROM folder WHERE uid = ? AND org_id = ?
@@ -257,6 +301,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
 		args := make([]any, 0, 2)
+		// covered by UQE_folder_org_id_parent_uid_title
 		if q.UID == "" {
 			sql.WriteString("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=?")
 			args = append(args, q.OrgID)
@@ -265,15 +310,16 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 			args = append(args, q.UID, q.OrgID)
 		}
 
-		if q.FolderUIDs != nil {
-			sql.WriteString(" AND uid IN (?")
-			for range q.FolderUIDs[1:] {
-				sql.WriteString(", ?")
-			}
-			sql.WriteString(")")
-			for _, uid := range q.FolderUIDs {
+		if len(q.FolderUIDs) > 0 {
+			sql.WriteString(" AND uid IN (")
+			for i, uid := range q.FolderUIDs {
+				if i > 0 {
+					sql.WriteString(", ")
+				}
+				sql.WriteString("?")
 				args = append(args, uid)
 			}
+			sql.WriteString(")")
 		}
 		sql.WriteString(" ORDER BY title ASC")
 
@@ -303,6 +349,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 func (ss *sqlStore) getParentsMySQL(ctx context.Context, q folder.GetParentsQuery) (folders []*folder.Folder, err error) {
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		uid := ""
+		// covered by UQE_folder_org_id_uid
 		ok, err := sess.SQL("SELECT parent_uid FROM folder WHERE org_id=? AND uid=?", q.OrgID, q.UID).Get(&uid)
 		if err != nil {
 			return err
@@ -312,6 +359,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, q folder.GetParentsQuer
 		}
 		for {
 			f := &folder.Folder{}
+			// covered by UQE_folder_org_id_uid
 			ok, err := sess.SQL("SELECT * FROM folder WHERE org_id=? AND uid=?", q.OrgID, uid).Get(f)
 			if err != nil {
 				return err
@@ -331,6 +379,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, q folder.GetParentsQuer
 	return util.Reverse(folders), err
 }
 
+// TODO use a single query to get the height of a folder
 func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error) {
 	height := -1
 	queue := []string{foldrUID}
@@ -414,8 +463,12 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			if q.WithFullpath || q.WithFullpathUIDs || len(q.ancestorUIDs) > 0 {
 				s.WriteString(getFullpathJoinsSQL())
 			}
-			s.WriteString(` WHERE f0.org_id=?`)
-			args := []any{q.OrgID}
+			// covered by UQE_folder_org_id_uid
+			args := []any{}
+			if q.OrgID > 0 {
+				s.WriteString(` WHERE f0.org_id=?`)
+				args = []any{q.OrgID}
+			}
 			if len(partialUIDs) > 0 {
 				s.WriteString(` AND f0.uid IN (?` + strings.Repeat(", ?", len(partialUIDs)-1) + `)`)
 				for _, uid := range partialUIDs {
@@ -460,11 +513,76 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 	return folders, nil
 }
 
+func (ss *sqlStore) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
+	var folders []*folder.Folder
+
+	recursiveQueriesAreSupported, err := ss.db.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
+	}
+	switch recursiveQueriesAreSupported {
+	case true:
+		// covered by UQE_folder_org_id_parent_uid_title
+		recQuery := `
+		WITH RECURSIVE RecQry AS (
+			SELECT * FROM folder WHERE parent_uid = ? AND org_id = ?
+			UNION ALL SELECT f.* FROM folder f INNER JOIN RecQry r ON f.parent_uid = r.uid and f.org_id = r.org_id
+		)
+		SELECT * FROM RecQry;
+	`
+		if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+			err := sess.SQL(recQuery, ancestor_uid, orgID).Find(&folders)
+			if err != nil {
+				return folder.ErrDatabaseError.Errorf("failed to get folder descendants: %w", err)
+			}
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+	default:
+		// this is suboptimal because results is full table scan on f0
+		// but it's the best we can do without recursive CTE
+		if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+			s := strings.Builder{}
+			args := make([]any, 0, 1+folder.MaxNestedFolderDepth)
+			args = append(args, orgID)
+			// covered by UQE_folder_org_id_uid
+			s.WriteString(`SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`)
+			s.WriteString(` FROM folder f0`)
+			s.WriteString(getFullpathJoinsSQL())
+			s.WriteString(` WHERE f0.org_id=?`)
+			s.WriteString(` AND (`)
+			for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+				if i > 1 {
+					s.WriteString(` OR `)
+				}
+				s.WriteString(fmt.Sprintf(`f%d.uid=?`, i))
+				args = append(args, ancestor_uid)
+			}
+			s.WriteString(`)`)
+			return sess.SQL(s.String(), args...).Find(&folders)
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	// Add URLs
+	for i, f := range folders {
+		folders[i] = f.WithURL()
+	}
+
+	return folders, nil
+}
+
 func getFullpathSQL(dialect migrator.Dialect) string {
+	escaped := "\\/"
+	if dialect.DriverName() == migrator.MySQL {
+		escaped = "\\\\/"
+	}
 	concatCols := make([]string, 0, folder.MaxNestedFolderDepth)
-	concatCols = append(concatCols, "COALESCE(REPLACE(f0.title, '/', '\\/'), '')")
+	concatCols = append(concatCols, fmt.Sprintf("COALESCE(REPLACE(f0.title, '/', '%s'), '')", escaped))
 	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
-		concatCols = append([]string{fmt.Sprintf("COALESCE(REPLACE(f%d.title, '/', '\\/'), '')", i), "'/'"}, concatCols...)
+		concatCols = append([]string{fmt.Sprintf("COALESCE(REPLACE(f%d.title, '/', '%s'), '')", i, escaped), "'/'"}, concatCols...)
 	}
 	return dialect.Concat(concatCols...)
 }
@@ -482,6 +600,7 @@ func getFullapathUIDsSQL(dialect migrator.Dialect) string {
 func getFullpathJoinsSQL() string {
 	joins := make([]string, 0, folder.MaxNestedFolderDepth)
 	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+		// covered by UQE_folder_org_id_uid
 		joins = append(joins, fmt.Sprintf(` LEFT JOIN folder f%d ON f%d.org_id = f%d.org_id AND f%d.uid = f%d.parent_uid`, i, i, i-1, i, i-1))
 	}
 	return strings.Join(joins, "\n")

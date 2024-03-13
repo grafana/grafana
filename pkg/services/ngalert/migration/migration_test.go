@@ -30,8 +30,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 // TestServiceStart tests the wrapper method that decides when to run the migration based on migration status and settings.
 func TestServiceStart(t *testing.T) {

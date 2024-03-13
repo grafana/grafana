@@ -15,7 +15,7 @@ export {
 } from './utils/plugin';
 export { reportMetaAnalytics, reportInteraction, reportPageview, reportExperimentView } from './analytics/utils';
 export { featureEnabled } from './utils/licensing';
-export { logInfo, logDebug, logWarning, logError } from './utils/logging';
+export { logInfo, logDebug, logWarning, logError, createMonitoringLogger } from './utils/logging';
 export {
   DataSourceWithBackend,
   HealthCheckError,
@@ -55,4 +55,5 @@ export {
   createDataSourcePluginEventProperties,
 } from './analytics/plugins/eventProperties';
 export { usePluginInteractionReporter } from './analytics/plugins/usePluginInteractionReporter';
+export { setReturnToPreviousHook, useReturnToPrevious } from './utils/returnToPrevious';
 export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';

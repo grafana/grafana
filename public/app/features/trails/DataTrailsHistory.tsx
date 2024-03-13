@@ -13,9 +13,9 @@ import {
 } from '@grafana/scenes';
 import { useStyles2, Tooltip, Stack } from '@grafana/ui';
 
-import { DataTrail, DataTrailState } from './DataTrail';
+import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
 import { VAR_FILTERS } from './shared';
-import { getTrailFor } from './utils';
+import { getTrailFor, isSceneTimeRangeState } from './utils';
 
 export interface DataTrailsHistoryState extends SceneObjectState {
   currentStep: number;
@@ -44,7 +44,22 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     const trail = getTrailFor(this);
 
     if (this.state.steps.length === 0) {
+      // We always want to ensure in initial 'start' step
       this.addTrailStep(trail, 'start');
+
+      if (trail.state.metric) {
+        // But if our current trail has a metric, we want to remove it and the topScene,
+        // so that the "start" step always displays a metric select screen.
+
+        // So we remove the metric and update the topscene for the "start" step
+        const { metric, ...startState } = trail.state;
+        startState.topScene = getTopSceneFor(undefined);
+        this.state.steps[0].trailState = startState;
+
+        // But must add a secondary step to represent the selection of the metric
+        // for this restored trail state
+        this.addTrailStep(trail, 'metric');
+      }
     }
 
     trail.subscribeToState((newState, oldState) => {
@@ -68,6 +83,14 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
     trail.subscribeToEvent(SceneObjectStateChangedEvent, (evt) => {
       if (evt.payload.changedObject instanceof SceneTimeRange) {
+        const { prevState, newState } = evt.payload;
+
+        if (isSceneTimeRangeState(prevState) && isSceneTimeRangeState(newState)) {
+          if (prevState.from === newState.from && prevState.to === newState.to) {
+            return;
+          }
+        }
+
         this.addTrailStep(trail, 'time');
       }
     });
@@ -139,7 +162,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
     return (
       <div className={styles.container}>
-        <div className={styles.heading}>Trail</div>
+        <div className={styles.heading}>History</div>
         {steps.map((step, index) => (
           <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
             <button

@@ -1,16 +1,10 @@
 package migration
 
 import (
-	"bytes"
+	"context"
 	"fmt"
-	"io"
-	"math/rand"
-	"os"
-	"path/filepath"
-	"strconv"
 	"time"
 
-	"github.com/matttproud/golang_protobuf_extensions/pbutil"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/common/model"
 
@@ -27,9 +21,7 @@ var TimeNow = time.Now
 type silenceHandler struct {
 	rulesWithErrorSilenceLabels  int
 	rulesWithNoDataSilenceLabels int
-	createSilenceFile            func(filename string) (io.WriteCloser, error)
-
-	dataPath string
+	persistSilences              func(context.Context, int64, []*pb.MeshSilence) error
 }
 
 // handleSilenceLabels adds labels to the alert rule if the rule requires silence labels for error/nodata keep_state.
@@ -45,7 +37,7 @@ func (sh *silenceHandler) handleSilenceLabels(ar *models.AlertRule, parsedSettin
 }
 
 // createSilences creates silences and writes them to a file.
-func (sh *silenceHandler) createSilences(orgID int64, log log.Logger) error {
+func (sh *silenceHandler) createSilences(ctx context.Context, orgID int64, log log.Logger) error {
 	var silences []*pb.MeshSilence
 	if sh.rulesWithErrorSilenceLabels > 0 {
 		log.Info("Creating silence for rules with ExecutionErrorState = keep_state", "rules", sh.rulesWithErrorSilenceLabels)
@@ -56,9 +48,9 @@ func (sh *silenceHandler) createSilences(orgID int64, log log.Logger) error {
 		silences = append(silences, noDataSilence())
 	}
 	if len(silences) > 0 {
-		log.Debug("Writing silences file", "silences", len(silences))
-		if err := sh.writeSilencesFile(orgID, silences); err != nil {
-			return fmt.Errorf("write silence file: %w", err)
+		log.Debug("Writing silences to kvstore", "silences", len(silences))
+		if err := sh.persistSilences(ctx, orgID, silences); err != nil {
+			return fmt.Errorf("write silences to kvstore: %w", err)
 		}
 	}
 	return nil
@@ -114,65 +106,4 @@ func noDataSilence() *pb.MeshSilence {
 		},
 		ExpiresAt: TimeNow().AddDate(1, 0, 0), // 1 year.
 	}
-}
-
-func (sh *silenceHandler) writeSilencesFile(orgId int64, silences []*pb.MeshSilence) error {
-	var buf bytes.Buffer
-	for _, e := range silences {
-		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
-			return err
-		}
-	}
-
-	f, err := sh.createSilenceFile(silencesFileNameForOrg(sh.dataPath, orgId))
-	if err != nil {
-		return err
-	}
-
-	if _, err := io.Copy(f, bytes.NewReader(buf.Bytes())); err != nil {
-		return err
-	}
-
-	return f.Close()
-}
-
-func silencesFileNameForOrg(dataPath string, orgID int64) string {
-	return filepath.Join(dataPath, "alerting", strconv.Itoa(int(orgID)), "silences")
-}
-
-// replaceFile wraps a file that is moved to another filename on closing.
-type replaceFile struct {
-	*os.File
-	filename string
-}
-
-func (f *replaceFile) Close() error {
-	if err := f.File.Sync(); err != nil {
-		return err
-	}
-	if err := f.File.Close(); err != nil {
-		return err
-	}
-	return os.Rename(f.File.Name(), f.filename)
-}
-
-// openReplace opens a new temporary file that is moved to filename on closing.
-func openReplace(filename string) (io.WriteCloser, error) {
-	tmpFilename := fmt.Sprintf("%s.%x", filename, uint64(rand.Int63()))
-
-	if err := os.MkdirAll(filepath.Dir(tmpFilename), os.ModePerm); err != nil {
-		return nil, err
-	}
-
-	//nolint:gosec
-	f, err := os.Create(tmpFilename)
-	if err != nil {
-		return nil, err
-	}
-
-	rf := &replaceFile{
-		File:     f,
-		filename: filename,
-	}
-	return rf, nil
 }

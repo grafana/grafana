@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { DashboardCursorSync, GrafanaTheme2 } from '@grafana/data';
 import {
@@ -24,8 +24,9 @@ import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
+import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
 import { ShareTrailButton } from './ShareTrailButton';
-import { getTrailStore } from './TrailStore/TrailStore';
+import { useBookmarkState } from './TrailStore/useBookmarkState';
 import {
   ActionViewDefinition,
   ActionViewType,
@@ -42,15 +43,21 @@ export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
   metric: string;
   actionView?: string;
+
+  autoQuery: AutoQueryInfo;
+  queryDef?: AutoQueryDef;
 }
 
 export class MetricScene extends SceneObjectBase<MetricSceneState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView'] });
 
-  public constructor(state: MakeOptional<MetricSceneState, 'body'>) {
+  public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery'>) {
+    const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric);
     super({
       $variables: state.$variables ?? getVariableSet(state.metric),
-      body: state.body ?? buildGraphScene(state.metric),
+      body: state.body ?? buildGraphScene(),
+      autoQuery,
+      queryDef: state.queryDef ?? autoQuery.main,
       ...state,
     });
 
@@ -121,10 +128,8 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     const trail = getTrailFor(this);
     const dsValue = getDataSource(trail);
 
-    const flexItem = metricScene.state.body.state.children[0] as SceneFlexItem;
-    const autoVizPanel = flexItem.state.body as AutoVizPanel;
-    const queries = autoVizPanel.state.queryDef?.queries || [];
-    const timeRange = sceneGraph.getTimeRange(autoVizPanel);
+    const queries = metricScene.state.queryDef?.queries || [];
+    const timeRange = sceneGraph.getTimeRange(this);
 
     return getExploreUrl({
       queries,
@@ -146,18 +151,13 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     const metricScene = sceneGraph.getAncestor(model, MetricScene);
     const styles = useStyles2(getStyles);
     const trail = getTrailFor(model);
-    const [isBookmarked, setBookmarked] = useState(false);
+    const [isBookmarked, toggleBookmark] = useBookmarkState(trail);
     const { actionView } = metricScene.useState();
-
-    const onBookmarkTrail = () => {
-      getTrailStore().addBookmark(trail);
-      setBookmarked(!isBookmarked);
-    };
 
     return (
       <Box paddingY={1}>
         <div className={styles.actions}>
-          <Stack gap={2}>
+          <Stack gap={1}>
             <ToolbarButton
               variant={'canvas'}
               icon="compass"
@@ -175,7 +175,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
                 )
               }
               tooltip={'Bookmark'}
-              onClick={onBookmarkTrail}
+              onClick={toggleBookmark}
             />
             {trail.state.embedded && (
               <ToolbarButton variant={'canvas'} onClick={model.onOpenTrail}>
@@ -235,9 +235,8 @@ function getVariableSet(metric: string) {
 const MAIN_PANEL_MIN_HEIGHT = 280;
 const MAIN_PANEL_MAX_HEIGHT = '40%';
 
-function buildGraphScene(metric: string) {
-  const autoQuery = getAutoQueriesForMetric(metric);
-  const bodyAutoVizPanel = new AutoVizPanel({ autoQuery });
+function buildGraphScene() {
+  const bodyAutoVizPanel = new AutoVizPanel({});
 
   return new SceneFlexLayout({
     direction: 'column',

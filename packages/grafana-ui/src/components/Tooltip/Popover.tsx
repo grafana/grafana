@@ -1,96 +1,102 @@
-﻿import { Placement, VirtualElement } from '@popperjs/core';
-import React, { PureComponent } from 'react';
-import { Manager, Popper as ReactPopper, PopperArrowProps } from 'react-popper';
-import Transition from 'react-transition-group/Transition';
+﻿import {
+  FloatingArrow,
+  arrow,
+  autoUpdate,
+  flip,
+  offset,
+  shift,
+  useFloating,
+  useTransitionStyles,
+} from '@floating-ui/react';
+import React, { useLayoutEffect, useRef } from 'react';
 
+import { useTheme2 } from '../../themes';
+import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 
-import { PopoverContent } from './types';
-
-const defaultTransitionStyles = {
-  transitionProperty: 'opacity',
-  transitionDuration: '200ms',
-  transitionTimingFunction: 'linear',
-  opacity: 0,
-};
-
-const transitionStyles: { [key: string]: object } = {
-  exited: { opacity: 0 },
-  entering: { opacity: 0 },
-  entered: { opacity: 1, transitionDelay: '0s' },
-  exiting: { opacity: 0, transitionDelay: '500ms' },
-};
-
-export type RenderPopperArrowFn = (props: { arrowProps: PopperArrowProps; placement: string }) => JSX.Element;
+import { PopoverContent, TooltipPlacement } from './types';
 
 interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   show: boolean;
-  placement?: Placement;
+  placement?: TooltipPlacement;
   content: PopoverContent;
-  referenceElement: HTMLElement | VirtualElement;
+  referenceElement: HTMLElement;
   wrapperClassName?: string;
-  renderArrow?: RenderPopperArrowFn;
+  renderArrow?: boolean;
 }
 
-class Popover extends PureComponent<Props> {
-  render() {
-    const { content, show, placement, className, wrapperClassName, renderArrow, referenceElement, ...rest } =
-      this.props;
+export function Popover({
+  content,
+  show,
+  placement,
+  className,
+  wrapperClassName,
+  referenceElement,
+  renderArrow,
+  ...rest
+}: Props) {
+  const theme = useTheme2();
+  const arrowRef = useRef(null);
 
-    return (
-      <Manager>
-        <Transition in={show} timeout={100} mountOnEnter={true} unmountOnExit={true}>
-          {(transitionState) => {
-            return (
-              <Portal>
-                <ReactPopper
-                  placement={placement}
-                  referenceElement={referenceElement}
-                  modifiers={[
-                    { name: 'preventOverflow', enabled: true, options: { rootBoundary: 'viewport' } },
-                    {
-                      name: 'eventListeners',
-                      options: { scroll: true, resize: true },
-                    },
-                  ]}
-                >
-                  {({ ref, style, placement, arrowProps, update }) => {
-                    return (
-                      <div
-                        ref={ref}
-                        style={{
-                          ...style,
-                          ...defaultTransitionStyles,
-                          ...transitionStyles[transitionState],
-                        }}
-                        data-placement={placement}
-                        className={`${wrapperClassName}`}
-                        {...rest}
-                      >
-                        <div className={className}>
-                          {typeof content === 'string' && content}
-                          {React.isValidElement(content) && React.cloneElement(content)}
-                          {typeof content === 'function' &&
-                            content({
-                              updatePopperPosition: update,
-                            })}
-                          {renderArrow &&
-                            renderArrow({
-                              arrowProps,
-                              placement,
-                            })}
-                        </div>
-                      </div>
-                    );
-                  }}
-                </ReactPopper>
-              </Portal>
-            );
-          }}
-        </Transition>
-      </Manager>
+  // the order of middleware is important!
+  // `arrow` should almost always be at the end
+  // see https://floating-ui.com/docs/arrow#order
+  const middleware = [
+    offset(8),
+    flip({
+      fallbackAxisSideDirection: 'end',
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+    shift(),
+  ];
+
+  if (renderArrow) {
+    middleware.push(
+      arrow({
+        element: arrowRef,
+      })
     );
   }
-}
 
-export { Popover };
+  const { context, refs, floatingStyles } = useFloating({
+    open: show,
+    placement: getPlacement(placement),
+    middleware,
+    whileElementsMounted: autoUpdate,
+    strategy: 'fixed',
+  });
+
+  useLayoutEffect(() => {
+    refs.setReference(referenceElement);
+  }, [referenceElement, refs]);
+
+  const { styles: placementStyles } = useTransitionStyles(context, {
+    initial: () => ({
+      opacity: 0,
+    }),
+    duration: theme.transitions.duration.enteringScreen,
+  });
+
+  return show ? (
+    <Portal>
+      <div
+        ref={refs.setFloating}
+        style={{
+          ...floatingStyles,
+          ...placementStyles,
+        }}
+        className={wrapperClassName}
+        {...rest}
+      >
+        <div className={className}>
+          {renderArrow && <FloatingArrow fill={theme.colors.border.weak} ref={arrowRef} context={context} />}
+          {typeof content === 'string' && content}
+          {React.isValidElement(content) && React.cloneElement(content)}
+          {typeof content === 'function' && content({})}
+        </div>
+      </div>
+    </Portal>
+  ) : undefined;
+}

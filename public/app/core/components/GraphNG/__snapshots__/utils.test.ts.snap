@@ -61,12 +61,17 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
     },
   ],
   "cursor": {
-    "dataIdx": [Function],
     "drag": {
       "setScale": false,
     },
     "focus": {
       "prox": 30,
+    },
+    "hover": {
+      "prox": [Function],
+      "skip": [
+        null,
+      ],
     },
     "points": {
       "fill": [Function],
@@ -75,9 +80,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       "width": [Function],
     },
     "sync": {
-      "filters": {
-        "pub": [Function],
-      },
       "key": "__global_",
       "scales": [
         "x",

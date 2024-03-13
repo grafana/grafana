@@ -4,8 +4,7 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
@@ -75,7 +74,8 @@ export interface SimulationQuery {
 
 export interface NodesQuery {
   count?: number;
-  type?: ('random' | 'response' | 'random edges');
+  seed?: number;
+  type?: ('random' | 'response_small' | 'response_medium' | 'random edges');
 }
 
 export interface USAQuery {

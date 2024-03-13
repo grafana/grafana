@@ -3,17 +3,17 @@ package featuretoggle
 import (
 	"context"
 	"fmt"
-	"time"
+	"sync"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
 var (
@@ -27,18 +27,16 @@ var (
 type featuresStorage struct {
 	resource       *common.ResourceInfo
 	tableConverter rest.TableConvertor
-	features       []featuremgmt.FeatureFlag
-	startup        int64
+	features       *v0alpha1.FeatureList
+	featuresOnce   sync.Once
 }
 
 // NOTE! this does not depend on config or any system state!
 // In the future, the existence of features (and their properties) can be defined dynamically
-func NewFeaturesStorage(features []featuremgmt.FeatureFlag) *featuresStorage {
+func NewFeaturesStorage() *featuresStorage {
 	resourceInfo := v0alpha1.FeatureResourceInfo
 	return &featuresStorage{
-		startup:  time.Now().UnixMilli(),
 		resource: &resourceInfo,
-		features: features,
 		tableConverter: utils.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
@@ -82,44 +80,35 @@ func (s *featuresStorage) ConvertToTable(ctx context.Context, object runtime.Obj
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
+func (s *featuresStorage) init() {
+	s.featuresOnce.Do(func() {
+		rv := "1"
+		features, _ := featuremgmt.GetEmbeddedFeatureList()
+		for _, feature := range features.Items {
+			if feature.ResourceVersion > rv {
+				rv = feature.ResourceVersion
+			}
+		}
+		features.ResourceVersion = rv
+		s.features = &features
+	})
+}
+
 func (s *featuresStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	flags := &v0alpha1.FeatureList{
-		ListMeta: metav1.ListMeta{
-			ResourceVersion: fmt.Sprintf("%d", s.startup),
-		},
+	s.init()
+	if s.features == nil {
+		return nil, fmt.Errorf("error loading embedded features")
 	}
-	for _, flag := range s.features {
-		flags.Items = append(flags.Items, toK8sForm(flag))
-	}
-	return flags, nil
+	return s.features, nil
 }
 
 func (s *featuresStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	for _, flag := range s.features {
-		if name == flag.Name {
-			obj := toK8sForm(flag)
-			return &obj, nil
+	s.init()
+
+	for idx, flag := range s.features.Items {
+		if flag.Name == name {
+			return &s.features.Items[idx], nil
 		}
 	}
 	return nil, fmt.Errorf("not found")
-}
-
-func toK8sForm(flag featuremgmt.FeatureFlag) v0alpha1.Feature {
-	return v0alpha1.Feature{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              flag.Name,
-			CreationTimestamp: metav1.NewTime(flag.Created),
-		},
-		Spec: v0alpha1.FeatureSpec{
-			Description:       flag.Description,
-			Stage:             flag.Stage.String(),
-			Owner:             string(flag.Owner),
-			AllowSelfServe:    flag.AllowSelfServe,
-			HideFromAdminPage: flag.HideFromAdminPage,
-			HideFromDocs:      flag.HideFromDocs,
-			FrontendOnly:      flag.FrontendOnly,
-			RequiresDevMode:   flag.RequiresDevMode,
-			RequiresRestart:   flag.RequiresRestart,
-		},
-	}
 }

@@ -79,7 +79,7 @@ export class DashboardLinksEditView extends SceneObjectBase<DashboardLinksEditVi
 function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<DashboardLinksEditView>) {
   const { editIndex } = model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const { links, overlay } = dashboard.useState();
+  const { links } = dashboard.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const linkToEdit = editIndex !== undefined ? links[editIndex] : undefined;
 
@@ -107,7 +107,6 @@ function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<Dashboard
         onDuplicate={model.onDuplicate}
         onOrderChange={model.onOrderChange}
       />
-      {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
 }
@@ -124,7 +123,6 @@ interface EditLinkViewProps {
 function EditLinkView({ pageNav, link, navModel, dashboard, onChange, onGoBack }: EditLinkViewProps) {
   const parentTab = pageNav.children!.find((p) => p.active)!;
   parentTab.parentItem = pageNav;
-  const { overlay } = dashboard.useState();
 
   const editLinkPageNav = {
     text: 'Edit link',
@@ -135,7 +133,6 @@ function EditLinkView({ pageNav, link, navModel, dashboard, onChange, onGoBack }
     <Page navModel={navModel} pageNav={editLinkPageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
       <DashboardLinkForm link={link!} onUpdate={onChange} onGoBack={onGoBack} />
-      {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
 }

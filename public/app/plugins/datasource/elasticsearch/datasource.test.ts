@@ -1,6 +1,5 @@
 import { map } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
-import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 import {
   CoreApp,
@@ -18,9 +17,6 @@ import {
   toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, reportInteraction, config } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-
-import { createFetchResponse } from '../../../../test/helpers/createFetchResponse';
 
 import { enhanceDataFrame } from './LegacyQueryRunner';
 import { ElasticDatasource } from './datasource';
@@ -30,7 +26,9 @@ import { Filters, ElasticsearchOptions, ElasticsearchQuery } from './types';
 const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
 
 const originalConsoleError = console.error;
-
+const backendSrv = {
+  fetch: jest.fn(),
+};
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
@@ -44,6 +42,15 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+const createTimeRange = (from: DateTime, to: DateTime): TimeRange => ({
+  from,
+  to,
+  raw: {
+    from,
+    to,
+  },
+});
+
 const TIME_START = [2022, 8, 21, 6, 10, 10];
 const TIME_END = [2022, 8, 24, 6, 10, 21];
 const DATAQUERY_BASE = {
@@ -56,16 +63,22 @@ const DATAQUERY_BASE = {
   timezone: '',
   app: 'test',
   startTime: 0,
+  range: createTimeRange(toUtc(TIME_START), toUtc(TIME_END)),
 };
 
-const createTimeRange = (from: DateTime, to: DateTime): TimeRange => ({
-  from,
-  to,
-  raw: {
-    from,
-    to,
-  },
-});
+function createFetchResponse<T>(data: T): FetchResponse<T> {
+  return {
+    data,
+    status: 200,
+    url: 'http://localhost:3000/api/ds/query',
+    config: { url: 'http://localhost:3000/api/ds/query' },
+    type: 'basic',
+    statusText: 'Ok',
+    redirected: false,
+    headers: {} as unknown as Headers,
+    ok: true,
+  };
+}
 
 interface TestContext {
   data?: Data;
@@ -977,29 +990,31 @@ describe('ElasticDatasource', () => {
     });
 
     it('does not create a logs sample provider for non time series query', () => {
-      const options = getQueryOptions<ElasticsearchQuery>({
+      const options: DataQueryRequest<ElasticsearchQuery> = {
+        ...DATAQUERY_BASE,
         targets: [
           {
             refId: 'A',
             metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
           },
         ],
-      });
+      };
 
-      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
     });
 
     it('does create a logs sample provider for time series query', () => {
-      const options = getQueryOptions<ElasticsearchQuery>({
+      const options: DataQueryRequest<ElasticsearchQuery> = {
+        ...DATAQUERY_BASE,
         targets: [
           {
             refId: 'A',
             bucketAggs: [{ type: 'date_histogram', id: '1' }],
           },
         ],
-      });
+      };
 
-      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, options)).toBeDefined();
     });
   });
 
@@ -1010,29 +1025,31 @@ describe('ElasticDatasource', () => {
     });
 
     it("doesn't return a logs sample provider given a non time series query", () => {
-      const request = getQueryOptions<ElasticsearchQuery>({
+      const request: DataQueryRequest<ElasticsearchQuery> = {
+        ...DATAQUERY_BASE,
         targets: [
           {
             refId: 'A',
             metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
           },
         ],
-      });
+      };
 
-      expect(ds.getLogsSampleDataProvider(request)).not.toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, request)).not.toBeDefined();
     });
 
     it('returns a logs sample provider given a time series query', () => {
-      const request = getQueryOptions<ElasticsearchQuery>({
+      const request: DataQueryRequest<ElasticsearchQuery> = {
+        ...DATAQUERY_BASE,
         targets: [
           {
             refId: 'A',
             bucketAggs: [{ type: 'date_histogram', id: '1' }],
           },
         ],
-      });
+      };
 
-      expect(ds.getLogsSampleDataProvider(request)).toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, request)).toBeDefined();
     });
   });
 });
@@ -1588,6 +1605,9 @@ describe('ElasticDatasource using backend', () => {
 
         const annotations = await ds.annotationQuery({
           annotation: {},
+          dashboard: {
+            getVariables: () => [],
+          },
           range: timeRange,
         });
 
@@ -1618,6 +1638,9 @@ describe('ElasticDatasource using backend', () => {
             query: 'abc',
             tagsField: '@test_tags',
             textField: 'text',
+          },
+          dashboard: {
+            getVariables: () => [],
           },
           range: timeRange,
         });
@@ -1657,6 +1680,9 @@ describe('ElasticDatasource using backend', () => {
             tagsField: '@test_tags',
             textField: 'text',
           },
+          dashboard: {
+            getVariables: () => [],
+          },
           range: {
             from: dateTime(1683291160012),
             to: dateTime(1683291460012),
@@ -1685,6 +1711,9 @@ describe('ElasticDatasource using backend', () => {
 
         await ds.annotationQuery({
           annotation: {},
+          dashboard: {
+            getVariables: () => [],
+          },
           range: {
             from: dateTime(1683291160012),
             to: dateTime(1683291460012),
@@ -1693,6 +1722,63 @@ describe('ElasticDatasource using backend', () => {
         expect(postResourceRequestMock).toHaveBeenCalledWith(
           '_msearch',
           '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@timestamp":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}}]}},"size":10000}\n'
+        );
+      });
+
+      it('should process annotation request using dashboard adhoc variables', async () => {
+        const { ds } = getTestContext();
+        const postResourceRequestMock = jest.spyOn(ds, 'postResourceRequest').mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@test_time': 1, '@test_tags': 'foo', text: 'abc' } },
+                  { _source: { '@test_time': 3, '@test_tags': 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+
+        await ds.annotationQuery({
+          annotation: {
+            timeField: '@test_time',
+            timeEndField: '@time_end_field',
+            name: 'foo',
+            query: 'abc',
+            tagsField: '@test_tags',
+            textField: 'text',
+            datasource: {
+              type: 'elasticsearch',
+              uid: 'gdev-elasticsearch',
+            },
+          },
+          dashboard: {
+            getVariables: () => [
+              {
+                type: 'adhoc',
+                datasource: {
+                  type: 'elasticsearch',
+                  uid: 'gdev-elasticsearch',
+                },
+                filters: [
+                  {
+                    key: 'abc_key',
+                    operator: '=',
+                    value: 'abc_value',
+                  },
+                ],
+              },
+            ],
+          },
+          range: {
+            from: dateTime(1683291160012),
+            to: dateTime(1683291460012),
+          },
+        });
+        expect(postResourceRequestMock).toHaveBeenCalledWith(
+          '_msearch',
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc AND abc_key:\\"abc_value\\""}}]}},"size":10000}\n'
         );
       });
     });

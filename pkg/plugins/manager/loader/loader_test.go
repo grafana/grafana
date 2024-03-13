@@ -61,14 +61,14 @@ func TestLoader_Load(t *testing.T) {
 	tests := []struct {
 		name        string
 		class       plugins.Class
-		cfg         *config.Cfg
+		cfg         *config.PluginManagementCfg
 		pluginPaths []string
 		want        []*plugins.Plugin
 	}{
 		{
 			name:        "Load a Core plugin",
 			class:       plugins.ClassCore,
-			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()},
 			pluginPaths: []string{filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")},
 			want: []*plugins.Plugin{
 				{
@@ -83,8 +83,8 @@ func TestLoader_Load(t *testing.T) {
 							},
 							Description: "Data source for Amazon AWS monitoring service",
 							Logos: plugins.Logos{
-								Small: "/public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-								Large: "/public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 							},
 						},
 						Includes: []*plugins.Includes{
@@ -106,9 +106,8 @@ func TestLoader_Load(t *testing.T) {
 						Backend:      true,
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
-					Module:  "core:plugin/cloudwatch",
-					BaseURL: "/public/app/plugins/datasource/cloudwatch",
-
+					Module:    "core:plugin/cloudwatch",
+					BaseURL:   "public/app/plugins/datasource/cloudwatch",
 					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
 					Signature: plugins.SignatureStatusInternal,
 					Class:     plugins.ClassCore,
@@ -118,7 +117,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load a Bundled plugin",
 			class:       plugins.ClassBundled,
-			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()},
 			pluginPaths: []string{"../testdata/valid-v2-signature"},
 			want: []*plugins.Plugin{
 				{
@@ -133,8 +132,8 @@ func TestLoader_Load(t *testing.T) {
 							},
 							Version: "1.0.0",
 							Logos: plugins.Logos{
-								Small: "/public/img/icn-datasource.svg",
-								Large: "/public/img/icn-datasource.svg",
+								Small: "public/img/icn-datasource.svg",
+								Large: "public/img/icn-datasource.svg",
 							},
 							Description: "Test",
 						},
@@ -146,8 +145,8 @@ func TestLoader_Load(t *testing.T) {
 						Backend:    true,
 						State:      "alpha",
 					},
-					Module:        "/public/plugins/test-datasource/module.js",
-					BaseURL:       "/public/plugins/test-datasource",
+					Module:        "public/plugins/test-datasource/module.js",
+					BaseURL:       "public/plugins/test-datasource",
 					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/")),
 					Signature:     "valid",
 					SignatureType: plugins.SignatureTypeGrafana,
@@ -155,10 +154,11 @@ func TestLoader_Load(t *testing.T) {
 					Class:         plugins.ClassBundled,
 				},
 			},
-		}, {
+		},
+		{
 			name:        "Load plugin with symbolic links",
 			class:       plugins.ClassExternal,
-			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()},
 			pluginPaths: []string{"../testdata/symbolic-plugin-dirs"},
 			want: []*plugins.Plugin{
 				{
@@ -172,8 +172,8 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "http://test.com",
 							},
 							Logos: plugins.Logos{
-								Small: "/public/plugins/test-app/img/logo_small.png",
-								Large: "/public/plugins/test-app/img/logo_large.png",
+								Small: "public/plugins/test-app/img/logo_small.png",
+								Large: "public/plugins/test-app/img/logo_large.png",
 							},
 							Links: []plugins.InfoLink{
 								{Name: "Project site", URL: "http://project.com"},
@@ -181,11 +181,12 @@ func TestLoader_Load(t *testing.T) {
 							},
 							Description: "Official Grafana Test App & Dashboard bundle",
 							Screenshots: []plugins.Screenshots{
-								{Path: "/public/plugins/test-app/img/screenshot1.png", Name: "img1"},
-								{Path: "/public/plugins/test-app/img/screenshot2.png", Name: "img2"},
+								{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
+								{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
 							},
-							Version: "1.0.0",
-							Updated: "2015-02-10",
+							Version:  "1.0.0",
+							Updated:  "2015-02-10",
+							Keywords: []string{"test"},
 						},
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "3.x.x",
@@ -213,7 +214,8 @@ func TestLoader_Load(t *testing.T) {
 								Name: "Nginx Panel",
 								Type: string(plugins.TypePanel),
 								Role: org.RoleViewer,
-								Slug: "nginx-panel"},
+								Slug: "nginx-panel",
+							},
 							{
 								Name: "Nginx Datasource",
 								Type: string(plugins.TypeDataSource),
@@ -223,18 +225,19 @@ func TestLoader_Load(t *testing.T) {
 						},
 					},
 					Class:         plugins.ClassExternal,
-					Module:        "/public/plugins/test-app/module.js",
-					BaseURL:       "/public/plugins/test-app",
+					Module:        "public/plugins/test-app/module.js",
+					BaseURL:       "public/plugins/test-app",
 					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/includes-symlinks")),
 					Signature:     "valid",
 					SignatureType: plugins.SignatureTypeGrafana,
 					SignatureOrg:  "Grafana Labs",
 				},
 			},
-		}, {
+		},
+		{
 			name:  "Load an unsigned plugin (development)",
 			class: plugins.ClassExternal,
-			cfg: &config.Cfg{
+			cfg: &config.PluginManagementCfg{
 				DevMode:  true,
 				Features: featuremgmt.WithFeatures(),
 			},
@@ -251,8 +254,8 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "https://grafana.com",
 							},
 							Logos: plugins.Logos{
-								Small: "/public/img/icn-datasource.svg",
-								Large: "/public/img/icn-datasource.svg",
+								Small: "public/img/icn-datasource.svg",
+								Large: "public/img/icn-datasource.svg",
 							},
 							Description: "Test",
 						},
@@ -264,8 +267,8 @@ func TestLoader_Load(t *testing.T) {
 						State:   plugins.ReleaseStateAlpha,
 					},
 					Class:     plugins.ClassExternal,
-					Module:    "/public/plugins/test-datasource/module.js",
-					BaseURL:   "/public/plugins/test-datasource",
+					Module:    "public/plugins/test-datasource/module.js",
+					BaseURL:   "public/plugins/test-datasource",
 					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
 					Signature: "unsigned",
 				},
@@ -274,14 +277,14 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load an unsigned plugin (production)",
 			class:       plugins.ClassExternal,
-			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want:        []*plugins.Plugin{},
 		},
 		{
 			name:  "Load an unsigned plugin using PluginsAllowUnsigned config (production)",
 			class: plugins.ClassExternal,
-			cfg: &config.Cfg{
+			cfg: &config.PluginManagementCfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 				Features:             featuremgmt.WithFeatures(),
 			},
@@ -298,8 +301,8 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "https://grafana.com",
 							},
 							Logos: plugins.Logos{
-								Small: "/public/img/icn-datasource.svg",
-								Large: "/public/img/icn-datasource.svg",
+								Small: "public/img/icn-datasource.svg",
+								Large: "public/img/icn-datasource.svg",
 							},
 							Description: "Test",
 						},
@@ -311,8 +314,8 @@ func TestLoader_Load(t *testing.T) {
 						State:   plugins.ReleaseStateAlpha,
 					},
 					Class:     plugins.ClassExternal,
-					Module:    "/public/plugins/test-datasource/module.js",
-					BaseURL:   "/public/plugins/test-datasource",
+					Module:    "public/plugins/test-datasource/module.js",
+					BaseURL:   "public/plugins/test-datasource",
 					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
 					Signature: plugins.SignatureStatusUnsigned,
 				},
@@ -321,14 +324,14 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load a plugin with v1 manifest should return signatureInvalid",
 			class:       plugins.ClassExternal,
-			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()},
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
 		},
 		{
 			name:  "Load a plugin with v1 manifest using PluginsAllowUnsigned config (production) should return signatureInvali",
 			class: plugins.ClassExternal,
-			cfg: &config.Cfg{
+			cfg: &config.PluginManagementCfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 				Features:             featuremgmt.WithFeatures(),
 			},
@@ -338,7 +341,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:  "Load a plugin with manifest which has a file not found in plugin folder",
 			class: plugins.ClassExternal,
-			cfg: &config.Cfg{
+			cfg: &config.PluginManagementCfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 				Features:             featuremgmt.WithFeatures(),
 			},
@@ -348,7 +351,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:  "Load a plugin with file which is missing from the manifest",
 			class: plugins.ClassExternal,
-			cfg: &config.Cfg{
+			cfg: &config.PluginManagementCfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 				Features:             featuremgmt.WithFeatures(),
 			},
@@ -358,7 +361,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:  "Load an app with includes",
 			class: plugins.ClassExternal,
-			cfg: &config.Cfg{
+			cfg: &config.PluginManagementCfg{
 				PluginsAllowUnsigned: []string{"test-app"},
 				Features:             featuremgmt.WithFeatures(),
 			},
@@ -381,10 +384,11 @@ func TestLoader_Load(t *testing.T) {
 								{Name: "License & Terms", URL: "http://license.com"},
 							},
 							Logos: plugins.Logos{
-								Small: "/public/img/icn-app.svg",
-								Large: "/public/img/icn-app.svg",
+								Small: "public/img/icn-app.svg",
+								Large: "public/img/icn-app.svg",
 							},
-							Updated: "2015-02-10",
+							Updated:  "2015-02-10",
+							Keywords: []string{"test"},
 						},
 						Dependencies: plugins.Dependencies{
 							GrafanaDependency: ">=8.0.0",
@@ -401,49 +405,8 @@ func TestLoader_Load(t *testing.T) {
 					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/test-app-with-includes")),
 					Class:         plugins.ClassExternal,
 					Signature:     plugins.SignatureStatusUnsigned,
-					Module:        "/public/plugins/test-app/module.js",
-					BaseURL:       "/public/plugins/test-app",
-				},
-			},
-		},
-		{
-			name:  "Load a plugin with app sub url set",
-			class: plugins.ClassExternal,
-			cfg: &config.Cfg{
-				DevMode:          true,
-				GrafanaAppSubURL: "grafana",
-				Features:         featuremgmt.WithFeatures(),
-			},
-			pluginPaths: []string{"../testdata/unsigned-datasource"},
-			want: []*plugins.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID:   "test-datasource",
-						Type: plugins.TypeDataSource,
-						Name: "Test",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Grafana Labs",
-								URL:  "https://grafana.com",
-							},
-							Logos: plugins.Logos{
-								Small: "/grafana/public/img/icn-datasource.svg",
-								Large: "/grafana/public/img/icn-datasource.svg",
-							},
-							Description: "Test",
-						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "*",
-							Plugins:        []plugins.Dependency{},
-						},
-						Backend: true,
-						State:   plugins.ReleaseStateAlpha,
-					},
-					Class:     plugins.ClassExternal,
-					Module:    "/grafana/public/plugins/test-datasource/module.js",
-					BaseURL:   "/grafana/public/plugins/test-datasource",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
-					Signature: plugins.SignatureStatusUnsigned,
+					Module:        "public/plugins/test-app/module.js",
+					BaseURL:       "public/plugins/test-app",
 				},
 			},
 		},

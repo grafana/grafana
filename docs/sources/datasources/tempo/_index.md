@@ -26,6 +26,10 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML][configure-tempo-data-source] with Grafana's provisioning system.
 
+This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud. Tempo data source set up starts at 4:58 in the video.
+
+{{< youtube id="cqHO0oYW6Ic" start="298" >}}
+
 Once you've added the data source, you can [configure it]({{< relref "./configure-tempo-data-source/" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards][build-dashboards] and use [Explore][explore].
 
 {{< section withDescriptions="true">}}

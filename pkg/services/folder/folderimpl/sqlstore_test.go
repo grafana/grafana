@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"fmt"
+	"path"
 	"slices"
 	"sort"
 	"testing"
@@ -64,7 +65,7 @@ func TestIntegrationCreate(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
-			err := folderStore.Delete(context.Background(), f.UID, orgID)
+			err := folderStore.Delete(context.Background(), []string{f.UID}, orgID)
 			require.NoError(t, err)
 		})
 
@@ -102,7 +103,7 @@ func TestIntegrationCreate(t *testing.T) {
 		assert.NotEmpty(t, parent.URL)
 
 		t.Cleanup(func() {
-			err := folderStore.Delete(context.Background(), parent.UID, orgID)
+			err := folderStore.Delete(context.Background(), []string{parent.UID}, orgID)
 			require.NoError(t, err)
 		})
 		assertAncestorUIDs(t, folderStore, parent, []string{folder.GeneralFolderUID})
@@ -117,7 +118,7 @@ func TestIntegrationCreate(t *testing.T) {
 		})
 		require.NoError(t, err)
 		t.Cleanup(func() {
-			err := folderStore.Delete(context.Background(), f.UID, orgID)
+			err := folderStore.Delete(context.Background(), []string{f.UID}, orgID)
 			require.NoError(t, err)
 		})
 
@@ -165,7 +166,7 @@ func TestIntegrationDelete(t *testing.T) {
 
 	t.Cleanup(func() {
 		for _, uid := range ancestorUIDs[1:] {
-			err := folderStore.Delete(context.Background(), uid, orgID)
+			err := folderStore.Delete(context.Background(), []string{uid}, orgID)
 			require.NoError(t, err)
 		}
 	})
@@ -178,7 +179,7 @@ func TestIntegrationDelete(t *testing.T) {
 	*/
 
 	t.Run("deleting a leaf folder should succeed", func(t *testing.T) {
-		err := folderStore.Delete(context.Background(), ancestorUIDs[len(ancestorUIDs)-1], orgID)
+		err := folderStore.Delete(context.Background(), []string{ancestorUIDs[len(ancestorUIDs)-1]}, orgID)
 		require.NoError(t, err)
 
 		children, err := folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
@@ -221,7 +222,7 @@ func TestIntegrationUpdate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, f.ParentUID, parent.UID)
 	t.Cleanup(func() {
-		err := folderStore.Delete(context.Background(), f.UID, orgID)
+		err := folderStore.Delete(context.Background(), []string{f.UID}, orgID)
 		require.NoError(t, err)
 	})
 
@@ -391,11 +392,7 @@ func TestIntegrationGet(t *testing.T) {
 		UID:         util.GenerateShortUID(),
 		ParentUID:   f.UID,
 	})
-
-	t.Cleanup(func() {
-		err := folderStore.Delete(context.Background(), f.UID, orgID)
-		require.NoError(t, err)
-	})
+	require.NoError(t, err)
 
 	t.Run("should gently fail in case of bad request", func(t *testing.T) {
 		_, err = folderStore.Get(context.Background(), folder.GetFolderQuery{})
@@ -466,6 +463,24 @@ func TestIntegrationGet(t *testing.T) {
 		assert.NotEmpty(t, ff.Updated)
 		assert.NotEmpty(t, ff.URL)
 	})
+
+	t.Run("get folder with fullpath should set fullpath as expected", func(t *testing.T) {
+		ff, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
+			UID:          &subfolderWithSameName.UID,
+			OrgID:        orgID,
+			WithFullpath: true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, subfolderWithSameName.UID, ff.UID)
+		assert.Equal(t, subfolderWithSameName.OrgID, ff.OrgID)
+		assert.Equal(t, subfolderWithSameName.Title, ff.Title)
+		assert.Equal(t, subfolderWithSameName.Description, ff.Description)
+		assert.Equal(t, path.Join(f.Title, subfolderWithSameName.Title), ff.Fullpath)
+		assert.Equal(t, f.UID, ff.ParentUID)
+		assert.NotEmpty(t, ff.Created)
+		assert.NotEmpty(t, ff.Updated)
+		assert.NotEmpty(t, ff.URL)
+	})
 }
 
 func TestIntegrationGetParents(t *testing.T) {
@@ -489,7 +504,7 @@ func TestIntegrationGetParents(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		err := folderStore.Delete(context.Background(), f.UID, orgID)
+		err := folderStore.Delete(context.Background(), []string{f.UID}, orgID)
 		require.NoError(t, err)
 	})
 
@@ -561,7 +576,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 	t.Cleanup(func() {
 		for _, uid := range treeLeaves {
-			err := folderStore.Delete(context.Background(), uid, orgID)
+			err := folderStore.Delete(context.Background(), []string{uid}, orgID)
 			require.NoError(t, err)
 		}
 	})
@@ -778,7 +793,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 
 	t.Cleanup(func() {
 		for _, uid := range uids {
-			err := folderStore.Delete(context.Background(), uid, orgID)
+			err := folderStore.Delete(context.Background(), []string{uid}, orgID)
 			require.NoError(t, err)
 		}
 	})

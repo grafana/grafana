@@ -5,8 +5,10 @@ package ssosettingstests
 import (
 	context "context"
 
-	models "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	identity "github.com/grafana/grafana/pkg/services/auth/identity"
 	mock "github.com/stretchr/testify/mock"
+
+	models "github.com/grafana/grafana/pkg/services/ssosettings/models"
 
 	ssosettings "github.com/grafana/grafana/pkg/services/ssosettings"
 )
@@ -182,17 +184,17 @@ func (_m *MockService) Reload(ctx context.Context, provider string) {
 	_m.Called(ctx, provider)
 }
 
-// Upsert provides a mock function with given fields: ctx, settings
-func (_m *MockService) Upsert(ctx context.Context, settings *models.SSOSettings) error {
-	ret := _m.Called(ctx, settings)
+// Upsert provides a mock function with given fields: ctx, settings, requester
+func (_m *MockService) Upsert(ctx context.Context, settings *models.SSOSettings, requester identity.Requester) error {
+	ret := _m.Called(ctx, settings, requester)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Upsert")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.SSOSettings) error); ok {
-		r0 = rf(ctx, settings)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.SSOSettings, identity.Requester) error); ok {
+		r0 = rf(ctx, settings, requester)
 	} else {
 		r0 = ret.Error(0)
 	}

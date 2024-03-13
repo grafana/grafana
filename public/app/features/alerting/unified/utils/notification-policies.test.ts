@@ -1,12 +1,13 @@
 import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import {
-  InhertitableProperties,
+  InheritableProperties,
   computeInheritedTree,
   findMatchingRoutes,
   getInheritedProperties,
   matchLabels,
   normalizeRoute,
+  unquoteRouteMatchers,
 } from './notification-policies';
 
 import 'core-js/stable/structured-clone';
@@ -205,20 +206,18 @@ describe('getInheritedProperties()', () => {
       expect(childInherited).toHaveProperty('group_by', ['label']);
     });
 
-    // This scenario is technically impossible unless we have a bug in our code.
-    // A route cannot both specify a receiver and inherit it from its parent at the same time.
-    it('should inherit from parent instead of grandparent', () => {
-      const parent: Route = { receiver: 'parent' };
-      const parentInherited: InhertitableProperties = { receiver: 'grandparent', group_by: ['foo'] };
-      const child: Route = {};
+    it('should inherit from grandparent when parent is inheriting', () => {
+      const parentInheritedProperties: InheritableProperties = { receiver: 'grandparent' };
+      const parent: Route = { receiver: null, group_by: ['foo'] };
+      const child: Route = { receiver: null };
 
-      const childInherited = getInheritedProperties(parent, child, parentInherited);
-      expect(childInherited).toHaveProperty('receiver', 'parent');
+      const childInherited = getInheritedProperties(parent, child, parentInheritedProperties);
+      expect(childInherited).toHaveProperty('receiver', 'grandparent');
       expect(childInherited.group_by).toEqual(['foo']);
     });
   });
 
-  describe('regular "undefined" values', () => {
+  describe('regular "undefined" or "null" values', () => {
     it('should compute inherited properties being undefined', () => {
       const parent: Route = {
         receiver: 'PARENT',
@@ -231,6 +230,20 @@ describe('getInheritedProperties()', () => {
 
       const childInherited = getInheritedProperties(parent, child);
       expect(childInherited).toHaveProperty('group_wait', '10s');
+    });
+
+    it('should compute inherited properties being null', () => {
+      const parent: Route = {
+        receiver: 'PARENT',
+        group_wait: '10s',
+      };
+
+      const child: Route = {
+        receiver: null,
+      };
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toHaveProperty('receiver', 'PARENT');
     });
 
     it('should compute inherited properties being undefined from parent inherited properties', () => {
@@ -462,5 +475,41 @@ describe('matchLabels', () => {
 
     expect(result).toHaveProperty('matches', false);
     expect(result.labelsMatch).toMatchSnapshot();
+  });
+});
+
+describe('unquoteRouteMatchers', () => {
+  it('should unquote and unescape matchers values', () => {
+    const route: RouteWithID = {
+      id: '1',
+      object_matchers: [
+        ['foo', MatcherOperator.equal, 'bar'],
+        ['foo', MatcherOperator.equal, '"bar"'],
+        ['foo', MatcherOperator.equal, '"b\\\\ar b\\"az"'],
+      ],
+    };
+
+    const unwrapped = unquoteRouteMatchers(route);
+
+    expect(unwrapped.object_matchers).toHaveLength(3);
+    expect(unwrapped.object_matchers).toContainEqual(['foo', MatcherOperator.equal, 'bar']);
+    expect(unwrapped.object_matchers).toContainEqual(['foo', MatcherOperator.equal, 'bar']);
+    expect(unwrapped.object_matchers).toContainEqual(['foo', MatcherOperator.equal, 'b\\ar b"az']);
+  });
+
+  it('should unquote and unescape matcher names', () => {
+    const route: RouteWithID = {
+      id: '1',
+      object_matchers: [
+        ['"f\\"oo with quote"', MatcherOperator.equal, 'bar'],
+        ['"f\\\\oo with slash"', MatcherOperator.equal, 'bar'],
+      ],
+    };
+
+    const unwrapped = unquoteRouteMatchers(route);
+
+    expect(unwrapped.object_matchers).toHaveLength(2);
+    expect(unwrapped.object_matchers).toContainEqual(['f"oo with quote', MatcherOperator.equal, 'bar']);
+    expect(unwrapped.object_matchers).toContainEqual(['f\\oo with slash', MatcherOperator.equal, 'bar']);
   });
 });

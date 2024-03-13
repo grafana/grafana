@@ -22,10 +22,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestService_GetForProvider(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -182,10 +185,52 @@ func TestService_GetForProvider(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "correctly merge the DB and system settings",
+			setup: func(env testEnv) {
+				env.store.ExpectedSSOSetting = &models.SSOSettings{
+					Provider: "github",
+					Settings: map[string]any{
+						"enabled":  true,
+						"auth_url": "",
+						"api_url":  "https://overwritten-api.com/user",
+						"team_ids": "",
+					},
+					Source: models.DB,
+				}
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"auth_url":  "https://github.com/login/oauth/authorize",
+						"token_url": "https://github.com/login/oauth/access_token",
+						"api_url":   "https://api.github.com/user",
+						"team_ids":  "10,11,12",
+					},
+				}
+			},
+			want: &models.SSOSettings{
+				Provider: "github",
+				Settings: map[string]any{
+					"enabled":   true,
+					"auth_url":  "https://github.com/login/oauth/authorize",
+					"token_url": "https://github.com/login/oauth/access_token",
+					"api_url":   "https://overwritten-api.com/user",
+					"team_ids":  "",
+				},
+				Source: models.DB,
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tc := range testCases {
+		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
+		// otherwise it would be like a moving pointer while tests run in parallel
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			env := setupTestEnv(t)
 			if tc.setup != nil {
 				tc.setup(env)
@@ -207,6 +252,8 @@ func TestService_GetForProvider(t *testing.T) {
 }
 
 func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -286,7 +333,13 @@ func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
+		// otherwise it would be like a moving pointer while tests run in parallel
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			env := setupTestEnv(t)
 			if tc.setup != nil {
 				tc.setup(env)
@@ -306,6 +359,8 @@ func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 }
 
 func TestService_List(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -429,7 +484,13 @@ func TestService_List(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
+		// otherwise it would be like a moving pointer while tests run in parallel
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			env := setupTestEnv(t)
 			if tc.setup != nil {
 				tc.setup(env)
@@ -449,6 +510,8 @@ func TestService_List(t *testing.T) {
 }
 
 func TestService_ListWithRedactedSecrets(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -723,7 +786,13 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
+		// otherwise it would be like a moving pointer while tests run in parallel
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			env := setupTestEnv(t)
 			if tc.setup != nil {
 				tc.setup(env)
@@ -743,7 +812,11 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 }
 
 func TestService_Upsert(t *testing.T) {
+	t.Parallel()
+
 	t.Run("successfully upsert SSO settings", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
@@ -760,9 +833,9 @@ func TestService_Upsert(t *testing.T) {
 		wg.Add(1)
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		reloadable.On("Validate", mock.Anything, settings, mock.Anything).Return(nil)
 		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
-			wg.Done()
+			defer wg.Done()
 			return settings.Provider == provider &&
 				settings.ID == "someid" &&
 				maps.Equal(settings.Settings, map[string]any{
@@ -794,7 +867,7 @@ func TestService_Upsert(t *testing.T) {
 				},
 			}, nil
 		}
-		err := env.service.Upsert(context.Background(), &settings)
+		err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
 		require.NoError(t, err)
 
 		// Wait for the goroutine first to assert the Reload call
@@ -805,6 +878,8 @@ func TestService_Upsert(t *testing.T) {
 	})
 
 	t.Run("returns error if provider is not configurable", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		provider := social.GrafanaComProviderName
@@ -821,11 +896,13 @@ func TestService_Upsert(t *testing.T) {
 		reloadable := ssosettingstests.NewMockReloadable(t)
 		env.reloadables[provider] = reloadable
 
-		err := env.service.Upsert(context.Background(), settings)
+		err := env.service.Upsert(context.Background(), settings, &user.SignedInUser{})
 		require.Error(t, err)
 	})
 
 	t.Run("returns error if provider was not found in reloadables", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
@@ -843,11 +920,13 @@ func TestService_Upsert(t *testing.T) {
 		// the reloadable is available for other provider
 		env.reloadables["github"] = reloadable
 
-		err := env.service.Upsert(context.Background(), settings)
+		err := env.service.Upsert(context.Background(), settings, &user.SignedInUser{})
 		require.Error(t, err)
 	})
 
 	t.Run("returns error if validation fails", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
@@ -862,14 +941,16 @@ func TestService_Upsert(t *testing.T) {
 		}
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings).Return(errors.New("validation failed"))
+		reloadable.On("Validate", mock.Anything, settings, mock.Anything).Return(errors.New("validation failed"))
 		env.reloadables[provider] = reloadable
 
-		err := env.service.Upsert(context.Background(), &settings)
+		err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
 		require.Error(t, err)
 	})
 
 	t.Run("returns error if a fallback strategy is not available for the provider", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		settings := &models.SSOSettings{
@@ -884,11 +965,13 @@ func TestService_Upsert(t *testing.T) {
 
 		env.fallbackStrategy.ExpectedIsMatch = false
 
-		err := env.service.Upsert(context.Background(), settings)
+		err := env.service.Upsert(context.Background(), settings, &user.SignedInUser{})
 		require.Error(t, err)
 	})
 
 	t.Run("returns error if secrets encryption failed", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		provider := social.OktaProviderName
@@ -903,15 +986,17 @@ func TestService_Upsert(t *testing.T) {
 		}
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		reloadable.On("Validate", mock.Anything, settings, mock.Anything).Return(nil)
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return(nil, errors.New("encryption failed")).Once()
 
-		err := env.service.Upsert(context.Background(), &settings)
+		err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
 		require.Error(t, err)
 	})
 
 	t.Run("should not update the current secret if the secret has not been updated", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
@@ -933,13 +1018,13 @@ func TestService_Upsert(t *testing.T) {
 		}
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		reloadable.On("Validate", mock.Anything, settings, mock.Anything).Return(nil)
 		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Maybe()
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Decrypt", mock.Anything, []byte("current-client-secret"), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 		env.secrets.On("Encrypt", mock.Anything, []byte("encrypted-client-secret"), mock.Anything).Return([]byte("current-client-secret"), nil).Once()
 
-		err := env.service.Upsert(context.Background(), &settings)
+		err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
 		require.NoError(t, err)
 
 		settings.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("current-client-secret"))
@@ -947,6 +1032,8 @@ func TestService_Upsert(t *testing.T) {
 	})
 
 	t.Run("returns error if store failed to upsert settings", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
@@ -961,7 +1048,7 @@ func TestService_Upsert(t *testing.T) {
 		}
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		reloadable.On("Validate", mock.Anything, settings, mock.Anything).Return(nil)
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
@@ -972,11 +1059,13 @@ func TestService_Upsert(t *testing.T) {
 			return errors.New("failed to upsert settings")
 		}
 
-		err := env.service.Upsert(context.Background(), &settings)
+		err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
 		require.Error(t, err)
 	})
 
 	t.Run("successfully upsert SSO settings if reload fails", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
@@ -991,12 +1080,12 @@ func TestService_Upsert(t *testing.T) {
 		}
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings).Return(nil)
+		reloadable.On("Validate", mock.Anything, settings, mock.Anything).Return(nil)
 		reloadable.On("Reload", mock.Anything, mock.Anything).Return(errors.New("failed reloading new settings")).Maybe()
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 
-		err := env.service.Upsert(context.Background(), &settings)
+		err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
 		require.NoError(t, err)
 
 		settings.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("encrypted-client-secret"))
@@ -1005,7 +1094,11 @@ func TestService_Upsert(t *testing.T) {
 }
 
 func TestService_Delete(t *testing.T) {
+	t.Parallel()
+
 	t.Run("successfully delete SSO settings", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		var wg sync.WaitGroup
@@ -1042,6 +1135,8 @@ func TestService_Delete(t *testing.T) {
 	})
 
 	t.Run("return error if SSO setting was not found for the specified provider", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
@@ -1051,10 +1146,13 @@ func TestService_Delete(t *testing.T) {
 
 		err := env.service.Delete(context.Background(), provider)
 		require.Error(t, err)
+
 		require.ErrorIs(t, err, ssosettings.ErrNotFound)
 	})
 
 	t.Run("should not delete the SSO settings if the provider is not configurable", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 		env.cfg.SSOSettingsConfigurableProviders = map[string]bool{social.AzureADProviderName: true}
 
@@ -1066,6 +1164,8 @@ func TestService_Delete(t *testing.T) {
 	})
 
 	t.Run("return error when store fails to delete the SSO settings for the specified provider", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
@@ -1077,6 +1177,8 @@ func TestService_Delete(t *testing.T) {
 	})
 
 	t.Run("return successfully when the deletion was successful but reloading the settings fail", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
@@ -1094,7 +1196,11 @@ func TestService_Delete(t *testing.T) {
 }
 
 func TestService_DoReload(t *testing.T) {
+	t.Parallel()
+
 	t.Run("successfully reload settings", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		settingsList := []*models.SSOSettings{
@@ -1133,6 +1239,8 @@ func TestService_DoReload(t *testing.T) {
 	})
 
 	t.Run("failed fetching the SSO settings", func(t *testing.T) {
+		t.Parallel()
+
 		env := setupTestEnv(t)
 
 		provider := "github"
@@ -1147,6 +1255,8 @@ func TestService_DoReload(t *testing.T) {
 }
 
 func TestService_decryptSecrets(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		setup    func(env testEnv)
@@ -1219,7 +1329,13 @@ func TestService_decryptSecrets(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
+		// otherwise it would be like a moving pointer while tests run in parallel
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			env := setupTestEnv(t)
 
 			if tc.setup != nil {
@@ -1242,6 +1358,8 @@ func TestService_decryptSecrets(t *testing.T) {
 }
 
 func setupTestEnv(t *testing.T) testEnv {
+	t.Helper()
+
 	store := ssosettingstests.NewFakeStore()
 	fallbackStrategy := ssosettingstests.NewFakeFallbackStrategy()
 	secrets := secretsFakes.NewMockService(t)

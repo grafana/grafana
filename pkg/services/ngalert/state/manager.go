@@ -50,6 +50,7 @@ type Manager struct {
 
 	doNotSaveNormalState           bool
 	applyNoDataAndErrorToAllStates bool
+	rulesPerRuleGroupLimit         int64
 
 	persister StatePersister
 }
@@ -68,6 +69,7 @@ type ManagerCfg struct {
 	// ApplyNoDataAndErrorToAllStates makes state manager to apply exceptional results (NoData and Error)
 	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
 	ApplyNoDataAndErrorToAllStates bool
+	RulesPerRuleGroupLimit         int64
 
 	Tracer tracing.Tracer
 	Log    log.Logger
@@ -92,6 +94,7 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		externalURL:                    cfg.ExternalURL,
 		doNotSaveNormalState:           cfg.DoNotSaveNormalState,
 		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
+		rulesPerRuleGroupLimit:         cfg.RulesPerRuleGroupLimit,
 		persister:                      statePersister,
 		tracer:                         cfg.Tracer,
 	}
@@ -134,8 +137,23 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 		}
 
 		ruleByUID := make(map[string]*ngModels.AlertRule, len(alertRules))
+		groupSizes := make(map[string]int64)
 		for _, rule := range alertRules {
 			ruleByUID[rule.UID] = rule
+			groupSizes[rule.RuleGroup] += 1
+		}
+
+		// Emit a warning if we detect a large group.
+		// We will not enforce this here, but it's convenient to emit the warning here as we load up all the rules.
+		for name, size := range groupSizes {
+			if st.rulesPerRuleGroupLimit > 0 && size > st.rulesPerRuleGroupLimit {
+				st.log.Warn(
+					"Large rule group was loaded. Large groups are discouraged and changes to them may be disallowed in the future.",
+					"limit", st.rulesPerRuleGroupLimit,
+					"actual", size,
+					"group", name,
+				)
+			}
 		}
 
 		orgStates := make(map[string]*ruleStates, len(ruleByUID))
@@ -298,14 +316,14 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 }
 
 func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger) []StateTransition {
-	if st.applyNoDataAndErrorToAllStates && results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK) { // If it is no data, check the mapping and switch all results to the new state
+	if st.applyNoDataAndErrorToAllStates && results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK || alertRule.NoDataState == ngModels.KeepLast) { // If it is no data, check the mapping and switch all results to the new state
 		// TODO aggregate UID of datasources that returned NoData into one and provide as auxiliary info, probably annotation
 		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
 		if len(transitions) > 0 {
 			return transitions // if there are no current states for the rule. Create ones for each result
 		}
 	}
-	if st.applyNoDataAndErrorToAllStates && results.IsError() && (alertRule.ExecErrState == ngModels.AlertingErrState || alertRule.ExecErrState == ngModels.OkErrState) {
+	if st.applyNoDataAndErrorToAllStates && results.IsError() && (alertRule.ExecErrState == ngModels.AlertingErrState || alertRule.ExecErrState == ngModels.OkErrState || alertRule.ExecErrState == ngModels.KeepLastErrState) {
 		// TODO squash all errors into one, and provide as annotation
 		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
 		if len(transitions) > 0 {
@@ -334,6 +352,7 @@ func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.A
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, currentState *State, result eval.Result, logger log.Logger) StateTransition {
 	start := st.clock.Now()
+
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.Results = append(currentState.Results, Evaluation{
@@ -374,10 +393,10 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	switch result.State {
 	case eval.Normal:
 		logger.Debug("Setting next state", "handler", "resultNormal")
-		resultNormal(currentState, alertRule, result, logger)
+		resultNormal(currentState, alertRule, result, logger, "")
 	case eval.Alerting:
 		logger.Debug("Setting next state", "handler", "resultAlerting")
-		resultAlerting(currentState, alertRule, result, logger)
+		resultAlerting(currentState, alertRule, result, logger, "")
 	case eval.Error:
 		logger.Debug("Setting next state", "handler", "resultError")
 		resultError(currentState, alertRule, result, logger)
@@ -394,7 +413,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	if currentState.State != result.State &&
 		result.State != eval.Normal &&
 		result.State != eval.Alerting {
-		currentState.StateReason = result.State.String()
+		currentState.StateReason = resultStateReason(result, alertRule)
 	}
 
 	// Set Resolved property so the scheduler knows to send a postable alert
@@ -426,6 +445,14 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	}
 
 	return nextState
+}
+
+func resultStateReason(result eval.Result, rule *ngModels.AlertRule) string {
+	if rule.ExecErrState == ngModels.KeepLastErrState || rule.NoDataState == ngModels.KeepLast {
+		return ngModels.ConcatReasons(result.State.String(), ngModels.StateReasonKeepLast)
+	}
+
+	return result.State.String()
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {

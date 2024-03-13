@@ -12,6 +12,7 @@ import { AnnotationsEditView } from './AnnotationsEditView';
 import { DashboardLinksEditView } from './DashboardLinksEditView';
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
 import { JsonModelEditView } from './JsonModelEditView';
+import { PermissionsEditView } from './PermissionsEditView';
 import { VariablesEditView } from './VariablesEditView';
 import { VersionsEditView } from './VersionsEditView';
 
@@ -62,6 +63,11 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
         active: currentEditView === 'versions',
       },
       {
+        text: t('dashboard-settings.permissions.title', 'Permissions'),
+        url: locationUtil.getUrlForPartial(location, { editview: 'permissions', editIndex: null }),
+        active: currentEditView === 'permissions',
+      },
+      {
         text: t('dashboard-settings.json-editor.title', 'JSON Model'),
         url: locationUtil.getUrlForPartial(location, { editview: 'json-model', editIndex: null }),
         active: currentEditView === 'json-model',
@@ -85,6 +91,8 @@ export function createDashboardEditViewFor(editview: string): DashboardEditView 
       return new VersionsEditView({});
     case 'json-model':
       return new JsonModelEditView({});
+    case 'permissions':
+      return new PermissionsEditView({});
     case 'settings':
     default:
       return new GeneralSettingsEditView({});

@@ -17,6 +17,9 @@ type DashboardService interface {
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
+	// GetDashboard fetches a dashboard.
+	// To fetch a dashboard under root by title should set the folder UID to point to an empty string
+	// eg. util.Pointer("")
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
 	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) ([]*DashboardTagCloudItem, error)
@@ -24,7 +27,7 @@ type DashboardService interface {
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*Dashboard, error)
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
 	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
-	CountInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) (int64, error)
+	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
 	GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*Dashboard, error)
 }
 
@@ -74,6 +77,6 @@ type Store interface {
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
-	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
-	DeleteDashboardsInFolder(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
+	CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
+	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
 }

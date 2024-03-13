@@ -32,13 +32,14 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   // To avoid querying single dashboard multiple times, stateManager.fetchDashboard uses a simple, short-lived cache.
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const dashboard = useAsync(async () => {
-    const dashToFetch = props.route.routeName === DashboardRoutes.Home ? props.route.routeName : props.match.params.uid;
-
-    if (!dashToFetch) {
+    if (props.match.params.type === 'snapshot') {
       return null;
     }
 
-    return stateManager.fetchDashboard({ uid: dashToFetch });
+    return stateManager.fetchDashboard({
+      route: props.route.routeName as DashboardRoutes,
+      uid: props.match.params.uid ?? '',
+    });
   }, [props.match.params.uid, props.route.routeName]);
 
   if (!config.featureToggles.dashboardSceneForViewers) {
