@@ -8,7 +8,7 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
@@ -38,6 +38,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   useExplorePageTitle(props.queryParams);
   const { chrome } = useGrafana();
   const navModel = useNavModel('explore');
+  const dispatch = useDispatch();
   const { updateSplitSize, widthCalc } = useSplitSizeUpdater(MIN_PANE_WIDTH);
   const [drawerHeight, setDrawerHeight] = useState<number | undefined>(undefined);
 
@@ -68,6 +69,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
         paneSize={drawerHeight || theme.components.horizontalDrawer.defaultHeight}
         splitVisible={showQueryHistory}
         onDragFinished={(size) => size && setDrawerHeight(size)}
+        secondaryPaneStyle={{ overflow: 'scroll' }}
       >
         <SplitPaneWrapper
           splitOrientation="vertical"
@@ -91,7 +93,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
         {showQueryHistory && (
           <RichHistoryContainer
             onClose={() => {
-              changeShowQueryHistory(false);
+              dispatch(changeShowQueryHistory(false));
             }}
           />
         )}
