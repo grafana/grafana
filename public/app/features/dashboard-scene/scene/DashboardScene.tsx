@@ -235,6 +235,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         folderUid: folderUid,
       },
     });
+
     this._changeTracker.startTrackingChanges();
   }
 
@@ -245,14 +246,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   }
 
-  public exitEditMode({ skipConfirm }: { skipConfirm: boolean }) {
+  public exitEditMode({ skipConfirm, restoreIntialState }: { skipConfirm: boolean; restoreIntialState?: boolean }) {
     if (!this.canDiscard()) {
       console.error('Trying to discard back to a state that does not exist, initialState undefined');
       return;
     }
 
     if (!this.state.isDirty || skipConfirm) {
-      this.exitEditModeConfirmed();
+      this.exitEditModeConfirmed(restoreIntialState || this.state.isDirty);
       return;
     }
 
@@ -267,7 +268,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     );
   }
 
-  private exitEditModeConfirmed() {
+  private exitEditModeConfirmed(restoreIntialState = true) {
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
     // Stop url sync before updating url
@@ -286,9 +287,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       })
     );
 
-    // locationService.replace({ pathname: this._initialUrlState?.pathname, search: this._initialUrlState?.search });
-    // Update state and disable editing
-    this.setState({ ...this._initialState, isEditing: false });
+    if (restoreIntialState) {
+      //  Restore initial state and disable editing
+      this.setState({ ...this._initialState, isEditing: false });
+    } else {
+      // Do not restore
+      this.setState({ isEditing: false });
+    }
     // and start url sync again
     this.startUrlSync();
     // Disable grid dragging
@@ -297,6 +302,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public canDiscard() {
     return this._initialState !== undefined;
+  }
+
+  public pauseTrackingChanges() {
+    this._changeTracker.stopTrackingChanges();
+  }
+
+  public resumeTrackingChanges() {
+    this._changeTracker.startTrackingChanges();
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
@@ -314,13 +327,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 
-    this._initialState = newState;
-    this.exitEditMode({ skipConfirm: false });
+    this.setState(newState);
+    this.exitEditMode({ skipConfirm: true, restoreIntialState: false });
 
     return true;
   };
 
-  public openSaveDrawer({ saveAsCopy }: { saveAsCopy?: boolean }) {
+  public openSaveDrawer({ saveAsCopy, onSaveSuccess }: { saveAsCopy?: boolean; onSaveSuccess?: () => void }) {
     if (!this.state.isEditing) {
       return;
     }
@@ -329,6 +342,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       overlay: new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
         saveAsCopy,
+        onSaveSuccess,
       }),
     });
   }
