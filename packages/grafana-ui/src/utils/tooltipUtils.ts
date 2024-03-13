@@ -58,15 +58,6 @@ export function buildTooltipTheme(
         background: colorManipulator.darken(tooltipBg, 0.1),
         color: tooltipText,
       },
-
-      a: {
-        color: tooltipText,
-        textDecoration: 'underline',
-      },
-
-      'a:hover': {
-        textDecoration: 'none',
-      },
     }),
     headerClose: css({
       color: theme.colors.text.secondary,
