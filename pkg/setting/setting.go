@@ -411,6 +411,7 @@ type Cfg struct {
 	AutoAssignOrg              bool
 	AutoAssignOrgId            int
 	AutoAssignOrgRole          string
+	LoginDefaultOrgId          int64
 	OAuthSkipOrgRoleUpdateSync bool
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
@@ -494,6 +495,9 @@ type Cfg struct {
 
 	// Public dashboards
 	PublicDashboardsEnabled bool
+
+	// Cloud Migration
+	CloudMigrationIsTarget bool
 
 	// Feature Management Settings
 	FeatureManagement FeatureMgmtSettings
@@ -1286,6 +1290,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
+	cfg.readCloudMigrationSettings()
 
 	// read experimental scopes settings.
 	scopesSection := iniFile.Section("scopes")
@@ -1654,6 +1659,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
+	cfg.LoginDefaultOrgId = users.Key("login_default_org_id").MustInt64(-1)
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
 		string(roletype.RoleViewer), []string{
 			string(roletype.RoleNone),
@@ -2004,4 +2010,9 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 func (cfg *Cfg) readPublicDashboardsSettings() {
 	publicDashboards := cfg.Raw.Section("public_dashboards")
 	cfg.PublicDashboardsEnabled = publicDashboards.Key("enabled").MustBool(true)
+}
+
+func (cfg *Cfg) readCloudMigrationSettings() {
+	cloudMigration := cfg.Raw.Section("cloud_migration")
+	cfg.CloudMigrationIsTarget = cloudMigration.Key("is_target").MustBool(false)
 }

@@ -9,16 +9,7 @@ import (
 )
 
 var (
-	AllOAuthProviders = []string{
-		social.GitHubProviderName,
-		social.GitlabProviderName,
-		social.GoogleProviderName,
-		social.GenericOAuthProviderName,
-		social.GrafanaComProviderName,
-		social.AzureADProviderName,
-		social.OktaProviderName,
-		social.SAMLProviderName,
-	}
+	AllOAuthProviders = []string{social.GitHubProviderName, social.GitlabProviderName, social.GoogleProviderName, social.GenericOAuthProviderName, social.GrafanaComProviderName, social.AzureADProviderName, social.OktaProviderName}
 )
 
 // Service is a SSO settings service
