@@ -3,7 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, ConfirmModal, IconButton, Link, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
+import { Badge, Button, ConfirmModal, IconButton, Link, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types/store';
 
@@ -11,6 +11,7 @@ import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { deleteMuteTimingAction } from '../../state/actions';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
@@ -175,9 +176,8 @@ function useColumns(
   ]);
   const showActions = !hideActions && (allowedToEdit || allowedToDelete);
 
-  // const [ExportDrawer, openExportDrawer] = useExportMuteTiming();
-  // const [_, openExportDrawer] = useExportMuteTiming();
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportMuteTimings);
+  const styles = useStyles2(getStyles);
 
   return useMemo((): Array<DynamicTableColumnProps<MuteTimeInterval>> => {
     const columns: Array<DynamicTableColumnProps<MuteTimeInterval>> = [
@@ -204,43 +204,18 @@ function useColumns(
     if (showActions) {
       columns.push({
         id: 'actions',
-        label: 'Actions',
+        label: '',
         renderCell: function renderActions({ data }) {
-          if (data.provenance) {
-            return (
-              <div>
-                <Link
-                  href={makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
-                    muteName: data.name,
-                  })}
-                >
-                  <IconButton name="file-alt" tooltip="View mute timing" />
-                </Link>
-              </div>
-            );
-          }
           return (
-            <div>
-              <Authorize actions={[AlertmanagerAction.UpdateMuteTiming]}>
-                <Link
-                  href={makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
-                    muteName: data.name,
-                  })}
-                >
-                  <IconButton name="edit" tooltip="Edit mute timing" />
-                </Link>
-              </Authorize>
-              <Authorize actions={[AlertmanagerAction.DeleteMuteTiming]}>
-                <IconButton
-                  name="trash-alt"
-                  tooltip="Delete mute timing"
-                  onClick={() => setMuteTimingName(data.name)}
-                />
-              </Authorize>
-            </div>
+            <ActionsAndBadge
+              data={data}
+              alertManagerSourceName={alertManagerSourceName}
+              setMuteTimingName={setMuteTimingName}
+            />
           );
         },
-        size: '80px',
+        size: '150px',
+        className: styles.actionsColumn,
       });
     }
     if (exportSupported) {
@@ -265,7 +240,79 @@ function useColumns(
       });
     }
     return columns;
-  }, [alertManagerSourceName, setMuteTimingName, showActions, exportSupported, exportAllowed, openExportDrawer]);
+  }, [
+    alertManagerSourceName,
+    setMuteTimingName,
+    showActions,
+    exportSupported,
+    exportAllowed,
+    openExportDrawer,
+    styles.actionsColumn,
+  ]);
+}
+
+function isDisabled(muteTiming: MuteTimeInterval) {
+  const allTimeIntervalsDisabled = muteTiming.time_intervals.every((timeInterval) => {
+    return (
+      timeInterval.times?.length === 0 ||
+      timeInterval.weekdays?.length === 0 ||
+      timeInterval.days_of_month?.length === 0 ||
+      timeInterval.months?.length === 0 ||
+      timeInterval.years?.length === 0
+    );
+  });
+  return allTimeIntervalsDisabled;
+}
+
+interface ActionsAndBadgeProps {
+  data: MuteTimeInterval;
+  alertManagerSourceName: string;
+  setMuteTimingName: (name: string) => void;
+}
+
+function ActionsAndBadge({ data, alertManagerSourceName, setMuteTimingName }: ActionsAndBadgeProps) {
+  const styles = useStyles2(getStyles);
+  const isGrafanaDataSource = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
+
+  {
+    isDisabled(data) && <Badge text="Disabled" color="red" className={styles.disabledBadge} />;
+  }
+
+  if (data.provenance) {
+    return (
+      <Stack direction="row" alignItems="center" justifyContent="flex-end">
+        {isDisabled(data) && !isGrafanaDataSource && (
+          <Badge text="Disabled" color="red" className={styles.disabledBadge} />
+        )}
+        <Link
+          href={makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
+            muteName: data.name,
+          })}
+        >
+          <IconButton name="file-alt" tooltip="View mute timing" />
+        </Link>
+      </Stack>
+    );
+  }
+  return (
+    <Stack direction="row" alignItems="center" justifyContent="flex-end">
+      {isDisabled(data) && !isGrafanaDataSource && (
+        <Badge text="Disabled" color="red" className={styles.disabledBadge} />
+      )}
+      <Authorize actions={[AlertmanagerAction.UpdateMuteTiming]}>
+        <Link
+          href={makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
+            muteName: data.name,
+          })}
+        >
+          <IconButton name="edit" tooltip="Edit mute timing" className={styles.editButton} />
+        </Link>
+      </Authorize>
+      <Authorize actions={[AlertmanagerAction.DeleteMuteTiming]}>
+        <IconButton name="trash-alt" tooltip="Delete mute timing" onClick={() => setMuteTimingName(data.name)} />
+      </Authorize>
+    </Stack>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -277,4 +324,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(2)};
     align-self: flex-end;
   `,
+  disabledBadge: css({
+    height: 'fit-content',
+  }),
+  editButton: css({
+    display: 'flex',
+  }),
+  actionsColumn: css({
+    justifyContent: 'flex-end',
+  }),
 });
