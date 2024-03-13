@@ -1,9 +1,7 @@
 ---
-## TODO: alias
-##aliases:
-##  - ../metrics/
-##  - ../unified-alerting/fundamentals/evaluate-grafana-alerts/
-## latest/alerting/fundamentals/evaluate-grafana-alerts/
+aliases:
+  - ../../fundamentals/evaluate-grafana-alerts/
+  - ../../unified-alerting/fundamentals/evaluate-grafana-alerts/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/
 description: Define queries to get the data you want to measure and conditions that need to be met before an alert rule fires
 keywords:
