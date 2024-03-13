@@ -32,19 +32,23 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
 
     setOutlineItems((prevItems) => {
       if (outlineItem.level === 'root') {
+        const mergeSingleChild = checkMergeSingleChild(parentlessItemsRef, outlineItem);
         return [
           ...prevItems,
           {
             ...outlineItem,
             id,
             children: parentlessItemsRef.current[outlineItem.panelId] || [],
+            mergeSingleChild,
           },
         ];
       }
 
       if (outlineItem.level === 'child') {
-        const parent = prevItems.find((item) => item.panelId === outlineItem.panelId && item.level === 'root');
-        if (!parent) {
+        const parentIndex = prevItems.findIndex(
+          (item) => item.panelId === outlineItem.panelId && item.level === 'root'
+        );
+        if (parentIndex === -1) {
           const parentlessItemSibling = Object.keys(parentlessItemsRef.current).find(
             (key) => key === outlineItem.panelId
           );
@@ -65,16 +69,22 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
           return [...prevItems];
         }
 
-        parent.children?.push({
-          ...outlineItem,
-          id,
-        });
-        parent.children?.sort(sortElementsByDocumentPosition);
+        const newItems = [...prevItems];
+        const parent = { ...newItems[parentIndex] };
+        const childrenUpdated = [...(parent.children || []), { ...outlineItem, id }];
+        childrenUpdated.sort(sortElementsByDocumentPosition);
+        const mergeSingleChild = checkMergeSingleChild(parentlessItemsRef, parent);
 
-        return [...prevItems];
+        newItems[parentIndex] = {
+          ...parent,
+          children: childrenUpdated,
+          mergeSingleChild,
+        };
+
+        return newItems;
       }
 
-      return prevItems;
+      return [...prevItems];
     });
 
     return id;
@@ -110,6 +120,16 @@ function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps, b: Co
     }
   }
   return 0;
+}
+
+function checkMergeSingleChild(
+  parentlessItemsRef: React.MutableRefObject<ParentlessItems>,
+  outlineItem: Omit<ContentOutlineItemContextProps, 'id'>
+) {
+  const children = parentlessItemsRef.current[outlineItem.panelId] || [];
+  const mergeSingleChild = children.length === 1 && outlineItem.mergeSingleChild;
+
+  return mergeSingleChild;
 }
 
 export function useContentOutlineContext() {

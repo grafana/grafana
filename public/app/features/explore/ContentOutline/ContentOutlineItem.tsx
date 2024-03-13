@@ -10,6 +10,7 @@ export interface ContentOutlineItemBaseProps {
   icon: string;
   customTopOffset?: number;
   level?: INDENT_LEVELS;
+  mergeSingleChild?: boolean;
 }
 
 interface ContentOutlineItemProps extends ContentOutlineItemBaseProps {
@@ -25,6 +26,7 @@ export function ContentOutlineItem({
   children,
   className,
   level = 'root',
+  mergeSingleChild,
 }: ContentOutlineItemProps) {
   const { register, unregister } = useContentOutlineContext() ?? {};
   const ref = useRef(null);
@@ -42,11 +44,12 @@ export function ContentOutlineItem({
       ref: ref.current,
       customTopOffset: customTopOffset,
       level: level,
+      mergeSingleChild,
     });
 
     // When the component unmounts, unregister it using its unique ID.
     return () => unregister(id);
-  }, [panelId, title, icon, customTopOffset, level, register, unregister]);
+  }, [panelId, title, icon, customTopOffset, level, mergeSingleChild, register, unregister]);
 
   return (
     <div className={className} ref={ref}>
