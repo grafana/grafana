@@ -10,7 +10,7 @@ import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimen
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
 import { getDataLinks } from '../../../plugins/panel/canvas/utils';
-import { CanvasElementItem, CanvasElementProps, defaultThemeTextColor } from '../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultThemeTextColor } from '../element';
 import { ElementState } from '../runtime/element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
 
@@ -149,19 +149,21 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
     },
   }),
 
-  prepareData: (ctx: DimensionContext, cfg: TextConfig) => {
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<TextConfig>) => {
+    const textConfig = elementOptions.config;
+
     const data: TextData = {
-      text: cfg.text ? ctx.getText(cfg.text).value() : '',
-      align: cfg.align ?? Align.Center,
-      valign: cfg.valign ?? VAlign.Middle,
-      size: cfg.size,
+      text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
+      align: textConfig?.align ?? Align.Center,
+      valign: textConfig?.valign ?? VAlign.Middle,
+      size: textConfig?.size,
     };
 
-    if (cfg.color) {
-      data.color = ctx.getColor(cfg.color).value();
+    if (textConfig?.color) {
+      data.color = dimensionContext.getColor(textConfig.color).value();
     }
 
-    data.links = getDataLinks(ctx, cfg, data.text);
+    data.links = getDataLinks(dimensionContext, elementOptions, data.text);
 
     return data;
   },

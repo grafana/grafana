@@ -72,7 +72,7 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
   /** The default width/height to use when adding  */
   defaultSize?: Placement;
 
-  prepareData?: (ctx: DimensionContext, cfg: TConfig) => TData;
+  prepareData?: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<TConfig>) => TData;
 
   /** Component used to draw */
   display: ComponentType<CanvasElementProps<TConfig, TData>>;
