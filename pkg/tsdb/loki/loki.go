@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
-var logger = backend.NewLoggerWith("logger", "fab1")
+var logger = backend.NewLoggerWith("logger", "tsdb.loki")
 
 type Service struct {
 	im       instancemgmt.InstanceManager
@@ -113,12 +113,13 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	// TODO
-	logger := backend.NewLoggerWith("logger", "fab2") // s.logger.FromContext(ctx)
+	var myLogger = backend.NewLoggerWith("logger", "tsdb.loki")
+	var contextualLogger = myLogger.FromContext(ctx) // s.logger.FromContext(ctx)
 	if err != nil {
-		logger.Error("Failed to get data source info", "error", err)
+		contextualLogger.Error("Failed to get data source info", "error", err)
 		return err
 	}
-	return callResource(ctx, req, sender, dsInfo, logger, s.tracer)
+	return callResource(ctx, req, sender, dsInfo, contextualLogger, s.tracer)
 }
 
 func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger, tracer tracing.Tracer) error {
@@ -142,7 +143,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	))
 	defer span.End()
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, backend.NewLoggerWith("logger", "fab3"), tracer, false)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, false)
 
 	rawLokiResponse, err := api.RawQuery(ctx, lokiURL)
 	if err != nil {
@@ -168,9 +169,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
 	// TODO
-	logger := backend.NewLoggerWith("logger", "fab4", "fromAlert", fromAlert) // logger.FromContext(ctx).With("fromAlert", fromAlert)
+	var myLogger = backend.NewLoggerWith("logger", "tsdb.loki")
+	var contextualLogger = myLogger.FromContext(ctx).With("fromAlert", fromAlert).FromContext(ctx) // logger.FromContext(ctx).With("fromAlert", fromAlert)
 	if err != nil {
-		logger.Error("Failed to get data source info", "err", err)
+		contextualLogger.Error("Failed to get data source info", "err", err)
 		result := backend.NewQueryDataResponse()
 		return result, err
 	}
@@ -180,14 +182,13 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		logsDataplane:   s.features.IsEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
 	}
 
-	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, backend.NewLoggerWith("logger", "fab5"), s.features.IsEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), s.features.IsEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
+	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, contextualLogger, s.features.IsEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), s.features.IsEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
 }
 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool, requestStructuredMetadata bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, requestStructuredMetadata)
-	// api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, backend.NewLoggerWith("logger", "fab6"), tracer, requestStructuredMetadata)
 
 	start := time.Now()
 	queries, err := parseQuery(req)
@@ -196,7 +197,9 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		return result, err
 	}
 
-	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest, "runInParallel", runInParallel)
+	// TODO
+	var myLogger = backend.NewLoggerWith("logger", "tsdb.loki")
+	myLogger.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest, "runInParallel", runInParallel)
 
 	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries", trace.WithAttributes(
 		attribute.Bool("runInParallel", runInParallel),
