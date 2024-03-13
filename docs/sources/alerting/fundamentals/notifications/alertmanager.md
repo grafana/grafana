@@ -3,7 +3,7 @@ aliases:
   - ../../fundamentals/alertmanager/
   - ../../unified-alerting/fundamentals/alertmanager/
   - ../../manage-notifications/alertmanager/
-canonical: https://grafana.com/docs/grafana/latest/alerting/notification-policies/alertmanager/
+canonical: https://grafana.com/docs/grafana/latest/alerting/notifications/alertmanager/
 description: Learn about Alertmanagers and the Alertmanager options for Grafana Alerting
 labels:
   products:

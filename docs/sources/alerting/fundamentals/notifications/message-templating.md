@@ -3,7 +3,7 @@ aliases:
   - ../../contact-points/message-templating/
   - ../../alert-rules/message-templating/
   - ../../unified-alerting/message-templating/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/message-templating/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/message-templating/
 description: Learn about notification templating
 keywords:
   - grafana

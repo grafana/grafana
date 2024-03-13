@@ -4,7 +4,7 @@ aliases:
   - ../../fundamentals/contact-points/contact-point-types/
   - ../../contact-points/
   - ../../unified-alerting/contact-points/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/contact-points/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/contact-points/
 description: Learn about contact points and the supported contact point integrations
 keywords:
   - grafana

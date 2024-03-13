@@ -1,6 +1,8 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/
-description: Learn about how notification policies work
+aliases:
+  - ./notification-policies/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/
+description: Learn about how notifications work
 keywords:
   - grafana
   - alerting

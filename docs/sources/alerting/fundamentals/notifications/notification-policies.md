@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../notifications/
+  - ../notification-policies/notifications/
   - alerting/manage-notifications/create-notification-policy/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/notifications/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/notification-policies/
 description: Learn about how notification policies work and are structured
 keywords:
   - grafana
