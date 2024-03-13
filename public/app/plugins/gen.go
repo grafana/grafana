@@ -49,8 +49,7 @@ func main() {
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
 		codegen.PluginGoTypesJenny("pkg/tsdb"),
-		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
-		codegen.PluginTSEachMajor(rt),
+		codegen.PluginTSTypesJenny("public/app/plugins"),
 	)
 
 	schifs := kindsys.SchemaInterfaces(rt.Context())
@@ -78,16 +77,6 @@ func main() {
 	} else if err = jfs.Write(context.Background(), groot); err != nil {
 		log.Fatal(fmt.Errorf("error while writing generated code to disk:\n%s", err))
 	}
-}
-
-func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
-	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) corecodegen.SchemaForGen {
-		return corecodegen.SchemaForGen{
-			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
-			Schema:  pd.Lineage.Latest(),
-			IsGroup: pd.SchemaInterface.IsGroup,
-		}
-	})
 }
 
 func kind2pd(rt *thema.Runtime, j codejen.OneToOne[kindsys.Kind]) codejen.OneToOne[*pfs.PluginDecl] {

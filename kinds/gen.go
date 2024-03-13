@@ -42,10 +42,7 @@ func main() {
 		&codegen.GoSpecJenny{},
 		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
-		codegen.LatestMajorsOrXJenny(
-			cuectx.TSCoreKindParentPath,
-			true, // forcing group so that we ignore the top level resource (for now)
-			codegen.TSResourceJenny{}),
+		codegen.LatestMajorsOrXJenny(cuectx.TSCoreKindParentPath),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 	)
 

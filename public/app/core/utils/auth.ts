@@ -11,3 +11,7 @@ export function getSessionExpiry() {
 
   return parseInt(expiresStr, 10);
 }
+
+export function hasSessionExpiry() {
+  return document.cookie.split('; ').findIndex((row) => row.startsWith('grafana_session_expiry=')) > -1;
+}
