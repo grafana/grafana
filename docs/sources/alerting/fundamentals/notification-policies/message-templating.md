@@ -1,10 +1,10 @@
 ---
 aliases:
-  ## TODO: alias and templating
+  - ../../fundamentals/annotation-label/variables-label-annotation
   - ../../contact-points/message-templating/
   - ../../alert-rules/message-templating/
   - ../../unified-alerting/message-templating/
-canonical: https://grafana.com/docs/grafana/latest/alerting/notification-policies/message-templating/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/message-templating/
 description: Learn about notification templating
 keywords:
   - grafana
