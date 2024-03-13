@@ -35,7 +35,7 @@ func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 	}
 
 	slotname := strings.ToLower(decl.SchemaInterface.Name)
-	byt, err := generators.GenerateTypesGo(decl.Lineage.Latest(), &generators.GoConfig{
+	byt, err := generators.GenerateTypesGo(decl.Lineage.Underlying(), &generators.GoConfig{
 		Config: &generators.OpenApiConfig{
 			Config: &copenapi.Config{
 				MaxCycleDepth: 10,

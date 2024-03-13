@@ -47,7 +47,7 @@ func (gen *genTSVeneerIndex) Generate(kinds ...kindsys.Kind) (*codejen.File, err
 	tsf := new(ast.File)
 	for _, def := range kinds {
 		sch := def.Lineage().Latest()
-		f, err := generators.GenerateTypesTS(sch, &generators.TSConfig{
+		f, err := generators.GenerateTypesTS(sch.Underlying(), &generators.TSConfig{
 			CuetsyConfig: &cuetsy.Config{
 				ImportMapper: cuectx.MapCUEImportToTS,
 			},

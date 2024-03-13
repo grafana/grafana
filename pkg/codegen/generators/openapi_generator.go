@@ -25,7 +25,7 @@ func generateOpenAPI(v cue.Value, cfg *OpenApiConfig) (*ast.File, error) {
 		cfg.Config = &openapi.Config{}
 	}
 
-	name, err := getName(v)
+	name, err := getSchemaName(v)
 	if err != nil {
 		return nil, err
 	}
@@ -196,9 +196,4 @@ func trimThemaPathPrefix(p, base cue.Path) cue.Path {
 	default:
 		return cue.MakePath(rest...)
 	}
-}
-
-func getName(v cue.Value) (string, error) {
-	nameValue := v.LookupPath(cue.ParsePath("name"))
-	return nameValue.String()
 }

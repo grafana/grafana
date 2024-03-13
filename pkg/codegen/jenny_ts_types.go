@@ -26,7 +26,7 @@ func (j TSTypesJenny) JennyName() string {
 }
 
 func (j TSTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
-	f, err := generators.GenerateTypesTS(sfg.Schema, &generators.TSConfig{
+	f, err := generators.GenerateTypesTS(sfg.Schema.Underlying(), &generators.TSConfig{
 		CuetsyConfig: &cuetsy.Config{
 			Export:       true,
 			ImportMapper: cuectx.MapCUEImportToTS,

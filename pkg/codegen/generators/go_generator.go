@@ -2,6 +2,7 @@ package generators
 
 import (
 	"bytes"
+	"cuelang.org/go/cue"
 	"fmt"
 	"go/parser"
 	"go/token"
@@ -13,7 +14,6 @@ import (
 	"github.com/dave/dst/dstutil"
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/grafana/thema"
 	"golang.org/x/tools/imports"
 )
 
@@ -23,7 +23,7 @@ type GoConfig struct {
 	ApplyFuncs  []dstutil.ApplyFunc
 }
 
-func GenerateTypesGo(sch thema.Schema, cfg *GoConfig) ([]byte, error) {
+func GenerateTypesGo(v cue.Value, cfg *GoConfig) ([]byte, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("configuration cannot be nil")
 	}
@@ -31,12 +31,12 @@ func GenerateTypesGo(sch thema.Schema, cfg *GoConfig) ([]byte, error) {
 	applyFuncs := []dstutil.ApplyFunc{depointerizer(), fixRawData(), fixUnderscoreInTypeName(), fixTODOComments()}
 	applyFuncs = append(applyFuncs, cfg.ApplyFuncs...)
 
-	f, err := generateOpenAPI(sch.Lineage().Underlying(), cfg.Config)
+	f, err := generateOpenAPI(v, cfg.Config)
 	if err != nil {
 		return nil, err
 	}
 
-	str, err := yaml.Marshal(sch.Lineage().Runtime().Context().BuildFile(f))
+	str, err := yaml.Marshal(v.Context().BuildFile(f))
 	if err != nil {
 		return nil, fmt.Errorf("cue-yaml marshaling failed: %w", err)
 	}
@@ -46,8 +46,14 @@ func GenerateTypesGo(sch thema.Schema, cfg *GoConfig) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("loading generated openapi failed: %w", err)
 	}
+
+	schemaName, err := getSchemaName(v)
+	if err != nil {
+		return nil, err
+	}
+
 	if cfg.PackageName == "" {
-		cfg.PackageName = sch.Lineage().Name()
+		cfg.PackageName = schemaName
 	}
 
 	ccfg := codegen.Configuration{
@@ -72,7 +78,7 @@ func GenerateTypesGo(sch thema.Schema, cfg *GoConfig) ([]byte, error) {
 	}
 
 	return postprocessGoFile(genGoFile{
-		path:     fmt.Sprintf("%s_type_gen.go", sch.Lineage().Name()),
+		path:     fmt.Sprintf("%s_type_gen.go", schemaName),
 		appliers: applyFuncs,
 		in:       []byte(gostr),
 	})

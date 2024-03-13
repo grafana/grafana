@@ -122,3 +122,8 @@ func pathsAreEq(p1s, p2s []cue.Selector) bool {
 	}
 	return true
 }
+
+func getSchemaName(v cue.Value) (string, error) {
+	nameValue := v.LookupPath(cue.ParsePath("name"))
+	return nameValue.String()
+}

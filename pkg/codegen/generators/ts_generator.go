@@ -2,13 +2,11 @@ package generators
 
 import (
 	"fmt"
-	"github.com/grafana/cuetsy/ts/ast"
-	"strings"
 
 	"cuelang.org/go/cue"
 	"github.com/grafana/cuetsy"
 	"github.com/grafana/cuetsy/ts"
-	"github.com/grafana/thema"
+	"github.com/grafana/cuetsy/ts/ast"
 )
 
 type TSConfig struct {
@@ -19,7 +17,7 @@ type TSConfig struct {
 
 // GenerateTypesTS generates native TypeScript types and defaults corresponding to
 // the provided Schema.
-func GenerateTypesTS(sch thema.Schema, cfg *TSConfig) (*ast.File, error) {
+func GenerateTypesTS(v cue.Value, cfg *TSConfig) (*ast.File, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("configuration cannot be empty")
 	}
@@ -28,18 +26,16 @@ func GenerateTypesTS(sch thema.Schema, cfg *TSConfig) (*ast.File, error) {
 			Export: true,
 		}
 	}
-	if cfg.RootName == "" {
-		cfg.RootName = strings.Title(sch.Lineage().Name())
-	}
 
-	file := &ts.File{}
-	schdef := sch.Underlying().LookupPath(cue.ParsePath("schema"))
+	schdef := v.LookupPath(cue.ParsePath("schema"))
 	tf, err := cuetsy.GenerateAST(schdef, *cfg.CuetsyConfig)
 	if err != nil {
 		return nil, fmt.Errorf("generating TS for child elements of schema failed: %w", err)
 	}
 
-	file.Nodes = append(file.Nodes, tf.Nodes...)
+	file := &ts.File{
+		Nodes: tf.Nodes,
+	}
 
 	if !cfg.IsGroup {
 		top, err := cuetsy.GenerateSingleAST(cfg.RootName, schdef, cuetsy.TypeInterface)

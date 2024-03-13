@@ -22,7 +22,7 @@ func (jenny *GoSpecJenny) Generate(kinds ...kindsys.Kind) (codejen.Files, error)
 	files := make(codejen.Files, len(kinds))
 	for i, v := range kinds {
 		name := v.Lineage().Name()
-		b, err := generators.GenerateTypesGo(v.Lineage().Latest(),
+		b, err := generators.GenerateTypesGo(v.Lineage().Underlying(),
 			&generators.GoConfig{
 				Config: &generators.OpenApiConfig{
 					IsGroup:  false,
