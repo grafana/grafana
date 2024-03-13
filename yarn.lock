@@ -18238,16 +18238,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"get-tsconfig@npm:^4.4.0":
-  version: 4.6.0
-  resolution: "get-tsconfig@npm:4.6.0"
-  dependencies:
-    resolve-pkg-maps: "npm:^1.0.0"
-  checksum: 10/a54e9f1e31e689d9cc9b66070d5448952eba718c7c2950678e169b966faa317ae3bfa0d497958d5cb7e4c86abd276501ca9b15405be27cf9b33c235b7bcece0e
-  languageName: node
-  linkType: hard
-
-"get-tsconfig@npm:^4.7.0":
+"get-tsconfig@npm:^4.4.0, get-tsconfig@npm:^4.7.0":
   version: 4.7.3
   resolution: "get-tsconfig@npm:4.7.3"
   dependencies:
@@ -32187,14 +32178,14 @@ __metadata:
   linkType: hard
 
 "xss@npm:^1.0.14":
-  version: 1.0.14
-  resolution: "xss@npm:1.0.14"
+  version: 1.0.15
+  resolution: "xss@npm:1.0.15"
   dependencies:
     commander: "npm:^2.20.3"
     cssfilter: "npm:0.0.10"
   bin:
     xss: bin/xss
-  checksum: 10/dc97acaee35e5ed453fe5628841daf7b4aba5ed26b31ff4eadf831f42cded1ddebc218ff0db1d6a73e301bfada8a5236fec0c234233d66a20ecc319da542b357
+  checksum: 10/074ad54babac9dd5107466dbf30d3b871dbedae1f8e7b8f4e3b76d60da8b92bd0f66f18ccd26b8524545444ef784b78c526cee089a907aa904f83c8b8d7958f6
   languageName: node
   linkType: hard
 
