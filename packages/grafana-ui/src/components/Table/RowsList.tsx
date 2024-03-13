@@ -212,7 +212,8 @@ export const RowsList = (props: RowsListProps) => {
     ) {
       rowBg = (rowIndex: number): CellColors => {
         const display = field.display!(field.values.get(rowIndex));
-        return getCellColors(tableStyles, fieldOptions.cellOptions, display);
+        const colors = getCellColors(tableStyles, fieldOptions.cellOptions, display);
+        return colors;
       };
     }
   }
@@ -266,6 +267,7 @@ export const RowsList = (props: RowsListProps) => {
               columnCount={row.cells.length}
               timeRange={timeRange}
               frame={data}
+              rowStyled={rowBg !== undefined}
             />
           ))}
         </div>

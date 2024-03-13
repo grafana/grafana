@@ -16,7 +16,8 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     background?: string,
     overflowOnHover?: boolean,
     asCellText?: boolean,
-    textShouldWrap?: boolean
+    textShouldWrap?: boolean,
+    rowStyled?: boolean,
   ) => {
     return css({
       label: overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow',
@@ -40,7 +41,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       borderRight: `1px solid ${borderColor}`,
 
       color: color ?? undefined,
-      background: background ?? undefined,
+      background: rowStyled ? undefined : background ?? undefined,
       backgroundClip: 'padding-box',
 
       '&:last-child:not(:only-child)': {
@@ -55,7 +56,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         wordBreak: textShouldWrap ? 'break-word' : undefined,
         whiteSpace: textShouldWrap && overflowOnHover ? 'normal' : 'nowrap',
         boxShadow: overflowOnHover ? `0 0 2px ${theme.colors.primary.main}` : undefined,
-        background: 'inherit',
+        background: background ?? undefined,
         zIndex: 1,
         '.cellActions': {
           visibility: 'visible',

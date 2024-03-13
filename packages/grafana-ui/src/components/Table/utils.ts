@@ -617,7 +617,7 @@ export function getCellColors(
 
     if (mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
-      bgColor = tinycolor(displayValue.color).toRgbString();
+      bgColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
       const bgColor2 = tinycolor(displayValue.color)
         .darken(10 * darkeningFactor)
