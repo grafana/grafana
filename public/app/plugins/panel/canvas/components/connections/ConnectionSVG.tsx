@@ -118,9 +118,6 @@ export const ConnectionSVG = ({
     }
   };
 
-  const vertexStyles = { fill: '#44aaff', strokeWidth: 1 };
-  const addVertexStyles = { fill: '#44aaff', opacity: 0.6, strokeWidth: 1 };
-
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
     return scene.connections.state.map((v, idx) => {
@@ -214,7 +211,7 @@ export const ConnectionSVG = ({
                           cy={y}
                           r={4}
                           stroke={strokeColor}
-                          style={vertexStyles}
+                          className={styles.vertex}
                           cursor={'crosshair'}
                           pointerEvents="auto"
                         />
@@ -232,7 +229,7 @@ export const ConnectionSVG = ({
                             cy={y}
                             r={4}
                             stroke={strokeColor}
-                            style={addVertexStyles}
+                            className={styles.addVertex}
                             cursor={'crosshair'}
                             pointerEvents="auto"
                           />
@@ -276,7 +273,7 @@ export const ConnectionSVG = ({
                     cy={midpoint.y}
                     r={4}
                     stroke={strokeColor}
-                    style={addVertexStyles}
+                    className={styles.addVertex}
                     cursor={'crosshair'}
                     pointerEvents="auto"
                   />
@@ -315,7 +312,7 @@ export const ConnectionSVG = ({
           strokeDasharray={'5, 5'}
           fill={'none'}
         />
-        <circle ref={setVertexRef} stroke={defaultArrowColor} r={4} style={vertexStyles} />
+        <circle ref={setVertexRef} stroke={defaultArrowColor} r={4} className={styles.vertex} />
       </svg>
       {renderConnections()}
     </>
@@ -337,5 +334,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
     zIndex: 1000,
     pointerEvents: 'none',
+  }),
+  vertex: css({
+    fill: '#44aaff',
+    strokeWidth: 2,
+  }),
+  addVertex: css({
+    fill: '#44aaff',
+    opacity: 0.5,
+    strokeWidth: 1,
   }),
 });
