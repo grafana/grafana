@@ -56,12 +56,13 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         wordBreak: textShouldWrap ? 'break-word' : undefined,
         whiteSpace: textShouldWrap && overflowOnHover ? 'normal' : 'nowrap',
         boxShadow: overflowOnHover ? `0 0 2px ${theme.colors.primary.main}` : undefined,
-        background: 'inherit',
+        background: rowStyled ? 'inherit' : background ?? undefined,
         zIndex: 1,
         '.cellActions': {
           visibility: 'visible',
           opacity: 1,
           width: 'auto',
+          background: 'rgba(0, 0, 0, 0.25)'
         },
       },
 
