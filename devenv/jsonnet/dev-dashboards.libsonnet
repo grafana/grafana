@@ -21,6 +21,7 @@
     "barchart-tooltips-legends": (import '../dev-dashboards/panel-barchart/barchart-tooltips-legends.json'),
     "candlestick": (import '../dev-dashboards/panel-candlestick/candlestick.json'),
     "canvas-connection-examples": (import '../dev-dashboards/panel-canvas/canvas-connection-examples.json'),
+    "canvas-datalinks": (import '../dev-dashboards/panel-canvas/canvas-datalinks.json'),
     "canvas-examples": (import '../dev-dashboards/panel-canvas/canvas-examples.json'),
     "color_modes": (import '../dev-dashboards/panel-common/color_modes.json'),
     "config-from-query": (import '../dev-dashboards/transforms/config-from-query.json'),
