@@ -1,6 +1,8 @@
 package options
 
 import (
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -13,11 +15,6 @@ import (
 	apiregistrationv1beta1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
-	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
-	"k8s.io/kube-openapi/pkg/common"
-
-	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
@@ -31,12 +28,6 @@ type AggregatorServerOptions struct {
 
 func NewAggregatorServerOptions() *AggregatorServerOptions {
 	return &AggregatorServerOptions{}
-}
-
-func (o *AggregatorServerOptions) getMergedOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-	aggregatorAPIs := aggregatoropenapi.GetOpenAPIDefinitions(ref)
-
-	return aggregatorAPIs
 }
 
 func (o *AggregatorServerOptions) AddFlags(fs *pflag.FlagSet) {
