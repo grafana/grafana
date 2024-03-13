@@ -5,7 +5,6 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericfeatures "k8s.io/apiserver/pkg/features"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
@@ -36,6 +35,7 @@ func NewAggregatorServerOptions() *AggregatorServerOptions {
 
 func (o *AggregatorServerOptions) getMergedOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	aggregatorAPIs := aggregatoropenapi.GetOpenAPIDefinitions(ref)
+
 	return aggregatorAPIs
 }
 
@@ -109,11 +109,6 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 	aggregatorConfig.ExtraConfig.ProxyClientCertFile = o.ProxyClientCertFile
 	aggregatorConfig.ExtraConfig.ProxyClientKeyFile = o.ProxyClientKeyFile
 
-	namer := openapinamer.NewDefinitionNamer(aggregatorscheme.Scheme)
-	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(o.getMergedOpenAPIDefinitions, namer)
-	genericConfig.OpenAPIV3Config.Info.Title = "Kubernetes"
-	genericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(o.getMergedOpenAPIDefinitions, namer)
-	genericConfig.OpenAPIConfig.Info.Title = "Kubernetes"
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
 
 	// These hooks use v1 informers, which are not available in the grafana aggregator.
