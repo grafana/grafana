@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
-import { OverlayContainer, usePreventScroll, useOverlay } from '@react-aria/overlays';
+import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import React, { PropsWithChildren, useRef } from 'react';
 
 import { useStyles2 } from '../../themes';
@@ -46,7 +46,6 @@ export function Modal(props: PropsWithChildren<Props>) {
     onClickBackdrop,
     trapFocus = true,
   } = props;
-  usePreventScroll();
   const styles = useStyles2(getModalStyles);
 
   const ref = useRef<HTMLDivElement>(null);

@@ -14,6 +14,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
       fontFamily: theme.typography.fontFamily,
       lineHeight: theme.typography.body.lineHeight,
       fontKerning: 'normal',
+      overflow: 'auto',
     },
 
     ':root': {
@@ -21,12 +22,15 @@ export function getElementStyles(theme: GrafanaTheme2) {
     },
 
     body: {
-      height: '100%',
+      minHeight: '100%',
+      display: 'flex',
+      flexDirection: 'column',
       width: '100%',
-      position: 'absolute',
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.background.canvas,
-      overflow: 'auto',
+      // react select tries prevent scrolling by setting overflow/padding-right on the body
+      paddingRight: '0 !important',
+      overflow: 'unset !important',
       ...getVariantStyles(theme.typography.body),
     },
 

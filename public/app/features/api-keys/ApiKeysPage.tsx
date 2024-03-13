@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
-import { InlineField, InlineSwitch, VerticalGroup, Modal, Button } from '@grafana/ui';
+import { InlineField, InlineSwitch, Modal, Button, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -127,7 +127,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               />
             ) : null}
             {showTable ? (
-              <VerticalGroup>
+              <Stack direction="column">
                 <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
                   <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
                 </InlineField>
@@ -137,7 +137,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                   onMigrate={this.onMigrateApiKey}
                   onDelete={this.onDeleteApiKey}
                 />
-              </VerticalGroup>
+              </Stack>
             ) : null}
           </>
         </Page.Contents>

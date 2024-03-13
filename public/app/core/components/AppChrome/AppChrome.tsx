@@ -184,7 +184,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     skipLink: css({
-      position: 'absolute',
+      position: 'fixed',
       top: -1000,
 
       ':focus': {
