@@ -178,7 +178,7 @@ export interface RulerAlertingRuleDTO extends RulerRuleBaseDTO {
 export enum GrafanaAlertStateDecision {
   Alerting = 'Alerting',
   NoData = 'NoData',
-  KeepLastState = 'KeepLastState',
+  KeepLast = 'KeepLast',
   OK = 'OK',
   Error = 'Error',
 }

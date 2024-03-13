@@ -23,8 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
-func ProvideService(cfg *config.Cfg, registry registry.Service, licensing plugins.Licensing) (*Manager, error) {
-	l, err := createLoader(cfg, registry, licensing)
+func ProvideService(cfg *config.PluginManagementCfg, pluginEnvProvider envvars.Provider,
+	registry registry.Service) (*Manager, error) {
+	l, err := createLoader(cfg, pluginEnvProvider, registry)
 	if err != nil {
 		return nil, err
 	}
@@ -33,14 +34,14 @@ func ProvideService(cfg *config.Cfg, registry registry.Service, licensing plugin
 }
 
 type Manager struct {
-	cfg    *config.Cfg
+	cfg    *config.PluginManagementCfg
 	loader loader.Service
 	log    log.Logger
 
 	renderer *Plugin
 }
 
-func NewManager(cfg *config.Cfg, loader loader.Service) *Manager {
+func NewManager(cfg *config.PluginManagementCfg, loader loader.Service) *Manager {
 	return &Manager{
 		cfg:    cfg,
 		loader: loader,
@@ -102,7 +103,8 @@ func (m *Manager) Renderer(ctx context.Context) (rendering.Plugin, bool) {
 	return nil, false
 }
 
-func createLoader(cfg *config.Cfg, pr registry.Service, l plugins.Licensing) (loader.Service, error) {
+func createLoader(cfg *config.PluginManagementCfg, pluginEnvProvider envvars.Provider,
+	pr registry.Service) (loader.Service, error) {
 	d := discovery.New(cfg, discovery.Opts{
 		FindFilterFuncs: []discovery.FindFilterFunc{
 			discovery.NewPermittedPluginTypesFilterStep([]plugins.Type{plugins.TypeRenderer}),
@@ -121,7 +123,7 @@ func createLoader(cfg *config.Cfg, pr registry.Service, l plugins.Licensing) (lo
 	})
 	i := initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
-			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), provider.New(provider.RendererProvider)),
+			initialization.BackendClientInitStep(pluginEnvProvider, provider.New(provider.RendererProvider)),
 			initialization.PluginRegistrationStep(pr),
 		},
 	})

@@ -11,6 +11,7 @@ import {
   DataQueryResponse,
   DataQueryResponseData,
   DataSourceApi,
+  DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
@@ -209,6 +210,23 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return options.flatMap((option: SelectableValue<string>) =>
       option.value !== undefined ? [{ text: option.value }] : []
     );
+  }
+
+  // Allows to retrieve the list of tags for ad-hoc filters
+  async getTagKeys(): Promise<Array<{ text: string }>> {
+    await this.languageProvider.fetchTags();
+    const tags = this.languageProvider.tagsV2 || [];
+    return tags
+      .map(({ name, tags }) =>
+        tags.filter((tag) => tag !== undefined).map((t) => (name !== 'intrinsic' ? `${name}.${t}` : `${t}`))
+      )
+      .flat()
+      .map((tag) => ({ text: tag }));
+  }
+
+  // Allows to retrieve the list of tag values for ad-hoc filters
+  getTagValues(options: DataSourceGetTagValuesOptions): Promise<Array<{ text: string }>> {
+    return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''));
   }
 
   init = async () => {
@@ -696,7 +714,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }).pipe(
       map((response) => {
         return {
-          data: formatTraceQLMetrics(response.data),
+          data: formatTraceQLMetrics(queryValue, response.data),
         };
       }),
       catchError((err) => {
@@ -1110,13 +1128,35 @@ export function getFieldConfig(
         datasourceUid,
         false
       ),
-      makeTempoLink('View traces', `\${${tempoField}}`, '', tempoDatasourceUid),
+      makeTempoLink(
+        'View traces',
+        namespaceFields !== undefined ? `\${${namespaceFields.targetNamespace}}` : '',
+        `\${${targetField}}`,
+        '',
+        tempoDatasourceUid
+      ),
     ],
   };
 }
 
-export function makeTempoLink(title: string, serviceName: string, spanName: string, datasourceUid: string) {
+export function makeTempoLink(
+  title: string,
+  serviceNamespace: string | undefined,
+  serviceName: string,
+  spanName: string,
+  datasourceUid: string
+) {
   let query: TempoQuery = { refId: 'A', queryType: 'traceqlSearch', filters: [] };
+  if (serviceNamespace !== undefined && serviceNamespace !== '') {
+    query.filters.push({
+      id: 'service-namespace',
+      scope: TraceqlSearchScope.Resource,
+      tag: 'service.namespace',
+      value: serviceNamespace,
+      operator: '=',
+      valueType: 'string',
+    });
+  }
   if (serviceName !== '') {
     query.filters.push({
       id: 'service-name',
@@ -1320,7 +1360,7 @@ function getServiceGraphView(
         return 'Tempo';
       }),
       config: {
-        links: [makeTempoLink('Tempo', '', `\${__data.fields[0]}`, tempoDatasourceUid)],
+        links: [makeTempoLink('Tempo', undefined, '', `\${__data.fields[0]}`, tempoDatasourceUid)],
       },
     });
   }
