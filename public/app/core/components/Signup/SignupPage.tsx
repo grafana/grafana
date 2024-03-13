@@ -2,12 +2,13 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { Field, Input, Button, LinkButton, Stack } from '@grafana/ui';
+import { Button, Field, Input, LinkButton, Stack } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
+import { Branding } from '../Branding/Branding';
 import { InnerBox, LoginLayout } from '../Login/LoginLayout';
 import { PasswordField } from '../PasswordField/PasswordField';
 
@@ -64,7 +65,7 @@ export const SignupPage = ({ queryParams }: Props) => {
   };
 
   return (
-    <LoginLayout>
+    <LoginLayout branding={{version: Branding.Version}}>
       <InnerBox>
         <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
           <Field label="Your name">

@@ -48,10 +48,12 @@ export function getVersionMeta(version: string) {
   };
 }
 
-export function getVersionLinks(hideEdition?: boolean): FooterLink[] {
+export function getVersionLinks(hideEdition?: boolean, version?: string): FooterLink[] {
   const { buildInfo, licenseInfo } = config;
   const links: FooterLink[] = [];
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
+
+  const v = version || `v${buildInfo.version} (${buildInfo.commit})`;
 
   if (!hideEdition) {
     links.push({
@@ -71,7 +73,7 @@ export function getVersionLinks(hideEdition?: boolean): FooterLink[] {
   links.push({
     target: '_blank',
     id: 'version',
-    text: `v${buildInfo.version} (${buildInfo.commit})`,
+    text: v,
     url: hasReleaseNotes ? `https://github.com/grafana/grafana/blob/main/CHANGELOG.md` : undefined,
   });
 
@@ -96,10 +98,11 @@ export interface Props {
   /** Link overrides to show specific links in the UI */
   customLinks?: FooterLink[] | null;
   hideEdition?: boolean;
+  version?: string;
 }
 
-export const Footer = React.memo(({ customLinks, hideEdition }: Props) => {
-  const links = (customLinks || getFooterLinks()).concat(getVersionLinks(hideEdition));
+export const Footer = React.memo(({ customLinks, hideEdition, version }: Props) => {
+  const links = (customLinks || getFooterLinks()).concat(getVersionLinks(hideEdition, version));
 
   return (
     <footer className="footer">

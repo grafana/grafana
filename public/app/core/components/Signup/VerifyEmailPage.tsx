@@ -1,12 +1,13 @@
 import React from 'react';
 
-import { LoginLayout, InnerBox } from '../Login/LoginLayout';
+import { Branding } from '../Branding/Branding';
+import { InnerBox, LoginLayout } from '../Login/LoginLayout';
 
 import { VerifyEmail } from './VerifyEmail';
 
 export const VerifyEmailPage = () => {
   return (
-    <LoginLayout>
+    <LoginLayout branding={{version: Branding.Version}}>
       <InnerBox>
         <VerifyEmail />
       </InnerBox>

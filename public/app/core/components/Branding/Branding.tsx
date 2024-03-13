@@ -65,4 +65,5 @@ export class Branding {
   static GetLoginSubTitle = (): null | string => {
     return null;
   };
+  static Version = '';
 }

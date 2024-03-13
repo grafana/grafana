@@ -1,4 +1,4 @@
-import { cx, css, keyframes } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -55,7 +55,7 @@ export const LoginLayout = ({ children, branding, isChangingPassword }: React.Pr
           <div className={loginStyles.loginOuterBox}>{children}</div>
         </div>
       </div>
-      {branding?.hideFooter ? <></> : <Footer hideEdition={hideEdition} customLinks={branding?.footerLinks} />}
+      {branding?.hideFooter ? <></> : <Footer hideEdition={hideEdition} customLinks={branding?.footerLinks} version={branding?.version} />}
     </Branding.LoginBackground>
   );
 };

@@ -1,11 +1,12 @@
 import React from 'react';
 
-import { LoginLayout, InnerBox } from '../Login/LoginLayout';
+import { Branding } from '../Branding/Branding';
+import { InnerBox, LoginLayout } from '../Login/LoginLayout';
 
 import { ForgottenPassword } from './ForgottenPassword';
 
 export const SendResetMailPage = () => (
-  <LoginLayout>
+  <LoginLayout branding={{version: Branding.Version}}>
     <InnerBox>
       <ForgottenPassword />
     </InnerBox>

@@ -7,13 +7,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { ChangePassword } from '../ForgottenPassword/ChangePassword';
 
 import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
-import { LoginLayout, InnerBox } from './LoginLayout';
+import { InnerBox, LoginLayout } from './LoginLayout';
 import { LoginServiceButtons } from './LoginServiceButtons';
 import { UserSignup } from './UserSignup';
 
@@ -36,7 +36,7 @@ export const LoginPage = () => {
         showDefaultPasswordWarning,
         loginErrorMessage,
       }) => (
-        <LoginLayout isChangingPassword={isChangingPassword}>
+        <LoginLayout isChangingPassword={isChangingPassword} branding={{version: Branding.Version}}>
           {!isChangingPassword && (
             <InnerBox>
               {loginErrorMessage && (

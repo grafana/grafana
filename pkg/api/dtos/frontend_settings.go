@@ -132,6 +132,7 @@ type FrontendSettingsWhitelabelingDTO struct {
 	LoadingLogo        *string                                   `json:"loadingLogo,omitempty"`
 	HideEdition        *bool                                     `json:"hideEdition,omitempty"`
 	PublicDashboard    *FrontendSettingsPublicDashboardConfigDTO `json:"publicDashboard,omitempty"`
+	Version            *string                                   `json:"version,omitempty"`
 }
 
 type FrontendSettingsSqlConnectionLimitsDTO struct {

@@ -14,4 +14,5 @@ export interface BrandingSettings {
   loadingLogo?: string;
   hideEdition?: boolean;
   appleTouchIcon?: string;
+  version?: string;
 }
