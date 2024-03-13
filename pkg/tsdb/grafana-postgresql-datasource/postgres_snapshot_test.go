@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -49,20 +48,6 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 
 	if !shouldRunTest() {
 		t.Skip()
-	}
-
-	getCnnStr := func() string {
-		host := os.Getenv("POSTGRES_HOST")
-		if host == "" {
-			host = "localhost"
-		}
-		port := os.Getenv("POSTGRES_PORT")
-		if port == "" {
-			port = "5432"
-		}
-
-		return fmt.Sprintf("user=grafanatest password=grafanatest host=%s port=%s dbname=grafanadstest sslmode=disable",
-			host, port)
 	}
 
 	sqlQueryCommentRe := regexp.MustCompile(`^-- (.+)\n`)
@@ -148,18 +133,34 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 				ConnMaxLifetime:     14400,
 				Timescaledb:         false,
 				ConfigurationMethod: "file-path",
+				Mode:                "disable",
+			}
+
+			host := os.Getenv("POSTGRES_HOST")
+			if host == "" {
+				host = "localhost"
+			}
+			port := os.Getenv("POSTGRES_PORT")
+			if port == "" {
+				port = "5432"
 			}
 
 			dsInfo := sqleng.DataSourceInfo{
-				JsonData:                jsonData,
-				DecryptedSecureJSONData: map[string]string{},
+				JsonData: jsonData,
+				DecryptedSecureJSONData: map[string]string{
+					"password": "grafanatest",
+				},
+				URL:      host + ":" + port,
+				Database: "grafanadstest",
+				User:     "grafanatest",
 			}
 
 			logger := log.New()
 
-			cnnstr := getCnnStr()
-
-			db, handler, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+			settings := backend.DataSourceInstanceSettings{}
+			proxyClient, err := settings.ProxyClient(context.Background())
+			require.NoError(t, err)
+			db, handler, err := newPostgres("error", 10000, dsInfo, logger, proxyClient)
 
 			t.Cleanup((func() {
 				_, err := db.Exec("DROP TABLE tbl")
