@@ -262,10 +262,6 @@ function ActionsAndBadge({ muteTiming, alertManagerSourceName, setMuteTimingName
   const styles = useStyles2(getStyles);
   const isGrafanaDataSource = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
-  {
-    isDisabled(muteTiming) && <Badge text="Disabled" color="orange" className={styles.disabledBadge} />;
-  }
-
   if (muteTiming.provenance) {
     return (
       <Stack direction="row" alignItems="center" justifyContent="flex-end">
