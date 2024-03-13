@@ -28,8 +28,6 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
       (props.route.routeName === DashboardRoutes.Normal && props.match.params.uid)
   );
 
-  console.log('isScenesSupportedRoute', isScenesSupportedRoute);
-
   // We pre-fetch dashboard to render dashboard page component depending on dashboard permissions.
   // To avoid querying single dashboard multiple times, stateManager.fetchDashboard uses a simple, short-lived cache.
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -52,7 +50,6 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return null;
   }
 
-  console.log('can make editake', dashboard);
   if (
     dashboard.value &&
     !(dashboard.value.meta.canEdit || dashboard.value.meta.canMakeEditable) &&

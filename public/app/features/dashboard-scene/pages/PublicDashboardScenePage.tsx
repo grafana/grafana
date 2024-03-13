@@ -4,17 +4,17 @@ import React, { useEffect, useState } from 'react';
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { PublicDashboardFooter } from 'app/features/dashboard/components/PublicDashboard/PublicDashboardsFooter';
+import { PublicDashboardNotAvailable } from 'app/features/dashboard/components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import {
   PublicDashboardPageRouteParams,
   PublicDashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
+import { DashboardRoutes } from 'app/types/dashboard';
 
-import { Page } from '../../../core/components/Page/Page';
-import PageLoader from '../../../core/components/PageLoader/PageLoader';
-import { DashboardRoutes } from '../../../types';
-import { PublicDashboardFooter } from '../../dashboard/components/PublicDashboard/PublicDashboardsFooter';
-import { PublicDashboardNotAvailable } from '../../dashboard/components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';

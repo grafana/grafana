@@ -245,7 +245,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   }
 
   if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
-    console.log('executing');
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({

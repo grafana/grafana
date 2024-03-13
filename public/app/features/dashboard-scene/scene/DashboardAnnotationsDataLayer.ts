@@ -16,7 +16,6 @@ import { PublicAnnotationsDataSource } from 'app/features/query/state/DashboardQ
  */
 export class DashboardAnnotationsDataLayer extends dataLayers.AnnotationsDataLayer {
   protected async resolveDataSource(query: AnnotationQuery) {
-    console.log('resolveDatSource');
     if (config.publicDashboardAccessToken) {
       return new PublicAnnotationsDataSource();
     }
@@ -30,7 +29,6 @@ export class DashboardAnnotationsDataLayer extends dataLayers.AnnotationsDataLay
       events: AnnotationEvent[];
     }
   ) {
-    console.log('processEvents');
     if (config.publicDashboardAccessToken) {
       const stateUpdate: PanelData = {
         series: [],

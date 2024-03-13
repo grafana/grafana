@@ -128,7 +128,6 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
 }
 
 function getBuiltInAnnotationsLayer(scene: DashboardScene): dataLayers.AnnotationsDataLayer | undefined {
-  console.log('also executed here');
   // When there is no builtin annotations query we disable the ability to add annotations
   if (scene.state.$data instanceof SceneDataLayers) {
     for (const layer of scene.state.$data.state.layers) {
