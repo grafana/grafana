@@ -3,7 +3,7 @@ import {
   DashboardCursorSync,
   DataFrame,
   DefaultTimeZone,
-  EventBusSrv,
+  // EventBusSrv,
   FieldColorModeId,
   FieldConfig,
   FieldMatcherID,
@@ -215,7 +215,6 @@ describe('GraphNG utils', () => {
       theme: createTheme(),
       timeZones: [DefaultTimeZone],
       getTimeRange: getDefaultTimeRange,
-      eventBus: new EventBusSrv(),
       sync: () => DashboardCursorSync.Tooltip,
       allFrames: [frame!],
     }).getConfig();

@@ -46,6 +46,7 @@ interface CascaderState {
   //Array for cascade navigation
   rcValue: SelectableValue<string[]>;
   activeLabel: string;
+  inputValue: string;
 }
 
 export interface CascaderOption {
@@ -84,6 +85,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
       focusCascade: false,
       rcValue,
       activeLabel,
+      inputValue: '',
     };
   }
 
@@ -141,6 +143,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
       focusCascade: true,
       activeLabel,
       isSearching: false,
+      inputValue: activeLabel,
     };
     this.setState(state);
     this.props.onSelect(selectedOptions[selectedOptions.length - 1].value);
@@ -152,6 +155,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
     const activeLabel = this.props.displayAllSelectedLevels ? obj.label : obj.singleLabel || '';
     const state: CascaderState = {
       activeLabel: activeLabel,
+      inputValue: activeLabel,
       rcValue: { value: valueArray, label: activeLabel },
       isSearching: false,
       focusCascade: false,
@@ -163,6 +167,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
   onCreateOption = (value: string) => {
     this.setState({
       activeLabel: value,
+      inputValue: value,
       rcValue: [],
       isSearching: false,
     });
@@ -192,26 +197,26 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
   };
 
   onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (['ArrowDown', 'ArrowUp', 'Enter', 'ArrowLeft', 'ArrowRight', 'Backspace'].includes(e.key)) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
       return;
     }
+    const { activeLabel } = this.state;
     this.setState({
       focusCascade: false,
       isSearching: true,
+      inputValue: activeLabel,
     });
   };
 
   onSelectInputChange = (value: string) => {
-    if (value === '') {
-      this.setState({
-        isSearching: false,
-      });
-    }
+    this.setState({
+      inputValue: value,
+    });
   };
 
   render() {
     const { allowCustomValue, formatCreateLabel, placeholder, width, changeOnSelect, options, disabled } = this.props;
-    const { focusCascade, isSearching, rcValue, activeLabel } = this.state;
+    const { focusCascade, isSearching, rcValue, activeLabel, inputValue } = this.state;
 
     const searchableOptions = this.getSearchableOptions(options);
 
@@ -230,6 +235,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
             width={width}
             onInputChange={this.onSelectInputChange}
             disabled={disabled}
+            inputValue={inputValue}
           />
         ) : (
           <RCCascader

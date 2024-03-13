@@ -28,22 +28,16 @@ export const mergePartialAmRouteWithRouteTree = (
 
     if (currentRoute.id === partialFormRoute.id) {
       const newRoute = formAmRouteToAmRoute(alertManagerSourceName, partialFormRoute, routeTree);
-      updatedRoute = omit(
-        {
-          ...currentRoute,
-          ...newRoute,
-        },
-        'id'
-      );
+      updatedRoute = {
+        ...currentRoute,
+        ...newRoute,
+      };
     }
 
-    return omit(
-      {
-        ...updatedRoute,
-        routes: currentRoute.routes?.map(findAndReplace),
-      },
-      'id'
-    );
+    return {
+      ...updatedRoute,
+      routes: currentRoute.routes?.map(findAndReplace),
+    };
   }
 
   return findAndReplace(routeTree);
@@ -51,26 +45,23 @@ export const mergePartialAmRouteWithRouteTree = (
 
 // remove a route from the policy tree, returns a new tree
 // make sure to omit the "id" because Prometheus / Loki / Mimir will reject the payload
-export const omitRouteFromRouteTree = (findRoute: RouteWithID, routeTree: RouteWithID): Route => {
+export const omitRouteFromRouteTree = (findRoute: RouteWithID, routeTree: RouteWithID): RouteWithID => {
   if (findRoute.id === routeTree.id) {
     throw new Error('You cant remove the root policy');
   }
 
-  function findAndOmit(currentRoute: RouteWithID): Route {
-    return omit(
-      {
-        ...currentRoute,
-        routes: currentRoute.routes?.reduce((acc: Route[] = [], route) => {
-          if (route.id === findRoute.id) {
-            return acc;
-          }
-
-          acc.push(findAndOmit(route));
+  function findAndOmit(currentRoute: RouteWithID): RouteWithID {
+    return {
+      ...currentRoute,
+      routes: currentRoute.routes?.reduce((acc: RouteWithID[] = [], route) => {
+        if (route.id === findRoute.id) {
           return acc;
-        }, []),
-      },
-      'id'
-    );
+        }
+
+        acc.push(route);
+        return acc;
+      }, []),
+    };
   }
 
   return findAndOmit(routeTree);
@@ -85,7 +76,7 @@ export const addRouteToReferenceRoute = (
   referenceRoute: RouteWithID,
   routeTree: RouteWithID,
   position: InsertPosition
-): Route => {
+): RouteWithID => {
   const newRoute = formAmRouteToAmRoute(alertManagerSourceName, partialFormRoute, routeTree);
 
   return produce(routeTree, (draftTree) => {
@@ -146,6 +137,16 @@ export function findRouteInTree(
   findRouteInTree(routeTree, 0, routeTree);
 
   return [matchingRoute, matchingRouteParent, matchingRoutePositionInParent];
+}
+
+export function cleanRouteIDs(route: Route | RouteWithID): Route {
+  return omit(
+    {
+      ...route,
+      routes: route.routes?.map((route) => cleanRouteIDs(route)),
+    },
+    'id'
+  );
 }
 
 export function findExistingRoute(id: string, routeTree: RouteWithID): RouteWithID | undefined {
