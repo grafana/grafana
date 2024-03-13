@@ -1330,74 +1330,6 @@
         }
       }
     },
-    "/reports/render/pdf/{dashboardID}": {
-      "get": {
-        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
-        "produces": [
-          "application/pdf"
-        ],
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
-        "summary": "Render report for dashboard.",
-        "operationId": "renderReportPDF",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "dashboardID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "title",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "variables",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "from",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "to",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "orientation",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "layout",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/contentResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -3343,13 +3275,6 @@
     "CreateOrUpdateReportConfig": {
       "type": "object",
       "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
         "dashboards": {
           "type": "array",
           "items": {
@@ -3392,9 +3317,6 @@
         },
         "state": {
           "$ref": "#/definitions/State"
-        },
-        "templateVars": {
-          "type": "object"
         }
       }
     },
@@ -4538,7 +4460,7 @@
       }
     },
     "FrameType": {
-      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
       "type": "string"
     },
     "FrameTypeVersion": {
@@ -5358,6 +5280,20 @@
       "items": {
         "type": "integer",
         "format": "int64"
+      }
+    },
+    "ObjectMatcher": {
+      "type": "array",
+      "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ObjectMatchers": {
+      "type": "array",
+      "title": "ObjectMatchers is a list of matchers that can be used to filter alerts.",
+      "items": {
+        "$ref": "#/definitions/ObjectMatcher"
       }
     },
     "OrgDTO": {
@@ -6216,16 +6152,6 @@
           "type": "string",
           "format": "date-time"
         },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardName": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
         "dashboards": {
           "type": "array",
           "items": {
@@ -6276,9 +6202,6 @@
         },
         "state": {
           "$ref": "#/definitions/State"
-        },
-        "templateVars": {
-          "type": "object"
         },
         "uid": {
           "type": "string"

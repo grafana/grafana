@@ -4270,13 +4270,6 @@
       },
       "CreateOrUpdateReportConfig": {
         "properties": {
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
           "dashboards": {
             "items": {
               "$ref": "#/components/schemas/ReportDashboard"
@@ -4319,9 +4312,6 @@
           },
           "state": {
             "$ref": "#/components/schemas/State"
-          },
-          "templateVars": {
-            "type": "object"
           }
         },
         "type": "object"
@@ -9359,16 +9349,6 @@
             "format": "date-time",
             "type": "string"
           },
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardName": {
-            "type": "string"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
           "dashboards": {
             "items": {
               "$ref": "#/components/schemas/ReportDashboard"
@@ -9419,9 +9399,6 @@
           },
           "state": {
             "$ref": "#/components/schemas/State"
-          },
-          "templateVars": {
-            "type": "object"
           },
           "uid": {
             "type": "string"
@@ -21384,85 +21361,6 @@
           }
         },
         "summary": "Send a report.",
-        "tags": [
-          "reports",
-          "enterprise"
-        ]
-      }
-    },
-    "/reports/render/pdf/{dashboardID}": {
-      "get": {
-        "deprecated": true,
-        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
-        "operationId": "renderReportPDF",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "dashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "title",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "variables",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "from",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "to",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "orientation",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "layout",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/contentResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Render report for dashboard.",
         "tags": [
           "reports",
           "enterprise"
