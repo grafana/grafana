@@ -15,7 +15,7 @@ import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './typ
 import { getCellColors, getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame } = props;
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled } = props;
 
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
@@ -52,7 +52,7 @@ export const DefaultCell = (props: TableCellProps) => {
 
   // Text should wrap when the content length is less than or equal to the length of an OG tweet and it contains whitespace
   const textShouldWrap = displayValue.text.length <= OG_TWEET_LENGTH && /\s/.test(displayValue.text);
-  const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled, isStringValue, textShouldWrap);
+  const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled, isStringValue, textShouldWrap, rowStyled);
 
   if (isStringValue) {
     let justifyContent = cellProps.style?.justifyContent;
@@ -103,7 +103,8 @@ function getCellStyle(
   displayValue: DisplayValue,
   disableOverflowOnHover = false,
   isStringValue = false,
-  shouldWrapText = false
+  shouldWrapText = false,
+  rowStyled = false,
 ) {
   // Setup color variables
   let textColor: string | undefined = undefined;
@@ -111,12 +112,8 @@ function getCellStyle(
 
   // Get colors
   const colors = getCellColors(tableStyles, cellOptions, displayValue);
-
-  // Skip application of background color if we're applying to the whole row
-  if (cellOptions.type === TableCellDisplayMode.ColorBackground && !cellOptions.applyToRow) {
-    textColor = colors.textColor;
-    bgColor = colors.bgColor;
-  }
+  textColor = colors.textColor;
+  bgColor = colors.bgColor;
 
   // If we have definied colors return those styles
   // Otherwise we return default styles
@@ -126,6 +123,7 @@ function getCellStyle(
     !disableOverflowOnHover,
     isStringValue,
     shouldWrapText,
+    rowStyled
   );
 }
 
