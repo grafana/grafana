@@ -266,15 +266,14 @@ describe('InfiniteScroll', () => {
       });
 
       describe('Scrolling to the top', () => {
-        test(
-          'Waits for the user to reach the edge before triggering a new query', async () => {
-            const loadMoreMock = jest.fn();
-            const { wheel } = setup(loadMoreMock, 10, rows, order);
-  
-            wheel(-10);
-            expect(loadMoreMock).not.toHaveBeenCalled();
-            wheel(-5);
-            expect(loadMoreMock).toHaveBeenCalled();
+        test('Waits for the user to reach the edge before triggering a new query', async () => {
+          const loadMoreMock = jest.fn();
+          const { wheel } = setup(loadMoreMock, 10, rows, order);
+
+          wheel(-10);
+          expect(loadMoreMock).not.toHaveBeenCalled();
+          wheel(-5);
+          expect(loadMoreMock).toHaveBeenCalled();
         });
       });
     }
