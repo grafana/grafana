@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"cuelang.org/go/cue"
 	"github.com/grafana/codejen"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
@@ -58,4 +59,9 @@ type SchemaForGen struct {
 	Schema thema.Schema
 	// Whether the schema is grouped. See https://github.com/grafana/thema/issues/62
 	IsGroup bool
+}
+
+type CueSchema struct {
+	CueFile  cue.Value
+	FilePath string
 }

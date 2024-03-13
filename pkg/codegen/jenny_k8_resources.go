@@ -18,15 +18,15 @@ func (jenny *K8ResourcesJenny) JennyName() string {
 	return "K8ResourcesJenny"
 }
 
-func (jenny *K8ResourcesJenny) Generate(cueFiles []cue.Value) (codejen.Files, error) {
+func (jenny *K8ResourcesJenny) Generate(cueFiles []CueSchema) (codejen.Files, error) {
 	files := make(codejen.Files, 0)
 	for _, val := range cueFiles {
-		pkg, err := getPackageName(val)
+		pkg, err := getPackageName(val.CueFile)
 		if err != nil {
 			return nil, err
 		}
 
-		resource, err := jenny.genResource(pkg, val)
+		resource, err := jenny.genResource(pkg, val.CueFile)
 		if err != nil {
 			return nil, err
 		}
