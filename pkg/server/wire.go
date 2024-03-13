@@ -50,7 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
-	cloudmigrations "github.com/grafana/grafana/pkg/services/cloudmigrations/service"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/cloudmigrationimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
@@ -284,6 +284,7 @@ var wireBasicSet = wire.NewSet(
 	dashsnapsvc.ProvideService,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
+	datasourceservice.ProvideLegacyDataSourceLookup,
 	alerting.ProvideService,
 	serviceaccountsretriever.ProvideService,
 	wire.Bind(new(serviceaccountsretriever.ServiceAccountRetriever), new(*serviceaccountsretriever.Service)),
@@ -381,7 +382,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(ssosettings.Service), new(*ssoSettingsImpl.Service)),
 	idimpl.ProvideService,
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
-	cloudmigrations.ProvideService,
+	cloudmigrationimpl.ProvideService,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,

@@ -18,7 +18,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { GrafanaMuteTimingsExporter } from '../export/GrafanaMuteTimingsExporter';
 
-import { renderTimeIntervals } from './util';
+import { mergeTimeIntervals, renderTimeIntervals } from './util';
 
 const ALL_MUTE_TIMINGS = Symbol('all mute timings');
 
@@ -72,9 +72,9 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
   const config = currentData?.alertmanager_config;
 
   const [muteTimingName, setMuteTimingName] = useState<string>('');
-
   const items = useMemo((): Array<DynamicTableItemProps<MuteTimeInterval>> => {
-    const muteTimings = config?.mute_time_intervals ?? [];
+    // merge both fields mute_time_intervals and time_intervals to support both old and new config
+    const muteTimings = config ? mergeTimeIntervals(config) : [];
     const muteTimingsProvenances = config?.muteTimeProvenances ?? {};
 
     return muteTimings
@@ -88,7 +88,7 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
           },
         };
       });
-  }, [config?.mute_time_intervals, config?.muteTimeProvenances, muteTimingNames]);
+  }, [muteTimingNames, config]);
 
   const [_, allowedToCreateMuteTiming] = useAlertmanagerAbility(AlertmanagerAction.CreateMuteTiming);
 

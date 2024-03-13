@@ -126,10 +126,11 @@ Configure these options if you select the InfluxQL (classic InfluxDB) query lang
 
 Configure these options if you select the SQL query language:
 
-| Name         | Description                                                                                                                                                                                                                   |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Database** | Sets the ID of the bucket to query. Copy this from the Buckets page of the InfluxDB UI.                                                                                                                                       |
-| **Token**    | API token used for SQL queries. It can be generated on InfluxDB Cloud dashboard under [Load Data > API Tokens](https://docs.influxdata.com/influxdb/cloud-serverless/get-started/setup/#create-an-all-access-api-token) menu. |
+| Name                    | Description                                                                                                                                                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Database**            | Sets the ID of the bucket to query. Copy this from the Buckets page of the InfluxDB UI.                                                                                                                                       |
+| **Token**               | API token used for SQL queries. It can be generated on InfluxDB Cloud dashboard under [Load Data > API Tokens](https://docs.influxdata.com/influxdb/cloud-serverless/get-started/setup/#create-an-all-access-api-token) menu. |
+| **Insecure Connection** | Disable gRPC TLS security.                                                                                                                                                                                                    |
 
 ### Configure Flux
 
@@ -138,7 +139,7 @@ Configure these options if you select the Flux query language:
 | Name               | Description                                                                                                                                                                                                                                                                                                                    |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Organization**   | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries. This is also used to for the `v.organization` query macro.                                                                                                                                                   |
-| **Token**          | The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/). Token must be set as `Authorization` header with the value `Token <geenrated-token>`. For influx 1.8, the token is `username:password`. |
+| **Token**          | The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/). Token must be set as `Authorization` header with the value `Token <generated-token>`. For influx 1.8, the token is `username:password`. |
 | **Default bucket** | _(Optional)_ The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries.                                                                                                                                                                |
 
 ### Provision the data source
@@ -203,9 +204,8 @@ datasources:
     access: proxy
     url: http://localhost:8086
     jsonData:
-      version: SQL
-      metadata:
-        - database: <bucket-name>
+      dbName: site
+      httpHeaderName1: 'Authorization'
     secureJsonData:
       httpHeaderValue1: 'Token <token>'
 ```
@@ -216,11 +216,12 @@ datasources:
 apiVersion: 1
 
 datasources:
-  - name: InfluxDB_v2_InfluxQL
+  - name: InfluxDB_v3_InfluxQL
     type: influxdb
     access: proxy
     url: http://localhost:8086
     jsonData:
+      version: SQL
       dbName: site
       httpMode: POST
     secureJsonData:
