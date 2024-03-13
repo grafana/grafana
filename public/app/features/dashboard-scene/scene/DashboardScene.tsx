@@ -1,4 +1,5 @@
 import * as H from 'history';
+import { Unsubscribable } from 'rxjs';
 
 import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';

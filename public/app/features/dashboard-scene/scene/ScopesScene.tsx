@@ -18,9 +18,9 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
     });
   }
 
-  public setIsExpanded = (isExpanded: boolean) => {
+  public setIsExpanded(isExpanded: boolean) {
     this.setState({ isExpanded });
-  };
+  }
 
   public fetchScopes() {
     this.state.filters.fetchScopes();
