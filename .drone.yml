@@ -2602,7 +2602,7 @@ trigger:
     - docs/**
     - latest.json
   repo:
-  - grafana/grafana-security-mirror
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4922,6 +4922,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3a5abc7888fc359aa630b47a6b97618c3e8dcb8ff4a2cfeacfb56ccff1596f8a
+hmac: feb0603ccd1169c54e142a4b0105bc6d2805e5e0f4d8f0e1b0edd95d41d450b9
 
 ...
