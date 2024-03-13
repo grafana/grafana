@@ -16,7 +16,7 @@ labels:
   products:
     - enterprise
     - oss
-title: Configure High Availability
+title: Configure high availability
 weight: 600
 ---
 
