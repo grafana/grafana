@@ -79,7 +79,6 @@ export const ConnectionSVG = ({
           selectedConnectionRef.current.source.options.connections?.filter(
             (connection) => connection !== selectedConnectionRef.current?.info
           );
-        //console.log(selectedConnectionRef.current.source.options);
         selectedConnectionRef.current.source.onChange(selectedConnectionRef.current.source.options);
 
         setSelectedConnection(undefined);
