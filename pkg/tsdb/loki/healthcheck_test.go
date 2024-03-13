@@ -88,7 +88,7 @@ func Test_healthcheck(t *testing.T) {
 			im:       datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
 			features: featuremgmt.WithFeatures(featuremgmt.FlagLokiLogsDataplane, featuremgmt.FlagLokiMetricDataplane),
 			tracer:   tracing.InitializeTracerForTest(),
-			logger:   backend.NewLoggerWith("loki test"),
+			logger:   backend.NewLoggerWith("logger", "loki test"),
 		}
 
 		req := &backend.CheckHealthRequest{
@@ -107,7 +107,7 @@ func Test_healthcheck(t *testing.T) {
 			im:       datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
 			features: featuremgmt.WithFeatures(featuremgmt.FlagLokiLogsDataplane, featuremgmt.FlagLokiMetricDataplane),
 			tracer:   tracing.InitializeTracerForTest(),
-			logger:   backend.NewLoggerWith("loki test"),
+			logger:   backend.NewLoggerWith("logger", "loki test"),
 		}
 
 		req := &backend.CheckHealthRequest{
