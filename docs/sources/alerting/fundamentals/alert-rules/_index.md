@@ -57,7 +57,7 @@ Grafana-managed alert rules can query the following backend data sources that ha
 
 ### Multi-dimensional alerts
 
-Grafana managed alerts support multi-dimensional alerting. Each alert rule can create multiple alert instances. This is exceptionally powerful if you are observing multiple series in a single expression.
+Grafana-managed alerting supports multi-dimensional alerting. Each alert rule can create multiple alert instances. This is exceptionally powerful if you are observing multiple series in a single expression.
 
 Consider the following PromQL expression:
 
