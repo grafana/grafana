@@ -87,7 +87,6 @@ export interface FeatureToggles {
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
-  cloudWatchLogsMonacoEditor?: boolean;
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
   vizAndWidgetSplit?: boolean;
