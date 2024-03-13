@@ -387,6 +387,13 @@ func TestService_List(t *testing.T) {
 						},
 						Source: models.DB,
 					},
+					{
+						Provider: "saml",
+						Settings: map[string]any{
+							"enabled": false,
+						},
+						Source: models.DB,
+					},
 				}
 				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
 				env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
@@ -469,6 +476,10 @@ func TestService_List(t *testing.T) {
 					Provider: "grafana_com",
 					Settings: map[string]any{"enabled": false},
 					Source:   models.System,
+				},
+				{
+					Provider: "saml",
+					Settings: map[string]any{"enabled": false},
 				},
 			},
 			wantErr: false,
