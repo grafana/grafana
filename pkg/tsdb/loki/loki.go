@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
-var logger = backend.NewLoggerWith("logger", "tsdb.loki")
+var logger = backend.NewLoggerWith("logger", "fab1")
 
 type Service struct {
 	im       instancemgmt.InstanceManager
@@ -112,7 +112,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	logger := s.logger.FromContext(ctx)
+	// TODO
+	logger := backend.NewLoggerWith("logger", "fab2") // s.logger.FromContext(ctx)
 	if err != nil {
 		logger.Error("Failed to get data source info", "error", err)
 		return err
@@ -141,7 +142,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	))
 	defer span.End()
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, false)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, backend.NewLoggerWith("logger", "fab3"), tracer, false)
 
 	rawLokiResponse, err := api.RawQuery(ctx, lokiURL)
 	if err != nil {
@@ -166,7 +167,8 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	logger := logger.FromContext(ctx).With("fromAlert", fromAlert)
+	// TODO
+	logger := backend.NewLoggerWith("logger", "fab4", "fromAlert", fromAlert) // logger.FromContext(ctx).With("fromAlert", fromAlert)
 	if err != nil {
 		logger.Error("Failed to get data source info", "err", err)
 		result := backend.NewQueryDataResponse()
@@ -178,13 +180,14 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		logsDataplane:   s.features.IsEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
 	}
 
-	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, s.features.IsEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), s.features.IsEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
+	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, backend.NewLoggerWith("logger", "fab5"), s.features.IsEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), s.features.IsEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
 }
 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool, requestStructuredMetadata bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, requestStructuredMetadata)
+	// api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, backend.NewLoggerWith("logger", "fab6"), tracer, requestStructuredMetadata)
 
 	start := time.Now()
 	queries, err := parseQuery(req)
