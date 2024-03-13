@@ -124,8 +124,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     const MENU_WIDTH = 270;
     const MENU_HEIGHT = 105;
-    const x = (e.clientX + MENU_WIDTH) > window.innerWidth ? window.innerWidth - MENU_WIDTH : e.clientX;
-    const y = (e.clientY + MENU_HEIGHT) > window.innerHeight ? window.innerHeight - MENU_HEIGHT : e.clientY;
+    const x = e.clientX + MENU_WIDTH > window.innerWidth ? window.innerWidth - MENU_WIDTH : e.clientX;
+    const y = e.clientY + MENU_HEIGHT > window.innerHeight ? window.innerHeight - MENU_HEIGHT : e.clientY;
 
     this.setState({
       selection,
