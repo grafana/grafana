@@ -94,7 +94,7 @@
     "@types/jquery": "3.5.29",
     "@types/lodash": "4.17.0",
     "@types/marked": "5.0.2",
-    "@types/node": "20.11.26",
+    "@types/node": "20.11.27",
     "@types/pluralize": "^0.0.33",
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.65",
