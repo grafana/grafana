@@ -23,7 +23,6 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
   const [debouncedPanelName, setDebouncedPanelName] = useState(panel.title);
   const [waiting, setWaiting] = useState(false);
 
-  console.log('folderUid', folderUid);
   useEffect(() => setWaiting(true), [panelName]);
   useDebounce(() => setDebouncedPanelName(panelName), 350, [panelName]);
 
@@ -53,7 +52,6 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
     }
   }, [debouncedPanelName, folderUid]);
 
-  console.log('isValidName:', isValidName);
   const invalidInput =
     !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
 

@@ -1,53 +1,53 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
-import { PanelModel, PanelPluginMeta } from '@grafana/data';
+import { PanelPluginMeta } from '@grafana/data';
+import { VizPanel } from '@grafana/scenes';
 import { Button, VerticalGroup } from '@grafana/ui';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { changeToLibraryPanel } from 'app/features/panel/state/actions';
-import { useDispatch } from 'app/types';
+import { PanelTypeFilter } from 'app/core/components/PanelTypeFilter/PanelTypeFilter';
+import { LibraryPanelsView } from 'app/features/library-panels/components/LibraryPanelsView/LibraryPanelsView';
 
-import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
-import { LibraryElementDTO } from '../../types';
-import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
-import { ChangeLibraryPanelModal } from '../ChangeLibraryPanelModal/ChangeLibraryPanelModal';
-import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { getDashboardSceneFor } from '../utils/utils';
 
 interface Props {
-  panel: PanelModel;
+  panel: VizPanel;
   searchQuery: string;
   isWidget?: boolean;
 }
 
 export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false }: Props) => {
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
-  const [changeToPanel, setChangeToPanel] = useState<LibraryElementDTO | undefined>(undefined);
+  // const [changeToPanel, setChangeToPanel] = useState<LibraryElementDTO | undefined>(undefined);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
+
   const onPanelFilterChange = useCallback(
     (plugins: PanelPluginMeta[]) => {
       setPanelFilter(plugins.map((p) => p.id));
     },
     [setPanelFilter]
   );
-  const dashboard = getDashboardSrv().getCurrent();
-  const dispatch = useDispatch();
 
-  const useLibraryPanel = async () => {
-    if (!changeToPanel) {
-      return;
-    }
+  const dashboard = getDashboardSceneFor(panel);
 
-    setChangeToPanel(undefined);
-    dispatch(changeToLibraryPanel(panel, changeToPanel));
-  };
+  // const useLibraryPanel = async () => {
+  //   if (!changeToPanel) {
+  //     return;
+  //   }
+
+  //   setChangeToPanel(undefined);
+  //   dispatch(changeToLibraryPanel(panel, changeToPanel));
+  // };
+
+  const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
 
   const onAddToPanelLibrary = () => setShowingAddPanelModal(true);
-  const onDismissChangeToPanel = () => setChangeToPanel(undefined);
+  // const onDismissChangeToPanel = () => setChangeToPanel(undefined);
   return (
     <VerticalGroup spacing="md">
-      {!panel.libraryPanel && (
+      {!isLibraryPanel && (
         <VerticalGroup align="center">
-          <Button icon="plus" onClick={onAddToPanelLibrary} variant="secondary" fullWidth>
+          <Button icon="plus" onClick={() => {}} variant="secondary" fullWidth>
             Create new library panel
           </Button>
         </VerticalGroup>
@@ -57,10 +57,10 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false 
 
       <div className={styles.libraryPanelsView}>
         <LibraryPanelsView
-          currentPanelId={panel.libraryPanel?.uid}
+          currentPanelId={isLibraryPanel ? panel.parent.state.uid : undefined}
           searchString={searchQuery}
           panelFilter={panelFilter}
-          onClickCard={setChangeToPanel}
+          onClickCard={() => {}}
           showSecondaryActions
           isWidget={isWidget}
         />
@@ -70,14 +70,14 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false 
         <AddLibraryPanelModal
           panel={panel}
           onDismiss={() => setShowingAddPanelModal(false)}
-          initialFolderUid={dashboard?.meta.folderUid}
+          initialFolderUid={dashboard.state.meta.folderUid}
           isOpen={showingAddPanelModal}
         />
       )}
 
-      {changeToPanel && (
+      {/* {changeToPanel && (
         <ChangeLibraryPanelModal panel={panel} onDismiss={onDismissChangeToPanel} onConfirm={useLibraryPanel} />
-      )}
+      )} */}
     </VerticalGroup>
   );
 };

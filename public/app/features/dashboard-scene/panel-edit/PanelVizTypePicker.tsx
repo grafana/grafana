@@ -6,6 +6,7 @@ import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { CustomScrollbar, Field, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
+import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypePicker } from 'app/features/panel/components/VizTypePicker/VizTypePicker';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
@@ -35,11 +36,11 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
   const radioOptions: Array<SelectableValue<VisualizationSelectPaneTab>> = [
     { label: 'Visualizations', value: VisualizationSelectPaneTab.Visualizations },
     { label: 'Suggestions', value: VisualizationSelectPaneTab.Suggestions },
-    // {
-    //   label: 'Library panels',
-    //   value: VisualizationSelectPaneTab.LibraryPanels,
-    //   description: 'Reusable panels you can share between multiple dashboards.',
-    // },
+    {
+      label: 'Library panels',
+      value: VisualizationSelectPaneTab.LibraryPanels,
+      description: 'Reusable panels you can share between multiple dashboards.',
+    },
   ];
 
   const onVizTypeChange = (options: VizTypeChangeDetails) => {
@@ -73,6 +74,9 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
             panel={panelModel}
             data={data}
           />
+        )}
+        {listMode === VisualizationSelectPaneTab.LibraryPanels && (
+          <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panelModel} key="Panel Library" />
         )}
       </CustomScrollbar>
     </div>
