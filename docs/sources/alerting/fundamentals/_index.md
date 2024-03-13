@@ -1,7 +1,7 @@
 ---
 aliases:
-  - metrics/
-  - unified-alerting/fundamentals/
+  - ./metrics/ # /docs/grafana/<GRAFANA_VERSION>/alerting/metrics/
+  - ./unified-alerting/fundamentals/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/fundamentals/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/
 description: Learn about the fundamentals of Grafana Alerting as well as the key features it offers
 labels:

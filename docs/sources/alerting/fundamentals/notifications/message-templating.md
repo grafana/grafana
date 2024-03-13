@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../contact-points/message-templating/
-  - ../../alert-rules/message-templating/
-  - ../../unified-alerting/message-templating/
+  - ../../contact-points/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/message-templating/
+  - ../../alert-rules/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alert-rules/message-templating/
+  - ../../unified-alerting/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/message-templating/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/message-templating/
 description: Learn about notification templating
 keywords:

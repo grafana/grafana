@@ -1,8 +1,9 @@
 ---
 aliases:
-  - ../notifications/ # /docs/grafana/latest/alerting/notifications/
-  - ../unified-alerting/notifications/ # /docs/grafana/latest/alerting/unified-alerting/notifications/
-  - ../alerting-rules/create-notification-policy/ # /docs/grafana/latest/alerting/alerting-rules/create-notification-policy/
+  - ../notifications/ # /docs/grafana/<GRAFANA_VERSION>/alerting/notifications/
+  - ../unified-alerting/notifications/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/notifications/
+  - ../alerting-rules/create-notification-policy/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-notification-policy/
+  - ../manage-notifications/create-notification-policy/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/create-notification-policy/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/create-notification-policy/
 description: Configure notification policies to determine how alerts are routed to contact points
 keywords:

@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../fundamentals/annotation-label/variables-label-annotation/
+  - ../fundamentals/annotation-label/variables-label-annotation/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label/variables-label-annotation/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templating-labels-annotations/
 description: Learn about how to template labels and annotations
 keywords:

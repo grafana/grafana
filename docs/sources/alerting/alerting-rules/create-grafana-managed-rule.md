@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../unified-alerting/alerting-rules/create-grafana-managed-rule/
+  - ../unified-alerting/alerting-rules/create-grafana-managed-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
 description: Configure Grafana-managed alert rules to create alerts that can act on data from any of our supported data sources
 keywords:

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
-  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+  - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
+  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
 description: Create recording rules for an external Grafana Mimir or Loki instance
 keywords:

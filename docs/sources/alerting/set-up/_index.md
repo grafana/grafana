@@ -1,6 +1,6 @@
 ---
 aliases:
-  - unified-alerting/set-up/
+  - unified-alerting/set-up/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/set-up/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/
 description: Set up or upgrade your implementation of Grafana Alerting
 labels:

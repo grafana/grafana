@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../../fundamentals/annotation-label/
-  - ../../fundamentals/annotation-label/labels-and-label-matchers/
-  - ../../fundamentals/annotation-label/how-to-use-labels/
-  - ../../alerting-rules/alert-annotation-label/
-  - ../../unified-alerting/alerting-rules/alert-annotation-label/
+  - ../../fundamentals/annotation-label/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label/
+  - ../../fundamentals/annotation-label/labels-and-label-matchers/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label/labels-and-label-matchers/
+  - ../../fundamentals/annotation-label/how-to-use-labels/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label/how-to-use-labels/
+  - ../../alerting-rules/alert-annotation-label/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alert-annotation-label/
+  - ../../unified-alerting/alerting-rules/alert-annotation-label/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/alert-annotation-label/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/
 description: Learn how to use annotations and labels to store key information about alerts
 keywords:

@@ -1,9 +1,9 @@
 ---
 aliases:
-  - ../high-availability/enable-alerting-ha/
-  - ../unified-alerting/high-availability/ ## latest/alerting/unified-alerting/high-availability
-  - ../high-availability/ ## latest/alerting/high-availability
-  - ../fundamentals/high-availability/ ## latest/alerting/fundamentals/high-availability
+  - ../unified-alerting/high-availability/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/high-availability
+  - ../high-availability/enable-alerting-ha/ # /docs/grafana/<GRAFANA_VERSION>/alerting/high-availability/enable-alerting-ha/
+  - ../high-availability/ # /docs/grafana/<GRAFANA_VERSION>/alerting/high-availability
+  - ../fundamentals/high-availability/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/high-availability
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/configure-high-availability/
 description: Configure High Availability
 keywords:

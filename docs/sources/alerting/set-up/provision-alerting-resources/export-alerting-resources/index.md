@@ -1,7 +1,6 @@
 ---
 aliases:
-  - ../../provision-alerting-resources/view-provisioned-resources/
-  - ./view-provisioned-resources/
+  - ../../provision-alerting-resources/view-provisioned-resources/ # /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/view-provisioned-resources/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/export-alerting-resources/
 description: Export alerting resources in Grafana
 keywords:

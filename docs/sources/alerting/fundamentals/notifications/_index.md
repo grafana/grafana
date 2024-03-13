@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ./notification-policies/
+  - ./notification-policies/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notification-policies/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/
 description: Learn about how notifications work
 keywords:

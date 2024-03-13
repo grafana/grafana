@@ -1,9 +1,9 @@
 ---
 aliases:
-  - ../fundamentals/data-source-alerting/
-  - ../fundamentals/alert-rules/alert-instances/
-  - ../fundamentals/alert-rules/recording-rules/
-  - ../fundamentals/alert-rules/alert-rule-types/
+  - ../fundamentals/data-source-alerting/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/data-source-alerting/
+  - ../fundamentals/alert-rules/alert-instances/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/alert-instances/
+  - ../fundamentals/alert-rules/recording-rules/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/recording-rules/
+  - ../fundamentals/alert-rules/alert-rule-types/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/alert-rule-types/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/
 description: Learn about alert rules
 keywords:
