@@ -72,6 +72,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 
 		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+		ctx = contextualMiddlewares(ctx)
 		rsp, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
 			Queries:       queries,
 			PluginContext: pluginCtx,

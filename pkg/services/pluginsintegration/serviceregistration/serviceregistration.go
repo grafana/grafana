@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/plugins/auth"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -21,9 +20,9 @@ type Service struct {
 	settingsSvc    pluginsettings.Service
 }
 
-func ProvideService(cfg *config.PluginManagementCfg, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
+func ProvideService(features featuremgmt.FeatureToggles, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
 	s := &Service{
-		featureEnabled: cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
+		featureEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 		log:            log.New("plugins.external.registration"),
 		reg:            reg,
 		settingsSvc:    settingsSvc,
