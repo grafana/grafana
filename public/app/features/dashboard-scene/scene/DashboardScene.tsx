@@ -384,7 +384,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    * Returns the body (layout) or the full view panel
    */
   public getBodyToRender(): SceneObject {
-    console.log('view panel', this.state.body);
     return this.state.viewPanelScene ?? this.state.body;
   }
 
