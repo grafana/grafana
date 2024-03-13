@@ -50,7 +50,7 @@ import { DashboardControls } from './DashboardControls';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
-import { ScopeSelectorScene } from './ScopeSelectorScene';
+import { ScopesScene } from './ScopesScene';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
@@ -97,7 +97,7 @@ export interface DashboardSceneState extends SceneObjectState {
   overlay?: SceneObject;
   isEmpty?: boolean;
   /** Scene object that handles the scopes selector */
-  scopeSelector?: ScopeSelectorScene;
+  scopes?: ScopesScene;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -141,7 +141,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       links: state.links ?? [],
-      scopeSelector: config.featureToggles.scopeFilters ? new ScopeSelectorScene() : undefined,
+      scopes: config.featureToggles.scopeFilters ? new ScopesScene() : undefined,
       ...state,
     });
 
@@ -157,8 +157,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.startTrackingChanges();
     }
 
-    if (this.state.scopeSelector) {
+    if (this.state.scopes) {
       this.startTrackingScopes();
+
+      this.state.scopes.fetchScopes();
     }
 
     if (!this.state.meta.isEmbedded && this.state.uid) {
@@ -415,16 +417,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private startTrackingScopes() {
-    this._scopesTrackerSub = this.subscribeToEvent(
-      SceneObjectStateChangedEvent,
-      (event: SceneObjectStateChangedEvent) => {
-        if (event.payload.changedObject instanceof ScopeSelectorScene) {
-          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'value')) {
-            sceneGraph.getTimeRange(this).onRefresh();
-          }
-        }
+    this._scopesTrackerSub = this.state.scopes!.state.filters.subscribeToState((newState, prevState) => {
+      if (newState.value !== prevState.value) {
+        sceneGraph.getTimeRange(this).onRefresh();
       }
-    );
+    });
   }
 
   private setIsDirty() {
@@ -438,6 +435,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private stopTrackingScopes() {
+    console.log('stopTrackingScopes');
     this._scopesTrackerSub?.unsubscribe();
   }
 
@@ -573,7 +571,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardUID: this.state.uid,
       panelId,
       panelPluginId: panel?.state.pluginId,
-      scope: this.state.scopeSelector?.getSelectedScope(),
+      scope: this.state.scopes?.getSelectedScope(),
     };
   }
 

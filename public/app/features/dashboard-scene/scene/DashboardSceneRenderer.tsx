@@ -12,10 +12,11 @@ import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
+import { Scopes } from './Scopes';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, scopeSelector } = model.useState();
-  const { isExpanded: isScopesExpanded } = scopeSelector?.useState() ?? {};
+  const { controls, overlay, editview, editPanel, isEmpty, scopes } = model.useState();
+  const { isExpanded: isScopesExpanded } = scopes?.useState() ?? {};
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
@@ -44,21 +45,21 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
-        <CustomScrollbar autoHeightMin={'100%'}>
-          <div className={styles.innerScrollbarContainer}>
-            {scopeSelector && <scopeSelector.Component model={scopeSelector} renderExpanded />}
+        <div className={styles.pageContainer}>
+          {scopes && isScopesExpanded && <Scopes scopes={scopes} />}
+          <CustomScrollbar autoHeightMin={'100%'}>
             <div className={styles.canvasContent}>
               <NavToolbarActions dashboard={model} />
-              {(controls || (scopeSelector && !isScopesExpanded)) && (
+              {(controls || scopes) && (
                 <div className={styles.controlsWrapper}>
-                  {scopeSelector && <scopeSelector.Component model={scopeSelector} />}
+                  {scopes && !isScopesExpanded && <Scopes scopes={scopes} />}
                   {controls && <controls.Component model={controls} />}
                 </div>
               )}
               {isEmpty ? emptyState : withPanels}
             </div>
-          </div>
-        </CustomScrollbar>
+          </CustomScrollbar>
+        </div>
       )}
       {overlay && <overlay.Component model={overlay} />}
     </Page>
@@ -67,10 +68,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    innerScrollbarContainer: css({
+    pageContainer: css({
       display: 'flex',
-      flex: '100%',
       flexDirection: 'row',
+      flexWrap: 'nowrap',
+      height: '100%',
+      overflow: 'hidden',
     }),
     canvasContent: css({
       label: 'canvas-content',
