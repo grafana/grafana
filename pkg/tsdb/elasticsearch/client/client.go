@@ -64,6 +64,8 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, logger log.Logger,
 		return nil, err
 	}
 
+	logger.Debug("Creating new client", "configuredFields", fmt.Sprintf("%#v", ds.ConfiguredFields), "interval", ds.Interval, "index", ds.Database)
+
 	return &baseClientImpl{
 		logger:           logger,
 		ctx:              ctx,
