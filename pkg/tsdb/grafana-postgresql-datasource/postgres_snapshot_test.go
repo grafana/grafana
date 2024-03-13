@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -51,7 +52,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		t.Skip()
 	}
 
-	getCnnStr := func() string {
+	getCnn := func() (*pgx.ConnConfig, error) {
 		host := os.Getenv("POSTGRES_HOST")
 		if host == "" {
 			host = "localhost"
@@ -61,8 +62,10 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 			port = "5432"
 		}
 
-		return fmt.Sprintf("user=grafanatest password=grafanatest host=%s port=%s dbname=grafanadstest sslmode=disable",
+		cnnString := fmt.Sprintf("user=grafanatest password=grafanatest host=%s port=%s dbname=grafanadstest sslmode=disable",
 			host, port)
+
+		return pgx.ParseConfig(cnnString)
 	}
 
 	sqlQueryCommentRe := regexp.MustCompile(`^-- (.+)\n`)
@@ -157,9 +160,10 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 
 			logger := log.New()
 
-			cnnstr := getCnnStr()
+			cnn, err := getCnn()
+			require.NoError(t, err)
 
-			db, handler, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+			db, handler, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnn, logger, backend.DataSourceInstanceSettings{})
 
 			t.Cleanup((func() {
 				_, err := db.Exec("DROP TABLE tbl")
