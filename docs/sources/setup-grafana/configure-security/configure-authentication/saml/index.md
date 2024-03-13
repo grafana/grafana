@@ -69,7 +69,7 @@ By default, SP-initiated requests are enabled. For instructions on how to enable
    - [`assertion_attribute_email`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_email" >}})
    - [`assertion_attribute_name`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_name" >}})
    - [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}})
-1. Save the configuration file and and then restart the Grafana server.
+1. Save the configuration file and then restart the Grafana server.
 
 When you are finished, the Grafana configuration might look like this example:
 

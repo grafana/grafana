@@ -104,7 +104,7 @@ So if you have numbers with labels like `{host=web01}` in `$A` and another numbe
 - An item with no labels will join to anything.
 - If both `$A` and `$B` each contain only one item (one series, or one number), they will join.
 - If labels are exact math they will join.
-- If labels are a subset of the other, for example and item in `$A` is labeled `{host=A,dc=MIA}` and and item in `$B` is labeled `{host=A}` they will join.
+- If labels are a subset of the other, for example and item in `$A` is labeled `{host=A,dc=MIA}` and item in `$B` is labeled `{host=A}` they will join.
 - Currently, if within a variable such as `$A` there are different tag _keys_ for each item, the join behavior is undefined.
 
 The relational and logical operators return 0 for false 1 for true.
