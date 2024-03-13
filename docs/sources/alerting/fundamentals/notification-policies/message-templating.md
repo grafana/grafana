@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../../fundamentals/annotation-label/variables-label-annotation
   - ../../contact-points/message-templating/
   - ../../alert-rules/message-templating/
   - ../../unified-alerting/message-templating/
