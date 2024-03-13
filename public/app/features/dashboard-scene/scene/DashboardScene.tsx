@@ -1,5 +1,4 @@
 import * as H from 'history';
-import { Unsubscribable } from 'rxjs';
 
 import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
@@ -146,10 +145,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    * Dashboard changes tracker
    */
   private _changeTracker: DashboardSceneChangeTracker;
-  /**
-   * scopes tracking subscription
-   */
-  private _scopesTrackerSub?: Unsubscribable;
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -178,7 +173,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     if (this.state.scopes) {
-      this.startTrackingScopes();
+      this._changeTracker.startTrackingScopes();
 
       this.state.scopes.fetchScopes();
     }
@@ -201,7 +196,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.stopUrlSync();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
-      this.stopTrackingScopes();
     };
   }
 
@@ -404,19 +398,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   public getBodyToRender(): SceneObject {
     return this.state.viewPanelScene ?? this.state.body;
-  }
-
-  private startTrackingScopes() {
-    this._scopesTrackerSub = this.state.scopes!.state.filters.subscribeToState((newState, prevState) => {
-      if (newState.value !== prevState.value) {
-        sceneGraph.getTimeRange(this).onRefresh();
-      }
-    });
-  }
-
-  private stopTrackingScopes() {
-    console.log('stopTrackingScopes');
-    this._scopesTrackerSub?.unsubscribe();
   }
 
   public getInitialState(): DashboardSceneState | undefined {

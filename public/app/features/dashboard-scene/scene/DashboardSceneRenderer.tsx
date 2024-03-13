@@ -12,7 +12,6 @@ import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
-import { Scopes } from './Scopes';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const { controls, overlay, editview, editPanel, isEmpty, scopes } = model.useState();
@@ -46,13 +45,13 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
         <div className={styles.pageContainer}>
-          {scopes && isScopesExpanded && <Scopes scopes={scopes} />}
+          {scopes && isScopesExpanded && <scopes.Component model={scopes} />}
           <CustomScrollbar autoHeightMin={'100%'}>
             <div className={styles.canvasContent}>
               <NavToolbarActions dashboard={model} />
               {(controls || scopes) && (
                 <div className={styles.controlsWrapper}>
-                  {scopes && !isScopesExpanded && <Scopes scopes={scopes} />}
+                  {scopes && !isScopesExpanded && <scopes.Component model={scopes} />}
                   {controls && <controls.Component model={controls} />}
                 </div>
               )}
