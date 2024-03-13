@@ -115,8 +115,5 @@ function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps, b: Co
 export function useContentOutlineContext() {
   const ctx = useContext(ContentOutlineContext);
 
-  if (!ctx) {
-    throw new Error('useContentOutlineContext must be used within a ContentOutlineContextProvider');
-  }
   return ctx;
 }

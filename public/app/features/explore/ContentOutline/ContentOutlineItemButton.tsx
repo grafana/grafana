@@ -64,13 +64,13 @@ export function ContentOutlineItemButton({
   );
 }
 
-function renderIcon(icon: IconName | React.ReactNode, size: IconSize = 'lg') {
+function renderIcon(icon: IconName | React.ReactNode, size: IconSize = 'lg', rotateIcon?: number) {
   if (!icon) {
     return null;
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size={size} />;
+    return <Icon name={icon} size={size} rotate={rotateIcon} />;
   }
 
   return icon;

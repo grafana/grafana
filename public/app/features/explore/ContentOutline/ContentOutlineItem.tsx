@@ -26,10 +26,14 @@ export function ContentOutlineItem({
   className,
   level = 'root',
 }: ContentOutlineItemProps) {
-  const { register, unregister } = useContentOutlineContext();
+  const { register, unregister } = useContentOutlineContext() ?? {};
   const ref = useRef(null);
 
   useEffect(() => {
+    if (!register || !unregister) {
+      return;
+    }
+
     // When the component mounts, register it and get its unique ID.
     const id = register({
       panelId: panelId,

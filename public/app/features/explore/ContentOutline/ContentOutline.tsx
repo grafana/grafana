@@ -63,6 +63,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       '&:hover': {
         color: theme.colors.text.primary,
       },
+      transform: expanded ? 'rotate(180deg)' : '',
     }),
     sectionWrapper: css({
       display: 'flex',
@@ -78,14 +79,15 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(false);
   const [sectionExpanded, toggleSectionExpanded] = useToggle(false);
-  const { outlineItems } = useContentOutlineContext();
+  const scrollerRef = useRef(scroller || null);
+  const { y: verticalScroll } = useScroll(scrollerRef);
+  const styles = useStyles2((theme) => getStyles(theme, contentOutlineExpanded));
+
+  const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
   const [activeSectionId, setActiveSectionId] = useState<string | undefined>(outlineItems[0]?.id);
   const [activeSectionChildId, setActiveSectionChildId] = useState<string | undefined>(
     outlineItems[0]?.children?.[0]?.id
   );
-  const scrollerRef = useRef(scroller || null);
-  const { y: verticalScroll } = useScroll(scrollerRef);
-  const styles = useStyles2((theme) => getStyles(theme, contentOutlineExpanded));
 
   const scrollIntoView = (ref: HTMLElement | null, itemPanelId: string, customOffsetTop = 0) => {
     let scrollValue = 0;
@@ -162,11 +164,10 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       <CustomScrollbar>
         <div className={styles.content}>
           <ContentOutlineItemButton
-            icon={contentOutlineExpanded ? 'arrow-to-right' : 'arrow-from-right'}
+            icon={'arrow-from-right'}
             onClick={toggle}
             className={styles.toggleContentOutlineButton}
             aria-expanded={contentOutlineExpanded}
-            iconRight={contentOutlineExpanded}
           />
 
           {outlineItems.map((item) => (
