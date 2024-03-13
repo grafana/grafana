@@ -52,7 +52,15 @@ export const DefaultCell = (props: TableCellProps) => {
 
   // Text should wrap when the content length is less than or equal to the length of an OG tweet and it contains whitespace
   const textShouldWrap = displayValue.text.length <= OG_TWEET_LENGTH && /\s/.test(displayValue.text);
-  const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled, isStringValue, textShouldWrap, rowStyled);
+  const cellStyle = getCellStyle(
+    tableStyles,
+    cellOptions,
+    displayValue,
+    inspectEnabled,
+    isStringValue,
+    textShouldWrap,
+    rowStyled
+  );
 
   if (isStringValue) {
     let justifyContent = cellProps.style?.justifyContent;
@@ -104,7 +112,7 @@ function getCellStyle(
   disableOverflowOnHover = false,
   isStringValue = false,
   shouldWrapText = false,
-  rowStyled = false,
+  rowStyled = false
 ) {
   // Setup color variables
   let textColor: string | undefined = undefined;

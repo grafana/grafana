@@ -17,7 +17,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     overflowOnHover?: boolean,
     asCellText?: boolean,
     textShouldWrap?: boolean,
-    rowStyled?: boolean,
+    rowStyled?: boolean
   ) => {
     return css({
       label: overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow',

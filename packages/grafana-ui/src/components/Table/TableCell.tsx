@@ -44,7 +44,7 @@ export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, use
         timeRange,
         userProps,
         frame,
-        rowStyled
+        rowStyled,
       })}
     </>
   );
