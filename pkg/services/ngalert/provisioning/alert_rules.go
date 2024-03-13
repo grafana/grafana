@@ -134,8 +134,8 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", rule.UID, err))
 	}
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
-	// if the alert group does not exists we just use the default interval
-	if err != nil && errors.Is(err, store.ErrAlertRuleGroupNotFound) {
+	// if the alert group does not exist we just use the default interval
+	if err != nil && errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		interval = service.defaultIntervalSeconds
 	} else if err != nil {
 		return models.AlertRule{}, err
@@ -199,7 +199,7 @@ func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, 
 		return models.AlertRuleGroup{}, err
 	}
 	if len(ruleList) == 0 {
-		return models.AlertRuleGroup{}, store.ErrAlertRuleGroupNotFound
+		return models.AlertRuleGroup{}, models.ErrAlertRuleGroupNotFound.Errorf("")
 	}
 	res := models.AlertRuleGroup{
 		Title:     ruleList[0].RuleGroup,
@@ -274,6 +274,38 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	}
 
 	return service.persistDelta(ctx, orgID, delta, userID, provenance)
+}
+
+func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, orgID int64, namespaceUID, group string, provenance models.Provenance) error {
+	// List all rules in the group.
+	q := models.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{namespaceUID},
+		RuleGroup:     group,
+	}
+	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
+	if err != nil {
+		return err
+	}
+	if len(ruleList) == 0 {
+		return models.ErrAlertRuleGroupNotFound.Errorf("")
+	}
+
+	// Check provenance for all rules in the group. Fail to delete if any deletions aren't allowed.
+	for _, rule := range ruleList {
+		storedProvenance, err := service.provenanceStore.GetProvenance(ctx, rule, rule.OrgID)
+		if err != nil {
+			return err
+		}
+		if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+			return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+		}
+	}
+
+	// Delete all rules.
+	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		return service.deleteRules(ctx, orgID, ruleList...)
+	})
 }
 
 func (service *AlertRuleService) calcDelta(ctx context.Context, orgID int64, group models.AlertRuleGroup) (*store.GroupDelta, error) {
@@ -498,7 +530,7 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 		return models.AlertRuleGroupWithFolderTitle{}, err
 	}
 	if len(ruleList) == 0 {
-		return models.AlertRuleGroupWithFolderTitle{}, store.ErrAlertRuleGroupNotFound
+		return models.AlertRuleGroupWithFolderTitle{}, models.ErrAlertRuleGroupNotFound.Errorf("")
 	}
 
 	dq := dashboards.GetDashboardQuery{

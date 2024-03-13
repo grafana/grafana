@@ -1,4 +1,6 @@
-import { behaviors, SceneGridLayout, SceneGridItem, SceneTimeRange } from '@grafana/scenes';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { setPluginImportUtils } from '@grafana/runtime';
+import { behaviors, SceneGridLayout, SceneGridItem, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { DashboardControls } from '../scene/DashboardControls';
@@ -6,6 +8,11 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
 
 describe('GeneralSettingsEditView', () => {
   describe('Dashboard state', () => {
@@ -129,7 +136,11 @@ async function buildTestScene() {
           y: 0,
           width: 10,
           height: 12,
-          body: undefined,
+          body: new VizPanel({
+            title: 'Panel A',
+            key: 'panel-1',
+            pluginId: 'table',
+          }),
         }),
       ],
     }),

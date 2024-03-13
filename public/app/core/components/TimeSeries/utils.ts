@@ -4,9 +4,6 @@ import uPlot from 'uplot';
 import {
   DashboardCursorSync,
   DataFrame,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  DataHoverPayload,
   FieldConfig,
   FieldType,
   formattedValueToString,
@@ -30,6 +27,7 @@ import {
   GraphTransform,
   AxisColorMode,
   GraphGradientMode,
+  VizOrientation,
 } from '@grafana/schema';
 
 // unit lookup needed to determine if we want power-of-2 or power-of-10 axis ticks
@@ -82,7 +80,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   theme,
   timeZones,
   getTimeRange,
-  eventBus,
   sync,
   allFrames,
   renderers,
@@ -90,7 +87,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   tweakAxis = (opts) => opts,
   eventsScope = '__global_',
   hoverProximity,
+  orientation = VizOrientation.Horizontal,
 }) => {
+  // we want the Auto and Horizontal orientation to default to Horizontal
+  const isHorizontal = orientation !== VizOrientation.Vertical;
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
   let alignedFrame: DataFrame;
@@ -109,19 +109,21 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   }
 
   const xScaleKey = 'x';
-  let xScaleUnit = '_x';
   let yScaleKey = '';
 
   const xFieldAxisPlacement =
-    xField.config.custom?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden;
+    xField.config.custom?.axisPlacement === AxisPlacement.Hidden
+      ? AxisPlacement.Hidden
+      : isHorizontal
+        ? AxisPlacement.Bottom
+        : AxisPlacement.Left;
   const xFieldAxisShow = xField.config.custom?.axisPlacement !== AxisPlacement.Hidden;
 
   if (xField.type === FieldType.time) {
-    xScaleUnit = 'time';
     builder.addScale({
       scaleKey: xScaleKey,
-      orientation: ScaleOrientation.Horizontal,
-      direction: ScaleDirection.Right,
+      orientation: isHorizontal ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
+      direction: isHorizontal ? ScaleDirection.Right : ScaleDirection.Up,
       isTime: true,
       range: () => {
         const r = getTimeRange();
@@ -133,7 +135,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     const filterTicks: uPlot.Axis.Filter | undefined =
       timeZones.length > 1
         ? (u, splits) => {
-            return splits.map((v, i) => (i < 2 ? null : v));
+            if (isHorizontal) {
+              return splits.map((v, i) => (i < 2 ? null : v));
+            }
+            return splits;
           }
         : undefined;
 
@@ -157,13 +162,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       builder.addHook('drawAxes', (u: uPlot) => {
         u.ctx.save();
 
-        u.ctx.fillStyle = theme.colors.text.primary;
-        u.ctx.textAlign = 'left';
-        u.ctx.textBaseline = 'bottom';
-
         let i = 0;
         u.axes.forEach((a) => {
-          if (a.side === 2) {
+          if (isHorizontal && a.side === 2) {
+            u.ctx.fillStyle = theme.colors.text.primary;
+            u.ctx.textAlign = 'left';
+            u.ctx.textBaseline = 'bottom';
             //@ts-ignore
             let cssBaseline: number = a._pos + a._size;
             u.ctx.fillText(timeZones[i], u.bbox.left, cssBaseline * uPlot.pxRatio);
@@ -175,15 +179,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       });
     }
   } else {
-    // Not time!
-    if (xField.config.unit) {
-      xScaleUnit = xField.config.unit;
-    }
-
     builder.addScale({
       scaleKey: xScaleKey,
-      orientation: ScaleOrientation.Horizontal,
-      direction: ScaleDirection.Right,
+      orientation: isHorizontal ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
+      direction: isHorizontal ? ScaleDirection.Right : ScaleDirection.Up,
       range: (u, dataMin, dataMax) => [xField.config.min ?? dataMin, xField.config.max ?? dataMax],
     });
 
@@ -243,8 +242,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       tweakScale(
         {
           scaleKey,
-          orientation: ScaleOrientation.Vertical,
-          direction: ScaleDirection.Up,
+          orientation: isHorizontal ? ScaleOrientation.Vertical : ScaleOrientation.Horizontal,
+          direction: isHorizontal ? ScaleDirection.Up : ScaleDirection.Right,
           distribution: customConfig.scaleDistribution?.type,
           log: customConfig.scaleDistribution?.log,
           linearThreshold: customConfig.scaleDistribution?.linearThreshold,
@@ -329,7 +328,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             scaleKey,
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
-            placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
+            placement: isHorizontal ? customConfig.axisPlacement ?? AxisPlacement.Auto : AxisPlacement.Bottom,
             formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
@@ -587,40 +586,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     },
   };
 
-  if (sync && sync() !== DashboardCursorSync.Off && xField.type === FieldType.time) {
-    const payload: DataHoverPayload = {
-      point: {
-        [xScaleKey]: null,
-        [yScaleKey]: null,
-      },
-      data: frame,
-    };
-
-    const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
-    const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
-
+  if (xField.type === FieldType.time && sync && sync() !== DashboardCursorSync.Off) {
     cursor.sync = {
       key: eventsScope,
-      filters: {
-        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-          if (sync && sync() === DashboardCursorSync.Off) {
-            return false;
-          }
-
-          payload.rowIndex = dataIdx;
-          if (x < 0 && y < 0) {
-            eventBus.publish(clearEvent);
-          } else {
-            // convert the points
-            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
-            payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
-            payload.point.panelRelY = y > 0 ? y / h : 1; // used by old graph panel to position tooltip
-            eventBus.publish(hoverEvent);
-            hoverEvent.payload.down = undefined;
-          }
-          return true;
-        },
-      },
       scales: [xScaleKey, null],
       // match: [() => true, () => false],
     };
