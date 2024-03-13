@@ -3,7 +3,7 @@ import React from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Icon, IconButton, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, IconButton, InlineField, InlineFieldRow, Input, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
 
@@ -17,7 +17,8 @@ const INVALID_FORMAT_MESSAGE = 'Times must be between 00:00 and 24:00 UTC';
 
 export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
   const styles = useStyles2(getStyles);
-  const { register, formState, getValues } = useFormContext<MuteTimingFields>();
+  const { register, formState, getValues, watch } = useFormContext<MuteTimingFields>();
+  const isDisabled = watch(`time_intervals.${intervalIndex}.disable`);
 
   const {
     fields: timeRanges,
@@ -61,63 +62,69 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                     invalid={Boolean(timeRangeErrors?.start_time)}
                     error={timeRangeErrors?.start_time?.message}
                   >
-                    <Input
-                      // @ts-ignore
-                      {...register(startTimeKey, {
-                        validate: (input: string) => {
-                          const validFormat = isvalidTimeFormat(input);
-                          if (!validFormat) {
-                            return INVALID_FORMAT_MESSAGE;
-                          }
+                    <Tooltip content={isDisabled ? 'This time interval is disabled' : ''} placement="right-start">
+                      <Input
+                        // @ts-ignore
+                        {...register(startTimeKey, {
+                          validate: (input: string) => {
+                            const validFormat = isvalidTimeFormat(input);
+                            if (!validFormat) {
+                              return INVALID_FORMAT_MESSAGE;
+                            }
 
-                          const [startTime, endTime] = getStartAndEndTime();
+                            const [startTime, endTime] = getStartAndEndTime();
 
-                          if (isValidStartAndEndTime(startTime, endTime)) {
-                            return;
-                          } else {
-                            return 'Start time must be before end time';
-                          }
-                        },
-                      })}
-                      className={styles.timeRangeInput}
-                      maxLength={5}
-                      suffix={<Icon name="clock-nine" />}
-                      // @ts-ignore react-hook-form doesn't handle nested field arrays well
-                      defaultValue={timeRange.start_time}
-                      placeholder="HH:mm"
-                      data-testid="mute-timing-starts-at"
-                    />
+                            if (isValidStartAndEndTime(startTime, endTime)) {
+                              return;
+                            } else {
+                              return 'Start time must be before end time';
+                            }
+                          },
+                        })}
+                        className={styles.timeRangeInput}
+                        maxLength={5}
+                        disabled={isDisabled}
+                        suffix={<Icon name="clock-nine" />}
+                        // @ts-ignore react-hook-form doesn't handle nested field arrays well
+                        defaultValue={timeRange.start_time}
+                        placeholder="HH:mm"
+                        data-testid="mute-timing-starts-at"
+                      />
+                    </Tooltip>
                   </InlineField>
                   <InlineField
                     label="End time"
                     invalid={Boolean(timeRangeErrors?.end_time)}
                     error={timeRangeErrors?.end_time?.message}
                   >
-                    <Input
-                      {...register(`time_intervals.${intervalIndex}.times.${index}.end_time`, {
-                        validate: (input: string) => {
-                          const validFormat = isvalidTimeFormat(input);
-                          if (!validFormat) {
-                            return INVALID_FORMAT_MESSAGE;
-                          }
+                    <Tooltip content={isDisabled ? 'This time interval is disabled' : ''} placement="right-start">
+                      <Input
+                        {...register(`time_intervals.${intervalIndex}.times.${index}.end_time`, {
+                          validate: (input: string) => {
+                            const validFormat = isvalidTimeFormat(input);
+                            if (!validFormat) {
+                              return INVALID_FORMAT_MESSAGE;
+                            }
 
-                          const [startTime, endTime] = getStartAndEndTime();
+                            const [startTime, endTime] = getStartAndEndTime();
 
-                          if (isValidStartAndEndTime(startTime, endTime)) {
-                            return;
-                          } else {
-                            return 'End time must be after start time';
-                          }
-                        },
-                      })}
-                      className={styles.timeRangeInput}
-                      maxLength={5}
-                      suffix={<Icon name="clock-nine" />}
-                      // @ts-ignore react-hook-form doesn't handle nested field arrays well
-                      defaultValue={timeRange.end_time}
-                      placeholder="HH:mm"
-                      data-testid="mute-timing-ends-at"
-                    />
+                            if (isValidStartAndEndTime(startTime, endTime)) {
+                              return;
+                            } else {
+                              return 'End time must be after start time';
+                            }
+                          },
+                        })}
+                        className={styles.timeRangeInput}
+                        maxLength={5}
+                        disabled={isDisabled}
+                        suffix={<Icon name="clock-nine" />}
+                        // @ts-ignore react-hook-form doesn't handle nested field arrays well
+                        defaultValue={timeRange.end_time}
+                        placeholder="HH:mm"
+                        data-testid="mute-timing-ends-at"
+                      />
+                    </Tooltip>
                   </InlineField>
                   <IconButton
                     className={styles.deleteTimeRange}
@@ -135,15 +142,18 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
           })}
         </>
       </Field>
-      <Button
-        className={styles.addTimeRange}
-        variant="secondary"
-        type="button"
-        icon="plus"
-        onClick={() => addTimeRange({ start_time: '', end_time: '' })}
-      >
-        Add another time range
-      </Button>
+      <Tooltip content={isDisabled ? 'This time interval is disabled' : ''} placement="right-start">
+        <Button
+          className={styles.addTimeRange}
+          variant="secondary"
+          type="button"
+          icon="plus"
+          disabled={isDisabled}
+          onClick={() => addTimeRange({ start_time: '', end_time: '' })}
+        >
+          Add another time range
+        </Button>
+      </Tooltip>
     </div>
   );
 };
