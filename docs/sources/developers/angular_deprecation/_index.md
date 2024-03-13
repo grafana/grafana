@@ -42,7 +42,8 @@ Our current plan is to completely remove any remaining support for Angular plugi
 
 ## A dashboard I use is displaying a warning, what do I need to do?
 
-Dashboards displaying warnings that they depend on Angular means that a panel visualization or data source being used has a dependency on this legacy framework. Contact your system administrator to advise of the issue or follow the above guidance on avoiding disruption.
+A dashboard displays warnings when one or more panel visualizations or data sources in the dashboard have a dependency on Angular.
+Contact your system administrator to advise them of the issue or follow the preceding guidance on avoiding disruption.
 
 ## How do I migrate an Angular plugin to React?
 
