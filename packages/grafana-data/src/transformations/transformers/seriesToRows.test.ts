@@ -11,6 +11,33 @@ describe('Series to rows', () => {
     mockTransformationsRegistry([seriesToRowsTransformer]);
   });
 
+  it('should do transform even with only one series', async () => {
+    const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
+      id: DataTransformerID.seriesToRows,
+      options: {},
+    };
+
+    const seriesA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        { name: 'Temp', type: FieldType.number, values: [1] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const result = received[0];
+
+      const expected: Field[] = [
+        createField('Time', FieldType.time, [1000]),
+        createField('Metric', FieldType.string, ['A']),
+        createField('Value', FieldType.number, [1]),
+      ];
+
+      expect(unwrap(result[0].fields)).toEqual(expected);
+    });
+  });
+
   it('combine two series into one', async () => {
     const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
       id: DataTransformerID.seriesToRows,

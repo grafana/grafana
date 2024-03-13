@@ -4,10 +4,6 @@ import uPlot, { Cursor } from 'uplot';
 import {
   DashboardCursorSync,
   DataFrameType,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  DataHoverPayload,
-  EventBus,
   formattedValueToString,
   getValueFormat,
   GrafanaTheme2,
@@ -60,7 +56,6 @@ export interface HeatmapZoomEvent {
 interface PrepConfigOpts {
   dataRef: RefObject<HeatmapData>;
   theme: GrafanaTheme2;
-  eventBus: EventBus;
   onhover?: null | ((evt?: HeatmapHoverEvent | null) => void);
   onclick?: null | ((evt?: Object) => void);
   onzoom?: null | ((evt: HeatmapZoomEvent) => void);
@@ -82,7 +77,6 @@ export function prepConfig(opts: PrepConfigOpts) {
   const {
     dataRef,
     theme,
-    eventBus,
     onhover,
     onclick,
     isToolTipOpen,
@@ -98,11 +92,9 @@ export function prepConfig(opts: PrepConfigOpts) {
   } = opts;
 
   const xScaleKey = 'x';
-  let xScaleUnit = 'time';
   let isTime = true;
 
   if (dataRef.current?.heatmap?.fields[0].type !== FieldType.time) {
-    xScaleUnit = dataRef.current?.heatmap?.fields[0].config?.unit ?? 'x';
     isTime = false;
   }
 
@@ -166,16 +158,6 @@ export function prepConfig(opts: PrepConfigOpts) {
     rect = r;
   });
 
-  const payload: DataHoverPayload = {
-    point: {
-      [xScaleUnit]: null,
-    },
-    data: dataRef.current?.heatmap,
-  };
-
-  const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
-  const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
-
   let pendingOnleave: ReturnType<typeof setTimeout> | 0;
 
   onhover &&
@@ -185,9 +167,6 @@ export function prepConfig(opts: PrepConfigOpts) {
           const sel = u.cursor.idxs[i];
           if (sel != null) {
             const { left, top } = u.cursor;
-            payload.rowIndex = sel;
-            payload.point[xScaleUnit] = u.posToVal(left!, xScaleKey);
-            eventBus.publish(hoverEvent);
 
             if (!isToolTipOpen?.current) {
               if (pendingOnleave) {
@@ -211,7 +190,6 @@ export function prepConfig(opts: PrepConfigOpts) {
         if (!pendingOnleave) {
           pendingOnleave = setTimeout(() => {
             onhover(null);
-            eventBus.publish(clearEvent);
           }, 100);
         }
       }
@@ -609,19 +587,6 @@ export function prepConfig(opts: PrepConfigOpts) {
     cursor.sync = {
       key: eventsScope,
       scales: [xScaleKey, null],
-      filters: {
-        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-          if (x < 0) {
-            payload.point[xScaleUnit] = null;
-            eventBus.publish(new DataHoverClearEvent());
-          } else {
-            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
-            eventBus.publish(hoverEvent);
-          }
-
-          return true;
-        },
-      },
     };
 
     builder.setSync();
