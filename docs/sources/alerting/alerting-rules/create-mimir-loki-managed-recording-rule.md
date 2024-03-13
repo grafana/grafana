@@ -69,8 +69,8 @@ To create recording rules, follow these steps.
 1. Click **Save rule** to save the rule or **Save rule and exit** to save the rule and go back to the Alerting page.
 
 {{% docs/reference %}}
-[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label"
-[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label"
+[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label"
 
 [configure-grafana]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana"
 {{% /docs/reference %}}

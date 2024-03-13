@@ -1,10 +1,11 @@
 ---
-## TODO: latest/alerting/fundamentals/annotation-label/how-to-use-labels/
-## latest/alerting/fundamentals/annotation-label/labels-and-label-matchers/
 aliases:
-  - ../alerting-rules/alert-annotation-label/
-  - ../unified-alerting/alerting-rules/alert-annotation-label/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/
+  - ../../fundamentals/annotation-label/
+  - ../../fundamentals/annotation-label/labels-and-label-matchers/
+  - ../../fundamentals/annotation-label/how-to-use-labels/
+  - ../../alerting-rules/alert-annotation-label/
+  - ../../unified-alerting/alerting-rules/alert-annotation-label/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/
 description: Learn how to use annotations and labels to store key information about alerts
 keywords:
   - grafana
@@ -35,12 +36,12 @@ Labels are a fundamental component of alerting:
 
 - The complete set of labels for an alert is what uniquely identifies an alert within Grafana alerts.
 - The alerting UI shows labels for every alert instance generated during evaluation of that rule.
-- Contact points can access labels to dynamically generate notifications that contain specific alert information.
+- Contact points can access labels to send notification messages that contain specific alert information.
 - The Alertmanager uses labels to match alerts for silences and alert groups in notification policies.
 
-{{< collapse title="How label matching works" >}}
+### How label matching works
 
-Use labels and label matchers to link alert rules to notification policies and silences. This allows for a very flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
+Use labels and label matchers to link alert rules to notification policies and silences. This allows for a flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
 
 A label matchers consists of 3 distinct parts, the **label**, the **value** and the **operator**.
 
@@ -50,24 +51,16 @@ A label matchers consists of 3 distinct parts, the **label**, the **value** and 
 
 - The **Operator** field is the operator to match against the label value. The available operators are:
 
-| Operator | Description                                        |
-| -------- | -------------------------------------------------- |
-| `=`      | Select labels that are exactly equal to the value. |
-| `!=`     | Select labels that are not equal to the value.     |
-| `=~`     | Select labels that regex-match the value.          |
-| `!~`     | Select labels that do not regex-match the value.   |
-
-You can also write label matchers to exclude labels:
-
-| Operator | Value |
-| -------- | ----- |
-| `=`      | `""`  |
-| `!~`     | `.+`  |
-| `=~`     | `^$`  |
+  | Operator | Description                                        |
+  | -------- | -------------------------------------------------- |
+  | `=`      | Select labels that are exactly equal to the value. |
+  | `!=`     | Select labels that are not equal to the value.     |
+  | `=~`     | Select labels that regex-match the value.          |
+  | `!~`     | Select labels that do not regex-match the value.   |
 
 If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match in order to link a rule to a policy.
 
-**Example**
+{{< collapse title="Label matching example" >}}
 
 If you define the following set of labels for your alert:
 
@@ -80,6 +73,18 @@ then:
 - A label matcher defined as `id=~[0-9]+` matches this alert rule.
 - A label matcher defined as `baz!~[0-9]+` matches this alert rule.
 - Two label matchers defined as `foo=bar` and `id=~[0-9]+` match this alert rule.
+
+**Exclude labels**
+
+You can also write label matchers to exclude labels.
+
+Here is an example that shows how to exclude the label `Team`. You can choose between any of the values below to exclude labels.
+
+| Label  | Operator | Value |
+| ------ | -------- | ----- |
+| `team` | `=`      | `""`  |
+| `team` | `!~`     | `.+`  |
+| `team` | `=~`     | `^$`  |
 
 {{< /collapse >}}
 
