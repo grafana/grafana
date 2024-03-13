@@ -62,7 +62,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
           visibility: 'visible',
           opacity: 1,
           width: 'auto',
-          background: 'rgba(0, 0, 0, 0.25)'
+          background: 'rgba(0, 0, 0, 0.25)',
         },
       },
 
