@@ -42,6 +42,7 @@ type LokiConfig struct {
 	TenantID          string
 	ExternalLabels    map[string]string
 	Encoder           encoder
+	MaxQueryLength    time.Duration
 }
 
 func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig, error) {
@@ -76,6 +77,7 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 		BasicAuthPassword: cfg.LokiBasicAuthPassword,
 		TenantID:          cfg.LokiTenantID,
 		ExternalLabels:    cfg.ExternalLabels,
+		MaxQueryLength:    cfg.LokiMaxQueryLength,
 		// Snappy-compressed protobuf is the default, same goes for Promtail.
 		Encoder: SnappyProtoEncoder{},
 	}, nil
@@ -227,6 +229,7 @@ func (c *HttpLokiClient) RangeQuery(ctx context.Context, logQL string, start, en
 	if start > end {
 		return QueryRes{}, fmt.Errorf("start time cannot be after end time")
 	}
+	start, end = c.clampRange(start, end)
 	if limit < 1 {
 		limit = defaultPageSize
 	}
@@ -350,4 +353,16 @@ func (c *HttpLokiClient) handleLokiResponse(res *http.Response) ([]byte, error) 
 	}
 
 	return data, nil
+}
+
+// clampRange ensures that the time range is within the configured maximum query length.
+func (c *HttpLokiClient) clampRange(start, end int64) (newStart int64, newEnd int64) {
+	newStart, newEnd = start, end
+
+	maxTimeRange := c.cfg.MaxQueryLength.Nanoseconds()
+	if maxTimeRange != 0 && end-start > maxTimeRange {
+		newStart = end - maxTimeRange
+	}
+
+	return newStart, newEnd
 }

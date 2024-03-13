@@ -30,9 +30,8 @@ import (
 )
 
 const (
-	subsystem            = "annotations"
-	defaultQueryRange    = 6 * time.Hour   // from grafana/pkg/services/ngalert/state/historian/loki.go
-	defaultMaxQueryRange = 741 * time.Hour // Loki default max query range
+	subsystem         = "annotations"
+	defaultQueryRange = 6 * time.Hour // from grafana/pkg/services/ngalert/state/historian/loki.go
 )
 
 var (
@@ -58,6 +57,7 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 	if !useStore(cfg, ft) {
 		return nil
 	}
+
 	lokiCfg, err := historian.NewLokiConfig(cfg)
 	if err != nil {
 		// this config error is already handled elsewhere
@@ -108,17 +108,6 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 	// query.From and query.To are always in milliseconds, convert them to nanoseconds for loki
 	from := query.From * 1e6
 	to := query.To * 1e6
-
-	// clamp 'from' to the max time range, treating a value of 0 as no limit
-	maxTimeRange := defaultMaxQueryRange.Nanoseconds()
-	cfg, err := r.client.GetConfigProjection(ctx)
-	if err == nil {
-		// if we could fetch the config, use the max query length from it
-		maxTimeRange = time.Duration(cfg.LimitsConfig.MaxQueryLength).Nanoseconds()
-	}
-	if maxTimeRange != 0 && to-from > maxTimeRange {
-		from = to - maxTimeRange
-	}
 
 	res, err := r.client.RangeQuery(ctx, logQL, from, to, query.Limit)
 	if err != nil {
