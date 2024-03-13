@@ -189,7 +189,6 @@ func isSupportBundlesEnabled(s *ServiceImpl) bool {
 
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
 	if s.cfg.HelpEnabled {
-
 		// The version subtitle is set later by NavTree.ApplyHelpVersion
 		helpNode := &navtree.NavLink{
 			Text:       "Help",
