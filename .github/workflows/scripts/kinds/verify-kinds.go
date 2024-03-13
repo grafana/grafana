@@ -35,10 +35,6 @@ func main() {
 	composableKinds, err := schemas.GetComposableKinds()
 	die(err)
 
-	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
-		os.Exit(0)
-	}
-
 	coreJennies := codejen.JennyList[schemas.CoreKind]{}
 	coreJennies.Append(
 		CoreKindRegistryJenny(outputPath),
