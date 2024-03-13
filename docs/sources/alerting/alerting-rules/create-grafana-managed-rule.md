@@ -38,8 +38,6 @@ Grafana managed alert rules can only be edited or deleted by users with Edit per
 If you delete an alerting resource created in the UI, you can no longer retrieve it.
 To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
 
-Watch this video to learn more about creating alert rules: {{< vimeo 720001934 >}}
-
 In the following sections, we’ll guide you through the process of creating your Grafana-managed alert rules.
 
 To create a Grafana-managed alert rule, use the in-product alert creation flow and follow these steps to help you.
@@ -79,10 +77,6 @@ Define a query to get the data you want to measure and a condition that needs to
    {{% /admonition %}}
 
    b. Click **Preview** to verify that the expression is successful.
-
-{{% admonition type="note" %}}
-The recovery threshold feature is currently only available in OSS.
-{{% /admonition %}}
 
 1. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your alert rule should stop firing.
 
@@ -173,16 +167,16 @@ Complete the following steps to set up labels and notifications.
 
    2. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
 
-      {{% admonition type="note" %}}
-      An auto-generated notification policy is generated. Only admins can view these auto-generated policies from the **Notification policies** list view. Any changes have to be made in the alert rules form. {{% /admonition %}}
+      {{< admonition type="note" >}}
+      An auto-generated notification policy is generated. Only admins can view these auto-generated policies from the **Notification policies** list view. Any changes have to be made in the alert rules form. {{< /admonition >}}
 
    **Use notification policy**
 
    3. Choose this option to use the notification policy tree to direct your notifications.
 
-      {{% admonition type="note" %}}
+      {{< admonition type="note" >}}
       All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
-      {{% /admonition %}}
+      {{< /admonition >}}
 
    4. Preview your alert instance routing set up.
 

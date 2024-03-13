@@ -9,6 +9,7 @@
     "loader-utils", // v3 requires upstream changes in ngtemplate-loader. ignore, and remove when we remove angular.
     "monaco-editor", // due to us exposing this via @grafana/ui/CodeEditor's props bumping can break plugins
     "@fingerprintjs/fingerprintjs", // we don't want to bump to v4 due to licensing changes
+    "@swc/core", // versions ~1.4.5 contain multiple bugs related to baseUrl resolution breaking builds.
   ],
   "includePaths": ["package.json", "packages/**", "public/app/plugins/**"],
   "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**", "packages/grafana-e2e/**"],

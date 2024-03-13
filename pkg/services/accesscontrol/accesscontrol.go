@@ -26,6 +26,8 @@ type Service interface {
 	registry.ProvidesUsageStats
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
+	// GetUserPermissionsInOrg return user permission in a specific organization
+	GetUserPermissionsInOrg(ctx context.Context, user identity.Requester, orgID int64) ([]Permission, error)
 	// SearchUsersPermissions returns all users' permissions filtered by an action prefix
 	SearchUsersPermissions(ctx context.Context, user identity.Requester, options SearchOptions) (map[int64][]Permission, error)
 	// ClearUserPermissionCache removes the permission cache entry for the given user
@@ -35,6 +37,9 @@ type Service interface {
 	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
 	// If orgID is set to 0 remove permissions from all orgs
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+	// DeleteTeamPermissions removes all role assignments and permissions granted to a team
+	// and removes permissions scoped to the team.
+	DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error
 	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(registrations ...RoleRegistration) error
@@ -52,6 +57,7 @@ type Store interface {
 	SearchUsersPermissions(ctx context.Context, orgID int64, options SearchOptions) (map[int64][]Permission, error)
 	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+	DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error
 	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 }
@@ -71,6 +77,7 @@ type SearchOptions struct {
 	Scope        string
 	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
 	wildcards    Wildcards // private field computed based on the Scope
+	RolePrefixes []string
 }
 
 // Wildcards computes the wildcard scopes that include the scope
