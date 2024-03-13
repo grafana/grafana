@@ -8,6 +8,7 @@ import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionState } from '../../types';
 import {
+  calculateAngle,
   calculateCoordinates,
   getConnections,
   getParentBoundingClientRect,
@@ -275,6 +276,7 @@ export class Connections {
 
   // Handles mousemove and mouseup events when dragging an existing vertex
   vertexListener = (event: MouseEvent) => {
+    this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
     event.preventDefault();
 
     if (!(this.connectionVertex && this.scene.div && this.scene.div.parentElement)) {
@@ -323,9 +325,22 @@ export class Connections {
       }
     }
 
-    // Display temporary vertex during drag
-    this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${x} ${y} L${vx2} ${vy2}`);
-    this.connectionSVGVertex!.style.display = 'block';
+    // Check if slope before vertex and after vertex is within snapping tolerance
+    const snapTolerance = 5;
+    const angleOverall = calculateAngle(vx1, vy1, vx2, vy2);
+    const angleBefore = calculateAngle(vx1, vy1, x, y);
+    const deleteVertex = Math.abs(angleBefore - angleOverall) < snapTolerance;
+    if (deleteVertex) {
+      // Display temporary vertex removal
+      this.scene.selecto!.rootContainer!.style.cursor = 'not-allowed';
+      this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${vx2} ${vy2}`);
+      this.connectionSVGVertex!.style.display = 'block';
+    } else {
+      // Display temporary vertex during drag
+      this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${x} ${y} L${vx2} ${vy2}`);
+      this.connectionSVGVertex!.style.display = 'block';
+      this.connectionVertexPath!.style.stroke = 'white';
+    }
 
     // Handle mouseup
     if (!event.buttons) {
@@ -345,12 +360,16 @@ export class Connections {
           const currentConnections = [...currentSource.options.connections];
           if (currentConnections[connectionIndex].vertices) {
             const currentVertices = [...currentConnections[connectionIndex].vertices!];
-            const currentVertex = { ...currentVertices[vertexIndex] };
+            if (deleteVertex) {
+              currentVertices.splice(vertexIndex, 1);
+            } else {
+              const currentVertex = { ...currentVertices[vertexIndex] };
 
-            currentVertex.x = (x - x1) / (x2 - x1);
-            currentVertex.y = (y - y1) / (y2 - y1);
+              currentVertex.x = (x - x1) / (x2 - x1);
+              currentVertex.y = (y - y1) / (y2 - y1);
 
-            currentVertices[vertexIndex] = currentVertex;
+              currentVertices[vertexIndex] = currentVertex;
+            }
             currentConnections[connectionIndex] = {
               ...currentConnections[connectionIndex],
               vertices: currentVertices,
@@ -368,6 +387,7 @@ export class Connections {
 
   // Handles mousemove and mouseup events when dragging a new vertex
   vertexAddListener = (event: MouseEvent) => {
+    this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
     event.preventDefault();
 
     if (!(this.connectionVertex && this.scene.div && this.scene.div.parentElement)) {
@@ -495,7 +515,6 @@ export class Connections {
   handleVertexDragStart = (selectedTarget: HTMLElement) => {
     // Get vertex index from selected target data
     this.selectedVertexIndex = Number(selectedTarget.getAttribute('data-index'));
-    this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.vertexListener);
     this.scene.selecto?.rootContainer?.addEventListener('mouseup', this.vertexListener);
@@ -505,7 +524,6 @@ export class Connections {
   handleVertexAddDragStart = (selectedTarget: HTMLElement) => {
     // Get vertex index from selected target data
     this.selectedVertexIndex = Number(selectedTarget.getAttribute('data-index'));
-    this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.vertexAddListener);
     this.scene.selecto?.rootContainer?.addEventListener('mouseup', this.vertexAddListener);
