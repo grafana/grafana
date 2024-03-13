@@ -334,7 +334,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     newState.version = versionRsp.version;
 
     this.setState(newState);
-    this.exitEditMode({ skipConfirm: true, restoreIntialState: false });
+    this.exitEditMode({ skipConfirm: true, restoreInitialState: false });
 
     return true;
   };
