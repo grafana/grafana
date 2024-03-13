@@ -28,8 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
-var logger = backend.NewLoggerWith("logger", "tsdb.loki")
-
 type Service struct {
 	im       instancemgmt.InstanceManager
 	features featuremgmt.FeatureToggles
@@ -48,7 +46,7 @@ func ProvideService(httpClientProvider httpclient.Provider, features featuremgmt
 		im:       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		features: features,
 		tracer:   tracer,
-		logger:   logger,
+		logger:   backend.NewLoggerWith("logger", "tsdb.loki"),
 	}
 }
 
@@ -112,14 +110,12 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	// TODO
-	var myLogger = backend.NewLoggerWith("logger", "tsdb.loki")
-	var contextualLogger = myLogger.FromContext(ctx) // s.logger.FromContext(ctx)
+	logger := s.logger.FromContext(ctx)
 	if err != nil {
-		contextualLogger.Error("Failed to get data source info", "error", err)
+		logger.Error("Failed to get data source info", "error", err)
 		return err
 	}
-	return callResource(ctx, req, sender, dsInfo, contextualLogger, s.tracer)
+	return callResource(ctx, req, sender, dsInfo, logger, s.tracer)
 }
 
 func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger, tracer tracing.Tracer) error {
@@ -168,11 +164,9 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	// TODO
-	var myLogger = backend.NewLoggerWith("logger", "tsdb.loki")
-	var contextualLogger = myLogger.FromContext(ctx).With("fromAlert", fromAlert).FromContext(ctx) // logger.FromContext(ctx).With("fromAlert", fromAlert)
+	logger := s.logger.With("fromAlert", fromAlert).FromContext(ctx)
 	if err != nil {
-		contextualLogger.Error("Failed to get data source info", "err", err)
+		logger.Error("Failed to get data source info", "err", err)
 		result := backend.NewQueryDataResponse()
 		return result, err
 	}
@@ -182,7 +176,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		logsDataplane:   s.features.IsEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
 	}
 
-	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, contextualLogger, s.features.IsEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), s.features.IsEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
+	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, s.features.IsEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), s.features.IsEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
 }
 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool, requestStructuredMetadata bool) (*backend.QueryDataResponse, error) {
@@ -197,9 +191,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		return result, err
 	}
 
-	// TODO
-	var myLogger = backend.NewLoggerWith("logger", "tsdb.loki")
-	myLogger.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest, "runInParallel", runInParallel)
+	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest, "runInParallel", runInParallel)
 
 	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries", trace.WithAttributes(
 		attribute.Bool("runInParallel", runInParallel),
