@@ -325,7 +325,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return true;
   };
 
-  public openSaveDrawer({ saveAsCopy }: { saveAsCopy?: boolean }) {
+  public openSaveDrawer({ saveAsCopy, onSaveSuccess }: { saveAsCopy?: boolean; onSaveSuccess?: () => void }) {
     if (!this.state.isEditing) {
       return;
     }
@@ -334,6 +334,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       overlay: new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
         saveAsCopy,
+        onSaveSuccess,
       }),
     });
   }

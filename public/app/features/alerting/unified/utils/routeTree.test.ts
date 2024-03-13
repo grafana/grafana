@@ -3,7 +3,7 @@ import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../types/amroutes';
 
 import { GRAFANA_DATASOURCE_NAME } from './datasource';
-import { addRouteToReferenceRoute, findRouteInTree, omitRouteFromRouteTree } from './routeTree';
+import { addRouteToReferenceRoute, cleanRouteIDs, findRouteInTree, omitRouteFromRouteTree } from './routeTree';
 
 describe('findRouteInTree', () => {
   it('should find the correct route', () => {
@@ -69,9 +69,10 @@ describe('omitRouteFromRouteTree', () => {
       ],
     };
 
-    expect(omitRouteFromRouteTree({ id: 'route-2' }, tree)).toStrictEqual({
+    expect(omitRouteFromRouteTree({ id: 'route-2' }, tree)).toEqual({
+      id: 'route-1',
       receiver: 'root',
-      routes: [{ receiver: 'receiver-3', routes: undefined }],
+      routes: [{ id: 'route-3', receiver: 'receiver-3', routes: undefined }],
     });
   });
 
@@ -83,5 +84,24 @@ describe('omitRouteFromRouteTree', () => {
     expect(() => {
       omitRouteFromRouteTree(tree, { id: 'route-1' });
     }).toThrow();
+  });
+});
+
+describe('cleanRouteIDs', () => {
+  it('should remove IDs from routesr recursively', () => {
+    expect(
+      cleanRouteIDs({
+        id: '1',
+        receiver: '1',
+        routes: [
+          { id: '2', receiver: '2' },
+          { id: '3', receiver: '3' },
+        ],
+      })
+    ).toEqual({ receiver: '1', routes: [{ receiver: '2' }, { receiver: '3' }] });
+  });
+
+  it('should also accept regular routes', () => {
+    expect(cleanRouteIDs({ receiver: 'test' })).toEqual({ receiver: 'test' });
   });
 });
