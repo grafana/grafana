@@ -88,11 +88,11 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 	usr.Rands = rands
 
 	if len(args.Password) > 0 {
-		encodedPassword, err := util.EncodePassword(args.Password, usr.Salt)
+		encodedPassword, err := util.EncodePassword(string(args.Password), usr.Salt)
 		if err != nil {
 			return usr, err
 		}
-		usr.Password = encodedPassword
+		usr.Password = user.Password(encodedPassword)
 	}
 
 	sess.UseBool("is_admin")

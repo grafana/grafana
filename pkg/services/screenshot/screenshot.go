@@ -122,11 +122,11 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 		Width:           opts.Width,
 		Height:          opts.Height,
 		Theme:           opts.Theme,
-		ConcurrentLimit: s.cfg.AlertingRenderLimit,
+		ConcurrentLimit: s.cfg.RendererConcurrentRequestLimit,
 		Path:            u.String(),
 	}
 
-	result, err := s.rs.Render(ctx, renderOpts, nil)
+	result, err := s.rs.Render(ctx, rendering.RenderPNG, renderOpts, nil)
 	if err != nil {
 		s.instrumentError(err)
 		return nil, fmt.Errorf("failed to take screenshot: %w", err)

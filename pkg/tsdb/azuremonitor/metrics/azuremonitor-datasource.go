@@ -339,17 +339,12 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 		return nil, err
 	}
 
-	azurePortalUrl, err := loganalytics.GetAzurePortalUrl(dsInfo.Cloud)
-	if err != nil {
-		return nil, err
-	}
-
 	subscription, err := e.retrieveSubscriptionDetails(cli, ctx, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
-	frames, err := e.parseResponse(data, query, azurePortalUrl, subscription)
+	frames, err := e.parseResponse(data, query, dsInfo.Routes["Azure Portal"].URL, subscription)
 	if err != nil {
 		return nil, err
 	}

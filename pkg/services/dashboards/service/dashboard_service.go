@@ -598,9 +598,19 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 		folderUIDs = append(folderUIDs, dashboard.FolderUID)
 	}
 
-	dashFolders, err := dr.folderStore.GetFolders(ctx, user.GetOrgID(), folderUIDs)
+	// GetFolders return only folders available to user. So we can use is to check access.
+	userDashFolders, err := dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
+		UIDs:         folderUIDs,
+		OrgID:        user.GetOrgID(),
+		SignedInUser: user,
+	})
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
+	}
+
+	dashFoldersMap := make(map[string]*folder.Folder, 0)
+	for _, f := range userDashFolders {
+		dashFoldersMap[f.UID] = f
 	}
 
 	for _, dashboard := range userDashboards {
@@ -609,24 +619,8 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 			continue
 		}
 
-		dashFolder, ok := dashFolders[dashboard.FolderUID]
-		if !ok {
-			dr.log.Error("failed to fetch folder by UID from store", "uid", dashboard.FolderUID)
-			continue
-		}
-
-		g, err := guardian.NewByFolder(ctx, dashFolder, user.GetOrgID(), user)
-		if err != nil {
-			dr.log.Error("failed to check folder permissions", "folder uid", dashboard.FolderUID, "error", err)
-			continue
-		}
-
-		canView, err := g.CanView()
-		if err != nil {
-			dr.log.Error("failed to fetch dashboard", "uid", dashboard.UID, "error", err)
-			continue
-		}
-		if !canView {
+		_, hasAccess := dashFoldersMap[dashboard.FolderUID]
+		if !hasAccess {
 			filteredDashboards = append(filteredDashboards, dashboard)
 		}
 	}

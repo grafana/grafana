@@ -38,7 +38,7 @@ type ContactPointService interface {
 }
 
 type TemplateService interface {
-	GetTemplates(ctx context.Context, orgID int64) (map[string]string, error)
+	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
 	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
 	DeleteTemplate(ctx context.Context, orgID int64, name string) error
 }
@@ -65,6 +65,7 @@ type AlertRuleService interface {
 	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
 	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroup, error)
 	ReplaceRuleGroup(ctx context.Context, orgID int64, group alerting_models.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
+	DeleteRuleGroup(ctx context.Context, orgID int64, folder, group string, provenance alerting_models.Provenance) error
 	GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (provisioning.AlertRuleWithFolderTitle, error)
 	GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroupWithFolderTitle, error)
 	GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64, folderUIDs []string) ([]alerting_models.AlertRuleGroupWithFolderTitle, error)
@@ -201,11 +202,7 @@ func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) respon
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	result := make([]definitions.NotificationTemplate, 0, len(templates))
-	for k, v := range templates {
-		result = append(result, definitions.NotificationTemplate{Name: k, Template: v})
-	}
-	return response.JSON(http.StatusOK, result)
+	return response.JSON(http.StatusOK, templates)
 }
 
 func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name string) response.Response {
@@ -213,8 +210,10 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name st
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	if tmpl, ok := templates[name]; ok {
-		return response.JSON(http.StatusOK, definitions.NotificationTemplate{Name: name, Template: tmpl})
+	for _, tmpl := range templates {
+		if tmpl.Name == name {
+			return response.JSON(http.StatusOK, tmpl)
+		}
 	}
 	return response.Empty(http.StatusNotFound)
 }
@@ -398,10 +397,7 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *contextmodel.ReqContext, UID
 func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *contextmodel.ReqContext, folder string, group string) response.Response {
 	g, err := srv.alertRules.GetRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), folder, group)
 	if err != nil {
-		if errors.Is(err, store.ErrAlertRuleGroupNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusOK, ApiAlertRuleGroupFromAlertRuleGroup(g))
 }
@@ -447,10 +443,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqContext, folder string, group string) response.Response {
 	g, err := srv.alertRules.GetAlertRuleGroupWithFolderTitle(c.Req.Context(), c.SignedInUser.GetOrgID(), folder, group)
 	if err != nil {
-		if errors.Is(err, store.ErrAlertRuleGroupNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rule group")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rule group", err)
 	}
 
 	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{g})
@@ -505,6 +498,15 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, ag)
+}
+
+func (srv *ProvisioningSrv) RouteDeleteAlertRuleGroup(c *contextmodel.ReqContext, folderUID string, group string) response.Response {
+	provenance := determineProvenance(c)
+	err := srv.alertRules.DeleteRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), folderUID, group, alerting_models.Provenance(provenance))
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
+	}
+	return response.JSON(http.StatusNoContent, "")
 }
 
 func determineProvenance(ctx *contextmodel.ReqContext) definitions.Provenance {
@@ -606,11 +608,11 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 		return nil
 	}
 	if err := convertToResources(); err != nil {
-		return response.Error(500, "failed to convert to HCL resources", err)
+		return response.Error(http.StatusInternalServerError, "failed to convert to HCL resources", err)
 	}
 	hclBody, err := hcl.Encode(resources...)
 	if err != nil {
-		return response.Error(500, "body hcl encode", err)
+		return response.Error(http.StatusInternalServerError, "body hcl encode", err)
 	}
 	resp := response.Respond(http.StatusOK, hclBody)
 	if download {

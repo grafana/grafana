@@ -6,18 +6,17 @@ import (
 	"net"
 	"path"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
-	"github.com/grafana/grafana/pkg/registry/apis/example"
-	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
-	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,7 +27,8 @@ const (
 
 // APIServerOptions contains the state for the apiserver
 type APIServerOptions struct {
-	builders           []grafanaAPIServer.APIGroupBuilder
+	factory            standalone.APIServerFactory
+	builders           []builder.APIGroupBuilder
 	RecommendedOptions *options.RecommendedOptions
 	AlternateDNS       []string
 
@@ -43,29 +43,18 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 	}
 }
 
-func (o *APIServerOptions) loadAPIGroupBuilders(args []string) error {
-	o.builders = []grafanaAPIServer.APIGroupBuilder{}
-	for _, g := range args {
-		switch g {
-		// No dependencies for testing
-		case "example.grafana.app":
-			o.builders = append(o.builders, example.NewTestingAPIBuilder())
-		case "featuretoggle.grafana.app":
-			features := featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil) // none... for now
-			o.builders = append(o.builders, featuretoggle.NewFeatureFlagAPIBuilder(features))
-		case "testdata.datasource.grafana.app":
-			ds, err := server.InitializeDataSourceAPIServer(g)
-			if err != nil {
-				return err
-			}
-			o.builders = append(o.builders, ds)
-		default:
-			return fmt.Errorf("unknown group: %s", g)
+func (o *APIServerOptions) loadAPIGroupBuilders(apis []schema.GroupVersion) error {
+	o.builders = []builder.APIGroupBuilder{}
+	for _, gv := range apis {
+		api, err := o.factory.MakeAPIServer(gv)
+		if err != nil {
+			return err
 		}
+		o.builders = append(o.builders, api)
 	}
 
 	if len(o.builders) < 1 {
-		return fmt.Errorf("expected group name(s) in the command line arguments")
+		return fmt.Errorf("no apis matched ")
 	}
 
 	// Install schemas
@@ -122,6 +111,7 @@ func (o *APIServerOptions) ModifiedApplyTo(config *genericapiserver.RecommendedC
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -162,7 +152,15 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
 
 	// Add OpenAPI specs for each group+version
-	err := grafanaAPIServer.SetupConfig(serverConfig, o.builders)
+	err := builder.SetupConfig(
+		grafanaAPIServer.Scheme,
+		serverConfig,
+		o.builders,
+		setting.BuildStamp,
+		setting.BuildVersion,
+		setting.BuildCommit,
+		setting.BuildBranch,
+	)
 	return serverConfig, err
 }
 
@@ -172,6 +170,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 func (o *APIServerOptions) Validate(args []string) error {
 	errors := []error{}
 	errors = append(errors, o.RecommendedOptions.Validate()...)
+	errors = append(errors, o.factory.GetOptions().ValidateOptions()...)
 	return utilerrors.NewAggregate(errors)
 }
 
@@ -190,7 +189,7 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 	}
 
 	// Install the API Group+version
-	err = grafanaAPIServer.InstallAPIs(server, config.RESTOptionsGetter, o.builders)
+	err = builder.InstallAPIs(grafanaAPIServer.Scheme, grafanaAPIServer.Codecs, server, config.RESTOptionsGetter, o.builders, true)
 	if err != nil {
 		return err
 	}

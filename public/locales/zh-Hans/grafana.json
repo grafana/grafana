@@ -1,5 +1,5 @@
 {
-  "_comment": "此文件是英文字符串的真实来源。编辑此文件可更改用户界面的复数形式和其他短语。",
+  "_comment": "此文件是英文字符串的真实来源。在代码库中编辑此文件以更改复数形式和 UI 的其他短语。",
   "access-control": {
     "add-permission": {
       "role-label": "角色",
@@ -26,7 +26,7 @@
     }
   },
   "bouncing-loader": {
-    "label": ""
+    "label": "正在加载"
   },
   "browse-dashboards": {
     "action": {
@@ -71,7 +71,7 @@
     "folder-picker": {
       "accessible-label": "选择文件夹：{{ label }} 当前已选择",
       "button-label": "选择文件夹",
-      "clear-selection": "",
+      "clear-selection": "清除选择",
       "empty-message": "未找到文件夹",
       "error-title": "加载文件夹时出错",
       "search-placeholder": "搜索文件夹",
@@ -102,6 +102,9 @@
       "change-theme": "更改主题...",
       "dark-theme": "深色",
       "light-theme": "浅色"
+    },
+    "empty-state": {
+      "title": ""
     },
     "search-box": {
       "placeholder": "搜索或跳转至..."
@@ -230,8 +233,8 @@
       "widget": "小部件"
     },
     "alert-rules-drawer": {
-      "redirect-link": "",
-      "subtitle": ""
+      "redirect-link": "Grafana Alerting 中的列表",
+      "subtitle": "与此仪表板相关的警报规则"
     },
     "empty": {
       "add-library-panel-body": "添加与其他仪表板共享的可视化。",
@@ -301,7 +304,7 @@
     },
     "toolbar": {
       "add": "添加",
-      "alert-rules": "",
+      "alert-rules": "警报规则",
       "mark-favorite": "标记为收藏",
       "open-original": "打开原始仪表板",
       "playlist-next": "前往下一个仪表板",
@@ -311,7 +314,7 @@
       "save": "保存仪表板",
       "settings": "仪表板设置",
       "share": "分享仪表板或面板",
-      "share-button": "",
+      "share-button": "分享",
       "unmark-favorite": "取消标记为收藏"
     },
     "validation": {
@@ -361,7 +364,7 @@
       "title-label": "标题"
     },
     "json-editor": {
-      "apply-button": "",
+      "apply-button": "应用更改",
       "save-button": "保存更改",
       "subtitle": "下面的 JSON 模型是定义仪表板的数据结构。这包括仪表板设置、面板设置、布局和查询等等。",
       "title": "JSON 模型"
@@ -532,13 +535,13 @@
     },
     "toolbar": {
       "aria-label": "浏览 工具栏",
-      "copy-link": "",
-      "copy-link-abs-time": "",
-      "copy-links-absolute-category": "",
-      "copy-links-normal-category": "",
-      "copy-shortened-link": "复制短链接",
-      "copy-shortened-link-abs-time": "",
-      "copy-shortened-link-menu": "",
+      "copy-link": "复制网址",
+      "copy-link-abs-time": "复制绝对网址",
+      "copy-links-absolute-category": "时间同步网址链接（保持时间范围共享）",
+      "copy-links-normal-category": "正常链接地址",
+      "copy-shortened-link": "复制短网址",
+      "copy-shortened-link-abs-time": "复制绝对短网址",
+      "copy-shortened-link-menu": "打开短链接菜单",
       "refresh-picker-cancel": "取消",
       "refresh-picker-run": "运行查询",
       "split-close": "关闭",
@@ -554,7 +557,7 @@
   },
   "grafana-ui": {
     "drawer": {
-      "close": ""
+      "close": "关闭"
     },
     "modal": {
       "close-tooltip": "关闭"
@@ -587,7 +590,7 @@
     "shortcuts-description": {
       "change-theme": "更改主题",
       "collapse-all-rows": "折叠所有行",
-      "copy-time-range": "",
+      "copy-time-range": "复制时间范围",
       "dashboard-settings": "仪表板设置",
       "duplicate-panel": "复制面板",
       "exit-edit/setting-views": "退出编辑/设置视图",
@@ -601,7 +604,7 @@
       "move-time-range-forward": "向前移动时间范围",
       "open-search": "打开搜索",
       "open-shared-modal": "打开面板分享模式",
-      "paste-time-range": "",
+      "paste-time-range": "粘贴时间范围",
       "refresh-all-panels": "刷新所有面板",
       "remove-panel": "删除面板",
       "save-dashboard": "保存仪表板",
@@ -644,14 +647,14 @@
   },
   "library-panels": {
     "modal": {
-      "body_other": "此面板在 {{count}} 个仪表板中使用。请选择要在哪个仪表板中查看此面板：",
       "button-cancel": "<0>取消</0>",
       "button-view-panel1": "在 {{label}} 中查看面板...",
       "button-view-panel2": "在仪表板中查看面板...",
       "panel-not-linked": "面板没有链接到仪表板。请将面板添加到仪表板，然后重试。",
       "select-no-options-message": "未找到仪表板",
       "select-placeholder": "开始输入以搜索仪表板",
-      "title": "在仪表板中查看面板"
+      "title": "在仪表板中查看面板",
+      "body_other": "此面板在 {{count}} 个仪表板中使用。请选择要在哪个仪表板中查看此面板："
     },
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
@@ -664,6 +667,125 @@
       "invalid-user-or-password": "用户名或密码无效",
       "title": "登录失败",
       "unknown": "发生了未知错误"
+    },
+    "forgot-password": "",
+    "form": {
+      "password-label": "",
+      "password-required": "",
+      "submit-label": "",
+      "submit-loading-label": "",
+      "username-label": "",
+      "username-required": ""
+    },
+    "services": {
+      "sing-in-with-prefix": ""
+    },
+    "signup": {
+      "button-label": "",
+      "new-to-question": ""
+    }
+  },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "connect-modal": {
+      "body-cloud-stack": "",
+      "body-get-started": "",
+      "body-paste-stack": "",
+      "body-sign-up": "",
+      "body-token": "",
+      "body-token-field": "",
+      "body-token-field-placeholder": "",
+      "body-token-instructions": "",
+      "body-url-field": "",
+      "body-view-stacks": "",
+      "cancel": "",
+      "connect": "",
+      "connecting": "",
+      "stack-required-error": "",
+      "title": "",
+      "token-required-error": ""
+    },
+    "cta": {
+      "button": "",
+      "header": ""
+    },
+    "disconnect-modal": {
+      "body": "",
+      "cancel": "",
+      "disconnect": "",
+      "disconnecting": "",
+      "title": ""
+    },
+    "get-started": {
+      "body": "",
+      "configure-pdc-link": "",
+      "link-title": "",
+      "step-1": "",
+      "step-2": "",
+      "step-3": "",
+      "step-4": "",
+      "step-5": "",
+      "title": ""
+    },
+    "is-it-secure": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "migrate-to-this-stack": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "migration-token": {
+      "body": "",
+      "delete-button": "",
+      "delete-modal-body": "",
+      "delete-modal-cancel": "",
+      "delete-modal-confirm": "",
+      "delete-modal-deleting": "",
+      "delete-modal-title": "",
+      "generate-button": "",
+      "generate-button-loading": "",
+      "modal-close": "",
+      "modal-copy-and-close": "",
+      "modal-copy-button": "",
+      "modal-field-description": "",
+      "modal-field-label": "",
+      "modal-title": "",
+      "status": "",
+      "title": ""
+    },
+    "pdc": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "pricing": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "resources": {
+      "disconnect": ""
+    },
+    "token-status": {
+      "active": "",
+      "no-active": ""
+    },
+    "what-is-cloud": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "why-host": {
+      "body": "",
+      "link-title": "",
+      "title": ""
     }
   },
   "nav": {
@@ -675,7 +797,7 @@
       "title": "服务器管理员"
     },
     "alert-list-legacy": {
-      "title": ""
+      "title": "警报规则"
     },
     "alerting": {
       "subtitle": "在系统发生问题后立即获悉",
@@ -714,8 +836,8 @@
       "title": "静默"
     },
     "alerting-upgrade": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "将您现有的旧版警报和通知通道升级到新的 Grafana 告警",
+      "title": "Alerting 升级"
     },
     "alerts-and-incidents": {
       "subtitle": "警报和事件管理应用",
@@ -734,6 +856,9 @@
     },
     "authentication": {
       "title": "身份验证"
+    },
+    "collector": {
+      "title": "收集器"
     },
     "config": {
       "title": "管理"
@@ -795,7 +920,7 @@
       "title": "探索"
     },
     "frontend": {
-      "subtitle": "",
+      "subtitle": "获得真正的用户监测洞察",
       "title": "前端"
     },
     "frontend-app": {
@@ -826,14 +951,14 @@
       "title": "事件"
     },
     "infrastructure": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "了解您基础设施的健康",
+      "title": "基础设施"
     },
     "integrations": {
       "title": "集成"
     },
     "k6": {
-      "title": ""
+      "title": "性能"
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -847,6 +972,10 @@
     },
     "manage-folder": {
       "subtitle": "管理文件夹仪表板和权限"
+    },
+    "migrate-to-cloud": {
+      "subtitle": "",
+      "title": ""
     },
     "monitoring": {
       "subtitle": "监控和基础设施应用",
@@ -871,9 +1000,6 @@
       "subtitle": "管理整个组织的首选项",
       "title": "默认首选项"
     },
-    "performance-testing": {
-      "title": "性能测试"
-    },
     "playlists": {
       "subtitle": "以序列显示的仪表板组",
       "title": "播放列表"
@@ -881,6 +1007,10 @@
     "plugins": {
       "subtitle": "使用插件扩展 Grafana 体验",
       "title": "插件"
+    },
+    "private-data-source-connections": {
+      "subtitle": "查询安全网络中的数据，无需打开网络从 Grafana Cloud 传入流量。请在我们的文档中了解更多信息。",
+      "title": "私有数据源连接"
     },
     "profile/notifications": {
       "title": "通知历史记录"
@@ -955,8 +1085,8 @@
       "title": "团队"
     },
     "testing-and-synthetics": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "使用 k6 和 Synthetic Monitoring 洞察优化性能。",
+      "title": "测试与合成"
     },
     "upgrading": {
       "title": "统计信息和许可证"
@@ -973,8 +1103,8 @@
     "megamenu": {
       "close": "关闭菜单",
       "dock": "停靠菜单",
-      "list-label": "",
-      "undock": ""
+      "list-label": "导航",
+      "undock": "取消停靠菜单"
     },
     "toolbar": {
       "close-menu": "关闭菜单",
@@ -985,7 +1115,7 @@
   },
   "news": {
     "drawer": {
-      "close": ""
+      "close": "关闭抽屉"
     },
     "title": "最新博客"
   },
@@ -1072,121 +1202,122 @@
       "new-password-same-as-old": "新密码不能和旧密码相同。",
       "old-password-label": "旧密码",
       "old-password-required": "旧密码是必需项",
-      "passwords-must-match": "密码必须一致"
+      "passwords-must-match": "密码必须一致",
+      "strong-password-validation-register": ""
     }
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
-      "ack-title": "",
-      "data-src-ack-desc": "",
-      "data-src-ack-tooltip": "",
-      "public-ack-desc": "",
-      "public-ack-tooltip": "",
-      "usage-ack-desc": "",
-      "usage-ack-desc-tooltip": ""
+      "ack-title": "在发布仪表板前，请确认以下内容：",
+      "data-src-ack-desc": "发布当前仅适用于数据源子集*",
+      "data-src-ack-tooltip": "了解更多关于公共数据源的信息",
+      "public-ack-desc": "您的整个仪表板将公开*",
+      "public-ack-tooltip": "了解更多关于公共仪表板的信息",
+      "usage-ack-desc": "公布仪表板将导致其每次被查看时运行查询，这可能会增加费用*",
+      "usage-ack-desc-tooltip": "了解更多关于查询缓存的信息"
     },
     "config": {
-      "can-view-dashboard-radio-button-label": "",
-      "copy-button": "",
-      "dashboard-url-field-label": "",
-      "email-share-type-option-label": "",
-      "pause-sharing-dashboard-label": "",
-      "public-share-type-option-label": "",
-      "revoke-public-URL-button": "",
-      "revoke-public-URL-button-title": "",
-      "settings-title": ""
+      "can-view-dashboard-radio-button-label": "可以查看仪表板",
+      "copy-button": "复制",
+      "dashboard-url-field-label": "仪表板网址",
+      "email-share-type-option-label": "仅指定人员",
+      "pause-sharing-dashboard-label": "暂停共享仪表板",
+      "public-share-type-option-label": "任何有链接的人",
+      "revoke-public-URL-button": "撤销公共网址",
+      "revoke-public-URL-button-title": "注销公共网址",
+      "settings-title": "设置"
     },
     "create-page": {
-      "generate-public-url-button": "",
-      "unsupported-features-desc": "",
-      "welcome-title": ""
+      "generate-public-url-button": "生成公共网址",
+      "unsupported-features-desc": "目前，我们不支持模板变量或前端数据源",
+      "welcome-title": "欢迎使用公共仪表板 ！"
     },
     "delete-modal": {
-      "revoke-nonorphaned-body-text": "",
-      "revoke-orphaned-body-text": "",
-      "revoke-title": ""
+      "revoke-nonorphaned-body-text": "您确定要注销此网址吗？仪表板将不再公开。",
+      "revoke-orphaned-body-text": "孤立的公共仪表板将不再公开。",
+      "revoke-title": "注销公共网址"
     },
     "email-sharing": {
-      "input-invalid-email-text": "",
-      "input-required-email-text": "",
-      "invite-button": "",
-      "invite-field-desc": "",
-      "invite-field-label": "",
-      "resend-button": "",
-      "resend-button-title": "",
-      "revoke-button": "",
-      "revoke-button-title": ""
+      "input-invalid-email-text": "无效电子邮箱",
+      "input-required-email-text": "电子邮箱是必填项",
+      "invite-button": "邀请",
+      "invite-field-desc": "通过电子邮件邀请人员",
+      "invite-field-label": "邀请",
+      "resend-button": "重新发送",
+      "resend-button-title": "重新发送",
+      "revoke-button": "注销",
+      "revoke-button-title": "注销"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "",
-      "no-upsert-perm-alert-title": "",
-      "save-dashboard-changes-alert-title": "",
-      "unsupport-data-source-alert-readmore-link": "",
-      "unsupported-data-source-alert-desc": "",
-      "unsupported-data-source-alert-title": "",
-      "unsupported-template-variable-alert-desc": "",
-      "unsupported-template-variable-alert-title": ""
+      "no-upsert-perm-alert-desc": "请联系您的管理员以获得{{mode}}公共仪表板的权限",
+      "no-upsert-perm-alert-title": "您没有{{mode}}公共仪表板的权限",
+      "save-dashboard-changes-alert-title": "请在更新公共配置之前保存您的仪表板更改",
+      "unsupport-data-source-alert-readmore-link": "阅读更多关于支持的数据源的信息",
+      "unsupported-data-source-alert-desc": "此仪表板中有公共仪表板不支持的数据源。使用这些数据源的面板可能无法正常运行：{{unsupportedDataSources}}。",
+      "unsupported-data-source-alert-title": "不受支持的数据源",
+      "unsupported-template-variable-alert-desc": "此公共仪表板可能无法工作，因为其使用了模板变量",
+      "unsupported-template-variable-alert-title": "模板变量不受支持"
     },
     "settings-bar-header": {
-      "collapse-settings-tooltip": "",
-      "expand-settings-tooltip": ""
+      "collapse-settings-tooltip": "折叠设置",
+      "expand-settings-tooltip": "展开设置"
     },
     "settings-configuration": {
-      "default-time-range-label": "",
-      "default-time-range-label-desc": "",
-      "show-annotations-label": "",
-      "show-annotations-label-desc": "",
-      "time-range-picker-label": "",
-      "time-range-picker-label-desc": ""
+      "default-time-range-label": "默认时间范围",
+      "default-time-range-label-desc": "公共仪表板使用仪表板的默认时间范围设置",
+      "show-annotations-label": "显示注释",
+      "show-annotations-label-desc": "在公共仪表板上显示注释",
+      "time-range-picker-label": "已启用时间范围选择器",
+      "time-range-picker-label-desc": "允许查看者更改时间范围"
     },
     "settings-summary": {
-      "annotations-hide-text": "",
-      "annotations-show-text": "",
-      "time-range-picker-disabled-text": "",
-      "time-range-picker-enabled-text": "",
-      "time-range-text": ""
+      "annotations-hide-text": "注释 = 隐藏",
+      "annotations-show-text": "注释 = 显示",
+      "time-range-picker-disabled-text": "时间范围选择器 = 已禁用",
+      "time-range-picker-enabled-text": "时间范围选择器 = 已启用",
+      "time-range-text": "时间范围 = "
     }
   },
   "public-dashboard-list": {
     "button": {
-      "config-button-tooltip": "",
-      "revoke-button-text": "",
-      "revoke-button-tooltip": "",
-      "view-button-tooltip": ""
+      "config-button-tooltip": "配置公共仪表板",
+      "revoke-button-text": "注销公共网址",
+      "revoke-button-tooltip": "撤销公共仪表板网址",
+      "view-button-tooltip": "查看公共仪表板"
     },
     "dashboard-title": {
-      "orphaned-title": "",
-      "orphaned-tooltip": ""
+      "orphaned-title": "<0>孤立的公共仪表板</0>",
+      "orphaned-tooltip": "链接的仪表板已被删除"
     },
     "toggle": {
-      "pause-sharing-toggle-text": ""
+      "pause-sharing-toggle-text": "暂停共享"
     }
   },
   "public-dashboard-users-access-list": {
     "dashboard-modal": {
-      "loading-text": "",
-      "open-dashboard-list-text": "",
-      "public-dashboard-link": "",
-      "public-dashboard-setting": ""
+      "loading-text": "加载中...",
+      "open-dashboard-list-text": "打开仪表板列表",
+      "public-dashboard-link": "公共仪表板网址",
+      "public-dashboard-setting": "公共仪表板设置"
     },
     "delete-user-modal": {
-      "delete-user-button-text": "",
-      "delete-user-cancel-button": "",
-      "delete-user-revoke-access-button": "",
-      "revoke-access-title": "",
-      "revoke-user-access-modal-desc-line1": "",
-      "revoke-user-access-modal-desc-line2": ""
+      "delete-user-button-text": "删除用户",
+      "delete-user-cancel-button": "取消",
+      "delete-user-revoke-access-button": "注销访问权限",
+      "revoke-access-title": "注销访问权限",
+      "revoke-user-access-modal-desc-line1": "您确定要注销对 {{email}} 的访问权限吗？",
+      "revoke-user-access-modal-desc-line2": "此操作将立即注销 {{email}} 对所有公共仪表板的访问权限。"
     },
     "modal": {
-      "dashboard-modal-title": ""
+      "dashboard-modal-title": "公共仪表板"
     },
     "table-header": {
-      "activated-label": "",
-      "activated-tooltip": "",
-      "email-label": "",
-      "last-active-label": "",
-      "origin-label": "",
-      "role-label": ""
+      "activated-label": "已激活",
+      "activated-tooltip": "最早时间用户已是仪表板的活动用户",
+      "email-label": "电子邮箱",
+      "last-active-label": "上次处于活动状态",
+      "origin-label": "原始",
+      "role-label": "角色"
     }
   },
   "query-operation": {
@@ -1226,9 +1357,9 @@
   },
   "return-to-previous": {
     "button": {
-      "label": ""
+      "label": "返回到 {{title}}"
     },
-    "dismissable-button": ""
+    "dismissable-button": "关闭"
   },
   "search": {
     "actions": {
@@ -1307,10 +1438,10 @@
       "expire-day": "1 天",
       "expire-hour": "1 小时",
       "expire-never": "从不",
-      "expire-week": "7 天",
+      "expire-week": "",
       "info-text-1": "可通过快照即时、公开地分享交互式仪表板。创建后，我们会剥离敏感数据，如查询（指标、模板和注释）和面板链接，仅将可见指标数据和系列名称嵌入到仪表板中。",
       "info-text-2": "请注意，知晓该链接并能够访问该网址的<1>任何人都可以</1>查看您的快照。分享需谨慎。",
-      "local-button": "本地快照",
+      "local-button": "",
       "mistake-message": "是不是弄错了什么？",
       "name": "快照名称",
       "timeout": "超时（秒）",
@@ -1323,8 +1454,8 @@
       "library-panel": "库面板",
       "link": "链接",
       "panel-embed": "嵌入",
-      "public-dashboard": "公共仪表板",
-      "public-dashboard-title": "",
+      "public-dashboard": "",
+      "public-dashboard-title": "公共仪表板",
       "snapshot": "快照"
     },
     "theme-picker": {
@@ -1395,7 +1526,7 @@
     "calendar": {
       "apply-button": "应用时间范围",
       "cancel-button": "取消",
-      "close": "",
+      "close": "关闭日历",
       "select-time": "选择时间范围"
     },
     "content": {
@@ -1404,11 +1535,11 @@
       "filter-placeholder": "搜索快速范围"
     },
     "copy-paste": {
-      "copy-success-message": "",
-      "default-error-message": "",
-      "default-error-title": "",
-      "tooltip-copy": "",
-      "tooltip-paste": ""
+      "copy-success-message": "时间范围已复制到剪贴板",
+      "default-error-message": "{{error}} 不是一个有效的日期范围",
+      "default-error-title": "无效时间范围",
+      "tooltip-copy": "将时间范围复制到剪贴板",
+      "tooltip-paste": "粘贴时间范围"
     },
     "footer": {
       "change-settings-button": "更改时间设置",
@@ -1422,7 +1553,7 @@
       "default-error": "请输入一个过去的日期或\"现在\"",
       "fiscal-year": "财政年度",
       "from-input": "发件人",
-      "open-input-calendar": "",
+      "open-input-calendar": "打开日历",
       "range-error": "“发件人”不能在“收件人”之后",
       "to-input": "结束"
     },
@@ -1447,8 +1578,8 @@
   },
   "transformations": {
     "empty": {
-      "add-transformation-body": "",
-      "add-transformation-header": ""
+      "add-transformation-body": "转换允许在显示可视化之前以各种方式更改数据。 <1></1>这包括合并数据、重命名字段、进行计算、格式化数据以便显示等等。",
+      "add-transformation-header": "开始转换数据"
     }
   },
   "user-orgs": {
@@ -1482,7 +1613,7 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": ""
+      "public-dashboard-users-tab-title": "公共仪表板用户"
     }
   },
   "variable": {

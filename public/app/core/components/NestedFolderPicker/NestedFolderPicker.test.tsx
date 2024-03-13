@@ -1,7 +1,7 @@
 import 'whatwg-fetch'; // fetch polyfill
 import { fireEvent, render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { rest } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -46,17 +46,37 @@ describe('NestedFolderPicker', () => {
 
   beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
+
     server = setupServer(
-      rest.get('/api/folders/:uid', (_, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({
-            title: folderA.item.title,
-            uid: folderA.item.uid,
+      http.get('/api/folders/:uid', () => {
+        return HttpResponse.json({
+          title: folderA.item.title,
+          uid: folderA.item.uid,
+        });
+      }),
+
+      http.get('/api/folders', ({ request }) => {
+        const url = new URL(request.url);
+        const parentUid = url.searchParams.get('parentUid') ?? undefined;
+
+        const limit = parseInt(url.searchParams.get('limit') ?? '1000', 10);
+        const page = parseInt(url.searchParams.get('page') ?? '1', 10);
+
+        // reconstruct a folder API response from the flat tree fixture
+        const folders = mockTree
+          .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUid)
+          .map((folder) => {
+            return {
+              uid: folder.item.uid,
+              title: folder.item.kind === 'folder' ? folder.item.title : "invalid - this shouldn't happen",
+            };
           })
-        );
+          .slice(limit * (page - 1), limit * page);
+
+        return HttpResponse.json(folders);
       })
     );
+
     server.listen();
   });
 
@@ -128,6 +148,40 @@ describe('NestedFolderPicker', () => {
 
     await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}');
     expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
+  });
+
+  it('shows the root folder by default', async () => {
+    render(<NestedFolderPicker onChange={mockOnChange} />);
+
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
+
+    await userEvent.click(screen.getByLabelText('Dashboards'));
+    expect(mockOnChange).toHaveBeenCalledWith('', 'Dashboards');
+  });
+
+  it('hides the root folder if the prop says so', async () => {
+    render(<NestedFolderPicker showRootFolder={false} onChange={mockOnChange} />);
+
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
+
+    expect(screen.queryByLabelText('Dashboards')).not.toBeInTheDocument();
+  });
+
+  it('hides folders specififed by UID', async () => {
+    render(<NestedFolderPicker excludeUIDs={[folderA.item.uid]} onChange={mockOnChange} />);
+
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+    await screen.findByLabelText(folderB.item.title);
+
+    expect(screen.queryByLabelText(folderA.item.title)).not.toBeInTheDocument();
   });
 
   describe('when nestedFolders is enabled', () => {

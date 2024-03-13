@@ -23,7 +23,7 @@ import {
   GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   LineInterpolation,
   LineStyle,
   VisibilityMode,
@@ -529,9 +529,9 @@ export function graphToTimeseriesOptions(angular: any): {
       });
     }
 
-    let displayMode = area ? GraphTresholdsStyleMode.Area : GraphTresholdsStyleMode.Line;
+    let displayMode = area ? GraphThresholdsStyleMode.Area : GraphThresholdsStyleMode.Line;
     if (line && area) {
-      displayMode = GraphTresholdsStyleMode.LineAndArea;
+      displayMode = GraphThresholdsStyleMode.LineAndArea;
     }
 
     // TODO move into standard ThresholdConfig ?
@@ -657,6 +657,11 @@ function fillY2DynamicValues(
       });
     }
   }
+
+  props.push({
+    id: `custom.axisPlacement`,
+    value: AxisPlacement.Right,
+  });
 
   // Add any custom property
   const y1G = y1.custom ?? {};

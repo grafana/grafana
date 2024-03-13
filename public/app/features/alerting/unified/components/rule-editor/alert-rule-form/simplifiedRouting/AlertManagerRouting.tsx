@@ -1,11 +1,13 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, CollapsableSection, IconButton, LoadingPlaceholder, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, CollapsableSection, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
 
+import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoints';
 import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
 
@@ -18,31 +20,36 @@ interface AlertManagerManualRoutingProps {
   alertManager: AlertManagerDataSource;
 }
 
-const LOADING_SPINNER_DURATION = 1000;
-
 export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRoutingProps) {
   const styles = useStyles2(getStyles);
 
   const alertManagerName = alertManager.name;
-  const { isLoading, error: errorInContactPointStatus, contactPoints, refetchReceivers } = useContactPointsWithStatus();
+  const {
+    isLoading,
+    error: errorInContactPointStatus,
+    contactPoints,
+    refetchReceivers,
+  } = useContactPointsWithStatus({ includePoliciesCount: false, receiverStatusPollingInterval: 0 });
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();
 
-  // We need to provide a fake loading state for the contact points, because it might be that the response is so fast that the loading spinner is not shown,
-  // and the user might think that the contact points are not fetched.
-  // We will show the loading spinner for 1 second, and if the fetching takes more than 1 second, we will show the loading spinner until the fetching is done.
-
-  const [loadingContactPoints, setLoadingContactPoints] = useState(false);
-  // we need to keep track if the fetching takes more than 1 second, so we can show the loading spinner until the fetching is done
-  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  const onClickRefresh = () => {
-    setLoadingContactPoints(true);
-    Promise.all([refetchReceivers(), sleep(LOADING_SPINNER_DURATION)]).finally(() => {
-      setLoadingContactPoints(false);
-    });
+  const onSelectContactPoint = (contactPoint?: ContactPointWithMetadata) => {
+    setSelectedContactPointWithMetadata(contactPoint);
   };
+
+  const { watch } = useFormContext<RuleFormValues>();
+  const hasRouteSettings =
+    watch(`contactPoints.${alertManagerName}.overrideGrouping`) ||
+    watch(`contactPoints.${alertManagerName}.overrideTimings`) ||
+    watch(`contactPoints.${alertManagerName}.muteTimeIntervals`)?.length > 0;
+
+  const options = contactPoints.map((receiver) => {
+    const integrations = receiver?.grafana_managed_receiver_configs;
+    const description = <ContactPointReceiverSummary receivers={integrations ?? []} />;
+
+    return { label: receiver.name, value: receiver, description };
+  });
 
   if (errorInContactPointStatus) {
     return <Alert title="Failed to fetch contact points" severity="error" />;
@@ -64,21 +71,10 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       <Stack direction="row" gap={1} alignItems="center">
         <ContactPointSelector
           alertManager={alertManagerName}
-          contactPoints={contactPoints}
-          onSelectContactPoint={setSelectedContactPointWithMetadata}
+          options={options}
+          onSelectContactPoint={onSelectContactPoint}
+          refetchReceivers={refetchReceivers}
         />
-        <div className={styles.contactPointsInfo}>
-          <IconButton
-            name="sync"
-            onClick={onClickRefresh}
-            aria-label="Refresh contact points"
-            tooltip="Refresh contact points list"
-            className={cx(styles.refreshButton, {
-              [styles.loading]: loadingContactPoints,
-            })}
-          />
-          <LinkToContactPoints />
-        </div>
       </Stack>
       {selectedContactPointWithMetadata?.grafana_managed_receiver_configs && (
         <ContactPointDetails receivers={selectedContactPointWithMetadata.grafana_managed_receiver_configs} />
@@ -86,7 +82,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       <div className={styles.routingSection}>
         <CollapsableSection
           label="Muting, grouping and timings (optional)"
-          isOpen={false}
+          isOpen={hasRouteSettings}
           className={styles.collapsableSection}
         >
           <Stack direction="column" gap={1}>
@@ -96,14 +92,6 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
         </CollapsableSection>
       </div>
     </Stack>
-  );
-}
-function LinkToContactPoints() {
-  const hrefToContactPoints = '/alerting/notifications';
-  return (
-    <TextLink external href={createUrl(hrefToContactPoints)} aria-label="View or create contact points">
-      View or create contact points
-    </TextLink>
   );
 }
 
@@ -140,31 +128,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
     marginTop: theme.spacing(2),
-  }),
-  contactPointsInfo: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing(1),
-    marginTop: theme.spacing(1),
-  }),
-  refreshButton: css({
-    color: theme.colors.text.secondary,
-    cursor: 'pointer',
-    borderRadius: theme.shape.radius.circle,
-    overflow: 'hidden',
-  }),
-  loading: css({
-    pointerEvents: 'none',
-    animation: 'rotation 2s infinite linear',
-    '@keyframes rotation': {
-      from: {
-        transform: 'rotate(720deg)',
-      },
-      to: {
-        transform: 'rotate(0deg)',
-      },
-    },
   }),
 });

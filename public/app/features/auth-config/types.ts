@@ -53,12 +53,15 @@ export type SSOProviderSettingsBase = {
   defineAllowedTeamsIds?: boolean;
   configureTLS?: boolean;
   tlsSkipVerifyInsecure?: boolean;
+  // For Azure AD
+  forceUseGraphApi?: boolean;
 };
 
 // SSO data received from the API and sent to it
 export type SSOProvider = {
   id: string;
   provider: string;
+  source: string;
   settings: SSOProviderSettingsBase & {
     teamIds: string;
     allowedOrganizations: string;
@@ -113,7 +116,8 @@ export type FieldData = {
   allowCustomValue?: boolean;
   options?: Array<SelectableValue<string>>;
   placeholder?: string;
-  defaultValue?: string;
+  defaultValue?: SelectableValue<string>;
+  hidden?: boolean;
 };
 
 export type SSOSettingsField =

@@ -2007,6 +2007,147 @@
         }
       }
     },
+    "/v1/notifications/receivers": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Get all receivers.",
+        "operationId": "RouteGetReceivers",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "name": "names",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "decrypt",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/GetReceiversResponse"
+          },
+          "403": {
+            "description": "PermissionDenied",
+            "schema": {
+              "$ref": "#/definitions/PermissionDenied"
+            }
+          }
+        }
+      }
+    },
+    "/v1/notifications/receivers/{Name}": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Get a receiver by name.",
+        "operationId": "RouteGetReceiver",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "boolean",
+            "name": "decrypt",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/GetReceiverResponse"
+          },
+          "403": {
+            "description": "PermissionDenied",
+            "schema": {
+              "$ref": "#/definitions/PermissionDenied"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      }
+    },
+    "/v1/notifications/time-intervals": {
+      "get": {
+        "description": "Get all the time intervals",
+        "tags": [
+          "notifications"
+        ],
+        "operationId": "RouteNotificationsGetTimeIntervals",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/GetAllIntervalsResponse"
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      }
+    },
+    "/v1/notifications/time-intervals/{name}": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Get a time interval by name.",
+        "operationId": "RouteNotificationsGetTimeInterval",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Time interval name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/GetIntervalsByNameResponse"
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      }
+    },
     "/v1/provisioning/alert-rules": {
       "get": {
         "tags": [
@@ -2546,6 +2687,45 @@
             "description": "ValidationError",
             "schema": {
               "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete rule group",
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "operationId": "RouteDeleteAlertRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "FolderUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The alert rule group was deleted successfully."
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
             }
           }
         }
@@ -3648,6 +3828,9 @@
             "OK"
           ]
         },
+        "notification_settings": {
+          "$ref": "#/definitions/AlertRuleNotificationSettingsExport"
+        },
         "panelId": {
           "type": "integer",
           "format": "int64"
@@ -3712,6 +3895,90 @@
         "interval": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "AlertRuleNotificationSettings": {
+      "type": "object",
+      "required": [
+        "receiver"
+      ],
+      "properties": {
+        "group_by": {
+          "description": "Override the labels by which incoming alerts are grouped together. For example, multiple alerts coming in for\ncluster=A and alertname=LatencyHigh would be batched into a single group. To aggregate by all possible labels\nuse the special value '...' as the sole label name.\nThis effectively disables aggregation entirely, passing through all alerts as-is. This is unlikely to be what\nyou want, unless you have a very low alert volume or your upstream notification system performs its own grouping.\nMust include 'alertname' and 'grafana_folder' if not using '...'.",
+          "type": "array",
+          "default": [
+            "alertname",
+            "grafana_folder"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "alertname",
+            "grafana_folder",
+            "cluster"
+          ]
+        },
+        "group_interval": {
+          "description": "Override how long to wait before sending a notification about new alerts that are added to a group of alerts for\nwhich an initial notification has already been sent. (Usually ~5m or more.)",
+          "type": "string",
+          "example": "5m"
+        },
+        "group_wait": {
+          "description": "Override how long to initially wait to send a notification for a group of alerts. Allows to wait for an\ninhibiting alert to arrive or collect more initial alerts for the same group. (Usually ~0s to few minutes.)",
+          "type": "string",
+          "example": "30s"
+        },
+        "mute_time_intervals": {
+          "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "maintenance"
+          ]
+        },
+        "receiver": {
+          "description": "Name of the receiver to send notifications to.",
+          "type": "string",
+          "example": "grafana-default-email"
+        },
+        "repeat_interval": {
+          "description": "Override how long to wait before sending a notification again if it has already been sent successfully for an\nalert. (Usually ~3h or more).\nNote that this parameter is implicitly bound by Alertmanager's `--data.retention` configuration flag.\nNotifications will be resent after either repeat_interval or the data retention period have passed, whichever\noccurs first. `repeat_interval` should not be less than `group_interval`.",
+          "type": "string",
+          "example": "4h"
+        }
+      }
+    },
+    "AlertRuleNotificationSettingsExport": {
+      "type": "object",
+      "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
+      "properties": {
+        "group_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "group_interval": {
+          "type": "string"
+        },
+        "group_wait": {
+          "type": "string"
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "receiver": {
+          "type": "string"
+        },
+        "repeat_interval": {
+          "type": "string"
         }
       }
     },
@@ -3997,6 +4264,7 @@
           }
         },
         "mute_time_intervals": {
+          "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/MuteTimeInterval"
@@ -4009,6 +4277,12 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
           }
         }
       }
@@ -4175,6 +4449,9 @@
         },
         "webhook_url": {
           "$ref": "#/definitions/SecretURL"
+        },
+        "webhook_url_file": {
+          "type": "string"
         }
       }
     },
@@ -4682,11 +4959,20 @@
         },
         "typeVersion": {
           "$ref": "#/definitions/FrameTypeVersion"
+        },
+        "uniqueRowIdFields": {
+          "description": "Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID\nbut that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially\nwith streaming data with frequent updates.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "example": "TraceID in Tempo, table name + primary key in SQL"
         }
       }
     },
     "FrameType": {
-      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
       "type": "string"
     },
     "FrameTypeVersion": {
@@ -4743,6 +5029,7 @@
           }
         },
         "mute_time_intervals": {
+          "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/MuteTimeInterval"
@@ -4762,6 +5049,12 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
           }
         }
       }
@@ -4976,6 +5269,9 @@
             "OK"
           ]
         },
+        "notification_settings": {
+          "$ref": "#/definitions/AlertRuleNotificationSettings"
+        },
         "orgId": {
           "type": "integer",
           "format": "int64"
@@ -5088,6 +5384,23 @@
         },
         "versionInfo": {
           "$ref": "#/definitions/versionInfo"
+        }
+      }
+    },
+    "GettableTimeIntervals": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeIntervalItem"
+          }
         }
       }
     },
@@ -5427,6 +5740,9 @@
         "send_resolved": {
           "type": "boolean"
         },
+        "summary": {
+          "type": "string"
+        },
         "text": {
           "type": "string"
         },
@@ -5435,6 +5751,9 @@
         },
         "webhook_url": {
           "$ref": "#/definitions/SecretURL"
+        },
+        "webhook_url_file": {
+          "type": "string"
         }
       }
     },
@@ -5930,24 +6249,6 @@
     "PermissionDenied": {
       "type": "object"
     },
-    "Point": {
-      "description": "If H is not nil, then this is a histogram point and only (T, H) is valid.\nIf H is nil, then only (T, V) is valid.",
-      "type": "object",
-      "title": "Point represents a single data point for a given timestamp.",
-      "properties": {
-        "H": {
-          "$ref": "#/definitions/FloatHistogram"
-        },
-        "T": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "V": {
-          "type": "number",
-          "format": "double"
-        }
-      }
-    },
     "PostableApiAlertingConfig": {
       "type": "object",
       "properties": {
@@ -5961,6 +6262,7 @@
           }
         },
         "mute_time_intervals": {
+          "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/MuteTimeInterval"
@@ -5980,6 +6282,12 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
           }
         }
       }
@@ -6203,6 +6511,9 @@
             "OK"
           ]
         },
+        "notification_settings": {
+          "$ref": "#/definitions/AlertRuleNotificationSettings"
+        },
         "title": {
           "type": "string"
         },
@@ -6237,6 +6548,20 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/PostableExtendedRuleNode"
+          }
+        }
+      }
+    },
+    "PostableTimeIntervals": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeIntervalItem"
           }
         }
       }
@@ -6375,6 +6700,9 @@
             "NoData",
             "OK"
           ]
+        },
+        "notification_settings": {
+          "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
         "orgID": {
           "type": "integer",
@@ -7044,9 +7372,13 @@
       }
     },
     "Sample": {
+      "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
       "type": "object",
-      "title": "Sample is a single sample belonging to a metric.",
       "properties": {
+        "F": {
+          "type": "number",
+          "format": "double"
+        },
         "H": {
           "$ref": "#/definitions/FloatHistogram"
         },
@@ -7056,10 +7388,6 @@
         "T": {
           "type": "integer",
           "format": "int64"
-        },
-        "V": {
-          "type": "number",
-          "format": "double"
         }
       }
     },
@@ -7553,7 +7881,21 @@
       "type": "string"
     },
     "TimeInterval": {
-      "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
+      "type": "object",
+      "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
+          }
+        }
+      }
+    },
+    "TimeIntervalItem": {
       "type": "object",
       "properties": {
         "days_of_month": {
@@ -7574,7 +7916,7 @@
         "times": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/TimeRange"
+            "$ref": "#/definitions/TimeIntervalTimeRange"
           }
         },
         "weekdays": {
@@ -7588,6 +7930,17 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "TimeIntervalTimeRange": {
+      "type": "object",
+      "properties": {
+        "end_time": {
+          "type": "string"
+        },
+        "start_time": {
+          "type": "string"
         }
       }
     },
@@ -7606,8 +7959,9 @@
       }
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -7694,7 +8048,7 @@
       }
     },
     "Vector": {
-      "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
+      "description": "Vector is basically only an alias for []Sample, but the contract is that\nin a Vector, all Samples have the same timestamp.",
       "type": "array",
       "items": {
         "$ref": "#/definitions/Sample"
@@ -7847,6 +8201,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -7871,7 +8226,6 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -7977,7 +8331,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -8034,6 +8387,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -8041,6 +8395,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8243,7 +8598,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8397,6 +8751,36 @@
     }
   },
   "responses": {
+    "GetAllIntervalsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/GettableTimeIntervals"
+        }
+      }
+    },
+    "GetIntervalsByNameResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/GettableTimeIntervals"
+      }
+    },
+    "GetReceiverResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/GettableApiReceiver"
+      }
+    },
+    "GetReceiversResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/GettableApiReceiver"
+        }
+      }
+    },
     "GettableHistoricUserConfigs": {
       "description": "",
       "schema": {

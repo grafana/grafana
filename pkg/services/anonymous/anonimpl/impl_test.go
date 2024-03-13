@@ -18,7 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationDeviceService_tag(t *testing.T) {
 	type tagReq struct {
@@ -206,6 +211,8 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 				Query: "",
 				Page:  1,
 				Limit: 1,
+				From:  fixedTime,
+				To:    fixedTime.Add(1 * time.Hour),
 			},
 			expectedCount: 1,
 		},
@@ -227,6 +234,8 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 				Query: "192.1",
 				Page:  1,
 				Limit: 50,
+				From:  fixedTime,
+				To:    fixedTime.Add(1 * time.Hour),
 			},
 			expectedCount: 1,
 			expectedDevice: &anonstore.Device{

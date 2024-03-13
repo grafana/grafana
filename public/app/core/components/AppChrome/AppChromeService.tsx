@@ -24,8 +24,8 @@ export interface AppChromeState {
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
   returnToPrevious?: {
-    href: ReturnToPreviousProps['href'];
     title: ReturnToPreviousProps['title'];
+    href: ReturnToPreviousProps['href'];
   };
 }
 
@@ -38,12 +38,8 @@ export class AppChromeService {
   private routeChangeHandled = true;
 
   private megaMenuDocked = Boolean(
-    config.featureToggles.dockedMegaMenu &&
-      window.innerWidth >= config.theme2.breakpoints.values.xl &&
-      store.getBool(
-        DOCKED_LOCAL_STORAGE_KEY,
-        Boolean(config.featureToggles.dockedMegaMenu && window.innerWidth >= config.theme2.breakpoints.values.xxl)
-      )
+    window.innerWidth >= config.theme2.breakpoints.values.xl &&
+      store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xxl))
   );
 
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
@@ -94,11 +90,33 @@ export class AppChromeService {
   }
 
   public setReturnToPrevious = (returnToPrevious: ReturnToPreviousProps) => {
+    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
+    if (!isReturnToPreviousEnabled) {
+      return;
+    }
+    const previousPage = this.state.getValue().returnToPrevious;
+    reportInteraction('grafana_return_to_previous_button_created', {
+      page: returnToPrevious.href,
+      previousPage: previousPage?.href,
+    });
+
     this.update({ returnToPrevious });
     window.sessionStorage.setItem('returnToPrevious', JSON.stringify(returnToPrevious));
   };
 
-  public clearReturnToPrevious = () => {
+  public clearReturnToPrevious = (interactionAction: 'clicked' | 'dismissed' | 'auto_dismissed') => {
+    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
+    if (!isReturnToPreviousEnabled) {
+      return;
+    }
+    const existingRtp = this.state.getValue().returnToPrevious;
+    if (existingRtp) {
+      reportInteraction('grafana_return_to_previous_button_dismissed', {
+        action: interactionAction,
+        page: existingRtp.href,
+      });
+    }
+
     this.update({ returnToPrevious: undefined });
     window.sessionStorage.removeItem('returnToPrevious');
   };
@@ -130,14 +148,10 @@ export class AppChromeService {
 
   public setMegaMenuOpen = (newOpenState: boolean) => {
     const { megaMenuDocked } = this.state.getValue();
-    if (config.featureToggles.dockedMegaMenu) {
-      if (megaMenuDocked) {
-        store.set(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
-      }
-      reportInteraction('grafana_mega_menu_open', { state: newOpenState });
-    } else {
-      reportInteraction('grafana_toggle_menu_clicked', { action: newOpenState ? 'open' : 'close' });
+    if (megaMenuDocked) {
+      store.set(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
     }
+    reportInteraction('grafana_mega_menu_open', { state: newOpenState });
     this.update({
       megaMenuOpen: newOpenState,
     });
@@ -177,13 +191,19 @@ export class AppChromeService {
   }
 
   public setKioskModeFromUrl(kiosk: UrlQueryValue) {
+    let newKioskMode: KioskMode | undefined;
+
     switch (kiosk) {
       case 'tv':
-        this.update({ kioskMode: KioskMode.TV });
+        newKioskMode = KioskMode.TV;
         break;
       case '1':
       case true:
-        this.update({ kioskMode: KioskMode.Full });
+        newKioskMode = KioskMode.Full;
+    }
+
+    if (newKioskMode && newKioskMode !== this.state.getValue().kioskMode) {
+      this.update({ kioskMode: newKioskMode });
     }
   }
 

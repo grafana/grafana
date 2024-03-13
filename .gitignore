@@ -24,9 +24,6 @@ __debug_bin*
 !.yarn/plugins
 !.yarn/sdks
 !.yarn/versions
-# we temporarily commit this file because yarn downloading it
-# somehow produces different checksum values
-!.yarn/cache/pa11y-ci-https-1e9675e9e1-668c9119bd.zip
 .pnp.*
 
 # Enterprise emails
@@ -174,6 +171,11 @@ compilation-stats.json
 /e2e/build_results.zip
 /e2e/extensions
 /e2e/extensions-suite
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
 
 # grafana server
 /scripts/grafana-server/server.log
@@ -202,6 +204,7 @@ public/api-spec.json
 deployment_tools_config.json
 
 .betterer.cache
+.nx
 
 # Temporary file for backporting PRs
 .pr-body.txt
@@ -212,3 +215,4 @@ public/app/plugins/**/dist/
 # Ignore transpiled JavaScript resulting from the generate-transformations.ts script.
 /public/app/features/transformers/docs/*.js
 /scripts/docs/generate-transformations.js
+

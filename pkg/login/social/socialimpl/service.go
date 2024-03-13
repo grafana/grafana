@@ -84,11 +84,6 @@ func ProvideService(cfg *setting.Cfg,
 				continue
 			}
 
-			// Workaround for moving the SkipOrgRoleSync setting to the OAuthInfo struct
-			withOverrides := cfg.SectionWithEnvOverrides("auth." + name)
-			info.Enabled = withOverrides.Key("enabled").MustBool(false)
-			info.SkipOrgRoleSync = withOverrides.Key("skip_org_role_sync").MustBool(false)
-
 			if !info.Enabled {
 				continue
 			}

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -164,7 +165,7 @@ func (s *Service) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSet
 	return configurableSettings, nil
 }
 
-func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings) error {
+func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requester identity.Requester) error {
 	if !s.isProviderConfigurable(settings.Provider) {
 		return ssosettings.ErrNotConfigurable
 	}
@@ -174,7 +175,7 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings) erro
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", settings.Provider)
 	}
 
-	err := social.Validate(ctx, *settings)
+	err := social.Validate(ctx, *settings, requester)
 	if err != nil {
 		return err
 	}
@@ -196,9 +197,11 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings) erro
 		return err
 	}
 
-	settings.Settings = overrideMaps(storedSettings.Settings, settings.Settings, secrets)
+	// make a copy of current settings for reload operation and apply overrides
+	reloadSettings := *settings
+	reloadSettings.Settings = overrideMaps(storedSettings.Settings, settings.Settings, secrets)
 
-	go s.reload(social, settings.Provider, *settings)
+	go s.reload(social, settings.Provider, reloadSettings)
 
 	return nil
 }
@@ -430,6 +433,7 @@ func removeSecrets(settings map[string]any) map[string]any {
 
 // mergeSettings merges two maps in a way that the values from the first map are preserved
 // and the values from the second map are added only if they don't exist in the first map
+// or if they contain empty URLs.
 func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any {
 	settings := make(map[string]any)
 
@@ -439,6 +443,12 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 
 	for k, v := range systemSettings {
 		if _, ok := settings[k]; !ok {
+			settings[k] = v
+		} else if isURL(k) && isEmptyString(settings[k]) {
+			// Overwrite all URL settings from the DB containing an empty string with their value
+			// from the system settings. This fixes an issue with empty auth_url, api_url and token_url
+			// from the DB not being replaced with their values defined in the system settings for
+			// the Google provider.
 			settings[k] = v
 		}
 	}
@@ -481,6 +491,15 @@ func isSecret(fieldName string) bool {
 		}
 	}
 	return false
+}
+
+func isURL(fieldName string) bool {
+	return strings.HasSuffix(fieldName, "_url")
+}
+
+func isEmptyString(val any) bool {
+	_, ok := val.(string)
+	return ok && val == ""
 }
 
 func isNewSecretValue(value string) bool {

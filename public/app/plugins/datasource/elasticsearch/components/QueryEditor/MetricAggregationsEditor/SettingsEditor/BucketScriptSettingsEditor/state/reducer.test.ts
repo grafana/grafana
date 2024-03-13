@@ -1,6 +1,5 @@
-import { reducerTester } from 'test/core/redux/reducerTester';
-
 import { PipelineVariable } from '../../../../../../types';
+import { reducerTester } from '../../../../../reducerTester';
 
 import {
   addPipelineVariable,
