@@ -76,10 +76,9 @@ func (provider *healthCheckProvider[T]) GetTransport(opts ...httpclient.Options)
 }
 
 // Return a mocked HTTP client provider.
-// 
+//
 // Example taken from `pkg/promlib/healthcheck_test.go`
 func getMockProvider[T http.RoundTripper]() *httpclient.Provider {
-	
 	p := &healthCheckProvider[T]{
 		RoundTripper: new(T),
 	}
