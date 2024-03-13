@@ -31,7 +31,7 @@ func GenerateTypesGo(sch thema.Schema, cfg *GoConfig) ([]byte, error) {
 	applyFuncs := []dstutil.ApplyFunc{depointerizer(), fixRawData(), fixUnderscoreInTypeName(), fixTODOComments()}
 	applyFuncs = append(applyFuncs, cfg.ApplyFuncs...)
 
-	f, err := generateOpenAPI(sch, cfg.Config)
+	f, err := generateOpenAPI(sch.Lineage().Underlying(), cfg.Config)
 	if err != nil {
 		return nil, err
 	}

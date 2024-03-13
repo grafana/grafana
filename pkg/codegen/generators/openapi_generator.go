@@ -7,7 +7,6 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/encoding/openapi"
-	"github.com/grafana/thema"
 )
 
 type OpenApiConfig struct {
@@ -17,7 +16,7 @@ type OpenApiConfig struct {
 	SubPath  cue.Path
 }
 
-func generateOpenAPI(sch thema.Schema, cfg *OpenApiConfig) (*ast.File, error) {
+func generateOpenAPI(v cue.Value, cfg *OpenApiConfig) (*ast.File, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("missing openapi configuration")
 	}
@@ -26,12 +25,17 @@ func generateOpenAPI(sch thema.Schema, cfg *OpenApiConfig) (*ast.File, error) {
 		cfg.Config = &openapi.Config{}
 	}
 
+	name, err := getName(v)
+	if err != nil {
+		return nil, err
+	}
+
 	gen := &oapiGen{
 		cfg:     cfg,
-		sch:     sch,
-		val:     sch.Underlying().LookupPath(cue.MakePath(cue.Str("schema"))),
+		name:    name,
+		val:     v.LookupPath(cue.ParsePath("schemas[0].schema")),
 		subpath: cfg.SubPath,
-		bpath:   sch.Underlying().Path(),
+		bpath:   v.LookupPath(cue.ParsePath("schemas[0]")).Path(),
 	}
 
 	declFunc := genSchema
@@ -50,10 +54,6 @@ func generateOpenAPI(sch thema.Schema, cfg *OpenApiConfig) (*ast.File, error) {
 		Decls: []ast.Decl{
 			ast.NewStruct(
 				"openapi", ast.NewString("3.0.0"),
-				"info", ast.NewStruct(
-					"title", ast.NewString(gen.name),
-					"version", ast.NewString(sch.Version().String()),
-				),
 				"paths", ast.NewStruct(),
 				"components", ast.NewStruct(
 					"schemas", &ast.StructLit{Elts: decls},
@@ -65,7 +65,6 @@ func generateOpenAPI(sch thema.Schema, cfg *OpenApiConfig) (*ast.File, error) {
 
 type oapiGen struct {
 	cfg     *OpenApiConfig
-	sch     thema.Schema
 	val     cue.Value
 	subpath cue.Path
 
@@ -80,7 +79,7 @@ type oapiGen struct {
 }
 
 func genGroup(gen *oapiGen) ([]ast.Decl, error) {
-	ctx := gen.sch.Underlying().Context()
+	ctx := gen.val.Context()
 	iter, err := gen.val.Fields(cue.Definitions(true), cue.Optional(true))
 	if err != nil {
 		panic(fmt.Errorf("unreachable - should always be able to get iter for struct kinds: %w", err))
@@ -99,7 +98,6 @@ func genGroup(gen *oapiGen) ([]ast.Decl, error) {
 		cfgi.NameFunc = func(val cue.Value, path cue.Path) string {
 			return gen.nfSingle(val, path, defpath, name)
 		}
-		cfgi.Info = newHeader(defpath.String(), gen.sch.Version())
 
 		part, err := openapi.Generate(defsch, &cfgi)
 		if err != nil {
@@ -109,13 +107,12 @@ func genGroup(gen *oapiGen) ([]ast.Decl, error) {
 		decls = append(decls, getSchemas(part)...)
 	}
 
-	gen.name = sanitizeLabelString(gen.sch.Lineage().Name())
 	return decls, nil
 }
 
 func genSchema(gen *oapiGen) ([]ast.Decl, error) {
 	hasSubpath := len(gen.cfg.SubPath.Selectors()) > 0
-	name := sanitizeLabelString(gen.sch.Lineage().Name())
+	name := sanitizeLabelString(gen.name)
 	if gen.cfg.RootName != "" {
 		name = gen.cfg.RootName
 	} else if hasSubpath {
@@ -133,20 +130,19 @@ func genSchema(gen *oapiGen) ([]ast.Decl, error) {
 		val = val.LookupPath(gen.cfg.SubPath)
 	}
 
-	v := gen.sch.Underlying().Context().CompileString(fmt.Sprintf("#%s: _", name))
+	v := gen.val.Context().CompileString(fmt.Sprintf("#%s: _", name))
 	defpath := cue.MakePath(cue.Def(name))
 	defsch := v.FillPath(defpath, val)
 
 	gen.cfg.Config.NameFunc = func(val cue.Value, path cue.Path) string {
 		return gen.nfSingle(val, path, defpath, name)
 	}
-	gen.cfg.Config.Info = newHeader(name, gen.sch.Version())
+
 	f, err := openapi.Generate(defsch.Eval(), gen.cfg.Config)
 	if err != nil {
 		return nil, err
 	}
 
-	gen.name = name
 	return getSchemas(f), nil
 }
 
@@ -185,13 +181,6 @@ func orp[T any](t T, err error) T {
 	return t
 }
 
-func newHeader(title string, v thema.SyntacticVersion) *ast.StructLit {
-	return ast.NewStruct(
-		"title", ast.NewString(strings.Trim(title, "#?")),
-		"version", ast.NewString(v.String()),
-	)
-}
-
 func trimThemaPathPrefix(p, base cue.Path) cue.Path {
 	if !pathHasPrefix(p, base) {
 		return p
@@ -207,4 +196,9 @@ func trimThemaPathPrefix(p, base cue.Path) cue.Path {
 	default:
 		return cue.MakePath(rest...)
 	}
+}
+
+func getName(v cue.Value) (string, error) {
+	nameValue := v.LookupPath(cue.ParsePath("name"))
+	return nameValue.String()
 }
