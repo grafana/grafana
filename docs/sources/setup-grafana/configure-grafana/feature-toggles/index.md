@@ -174,6 +174,7 @@ Experimental features might be changed or removed without prior notice.
 | `nodeGraphDotLayout`                        | Changed the layout algorithm for the node graph                                                                                                                                                                                                                                   |
 | `kubernetesAggregator`                      | Enable grafana aggregator                                                                                                                                                                                                                                                         |
 | `expressionParser`                          | Enable new expression parser                                                                                                                                                                                                                                                      |
+| `usePrometheusFrontendPackage`              | Use the @grafana/prometheus frontend package in core Prometheus.                                                                                                                                                                                                                  |
 
 ## Development feature toggles
 
