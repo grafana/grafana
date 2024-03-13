@@ -12,10 +12,10 @@ import (
 	"github.com/grafana/cuetsy"
 	"github.com/grafana/cuetsy/ts"
 	"github.com/grafana/cuetsy/ts/ast"
+	"github.com/grafana/grafana/pkg/codegen/generators"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
-	"github.com/grafana/thema/encoding/typescript"
 )
 
 var schPath = cue.MakePath(cue.Hid("_#schema", "github.com/grafana/thema"))
@@ -47,12 +47,12 @@ func (gen *genTSVeneerIndex) Generate(kinds ...kindsys.Kind) (*codejen.File, err
 	tsf := new(ast.File)
 	for _, def := range kinds {
 		sch := def.Lineage().Latest()
-		f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
+		f, err := generators.GenerateTypesTS(sch, &generators.TSConfig{
 			CuetsyConfig: &cuetsy.Config{
 				ImportMapper: cuectx.MapCUEImportToTS,
 			},
 			RootName: def.Props().Common().Name,
-			Group:    def.Props().Common().LineageIsGroup,
+			IsGroup:  def.Props().Common().LineageIsGroup,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", def.Props().Common().Name, err)

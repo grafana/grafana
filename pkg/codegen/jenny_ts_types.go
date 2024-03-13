@@ -4,8 +4,8 @@ import (
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
 	"github.com/grafana/cuetsy/ts/ast"
+	"github.com/grafana/grafana/pkg/codegen/generators"
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/thema/encoding/typescript"
 )
 
 type ApplyFunc func(sfg SchemaForGen, file *ast.File)
@@ -26,14 +26,13 @@ func (j TSTypesJenny) JennyName() string {
 }
 
 func (j TSTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
-	// TODO allow using name instead of machine name in thema generator
-	f, err := typescript.GenerateTypes(sfg.Schema, &typescript.TypeConfig{
+	f, err := generators.GenerateTypesTS(sfg.Schema, &generators.TSConfig{
 		CuetsyConfig: &cuetsy.Config{
 			Export:       true,
 			ImportMapper: cuectx.MapCUEImportToTS,
 		},
 		RootName: sfg.Name,
-		Group:    sfg.IsGroup,
+		IsGroup:  sfg.IsGroup,
 	})
 
 	for _, renameFunc := range j.ApplyFuncs {
