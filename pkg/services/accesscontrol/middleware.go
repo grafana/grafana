@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -318,6 +319,53 @@ func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
 		}
 		return GlobalOrgID, nil
 	}
+}
+
+type QueryWithOrg struct {
+	OrgId *int64 `json:"orgId"`
+}
+
+// UseOrgFromRequestData returns the organization from the request data.
+// If no org specified, then org where user is logged in returned.
+func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
+	query := QueryWithOrg{}
+
+	// Get copy of body to prevent error when reading closed body in request handler
+	bodyCopy, err := CopyReqBody(c.Req)
+	if err != nil {
+		return 0, err
+	}
+	req := c.Req.Clone(c.Req.Context())
+	req.Body = bodyCopy
+
+	if err := web.Bind(req, &query); err != nil {
+		// Special case of macaron handling invalid params
+		return 0, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+	}
+
+	if query.OrgId == nil {
+		return c.SignedInUser.GetOrgID(), nil
+	}
+
+	return *query.OrgId, nil
+}
+
+// CopyReqBody returns copy of request body and keep the original one to prevent error when reading closed body
+func CopyReqBody(req *http.Request) (io.ReadCloser, error) {
+	if req.Body == nil {
+		return nil, nil
+	}
+
+	body := req.Body
+	var buf bytes.Buffer
+	if _, err := buf.ReadFrom(body); err != nil {
+		return nil, err
+	}
+	if err := body.Close(); err != nil {
+		return nil, err
+	}
+	req.Body = io.NopCloser(&buf)
+	return io.NopCloser(bytes.NewReader(buf.Bytes())), nil
 }
 
 // scopeParams holds the parameters used to fill in scope templates
