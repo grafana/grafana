@@ -6,7 +6,6 @@ import {
   createDataFrame,
   createTheme,
   DataFrame,
-  DataFrameDTO,
   DataLink,
   DataLinkConfigOrigin,
   DataQueryResponse,
@@ -38,106 +37,6 @@ import {
   TraceqlMetricsResponse,
   TraceSearchMetadata,
 } from './types';
-
-export function createTableFrame(
-  logsFrame: DataFrame | DataFrameDTO,
-  datasourceUid: string,
-  datasourceName: string,
-  traceRegexs: string[]
-): DataFrame {
-  const tableFrame = new MutableDataFrame({
-    fields: [
-      {
-        name: 'Time',
-        type: FieldType.time,
-        config: {
-          custom: {
-            width: 200,
-          },
-        },
-        values: [],
-      },
-      {
-        name: 'traceID',
-        type: FieldType.string,
-        config: {
-          displayNameFromDS: 'Trace ID',
-          custom: { width: 180 },
-          links: [
-            {
-              title: 'Click to open trace ${__value.raw}',
-              url: '',
-              internal: {
-                datasourceUid,
-                datasourceName,
-                query: {
-                  query: '${__value.raw}',
-                },
-              },
-            },
-          ],
-        },
-        values: [],
-      },
-      {
-        name: 'Message',
-        type: FieldType.string,
-        values: [],
-      },
-    ],
-    meta: {
-      preferredVisualisationType: 'table',
-    },
-  });
-
-  if (!logsFrame || traceRegexs.length === 0) {
-    return tableFrame;
-  }
-
-  const timeField = logsFrame.fields.find((f) => f.type === FieldType.time);
-
-  // Going through all string fields to look for trace IDs
-  for (let field of logsFrame.fields) {
-    let hasMatch = false;
-    if (field.type === FieldType.string) {
-      const values = field.values!;
-      for (let i = 0; i < values.length; i++) {
-        const line = values[i];
-        if (line) {
-          for (let traceRegex of traceRegexs) {
-            const match = line.match(traceRegex);
-            if (match) {
-              const traceId = match[1];
-              const time = timeField ? timeField.values![i] : null;
-              tableFrame.fields[0].values.push(time);
-              tableFrame.fields[1].values.push(traceId);
-              tableFrame.fields[2].values.push(line);
-              hasMatch = true;
-            }
-          }
-        }
-      }
-    }
-    if (hasMatch) {
-      break;
-    }
-  }
-
-  return tableFrame;
-}
-
-export function transformTraceList(
-  response: DataQueryResponse,
-  datasourceId: string,
-  datasourceName: string,
-  traceRegexs: string[]
-): DataQueryResponse {
-  response.data.forEach((data, index) => {
-    const frame = createTableFrame(data, datasourceId, datasourceName, traceRegexs);
-    response.data[index] = frame;
-  });
-  return response;
-}
 
 function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.AnyValue): any {
   if (value.stringValue) {

@@ -186,13 +186,6 @@ The **Search** setting configures [Tempo search](/docs/tempo/latest/configuratio
 
 You can configure the **Hide search** setting to hide the search query option in **Explore** if search is not configured in the Tempo instance.
 
-## Loki search
-
-The **Loki search** setting configures the Loki search query type.
-
-Configure the **Data source** setting to define which Loki instance you want to use to search traces.
-You must configure [derived fields]({{< relref "../loki#configure-derived-fields" >}}) in the Loki instance.
-
 ## TraceID query
 
 The **TraceID query** setting modifies how TraceID queries are run. The time range can be used when there are performance issues or timeouts since it will narrow down the search to the defined range. This setting is disabled by default.
@@ -266,8 +259,6 @@ datasources:
         enabled: true
       search:
         hide: false
-      lokiSearch:
-        datasourceUid: 'loki'
       traceQuery:
         timeShiftEnabled: true
         spanStartTimeShift: '1h'

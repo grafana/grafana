@@ -27,7 +27,6 @@ const (
 const (
 	TempoQueryTypeClear         TempoQueryType = "clear"
 	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
-	TempoQueryTypeSearch        TempoQueryType = "search"
 	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
 	TempoQueryTypeTraceId       TempoQueryType = "traceId"
 	TempoQueryTypeTraceql       TempoQueryType = "traceql"
@@ -142,7 +141,7 @@ type TempoQuery struct {
 	TableType *SearchTableType `json:"tableType,omitempty"`
 }
 
-// TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility
+// TempoQueryType nativeSearch = Tempo search for backwards compatibility
 type TempoQueryType string
 
 // TraceqlFilter defines model for TraceqlFilter.
