@@ -6,6 +6,7 @@ import { GrafanaTheme2, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
+import { TitleItem } from '../PanelChrome/TitleItem';
 
 import { getIconRoot, getIconSubDir, getSvgSize } from './utils';
 
@@ -13,6 +14,9 @@ export interface IconProps extends Omit<React.SVGProps<SVGElement>, 'onLoad' | '
   name: IconName;
   size?: IconSize;
   type?: IconType;
+  /**
+   * Give your icon a semantic meaning. It will be hidden from screen readers, unless this prop is provided.
+   */
   title?: string;
 }
 
@@ -60,7 +64,7 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
 
     return (
       <SVG
-        aria-hidden={!rest['aria-label']}
+        aria-hidden={!TitleItem}
         innerRef={ref}
         src={svgPath}
         width={svgWid}
