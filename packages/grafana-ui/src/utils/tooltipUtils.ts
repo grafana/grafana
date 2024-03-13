@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Placement } from '@floating-ui/react';
 
-import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { TooltipPlacement } from '../components/Tooltip';
 
@@ -44,19 +44,6 @@ export function buildTooltipTheme(
 
       "&[data-popper-interactive='false']": {
         pointerEvents: 'none',
-      },
-
-      code: {
-        border: 'none',
-        display: 'inline',
-        background: colorManipulator.darken(tooltipBg, 0.1),
-        color: tooltipText,
-        whiteSpace: 'normal',
-      },
-
-      pre: {
-        background: colorManipulator.darken(tooltipBg, 0.1),
-        color: tooltipText,
       },
     }),
     headerClose: css({
