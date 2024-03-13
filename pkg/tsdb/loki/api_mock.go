@@ -74,5 +74,5 @@ func makeCompressedMockedAPIWithUrl(url string, statusCode int, contentType stri
 		Transport: &mockedCompressedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes, requestCallback: requestCallback},
 	}
 
-	return newLokiAPI(&client, url,  backend.NewLoggerWith("logger", "test"), tracing.InitializeTracerForTest(), false)
+	return newLokiAPI(&client, url, backend.NewLoggerWith("logger", "test"), tracing.InitializeTracerForTest(), false)
 }
