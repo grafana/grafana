@@ -152,11 +152,15 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	hideVersion := hs.Cfg.AnonymousHideVersion && !c.IsSignedIn
 	version := setting.BuildVersion
 	commit := setting.BuildCommit
+	commitShort := getShortCommitHash(setting.BuildCommit, 10)
 	buildstamp := setting.BuildStamp
+	versionString := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, version, commitShort)
 
 	if hideVersion {
 		version = ""
+		versionString = setting.ApplicationName
 		commit = ""
+		commitShort = ""
 		buildstamp = 0
 	}
 
@@ -226,7 +230,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
 			Version:       version,
+			VersionString: versionString,
 			Commit:        commit,
+			CommitShort:   commitShort,
 			Buildstamp:    buildstamp,
 			Edition:       hs.License.Edition(),
 			LatestVersion: hs.grafanaUpdateChecker.LatestVersion(),
@@ -365,6 +371,15 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 func isSupportBundlesEnabled(hs *HTTPServer) bool {
 	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
+}
+
+// don't need to show the full commit hash in the UI
+// let's substring to 10 chars like local git does automatically
+func getShortCommitHash(commitHash string, maxLength int) string {
+	if len(commitHash) > maxLength {
+		return commitHash[:maxLength]
+	}
+	return commitHash
 }
 
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
