@@ -75,17 +75,23 @@ func (provider *healthCheckProvider[T]) GetTransport(opts ...httpclient.Options)
 	return *new(T), nil
 }
 
-func getMockProvider[T http.RoundTripper]() *healthCheckProvider[T] {
-	return &healthCheckProvider[T]{
+func getMockProvider[T http.RoundTripper]() *httpclient.Provider {
+	p := &healthCheckProvider[T]{
 		RoundTripper: new(T),
 	}
+	anotherFN := func(o httpclient.Options, next http.RoundTripper) http.RoundTripper {
+		return *p.RoundTripper
+	}
+	fn := httpclient.MiddlewareFunc(anotherFN)
+	mid := httpclient.NamedMiddlewareFunc("mock", fn)
+	return httpclient.NewProvider(httpclient.ProviderOptions{Middlewares: []httpclient.Middleware{mid}})
 }
 
 func Test_healthcheck(t *testing.T) {
 	t.Run("should do a successful health check", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckSuccessRoundTripper]()
 		s := &Service{
-			im:       datasource.NewInstanceManager(newInstanceSettings(&httpProvider.Provider)),
+			im:       datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
 			features: featuremgmt.WithFeatures(featuremgmt.FlagLokiLogsDataplane, featuremgmt.FlagLokiMetricDataplane),
 			tracer:   tracing.InitializeTracerForTest(),
 			logger:   log.New("loki test"),
@@ -104,7 +110,7 @@ func Test_healthcheck(t *testing.T) {
 	t.Run("should return an error for an unsuccessful health check", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckFailRoundTripper]()
 		s := &Service{
-			im:       datasource.NewInstanceManager(newInstanceSettings(&httpProvider.Provider)),
+			im:       datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
 			features: featuremgmt.WithFeatures(featuremgmt.FlagLokiLogsDataplane, featuremgmt.FlagLokiMetricDataplane),
 			tracer:   tracing.InitializeTracerForTest(),
 			logger:   log.New("loki test"),
