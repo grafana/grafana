@@ -39,7 +39,7 @@ The state timeline visualization is useful when you need to monitor and analyze 
 
 The state timeline panel works best if you have data capturing the various states of entities over time, formatted as a table. The data must include:
 
-- **Timestamps** - Indicates when each state change occurred. This could also be the start time for the state change. You can also add an optional timestamp to indicate the end time for the state change.
+- **Timestamps** - Indicate when each state change occurred. This could also be the start time for the state change. You can also add an optional timestamp to indicate the end time for the state change.
 - **Entity name/identifier** - Represents the name of the entity you're trying to monitor.
 - **State value** - Represents the state value of the entity you're monitoring. These can be string, numerical, or boolean states.
 
