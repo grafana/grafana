@@ -5,7 +5,7 @@ aliases:
   - ../high-availability/ ## latest/alerting/high-availability
   - ../fundamentals/high-availability/ ## latest/alerting/fundamentals/high-availability
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/configure-high-availability/
-description: Enable alerting high availability
+description: Configure High Availability
 keywords:
   - grafana
   - alerting
@@ -16,11 +16,11 @@ labels:
   products:
     - enterprise
     - oss
-title: Enable alerting high availability
+title: Configure High Availability
 weight: 600
 ---
 
-# Enable alerting high availability
+# Configure High Availability
 
 Grafana Alerting uses the Prometheus model of separating the evaluation of alert rules from the delivering of notifications. In this model the evaluation of alert rules is done in the alert generator and the delivering of notifications is done in the alert receiver. In Grafana Alerting, the alert generator is the Scheduler and the receiver is the Alertmanager.
 

@@ -11,7 +11,7 @@ labels:
   products:
     - oss
 title: Configure Alert State History
-weight: 400
+weight: 250
 ---
 
 # Configure Alert State History
