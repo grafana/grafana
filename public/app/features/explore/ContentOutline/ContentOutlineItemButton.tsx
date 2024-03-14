@@ -3,11 +3,13 @@ import React, { ButtonHTMLAttributes } from 'react';
 
 import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2, Tooltip, IconSize } from '@grafana/ui';
+import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 
 type CommonProps = {
   title?: string;
   icon?: IconName | React.ReactNode;
   tooltip?: string;
+  tooltipPlacement?: TooltipPlacement;
   className?: string;
   collapsible?: boolean;
   collapsed?: boolean;
@@ -23,6 +25,7 @@ export function ContentOutlineItemButton({
   title,
   icon,
   tooltip,
+  tooltipPlacement = 'bottom',
   className,
   collapsible,
   collapsed,
@@ -58,7 +61,7 @@ export function ContentOutlineItemButton({
   );
 
   return tooltip ? (
-    <Tooltip content={tooltip} placement="bottom">
+    <Tooltip content={tooltip} placement={tooltipPlacement}>
       {body}
     </Tooltip>
   ) : (

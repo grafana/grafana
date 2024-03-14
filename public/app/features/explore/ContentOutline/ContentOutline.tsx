@@ -106,6 +106,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
           <ContentOutlineItemButton
             icon={'arrow-from-right'}
             tooltip={contentOutlineExpanded ? 'Collapse outline' : 'Expand outline'}
+            tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
             onClick={toggle}
             className={styles.toggleContentOutlineButton}
             aria-expanded={contentOutlineExpanded}
