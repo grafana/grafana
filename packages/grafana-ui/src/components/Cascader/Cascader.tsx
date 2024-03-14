@@ -6,7 +6,9 @@ import React, { PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
 
 import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
+import { Stack } from '../Layout/Stack/Stack';
 import { Select } from '../Select/Select';
 
 import { onChangeCascader } from './optionMappings';
@@ -40,6 +42,8 @@ export interface CascaderProps {
   disabled?: boolean;
   /** ID for the underlying Select/Cascader component */
   id?: string;
+  /** Whether you can clear the selected value or not */
+  isClearable?: boolean;
 }
 
 interface CascaderState {
@@ -217,8 +221,17 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
   };
 
   render() {
-    const { allowCustomValue, formatCreateLabel, placeholder, width, changeOnSelect, options, disabled, id } =
-      this.props;
+    const {
+      allowCustomValue,
+      formatCreateLabel,
+      placeholder,
+      width,
+      changeOnSelect,
+      options,
+      disabled,
+      id,
+      isClearable,
+    } = this.props;
     const { focusCascade, isSearching, rcValue, activeLabel, inputValue } = this.state;
 
     const searchableOptions = this.getSearchableOptions(options);
@@ -262,11 +275,21 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
                 suffix={
-                  focusCascade ? (
-                    <Icon name="angle-up" />
-                  ) : (
-                    <Icon name="angle-down" style={{ marginBottom: 0, marginLeft: '4px' }} />
-                  )
+                  <Stack gap={0.5}>
+                    {isClearable && activeLabel !== '' && (
+                      <IconButton
+                        name="times"
+                        aria-label="Clear selection"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          this.setState({ rcValue: [], activeLabel: '', inputValue: '' });
+                          this.props.onSelect('');
+                        }}
+                      />
+                    )}
+                    <Icon name={focusCascade ? 'angle-up' : 'angle-down'} />
+                  </Stack>
                 }
                 disabled={disabled}
                 id={id}
