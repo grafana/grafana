@@ -3,6 +3,7 @@ import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 
@@ -23,8 +24,17 @@ function PluginListItemComponent({ plugin, pathName, displayMode = PluginListDis
   const styles = useStyles2(getStyles);
   const isList = displayMode === PluginListDisplayMode.List;
 
+  const reportUserClickInteraction = () => {
+    if (locationService.getSearchObject()?.q) {
+      reportInteraction('plugins_search_user_click', {});
+    }
+  };
   return (
-    <a href={`${pathName}/${plugin.id}`} className={cx(styles.container, { [styles.list]: isList })}>
+    <a
+      href={`${pathName}/${plugin.id}`}
+      className={cx(styles.container, { [styles.list]: isList })}
+      onClick={reportUserClickInteraction}
+    >
       <PluginLogo src={plugin.info.logos.small} className={styles.pluginLogo} height={LOGO_SIZE} alt="" />
       <h2 className={cx(styles.name, 'plugin-name')}>{plugin.name}</h2>
       <div className={cx(styles.content, 'plugin-content')}>
