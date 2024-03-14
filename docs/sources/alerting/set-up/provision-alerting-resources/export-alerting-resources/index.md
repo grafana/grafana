@@ -131,13 +131,13 @@ To export mute timings from the Grafana UI, complete the following steps.
 
 You can use the [Alerting HTTP API][alerting_http_provisioning] to return existing alerting resources in JSON and import them to another Grafana instance using the same endpoint.
 
-| Resource                                                       | URI                                 | Methods          |
-| -------------------------------------------------------------- | ----------------------------------- | ---------------- |
-| [Alert rules][alerting_http_alertrules]                        | /api/v1/provisioning/alert-rules    | GET,POST,PUT,DEL |
-| [Contact points][alerting_http_contactpoints]                  | /api/v1/provisioning/contact-points | GET,POST,PUT,DEL |
-| [Notification policy tree][alerting_http_notificationpolicies] | /api/v1/provisioning/policies       | GET,PUT,DEL      |
-| [Mute timings][alerting_http_mutetimings]                      | /api/v1/provisioning/mute-timings   | GET,POST,PUT,DEL |
-| [Templates][alerting_http_templates]                           | /api/v1/provisioning/templates      | GET,PUT,DEL      |
+| Resource                                                       | URI                                 |
+| -------------------------------------------------------------- | ----------------------------------- |
+| [Alert rules][alerting_http_alertrules]                        | /api/v1/provisioning/alert-rules    |
+| [Contact points][alerting_http_contactpoints]                  | /api/v1/provisioning/contact-points |
+| [Notification policy tree][alerting_http_notificationpolicies] | /api/v1/provisioning/policies       |
+| [Mute timings][alerting_http_mutetimings]                      | /api/v1/provisioning/mute-timings   |
+| [Templates][alerting_http_templates]                           | /api/v1/provisioning/templates      |
 
 However, note the standard endpoints return a JSON format that is not compatible for provisioning through configuration files or Terraform, except the `/export` endpoints listed below.
 
