@@ -660,6 +660,6 @@ const (
 	FlagEmailVerificationEnforcement = "emailVerificationEnforcement"
 
 	// FlagSsoSettingsSAML
-	// Enables the SSO settings API and the SAML configuration UIs in Grafana
+	// Use the new SSO Settings API to configure the SAML connector
 	FlagSsoSettingsSAML = "ssoSettingsSAML"
 )
