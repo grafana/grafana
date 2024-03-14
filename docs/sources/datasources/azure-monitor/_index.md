@@ -136,7 +136,8 @@ datasources:
 **Current User:**
 
 {{< admonition type="note" >}}
-The `oauthPassThru` property is required for current user authentication to function. Additionally, `disableGrafanaCache` is necessary to ensure cached responses to resources users do not have access to in Azure are not returned.
+The `oauthPassThru` property is required for current user authentication to function.
+Additionally, `disableGrafanaCache` is necessary to prevent the data source returning cached responses for resources users don't have access to.
 {{< /admonition >}}
 
 ```yaml
@@ -163,7 +164,8 @@ datasources:
 | **US Government cloud**              | `govazuremonitor`          |
 
 {{< admonition type="note" >}}
-Cloud names for current user authentication differ from the above. The public cloud name is `AzureCloud`, the Chinese national cloud name is `AzureChinaCloud`, and the US Government cloud name is `AzureUSGovernment`.
+Cloud names for current user authentication differ to the `cloudName` values in the preceding table.
+The public cloud name is `AzureCloud`, the Chinese national cloud name is `AzureChinaCloud`, and the US Government cloud name is `AzureUSGovernment`.
 {{< /admonition >}}
 
 ### Configure Managed Identity
@@ -226,38 +228,45 @@ For details on workload identity, refer to the [Azure workload identity document
    workload_identity_token_file = TOKEN_FILE_PATH
    ```
 
-### Configure Current User Authentication
+### Configure Current User authentication
 
 {{< admonition type="note" >}}
-This feature is experimental and subject to change or removal. Aspects of Grafana may not work as expected when using this authentication method.
+Current user authentication is an [experimental feature](https://grafana.com/docs/release-life-cycle/). Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Contact Grafana Support to enable this feature in Grafana Cloud. Aspects of Grafana may not work as expected when using this authentication method.
 {{< /admonition >}}
 
 If your Grafana instance is configured with Azure Entra (formerly Active Directory) authentication for login, this authentication method can be used to forward the currently logged in user's credentials to the data source. The users credentials will then be used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra refer to the [documentation][configure-grafana-azure-auth].
 
-This method of authentication does not inherently support backend functionality as a user's credentials will not be in scope e.g. alerting, reporting, recorded queries. In order to support backend queries when using a data source configured with current user authentication, it is possible to configure service credentials. Also, note that query and resource caching will be disabled by default for data sources using current user authentication.
+This method of authentication doesn't inherently support all backend functionality as a user's credentials won't be in scope.
+Affected functionality includes alerting, reporting, and recorded queries.
+In order to support backend queries when using a data source configured with current user authentication, you can configure service credentials.
+Also, note that query and resource caching is disabled by default for data sources using current user authentication.
 
 {{< admonition type="note" >}}
 To configure fallback service credentials the [feature toggle][configure-grafana-feature-toggles] `idForwarding` must be set to `true` and `user_identity_fallback_credentials_enabled` must be enabled in the [Azure configuration section][configure-grafana-azure] (enabled by default when `user_identity_enabled` is set to `true`).
 {{< /admonition >}}
 
-Permissions for fallback credentials may need to be broad in order to appropriately support backend functionality. For example, an alerting query created by a user will be dependent on their permissions. If a user creates an alert for a resource that the fallback credentials cannot access, the alert will fail.
+Permissions for fallback credentials may need to be broad to appropriately support backend functionality.
+For example, an alerting query created by a user is dependent on their permissions.
+If a user tries to create an alert for a resource that the fallback credentials can't access, the alert will fail.
 
 **To enable current user authentication for Grafana:**
 
-1. Set the `user_identity_enabled` flag in the `[azure]` section of the [Grafana server configuration][configure-grafana-azure]. By default this will also enable fallback service credentials as mentioned above. If you wish to disable service credentials at the instance level set `user_identity_fallback_credentials_enabled` to false.
+1. Set the `user_identity_enabled` flag in the `[azure]` section of the [Grafana server configuration][configure-grafana-azure].
+   By default this will also enable fallback service credentials.
+   If you want to disable service credentials at the instance level set `user_identity_fallback_credentials_enabled` to false.
 
    ```ini
    [azure]
    user_identity_enabled = true
    ```
 
-2. In the Azure Monitor data source configuration, set **Authentication** to **Current User**.
+1. In the Azure Monitor data source configuration, set **Authentication** to **Current User**.
 
-If fallback service credentials are enabled at the instance level, an additional configuration section will be visible allowing service credentials to be enabled/disabled for this data source.
+If fallback service credentials are enabled at the instance level, an additional configuration section is visible that you can use to enable or disable using service credentials for this data source.
 
 {{< figure src="/media/docs/grafana/data-sources/screenshot-current-user.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor screenshot showing Current User authentication" >}}
 
-3. If backend functionality is desired using this data source, enable service credentials and configure the data source using the most applicable credentials for your circumstances.
+1. If you want backend functionality to work with this data source, enable service credentials and configure the data source using the most applicable credentials for your circumstances.
 
 ## Query the data source
 
