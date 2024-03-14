@@ -82,11 +82,6 @@ describe('Tempo data source', () => {
         refId: 'x',
         queryType: 'traceql',
         query: '$interpolationVarWithPipe',
-        spanName: '$interpolationVar',
-        serviceName: '$interpolationVar',
-        search: '$interpolationVar',
-        minDuration: '$interpolationVar',
-        maxDuration: '$interpolationVar',
         serviceMapQuery,
         filters: [
           {
@@ -134,11 +129,6 @@ describe('Tempo data source', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       const queries = ds.interpolateVariablesInQueries([getQuery()], {});
       expect(queries[0].query).toBe(textWithPipe);
-      expect(queries[0].serviceName).toBe(text);
-      expect(queries[0].spanName).toBe(text);
-      expect(queries[0].search).toBe(text);
-      expect(queries[0].minDuration).toBe(text);
-      expect(queries[0].maxDuration).toBe(text);
       expect(queries[0].serviceMapQuery).toBe(text);
       expect(queries[0].filters[0].value).toBe(textWithPipe);
       expect(queries[0].filters[1].value).toBe(text);
@@ -152,11 +142,6 @@ describe('Tempo data source', () => {
         interpolationVar: { text: scopedText, value: scopedText },
       });
       expect(resp.query).toBe(textWithPipe);
-      expect(resp.serviceName).toBe(scopedText);
-      expect(resp.spanName).toBe(scopedText);
-      expect(resp.search).toBe(scopedText);
-      expect(resp.minDuration).toBe(scopedText);
-      expect(resp.maxDuration).toBe(scopedText);
       expect(resp.filters[0].value).toBe(textWithPipe);
       expect(resp.filters[1].value).toBe(scopedText);
       expect(resp.filters[1].tag).toBe(scopedText);
