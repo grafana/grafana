@@ -250,7 +250,7 @@ The App Registration must also be configured with additional **API Permissions**
 
 1. In the Azure Portal, open the App Registration that requires configuration.
 1. Select **API Permissions** in the side menu.
-1. Ensure the `openid`, `profile`, `email`, and `offline_access` permissions are present under the **Microsoft Graph** selction. If not, they must be added.
+1. Ensure the `openid`, `profile`, `email`, and `offline_access` permissions are present under the **Microsoft Graph** section. If not, they must be added.
 1. Select **Add a permission** and choose the following permissions. They must be added individually. Refer to the [Azure documentation](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-configure-app-access-web-apis) for more information.
    - Select **Azure Service Management** > **Delegated permissions** > `user_impersonation` > **Add permissions**
    - Select **APIs my organization uses** > Search for **Log Analytics API** and select it > **Delegated permissions** > `Date.Read` > **Add permissions**
