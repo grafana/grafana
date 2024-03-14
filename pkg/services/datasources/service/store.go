@@ -254,7 +254,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			}
 			cmd.UID = uid
 		} else if err := util.ValidateUID(cmd.UID); err != nil {
-			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name)
+			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, err)
 		}
 
 		ds = &datasources.DataSource{
@@ -381,15 +381,10 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 
 		err = updateIsDefaultFlag(ds, sess)
 
-		if cmd.UpdateSecretFn != nil {
-			if err := cmd.UpdateSecretFn(); err != nil {
-				ss.logger.Error("Failed to update datasource secrets -- rolling back update", "UID", cmd.UID, "name", cmd.Name, "type", cmd.Type, "orgId", cmd.OrgID)
-				return err
+		if cmd.UID != "" {
+			if err := util.ValidateUID(cmd.UID); err != nil {
+				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, err)
 			}
-		}
-
-		if err := util.ValidateUID(cmd.UID); err != nil {
-			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name)
 		}
 
 		return err
@@ -415,11 +410,11 @@ func generateNewDatasourceUid(sess *db.Session, orgId int64) (string, error) {
 
 var generateNewUid func() string = util.GenerateShortUID
 
-func logDeprecatedInvalidDsUid(logger log.Logger, uid, name string) {
+func logDeprecatedInvalidDsUid(logger log.Logger, uid string, name string, err error) {
 	logger.Warn(
 		"Invalid datasource uid. The use of invalid uids is deprecated and this operation will fail in a future "+
 			"version of Grafana. A valid uid is a combination of a-z, A-Z, 0-9 (alphanumeric), - (dash) and _ "+
 			"(underscore) characters, maximum length 40",
-		"uid", uid, "name", name,
+		"uid", uid, "name", name, "error", err,
 	)
 }
