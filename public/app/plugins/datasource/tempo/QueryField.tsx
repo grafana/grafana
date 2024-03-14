@@ -16,9 +16,10 @@ import {
 } from '@grafana/ui';
 
 import NativeSearch from './NativeSearch/NativeSearch';
+import { generateId } from './SearchTraceQLEditor/TagsInput';
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
-import { TempoQueryType } from './dataquery.gen';
+import { SearchTableType, TempoQueryType, TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import { QueryEditor } from './traceql/QueryEditor';
 import { TempoQuery } from './types';
@@ -84,6 +85,75 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       query.queryType === 'nativeSearch'
     ) {
       queryTypeOptions.unshift({ value: 'nativeSearch', label: '[Deprecated] Search' });
+
+      let filters: TraceqlFilter[] = [];
+      if (query.spanName) {
+        filters.push({
+          id: generateId(),
+          scope: TraceqlSearchScope.Span,
+          tag: 'name',
+          operator: '=',
+          value: [query.spanName],
+          valueType: 'string',
+        });
+      }
+      if (query.serviceName) {
+        filters.push({
+          id: generateId(),
+          scope: TraceqlSearchScope.Resource,
+          tag: 'service.name',
+          operator: '=',
+          value: [query.serviceName],
+          valueType: 'string',
+        });
+      }
+      if (query.minDuration) {
+        filters.push({
+          id: 'min-duration',
+          tag: 'duration',
+          operator: '>',
+          value: [query.minDuration],
+          valueType: 'duration',
+        });
+      }
+      if (query.maxDuration) {
+        filters.push({
+          id: 'max-duration',
+          tag: 'duration',
+          operator: '<',
+          value: [query.maxDuration],
+          valueType: 'duration',
+        });
+      }
+      if (query.search) {
+        const tags = query.search.split(' ');
+        for (const tag of tags) {
+          const [key, value] = tag.split('=');
+          if (key && value) {
+            filters.push({
+              id: generateId(),
+              scope: TraceqlSearchScope.Unscoped,
+              tag: key,
+              operator: '=',
+              value: [value.replace(/(^"|"$)/g, '')], // remove quotes at start and end of string
+              valueType: 'string',
+            });
+          }
+        }
+      }
+
+      const newQuery: TempoQuery = {
+        datasource: query.datasource,
+        filters,
+        groupBy: query.groupBy,
+        limit: query.limit,
+        query: query.query,
+        queryType: 'traceqlSearch',
+        refId: query.refId,
+        tableType: SearchTableType.Traces,
+      };
+
+      onChange(newQuery);
     }
 
     return (
