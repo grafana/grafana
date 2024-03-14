@@ -5,6 +5,7 @@ import (
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/user"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -156,30 +157,7 @@ func addUserMigrations(mg *Migrator) {
 
 	// Service accounts login were not unique per org. this migration is part of making it unique per org
 	// to be able to create service accounts that are unique per org
-	mg.AddMigration("", NewRawSQLMigration(""))
-
-	// mg.AddMigration("Update login field for service accounts", NewRawSQLMigration("").
-	// 	SQLite(`UPDATE user
-	//         SET login = 'sa-' || CAST(org_id AS TEXT) || '-' ||
-	//         CASE
-	//             WHEN SUBSTR(login, 1, 3) = 'sa-' THEN SUBSTR(login, 4)
-	//             ELSE login
-	//         END
-	//         WHERE login IS NOT NULL AND is_service_account = 1;`).
-	// 	Postgres(`UPDATE "user"
-	//           SET login = 'sa-' || org_id::text || '-' ||
-	//           CASE
-	//             WHEN login LIKE 'sa-%' THEN SUBSTRING(login FROM 4)
-	//             ELSE login
-	//           END
-	//           WHERE login IS NOT NULL AND is_service_account = true;`).
-	// 	Mysql(`UPDATE user
-	//        SET login = CONCAT('sa-', CAST(org_id AS CHAR), '-',
-	//        CASE
-	//          WHEN login LIKE 'sa-%' THEN SUBSTRING(login, 4)
-	//          ELSE login
-	//        END)
-	//        WHERE login IS NOT NULL AND is_service_account = 1;`))
+	mg.AddMigration(user.AllowSameLoginCrossOrgs, &user.ServiceAccountsSameLoginCrossOrgs{})
 }
 
 const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;

@@ -14,22 +14,22 @@ const (
 // Service accounts login were not unique per org. this migration is part of making it unique per org
 // to be able to create service accounts that are unique per org
 func AddServiceAccountsAllowSameLoginCrossOrgs(mg *migrator.Migrator) {
-	mg.AddMigration(AllowSameLoginCrossOrgs, &serviceAccountsSameLoginCrossOrgs{})
+	mg.AddMigration(AllowSameLoginCrossOrgs, &ServiceAccountsSameLoginCrossOrgs{})
 }
 
-var _ migrator.CodeMigration = new(serviceAccountsSameLoginCrossOrgs)
+var _ migrator.CodeMigration = new(ServiceAccountsSameLoginCrossOrgs)
 
-type serviceAccountsSameLoginCrossOrgs struct {
+type ServiceAccountsSameLoginCrossOrgs struct {
 	sess    *xorm.Session
 	dialect migrator.Dialect
 	migrator.MigrationBase
 }
 
-func (p *serviceAccountsSameLoginCrossOrgs) SQL(dialect migrator.Dialect) string {
+func (p *ServiceAccountsSameLoginCrossOrgs) SQL(dialect migrator.Dialect) string {
 	return "code migration"
 }
 
-func (p *serviceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	fmt.Printf("Executing migration %s\n", AllowSameLoginCrossOrgs)
 	p.sess = sess
 	p.dialect = mg.Dialect

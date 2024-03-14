@@ -13,64 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Setup users
 var (
 	now = time.Now()
-
-	users = []user.User{
-		{
-			ID:      1,
-			UID:     "u1",
-			Email:   "viewer1@example.org",
-			Name:    "viewer1",
-			Login:   "viewer1",
-			OrgID:   1,
-			Created: now,
-			Updated: now,
-		},
-		{
-			ID:      2,
-			UID:     "u2",
-			Email:   "viewer2@example.org",
-			Name:    "viewer2",
-			Login:   "viewer2",
-			OrgID:   1,
-			Created: now,
-			Updated: now,
-		},
-		{
-			ID:      3,
-			UID:     "u3",
-			Email:   "editor1@example.org",
-			Name:    "editor1",
-			Login:   "editor1",
-			OrgID:   1,
-			Created: now,
-			Updated: now,
-		},
-		{
-			ID:      4,
-			UID:     "u4",
-			Email:   "admin1@example.org",
-			Name:    "admin1",
-			Login:   "admin1",
-			OrgID:   1,
-			Created: now,
-			Updated: now,
-		},
-		{
-			ID:    5,
-			UID:   "u5",
-			Email: "editor2@example.org",
-			Name:  "editor2",
-			Login: "editor2",
-			OrgID: 2,
-		},
-	}
 )
 
 func setupTestDB(t *testing.T) *xorm.Engine {
