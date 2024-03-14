@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 //go:generate go run gen.go
 
 package main
@@ -13,6 +16,8 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
+	"cuelang.org/go/cue/load"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
 	"github.com/grafana/grafana/pkg/codegen"
@@ -66,7 +71,7 @@ func main() {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
 
-	commfsys := elsedie(genCommon(filepath.Join(groot, "pkg", "kindsys")))("common schemas failed")
+	commfsys := elsedie(genCommon(groot))("common schemas failed")
 	commfsys = elsedie(commfsys.Map(header))("failed gen header on common fsys")
 	if err = jfs.Merge(commfsys); err != nil {
 		die(err)
@@ -83,27 +88,26 @@ func main() {
 
 type dummyCommonJenny struct{}
 
-func genCommon(kp string) (*codejen.FS, error) {
+func genCommon(groot string) (*codejen.FS, error) {
 	fsys := codejen.NewFS()
-
-	// kp := filepath.Join("pkg", "kindsys")
 	path := filepath.Join("packages", "grafana-schema", "src", "common")
-	// Grab all the common_* files from kindsys and load them in
-	dfsys := os.DirFS(kp)
-	matches := elsedie(fs.Glob(dfsys, "common_*.cue"))("could not glob kindsys cue files")
-	for _, fname := range matches {
-		fpath := filepath.Join(path, strings.TrimPrefix(fname, "common_"))
-		fpath = fpath[:len(fpath)-4] + "_gen.cue"
-		data := elsedie(fs.ReadFile(dfsys, fname))("error reading " + fname)
-		_ = fsys.Add(*codejen.NewFile(fpath, data, dummyCommonJenny{}))
-	}
 	fsys = elsedie(fsys.Map(packageMapper))("failed remapping fs")
 
-	v, err := cuectx.BuildGrafanaInstance(nil, path, "", nil)
-	if err != nil {
-		return nil, err
+	commonFiles := make([]string, 0)
+	filepath.WalkDir(filepath.Join(groot, path), func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() || filepath.Ext(d.Name()) != ".cue" {
+			return nil
+		}
+		commonFiles = append(commonFiles, path)
+		return nil
+	})
+
+	instance := load.Instances(commonFiles, &load.Config{})[0]
+	if instance.Err != nil {
+		return nil, instance.Err
 	}
 
+	v := cuecontext.New().BuildInstance(instance)
 	b := elsedie(cuetsy.Generate(v, cuetsy.Config{
 		Export: true,
 	}))("failed to generate common schema TS")
