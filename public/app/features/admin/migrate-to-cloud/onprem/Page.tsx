@@ -1,39 +1,37 @@
-import React from 'react';
+import { skipToken } from '@reduxjs/toolkit/query/react';
+import React, { useState } from 'react';
 
-import { Button, ModalsController, Stack, Text } from '@grafana/ui';
+import { Button, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { useDisconnectStackMutation, useGetStatusQuery } from '../api';
+import { useGetStatusQuery, useListResourcesQuery } from '../api';
 
 import { DisconnectModal } from './DisconnectModal';
 import { EmptyState } from './EmptyState/EmptyState';
+import { ResourcesTable } from './ResourcesTable';
 
 export const Page = () => {
-  const { data, isFetching } = useGetStatusQuery();
-  const [disconnectStack, disconnectResponse] = useDisconnectStackMutation();
-  if (!data?.enabled) {
+  const { data: status, isFetching } = useGetStatusQuery();
+  const { data: resources } = useListResourcesQuery(status?.enabled ? undefined : skipToken);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+
+  if (!status?.enabled) {
     return <EmptyState />;
   }
 
   return (
-    <ModalsController>
-      {({ showModal, hideModal }) => (
-        <Stack alignItems="center">
-          {data.stackURL && <Text variant="h4">{data.stackURL}</Text>}
-          <Button
-            disabled={isFetching || disconnectResponse.isLoading}
-            variant="secondary"
-            onClick={() =>
-              showModal(DisconnectModal, {
-                hideModal,
-                onConfirm: disconnectStack,
-              })
-            }
-          >
-            <Trans i18nKey="migrate-to-cloud.resources.disconnect">Disconnect</Trans>
-          </Button>
-        </Stack>
-      )}
-    </ModalsController>
+    <>
+      <Stack direction="column" alignItems="flex-start">
+        {status.stackURL && <Text variant="h4">{status.stackURL}</Text>}
+
+        <Button disabled={isFetching || isDisconnecting} variant="secondary" onClick={() => setIsDisconnecting(true)}>
+          <Trans i18nKey="migrate-to-cloud.resources.disconnect">Disconnect</Trans>
+        </Button>
+
+        {resources && <ResourcesTable resources={resources} />}
+      </Stack>
+
+      <DisconnectModal isOpen={isDisconnecting} onDismiss={() => setIsDisconnecting(false)} />
+    </>
   );
 };

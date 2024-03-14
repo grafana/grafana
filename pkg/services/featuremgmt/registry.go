@@ -524,13 +524,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:         "exploreScrollableLogsContainer",
-			Description:  "Improves the scrolling behavior of logs in Explore",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
@@ -592,7 +585,7 @@ var (
 		{
 			Name:         "traceQLStreaming",
 			Description:  "Enables response streaming of TraceQL queries of the Tempo data source",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
@@ -1219,6 +1212,14 @@ var (
 		{
 			Name:              "emailVerificationEnforcement",
 			Description:       "Force email verification for users, even when authenticating through sso.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "ssoSettingsSAML",
+			Description:       "Use the new SSO Settings API to configure the SAML connector",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,

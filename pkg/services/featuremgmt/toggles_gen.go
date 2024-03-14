@@ -287,10 +287,6 @@ const (
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
 
-	// FlagExploreScrollableLogsContainer
-	// Improves the scrolling behavior of logs in Explore
-	FlagExploreScrollableLogsContainer = "exploreScrollableLogsContainer"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
@@ -662,4 +658,8 @@ const (
 	// FlagEmailVerificationEnforcement
 	// Force email verification for users, even when authenticating through sso.
 	FlagEmailVerificationEnforcement = "emailVerificationEnforcement"
+
+	// FlagSsoSettingsSAML
+	// Use the new SSO Settings API to configure the SAML connector
+	FlagSsoSettingsSAML = "ssoSettingsSAML"
 )
