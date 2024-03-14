@@ -41,12 +41,12 @@ export function syncToURLPredicate(paused: MutableRefObject<boolean>, action: Ac
 }
 
 export function syncToURL(
-  getState: () => { explore: ExploreState },
+  exploreState: ExploreState,
   prevParams: MutableRefObject<UrlQueryMap>,
   initState: MutableRefObject<'pending' | 'done' | 'notstarted'>,
   location: LocationService
 ) {
-  const panesQueryParams = Object.entries(getState().explore.panes).reduce((acc, [id, paneState]) => {
+  const panesQueryParams = Object.entries(exploreState.panes).reduce((acc, [id, paneState]) => {
     if (!paneState) {
       return acc;
     }

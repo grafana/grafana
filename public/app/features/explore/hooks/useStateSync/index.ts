@@ -44,7 +44,7 @@ export function useStateSync(params: ExploreQueryParams) {
           // are committed to the store.
           cancelActiveListeners();
           await delay(200);
-          syncToURL(getState, prevParams, initState, location);
+          syncToURL(getState().explore, prevParams, initState, location);
         },
       })
     );
