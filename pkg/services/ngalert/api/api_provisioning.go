@@ -58,17 +58,17 @@ type MuteTimingService interface {
 }
 
 type AlertRuleService interface {
-	GetAlertRules(ctx context.Context, orgID int64) ([]*alerting_models.AlertRule, map[string]alerting_models.Provenance, error)
-	GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (alerting_models.AlertRule, alerting_models.Provenance, error)
-	CreateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance, userID int64) (alerting_models.AlertRule, error)
-	UpdateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
-	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
-	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroup, error)
-	ReplaceRuleGroup(ctx context.Context, orgID int64, group alerting_models.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
-	DeleteRuleGroup(ctx context.Context, orgID int64, folder, group string, provenance alerting_models.Provenance) error
-	GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (provisioning.AlertRuleWithFolderTitle, error)
-	GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroupWithFolderTitle, error)
-	GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64, folderUIDs []string) ([]alerting_models.AlertRuleGroupWithFolderTitle, error)
+	GetAlertRules(ctx context.Context, user identity.Requester) ([]*alerting_models.AlertRule, map[string]alerting_models.Provenance, error)
+	GetAlertRule(ctx context.Context, user identity.Requester, ruleUID string) (alerting_models.AlertRule, alerting_models.Provenance, error)
+	CreateAlertRule(ctx context.Context, user identity.Requester, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
+	UpdateAlertRule(ctx context.Context, user identity.Requester, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
+	DeleteAlertRule(ctx context.Context, user identity.Requester, ruleUID string, provenance alerting_models.Provenance) error
+	GetRuleGroup(ctx context.Context, user identity.Requester, folder, group string) (alerting_models.AlertRuleGroup, error)
+	ReplaceRuleGroup(ctx context.Context, user identity.Requester, group alerting_models.AlertRuleGroup, provenance alerting_models.Provenance) error
+	DeleteRuleGroup(ctx context.Context, user identity.Requester, folder, group string, provenance alerting_models.Provenance) error
+	GetAlertRuleWithFolderTitle(ctx context.Context, user identity.Requester, ruleUID string) (provisioning.AlertRuleWithFolderTitle, error)
+	GetAlertRuleGroupWithFolderTitle(ctx context.Context, user identity.Requester, folder, group string) (alerting_models.AlertRuleGroupWithFolderTitle, error)
+	GetAlertGroupsWithFolderTitle(ctx context.Context, user identity.Requester, folderUIDs []string) ([]alerting_models.AlertRuleGroupWithFolderTitle, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
@@ -309,7 +309,7 @@ func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *contextmodel.ReqContext, na
 }
 
 func (srv *ProvisioningSrv) RouteGetAlertRules(c *contextmodel.ReqContext) response.Response {
-	rules, provenances, err := srv.alertRules.GetAlertRules(c.Req.Context(), c.SignedInUser.GetOrgID())
+	rules, provenances, err := srv.alertRules.GetAlertRules(c.Req.Context(), c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -317,7 +317,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRules(c *contextmodel.ReqContext) respo
 }
 
 func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *contextmodel.ReqContext, UID string) response.Response {
-	rule, provenace, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.SignedInUser.GetOrgID(), UID)
+	rule, provenace, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.SignedInUser, UID)
 	if err != nil {
 		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 			return response.Empty(http.StatusNotFound)
@@ -334,8 +334,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	provenance := determineProvenance(c)
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, alerting_models.Provenance(provenance), userID)
+	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), c.SignedInUser, upstreamModel, alerting_models.Provenance(provenance))
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -364,7 +363,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 	updated.OrgID = c.SignedInUser.GetOrgID()
 	updated.UID = UID
 	provenance := determineProvenance(c)
-	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), updated, alerting_models.Provenance(provenance))
+	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), c.SignedInUser, updated, alerting_models.Provenance(provenance))
 	if errors.Is(err, alerting_models.ErrAlertRuleUniqueConstraintViolation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -387,7 +386,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 
 func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *contextmodel.ReqContext, UID string) response.Response {
 	provenance := determineProvenance(c)
-	err := srv.alertRules.DeleteAlertRule(c.Req.Context(), c.SignedInUser.GetOrgID(), UID, alerting_models.Provenance(provenance))
+	err := srv.alertRules.DeleteAlertRule(c.Req.Context(), c.SignedInUser, UID, alerting_models.Provenance(provenance))
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -395,7 +394,7 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *contextmodel.ReqContext, UID
 }
 
 func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *contextmodel.ReqContext, folder string, group string) response.Response {
-	g, err := srv.alertRules.GetRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), folder, group)
+	g, err := srv.alertRules.GetRuleGroup(c.Req.Context(), c.SignedInUser, folder, group)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
@@ -423,7 +422,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 		return srv.RouteGetAlertRuleGroupExport(c, folderUIDs[0], group)
 	}
 
-	groupsWithTitle, err := srv.alertRules.GetAlertGroupsWithFolderTitle(c.Req.Context(), c.SignedInUser.GetOrgID(), folderUIDs)
+	groupsWithTitle, err := srv.alertRules.GetAlertGroupsWithFolderTitle(c.Req.Context(), c.SignedInUser, folderUIDs)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
@@ -441,7 +440,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 
 // RouteGetAlertRuleGroupExport retrieves the given alert rule group in a format compatible with file provisioning.
 func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqContext, folder string, group string) response.Response {
-	g, err := srv.alertRules.GetAlertRuleGroupWithFolderTitle(c.Req.Context(), c.SignedInUser.GetOrgID(), folder, group)
+	g, err := srv.alertRules.GetAlertRuleGroupWithFolderTitle(c.Req.Context(), c.SignedInUser, folder, group)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rule group", err)
 	}
@@ -456,7 +455,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 
 // RouteGetAlertRuleExport retrieves the given alert rule in a format compatible with file provisioning.
 func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, UID string) response.Response {
-	rule, err := srv.alertRules.GetAlertRuleWithFolderTitle(c.Req.Context(), c.SignedInUser.GetOrgID(), UID)
+	rule, err := srv.alertRules.GetAlertRuleWithFolderTitle(c.Req.Context(), c.SignedInUser, UID)
 	if err != nil {
 		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -482,9 +481,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 		ErrResp(http.StatusBadRequest, err, "")
 	}
 	provenance := determineProvenance(c)
-
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), groupModel, userID, alerting_models.Provenance(provenance))
+	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, groupModel, alerting_models.Provenance(provenance))
 	if errors.Is(err, alerting_models.ErrAlertRuleUniqueConstraintViolation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -502,7 +499,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 
 func (srv *ProvisioningSrv) RouteDeleteAlertRuleGroup(c *contextmodel.ReqContext, folderUID string, group string) response.Response {
 	provenance := determineProvenance(c)
-	err := srv.alertRules.DeleteRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), folderUID, group, alerting_models.Provenance(provenance))
+	err := srv.alertRules.DeleteRuleGroup(c.Req.Context(), c.SignedInUser, folderUID, group, alerting_models.Provenance(provenance))
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
