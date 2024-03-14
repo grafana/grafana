@@ -15,7 +15,6 @@ import {
   withTheme2,
 } from '@grafana/ui';
 
-import NativeSearch from './NativeSearch/NativeSearch';
 import { generateId } from './SearchTraceQLEditor/TagsInput';
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
@@ -84,8 +83,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       query.minDuration ||
       query.queryType === 'nativeSearch'
     ) {
-      queryTypeOptions.unshift({ value: 'nativeSearch', label: '[Deprecated] Search' });
-
       let filters: TraceqlFilter[] = [];
       if (query.spanName) {
         filters.push({
@@ -216,15 +213,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             </HorizontalGroup>
           </InlineField>
         </InlineFieldRow>
-        {query.queryType === 'nativeSearch' && (
-          <NativeSearch
-            datasource={this.props.datasource}
-            query={query}
-            onChange={onChange}
-            onBlur={this.props.onBlur}
-            onRunQuery={this.props.onRunQuery}
-          />
-        )}
         {query.queryType === 'traceqlSearch' && (
           <TraceQLSearch
             datasource={this.props.datasource}
