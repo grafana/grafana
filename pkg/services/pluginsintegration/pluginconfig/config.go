@@ -63,6 +63,7 @@ type PluginInstanceCfg struct {
 	GrafanaVersion string
 
 	ConcurrentQueryCount int
+	ResponseLimit        int64
 
 	UserFacingDefaultError string
 
@@ -115,6 +116,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		SQLDatasourceMaxOpenConnsDefault:    cfg.SqlDatasourceMaxOpenConnsDefault,
 		SQLDatasourceMaxIdleConnsDefault:    cfg.SqlDatasourceMaxIdleConnsDefault,
 		SQLDatasourceMaxConnLifetimeDefault: cfg.SqlDatasourceMaxConnLifetimeDefault,
+		ResponseLimit:                       cfg.ResponseLimit,
 	}, nil
 }
 
