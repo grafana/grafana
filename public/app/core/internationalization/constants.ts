@@ -55,7 +55,7 @@ export const LANGUAGES: LanguageDefinitions[] = [
   {
     code: BRAZILIAN_PORTUGUESE,
     name: 'Português Brasileiro',
-    loader: () => import('../../../locales/pt-br/grafana.json'),
+    loader: () => import('../../../locales/pt-BR/grafana.json'),
   },
 ];
 
