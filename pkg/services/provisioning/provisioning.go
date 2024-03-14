@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources"
@@ -26,7 +25,6 @@ import (
 	prov_alerting "github.com/grafana/grafana/pkg/services/provisioning/alerting"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
-	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
 	"github.com/grafana/grafana/pkg/services/provisioning/plugins"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/searchV2"
@@ -46,7 +44,6 @@ func ProvideService(
 	correlationsService correlations.Service,
 	dashboardService dashboardservice.DashboardService,
 	folderService folder.Service,
-	alertingService *alerting.AlertNotificationService,
 	pluginSettings pluginsettings.Service,
 	searchService searchV2.SearchService,
 	quotaService quota.Service,
@@ -61,7 +58,6 @@ func ProvideService(
 		EncryptionService:            encryptionService,
 		NotificationService:          notificatonService,
 		newDashboardProvisioner:      dashboards.New,
-		provisionNotifiers:           notifiers.Provision,
 		provisionDatasources:         datasources.Provision,
 		provisionPlugins:             plugins.Provision,
 		provisionAlerting:            prov_alerting.Provision,
@@ -69,7 +65,6 @@ func ProvideService(
 		dashboardService:             dashboardService,
 		datasourceService:            datasourceService,
 		correlationsService:          correlationsService,
-		alertingService:              alertingService,
 		pluginsSettings:              pluginSettings,
 		searchService:                searchService,
 		quotaService:                 quotaService,
@@ -86,7 +81,6 @@ type ProvisioningService interface {
 	RunInitProvisioners(ctx context.Context) error
 	ProvisionDatasources(ctx context.Context) error
 	ProvisionPlugins(ctx context.Context) error
-	ProvisionNotifications(ctx context.Context) error
 	ProvisionDashboards(ctx context.Context) error
 	ProvisionAlerting(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
@@ -99,7 +93,6 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     logger,
 		newDashboardProvisioner: dashboards.New,
-		provisionNotifiers:      notifiers.Provision,
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
 	}
@@ -108,14 +101,12 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 // Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
-	provisionNotifiers func(context.Context, *setting.Cfg, string, notifiers.Manager, org.Service, encryption.Internal, *notifications.NotificationService) error,
 	provisionDatasources func(context.Context, string, datasources.Store, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
-		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
 	}
@@ -133,7 +124,6 @@ type ProvisioningServiceImpl struct {
 	pollingCtxCancel             context.CancelFunc
 	newDashboardProvisioner      dashboards.DashboardProvisionerFactory
 	dashboardProvisioner         dashboards.DashboardProvisioner
-	provisionNotifiers           func(context.Context, *setting.Cfg, string, notifiers.Manager, org.Service, encryption.Internal, *notifications.NotificationService) error
 	provisionDatasources         func(context.Context, string, datasources.Store, datasources.CorrelationsStore, org.Service) error
 	provisionPlugins             func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error
 	provisionAlerting            func(context.Context, prov_alerting.ProvisionerConfig) error
@@ -142,7 +132,6 @@ type ProvisioningServiceImpl struct {
 	dashboardService             dashboardservice.DashboardService
 	datasourceService            datasourceservice.DataSourceService
 	correlationsService          correlations.Service
-	alertingService              *alerting.AlertNotificationService
 	pluginsSettings              pluginsettings.Service
 	searchService                searchV2.SearchService
 	quotaService                 quota.Service
@@ -160,12 +149,6 @@ func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) erro
 	err = ps.ProvisionPlugins(ctx)
 	if err != nil {
 		ps.log.Error("Failed to provision plugins", "error", err)
-		return err
-	}
-
-	err = ps.ProvisionNotifications(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision alert notifications", "error", err)
 		return err
 	}
 
@@ -225,16 +208,6 @@ func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 	if err := ps.provisionPlugins(ctx, appPath, ps.pluginStore, ps.pluginsSettings, ps.orgService); err != nil {
 		err = fmt.Errorf("%v: %w", "app provisioning error", err)
 		ps.log.Error("Failed to provision plugins", "error", err)
-		return err
-	}
-	return nil
-}
-
-func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) error {
-	alertNotificationsPath := filepath.Join(ps.Cfg.ProvisioningPath, "notifiers")
-	if err := ps.provisionNotifiers(ctx, ps.Cfg, alertNotificationsPath, ps.alertingService, ps.orgService, ps.EncryptionService, ps.NotificationService); err != nil {
-		err = fmt.Errorf("%v: %w", "Alert notification provisioning error", err)
-		ps.log.Error("Failed to provision alert notifications", "error", err)
 		return err
 	}
 	return nil

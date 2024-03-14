@@ -326,7 +326,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	folderStore := folderimpl.ProvideDashboardFolderStore(db)
 	dashPermissionService := acmock.NewMockedPermissionsService()
 	dashService, err := service.ProvideDashboardServiceImpl(
-		cfg, dashboardStoreService, folderStore, nil,
+		cfg, dashboardStoreService, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 		foldertest.NewFakeService(), nil,
 	)

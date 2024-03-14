@@ -173,13 +173,6 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 	if alertingNode != nil {
 		alertingNodes = append(alertingNodes, alertingNode)
 	}
-	if len(alertingNodes) == 0 || s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingPreviewUpgrade) {
-		// If FlagAlertingPreviewUpgrade is enabled, we want to add both the legacy and new alerting nodes.
-		alertingNode := treeRoot.FindById(navtree.NavIDAlertingLegacy)
-		if alertingNode != nil {
-			alertingNodes = append(alertingNodes, alertingNode)
-		}
-	}
 	sectionID := navtree.NavIDApps
 
 	if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride {

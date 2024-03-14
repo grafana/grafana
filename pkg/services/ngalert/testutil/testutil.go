@@ -55,7 +55,7 @@ func SetupDashboardService(tb testing.TB, sqlStore *sqlstore.SQLStore, fs *folde
 	require.NoError(tb, err)
 
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, fs, nil,
+		cfg, dashboardStore, fs,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
 		nil,

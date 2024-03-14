@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -488,7 +487,7 @@ func setupEnv(t *testing.T, sqlStore *sqlstore.SQLStore, b bus.Bus, quotaService
 	_, err = ngalert.ProvideService(
 		sqlStore.Cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotaService,
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, migration.NewFakeMigrationService(t), nil,
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
 	)
 	require.NoError(t, err)
 	_, err = storesrv.ProvideService(sqlStore, featuremgmt.WithFeatures(), sqlStore.Cfg, quotaService, storesrv.ProvideSystemUsersService())

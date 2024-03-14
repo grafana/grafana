@@ -1,4 +1,0 @@
-notifiers:
-  - name: unknown-notifier
-    type: nonexisting
-    uid: notifier1

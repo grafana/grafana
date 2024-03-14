@@ -25,7 +25,7 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
+import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';

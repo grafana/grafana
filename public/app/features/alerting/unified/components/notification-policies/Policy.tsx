@@ -20,7 +20,7 @@ import {
   getTagColorsFromName,
   useStyles2,
 } from '@grafana/ui';
-import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
+import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import {
   AlertmanagerGroup,
   MatcherOperator,

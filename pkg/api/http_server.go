@@ -47,7 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -158,7 +157,6 @@ type HTTPServer struct {
 	ContextHandler               *contexthandler.ContextHandler
 	LoggerMiddleware             loggermw.Logger
 	SQLStore                     db.DB
-	AlertEngine                  *alerting.AlertEngine
 	AlertNG                      *ngalert.AlertNG
 	LibraryPanelService          librarypanels.Service
 	LibraryElementService        libraryelements.Service
@@ -184,7 +182,6 @@ type HTTPServer struct {
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                folder.Service
 	dsGuardian                   guardian.DatasourceGuardianProvider
-	AlertNotificationService     *alerting.AlertNotificationService
 	dashboardsnapshotsService    dashboardsnapshots.Service
 	PluginSettings               pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
@@ -226,7 +223,7 @@ type ServerOptions struct {
 
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing licensing.Licensing, hooksService *hooks.HooksService,
-	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
+	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
 	pluginRequestValidator validations.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
@@ -245,7 +242,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	authInfoService login.AuthInfoService, storageService store.StorageService,
 	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
-	dsGuardian guardian.DatasourceGuardianProvider, alertNotificationService *alerting.AlertNotificationService,
+	dsGuardian guardian.DatasourceGuardianProvider,
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
@@ -274,7 +271,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		HooksService:                 hooksService,
 		CacheService:                 cacheService,
 		SQLStore:                     sqlStore,
-		AlertEngine:                  alertEngine,
 		PluginRequestValidator:       pluginRequestValidator,
 		pluginInstaller:              pluginInstaller,
 		pluginClient:                 pluginClient,
@@ -330,7 +326,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
 		dsGuardian:                   dsGuardian,
-		AlertNotificationService:     alertNotificationService,
 		dashboardsnapshotsService:    dashboardsnapshotsService,
 		PluginSettings:               pluginSettings,
 		AvatarCacheServer:            avatarCacheServer,

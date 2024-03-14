@@ -28,7 +28,6 @@ const mssqlPlugin = async () =>
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 
-import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as annoListPanel from 'app/plugins/panel/annolist/module';
 import * as barChartPanel from 'app/plugins/panel/barchart/module';
@@ -118,7 +117,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/welcome': welcomeBanner,
   'core:plugin/nodeGraph': nodeGraph,
   'core:plugin/histogram': histogramPanel,
-  'core:plugin/alertGroups': alertGroupsPanel,
 };
 
 export default builtInPlugins;

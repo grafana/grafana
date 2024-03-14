@@ -68,8 +68,6 @@ provisioning/
     <yaml files>
   dashboards/
     <yaml files>
-  notifiers/
-    <yaml files>
 ```
 
 Next, we'll look at how to provision a data source.

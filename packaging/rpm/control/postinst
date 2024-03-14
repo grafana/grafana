@@ -56,11 +56,6 @@ if [ $1 -eq 1 ] ; then
     cp /usr/share/grafana/conf/provisioning/datasources/sample.yaml $PROVISIONING_CFG_DIR/datasources/sample.yaml
   fi
 
-  if [ ! -d $PROVISIONING_CFG_DIR/notifiers ]; then
-    mkdir -p $PROVISIONING_CFG_DIR/notifiers
-    cp /usr/share/grafana/conf/provisioning/notifiers/sample.yaml $PROVISIONING_CFG_DIR/notifiers/sample.yaml
-  fi
-
   if [ ! -d $PROVISIONING_CFG_DIR/plugins ]; then
     mkdir -p $PROVISIONING_CFG_DIR/plugins
     cp /usr/share/grafana/conf/provisioning/plugins/sample.yaml $PROVISIONING_CFG_DIR/plugins/sample.yaml

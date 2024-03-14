@@ -55,7 +55,6 @@ func (hs *HTTPServer) registerRoutes() {
 	reqNotSignedIn := middleware.ReqNotSignedIn
 	reqSignedInNoAnonymous := middleware.ReqSignedInNoAnonymous
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
-	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	reqRoleForAppRoute := middleware.RoleAppPluginAuth(hs.AccessControl, hs.pluginStore, hs.Features, hs.log)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
@@ -509,40 +508,10 @@ func (hs *HTTPServer) registerRoutes() {
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.getDSQueryEndpoint())
 
-		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
-			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
-			alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(hs.PauseAlert(hs.Cfg.AlertingEnabled)))
-			alertsRoute.Get("/:alertId", hs.ValidateOrgAlert, routing.Wrap(hs.GetAlert))
-			alertsRoute.Get("/", routing.Wrap(hs.GetAlerts))
-			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
-		}, requestmeta.SetOwner(requestmeta.TeamAlerting))
-
 		// Unified Alerting
 		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
 			hs.GetAlertNotifiers()),
 		)
-
-		// Legacy
-		apiRoute.Get("/alert-notifiers-legacy", reqEditorRole, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
-			hs.GetLegacyAlertNotifiers()),
-		)
-
-		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
-			alertNotifications.Get("/", routing.Wrap(hs.GetAlertNotifications))
-			alertNotifications.Post("/test", routing.Wrap(hs.NotificationTest))
-			alertNotifications.Post("/", routing.Wrap(hs.CreateAlertNotification))
-			alertNotifications.Put("/:notificationId", routing.Wrap(hs.UpdateAlertNotification))
-			alertNotifications.Get("/:notificationId", routing.Wrap(hs.GetAlertNotificationByID))
-			alertNotifications.Delete("/:notificationId", routing.Wrap(hs.DeleteAlertNotification))
-			alertNotifications.Get("/uid/:uid", routing.Wrap(hs.GetAlertNotificationByUID))
-			alertNotifications.Put("/uid/:uid", routing.Wrap(hs.UpdateAlertNotificationByUID))
-			alertNotifications.Delete("/uid/:uid", routing.Wrap(hs.DeleteAlertNotificationByUID))
-		}, reqEditorRole, requestmeta.SetOwner(requestmeta.TeamAlerting))
-
-		// alert notifications without requirement of user to be org editor
-		apiRoute.Group("/alert-notifications", func(orgRoute routing.RouteRegister) {
-			orgRoute.Get("/lookup", routing.Wrap(hs.GetAlertNotificationLookup))
-		}, requestmeta.SetOwner(requestmeta.TeamAlerting))
 
 		apiRoute.Get("/annotations", authorize(ac.EvalPermission(ac.ActionAnnotationsRead)), routing.Wrap(hs.GetAnnotations))
 		apiRoute.Post("/annotations/mass-delete", authorize(ac.EvalPermission(ac.ActionAnnotationsDelete)), routing.Wrap(hs.MassDeleteAnnotations))
@@ -583,7 +552,6 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/settings", authorize(ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetSettings))
 		adminRoute.Get("/settings-verbose", authorize(ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetVerboseSettings))
 		adminRoute.Get("/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
-		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts(hs.Cfg.AlertingEnabled)))
 
 		adminRoute.Post("/encryption/rotate-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminRotateDataEncryptionKeys))
 		adminRoute.Post("/encryption/reencrypt-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptEncryptionKeys))
@@ -596,7 +564,6 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/provisioning/dashboards/reload", authorize(ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDashboards)), routing.Wrap(hs.AdminProvisioningReloadDashboards))
 		adminRoute.Post("/provisioning/plugins/reload", authorize(ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersPlugins)), routing.Wrap(hs.AdminProvisioningReloadPlugins))
 		adminRoute.Post("/provisioning/datasources/reload", authorize(ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDatasources)), routing.Wrap(hs.AdminProvisioningReloadDatasources))
-		adminRoute.Post("/provisioning/notifications/reload", authorize(ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersNotifications)), routing.Wrap(hs.AdminProvisioningReloadNotifications))
 		adminRoute.Post("/provisioning/alerting/reload", authorize(ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersAlertRules)), routing.Wrap(hs.AdminProvisioningReloadAlerting))
 	}, reqSignedIn)
 

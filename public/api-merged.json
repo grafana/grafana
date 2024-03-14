@@ -1146,44 +1146,6 @@
         }
       }
     },
-    "/admin/pause-all-alerts": {
-      "post": {
-        "security": [
-          {
-            "basic": []
-          }
-        ],
-        "tags": [
-          "admin"
-        ],
-        "summary": "Pause/unpause all (legacy) alerts.",
-        "operationId": "pauseAllAlerts",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/PauseAllAlertsCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/pauseAlertsResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/admin/provisioning/access-control/reload": {
       "post": {
         "tags": [
@@ -1247,35 +1209,6 @@
         ],
         "summary": "Reload datasource provisioning configurations.",
         "operationId": "adminProvisioningReloadDatasources",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/admin/provisioning/notifications/reload": {
-      "post": {
-        "security": [
-          {
-            "basic": []
-          }
-        ],
-        "description": "Reloads the provisioning config files for legacy alert notifiers again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:notifications`.",
-        "tags": [
-          "admin_provisioning"
-        ],
-        "summary": "Reload legacy alert notifier provisioning configurations.",
-        "operationId": "adminProvisioningReloadNotifications",
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
@@ -1846,577 +1779,6 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alert-notifications": {
-      "get": {
-        "description": "Returns all notification channels that the authenticated user has permission to view.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Get all notification channels.",
-        "operationId": "getAlertNotificationChannels",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationChannelsResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "You can find the full list of [supported notifiers](https://grafana.com/docs/grafana/latest/alerting/old-alerting/notifications/#list-of-supported-notifiers) on the alert notifiers page.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Create notification channel.",
-        "operationId": "createAlertNotificationChannel",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/CreateAlertNotificationCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alert-notifications/lookup": {
-      "get": {
-        "description": "Returns all notification channels, but with less detailed information. Accessible by any authenticated user and is mainly used by providing alert notification channels in Grafana UI when configuring alert rule.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Get all notification channels (lookup).",
-        "operationId": "getAlertNotificationLookup",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationLookupResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alert-notifications/test": {
-      "post": {
-        "description": "Sends a test notification to the channel.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Test notification channel.",
-        "operationId": "notificationChannelTest",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/NotificationTestCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "412": {
-            "$ref": "#/responses/SMTPNotEnabledError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alert-notifications/uid/{notification_channel_uid}": {
-      "get": {
-        "description": "Returns the notification channel given the notification channel UID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Get notification channel by UID.",
-        "operationId": "getAlertNotificationChannelByUID",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "notification_channel_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "put": {
-        "description": "Updates an existing notification channel identified by uid.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Update notification channel by UID.",
-        "operationId": "updateAlertNotificationChannelByUID",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateAlertNotificationWithUidCommand"
-            }
-          },
-          {
-            "type": "string",
-            "name": "notification_channel_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "Deletes an existing notification channel identified by UID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Delete alert notification by UID.",
-        "operationId": "deleteAlertNotificationChannelByUID",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "notification_channel_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/deleteAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alert-notifications/{notification_channel_id}": {
-      "get": {
-        "description": "Returns the notification channel given the notification channel ID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Get notification channel by ID.",
-        "operationId": "getAlertNotificationChannelByID",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "notification_channel_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "put": {
-        "description": "Updates an existing notification channel identified by ID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Update notification channel by ID.",
-        "operationId": "updateAlertNotificationChannel",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateAlertNotificationCommand"
-            }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "notification_channel_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "Deletes an existing notification channel identified by ID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ],
-        "summary": "Delete alert notification by ID.",
-        "operationId": "deleteAlertNotificationChannel",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "notification_channel_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alerts": {
-      "get": {
-        "tags": [
-          "legacy_alerts"
-        ],
-        "summary": "Get legacy alerts.",
-        "operationId": "getAlerts",
-        "parameters": [
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Limit response to alerts in specified dashboard(s). You can specify multiple dashboards.",
-            "name": "dashboardId",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "Limit response to alert for a specified panel on a dashboard.",
-            "name": "panelId",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Limit response to alerts having a name like this value.",
-            "name": "query",
-            "in": "query"
-          },
-          {
-            "enum": [
-              "all",
-              "no_data",
-              "paused",
-              "alerting",
-              "ok",
-              "pending",
-              "unknown"
-            ],
-            "type": "string",
-            "description": "Return alerts with one or more of the following alert states",
-            "name": "state",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "Limit response to X number of alerts.",
-            "name": "limit",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "collectionFormat": "multi",
-            "description": "Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders",
-            "name": "folderId",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Limit response to alerts having a dashboard name like this value./ Limit response to alerts having a dashboard name like this value.",
-            "name": "dashboardQuery",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "collectionFormat": "multi",
-            "description": "Limit response to alerts of dashboards with specified tags. To do an “AND” filtering with multiple tags, specify the tags parameter multiple times",
-            "name": "dashboardTag",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertsResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alerts/states-for-dashboard": {
-      "get": {
-        "tags": [
-          "legacy_alerts"
-        ],
-        "summary": "Get alert states for a dashboard.",
-        "operationId": "getDashboardStates",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "dashboardId",
-            "in": "query",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getDashboardStatesResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alerts/test": {
-      "post": {
-        "tags": [
-          "legacy_alerts"
-        ],
-        "summary": "Test alert.",
-        "operationId": "testAlert",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/AlertTestCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/testAlertResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "422": {
-            "$ref": "#/responses/unprocessableEntityError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alerts/{alert_id}": {
-      "get": {
-        "description": "“evalMatches” data in the response is cached in the db when and only when the state of the alert changes (e.g. transitioning from “ok” to “alerting” state).\nIf data from one server triggers the alert first and, before that server is seen leaving alerting state, a second server also enters a state that would trigger the alert, the second server will not be visible in “evalMatches” data.",
-        "tags": [
-          "legacy_alerts"
-        ],
-        "summary": "Get alert by internal ID.",
-        "operationId": "getAlertByID",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "alert_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAlertResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/alerts/{alert_id}/pause": {
-      "post": {
-        "tags": [
-          "legacy_alerts"
-        ],
-        "summary": "Pause/unpause alert by id.",
-        "operationId": "pauseAlert",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "alert_id",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/PauseAlertCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/pauseAlertResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -12024,52 +11386,6 @@
         }
       }
     },
-    "AlertListItemDTO": {
-      "type": "object",
-      "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardSlug": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
-        "evalData": {
-          "$ref": "#/definitions/Json"
-        },
-        "evalDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "executionError": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "newStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "state": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "url": {
-          "type": "string"
-        }
-      }
-    },
     "AlertManager": {
       "type": "object",
       "title": "AlertManager models a configured Alert Manager.",
@@ -12097,88 +11413,6 @@
           "items": {
             "$ref": "#/definitions/AlertManager"
           }
-        }
-      }
-    },
-    "AlertNotification": {
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureFields": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "boolean"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "AlertNotificationLookup": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertPair": {
-      "type": "object",
-      "properties": {
-        "alertRule": {
-          "$ref": "#/definitions/AlertRuleUpgrade"
-        },
-        "error": {
-          "type": "string"
-        },
-        "legacyAlert": {
-          "$ref": "#/definitions/LegacyAlert"
         }
       }
     },
@@ -12449,103 +11683,6 @@
           "type": "string"
         },
         "repeat_interval": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertRuleUpgrade": {
-      "type": "object",
-      "properties": {
-        "sendsTo": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "title": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertStateInfoDTO": {
-      "type": "object",
-      "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "newStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "state": {
-          "$ref": "#/definitions/AlertStateType"
-        }
-      }
-    },
-    "AlertStateType": {
-      "type": "string"
-    },
-    "AlertTestCommand": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "AlertTestResult": {
-      "type": "object",
-      "properties": {
-        "conditionEvals": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        },
-        "firing": {
-          "type": "boolean"
-        },
-        "logs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AlertTestResultLog"
-          }
-        },
-        "matches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/EvalMatch"
-          }
-        },
-        "state": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "timeMs": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertTestResultLog": {
-      "type": "object",
-      "properties": {
-        "data": {},
-        "message": {
           "type": "string"
         }
       }
@@ -13391,20 +12528,6 @@
         }
       }
     },
-    "ContactPair": {
-      "type": "object",
-      "properties": {
-        "contactPoint": {
-          "$ref": "#/definitions/ContactPointUpgrade"
-        },
-        "error": {
-          "type": "string"
-        },
-        "legacyChannel": {
-          "$ref": "#/definitions/LegacyChannel"
-        }
-      }
-    },
     "ContactPointExport": {
       "type": "object",
       "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
@@ -13421,20 +12544,6 @@
           "items": {
             "$ref": "#/definitions/ReceiverExport"
           }
-        }
-      }
-    },
-    "ContactPointUpgrade": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "routeMatchers": {
-          "$ref": "#/definitions/ObjectMatchers"
-        },
-        "type": {
-          "type": "string"
         }
       }
     },
@@ -13586,41 +12695,6 @@
       "type": "integer",
       "format": "uint8",
       "title": "CounterResetHint contains the known information about a counter reset,"
-    },
-    "CreateAlertNotificationCommand": {
-      "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
     },
     "CreateCorrelationCommand": {
       "description": "CreateCorrelationCommand is the command for creating a correlation",
@@ -14225,48 +13299,6 @@
         }
       }
     },
-    "DashboardUpgrade": {
-      "type": "object",
-      "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardName": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        },
-        "folderName": {
-          "type": "string"
-        },
-        "folderUid": {
-          "type": "string"
-        },
-        "migratedAlerts": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AlertPair"
-          }
-        },
-        "newFolderName": {
-          "type": "string"
-        },
-        "newFolderUid": {
-          "type": "string"
-        },
-        "provisioned": {
-          "type": "boolean"
-        },
-        "warning": {
-          "type": "string"
-        }
-      }
-    },
     "DashboardVersionMeta": {
       "description": "DashboardVersionMeta extends the DashboardVersionDTO with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersionDTO model.",
       "type": "object",
@@ -14812,23 +13844,6 @@
         "now": {
           "type": "string",
           "format": "date-time"
-        }
-      }
-    },
-    "EvalMatch": {
-      "type": "object",
-      "properties": {
-        "metric": {
-          "type": "string"
-        },
-        "tags": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "value": {
-          "type": "string"
         }
       }
     },
@@ -16272,97 +15287,6 @@
         "$ref": "#/definitions/Label"
       }
     },
-    "LegacyAlert": {
-      "type": "object",
-      "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "DashboardID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "EvalData": {
-          "$ref": "#/definitions/Json"
-        },
-        "ExecutionError": {
-          "type": "string"
-        },
-        "For": {
-          "$ref": "#/definitions/Duration"
-        },
-        "Frequency": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Handler": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "ID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Message": {
-          "type": "string"
-        },
-        "Name": {
-          "type": "string"
-        },
-        "NewStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "OrgID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "PanelID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "Severity": {
-          "type": "string"
-        },
-        "Silenced": {
-          "type": "boolean"
-        },
-        "State": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "StateChanges": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Version": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "LegacyChannel": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        }
-      }
-    },
     "LibraryElementArrayResponse": {
       "type": "object",
       "title": "LibraryElementArrayResponse is a response struct for an array of LibraryElementDTO.",
@@ -16939,39 +15863,6 @@
         "$ref": "#/definitions/NotificationTemplate"
       }
     },
-    "NotificationTestCommand": {
-      "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        }
-      }
-    },
     "NotifierConfig": {
       "type": "object",
       "title": "NotifierConfig contains base options common across all notifier configurations.",
@@ -17153,50 +16044,6 @@
         },
         "name": {
           "type": "string"
-        }
-      }
-    },
-    "OrgMigrationState": {
-      "type": "object",
-      "properties": {
-        "migratedChannels": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ContactPair"
-          }
-        },
-        "migratedDashboards": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DashboardUpgrade"
-          }
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "OrgMigrationSummary": {
-      "type": "object",
-      "properties": {
-        "hasErrors": {
-          "type": "boolean"
-        },
-        "newAlerts": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "newChannels": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "newDashboards": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "removed": {
-          "type": "boolean"
         }
       }
     },
@@ -17474,26 +16321,6 @@
         }
       }
     },
-    "PauseAlertCommand": {
-      "type": "object",
-      "properties": {
-        "alertId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "paused": {
-          "type": "boolean"
-        }
-      }
-    },
-    "PauseAllAlertsCommand": {
-      "type": "object",
-      "properties": {
-        "paused": {
-          "type": "boolean"
-        }
-      }
-    },
     "Permission": {
       "type": "object",
       "title": "Permission is the model for access control permissions.",
@@ -17700,6 +16527,7 @@
       }
     },
     "PostableApiAlertingConfig": {
+      "description": "nolint:revive",
       "type": "object",
       "properties": {
         "global": {
@@ -17743,6 +16571,7 @@
       }
     },
     "PostableApiReceiver": {
+      "description": "nolint:revive",
       "type": "object",
       "properties": {
         "discord_configs": {
@@ -20958,80 +19787,6 @@
         }
       }
     },
-    "UpdateAlertNotificationCommand": {
-      "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "UpdateAlertNotificationWithUidCommand": {
-      "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
     "UpdateAnnotationsCmd": {
       "type": "object",
       "properties": {
@@ -21820,7 +20575,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -22009,14 +20763,12 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       }
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -22065,6 +20817,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -22765,28 +21518,6 @@
         }
       }
     },
-    "deleteAlertNotificationChannelResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "object",
-        "required": [
-          "id",
-          "message"
-        ],
-        "properties": {
-          "id": {
-            "description": "ID Identifier of the deleted notification channel.",
-            "type": "integer",
-            "format": "int64",
-            "example": 65
-          },
-          "message": {
-            "description": "Message Message of the deleted notificatiton channel.",
-            "type": "string"
-          }
-        }
-      }
-    },
     "deleteCorrelationResponse": {
       "description": "(empty)",
       "schema": {
@@ -22928,45 +21659,6 @@
         "$ref": "#/definitions/Status"
       }
     },
-    "getAlertNotificationChannelResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/AlertNotification"
-      }
-    },
-    "getAlertNotificationChannelsResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertNotification"
-        }
-      }
-    },
-    "getAlertNotificationLookupResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertNotificationLookup"
-        }
-      }
-    },
-    "getAlertResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/LegacyAlert"
-      }
-    },
-    "getAlertsResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertListItemDTO"
-        }
-      }
-    },
     "getAllRolesResponse": {
       "description": "(empty)",
       "schema": {
@@ -23038,15 +21730,6 @@
     },
     "getDashboardSnapshotResponse": {
       "description": "(empty)"
-    },
-    "getDashboardStatesResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertStateInfoDTO"
-        }
-      }
     },
     "getDashboardsTagsResponse": {
       "description": "(empty)",
@@ -23599,53 +22282,6 @@
         "$ref": "#/definitions/SuccessResponseBody"
       }
     },
-    "pauseAlertResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "object",
-        "required": [
-          "alertId",
-          "message"
-        ],
-        "properties": {
-          "alertId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          },
-          "state": {
-            "description": "Alert result state\nrequired true",
-            "type": "string"
-          }
-        }
-      }
-    },
-    "pauseAlertsResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "object",
-        "required": [
-          "alertsAffected",
-          "message"
-        ],
-        "properties": {
-          "alertsAffected": {
-            "description": "AlertsAffected is the number of the affected alerts.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          },
-          "state": {
-            "description": "Alert result state\nrequired true",
-            "type": "string"
-          }
-        }
-      }
-    },
     "postAPIkeyResponse": {
       "description": "(empty)",
       "schema": {
@@ -23865,12 +22501,6 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/RoleAssignmentsDTO"
-      }
-    },
-    "testAlertResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/AlertTestResult"
       }
     },
     "unauthorisedError": {

@@ -2280,200 +2280,6 @@
         }
       }
     },
-    "AlertListItemDTO": {
-      "type": "object",
-      "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardSlug": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
-        "evalData": {
-          "$ref": "#/definitions/Json"
-        },
-        "evalDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "executionError": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "newStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "state": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "url": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertNotification": {
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureFields": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "boolean"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "AlertNotificationLookup": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertStateInfoDTO": {
-      "type": "object",
-      "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "newStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "state": {
-          "$ref": "#/definitions/AlertStateType"
-        }
-      }
-    },
-    "AlertStateType": {
-      "type": "string"
-    },
-    "AlertTestCommand": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "AlertTestResult": {
-      "type": "object",
-      "properties": {
-        "conditionEvals": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        },
-        "firing": {
-          "type": "boolean"
-        },
-        "logs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AlertTestResultLog"
-          }
-        },
-        "matches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/EvalMatch"
-          }
-        },
-        "state": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "timeMs": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertTestResultLog": {
-      "type": "object",
-      "properties": {
-        "data": {},
-        "message": {
-          "type": "string"
-        }
-      }
-    },
     "Annotation": {
       "type": "object",
       "properties": {
@@ -3166,41 +2972,6 @@
         },
         "type": {
           "$ref": "#/definitions/CorrelationConfigType"
-        }
-      }
-    },
-    "CreateAlertNotificationCommand": {
-      "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
         }
       }
     },
@@ -4178,23 +3949,6 @@
       "description": "ErrorSource type defines the source of the error",
       "type": "string"
     },
-    "EvalMatch": {
-      "type": "object",
-      "properties": {
-        "metric": {
-          "type": "string"
-        },
-        "tags": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "value": {
-          "type": "string"
-        }
-      }
-    },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
     },
@@ -4538,7 +4292,7 @@
       }
     },
     "FrameType": {
-      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
       "type": "string"
     },
     "FrameTypeVersion": {
@@ -4814,8 +4568,8 @@
       }
     },
     "JSONWebKey": {
+      "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
       "type": "object",
-      "title": "JSONWebKey represents a public or private key in JWK format.",
       "properties": {
         "Algorithm": {
           "description": "Key algorithm, parsed from `alg` header.",
@@ -4848,7 +4602,7 @@
           "$ref": "#/definitions/URL"
         },
         "Key": {
-          "description": "Cryptographic key, can be a symmetric or asymmetric key."
+          "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\ned25519.PublicKey\ned25519.PrivateKey\necdsa.PublicKey\necdsa.PrivateKey\nrsa.PublicKey\nrsa.PrivateKey\n[]byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
         },
         "KeyID": {
           "description": "Key identifier, parsed from `kid` header.",
@@ -4867,82 +4621,6 @@
       "description": "KeyUsage represents the set of actions that are valid for a given key. It's\na bitmap of the KeyUsage* constants.",
       "type": "integer",
       "format": "int64"
-    },
-    "LegacyAlert": {
-      "type": "object",
-      "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "DashboardID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "EvalData": {
-          "$ref": "#/definitions/Json"
-        },
-        "ExecutionError": {
-          "type": "string"
-        },
-        "For": {
-          "$ref": "#/definitions/Duration"
-        },
-        "Frequency": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Handler": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "ID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Message": {
-          "type": "string"
-        },
-        "Name": {
-          "type": "string"
-        },
-        "NewStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "OrgID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "PanelID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "Severity": {
-          "type": "string"
-        },
-        "Silenced": {
-          "type": "boolean"
-        },
-        "State": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "StateChanges": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Version": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
     },
     "LibraryElementArrayResponse": {
       "type": "object",
@@ -5319,45 +4997,26 @@
       "format": "int64",
       "title": "NoticeSeverity is a type for the Severity property of a Notice."
     },
-    "NotificationTestCommand": {
-      "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        }
-      }
-    },
     "ObjectIdentifier": {
       "type": "array",
       "title": "An ObjectIdentifier represents an ASN.1 OBJECT IDENTIFIER.",
       "items": {
         "type": "integer",
         "format": "int64"
+      }
+    },
+    "ObjectMatcher": {
+      "type": "array",
+      "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ObjectMatchers": {
+      "type": "array",
+      "title": "ObjectMatchers is a list of matchers that can be used to filter alerts.",
+      "items": {
+        "$ref": "#/definitions/ObjectMatcher"
       }
     },
     "OrgDTO": {
@@ -5562,26 +5221,6 @@
         "comment": {
           "description": "Updated comment",
           "type": "string"
-        }
-      }
-    },
-    "PauseAlertCommand": {
-      "type": "object",
-      "properties": {
-        "alertId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "paused": {
-          "type": "boolean"
-        }
-      }
-    },
-    "PauseAllAlertsCommand": {
-      "type": "object",
-      "properties": {
-        "paused": {
-          "type": "boolean"
         }
       }
     },
@@ -7485,80 +7124,6 @@
         }
       }
     },
-    "UpdateAlertNotificationCommand": {
-      "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "UpdateAlertNotificationWithUidCommand": {
-      "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
     "UpdateAnnotationsCmd": {
       "type": "object",
       "properties": {
@@ -8512,28 +8077,6 @@
         }
       }
     },
-    "deleteAlertNotificationChannelResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "required": [
-          "id",
-          "message"
-        ],
-        "properties": {
-          "id": {
-            "description": "ID Identifier of the deleted notification channel.",
-            "type": "integer",
-            "format": "int64",
-            "example": 65
-          },
-          "message": {
-            "description": "Message Message of the deleted notificatiton channel.",
-            "type": "string"
-          }
-        }
-      }
-    },
     "deleteCorrelationResponse": {
       "description": "",
       "schema": {
@@ -8675,45 +8218,6 @@
         "$ref": "#/definitions/Status"
       }
     },
-    "getAlertNotificationChannelResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/AlertNotification"
-      }
-    },
-    "getAlertNotificationChannelsResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertNotification"
-        }
-      }
-    },
-    "getAlertNotificationLookupResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertNotificationLookup"
-        }
-      }
-    },
-    "getAlertResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/LegacyAlert"
-      }
-    },
-    "getAlertsResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertListItemDTO"
-        }
-      }
-    },
     "getAllRolesResponse": {
       "description": "",
       "schema": {
@@ -8785,15 +8289,6 @@
     },
     "getDashboardSnapshotResponse": {
       "description": ""
-    },
-    "getDashboardStatesResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertStateInfoDTO"
-        }
-      }
     },
     "getDashboardsTagsResponse": {
       "description": "",
@@ -9346,53 +8841,6 @@
         "$ref": "#/definitions/SuccessResponseBody"
       }
     },
-    "pauseAlertResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "required": [
-          "alertId",
-          "message"
-        ],
-        "properties": {
-          "alertId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          },
-          "state": {
-            "description": "Alert result state\nrequired true",
-            "type": "string"
-          }
-        }
-      }
-    },
-    "pauseAlertsResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "required": [
-          "alertsAffected",
-          "message"
-        ],
-        "properties": {
-          "alertsAffected": {
-            "description": "AlertsAffected is the number of the affected alerts.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          },
-          "state": {
-            "description": "Alert result state\nrequired true",
-            "type": "string"
-          }
-        }
-      }
-    },
     "postAPIkeyResponse": {
       "description": "",
       "schema": {
@@ -9603,12 +9051,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/RoleAssignmentsDTO"
-      }
-    },
-    "testAlertResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/AlertTestResult"
       }
     },
     "unauthorisedError": {

@@ -17,7 +17,7 @@ export function initAlerting() {
 
   if (contextSrv.hasPermission(grafanaRulesPermissions.read)) {
     addCustomRightAction({
-      show: () => config.unifiedAlertingEnabled || (config.featureToggles.alertingPreviewUpgrade ?? false),
+      show: () => config.unifiedAlertingEnabled,
       component: ({ dashboard }) => (
         <React.Suspense fallback={null} key="alert-rules-button">
           {dashboard && <AlertRulesToolbarButton dashboardUid={dashboard.uid} />}

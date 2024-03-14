@@ -1,9 +1,13 @@
 import { throwError } from 'rxjs';
 import { delay, first } from 'rxjs/operators';
 
-import { AlertState, AlertStateInfo } from '@grafana/data';
+import { AlertState } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { AccessControlAction } from 'app/types';
+import { PromAlertingRuleState, PromRulesResponse, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../../core/services/backend_srv';
@@ -18,6 +22,10 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
+beforeEach(() => {
+  grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]);
+});
+
 function getTestContext() {
   jest.clearAllMocks();
   const timeSrvMock = { timeRange: jest.fn() } as unknown as TimeSrv;
@@ -25,10 +33,55 @@ function getTestContext() {
   // These tests are setup so all the workers and runners are invoked once, this wouldn't be the case in real life
   const runner = createDashboardQueryRunner({ dashboard: options.dashboard, timeSrv: timeSrvMock });
 
-  const getResults: AlertStateInfo[] = [
-    { id: 1, state: AlertState.Alerting, dashboardId: 1, panelId: 1 },
-    { id: 2, state: AlertState.Alerting, dashboardId: 1, panelId: 2 },
-  ];
+  const getResults: PromRulesResponse = {
+    status: 'success',
+    data: {
+      groups: [
+        {
+          name: 'my-group',
+          rules: [
+            {
+              name: 'my alert',
+              state: PromAlertingRuleState.Firing,
+              query: 'foo > 1',
+              type: PromRuleType.Alerting,
+              annotations: {
+                [Annotation.dashboardUID]: '1',
+                [Annotation.panelID]: '1',
+              },
+              health: 'ok',
+              labels: {},
+            },
+          ],
+          interval: 300,
+          file: 'my-namespace',
+        },
+        {
+          name: 'another-group',
+          rules: [
+            {
+              name: 'another alert',
+              query: 'foo > 1',
+              state: PromAlertingRuleState.Firing,
+              type: PromRuleType.Alerting,
+              annotations: {
+                [Annotation.dashboardUID]: '1',
+                [Annotation.panelID]: '2',
+              },
+              health: 'ok',
+              labels: {},
+            },
+          ],
+          interval: 300,
+          file: 'my-namespace',
+        },
+      ],
+      totals: {
+        alerting: 2,
+      },
+    },
+  };
+
   const getMock = jest.spyOn(backendSrv, 'get').mockResolvedValue(getResults);
   const executeAnnotationQueryMock = jest
     .spyOn(annotationsSrv, 'executeAnnotationQuery')
@@ -294,7 +347,7 @@ function getExpectedForAllResult(): DashboardQueryRunnerResult {
   return {
     alertState: {
       dashboardId: 1,
-      id: 1,
+      id: 0,
       panelId: 1,
       state: AlertState.Alerting,
     },

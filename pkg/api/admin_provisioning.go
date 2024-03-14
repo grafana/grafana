@@ -78,29 +78,6 @@ func (hs *HTTPServer) AdminProvisioningReloadPlugins(c *contextmodel.ReqContext)
 	return response.Success("Plugins config reloaded")
 }
 
-// swagger:route POST /admin/provisioning/notifications/reload admin_provisioning adminProvisioningReloadNotifications
-//
-// Reload legacy alert notifier provisioning configurations.
-//
-// Reloads the provisioning config files for legacy alert notifiers again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.
-// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:notifications`.
-//
-// Security:
-// - basic:
-//
-// Responses:
-// 200: okResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (hs *HTTPServer) AdminProvisioningReloadNotifications(c *contextmodel.ReqContext) response.Response {
-	err := hs.ProvisioningService.ProvisionNotifications(c.Req.Context())
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "", err)
-	}
-	return response.Success("Notifications config reloaded")
-}
-
 func (hs *HTTPServer) AdminProvisioningReloadAlerting(c *contextmodel.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionAlerting(c.Req.Context())
 	if err != nil {

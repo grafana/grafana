@@ -103,7 +103,6 @@
     "testdata-test-variable-output": (import '../dev-dashboards/feature-templating/testdata-test-variable-output.json'),
     "testdata-variables-textbox": (import '../dev-dashboards/feature-templating/testdata-variables-textbox.json'),
     "testdata-variables-that-update-on-time-c": (import '../dev-dashboards/feature-templating/testdata-variables-that-update-on-time-change.json'),
-    "testdata_alerts": (import '../dev-dashboards/alerting/testdata_alerts.json'),
     "text-options": (import '../dev-dashboards/panel-text/text-options.json'),
     "time_zone_support": (import '../dev-dashboards/scenarios/time_zone_support.json'),
     "timeline-align-endtime": (import '../dev-dashboards/panel-timeline/timeline-align-endtime.json'),

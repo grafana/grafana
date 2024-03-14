@@ -131,9 +131,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 
 /devenv/bulk-dashboards/*.json
 /devenv/bulk-folders/*/*.json
-/devenv/bulk_alerting_dashboards/*.json
 /devenv/datasources_bulk.yaml
-/devenv/bulk_alerting_dashboards/bulk_alerting_datasources.yaml
 
 /scripts/build/release_publisher/release_publisher
 *.patch

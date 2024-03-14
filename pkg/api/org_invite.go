@@ -350,6 +350,9 @@ func (hs *HTTPServer) applyUserInvite(ctx context.Context, usr *user.User, invit
 	return true, nil
 }
 
+// swagger:response SMTPNotEnabledError
+type SMTPNotEnabledError PreconditionFailedError
+
 // swagger:parameters addOrgInvite
 type AddInviteParams struct {
 	// in:body

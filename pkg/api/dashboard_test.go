@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -479,7 +478,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				{SaveError: dashboards.ErrDashboardVersionMismatch, ExpectedStatusCode: http.StatusPreconditionFailed},
 				{SaveError: dashboards.ErrDashboardTitleEmpty, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: alerting.ValidationError{Reason: "Mu"}, ExpectedStatusCode: http.StatusUnprocessableEntity},
 				{SaveError: dashboards.ErrDashboardTypeMismatch, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardFolderWithSameNameAsDashboard, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardWithSameNameAsFolder, ExpectedStatusCode: http.StatusBadRequest},
@@ -834,14 +832,14 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
+			cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
 			ac, folderSvc, nil,
 		)
 		require.NoError(t, err)
 	}
 
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
+		cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
 		ac, folderSvc, nil,
 	)
 	require.NoError(t, err)

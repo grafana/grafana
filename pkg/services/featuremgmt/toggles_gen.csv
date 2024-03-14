@@ -141,7 +141,6 @@ tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
 regressionTransformation,preview,@grafana/dataviz-squad,false,false,true
 lokiQueryHints,GA,@grafana/observability-logs,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
-alertingPreviewUpgrade,GA,@grafana/alerting-squad,false,true,false
 enablePluginsTracingByDefault,experimental,@grafana/plugins-platform-backend,false,true,false
 cloudRBACRoles,experimental,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
@@ -158,7 +157,6 @@ kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true
 expressionParser,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 betterPageScrolling,GA,@grafana/grafana-frontend-platform,false,false,true
-alertingUpgradeDryrunOnStart,GA,@grafana/alerting-squad,false,true,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
 emailVerificationEnforcement,experimental,@grafana/identity-access-team,false,false,false
 ssoSettingsSAML,experimental,@grafana/identity-access-team,false,false,false

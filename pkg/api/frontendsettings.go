@@ -178,9 +178,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		LdapEnabled:                         hs.Cfg.LDAPAuthEnabled,
 		JwtHeaderName:                       hs.Cfg.JWTAuth.HeaderName,
 		JwtUrlLogin:                         hs.Cfg.JWTAuth.URLLogin,
-		AlertingErrorOrTimeout:              hs.Cfg.AlertingErrorOrTimeout,
-		AlertingNoDataOrNullValues:          hs.Cfg.AlertingNoDataOrNullValues,
-		AlertingMinInterval:                 hs.Cfg.AlertingMinInterval,
 		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
 		AutoAssignOrg:                       hs.Cfg.AutoAssignOrg,
 		VerifyEmailEnabled:                  hs.Cfg.VerifyEmailEnabled,
@@ -310,10 +307,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	if hs.Cfg.UnifiedAlerting.Enabled != nil {
 		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
-	}
-
-	if hs.Cfg.AlertingEnabled != nil {
-		frontendSettings.AlertingEnabled = *(hs.Cfg.AlertingEnabled)
 	}
 
 	// It returns false if the provider is not enabled or the skip org role sync is false.

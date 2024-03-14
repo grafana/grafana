@@ -96,20 +96,6 @@
    "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
    "type": "object"
   },
-  "AlertPair": {
-   "properties": {
-    "alertRule": {
-     "$ref": "#/definitions/AlertRuleUpgrade"
-    },
-    "error": {
-     "type": "string"
-    },
-    "legacyAlert": {
-     "$ref": "#/definitions/LegacyAlert"
-    }
-   },
-   "type": "object"
-  },
   "AlertQuery": {
    "properties": {
     "datasourceUid": {
@@ -379,23 +365,6 @@
     }
    },
    "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
-   "type": "object"
-  },
-  "AlertRuleUpgrade": {
-   "properties": {
-    "sendsTo": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "title": {
-     "type": "string"
-    },
-    "uid": {
-     "type": "string"
-    }
-   },
    "type": "object"
   },
   "AlertingFileExport": {
@@ -686,20 +655,6 @@
    "title": "Config is the top-level configuration for Alertmanager's config files.",
    "type": "object"
   },
-  "ContactPair": {
-   "properties": {
-    "contactPoint": {
-     "$ref": "#/definitions/ContactPointUpgrade"
-    },
-    "error": {
-     "type": "string"
-    },
-    "legacyChannel": {
-     "$ref": "#/definitions/LegacyChannel"
-    }
-   },
-   "type": "object"
-  },
   "ContactPointExport": {
    "properties": {
     "name": {
@@ -719,20 +674,6 @@
    "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
    "type": "object"
   },
-  "ContactPointUpgrade": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "routeMatchers": {
-     "$ref": "#/definitions/ObjectMatchers"
-    },
-    "type": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "ContactPoints": {
    "items": {
     "$ref": "#/definitions/EmbeddedContactPoint"
@@ -744,48 +685,6 @@
    "format": "uint8",
    "title": "CounterResetHint contains the known information about a counter reset,",
    "type": "integer"
-  },
-  "DashboardUpgrade": {
-   "properties": {
-    "dashboardId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "dashboardName": {
-     "type": "string"
-    },
-    "dashboardUid": {
-     "type": "string"
-    },
-    "error": {
-     "type": "string"
-    },
-    "folderName": {
-     "type": "string"
-    },
-    "folderUid": {
-     "type": "string"
-    },
-    "migratedAlerts": {
-     "items": {
-      "$ref": "#/definitions/AlertPair"
-     },
-     "type": "array"
-    },
-    "newFolderName": {
-     "type": "string"
-    },
-    "newFolderUid": {
-     "type": "string"
-    },
-    "provisioned": {
-     "type": "boolean"
-    },
-    "warning": {
-     "type": "string"
-    }
-   },
-   "type": "object"
   },
   "DataLink": {
    "description": "DataLink define what",
@@ -2075,41 +1974,6 @@
    },
    "type": "array"
   },
-  "LegacyAlert": {
-   "properties": {
-    "dashboardId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "id": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "name": {
-     "type": "string"
-    },
-    "panelId": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
-  "LegacyChannel": {
-   "properties": {
-    "id": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "name": {
-     "type": "string"
-    },
-    "type": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "LinkTransformationConfig": {
    "properties": {
     "expression": {
@@ -2501,50 +2365,6 @@
    },
    "type": "object"
   },
-  "OrgMigrationState": {
-   "properties": {
-    "migratedChannels": {
-     "items": {
-      "$ref": "#/definitions/ContactPair"
-     },
-     "type": "array"
-    },
-    "migratedDashboards": {
-     "items": {
-      "$ref": "#/definitions/DashboardUpgrade"
-     },
-     "type": "array"
-    },
-    "orgId": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
-  "OrgMigrationSummary": {
-   "properties": {
-    "hasErrors": {
-     "type": "boolean"
-    },
-    "newAlerts": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "newChannels": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "newDashboards": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "removed": {
-     "type": "boolean"
-    }
-   },
-   "type": "object"
-  },
   "PagerdutyConfig": {
    "properties": {
     "class": {
@@ -2645,6 +2465,7 @@
    "type": "object"
   },
   "PostableApiAlertingConfig": {
+   "description": "nolint:revive",
    "properties": {
     "global": {
      "$ref": "#/definitions/GlobalConfig"
@@ -2688,6 +2509,7 @@
    "type": "object"
   },
   "PostableApiReceiver": {
+   "description": "nolint:revive",
    "properties": {
     "discord_configs": {
      "items": {
@@ -4620,7 +4442,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4781,14 +4602,12 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4837,6 +4656,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },

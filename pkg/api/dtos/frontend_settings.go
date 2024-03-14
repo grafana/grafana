@@ -141,24 +141,20 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 }
 
 type FrontendSettingsDTO struct {
-	DefaultDatasource          string                           `json:"defaultDatasource"`
-	Datasources                map[string]plugins.DataSourceDTO `json:"datasources"`
-	MinRefreshInterval         string                           `json:"minRefreshInterval"`
-	Panels                     map[string]plugins.PanelDTO      `json:"panels"`
-	Apps                       map[string]*plugins.AppDTO       `json:"apps"`
-	AppUrl                     string                           `json:"appUrl"`
-	AppSubUrl                  string                           `json:"appSubUrl"`
-	AllowOrgCreate             bool                             `json:"allowOrgCreate"`
-	AuthProxyEnabled           bool                             `json:"authProxyEnabled"`
-	LdapEnabled                bool                             `json:"ldapEnabled"`
-	JwtHeaderName              string                           `json:"jwtHeaderName"`
-	JwtUrlLogin                bool                             `json:"jwtUrlLogin"`
-	AlertingEnabled            bool                             `json:"alertingEnabled"`
-	AlertingErrorOrTimeout     string                           `json:"alertingErrorOrTimeout"`
-	AlertingNoDataOrNullValues string                           `json:"alertingNoDataOrNullValues"`
-	AlertingMinInterval        int64                            `json:"alertingMinInterval"`
-	LiveEnabled                bool                             `json:"liveEnabled"`
-	AutoAssignOrg              bool                             `json:"autoAssignOrg"`
+	DefaultDatasource  string                           `json:"defaultDatasource"`
+	Datasources        map[string]plugins.DataSourceDTO `json:"datasources"`
+	MinRefreshInterval string                           `json:"minRefreshInterval"`
+	Panels             map[string]plugins.PanelDTO      `json:"panels"`
+	Apps               map[string]*plugins.AppDTO       `json:"apps"`
+	AppUrl             string                           `json:"appUrl"`
+	AppSubUrl          string                           `json:"appSubUrl"`
+	AllowOrgCreate     bool                             `json:"allowOrgCreate"`
+	AuthProxyEnabled   bool                             `json:"authProxyEnabled"`
+	LdapEnabled        bool                             `json:"ldapEnabled"`
+	JwtHeaderName      string                           `json:"jwtHeaderName"`
+	JwtUrlLogin        bool                             `json:"jwtUrlLogin"`
+	LiveEnabled        bool                             `json:"liveEnabled"`
+	AutoAssignOrg      bool                             `json:"autoAssignOrg"`
 
 	VerifyEmailEnabled  bool `json:"verifyEmailEnabled"`
 	SigV4AuthEnabled    bool `json:"sigV4AuthEnabled"`

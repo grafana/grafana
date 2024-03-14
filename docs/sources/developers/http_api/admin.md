@@ -615,8 +615,6 @@ Content-Type: application/json
 
 `POST /api/admin/provisioning/plugins/reload`
 
-`POST /api/admin/provisioning/notifications/reload`
-
 `POST /api/admin/provisioning/access-control/reload`
 
 `POST /api/admin/provisioning/alerting/reload`
@@ -637,7 +635,6 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 | provisioning:reload | provisioners:dashboards    | dashboards       |
 | provisioning:reload | provisioners:datasources   | datasources      |
 | provisioning:reload | provisioners:plugins       | plugins          |
-| provisioning:reload | provisioners:notifications | notifications    |
 | provisioning:reload | provisioners:alerting      | alerting         |
 
 **Example Request**:
