@@ -43,7 +43,10 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const { isVizPickerOpen, searchQuery, listMode } = model.useState();
     const vizManager = sceneGraph.getAncestor(model, PanelEditor).state.vizManager;
     const { pluginId } = vizManager.state.panel.useState();
+    const { data } = sceneGraph.getData(vizManager).useState();
     const styles = useStyles2(getStyles);
+
+    console.log('structurREv', data?.structureRev);
 
     return (
       <>
@@ -59,11 +62,13 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
               />
             </div>
             <div className={styles.listOfOptions}>
-              <PanelOptions vizManager={vizManager} searchQuery={searchQuery} listMode={listMode} />
+              <PanelOptions vizManager={vizManager} searchQuery={searchQuery} listMode={listMode} data={data} />
             </div>
           </>
         )}
-        {isVizPickerOpen && <PanelVizTypePicker vizManager={vizManager} onChange={model.onToggleVizPicker} />}
+        {isVizPickerOpen && (
+          <PanelVizTypePicker vizManager={vizManager} onChange={model.onToggleVizPicker} data={data} />
+        )}
       </>
     );
   };
