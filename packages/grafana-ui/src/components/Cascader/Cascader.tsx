@@ -41,6 +41,8 @@ export interface CascaderProps {
   disabled?: boolean;
   /** ID for the underlying Select/Cascader component */
   id?: string;
+  /** Whether you can clear the selected value or not */
+  isClearable?: boolean;
 }
 
 interface CascaderState {
@@ -218,8 +220,17 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
   };
 
   render() {
-    const { allowCustomValue, formatCreateLabel, placeholder, width, changeOnSelect, options, disabled, id } =
-      this.props;
+    const {
+      allowCustomValue,
+      formatCreateLabel,
+      placeholder,
+      width,
+      changeOnSelect,
+      options,
+      disabled,
+      id,
+      isClearable,
+    } = this.props;
     const { focusCascade, isSearching, rcValue, activeLabel, inputValue } = this.state;
 
     const searchableOptions = this.getSearchableOptions(options);
@@ -264,7 +275,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
                 onChange={() => {}}
                 suffix={
                   <>
-                    {activeLabel !== '' && (
+                    {isClearable && activeLabel !== '' && (
                       <IconButton
                         name="times"
                         aria-label="Clear selection"
