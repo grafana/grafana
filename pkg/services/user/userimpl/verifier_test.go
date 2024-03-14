@@ -33,7 +33,7 @@ func TestVerifier_VerifyEmail(t *testing.T) {
 			Action: user.EmailUpdateAction,
 		})
 
-		assert.ErrorIs(t, err, user.ErrUserAlreadyExists)
+		assert.ErrorIs(t, err, user.ErrEmailConflict)
 	})
 
 	t.Run("should succeed when no user has the email", func(t *testing.T) {

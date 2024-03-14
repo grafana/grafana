@@ -255,7 +255,6 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 				return response.Error(http.StatusBadRequest, "Invalid email address", err)
 			}
 			return hs.verifyEmailUpdate(ctx, normalized, user.EmailUpdateAction, usr)
-
 		}
 		if len(cmd.Login) != 0 && usr.Login != cmd.Login {
 			normalized, err := ValidateAndNormalizeEmail(cmd.Login)
