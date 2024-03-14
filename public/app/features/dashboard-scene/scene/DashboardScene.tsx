@@ -314,6 +314,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState !== undefined;
   }
 
+  public pauseTrackingChanges() {
+    this._changeTracker.stopTrackingChanges();
+  }
+
+  public resumeTrackingChanges() {
+    this._changeTracker.startTrackingChanges();
+  }
+
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
     const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
 
@@ -329,8 +337,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 
-    this._initialState = newState;
-    this.exitEditMode({ skipConfirm: false, restoreIntialState: true });
+    this.setState(newState);
+    this.exitEditMode({ skipConfirm: true, restoreIntialState: false });
 
     return true;
   };

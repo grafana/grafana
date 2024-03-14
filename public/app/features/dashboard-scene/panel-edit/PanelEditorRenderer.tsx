@@ -6,6 +6,7 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanel } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
@@ -58,7 +59,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
 function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
-  const { vizManager, dataPane, showLibraryPanelSaveModal } = model.useState();
+  const { vizManager, dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal } = model.useState();
   const { sourcePanel } = vizManager.useState();
   const libraryPanel = getLibraryPanel(sourcePanel.resolve());
   const { controls, scopes } = dashboard.useState();
@@ -83,7 +84,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   return (
     <div className={styles.pageContainer}>
       {scopes && <scopes.Component model={scopes} />}
-      {controls && <controls.Component model={controls} />}
+      <div className={styles.controlsWrapper}>{controls && <controls.Component model={controls} />}</div>
       <div {...containerProps}>
         <div {...primaryProps}>
           <vizManager.Component model={vizManager} />
@@ -91,10 +92,17 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         {showLibraryPanelSaveModal && libraryPanel && (
           <SaveLibraryVizPanelModal
             libraryPanel={libraryPanel}
-            onDismiss={model.onDismissLibraryPanelModal}
+            onDismiss={model.onDismissLibraryPanelSaveModal}
             onConfirm={model.onConfirmSaveLibraryPanel}
             onDiscard={model.onDiscard}
           ></SaveLibraryVizPanelModal>
+        )}
+        {showLibraryPanelUnlinkModal && libraryPanel && (
+          <UnlinkModal
+            onDismiss={model.onDismissUnlinkLibraryPanelModal}
+            onConfirm={model.onConfirmUnlinkLibraryPanel}
+            isOpen
+          />
         )}
         {dataPane && (
           <>
@@ -153,7 +161,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       minHeight: 0,
-      gap: '8px',
     }),
     optionsPane: css({
       flexDirection: 'column',
@@ -177,6 +184,12 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rotate180: css({
       rotate: '180deg',
+    }),
+    controlsWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 0,
+      paddingLeft: theme.spacing(2),
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),
