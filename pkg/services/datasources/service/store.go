@@ -253,7 +253,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 				return fmt.Errorf("failed to generate UID for datasource %q: %w", cmd.Name, err)
 			}
 			cmd.UID = uid
-		} else if !util.IsValidShortUID(cmd.UID) {
+		} else if err := util.ValidateUID(cmd.UID); err != nil {
 			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name)
 		}
 
@@ -388,7 +388,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			}
 		}
 
-		if !util.IsValidShortUID(cmd.UID) {
+		if err := util.ValidateUID(cmd.UID); err != nil {
 			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name)
 		}
 
