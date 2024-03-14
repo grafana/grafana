@@ -45,7 +45,13 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   );
 
   const saveButton = (overwrite: boolean) => (
-    <SaveButton isValid={hasChanges} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
+    <SaveButton
+      isValid={hasChanges}
+      isLoading={state.loading}
+      onSave={onSave}
+      overwrite={overwrite}
+      testId={selectors.pages.SaveDashboardModal.saveButtonDrawer}
+    />
   );
 
   function renderFooter(error?: Error) {

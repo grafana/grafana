@@ -417,6 +417,7 @@ export function ToolbarActions({ dashboard }: Props) {
             key="save"
             size="sm"
             variant={'primary'}
+            data-testid={selectors.pages.SaveDashboardModal.saveDashboardToolbar}
           >
             Save dashboard
           </Button>
@@ -474,6 +475,7 @@ export function ToolbarActions({ dashboard }: Props) {
             tooltip="Save changes"
             size="sm"
             variant={isDirty ? 'primary' : 'secondary'}
+            data-testid={selectors.pages.SaveDashboardModal.saveDashboardToolbar}
           >
             Save dashboard
           </Button>

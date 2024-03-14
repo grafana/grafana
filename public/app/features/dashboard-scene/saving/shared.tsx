@@ -56,14 +56,16 @@ export interface SaveButtonProps {
   onSave: (overwrite: boolean) => void;
   isLoading: boolean;
   isValid?: boolean;
+  testId?: string;
 }
 
-export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButtonProps) {
+export function SaveButton({ overwrite, isLoading, isValid, onSave, testId }: SaveButtonProps) {
+  const testIdSelector = testId ? testId : selectors.pages.SaveDashboardModal.save;
   return (
     <Button
       disabled={!isValid || isLoading}
       icon={isLoading ? 'spinner' : undefined}
-      aria-label={selectors.pages.SaveDashboardModal.save}
+      data-testid={testIdSelector}
       onClick={() => onSave(overwrite)}
       variant={overwrite ? 'destructive' : 'primary'}
     >

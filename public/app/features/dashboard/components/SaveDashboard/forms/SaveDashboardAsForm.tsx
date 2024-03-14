@@ -1,5 +1,6 @@
 import React, { ChangeEvent } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, HorizontalGroup, Label, TextArea } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -188,7 +189,12 @@ export const SaveDashboardAsForm = ({
             <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
               Cancel
             </Button>
-            <Button disabled={isLoading} type="submit" aria-label="Save dashboard button">
+            <Button
+              disabled={isLoading}
+              type="submit"
+              aria-label="Save dashboard button"
+              data-testid={selectors.pages.SaveDashboardModal.saveButtonDrawer}
+            >
               {isLoading ? 'Saving...' : 'Save'}
             </Button>
           </HorizontalGroup>

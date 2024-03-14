@@ -143,9 +143,9 @@ function copyExistingDashboard() {
 
   e2e.pages.Dashboard.Settings.General.saveAsDashBoard().should('be.visible').click();
 
-  e2e.pages.SaveDashboardAsModal.newName().should('be.visible').type(`${Date.now()}`);
+  e2e.pages.SaveDashboardModal.newName().should('be.visible').type(`${Date.now()}`);
 
-  e2e.pages.SaveDashboardAsModal.save().should('be.visible').click();
+  e2e.pages.SaveDashboardModal.saveDashboardToolbar().should('be.visible').click();
 
   cy.wait('@save-dash');
   cy.wait('@load-dash');
