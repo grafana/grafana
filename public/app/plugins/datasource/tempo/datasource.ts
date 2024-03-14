@@ -321,7 +321,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         if (traceqlSearchTargets.length > 0) {
           const appliedQuery = this.applyVariables(traceqlSearchTargets[0], options.scopedVars);
           const queryValueFromFilters = generateQueryFromFilters(appliedQuery.filters);
-          console.log(traceqlSearchTargets[0], appliedQuery, queryValueFromFilters);
 
           reportInteraction('grafana_traces_traceql_search_queried', {
             datasourceType: 'tempo',
