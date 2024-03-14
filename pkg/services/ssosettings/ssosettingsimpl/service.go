@@ -414,7 +414,6 @@ func (s *Service) decryptSecrets(ctx context.Context, settings map[string]any) (
 
 func (s *Service) isProviderConfigurable(provider string) bool {
 	_, ok := s.cfg.SSOSettingsConfigurableProviders[provider]
-
 	return ok
 }
 
