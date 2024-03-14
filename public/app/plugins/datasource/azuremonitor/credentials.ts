@@ -80,14 +80,20 @@ function getSecret(options: AzureDataSourceSettings): undefined | string | Conce
   }
 }
 
-export function isCredentialsComplete(credentials: AzureCredentials): boolean {
+export function isCredentialsComplete(credentials: AzureCredentials, ignoreSecret = false): boolean {
   switch (credentials.authType) {
     case 'msi':
     case 'workloadidentity':
     case 'currentuser':
       return true;
     case 'clientsecret':
-      return !!(credentials.azureCloud && credentials.tenantId && credentials.clientId && credentials.clientSecret);
+      return !!(
+        credentials.azureCloud &&
+        credentials.tenantId &&
+        credentials.clientId &&
+        // When ignoreSecret is set we consider the credentials complete without checking the secret
+        !!(ignoreSecret || credentials.clientSecret)
+      );
   }
 }
 

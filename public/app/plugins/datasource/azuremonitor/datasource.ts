@@ -65,7 +65,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       if (!credentials.serviceCredentials) {
         this.currentUserAuthFallbackAvailable = false;
       } else {
-        this.currentUserAuthFallbackAvailable = isCredentialsComplete(credentials.serviceCredentials);
+        this.currentUserAuthFallbackAvailable = isCredentialsComplete(credentials.serviceCredentials, true);
       }
     } else {
       this.currentUserAuthFallbackAvailable = false;
