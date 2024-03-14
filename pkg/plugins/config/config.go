@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,7 +22,8 @@ type PluginManagementCfg struct {
 
 	GrafanaAppURL string
 
-	Features featuremgmt.FeatureToggles
+	ExternalCorePluginsEnabled bool
+	SkipHostEnvVarsEnabled     bool
 
 	AngularSupportEnabled  bool
 	HideAngularDeprecation []string
@@ -31,21 +31,22 @@ type PluginManagementCfg struct {
 
 // NewPluginManagementCfg returns a new PluginManagementCfg.
 func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
-	pluginsCDNURLTemplate string, appURL string, features featuremgmt.FeatureToggles, angularSupportEnabled bool,
+	pluginsCDNURLTemplate string, appURL string, externalCorePluginsEnabled, skipHostEnvVarsEnabled, angularSupportEnabled bool,
 	grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string,
 ) *PluginManagementCfg {
 	return &PluginManagementCfg{
-		PluginsPath:            pluginsPath,
-		DevMode:                devMode,
-		PluginSettings:         pluginSettings,
-		PluginsAllowUnsigned:   pluginsAllowUnsigned,
-		DisablePlugins:         disablePlugins,
-		PluginsCDNURLTemplate:  pluginsCDNURLTemplate,
-		GrafanaComURL:          grafanaComURL,
-		GrafanaAppURL:          appURL,
-		Features:               features,
-		AngularSupportEnabled:  angularSupportEnabled,
-		HideAngularDeprecation: hideAngularDeprecation,
-		ForwardHostEnvVars:     forwardHostEnvVars,
+		PluginsPath:                pluginsPath,
+		DevMode:                    devMode,
+		PluginSettings:             pluginSettings,
+		PluginsAllowUnsigned:       pluginsAllowUnsigned,
+		DisablePlugins:             disablePlugins,
+		PluginsCDNURLTemplate:      pluginsCDNURLTemplate,
+		GrafanaComURL:              grafanaComURL,
+		GrafanaAppURL:              appURL,
+		ExternalCorePluginsEnabled: externalCorePluginsEnabled,
+		SkipHostEnvVarsEnabled:     skipHostEnvVarsEnabled,
+		AngularSupportEnabled:      angularSupportEnabled,
+		HideAngularDeprecation:     hideAngularDeprecation,
+		ForwardHostEnvVars:         forwardHostEnvVars,
 	}
 }
