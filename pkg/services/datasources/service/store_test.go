@@ -131,7 +131,6 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ds := initDatasource(db)
 			cmd := defaultUpdateDatasourceCommand
 			cmd.ID = ds.ID
-			cmd.UID = ds.UID
 			cmd.Version = ds.Version
 			ss := SqlStore{db: db}
 			_, err := ss.UpdateDataSource(context.Background(), &cmd)
@@ -146,7 +145,6 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			cmd := defaultUpdateDatasourceCommand
 			cmd.ID = ds.ID
-			cmd.UID = ds.UID
 			_, err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
 
@@ -163,7 +161,6 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			cmd := datasources.UpdateDataSourceCommand{
 				ID:      ds.ID,
-				UID:     ds.UID,
 				OrgID:   10,
 				Name:    "nisse",
 				Type:    datasources.DS_GRAPHITE,
@@ -188,7 +185,6 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			cmd := &datasources.UpdateDataSourceCommand{
 				ID:     ds.ID,
-				UID:    ds.UID,
 				OrgID:  10,
 				Name:   "nisse",
 				Type:   datasources.DS_GRAPHITE,
@@ -207,7 +203,6 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			cmd := &datasources.UpdateDataSourceCommand{
 				ID:      ds.ID,
-				UID:     ds.UID,
 				OrgID:   10,
 				Name:    "nisse",
 				Type:    datasources.DS_GRAPHITE,
