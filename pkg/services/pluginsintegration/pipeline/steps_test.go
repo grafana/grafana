@@ -68,7 +68,9 @@ func TestAsExternal(t *testing.T) {
 
 	t.Run("should skip a core plugin", func(t *testing.T) {
 		cfg := &config.PluginManagementCfg{
-			ExternalCorePluginsEnabled: true,
+			Features: config.Features{
+				ExternalCorePluginsEnabled: true,
+			},
 			PluginSettings: setting.PluginSettings{
 				"plugin1": map[string]string{
 					"as_external": "true",

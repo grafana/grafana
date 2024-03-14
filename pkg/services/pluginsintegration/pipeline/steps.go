@@ -176,7 +176,7 @@ func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 
 // Filter will filter out any plugins that are marked to be disabled.
 func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-	if !c.cfg.ExternalCorePluginsEnabled {
+	if !c.cfg.Features.ExternalCorePluginsEnabled {
 		return bundles, nil
 	}
 

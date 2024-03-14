@@ -162,7 +162,7 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 // ForwardHostEnvVars plugin ids list.
 func SkipHostEnvVarsDecorateFunc(cfg *config.PluginManagementCfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-		p.SkipHostEnvVars = cfg.SkipHostEnvVarsEnabled && !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
+		p.SkipHostEnvVars = cfg.Features.SkipHostEnvVarsEnabled && !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
 		return p, nil
 	}
 }
