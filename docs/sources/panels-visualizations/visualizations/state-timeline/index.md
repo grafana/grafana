@@ -65,9 +65,7 @@ The data is converted as follows, with the [null and empty values visualized as 
 
 {{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-null-values.png" max-width="1025px" alt="A state timeline panel with null values showing the status of two servers" >}}
 
-{{< admonition type="note" >}}
 If your query results aren't in a table format like the preceding example, especially for time-series data, you can apply [transformations](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/) to achieve this.
-{{< /admonition >}}
 
 ## State timeline options
 
