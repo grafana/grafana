@@ -60,7 +60,7 @@
     "@types/history": "4.7.11",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.17.0",
-    "@types/react": "18.2.65",
+    "@types/react": "18.2.66",
     "@types/react-dom": "18.2.22",
     "@types/systemjs": "6.13.5",
     "esbuild": "0.18.12",
