@@ -9,12 +9,12 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
-import { getCloudRule, getGrafanaRule, grantUserPermissions } from '../../../mocks';
-import { Annotation } from '../../../utils/constants';
-import * as ruleId from '../../../utils/rule-id';
+import { getCloudRule, getGrafanaRule, grantUserPermissions } from '../../mocks';
+import { Annotation } from '../../utils/constants';
+import * as ruleId from '../../utils/rule-id';
 
 import { AlertRuleProvider } from './RuleContext';
-import RuleViewer from './RuleViewer.v2';
+import RuleViewer from './RuleViewer';
 import { createMockGrafanaServer } from './__mocks__/server';
 
 // metadata and interactive elements

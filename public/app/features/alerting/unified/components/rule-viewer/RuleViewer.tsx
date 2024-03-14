@@ -9,28 +9,28 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { defaultPageNav } from '../../../RuleViewer';
-import { Annotation } from '../../../utils/constants';
-import { makeDashboardLink, makePanelLink } from '../../../utils/misc';
-import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule, isRecordingRule } from '../../../utils/rules';
-import { createUrl } from '../../../utils/url';
-import { AlertLabels } from '../../AlertLabels';
-import { AlertingPageWrapper } from '../../AlertingPageWrapper';
-import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
-import { WithReturnButton } from '../../WithReturnButton';
-import { decodeGrafanaNamespace } from '../../expressions/util';
-import { RedirectToCloneRule } from '../../rules/CloneRule';
-import { FederatedRuleWarning } from '../FederatedRuleWarning';
-import { Details } from '../tabs/Details';
-import { History } from '../tabs/History';
-import { InstancesList } from '../tabs/Instances';
-import { QueryResults } from '../tabs/Query';
-import { Routing } from '../tabs/Routing';
+import { defaultPageNav } from '../../RuleViewer';
+import { Annotation } from '../../utils/constants';
+import { makeDashboardLink, makePanelLink } from '../../utils/misc';
+import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule, isRecordingRule } from '../../utils/rules';
+import { createUrl } from '../../utils/url';
+import { AlertLabels } from '../AlertLabels';
+import { AlertingPageWrapper } from '../AlertingPageWrapper';
+import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
+import { WithReturnButton } from '../WithReturnButton';
+import { decodeGrafanaNamespace } from '../expressions/util';
+import { RedirectToCloneRule } from '../rules/CloneRule';
 
 import { useAlertRulePageActions } from './Actions';
 import { useDeleteModal } from './DeleteModal';
+import { FederatedRuleWarning } from './FederatedRuleWarning';
 import { useAlertRule } from './RuleContext';
 import { RecordingBadge, StateBadge } from './StateBadges';
+import { Details } from './tabs/Details';
+import { History } from './tabs/History';
+import { InstancesList } from './tabs/Instances';
+import { QueryResults } from './tabs/Query';
+import { Routing } from './tabs/Routing';
 
 enum ActiveTab {
   Query = 'query',

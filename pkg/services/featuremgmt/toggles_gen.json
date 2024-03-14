@@ -999,7 +999,8 @@
       "metadata": {
         "name": "alertingDetailsViewV2",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-12T12:33:03Z"
       },
       "spec": {
         "description": "Enables the preview of the new alert details view",

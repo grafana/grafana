@@ -543,10 +543,6 @@ const (
 	// Allow collapsing of flame graph items
 	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
 
-	// FlagAlertingDetailsViewV2
-	// Enables the preview of the new alert details view
-	FlagAlertingDetailsViewV2 = "alertingDetailsViewV2"
-
 	// FlagDatatrails
 	// Enables the new core app datatrails
 	FlagDatatrails = "datatrails"

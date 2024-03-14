@@ -4,9 +4,9 @@ import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { deleteRuleAction } from '../../../state/actions';
-import { getRulesSourceName } from '../../../utils/datasource';
-import { fromRulerRule } from '../../../utils/rule-id';
+import { deleteRuleAction } from '../../state/actions';
+import { getRulesSourceName } from '../../utils/datasource';
+import { fromRulerRule } from '../../utils/rule-id';
 
 type DeleteModalHook = [JSX.Element, (rule: CombinedRule) => void, () => void];
 
