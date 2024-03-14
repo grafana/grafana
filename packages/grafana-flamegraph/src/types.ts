@@ -1,5 +1,9 @@
 import { LevelItem } from './FlameGraph/dataTransform';
 
+export { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
+
+export { type ExtraContextMenuButton } from './FlameGraph/FlameGraphContextMenu';
+
 export type ClickedItemData = {
   posX: number;
   posY: number;

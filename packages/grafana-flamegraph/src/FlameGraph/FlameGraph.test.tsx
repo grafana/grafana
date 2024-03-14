@@ -3,7 +3,7 @@ import React from 'react';
 
 import { createDataFrame } from '@grafana/data';
 
-import { ColorScheme } from '../types';
+import { ColorScheme, SelectedView } from '../types';
 
 import FlameGraph from './FlameGraph';
 import { FlameGraphDataContainer } from './dataTransform';
@@ -23,7 +23,7 @@ jest.mock('react-use', () => {
 });
 
 describe('FlameGraph', () => {
-  function setup() {
+  function setup(props?: Partial<React.ComponentProps<typeof FlameGraph>>) {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
 
@@ -47,6 +47,9 @@ describe('FlameGraph', () => {
         onFocusPillClick={onFocusPillClick}
         onSandwichPillClick={onSandwichPillClick}
         colorScheme={ColorScheme.ValueBased}
+        selectedView={SelectedView.FlameGraph}
+        search={''}
+        {...props}
       />
     );
     return {
@@ -80,18 +83,31 @@ describe('FlameGraph', () => {
     expect(screen.getByText('16.5 Bil | 16.5 Bil samples (Count)')).toBeDefined();
   });
 
-  it('should render context menu', async () => {
+  it('should render context menu + extra items', async () => {
     const event = new MouseEvent('click', { bubbles: true });
     Object.defineProperty(event, 'offsetX', { get: () => 10 });
     Object.defineProperty(event, 'offsetY', { get: () => 10 });
     Object.defineProperty(HTMLCanvasElement.prototype, 'clientWidth', { configurable: true, value: 500 });
 
-    setup();
+    setup({
+      getExtraContextMenuButtons: (clickedItemData, data, state) => {
+        expect(clickedItemData).toMatchObject({ posX: 0, posY: 0, label: 'total' });
+        expect(data.length).toEqual(1101);
+        expect(state).toEqual({
+          selectedView: SelectedView.FlameGraph,
+          isDiff: false,
+          search: '',
+          collapseConfig: undefined,
+        });
+        return [{ label: 'test extra item', icon: 'eye', onClick: () => {} }];
+      },
+    });
     const canvas = screen.getByTestId('flameGraph') as HTMLCanvasElement;
     expect(canvas).toBeInTheDocument();
     expect(screen.queryByTestId('contextMenu')).not.toBeInTheDocument();
 
     fireEvent(canvas, event);
     expect(screen.getByTestId('contextMenu')).toBeInTheDocument();
+    expect(screen.getByText('test extra item')).toBeInTheDocument();
   });
 });

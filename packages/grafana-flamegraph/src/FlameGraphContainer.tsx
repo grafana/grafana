@@ -7,6 +7,7 @@ import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
 
 import FlameGraph from './FlameGraph/FlameGraph';
+import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
@@ -53,6 +54,11 @@ export type Props = {
   extraHeaderElements?: React.ReactNode;
 
   /**
+   * Extra buttons that will be shown in the context menu when user clicks on a Node.
+   */
+  getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
+
+  /**
    * If true the flamegraph will be rendered on top of the table.
    */
   vertical?: boolean;
@@ -80,6 +86,7 @@ const FlameGraphContainer = ({
   vertical,
   showFlameGraphOnly,
   disableCollapsing,
+  getExtraContextMenuButtons,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -169,6 +176,9 @@ const FlameGraphContainer = ({
       colorScheme={colorScheme}
       showFlameGraphOnly={showFlameGraphOnly}
       collapsing={!disableCollapsing}
+      getExtraContextMenuButtons={getExtraContextMenuButtons}
+      selectedView={selectedView}
+      search={search}
     />
   );
 
@@ -238,7 +248,7 @@ const FlameGraphContainer = ({
             stickyHeader={Boolean(stickyHeader)}
             extraHeaderElements={extraHeaderElements}
             vertical={vertical}
-            isDiffMode={Boolean(dataContainer.isDiffFlamegraph())}
+            isDiffMode={dataContainer.isDiffFlamegraph()}
           />
         )}
 
