@@ -160,7 +160,6 @@ export interface FeatureToggles {
   regressionTransformation?: boolean;
   lokiQueryHints?: boolean;
   kubernetesFeatureToggles?: boolean;
-  alertingPreviewUpgrade?: boolean;
   enablePluginsTracingByDefault?: boolean;
   cloudRBACRoles?: boolean;
   alertingQueryOptimization?: boolean;
@@ -177,7 +176,6 @@ export interface FeatureToggles {
   expressionParser?: boolean;
   groupByVariable?: boolean;
   betterPageScrolling?: boolean;
-  alertingUpgradeDryrunOnStart?: boolean;
   scopeFilters?: boolean;
   emailVerificationEnforcement?: boolean;
   ssoSettingsSAML?: boolean;

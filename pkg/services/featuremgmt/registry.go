@@ -1055,15 +1055,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "alertingPreviewUpgrade",
-			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
-		},
-		{
 			Name:            "enablePluginsTracingByDefault",
 			Description:     "Enable plugin tracing for all external plugins",
 			FrontendOnly:    false,
@@ -1180,15 +1171,6 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 			Expression:   "true", // enabled by default
-		},
-		{
-			Name:            "alertingUpgradeDryrunOnStart",
-			Description:     "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:              "scopeFilters",

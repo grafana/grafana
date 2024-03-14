@@ -59,7 +59,8 @@
       "metadata": {
         "name": "alertingPreviewUpgrade",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-11T16:22:16Z"
       },
       "spec": {
         "description": "Show Unified Alerting preview and upgrade page in legacy alerting",
@@ -646,7 +647,8 @@
       "metadata": {
         "name": "alertingUpgradeDryrunOnStart",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-11T16:22:16Z"
       },
       "spec": {
         "description": "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
