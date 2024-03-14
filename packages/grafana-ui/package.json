@@ -141,7 +141,7 @@
     "@types/mock-raf": "1.0.6",
     "@types/node": "20.11.27",
     "@types/prismjs": "1.26.3",
-    "@types/react": "18.2.65",
+    "@types/react": "18.2.66",
     "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-calendar": "3.9.0",
     "@types/react-color": "3.0.12",

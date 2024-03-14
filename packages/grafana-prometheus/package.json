@@ -97,7 +97,7 @@
     "@types/node": "20.11.27",
     "@types/pluralize": "^0.0.33",
     "@types/prismjs": "1.26.3",
-    "@types/react": "18.2.65",
+    "@types/react": "18.2.66",
     "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-dom": "18.2.22",
     "@types/react-highlight-words": "0.16.7",
