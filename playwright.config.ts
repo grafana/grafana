@@ -14,7 +14,7 @@ export default defineConfig<PluginOptions>({
   reporter: 'html',
   use: {
     baseURL: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     httpCredentials: {
       username: 'admin',
       password: 'admin',

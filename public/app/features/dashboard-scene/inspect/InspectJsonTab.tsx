@@ -17,6 +17,7 @@ import {
   sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
+import { LibraryPanel } from '@grafana/schema/';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
@@ -257,17 +258,26 @@ function libraryPanelChildToLegacyRepresentation(panel: VizPanel<{}, {}>) {
   }
 
   const gridItem = panel.parent.parent;
-  const libraryPanelObj = gridItemToPanel(gridItem);
-  const panelObj = vizPanelToPanel(panel);
-
-  panelObj.gridPos = {
+  const gridPos = {
     x: gridItem.state.x || 0,
     y: gridItem.state.y || 0,
     h: gridItem.state.height || 0,
     w: gridItem.state.width || 0,
   };
+  const libraryPanelObj = vizPanelToLibraryPanel(panel);
+  const panelObj = vizPanelToPanel(panel, gridPos, false, gridItem);
 
-  return { ...libraryPanelObj, ...panelObj };
+  return { libraryPanel: { ...libraryPanelObj }, ...panelObj };
+}
+
+function vizPanelToLibraryPanel(panel: VizPanel): LibraryPanel {
+  if (!(panel.parent instanceof LibraryVizPanel)) {
+    throw new Error('Panel not a child of LibraryVizPanel');
+  }
+  if (!panel.parent.state._loadedPanel) {
+    throw new Error('Library panel not loaded');
+  }
+  return panel.parent.state._loadedPanel;
 }
 
 function hasGridPosChanged(a: SceneGridItemStateLike, b: SceneGridItemStateLike) {

@@ -15,10 +15,11 @@ type OAuthStrategy struct {
 	settingsByProvider map[string]map[string]any
 }
 
-var extraKeysByProvider = map[string][]string{
+var extraKeysByProvider = map[string]map[string]connectors.ExtraKeyInfo{
 	social.AzureADProviderName:      connectors.ExtraAzureADSettingKeys,
 	social.GenericOAuthProviderName: connectors.ExtraGenericOAuthSettingKeys,
 	social.GitHubProviderName:       connectors.ExtraGithubSettingKeys,
+	social.GoogleProviderName:       connectors.ExtraGoogleSettingKeys,
 	social.GrafanaComProviderName:   connectors.ExtraGrafanaComSettingKeys,
 	social.GrafanaNetProviderName:   connectors.ExtraGrafanaComSettingKeys,
 }
@@ -48,14 +49,21 @@ func (s *OAuthStrategy) GetProviderConfig(_ context.Context, provider string) (m
 }
 
 func (s *OAuthStrategy) loadAllSettings() {
-	allProviders := append([]string{social.GrafanaNetProviderName}, ssosettings.AllOAuthProviders...)
+	allProviders := append(ssosettings.AllOAuthProviders, social.GrafanaNetProviderName)
 	for _, provider := range allProviders {
 		settings := s.loadSettingsForProvider(provider)
-		if provider == social.GrafanaNetProviderName {
+		// This is required to support the legacy settings for the provider (auth.grafananet section)
+		// It will use the settings (and overwrite the current grafana_com settings) from auth.grafananet if
+		// the auth.grafananet section is enabled and the auth.grafana_com section is disabled.
+		if provider == social.GrafanaNetProviderName && s.shouldUseGrafanaNetSettings() && settings["enabled"] == true {
 			provider = social.GrafanaComProviderName
 		}
 		s.settingsByProvider[provider] = settings
 	}
+}
+
+func (s *OAuthStrategy) shouldUseGrafanaNetSettings() bool {
+	return s.settingsByProvider[social.GrafanaComProviderName]["enabled"] == false
 }
 
 func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any {
@@ -96,9 +104,18 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"signout_redirect_url":       section.Key("signout_redirect_url").Value(),
 	}
 
-	extraFields := extraKeysByProvider[provider]
-	for _, key := range extraFields {
-		result[key] = section.Key(key).Value()
+	extraKeys := extraKeysByProvider[provider]
+	for key, keyInfo := range extraKeys {
+		switch keyInfo.Type {
+		case connectors.Bool:
+			result[key] = section.Key(key).MustBool(keyInfo.DefaultValue.(bool))
+		default:
+			if _, ok := keyInfo.DefaultValue.(string); !ok {
+				result[key] = section.Key(key).Value()
+			} else {
+				result[key] = section.Key(key).MustString(keyInfo.DefaultValue.(string))
+			}
+		}
 	}
 
 	return result

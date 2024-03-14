@@ -59,9 +59,9 @@
     "@types/angular": "1.8.9",
     "@types/history": "4.7.11",
     "@types/jest": "29.5.12",
-    "@types/lodash": "4.14.202",
-    "@types/react": "18.2.55",
-    "@types/react-dom": "18.2.19",
+    "@types/lodash": "4.17.0",
+    "@types/react": "18.2.65",
+    "@types/react-dom": "18.2.22",
     "@types/systemjs": "6.13.5",
     "esbuild": "0.18.12",
     "lodash": "4.17.21",
@@ -77,7 +77,7 @@
     "typescript": "5.3.3"
   },
   "peerDependencies": {
-    "react": "^17.0.0 || ^18.0.0",
-    "react-dom": "^17.0.0 || ^18.0.0"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   }
 }

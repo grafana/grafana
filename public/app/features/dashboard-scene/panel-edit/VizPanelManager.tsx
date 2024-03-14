@@ -13,38 +13,44 @@ import {
 } from '@grafana/data';
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
-  SceneObjectState,
-  VizPanel,
-  SceneObjectBase,
-  SceneComponentProps,
-  sceneUtils,
   DeepPartial,
-  SceneQueryRunner,
-  sceneGraph,
-  SceneDataTransformer,
   PanelBuilders,
+  SceneComponentProps,
+  SceneDataTransformer,
   SceneGridItem,
+  SceneObjectBase,
   SceneObjectRef,
+  SceneObjectState,
+  SceneQueryRunner,
+  VizPanel,
+  sceneGraph,
+  sceneUtils,
 } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig, Panel } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
+import { updateLibraryVizPanel } from 'app/features/library-panels/state/api';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { PanelRepeaterGridItem, RepeatDirection } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
-interface VizPanelManagerState extends SceneObjectState {
+export interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
   sourcePanel: SceneObjectRef<VizPanel>;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
   tableView?: VizPanel;
+  repeat?: string;
+  repeatDirection?: RepeatDirection;
+  maxPerRow?: number;
 }
 
 export enum DisplayMode {
@@ -70,10 +76,17 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
    * live on the VizPanelManager level instead of the VizPanel level
    */
   public static createFor(sourcePanel: VizPanel) {
+    let repeatOptions: Pick<VizPanelManagerState, 'repeat' | 'repeatDirection' | 'maxPerRow'> = {};
+    if (sourcePanel.parent instanceof PanelRepeaterGridItem) {
+      const { variableName: repeat, repeatDirection, maxPerRow } = sourcePanel.parent.state;
+      repeatOptions = { repeat, repeatDirection, maxPerRow };
+    }
+
     return new VizPanelManager({
       panel: sourcePanel.clone({ $data: undefined }),
       $data: sourcePanel.state.$data?.clone(),
       sourcePanel: sourcePanel.getRef(),
+      ...repeatOptions,
     });
   }
 
@@ -325,6 +338,24 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     });
   }
 
+  public unlinkLibraryPanel() {
+    const sourcePanel = this.state.sourcePanel.resolve();
+    if (!(sourcePanel.parent instanceof LibraryVizPanel)) {
+      throw new Error('VizPanel is not a child of a library panel');
+    }
+
+    const gridItem = sourcePanel.parent.parent;
+    if (!(gridItem instanceof SceneGridItem)) {
+      throw new Error('Library panel not a child of a grid item');
+    }
+
+    const newSourcePanel = this.state.panel.clone({ $data: this.state.$data?.clone() });
+    gridItem.setState({
+      body: newSourcePanel,
+    });
+    this.setState({ sourcePanel: newSourcePanel.getRef() });
+  }
+
   public commitChanges() {
     const sourcePanel = this.state.sourcePanel.resolve();
 
@@ -334,6 +365,24 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
           $data: this.state.$data?.clone(),
         }),
       });
+    }
+
+    if (sourcePanel.parent instanceof LibraryVizPanel) {
+      if (sourcePanel.parent.parent instanceof SceneGridItem) {
+        const newLibPanel = sourcePanel.parent.clone({
+          panel: this.state.panel.clone({
+            $data: this.state.$data?.clone(),
+          }),
+        });
+        sourcePanel.parent.parent.setState({
+          body: newLibPanel,
+        });
+        updateLibraryVizPanel(newLibPanel!).then((p) => {
+          if (sourcePanel.parent instanceof LibraryVizPanel) {
+            newLibPanel.setPanelFromLibPanel(p);
+          }
+        });
+      }
     }
   }
 
@@ -354,6 +403,10 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     return { error: 'Unsupported panel parent' };
+  }
+
+  public getPanelCloneWithData(): VizPanel {
+    return this.state.panel.clone({ $data: this.state.$data?.clone() });
   }
 
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {

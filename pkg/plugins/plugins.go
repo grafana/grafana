@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -118,7 +118,7 @@ type JSONData struct {
 	Executable string `json:"executable,omitempty"`
 
 	// App Service Auth Registration
-	IAM *plugindef.IAM `json:"iam,omitempty"`
+	IAM *pfs.IAM `json:"iam,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
