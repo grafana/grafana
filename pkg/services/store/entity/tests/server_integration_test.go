@@ -1,9 +1,11 @@
 package entity_server_tests
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -109,6 +111,140 @@ func requireVersionMatch(t *testing.T, obj *entity.Entity, m objectVersionMatche
 	require.True(t, len(mismatches) == 0, mismatches)
 }
 
+func TestIntegrationWatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	testCtx := createTestContext(t)
+
+	// Update env with entity_api db config
+	dbType := os.Getenv("GRAFANA_TEST_DB")
+	err := addUnifiedStorageConfig(t, testCtx, dbType)
+	require.NoError(t, err)
+
+	t.Run("test should not receive events for keys we are not watching", func(t *testing.T) {
+		group := "test.grafana.app"
+		resource := "jsonobjs"
+		namespace := "default"
+		body := []byte("{\"name\":\"John\"}")
+		name := "test1"
+		key := "/" + group + "/" + resource + "/namespaces/" + namespace + "/" + name
+		otherKey := "/" + group + "/" + resource + "/namespaces/" + namespace + "/" + "otherName"
+
+		// create watch client and timeout after 5 seconds of waiting for an event
+		ctx := testCtx.ctx
+		ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+		defer cancel()
+		watchClient := newWatchClient(t, ctx, testCtx.client, otherKey)
+
+		// create entity
+		createReq := &entity.CreateEntityRequest{
+			Entity: &entity.Entity{
+				Key:       key,
+				Group:     group,
+				Resource:  resource,
+				Namespace: namespace,
+				Name:      name,
+				Body:      body,
+				Message:   "first entity!",
+			},
+		}
+		_, err = testCtx.client.Create(ctx, createReq)
+		require.NoError(t, err)
+
+		//delete entity
+		_, err = testCtx.client.Delete(ctx, &entity.DeleteEntityRequest{Key: key})
+		require.NoError(t, err)
+
+		// watch client should receive nothing and timeout after 5 seconds
+		resp, err := watchClient.Recv()
+		require.Nil(t, resp)
+		require.Error(t, err)
+		require.ErrorContainsf(t, err, "context deadline exceeded", err.Error())
+	})
+
+	t.Run("watch will receive events for create, update, and delete", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("skipping integration test")
+		}
+
+		group := "test.grafana.app"
+		resource := "jsonobjs"
+		namespace := "default"
+		body := []byte("{\"name\":\"John\"}")
+		name := "test2"
+		key := "/" + group + "/" + resource + "/" + namespace + "/" + name
+
+		// create watch client and listen for events
+		watchClient := newWatchClient(t, testCtx.ctx, testCtx.client, key)
+
+		// create entity
+		createReq := &entity.CreateEntityRequest{
+			Entity: &entity.Entity{
+				Key:       key,
+				Group:     group,
+				Resource:  resource,
+				Namespace: namespace,
+				Name:      name,
+				Body:      body,
+				Message:   "first entity!",
+			},
+		}
+		_, err = testCtx.client.Create(testCtx.ctx, createReq)
+		require.NoError(t, err)
+
+		// watch client receives create
+		res, err := watchClient.Recv()
+		require.NoError(t, err)
+		require.Equal(t, key, res.Entity.Key)
+		require.Equal(t, entity.Entity_CREATED, res.Entity.Action)
+
+		// update entity
+		body2 := []byte("{\"name\":\"John2\"}")
+		updateReq := &entity.UpdateEntityRequest{
+			Entity: &entity.Entity{
+				Key:     key,
+				Body:    body2,
+				Message: "update1",
+			},
+		}
+		updateResp, err := testCtx.client.Update(testCtx.ctx, updateReq)
+		require.NoError(t, err)
+		require.Equal(t, entity.Entity_UPDATED, updateResp.Entity.Action)
+
+		// watch client receives update
+		res, err = watchClient.Recv()
+		require.NoError(t, err)
+		require.Equal(t, key, res.Entity.Key)
+		require.Equal(t, entity.Entity_UPDATED, res.Entity.Action)
+
+		// delete entity
+		_, err = testCtx.client.Delete(testCtx.ctx, &entity.DeleteEntityRequest{
+			Key:             key,
+			PreviousVersion: res.Entity.ResourceVersion,
+		})
+		require.NoError(t, err)
+
+		// watch client receives delete
+		res, err = watchClient.Recv()
+		require.NoError(t, err)
+		require.Equal(t, key, res.Entity.Key)
+		require.Equal(t, entity.Entity_DELETED, res.Entity.Action)
+	})
+}
+
+func addUnifiedStorageConfig(t *testing.T, testCtx testContext, dbType string) error {
+	s, _ := testCtx.testEnv.SQLStore.Cfg.Raw.NewSection("entity_api")
+	_, err := s.NewKey("db_type", dbType)
+	require.NoError(t, err)
+	_, _ = s.NewKey("db_host", "localhost")
+	_, _ = s.NewKey("db_name", "grafanatest")
+	_, _ = s.NewKey("db_user", "grafanatest")
+	_, _ = s.NewKey("db_pass", "grafanatest")
+	return err
+}
+
 func TestIntegrationEntityServer(t *testing.T) {
 	// TODO figure out why this still runs into sqlite database locked error
 	if true {
@@ -129,8 +265,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 	resource2 := "playlists"
 	namespace := "default"
 	name := "my-test-entity"
-	testKey := "/" + group + "/" + resource + "/" + namespace + "/" + name
-	testKey2 := "/" + group + "/" + resource2 + "/" + namespace + "/" + name
+	testKey := "/" + group + "/" + resource + "/namespaces/" + namespace + "/" + name
+	testKey2 := "/" + group + "/" + resource2 + "/namespaces/" + namespace + "/" + name
 	body := []byte("{\"name\":\"John\"}")
 
 	t.Run("should not retrieve non-existent objects", func(t *testing.T) {
@@ -484,7 +620,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 	t.Run("should be able to filter objects based on their labels", func(t *testing.T) {
 		_, err := testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				Key:  "/dashboards.grafana.app/dashboards/default/blue-green",
+				Key:  "/dashboards.grafana.app/dashboards/namespaces/default/blue-green",
 				Body: []byte(dashboardWithTagsBlueGreen),
 				Labels: map[string]string{
 					"blue":  "",
@@ -496,7 +632,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 
 		_, err = testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				Key:  "/dashboards.grafana.app/dashboards/default/red-green",
+				Key:  "/dashboards.grafana.app/dashboards/namespaces/default/red-green",
 				Body: []byte(dashboardWithTagsRedGreen),
 				Labels: map[string]string{
 					"red":   "",
@@ -507,7 +643,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NoError(t, err)
 
 		resp, err := testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
+			Key:      []string{"/dashboards.grafana.app/dashboards/namespaces/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"red": "",
@@ -519,7 +655,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Equal(t, resp.Results[0].Name, "red-green")
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
+			Key:      []string{"/dashboards.grafana.app/dashboards/namespaces/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"red":   "",
@@ -532,7 +668,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Equal(t, resp.Results[0].Name, "red-green")
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
+			Key:      []string{"/dashboards.grafana.app/dashboards/namespaces/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"red": "invalid",
@@ -543,7 +679,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Len(t, resp.Results, 0)
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
+			Key:      []string{"/dashboards.grafana.app/dashboards/namespaces/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"green": "",
@@ -554,7 +690,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Len(t, resp.Results, 2)
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
+			Key:      []string{"/dashboards.grafana.app/dashboards/namespaces/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"yellow": "",
@@ -564,4 +700,15 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NotNil(t, resp)
 		require.Len(t, resp.Results, 0)
 	})
+}
+
+func newWatchClient(t *testing.T, ctx context.Context, client entity.EntityStoreClient, key string) entity.EntityStore_WatchClient {
+	watchReq := &entity.EntityWatchRequest{
+		Since: 0,
+		Key:   []string{key},
+	}
+	watchClient, err := client.Watch(ctx, watchReq)
+	require.NoError(t, err)
+
+	return watchClient
 }

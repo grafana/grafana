@@ -81,8 +81,13 @@ func (s *sqlEntityServer) Init() error {
 
 	// set up the broadcaster
 	s.broadcaster, err = NewBroadcaster(context.Background(), func(stream chan *entity.Entity) error {
-		// start the poller
-		go s.poller(stream)
+		// subscribe to new events
+		if engine.DriverName() == "postgres" {
+			go s.pgWatcher(stream)
+		} else {
+			// start the poller
+			go s.poller(stream)
+		}
 
 		return nil
 	})
@@ -651,6 +656,9 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		// Update resource version
 		current.ResourceVersion = s.snowflake.Generate().Int64()
 
+		// set entity action
+		current.Action = entity.Entity_UPDATED
+
 		values := map[string]any{
 			// below are only set in history table
 			"guid":       current.Guid,
@@ -682,7 +690,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			"origin_key":       current.Origin.Key,
 			"origin_ts":        current.Origin.Time,
 			"message":          current.Message,
-			"action":           entity.Entity_UPDATED,
+			"action":           current.Action,
 		}
 
 		// 1. Add the `entity_history` values
@@ -702,7 +710,6 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		delete(values, "name")
 		delete(values, "created_at")
 		delete(values, "created_by")
-		delete(values, "action")
 
 		err = s.dialect.Update(
 			ctx,
