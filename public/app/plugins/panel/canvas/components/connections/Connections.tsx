@@ -327,9 +327,35 @@ export class Connections {
 
     // Check if slope before vertex and after vertex is within snapping tolerance
     const snapTolerance = 5;
+    const orthoTolerance = 0.05;
     const angleOverall = calculateAngle(vx1, vy1, vx2, vy2);
     const angleBefore = calculateAngle(vx1, vy1, x, y);
     const deleteVertex = Math.abs(angleBefore - angleOverall) < snapTolerance;
+    const verticalBefore = Math.abs((x - vx1) / (y - vy1)) < orthoTolerance;
+    const verticalAfter = Math.abs((x - vx2) / (y - vy2)) < orthoTolerance;
+    const horizontalBefore = Math.abs((y - vy1) / (x - vx1)) < orthoTolerance;
+    const horizontalAfter = Math.abs((y - vy2) / (x - vx2)) < orthoTolerance;
+
+    let xSnap = x;
+    let ySnap = y;
+    if (verticalBefore) {
+      xSnap = vx1;
+    } else if (verticalAfter) {
+      xSnap = vx2;
+    }
+    if (horizontalBefore) {
+      ySnap = vy1;
+    } else if (horizontalAfter) {
+      ySnap = vy2;
+    }
+
+    if ((verticalBefore || verticalAfter) && (horizontalBefore || horizontalAfter)) {
+      this.scene.selecto!.rootContainer!.style.cursor = 'move';
+    } else if (verticalBefore || verticalAfter) {
+      this.scene.selecto!.rootContainer!.style.cursor = 'col-resize';
+    } else if (horizontalBefore || horizontalAfter) {
+      this.scene.selecto!.rootContainer!.style.cursor = 'row-resize';
+    }
     if (deleteVertex) {
       // Display temporary vertex removal
       this.scene.selecto!.rootContainer!.style.cursor = 'not-allowed';
@@ -337,7 +363,7 @@ export class Connections {
       this.connectionSVGVertex!.style.display = 'block';
     } else {
       // Display temporary vertex during drag
-      this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${x} ${y} L${vx2} ${vy2}`);
+      this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${xSnap} ${ySnap} L${vx2} ${vy2}`);
       this.connectionSVGVertex!.style.display = 'block';
     }
 
@@ -364,8 +390,8 @@ export class Connections {
             } else {
               const currentVertex = { ...currentVertices[vertexIndex] };
 
-              currentVertex.x = (x - x1) / (x2 - x1);
-              currentVertex.y = (y - y1) / (y2 - y1);
+              currentVertex.x = (xSnap - x1) / (x2 - x1);
+              currentVertex.y = (ySnap - y1) / (y2 - y1);
 
               currentVertices[vertexIndex] = currentVertex;
             }
