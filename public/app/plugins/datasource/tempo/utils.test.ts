@@ -15,7 +15,6 @@ describe('utils', () => {
     };
 
     const migratedQuery = migrateFromSearchToTraceQLSearch(query);
-    console.log(migratedQuery);
     expect(migratedQuery.queryType).toBe('traceqlSearch');
     expect(migratedQuery.filters.length).toBe(6);
     expect(migratedQuery.filters[0].scope).toBe('span');
