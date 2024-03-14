@@ -75,7 +75,11 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
         <filters.Component model={filters} />
       </div>
 
-      {isExpandedComputed && <dashboards.Component model={dashboards} />}
+      {isExpandedComputed && (
+        <div className={styles.dashboardsContainer}>
+          <dashboards.Component model={dashboards} />
+        </div>
+      )}
     </div>
   );
 }
@@ -83,15 +87,17 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
-      alignItems: 'baseline',
-      gap: theme.spacing(1),
+      display: 'flex',
+      flexDirection: 'column',
       gridArea: 'scopes',
+      height: '100%',
     }),
     containerExpanded: css({
       backgroundColor: theme.colors.background.primary,
     }),
     filtersContainer: css({
       display: 'flex',
+      flex: '0 1 auto',
       flexDirection: 'row',
       padding: theme.spacing(2, 0, 2, 2),
     }),
@@ -101,6 +107,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     iconNotExpanded: css({
       transform: 'scaleX(-1)',
+    }),
+    dashboardsContainer: css({
+      display: 'flex',
+      flex: '1 1 auto',
+      flexDirection: 'column',
+      gap: theme.spacing(3),
+      overflow: 'hidden',
+      padding: theme.spacing(2),
     }),
   };
 };

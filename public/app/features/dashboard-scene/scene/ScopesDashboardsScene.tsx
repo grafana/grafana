@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2, ScopeDashboard } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { Icon, Input, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
   dashboards: ScopeDashboard[];
@@ -70,24 +70,45 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
   const { filteredDashboards, isLoading } = model.useState();
   const styles = useStyles2(getStyles);
 
+  const ac = [];
+
+  for (let i = 0; i < 100; i++) {
+    ac.push(...filteredDashboards);
+  }
+
   return (
-    <div className={styles.container}>
-      <Input
-        prefix={<Icon name="search" />}
-        disabled={isLoading}
-        onChange={(evt) => model.changeSearchQuery(evt.currentTarget.value)}
-      />
-      {filteredDashboards.map((dashboard) => (
-        <div key={dashboard.uid}>{dashboard.title}</div>
-      ))}
-    </div>
+    <>
+      <div className={styles.searchInputContainer}>
+        <Input
+          prefix={<Icon name="search" />}
+          disabled={isLoading}
+          onChange={(evt) => model.changeSearchQuery(evt.currentTarget.value)}
+        />
+      </div>
+
+      <CustomScrollbar>
+        {ac.map((dashboard, idx) => (
+          <div key={idx} className={styles.dashboardItem}>
+            {dashboard.title}
+          </div>
+        ))}
+      </CustomScrollbar>
+    </>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css({
-      padding: theme.spacing(2),
+    searchInputContainer: css({
+      flex: '0 1 auto',
+    }),
+    dashboardItem: css({
+      padding: theme.spacing(1, 0),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+
+      ':first-child': {
+        paddingTop: 0,
+      },
     }),
   };
 };

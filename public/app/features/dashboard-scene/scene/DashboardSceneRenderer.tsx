@@ -66,6 +66,7 @@ function getStyles(theme: GrafanaTheme2) {
         "scopes controls"
         "panels panels"`,
       gridTemplateColumns: `${theme.spacing(40)} 1fr`,
+      gridTemplateRows: 'auto 1fr',
       height: '100%',
     }),
     pageContainerExpanded: css({
