@@ -71,7 +71,7 @@ func TestVerifier_VerifyEmail(t *testing.T) {
 		assert.True(t, c.updateCalled)
 	})
 
-	t.Run("should success user holding email is the same that want to verify it", func(t *testing.T) {
+	t.Run("should succeed when the user holding the email is the same user that want to verify it", func(t *testing.T) {
 		us.ExpectedUser = &user.User{ID: 2}
 		var c calls
 		ts.ExpirePreviousVerificationsFN = func(ctx context.Context, cmd *tempuser.ExpirePreviousVerificationsCommand) error {
