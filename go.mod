@@ -10,15 +10,6 @@ replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
 // contains openapi encoder fixes. remove ASAP
 replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
 
-// TODO: following otel replaces to pin the libraries so k8s.io/apiserver doesn't downgrade us inadvertantly
-// will need bumps as we upgrade otel in Grafana
-replace (
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.24.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.24.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.24.0 // @grafana/backend-platform
-)
-
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
 // import that instead of v0.X even though v0.X is newer.
