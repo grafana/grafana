@@ -1,4 +1,4 @@
-[[HiddenSubject .Subject "Verify your new email - [[.Name]]"]]
+[[HiddenSubject .Subject "Verify your email - [[.Name]]"]]
 
 Hi [[.Name]],
 

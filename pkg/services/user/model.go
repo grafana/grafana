@@ -220,6 +220,12 @@ type GetUserByIDQuery struct {
 	ID int64
 }
 
+type VerifyEmailCommand struct {
+	User   User
+	Email  string
+	Action UpdateEmailActionType
+}
+
 type ErrCaseInsensitiveLoginConflict struct {
 	Users []User
 }

@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -245,25 +244,22 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 		usr, err := hs.userService.GetByID(ctx, &query)
 		if err != nil {
 			if errors.Is(err, user.ErrUserNotFound) {
-				return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
+				return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), err)
 			}
 			return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 		}
 
 		if len(cmd.Email) != 0 && usr.Email != cmd.Email {
-			// Email is being updated
-			newEmail, err := ValidateAndNormalizeEmail(cmd.Email)
+			normalized, err := ValidateAndNormalizeEmail(cmd.Email)
 			if err != nil {
 				return response.Error(http.StatusBadRequest, "Invalid email address", err)
 			}
-
-			return hs.verifyEmailUpdate(ctx, newEmail, user.EmailUpdateAction, usr)
+			return hs.verifyEmailUpdate(ctx, normalized, user.EmailUpdateAction, usr)
 		}
 		if len(cmd.Login) != 0 && usr.Login != cmd.Login {
-			// Username is being updated. If it's an email, go through the email verification flow
-			newEmailLogin, err := ValidateAndNormalizeEmail(cmd.Login)
-			if err == nil && newEmailLogin != usr.Email {
-				return hs.verifyEmailUpdate(ctx, newEmailLogin, user.LoginUpdateAction, usr)
+			normalized, err := ValidateAndNormalizeEmail(cmd.Login)
+			if err == nil && usr.Email != normalized {
+				return hs.verifyEmailUpdate(ctx, cmd.Login, user.LoginUpdateAction, usr)
 			}
 		}
 	}
@@ -279,55 +275,12 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 }
 
 func (hs *HTTPServer) verifyEmailUpdate(ctx context.Context, email string, field user.UpdateEmailActionType, usr *user.User) response.Response {
-	// Verify that email is not already being used
-	query := user.GetUserByLoginQuery{LoginOrEmail: email}
-	existingUsr, err := hs.userService.GetByLogin(ctx, &query)
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		return response.Error(http.StatusInternalServerError, "Failed to validate if email is already in use", err)
-	}
-	if existingUsr != nil {
-		return response.Error(http.StatusConflict, "Email is already being used", nil)
-	}
-
-	// Invalidate any pending verifications for this user
-	expireCmd := tempuser.ExpirePreviousVerificationsCommand{InvitedByUserID: usr.ID}
-	err = hs.tempUserService.ExpirePreviousVerifications(ctx, &expireCmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Could not invalidate pending email verifications", err)
-	}
-
-	code, err := util.GetRandomString(20)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to generate random string", err)
-	}
-
-	tempCmd := tempuser.CreateTempUserCommand{
-		OrgID:  -1,
+	if err := hs.userVerifier.VerifyEmail(ctx, user.VerifyEmailCommand{
+		User:   *usr,
 		Email:  email,
-		Code:   code,
-		Status: tempuser.TmpUserEmailUpdateStarted,
-		// used to fetch the User in the second step of the verification flow
-		InvitedByUserID: usr.ID,
-		// used to determine if the user was updating their email or username in the second step of the verification flow
-		Name: string(field),
-	}
-
-	tempUser, err := hs.tempUserService.CreateTempUser(ctx, &tempCmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to create email change", err)
-	}
-
-	emailCmd := notifications.SendVerifyEmailCommand{Email: tempUser.Email, Code: tempUser.Code, User: usr}
-	err = hs.NotificationService.SendVerificationEmail(ctx, &emailCmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to send verification email", err)
-	}
-
-	// Record email as sent
-	emailSentCmd := tempuser.UpdateTempUserWithEmailSentCommand{Code: tempUser.Code}
-	err = hs.tempUserService.UpdateTempUserWithEmailSent(ctx, &emailSentCmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to record verification email", err)
+		Action: field,
+	}); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to generate email verification", err)
 	}
 
 	return response.Success("Email sent for verification")
