@@ -74,7 +74,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       { value: 'serviceMap', label: 'Service Graph' },
     ];
 
-    // Show the deprecated search option if any of the deprecated search fields are set
+    // Migrate user to new query type if they are using the old search query type
     if (
       query.spanName ||
       query.serviceName ||
