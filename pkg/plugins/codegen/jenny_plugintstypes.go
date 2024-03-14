@@ -34,10 +34,6 @@ func (j *ptsJenny) JennyName() string {
 }
 
 func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (codejen.Files, error) {
-	if !decl.HasSchema() {
-		return nil, nil
-	}
-
 	genFile := &tsast.File{}
 	versionedFile := &tsast.File{}
 
@@ -94,13 +90,10 @@ func getPluginVersion(pluginVersion *string) string {
 
 func adaptToPipeline(j codejen.OneToOne[codegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
 	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) codegen.SchemaForGen {
-		name := strings.ReplaceAll(pd.PluginMeta.Name, " ", "")
-		if pd.SchemaInterface.Name == "DataQuery" {
-			name = name + "DataQuery"
-		}
+		name := strings.ReplaceAll(pd.PluginMeta.Name, " ", "") + pd.SchemaInterface.Name
 		return codegen.SchemaForGen{
 			Name:    name,
-			CueFile: pd.Lineage.Latest().Underlying(),
+			CueFile: pd.CueFile,
 			IsGroup: pd.SchemaInterface.IsGroup,
 		}
 	})

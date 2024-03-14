@@ -30,12 +30,12 @@ func (j *pgoJenny) JennyName() string {
 
 func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 	hasBackend := decl.PluginMeta.Backend
-	if hasBackend == nil || !*hasBackend || !decl.HasSchema() {
+	if hasBackend == nil || !*hasBackend {
 		return nil, nil
 	}
 
 	slotname := strings.ToLower(decl.SchemaInterface.Name)
-	byt, err := generators.GenerateTypesGo(decl.Lineage.Underlying(), &generators.GoConfig{
+	byt, err := generators.GenerateTypesGo(decl.CueFile, &generators.GoConfig{
 		Config: &generators.OpenApiConfig{
 			Config: &copenapi.Config{
 				MaxCycleDepth: 10,
@@ -43,7 +43,7 @@ func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 			IsGroup: decl.SchemaInterface.IsGroup,
 		},
 		PackageName: slotname,
-		ApplyFuncs:  []dstutil.ApplyFunc{corecodegen.PrefixDropper(decl.Lineage.Name())},
+		ApplyFuncs:  []dstutil.ApplyFunc{corecodegen.PrefixDropper(decl.PluginMeta.Name)},
 	})
 	if err != nil {
 		return nil, err
