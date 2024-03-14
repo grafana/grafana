@@ -113,7 +113,7 @@
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jest": "27.8.0",
+    "eslint-plugin-jest": "27.9.0",
     "eslint-plugin-jsdoc": "48.1.0",
     "eslint-plugin-jsx-a11y": "6.8.0",
     "eslint-plugin-lodash": "7.4.0",
