@@ -7,10 +7,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -42,6 +44,7 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, group := range file.Groups {
+			u := provisionerUser(group.OrgID)
 			folderUID, err := prov.getOrCreateFolderUID(ctx, group.FolderTitle, group.OrgID)
 			if err != nil {
 				return err
@@ -54,19 +57,18 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 			for _, rule := range group.Rules {
 				rule.NamespaceUID = folderUID
 				rule.RuleGroup = group.Title
-				err = prov.provisionRule(ctx, group.OrgID, rule)
+				err = prov.provisionRule(ctx, u, rule)
 				if err != nil {
 					return err
 				}
 			}
-			err = prov.ruleService.UpdateRuleGroup(ctx, group.OrgID, folderUID, group.Title, group.Interval)
+			err = prov.ruleService.UpdateRuleGroup(ctx, u, folderUID, group.Title, group.Interval)
 			if err != nil {
 				return err
 			}
 		}
 		for _, deleteRule := range file.DeleteRules {
-			err := prov.ruleService.DeleteAlertRule(ctx, deleteRule.OrgID,
-				deleteRule.UID, alert_models.ProvenanceFile)
+			err := prov.ruleService.DeleteAlertRule(ctx, provisionerUser(deleteRule.OrgID), deleteRule.UID, alert_models.ProvenanceFile)
 			if err != nil {
 				return err
 			}
@@ -77,20 +79,20 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 
 func (prov *defaultAlertRuleProvisioner) provisionRule(
 	ctx context.Context,
-	orgID int64,
+	user identity.Requester,
 	rule alert_models.AlertRule) error {
 	prov.logger.Debug("provisioning alert rule", "uid", rule.UID, "org", rule.OrgID)
-	_, _, err := prov.ruleService.GetAlertRule(ctx, orgID, rule.UID)
+	_, _, err := prov.ruleService.GetAlertRule(ctx, user, rule.UID)
 	if err != nil && !errors.Is(err, alert_models.ErrAlertRuleNotFound) {
 		return err
 	} else if err != nil {
 		prov.logger.Debug("creating rule", "uid", rule.UID, "org", rule.OrgID)
 		// a nil user is passed in as then the quota logic will only check for
 		// the organization quota since we don't have any user scope here.
-		_, err = prov.ruleService.CreateAlertRule(ctx, nil, rule, alert_models.ProvenanceFile)
+		_, err = prov.ruleService.CreateAlertRule(ctx, user, rule, alert_models.ProvenanceFile)
 	} else {
 		prov.logger.Debug("updating rule", "uid", rule.UID, "org", rule.OrgID)
-		_, err = prov.ruleService.UpdateAlertRule(ctx, rule, alert_models.ProvenanceFile)
+		_, err = prov.ruleService.UpdateAlertRule(ctx, user, rule, alert_models.ProvenanceFile)
 	}
 	return err
 }
@@ -128,4 +130,9 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 	}
 
 	return cmdResult.UID, nil
+}
+
+// UserID is 0 to use org quota
+var provisionerUser = func(orgID int64) identity.Requester {
+	return &user.SignedInUser{UserID: 0, Login: "alert_provisioner", OrgID: orgID}
 }
