@@ -191,7 +191,7 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 	return result
 }
 
-func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger log.Logger) {
+func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
 	if state.State == eval.Normal {
 		logger.Debug("Keeping state", "state", state.State)
 	} else {
@@ -206,11 +206,11 @@ func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger 
 			"next_ends_at",
 			nextEndsAt)
 		// Normal states have the same start and end timestamps
-		state.SetNormal("", nextEndsAt, nextEndsAt)
+		state.SetNormal(reason, nextEndsAt, nextEndsAt)
 	}
 }
 
-func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
 	switch state.State {
 	case eval.Alerting:
 		prevEndsAt := state.EndsAt
@@ -235,7 +235,7 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 				state.EndsAt,
 				"next_ends_at",
 				nextEndsAt)
-			state.SetAlerting("", result.EvaluatedAt, nextEndsAt)
+			state.SetAlerting(reason, result.EvaluatedAt, nextEndsAt)
 		}
 	default:
 		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
@@ -250,7 +250,7 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 				state.EndsAt,
 				"next_ends_at",
 				nextEndsAt)
-			state.SetPending("", result.EvaluatedAt, nextEndsAt)
+			state.SetPending(reason, result.EvaluatedAt, nextEndsAt)
 		} else {
 			logger.Debug("Changing state",
 				"previous_state",
@@ -261,18 +261,20 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 				state.EndsAt,
 				"next_ends_at",
 				nextEndsAt)
-			state.SetAlerting("", result.EvaluatedAt, nextEndsAt)
+			state.SetAlerting(reason, result.EvaluatedAt, nextEndsAt)
 		}
 	}
 }
+
 func resultError(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+	handlerStr := "resultError"
+
 	switch rule.ExecErrState {
 	case models.AlertingErrState:
-		logger.Debug("Execution error state is Alerting", "handler", "resultAlerting", "previous_handler", "resultError")
-		resultAlerting(state, rule, result, logger)
+		logger.Debug("Execution error state is Alerting", "handler", "resultAlerting", "previous_handler", handlerStr)
+		resultAlerting(state, rule, result, logger, models.StateReasonError)
 		// This is a special case where Alerting and Pending should also have an error and reason
 		state.Error = result.Error
-		state.StateReason = models.StateReasonError
 	case models.ErrorErrState:
 		if state.State == eval.Error {
 			prevEndsAt := state.EndsAt
@@ -316,8 +318,11 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 			}
 		}
 	case models.OkErrState:
-		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", "resultError")
-		resultNormal(state, rule, result, logger)
+		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
+		resultNormal(state, rule, result, logger, "") // TODO: Should we add a reason?
+	case models.KeepLastErrState:
+		logger := logger.New("previous_handler", handlerStr)
+		resultKeepLast(state, rule, result, logger)
 	default:
 		err := fmt.Errorf("unsupported execution error state: %s", rule.ExecErrState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
@@ -326,11 +331,12 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 }
 
 func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+	handlerStr := "resultNoData"
+
 	switch rule.NoDataState {
 	case models.Alerting:
-		logger.Debug("Execution no data state is Alerting", "handler", "resultAlerting", "previous_handler", "resultNoData")
-		resultAlerting(state, rule, result, logger)
-		state.StateReason = models.StateReasonNoData
+		logger.Debug("Execution no data state is Alerting", "handler", "resultAlerting", "previous_handler", handlerStr)
+		resultAlerting(state, rule, result, logger, models.StateReasonNoData)
 	case models.NoData:
 		if state.State == eval.NoData {
 			prevEndsAt := state.EndsAt
@@ -357,13 +363,40 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 			state.SetNoData("", result.EvaluatedAt, nextEndsAt)
 		}
 	case models.OK:
-		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", "resultNoData")
-		resultNormal(state, rule, result, logger)
-		state.StateReason = models.StateReasonNoData
+		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
+		resultNormal(state, rule, result, logger, models.StateReasonNoData)
+	case models.KeepLast:
+		logger := logger.New("previous_handler", handlerStr)
+		resultKeepLast(state, rule, result, logger)
 	default:
 		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
 		state.Annotations["Error"] = err.Error()
+	}
+}
+
+func resultKeepLast(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+	reason := models.ConcatReasons(result.State.String(), models.StateReasonKeepLast)
+
+	switch state.State {
+	case eval.Alerting:
+		logger.Debug("Execution keep last state is Alerting", "handler", "resultAlerting")
+		resultAlerting(state, rule, result, logger, reason)
+	case eval.Pending:
+		// respect 'for' setting on rule
+		if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
+			logger.Debug("Execution keep last state is Pending", "handler", "resultAlerting")
+			resultAlerting(state, rule, result, logger, reason)
+		} else {
+			logger.Debug("Ignoring set next state to pending")
+		}
+	case eval.Normal:
+		logger.Debug("Execution keep last state is Normal", "handler", "resultNormal")
+		resultNormal(state, rule, result, logger, reason)
+	default:
+		// this should not happen, add as failsafe
+		logger.Debug("Reverting invalid state to normal", "handler", "resultNormal")
+		resultNormal(state, rule, result, logger, reason)
 	}
 }
 
@@ -486,21 +519,28 @@ func FormatStateAndReason(state eval.State, reason string) string {
 // ParseFormattedState parses a state string in the format "state (reason)"
 // and returns the state and reason separately.
 func ParseFormattedState(stateStr string) (eval.State, string, error) {
-	split := strings.Split(stateStr, " ")
-	if len(split) == 0 {
-		return -1, "", errors.New("invalid state format")
+	p := 0
+	// walk string until we find a space
+	for i, c := range stateStr {
+		if c == ' ' {
+			p = i
+			break
+		}
+	}
+	if p == 0 {
+		p = len(stateStr)
 	}
 
-	state, err := eval.ParseStateString(split[0])
+	state, err := eval.ParseStateString(stateStr[:p])
 	if err != nil {
 		return -1, "", err
 	}
 
-	var reason string
-	if len(split) > 1 {
-		reason = strings.Trim(split[1], "()")
+	if p == len(stateStr) {
+		return state, "", nil
 	}
 
+	reason := strings.Trim(stateStr[p+1:], "()")
 	return state, reason, nil
 }
 

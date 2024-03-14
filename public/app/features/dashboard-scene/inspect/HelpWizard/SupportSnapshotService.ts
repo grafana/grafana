@@ -75,12 +75,13 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
     const snapshotSize = formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
 
     let scene: SceneObject | undefined = undefined;
-
-    try {
-      const dash = transformSaveModelToScene({ dashboard: snapshot, meta: { isEmbedded: true } });
-      scene = dash.state.body; // skip the wrappers
-    } catch (ex) {
-      console.log('Error creating scene:', ex);
+    if (snapshot) {
+      try {
+        const dash = transformSaveModelToScene({ dashboard: snapshot, meta: { isEmbedded: true } });
+        scene = dash.state.body; // skip the wrappers
+      } catch (ex) {
+        console.log('Error creating scene:', ex);
+      }
     }
 
     this.setState({ snapshot, snapshotText, markdownText, snapshotSize, snapshotUpdate: snapshotUpdate + 1, scene });

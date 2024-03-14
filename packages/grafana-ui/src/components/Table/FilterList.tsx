@@ -4,7 +4,7 @@ import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 
-import { ButtonSelect, Checkbox, FilterInput, HorizontalGroup, Label, VerticalGroup } from '..';
+import { ButtonSelect, Checkbox, FilterInput, Label, Stack } from '..';
 import { useStyles2, useTheme2 } from '../../themes';
 
 interface Props {
@@ -169,11 +169,11 @@ export const FilterList = ({
   }, [onChange, values, items, selectedItems]);
 
   return (
-    <VerticalGroup spacing="md">
+    <Stack direction="column" gap={0.25}>
       {!showOperators && <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />}
       {showOperators && (
-        <HorizontalGroup>
-          <ButtonSelect<string>
+        <Stack direction="row" gap={0}>
+          <ButtonSelect
             variant="canvas"
             options={OPERATORS}
             onChange={setOperator}
@@ -181,7 +181,7 @@ export const FilterList = ({
             tooltip={operator.description}
           />
           <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
-        </HorizontalGroup>
+        </Stack>
       )}
       {!items.length && <Label>No values</Label>}
       {items.length && (
@@ -206,7 +206,7 @@ export const FilterList = ({
         </List>
       )}
       {items.length && (
-        <VerticalGroup spacing="xs">
+        <Stack direction="column" gap={0.25}>
           <div className={cx(styles.selectDivider)} />
           <div className={cx(styles.filterListRow)}>
             <Checkbox
@@ -217,9 +217,9 @@ export const FilterList = ({
               onChange={onSelectChanged}
             />
           </div>
-        </VerticalGroup>
+        </Stack>
       )}
-    </VerticalGroup>
+    </Stack>
   );
 };
 
