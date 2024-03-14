@@ -109,7 +109,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
             onClick={toggle}
             className={styles.toggleContentOutlineButton}
             aria-expanded={contentOutlineExpanded}
-            maxWidth={contentOutlineExpanded ? 160 : 40}
+            width={contentOutlineExpanded ? 160 : 40}
           />
 
           {outlineItems.map((item) => (
@@ -127,22 +127,33 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                 collapsed={!sectionExpanded}
                 toggleCollapsed={toggleSection}
                 isActive={activeSectionId === item.id}
-                maxWidth={getRootMaxWidth(contentOutlineExpanded, isCollapsible(item))}
+                width={getRootWidth(contentOutlineExpanded, isCollapsible(item))}
               />
               {item.children &&
+                item.children.length > 0 &&
                 (!item.mergeSingleChild || item.children.length !== 1) &&
                 sectionExpanded &&
-                item.children.map((child) => (
-                  <ContentOutlineItemButton
-                    key={child.id}
-                    title={contentOutlineExpanded ? child.title : undefined}
-                    icon={contentOutlineExpanded ? undefined : item.icon}
-                    className={cx(styles.buttonStyles, styles.indentChildren)}
-                    onClick={() => scrollIntoView(child.ref, child.panelId, child.customTopOffset)}
-                    tooltip={!contentOutlineExpanded ? child.title : undefined}
-                    isActive={activeSectionChildId === child.id}
-                    maxWidth={contentOutlineExpanded ? 88 : 40}
-                  />
+                item.children.map((child, i) => (
+                  <div key={child.id} className={styles.itemWrapper}>
+                    {contentOutlineExpanded && (
+                      <div
+                        className={cx(styles.itemConnector, {
+                          [styles.firstItemConnector]: i === 0,
+                          [styles.lastItemConnector]: i === (item.children?.length || 0) - 1,
+                        })}
+                      />
+                    )}
+                    <ContentOutlineItemButton
+                      key={child.id}
+                      title={contentOutlineExpanded ? child.title : undefined}
+                      icon={contentOutlineExpanded ? undefined : item.icon}
+                      className={cx(styles.buttonStyles, styles.indentChildren)}
+                      onClick={() => scrollIntoView(child.ref, child.panelId, child.customTopOffset)}
+                      tooltip={!contentOutlineExpanded ? child.title : undefined}
+                      isActive={activeSectionChildId === child.id}
+                      width={contentOutlineExpanded ? 88 : 40}
+                    />
+                  </div>
                 ))}
             </React.Fragment>
           ))}
@@ -171,11 +182,13 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       top: 0,
     }),
     buttonStyles: css({
-      width: '100%',
+      display: 'flex',
+      flexGrow: 1,
       '&:hover': {
         color: theme.colors.text.primary,
         textDecoration: 'underline',
       },
+      justifyContent: 'stretch',
     }),
     iconButton: css({
       justifyContent: 'center',
@@ -202,6 +215,36 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
     indentChildren: css({
       marginLeft: expanded ? INDENT_LEVELS.CHILD_EXPANDED : INDENT_LEVELS.CHILD_COLLAPSED,
     }),
+    itemWrapper: css({
+      display: 'flex',
+      height: theme.spacing(4),
+      alignItems: 'center',
+    }),
+    itemConnector: css({
+      position: 'relative',
+      height: '100%',
+      width: theme.spacing(1.5),
+      '&::before': {
+        borderRight: `1px solid ${theme.colors.border.medium}`,
+        content: '""',
+        height: '100%',
+        left: 48,
+        position: 'absolute',
+        transform: 'translateX(50%)',
+      },
+    }),
+    firstItemConnector: css({
+      '&::before': {
+        top: theme.spacing(1),
+        height: `calc(100% - ${theme.spacing(1)})`,
+      },
+    }),
+
+    lastItemConnector: css({
+      '&::before': {
+        height: `calc(100% - ${theme.spacing(1)})`,
+      },
+    }),
   };
 };
 
@@ -209,14 +252,14 @@ function isCollapsible(item: ContentOutlineItemContextProps): boolean {
   return !!(item.children && item.children.length > 0 && (!item.mergeSingleChild || item.children.length !== 1));
 }
 
-function getRootMaxWidth(contentOutlineExpanded: boolean, isCollapsible: boolean): number {
-  let maxWidth = 40;
+function getRootWidth(contentOutlineExpanded: boolean, isCollapsible: boolean): number {
+  let width = 40;
 
   if (contentOutlineExpanded && isCollapsible) {
-    maxWidth = 122;
+    width = 122;
   } else if (contentOutlineExpanded) {
-    maxWidth = 160;
+    width = 160;
   }
 
-  return maxWidth;
+  return width;
 }
