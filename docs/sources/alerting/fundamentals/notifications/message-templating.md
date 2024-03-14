@@ -1,9 +1,9 @@
 ---
 aliases:
-  - ../../contact-points/message-templating/
-  - ../../message-templating/
-  - ../../unified-alerting/message-templating/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/message-templating/
+  - ../../contact-points/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/message-templating/
+  - ../../alert-rules/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alert-rules/message-templating/
+  - ../../unified-alerting/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/message-templating/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/message-templating/
 description: Learn about notification templating
 keywords:
   - grafana
@@ -16,11 +16,11 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Notification templating
-weight: 415
+title: Notification templates
+weight: 114
 ---
 
-# Notification templating
+# Notification templates
 
 Notifications sent via contact points are built using notification templates. Grafana's default templates are based on the [Go templating system](https://golang.org/pkg/text/template) where some fields are evaluated as text, while others are evaluated as HTML (which can affect escaping).
 

@@ -1,6 +1,8 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/
-description: Learn about how notification policies work
+aliases:
+  - ./notification-policies/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notification-policies/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/
+description: Learn about how notifications work
 keywords:
   - grafana
   - alerting
@@ -25,6 +27,12 @@ Next, create a notification policy which is a set of rules for where, when and h
 ## Alertmanagers
 
 Grafana uses Alertmanagers to send notifications for firing and resolved alerts. Grafana has its own Alertmanager, referred to as "Grafana" in the user interface, but also supports sending notifications from other Alertmanagers too, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/). The Grafana Alertmanager uses notification policies and contact points to configure how and where a notification is sent; how often a notification should be sent; and whether alerts should all be sent in the same notification, sent in grouped notifications based on a set of labels, or as separate notifications.
+
+## Contact points
+
+Contact points contain the configuration for sending alert notifications, specifying destinations like email, Slack, OnCall, webhooks, and their notification messages. They allow the customization of notification messages and the use of notification templates.
+
+A contact point is a list of integrations, each sending a message to a specific destination. You can configure them via notification policies or alert rules.
 
 ## Notification policies
 

@@ -1,8 +1,8 @@
 ---
 aliases:
-  - rules/
-  - unified-alerting/alerting-rules/
-  - ./create-alerts/
+  - rules/ # /docs/grafana/<GRAFANA_VERSION>/alerting/rules/
+  - unified-alerting/alerting-rules/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/
+  - ./create-alerts/ # /docs/grafana/<GRAFANA_VERSION>/alerting/create-alerts/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/
 description: Configure alert rules
 labels:

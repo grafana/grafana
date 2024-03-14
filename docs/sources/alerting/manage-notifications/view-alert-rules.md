@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../unified-alerting/alerting-rules/rule-list/
-  - ../view-alert-rules/
-  - rule-list/
+  - ../../alerting/unified-alerting/alerting-rules/rule-list/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/rule-list
+  - ../../alerting/alerting-rules/view-alert-rules/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/view-alert-rules
+  - ../../alerting/alerting-rules/rule-list/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/rule-list
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-alert-rules/
 description: View and filter by alert rules
 keywords:

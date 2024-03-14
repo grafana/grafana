@@ -1,7 +1,7 @@
 ---
 aliases:
-  - metrics/
-  - unified-alerting/fundamentals/
+  - ./metrics/ # /docs/grafana/<GRAFANA_VERSION>/alerting/metrics/
+  - ./unified-alerting/fundamentals/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/fundamentals/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/
 description: Learn about the fundamentals of Grafana Alerting as well as the key features it offers
 labels:
@@ -145,6 +145,6 @@ Alerts are sent to the alert receiver where they are routed, grouped, inhibited,
 {{% docs/reference %}}
 [external-alertmanagers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager"
 [external-alertmanagers]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager"
-[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notification-policies/notifications"
-[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notification-policies/notifications"
+[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies"
+[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies"
 {{% /docs/reference %}}

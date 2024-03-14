@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../notifications/mute-timings/ # /docs/grafana/latest/alerting/notifications/mute-timings/
-  - ../unified-alerting/notifications/mute-timings/ # /docs/grafana/latest/alerting/unified-alerting/notifications/mute-timings/
-  - ../manage-notifications/mute-timings/ # /docs/grafana/latest/alerting/manage-notifications/mute-timings/
+  - ../notifications/mute-timings/ # /docs/grafana/<GRAFANA_VERSION>/alerting/notifications/mute-timings/
+  - ../unified-alerting/notifications/mute-timings/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/notifications/mute-timings/
+  - ../manage-notifications/mute-timings/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/mute-timings/
 canonical: /docs/grafana/latest/alerting/configure-notifications/mute-timings/
 description: Create mute timings to prevent alerts from firing during a specific and reoccurring period of time
 keywords:
@@ -27,7 +27,7 @@ A mute timing is a recurring interval of time when no new notifications for a po
 
 Similar to silences, mute timings do not prevent alert rules from being evaluated, nor do they stop alert instances from being shown in the user interface. They only prevent notifications from being created.
 
-You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager data source][datasources/alertmanager]. For more information, refer to [Alertmanager documentation][fundamentals/alertmanager].
+You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager data source][datasources/alertmanager]. For more information, refer to [Alertmanager documentation][intro-alertmanager].
 
 ## Mute timings vs silences
 
@@ -85,6 +85,6 @@ If you want to specify an exact duration, specify all the options. For example, 
 [datasources/alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager"
 [datasources/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/alertmanager"
 
-[fundamentals/alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alertmanager"
-[fundamentals/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alertmanager"
+[intro-alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/alertmanager"
+[intro-alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/alertmanager"
 {{% /docs/reference %}}
