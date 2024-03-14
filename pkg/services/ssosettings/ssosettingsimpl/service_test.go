@@ -14,11 +14,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/extensions/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -423,7 +423,7 @@ func TestService_List(t *testing.T) {
 						"enabled": false,
 					},
 				}
-				env.service.licensing = &licensingtest.InvalidLicense{}
+				env.service.licensing = &licensing.OSSLicensingService{}
 			},
 			want: []*models.SSOSettings{
 				{
@@ -1367,7 +1367,7 @@ func setupTestEnv(t *testing.T) testEnv {
 	secrets := secretsFakes.NewMockService(t)
 	accessControl := acimpl.ProvideAccessControl(setting.NewCfg())
 	reloadables := make(map[string]ssosettings.Reloadable)
-	licensing := &licensingtest.ValidLicense{}
+	licensing := &licensing.OSSLicensingService{}
 
 	fallbackStrategy.ExpectedIsMatch = true
 
