@@ -1,7 +1,7 @@
 // this file is pretty much a copy-paste of TimeSeriesPanel.tsx :(
 // with some extra renderers passed to the <TimeSeries> component
 
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import uPlot from 'uplot';
 
 import { Field, getDisplayProcessor, PanelProps } from '@grafana/data';
@@ -53,6 +53,7 @@ export const CandlestickPanel = ({
 }: CandlestickPanelProps) => {
   const {
     sync,
+    eventsScope,
     canAddAnnotations,
     onThresholdsChange,
     canEditThresholds,
@@ -63,25 +64,13 @@ export const CandlestickPanel = ({
 
   const theme = useTheme2();
 
-  // TODO: we should just re-init when this changes, and have this be a static setting
-  const syncTooltip = useCallback(
-    () => sync?.() === DashboardCursorSync.Tooltip,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  const syncAny = useCallback(
-    () => sync?.() !== DashboardCursorSync.Off,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
   const info = useMemo(() => {
     return prepareCandlestickFields(data.series, options, theme, timeRange);
   }, [data.series, options, theme, timeRange]);
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
+  const cursorSync = useMemo(() => sync?.() ?? DashboardCursorSync.Off, [sync]);
 
   const { renderers, tweakScale, tweakAxis, shouldRenderPrice } = useMemo(() => {
     let tweakScale = (opts: ScaleProps, forField: Field) => opts;
@@ -286,7 +275,9 @@ export const CandlestickPanel = ({
         return (
           <>
             <KeyboardPlugin config={uplotConfig} />
-            <EventBusPlugin config={uplotConfig} sync={syncAny} eventBus={eventBus} frame={alignedFrame} />
+            {cursorSync !== DashboardCursorSync.Off && (
+              <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
+            )}
             {showNewVizTooltips ? (
               <TooltipPlugin2
                 config={uplotConfig}
@@ -295,7 +286,8 @@ export const CandlestickPanel = ({
                 }
                 queryZoom={onChangeTimeRange}
                 clientZoom={true}
-                syncTooltip={syncTooltip}
+                syncMode={cursorSync}
+                syncScope={eventsScope}
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);

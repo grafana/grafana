@@ -2,7 +2,6 @@ import { MutableRefObject, RefObject } from 'react';
 import uPlot, { Cursor } from 'uplot';
 
 import {
-  DashboardCursorSync,
   DataFrameType,
   formattedValueToString,
   getValueFormat,
@@ -68,9 +67,6 @@ interface PrepConfigOpts {
   hideGE?: number;
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
-  sync?: () => DashboardCursorSync;
-  // Identifies the shared key for uPlot cursor sync
-  eventsScope?: string;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -87,8 +83,6 @@ export function prepConfig(opts: PrepConfigOpts) {
     hideGE,
     yAxisConfig,
     ySizeDivisor,
-    sync,
-    eventsScope = '__global_',
   } = opts;
 
   const xScaleKey = 'x';
@@ -582,15 +576,6 @@ export function prepConfig(opts: PrepConfigOpts) {
       },
     },
   };
-
-  if (sync && sync() !== DashboardCursorSync.Off) {
-    cursor.sync = {
-      key: eventsScope,
-      scales: [xScaleKey, null],
-    };
-
-    builder.setSync();
-  }
 
   builder.setCursor(cursor);
 

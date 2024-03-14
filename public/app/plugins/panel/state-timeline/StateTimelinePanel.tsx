@@ -53,19 +53,6 @@ export const StateTimelinePanel = ({
 }: TimelinePanelProps) => {
   const theme = useTheme2();
 
-  // TODO: we should just re-init when this changes, and have this be a static setting
-  const syncTooltip = useCallback(
-    () => sync?.() === DashboardCursorSync.Tooltip,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  const syncAny = useCallback(
-    () => sync?.() !== DashboardCursorSync.Off,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
   const isToolTipOpen = useRef<boolean>(false);
 
@@ -77,7 +64,8 @@ export const StateTimelinePanel = ({
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const { sync, canAddAnnotations, dataLinkPostProcessor, eventBus } = usePanelContext();
+  const { sync, eventsScope, canAddAnnotations, dataLinkPostProcessor, eventBus } = usePanelContext();
+  const cursorSync = useMemo(() => sync?.() ?? DashboardCursorSync.Off, [sync]);
 
   const onCloseToolTip = () => {
     isToolTipOpen.current = false;
@@ -212,7 +200,9 @@ export const StateTimelinePanel = ({
 
         return (
           <>
-            <EventBusPlugin config={builder} sync={syncAny} eventBus={eventBus} frame={alignedFrame} />
+            {cursorSync !== DashboardCursorSync.Off && (
+              <EventBusPlugin config={builder} eventBus={eventBus} frame={alignedFrame} />
+            )}
             {showNewVizTooltips ? (
               <>
                 {options.tooltip.mode !== TooltipDisplayMode.None && (
@@ -222,7 +212,8 @@ export const StateTimelinePanel = ({
                       options.tooltip.mode === TooltipDisplayMode.Multi ? TooltipHoverMode.xAll : TooltipHoverMode.xOne
                     }
                     queryZoom={onChangeTimeRange}
-                    syncTooltip={syncTooltip}
+                    syncMode={cursorSync}
+                    syncScope={eventsScope}
                     render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
                       if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);

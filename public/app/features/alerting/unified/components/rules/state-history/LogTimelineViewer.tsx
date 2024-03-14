@@ -77,7 +77,6 @@ function useCursorTimelinePosition(onPointerMove: (seriesIdx: number, pointIdx: 
 
   // Applies cursor tracking to the UPlot chart
   const setupCursorTracking = (builder: UPlotConfigBuilder) => {
-    builder.setSync();
     const interpolator = builder.getTooltipInterpolator();
 
     // I found this in TooltipPlugin.tsx

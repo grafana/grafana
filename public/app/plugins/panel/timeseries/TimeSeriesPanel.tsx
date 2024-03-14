@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -43,6 +43,7 @@ export const TimeSeriesPanel = ({
 }: TimeSeriesPanelProps) => {
   const {
     sync,
+    eventsScope,
     canAddAnnotations,
     onThresholdsChange,
     canEditThresholds,
@@ -70,19 +71,7 @@ export const TimeSeriesPanel = ({
   const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-
-  // TODO: we should just re-init when this changes, and have this be a static setting
-  const syncTooltip = useCallback(
-    () => sync?.() === DashboardCursorSync.Tooltip,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  const syncAny = useCallback(
-    () => sync?.() !== DashboardCursorSync.Off,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  const cursorSync = useMemo(() => sync?.() ?? DashboardCursorSync.Off, [sync]);
 
   if (!frames || suggestions) {
     return (
@@ -123,8 +112,10 @@ export const TimeSeriesPanel = ({
         return (
           <>
             <KeyboardPlugin config={uplotConfig} />
-            <EventBusPlugin config={uplotConfig} sync={syncAny} eventBus={eventBus} frame={alignedFrame} />
-            {options.tooltip.mode === TooltipDisplayMode.None || (
+            {cursorSync !== DashboardCursorSync.Off && (
+              <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
+            )}
+            {options.tooltip.mode !== TooltipDisplayMode.None && (
               <>
                 {showNewVizTooltips ? (
                   <TooltipPlugin2
@@ -134,7 +125,8 @@ export const TimeSeriesPanel = ({
                     }
                     queryZoom={onChangeTimeRange}
                     clientZoom={true}
-                    syncTooltip={syncTooltip}
+                    syncMode={cursorSync}
+                    syncScope={eventsScope}
                     render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
                       if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);

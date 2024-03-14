@@ -49,20 +49,8 @@ export const HeatmapPanel = ({
 }: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { sync, canAddAnnotations } = usePanelContext();
-
-  // TODO: we should just re-init when this changes, and have this be a static setting
-  const syncTooltip = useCallback(
-    () => sync?.() === DashboardCursorSync.Tooltip,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  const syncAny = useCallback(
-    () => sync?.() !== DashboardCursorSync.Off,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  const { sync, eventsScope, canAddAnnotations } = usePanelContext();
+  const cursorSync = useMemo(() => sync?.() ?? DashboardCursorSync.Off, [sync]);
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
@@ -152,7 +140,6 @@ export const HeatmapPanel = ({
       isToolTipOpen,
       timeZone,
       getTimeRange: () => timeRangeRef.current,
-      sync,
       cellGap: options.cellGap,
       hideLE: options.filterValues?.le,
       hideGE: options.filterValues?.ge,
@@ -213,7 +200,9 @@ export const HeatmapPanel = ({
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
-            <EventBusPlugin config={builder} sync={syncAny} eventBus={eventBus} frame={info.series ?? info.heatmap} />
+            {cursorSync !== DashboardCursorSync.Off && (
+              <EventBusPlugin config={builder} eventBus={eventBus} frame={info.series ?? info.heatmap} />
+            )}
             {!showNewVizTooltips && <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />}
             {showNewVizTooltips && (
               <>
@@ -222,7 +211,8 @@ export const HeatmapPanel = ({
                     config={builder}
                     hoverMode={TooltipHoverMode.xyOne}
                     queryZoom={onChangeTimeRange}
-                    syncTooltip={syncTooltip}
+                    syncMode={cursorSync}
+                    syncScope={eventsScope}
                     render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
                       if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);

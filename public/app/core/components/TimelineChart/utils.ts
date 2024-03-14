@@ -1,9 +1,7 @@
 import React from 'react';
-import uPlot from 'uplot';
 
 import {
   DataFrame,
-  DashboardCursorSync,
   FALLBACK_COLOR,
   Field,
   FieldColorModeId,
@@ -53,15 +51,12 @@ interface UPlotConfigOptions {
   frame: DataFrame;
   theme: GrafanaTheme2;
   mode: TimelineMode;
-  sync?: () => DashboardCursorSync;
   rowHeight?: number;
   colWidth?: number;
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
-  // Identifies the shared key for uPlot cursor sync
-  eventsScope?: string;
   hoverMulti: boolean;
 }
 
@@ -96,14 +91,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   timeZones,
   getTimeRange,
   mode,
-  sync,
   rowHeight,
   colWidth,
   showValue,
   alignValue,
   mergeValues,
   getValueColor,
-  eventsScope = '__global_',
   hoverMulti,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
@@ -272,17 +265,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
     });
-  }
-
-  if (sync && sync() !== DashboardCursorSync.Off) {
-    let cursor: Partial<uPlot.Cursor> = {};
-
-    cursor.sync = {
-      key: eventsScope,
-      scales: [xScaleKey, null],
-    };
-    builder.setSync();
-    builder.setCursor(cursor);
   }
 
   return builder;

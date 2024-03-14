@@ -32,7 +32,7 @@ type PreDataStacked = (frames: DataFrame[], stackingGroups: StackingGroup[]) => 
 export class UPlotConfigBuilder {
   series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
-  private scales: UPlotScaleBuilder[] = [];
+  readonly scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];
   private stackingGroups: StackingGroup[] = [];
   private cursor: Cursor | undefined;
@@ -40,7 +40,6 @@ export class UPlotConfigBuilder {
   private hasLeftAxis = false;
   private hooks: Hooks.Arrays = {};
   private tz: string | undefined = undefined;
-  private sync = false;
   private mode: uPlot.Mode = 1;
   private frames: DataFrame[] | undefined = undefined;
   // to prevent more than one threshold per scale
@@ -170,14 +169,6 @@ export class UPlotConfigBuilder {
     };
   }
 
-  setSync() {
-    this.sync = true;
-  }
-
-  hasSync() {
-    return this.sync;
-  }
-
   setPadding(padding: Padding) {
     this.padding = padding;
   }
@@ -301,8 +292,6 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   renderers?: Renderers;
   tweakScale?: (opts: ScaleProps, forField: Field) => ScaleProps;
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
-  // Identifies the shared key for uPlot cursor sync
-  eventsScope?: string;
   hoverProximity?: number;
   orientation?: VizOrientation;
 } & T;

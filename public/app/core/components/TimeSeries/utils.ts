@@ -2,7 +2,6 @@ import { isNumber } from 'lodash';
 import uPlot from 'uplot';
 
 import {
-  DashboardCursorSync,
   DataFrame,
   FieldConfig,
   FieldType,
@@ -73,19 +72,15 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
-  sync?: () => DashboardCursorSync;
-}> = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   frame,
   theme,
   timeZones,
   getTimeRange,
-  sync,
   allFrames,
   renderers,
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
-  eventsScope = '__global_',
   hoverProximity,
   orientation = VizOrientation.Horizontal,
 }) => {
@@ -555,8 +550,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     r.init(builder, fieldIndices);
   });
 
-  builder.scaleKeys = [xScaleKey, yScaleKey];
-
   // if hovered value is null, how far we may scan left/right to hover nearest non-null
   const DEFAULT_HOVER_NULL_PROXIMITY = 15;
   const DEFAULT_FOCUS_PROXIMITY = 30;
@@ -586,15 +579,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     },
   };
 
-  if (xField.type === FieldType.time && sync && sync() !== DashboardCursorSync.Off) {
-    cursor.sync = {
-      key: eventsScope,
-      scales: [xScaleKey, null],
-      // match: [() => true, () => false],
-    };
-  }
-
-  builder.setSync();
   builder.setCursor(cursor);
 
   return builder;
