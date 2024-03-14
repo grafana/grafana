@@ -49,7 +49,7 @@ The following diagram shows how Grafana-managed alerting works.
 
 ### Supported data sources
 
-Grafana-managed alert rules can query backend data sources with enabled alerting, specifying `{"backend": true, "alerting": true}` in the [plugin.json](/developers/plugin-tools/reference-plugin-json).
+Grafana-managed alert rules can query backend data sources if Grafana Alerting enabled by specifying `{"backend": true, "alerting": true}` in the [plugin.json](/developers/plugin-tools/reference-plugin-json).
 
 The following data sources are supported:
 
