@@ -129,6 +129,7 @@ export const sectionFields: Section = {
       id: 'extra',
       fields: [
         'validateHd',
+        'hostedDomain',
         'allowedDomains',
         'allowedGroups',
         'usePkce',
@@ -591,6 +592,11 @@ export function fieldMap(provider: string): Record<string, FieldData> {
               message: 'Team Ids must be numbers.',
             }
           : undefined,
+    },
+    hostedDomain: {
+      label: 'Hosted domain',
+      description: 'The domain under which Grafana is hosted and accessible.',
+      type: 'text',
     },
     validateHd: {
       label: 'Validate hosted domain',
