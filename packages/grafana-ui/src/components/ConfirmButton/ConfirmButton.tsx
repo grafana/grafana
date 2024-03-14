@@ -6,7 +6,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { ComponentSize } from '../../types/size';
 import { Button, ButtonVariant } from '../Button';
-import { Stack } from '../Layout/Stack/Stack';
 
 export interface Props {
   /** Confirm action callback */
@@ -94,9 +93,12 @@ export const ConfirmButton = ({
   const confirmButtonClass = cx(styles.confirmButton, {
     [styles.confirmButtonHide]: !showConfirm,
   });
+  const confirmButtonContainerClass = cx(styles.confirmButtonContainer, {
+    [styles.confirmButtonContainerHide]: !showConfirm,
+  });
 
   return (
-    <Stack gap={0} alignItems="center" justifyContent="flex-end">
+    <div className={styles.container}>
       <span className={buttonClass}>
         {typeof children === 'string' ? (
           <Button disabled={disabled} size={size} fill="text" onClick={onClickButton} ref={mainButtonRef}>
@@ -106,31 +108,53 @@ export const ConfirmButton = ({
           React.cloneElement(children, { disabled, onClick: onClickButton, ref: mainButtonRef })
         )}
       </span>
-      <span className={confirmButtonClass}>
-        <Button size={size} variant={confirmVariant} onClick={onClickConfirm} ref={confirmButtonRef}>
-          {confirmText}
-        </Button>
-        <Button size={size} fill="text" onClick={onClickCancel}>
-          Cancel
-        </Button>
-      </span>
-    </Stack>
+      <div className={confirmButtonContainerClass}>
+        <span className={confirmButtonClass}>
+          <Button size={size} variant={confirmVariant} onClick={onClickConfirm} ref={confirmButtonRef}>
+            {confirmText}
+          </Button>
+          <Button size={size} fill="text" onClick={onClickCancel}>
+            Cancel
+          </Button>
+        </span>
+      </div>
+    </div>
   );
 };
 ConfirmButton.displayName = 'ConfirmButton';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    container: css({
+      alignItems: 'center',
+      display: 'flex',
+      justifyContent: 'flex-end',
+      position: 'relative',
+    }),
     mainButton: css({
       opacity: 1,
-      transition: 'opacity 0.1s ease',
+      transition: theme.transitions.create(['opacity'], {
+        duration: theme.transitions.duration.shortest,
+        easing: theme.transitions.easing.easeOut,
+      }),
       zIndex: 2,
     }),
     mainButtonHide: css({
       opacity: 0,
-      transition: 'opacity 0.1s ease, visibility 0 0.1s',
+      transition: theme.transitions.create(['opacity', 'visibility'], {
+        duration: theme.transitions.duration.shortest,
+        easing: theme.transitions.easing.easeIn,
+      }),
       visibility: 'hidden',
       zIndex: 0,
+    }),
+    confirmButtonContainer: css({
+      overflow: 'visible',
+      position: 'absolute',
+      right: 0,
+    }),
+    confirmButtonContainerHide: css({
+      overflow: 'hidden',
     }),
     confirmButton: css({
       alignItems: 'flex-start',
@@ -138,16 +162,21 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       opacity: 1,
       pointerEvents: 'all',
-      position: 'fixed',
       transform: 'translateX(0)',
-      transition: 'opacity 0.08s ease-out, transform 0.1s ease-out',
+      transition: theme.transitions.create(['opacity', 'transform'], {
+        duration: theme.transitions.duration.shortest,
+        easing: theme.transitions.easing.easeOut,
+      }),
       zIndex: 1,
     }),
     confirmButtonHide: css({
       opacity: 0,
       pointerEvents: 'none',
       transform: 'translateX(100%)',
-      transition: 'opacity 0.12s ease-in, transform 0.14s ease-in, visibility 0.12s ease-in',
+      transition: theme.transitions.create(['opacity', 'transform', 'visibility'], {
+        duration: theme.transitions.duration.shortest,
+        easing: theme.transitions.easing.easeIn,
+      }),
       visibility: 'hidden',
     }),
   };
