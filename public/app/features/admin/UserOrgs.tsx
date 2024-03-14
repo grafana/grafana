@@ -245,7 +245,6 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                 confirmVariant="destructive"
                 onCancel={this.onCancelClick}
                 onConfirm={this.onOrgRemove}
-                autoFocus
               >
                 Remove from organization
               </ConfirmButton>
