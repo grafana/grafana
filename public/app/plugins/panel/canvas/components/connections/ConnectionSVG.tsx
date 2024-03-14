@@ -113,7 +113,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
 
       const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
 
-      const { strokeColor, strokeWidth } = getConnectionStyles(info, scene, defaultArrowSize);
+      const { strokeColor, strokeWidth, strokeType } = getConnectionStyles(info, scene, defaultArrowSize);
 
       const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
 
@@ -155,6 +155,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
               stroke={strokeColor}
               pointerEvents="auto"
               strokeWidth={strokeWidth}
+              strokeDasharray={strokeType}
               markerEnd={`url(#${CONNECTION_HEAD_ID})`}
               x1={x1}
               y1={y1}

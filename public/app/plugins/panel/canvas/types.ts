@@ -40,3 +40,8 @@ export interface ConnectionState {
   target: ElementState;
   info: CanvasConnection;
 }
+
+export enum LineType {
+  Solid = 'Solid',
+  Dashed = 'Dashed',
+}

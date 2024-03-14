@@ -8,6 +8,12 @@ interface OptionSuppliers {
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
   addColor: PanelOptionsSupplier<CanvasConnection>;
   addSize: PanelOptionsSupplier<CanvasConnection>;
+  addType: PanelOptionsSupplier<CanvasConnection>;
+}
+
+enum LineType {
+  Solid = 'Solid',
+  Dashed = 'Dashed',
 }
 
 const getCategoryName = (str: string, type: string | undefined) => {
@@ -118,6 +124,23 @@ export const optionBuilder: OptionSuppliers = {
         min: 1,
         max: 10,
       },
+    });
+  },
+
+  addType: (builder, context) => {
+    const category = ['Type'];
+    builder.addSelect({
+      category,
+      // id: 'type',
+      path: 'type',
+      name: 'Type',
+      settings: {
+        options: [
+          { value: LineType.Solid, label: LineType.Solid },
+          { value: LineType.Dashed, label: LineType.Dashed },
+        ],
+      },
+      defaultValue: LineType.Solid,
     });
   },
 };
