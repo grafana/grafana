@@ -86,7 +86,8 @@ func (s *Service) GetHeuristics(ctx context.Context, req HeuristicsRequest) (*He
 	if err != nil {
 		return nil, err
 	}
-	return getHeuristics(ctx, ds, s.logger)
+	logger := s.logger.FromContext(ctx)
+	return getHeuristics(ctx, ds, logger)
 }
 
 func getHeuristics(ctx context.Context, i *instance, logger log.Logger) (*Heuristics, error) {

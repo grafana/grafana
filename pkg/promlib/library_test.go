@@ -144,5 +144,4 @@ func mockRequest() *backend.CallResourceRequest {
 		URL:    "/api/v1/series",
 		Body:   []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"),
 	}
-
 }

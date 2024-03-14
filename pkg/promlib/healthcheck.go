@@ -29,19 +29,21 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return getHealthCheckMessage("", errors.New("invalid datasource info received"))
 	}
 
+	logger := s.logger.FromContext(ctx)
+
 	hc, err := healthcheck(ctx, req, ds)
 	if err != nil {
-		s.logger.Warn("Error performing prometheus healthcheck", "err", err.Error())
+		logger.Warn("Error performing prometheus healthcheck", "err", err.Error())
 		return nil, err
 	}
 
-	heuristics, err := getHeuristics(ctx, ds, s.logger)
+	heuristics, err := getHeuristics(ctx, ds, logger)
 	if err != nil {
-		s.logger.Warn("Failed to get prometheus heuristics", "err", err.Error())
+		logger.Warn("Failed to get prometheus heuristics", "err", err.Error())
 	} else {
 		jsonDetails, err := json.Marshal(heuristics)
 		if err != nil {
-			s.logger.Warn("Failed to marshal heuristics", "err", err)
+			logger.Warn("Failed to marshal heuristics", "err", err)
 		} else {
 			hc.JSONDetails = jsonDetails
 		}
