@@ -12,9 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/api"
@@ -28,12 +30,13 @@ import (
 var _ ssosettings.Service = (*Service)(nil)
 
 type Service struct {
-	logger  log.Logger
-	cfg     *setting.Cfg
-	store   ssosettings.Store
-	ac      ac.AccessControl
-	secrets secrets.Service
-	metrics *metrics
+	logger    log.Logger
+	cfg       *setting.Cfg
+	store     ssosettings.Store
+	ac        ac.AccessControl
+	secrets   secrets.Service
+	metrics   *metrics
+	licensing licensing.Licensing
 
 	fbStrategies []ssosettings.FallbackStrategy
 	reloadables  map[string]ssosettings.Reloadable
@@ -42,7 +45,7 @@ type Service struct {
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service, usageStats usagestats.Service, registerer prometheus.Registerer,
-	settingsProvider setting.Provider) *Service {
+	settingsProvider setting.Provider, licensing licensing.Licensing) *Service {
 	strategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
 		strategies.NewSAMLStrategy(settingsProvider),
@@ -58,6 +61,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		fbStrategies: strategies,
 		secrets:      secrets,
 		metrics:      newMetrics(registerer),
+		licensing:    licensing,
 		reloadables:  make(map[string]ssosettings.Reloadable),
 	}
 
@@ -115,14 +119,19 @@ func (s *Service) GetForProviderWithRedactedSecrets(ctx context.Context, provide
 }
 
 func (s *Service) List(ctx context.Context) ([]*models.SSOSettings, error) {
-	result := make([]*models.SSOSettings, 0, len(ssosettings.AllProviders))
+	availableProviders := ssosettings.AllOAuthProviders
+	if s.licensing.FeatureEnabled(social.SAMLProviderName) {
+		availableProviders = ssosettings.AllProviders
+	}
+
+	result := make([]*models.SSOSettings, 0, len(availableProviders))
 	storedSettings, err := s.store.List(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, provider := range ssosettings.AllProviders {
+	for _, provider := range availableProviders {
 		dbSettings := getSettingByProvider(provider, storedSettings)
 		if dbSettings != nil {
 			// Settings are coming from the database thus secrets are encrypted

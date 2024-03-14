@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/extensions/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -387,13 +388,6 @@ func TestService_List(t *testing.T) {
 						},
 						Source: models.DB,
 					},
-					{
-						Provider: "saml",
-						Settings: map[string]any{
-							"enabled": false,
-						},
-						Source: models.DB,
-					},
 				}
 				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
 				env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
@@ -429,6 +423,7 @@ func TestService_List(t *testing.T) {
 						"enabled": false,
 					},
 				}
+				env.service.licensing = &licensingtest.InvalidLicense{}
 			},
 			want: []*models.SSOSettings{
 				{
@@ -476,10 +471,6 @@ func TestService_List(t *testing.T) {
 					Provider: "grafana_com",
 					Settings: map[string]any{"enabled": false},
 					Source:   models.System,
-				},
-				{
-					Provider: "saml",
-					Settings: map[string]any{"enabled": false},
 				},
 			},
 			wantErr: false,
@@ -1376,6 +1367,7 @@ func setupTestEnv(t *testing.T) testEnv {
 	secrets := secretsFakes.NewMockService(t)
 	accessControl := acimpl.ProvideAccessControl(setting.NewCfg())
 	reloadables := make(map[string]ssosettings.Reloadable)
+	licensing := &licensingtest.ValidLicense{}
 
 	fallbackStrategy.ExpectedIsMatch = true
 
@@ -1399,6 +1391,7 @@ func setupTestEnv(t *testing.T) testEnv {
 		reloadables:  reloadables,
 		metrics:      newMetrics(prometheus.NewRegistry()),
 		secrets:      secrets,
+		licensing:    licensing,
 	}
 
 	return testEnv{
