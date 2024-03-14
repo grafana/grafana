@@ -2522,9 +2522,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataPane.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/dashboard-scene/panel-edit/PanelLibraryPane/PanelLibraryOptionsGroup.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
     "public/app/features/dashboard-scene/saving/DashboardPrompt.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],

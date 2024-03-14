@@ -33,12 +33,17 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
   const tabKey = isWidgetEnabled ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
   const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
+  const vizPanel = sourcePanel.resolve();
 
-  const parent =
-    sourcePanel.resolve().parent instanceof LibraryVizPanel
-      ? sourcePanel.resolve().parent?.parent
-      : sourcePanel.resolve().parent;
-  const panelJson = gridItemToPanel(parent!);
+  let panMod;
+
+  const parent = vizPanel.parent instanceof LibraryVizPanel ? vizPanel.parent?.parent : vizPanel.parent;
+  console.log(vizPanel.parent);
+
+  if (parent) {
+    const panelJson = gridItemToPanel(parent);
+    panMod = new PanelModel(panelJson);
+  }
 
   const [listMode, setListMode] = useLocalStorage(tabKey, defaultTab);
 
@@ -84,12 +89,12 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
             data={data}
           />
         )}
-        {listMode === VisualizationSelectPaneTab.LibraryPanels && (
+        {listMode === VisualizationSelectPaneTab.LibraryPanels && panMod && (
           <PanelLibraryOptionsGroup
             searchQuery={searchQuery}
-            panel={new PanelModel(panelJson)}
+            panel={panMod}
             key="Panel Library"
-            vizPanel={sourcePanel.resolve()}
+            vizPanelManager={vizManager}
           />
         )}
       </CustomScrollbar>

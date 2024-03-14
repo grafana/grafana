@@ -26,7 +26,7 @@ import {
   sceneGraph,
   sceneUtils,
 } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig, Panel } from '@grafana/schema';
+import { DataQuery, DataTransformerConfig, LibraryPanel, Panel } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
@@ -389,6 +389,41 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   public getPanelCloneWithData(): VizPanel {
     return this.state.panel.clone({ $data: this.state.$data?.clone() });
+  }
+
+  public changeToLibraryPanel(libPanel: LibraryPanel) {
+    const panel = this.state.panel;
+    const vizPanel = this.state.sourcePanel.resolve();
+
+    const libVizPanel = new LibraryVizPanel({
+      title: panel.state.title,
+      uid: libPanel.uid,
+      name: libPanel.name,
+      panelKey: panel.state.key!,
+    });
+
+    libVizPanel.activate();
+
+    libVizPanel.subscribeToState((lib) => {
+      const dashboard = getDashboardSceneFor(vizPanel);
+
+      console.log(vizPanel.parent);
+      if (vizPanel.parent instanceof PanelRepeaterGridItem) {
+        vizPanel.parent.setState({ source: libVizPanel });
+        console.log(vizPanel.parent);
+      } else if (vizPanel.parent instanceof SceneGridItem) {
+        vizPanel.parent.setState({ body: libVizPanel });
+      } else if (vizPanel.parent instanceof LibraryVizPanel && vizPanel.parent.parent instanceof SceneGridItem) {
+        vizPanel.parent.parent.setState({ body: libVizPanel });
+      } else if (
+        vizPanel.parent instanceof LibraryVizPanel &&
+        vizPanel.parent.parent instanceof PanelRepeaterGridItem
+      ) {
+        vizPanel.parent.parent.setState({ source: libVizPanel });
+      }
+
+      this.setState({ sourcePanel: lib.panel!.getRef(), panel: lib.panel?.clone() });
+    });
   }
 
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
