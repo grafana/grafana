@@ -25,8 +25,10 @@ import {
   useReshareAccessToRecipientMutation,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { AccessControlAction, useSelector } from 'app/types';
+import { AccessControlAction } from 'app/types';
 
 import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
@@ -103,13 +105,12 @@ const EmailList = ({
   );
 };
 
-export const EmailSharingConfiguration = () => {
+export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardModel | DashboardScene }) => {
   const { width } = useWindowSize();
   const styles = useStyles2(getStyles);
-  const dashboardState = useSelector((store) => store.dashboard);
-  const dashboard = dashboardState.getModel()!;
 
-  const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
+  const dashboardUid = dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid;
+  const { data: publicDashboard } = useGetPublicDashboardQuery(dashboardUid);
   const [updateShareType] = useUpdatePublicDashboardMutation();
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddRecipientMutation();
 
@@ -145,7 +146,7 @@ export const EmailSharingConfiguration = () => {
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
     DashboardInteractions.publicDashboardEmailInviteClicked();
-    await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
+    await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid }).unwrap();
     reset({ email: '', shareType: PublicDashboardShareType.EMAIL });
   };
 
@@ -225,7 +226,7 @@ export const EmailSharingConfiguration = () => {
             {!!publicDashboard?.recipients?.length && (
               <EmailList
                 recipients={publicDashboard.recipients}
-                dashboardUid={dashboard.uid}
+                dashboardUid={dashboardUid}
                 publicDashboardUid={publicDashboard.uid}
               />
             )}
