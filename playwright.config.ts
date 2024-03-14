@@ -62,12 +62,13 @@ export default defineConfig<PluginOptions>({
       dependencies: ['createUserAndAuthenticate'],
     },
     {
-      name: 'various',
-      testDir: path.join(testDirRoot, '/various-suite'),
+      name: 'mysql',
+      testDir: path.join(testDirRoot, '/mysql'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
       },
+      repeatEach: 20,
       dependencies: ['authenticate'],
     },
   ],

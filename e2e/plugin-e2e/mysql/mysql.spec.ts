@@ -27,24 +27,25 @@ test.beforeEach(async ({ context, selectors, explorePage }) => {
 
 test('code editor autocomplete should handle table name escaping/quoting', async ({ explorePage, selectors, page }) => {
   await page.getByLabel('Code').check();
+
   const editor = explorePage.getByTestIdOrAriaLabel(selectors.components.CodeEditor.container).getByRole('textbox');
   await editor.fill('S');
-  await editor.press('ArrowDown+Enter');
+  await page.getByLabel('SELECT <column> FROM <table>').locator('a').click();
   await expect(page.getByLabel(tableNameWithSpecialCharacter)).toBeVisible();
-  await editor.press('Enter');
+  await page.keyboard.press('Enter');
 
   await expect(editor).toHaveValue(`SELECT  FROM grafana.\`${tableNameWithSpecialCharacter}\``);
 
   for (let i = 0; i < tableNameWithSpecialCharacter.length + 2; i++) {
-    await editor.press('Backspace');
+    await page.keyboard.press('Backspace');
   }
 
-  await editor.press('Control+I');
+  await page.keyboard.press('Control+I');
   await expect(page.getByLabel(tableNameWithSpecialCharacter)).toBeVisible();
 });
 
 test('visual query builder should handle time filter macro', async ({ explorePage, page }) => {
-  await explorePage.getByTestIdOrAriaLabel('Table selector').click();
+  await explorePage.getByTestIdOrAriaLabel(selectors.components.SQLQueryEditor.headerTableSelector).click();
   await page.getByText(normalTableName, { exact: true }).click();
 
   // Open column selector
@@ -59,11 +60,11 @@ test('visual query builder should handle time filter macro', async ({ explorePag
   await page.getByRole('button', { name: 'Add filter' }).click(); // For some reason we need to click twice
 
   // Open field selector
-  await explorePage.getByTestIdOrAriaLabel('Field').click();
+  await explorePage.getByTestIdOrAriaLabel(selectors.components.SQLQueryEditor.filterField).click();
   await page.getByLabel('Select options menu').getByText('createdAt').click();
 
   // Open operator selector
-  await explorePage.getByTestIdOrAriaLabel('Operator').click();
+  await explorePage.getByTestIdOrAriaLabel(selectors.components.SQLQueryEditor.filterOperator).click();
   await page.getByText('Macros').click();
 
   // Open macros value selector
@@ -77,8 +78,8 @@ test('visual query builder should handle time filter macro', async ({ explorePag
 
   // Validate that the timeFilter macro was removed when changed to equals operator
 
-  await explorePage.getByTestIdOrAriaLabel('Operator').click();
-  await page.getByText('==').click();
+  await explorePage.getByTestIdOrAriaLabel(selectors.components.SQLQueryEditor.filterOperator).click();
+  await page.getByLabel('Select options menu').getByText('==').click();
 
   await explorePage.getByTestIdOrAriaLabel(selectors.components.DateTimePicker.input).click();
   await explorePage.getByTestIdOrAriaLabel(selectors.components.DateTimePicker.input).blur();
