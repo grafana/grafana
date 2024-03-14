@@ -55,15 +55,18 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       return;
     }
 
-    items.push({
-      text: t('panel.header-menu.view', `View`),
-      iconClassName: 'eye',
-      shortcut: 'v',
-      onClick: () => DashboardInteractions.panelMenuItemClicked('view'),
-      href: getViewPanelUrl(panel),
-    });
+    const editPanel = Boolean(dashboard.state.editPanel);
+    if (!editPanel) {
+      items.push({
+        text: t('panel.header-menu.view', `View`),
+        iconClassName: 'eye',
+        shortcut: 'v',
+        onClick: () => DashboardInteractions.panelMenuItemClicked('view'),
+        href: getViewPanelUrl(panel),
+      });
+    }
 
-    if (dashboard.canEditDashboard() && !isRepeat) {
+    if (dashboard.canEditDashboard() && !isRepeat && !editPanel) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
@@ -85,7 +88,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       shortcut: 'p s',
     });
 
-    if (dashboard.state.isEditing && !isRepeat) {
+    if (dashboard.state.isEditing && !isRepeat && !editPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),
         onClick: () => {
@@ -96,15 +99,17 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    moreSubMenu.push({
-      text: t('panel.header-menu.copy', `Copy`),
-      onClick: () => {
-        DashboardInteractions.panelMenuItemClicked('copy');
-        dashboard.copyPanel(panel);
-      },
-    });
+    if (!editPanel) {
+      moreSubMenu.push({
+        text: t('panel.header-menu.copy', `Copy`),
+        onClick: () => {
+          DashboardInteractions.panelMenuItemClicked('copy');
+          dashboard.copyPanel(panel);
+        },
+      });
+    }
 
-    if (dashboard.state.isEditing && !isRepeat) {
+    if (dashboard.state.isEditing && !isRepeat && !editPanel) {
       if (parent instanceof LibraryVizPanel) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
@@ -139,7 +144,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       onClick: (e) => onCreateAlert(panel),
     });
 
-    if (hasLegendOptions(panel.state.options)) {
+    if (hasLegendOptions(panel.state.options) && !editPanel) {
       moreSubMenu.push({
         text: panel.state.options.legend.showLegend
           ? t('panel.header-menu.hide-legend', 'Hide legend')
@@ -199,7 +204,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (dashboard.state.isEditing && !isRepeat) {
+    if (dashboard.state.isEditing && !isRepeat && !editPanel) {
       items.push({
         text: '',
         type: 'divider',
