@@ -312,15 +312,11 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
 }
 
 function getLabelValue(frame: DataFrame) {
-  const labels = frame.fields[1]?.labels;
-
-  if (!labels) {
-    return 'No labels';
-  }
+  const labels = frame.fields[1]?.labels || {};
 
   const keys = Object.keys(labels);
   if (keys.length === 0) {
-    return 'No labels';
+    return '<unspecified>';
   }
 
   return labels[keys[0]];
