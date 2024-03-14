@@ -87,7 +87,7 @@ require (
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/urfave/cli/v2 v2.25.0 // @grafana/backend-platform
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae // @grafana/backend-platform
-	github.com/yalue/merged_fs v1.2.2 // @grafana/grafana-as-code
+	github.com/yalue/merged_fs v1.2.2 // indirect; @grafana/grafana-as-code
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/backend-platform
 	go.opentelemetry.io/collector/pdata v1.0.1 // @grafana/backend-platform
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.49.0 // @grafana/grafana-operator-experience-squad
@@ -248,7 +248,6 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.7 // @grafana/observability-metrics
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 //  @grafana/grafana-as-code
 	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b // @grafana/observability-traces-and-profiling
-	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed // @grafana/grafana-as-code
 	github.com/microsoft/go-mssqldb v1.6.1-0.20240214161942-b65008136246 // @grafana/grafana-bi-squad
 	github.com/redis/go-redis/v9 v9.1.0 // @grafana/alerting-squad-backend
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.18.0 // @grafana/backend-platform
@@ -294,9 +293,6 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0 // @grafan/grafana-app-platform-squad
 	github.com/centrifugal/protocol v0.10.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
-	github.com/cockroachdb/errors v1.9.1 // indirect
-	github.com/cockroachdb/logtags v0.0.0-20211118104740-dabe8e521a4f // indirect
-	github.com/cockroachdb/redact v1.1.3 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -311,7 +307,6 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/getsentry/sentry-go v0.12.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
@@ -330,7 +325,6 @@ require (
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
-	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-ieproxy v0.0.3 // indirect
@@ -346,7 +340,6 @@ require (
 	github.com/redis/rueidis v1.0.16 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
-	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
@@ -436,7 +429,6 @@ require (
 
 require (
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
-	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.0 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/backend-platform
@@ -504,6 +496,7 @@ require (
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20230716120725-531d2d74bc12 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
+	github.com/grafana/thema v0.0.0-20230302221249-6952e4a999b7 // indirect
 	github.com/invopop/jsonschema v0.12.0 // indirect
 	github.com/iris-contrib/schema v0.0.6 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -529,6 +522,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/yosssi/ace v0.0.5 // indirect
+	github.com/yudai/pp v2.0.1+incompatible // indirect
 	golang.org/x/arch v0.3.0 // indirect
 )
 
