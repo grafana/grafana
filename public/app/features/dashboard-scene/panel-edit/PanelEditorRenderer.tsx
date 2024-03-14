@@ -6,9 +6,11 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { getDashboardSceneFor } from '../utils/utils';
+import { UnlinkModal } from '../scene/UnlinkModal';
+import { getDashboardSceneFor, getLibraryPanel } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
+import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
@@ -57,7 +59,9 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
 function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
-  const { vizManager, dataPane } = model.useState();
+  const { vizManager, dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal } = model.useState();
+  const { sourcePanel } = vizManager.useState();
+  const libraryPanel = getLibraryPanel(sourcePanel.resolve());
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
@@ -77,11 +81,26 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 
   return (
     <>
-      {controls && <controls.Component model={controls} />}
+      <div className={styles.controlsWrapper}>{controls && <controls.Component model={controls} />}</div>
       <div {...containerProps}>
         <div {...primaryProps}>
           <vizManager.Component model={vizManager} />
         </div>
+        {showLibraryPanelSaveModal && libraryPanel && (
+          <SaveLibraryVizPanelModal
+            libraryPanel={libraryPanel}
+            onDismiss={model.onDismissLibraryPanelSaveModal}
+            onConfirm={model.onConfirmSaveLibraryPanel}
+            onDiscard={model.onDiscard}
+          ></SaveLibraryVizPanelModal>
+        )}
+        {showLibraryPanelUnlinkModal && libraryPanel && (
+          <UnlinkModal
+            onDismiss={model.onDismissUnlinkLibraryPanelModal}
+            onConfirm={model.onConfirmUnlinkLibraryPanel}
+            isOpen
+          />
+        )}
         {dataPane && (
           <>
             <div {...splitterProps} />
@@ -125,7 +144,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       minHeight: 0,
-      gap: '8px',
     }),
     optionsPane: css({
       flexDirection: 'column',
@@ -149,6 +167,12 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rotate180: css({
       rotate: '180deg',
+    }),
+    controlsWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 0,
+      paddingLeft: theme.spacing(2),
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),

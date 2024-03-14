@@ -724,6 +724,7 @@
       "cancel": "",
       "disconnect": "",
       "disconnecting": "",
+      "error": "",
       "title": ""
     },
     "get-started": {
@@ -775,6 +776,19 @@
       "body": "",
       "link-title": "",
       "title": ""
+    },
+    "resource-status": {
+      "error-details-button": "",
+      "failed": "",
+      "migrated": "",
+      "migrating": "",
+      "not-migrated": "",
+      "unknown": ""
+    },
+    "resource-type": {
+      "dashboard": "",
+      "datasource": "",
+      "unknown": ""
     },
     "resources": {
       "disconnect": ""
@@ -1208,7 +1222,8 @@
       "new-password-same-as-old": "Le nouveau mot de passe ne peut pas être le même que l'ancien.",
       "old-password-label": "Ancien mot de passe",
       "old-password-required": "Vous devez saisir l'ancien mot de passe",
-      "passwords-must-match": "Les mots de passe doivent être identiques"
+      "passwords-must-match": "Les mots de passe doivent être identiques",
+      "strong-password-validation-register": ""
     }
   },
   "public-dashboard": {

@@ -4,8 +4,9 @@ import { NavIndex } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneGridItem, SceneGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
-import { getPanelIdForVizPanel, getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
@@ -18,6 +19,8 @@ export interface PanelEditorState extends SceneObjectState {
   optionsPane: PanelOptionsPane;
   dataPane?: PanelDataPane;
   vizManager: VizPanelManager;
+  showLibraryPanelSaveModal?: boolean;
+  showLibraryPanelUnlinkModal?: boolean;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
@@ -105,7 +108,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const normalToRepeat = !this._initialRepeatOptions.repeat && panelManager.state.repeat;
     const repeatToNormal = this._initialRepeatOptions.repeat && !panelManager.state.repeat;
 
-    if (sourcePanelParent instanceof SceneGridItem) {
+    if (sourcePanelParent instanceof LibraryVizPanel) {
+      // Library panels handled separately
+      return;
+    } else if (sourcePanelParent instanceof SceneGridItem) {
       if (normalToRepeat) {
         this.replaceSceneGridItemWithPanelRepeater(sourcePanelParent);
       } else {
@@ -197,6 +203,32 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       height,
     });
   }
+
+  public onSaveLibraryPanel = () => {
+    this.setState({ showLibraryPanelSaveModal: true });
+  };
+
+  public onConfirmSaveLibraryPanel = () => {
+    this.state.vizManager.commitChanges();
+    locationService.partial({ editPanel: null });
+  };
+
+  public onDismissLibraryPanelSaveModal = () => {
+    this.setState({ showLibraryPanelSaveModal: false });
+  };
+
+  public onUnlinkLibraryPanel = () => {
+    this.setState({ showLibraryPanelUnlinkModal: true });
+  };
+
+  public onDismissUnlinkLibraryPanelModal = () => {
+    this.setState({ showLibraryPanelUnlinkModal: false });
+  };
+
+  public onConfirmUnlinkLibraryPanel = () => {
+    this.state.vizManager.unlinkLibraryPanel();
+    this.setState({ showLibraryPanelUnlinkModal: false });
+  };
 }
 
 export function buildPanelEditScene(panel: VizPanel): PanelEditor {
