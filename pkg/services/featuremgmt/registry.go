@@ -1219,7 +1219,7 @@ var (
 		},
 		{
 			Name:              "ssoSettingsSAML",
-			Description:       "Enables the SSO settings API and the SAML configuration UIs in Grafana",
+			Description:       "Use the new SSO Settings API to configure the SAML connector",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
