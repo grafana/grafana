@@ -27,7 +27,7 @@ weight: 60
 
 **Standard options** in the panel editor pane let you change how field data is displayed in your visualizations. Options that you apply don't change the data, they just change how Grafana _displays_ the data.
 
-When you set a standard option, the change is applied to all fields, meaning all series or columns. For example, if you set the **Unit** option to **Percentage**, all fields with numeric values are displayed as percentages.
+When you set a standard option, the change is applied to all fields or series. For example, if you set the **Unit** option to **Percentage**, all fields with numeric values are displayed as percentages.
 
 For more granular control over the display of fields, refer to [Configure overrides][].
 
@@ -47,7 +47,7 @@ You can configure standard options for the following visualizations:
 
 This section explains all available standard options.
 
-To set these options, expand the **Standard options** section in the panel editor pane. Most field options won't affect the visualization until you click outside of the field option box you are editing or press Enter.
+To set these options, expand the **Standard options** section in the panel editor pane. Most field options won't affect the visualization until you click outside of the field option box you're editing or press Enter.
 
 {{% admonition type="note" %}}
 Not all of the options listed apply to all visualizations with standard options.
@@ -61,13 +61,13 @@ This option lets you choose which unit a field should use. Click in the **Unit**
 
 You can also use the **Unit** drop-down to specify custom units, custom prefixes or suffixes, and date time formats.
 
-To set a custom unit, enter the unit you want to use and then select it in the drop-down. It will be the last option listed. For example, if you enter a unit called "Hearts", the drop-down will then include the option **Custom unit: Hearts**.
+To set a custom unit, enter the unit you want to use and then select it in the drop-down. It'll be the last option listed. For example, if you enter a unit called "Hearts", the drop-down will then include the option **Custom unit: Hearts**.
 
-You can further define a custom unit using the formatting in the following table. For example, to set a custom currency unit called "Gems", enter `currency:Gems` in the field. The drop-down will include the option **Custom unit: currency:Gems**:
+You can further define a custom unit with specific syntax. For example, to set a custom currency unit called "Gems", enter `currency:Gems` in the field. The drop-down will include the option **Custom unit: currency:Gems**:
 
 ![A custom currency unit called Gems in the Unit drop-down](custom_unit_currency_v11.0.png)
 
-Choose from the following custom unit options:
+The following table lists the special syntax options for custom units:
 
 | Custom unit                        | Description                                                                                                                                                                                                    |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -78,9 +78,11 @@ Choose from the following custom unit options:
 | `count:<unit>`                     | Custom count unit.                                                                                                                                                                                             |
 | `currency:<unit>`                  | Custom currency unit.                                                                                                                                                                                          |
 
-You can also paste a native emoji in the unit picker and select it as a custom unit:
+You can also paste a native emoji in the **Unit** drop-down and select it as a custom unit:
 
-{{< figure src="/static/img/docs/v66/custom_unit_burger2.png" max-width="600px" caption="Custom unit emoji" >}}
+![Custom unit emoji](custom_unit_thumbsup_v11.0.png)
+
+![Custom unit emoji](thumbsup_panel_v11.0.png)
 
 #### String units
 
@@ -124,27 +126,21 @@ If the value is an empty string after rendering the expression for a particular 
 
 ### Color scheme
 
-The color options and their effect on the visualization depends on the visualization you are working with. Some visualizations have different color options.
+The **Color scheme** options let you set single or multiple colors for your entire visualization.
 
-You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
-Continuous color interpolates a color using the percentage of a value relative to min and max.
+The color options and their effect on a visualization depend on the visualization you're working with and some visualizations have different color options.
 
-Select one of the following palettes:
+Select one of the following schemes:
 
-<div class="clearfix"></div>
-
-| Color mode                                        | Description                                                                                                                                                  |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Single color**                                  | Specify a single color, useful in an override rule.                                                                                                          |
-| **Shades of a color**                             | Selects shades of a single color, useful in an override rule                                                                                                 |
-| **From thresholds (by value)**                    | Informs Grafana to take the color from the matching threshold.                                                                                               |
-|                                                   |
-| **Classic palette**                               | Grafana assigns color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations.        |
-| **Classic palette (by series name)**              | Grafana assigns color based on the name of the series. Useful when the series names to be visualized depend on the available data.                           |
-| Continuous color scheme by value; multiple colors | Continuous color scheme. Select from: **Green-Yellow-Red**, **Red-Yellow-Green**, **Blue-Yellow-Red**, **Yellow-Red**, **Blue-Purple**, and **Yellow-Blue**. |
-| Continuous color scheme by value; single color    | Continuous color scheme with panel background to defined color. Select from: **Blues**, **Reds**, **Greens**, and **Purples**.                               |
-
-<!-- {{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" >}} -->
+| Color scheme                          | Description                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Single color                          | Specifies a single color.                                                                                                                                                                                                                                                                                                                                                                                   |
+| Shades of a color                     | Grafana selects shades of a single color.                                                                                                                                                                                                                                                                                                                                                                   |
+| From thresholds (by value)            | The color is taken from the matching [threshold][]. For some visualizations, you also need to choose if the color is set by the **Last**, **Min**, or **Max** value of the field or series.                                                                                                                                                                                                                 |
+| Classic palette                       | Grafana automatically assigns a color for each field or series based on its order. If the order of a field changes in your query, the color also changes. Useful for graphs, pie charts, and other categorical data visualizations.                                                                                                                                                                         |
+| Classic palette (by series name)      | Grafana automatically assigns colors based on the name of the series. Useful when the series names to be visualized can change based on the available data.                                                                                                                                                                                                                                                 |
+| Multiple continuous colors (by value) | Grafana automatically assigns colors based on the percentage of a value relative to the min and the max of the field or series. For some visualizations, you also need to choose if the color is set by the **Last**, **Min**, or **Max** value of the field or series. Select from: **Green-Yellow-Red**, **Red-Yellow-Green**, **Blue-Yellow-Red**, **Yellow-Red**, **Blue-Purple**, and **Yellow-Blue**. |
+| Single continuous color (by value)    | Grafana automatically assigns shades of one color based on the percentage of a value relative to the min and the max of the field or series. For some visualizations, you also need to choose if the color is set by the **Last**, **Min**, or **Max** value of the field or series. Select from: **Blues**, **Reds**, **Greens**, and **Purples**.                                                         |
 
 ### No value
 
@@ -198,23 +194,7 @@ Enter what Grafana should display if the field value is empty or null. The defau
 
 [variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
 [variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables"
-{{% /docs/reference %}}
 
-<!--| Color mode                           | Description                                                                                                                                               |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Single color**                     | Specify a single color, useful in an override rule.                                                                                                       |
-| **Shades of a color**                | Selects shades of a single color, useful in an override rule                                                                                              |
-| **From thresholds (by value)**                  | Informs Grafana to take the color from the matching threshold.                                                                                            |
-|                                      |
-| **Classic palette**                  | Grafana assigns color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations. |
-| **Classic palette (by series name)** | Grafana assigns color based on the name of the series. Useful when the series names to be visualized depend on the available data.                    |
-| **Green-Yellow-Red (by value)**      | Continuous color scheme. Select from: - Green-Yellow-Red, Red-Yellow-Green, Blue-Yellow-Red, Yellow-Red, Blue-Purple, and Yellow-Blue                                                                                                                                |
-| **Red-Yellow-Green (by value)**      | Continuous color scheme                                                                                                                                   |
-| **Blue-Yellow-Red (by value)**       | Continuous color scheme                                                                                                                                   |
-| **Yellow-Red (by value)**            | Continuous color scheme                                                                                                                                   |
-| **Blue-Purple (by value)**           | Continuous color scheme                                                                                                                                   |
-| **Yellow-Blue (by value)**           | Continuous color scheme                                                                                                                                   |
-| **Blues (by value)**                 | Continuous color scheme (panel background to blue)                                                                                                        |
-| **Reds (by value)**                  | Continuous color scheme (panel background color to red)                                                                                                   |
-| **Greens (by value)**                | Continuous color scheme (panel background color to green)                                                                                                 |
-| **Purples (by value)**               | Continuous color scheme (panel background color to purple)                                                                                                | -->
+[threshold]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-thresholds"
+[threshold]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-thresholds"
+{{% /docs/reference %}}
