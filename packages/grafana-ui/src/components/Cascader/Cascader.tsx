@@ -6,6 +6,7 @@ import React, { PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
 
 import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
 import { Select } from '../Select/Select';
 
@@ -262,11 +263,24 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
                 suffix={
-                  focusCascade ? (
-                    <Icon name="angle-up" />
-                  ) : (
-                    <Icon name="angle-down" style={{ marginBottom: 0, marginLeft: '4px' }} />
-                  )
+                  <>
+                    {activeLabel !== '' && (
+                      <IconButton
+                        name="times"
+                        aria-label="Clear selection"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          this.setState({ rcValue: [], activeLabel: '', inputValue: '' });
+                          this.props.onSelect('');
+                        }}
+                      />
+                    )}
+                    <Icon
+                      name={focusCascade ? 'angle-up' : 'angle-down'}
+                      style={{ marginBottom: 0, marginLeft: '4px' }}
+                    />
+                  </>
                 }
                 disabled={disabled}
                 id={id}
