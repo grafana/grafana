@@ -51,7 +51,7 @@
     "@prometheus-io/lezer-promql": "^0.37.0-rc.1",
     "@reduxjs/toolkit": "1.9.5",
     "d3": "7.9.0",
-    "date-fns": "3.3.1",
+    "date-fns": "3.4.0",
     "debounce-promise": "3.1.2",
     "eventemitter3": "5.0.1",
     "lodash": "4.17.21",
