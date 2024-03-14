@@ -190,6 +190,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flexGrow: 0,
       paddingLeft: theme.spacing(2),
+      gridArea: 'controls',
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),
