@@ -7,6 +7,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/extensions/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -79,6 +80,7 @@ func TestSocialService_ProvideService(t *testing.T) {
 		&usagestats.UsageStatsMock{},
 		nil,
 		&setting.OSSImpl{Cfg: cfg},
+		&licensingtest.ValidLicense{},
 	)
 
 	for _, tc := range testCases {
@@ -180,7 +182,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 	accessControl := acimpl.ProvideAccessControl(cfg)
 	sqlStore := db.InitTestDB(t)
 
-	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil, nil)
+	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil, nil, &licensingtest.ValidLicense{})
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
