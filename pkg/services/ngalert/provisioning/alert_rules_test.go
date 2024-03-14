@@ -635,6 +635,126 @@ func TestCreateAlertRule(t *testing.T) {
 			})
 		})
 	})
+	t.Run("when user cannot write all rules", func(t *testing.T) {
+		t.Run("and it creates a new group", func(t *testing.T) {
+			rule := models.AlertRuleGen(models.WithOrgID(orgID))()
+			t.Run("it should authorize the change", func(t *testing.T) {
+				service, ruleStore, provenanceStore, ac := initServiceWithData(t)
+
+				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+					return false, nil
+				}
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+					assert.Equal(t, u, user)
+					assert.Equal(t, rule.GetGroupKey(), change.GroupKey)
+					assert.Len(t, change.New, 1)
+					assert.Empty(t, change.Update)
+					assert.Empty(t, change.Delete)
+					assert.Empty(t, change.AffectedGroups)
+					return nil
+				}
+
+				actualRule, err := service.CreateAlertRule(context.Background(), u, *rule, models.ProvenanceFile)
+				require.NoError(t, err)
+
+				require.Len(t, ac.Calls, 2)
+				assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+				assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+
+				t.Run("it should assign default interval", func(t *testing.T) {
+					require.Equal(t, service.defaultIntervalSeconds, actualRule.IntervalSeconds)
+				})
+
+				t.Run("inserts to database", func(t *testing.T) {
+					inserts := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+						a, ok := cmd.([]models.AlertRule)
+						return a, ok
+					})
+					require.Len(t, inserts, 1)
+					cmd := inserts[0].([]models.AlertRule)
+					require.Len(t, cmd, 1)
+				})
+
+				t.Run("set correct provenance", func(t *testing.T) {
+					p, err := provenanceStore.GetProvenance(context.Background(), &actualRule, orgID)
+					require.NoError(t, err)
+					require.Equal(t, models.ProvenanceFile, p)
+				})
+			})
+		})
+		t.Run("and it adds a rule to a group", func(t *testing.T) {
+			rule := models.AlertRuleGen(models.WithGroupKey(groupKey))()
+			t.Run("it should authorize the change to whole group", func(t *testing.T) {
+				service, ruleStore, provenanceStore, ac := initServiceWithData(t)
+
+				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+					return false, nil
+				}
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+					assert.Equal(t, u, user)
+					assert.Equal(t, rule.GetGroupKey(), change.GroupKey)
+					assert.Contains(t, change.AffectedGroups, change.GroupKey)
+					assert.EqualValues(t, change.AffectedGroups[change.GroupKey], rules)
+					assert.Len(t, change.New, 1)
+					assert.Empty(t, change.Update)
+					assert.Empty(t, change.Delete)
+					return nil
+				}
+
+				actualRule, err := service.CreateAlertRule(context.Background(), u, *rule, models.ProvenanceNone)
+				require.NoError(t, err)
+
+				require.Len(t, ac.Calls, 2)
+				assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+				assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+
+				t.Run("it should assign group interval", func(t *testing.T) {
+					require.Equal(t, groupIntervalSeconds, actualRule.IntervalSeconds)
+				})
+
+				t.Run("inserts to database", func(t *testing.T) {
+					inserts := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+						a, ok := cmd.([]models.AlertRule)
+						return a, ok
+					})
+					require.Len(t, inserts, 1)
+					cmd := inserts[0].([]models.AlertRule)
+					require.Len(t, cmd, 1)
+				})
+
+				t.Run("set correct provenance", func(t *testing.T) {
+					p, err := provenanceStore.GetProvenance(context.Background(), &actualRule, orgID)
+					require.NoError(t, err)
+					require.Equal(t, models.ProvenanceNone, p)
+				})
+			})
+		})
+		t.Run("it should not insert if not authorized", func(t *testing.T) {
+			rule := models.AlertRuleGen(models.WithGroupKey(groupKey))()
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			expectedErr := errors.New("test error")
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				return expectedErr
+			}
+
+			_, err := service.CreateAlertRule(context.Background(), u, *rule, models.ProvenanceFile)
+			require.ErrorIs(t, expectedErr, err)
+
+			require.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+
+			inserts := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+				a, ok := cmd.([]models.AlertRule)
+				return a, ok
+			})
+			require.Empty(t, inserts)
+		})
+	})
 
 	ruleService := createAlertRuleService(t)
 	t.Run("should return the created id", func(t *testing.T) {
@@ -672,6 +792,200 @@ func TestCreateAlertRule(t *testing.T) {
 	})
 }
 
+func TestUpdateAlertRule(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID}
+	groupKey := models.GenerateGroupKey(orgID)
+	groupIntervalSeconds := int64(30)
+	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey), models.WithInterval(time.Duration(groupIntervalSeconds)*time.Second)))
+	groupProvenance := models.ProvenanceAPI
+
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID: rules,
+		}
+		for _, rule := range rules {
+			require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, groupProvenance))
+		}
+		return service, ruleStore, provenanceStore, ac
+	}
+
+	t.Run("when user can write all rules", func(t *testing.T) {
+		rule := models.CopyRule(rules[0])
+		rule.RuleGroup = rule.RuleGroup + "_new"
+		rule.Title = rule.Title + "_new"
+		service, ruleStore, _, ac := initServiceWithData(t)
+
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		_, err := service.UpdateAlertRule(context.Background(), u, *rule, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		require.Len(t, ac.Calls, 1)
+		assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+
+		updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			a, ok := cmd.([]models.UpdateRule)
+			return a, ok
+		})
+		require.Len(t, updates, 1)
+	})
+	t.Run("when user cannot write all rules", func(t *testing.T) {
+		rule := models.CopyRule(rules[0])
+		rule.Title = rule.Title + "_new"
+
+		t.Run("it should authorize the change to whole group", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				assert.Equal(t, u, user)
+				assert.Equal(t, groupKey, change.GroupKey)
+				assert.Contains(t, change.AffectedGroups, groupKey)
+				assert.EqualValues(t, rules, change.AffectedGroups[groupKey])
+				assert.Len(t, change.Update, 1)
+				assert.Empty(t, change.New)
+				assert.Empty(t, change.Delete)
+				return nil
+			}
+
+			_, err := service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
+			require.NoError(t, err)
+
+			require.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+
+			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+				a, ok := cmd.([]models.UpdateRule)
+				return a, ok
+			})
+			require.Len(t, updates, 1)
+		})
+		t.Run("it should not update if not authorized", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			expectedErr := errors.New("test error")
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				return expectedErr
+			}
+
+			_, err := service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
+			require.ErrorIs(t, expectedErr, err)
+
+			require.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+
+			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+				a, ok := cmd.([]models.UpdateRule)
+				return a, ok
+			})
+			require.Empty(t, updates)
+		})
+	})
+}
+
+func TestDeleteAlertRule(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID}
+	groupKey := models.GenerateGroupKey(orgID)
+	groupIntervalSeconds := int64(30)
+	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey), models.WithInterval(time.Duration(groupIntervalSeconds)*time.Second)))
+	groupProvenance := models.ProvenanceAPI
+
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID: rules,
+		}
+		for _, rule := range rules {
+			require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, groupProvenance))
+		}
+		return service, ruleStore, provenanceStore, ac
+	}
+
+	t.Run("when user can write all rules", func(t *testing.T) {
+		rule := rules[0]
+		service, ruleStore, _, ac := initServiceWithData(t)
+
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		err := service.DeleteAlertRule(context.Background(), u, rule.UID, groupProvenance)
+		require.NoError(t, err)
+
+		require.Len(t, ac.Calls, 1)
+		assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+
+		deletes := getDeleteQueries(ruleStore)
+		require.Len(t, deletes, 1)
+	})
+	t.Run("when user cannot write all rules", func(t *testing.T) {
+		rule := models.CopyRule(rules[0])
+		rule.Title = rule.Title + "_new"
+
+		t.Run("it should authorize the change to whole group", func(t *testing.T) {
+			rule := rules[0]
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				assert.Equal(t, u, user)
+				assert.Equal(t, groupKey, change.GroupKey)
+				assert.Contains(t, change.AffectedGroups, groupKey)
+				assert.EqualValues(t, rules, change.AffectedGroups[groupKey])
+				assert.Empty(t, change.Update)
+				assert.Empty(t, change.New)
+				assert.Len(t, change.Delete, 1)
+				return nil
+			}
+
+			err := service.DeleteAlertRule(context.Background(), u, rule.UID, groupProvenance)
+			require.NoError(t, err)
+
+			require.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+
+			deletes := getDeleteQueries(ruleStore)
+			require.Len(t, deletes, 1)
+		})
+		t.Run("it should not delete if not authorized", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			expectedErr := errors.New("test error")
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				return expectedErr
+			}
+
+			_, err := service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
+			require.ErrorIs(t, expectedErr, err)
+
+			require.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+
+			deletes := getDeleteQueries(ruleStore)
+			require.Empty(t, deletes)
+		})
+	})
+}
+
 func TestGetAlertRule(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
@@ -691,15 +1005,17 @@ func TestGetAlertRule(t *testing.T) {
 	}
 
 	t.Run("when user cannot read all rules", func(t *testing.T) {
-		t.Run("should request entire group and return error if AuthorizeAccessToRuleGroup returns error", func(t *testing.T) {
-			service, ruleStore, _, ac := initServiceWithData(t)
+		t.Run("should authorize access to entire group", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
 
 			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 				return false, nil
 			}
 
 			expected := errors.New("test")
-			ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+			ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, r models.RulesGroup) error {
+				assert.Equal(t, u, user)
+				assert.EqualValues(t, rules, r)
 				return expected
 			}
 
@@ -709,26 +1025,9 @@ func TestGetAlertRule(t *testing.T) {
 
 			assert.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
-			assert.Equal(t, u, ac.Calls[0].Args[1])
-
 			assert.Equal(t, "AuthorizeAccessToRuleGroup", ac.Calls[1].Method)
-			assert.Equal(t, u, ac.Calls[1].Args[1])
-			assert.Equal(t, models.RulesGroup(rules), ac.Calls[1].Args[2])
 
-			assert.Len(t, ruleStore.RecordedOps, 1)
-			require.IsType(t, ruleStore.RecordedOps[0], models.GetAlertRulesGroupByRuleUIDQuery{})
-			query := ruleStore.RecordedOps[0].(models.GetAlertRulesGroupByRuleUIDQuery)
-			assert.Equal(t, models.GetAlertRulesGroupByRuleUIDQuery{
-				OrgID: groupKey.OrgID,
-				UID:   rule.UID,
-			}, query)
-		})
-
-		t.Run("should request entire group and return single rule if AuthorizeAccessToRuleGroup passes", func(t *testing.T) {
-			service, _, _, ac := initServiceWithData(t)
-			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
-				return false, nil
-			}
+			ac.Calls = nil
 			ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
 				return nil
 			}
@@ -763,6 +1062,7 @@ func TestGetAlertRule(t *testing.T) {
 		t.Run("should query rule by UID and do not check any permissions", func(t *testing.T) {
 			service, ruleStore, _, ac := initServiceWithData(t)
 			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				assert.Equal(t, u, user)
 				return true, nil
 			}
 
@@ -773,7 +1073,6 @@ func TestGetAlertRule(t *testing.T) {
 
 			assert.Len(t, ac.Calls, 1)
 			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
-			assert.Equal(t, u, ac.Calls[0].Args[1])
 
 			require.Len(t, ruleStore.RecordedOps, 1)
 			require.IsType(t, ruleStore.RecordedOps[0], models.GetAlertRuleByUIDQuery{})
@@ -847,14 +1146,17 @@ func TestGetRuleGroup(t *testing.T) {
 	})
 
 	t.Run("when user cannot read all rules", func(t *testing.T) {
-		t.Run("it should check AuthorizeAccessToRuleGroup and propagate error", func(t *testing.T) {
-			service, ruleStore, _, ac := initServiceWithData(t)
+		t.Run("it should authorize access to entire group", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
 
 			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				assert.Equal(t, u, user)
 				return false, nil
 			}
 			expectedErr := errors.New("error")
-			ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+			ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, r models.RulesGroup) error {
+				assert.Equal(t, u, user)
+				assert.EqualValues(t, rules, r)
 				return expectedErr
 			}
 
@@ -864,28 +1166,8 @@ func TestGetRuleGroup(t *testing.T) {
 
 			assert.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
-			assert.Equal(t, u, ac.Calls[0].Args[1])
-
 			assert.Equal(t, "AuthorizeAccessToRuleGroup", ac.Calls[1].Method)
-			assert.Equal(t, u, ac.Calls[1].Args[1])
-			assert.Equal(t, models.RulesGroup(rules), ac.Calls[1].Args[2])
 
-			assert.Len(t, ruleStore.RecordedOps, 1)
-			require.IsType(t, ruleStore.RecordedOps[0], models.ListAlertRulesQuery{})
-			query := ruleStore.RecordedOps[0].(models.ListAlertRulesQuery)
-			assert.Equal(t, models.ListAlertRulesQuery{
-				OrgID:         groupKey.OrgID,
-				RuleGroup:     groupKey.RuleGroup,
-				NamespaceUIDs: []string{groupKey.NamespaceUID},
-			}, query)
-		})
-
-		t.Run("should return group if AuthorizeAccessToRuleGroup passes", func(t *testing.T) {
-			service, _, _, ac := initServiceWithData(t)
-
-			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
-				return false, nil
-			}
 			ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
 				return nil
 			}
@@ -905,6 +1187,7 @@ func TestGetRuleGroup(t *testing.T) {
 			service, _, _, ac := initServiceWithData(t)
 
 			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				assert.Equal(t, u, user)
 				return true, nil
 			}
 
@@ -913,7 +1196,6 @@ func TestGetRuleGroup(t *testing.T) {
 
 			assert.Len(t, ac.Calls, 1)
 			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
-			assert.Equal(t, u, ac.Calls[0].Args[1])
 
 			assert.Equal(t, groupKey.RuleGroup, group.Title)
 			assert.Equal(t, groupKey.NamespaceUID, group.FolderUID)
@@ -1038,6 +1320,221 @@ func TestGetAlertRules(t *testing.T) {
 	})
 }
 
+func TestReplaceGroup(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID}
+	groupKey := models.GenerateGroupKey(orgID)
+	groupIntervalSeconds := int64(30)
+	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey), models.WithInterval(time.Duration(groupIntervalSeconds)*time.Second)))
+	groupProvenance := models.ProvenanceAPI
+
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID: rules,
+		}
+		for _, rule := range rules {
+			require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, groupProvenance))
+		}
+		return service, ruleStore, provenanceStore, ac
+	}
+
+	t.Run("when user can write all rules", func(t *testing.T) {
+		group := models.AlertRuleGroup{
+			Title:      groupKey.RuleGroup,
+			FolderUID:  groupKey.NamespaceUID,
+			Interval:   groupIntervalSeconds,
+			Provenance: groupProvenance,
+		}
+		for _, rule := range rules {
+			r := models.CopyRule(rule)
+			r.Title = r.Title + "_new"
+			group.Rules = append(group.Rules, *r)
+		}
+
+		service, ruleStore, _, ac := initServiceWithData(t)
+
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		require.Len(t, ac.Calls, 1)
+		assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+
+		updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			a, ok := cmd.([]models.UpdateRule)
+			return a, ok
+		})
+		require.Len(t, updates, 1)
+	})
+	t.Run("when user cannot write all rules", func(t *testing.T) {
+		group := models.AlertRuleGroup{
+			Title:      groupKey.RuleGroup,
+			FolderUID:  groupKey.NamespaceUID,
+			Interval:   groupIntervalSeconds,
+			Provenance: groupProvenance,
+		}
+		for _, rule := range rules {
+			r := models.CopyRule(rule)
+			r.Title = r.Title + "_new"
+			group.Rules = append(group.Rules, *r)
+		}
+
+		t.Run("it should not update if not authorized", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			expectedErr := errors.New("test error")
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				return expectedErr
+			}
+
+			err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+			require.ErrorIs(t, err, expectedErr)
+
+			require.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+
+			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+				a, ok := cmd.([]models.UpdateRule)
+				return a, ok
+			})
+			require.Empty(t, updates)
+		})
+		t.Run("it should update if authorized", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				return nil
+			}
+
+			err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+			require.NoError(t, err)
+
+			require.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+
+			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+				a, ok := cmd.([]models.UpdateRule)
+				return a, ok
+			})
+			require.Len(t, updates, 1)
+		})
+	})
+}
+
+func TestDeleteRuleGroup(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID}
+	groupKey := models.GenerateGroupKey(orgID)
+	groupIntervalSeconds := int64(30)
+	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey), models.WithInterval(time.Duration(groupIntervalSeconds)*time.Second)))
+	groupProvenance := models.ProvenanceAPI
+
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID: rules,
+		}
+		for _, rule := range rules {
+			require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, groupProvenance))
+		}
+		return service, ruleStore, provenanceStore, ac
+	}
+
+	t.Run("when user can write all rules", func(t *testing.T) {
+		service, ruleStore, _, ac := initServiceWithData(t)
+
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		err := service.DeleteRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup, groupProvenance)
+		require.NoError(t, err)
+
+		require.Len(t, ac.Calls, 1)
+		assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+
+		deletes := getDeleteQueries(ruleStore)
+		require.Len(t, deletes, 1)
+	})
+	t.Run("when user cannot write all rules", func(t *testing.T) {
+		t.Run("it should not update if not authorized", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			expectedErr := errors.New("test error")
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				return expectedErr
+			}
+
+			err := service.DeleteRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup, groupProvenance)
+			require.ErrorIs(t, err, expectedErr)
+
+			require.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+
+			deletes := getDeleteQueries(ruleStore)
+			require.Empty(t, deletes)
+		})
+		t.Run("it should update if authorized", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				assert.Equal(t, u, user)
+				assert.Equal(t, groupKey, change.GroupKey)
+				assert.Contains(t, change.AffectedGroups, groupKey)
+				assert.EqualValues(t, rules, change.AffectedGroups[groupKey])
+				assert.Empty(t, change.Update)
+				assert.Empty(t, change.New)
+				assert.Len(t, change.Delete, len(rules))
+				return nil
+			}
+
+			err := service.DeleteRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup, groupProvenance)
+			require.NoError(t, err)
+
+			require.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+
+			deletes := getDeleteQueries(ruleStore)
+			require.Len(t, deletes, 1)
+		})
+	})
+}
+
+func getDeleteQueries(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {
+	generic := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+		a, ok := cmd.(fakes.GenericRecordedQuery)
+		if !ok || a.Name != "DeleteAlertRulesByUID" {
+			return nil, false
+		}
+		return a, ok
+	})
+	result := make([]fakes.GenericRecordedQuery, 0, len(generic))
+	for _, g := range generic {
+		result = append(result, g.(fakes.GenericRecordedQuery))
+	}
+	return result
+}
+
 func createAlertRuleService(t *testing.T) AlertRuleService {
 	t.Helper()
 	sqlStore := db.InitTestDB(t)
@@ -1066,6 +1563,7 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 		defaultIntervalSeconds: 60,
 		folderService:          folderService,
 		authz:                  &fakeRuleAccessControlService{},
+		nsValidatorProvider:    &NotificationSettingsValidatorProviderFake{},
 	}
 }
 
@@ -1131,6 +1629,7 @@ func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.Fake
 		baseIntervalSeconds:    10,
 		defaultIntervalSeconds: 60,
 		authz:                  ac,
+		nsValidatorProvider:    &NotificationSettingsValidatorProviderFake{},
 	}
 
 	return service, ruleStore, provenanceStore, ac
