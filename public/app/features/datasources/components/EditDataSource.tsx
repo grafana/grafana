@@ -133,7 +133,7 @@ export function EditDataSourceView({
       trackDsConfigUpdated({ item: 'success' });
       appEvents.publish(new DataSourceUpdatedSuccessfully());
     } catch (error) {
-      trackDsConfigUpdated({ item: 'fail', error });
+      trackDsConfigUpdated({ item: 'fail' });
       return;
     }
 
