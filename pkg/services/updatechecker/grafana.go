@@ -60,7 +60,7 @@ func (s *GrafanaService) IsDisabled() bool {
 func (s *GrafanaService) Run(ctx context.Context) error {
 	s.instrumentedCheckForUpdates(ctx)
 
-	ticker := time.NewTicker(time.Hour * 2)
+	ticker := time.NewTicker(time.Hour * 24)
 	run := true
 
 	for run {
