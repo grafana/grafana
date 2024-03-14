@@ -25,11 +25,7 @@ weight: 60
 
 # Configure standard options
 
-The data model used in Grafana, the [data frame](https://grafana.com/developers/plugin-tools/introduction/data-frames), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
-
-<!-- I don't really understand that first paragraph; can we make it more user friendly with a visual? -->
-
-The field options found in the **Standard options** section of the panel editor pane let you change how data is displayed in your visualizations. Options that you apply don't change the data, they just change how Grafana _displays_ the data.
+**Standard options** in the panel editor pane let you change how field data is displayed in your visualizations. Options that you apply don't change the data, they just change how Grafana _displays_ the data.
 
 When you set a standard option, the change is applied to all fields, meaning all series or columns. For example, if you set the **Unit** option to **Percentage**, all fields with numeric values are displayed as percentages.
 
@@ -65,19 +61,17 @@ This option lets you choose which unit a field should use. Click in the **Unit**
 
 You can also use the **Unit** drop-down to specify custom units, custom prefixes or suffixes, and date time formats.
 
-To set a custom unit, enter the custom unit you want to use and then select it in the drop-down. It will be the last option listed. For example, if you enter a unit called "Hearts", the drop-down will include the option **Custom unit: Hearts**.
+To set a custom unit, enter the unit you want to use and then select it in the drop-down. It will be the last option listed. For example, if you enter a unit called "Hearts", the drop-down will then include the option **Custom unit: Hearts**.
 
 You can further define a custom unit using the formatting in the following table. For example, to set a custom currency unit called "Gems", enter `currency:Gems` in the field. The drop-down will include the option **Custom unit: currency:Gems**:
 
 ![A custom currency unit called Gems in the Unit drop-down](custom_unit_currency_v11.0.png)
 
-<!--can you only set these types of custom fields or is it okay to set whatever you want without using these? -->
-
 Choose from the following custom unit options:
 
 | Custom unit                        | Description                                                                                                                                                                                                    |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `suffix:<suffix>`                  | Custom unit that should go after value. <!--This seems to be the default; when would you need to set this? -->                                                                                                 |
+| `suffix:<suffix>`                  | Custom unit that should go after value.                                                                                                                                                                        |
 | `prefix:<prefix>`                  | Custom unit that should go before value.                                                                                                                                                                       |
 | `time:<format>`                    | Custom date time formats type, such as `time:YYYY-MM-DD`. Refer to [formats](https://momentjs.com/docs/#/displaying/) for the format syntax and options.                                                       |
 | `si:<base scale><unit characters>` | Custom SI units, such as `si: mF`. You can specify both a unit and the source data scale. For example, if your source data is represented as milli-something, prefix the unit with the `m` SI scale character. |
@@ -90,9 +84,7 @@ You can also paste a native emoji in the unit picker and select it as a custom u
 
 #### String units
 
-Sometimes Grafana is too aggressive in parsing strings and displaying them as numbers. To configure Grafana to show the original string value, create a field override and add a unit property with the `String` unit.
-
-<!-- do we need this specific use case given that it's just a miscellaneous option now? -->
+Sometimes Grafana is too aggressive in parsing strings and displaying them as numbers. To configure Grafana to show the original string value, select **Misc > String** in the **Unit** drop-down.
 
 ### Min
 
