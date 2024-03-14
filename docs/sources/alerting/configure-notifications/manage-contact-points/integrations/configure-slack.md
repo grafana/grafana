@@ -47,8 +47,8 @@ Grafana Alerting only allows one Slack channel per Contact point.
 
 If you are using a Slack API Token, complete the following steps.
 
-1. Follow steps 1 and 2 of the Slack API Quickstart.
-1. Add the chat:write.public scope to give your app the ability to post in all public channels without joining.
+1. Follow steps 1 and 2 of the [Slack API Quickstart](https://api.slack.com/start/quickstart).
+1. Add the [chat:write.public](https://api.slack.com/scopes/chat:write.public) scope to give your app the ability to post in all public channels without joining.
 1. In OAuth Tokens for Your Workspace, copy the Bot User OAuth Token.
 1. Open your Slack workplace.
 1. Right click the channel you want to receive notifications in.
@@ -61,7 +61,7 @@ While going through these steps, Slack may prompt you to Reinstall your app in o
 
 ### Webhook URL
 
-If you are using a Webhook URL, follow steps 1 and 5 in the Slack API Quickstart.
+If you are using a Webhook URL, follow steps 1 and 5 in the [Slack API Quickstart](https://api.slack.com/start/quickstart).
 
 
 **Note:**
