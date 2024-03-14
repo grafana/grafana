@@ -1217,6 +1217,14 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:              "ssoSettingsSAML",
+			Description:       "Enables the SSO settings API and the SAML configuration UIs in Grafana",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 
