@@ -381,6 +381,13 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 
 		err = updateIsDefaultFlag(ds, sess)
 
+		if cmd.UpdateSecretFn != nil {
+			if err := cmd.UpdateSecretFn(); err != nil {
+				ss.logger.Error("Failed to update datasource secrets -- rolling back update", "UID", cmd.UID, "name", cmd.Name, "type", cmd.Type, "orgId", cmd.OrgID)
+				return err
+			}
+		}
+
 		if cmd.UID != "" {
 			if err := util.ValidateUID(cmd.UID); err != nil {
 				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, err)
