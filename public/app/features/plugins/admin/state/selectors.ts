@@ -1,6 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 import { filterByKeyword } from '../helpers';
 import { RequestStatus, PluginCatalogStoreState } from '../types';
@@ -35,6 +36,9 @@ export const selectPlugins = (filters: PluginFilters) =>
     const keyword = filters.keyword ? unEscapeStringFromRegex(filters.keyword.toLowerCase()) : '';
     const filteredPluginIds = keyword !== '' ? filterByKeyword(plugins, keyword) : null;
 
+    if (keyword) {
+      reportInteraction('plugins_search', { resultsCount: filteredPluginIds?.length });
+    }
     return plugins.filter((plugin) => {
       if (keyword && filteredPluginIds == null) {
         return false;

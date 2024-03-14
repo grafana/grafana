@@ -718,6 +718,7 @@
       "cancel": "",
       "disconnect": "",
       "disconnecting": "",
+      "error": "",
       "title": ""
     },
     "get-started": {
@@ -769,6 +770,19 @@
       "body": "",
       "link-title": "",
       "title": ""
+    },
+    "resource-status": {
+      "error-details-button": "",
+      "failed": "",
+      "migrated": "",
+      "migrating": "",
+      "not-migrated": "",
+      "unknown": ""
+    },
+    "resource-type": {
+      "dashboard": "",
+      "datasource": "",
+      "unknown": ""
     },
     "resources": {
       "disconnect": ""
