@@ -8,6 +8,7 @@ import { SelectableValue } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
+import { Stack } from '../Layout/Stack/Stack';
 import { Select } from '../Select/Select';
 
 import { onChangeCascader } from './optionMappings';
@@ -274,7 +275,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
                 suffix={
-                  <>
+                  <Stack gap={0.5}>
                     {isClearable && activeLabel !== '' && (
                       <IconButton
                         name="times"
@@ -287,11 +288,8 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
                         }}
                       />
                     )}
-                    <Icon
-                      name={focusCascade ? 'angle-up' : 'angle-down'}
-                      style={{ marginBottom: 0, marginLeft: '4px' }}
-                    />
-                  </>
+                    <Icon name={focusCascade ? 'angle-up' : 'angle-down'} />
+                  </Stack>
                 }
                 disabled={disabled}
                 id={id}
