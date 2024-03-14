@@ -2,6 +2,7 @@ package promlib
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -71,32 +72,7 @@ func TestService(t *testing.T) {
 				httpProvider := getMockPromTestSDKProvider(f)
 				service := NewService(httpProvider, backend.NewLoggerWith("logger", "test"), mockExtendTransportOptions)
 
-				req := &backend.CallResourceRequest{
-					PluginContext: backend.PluginContext{
-						OrgID:               0,
-						PluginID:            "prometheus",
-						User:                nil,
-						AppInstanceSettings: nil,
-						DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-							ID:               0,
-							UID:              "",
-							Type:             "prometheus",
-							Name:             "test-prom",
-							URL:              "http://localhost:9090",
-							User:             "",
-							Database:         "",
-							BasicAuthEnabled: true,
-							BasicAuthUser:    "admin",
-							Updated:          time.Time{},
-							JSONData:         []byte("{}"),
-						},
-					},
-					Path:   "/api/v1/series",
-					Method: http.MethodPost,
-					URL:    "/api/v1/series",
-					Body:   []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"),
-				}
-
+				req := mockRequest()
 				sender := &fakeSender{}
 				err := service.CallResource(context.Background(), req, sender)
 				require.NoError(t, err)
@@ -115,4 +91,58 @@ func TestService(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("no extendOptions function provided", func(t *testing.T) {
+		f := &fakeHTTPClientProvider{}
+		httpProvider := getMockPromTestSDKProvider(f)
+		service := NewService(httpProvider, backend.NewLoggerWith("logger", "test"), nil)
+		require.NotNil(t, service)
+		require.NotNil(t, service.im)
+	})
+
+	t.Run("extendOptions function provided", func(t *testing.T) {
+		f := &fakeHTTPClientProvider{}
+		httpProvider := getMockPromTestSDKProvider(f)
+		service := NewService(httpProvider, backend.NewLoggerWith("logger", "test"), func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error {
+			fmt.Println(ctx, settings, clientOpts)
+			require.NotNil(t, ctx)
+			require.NotNil(t, settings)
+			require.Equal(t, "test-prom", settings.Name)
+			return nil
+		})
+
+		req := mockRequest()
+		sender := &fakeSender{}
+		err := service.CallResource(context.Background(), req, sender)
+		require.NoError(t, err)
+	})
+}
+
+func mockRequest() *backend.CallResourceRequest {
+	return &backend.CallResourceRequest{
+		PluginContext: backend.PluginContext{
+			OrgID:               0,
+			PluginID:            "prometheus",
+			User:                nil,
+			AppInstanceSettings: nil,
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				ID:               0,
+				UID:              "",
+				Type:             "prometheus",
+				Name:             "test-prom",
+				URL:              "http://localhost:9090",
+				User:             "",
+				Database:         "",
+				BasicAuthEnabled: true,
+				BasicAuthUser:    "admin",
+				Updated:          time.Time{},
+				JSONData:         []byte("{}"),
+			},
+		},
+		Path:   "/api/v1/series",
+		Method: http.MethodPost,
+		URL:    "/api/v1/series",
+		Body:   []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"),
+	}
+
 }
