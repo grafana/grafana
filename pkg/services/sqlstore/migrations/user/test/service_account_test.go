@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestServiceAccountMigration(t *testing.T) {
+func TestIntegrationServiceAccountMigration(t *testing.T) {
 	// Run initial migration to have a working DB
 	x := setupTestDB(t)
 
@@ -104,17 +104,22 @@ func TestServiceAccountMigration(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			_, err := x.Insert(tc.serviceAccounts)
-			require.NoError(t, err)
+			// Remove migration and permissions
+			_, errDeleteMig := x.Exec(`DELETE FROM migration_log WHERE migration_id = ?`, usermig.AllowSameLoginCrossOrgs)
+			require.NoError(t, errDeleteMig)
 
-			// Run RBAC action name migration
+			// insert service accounts
+			serviceAccoutsCount, err := x.Insert(tc.serviceAccounts)
+			require.NoError(t, err)
+			require.Equal(t, int64(len(tc.serviceAccounts)), serviceAccoutsCount)
+
+			// run the migration
 			usermigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("usermigration.test")})
 			usermig.AddServiceAccountsAllowSameLoginCrossOrgs(usermigrator)
-
 			errRunningMig := usermigrator.Start(false, 0)
 			require.NoError(t, errRunningMig)
 
-			// Check permissions
+			// Check service accounts
 			resultingServiceAccounts := []user.User{}
 			err = x.Table("user").Find(&resultingServiceAccounts)
 			require.NoError(t, err)
