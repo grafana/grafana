@@ -108,7 +108,9 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
             tooltip={contentOutlineExpanded ? 'Collapse outline' : 'Expand outline'}
             tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
             onClick={toggle}
-            className={styles.toggleContentOutlineButton}
+            className={cx(styles.toggleContentOutlineButton, {
+              [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsShouldIndent,
+            })}
             aria-expanded={contentOutlineExpanded}
             width={contentOutlineExpanded ? 160 : 40}
           />
@@ -120,6 +122,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                 title={contentOutlineExpanded ? item.title : undefined}
                 className={cx(styles.buttonStyles, {
                   [styles.indentRoot]: outlineItemsShouldIndent && item.children?.length === 0,
+                  [styles.justifyCenter]: !contentOutlineExpanded,
                 })}
                 icon={item.icon}
                 onClick={() => scrollIntoView(item.ref, item.panelId)}
@@ -147,7 +150,9 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                       key={child.id}
                       title={contentOutlineExpanded ? child.title : undefined}
                       icon={contentOutlineExpanded ? undefined : item.icon}
-                      className={cx(styles.buttonStyles, styles.indentChildren)}
+                      className={cx(styles.buttonStyles, styles.indentChildren, {
+                        [styles.justifyCenter]: !contentOutlineExpanded,
+                      })}
                       onClick={() => scrollIntoView(child.ref, child.panelId, child.customTopOffset)}
                       tooltip={!contentOutlineExpanded ? child.title : undefined}
                       isActive={activeSectionChildId === child.id}
@@ -183,19 +188,8 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
     }),
     buttonStyles: css({
       display: 'flex',
-      flexGrow: 1,
       '&:hover': {
         color: theme.colors.text.primary,
-        textDecoration: 'underline',
-      },
-      justifyContent: 'stretch',
-    }),
-    iconButton: css({
-      justifyContent: 'center',
-      width: theme.spacing(4),
-      '&:hover': {
-        color: theme.colors.text.primary,
-        background: theme.colors.background.secondary,
         textDecoration: 'underline',
       },
     }),
@@ -205,9 +199,6 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       },
       transform: expanded ? 'rotate(180deg)' : '',
       marginRight: expanded ? theme.spacing(0.5) : undefined,
-    }),
-    sectionWrapper: css({
-      display: 'flex',
     }),
     indentRoot: css({
       marginLeft: INDENT_LEVELS.ROOT,
@@ -239,11 +230,13 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
         height: `calc(100% - ${theme.spacing(1)})`,
       },
     }),
-
     lastItemConnector: css({
       '&::before': {
         height: `calc(100% - ${theme.spacing(1)})`,
       },
+    }),
+    justifyCenter: css({
+      justifyContent: 'center',
     }),
   };
 };

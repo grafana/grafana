@@ -15,7 +15,6 @@ type CommonProps = {
   collapsed?: boolean;
   toggleCollapsed?: () => void;
   isActive?: boolean;
-  iconRight?: boolean;
   width: number;
 };
 
@@ -31,7 +30,6 @@ export function ContentOutlineItemButton({
   collapsed,
   toggleCollapsed,
   isActive,
-  iconRight,
   width,
   ...rest
 }: ContentOutlineItemButtonProps) {
@@ -49,7 +47,6 @@ export function ContentOutlineItemButton({
       <button
         className={cx(buttonStyles, {
           [styles.active]: isActive,
-          [styles.iconRight]: iconRight,
         })}
         aria-label={tooltip}
         {...rest}
@@ -140,9 +137,6 @@ const getStyles = (theme: GrafanaTheme2, width: number) => {
         width: theme.spacing(0.5),
         left: '2px',
       },
-    }),
-    iconRight: css({
-      justifyContent: 'flex-end',
     }),
   };
 };

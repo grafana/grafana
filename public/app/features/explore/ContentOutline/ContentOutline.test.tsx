@@ -122,7 +122,7 @@ describe('<ContentOutline />', () => {
     expect(child2).toBeInTheDocument();
   });
 
-  it('if item has multiple children, it displays multiple children when mergeSingleChild is true', async () => {
+  it('if item has multiple children, it displays multiple children even when mergeSingleChild is true', async () => {
     setup(true);
     const expandSectonChevron = screen.getAllByTitle('angle-right');
     // since first item has only one child, we will have only one chevron
