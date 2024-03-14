@@ -3,7 +3,6 @@ package remote
 import (
 	"context"
 	"crypto/md5"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -184,55 +183,41 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 // CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
 // If not, it sends the configuration to the remote Alertmanager.
 func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	if am.shouldSendConfig(ctx, config) {
+	c, err := notifier.Load([]byte(config.AlertmanagerConfiguration))
+	if err != nil {
+		return err
+	}
+
+	// Inject the context into the function that decrypts the configuration.
+	fn := func(payload []byte) ([]byte, error) {
+		return am.decrypt(ctx, payload)
+	}
+
+	if err := c.AlertmanagerConfig.Decrypt(fn); err != nil {
+		return err
+	}
+
+	rawCfg, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	if am.shouldSendConfig(ctx, rawCfg) {
 		am.metrics.ConfigSyncsTotal.Inc()
-		if err := am.SendConfiguration(ctx, config); err != nil {
+		if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
+			ctx,
+			string(rawCfg),
+			config.ConfigurationHash,
+			config.ID,
+			config.CreatedAt,
+			config.Default,
+		); err != nil {
 			am.metrics.ConfigSyncErrorsTotal.Inc()
 			return err
 		}
 		am.metrics.LastConfigSync.SetToCurrentTime()
 	}
 	return nil
-}
-
-func (am *Alertmanager) SendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	postableConfig, err := notifier.Load([]byte(config.AlertmanagerConfiguration))
-	if err != nil {
-		return err
-	}
-
-	// Decode and decrypt secure fields before sending the config.
-	for _, rcv := range postableConfig.AlertmanagerConfig.Receivers {
-		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			for k, v := range gmr.SecureSettings {
-				decoded, err := base64.StdEncoding.DecodeString(v)
-				if err != nil {
-					return fmt.Errorf("failed to decode value for key '%s': %w", k, err)
-				}
-
-				decrypted, err := am.decrypt(ctx, decoded)
-				if err != nil {
-					return fmt.Errorf("failed to decrypt value for key '%s': %w", k, err)
-				}
-
-				gmr.SecureSettings[k] = string(decrypted)
-			}
-		}
-	}
-
-	rawConfig, err := json.Marshal(postableConfig)
-	if err != nil {
-		return err
-	}
-
-	return am.mimirClient.CreateGrafanaAlertmanagerConfig(
-		ctx,
-		string(rawConfig),
-		config.ConfigurationHash,
-		config.ID,
-		config.CreatedAt,
-		config.Default,
-	)
 }
 
 // CompareAndSendState gets the Alertmanager's internal state and compares it with the remote Alertmanager's one.
@@ -416,7 +401,7 @@ func (am *Alertmanager) CleanUp() {}
 
 // shouldSendConfig compares the remote Alertmanager configuration with our local one.
 // It returns true if the configurations are different.
-func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *models.AlertConfiguration) bool {
+func (am *Alertmanager) shouldSendConfig(ctx context.Context, rawConfig []byte) bool {
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 	if err != nil {
 		// Log the error and return true so we try to upload our config anyway.
@@ -424,7 +409,7 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *models.Ale
 		return true
 	}
 
-	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) != md5.Sum([]byte(config.AlertmanagerConfiguration))
+	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) != md5.Sum(rawConfig)
 }
 
 // shouldSendState compares the remote Alertmanager state with our local one.

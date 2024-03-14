@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -172,7 +173,7 @@ func TestApplyConfig(t *testing.T) {
 	require.True(t, am.Ready())
 }
 
-func TestSendConfiguration(t *testing.T) {
+func TestCompareAndSendConfiguration(t *testing.T) {
 	testValue := "test-value"
 	testErr := errors.New("test error")
 	decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
@@ -185,11 +186,15 @@ func TestSendConfiguration(t *testing.T) {
 	configWithInvalidBase64 := strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, `"password":"!"`, 1)
 	configWithDecryptableKey := strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString([]byte(testValue))), 1)
 
+	var got string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("content-type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, err := w.Write([]byte(`{"status": "success"}`))
 		require.NoError(t, err)
+		b, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+		got = string(b)
 	}))
 
 	store := ngfakes.NewFakeKVStore(t)
@@ -207,11 +212,13 @@ func TestSendConfiguration(t *testing.T) {
 	tests := []struct {
 		name   string
 		config ngmodels.AlertConfiguration
+		expCfg *client.UserGrafanaConfig
 		expErr string
 	}{
 		{
 			"invalid config",
 			ngmodels.AlertConfiguration{},
+			nil,
 			"unable to parse Alertmanager configuration: unexpected end of JSON input",
 		},
 		{
@@ -219,6 +226,7 @@ func TestSendConfiguration(t *testing.T) {
 			ngmodels.AlertConfiguration{
 				AlertmanagerConfiguration: configWithInvalidBase64,
 			},
+			nil,
 			"failed to decode value for key 'password': illegal base64 data at input byte 0",
 		},
 		{
@@ -226,6 +234,7 @@ func TestSendConfiguration(t *testing.T) {
 			ngmodels.AlertConfiguration{
 				AlertmanagerConfiguration: testGrafanaConfigWithSecret,
 			},
+			nil,
 			fmt.Sprintf("failed to decrypt value for key 'password': %s", testErr.Error()),
 		},
 		{
@@ -233,15 +242,22 @@ func TestSendConfiguration(t *testing.T) {
 			ngmodels.AlertConfiguration{
 				AlertmanagerConfiguration: configWithDecryptableKey,
 			},
+			&client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: testGrafanaConfigWithSecret,
+			},
 			"",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
-			err = am.SendConfiguration(context.Background(), &test.config)
+			err = am.CompareAndSendConfiguration(context.Background(), &test.config)
 			if test.expErr == "" {
 				require.NoError(tt, err)
+
+				rawCfg, err := json.Marshal(test.expCfg)
+				require.NoError(tt, err)
+				require.JSONEq(tt, string(rawCfg), got)
 				return
 			}
 			require.Equal(tt, test.expErr, err.Error())

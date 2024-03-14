@@ -2,6 +2,7 @@ package definitions
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -983,6 +984,29 @@ type PostableApiAlertingConfig struct {
 
 	// Override with our superset receiver type
 	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+}
+
+// Decrypt decrypts secure fields in receivers.
+// Important: this method mutates the configuration struct.
+func (c *PostableApiAlertingConfig) Decrypt(decryptFn func(payload []byte) ([]byte, error)) error {
+	for _, rcv := range c.Receivers {
+		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			for k, v := range gmr.SecureSettings {
+				decoded, err := base64.StdEncoding.DecodeString(v)
+				if err != nil {
+					return fmt.Errorf("failed to decode value for key '%s': %w", k, err)
+				}
+
+				decrypted, err := decryptFn(decoded)
+				if err != nil {
+					return fmt.Errorf("failed to decrypt value for key '%s': %w", k, err)
+				}
+
+				gmr.SecureSettings[k] = string(decrypted)
+			}
+		}
+	}
+	return nil
 }
 
 func (c *PostableApiAlertingConfig) GetReceivers() []*PostableApiReceiver {
