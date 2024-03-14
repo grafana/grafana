@@ -47,6 +47,7 @@ import { PanelNotices } from '../scene/PanelNotices';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
@@ -71,9 +72,7 @@ export interface SaveModelToSceneOptions {
 
 export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
-  const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
-    autoMigrateOldPanels: false,
-  });
+  const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
   const scene = createDashboardSceneFromDashboardModel(oldModel);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
@@ -213,6 +212,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
     isCollapsed: row.collapsed,
     children: children,
     $behaviors: behaviors,
+    actions: new RowActions({}),
   });
 }
 

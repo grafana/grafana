@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -440,47 +440,6 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		},
-		{
-			name:  "Load a plugin with app sub url set",
-			class: plugins.ClassExternal,
-			cfg: &config.PluginManagementCfg{
-				DevMode:          true,
-				GrafanaAppSubURL: "grafana",
-				Features:         featuremgmt.WithFeatures(),
-			},
-			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
-			want: []*plugins.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID:   "test-datasource",
-						Type: plugins.TypeDataSource,
-						Name: "Test",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Grafana Labs",
-								URL:  "https://grafana.com",
-							},
-							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
-							},
-							Description: "Test",
-						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "*",
-							Plugins:        []plugins.Dependency{},
-						},
-						Backend: true,
-						State:   plugins.ReleaseStateAlpha,
-					},
-					Class:     plugins.ClassExternal,
-					Module:    "public/plugins/test-datasource/module.js",
-					BaseURL:   "public/plugins/test-datasource",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
-					Signature: plugins.SignatureStatusUnsigned,
-				},
-			},
-		},
 	}
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
@@ -541,8 +500,8 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 						GrafanaVersion: "*",
 						Plugins:        []plugins.Dependency{},
 					},
-					IAM: &plugindef.IAM{
-						Permissions: []plugindef.Permission{
+					IAM: &pfs.IAM{
+						Permissions: []pfs.Permission{
 							{
 								Action: "read",
 								Scope:  stringPtr("datasource"),

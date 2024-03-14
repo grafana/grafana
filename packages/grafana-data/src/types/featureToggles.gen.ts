@@ -88,7 +88,6 @@ export interface FeatureToggles {
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
   cloudWatchLogsMonacoEditor?: boolean;
-  exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
   vizAndWidgetSplit?: boolean;
@@ -153,7 +152,6 @@ export interface FeatureToggles {
   canvasPanelPanZoom?: boolean;
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
-  alertingDetailsViewV2?: boolean;
   datatrails?: boolean;
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
@@ -162,7 +160,6 @@ export interface FeatureToggles {
   regressionTransformation?: boolean;
   lokiQueryHints?: boolean;
   kubernetesFeatureToggles?: boolean;
-  alertingPreviewUpgrade?: boolean;
   enablePluginsTracingByDefault?: boolean;
   cloudRBACRoles?: boolean;
   alertingQueryOptimization?: boolean;
@@ -178,6 +175,8 @@ export interface FeatureToggles {
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
-  alertingUpgradeDryrunOnStart?: boolean;
+  betterPageScrolling?: boolean;
   scopeFilters?: boolean;
+  emailVerificationEnforcement?: boolean;
+  ssoSettingsSAML?: boolean;
 }

@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-    - '**/*.cue'
+      - '**/*.cue'
 
 jobs:
   main:
@@ -23,5 +23,4 @@ jobs:
       - name: "Verify kinds"
         run: go run .github/workflows/scripts/kinds/verify-kinds.go
         env:
-          CODEGEN_VERIFY: 1
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

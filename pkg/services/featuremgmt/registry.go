@@ -524,13 +524,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:         "exploreScrollableLogsContainer",
-			Description:  "Improves the scrolling behavior of logs in Explore",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
@@ -592,7 +585,7 @@ var (
 		{
 			Name:         "traceQLStreaming",
 			Description:  "Enables response streaming of TraceQL queries of the Tempo data source",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
@@ -999,14 +992,6 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
-			Name:         "alertingDetailsViewV2",
-			Description:  "Enables the preview of the new alert details view",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-		},
-		{
 			Name:         "datatrails",
 			Description:  "Enables the new core app datatrails",
 			Stage:        FeatureStageExperimental,
@@ -1068,15 +1053,6 @@ var (
 			Owner:             grafanaOperatorExperienceSquad,
 			AllowSelfServe:    false,
 			HideFromAdminPage: true,
-		},
-		{
-			Name:            "alertingPreviewUpgrade",
-			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "enablePluginsTracingByDefault",
@@ -1189,13 +1165,12 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "alertingUpgradeDryrunOnStart",
-			Description:     "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
+			Name:         "betterPageScrolling",
+			Description:  "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
+			Stage:        FeatureStageGeneralAvailability,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:              "scopeFilters",
@@ -1205,6 +1180,22 @@ var (
 			Owner:             grafanaDashboardsSquad,
 			RequiresRestart:   false,
 			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "emailVerificationEnforcement",
+			Description:       "Force email verification for users, even when authenticating through sso.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "ssoSettingsSAML",
+			Description:       "Use the new SSO Settings API to configure the SAML connector",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},

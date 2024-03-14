@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -25,6 +27,7 @@ type AlertRuleService struct {
 	rulesPerRuleGroupLimit int64
 	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
+	folderService          folder.Service
 	dashboardService       dashboards.DashboardService
 	quotas                 QuotaChecker
 	xact                   TransactionManager
@@ -34,6 +37,7 @@ type AlertRuleService struct {
 
 func NewAlertRuleService(ruleStore RuleStore,
 	provenanceStore ProvisioningStore,
+	folderService folder.Service,
 	dashboardService dashboards.DashboardService,
 	quotas QuotaChecker,
 	xact TransactionManager,
@@ -49,6 +53,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 		rulesPerRuleGroupLimit: rulesPerRuleGroupLimit,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
+		folderService:          folderService,
 		dashboardService:       dashboardService,
 		quotas:                 quotas,
 		xact:                   xact,
@@ -127,15 +132,15 @@ func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context
 // CreateAlertRule creates a new alert rule. This function will ignore any
 // interval that is set in the rule struct and use the already existing group
 // interval or the default one.
-func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance, userID int64) (models.AlertRule, error) {
+func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
 	} else if err := util.ValidateUID(rule.UID); err != nil {
 		return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", rule.UID, err))
 	}
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
-	// if the alert group does not exists we just use the default interval
-	if err != nil && errors.Is(err, store.ErrAlertRuleGroupNotFound) {
+	// if the alert group does not exist we just use the default interval
+	if err != nil && errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		interval = service.defaultIntervalSeconds
 	} else if err != nil {
 		return models.AlertRule{}, err
@@ -143,6 +148,9 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	rule.IntervalSeconds = interval
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
+		return models.AlertRule{}, err
+	}
+	if err = service.ensureRuleNamespace(ctx, user, rule); err != nil {
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
@@ -176,6 +184,11 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 			return errors.New("couldn't find newly created id")
 		}
 
+		// default to 0 if there is no user
+		userID := int64(0)
+		if user != nil {
+			userID, _ = identity.UserIdentifier(user.GetNamespacedID())
+		}
 		if err = service.checkLimitsTransactionCtx(ctx, rule.OrgID, userID); err != nil {
 			return err
 		}
@@ -199,7 +212,7 @@ func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, 
 		return models.AlertRuleGroup{}, err
 	}
 	if len(ruleList) == 0 {
-		return models.AlertRuleGroup{}, store.ErrAlertRuleGroupNotFound
+		return models.AlertRuleGroup{}, models.ErrAlertRuleGroupNotFound.Errorf("")
 	}
 	res := models.AlertRuleGroup{
 		Title:     ruleList[0].RuleGroup,
@@ -288,7 +301,7 @@ func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, orgID int6
 		return err
 	}
 	if len(ruleList) == 0 {
-		return store.ErrAlertRuleGroupNotFound
+		return models.ErrAlertRuleGroupNotFound.Errorf("")
 	}
 
 	// Check provenance for all rules in the group. Fail to delete if any deletions aren't allowed.
@@ -530,7 +543,7 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 		return models.AlertRuleGroupWithFolderTitle{}, err
 	}
 	if len(ruleList) == 0 {
-		return models.AlertRuleGroupWithFolderTitle{}, store.ErrAlertRuleGroupNotFound
+		return models.AlertRuleGroupWithFolderTitle{}, models.ErrAlertRuleGroupNotFound.Errorf("")
 	}
 
 	dq := dashboards.GetDashboardQuery{
@@ -635,6 +648,35 @@ func (service *AlertRuleService) checkGroupLimits(group models.AlertRuleGroup) e
 			"actual", len(group.Rules),
 			"group", group.Title,
 		)
+	}
+
+	return nil
+}
+
+// ensureRuleNamespace ensures that the rule has a valid namespace UID.
+// If the rule does not have a namespace UID or the namespace (folder) does not exist it will return an error.
+func (service *AlertRuleService) ensureRuleNamespace(ctx context.Context, user identity.Requester, rule models.AlertRule) error {
+	if rule.NamespaceUID == "" {
+		return fmt.Errorf("%w: folderUID must be set", models.ErrAlertRuleFailedValidation)
+	}
+
+	if user == nil {
+		// user is nil when this is called during file provisioning,
+		// which already creates the folder if it does not exist
+		return nil
+	}
+
+	// ensure the namespace exists
+	_, err := service.folderService.Get(ctx, &folder.GetFolderQuery{
+		OrgID:        rule.OrgID,
+		UID:          &rule.NamespaceUID,
+		SignedInUser: user,
+	})
+	if err != nil {
+		if errors.Is(err, dashboards.ErrFolderNotFound) {
+			return fmt.Errorf("%w: folder does not exist", models.ErrAlertRuleFailedValidation)
+		}
+		return err
 	}
 
 	return nil
