@@ -658,4 +658,8 @@ const (
 	// FlagEmailVerificationEnforcement
 	// Force email verification for users, even when authenticating through sso.
 	FlagEmailVerificationEnforcement = "emailVerificationEnforcement"
+
+	// FlagSsoSettingsSAML
+	// Enables the SSO settings API and the SAML configuration UIs in Grafana
+	FlagSsoSettingsSAML = "ssoSettingsSAML"
 )
