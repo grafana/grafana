@@ -171,6 +171,63 @@ func TestParse(t *testing.T) {
 		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 	})
 
+	t.Run("parsing query model with $__interval_s variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		q := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [$__interval_s]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"intervalMs": 60000,
+			"refId": "A"
+		}`, timeRange, time.Duration(1)*time.Minute)
+
+		res, err := models.Parse(q, "15s", intervalCalculator, false, false)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [120]})", res.Expr)
+	})
+
+	t.Run("parsing query model with $__interval_s and $__interval variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		q := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [$__interval_s]}) + rate(ALERTS{job=\"test\" [$__interval]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"intervalMs": 60000,
+			"refId": "A"
+		}`, timeRange, time.Duration(1)*time.Minute)
+
+		res, err := models.Parse(q, "15s", intervalCalculator, false, false)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [120]}) + rate(ALERTS{job=\"test\" [2m]})", res.Expr)
+	})
+
+	t.Run("parsing query model with ${__interval_s} and ${__interval} variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		q := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [${__interval_s}]}) + rate(ALERTS{job=\"test\" [${__interval}]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"intervalMs": 60000,
+			"refId": "A"
+		}`, timeRange, time.Duration(1)*time.Minute)
+
+		res, err := models.Parse(q, "15s", intervalCalculator, false, false)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [120]}) + rate(ALERTS{job=\"test\" [2m]})", res.Expr)
+	})
+
 	t.Run("parsing query model with $__interval_ms variable", func(t *testing.T) {
 		timeRange := backend.TimeRange{
 			From: now,
@@ -391,6 +448,60 @@ func TestParse(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [1m0s]})", res.Expr)
 		require.Equal(t, 1*time.Minute, res.Step)
+	})
+
+	t.Run("parsing query model with $__rate_interval_s variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		q := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [$__rate_interval_s]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange, 2*time.Minute)
+
+		res, err := models.Parse(q, "15s", intervalCalculator, false, false)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [135]})", res.Expr)
+	})
+
+	t.Run("parsing query model with $__rate_interval_s and $__rate_interval variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		q := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [$__rate_interval_s]}) + rate(ALERTS{job=\"test\" [$__rate_interval]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange, 2*time.Minute)
+
+		res, err := models.Parse(q, "15s", intervalCalculator, false, false)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [135]}) + rate(ALERTS{job=\"test\" [2m15s]})", res.Expr)
+	})
+
+	t.Run("parsing query model with ${__rate_interval_s} and ${__rate_interval} variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		q := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [${__rate_interval_s}]}) + rate(ALERTS{job=\"test\" [${__rate_interval}]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange, 2*time.Minute)
+
+		res, err := models.Parse(q, "15s", intervalCalculator, false, false)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [135]}) + rate(ALERTS{job=\"test\" [2m15s]})", res.Expr)
 	})
 
 	t.Run("parsing query model with $__rate_interval_ms variable", func(t *testing.T) {
