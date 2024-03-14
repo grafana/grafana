@@ -28,13 +28,12 @@ import (
 var _ ssosettings.Service = (*Service)(nil)
 
 type Service struct {
-	logger   log.Logger
-	cfg      *setting.Cfg
-	store    ssosettings.Store
-	ac       ac.AccessControl
-	secrets  secrets.Service
-	metrics  *metrics
-	features featuremgmt.FeatureToggles
+	logger  log.Logger
+	cfg     *setting.Cfg
+	store   ssosettings.Store
+	ac      ac.AccessControl
+	secrets secrets.Service
+	metrics *metrics
 
 	fbStrategies []ssosettings.FallbackStrategy
 	reloadables  map[string]ssosettings.Reloadable
@@ -59,12 +58,11 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		secrets:      secrets,
 		metrics:      newMetrics(registerer),
 		reloadables:  make(map[string]ssosettings.Reloadable),
-		features:     features,
 	}
 
 	usageStats.RegisterMetricsFunc(svc.getUsageStats)
 
-	if svc.features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
+	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
 		ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac)
 		ssoSettingsApi.RegisterAPIEndpoints()
 	}
