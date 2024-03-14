@@ -60,7 +60,7 @@ type MuteTimingService interface {
 type AlertRuleService interface {
 	GetAlertRules(ctx context.Context, orgID int64) ([]*alerting_models.AlertRule, map[string]alerting_models.Provenance, error)
 	GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (alerting_models.AlertRule, alerting_models.Provenance, error)
-	CreateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance, userID int64) (alerting_models.AlertRule, error)
+	CreateAlertRule(ctx context.Context, user identity.Requester, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	UpdateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
 	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroup, error)
@@ -334,8 +334,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	provenance := determineProvenance(c)
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, alerting_models.Provenance(provenance), userID)
+	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), c.SignedInUser, upstreamModel, alerting_models.Provenance(provenance))
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}

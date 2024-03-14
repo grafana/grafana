@@ -15,6 +15,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,7 +44,7 @@ func TestAlertRuleService(t *testing.T) {
 	t.Run("alert rule group should be updated correctly", func(t *testing.T) {
 		rule := dummyRule("test#3", orgID)
 		rule.RuleGroup = "a"
-		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
+		rule, err := ruleService.CreateAlertRule(context.Background(), nil, rule, models.ProvenanceNone)
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
@@ -59,13 +61,27 @@ func TestAlertRuleService(t *testing.T) {
 		var orgID int64 = 2
 		rule := dummyRule("test#1", orgID)
 		rule.NamespaceUID = "123abc"
-		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
+		rule, err := ruleService.CreateAlertRule(context.Background(), nil, rule, models.ProvenanceNone)
 		require.NoError(t, err)
 
 		rule.NamespaceUID = "abc123"
 		_, err = ruleService.UpdateAlertRule(context.Background(),
 			rule, models.ProvenanceNone)
 		require.NoError(t, err)
+	})
+
+	t.Run("group update should propagate folderUID from group to rules", func(t *testing.T) {
+		ruleService := createAlertRuleService(t)
+		group := createDummyGroup("namespace-test", 1)
+		group.Rules[0].NamespaceUID = ""
+
+		err := ruleService.ReplaceRuleGroup(context.Background(), 1, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "namespace-test")
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Equal(t, "my-namespace", readGroup.Rules[0].NamespaceUID)
 	})
 
 	t.Run("group creation should propagate group title correctly", func(t *testing.T) {
@@ -86,7 +102,7 @@ func TestAlertRuleService(t *testing.T) {
 	t.Run("alert rule should get interval from existing rule group", func(t *testing.T) {
 		rule := dummyRule("test#4", orgID)
 		rule.RuleGroup = "b"
-		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
+		rule, err := ruleService.CreateAlertRule(context.Background(), nil, rule, models.ProvenanceNone)
 		require.NoError(t, err)
 
 		var interval int64 = 120
@@ -95,7 +111,7 @@ func TestAlertRuleService(t *testing.T) {
 
 		rule = dummyRule("test#4-1", orgID)
 		rule.RuleGroup = "b"
-		rule, err = ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
+		rule, err = ruleService.CreateAlertRule(context.Background(), nil, rule, models.ProvenanceNone)
 		require.NoError(t, err)
 		require.Equal(t, interval, rule.IntervalSeconds)
 	})
@@ -112,7 +128,7 @@ func TestAlertRuleService(t *testing.T) {
 		rule.UID = ruleUID
 		rule.RuleGroup = ruleGroup
 		rule.NamespaceUID = namespaceUID
-		_, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
+		_, err := ruleService.CreateAlertRule(context.Background(), nil, rule, models.ProvenanceNone)
 		require.NoError(t, err)
 
 		rule, _, err = ruleService.GetAlertRule(context.Background(), orgID, ruleUID)
@@ -420,7 +436,7 @@ func TestAlertRuleService(t *testing.T) {
 			t.Run(test.name, func(t *testing.T) {
 				var orgID int64 = 1
 				rule := dummyRule(t.Name(), orgID)
-				rule, err := ruleService.CreateAlertRule(context.Background(), rule, test.from, 0)
+				rule, err := ruleService.CreateAlertRule(context.Background(), nil, rule, test.from)
 				require.NoError(t, err)
 
 				_, err = ruleService.UpdateAlertRule(context.Background(), rule, test.to)
@@ -501,7 +517,7 @@ func TestAlertRuleService(t *testing.T) {
 		checker.EXPECT().LimitExceeded()
 		ruleService.quotas = checker
 
-		_, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#1", orgID), models.ProvenanceNone, 0)
+		_, err := ruleService.CreateAlertRule(context.Background(), nil, dummyRule("test#1", orgID), models.ProvenanceNone)
 
 		require.ErrorIs(t, err, models.ErrQuotaReached)
 	})
@@ -524,13 +540,13 @@ func TestCreateAlertRule(t *testing.T) {
 	var orgID int64 = 1
 
 	t.Run("should return the created id", func(t *testing.T) {
-		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#1", orgID), models.ProvenanceNone, 0)
+		rule, err := ruleService.CreateAlertRule(context.Background(), nil, dummyRule("test#1", orgID), models.ProvenanceNone)
 		require.NoError(t, err)
 		require.NotEqual(t, 0, rule.ID, "expected to get the created id and not the zero value")
 	})
 
 	t.Run("should set the right provenance", func(t *testing.T) {
-		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#2", orgID), models.ProvenanceAPI, 0)
+		rule, err := ruleService.CreateAlertRule(context.Background(), nil, dummyRule("test#2", orgID), models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		_, provenance, err := ruleService.GetAlertRule(context.Background(), orgID, rule.UID)
@@ -542,14 +558,14 @@ func TestCreateAlertRule(t *testing.T) {
 		t.Run("return error if it is not valid UID", func(t *testing.T) {
 			rule := dummyRule("test#3", orgID)
 			rule.UID = strings.Repeat("1", util.MaxUIDLength+1)
-			rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
+			rule, err := ruleService.CreateAlertRule(context.Background(), nil, rule, models.ProvenanceNone)
 			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		})
 		t.Run("should create a new rule with this UID", func(t *testing.T) {
 			rule := dummyRule("test#3", orgID)
 			uid := util.GenerateShortUID()
 			rule.UID = uid
-			created, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
+			created, err := ruleService.CreateAlertRule(context.Background(), nil, rule, models.ProvenanceNone)
 			require.NoError(t, err)
 			require.Equal(t, uid, created.UID)
 			_, _, err = ruleService.GetAlertRule(context.Background(), orgID, uid)
@@ -561,13 +577,19 @@ func TestCreateAlertRule(t *testing.T) {
 func createAlertRuleService(t *testing.T) AlertRuleService {
 	t.Helper()
 	sqlStore := db.InitTestDB(t)
+	folderService := foldertest.NewFakeService()
+	folderService.ExpectedFolder = &folder.Folder{
+		UID: "default-namespace",
+	}
 	store := store.DBstore{
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Second * 10,
 		},
-		Logger: log.NewNopLogger(),
+		Logger:        log.NewNopLogger(),
+		FolderService: folderService,
 	}
+	// store := fakes.NewRuleStore(t)
 	quotas := MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
 	return AlertRuleService{
@@ -578,6 +600,7 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 		log:                    log.New("testing"),
 		baseIntervalSeconds:    10,
 		defaultIntervalSeconds: 60,
+		folderService:          folderService,
 	}
 }
 
