@@ -1,8 +1,7 @@
 ---
 aliases:
-  - ../notifications/
-  - alerting/manage-notifications/create-notification-policy/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/notifications/
+  - ../notification-policies/notifications/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notification-policies/notifications/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/notification-policies/
 description: Learn about how notification policies work and are structured
 keywords:
   - grafana
@@ -17,7 +16,7 @@ labels:
     - enterprise
     - oss
 title: Notification policies
-weight: 410
+weight: 113
 ---
 
 # Notification policies
@@ -132,6 +131,6 @@ Repeat interval decides how often notifications are repeated if the group has no
 **Default** 4 hours
 
 {{% docs/reference %}}
-[labels-and-label-matchers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label/labels-and-label-matchers"
-[labels-and-label-matchers]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label/labels-and-label-matchers"
+[labels-and-label-matchers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label#how-label-matching-works"
+[labels-and-label-matchers]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label#how-label-matching-works"
 {{% /docs/reference %}}

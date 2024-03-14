@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../manage-notifications/template-notifications/ # /docs/grafana/latest/alerting/manage-notifications/template-notifications/
+  - ../manage-notifications/template-notifications/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/
 description: Customize your notifications using notification templates
 keywords:

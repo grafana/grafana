@@ -1,9 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/contact-points/
-  - /docs/grafana/latest/alerting/unified-alerting/contact-points/
-  - /docs/grafana/latest/alerting/fundamentals/contact-points/contact-point-types/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/contact-points/
+  - ../../fundamentals/contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/contact-points/
+  - ../../fundamentals/contact-points/contact-point-types/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/contact-points/contact-point-types/
+  - ../../contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/
+  - ../../unified-alerting/contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/contact-points/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/contact-points/
 description: Learn about contact points and the supported contact point integrations
 keywords:
   - grafana
@@ -18,7 +19,7 @@ labels:
     - enterprise
     - oss
 title: Contact points
-weight: 120
+weight: 112
 ---
 
 # Contact points

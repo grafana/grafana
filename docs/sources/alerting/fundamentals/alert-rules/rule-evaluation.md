@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
 title: Alert rule evaluation
-weight: 106
+weight: 108
 ---
 
 # Alert rule evaluation
