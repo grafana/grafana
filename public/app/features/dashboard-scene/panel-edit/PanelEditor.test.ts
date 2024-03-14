@@ -59,6 +59,34 @@ describe('PanelEditor', () => {
     });
   });
 
+  describe('When opening save drawer from panel edit', () => {
+    it('should commit changes', () => {
+      pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
+
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+      });
+
+      const editScene = buildPanelEditScene(panel);
+      const gridItem = new SceneGridItem({ body: panel });
+      const scene = new DashboardScene({
+        editPanel: editScene,
+        isEditing: true,
+        body: new SceneGridLayout({
+          children: [gridItem],
+        }),
+      });
+
+      editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
+
+      scene.openSaveDrawer({});
+
+      const updatedPanel = gridItem.state.body as VizPanel;
+      expect(updatedPanel?.state.title).toBe('changed title');
+    });
+  });
+
   describe('Handling library panels', () => {
     it('should call the api with the updated panel', async () => {
       pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });

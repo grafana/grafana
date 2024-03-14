@@ -338,6 +338,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       return;
     }
 
+    // We have to commit changes when opening save drawer in panel edit
+    if (this.state.editPanel) {
+      this.state.editPanel.commitChanges();
+    }
+
     this.setState({
       overlay: new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
