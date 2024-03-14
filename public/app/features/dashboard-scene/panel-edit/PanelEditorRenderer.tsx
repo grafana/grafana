@@ -143,7 +143,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     pageContainer: css({
-      display: 'grid',
+      alignItems: 'start',
       gridTemplateAreas: `
         "panels"`,
       gridTemplateColumns: `1fr`,
