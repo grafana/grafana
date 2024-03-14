@@ -154,6 +154,10 @@ export const MuteTimingTimeInterval = () => {
                   >
                     Remove time interval
                   </Button>
+                  {/* 
+                    This switch is only available for Grafana Alertmanager, as for now, Grafana alert manager doesn't support this feature
+                    It hanldes empty list as undefined making impossible the use of an empty list for disabling time interval
+                  */}
                   {!isGrafanaAlertmanager && (
                     <Stack direction="row" gap={0} alignItems="center">
                       <Tooltip placement="top" content="Disable this time interval" theme="info">
