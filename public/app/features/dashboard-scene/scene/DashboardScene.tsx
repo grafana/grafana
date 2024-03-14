@@ -109,8 +109,6 @@ export interface DashboardSceneState extends SceneObjectState {
   overlay?: SceneObject;
   /** True when a user copies a panel in the dashboard */
   hasCopiedPanel?: boolean;
-  /** The dashboard doesn't have panels */
-  isEmpty?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -739,6 +737,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     sceneGridLayout.setState({
       children: [newGridItem, ...sceneGridLayout.state.children],
     });
+    this.setState({ body: sceneGridLayout });
   }
 
   public onCreateNewRow() {
