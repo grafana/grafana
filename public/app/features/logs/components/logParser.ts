@@ -62,8 +62,7 @@ export const getDataframeFields = (
   row: LogRowModel,
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>
 ): FieldDef[] => {
-  const visibleFields = getVisibleFields(row.dataFrame);
-  const nonEmptyVisibleFields = visibleFields.filter((f) => f.values[row.rowIndex] != null);
+  const nonEmptyVisibleFields = getNonEmptyVisibleFields(row);
   return nonEmptyVisibleFields.map((field) => {
     const links = getFieldLinks ? getFieldLinks(field, row.rowIndex, row.dataFrame) : [];
     const fieldVal = field.values[row.rowIndex];
@@ -141,11 +140,16 @@ export function separateVisibleFields(
 }
 
 // Optimized version of separateVisibleFields() to only return visible fields for getAllFields()
-export function getVisibleFields(frame: DataFrame, opts?: VisOptions): FieldWithIndex[] {
+function getNonEmptyVisibleFields(row: LogRowModel, opts?: VisOptions): FieldWithIndex[] {
+  const frame = row.dataFrame;
   const visibleFieldIndices = getVisibleFieldIndices(frame, opts ?? {});
   const visibleFields: FieldWithIndex[] = [];
   for (let index = 0; index < frame.fields.length; index++) {
     const field = frame.fields[index];
+    // ignore empty fields
+    if (field.values[row.rowIndex] == null) {
+      continue;
+    }
     // hidden fields are always hidden
     if (field.config.custom?.hidden) {
       continue;
