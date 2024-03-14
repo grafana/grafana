@@ -66,13 +66,19 @@ While the `t` function can technically be used outside of React functions (e.g, 
 
 ## How to add a new language
 
-1. Add new locale in Crowdin and download files to repo
-   1. Grafana OSS Crowdin project -> "dot dot dot" menu in top right -> Target languages
-   2. If Crowdin's locale code is different from our IETF language tag, add a custom mapping in Project Settings -> Language mapping
-   3. GH repo grafana/grafana -> Actions -> Choose `Crowdin Download Action` -> Run workflow -> Creates a PR automatically
-2. Review the PR `I18n: Download translations from Crowdin`
-3. Update `public/app/core/internationalization/constants.ts` (add new constant, and add to `LOCALES`) and add changes to the open PR
-4. Approve and merge the PR
+1. Add a new locale in Crowdin
+   1. Grafana OSS Crowdin project
+   2. "dot dot dot" menu in top right
+   3. Target languages, and add the language
+   4. If Crowdin's locale code is different from our IETF language tag, add a custom mapping in Project Settings -> Language mapping
+2. Sync the new (empty language to the repo)
+   1. In Grafana's Github Actions, go to [Crowdin Download Action](https://github.com/grafana/grafana/actions/workflows/i18n-crowdin-download.yml)
+   2. Select 'Run workflow', from main
+   3. The workflow will create a PR with the new language files, which can be reviewed and merged
+3. Update `public/app/core/internationalization/constants.ts`
+   1. Add a new constant for the new language
+   2. Add the new constant to the `LOCALES` array
+   3. Create a PR with the changes and merge when you are ready to release the new language (probably wait until we have translations for it)
 
 ## How translations work in Grafana
 
