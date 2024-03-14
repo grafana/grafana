@@ -21,6 +21,8 @@ import { DEFAULT_RANGE, makeExplorePaneState } from './utils';
 // Actions and Payloads
 //
 
+export const updateState = createAction<ExploreState>('explore/updateState');
+
 export interface SyncTimesPayload {
   syncedTimes: boolean;
 }
@@ -215,6 +217,10 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       maxedExploreId: undefined,
       evenSplitPanes: true,
     };
+  }
+
+  if (updateState.match(action)) {
+    return { ...state, ...action.payload };
   }
 
   if (syncTimesAction.match(action)) {

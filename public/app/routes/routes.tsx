@@ -156,7 +156,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/explore',
+      path: '/explore/:workspace?/:snapshot?',
       pageClass: 'page-explore',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(() =>

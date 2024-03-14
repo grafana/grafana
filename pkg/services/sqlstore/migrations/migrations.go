@@ -74,6 +74,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	addCorrelationsMigrations(mg)
 
+	addExploreWorkspaces(mg)
+
 	addEntityEventsTableMigration(mg)
 
 	addPublicDashboardMigration(mg)

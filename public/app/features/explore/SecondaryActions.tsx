@@ -12,6 +12,7 @@ type Props = {
   richHistoryRowButtonHidden?: boolean;
   richHistoryButtonActive?: boolean;
   queryInspectorButtonActive?: boolean;
+  exploreWorkspacesButtonActive?: boolean;
 
   onClickAddQueryRowButton: () => void;
   onClickRichHistoryButton: () => void;
