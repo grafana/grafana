@@ -22,7 +22,7 @@ const useGetConfig = (cfg?: PublicDashboardCfg) => {
   const { footerText, footerLink, footerLogo, headerLogoHide } = {
     footerText: cfg?.footerText || cfg?.footerLogo ? cfg.footerText : 'Powered by',
     footerLogo: cfg?.footerText || cfg?.footerLogo ? cfg.footerLogo : GRAFANA_LOGO_DEFAULT_VALUE,
-    footerLink: cfg ? cfg.footerLink : FOOTER_URL,
+    footerLink: cfg?.footerLink ? cfg.footerLink : FOOTER_URL,
     headerLogoHide: cfg?.headerLogoHide || false,
   };
 
