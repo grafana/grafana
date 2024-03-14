@@ -24,7 +24,7 @@ type Service struct {
 	features  featuremgmt.FeatureToggles
 	dsService datasources.DataSourceService
 
-	api *api.MigrationAPI
+	api *api.CloudMigrationAPI
 	// metrics *Metrics
 }
 
@@ -62,6 +62,51 @@ func ProvideService(
 	return s
 }
 
-func (s *Service) MigrateDatasources(ctx context.Context, request *cloudmigration.MigrateDatasourcesRequest) (*cloudmigration.MigrateDatasourcesResponse, error) {
-	return s.store.MigrateDatasources(ctx, request)
+func (s *Service) CreateToken(ctx context.Context) error {
+	// TODO: Implement method
+	return nil
 }
+
+func (s *Service) ValidateToken(ctx context.Context, token string) error {
+	// TODO: Implement method
+	return nil
+}
+
+func (s *Service) SaveEncryptedToken(ctx context.Context, token string) error {
+	// TODO: Implement method
+	return nil
+}
+
+func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigrationResponse, error) {
+	// TODO: Implement method
+	return nil, nil
+}
+
+func (s *Service) GetMigrationList(ctx context.Context) ([]cloudmigration.CloudMigrationResponse, error) {
+	// TODO: Implement method
+	return nil, nil
+}
+
+func (s *Service) CreateMigration(ctx context.Context, cm cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
+	// TODO: Implement method
+	return nil, nil
+}
+
+func (s *Service) UpdateMigration(ctx context.Context, id int64, cm cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
+	// TODO: Implement method
+	return nil, nil
+}
+
+func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigrationRun, error) {
+	// TODO: Implement method
+	return nil, nil
+}
+
+func (s *Service) GetMigrationStatus(ctx context.Context, uid string) (*cloudmigration.CloudMigrationRun, error) {
+	// TODO: Implement method
+	return nil, nil
+}
+
+// func (s *Service) MigrateDatasources(ctx context.Context, request *cloudmigration.MigrateDatasourcesRequest) (*cloudmigration.MigrateDatasourcesResponse, error) {
+// 	return s.store.MigrateDatasources(ctx, request)
+// }
