@@ -1,28 +1,32 @@
-name: Sync Fork
-
 on:
-  workflow_dispatch:
   schedule:
-    - cron:  '* * * * *'
+    - cron:  '0 7 * * 1,4'
+    # scheduled at 07:00 every Monday and Thursday
+  workflow_dispatch:
 
 jobs:
-  sync:
+  sync_with_upstream:
     runs-on: ubuntu-latest
+    name: Sync master with upstream latest
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Sync Upstream-Downstream
-        uses: dchourasia/sync-upstream-repo@1.01
-        with:
-          # URL of upstream GitHub repo
-          upstream_repo: https://github.com/grafana/grafana
-          # Branch to merge from upstream (defaults to downstream branch)
-          upstream_branch: main
-          # URL of downstream GitHub repo
-          downstream_repo: https://github.com/QuentinBessot/grafana
-          # Branch to merge into downstream
-          downstream_branch: main
-          # GitHub Bot token
-          token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Checkout master
+      uses: actions/checkout@v2
+      with:
+        ref: master
         
+    - name: Pull upstream changes
+      id: sync
+      uses: aormsby/Fork-Sync-With-Upstream-action@v3.1
+      with:
+        target_sync_branch: master
+        # REQUIRED 'target_repo_token' exactly like this!
+        target_repo_token: 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
+        upstream_sync_branch: master
+        upstream_sync_repo: panr/hugo-theme-hello-friend
+
+        # Set test_mode true to run tests instead of the true action!!
+        test_mode: true
+
+    - name: Timestamp
+      run: date
