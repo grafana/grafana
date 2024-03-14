@@ -180,6 +180,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
 
+  /**
+   * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
+   * Grafana's supported language.
+   */
+  language: string | undefined;
+
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
 
@@ -221,6 +227,14 @@ export class GrafanaBootConfig implements GrafanaConfig {
     this.theme2 = getThemeById(this.bootData.user.theme);
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
+  }
+
+  setLanguage(language: string | undefined) {
+    if (this.language) {
+      throw new Error('Language is already set and cannot be changed after bootstrapping.');
+    }
+
+    this.language = language;
   }
 }
 

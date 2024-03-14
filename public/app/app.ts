@@ -126,6 +126,7 @@ export class GrafanaApp {
       parent.postMessage('GrafanaAppInit', '*');
 
       const initI18nPromise = initializeI18n(config.bootData.user.language);
+      initI18nPromise.then(({ language }) => config.setLanguage(language));
 
       setBackendSrv(backendSrv);
       initEchoSrv();
