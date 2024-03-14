@@ -34,7 +34,7 @@ func (s *Verifier) VerifyEmail(ctx context.Context, cmd user.VerifyEmailCommand)
 
 	// if email is already used by another user we stop here
 	if usr != nil && usr.ID != cmd.User.ID {
-		return user.ErrUserAlreadyExists
+		return user.ErrEmailConflict.Errorf("email already used")
 	}
 
 	code, err := util.GetRandomString(20)
