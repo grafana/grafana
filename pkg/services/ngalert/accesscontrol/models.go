@@ -1,7 +1,6 @@
 package accesscontrol
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -9,21 +8,12 @@ import (
 )
 
 var (
-	errMsgID                = "alerting.unauthorized"
-	errAuthorizationGeneric = errutil.Forbidden(errMsgID)
+	ErrAuthorizationBase = errutil.Forbidden("alerting.unauthorized")
 )
-
-func IsAuthorizationError(err error) bool {
-	e := errutil.Error{}
-	if !errors.As(err, &e) {
-		return false
-	}
-	return e.MessageID == errMsgID
-}
 
 func NewAuthorizationErrorWithPermissions(action string, eval accesscontrol.Evaluator) error {
 	msg := fmt.Sprintf("user is not authorized to %s", action)
-	err := errAuthorizationGeneric.Errorf(msg)
+	err := ErrAuthorizationBase.Errorf(msg)
 	err.PublicMessage = msg
 	if eval != nil {
 		err.PublicPayload = map[string]any{
