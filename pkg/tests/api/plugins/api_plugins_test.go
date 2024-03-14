@@ -113,6 +113,9 @@ func TestIntegrationPlugins(t *testing.T) {
 				require.Equal(t, tc.expStatus, resp.StatusCode)
 				b, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
+				// ignore info.version since it'll vary depending if plugins have been locally built
+				b, err = deleteFromJSONList(b, "info", "version")
+				require.NoError(t, err)
 
 				expResp := expectedResp(t, tc.expRespPath)
 
@@ -238,4 +241,20 @@ func updateRespSnapshot(t *testing.T, filename string, body string) {
 	if err != nil {
 		t.Errorf("error writing snapshot %s: %v", filename, err)
 	}
+}
+
+func deleteFromJSONList(b []byte, group, key string) ([]byte, error) {
+	list := []interface{}{}
+	err := json.Unmarshal(b, &list)
+	if err != nil {
+		return nil, err
+	}
+	res := []interface{}{}
+	for _, elem := range list {
+		elemJSON := elem.(map[string]any)
+		deps := elemJSON[group].(map[string]any)
+		delete(deps, key)
+		res = append(res, elemJSON)
+	}
+	return json.Marshal(res)
 }
