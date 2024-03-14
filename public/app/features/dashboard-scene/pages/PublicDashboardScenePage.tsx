@@ -131,6 +131,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     body: css({
       label: 'body',
+      flex: 1,
       marginBottom: theme.spacing(3),
     }),
   };
