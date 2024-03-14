@@ -1,0 +1,1656 @@
+{
+  "_comment": "",
+  "access-control": {
+    "add-permission": {
+      "role-label": "",
+      "serviceaccount-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": ""
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "",
+      "serviceaccount": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
+  "bouncing-loader": {
+    "label": ""
+  },
+  "browse-dashboards": {
+    "action": {
+      "cancel-button": "",
+      "cannot-move-folders": "",
+      "delete-button": "",
+      "delete-modal-invalid-text": "",
+      "delete-modal-invalid-title": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "deleting": "",
+      "manage-permissions-button": "",
+      "move-button": "",
+      "move-modal-alert": "",
+      "move-modal-field-label": "",
+      "move-modal-text": "",
+      "move-modal-title": "",
+      "moving": "",
+      "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule_one": "",
+      "alertRule_other": "",
+      "dashboard_one": "",
+      "dashboard_other": "",
+      "folder_one": "",
+      "folder_other": "",
+      "libraryPanel_one": "",
+      "libraryPanel_other": "",
+      "total_one": "",
+      "total_other": ""
+    },
+    "dashboards-tree": {
+      "collapse-folder-button": "",
+      "expand-folder-button": "",
+      "name-column": "",
+      "select-all-header-checkbox": "",
+      "select-checkbox": "",
+      "tags-column": ""
+    },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
+    },
+    "folder-picker": {
+      "accessible-label": "",
+      "button-label": "",
+      "clear-selection": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
+    },
+    "manage-folder-nav": {
+      "alert-rules": "",
+      "dashboards": "",
+      "panels": ""
+    },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
+    },
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": ""
+    },
+    "empty-state": {
+      "title": ""
+    },
+    "search-box": {
+      "placeholder": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "folder-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
+    }
+  },
+  "common": {
+    "locale": {
+      "default": ""
+    },
+    "save": ""
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
+  },
+  "correlations": {
+    "add-new": "",
+    "alert": {
+      "error-message": "",
+      "title": ""
+    },
+    "basic-info-form": {
+      "description-description": "",
+      "description-label": "",
+      "label-description": "",
+      "label-label": "",
+      "label-placeholder": "",
+      "label-required": "",
+      "sub-text": "",
+      "title": ""
+    },
+    "list": {
+      "delete": "",
+      "label": "",
+      "loading": "",
+      "read-only": "",
+      "source": "",
+      "target": ""
+    },
+    "navigation-form": {
+      "add-button": "",
+      "back-button": "",
+      "next-button": "",
+      "save-button": ""
+    },
+    "page-content": "",
+    "page-heading": "",
+    "query-editor": {
+      "control-rules": "",
+      "data-source-text": "",
+      "data-source-title": "",
+      "error-text": "",
+      "error-title": "",
+      "loading": "",
+      "query-description": "",
+      "query-editor-title": "",
+      "query-label": ""
+    },
+    "source-form": {
+      "control-required": "",
+      "description": "",
+      "heading": "",
+      "results-description": "",
+      "results-label": "",
+      "results-required": "",
+      "source-description": "",
+      "source-label": "",
+      "sub-text": "",
+      "title": ""
+    },
+    "sub-title": "",
+    "target-form": {
+      "control-rules": "",
+      "sub-text": "",
+      "target-description": "",
+      "target-label": "",
+      "title": ""
+    },
+    "trans-details": {
+      "logfmt-description": "",
+      "logfmt-label": "",
+      "regex-description": "",
+      "regex-expression": "",
+      "regex-label": "",
+      "regex-map-values": ""
+    },
+    "transform": {
+      "add-button": "",
+      "heading": "",
+      "no-transform": ""
+    },
+    "transform-row": {
+      "expression-label": "",
+      "expression-required": "",
+      "expression-tooltip": "",
+      "field-input": "",
+      "field-label": "",
+      "field-tooltip": "",
+      "map-value-label": "",
+      "map-value-tooltip": "",
+      "remove-button": "",
+      "remove-tooltip": "",
+      "transform-required": "",
+      "type-label": "",
+      "type-tooltip": ""
+    }
+  },
+  "dashboard": {
+    "add-menu": {
+      "import": "",
+      "paste-panel": "",
+      "row": "",
+      "visualization": "",
+      "widget": ""
+    },
+    "alert-rules-drawer": {
+      "redirect-link": "",
+      "subtitle": ""
+    },
+    "empty": {
+      "add-library-panel-body": "",
+      "add-library-panel-button": "",
+      "add-library-panel-header": "",
+      "add-visualization-body": "",
+      "add-visualization-button": "",
+      "add-visualization-header": "",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": "",
+      "import-a-dashboard-body": "",
+      "import-a-dashboard-header": "",
+      "import-dashboard-button": ""
+    },
+    "inspect": {
+      "data-tab": "",
+      "error-tab": "",
+      "json-tab": "",
+      "meta-tab": "",
+      "query-tab": "",
+      "stats-tab": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "inspect-data": {
+      "data-options": "",
+      "dataframe-aria-label": "",
+      "dataframe-label": "",
+      "download-csv": "",
+      "download-excel-description": "",
+      "download-excel-label": "",
+      "download-logs": "",
+      "download-service": "",
+      "download-traces": "",
+      "excel-header": "",
+      "formatted": "",
+      "formatted-data-description": "",
+      "formatted-data-label": "",
+      "panel-transforms": "",
+      "series-to-columns": "",
+      "transformation": "",
+      "transformations-description": "",
+      "transformations-label": ""
+    },
+    "inspect-json": {
+      "dataframe-description": "",
+      "dataframe-label": "",
+      "panel-data-description": "",
+      "panel-data-label": "",
+      "panel-json-description": "",
+      "panel-json-label": "",
+      "select-source": "",
+      "unknown": ""
+    },
+    "inspect-meta": {
+      "no-inspector": ""
+    },
+    "inspect-stats": {
+      "data-title": "",
+      "data-traceids": "",
+      "processing-time": "",
+      "queries": "",
+      "request-time": "",
+      "rows": "",
+      "table-title": ""
+    },
+    "toolbar": {
+      "add": "",
+      "alert-rules": "",
+      "mark-favorite": "",
+      "open-original": "",
+      "playlist-next": "",
+      "playlist-previous": "",
+      "playlist-stop": "",
+      "refresh": "",
+      "save": "",
+      "settings": "",
+      "share": "",
+      "share-button": "",
+      "unmark-favorite": ""
+    },
+    "validation": {
+      "invalid-dashboard-id": "",
+      "invalid-json": "",
+      "tags-expected-array": "",
+      "tags-expected-strings": ""
+    }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "",
+      "secondary-text": ""
+    },
+    "form-actions": {
+      "cancel": "",
+      "load": ""
+    },
+    "gcom-field": {
+      "label": "",
+      "load-button": "",
+      "placeholder": "",
+      "validation-required": ""
+    },
+    "json-field": {
+      "label": "",
+      "validation-required": ""
+    }
+  },
+  "dashboard-settings": {
+    "annotations": {
+      "title": ""
+    },
+    "dashboard-delete-button": "",
+    "general": {
+      "auto-refresh-description": "",
+      "auto-refresh-label": "",
+      "description-label": "",
+      "editable-description": "",
+      "editable-label": "",
+      "folder-label": "",
+      "panel-options-graph-tooltip-description": "",
+      "panel-options-graph-tooltip-label": "",
+      "panel-options-label": "",
+      "tags-label": "",
+      "title": "",
+      "title-label": ""
+    },
+    "json-editor": {
+      "apply-button": "",
+      "save-button": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "links": {
+      "title": ""
+    },
+    "permissions": {
+      "title": ""
+    },
+    "settings": {
+      "title": ""
+    },
+    "time-picker": {
+      "hide-time-picker": "",
+      "now-delay-description": "",
+      "now-delay-label": "",
+      "refresh-live-dashboards-description": "",
+      "refresh-live-dashboards-label": "",
+      "time-options-label": "",
+      "time-zone-label": "",
+      "week-start-label": ""
+    },
+    "variables": {
+      "title": ""
+    },
+    "versions": {
+      "title": ""
+    }
+  },
+  "data-source-picker": {
+    "add-new-data-source": "",
+    "built-in-list": {
+      "description-dashboard": "",
+      "description-grafana": "",
+      "description-mixed": ""
+    },
+    "list": {
+      "no-data-source-message": ""
+    },
+    "modal": {
+      "configure-new-data-source": "",
+      "input-placeholder": "",
+      "title": ""
+    },
+    "open-advanced-button": ""
+  },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "",
+    "rich-history": {
+      "close-tooltip": "",
+      "datasource-a-z": "",
+      "datasource-z-a": "",
+      "newest-first": "",
+      "oldest-first": "",
+      "query-history": "",
+      "settings": "",
+      "starred": ""
+    },
+    "rich-history-card": {
+      "add-comment-form": "",
+      "add-comment-tooltip": "",
+      "cancel": "",
+      "confirm-delete": "",
+      "copy-query-tooltip": "",
+      "copy-shortened-link-tooltip": "",
+      "datasource-icon-label": "",
+      "datasource-name-label": "",
+      "datasource-not-exist": "",
+      "delete-query-confirmation-title": "",
+      "delete-query-title": "",
+      "delete-query-tooltip": "",
+      "delete-starred-query-confirmation-text": "",
+      "edit-comment-tooltip": "",
+      "loading-text": "",
+      "optional-description": "",
+      "query-comment-label": "",
+      "query-text-label": "",
+      "run-query-button": "",
+      "save-comment": "",
+      "star-query-tooltip": "",
+      "switch-datasource-button": "",
+      "unstar-query-tooltip": "",
+      "update-comment-form": ""
+    },
+    "rich-history-container": {
+      "loading": ""
+    },
+    "rich-history-notification": {
+      "query-copied": "",
+      "query-deleted": ""
+    },
+    "rich-history-queries-tab": {
+      "displaying-partial-queries": "",
+      "displaying-queries": "",
+      "filter-aria-label": "",
+      "filter-history": "",
+      "filter-placeholder": "",
+      "history-local": "",
+      "loading": "",
+      "loading-results": "",
+      "search-placeholder": "",
+      "showing-queries": "",
+      "sort-aria-label": "",
+      "sort-placeholder": ""
+    },
+    "rich-history-settings-tab": {
+      "alert-info": "",
+      "change-default-tab": "",
+      "clear-history-info": "",
+      "clear-query-history": "",
+      "clear-query-history-button": "",
+      "delete-confirm": "",
+      "delete-confirm-text": "",
+      "delete-title": "",
+      "history-time-span": "",
+      "history-time-span-description": "",
+      "only-show-active-datasource": "",
+      "query-history-deleted": "",
+      "retention-period": {
+        "1-week": "",
+        "2-days": "",
+        "2-weeks": "",
+        "5-days": ""
+      }
+    },
+    "rich-history-starred-tab": {
+      "filter-queries-aria-label": "",
+      "filter-queries-placeholder": "",
+      "loading": "",
+      "loading-results": "",
+      "local-history-message": "",
+      "search-queries-placeholder": "",
+      "showing-queries": "",
+      "sort-queries-aria-label": "",
+      "sort-queries-placeholder": ""
+    },
+    "rich-history-utils": {
+      "a-week-ago": "",
+      "days-ago": "",
+      "default-from": "",
+      "default-to": "",
+      "today": "",
+      "two-weeks-ago": "",
+      "yesterday": ""
+    },
+    "rich-history-utils-notification": {
+      "saving-failed": "",
+      "update-failed": ""
+    },
+    "secondary-actions": {
+      "query-add-button": "",
+      "query-add-button-aria-label": "",
+      "query-history-button": "",
+      "query-history-button-aria-label": "",
+      "query-inspector-button": "",
+      "query-inspector-button-aria-label": ""
+    },
+    "table": {
+      "no-data": "",
+      "title": "",
+      "title-with-name": ""
+    },
+    "toolbar": {
+      "aria-label": "",
+      "copy-link": "",
+      "copy-link-abs-time": "",
+      "copy-links-absolute-category": "",
+      "copy-links-normal-category": "",
+      "copy-shortened-link": "",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
+      "refresh-picker-cancel": "",
+      "refresh-picker-run": "",
+      "split-close": "",
+      "split-close-tooltip": "",
+      "split-narrow": "",
+      "split-title": "",
+      "split-tooltip": "",
+      "split-widen": ""
+    }
+  },
+  "folder-picker": {
+    "loading": ""
+  },
+  "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
+    "modal": {
+      "close-tooltip": ""
+    },
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
+    }
+  },
+  "graph": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": "",
+      "title": ""
+    }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "",
+      "focused-panel": "",
+      "global": "",
+      "time-range": ""
+    },
+    "shortcuts-description": {
+      "change-theme": "",
+      "collapse-all-rows": "",
+      "copy-time-range": "",
+      "dashboard-settings": "",
+      "duplicate-panel": "",
+      "exit-edit/setting-views": "",
+      "expand-all-rows": "",
+      "go-to-dashboards": "",
+      "go-to-explore": "",
+      "go-to-home-dashboard": "",
+      "go-to-profile": "",
+      "make-time-range-permanent": "",
+      "move-time-range-back": "",
+      "move-time-range-forward": "",
+      "open-search": "",
+      "open-shared-modal": "",
+      "paste-time-range": "",
+      "refresh-all-panels": "",
+      "remove-panel": "",
+      "save-dashboard": "",
+      "show-all-shortcuts": "",
+      "toggle-active-mode": "",
+      "toggle-all-panel-legends": "",
+      "toggle-auto-fit": "",
+      "toggle-exemplars": "",
+      "toggle-graph-crosshair": "",
+      "toggle-kiosk": "",
+      "toggle-panel-edit": "",
+      "toggle-panel-fullscreen": "",
+      "toggle-panel-legend": "",
+      "zoom-out-time-range": ""
+    },
+    "title": ""
+  },
+  "inspector": {
+    "query": {
+      "collapse-all": "",
+      "copy-to-clipboard": "",
+      "description": "",
+      "expand-all": "",
+      "no-data": "",
+      "refresh": ""
+    }
+  },
+  "library-panel": {
+    "add-modal": {
+      "cancel": "",
+      "create": "",
+      "error": "",
+      "folder": "",
+      "folder-description": "",
+      "name": ""
+    },
+    "add-widget": {
+      "title": ""
+    }
+  },
+  "library-panels": {
+    "modal": {
+      "button-cancel": "",
+      "button-view-panel1": "",
+      "button-view-panel2": "",
+      "panel-not-linked": "",
+      "select-no-options-message": "",
+      "select-placeholder": "",
+      "title": "",
+      "body_one": "",
+      "body_other": ""
+    },
+    "save": {
+      "error": "",
+      "success": ""
+    }
+  },
+  "login": {
+    "error": {
+      "blocked": "",
+      "invalid-user-or-password": "",
+      "title": "",
+      "unknown": ""
+    },
+    "forgot-password": "",
+    "form": {
+      "password-label": "",
+      "password-required": "",
+      "submit-label": "",
+      "submit-loading-label": "",
+      "username-label": "",
+      "username-required": ""
+    },
+    "services": {
+      "sing-in-with-prefix": ""
+    },
+    "signup": {
+      "button-label": "",
+      "new-to-question": ""
+    }
+  },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "connect-modal": {
+      "body-cloud-stack": "",
+      "body-get-started": "",
+      "body-paste-stack": "",
+      "body-sign-up": "",
+      "body-token": "",
+      "body-token-field": "",
+      "body-token-field-placeholder": "",
+      "body-token-instructions": "",
+      "body-url-field": "",
+      "body-view-stacks": "",
+      "cancel": "",
+      "connect": "",
+      "connecting": "",
+      "stack-required-error": "",
+      "title": "",
+      "token-required-error": ""
+    },
+    "cta": {
+      "button": "",
+      "header": ""
+    },
+    "disconnect-modal": {
+      "body": "",
+      "cancel": "",
+      "disconnect": "",
+      "disconnecting": "",
+      "error": "",
+      "title": ""
+    },
+    "get-started": {
+      "body": "",
+      "configure-pdc-link": "",
+      "link-title": "",
+      "step-1": "",
+      "step-2": "",
+      "step-3": "",
+      "step-4": "",
+      "step-5": "",
+      "title": ""
+    },
+    "is-it-secure": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "migrate-to-this-stack": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "migration-token": {
+      "body": "",
+      "delete-button": "",
+      "delete-modal-body": "",
+      "delete-modal-cancel": "",
+      "delete-modal-confirm": "",
+      "delete-modal-deleting": "",
+      "delete-modal-title": "",
+      "generate-button": "",
+      "generate-button-loading": "",
+      "modal-close": "",
+      "modal-copy-and-close": "",
+      "modal-copy-button": "",
+      "modal-field-description": "",
+      "modal-field-label": "",
+      "modal-title": "",
+      "status": "",
+      "title": ""
+    },
+    "pdc": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "pricing": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "resource-status": {
+      "error-details-button": "",
+      "failed": "",
+      "migrated": "",
+      "migrating": "",
+      "not-migrated": "",
+      "unknown": ""
+    },
+    "resource-type": {
+      "dashboard": "",
+      "datasource": "",
+      "unknown": ""
+    },
+    "resources": {
+      "disconnect": ""
+    },
+    "token-status": {
+      "active": "",
+      "no-active": ""
+    },
+    "what-is-cloud": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "why-host": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    }
+  },
+  "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
+    "admin": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alert-list-legacy": {
+      "title": ""
+    },
+    "alerting": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting-admin": {
+      "title": ""
+    },
+    "alerting-am-routes": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting-channels": {
+      "title": ""
+    },
+    "alerting-groups": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting-home": {
+      "title": ""
+    },
+    "alerting-legacy": {
+      "title": ""
+    },
+    "alerting-list": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting-receivers": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting-silences": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerts-and-incidents": {
+      "subtitle": "",
+      "title": ""
+    },
+    "api-keys": {
+      "subtitle": "",
+      "title": ""
+    },
+    "application": {
+      "title": ""
+    },
+    "apps": {
+      "subtitle": "",
+      "title": ""
+    },
+    "authentication": {
+      "title": ""
+    },
+    "collector": {
+      "title": ""
+    },
+    "config": {
+      "title": ""
+    },
+    "config-access": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-general": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-plugins": {
+      "subtitle": "",
+      "title": ""
+    },
+    "connect-data": {
+      "title": ""
+    },
+    "connections": {
+      "subtitle": "",
+      "title": ""
+    },
+    "correlations": {
+      "subtitle": "",
+      "title": ""
+    },
+    "create": {
+      "title": ""
+    },
+    "create-alert": {
+      "title": ""
+    },
+    "create-dashboard": {
+      "title": ""
+    },
+    "create-folder": {
+      "title": ""
+    },
+    "create-import": {
+      "title": ""
+    },
+    "dashboards": {
+      "subtitle": "",
+      "title": ""
+    },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
+    },
+    "datasources": {
+      "subtitle": "",
+      "title": ""
+    },
+    "detect": {
+      "title": ""
+    },
+    "explore": {
+      "title": ""
+    },
+    "frontend": {
+      "subtitle": "",
+      "title": ""
+    },
+    "frontend-app": {
+      "title": ""
+    },
+    "global-orgs": {
+      "subtitle": "",
+      "title": ""
+    },
+    "global-users": {
+      "subtitle": "",
+      "title": ""
+    },
+    "grafana-quaderno": {
+      "title": ""
+    },
+    "help": {
+      "title": ""
+    },
+    "help/community": "",
+    "help/documentation": "",
+    "help/keyboard-shortcuts": "",
+    "help/support": "",
+    "home": {
+      "title": ""
+    },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
+      "title": ""
+    },
+    "k6": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
+    "library-panels": {
+      "subtitle": "",
+      "title": ""
+    },
+    "machine-learning": {
+      "title": ""
+    },
+    "manage-folder": {
+      "subtitle": ""
+    },
+    "migrate-to-cloud": {
+      "subtitle": "",
+      "title": ""
+    },
+    "monitoring": {
+      "subtitle": "",
+      "title": ""
+    },
+    "new": {
+      "title": ""
+    },
+    "new-dashboard": {
+      "title": ""
+    },
+    "new-folder": {
+      "title": ""
+    },
+    "observability": {
+      "title": ""
+    },
+    "oncall": {
+      "title": ""
+    },
+    "org-settings": {
+      "subtitle": "",
+      "title": ""
+    },
+    "playlists": {
+      "subtitle": "",
+      "title": ""
+    },
+    "plugins": {
+      "subtitle": "",
+      "title": ""
+    },
+    "private-data-source-connections": {
+      "subtitle": "",
+      "title": ""
+    },
+    "profile/notifications": {
+      "title": ""
+    },
+    "profile/password": {
+      "title": ""
+    },
+    "profile/settings": {
+      "title": ""
+    },
+    "profiles": {
+      "title": ""
+    },
+    "public": {
+      "title": ""
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
+    },
+    "scenes": {
+      "title": ""
+    },
+    "search": {
+      "placeholderCommandPalette": ""
+    },
+    "search-dashboards": {
+      "title": ""
+    },
+    "server-settings": {
+      "subtitle": "",
+      "title": ""
+    },
+    "service-accounts": {
+      "subtitle": "",
+      "title": ""
+    },
+    "sign-out": {
+      "title": ""
+    },
+    "slo": {
+      "title": ""
+    },
+    "snapshots": {
+      "subtitle": "",
+      "title": ""
+    },
+    "starred": {
+      "title": ""
+    },
+    "starred-empty": {
+      "title": ""
+    },
+    "statistics-and-licensing": {
+      "title": ""
+    },
+    "storage": {
+      "subtitle": "",
+      "title": ""
+    },
+    "support-bundles": {
+      "subtitle": "",
+      "title": ""
+    },
+    "synthetics": {
+      "title": ""
+    },
+    "teams": {
+      "subtitle": "",
+      "title": ""
+    },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
+    },
+    "upgrading": {
+      "title": ""
+    },
+    "users": {
+      "subtitle": "",
+      "title": ""
+    }
+  },
+  "navigation": {
+    "kiosk": {
+      "tv-alert": ""
+    },
+    "megamenu": {
+      "close": "",
+      "dock": "",
+      "list-label": "",
+      "undock": ""
+    },
+    "toolbar": {
+      "close-menu": "",
+      "enable-kiosk": "",
+      "open-menu": "",
+      "toggle-search-bar": ""
+    }
+  },
+  "news": {
+    "drawer": {
+      "close": ""
+    },
+    "title": ""
+  },
+  "notifications": {
+    "starred-dashboard": "",
+    "unstarred-dashboard": ""
+  },
+  "panel": {
+    "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
+      "hide-legend": "",
+      "inspect": "",
+      "inspect-data": "",
+      "inspect-json": "",
+      "more": "",
+      "new-alert-rule": "",
+      "query": "",
+      "remove": "",
+      "share": "",
+      "show-legend": "",
+      "unlink-library-panel": "",
+      "view": ""
+    }
+  },
+  "playlist-edit": {
+    "error-prefix": "",
+    "form": {
+      "add-tag-label": "",
+      "add-tag-placeholder": "",
+      "add-title-label": "",
+      "cancel": "",
+      "heading": "",
+      "interval-label": "",
+      "interval-placeholder": "",
+      "interval-required": "",
+      "name-label": "",
+      "name-placeholder": "",
+      "name-required": "",
+      "save": "",
+      "table-delete": "",
+      "table-drag": "",
+      "table-empty": "",
+      "table-heading": ""
+    },
+    "sub-title": "",
+    "title": ""
+  },
+  "playlist-page": {
+    "card": {
+      "delete": "",
+      "edit": "",
+      "start": "",
+      "tooltip": ""
+    },
+    "create-button": {
+      "title": ""
+    },
+    "delete-modal": {
+      "body": "",
+      "confirm-text": ""
+    },
+    "empty": {
+      "button": "",
+      "pro-tip": "",
+      "pro-tip-link-title": "",
+      "title": ""
+    }
+  },
+  "profile": {
+    "change-password": {
+      "cancel-button": "",
+      "cannot-change-password-message": "",
+      "change-password-button": "",
+      "confirm-password-label": "",
+      "confirm-password-required": "",
+      "ldap-auth-proxy-message": "",
+      "new-password-label": "",
+      "new-password-required": "",
+      "new-password-same-as-old": "",
+      "old-password-label": "",
+      "old-password-required": "",
+      "passwords-must-match": "",
+      "strong-password-validation-register": ""
+    }
+  },
+  "public-dashboard": {
+    "acknowledgment-checkboxes": {
+      "ack-title": "",
+      "data-src-ack-desc": "",
+      "data-src-ack-tooltip": "",
+      "public-ack-desc": "",
+      "public-ack-tooltip": "",
+      "usage-ack-desc": "",
+      "usage-ack-desc-tooltip": ""
+    },
+    "config": {
+      "can-view-dashboard-radio-button-label": "",
+      "copy-button": "",
+      "dashboard-url-field-label": "",
+      "email-share-type-option-label": "",
+      "pause-sharing-dashboard-label": "",
+      "public-share-type-option-label": "",
+      "revoke-public-URL-button": "",
+      "revoke-public-URL-button-title": "",
+      "settings-title": ""
+    },
+    "create-page": {
+      "generate-public-url-button": "",
+      "unsupported-features-desc": "",
+      "welcome-title": ""
+    },
+    "delete-modal": {
+      "revoke-nonorphaned-body-text": "",
+      "revoke-orphaned-body-text": "",
+      "revoke-title": ""
+    },
+    "email-sharing": {
+      "input-invalid-email-text": "",
+      "input-required-email-text": "",
+      "invite-button": "",
+      "invite-field-desc": "",
+      "invite-field-label": "",
+      "resend-button": "",
+      "resend-button-title": "",
+      "revoke-button": "",
+      "revoke-button-title": ""
+    },
+    "modal-alerts": {
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
+      "save-dashboard-changes-alert-title": "",
+      "unsupport-data-source-alert-readmore-link": "",
+      "unsupported-data-source-alert-desc": "",
+      "unsupported-data-source-alert-title": "",
+      "unsupported-template-variable-alert-desc": "",
+      "unsupported-template-variable-alert-title": ""
+    },
+    "settings-bar-header": {
+      "collapse-settings-tooltip": "",
+      "expand-settings-tooltip": ""
+    },
+    "settings-configuration": {
+      "default-time-range-label": "",
+      "default-time-range-label-desc": "",
+      "show-annotations-label": "",
+      "show-annotations-label-desc": "",
+      "time-range-picker-label": "",
+      "time-range-picker-label-desc": ""
+    },
+    "settings-summary": {
+      "annotations-hide-text": "",
+      "annotations-show-text": "",
+      "time-range-picker-disabled-text": "",
+      "time-range-picker-enabled-text": "",
+      "time-range-text": ""
+    }
+  },
+  "public-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "",
+      "revoke-button-text": "",
+      "revoke-button-tooltip": "",
+      "view-button-tooltip": ""
+    },
+    "dashboard-title": {
+      "orphaned-title": "",
+      "orphaned-tooltip": ""
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": ""
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "loading-text": "",
+      "open-dashboard-list-text": "",
+      "public-dashboard-link": "",
+      "public-dashboard-setting": ""
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "",
+      "delete-user-cancel-button": "",
+      "delete-user-revoke-access-button": "",
+      "revoke-access-title": "",
+      "revoke-user-access-modal-desc-line1": "",
+      "revoke-user-access-modal-desc-line2": ""
+    },
+    "modal": {
+      "dashboard-modal-title": ""
+    },
+    "table-header": {
+      "activated-label": "",
+      "activated-tooltip": "",
+      "email-label": "",
+      "last-active-label": "",
+      "origin-label": "",
+      "role-label": ""
+    }
+  },
+  "query-operation": {
+    "header": {
+      "collapse-row": "",
+      "datasource-help": "",
+      "disable-query": "",
+      "drag-and-drop": "",
+      "duplicate-query": "",
+      "expand-row": "",
+      "remove-query": "",
+      "toggle-edit-mode": ""
+    },
+    "query-editor-not-exported": ""
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "",
+      "duration-selected": ""
+    },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "tooltip": {
+      "interval-selected": "",
+      "turned-off": ""
+    }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
+  },
+  "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "view-as-folders": "",
+      "view-as-list": ""
+    },
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "",
+      "tags-header": "",
+      "type-dashboard": "",
+      "type-folder": "",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
+    }
+  },
+  "share-modal": {
+    "dashboard": {
+      "title": ""
+    },
+    "embed": {
+      "copy": "",
+      "html": "",
+      "html-description": "",
+      "info": "",
+      "time-range": "",
+      "time-range-description": ""
+    },
+    "export": {
+      "back-button": "",
+      "cancel-button": "",
+      "info-text": "",
+      "save-button": "",
+      "share-externally-label": "",
+      "view-button": ""
+    },
+    "library": {
+      "info": ""
+    },
+    "link": {
+      "copy-link-button": "",
+      "info-text": "",
+      "link-url": "",
+      "render-alert": "",
+      "render-instructions": "",
+      "rendered-image": "",
+      "save-alert": "",
+      "save-dashboard": "",
+      "shorten-url": "",
+      "time-range-description": "",
+      "time-range-label": ""
+    },
+    "panel": {
+      "title": ""
+    },
+    "snapshot": {
+      "cancel-button": "",
+      "copy-link-button": "",
+      "delete-button": "",
+      "deleted-message": "",
+      "expire": "",
+      "expire-day": "",
+      "expire-hour": "",
+      "expire-never": "",
+      "expire-week": "",
+      "info-text-1": "",
+      "info-text-2": "",
+      "local-button": "",
+      "mistake-message": "",
+      "name": "",
+      "timeout": "",
+      "timeout-description": "",
+      "url-label": ""
+    },
+    "tab-title": {
+      "embed": "",
+      "export": "",
+      "library-panel": "",
+      "link": "",
+      "panel-embed": "",
+      "public-dashboard": "",
+      "public-dashboard-title": "",
+      "snapshot": ""
+    },
+    "theme-picker": {
+      "current": "",
+      "dark": "",
+      "field-name": "",
+      "light": ""
+    },
+    "view-json": {
+      "copy-button": ""
+    }
+  },
+  "share-playlist": {
+    "checkbox-description": "",
+    "checkbox-label": "",
+    "copy-link-button": "",
+    "link-url-label": "",
+    "mode": "",
+    "mode-kiosk": "",
+    "mode-normal": "",
+    "mode-tv": "",
+    "title": ""
+  },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "",
+        "light-label": "",
+        "system-label": ""
+      }
+    }
+  },
+  "shared-dashboard": {
+    "fields": {
+      "timezone-label": ""
+    }
+  },
+  "shared-preferences": {
+    "fields": {
+      "home-dashboard-label": "",
+      "home-dashboard-placeholder": "",
+      "locale-label": "",
+      "locale-placeholder": "",
+      "theme-label": "",
+      "week-start-label": ""
+    },
+    "theme": {
+      "default-label": ""
+    },
+    "title": ""
+  },
+  "snapshot": {
+    "external-badge": "",
+    "name-column-header": "",
+    "url-column-header": "",
+    "view-button": ""
+  },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
+  },
+  "time-picker": {
+    "absolute": {
+      "recent-title": "",
+      "title": ""
+    },
+    "calendar": {
+      "apply-button": "",
+      "cancel-button": "",
+      "close": "",
+      "select-time": ""
+    },
+    "content": {
+      "empty-recent-list-docs": "",
+      "empty-recent-list-info": "",
+      "filter-placeholder": ""
+    },
+    "copy-paste": {
+      "copy-success-message": "",
+      "default-error-message": "",
+      "default-error-title": "",
+      "tooltip-copy": "",
+      "tooltip-paste": ""
+    },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "open-input-calendar": "",
+      "range-error": "",
+      "to-input": ""
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
+    },
+    "time-range": {
+      "aria-role": "",
+      "default-title": "",
+      "example-title": "",
+      "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
+    }
+  },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
+  "user-orgs": {
+    "current-org-button": "",
+    "name-column": "",
+    "role-column": "",
+    "select-org-button": "",
+    "title": ""
+  },
+  "user-profile": {
+    "fields": {
+      "email-error": "",
+      "email-label": "",
+      "name-error": "",
+      "name-label": "",
+      "username-label": ""
+    },
+    "tabs": {
+      "general": ""
+    }
+  },
+  "user-session": {
+    "browser-column": "",
+    "created-at-column": "",
+    "ip-column": "",
+    "revoke": "",
+    "seen-at-column": ""
+  },
+  "user-sessions": {
+    "loading": ""
+  },
+  "users-access-list": {
+    "tabs": {
+      "public-dashboard-users-tab-title": ""
+    }
+  },
+  "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
+    "picker": {
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    },
+    "textbox": {
+      "placeholder": ""
+    }
+  }
+}
