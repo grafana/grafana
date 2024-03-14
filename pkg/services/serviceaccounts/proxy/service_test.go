@@ -156,7 +156,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 			TotalCount: 2,
 			ServiceAccounts: []*serviceaccounts.ServiceAccountDTO{
 				{Login: "test"},
-				{Login: serviceaccounts.ServiceAccountPrefix + serviceaccounts.ExtSvcPrefix + "test"},
+				{Login: serviceaccounts.ExtSvcLoginPrefix + "test"},
 			},
 			Page:    1,
 			PerPage: 2,
