@@ -447,14 +447,14 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 }
 func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 	initUsers := []tests.TestUser{
-		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-satest-1", IsServiceAccount: true},
+		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-1-satest-1", IsServiceAccount: true},
 		{Name: "usertest-2", Role: string(org.RoleEditor), Login: "usertest-2", IsServiceAccount: false},
-		{Name: "satest-3", Role: string(org.RoleEditor), Login: "sa-satest-3", IsServiceAccount: true},
-		{Name: "satest-4", Role: string(org.RoleAdmin), Login: "sa-satest-4", IsServiceAccount: true},
-		{Name: "extsvc-test-5", Role: string(org.RoleNone), Login: "sa-extsvc-test-5", IsServiceAccount: true},
-		{Name: "extsvc-test-6", Role: string(org.RoleNone), Login: "sa-extsvc-test-6", IsServiceAccount: true},
-		{Name: "extsvc-test-7", Role: string(org.RoleNone), Login: "sa-extsvc-test-7", IsServiceAccount: true},
-		{Name: "extsvc-test-8", Role: string(org.RoleNone), Login: "sa-extsvc-test-8", IsServiceAccount: true},
+		{Name: "satest-3", Role: string(org.RoleEditor), Login: "sa-1-satest-3", IsServiceAccount: true},
+		{Name: "satest-4", Role: string(org.RoleAdmin), Login: "sa-1-satest-4", IsServiceAccount: true},
+		{Name: "extsvc-test-5", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-5", IsServiceAccount: true},
+		{Name: "extsvc-test-6", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-6", IsServiceAccount: true},
+		{Name: "extsvc-test-7", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-7", IsServiceAccount: true},
+		{Name: "extsvc-test-8", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-8", IsServiceAccount: true},
 	}
 
 	db, store := setupTestDatabase(t)
@@ -522,10 +522,10 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 			expectedCount: 4,
 		},
 		{
-			desc: "should return service accounts with sa-satest login",
+			desc: "should return service accounts with sa-1-satest login",
 			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
 				OrgID:        orgID,
-				Query:        "sa-satest",
+				Query:        "sa-1-satest",
 				SignedInUser: userWithPerm,
 				Filter:       serviceaccounts.FilterIncludeAll,
 			},
