@@ -5,7 +5,7 @@ import { AlertmanagerChoice, ExternalAlertmanagerConfig } from 'app/plugins/data
 import { dispatch } from 'app/store/store';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { dataSourcesApi } from '../../api/dataSourcesApi';
+import { dataSourcesApi, dataSourcesApiExtra } from '../../api/dataSourcesApi';
 import {
   ExternalAlertmanagerDataSourceWithStatus,
   useExternalDataSourceAlertmanagers,
@@ -45,7 +45,7 @@ export const SettingsProvider = (props: PropsWithChildren) => {
   const [updateDeliverySettings, updateDeliverySettingsState] =
     alertmanagerApi.endpoints.saveExternalAlertmanagersConfig.useMutation();
   const [updateAlertmanagerDataSource, updateAlertmanagerDataSourceState] =
-    dataSourcesApi.endpoints.enableOrDisableHandlingGrafanaManagedAlerts.useMutation();
+    dataSourcesApiExtra.endpoints.enableOrDisableHandlingGrafanaManagedAlerts.useMutation();
 
   const externalAlertmanagersWithStatus = useExternalDataSourceAlertmanagers();
 

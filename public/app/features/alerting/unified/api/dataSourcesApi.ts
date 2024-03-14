@@ -22,7 +22,8 @@ export const dataSourcesApi = alertingApi.injectEndpoints({
 });
 
 // I've split these up to get TypeScript type inference working properly when calling endpoints within endpoints
-dataSourcesApi.injectEndpoints({
+// I really don't like this
+export const dataSourcesApiExtra = dataSourcesApi.injectEndpoints({
   endpoints: (build) => ({
     enableOrDisableHandlingGrafanaManagedAlerts: build.mutation<
       unknown,
