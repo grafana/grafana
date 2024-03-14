@@ -64,7 +64,7 @@ jobs:
 
       - name: Get Token
         id: get_workflow_token
-        uses: peter-murray/workflow-application-token-action@v2
+        uses: peter-murray/workflow-application-token-action@v3
         with:
           application_id: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_ID }}
           application_private_key: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_KEY }}
