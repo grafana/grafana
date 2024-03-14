@@ -126,6 +126,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     pageContainer: css({
       alignItems: 'start',
+      display: 'grid',
       gridTemplateAreas: `
         "scopes controls"
         "panels panels"`,
@@ -135,6 +136,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     container: css({
       gridArea: 'panels',
+      height: '100%',
     }),
     canvasContent: css({
       label: 'canvas-content',

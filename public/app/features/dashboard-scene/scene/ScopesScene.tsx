@@ -47,7 +47,7 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
   }
 
   public enterViewMode() {
-    this.setState({ isViewing: true });
+    this.setState({ isExpanded: false, isViewing: true });
   }
 
   public exitViewMode() {
@@ -59,11 +59,9 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
   const { filters, dashboards, isExpanded, isViewing } = model.useState();
   const styles = useStyles2(getStyles);
 
-  const isExpandedComputed = isExpanded && !isViewing;
-
   return (
-    <div className={cx(styles.container, isExpandedComputed && styles.containerExpanded)}>
-      <div className={cx(styles.filtersContainer, isExpandedComputed && styles.filtersContainerExpanded)}>
+    <div className={cx(styles.container, isExpanded && styles.containerExpanded)}>
+      <div className={cx(styles.filtersContainer, isExpanded && styles.filtersContainerExpanded)}>
         {!isViewing && (
           <IconButton
             name="arrow-to-right"
@@ -75,7 +73,7 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
         <filters.Component model={filters} />
       </div>
 
-      {isExpandedComputed && (
+      {isExpanded && (
         <div className={styles.dashboardsContainer}>
           <dashboards.Component model={dashboards} />
         </div>
@@ -90,10 +88,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       gridArea: 'scopes',
-      height: '100%',
     }),
     containerExpanded: css({
       backgroundColor: theme.colors.background.primary,
+      height: '100%',
     }),
     filtersContainer: css({
       display: 'flex',
