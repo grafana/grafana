@@ -133,7 +133,6 @@ ssoSettingsApi,preview,@grafana/identity-access-team,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,true
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,true
-alertingDetailsViewV2,experimental,@grafana/alerting-squad,false,false,true
 datatrails,experimental,@grafana/dashboards-squad,false,false,true
 alertingSimplifiedRouting,preview,@grafana/alerting-squad,false,false,false
 logRowsPopoverMenu,GA,@grafana/observability-logs,false,false,true
