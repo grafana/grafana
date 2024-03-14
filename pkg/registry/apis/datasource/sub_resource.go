@@ -51,6 +51,7 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 		return nil, err
 	}
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+	ctx = contextualMiddlewares(ctx)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		body, err := io.ReadAll(req.Body)
