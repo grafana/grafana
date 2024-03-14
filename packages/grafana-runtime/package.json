@@ -73,7 +73,7 @@
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
     "rollup-plugin-sourcemaps": "0.6.3",
-    "rollup-plugin-terser": "7.0.2",
+    "@rollup/plugin-terser": "0.1.0",
     "typescript": "5.3.3"
   },
   "peerDependencies": {

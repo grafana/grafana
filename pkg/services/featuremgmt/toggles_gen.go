@@ -543,10 +543,6 @@ const (
 	// Allow collapsing of flame graph items
 	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
 
-	// FlagAlertingDetailsViewV2
-	// Enables the preview of the new alert details view
-	FlagAlertingDetailsViewV2 = "alertingDetailsViewV2"
-
 	// FlagDatatrails
 	// Enables the new core app datatrails
 	FlagDatatrails = "datatrails"
@@ -578,10 +574,6 @@ const (
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
 	FlagKubernetesFeatureToggles = "kubernetesFeatureToggles"
-
-	// FlagAlertingPreviewUpgrade
-	// Show Unified Alerting preview and upgrade page in legacy alerting
-	FlagAlertingPreviewUpgrade = "alertingPreviewUpgrade"
 
 	// FlagEnablePluginsTracingByDefault
 	// Enable plugin tracing for all external plugins
@@ -646,10 +638,6 @@ const (
 	// FlagBetterPageScrolling
 	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
 	FlagBetterPageScrolling = "betterPageScrolling"
-
-	// FlagAlertingUpgradeDryrunOnStart
-	// When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.
-	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
 
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
