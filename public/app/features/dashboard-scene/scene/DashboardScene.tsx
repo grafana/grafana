@@ -170,10 +170,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     if (this.state.isEditing) {
       this._changeTracker.startTrackingChanges();
-    }
 
-    if (this.state.scopes) {
-      // this.state.scopes.fetchScopes();
+      this.state.scopes?.enterViewMode();
     }
 
     if (!this.state.meta.isEmbedded && this.state.uid) {
@@ -219,6 +217,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.propagateEditModeChange();
 
     this._changeTracker.startTrackingChanges();
+
+    this.state.scopes?.enterViewMode();
   };
 
   public saveCompleted(saveModel: Dashboard, result: SaveDashboardResponseDTO, folderUid?: string) {
@@ -281,6 +281,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._changeTracker.stopTrackingChanges();
     // Stop url sync before updating url
     this.stopUrlSync();
+
+    this.state.scopes?.exitViewMode();
 
     // Now we can update urls
     // We are updating url and removing editview and editPanel.
@@ -777,7 +779,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardUID: this.state.uid,
       panelId,
       panelPluginId: panel?.state.pluginId,
-      scope: this.state.scopes?.getSelectedScope(),
+      scope: this.state.scopes?.state.filters.getSelectedScope(),
     };
   }
 

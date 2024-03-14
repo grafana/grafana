@@ -61,7 +61,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const { vizManager, dataPane, showLibraryPanelSaveModal } = model.useState();
   const { sourcePanel } = vizManager.useState();
   const libraryPanel = getLibraryPanel(sourcePanel.resolve());
-  const { controls } = dashboard.useState();
+  const { controls, scopes } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
@@ -74,12 +74,15 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       },
     });
 
+  containerProps.className = cx(containerProps.className, styles.container);
+
   if (!dataPane) {
     primaryProps.style.flexGrow = 1;
   }
 
   return (
-    <>
+    <div className={styles.pageContainer}>
+      {scopes && <scopes.Component model={scopes} />}
       {controls && <controls.Component model={controls} />}
       <div {...containerProps}>
         <div {...primaryProps}>
@@ -115,12 +118,24 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    pageContainer: css({
+      display: 'grid',
+      gridTemplateAreas: `
+        "scopes controls"
+        "panels panels"`,
+      gridTemplateColumns: `${theme.spacing(40)} 1fr`,
+      gridTemplateRows: 'auto 1fr',
+      height: '100%',
+    }),
+    container: css({
+      gridArea: 'panels',
+    }),
     canvasContent: css({
       label: 'canvas-content',
       display: 'flex',

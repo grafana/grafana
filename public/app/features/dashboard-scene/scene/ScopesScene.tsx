@@ -12,6 +12,7 @@ export interface ScopesSceneState extends SceneObjectState {
   dashboards: ScopesDashboardsScene;
   filters: ScopesFiltersScene;
   isExpanded: boolean;
+  isViewing: boolean;
 }
 
 export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
@@ -22,6 +23,7 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
       dashboards: new ScopesDashboardsScene(),
       filters: new ScopesFiltersScene(),
       isExpanded: false,
+      isViewing: false,
     });
 
     this.addActivationHandler(() => {
@@ -40,36 +42,40 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
     });
   }
 
-  public setIsExpanded(isExpanded: boolean) {
-    this.setState({ isExpanded });
+  public toggleIsExpanded() {
+    this.setState({ isExpanded: !this.state.isExpanded });
   }
 
-  public fetchScopes() {
-    this.state.filters.fetchScopes();
+  public enterViewMode() {
+    this.setState({ isViewing: true });
   }
 
-  public getSelectedScope() {
-    return this.state.filters.getSelectedScope();
+  public exitViewMode() {
+    this.setState({ isViewing: false });
   }
 }
 
 export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>) {
-  const { filters, dashboards, isExpanded } = model.useState();
+  const { filters, dashboards, isExpanded, isViewing } = model.useState();
   const styles = useStyles2(getStyles);
 
+  const isExpandedComputed = isExpanded && !isViewing;
+
   return (
-    <div className={cx(styles.container, isExpanded && styles.containerExpanded)}>
-      <div className={cx(styles.filtersContainer, isExpanded && styles.filtersContainerExpanded)}>
-        <IconButton
-          name="arrow-to-right"
-          aria-label={isExpanded ? 'Collapse scope filters' : 'Expand scope filters'}
-          className={cx(!isExpanded && styles.iconNotExpanded)}
-          onClick={() => model.setIsExpanded(!isExpanded)}
-        />
+    <div className={cx(styles.container, isExpandedComputed && styles.containerExpanded)}>
+      <div className={cx(styles.filtersContainer, isExpandedComputed && styles.filtersContainerExpanded)}>
+        {!isViewing && (
+          <IconButton
+            name="arrow-to-right"
+            aria-label={isExpanded ? 'Collapse scope filters' : 'Expand scope filters'}
+            className={cx(!isExpanded && styles.iconNotExpanded)}
+            onClick={() => model.toggleIsExpanded()}
+          />
+        )}
         <filters.Component model={filters} />
       </div>
 
-      {isExpanded && <dashboards.Component model={dashboards} />}
+      {isExpandedComputed && <dashboards.Component model={dashboards} />}
     </div>
   );
 }

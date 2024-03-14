@@ -42,7 +42,7 @@ interface RendererProps extends EmbeddedDashboardProps {
 
 function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: RendererProps) {
   const [isActive, setIsActive] = useState(false);
-  const { controls, body } = model.useState();
+  const { controls, body, scopes } = model.useState();
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -65,6 +65,7 @@ function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: Rende
 
   return (
     <div className={styles.canvas}>
+      {scopes && <scopes.Component model={scopes} />}
       {controls && <controls.Component model={controls} />}
       <div className={styles.body}>
         <body.Component model={body} />
@@ -100,8 +101,12 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     canvas: css({
       label: 'canvas-content',
-      display: 'flex',
-      flexDirection: 'column',
+      display: 'grid',
+      gridTemplateAreas: `
+        "scopes controls"
+        "panels panels"`,
+      gridTemplateColumns: `${theme.spacing(40)} 1fr`,
+      gridTemplateRows: 'auto 1fr',
       flexBasis: '100%',
       flexGrow: 1,
     }),
@@ -110,6 +115,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       gap: '8px',
+      gridArea: 'panels',
       marginBottom: theme.spacing(2),
     }),
     controls: css({
