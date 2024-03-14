@@ -12,6 +12,7 @@ import { changeRangeAction } from 'app/features/explore/state/time';
 import { ExploreState } from 'app/types';
 
 import { getUrlStateFromPaneState } from '../index';
+import { InitState } from '../internal.utils';
 
 /*
 We want to update the URL when:
@@ -43,7 +44,7 @@ export function syncToURLPredicate(paused: MutableRefObject<boolean>, action: Ac
 export function syncToURL(
   exploreState: ExploreState,
   prevParams: MutableRefObject<UrlQueryMap>,
-  initState: MutableRefObject<'pending' | 'done' | 'notstarted'>,
+  initState: MutableRefObject<InitState>,
   location: LocationService
 ) {
   const panesQueryParams = Object.entries(exploreState.panes).reduce((acc, [id, paneState]) => {

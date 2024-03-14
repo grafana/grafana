@@ -16,6 +16,7 @@ import {
   getDefaultQuery,
   getPaneDatasource,
   getQueryFilter,
+  InitState,
   isMixedDatasource,
   removeQueriesWithInvalidDatasource,
 } from '../internal.utils';
@@ -23,7 +24,7 @@ import { ExploreURLV1 } from '../migrators/v1';
 
 export function initializeFromURL(
   urlState: ExploreURLV1,
-  initState: MutableRefObject<'pending' | 'done' | 'notstarted'>,
+  initState: MutableRefObject<InitState>,
   orgId: number,
   dispatch: ThunkDispatch,
   location: LocationService

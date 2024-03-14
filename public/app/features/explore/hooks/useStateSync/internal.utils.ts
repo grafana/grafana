@@ -9,6 +9,8 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { isFulfilled } from '../utils';
 
+export type InitState = 'pending' | 'done' | 'notstarted';
+
 /**
  * Compare 2 explore urls and return a map of what changed. Used to update the local state with all the
  * side effects needed.
