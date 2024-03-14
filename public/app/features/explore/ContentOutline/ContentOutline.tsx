@@ -131,7 +131,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                 width={getRootWidth(contentOutlineExpanded, isCollapsible(item))}
               />
               {item.children &&
-                item.children.length > 0 &&
                 (!item.mergeSingleChild || item.children.length !== 1) &&
                 sectionExpanded &&
                 item.children.map((child, i) => (
