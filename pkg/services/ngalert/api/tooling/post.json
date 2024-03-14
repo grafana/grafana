@@ -96,20 +96,6 @@
    "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
    "type": "object"
   },
-  "AlertPair": {
-   "properties": {
-    "alertRule": {
-     "$ref": "#/definitions/AlertRuleUpgrade"
-    },
-    "error": {
-     "type": "string"
-    },
-    "legacyAlert": {
-     "$ref": "#/definitions/LegacyAlert"
-    }
-   },
-   "type": "object"
-  },
   "AlertQuery": {
    "properties": {
     "datasourceUid": {
@@ -379,23 +365,6 @@
     }
    },
    "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
-   "type": "object"
-  },
-  "AlertRuleUpgrade": {
-   "properties": {
-    "sendsTo": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "title": {
-     "type": "string"
-    },
-    "uid": {
-     "type": "string"
-    }
-   },
    "type": "object"
   },
   "AlertingFileExport": {
@@ -686,20 +655,6 @@
    "title": "Config is the top-level configuration for Alertmanager's config files.",
    "type": "object"
   },
-  "ContactPair": {
-   "properties": {
-    "contactPoint": {
-     "$ref": "#/definitions/ContactPointUpgrade"
-    },
-    "error": {
-     "type": "string"
-    },
-    "legacyChannel": {
-     "$ref": "#/definitions/LegacyChannel"
-    }
-   },
-   "type": "object"
-  },
   "ContactPointExport": {
    "properties": {
     "name": {
@@ -719,20 +674,6 @@
    "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
    "type": "object"
   },
-  "ContactPointUpgrade": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "routeMatchers": {
-     "$ref": "#/definitions/ObjectMatchers"
-    },
-    "type": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "ContactPoints": {
    "items": {
     "$ref": "#/definitions/EmbeddedContactPoint"
@@ -744,48 +685,6 @@
    "format": "uint8",
    "title": "CounterResetHint contains the known information about a counter reset,",
    "type": "integer"
-  },
-  "DashboardUpgrade": {
-   "properties": {
-    "dashboardId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "dashboardName": {
-     "type": "string"
-    },
-    "dashboardUid": {
-     "type": "string"
-    },
-    "error": {
-     "type": "string"
-    },
-    "folderName": {
-     "type": "string"
-    },
-    "folderUid": {
-     "type": "string"
-    },
-    "migratedAlerts": {
-     "items": {
-      "$ref": "#/definitions/AlertPair"
-     },
-     "type": "array"
-    },
-    "newFolderName": {
-     "type": "string"
-    },
-    "newFolderUid": {
-     "type": "string"
-    },
-    "provisioned": {
-     "type": "boolean"
-    },
-    "warning": {
-     "type": "string"
-    }
-   },
-   "type": "object"
   },
   "DataLink": {
    "description": "DataLink define what",
@@ -2075,41 +1974,6 @@
    },
    "type": "array"
   },
-  "LegacyAlert": {
-   "properties": {
-    "dashboardId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "id": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "name": {
-     "type": "string"
-    },
-    "panelId": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
-  "LegacyChannel": {
-   "properties": {
-    "id": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "name": {
-     "type": "string"
-    },
-    "type": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "LinkTransformationConfig": {
    "properties": {
     "expression": {
@@ -2501,50 +2365,6 @@
    },
    "type": "object"
   },
-  "OrgMigrationState": {
-   "properties": {
-    "migratedChannels": {
-     "items": {
-      "$ref": "#/definitions/ContactPair"
-     },
-     "type": "array"
-    },
-    "migratedDashboards": {
-     "items": {
-      "$ref": "#/definitions/DashboardUpgrade"
-     },
-     "type": "array"
-    },
-    "orgId": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
-  "OrgMigrationSummary": {
-   "properties": {
-    "hasErrors": {
-     "type": "boolean"
-    },
-    "newAlerts": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "newChannels": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "newDashboards": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "removed": {
-     "type": "boolean"
-    }
-   },
-   "type": "object"
-  },
   "PagerdutyConfig": {
    "properties": {
     "class": {
@@ -2645,6 +2465,7 @@
    "type": "object"
   },
   "PostableApiAlertingConfig": {
+   "description": "nolint:revive",
    "properties": {
     "global": {
      "$ref": "#/definitions/GlobalConfig"
@@ -2688,6 +2509,7 @@
    "type": "object"
   },
   "PostableApiReceiver": {
+   "description": "nolint:revive",
    "properties": {
     "discord_configs": {
      "items": {
@@ -4354,7 +4176,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -4390,7 +4211,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "UpdateRuleGroupResponse": {
@@ -4835,14 +4656,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -8479,221 +8298,6 @@
     "summary": "Query state history.",
     "tags": [
      "history"
-    ]
-   }
-  },
-  "/v1/upgrade/channels": {
-   "post": {
-    "operationId": "RoutePostUpgradeAllChannels",
-    "parameters": [
-     {
-      "default": false,
-      "description": "If true, legacy alert and notification channel upgrades from previous runs will be skipped. Otherwise, they will be replaced.",
-      "in": "query",
-      "name": "SkipExisting",
-      "type": "boolean"
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationSummary",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationSummary"
-      }
-     }
-    },
-    "summary": "Upgrade all legacy notification channels for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   }
-  },
-  "/v1/upgrade/channels/{ChannelID}": {
-   "post": {
-    "operationId": "RoutePostUpgradeChannel",
-    "parameters": [
-     {
-      "description": "Channel ID of legacy notification channel.",
-      "in": "path",
-      "name": "ChannelID",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationSummary",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationSummary"
-      }
-     }
-    },
-    "summary": "Upgrade a single legacy notification channel for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   }
-  },
-  "/v1/upgrade/dashboards": {
-   "post": {
-    "operationId": "RoutePostUpgradeAllDashboards",
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationSummary",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationSummary"
-      }
-     }
-    },
-    "summary": "Upgrade all legacy dashboard alerts for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   }
-  },
-  "/v1/upgrade/dashboards/{DashboardID}": {
-   "post": {
-    "operationId": "RoutePostUpgradeDashboard",
-    "parameters": [
-     {
-      "default": false,
-      "description": "If true, legacy alert and notification channel upgrades from previous runs will be skipped. Otherwise, they will be replaced.",
-      "in": "query",
-      "name": "SkipExisting",
-      "type": "boolean"
-     },
-     {
-      "description": "Dashboard ID of dashboard alert.",
-      "in": "path",
-      "name": "DashboardID",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationSummary",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationSummary"
-      }
-     }
-    },
-    "summary": "Upgrade all legacy dashboard alerts on a dashboard for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   }
-  },
-  "/v1/upgrade/dashboards/{DashboardID}/panels/{PanelID}": {
-   "post": {
-    "operationId": "RoutePostUpgradeAlert",
-    "parameters": [
-     {
-      "description": "Dashboard ID of dashboard alert.",
-      "in": "path",
-      "name": "DashboardID",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "description": "Panel ID of dashboard alert.",
-      "in": "path",
-      "name": "PanelID",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationSummary",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationSummary"
-      }
-     }
-    },
-    "summary": "Upgrade single legacy dashboard alert for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   }
-  },
-  "/v1/upgrade/org": {
-   "delete": {
-    "operationId": "RouteDeleteOrgUpgrade",
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     }
-    },
-    "summary": "Delete existing alerting upgrade for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   },
-   "get": {
-    "operationId": "RouteGetOrgUpgrade",
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationState",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationState"
-      }
-     }
-    },
-    "summary": "Get existing alerting upgrade for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   },
-   "post": {
-    "operationId": "RoutePostUpgradeOrg",
-    "parameters": [
-     {
-      "default": false,
-      "description": "If true, legacy alert and notification channel upgrades from previous runs will be skipped. Otherwise, they will be replaced.",
-      "in": "query",
-      "name": "SkipExisting",
-      "type": "boolean"
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationSummary",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationSummary"
-      }
-     }
-    },
-    "summary": "Upgrade all legacy alerts for the current organization.",
-    "tags": [
-     "upgrade"
     ]
    }
   }
