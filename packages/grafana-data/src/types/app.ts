@@ -115,7 +115,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     this._extensionConfigs.push({
       ...extension,
       type: PluginExtensionTypes.component,
-    } as PluginExtensionComponentConfig<Props>);
+    } as PluginExtensionComponentConfig);
 
     return this;
   }
