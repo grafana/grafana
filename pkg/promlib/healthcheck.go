@@ -16,11 +16,8 @@ const (
 	refID = "__healthcheck__"
 )
 
-var logger = backend.NewLoggerWith("logger", "tsdb.prometheus")
-
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
-	logger := logger.FromContext(ctx)
 	ds, err := s.getInstance(ctx, req.PluginContext)
 
 	// check that the datasource exists
@@ -34,17 +31,17 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	hc, err := healthcheck(ctx, req, ds)
 	if err != nil {
-		logger.Warn("Error performing prometheus healthcheck", "err", err.Error())
+		s.logger.Warn("Error performing prometheus healthcheck", "err", err.Error())
 		return nil, err
 	}
 
-	heuristics, err := getHeuristics(ctx, ds)
+	heuristics, err := getHeuristics(ctx, ds, s.logger)
 	if err != nil {
-		logger.Warn("Failed to get prometheus heuristics", "err", err.Error())
+		s.logger.Warn("Failed to get prometheus heuristics", "err", err.Error())
 	} else {
 		jsonDetails, err := json.Marshal(heuristics)
 		if err != nil {
-			logger.Warn("Failed to marshal heuristics", "err", err)
+			s.logger.Warn("Failed to marshal heuristics", "err", err)
 		} else {
 			hc.JSONDetails = jsonDetails
 		}
