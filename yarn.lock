@@ -4252,7 +4252,7 @@ __metadata:
     rc-drawer: "npm:7.1.0"
     rc-slider: "npm:10.5.0"
     rc-time-picker: "npm:^3.7.3"
-    rc-tooltip: "npm:6.1.3"
+    rc-tooltip: "npm:6.2.0"
     react: "npm:18.2.0"
     react-beautiful-dnd: "npm:13.1.1"
     react-calendar: "npm:4.8.0"
@@ -6700,7 +6700,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/trigger@npm:^1.18.0, @rc-component/trigger@npm:^1.5.0":
+"@rc-component/trigger@npm:^1.5.0":
   version: 1.18.2
   resolution: "@rc-component/trigger@npm:1.18.2"
   dependencies:
@@ -6714,6 +6714,23 @@ __metadata:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
   checksum: 10/920cf00157a2705606d3852ccbc9736e20e3869559b187dd65b2021bcd187470bd7157ae12de14e8bb91660a8dc5ad78a00929a8e493fddc414f264153d1ac43
+  languageName: node
+  linkType: hard
+
+"@rc-component/trigger@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "@rc-component/trigger@npm:2.0.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.23.2"
+    "@rc-component/portal": "npm:^1.1.0"
+    classnames: "npm:^2.3.2"
+    rc-motion: "npm:^2.0.0"
+    rc-resize-observer: "npm:^1.3.1"
+    rc-util: "npm:^5.38.0"
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: 10/6ae8eee1bbc639aa2426d1a0e00cc4bfc93e54e7cd57fcf97971d3acdb72de4b852b2377d4cca778de898f7024444da03ed0f41a94d702daf5a9c73b45fbb920
   languageName: node
   linkType: hard
 
@@ -26084,17 +26101,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tooltip@npm:6.1.3":
-  version: 6.1.3
-  resolution: "rc-tooltip@npm:6.1.3"
+"rc-tooltip@npm:6.2.0":
+  version: 6.2.0
+  resolution: "rc-tooltip@npm:6.2.0"
   dependencies:
     "@babel/runtime": "npm:^7.11.2"
-    "@rc-component/trigger": "npm:^1.18.0"
+    "@rc-component/trigger": "npm:^2.0.0"
     classnames: "npm:^2.3.1"
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/cf98afe8ad44d5fa9e68ba33e58a763d63a66239c947a2a4ef90bd74ec480466ed876bb2c29b9e1203ff35e728f2b641aa8067fcbfd21fdbbb37b1a7b13d55dc
+  checksum: 10/2be8fd3da8666df1d83485e5532e11eacf4dd3686efed9b4f0bc78caeb647196cac62104e54b9ce5dbc3051a9df70e07e54557f3273b632bb474a73c8bca0a2d
   languageName: node
   linkType: hard
 
