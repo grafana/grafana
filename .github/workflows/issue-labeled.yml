@@ -53,7 +53,7 @@ jobs:
           echo "TEAM=${TEAM}" >> $GITHUB_ENV
 
       - name: "Prepare payload"
-        uses: frabert/replace-string-action@v2.0
+        uses: frabert/replace-string-action@v2.5
         id: preparePayload
         with:
           # replace double quotes with single quotes to avoid breaking the JSON payload sent to Slack
