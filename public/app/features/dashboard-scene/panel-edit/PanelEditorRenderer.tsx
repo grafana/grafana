@@ -144,6 +144,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     pageContainer: css({
       alignItems: 'start',
+      display: 'grid',
       gridTemplateAreas: `
         "panels"`,
       gridTemplateColumns: `1fr`,
