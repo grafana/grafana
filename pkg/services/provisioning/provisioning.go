@@ -275,6 +275,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	ruleService := provisioning.NewAlertRuleService(
 		st,
 		st,
+		ps.folderService,
 		ps.dashboardService,
 		ps.quotaService,
 		ps.SQLStore,
