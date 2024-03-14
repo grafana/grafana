@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -369,7 +370,7 @@ func TestService_List(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "should return successfully",
+			name: "should return all oauth providers successfully without saml",
 			setup: func(env testEnv) {
 				env.store.ExpectedSSOSettings = []*models.SSOSettings{
 					{
@@ -423,7 +424,6 @@ func TestService_List(t *testing.T) {
 						"enabled": false,
 					},
 				}
-				env.service.licensing = &licensing.OSSLicensingService{}
 			},
 			want: []*models.SSOSettings{
 				{
@@ -474,6 +474,122 @@ func TestService_List(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "should return all sso providers successfully including saml",
+			setup: func(env testEnv) {
+				env.store.ExpectedSSOSettings = []*models.SSOSettings{
+					{
+						Provider: "github",
+						Settings: map[string]any{
+							"enabled":       true,
+							"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+						},
+						Source: models.DB,
+					},
+					{
+						Provider: "okta",
+						Settings: map[string]any{
+							"enabled":      false,
+							"other_secret": base64.RawStdEncoding.EncodeToString([]byte("other_secret")),
+						},
+						Source: models.DB,
+					},
+				}
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
+
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"enabled":       false,
+						"client_id":     "client_id",
+						"client_secret": "secret1",
+						"token_url":     "token_url",
+					},
+					"okta": {
+						"enabled":       false,
+						"client_id":     "client_id",
+						"client_secret": "coming-from-system",
+						"other_secret":  "secret2",
+						"token_url":     "token_url",
+					},
+					"gitlab": {
+						"enabled": false,
+					},
+					"generic_oauth": {
+						"enabled": false,
+					},
+					"google": {
+						"enabled": false,
+					},
+					"azuread": {
+						"enabled": false,
+					},
+					"grafana_com": {
+						"enabled": false,
+					},
+					"saml": {
+						"enabled": false,
+					},
+				}
+				license := licensingtest.NewFakeLicensing()
+				license.On("FeatureEnabled", "saml").Return(true)
+				env.service.licensing = license
+			},
+			want: []*models.SSOSettings{
+				{
+					Provider: "github",
+					Settings: map[string]any{
+						"enabled":       true,
+						"client_id":     "client_id",
+						"client_secret": "decrypted-client-secret", // client_secret is coming from the database, must be decrypted first
+						"token_url":     "token_url",
+					},
+					Source: models.DB,
+				},
+				{
+					Provider: "okta",
+					Settings: map[string]any{
+						"enabled":       false,
+						"client_id":     "client_id",
+						"client_secret": "coming-from-system", // client_secret is coming from the system, must not be decrypted
+						"other_secret":  "decrypted-other-secret",
+						"token_url":     "token_url",
+					},
+					Source: models.DB,
+				},
+				{
+					Provider: "gitlab",
+					Settings: map[string]any{"enabled": false},
+					Source:   models.System,
+				},
+				{
+					Provider: "generic_oauth",
+					Settings: map[string]any{"enabled": false},
+					Source:   models.System,
+				},
+				{
+					Provider: "google",
+					Settings: map[string]any{"enabled": false},
+					Source:   models.System,
+				},
+				{
+					Provider: "azuread",
+					Settings: map[string]any{"enabled": false},
+					Source:   models.System,
+				},
+				{
+					Provider: "grafana_com",
+					Settings: map[string]any{"enabled": false},
+					Source:   models.System,
+				},
+				{
+					Provider: "saml",
+					Settings: map[string]any{"enabled": false},
+					Source:   models.System,
+				},
+			},
 		},
 		{
 			name: "should return error if any of the fallback strategies was not found",
