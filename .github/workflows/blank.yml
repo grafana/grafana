@@ -7,23 +7,22 @@ on:
 
 jobs:
   sync:
-  runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  steps:
+    steps:
       - uses: actions/checkout@v2
 
       - name: Sync Upstream-Downstream
-    uses: dchourasia/sync-upstream-repo@1.01
-    with:
-    # URL of upstream gitHub repo
-    upstream_repo: https://github.com/grafana/grafana
-    # Branch to merge from upstream (defaults to downstream branch)
-    upstream_branch: master
-    # URL of downstream gitHub  repo
-    downstream_repo: https://github.com/QuentinBessot/grafana
-    # Branch to merge into downstream
-    downstream_branch: master
-    # GitHub Bot token
-    token: ${{ secrets.GITHUB_TOKEN }}
-          
-          
+        uses: dchourasia/sync-upstream-repo@1.01
+        with:
+          # URL of upstream GitHub repo
+          upstream_repo: https://github.com/grafana/grafana
+          # Branch to merge from upstream (defaults to downstream branch)
+          upstream_branch: master
+          # URL of downstream GitHub repo
+          downstream_repo: https://github.com/QuentinBessot/grafana
+          # Branch to merge into downstream
+          downstream_branch: master
+          # GitHub Bot token
+          token: ${{ secrets.GITHUB_TOKEN }}
+        
