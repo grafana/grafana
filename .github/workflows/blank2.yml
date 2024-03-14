@@ -1,0 +1,33 @@
+on:
+  schedule:
+    - cron: '0 7 * * 1,4' # scheduled at 07:00 every Monday and Thursday
+  workflow_dispatch:
+
+jobs:
+  sync_with_upstream:
+    runs-on: ubuntu-latest
+    name: Sync master with upstream latest
+
+    steps:
+    - name: Checkout master
+      uses: actions/checkout@v2
+      with:
+        ref: master
+        
+    - name: Authenticate Snyk
+      run: snyk auth
+        
+    - name: Pull upstream changes
+      id: sync
+      uses: aormsby/Fork-Sync-With-Upstream-action@v3.1
+      with:
+        target_sync_branch: main
+        target_repo_token: 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
+        upstream_sync_branch: main
+        upstream_sync_repo: grafana/grafana
+
+        # Set test_mode true to run tests instead of the true action!!
+        test_mode: true
+
+    - name: Timestamp
+      run: date
