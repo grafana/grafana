@@ -14,8 +14,6 @@ jobs:
       with:
         ref: main
         
-    - name: Authenticate Snyk
-      run: snyk auth
         
     - name: Pull upstream changes
       id: sync
