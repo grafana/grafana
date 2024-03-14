@@ -35,6 +35,7 @@ import {
   setPluginExtensionGetter,
   setEmbeddedDashboard,
   setAppEvents,
+  setDataTrailEmbedded,
   setReturnToPreviousHook,
   setPluginExtensionsHook,
 } from '@grafana/runtime';
@@ -145,6 +146,7 @@ export class GrafanaApp {
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setEmbeddedDashboard(EmbeddedDashboardLazy);
+      setDataTrailEmbedded(DataTrailEmbedded);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
 
