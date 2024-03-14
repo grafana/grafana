@@ -658,4 +658,8 @@ const (
 	// FlagEmailVerificationEnforcement
 	// Force email verification for users, even when authenticating through sso.
 	FlagEmailVerificationEnforcement = "emailVerificationEnforcement"
+
+	// FlagSsoSettingsSAML
+	// Use the new SSO Settings API to configure the SAML connector
+	FlagSsoSettingsSAML = "ssoSettingsSAML"
 )

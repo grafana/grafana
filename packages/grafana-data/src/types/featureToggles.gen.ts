@@ -181,4 +181,5 @@ export interface FeatureToggles {
   alertingUpgradeDryrunOnStart?: boolean;
   scopeFilters?: boolean;
   emailVerificationEnforcement?: boolean;
+  ssoSettingsSAML?: boolean;
 }
