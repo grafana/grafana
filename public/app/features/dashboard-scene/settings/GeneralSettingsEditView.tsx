@@ -69,7 +69,12 @@ export class GeneralSettingsEditView
   }
 
   public getLiveNowTimer(): behaviors.LiveNowTimer {
-    return sceneGraph.findObject(this._dashboard, (s) => s instanceof behaviors.LiveNowTimer) as behaviors.LiveNowTimer;
+    const liveNowTimer = sceneGraph.findObject(this._dashboard, (s) => s instanceof behaviors.LiveNowTimer);
+    if (liveNowTimer instanceof behaviors.LiveNowTimer) {
+      return liveNowTimer;
+    } else {
+      throw new Error('LiveNowTimer could not be found');
+    }
   }
 
   public getDashboardControls() {
