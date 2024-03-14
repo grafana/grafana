@@ -8,9 +8,13 @@
 //      "executedQueryString": "SELECT * FROM tbl WHERE false"
 //  }
 //  Name: 
-//  Dimensions: 0 Fields by 0 Rows
-//  +
-//  +
+//  Dimensions: 3 Fields by 0 Rows
+//  +--------------------+------------------+-----------------+
+//  | Name: time         | Name: v          | Name: c         |
+//  | Labels:            | Labels:          | Labels:         |
+//  | Type: []*time.Time | Type: []*float64 | Type: []*string |
+//  +--------------------+------------------+-----------------+
+//  +--------------------+------------------+-----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -26,10 +30,39 @@
           ],
           "executedQueryString": "SELECT * FROM tbl WHERE false"
         },
-        "fields": []
+        "fields": [
+          {
+            "name": "time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "v",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "c",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          }
+        ]
       },
       "data": {
-        "values": []
+        "values": [
+          [],
+          [],
+          []
+        ]
       }
     }
   ]

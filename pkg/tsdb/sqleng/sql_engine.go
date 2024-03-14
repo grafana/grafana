@@ -285,17 +285,6 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	frame.Meta.ExecutedQueryString = interpolatedQuery
 
-	// If no rows were returned, clear any previously set `Fields` with a single empty `data.Field` slice.
-	// Then assign `queryResult.dataResponse.Frames` the current single frame with that single empty Field.
-	// This assures 1) our visualization doesn't display unwanted empty fields, and also that 2)
-	// additionally-needed frame data stays intact and is correctly passed to our visulization.
-	if frame.Rows() == 0 {
-		frame.Fields = []*data.Field{}
-		queryResult.dataResponse.Frames = data.Frames{frame}
-		ch <- queryResult
-		return
-	}
-
 	if err := convertSQLTimeColumnsToEpochMS(frame, qm); err != nil {
 		errAppendDebug("converting time columns failed", err, interpolatedQuery)
 		return
@@ -327,8 +316,23 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 			}
 		}
 
-		tsSchema := frame.TimeSeriesSchema()
-		if tsSchema.Type == data.TimeSeriesTypeLong {
+		frameIsLong := frame.TimeSeriesSchema().Type == data.TimeSeriesTypeLong
+
+		// we can only continue if we have rows
+		if frame.Rows() == 0 {
+			// if it is a long-frame, normally those are converted to wide, which changes their shape.
+			// this is no possible when no rows, so it is not possible to know what the shape should be.
+			// so we clear the fields
+			if frameIsLong {
+				frame.Fields = []*data.Field{}
+			}
+
+			queryResult.dataResponse.Frames = data.Frames{frame}
+			ch <- queryResult
+			return
+		}
+
+		if frameIsLong {
 			var err error
 			originalData := frame
 			frame, err = data.LongToWide(frame, qm.FillMissing)

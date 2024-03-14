@@ -1274,8 +1274,7 @@ func TestIntegrationMySQL(t *testing.T) {
 			frames := queryResult.Frames
 			require.Len(t, frames, 1)
 			require.Equal(t, 0, frames[0].Rows())
-			require.NotNil(t, frames[0].Fields)
-			require.Empty(t, frames[0].Fields)
+			require.Len(t, frames[0].Fields, 2)
 		})
 	})
 }
