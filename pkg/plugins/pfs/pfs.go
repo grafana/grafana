@@ -1,14 +1,15 @@
 package pfs
 
 import (
+	"fmt"
+	"io/fs"
+	"strings"
+
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/load"
 	"encoding/json"
-	"fmt"
-	"github.com/grafana/grafana/pkg/cuectx"
-	"io/fs"
-	"strings"
+	"github.com/grafana/grafana/pkg/codegen"
 )
 
 // PackageName is the name of the CUE package that Grafana will load when
@@ -28,7 +29,7 @@ var schemaInterface = map[string]SchemaInterface{
 
 // PermittedCUEImports returns the list of import paths that may be used in a
 // plugin's grafanaplugin cue package.
-var PermittedCUEImports = cuectx.PermittedCUEImports
+var PermittedCUEImports = codegen.PermittedCUEImports
 
 func importAllowed(path string) bool {
 	for _, p := range PermittedCUEImports() {
@@ -60,10 +61,6 @@ func init() {
 //
 // This function parses exactly one plugin. It does not descend into
 // subdirectories to search for additional plugin.json or .cue files.
-//
-// Calling this with a nil [thema.Runtime] (the singleton returned from
-// [cuectx.GrafanaThemaRuntime] is used) will memoize certain CUE operations.
-// Prefer passing nil unless a different thema.Runtime is specifically required.
 //
 // [GrafanaPlugin]: https://github.com/grafana/grafana/blob/main/pkg/plugins/pfs/grafanaplugin.cue
 func ParsePluginFS(ctx *cue.Context, fsys fs.FS, dir string) (ParsedPlugin, error) {

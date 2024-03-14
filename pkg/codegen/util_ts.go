@@ -1,4 +1,4 @@
-package cuectx
+package codegen
 
 import (
 	"fmt"

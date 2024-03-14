@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/cuetsy/ts"
 	"github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/grafana/pkg/codegen/generators"
-	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 // TSVeneerIndexJenny generates an index.gen.ts file with references to all
@@ -44,7 +43,7 @@ func (gen *genTSVeneerIndex) Generate(sfg ...SchemaForGen) (*codejen.File, error
 	for _, def := range sfg {
 		f, err := generators.GenerateTypesTS(def.CueFile, &generators.TSConfig{
 			CuetsyConfig: &cuetsy.Config{
-				ImportMapper: cuectx.MapCUEImportToTS,
+				ImportMapper: MapCUEImportToTS,
 			},
 			RootName: def.Name,
 			IsGroup:  def.IsGroup,

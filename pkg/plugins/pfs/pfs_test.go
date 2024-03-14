@@ -2,6 +2,7 @@ package pfs
 
 import (
 	"archive/zip"
+	"cuelang.org/go/cue/cuecontext"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -9,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -171,7 +171,7 @@ func TestParsePluginTestdata(t *testing.T) {
 		tab[ent.Name()] = tst
 	}
 
-	lib := cuectx.GrafanaThemaRuntime()
+	lib := cuecontext.New()
 	for name, otst := range tab {
 		tst := otst // otherwise var is shadowed within func by looping
 		t.Run(name, func(t *testing.T) {
@@ -179,7 +179,7 @@ func TestParsePluginTestdata(t *testing.T) {
 				t.Skip(tst.skip)
 			}
 
-			pp, err := ParsePluginFS(tst.tfs, lib)
+			pp, err := ParsePluginFS(lib, tst.tfs, tst.subpath)
 			if tst.err == nil {
 				require.NoError(t, err, "unexpected error while parsing plugin tree")
 			} else {
@@ -271,7 +271,7 @@ func TestParseTreeZips(t *testing.T) {
 		tab[ent.Name()] = tst
 	}
 
-	lib := cuectx.GrafanaThemaRuntime()
+	lib := cuecontext.New()
 	for name, otst := range tab {
 		tst := otst // otherwise var is shadowed within func by looping
 		t.Run(name, func(t *testing.T) {
@@ -279,7 +279,7 @@ func TestParseTreeZips(t *testing.T) {
 				t.Skip(tst.skip)
 			}
 
-			pp, err := ParsePluginFS(tst.tfs, lib)
+			pp, err := ParsePluginFS(lib, tst.tfs, otst.subpath)
 			if tst.err == nil {
 				require.NoError(t, err, "unexpected error while parsing plugin fs")
 			} else {

@@ -5,7 +5,6 @@ import (
 	"github.com/grafana/cuetsy"
 	"github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/grafana/pkg/codegen/generators"
-	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 type ApplyFunc func(sfg SchemaForGen, file *ast.File)
@@ -25,7 +24,7 @@ func (j TSTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
 	f, err := generators.GenerateTypesTS(sfg.CueFile, &generators.TSConfig{
 		CuetsyConfig: &cuetsy.Config{
 			Export:       true,
-			ImportMapper: cuectx.MapCUEImportToTS,
+			ImportMapper: MapCUEImportToTS,
 		},
 		RootName: sfg.Name,
 		IsGroup:  sfg.IsGroup,

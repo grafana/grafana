@@ -21,8 +21,16 @@ import (
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
 	"github.com/grafana/grafana/pkg/codegen"
-	"github.com/grafana/grafana/pkg/cuectx"
 )
+
+// CoreDefParentPath is the path, relative to the repository root, where
+// each child directory is expected to contain .cue files defining one
+// Core kind.
+var CoreDefParentPath = "kinds"
+
+// TSCoreKindParentPath is the path, relative to the repository root, to the directory that
+// contains one directory per kind, full of generated TS kind output: types and default consts.
+var TSCoreKindParentPath = filepath.Join("packages", "grafana-schema", "src", "raw")
 
 func main() {
 	if len(os.Args) > 1 {
@@ -41,12 +49,14 @@ func main() {
 		&codegen.GoSpecJenny{},
 		&codegen.K8ResourcesJenny{},
 		&codegen.CoreRegistryJenny{},
-		codegen.LatestMajorsOrXJenny(cuectx.TSCoreKindParentPath),
+		codegen.LatestMajorsOrXJenny(TSCoreKindParentPath),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 	)
 
 	header := codegen.SlashHeaderMapper("kinds/gen.go")
 	coreKindsGen.AddPostprocessors(header)
+
+	ctx := cuecontext.New()
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -55,9 +65,9 @@ func main() {
 	}
 	groot := filepath.Dir(cwd)
 
-	f := os.DirFS(filepath.Join(groot, cuectx.CoreDefParentPath))
+	f := os.DirFS(filepath.Join(groot, CoreDefParentPath))
 	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
-	all, err := loadCueFiles(kinddirs)
+	all, err := loadCueFiles(ctx, kinddirs)
 	if err != nil {
 		die(err)
 	}
@@ -71,7 +81,7 @@ func main() {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
 
-	commfsys := elsedie(genCommon(groot))("common schemas failed")
+	commfsys := elsedie(genCommon(ctx, groot))("common schemas failed")
 	commfsys = elsedie(commfsys.Map(header))("failed gen header on common fsys")
 	if err = jfs.Merge(commfsys); err != nil {
 		die(err)
@@ -88,7 +98,7 @@ func main() {
 
 type dummyCommonJenny struct{}
 
-func genCommon(groot string) (*codejen.FS, error) {
+func genCommon(ctx *cue.Context, groot string) (*codejen.FS, error) {
 	fsys := codejen.NewFS()
 	path := filepath.Join("packages", "grafana-schema", "src", "common")
 	fsys = elsedie(fsys.Map(packageMapper))("failed remapping fs")
@@ -107,7 +117,7 @@ func genCommon(groot string) (*codejen.FS, error) {
 		return nil, instance.Err
 	}
 
-	v := cuecontext.New().BuildInstance(instance)
+	v := ctx.BuildInstance(instance)
 	b := elsedie(cuetsy.Generate(v, cuetsy.Config{
 		Export: true,
 	}))("failed to generate common schema TS")
@@ -149,8 +159,7 @@ func die(err error) {
 	os.Exit(1)
 }
 
-func loadCueFiles(dirs []os.DirEntry) ([]codegen.SchemaForGen, error) {
-	ctx := cuectx.GrafanaCUEContext()
+func loadCueFiles(ctx *cue.Context, dirs []os.DirEntry) ([]codegen.SchemaForGen, error) {
 	values := make([]codegen.SchemaForGen, 0)
 	for _, dir := range dirs {
 		if !dir.IsDir() {
@@ -179,7 +188,7 @@ func loadCueFiles(dirs []os.DirEntry) ([]codegen.SchemaForGen, error) {
 
 		sch := codegen.SchemaForGen{
 			Name:     name,
-			FilePath: "./" + filepath.Join(cuectx.CoreDefParentPath, entry),
+			FilePath: "./" + filepath.Join(CoreDefParentPath, entry),
 			CueFile:  v,
 			IsGroup:  false,
 		}
