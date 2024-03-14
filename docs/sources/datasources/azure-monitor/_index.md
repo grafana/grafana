@@ -231,10 +231,32 @@ For details on workload identity, refer to the [Azure workload identity document
 ### Configure Current User authentication
 
 {{< admonition type="note" >}}
-Current user authentication is an [experimental feature](https://grafana.com/docs/release-life-cycle/). Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Contact Grafana Support to enable this feature in Grafana Cloud. Aspects of Grafana may not work as expected when using this authentication method.
+Current user authentication is an [experimental feature](/docs/release-life-cycle). Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Contact Grafana Support to enable this feature in Grafana Cloud. Aspects of Grafana may not work as expected when using this authentication method.
 {{< /admonition >}}
 
 If your Grafana instance is configured with Azure Entra (formerly Active Directory) authentication for login, this authentication method can be used to forward the currently logged in user's credentials to the data source. The users credentials will then be used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra refer to the [documentation][configure-grafana-azure-auth].
+
+{{< admonition type="note" >}}
+Additional configuration is required to ensure that the App Registration used to login a user via Azure provides an access token with the permissions required by the data source.
+
+The App Registration must be configured to issue both **Access Tokens** and **ID Tokens**.
+
+1. In the Azure Portal, open the App Registration that requires configuration.
+2. Select **Authentication** in the side menu.
+3. Under **Implicit grant and hybrid flows** check both the **Access tokens** and **ID tokens** boxes.
+4. Save the changes to ensure the App Registration is updated.
+
+The App Registration must also be configured with additional **API Permissions** to provide authenticated users with access to the APIs utilised by the data source.
+
+1. In the Azure Portal, open the App Registration that requires configuration.
+1. Select **API Permissions** in the side menu.
+1. Ensure the `openid`, `profile`, `email`, and `offline_access` permissions are present under the **Microsoft Graph** selction. If not, they must be added.
+1. Select **Add a permission** and choose the following permissions. They must be added individually. Refer to the [Azure documentation](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-configure-app-access-web-apis) for more information.
+   - Select **Azure Service Management** > **Delegated permissions** > `user_impersonation` > **Add permissions**
+   - Select **APIs my organization uses** > Search for **Log Analytics API** and select it > **Delegated permissions** > `Date.Read` > **Add permissions**
+
+Once all permissions have been added, the Azure authentication section in Grafana must be updated. The `scopes` section must be updated to include the `.default` scope to ensure that a token with access to all APIs declared on the App Registration is requested by Grafana. Once updated the scopes value should equal: `.default openid email profile`.
+{{< /admonition >}}
 
 This method of authentication doesn't inherently support all backend functionality as a user's credentials won't be in scope.
 Affected functionality includes alerting, reporting, and recorded queries.
@@ -261,10 +283,8 @@ If a user tries to create an alert for a resource that the fallback credentials 
    ```
 
 1. In the Azure Monitor data source configuration, set **Authentication** to **Current User**.
-
-If fallback service credentials are enabled at the instance level, an additional configuration section is visible that you can use to enable or disable using service credentials for this data source.
-
-{{< figure src="/media/docs/grafana/data-sources/screenshot-current-user.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor screenshot showing Current User authentication" >}}
+   If fallback service credentials are enabled at the instance level, an additional configuration section is visible that you can use to enable or disable using service credentials for this data source.
+   {{< figure src="/media/docs/grafana/data-sources/screenshot-current-user.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor screenshot showing Current User authentication" >}}
 
 1. If you want backend functionality to work with this data source, enable service credentials and configure the data source using the most applicable credentials for your circumstances.
 
@@ -299,6 +319,9 @@ If you're upgrading from a Grafana version prior to v9.0 and relied on Applicati
 
 [configure-grafana-azure-auth]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/azuread"
 [configure-grafana-azure-auth]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/azuread"
+
+[configure-grafana-azure-auth-scopes]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana"
+[configure-grafana-azure-auth-scopes]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana"
 
 [configure-grafana-feature-toggles]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#feature_toggles"
 [configure-grafana-feature-toggles]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#feature_toggles"
