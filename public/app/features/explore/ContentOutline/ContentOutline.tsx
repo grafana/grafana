@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, CustomScrollbar } from '@grafana/ui';
 
-import { useContentOutlineContext } from './ContentOutlineContext';
+import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 
 const INDENT_LEVELS = {
@@ -15,60 +15,9 @@ const INDENT_LEVELS = {
   CHILD_EXPANDED: '66px',
 };
 
-const getStyles = (theme: GrafanaTheme2, expanded: boolean, itemsShouldIndent: boolean) => {
-  return {
-    wrapper: css({
-      label: 'wrapper',
-      position: 'relative',
-      display: 'flex',
-      justifyContent: 'center',
-      marginRight: theme.spacing(1),
-      height: '100%',
-      backgroundColor: theme.colors.background.primary,
-    }),
-    content: css({
-      label: 'content',
-      marginLeft: theme.spacing(0.5),
-      top: 0,
-    }),
-    buttonStyles: css({
-      width: '100%',
-      padding: theme.spacing(0, 1.5),
-      '&:hover': {
-        color: theme.colors.text.primary,
-        textDecoration: 'underline',
-      },
-    }),
-    iconButton: css({
-      justifyContent: 'center',
-      width: theme.spacing(4),
-      '&:hover': {
-        color: theme.colors.text.primary,
-        background: theme.colors.background.secondary,
-        textDecoration: 'underline',
-      },
-    }),
-    toggleContentOutlineButton: css({
-      marginLeft: itemsShouldIndent ? undefined : theme.spacing(0.6),
-      '&:hover': {
-        color: theme.colors.text.primary,
-      },
-      transform: expanded ? 'rotate(180deg)' : '',
-    }),
-    sectionWrapper: css({
-      display: 'flex',
-    }),
-    indentRoot: css({
-      marginLeft: INDENT_LEVELS.ROOT,
-    }),
-    indentChildren: css({
-      marginLeft: expanded ? INDENT_LEVELS.CHILD_EXPANDED : INDENT_LEVELS.CHILD_COLLAPSED,
-    }),
-  };
-};
-
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(false);
+  const styles = useStyles2((theme) => getStyles(theme, contentOutlineExpanded));
   const [sectionExpanded, toggleSectionExpanded] = useToggle(false);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
@@ -81,8 +30,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   const outlineItemsShouldIndent = outlineItems.some(
     (item) => item.children && !(item.mergeSingleChild && item.children?.length === 1) && item.children.length > 0
   );
-
-  const styles = useStyles2((theme) => getStyles(theme, contentOutlineExpanded, outlineItemsShouldIndent));
 
   const scrollIntoView = (ref: HTMLElement | null, itemPanelId: string, customOffsetTop = 0) => {
     let scrollValue = 0;
@@ -162,6 +109,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
             onClick={toggle}
             className={styles.toggleContentOutlineButton}
             aria-expanded={contentOutlineExpanded}
+            maxWidth={contentOutlineExpanded ? 160 : 40}
           />
 
           {outlineItems.map((item) => (
@@ -175,12 +123,11 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                 icon={item.icon}
                 onClick={() => scrollIntoView(item.ref, item.panelId)}
                 tooltip={!contentOutlineExpanded ? item.title : undefined}
-                collapsible={
-                  item.children && item.children.length > 0 && (!item.mergeSingleChild || item.children.length !== 1)
-                }
-                collapsed={sectionExpanded}
+                collapsible={isCollapsible(item)}
+                collapsed={!sectionExpanded}
                 toggleCollapsed={toggleSection}
                 isActive={activeSectionId === item.id}
+                maxWidth={getRootMaxWidth(contentOutlineExpanded, isCollapsible(item))}
               />
               {item.children &&
                 (!item.mergeSingleChild || item.children.length !== 1) &&
@@ -194,6 +141,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                     onClick={() => scrollIntoView(child.ref, child.panelId, child.customTopOffset)}
                     tooltip={!contentOutlineExpanded ? child.title : undefined}
                     isActive={activeSectionChildId === child.id}
+                    maxWidth={contentOutlineExpanded ? 88 : 40}
                   />
                 ))}
             </React.Fragment>
@@ -202,4 +150,73 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       </CustomScrollbar>
     </PanelContainer>
   );
+}
+
+const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
+  return {
+    wrapper: css({
+      label: 'wrapper',
+      position: 'relative',
+      display: 'flex',
+      justifyContent: 'center',
+      marginRight: theme.spacing(1),
+      height: '100%',
+      backgroundColor: theme.colors.background.primary,
+      width: expanded ? '160px' : undefined,
+      minWidth: expanded ? '160px' : undefined,
+    }),
+    content: css({
+      label: 'content',
+      marginLeft: theme.spacing(0.5),
+      top: 0,
+    }),
+    buttonStyles: css({
+      width: '100%',
+      '&:hover': {
+        color: theme.colors.text.primary,
+        textDecoration: 'underline',
+      },
+    }),
+    iconButton: css({
+      justifyContent: 'center',
+      width: theme.spacing(4),
+      '&:hover': {
+        color: theme.colors.text.primary,
+        background: theme.colors.background.secondary,
+        textDecoration: 'underline',
+      },
+    }),
+    toggleContentOutlineButton: css({
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+      transform: expanded ? 'rotate(180deg)' : '',
+      marginRight: expanded ? theme.spacing(0.5) : undefined,
+    }),
+    sectionWrapper: css({
+      display: 'flex',
+    }),
+    indentRoot: css({
+      marginLeft: INDENT_LEVELS.ROOT,
+    }),
+    indentChildren: css({
+      marginLeft: expanded ? INDENT_LEVELS.CHILD_EXPANDED : INDENT_LEVELS.CHILD_COLLAPSED,
+    }),
+  };
+};
+
+function isCollapsible(item: ContentOutlineItemContextProps): boolean {
+  return !!(item.children && item.children.length > 0 && (!item.mergeSingleChild || item.children.length !== 1));
+}
+
+function getRootMaxWidth(contentOutlineExpanded: boolean, isCollapsible: boolean): number {
+  let maxWidth = 40;
+
+  if (contentOutlineExpanded && isCollapsible) {
+    maxWidth = 122;
+  } else if (contentOutlineExpanded) {
+    maxWidth = 160;
+  }
+
+  return maxWidth;
 }

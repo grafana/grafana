@@ -23,7 +23,7 @@ interface ParentlessItems {
 
 const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
 
-export const ContentOutlineContextProvider = ({ children }: { children: ReactNode }) => {
+export function ContentOutlineContextProvider({ children }: { children: ReactNode }) {
   const [outlineItems, setOutlineItems] = useState<ContentOutlineItemContextProps[]>([]);
   const parentlessItemsRef = useRef<ParentlessItems>({});
 
@@ -108,7 +108,7 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
       {children}
     </ContentOutlineContext.Provider>
   );
-};
+}
 
 function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps, b: ContentOutlineItemContextProps) {
   if (a.ref && b.ref) {

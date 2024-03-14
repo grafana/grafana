@@ -14,6 +14,7 @@ type CommonProps = {
   toggleCollapsed?: () => void;
   isActive?: boolean;
   iconRight?: boolean;
+  maxWidth: number;
 };
 
 export type ContentOutlineItemButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -28,9 +29,10 @@ export function ContentOutlineItemButton({
   toggleCollapsed,
   isActive,
   iconRight,
+  maxWidth,
   ...rest
 }: ContentOutlineItemButtonProps) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, maxWidth);
 
   const buttonStyles = cx(styles.button, className);
 
@@ -38,7 +40,7 @@ export function ContentOutlineItemButton({
     <div className={styles.buttonContainer}>
       {collapsible && (
         <button className={styles.collapseButton} onClick={toggleCollapsed}>
-          {renderIcon(collapsed ? 'angle-down' : 'angle-right')}
+          {renderIcon(collapsed ? 'angle-right' : 'angle-down')}
         </button>
       )}
       <button
@@ -70,13 +72,13 @@ function renderIcon(icon: IconName | React.ReactNode, size: IconSize = 'lg', rot
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size={size} rotate={rotateIcon} />;
+    return <Icon name={icon} size={size} rotate={rotateIcon} title={icon} />;
   }
 
   return icon;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, maxWidth: number) => {
   return {
     buttonContainer: css({
       position: 'relative',
@@ -95,7 +97,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       background: 'transparent',
       border: 'none',
-      maxWidth: '155px',
+      maxWidth: `${maxWidth}px`,
     }),
     collapseButton: css({
       display: 'flex',
