@@ -12,7 +12,7 @@ import {
   SceneVariableSet,
   QueryVariable,
 } from '@grafana/scenes';
-import { ToolbarButton, Stack, Icon, TabsBar, Tab, useStyles2 } from '@grafana/ui';
+import { ToolbarButton, Stack, Icon, TabsBar, Tab, useStyles2, Box } from '@grafana/ui';
 
 import { getExploreUrl } from '../../core/utils/explore';
 
@@ -152,7 +152,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     const { actionView } = metricScene.useState();
 
     return (
-      <div className={styles.container}>
+      <Box paddingY={1}>
         <div className={styles.actions}>
           <Stack gap={1}>
             <ToolbarButton
@@ -194,7 +194,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
             );
           })}
         </TabsBar>
-      </div>
+      </Box>
     );
   };
 }
@@ -208,13 +208,6 @@ function getStyles(theme: GrafanaTheme2) {
         top: 16,
         zIndex: 2,
       },
-    }),
-    container: css({
-      display: 'flex',
-      flexDirection: 'column',
-      paddingTop: theme.spacing(1),
-      paddingBottom: theme.spacing(1),
-      position: 'relative',
     }),
   };
 }

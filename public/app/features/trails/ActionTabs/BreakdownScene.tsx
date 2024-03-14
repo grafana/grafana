@@ -240,7 +240,8 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       new SceneCSSGridLayout({
         templateColumns: '1fr',
         autoRows: '200px',
-        children: children,
+        // Clone children since a scene object can only have one parent at a time
+        children: children.map((c) => c.clone()),
       }),
     ],
   });

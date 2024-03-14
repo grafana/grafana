@@ -58,7 +58,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     sticky: css({
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'row',
       background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
       position: 'sticky',
       top: '70px',
@@ -66,7 +66,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     nonSticky: css({
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'row',
     }),
   };
 }
