@@ -352,6 +352,15 @@ func UseGlobalOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 	return c.SignedInUser.GetOrgID(), nil
 }
 
+// UseGlobalOrgFromRequestParams returns global org if `global` flag is set or the org where user is logged in.
+func UseGlobalOrgFromRequestParams(c *contextmodel.ReqContext) (int64, error) {
+	if c.QueryBool("global") {
+		return GlobalOrgID, nil
+	}
+
+	return c.SignedInUser.GetOrgID(), nil
+}
+
 func getOrgQueryFromRequest(c *contextmodel.ReqContext) (*QueryWithOrg, error) {
 	query := &QueryWithOrg{}
 
