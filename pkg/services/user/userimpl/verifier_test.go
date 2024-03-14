@@ -36,7 +36,7 @@ func TestVerifier_VerifyEmail(t *testing.T) {
 		assert.ErrorIs(t, err, user.ErrUserAlreadyExists)
 	})
 
-	t.Run("should success when no user has the email", func(t *testing.T) {
+	t.Run("should succeed when no user has the email", func(t *testing.T) {
 		us.ExpectedUser = nil
 		var c calls
 		ts.ExpirePreviousVerificationsFN = func(ctx context.Context, cmd *tempuser.ExpirePreviousVerificationsCommand) error {
