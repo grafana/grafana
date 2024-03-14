@@ -21,7 +21,7 @@ func (jenny *CoreRegistryJenny) JennyName() string {
 	return "CoreRegistryJenny"
 }
 
-func (jenny *CoreRegistryJenny) Generate(cueFiles []CueSchema) (codejen.Files, error) {
+func (jenny *CoreRegistryJenny) Generate(cueFiles ...SchemaForGen) (codejen.Files, error) {
 	schemas := make([]Schema, len(cueFiles))
 	for i, v := range cueFiles {
 		name, err := getSchemaName(v.CueFile)

@@ -27,7 +27,7 @@ func GenerateTypesTS(v cue.Value, cfg *TSConfig) (*ast.File, error) {
 		}
 	}
 
-	schdef := v.LookupPath(cue.ParsePath("schema"))
+	schdef := v.LookupPath(cue.ParsePath("lineage.schemas[0].schema"))
 	tf, err := cuetsy.GenerateAST(schdef, *cfg.CuetsyConfig)
 	if err != nil {
 		return nil, fmt.Errorf("generating TS for child elements of schema failed: %w", err)

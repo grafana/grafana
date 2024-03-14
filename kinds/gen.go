@@ -1,6 +1,3 @@
-//go:build ignore
-// +build ignore
-
 //go:generate go run gen.go
 
 package main
@@ -15,30 +12,30 @@ import (
 	"sort"
 	"strings"
 
-	"cuelang.org/go/cue/errors"
+	"cuelang.org/go/cue"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
-	"github.com/grafana/kindsys"
-
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 func main() {
 	if len(os.Args) > 1 {
-		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
+		fmt.Fprintf(os.Stderr, "code generator does not currently accept any arguments\n, got %q", os.Args)
 		os.Exit(1)
 	}
 
 	// Core kinds composite code generator. Produces all generated code in
 	// grafana/grafana that derives from core kinds.
-	coreKindsGen := codejen.JennyListWithNamer(func(def kindsys.Kind) string {
-		return def.Props().Common().MachineName
+	coreKindsGen := codejen.JennyListWithNamer(func(def codegen.SchemaForGen) string {
+		return def.Name
 	})
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
 		&codegen.GoSpecJenny{},
+		&codegen.K8ResourcesJenny{},
+		&codegen.CoreRegistryJenny{},
 		codegen.LatestMajorsOrXJenny(cuectx.TSCoreKindParentPath),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 	)
@@ -53,29 +50,15 @@ func main() {
 	}
 	groot := filepath.Dir(cwd)
 
-	rt := cuectx.GrafanaThemaRuntime()
-	var all []kindsys.Kind
-
 	f := os.DirFS(filepath.Join(groot, cuectx.CoreDefParentPath))
 	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
-	for _, kinddir := range kinddirs {
-		if !kinddir.IsDir() {
-			continue
-		}
-		rel := filepath.Join(cuectx.CoreDefParentPath, kinddir.Name())
-		def, err := cuectx.LoadCoreKindDef(rel, rt.Context(), nil)
-		if err != nil {
-			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
-		}
-		if def.Properties.MachineName != kinddir.Name() {
-			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, def.Properties.Name, kinddir.Name()))
-		}
-
-		all = append(all, elsedie(kindsys.BindCore(rt, def))(rel))
+	all, err := loadCueFiles(kinddirs)
+	if err != nil {
+		die(err)
 	}
 
 	sort.Slice(all, func(i, j int) bool {
-		return nameFor(all[i].Props()) < nameFor(all[j].Props())
+		return all[i].Name < all[j].Name
 	})
 
 	jfs, err := coreKindsGen.GenerateFS(all...)
@@ -89,36 +72,12 @@ func main() {
 		die(err)
 	}
 
-	// Merging k8 resources
-	rawResources, err := genRawResources(kinddirs)
-	if err != nil {
-		die(err)
-	}
-
-	if err = jfs.Merge(rawResources); err != nil {
-		die(err)
-	}
-
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		if err = jfs.Verify(context.Background(), groot); err != nil {
 			die(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
 		}
 	} else if err = jfs.Write(context.Background(), groot); err != nil {
 		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
-	}
-}
-
-func nameFor(m kindsys.SomeKindProperties) string {
-	switch x := m.(type) {
-	case kindsys.CoreProperties:
-		return x.Name
-	case kindsys.CustomProperties:
-		return x.Name
-	case kindsys.ComposableProperties:
-		return x.Name
-	default:
-		// unreachable so long as all the possibilities in KindProperties have switch branches
-		panic("unreachable")
 	}
 }
 
@@ -186,26 +145,9 @@ func die(err error) {
 	os.Exit(1)
 }
 
-// Resource generation without using Thema
-func genRawResources(dirs []os.DirEntry) (*codejen.FS, error) {
-	jenny := codejen.JennyListWithNamer[[]codegen.CueSchema](func(_ []codegen.CueSchema) string {
-		return "RawResources"
-	})
-
-	jenny.Append(
-		&codegen.K8ResourcesJenny{},
-		&codegen.CoreRegistryJenny{},
-	)
-
-	header := codegen.SlashHeaderMapper("kinds/gen.go")
-	jenny.AddPostprocessors(header)
-
-	return jenny.GenerateFS(loadCueFiles(dirs))
-}
-
-func loadCueFiles(dirs []os.DirEntry) []codegen.CueSchema {
+func loadCueFiles(dirs []os.DirEntry) ([]codegen.SchemaForGen, error) {
 	ctx := cuectx.GrafanaCUEContext()
-	values := make([]codegen.CueSchema, 0)
+	values := make([]codegen.SchemaForGen, 0)
 	for _, dir := range dirs {
 		if !dir.IsDir() {
 			continue
@@ -225,13 +167,32 @@ func loadCueFiles(dirs []os.DirEntry) []codegen.CueSchema {
 			os.Exit(1)
 		}
 
-		sch := codegen.CueSchema{
+		v := ctx.CompileBytes(cueFile)
+		name, err := getSchemaName(v)
+		if err != nil {
+			return nil, err
+		}
+
+		sch := codegen.SchemaForGen{
+			Name:     name,
 			FilePath: "./" + filepath.Join(cuectx.CoreDefParentPath, entry),
-			CueFile:  ctx.CompileBytes(cueFile),
+			CueFile:  v,
+			IsGroup:  false,
 		}
 
 		values = append(values, sch)
 	}
 
-	return values
+	return values, nil
+}
+
+func getSchemaName(v cue.Value) (string, error) {
+	namePath := v.LookupPath(cue.ParsePath("name"))
+	name, err := namePath.String()
+	if err != nil {
+		return "", fmt.Errorf("file doesn't have name field set: %s", err)
+	}
+
+	name = strings.Replace(name, "-", "_", -1)
+	return name, nil
 }

@@ -33,9 +33,9 @@ func generateOpenAPI(v cue.Value, cfg *OpenApiConfig) (*ast.File, error) {
 	gen := &oapiGen{
 		cfg:     cfg,
 		name:    name,
-		val:     v.LookupPath(cue.ParsePath("schemas[0].schema")),
+		val:     v.LookupPath(cue.ParsePath("lineage.schemas[0].schema")),
 		subpath: cfg.SubPath,
-		bpath:   v.LookupPath(cue.ParsePath("schemas[0]")).Path(),
+		bpath:   v.LookupPath(cue.ParsePath("lineage.schemas[0]")).Path(),
 	}
 
 	declFunc := genSchema

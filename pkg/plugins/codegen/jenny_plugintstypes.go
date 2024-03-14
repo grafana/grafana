@@ -100,7 +100,7 @@ func adaptToPipeline(j codejen.OneToOne[codegen.SchemaForGen]) codejen.OneToOne[
 		}
 		return codegen.SchemaForGen{
 			Name:    name,
-			Schema:  pd.Lineage.Latest(),
+			CueFile: pd.Lineage.Latest().Underlying(),
 			IsGroup: pd.SchemaInterface.IsGroup,
 		}
 	})

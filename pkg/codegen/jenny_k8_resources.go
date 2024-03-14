@@ -18,7 +18,7 @@ func (jenny *K8ResourcesJenny) JennyName() string {
 	return "K8ResourcesJenny"
 }
 
-func (jenny *K8ResourcesJenny) Generate(cueFiles []CueSchema) (codejen.Files, error) {
+func (jenny *K8ResourcesJenny) Generate(cueFiles ...SchemaForGen) (codejen.Files, error) {
 	files := make(codejen.Files, 0)
 	for _, val := range cueFiles {
 		pkg, err := getPackageName(val.CueFile)
