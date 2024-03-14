@@ -56,7 +56,7 @@ func (fileStore *FileStore) FilepathFor(ctx context.Context, filename string) (s
 		return "", fmt.Errorf("error decoding file '%s': %w", filename, err)
 	}
 
-	if err := fileStore.WriteFileToDisk(filename, bytes); err != nil {
+	if err := fileStore.writeFileToDisk(filename, bytes); err != nil {
 		return "", fmt.Errorf("error writing file %s: %w", filename, err)
 	}
 
@@ -118,8 +118,8 @@ func (fileStore *FileStore) Persist(ctx context.Context, filename string, st ale
 	return int64(len(bytes)), err
 }
 
-// WriteFileToDisk writes a file with the provided name and contents to the Alertmanager working directory with the default grafana permission.
-func (fileStore *FileStore) WriteFileToDisk(fn string, content []byte) error {
+// writeFileToDisk writes a file with the provided name and contents to the Alertmanager working directory with the default grafana permission.
+func (fileStore *FileStore) writeFileToDisk(fn string, content []byte) error {
 	// Ensure the working directory is created
 	err := os.MkdirAll(fileStore.workingDirPath, 0750)
 	if err != nil {

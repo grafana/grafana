@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -17,7 +16,6 @@ import (
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -46,6 +44,13 @@ type AlertingStore interface {
 	autogenRuleStore
 }
 
+type stateStore interface {
+	CleanUp()                                                                             // TODO: Is this necessary? Maybe not once we've removed the disk-coupling.
+	FilepathFor(ctx context.Context, filename string) (string, error)                     // TODO: This would preferably not be on the interface so that we can avoid disk-coupling.
+	Persist(ctx context.Context, filename string, st alertingNotify.State) (int64, error) // TODO: Rename to something more agnostic, ex. WriteSilence, WriteNotificationLog
+	GetFullState(ctx context.Context, keys ...string) (string, error)                     // TODO: This should be more specific, ex. GetSilenceState, GetNotificationLogState
+}
+
 type alertmanager struct {
 	Base   *alertingNotify.GrafanaAlertmanager
 	logger log.Logger
@@ -53,7 +58,7 @@ type alertmanager struct {
 	ConfigMetrics       *metrics.AlertmanagerConfigMetrics
 	Settings            *setting.Cfg
 	Store               AlertingStore
-	fileStore           *FileStore
+	fileStore           stateStore
 	NotificationService notifications.Service
 
 	decryptFn alertingNotify.GetDecryptedValueFn
@@ -87,11 +92,9 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 	return m.maintenanceFunc(state)
 }
 
-func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
+func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, fileStore stateStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager, withAutogen bool) (*alertmanager, error) {
-	workingPath := filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID)))
-	fileStore := NewFileStore(orgID, kvStore, workingPath)
 
 	nflogFilepath, err := fileStore.FilepathFor(ctx, NotificationLogFilename)
 	if err != nil {

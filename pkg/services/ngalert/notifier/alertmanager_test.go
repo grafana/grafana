@@ -2,6 +2,8 @@ package notifier
 
 import (
 	"context"
+	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -46,7 +48,12 @@ func setupAMTest(t *testing.T) *alertmanager {
 	kvStore := fakes.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	decryptFn := secretsService.GetDecryptedValue
-	am, err := NewAlertmanager(context.Background(), 1, cfg, s, kvStore, &NilPeer{}, decryptFn, nil, m, false)
+
+	orgID := 1
+	workingPath := filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(orgID))
+	stateStore := NewFileStore(int64(orgID), kvStore, workingPath)
+
+	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, false)
 	require.NoError(t, err)
 	return am
 }
