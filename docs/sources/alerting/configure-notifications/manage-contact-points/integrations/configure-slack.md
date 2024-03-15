@@ -27,7 +27,7 @@ Enable your app to access the Slack API. If, for example, you are interested in 
 1. Use a [Webhook URL](https://api.slack.com/messaging/webhooks)
 Webhooks is the simpler way to post messages into Slack. Slack automatically creates a bot user with all the necessary permissions to post messages to one particular channel of your choice.
 {{< admonition type="note" >}}
-Grafana Alerting only allows one Slack channel per Contact point.
+Grafana Alerting only allows one Slack channel per contact point.
 {{< /admonition >}}
 
 
