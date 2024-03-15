@@ -88,8 +88,10 @@ case "$1" in
     "")
         ;;
    "scenes")
-      cypressConfig[specPattern]=$rootForScenesSuite/*.spec.ts
+      env[SCENES]=true
+      cypressConfig[specPattern]=$rootForScenesSuite/*/$testFilesForSingleSuite
       cypressConfig[video]=false
+      CMD="cypress open"
       ;;
 
     *)
