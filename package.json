@@ -11,6 +11,7 @@
     "build:nominify": "yarn run build --env noMinify=1",
     "dev": "yarn prebuild & NODE_ENV=dev webpack --progress --color --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
+    "e2e:scenes": "./e2e/start-and-run-suite scenes",
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "e2e:benchmark:live": "./e2e/start-and-run-suite benchmark live",
