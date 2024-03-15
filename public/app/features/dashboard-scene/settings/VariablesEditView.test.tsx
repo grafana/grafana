@@ -18,6 +18,7 @@ import {
   VizPanel,
   AdHocFiltersVariable,
   SceneVariableState,
+  SceneTimeRange,
 } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
@@ -308,6 +309,7 @@ async function buildTestScene() {
     meta: {
       canEdit: true,
     },
+    $timeRange: new SceneTimeRange({}),
     $variables: new SceneVariableSet({
       variables: [
         new CustomVariable({

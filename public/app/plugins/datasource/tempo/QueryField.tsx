@@ -15,11 +15,9 @@ import {
   withTheme2,
 } from '@grafana/ui';
 
-import { LokiSearch } from './LokiSearch';
 import NativeSearch from './NativeSearch/NativeSearch';
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
-import { LokiQuery } from './_importedDependencies/datasources/loki/types';
 import { TempoQueryType } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import { QueryEditor } from './traceql/QueryEditor';
@@ -55,18 +53,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     }
   }
 
-  onChangeLinkedQuery = (value: LokiQuery) => {
-    const { query, onChange } = this.props;
-    onChange({
-      ...query,
-      linkedQuery: { ...value, refId: 'linked' },
-    });
-  };
-
-  onRunLinkedQuery = () => {
-    this.props.onRunQuery();
-  };
-
   onClearResults = () => {
     // Run clear query to clear results
     const { onChange, query, onRunQuery } = this.props;
@@ -80,8 +66,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   render() {
     const { query, onChange, datasource, app } = this.props;
 
-    const logsDatasourceUid = datasource.getLokiSearchDS();
-
     const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
 
     let queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
@@ -89,16 +73,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       { value: 'traceql', label: 'TraceQL' },
       { value: 'serviceMap', label: 'Service Graph' },
     ];
-
-    if (logsDatasourceUid) {
-      if (datasource?.search?.hide) {
-        // Place at beginning as Search if no native search
-        queryTypeOptions.unshift({ value: 'search', label: 'Search' });
-      } else {
-        // Place at end as Loki Search if native search is enabled
-        queryTypeOptions.push({ value: 'search', label: 'Loki Search' });
-      }
-    }
 
     // Show the deprecated search option if any of the deprecated search fields are set
     if (
@@ -172,14 +146,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             </HorizontalGroup>
           </InlineField>
         </InlineFieldRow>
-        {query.queryType === 'search' && (
-          <LokiSearch
-            logsDatasourceUid={logsDatasourceUid}
-            query={query}
-            onRunQuery={this.onRunLinkedQuery}
-            onChange={this.onChangeLinkedQuery}
-          />
-        )}
         {query.queryType === 'nativeSearch' && (
           <NativeSearch
             datasource={this.props.datasource}

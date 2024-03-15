@@ -69,9 +69,9 @@ const propsToDiff: Array<string | PropDiffFn> = [
 
 interface Props extends PanelProps<Options> {}
 
-export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZone, id }: Props) => {
+export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZone, id, replaceVariables }: Props) => {
   const theme = useTheme2();
-  const { eventBus } = usePanelContext();
+  const { dataLinkPostProcessor } = usePanelContext();
 
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
   const isToolTipOpen = useRef<boolean>(false);
@@ -288,7 +288,6 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       timeZone,
       theme,
       timeZones: [timeZone],
-      eventBus,
       orientation,
       barWidth,
       barRadius,
@@ -326,6 +325,8 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       structureRev={structureRev}
       width={width}
       height={height}
+      replaceVariables={replaceVariables}
+      dataLinkPostProcessor={dataLinkPostProcessor}
     >
       {(config) => {
         if (showNewVizTooltips && options.tooltip.mode !== TooltipDisplayMode.None) {

@@ -58,7 +58,7 @@ type DataSourceService interface {
 	// CustomHeaders returns a map of custom headers the user might have
 	// configured for this Datasource. Not every datasource can has the option
 	// to configure those.
-	CustomHeaders(ctx context.Context, ds *DataSource) (map[string]string, error)
+	CustomHeaders(ctx context.Context, ds *DataSource) (http.Header, error)
 }
 
 // CacheService interface for retrieving a cached datasource.

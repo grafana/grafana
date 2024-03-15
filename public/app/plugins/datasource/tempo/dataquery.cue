@@ -53,8 +53,8 @@ composableKinds: DataQuery: {
 					tableType?: #SearchTableType
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
-				// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-				#TempoQueryType: "traceql" | "traceqlSearch" | "search" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")
+				// nativeSearch = Tempo search for backwards compatibility
+				#TempoQueryType: "traceql" | "traceqlSearch" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")
 
 				// The state of the TraceQL streaming search query
 				#SearchStreamingState: "pending" | "streaming" | "done" | "error" @cuetsy(kind="enum")

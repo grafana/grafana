@@ -1,12 +1,12 @@
 ---
 aliases:
-  - ../silences/create-silence/ # /docs/grafana/latest/alerting/silences/create-silence/
-  - ../silences/edit-silence/ # /docs/grafana/latest/alerting/silences/edit-silence/
-  - ../silences/linking-to-silence-form/ # /docs/grafana/latest/alerting/silences/linking-to-silence-form/
-  - ../silences/remove-silence/ # /docs/grafana/latest/alerting/silences/remove-silence/
-  - ../unified-alerting/silences/ # /docs/grafana/latest/alerting/unified-alerting/silences/
-  - ../silences/ # /docs/grafana/latest/alerting/silences/
-  - ../manage-notifications/create-silence/ # /docs/grafana/latest/alerting/manage-notifications/create-silence/
+  - ../silences/create-silence/ # /docs/grafana/<GRAFANA_VERSION>/alerting/silences/create-silence/
+  - ../silences/edit-silence/ # /docs/grafana/<GRAFANA_VERSION>/alerting/silences/edit-silence/
+  - ../silences/linking-to-silence-form/ # /docs/grafana/<GRAFANA_VERSION>/alerting/silences/linking-to-silence-form/
+  - ../silences/remove-silence/ # /docs/grafana/<GRAFANA_VERSION>/alerting/silences/remove-silence/
+  - ../unified-alerting/silences/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/silences/
+  - ../silences/ # /docs/grafana/<GRAFANA_VERSION>/alerting/silences/
+  - ../manage-notifications/create-silence/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/create-silence/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/create-silence/
 description: Create silences to stop notifications from getting created for a specified window of time
 keywords:
@@ -19,15 +19,19 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Manage silences
+title: Configure silences
 weight: 440
 ---
 
-# Manage silences
+# Configure silences
 
 Silences stop notifications from getting created and last for only a specified window of time.
 
-**Note that inhibition rules are not supported in the Grafana Alertmanager.**
+{{< admonition type="note" >}}
+
+- Inhibition rules are not supported in the Grafana Alertmanager.
+- The preview of silenced alerts only applies to alerts in firing state.
+  {{< /admonition >}}
 
 ## Add silences
 
@@ -39,7 +43,7 @@ To add a silence, complete the following steps.
 1. Click **Create silence** to open the Create silence page.
 1. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
 1. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the **Silence start and end** field.
-1. In the **Label** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to.
+1. In the **Label** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to. Any matching alerts (in firing state) will show in the **Affected alert instances** field
 1. In **Comment**, add details about the silence.
 1. Click **Submit**.
 
