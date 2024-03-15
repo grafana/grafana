@@ -21,7 +21,6 @@ weight: 300
 Use the Grafana Alerting - Slack integration to send Slack notifications when your alerts are firing. 
 
 There are two ways of integrating Slack into Grafana Alerting. 
-
 1. Use a [Slack API token](https://api.slack.com/authentication/token-types)
 Enable your app to access the Slack API. If, for example, you are interested in more granular control over permissions, or your project is expected to regularly scale, resulting in new channels being created, this is the best option. 
 
