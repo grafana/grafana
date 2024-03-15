@@ -15,7 +15,6 @@ import (
 	"sort"
 	"strings"
 
-	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
@@ -40,8 +39,6 @@ func main() {
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
 		&codegen.GoSpecJenny{},
-		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
-		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
 		codegen.LatestMajorsOrXJenny(cuectx.TSCoreKindParentPath),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 	)
@@ -93,12 +90,12 @@ func main() {
 	}
 
 	// Merging k8 resources
-	k8Resources, err := genK8Resources(kinddirs)
+	rawResources, err := genRawResources(kinddirs)
 	if err != nil {
 		die(err)
 	}
 
-	if err = jfs.Merge(k8Resources); err != nil {
+	if err = jfs.Merge(rawResources); err != nil {
 		die(err)
 	}
 
@@ -189,12 +186,16 @@ func die(err error) {
 	os.Exit(1)
 }
 
-func genK8Resources(dirs []os.DirEntry) (*codejen.FS, error) {
-	jenny := codejen.JennyListWithNamer[[]cue.Value](func(_ []cue.Value) string {
-		return "K8Resources"
+// Resource generation without using Thema
+func genRawResources(dirs []os.DirEntry) (*codejen.FS, error) {
+	jenny := codejen.JennyListWithNamer[[]codegen.CueSchema](func(_ []codegen.CueSchema) string {
+		return "RawResources"
 	})
 
-	jenny.Append(&codegen.K8ResourcesJenny{})
+	jenny.Append(
+		&codegen.K8ResourcesJenny{},
+		&codegen.CoreRegistryJenny{},
+	)
 
 	header := codegen.SlashHeaderMapper("kinds/gen.go")
 	jenny.AddPostprocessors(header)
@@ -202,9 +203,9 @@ func genK8Resources(dirs []os.DirEntry) (*codejen.FS, error) {
 	return jenny.GenerateFS(loadCueFiles(dirs))
 }
 
-func loadCueFiles(dirs []os.DirEntry) []cue.Value {
+func loadCueFiles(dirs []os.DirEntry) []codegen.CueSchema {
 	ctx := cuectx.GrafanaCUEContext()
-	values := make([]cue.Value, 0)
+	values := make([]codegen.CueSchema, 0)
 	for _, dir := range dirs {
 		if !dir.IsDir() {
 			continue
@@ -224,7 +225,12 @@ func loadCueFiles(dirs []os.DirEntry) []cue.Value {
 			os.Exit(1)
 		}
 
-		values = append(values, ctx.CompileBytes(cueFile))
+		sch := codegen.CueSchema{
+			FilePath: "./" + filepath.Join(cuectx.CoreDefParentPath, entry),
+			CueFile:  ctx.CompileBytes(cueFile),
+		}
+
+		values = append(values, sch)
 	}
 
 	return values

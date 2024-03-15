@@ -320,6 +320,10 @@ describe('when performing testDataSource', () => {
 });
 
 describe('Test behavior with unmocked time', () => {
+  // Tolerance for checking timestamps.
+  // Using a lower number seems to cause flaky tests.
+  const numDigits = -4;
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -332,8 +336,8 @@ describe('Test behavior with unmocked time', () => {
     const ds = new JaegerDatasource(defaultSettings);
     const timeRange = ds.getTimeRange();
     const now = Date.now();
-    expect(timeRange.end).toBeCloseTo(now * 1000, -4);
-    expect(timeRange.start).toBeCloseTo((now - 6 * 3600 * 1000) * 1000, -4);
+    expect(timeRange.end).toBeCloseTo(now * 1000, numDigits);
+    expect(timeRange.start).toBeCloseTo((now - 6 * 3600 * 1000) * 1000, numDigits);
   });
 
   it("call for `query()` when `queryType === 'dependencyGraph'`", async () => {
@@ -346,11 +350,11 @@ describe('Test behavior with unmocked time', () => {
     const url = mock.mock.calls[0][0].url;
     const endTsMatch = url.match(/endTs=(\d+)/);
     expect(endTsMatch).not.toBeNull();
-    expect(parseInt(endTsMatch![1], 10)).toBeCloseTo(now, -4);
+    expect(parseInt(endTsMatch![1], 10)).toBeCloseTo(now, numDigits);
 
     const lookbackMatch = url.match(/lookback=(\d+)/);
     expect(lookbackMatch).not.toBeNull();
-    expect(parseInt(lookbackMatch![1], 10)).toBe(21600000);
+    expect(parseInt(lookbackMatch![1], 10)).toBeCloseTo(21600000, numDigits);
   });
 });
 

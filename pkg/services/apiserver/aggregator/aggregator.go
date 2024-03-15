@@ -23,6 +23,7 @@ import (
 	"time"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -37,11 +38,13 @@ import (
 	v1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	v1helper "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1/helper"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
+	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	apiregistrationclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	apiregistrationclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1"
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 
+	"github.com/grafana/grafana/pkg/apiserver/builder"
 	servicev0alpha1applyconfiguration "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
@@ -131,9 +134,15 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		return nil, err
 	}
 
+	serviceAPIBuilder := service.NewServiceAPIBuilder()
+	if err := serviceAPIBuilder.InstallSchema(aggregatorscheme.Scheme); err != nil {
+		return nil, err
+	}
+	APIVersionPriorities[serviceAPIBuilder.GetGroupVersion()] = Priority{Group: 15000, Version: int32(1)}
+
 	// Exit early, if no remote services file is configured
 	if commandOptions.AggregatorOptions.RemoteServicesFile == "" {
-		return NewConfig(aggregatorConfig, sharedInformerFactory, nil), nil
+		return NewConfig(aggregatorConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, nil), nil
 	}
 
 	_, err = readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
@@ -157,11 +166,16 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		serviceClientSet: serviceClient,
 	}
 
-	return NewConfig(aggregatorConfig, sharedInformerFactory, remoteServicesConfig), nil
+	return NewConfig(aggregatorConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, remoteServicesConfig), nil
 }
 
-func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, sharedInformerFactory informersv0alpha1.SharedInformerFactory, remoteServicesConfig *RemoteServicesConfig, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
+func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
+	aggregatorConfig := config.KubeAggregatorConfig
+	sharedInformerFactory := config.Informers
+	remoteServicesConfig := config.RemoteServicesConfig
+
 	completedConfig := aggregatorConfig.Complete()
+
 	aggregatorServer, err := completedConfig.NewWithDelegate(delegateAPIServer)
 	if err != nil {
 		return nil, err
@@ -174,6 +188,7 @@ func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, shared
 	}
 
 	autoRegistrationController := autoregister.NewAutoRegisterController(aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(), apiRegistrationClient)
+
 	apiServices := apiServicesToRegister(delegateAPIServer, autoRegistrationController)
 
 	// Imbue all builtin group-priorities onto the aggregated discovery
@@ -251,6 +266,16 @@ func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, shared
 		aggregatorServer.APIRegistrationInformers.Start(context.StopCh)
 		return nil
 	})
+
+	for _, b := range config.Builders {
+		serviceAPIGroupInfo, err := b.GetAPIGroupInfo(aggregatorscheme.Scheme, aggregatorscheme.Codecs, aggregatorConfig.GenericConfig.RESTOptionsGetter, false)
+		if err != nil {
+			return nil, err
+		}
+		if err := aggregatorServer.GenericAPIServer.InstallAPIGroup(serviceAPIGroupInfo); err != nil {
+			return nil, err
+		}
+	}
 
 	return aggregatorServer, nil
 }
