@@ -61,7 +61,7 @@ export const VirtualizedSelectMenu = ({ children, maxHeight, options, getValue }
   const heightEstimate = Math.min(options.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
 
   // Try to scroll to keep current value in the middle
-  const scrollOffset = valueYOffset > heightEstimate / 2 ? valueYOffset - heightEstimate / 2 : 0;
+  const scrollOffset = Math.max(0, valueYOffset - heightEstimate / 2);
 
   return (
     <List

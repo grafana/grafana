@@ -125,29 +125,6 @@ export const BasicVirtualizedList: Story<StoryProps> = (args) => {
   );
 };
 
-export const BasicVirtualizedListBug: Story<StoryProps> = (args) => {
-  const [value, setValue] = useState<SelectableValue<string>>();
-  const options = ['short', 'a', 'A longer value', 'A even longer longer value', 'short2'].map((v) => ({
-    label: v,
-    value: v,
-  }));
-
-  return (
-    <div style={{ width: 150, margin: 32 }}>
-      <Select
-        options={options}
-        virtualized
-        value={value}
-        onChange={(v) => {
-          setValue(v);
-          action('onChange')(v);
-        }}
-        {...args}
-      />
-    </div>
-  );
-};
-
 /**
  * Uses plain values instead of SelectableValue<T>
  */
