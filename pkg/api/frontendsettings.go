@@ -373,8 +373,6 @@ func isSupportBundlesEnabled(hs *HTTPServer) bool {
 	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
-// don't need to show the full commit hash in the UI
-// let's substring to 10 chars like local git does automatically
 func getShortCommitHash(commitHash string, maxLength int) string {
 	if len(commitHash) > maxLength {
 		return commitHash[:maxLength]
