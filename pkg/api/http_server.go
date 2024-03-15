@@ -214,7 +214,7 @@ type HTTPServer struct {
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
 	namespacer           request.NamespaceMapper
 	anonService          anonymous.Service
-  userVerifier         user.Verifier
+    userVerifier         user.Verifier
 	tlsCerts             TLSCerts
 }
 
