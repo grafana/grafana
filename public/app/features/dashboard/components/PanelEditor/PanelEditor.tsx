@@ -33,7 +33,7 @@ import { StoreState } from 'app/types';
 import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { notifyApp } from '../../../../core/actions';
-import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
+import { UnlinkModal } from '../../../dashboard-scene/scene/UnlinkModal';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getVariablesByKey } from '../../../variables/state/selectors';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';

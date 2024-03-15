@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,24 +18,27 @@ type PluginManagementCfg struct {
 
 	PluginsCDNURLTemplate string
 
-	Tracing Tracing
-
 	GrafanaComURL string
 
-	GrafanaAppURL    string
-	GrafanaAppSubURL string
+	GrafanaAppURL string
 
-	Features featuremgmt.FeatureToggles
+	Features Features
 
 	AngularSupportEnabled  bool
 	HideAngularDeprecation []string
 }
 
+// Features contains the feature toggles used for the plugin management system.
+type Features struct {
+	ExternalCorePluginsEnabled bool
+	SkipHostEnvVarsEnabled     bool
+}
+
 // NewPluginManagementCfg returns a new PluginManagementCfg.
 func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
-	pluginsCDNURLTemplate string, appURL string, appSubURL string, tracing Tracing, features featuremgmt.FeatureToggles,
-	angularSupportEnabled bool, grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string,
-	forwardHostEnvVars []string) *PluginManagementCfg {
+	pluginsCDNURLTemplate string, appURL string, features Features, angularSupportEnabled bool,
+	grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string,
+) *PluginManagementCfg {
 	return &PluginManagementCfg{
 		PluginsPath:            pluginsPath,
 		DevMode:                devMode,
@@ -44,10 +46,8 @@ func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings set
 		PluginsAllowUnsigned:   pluginsAllowUnsigned,
 		DisablePlugins:         disablePlugins,
 		PluginsCDNURLTemplate:  pluginsCDNURLTemplate,
-		Tracing:                tracing,
 		GrafanaComURL:          grafanaComURL,
 		GrafanaAppURL:          appURL,
-		GrafanaAppSubURL:       appSubURL,
 		Features:               features,
 		AngularSupportEnabled:  angularSupportEnabled,
 		HideAngularDeprecation: hideAngularDeprecation,
