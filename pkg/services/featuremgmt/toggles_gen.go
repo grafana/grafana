@@ -411,10 +411,6 @@ const (
 	// Generate signed id token for identity that can be forwarded to plugins and external services
 	FlagIdForwarding = "idForwarding"
 
-	// FlagCloudWatchWildCardDimensionValues
-	// Fetches dimension values from CloudWatch to correctly label wildcard dimensions
-	FlagCloudWatchWildCardDimensionValues = "cloudWatchWildCardDimensionValues"
-
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"

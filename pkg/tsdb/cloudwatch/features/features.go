@@ -7,9 +7,8 @@ import (
 )
 
 const (
-	FlagCloudWatchCrossAccountQuerying    = "cloudWatchCrossAccountQuerying"
-	FlagCloudWatchWildCardDimensionValues = "cloudWatchWildCardDimensionValues"
-	FlagCloudWatchBatchQueries            = "cloudWatchBatchQueries"
+	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
+	FlagCloudWatchBatchQueries         = "cloudWatchBatchQueries"
 )
 
 func IsEnabled(ctx context.Context, feature string) bool {

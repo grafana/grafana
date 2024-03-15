@@ -1503,7 +1503,8 @@
       "metadata": {
         "name": "cloudWatchWildCardDimensionValues",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-12T20:13:32Z"
       },
       "spec": {
         "description": "Fetches dimension values from CloudWatch to correctly label wildcard dimensions",

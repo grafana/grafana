@@ -757,14 +757,6 @@ var (
 			Owner:       identityAccessTeam,
 		},
 		{
-			Name:           "cloudWatchWildCardDimensionValues",
-			Description:    "Fetches dimension values from CloudWatch to correctly label wildcard dimensions",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:              "externalServiceAccounts",
 			Description:       "Automatic service account and token setup for plugins",
 			HideFromAdminPage: true,
