@@ -32,6 +32,7 @@ func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (en
 	entityServer := &sqlEntityServer{
 		db:  db,
 		log: log.New("sql-entity-server"),
+		ctx: context.Background(),
 	}
 
 	return entityServer, nil
@@ -44,6 +45,7 @@ type sqlEntityServer struct {
 	dialect     migrator.Dialect
 	snowflake   *snowflake.Node
 	broadcaster Broadcaster[*entity.Entity]
+	ctx         context.Context
 }
 
 func (s *sqlEntityServer) Init() error {
@@ -80,7 +82,7 @@ func (s *sqlEntityServer) Init() error {
 	}
 
 	// set up the broadcaster
-	s.broadcaster, err = NewBroadcaster(context.Background(), func(stream chan *entity.Entity) error {
+	s.broadcaster, err = NewBroadcaster(s.ctx, func(stream chan *entity.Entity) error {
 		// start the poller
 		go s.poller(stream)
 
@@ -132,7 +134,7 @@ func (s *sqlEntityServer) getReadSelect(r *entity.ReadEntityRequest) (string, er
 	return "SELECT " + strings.Join(quotedFields, ","), nil
 }
 
-func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.Entity, error) {
+func rowToEntity(rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	raw := &entity.Entity{
 		Origin: &entity.EntityOriginInfo{},
 	}
@@ -247,7 +249,7 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 		return &entity.Entity{}, nil
 	}
 
-	return s.rowToEntity(ctx, rows, r)
+	return rowToEntity(rows, r)
 }
 
 func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEntityRequest) (*entity.BatchReadEntityResponse, error) {
@@ -293,7 +295,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 	// TODO? make sure the results are in order?
 	rsp := &entity.BatchReadEntityResponse{}
 	for rows.Next() {
-		r, err := s.rowToEntity(ctx, rows, req)
+		r, err := rowToEntity(rows, req)
 		if err != nil {
 			return nil, err
 		}
@@ -964,7 +966,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		Key: r.Key,
 	}
 	for rows.Next() {
-		v, err := s.rowToEntity(ctx, rows, rr)
+		v, err := rowToEntity(rows, rr)
 		if err != nil {
 			return nil, err
 		}
@@ -1079,6 +1081,12 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
 
+	// if we are looking for deleted entities, we list "deleted" entries from the entity_history table
+	if r.Deleted {
+		entityQuery.from = "entity_history"
+		entityQuery.addWhere("action", entity.Entity_DELETED)
+	}
+
 	// TODO fix this
 	// entityQuery.addWhere("namespace", user.OrgID)
 
@@ -1132,20 +1140,28 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	}
 
 	if len(r.Labels) > 0 {
-		var args []any
-		var conditions []string
-		for labelKey, labelValue := range r.Labels {
-			args = append(args, labelKey)
-			args = append(args, labelValue)
-			conditions = append(conditions, "(label = ? AND value = ?)")
-		}
-		query := "SELECT guid FROM entity_labels" +
-			" WHERE (" + strings.Join(conditions, " OR ") + ")" +
-			" GROUP BY guid" +
-			" HAVING COUNT(label) = ?"
-		args = append(args, len(r.Labels))
+		// if we are looking for deleted entities, we need to use the labels column
+		if r.Deleted {
+			for labelKey, labelValue := range r.Labels {
+				entityQuery.addWhere(s.dialect.Quote("labels")+" LIKE ?", "%\""+labelKey+"\":\""+labelValue+"\"%")
+			}
+			// for active entities, we can use the entity_labels table
+		} else {
+			var args []any
+			var conditions []string
+			for labelKey, labelValue := range r.Labels {
+				args = append(args, labelKey)
+				args = append(args, labelValue)
+				conditions = append(conditions, "(label = ? AND value = ?)")
+			}
+			query := "SELECT guid FROM entity_labels" +
+				" WHERE (" + strings.Join(conditions, " OR ") + ")" +
+				" GROUP BY guid" +
+				" HAVING COUNT(label) = ?"
+			args = append(args, len(r.Labels))
 
-		entityQuery.addWhereInSubquery("guid", query, args)
+			entityQuery.addWhereInSubquery("guid", query, args)
+		}
 	}
 	for _, sort := range r.Sort {
 		sortBy, err := ParseSortBy(sort)
@@ -1169,7 +1185,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		ResourceVersion: s.snowflake.Generate().Int64(),
 	}
 	for rows.Next() {
-		result, err := s.rowToEntity(ctx, rows, rr)
+		result, err := rowToEntity(rows, rr)
 		if err != nil {
 			return rsp, err
 		}
@@ -1204,13 +1220,13 @@ func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntitySto
 	}
 
 	// collect and send any historical events
-	err = s.watchInit(w.Context(), r, w)
+	err = s.watchInit(r, w)
 	if err != nil {
 		return err
 	}
 
 	// subscribe to new events
-	err = s.watch(w.Context(), r, w)
+	err = s.watch(r, w)
 	if err != nil {
 		s.log.Error("watch error", "err", err)
 		return err
@@ -1220,7 +1236,7 @@ func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntitySto
 }
 
 // watchInit is a helper function to send the initial set of entities to the client
-func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
 	rr := &entity.ReadEntityRequest{
 		WithBody:   r.WithBody,
 		WithStatus: r.WithStatus,
@@ -1311,7 +1327,7 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 		err = func() error {
 			query, args := entityQuery.toQuery()
 
-			rows, err := s.sess.Query(ctx, query, args...)
+			rows, err := s.sess.Query(w.Context(), query, args...)
 			if err != nil {
 				return err
 			}
@@ -1326,7 +1342,7 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 					return nil
 				}
 
-				result, err := s.rowToEntity(ctx, rows, rr)
+				result, err := rowToEntity(rows, rr)
 				if err != nil {
 					return err
 				}
@@ -1368,14 +1384,14 @@ func (s *sqlEntityServer) poller(stream chan *entity.Entity) {
 	defer t.Stop()
 
 	for range t.C {
-		since, err = s.poll(context.Background(), since, stream)
+		since, err = s.poll(since, stream)
 		if err != nil {
 			s.log.Error("watch error", "err", err)
 		}
 	}
 }
 
-func (s *sqlEntityServer) poll(ctx context.Context, since int64, out chan *entity.Entity) (int64, error) {
+func (s *sqlEntityServer) poll(since int64, out chan *entity.Entity) (int64, error) {
 	s.log.Debug("watch poll", "since", since)
 
 	rr := &entity.ReadEntityRequest{
@@ -1402,7 +1418,7 @@ func (s *sqlEntityServer) poll(ctx context.Context, since int64, out chan *entit
 
 			query, args := entityQuery.toQuery()
 
-			rows, err := s.sess.Query(ctx, query, args...)
+			rows, err := s.sess.Query(s.ctx, query, args...)
 			if err != nil {
 				return err
 			}
@@ -1415,7 +1431,7 @@ func (s *sqlEntityServer) poll(ctx context.Context, since int64, out chan *entit
 					return nil
 				}
 
-				result, err := s.rowToEntity(ctx, rows, rr)
+				result, err := rowToEntity(rows, rr)
 				if err != nil {
 					return err
 				}
@@ -1483,18 +1499,12 @@ func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
 		}
 	}
 
-	// must match at least one label/value pair if specified
-	// TODO should this require matching all label conditions?
+	// must match all specified label/value pairs
 	if len(r.Labels) > 0 {
-		matched := false
 		for labelKey, labelValue := range r.Labels {
-			if result.Labels[labelKey] == labelValue {
-				matched = true
-				break
+			if result.Labels[labelKey] != labelValue {
+				return false
 			}
-		}
-		if !matched {
-			return false
 		}
 	}
 
@@ -1502,7 +1512,7 @@ func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
 }
 
 // watch is a helper to get the next set of entities and send them to the client
-func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
 	s.log.Debug("watch started", "since", r.Since)
 
 	evts, err := s.broadcaster.Subscribe(w.Context())

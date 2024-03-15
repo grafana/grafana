@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo, createRef } from 'react';
 import { useAsync } from 'react-use';
 
-import { PanelProps } from '@grafana/data';
+import { Field, LinkModel, PanelProps } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { SpanLinkFunc } from 'app/features/explore/TraceView/components';
@@ -17,6 +17,8 @@ const styles = {
 
 export interface TracesPanelOptions {
   createSpanLink?: SpanLinkFunc;
+  focusedSpanId?: string;
+  createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
 }
 
 export const TracesPanel = ({ data, options }: PanelProps<TracesPanelOptions>) => {
@@ -44,6 +46,8 @@ export const TracesPanel = ({ data, options }: PanelProps<TracesPanelOptions>) =
         datasource={dataSource.value}
         topOfViewRef={topOfViewRef}
         createSpanLink={options.createSpanLink}
+        focusedSpanId={options.focusedSpanId}
+        createFocusSpanLink={options.createFocusSpanLink}
       />
     </div>
   );

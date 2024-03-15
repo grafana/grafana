@@ -125,7 +125,7 @@ export const optionBuilder: OptionSuppliers = {
   },
 
   addType: (builder, context) => {
-    const category = ['Type'];
+    const category = ['Line style'];
     builder.addSelect({
       category,
       path: 'type',
