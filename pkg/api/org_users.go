@@ -326,11 +326,11 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	if c.QueryBool("accesscontrol") {
 		permissions := c.SignedInUser.GetPermissions()
 		if query.OrgID != c.SignedInUser.GetOrgID() {
-			permissionsList, err := hs.accesscontrolService.GetUserPermissionsInOrg(c.Req.Context(), c.SignedInUser, query.OrgID)
+			identity, err := hs.authnService.ResolveIdentity(c.Req.Context(), query.OrgID, c.SignedInUser.GetID())
 			if err != nil {
 				return nil, err
 			}
-			permissions = accesscontrol.GroupScopesByAction(permissionsList)
+			permissions = identity.GetPermissions()
 		}
 		accessControlMetadata = accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "users:id:", userIDs)
 	}

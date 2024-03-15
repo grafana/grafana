@@ -77,6 +77,10 @@ type Service interface {
 	RedirectURL(ctx context.Context, client string, r *Request) (*Redirect, error)
 	// Logout revokes session token and does additional clean up if client used to authenticate supports it
 	Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*Redirect, error)
+
+	// ResolveIdentity resolves an identity from org and namespace id.
+	ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*Identity, error)
+
 	// RegisterClient will register a new authn.Client that can be used for authentication
 	RegisterClient(c Client)
 }

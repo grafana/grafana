@@ -68,7 +68,11 @@ func (f *FakeService) RedirectURL(ctx context.Context, client string, r *authn.R
 	return f.ExpectedRedirect, f.ExpectedErr
 }
 
-func (*FakeService) Logout(_ context.Context, _ identity.Requester, _ *usertoken.UserToken) (*authn.Redirect, error) {
+func (f *FakeService) Logout(_ context.Context, _ identity.Requester, _ *usertoken.UserToken) (*authn.Redirect, error) {
+	panic("unimplemented")
+}
+
+func (f *FakeService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
 	panic("unimplemented")
 }
 
