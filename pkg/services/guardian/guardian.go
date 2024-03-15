@@ -62,13 +62,21 @@ type FakeDashboardGuardian struct {
 	CanViewValue  bool
 	CanAdminValue bool
 	CanViewUIDs   []string
+	CanEditUIDs   []string
+	CanSaveUIDs   []string
 }
 
 func (g *FakeDashboardGuardian) CanSave() (bool, error) {
+	if g.CanSaveUIDs != nil {
+		return slices.Contains(g.CanSaveUIDs, g.DashUID), nil
+	}
 	return g.CanSaveValue, nil
 }
 
 func (g *FakeDashboardGuardian) CanEdit() (bool, error) {
+	if g.CanEditUIDs != nil {
+		return slices.Contains(g.CanEditUIDs, g.DashUID), nil
+	}
 	return g.CanEditValue, nil
 }
 

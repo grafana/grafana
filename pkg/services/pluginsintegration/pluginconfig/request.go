@@ -147,5 +147,9 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	m[backend.SQLMaxIdleConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxIdleConnsDefault)
 	m[backend.SQLMaxConnLifetimeSecondsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxConnLifetimeDefault)
 
+	if s.cfg.ResponseLimit > 0 {
+		m[backend.ResponseLimit] = strconv.FormatInt(s.cfg.ResponseLimit, 10)
+	}
+
 	return m
 }

@@ -19,7 +19,6 @@ import (
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
-// this is terrible... but just making it work!!!!
 func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime.Codec) error {
 	var err error
 
@@ -99,7 +98,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 	return nil
 }
 
-func resourceToEntity(key string, res runtime.Object, requestInfo *request.RequestInfo, codec runtime.Codec) (*entityStore.Entity, error) {
+func resourceToEntity(res runtime.Object, requestInfo *request.RequestInfo, codec runtime.Codec) (*entityStore.Entity, error) {
 	metaAccessor, err := meta.Accessor(res)
 	if err != nil {
 		return nil, err
@@ -111,14 +110,22 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 	}
 	rv, _ := strconv.ParseInt(metaAccessor.GetResourceVersion(), 10, 64)
 
+	k := &entityStore.Key{
+		Group:       requestInfo.APIGroup,
+		Resource:    requestInfo.Resource,
+		Namespace:   requestInfo.Namespace,
+		Name:        metaAccessor.GetName(),
+		Subresource: requestInfo.Subresource,
+	}
+
 	rsp := &entityStore.Entity{
-		Group:           requestInfo.APIGroup,
+		Group:           k.Group,
 		GroupVersion:    requestInfo.APIVersion,
-		Resource:        requestInfo.Resource,
-		Subresource:     requestInfo.Subresource,
-		Namespace:       metaAccessor.GetNamespace(),
-		Key:             key,
-		Name:            metaAccessor.GetName(),
+		Resource:        k.Resource,
+		Subresource:     k.Subresource,
+		Namespace:       k.Namespace,
+		Key:             k.String(),
+		Name:            k.Name,
 		Guid:            string(metaAccessor.GetUID()),
 		ResourceVersion: rv,
 		Folder:          grafanaAccessor.GetFolder(),
