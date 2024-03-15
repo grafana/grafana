@@ -1480,11 +1480,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "11"],
       [0, 0, 0, "Styles should be written using objects.", "12"],
       [0, 0, 0, "Styles should be written using objects.", "13"],
-      [0, 0, 0, "Styles should be written using objects.", "14"],
-      [0, 0, 0, "Styles should be written using objects.", "15"],
-      [0, 0, 0, "Styles should be written using objects.", "16"],
-      [0, 0, 0, "Styles should be written using objects.", "17"],
-      [0, 0, 0, "Styles should be written using objects.", "18"]
+      [0, 0, 0, "Styles should be written using objects.", "14"]
     ],
     "public/app/features/alerting/unified/NotificationPolicies.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -2052,13 +2048,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/rule-viewer/RuleViewerLayout.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
-    "public/app/features/alerting/unified/components/rule-viewer/RuleViewerVisualization.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"]
     ],
     "public/app/features/alerting/unified/components/rules/ActionButton.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]

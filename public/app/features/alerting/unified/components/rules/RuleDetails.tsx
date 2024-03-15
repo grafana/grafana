@@ -37,7 +37,7 @@ export const RuleDetails = ({ rule }: Props) => {
 
   return (
     <div>
-      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} isViewMode={false} />
+      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {<EvaluationBehaviorSummary rule={rule} />}
