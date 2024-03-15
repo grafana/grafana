@@ -59,7 +59,7 @@ import {
 } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
 import { TempoJsonData, TempoQuery } from './types';
-import { getErrorMessage } from './utils';
+import { getErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
 import { TempoVariableSupport } from './variables';
 
 export const DEFAULT_LIMIT = 20;
@@ -261,6 +261,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.clear) {
       return of({ data: [], state: LoadingState.Done });
+    }
+
+    // Migrate user to new query type if they are using the old search query type
+    if (targets.nativeSearch?.length) {
+      if (
+        targets.nativeSearch[0].spanName ||
+        targets.nativeSearch[0].serviceName ||
+        targets.nativeSearch[0].search ||
+        targets.nativeSearch[0].maxDuration ||
+        targets.nativeSearch[0].minDuration ||
+        targets.nativeSearch[0].queryType === 'nativeSearch'
+      ) {
+        const migratedQuery = migrateFromSearchToTraceQLSearch(targets.nativeSearch[0]);
+        targets.traceqlSearch = [migratedQuery];
+      }
     }
 
     if (targets.traceql?.length) {
