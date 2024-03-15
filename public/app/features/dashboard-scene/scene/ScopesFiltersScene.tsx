@@ -64,9 +64,16 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     this.setState({ isLoading: true });
 
     try {
-      const response = await getBackendSrv().get<{ items: Array<{ spec: Scope }> }>(this._url);
+      const response = await getBackendSrv().get<{
+        items: Array<{ metadata: { uid: string }; spec: Omit<Scope, 'uid'> }>;
+      }>(this._url);
 
-      this.setScopesAfterFetch(response.items.map((item) => item.spec));
+      this.setScopesAfterFetch(
+        response.items.map(({ metadata: { uid }, spec }) => ({
+          uid,
+          ...spec,
+        }))
+      );
     } catch (err) {
       getAppEvents().publish({
         type: AppEvents.alertError.name,
