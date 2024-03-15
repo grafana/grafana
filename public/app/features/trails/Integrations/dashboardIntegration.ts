@@ -2,7 +2,7 @@ import { isString } from 'lodash';
 
 import { PanelMenuItem, PanelModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { SceneTimeRange, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
+import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { DashboardModel } from '../../dashboard/state';
