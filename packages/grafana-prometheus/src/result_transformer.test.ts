@@ -935,7 +935,7 @@ describe('Prometheus Result Transformer', () => {
 
     it('should convert values less than 1e-9 to 0', () => {
       // pulled from real response
-      let bucketValues = [
+      const bucketValues = [
         [0.22222222222222218, 0.24444444444444444, 0.19999999999999996], // le=0.005
         [0.39999999999999997, 0.44444444444444436, 0.42222222222222217],
         [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
