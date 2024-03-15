@@ -4,8 +4,6 @@ import { AdHocVariableFilter } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneTimeRangeLike } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
-import { getDataTrailsApp } from '../DataTrailsApp';
-import { OpenEmbeddedTrailEvent } from '../shared';
 
 export interface DataTrailEmbeddedState extends SceneObjectState {
   timeRange: SceneTimeRangeLike;
@@ -20,16 +18,8 @@ export class DataTrailEmbedded extends SceneObjectBase<DataTrailEmbeddedState> {
 
   constructor(state: DataTrailEmbeddedState) {
     super(state);
-
     this.trail = buildDataTrailFromState(state);
-    this.trail.addActivationHandler(() => {
-      this.trail.subscribeToEvent(OpenEmbeddedTrailEvent, this.onOpenTrail);
-    });
   }
-
-  onOpenTrail = () => {
-    getDataTrailsApp().goToUrlForTrail(this.trail.clone({ embedded: false }));
-  };
 }
 
 function DataTrailEmbeddedRenderer({ model }: SceneComponentProps<DataTrailEmbedded>) {

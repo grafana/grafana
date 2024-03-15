@@ -47,7 +47,3 @@ export function getVariablesWithMetricConstant(metric: string) {
 export class MetricSelectedEvent extends BusEventWithPayload<string> {
   public static type = 'metric-selected-event';
 }
-
-export class OpenEmbeddedTrailEvent extends BusEventBase {
-  public static type = 'open-embedded-trail-event';
-}
