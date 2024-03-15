@@ -2,13 +2,18 @@ import {
   cacheFieldDisplayNames,
   createDataFrame,
   FieldType,
-  type DataFrame,
   type DataQueryRequest,
   type DataQueryResponse,
   type PreferredVisualisationType,
 } from '@grafana/data';
 
-import { parseSampleValue, sortSeriesByLabel, transformDFToTable, transformV2 } from './result_transformer';
+import {
+  parseSampleValue,
+  sortSeriesByLabel,
+  transformDFToTable,
+  transformToHistogramOverTime,
+  transformV2,
+} from './result_transformer';
 import { PromQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -929,74 +934,57 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('should convert values less than 1e-9 to 0', () => {
-      const options = {
-        targets: [
-          {
-            format: 'heatmap',
-            refId: 'A',
-          },
-        ],
-      } as unknown as DataQueryRequest<PromQuery>;
-      const response = {
-        state: 'Done',
-        data: [
-          createDataFrame({
-            refId: 'A',
-            fields: [
-              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
-              {
-                name: 'Value',
-                type: FieldType.number,
-                values: [10, 10, 0],
-                labels: { le: '1' },
-              },
-            ],
-          }),
-          createDataFrame({
-            refId: 'A',
-            fields: [
-              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
-              {
-                name: 'Value',
-                type: FieldType.number,
-                values: [20, 10, 30],
-                labels: { le: '2' },
-              },
-            ],
-          }),
-          createDataFrame({
-            refId: 'A',
-            fields: [
-              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
-              {
-                name: 'Value',
-                type: FieldType.number,
-                values: [30, 10, 40],
-                labels: { le: '+Inf' },
-              },
-            ],
-          }),
-        ],
-      } as unknown as DataQueryResponse & { data: DataFrame[] };
+      // pulled from real response
+      let bucketValues = [
+        [0.22222222222222218, 0.24444444444444444, 0.19999999999999996], // le=0.005
+        [0.39999999999999997, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.39999999999999997, 0.44444444444444436, 0.42222222222222217],
+        [0.39999999999999997, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.4666666666666666, 0.5111111111111111, 0.4888888888888888],
+        [0.4666666666666666, 0.5111111111111111, 0.4888888888888888],
+        [0.46666666666666656, 0.5111111111111111, 0.4888888888888888],
+        [0.46666666666666656, 0.5111111111111111, 0.4888888888888888], // le=+Inf
+      ];
 
-      // Create a situation where the series subtraction in histogram transformation results in a value less than 1e-9
-      response.data[1].fields[1].values[1] += 0.0000000001;
-      response.data[2].fields[1].values[1] += 0.00000000015;
+      const frames = bucketValues.map((vals) =>
+        createDataFrame({
+          refId: 'A',
+          fields: [
+            { type: FieldType.time, values: [1, 2, 3] },
+            {
+              type: FieldType.number,
+              values: vals.slice(),
+            },
+          ],
+        })
+      );
 
-      const series = transformV2(response, options, {});
+      const fieldValues = transformToHistogramOverTime(frames).map((frame) => frame.fields[1].values);
 
-      expect(
-        series.data
-          .at(0)
-          ?.fields.find((field) => field.name === '2')
-          ?.values.at(1)
-      ).toBe(0);
-      expect(
-        series.data
-          .at(0)
-          ?.fields.find((field) => field.name === '+Inf')
-          ?.values.at(1)
-      ).toBe(0);
+      expect(fieldValues).toEqual([
+        [0.22222222222222218, 0.24444444444444444, 0.19999999999999996],
+        [0.17777777777777778, 0.19999999999999993, 0.2222222222222222],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0.06666666666666671, 0.06666666666666671, 0.06666666666666665],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+      ]);
     });
 
     it('should throw an error if the series does not contain number-type values', () => {

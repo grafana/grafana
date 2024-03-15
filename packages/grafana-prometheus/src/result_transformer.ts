@@ -359,7 +359,8 @@ function mergeHeatmapFrames(frames: DataFrame[]): DataFrame[] {
   ];
 }
 
-function transformToHistogramOverTime(seriesList: DataFrame[]): DataFrame[] {
+/** @internal */
+export function transformToHistogramOverTime(seriesList: DataFrame[]): DataFrame[] {
   /*      t1 = timestamp1, t2 = timestamp2 etc.
             t1  t2  t3          t1  t2  t3
     le10    10  10  0     =>    10  10  0
