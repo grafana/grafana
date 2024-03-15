@@ -151,7 +151,6 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	fakeConfigHash := fmt.Sprintf("%x", md5.Sum([]byte(testGrafanaConfig)))
 	fakeConfigCreatedAt := time.Date(2020, 6, 5, 12, 6, 0, 0, time.UTC).Unix()
 	fakeConfig := &ngmodels.AlertConfiguration{
-		ID:                        100,
 		AlertmanagerConfiguration: testGrafanaConfig,
 		ConfigurationHash:         fakeConfigHash,
 		ConfigurationVersion:      "v2",
@@ -205,7 +204,6 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		// Next, we need to verify that Mimir received both the configuration and state.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
-		require.Equal(t, int64(100), config.ID)
 		require.Equal(t, testGrafanaConfig, config.GrafanaAlertmanagerConfig)
 		require.Equal(t, fakeConfigHash, config.Hash)
 		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)
@@ -229,7 +227,6 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		// Next, we need to verify that the config that was uploaded remains the same.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
-		require.Equal(t, int64(100), config.ID)
 		require.Equal(t, testGrafanaConfig, config.GrafanaAlertmanagerConfig)
 		require.Equal(t, fakeConfigHash, config.Hash)
 		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)

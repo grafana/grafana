@@ -179,6 +179,10 @@ var (
 				{
 					Action: accesscontrol.ActionAlertingProvisioningWrite, // organization scope
 				},
+				{
+					Action: dashboards.ActionFoldersRead,
+					Scope:  dashboards.ScopeFoldersAll,
+				},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},

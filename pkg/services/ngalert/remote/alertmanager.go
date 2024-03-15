@@ -184,7 +184,6 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 			ctx,
 			config.AlertmanagerConfiguration,
 			config.ConfigurationHash,
-			config.ID,
 			config.CreatedAt,
 			config.Default,
 		); err != nil {

@@ -145,22 +145,24 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 
 ### Mute timings
 
-| Method | URI                                     | Name                                                  | Summary                          |
-| ------ | --------------------------------------- | ----------------------------------------------------- | -------------------------------- |
-| DELETE | /api/v1/provisioning/mute-timings/:name | [route delete mute timing](#route-delete-mute-timing) | Delete a mute timing.            |
-| GET    | /api/v1/provisioning/mute-timings/:name | [route get mute timing](#route-get-mute-timing)       | Get a mute timing.               |
-| GET    | /api/v1/provisioning/mute-timings       | [route get mute timings](#route-get-mute-timings)     | Get all the mute timings.        |
-| POST   | /api/v1/provisioning/mute-timings       | [route post mute timing](#route-post-mute-timing)     | Create a new mute timing.        |
-| PUT    | /api/v1/provisioning/mute-timings/:name | [route put mute timing](#route-put-mute-timing)       | Replace an existing mute timing. |
+| Method | URI                                            | Name                                                            | Summary                                              |
+| ------ | ---------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
+| DELETE | /api/v1/provisioning/mute-timings/:name        | [route delete mute timing](#route-delete-mute-timing)           | Delete a mute timing.                                |
+| GET    | /api/v1/provisioning/mute-timings/:name        | [route get mute timing](#route-get-mute-timing)                 | Get a mute timing.                                   |
+| GET    | /api/v1/provisioning/mute-timings              | [route get mute timings](#route-get-mute-timings)               | Get all the mute timings.                            |
+| POST   | /api/v1/provisioning/mute-timings              | [route post mute timing](#route-post-mute-timing)               | Create a new mute timing.                            |
+| PUT    | /api/v1/provisioning/mute-timings/:name        | [route put mute timing](#route-put-mute-timing)                 | Replace an existing mute timing.                     |
+| GET    | /api/v1/provisioning/mute-timings/export       | [route get mute timings export](#route-get-mute-timings-export) | Export all mute timings in provisioning file format. |
+| GET    | /api/v1/provisioning/mute-timings/:name/export | [route get mute timing export](#route-get-mute-timing-export)   | Export a mute timing in provisioning file format.    |
 
 ### Templates
 
-| Method | URI                                  | Name                                            | Summary                                    |
-| ------ | ------------------------------------ | ----------------------------------------------- | ------------------------------------------ |
-| DELETE | /api/v1/provisioning/templates/:name | [route delete template](#route-delete-template) | Delete a template.                         |
-| GET    | /api/v1/provisioning/templates/:name | [route get template](#route-get-template)       | Get a notification template.               |
-| GET    | /api/v1/provisioning/templates       | [route get templates](#route-get-templates)     | Get all notification templates.            |
-| PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Updates an existing notification template. |
+| Method | URI                                  | Name                                            | Summary                                   |
+| ------ | ------------------------------------ | ----------------------------------------------- | ----------------------------------------- |
+| DELETE | /api/v1/provisioning/templates/:name | [route delete template](#route-delete-template) | Delete a template.                        |
+| GET    | /api/v1/provisioning/templates/:name | [route get template](#route-get-template)       | Get a notification template.              |
+| GET    | /api/v1/provisioning/templates       | [route get templates](#route-get-templates)     | Get all notification templates.           |
+| PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Create or update a notification template. |
 
 ## Edit resources in the Grafana UI
 
@@ -630,6 +632,83 @@ Status: OK
 ###### <span id="route-get-mute-timings-200-schema"></span> Schema
 
 [MuteTimings](#mute-timings)
+
+### <span id="route-get-mute-timings-export"></span> Export all mute timings in provisioning file format. (_RouteGetMuteTimingsExport_)
+
+```
+GET /api/v1/provisioning/mute-timings/export
+```
+
+#### Parameters
+
+| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                       |
+| -------- | ------- | ------- | -------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                |
+| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
+
+#### All responses
+
+| Code                                      | Status    | Description       | Has headers | Schema                                              |
+| ----------------------------------------- | --------- | ----------------- | :---------: | --------------------------------------------------- |
+| [200](#route-get-mute-timings-export-200) | OK        | MuteTimingsExport |             | [schema](#route-get-mute-timings-export-200-schema) |
+| [403](#route-get-mute-timings-export-403) | Forbidden | PermissionDenied  |             | [schema](#route-get-mute-timings-export-403-schema) |
+
+#### Responses
+
+##### <span id="route-get-mute-timings-export-200"></span> 200 - MuteTimingsExport
+
+Status: OK
+
+###### <span id="route-get-mute-timings-export-200-schema"></span> Schema
+
+[AlertingFileExport](#alerting-file-export)
+
+##### <span id="route-get-mute-timings-export-403"></span> 403 - PermissionDenied
+
+Status: Forbidden
+
+###### <span id="route-get-mute-timings-export-403-schema"></span> Schema
+
+[PermissionDenied](#permission-denied)
+
+### <span id="route-get-mute-timing-export"></span> Export a mute timing in provisioning file format. (_RouteGetMuteTimingExport_)
+
+```
+GET /api/v1/provisioning/mute-timings/:name/export
+```
+
+#### Parameters
+
+| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                       |
+| -------- | ------- | ------- | -------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| name     | `path`  | string  | `string` |           |    ✓     |          | Mute timing name.                                                                                                                 |
+| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                |
+| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
+
+#### All responses
+
+| Code                                     | Status    | Description      | Has headers | Schema                                              |
+| ---------------------------------------- | --------- | ---------------- | :---------: | --------------------------------------------------- |
+| [200](#route-get-mute-timing-export-200) | OK        | MuteTimingExport |             | [schema](#route-get-mute-timings-export-200-schema) |
+| [403](#route-get-mute-timing-export-403) | Forbidden | PermissionDenied |             | [schema](#route-get-mute-timings-export-403-schema) |
+
+#### Responses
+
+##### <span id="route-get-mute-timing-export-200"></span> 200 - MuteTimingExport
+
+Status: OK
+
+###### <span id="route-get-mute-timing-export-200-schema"></span> Schema
+
+[AlertingFileExport](#alerting-file-export)
+
+##### <span id="route-get-mute-timing-export-403"></span> 403 - PermissionDenied
+
+Status: Forbidden
+
+###### <span id="route-get-mute-timing-export-403-schema"></span> Schema
+
+[PermissionDenied](#permission-denied)
 
 ### <span id="route-get-policy-tree"></span> Get the notification policy tree. (_RouteGetPolicyTree_)
 
@@ -1121,7 +1200,7 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
-### <span id="route-put-template"></span> Updates an existing notification template. (_RoutePutTemplate_)
+### <span id="route-put-template"></span> Create or update a notification template. (_RoutePutTemplate_)
 
 ```
 PUT /api/v1/provisioning/templates/:name
@@ -1392,6 +1471,14 @@ Status: Accepted
 | time_intervals | [][TimeInterval](#time-interval) | `[]*TimeInterval` |          |         |             |         |
 
 {{% /responsive-table %}}
+
+### <span id="mute-timing-export"></span> MuteTimingExport
+
+**Properties**
+
+### <span id="mute-timings-export"></span> MuteTimingsExport
+
+**Properties**
 
 ### <span id="mute-timings"></span> MuteTimings
 
