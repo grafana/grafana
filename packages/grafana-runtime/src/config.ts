@@ -228,14 +228,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
   }
-
-  setLanguage(language: string | undefined) {
-    if (this.language) {
-      throw new Error('Language is already set and cannot be changed after bootstrapping.');
-    }
-
-    this.language = language;
-  }
 }
 
 // localstorage key: grafana.featureToggles
