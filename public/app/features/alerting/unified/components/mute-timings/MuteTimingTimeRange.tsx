@@ -7,6 +7,7 @@ import { Button, Field, Icon, IconButton, InlineField, InlineFieldRow, Input, To
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
 
+import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { isValidStartAndEndTime, isvalidTimeFormat } from './util';
 
 interface Props {
@@ -138,7 +139,14 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
           })}
         </>
       </Field>
-      <Tooltip content={isDisabled ? 'This time interval is disabled' : ''} placement="right-start">
+      <ConditionalWrap
+        shouldWrap={isDisabled}
+        wrap={(children) => (
+          <Tooltip content="This time interval is disabled" placement="right-start">
+            {children}
+          </Tooltip>
+        )}
+      >
         <Button
           className={styles.addTimeRange}
           variant="secondary"
@@ -149,7 +157,7 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
         >
           Add another time range
         </Button>
-      </Tooltip>
+      </ConditionalWrap>
     </div>
   );
 };
