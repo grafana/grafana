@@ -132,8 +132,8 @@ export const optionBuilder: OptionSuppliers = {
       name: 'Type',
       settings: {
         options: [
-          { value: LineType.Solid, label: LineType.Solid },
-          { value: LineType.Dashed, label: LineType.Dashed },
+          { value: LineType.Solid, label: 'Solid' },
+          { value: LineType.Dashed, label: 'Dashed' },
         ],
       },
       defaultValue: LineType.Solid,
