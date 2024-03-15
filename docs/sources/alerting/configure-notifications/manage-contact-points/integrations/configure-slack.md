@@ -29,9 +29,6 @@ Webhooks is the simpler way to post messages into Slack. Slack automatically cre
 {{< admonition type="note" >}}
 Grafana Alerting only allows one Slack channel per contact point.
 {{< /admonition >}}
-
-
-
 ## Before you begin
 
 ### Slack API Token 
