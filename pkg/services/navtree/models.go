@@ -127,6 +127,14 @@ func Sort(nodes []*NavLink) {
 	}
 }
 
+func (root *NavTreeRoot) ApplyHelpVersion(version string) {
+	helpNode := root.FindById("help")
+
+	if helpNode != nil {
+		helpNode.SubTitle = version
+	}
+}
+
 func (root *NavTreeRoot) ApplyAdminIA() {
 	orgAdminNode := root.FindById(NavIDCfg)
 
