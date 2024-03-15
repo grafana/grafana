@@ -1,6 +1,7 @@
 package sqlstash
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -69,6 +70,26 @@ func (q *selectQuery) addWhereIn(f string, vals []string) {
 	} else if count == 1 {
 		q.addWhere(f, vals[0])
 	}
+}
+
+const sqlLikeEscape = "#"
+
+var sqlLikeEscapeReplacer = strings.NewReplacer(
+	sqlLikeEscape, sqlLikeEscape+sqlLikeEscape,
+	"%", sqlLikeEscape+"%",
+	"_", sqlLikeEscape+"_",
+)
+
+func escapeJSONStringSQLLike(s string) string {
+	b, _ := json.Marshal(s)
+	return sqlLikeEscapeReplacer.Replace(string(b))
+}
+
+func (q *selectQuery) addWhereJsonContainsKV(field string, key string, value string) {
+	escapedKey := escapeJSONStringSQLLike(key)
+	escapedValue := escapeJSONStringSQLLike(value)
+	q.where = append(q.where, q.dialect.Quote(field)+" LIKE ? ESCAPE ?")
+	q.args = append(q.args, "{%"+escapedKey+":"+escapedValue+"%}", sqlLikeEscape)
 }
 
 func (q *selectQuery) addOrderBy(field string, direction Direction) {

@@ -68,6 +68,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 		grafanaAccessor.SetUpdatedTimestamp(&updatedAt)
 	}
 	grafanaAccessor.SetSlug(rsp.Slug)
+	grafanaAccessor.SetAction(rsp.Action.String())
 
 	if rsp.Origin != nil {
 		originTime := time.UnixMilli(rsp.Origin.Time).UTC()

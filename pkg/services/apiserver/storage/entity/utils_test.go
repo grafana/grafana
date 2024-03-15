@@ -169,6 +169,7 @@ func TestEntityToResource(t *testing.T) {
 				Meta:            []byte(fmt.Sprintf(`{"metadata":{"name":"test-name","uid":"test-uid","resourceVersion":"1","creationTimestamp":%q,"labels":{"label1":"value1","label2":"value2"},"annotations":{"grafana.app/createdBy":"test-created-by","grafana.app/folder":"test-folder","grafana.app/slug":"test-slug","grafana.app/updatedTimestamp":%q,"grafana.app/updatedBy":"test-updated-by"}}}`, createdAtStr, updatedAtStr)),
 				Body:            []byte(fmt.Sprintf(`{"kind":"Playlist","apiVersion":"playlist.grafana.app/v0alpha1","metadata":{"name":"test-name","uid":"test-uid","resourceVersion":"1","creationTimestamp":%q,"labels":{"label1":"value1","label2":"value2"},"annotations":{"grafana.app/createdBy":"test-created-by","grafana.app/folder":"test-folder","grafana.app/slug":"test-slug","grafana.app/updatedBy":"test-updated-by","grafana.app/updatedTimestamp":%q}},"spec":{"title":"A playlist","interval":"5m","items":[{"type":"dashboard_by_tag","value":"panel-tests"},{"type":"dashboard_by_uid","value":"vmie2cmWz"}]}}`, createdAtStr, updatedAtStr)),
 				ResourceVersion: 1,
+				Action:          entityStore.Entity_CREATED,
 			},
 			codec:                     runtime.Codec(nil),
 			expectedApiVersion:        "playlist.grafana.app/v0alpha1",
@@ -179,6 +180,7 @@ func TestEntityToResource(t *testing.T) {
 			expectedResourceVersion:   "1",
 			expectedUid:               "test-guid",
 			expectedAnnotations: map[string]string{
+				"grafana.app/action":           "CREATED",
 				"grafana.app/createdBy":        "test-created-by",
 				"grafana.app/folder":           "test-folder",
 				"grafana.app/slug":             "test-slug",
