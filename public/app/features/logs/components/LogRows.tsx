@@ -147,7 +147,11 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (document.getSelection()?.toString()) {
       return;
     }
-    this.closePopoverMenu();
+    // Give time to the browser to process click events originating from the menu before closing it.
+    // Otherwise selectionchange fires before other click listeners, potentially skipping user actions.
+    setTimeout(() => {
+      this.closePopoverMenu();
+    }, 250)
   };
 
   closePopoverMenu = () => {
@@ -177,6 +181,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   componentWillUnmount() {
     document.removeEventListener('click', this.handleDeselection);
     document.removeEventListener('contextmenu', this.handleDeselection);
+    document.removeEventListener('selectionchange', this.handleDeselection);
     if (this.renderAllTimer) {
       clearTimeout(this.renderAllTimer);
     }
