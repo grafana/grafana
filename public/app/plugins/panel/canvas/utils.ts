@@ -290,6 +290,7 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
             source: v,
             target,
             info: c,
+            vertices: c.vertices ?? undefined,
           });
         }
       });
@@ -345,6 +346,21 @@ export const calculateCoordinates = (
   x2 /= transformScale;
   y2 /= transformScale;
   return { x1, y1, x2, y2 };
+};
+
+export const calculateMidpoint = (x1: number, y1: number, x2: number, y2: number) => {
+  return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
+};
+
+export const calculateAbsoluteCoords = (
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  valueX: number,
+  valueY: number
+) => {
+  return { x: valueX * (x2 - x1) + x1, y: valueY * (y2 - y1) + y1 };
 };
 
 // @TODO revisit, currently returning last row index for field
