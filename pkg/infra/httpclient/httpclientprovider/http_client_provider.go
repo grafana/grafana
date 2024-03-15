@@ -27,7 +27,7 @@ func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer 
 		SetUserAgentMiddleware(cfg.DataProxyUserAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
-		ResponseLimitMiddleware(cfg.ResponseLimit),
+		sdkhttpclient.ResponseLimitMiddleware(cfg.ResponseLimit),
 		RedirectLimitMiddleware(validator),
 	}
 
@@ -37,6 +37,10 @@ func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer 
 
 	if httpLoggingEnabled(cfg.PluginSettings) {
 		middlewares = append(middlewares, HTTPLoggerMiddleware(cfg.PluginSettings))
+	}
+
+	if cfg.IPRangeACEnabled {
+		middlewares = append(middlewares, GrafanaRequestIDHeaderMiddleware(cfg, logger))
 	}
 
 	setDefaultTimeoutOptions(cfg)

@@ -43,12 +43,11 @@ export class TimelineChart extends React.Component<TimelineProps> {
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     this.panelContext = this.context;
-    const { eventBus, sync } = this.panelContext;
+    const { sync } = this.panelContext;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,
-      eventBus,
       sync,
       allFrames: this.props.frames,
       ...this.props,
