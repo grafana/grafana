@@ -6,8 +6,10 @@ import (
 	"strconv"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
@@ -91,9 +93,11 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 	if err == nil {
 		meta.SetUpdatedTimestampMillis(v.UpdatedAt)
 		if v.Id > 0 {
+			createdAt := time.UnixMilli(v.CreatedAt)
 			meta.SetOriginInfo(&utils.ResourceOriginInfo{
-				Name: "SQL",
-				Key:  fmt.Sprintf("%d", v.Id),
+				Name:      "SQL",
+				Key:       fmt.Sprintf("%d", v.Id),
+				Timestamp: &createdAt,
 			})
 		}
 	}
