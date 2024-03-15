@@ -1,9 +1,3 @@
-import 'systemjs/dist/system';
-// Add ability to load plugins bundled as AMD format
-import 'systemjs/dist/extras/amd';
-// Add ability to load plugins bundled as CJS format
-import 'systemjs-cjs-extra';
-
 import {
   AppPlugin,
   DataSourceApi,
@@ -19,6 +13,7 @@ import { GenericDataSourcePlugin } from '../datasources/types';
 import builtInPlugins from './built_in_plugins';
 import { registerPluginInCache } from './loader/cache';
 import { sharedDependenciesMap } from './loader/sharedDependencies';
+import { SystemJS } from './loader/systemjs';
 import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemjsHooks';
 import { SystemJSWithLoaderHooks } from './loader/types';
 import { buildImportMap, resolveModulePath } from './loader/utils';
@@ -26,7 +21,6 @@ import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 import { isFrontendSandboxSupported } from './sandbox/utils';
 
 const imports = buildImportMap(sharedDependenciesMap);
-const SystemJS = window.System;
 
 SystemJS.addImportMap({ imports });
 
