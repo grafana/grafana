@@ -8,7 +8,7 @@ import { CloudWatchDatasource } from '../../../datasource';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../../../types';
 
 import { CloudWatchLink } from './CloudWatchLink';
-import CloudWatchLogsQueryFieldMonaco from './LogsQueryField';
+import CloudWatchLogsQueryField from './LogsQueryField';
 
 type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
   query: CloudWatchLogsQuery;
@@ -23,7 +23,7 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
   const { query, data, datasource } = props;
 
   return (
-    <CloudWatchLogsQueryFieldMonaco
+    <CloudWatchLogsQueryField
       {...props}
       ExtraFieldElement={
         <InlineFormLabel className={`gf-form-label--btn ${labelClass}`} width="auto" tooltip="Link to Graph in AWS">
