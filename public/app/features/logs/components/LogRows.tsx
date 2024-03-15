@@ -151,7 +151,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     // Otherwise selectionchange fires before other click listeners, potentially skipping user actions.
     setTimeout(() => {
       this.closePopoverMenu();
-    }, 250)
+    }, 100)
   };
 
   closePopoverMenu = () => {
