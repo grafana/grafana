@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
@@ -11,40 +11,38 @@ import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 import { CanvasElementItem, CanvasElementProps, defaultBgColor, defaultTextColor } from '../element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
 
-class Parallelogram extends PureComponent<CanvasElementProps<TextConfig, TextData>> {
-  render() {
-    const { data } = this.props;
-    const styles = getStyles(config.theme2, data);
+const Parallelogram = (props: CanvasElementProps<TextConfig, TextData>) => {
+  const { data } = props;
+  const styles = getStyles(config.theme2, data);
 
-    return (
-      <div className={styles.container}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          xmlnsXlink="http://www.w3.org/1999/xlink"
-          viewBox="0 0 120 60"
-          width="100%"
-          height="100%"
-          style={{
-            stroke: defaultBgColor,
-            fill: defaultBgColor,
-            maxWidth: '100%',
-            height: 'intrinsic',
-          }}
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M 0 60 L 20 0 L 120 0 L 100 60 Z"
-            fill={defaultBgColor}
-            stroke="rgb(0, 0, 0)"
-            strokeMiterlimit="10"
-            pointerEvents="all"
-          />
-        </svg>
-        <span className={styles.text}>{data?.text}</span>
-      </div>
-    );
-  }
-}
+  return (
+    <div className={styles.container}>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        xmlnsXlink="http://www.w3.org/1999/xlink"
+        viewBox="0 0 120 60"
+        width="100%"
+        height="100%"
+        style={{
+          stroke: defaultBgColor,
+          fill: defaultBgColor,
+          maxWidth: '100%',
+          height: 'intrinsic',
+        }}
+        preserveAspectRatio="none"
+      >
+        <path
+          d="M 0 60 L 20 0 L 120 0 L 100 60 Z"
+          fill={defaultBgColor}
+          stroke="rgb(0, 0, 0)"
+          strokeMiterlimit="10"
+          pointerEvents="all"
+        />
+      </svg>
+      <span className={styles.text}>{data?.text}</span>
+    </div>
+  );
+};
 
 export const parallelogramItem: CanvasElementItem<TextConfig, TextData> = {
   id: 'parallelogram',

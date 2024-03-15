@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
@@ -11,40 +11,38 @@ import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 import { CanvasElementItem, CanvasElementProps, defaultBgColor, defaultTextColor } from '../element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
 
-class Cloud extends PureComponent<CanvasElementProps<TextConfig, TextData>> {
-  render() {
-    const { data } = this.props;
-    const styles = getStyles(config.theme2, data);
+const Cloud = (props: CanvasElementProps<TextConfig, TextData>) => {
+  const { data } = props;
+  const styles = getStyles(config.theme2, data);
 
-    return (
-      <div className={styles.container}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          xmlnsXlink="http://www.w3.org/1999/xlink"
-          viewBox="0 0 110 70"
-          width="100%"
-          height="100%"
-          style={{
-            stroke: defaultBgColor,
-            fill: defaultBgColor,
-            maxWidth: '100%',
-            height: 'intrinsic',
-          }}
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M 23 13 C -1 13 -7 33 12.2 37 C -7 45.8 14.6 65 30.2 57 C 41 73 77 73 89 57 C 113 57 113 41 98 33 C 113 17 89 1 68 9 C 53 -3 29 -3 23 13 Z"
-            fill={defaultBgColor}
-            stroke="rgb(0, 0, 0)"
-            strokeMiterlimit="10"
-            pointerEvents="all"
-          />
-        </svg>
-        <span className={styles.text}>{data?.text}</span>
-      </div>
-    );
-  }
-}
+  return (
+    <div className={styles.container}>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        xmlnsXlink="http://www.w3.org/1999/xlink"
+        viewBox="0 0 110 70"
+        width="100%"
+        height="100%"
+        style={{
+          stroke: defaultBgColor,
+          fill: defaultBgColor,
+          maxWidth: '100%',
+          height: 'intrinsic',
+        }}
+        preserveAspectRatio="none"
+      >
+        <path
+          d="M 23 13 C -1 13 -7 33 12.2 37 C -7 45.8 14.6 65 30.2 57 C 41 73 77 73 89 57 C 113 57 113 41 98 33 C 113 17 89 1 68 9 C 53 -3 29 -3 23 13 Z"
+          fill={defaultBgColor}
+          stroke="rgb(0, 0, 0)"
+          strokeMiterlimit="10"
+          pointerEvents="all"
+        />
+      </svg>
+      <span className={styles.text}>{data?.text}</span>
+    </div>
+  );
+};
 
 export const cloudItem: CanvasElementItem = {
   id: 'cloud',
