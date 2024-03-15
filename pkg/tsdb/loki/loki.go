@@ -21,13 +21,20 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/loki/tracing"
 )
 
 var logger = log.New("tsdb.loki")
+
+func DecorateLoggerWithTraceID(logger log.Logger, ctx context.Context) log.Logger {
+	if traceID := tracing.TraceIDFromContext(ctx, false); traceID != "" {
+		return logger.New("traceID", traceID)
+	}
+	return logger
+}
 
 type Service struct {
 	im       instancemgmt.InstanceManager
@@ -111,7 +118,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	logger := s.logger.FromContext(ctx)
+	logger := DecorateLoggerWithTraceID(s.logger, ctx).FromContext(ctx)
 	if err != nil {
 		logger.Error("Failed to get data source info", "error", err)
 		return err
@@ -165,7 +172,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	logger := logger.FromContext(ctx).New("fromAlert", fromAlert)
+	logger := DecorateLoggerWithTraceID(logger, ctx).FromContext(ctx).New("fromAlert", fromAlert) 
 	if err != nil {
 		logger.Error("Failed to get data source info", "err", err)
 		result := backend.NewQueryDataResponse()
