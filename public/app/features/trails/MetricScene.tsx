@@ -113,7 +113,7 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
     displayName: 'Related metrics',
     value: 'related',
     getScene: buildRelatedMetricsScene,
-    description: 'Related metrics are correlated by similarity of their names',
+    description: 'Related metrics are correlated by similarity in name',
   },
 ];
 
