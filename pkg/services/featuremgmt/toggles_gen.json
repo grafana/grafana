@@ -59,7 +59,8 @@
       "metadata": {
         "name": "alertingPreviewUpgrade",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-11T16:22:16Z"
       },
       "spec": {
         "description": "Show Unified Alerting preview and upgrade page in legacy alerting",
@@ -149,12 +150,15 @@
     {
       "metadata": {
         "name": "traceQLStreaming",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710172794391",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-11 15:59:54.391734 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables response streaming of TraceQL queries of the Tempo data source",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true
       }
@@ -643,7 +647,8 @@
       "metadata": {
         "name": "alertingUpgradeDryrunOnStart",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-11T16:22:16Z"
       },
       "spec": {
         "description": "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
@@ -996,7 +1001,8 @@
       "metadata": {
         "name": "alertingDetailsViewV2",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-12T12:33:03Z"
       },
       "spec": {
         "description": "Enables the preview of the new alert details view",
@@ -1417,7 +1423,8 @@
       "metadata": {
         "name": "exploreScrollableLogsContainer",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-12T14:02:07Z"
       },
       "spec": {
         "description": "Improves the scrolling behavior of logs in Explore",
@@ -2109,6 +2116,23 @@
       },
       "spec": {
         "description": "Force email verification for users, even when authenticating through sso.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "ssoSettingsSAML",
+        "resourceVersion": "1710411764296",
+        "creationTimestamp": "2024-03-14T09:41:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-14 10:22:44.296694 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the new SSO Settings API to configure the SAML connector",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,
