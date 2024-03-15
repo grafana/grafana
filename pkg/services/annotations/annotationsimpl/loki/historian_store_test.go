@@ -11,8 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/common/model"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -197,12 +195,8 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 
 			// clamp time range to 1 second
-			d, _ := model.ParseDuration("1s")
-			fakeLokiClient.configProjRes = historian.LokiConfProj{
-				LimitsConfig: historian.LokiLimitsConfProj{
-					MaxQueryLength: d,
-				},
-			}
+			oldMax := fakeLokiClient.cfg.MaxQueryLength
+			fakeLokiClient.cfg.MaxQueryLength = 1 * time.Second
 
 			query := annotations.ItemQuery{
 				OrgID:       1,
@@ -222,6 +216,9 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			)
 			require.NoError(t, err)
 			require.Len(t, res, 2)
+
+			// restore original max query length
+			fakeLokiClient.cfg.MaxQueryLength = oldMax
 		})
 
 		t.Run("should sort history by time", func(t *testing.T) {
@@ -757,7 +754,6 @@ type FakeLokiClient struct {
 	metrics       *metrics.Historian
 	log           log.Logger
 	rangeQueryRes []historian.Stream
-	configProjRes historian.LokiConfProj
 }
 
 func NewFakeLokiClient() *FakeLokiClient {
@@ -768,9 +764,10 @@ func NewFakeLokiClient() *FakeLokiClient {
 	return &FakeLokiClient{
 		client: client.NewTimedClient(req, metrics.WriteDuration),
 		cfg: historian.LokiConfig{
-			WritePathURL: url,
-			ReadPathURL:  url,
-			Encoder:      historian.JsonEncoder{},
+			WritePathURL:   url,
+			ReadPathURL:    url,
+			Encoder:        historian.JsonEncoder{},
+			MaxQueryLength: 741 * time.Hour,
 		},
 		metrics: metrics,
 		log:     log.New("ngalert.state.historian", "backend", "loki"),
@@ -779,6 +776,9 @@ func NewFakeLokiClient() *FakeLokiClient {
 
 func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to, limit int64) (historian.QueryRes, error) {
 	streams := make([]historian.Stream, len(c.rangeQueryRes))
+
+	// clamp time range using logic from historian
+	from, to = historian.ClampRange(from, to, c.cfg.MaxQueryLength.Nanoseconds())
 
 	for n, stream := range c.rangeQueryRes {
 		streams[n].Stream = stream.Stream
@@ -796,26 +796,10 @@ func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to,
 			Result: streams,
 		},
 	}
+
 	// reset expected streams on read
 	c.rangeQueryRes = []historian.Stream{}
 	return res, nil
-}
-
-func (c *FakeLokiClient) GetConfigProjection(ctx context.Context) (historian.LokiConfProj, error) {
-	if c.configProjRes != (historian.LokiConfProj{}) {
-		res := c.configProjRes
-		// reset expected config on read
-		c.configProjRes = historian.LokiConfProj{}
-		return res, nil
-	}
-
-	d, _ := model.ParseDuration("721h")
-
-	return historian.LokiConfProj{
-		LimitsConfig: historian.LokiLimitsConfProj{
-			MaxQueryLength: d,
-		},
-	}, nil
 }
 
 func TestUseStore(t *testing.T) {

@@ -43,7 +43,6 @@ var (
 
 type lokiQueryClient interface {
 	RangeQuery(ctx context.Context, query string, start, end, limit int64) (historian.QueryRes, error)
-	GetConfigProjection(ctx context.Context) (historian.LokiConfProj, error)
 }
 
 // LokiHistorianStore is a read store that queries Loki for alert state history.
@@ -57,7 +56,6 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 	if !useStore(cfg, ft) {
 		return nil
 	}
-
 	lokiCfg, err := historian.NewLokiConfig(cfg)
 	if err != nil {
 		// this config error is already handled elsewhere

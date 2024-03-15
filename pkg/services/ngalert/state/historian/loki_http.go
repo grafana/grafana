@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/prometheus/common/model"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -229,7 +227,7 @@ func (c *HttpLokiClient) RangeQuery(ctx context.Context, logQL string, start, en
 	if start > end {
 		return QueryRes{}, fmt.Errorf("start time cannot be after end time")
 	}
-	start, end = c.clampRange(start, end)
+	start, end = ClampRange(start, end, c.cfg.MaxQueryLength.Nanoseconds())
 	if limit < 1 {
 		limit = defaultPageSize
 	}
@@ -289,50 +287,6 @@ type QueryData struct {
 	Result []Stream `json:"result"`
 }
 
-type LokiLimitsConfProj struct {
-	MaxQueryLength model.Duration `yaml:"max_query_length" json:"max_query_length"`
-}
-
-type LokiConfProj struct {
-	LimitsConfig LokiLimitsConfProj `yaml:"limits_config,omitempty"`
-}
-
-func (c *HttpLokiClient) GetConfigProjection(ctx context.Context) (LokiConfProj, error) {
-	queryURL := c.cfg.ReadPathURL.JoinPath("/config")
-
-	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
-	if err != nil {
-		c.log.Error("Error creating request", "err", err)
-		return LokiConfProj{}, err
-	}
-
-	req = req.WithContext(ctx)
-	c.setAuthAndTenantHeaders(req)
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		c.log.Error("Error executing request", "err", err)
-		return LokiConfProj{}, err
-	}
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			c.log.Warn("Failed to close response body", "err", err)
-		}
-	}()
-
-	data, err := c.handleLokiResponse(res)
-	if err != nil {
-		return LokiConfProj{}, err
-	}
-
-	result := LokiConfProj{}
-	if err := json.Unmarshal(data, &result); err != nil {
-		return LokiConfProj{}, fmt.Errorf("error parsing request response: %w", err)
-	}
-
-	return result, nil
-}
-
 func (c *HttpLokiClient) handleLokiResponse(res *http.Response) ([]byte, error) {
 	if res == nil {
 		return nil, fmt.Errorf("response is nil")
@@ -355,11 +309,10 @@ func (c *HttpLokiClient) handleLokiResponse(res *http.Response) ([]byte, error) 
 	return data, nil
 }
 
-// clampRange ensures that the time range is within the configured maximum query length.
-func (c *HttpLokiClient) clampRange(start, end int64) (newStart int64, newEnd int64) {
+// ClampRange ensures that the time range is within the configured maximum query length.
+func ClampRange(start, end, maxTimeRange int64) (newStart int64, newEnd int64) {
 	newStart, newEnd = start, end
 
-	maxTimeRange := c.cfg.MaxQueryLength.Nanoseconds()
 	if maxTimeRange != 0 && end-start > maxTimeRange {
 		newStart = end - maxTimeRange
 	}
