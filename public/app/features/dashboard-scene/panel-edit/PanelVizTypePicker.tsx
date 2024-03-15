@@ -98,7 +98,7 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
 function getOldPanelModel(vizPanel: VizPanel) {
   const parent = vizPanel.parent instanceof LibraryVizPanel ? vizPanel.parent?.parent : vizPanel.parent;
 
-  if (!(parent instanceof SceneGridItem) || !(parent instanceof PanelRepeaterGridItem)) {
+  if (!(parent instanceof SceneGridItem) && !(parent instanceof PanelRepeaterGridItem)) {
     throw new Error('Parent is not a SceneGridItem or PanelRepeaterGridItem');
   }
 
