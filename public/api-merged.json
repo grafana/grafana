@@ -4316,6 +4316,17 @@
             "description": "The parent folder UID",
             "name": "parentUid",
             "in": "query"
+          },
+          {
+            "enum": [
+              "Edit",
+              "View"
+            ],
+            "type": "string",
+            "default": "View",
+            "description": "Set to `Edit` to return folders that the user can edit",
+            "name": "permission",
+            "in": "query"
           }
         ],
         "responses": {
