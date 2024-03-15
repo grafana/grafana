@@ -174,7 +174,7 @@
     "eslint-plugin-react": "7.34.0",
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-scope": "^8.0.0",
-    "eslint-webpack-plugin": "4.0.1",
+    "eslint-webpack-plugin": "4.1.0",
     "expose-loader": "5.0.0",
     "fork-ts-checker-webpack-plugin": "9.0.2",
     "glob": "10.3.10",
