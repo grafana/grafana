@@ -73,13 +73,13 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 
 	storage := map[string]rest.Storage{}
 
-	scopeStorage, err := newStorage(scheme, optsGetter)
+	scopeStorage, err := newScopeStorage(scheme, optsGetter)
 	if err != nil {
 		return nil, err
 	}
 	storage[scopeResourceInfo.StoragePath()] = scopeStorage
 
-	scopeDashboardStorage, err := newStorage(scheme, optsGetter)
+	scopeDashboardStorage, err := newScopeDashboardStorage(scheme, optsGetter)
 	if err != nil {
 		return nil, err
 	}
