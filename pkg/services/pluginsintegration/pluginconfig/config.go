@@ -29,7 +29,10 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		allowedUnsigned,
 		cfg.PluginsCDNURLTemplate,
 		cfg.AppURL,
-		features,
+		config.Features{
+			ExternalCorePluginsEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins),
+			SkipHostEnvVarsEnabled:     features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
+		},
 		cfg.AngularSupportEnabled,
 		cfg.GrafanaComURL,
 		cfg.DisablePlugins,
