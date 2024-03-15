@@ -40,7 +40,7 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 			func(obj any) ([]interface{}, error) {
 				m, ok := obj.(*scope.Scope)
 				if !ok {
-					return nil, fmt.Errorf("expected query template")
+					return nil, fmt.Errorf("expected scope")
 				}
 				return []interface{}{
 					m.Name,
