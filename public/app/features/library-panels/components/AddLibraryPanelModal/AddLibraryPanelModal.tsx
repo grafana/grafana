@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
 import { FetchError, isFetchError } from '@grafana/runtime';
-import { SceneGridLayout, SceneGridRow, VizPanel, sceneGraph } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { Button, Field, Input, Modal } from '@grafana/ui';
 import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { VizPanelManager } from 'app/features/dashboard-scene/panel-edit/VizPanelManager';
-import { buildGridItemForLibPanel } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { PanelModel } from '../../../dashboard/state';
 import { getLibraryPanelByName } from '../../state/api';
@@ -49,36 +49,8 @@ export const AddLibraryPanelContents = ({
           if (vizPanel.parent instanceof VizPanelManager) {
             vizPanel.parent.changeToLibraryPanel(res);
           } else {
-            let layout;
-            try {
-              layout = sceneGraph.getAncestor(vizPanel, SceneGridLayout);
-            } catch (err) {
-              if (err instanceof Error) {
-                console.error(err.message);
-              }
-              return;
-            }
-
-            const newGridItem = buildGridItemForLibPanel(panel);
-            newGridItem?.setState({
-              key: vizPanel.parent!.state.key,
-            });
-
-            layout.setState({
-              children: layout.state.children.map((child) => {
-                if (child instanceof SceneGridRow) {
-                  const rowChildren = child.state.children.map((rowChild) =>
-                    rowChild.state.key === newGridItem!.state.key ? newGridItem! : rowChild
-                  );
-
-                  child.setState({ children: rowChildren });
-                  return child;
-                }
-
-                console.log(child.state.key === newGridItem!.state.key);
-                return child.state.key === newGridItem!.state.key ? newGridItem! : child;
-              }),
-            });
+            const dashboard = getDashboardSceneFor(vizPanel);
+            dashboard.replaceWithLibraryPanel(vizPanel, panel);
           }
         }
       } else {

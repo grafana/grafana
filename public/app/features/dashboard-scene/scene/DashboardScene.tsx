@@ -757,6 +757,38 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return getPanelIdForVizPanel(vizPanel);
   }
 
+  public replaceWithLibraryPanel(vizPanel: VizPanel, panelModel: PanelModel) {
+    if (!panelModel.libraryPanel) {
+      return;
+    }
+
+    const newGridItem = buildGridItemForLibPanel(panelModel);
+    newGridItem?.setState({
+      key: vizPanel.parent!.state.key,
+    });
+
+    const sceneGridLayout = this.state.body;
+
+    if (!(sceneGridLayout instanceof SceneGridLayout)) {
+      throw new Error('Trying to replace with a library panel in a layout that is not SceneGridLayout');
+    }
+
+    sceneGridLayout.setState({
+      children: sceneGridLayout.state.children.map((child) => {
+        if (child instanceof SceneGridRow) {
+          const rowChildren = child.state.children.map((rowChild) =>
+            rowChild.state.key === newGridItem!.state.key ? newGridItem! : rowChild
+          );
+
+          child.setState({ children: rowChildren });
+          return child;
+        }
+
+        return child.state.key === newGridItem!.state.key ? newGridItem! : child;
+      }),
+    });
+  }
+
   /**
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
    */
