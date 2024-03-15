@@ -162,6 +162,7 @@ export const TimeSeriesPanel = ({
                       mode={options.tooltip.mode}
                       sortOrder={options.tooltip.sort}
                       sync={sync}
+                      eventsScope={eventsScope}
                       timeZone={timeZone}
                     />
                   </>

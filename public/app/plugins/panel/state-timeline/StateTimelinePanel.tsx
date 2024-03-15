@@ -197,6 +197,15 @@ export const StateTimelinePanel = ({
             setIsActive,
             sync,
           });
+
+          if (cursorSync !== DashboardCursorSync.Off) {
+            builder.setCursor({
+              sync: {
+                key: eventsScope,
+                scales: ['x', null],
+              }
+            })
+          }
         }
 
         return (

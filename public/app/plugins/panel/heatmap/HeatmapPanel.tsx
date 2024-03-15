@@ -132,7 +132,7 @@ export const HeatmapPanel = ({
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
 
-    return prepConfig({
+    const builder = prepConfig({
       dataRef,
       theme,
       onhover: !showNewVizTooltips ? onhover : null,
@@ -147,6 +147,17 @@ export const HeatmapPanel = ({
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
     });
+
+    if (!showNewVizTooltips && cursorSync !== DashboardCursorSync.Off) {
+      builder.setCursor({
+        sync: {
+          key: eventsScope,
+          scales: ['x', null],
+        },
+      });
+    }
+
+    return builder;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, timeZone, data.structureRev, cursorSync]);
 
@@ -261,7 +272,7 @@ export const HeatmapPanel = ({
       </VizLayout>
       {!showNewVizTooltips && (
         <>
-          <Portal key={builder.uid}>
+          <Portal>
             {hover && options.tooltip.mode !== TooltipDisplayMode.None && (
               <VizTooltipContainer
                 position={{ x: hover.pageX, y: hover.pageY }}

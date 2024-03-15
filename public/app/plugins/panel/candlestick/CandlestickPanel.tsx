@@ -328,6 +328,7 @@ export const CandlestickPanel = ({
                   config={uplotConfig}
                   mode={TooltipDisplayMode.Multi}
                   sync={sync}
+                  eventsScope={eventsScope}
                   timeZone={timeZone}
                 />
               </>

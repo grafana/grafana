@@ -226,6 +226,15 @@ export const StatusHistoryPanel = ({
             isActive,
             setIsActive,
           });
+
+          if (cursorSync !== DashboardCursorSync.Off) {
+            builder.setCursor({
+              sync: {
+                key: eventsScope,
+                scales: ['x', null],
+              }
+            })
+          }
         }
 
         return (

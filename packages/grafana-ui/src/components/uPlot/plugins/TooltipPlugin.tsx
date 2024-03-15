@@ -32,6 +32,7 @@ interface TooltipPluginProps {
   mode?: TooltipDisplayMode;
   sortOrder?: SortOrder;
   sync?: () => DashboardCursorSync;
+  eventsScope?: string;
   // Allows custom tooltip content rendering. Exposes aligned data frame with relevant indexes for data inspection
   // Use field.state.origin indexes from alignedData frame field to get access to original data frame and field index.
   renderTooltip?: (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => React.ReactNode;
@@ -49,6 +50,7 @@ export const TooltipPlugin = ({
   timeZone,
   config,
   renderTooltip,
+  eventsScope = 'global',
   ...otherProps
 }: TooltipPluginProps) => {
   const plotInstance = useRef<uPlot>();
@@ -90,6 +92,17 @@ export const TooltipPlugin = ({
       setIsActive(false);
       plotInstance.current?.root.classList.remove('plot-active');
     };
+
+    const cursorSync = sync?.() ?? DashboardCursorSync.Off;
+
+    if (cursorSync !== DashboardCursorSync.Off && config.scales[0].props.isTime) {
+      config.setCursor({
+        sync: {
+          key: eventsScope,
+          scales: ['x', null],
+        },
+      });
+    }
 
     // cache uPlot plotting area bounding box
     config.addHook('syncRect', (u, rect) => (bbox = rect));
