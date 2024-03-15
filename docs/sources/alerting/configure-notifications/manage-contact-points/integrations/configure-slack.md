@@ -16,18 +16,13 @@ title: Configure Slack for Alerting
 weight: 300
 ---
 
-
 ## Configure Slack for Alerting
-
 
 Use the Grafana Alerting - Slack integration to send Slack notifications when your alerts are firing. 
 
 There are two ways of integrating Slack into Grafana Alerting. 
-
-
 1. Use a [Slack API token](https://api.slack.com/authentication/token-types)
 Enable your app to access the Slack API. If, for example, you are interested in more granular control over permissions, or your project is expected to regularly scale, resulting in new channels being created, this is the best option. 
-
 
 1. Use a [Webhook URL](https://api.slack.com/messaging/webhooks)
 Webhooks is the simpler way to post messages into Slack. Slack automatically creates a bot user with all the necessary permissions to post messages to one particular channel of your choice.
@@ -84,17 +79,17 @@ To create your Slack integration in Grafana Alerting, complete the following ste
 - In the Recipient field, copy in the channel ID in the Recipient field.
 - In the Token field, copy in the Bot User OAuth Token that starts with “xoxb-”.
 6. If you are using a Webhook URL, in the Webhook field, copy in your Slack app Webhook URL.
-7. Click Test to check that your integration works. 
-8. Click Save contact point.
+7. Click **Test** to check that your integration works. 
+8. Click **Save contact point**.
 
 ## Next steps
 
 To add the contact point and integration you created to your default notification policy, complete the following steps.
 
-1. Navigate to Alerts&IRM -> Alerting -> Notification policies.
-1. In the Default policy, click  the ellipsis icon (…) and then Edit,
+1. Navigate to **Alerts&IRM** -> **Alerting** -> **Notification policies**.
+1. In the **Default policy**, click  the ellipsis icon (…) and then **Edit**,
 1. Change the default policy to the contact point you created.
-1. Click Update default policy. 
+1. Click **Update default policy**. 
 
 **Note:**
 
