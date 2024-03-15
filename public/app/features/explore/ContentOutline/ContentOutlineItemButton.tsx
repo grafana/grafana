@@ -40,7 +40,11 @@ export function ContentOutlineItemButton({
   const body = (
     <div className={styles.buttonContainer}>
       {collapsible && (
-        <button className={styles.collapseButton} onClick={toggleCollapsed}>
+        <button
+          className={styles.collapseButton}
+          onClick={toggleCollapsed}
+          aria-label="content-outline-item-chevron-collapse"
+        >
           {renderIcon(collapsed ? 'angle-right' : 'angle-down')}
         </button>
       )}

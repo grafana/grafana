@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -69,67 +69,67 @@ const setup = (mergeSingleChild = false) => {
 };
 
 describe('<ContentOutline />', () => {
-  it('toggles content on button click', () => {
+  it('toggles content on button click', async () => {
     setup();
-    let showContentOutlineButton = screen.getByLabelText('Expand outline');
+    let showContentOutlineButton = screen.getByRole('button', { name: 'Expand outline' });
     expect(showContentOutlineButton).toBeInTheDocument();
 
-    fireEvent.click(showContentOutlineButton);
-    const hideContentOutlineButton = screen.getByLabelText('Collapse outline');
+    await userEvent.click(showContentOutlineButton);
+    const hideContentOutlineButton = screen.getByRole('button', { name: 'Collapse outline' });
     expect(hideContentOutlineButton).toBeInTheDocument();
 
-    fireEvent.click(hideContentOutlineButton);
-    showContentOutlineButton = screen.getByLabelText('Expand outline');
+    await userEvent.click(hideContentOutlineButton);
+    showContentOutlineButton = screen.getByRole('button', { name: 'Expand outline' });
     expect(showContentOutlineButton).toBeInTheDocument();
   });
 
-  it('scrolls into view on content button click', () => {
+  it('scrolls into view on content button click', async () => {
     setup();
-    const itemButtons = screen.getAllByLabelText(/Item/i);
+    const itemButtons = screen.getAllByRole('button', { name: /Item [0-9]+/ });
 
-    itemButtons.forEach((button) => {
-      fireEvent.click(button);
+    for (const button of itemButtons) {
+      await userEvent.click(button);
 
       //assert scrollIntoView is called
       expect(scrollerMock.scroll).toHaveBeenCalled();
-    });
+    }
   });
 
   it('doesnt merge a single child item when mergeSingleChild is false', async () => {
     setup();
-    const expandSectonChevron = screen.getAllByTitle('angle-right');
+    const expandSectonChevron = screen.getAllByRole('button', { name: 'content-outline-item-chevron-collapse' });
     await userEvent.click(expandSectonChevron[0]);
 
-    const child = screen.getByLabelText('Item 1-1');
+    const child = screen.getByRole('button', { name: 'Item 1-1' });
     expect(child).toBeInTheDocument();
   });
 
   it('merges a single child item when mergeSingleChild is true', () => {
     setup(true);
-    const child = screen.queryByText('Item 1-1');
+    const child = screen.queryByRole('button', { name: 'Item 1-1' });
 
     expect(child).not.toBeInTheDocument();
   });
 
   it('displays multiple children', async () => {
     setup();
-    const expandSectonChevron = screen.getAllByTitle('angle-right');
+    const expandSectonChevron = screen.getAllByRole('button', { name: 'content-outline-item-chevron-collapse' });
     await userEvent.click(expandSectonChevron[1]);
 
-    const child1 = screen.getByLabelText('Item 2-1');
-    const child2 = screen.getByLabelText('Item 2-2');
+    const child1 = screen.getByRole('button', { name: 'Item 2-1' });
+    const child2 = screen.getByRole('button', { name: 'Item 2-2' });
     expect(child1).toBeInTheDocument();
     expect(child2).toBeInTheDocument();
   });
 
   it('if item has multiple children, it displays multiple children even when mergeSingleChild is true', async () => {
     setup(true);
-    const expandSectonChevron = screen.getAllByTitle('angle-right');
+    const expandSectonChevron = screen.getAllByRole('button', { name: 'content-outline-item-chevron-collapse' });
     // since first item has only one child, we will have only one chevron
     await userEvent.click(expandSectonChevron[0]);
 
-    const child1 = screen.getByLabelText('Item 2-1');
-    const child2 = screen.getByLabelText('Item 2-2');
+    const child1 = screen.getByRole('button', { name: 'Item 2-1' });
+    const child2 = screen.getByRole('button', { name: 'Item 2-2' });
     expect(child1).toBeInTheDocument();
     expect(child2).toBeInTheDocument();
   });
