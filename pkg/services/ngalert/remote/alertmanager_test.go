@@ -174,74 +174,69 @@ func TestApplyConfig(t *testing.T) {
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
-	testValue := "test-value"
+	testValue := []byte("test")
 	testErr := errors.New("test error")
 	decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
-		if string(payload) == testValue {
-			return []byte("test"), nil
+		if string(payload) == string(testValue) {
+			return testValue, nil
 		}
 		return nil, testErr
 	}
 
-	configWithInvalidBase64 := strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, `"password":"!"`, 1)
-	configWithDecryptableKey := strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString([]byte(testValue))), 1)
-
 	var got string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("content-type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, err := w.Write([]byte(`{"status": "success"}`))
-		require.NoError(t, err)
+
+		defer r.Body.Close()
 		b, err := io.ReadAll(r.Body)
 		require.NoError(t, err)
 		got = string(b)
+
+		_, err = w.Write([]byte(`{"status": "success"}`))
+		require.NoError(t, err)
 	}))
 
-	store := ngfakes.NewFakeKVStore(t)
-	fstore := notifier.NewFileStore(1, store, "")
+	fstore := notifier.NewFileStore(1, ngfakes.NewFakeKVStore(t), "")
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-
 	cfg := AlertmanagerConfig{
 		OrgID:    1,
 		TenantID: "test",
 		URL:      server.URL,
 	}
-	am, err := NewAlertmanager(cfg, fstore, decryptFn, m)
+	am, err := NewAlertmanager(cfg,
+		fstore,
+		decryptFn,
+		m,
+	)
 	require.NoError(t, err)
 
 	tests := []struct {
 		name   string
-		config ngmodels.AlertConfiguration
+		config string
 		expCfg *client.UserGrafanaConfig
 		expErr string
 	}{
 		{
 			"invalid config",
-			ngmodels.AlertConfiguration{},
+			"{}",
 			nil,
-			"unable to parse Alertmanager configuration: unexpected end of JSON input",
+			"unable to parse Alertmanager configuration: no route provided in config",
 		},
 		{
-			"non base-64 encoded key",
-			ngmodels.AlertConfiguration{
-				AlertmanagerConfiguration: configWithInvalidBase64,
-			},
+			"invalid base-64 in key",
+			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, `"password":"!"`, 1),
 			nil,
 			"failed to decode value for key 'password': illegal base64 data at input byte 0",
 		},
 		{
 			"decrypt error",
-			ngmodels.AlertConfiguration{
-				AlertmanagerConfiguration: testGrafanaConfigWithSecret,
-			},
+			testGrafanaConfigWithSecret,
 			nil,
 			fmt.Sprintf("failed to decrypt value for key 'password': %s", testErr.Error()),
 		},
 		{
 			"no error",
-			ngmodels.AlertConfiguration{
-				AlertmanagerConfiguration: configWithDecryptableKey,
-			},
+			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString(testValue)), 1),
 			&client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: testGrafanaConfigWithSecret,
 			},
@@ -251,10 +246,12 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
-			err = am.CompareAndSendConfiguration(context.Background(), &test.config)
+			cfg := ngmodels.AlertConfiguration{
+				AlertmanagerConfiguration: test.config,
+			}
+			err = am.CompareAndSendConfiguration(context.Background(), &cfg)
 			if test.expErr == "" {
 				require.NoError(tt, err)
-
 				rawCfg, err := json.Marshal(test.expCfg)
 				require.NoError(tt, err)
 				require.JSONEq(tt, string(rawCfg), got)
