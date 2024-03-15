@@ -14,6 +14,7 @@ import {
 import { Dashboard, DashboardCursorSync } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { PanelModel } from 'app/features/dashboard/state';
 import { VariablesChanged } from 'app/features/variables/types';
 
 import { createWorker } from '../saving/createDetectChangesWorker';
@@ -703,6 +704,47 @@ describe('DashboardScene', () => {
 
         expect(body.state.children.length).toBe(1);
         expect(gridItem.state.body).toBeInstanceOf(VizPanel);
+      });
+
+      it('Should replace panel with a library panel', () => {
+        const layout = scene.state.body as SceneGridLayout;
+        const gridItem = layout.state.children[0] as SceneGridItem;
+        const panel = gridItem.state.body as VizPanel;
+
+        const panelModel = {
+          title: 'newLibPanel',
+          libraryPanel: {
+            uid: 'uid',
+            name: 'newLibPanel',
+          },
+          id: 1,
+        };
+
+        scene.replaceWithLibraryPanel(panel, new PanelModel(panelModel));
+
+        expect((layout.state.children[0] as SceneGridItem).state.body).toBeInstanceOf(LibraryVizPanel);
+      });
+
+      it('Should replace a panel in a row with a library panel', () => {
+        const layout = scene.state.body as SceneGridLayout;
+        const gridRow = layout.state.children[2] as SceneGridRow;
+        const gridItem = gridRow.state.children[0] as SceneGridItem;
+        const panel = gridItem.state.body as VizPanel;
+
+        const panelModel = {
+          title: 'newLibPanel',
+          libraryPanel: {
+            uid: 'uid',
+            name: 'newLibPanel',
+          },
+          id: 1,
+        };
+
+        scene.replaceWithLibraryPanel(panel, new PanelModel(panelModel));
+
+        expect(
+          ((layout.state.children[2] as SceneGridRow).state.children[0] as SceneGridItem).state.body
+        ).toBeInstanceOf(LibraryVizPanel);
       });
     });
   });

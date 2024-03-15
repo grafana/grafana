@@ -762,10 +762,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       return;
     }
 
-    const newGridItem = buildGridItemForLibPanel(panelModel);
-    newGridItem?.setState({
+    const gridLibItem = buildGridItemForLibPanel(panelModel);
+    gridLibItem?.setState({
       key: vizPanel.parent!.state.key,
     });
+    const newGridItem = gridLibItem?.clone();
 
     const sceneGridLayout = this.state.body;
 
