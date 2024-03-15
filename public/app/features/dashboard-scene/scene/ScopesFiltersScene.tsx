@@ -25,7 +25,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scope'] });
 
-  private _url = config.bootData.settings.listScopesEndpoint ?? '/apis/scope.grafana.app/v0alpha1/scopes';
+  private _url = config.bootData.settings.listScopesEndpoint || '/apis/scope.grafana.app/v0alpha1/scopes';
 
   constructor() {
     super({

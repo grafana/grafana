@@ -170,8 +170,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     if (this.state.isEditing) {
       this._changeTracker.startTrackingChanges();
-
-      this.state.scopes?.enterViewMode();
     }
 
     if (!this.state.meta.isEmbedded && this.state.uid) {
@@ -217,8 +215,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.propagateEditModeChange();
 
     this._changeTracker.startTrackingChanges();
-
-    this.state.scopes?.enterViewMode();
   };
 
   public saveCompleted(saveModel: Dashboard, result: SaveDashboardResponseDTO, folderUid?: string) {
