@@ -30,6 +30,7 @@ import {
 import {
   BackendDataSourceResponse,
   BackendSrvRequest,
+  config,
   DataSourceWithBackend,
   FetchResponse,
   getBackendSrv,
@@ -364,6 +365,11 @@ export class PrometheusDatasource
       // We need to pass utcOffsetSec to backend to calculate aligned range
       utcOffsetSec: request.range.to.utcOffset() * 60,
     };
+
+    if (config.featureToggles.promQLScope) {
+      processedTarget.scope = request.scope;
+    }
+
     if (target.instant && target.range) {
       // We have query type "Both" selected
       // We should send separate queries with different refId
