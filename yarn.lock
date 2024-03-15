@@ -3993,7 +3993,7 @@ __metadata:
     react-select-event: "npm:5.5.1"
     react-test-renderer: "npm:18.2.0"
     react-use: "npm:17.5.0"
-    react-window: "npm:1.8.10"
+    react-window: "npm:^1.8.10"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
@@ -4272,7 +4272,7 @@ __metadata:
     react-test-renderer: "npm:18.2.0"
     react-transition-group: "npm:4.4.5"
     react-use: "npm:17.5.0"
-    react-window: "npm:1.8.10"
+    react-window: "npm:^1.8.10"
     rimraf: "npm:5.0.5"
     rollup: "npm:2.79.1"
     rollup-plugin-copy: "npm:3.5.0"
@@ -18809,7 +18809,7 @@ __metadata:
     react-use: "npm:17.5.0"
     react-virtual: "npm:2.10.4"
     react-virtualized-auto-sizer: "npm:1.0.24"
-    react-window: "npm:1.8.10"
+    react-window: "npm:^1.8.10"
     react-window-infinite-loader: "npm:1.0.9"
     react-zoom-pan-pinch: "npm:^3.3.0"
     redux: "npm:4.2.1"
@@ -27086,7 +27086,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-window@npm:1.8.10":
+"react-window@npm:^1.8.10":
   version: 1.8.10
   resolution: "react-window@npm:1.8.10"
   dependencies:
