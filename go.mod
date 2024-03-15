@@ -103,7 +103,7 @@ require (
 	golang.org/x/oauth2 v0.16.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.6.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/backend-platform
-	golang.org/x/tools v0.17.0 // @grafana/grafana-as-code
+	golang.org/x/tools v0.17.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
 	google.golang.org/api v0.155.0 // @grafana/backend-platform
 	google.golang.org/grpc v1.62.1 // @grafana/plugins-platform-backend
@@ -457,7 +457,7 @@ require github.com/fullstorydev/grpchan v1.1.1 // @grafana/backend-platform
 // This needs to be here for other projects that import grafana/grafana
 // For local development grafana/grafana will always use the local files
 // Check go.work file for details
-require github.com/grafana/grafana/pkg/promlib v0.0.1 // @grafana/observability-metrics
+require github.com/grafana/grafana/pkg/promlib v0.0.2 // @grafana/observability-metrics
 
 require (
 	github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c // indirect
