@@ -55,8 +55,8 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       return;
     }
 
-    const editPanel = Boolean(dashboard.state.editPanel);
-    if (!editPanel) {
+    const isEditingPanel = Boolean(dashboard.state.editPanel);
+    if (!isEditingPanel) {
       items.push({
         text: t('panel.header-menu.view', `View`),
         iconClassName: 'eye',
@@ -66,7 +66,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (dashboard.canEditDashboard() && !isRepeat && !editPanel) {
+    if (dashboard.canEditDashboard() && !isRepeat && !isEditingPanel) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
@@ -88,7 +88,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       shortcut: 'p s',
     });
 
-    if (dashboard.state.isEditing && !isRepeat && !editPanel) {
+    if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),
         onClick: () => {
@@ -99,7 +99,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (!editPanel) {
+    if (!isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.copy', `Copy`),
         onClick: () => {
@@ -109,7 +109,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (dashboard.state.isEditing && !isRepeat && !editPanel) {
+    if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
       if (parent instanceof LibraryVizPanel) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
@@ -144,7 +144,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       onClick: (e) => onCreateAlert(panel),
     });
 
-    if (hasLegendOptions(panel.state.options) && !editPanel) {
+    if (hasLegendOptions(panel.state.options) && !isEditingPanel) {
       moreSubMenu.push({
         text: panel.state.options.legend.showLegend
           ? t('panel.header-menu.hide-legend', 'Hide legend')
@@ -204,7 +204,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (dashboard.state.isEditing && !isRepeat && !editPanel) {
+    if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
       items.push({
         text: '',
         type: 'divider',
