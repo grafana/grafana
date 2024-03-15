@@ -60,7 +60,7 @@ const (
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
 	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
 	stateHistoryDefaultEnabled    = true
-	lokiDefaultMaxQueryLength     = 741 * time.Hour // ~31 days, matches the default value in Loki
+	lokiDefaultMaxQueryLength     = 721 * time.Hour // 30d1h, matches the default value in Loki
 )
 
 type UnifiedAlertingSettings struct {

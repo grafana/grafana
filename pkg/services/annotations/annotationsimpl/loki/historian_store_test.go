@@ -767,7 +767,7 @@ func NewFakeLokiClient() *FakeLokiClient {
 			WritePathURL:   url,
 			ReadPathURL:    url,
 			Encoder:        historian.JsonEncoder{},
-			MaxQueryLength: 741 * time.Hour,
+			MaxQueryLength: 721 * time.Hour,
 		},
 		metrics: metrics,
 		log:     log.New("ngalert.state.historian", "backend", "loki"),
