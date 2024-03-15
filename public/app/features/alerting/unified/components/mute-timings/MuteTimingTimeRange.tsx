@@ -3,9 +3,10 @@ import React from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Icon, IconButton, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, IconButton, InlineField, InlineFieldRow, Input, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
+import ConditionalWrap from '../ConditionalWrap';
 
 import { isValidStartAndEndTime, isvalidTimeFormat } from './util';
 
@@ -17,7 +18,8 @@ const INVALID_FORMAT_MESSAGE = 'Times must be between 00:00 and 24:00 UTC';
 
 export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
   const styles = useStyles2(getStyles);
-  const { register, formState, getValues } = useFormContext<MuteTimingFields>();
+  const { register, formState, getValues, watch } = useFormContext<MuteTimingFields>();
+  const isDisabled = watch(`time_intervals.${intervalIndex}.disable`);
 
   const {
     fields: timeRanges,
@@ -81,6 +83,7 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                       })}
                       className={styles.timeRangeInput}
                       maxLength={5}
+                      readOnly={isDisabled}
                       suffix={<Icon name="clock-nine" />}
                       // @ts-ignore react-hook-form doesn't handle nested field arrays well
                       defaultValue={timeRange.start_time}
@@ -112,6 +115,7 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                       })}
                       className={styles.timeRangeInput}
                       maxLength={5}
+                      readOnly={isDisabled}
                       suffix={<Icon name="clock-nine" />}
                       // @ts-ignore react-hook-form doesn't handle nested field arrays well
                       defaultValue={timeRange.end_time}
@@ -135,15 +139,25 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
           })}
         </>
       </Field>
-      <Button
-        className={styles.addTimeRange}
-        variant="secondary"
-        type="button"
-        icon="plus"
-        onClick={() => addTimeRange({ start_time: '', end_time: '' })}
+      <ConditionalWrap
+        shouldWrap={isDisabled}
+        wrap={(children) => (
+          <Tooltip content="This time interval is disabled" placement="right-start">
+            {children}
+          </Tooltip>
+        )}
       >
-        Add another time range
-      </Button>
+        <Button
+          className={styles.addTimeRange}
+          variant="secondary"
+          type="button"
+          icon="plus"
+          disabled={isDisabled}
+          onClick={() => addTimeRange({ start_time: '', end_time: '' })}
+        >
+          Add another time range
+        </Button>
+      </ConditionalWrap>
     </div>
   );
 };
