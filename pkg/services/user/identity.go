@@ -213,7 +213,7 @@ func (u *SignedInUser) GetID() string {
 // The namespace is one of the constants defined in pkg/services/auth/identity
 func (u *SignedInUser) GetNamespacedID() (string, string) {
 	parts := strings.Split(u.GetID(), ":")
-	// Safety: GetID always returns a ':' seperated string
+	// Safety: GetID always returns a ':' separated string
 	return parts[0], parts[1]
 }
 
