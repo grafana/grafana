@@ -24,7 +24,6 @@ There are two ways of integrating Slack into Grafana Alerting.
 1. Use a [Slack API token](https://api.slack.com/authentication/token-types)
 Enable your app to access the Slack API. If, for example, you are interested in more granular control over permissions, or your project is expected to regularly scale, resulting in new channels being created, this is the best option. 
 
-
 1. Use a [Webhook URL](https://api.slack.com/messaging/webhooks)
 Webhooks is the simpler way to post messages into Slack. Slack automatically creates a bot user with all the necessary permissions to post messages to one particular channel of your choice.
 
