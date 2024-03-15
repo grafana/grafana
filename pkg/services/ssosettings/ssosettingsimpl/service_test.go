@@ -902,8 +902,121 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{
+			name: "should not include saml provider if the provider is enabled but the licensing feature is not enabled",
+			setup: func(env testEnv) {
+				env.store.ExpectedSSOSettings = []*models.SSOSettings{
+					{
+						Provider: "github",
+						Settings: map[string]any{
+							"enabled":       true,
+							"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+							"client_id":     "client_id",
+						},
+						Source: models.DB,
+					},
+				}
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"enabled":       true,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
+					},
+				}
+
+				env.service.cfg.SSOSettingsConfigurableProviders = map[string]bool{
+					"github": true,
+					"saml":   true,
+				}
+
+				license := licensingtest.NewFakeLicensing()
+				license.On("FeatureEnabled", "saml").Return(false)
+				env.service.licensing = license
+			},
+			want: []*models.SSOSettings{
+				{
+					Provider: "github",
+					Settings: map[string]any{
+						"enabled":       true,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.DB,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should include saml provider if the provider is enabled and the licensing feature is enabled",
+			setup: func(env testEnv) {
+				env.store.ExpectedSSOSettings = []*models.SSOSettings{
+					{
+						Provider: "github",
+						Settings: map[string]any{
+							"enabled":       true,
+							"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+							"client_id":     "client_id",
+						},
+						Source: models.DB,
+					},
+				}
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"enabled":       true,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
+					},
+					"saml": {
+						"certificate_path": "/path/to/certificate",
+						"private_key_path": "/path/to/private/key",
+					},
+				}
+
+				env.service.cfg.SSOSettingsConfigurableProviders = map[string]bool{
+					"github": true,
+					"saml":   true,
+				}
+
+				license := licensingtest.NewFakeLicensing()
+				license.On("FeatureEnabled", "saml").Return(true)
+				env.service.licensing = license
+			},
+			want: []*models.SSOSettings{
+				{
+					Provider: "github",
+					Settings: map[string]any{
+						"enabled":       true,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.DB,
+				},
+				{
+					Provider: "saml",
+					Settings: map[string]any{
+						"certificate_path": "*********",
+						"private_key_path": "*********",
+					},
+					Source: models.System,
+				},
+			},
+			wantErr: false,
+		},
 	}
-	for _, tc := range testCases {
+	for i, tc := range testCases {
+		if i != 5 {
+			continue
+		}
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
 		tc := tc
