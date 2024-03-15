@@ -988,6 +988,8 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 
 	query, args := entityQuery.toQuery()
 
+	s.log.Debug("history", "query", query, "args", args)
+
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -1180,7 +1182,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		// if we are looking for deleted entities, we need to use the labels column
 		if r.Deleted {
 			for labelKey, labelValue := range r.Labels {
-				entityQuery.addWhere(s.dialect.Quote("labels")+" LIKE ?", `%"`+labelKey+`":"`+labelValue+`"%`)
+				entityQuery.addWhereJsonContainsKV("labels", labelKey, labelValue)
 			}
 			// for active entities, we can use the entity_labels table
 		} else {
@@ -1200,6 +1202,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 			entityQuery.addWhereInSubquery("guid", query, args)
 		}
 	}
+
 	for _, sort := range r.Sort {
 		sortBy, err := ParseSortBy(sort)
 		if err != nil {
@@ -1333,31 +1336,37 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 	}
 
 	if len(r.Labels) > 0 {
-		var args []any
-		var conditions []string
-		for labelKey, labelValue := range r.Labels {
-			args = append(args, labelKey)
-			args = append(args, labelValue)
-			conditions = append(conditions, "(label = ? AND value = ?)")
-		}
-		query := "SELECT guid FROM entity_labels" +
-			" WHERE (" + strings.Join(conditions, " OR ") + ")" +
-			" GROUP BY guid" +
-			" HAVING COUNT(label) = ?"
-		args = append(args, len(r.Labels))
+		if r.Since > 0 {
+			for labelKey, labelValue := range r.Labels {
+				entityQuery.addWhereJsonContainsKV("labels", labelKey, labelValue)
+			}
+		} else {
+			var args []any
+			var conditions []string
+			for labelKey, labelValue := range r.Labels {
+				args = append(args, labelKey)
+				args = append(args, labelValue)
+				conditions = append(conditions, "(label = ? AND value = ?)")
+			}
+			query := "SELECT guid FROM entity_labels" +
+				" WHERE (" + strings.Join(conditions, " OR ") + ")" +
+				" GROUP BY guid" +
+				" HAVING COUNT(label) = ?"
+			args = append(args, len(r.Labels))
 
-		entityQuery.addWhereInSubquery("guid", query, args)
+			entityQuery.addWhereInSubquery("guid", query, args)
+		}
 	}
 
 	entityQuery.addOrderBy("resource_version", Ascending)
 
 	var err error
 
-	s.log.Debug("watch init", "since", r.Since)
-
 	for hasmore := true; hasmore; {
 		err = func() error {
 			query, args := entityQuery.toQuery()
+
+			s.log.Debug("watch init", "query", query, "args", args)
 
 			rows, err := s.sess.Query(w.Context(), query, args...)
 			if err != nil {
@@ -1424,8 +1433,6 @@ func (s *sqlEntityServer) poller(stream chan *entity.Entity) {
 }
 
 func (s *sqlEntityServer) poll(since int64, out chan *entity.Entity) (int64, error) {
-	// s.log.Debug("watch poll", "since", since)
-
 	rr := &entity.ReadEntityRequest{
 		WithBody:   true,
 		WithStatus: true,
