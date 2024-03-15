@@ -128,7 +128,6 @@ export const optionBuilder: OptionSuppliers = {
     const category = ['Type'];
     builder.addSelect({
       category,
-      // id: 'type',
       path: 'type',
       name: 'Type',
       settings: {
