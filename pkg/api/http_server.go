@@ -408,7 +408,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 			return err
 		}
 		if hs.Cfg.CertFile != "" && hs.Cfg.KeyFile != "" {
-			if hs.Cfg.CertWatchInterval != 0 {
+			if hs.Cfg.CertWatchInterval > 0 {
 				hs.httpSrv.TLSConfig.GetCertificate = hs.GetCertificate
 				go hs.WatchAndUpdateCerts(ctx)
 				hs.log.Debug("HTTP Server certificates reload feature is enabled")
