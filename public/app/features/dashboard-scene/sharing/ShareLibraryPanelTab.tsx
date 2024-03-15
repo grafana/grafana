@@ -48,6 +48,7 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
         initialFolderUid={dashboardScene.state.meta.folderUid}
         dashboard={dashboardModel}
         panel={panelModel}
+        vizPanel={vizPanel}
         onDismiss={() => {
           modalRef?.resolve().onDismiss();
         }}

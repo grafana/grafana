@@ -2,22 +2,31 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
 import { FetchError, isFetchError } from '@grafana/runtime';
+import { SceneGridLayout, SceneGridRow, VizPanel, sceneGraph } from '@grafana/scenes';
+import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { Button, Field, Input, Modal } from '@grafana/ui';
 import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { t, Trans } from 'app/core/internationalization';
+import { VizPanelManager } from 'app/features/dashboard-scene/panel-edit/VizPanelManager';
+import { buildGridItemForLibPanel } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 
 import { PanelModel } from '../../../dashboard/state';
 import { getLibraryPanelByName } from '../../state/api';
-import { LibraryElementDTO } from '../../types';
 import { usePanelSave } from '../../utils/usePanelSave';
 
 interface AddLibraryPanelContentsProps {
   onDismiss?: () => void;
   panel: PanelModel;
   initialFolderUid?: string;
+  vizPanel?: VizPanel;
 }
 
-export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: AddLibraryPanelContentsProps) => {
+export const AddLibraryPanelContents = ({
+  panel,
+  initialFolderUid,
+  vizPanel,
+  onDismiss,
+}: AddLibraryPanelContentsProps) => {
   const [folderUid, setFolderUid] = useState(initialFolderUid);
   const [panelName, setPanelName] = useState(panel.title);
   const [debouncedPanelName, setDebouncedPanelName] = useState(panel.title);
@@ -30,14 +39,53 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
 
   const onCreate = useCallback(() => {
     panel.libraryPanel = { uid: '', name: panelName };
-    saveLibraryPanel(panel, folderUid!).then((res: LibraryElementDTO | FetchError) => {
+    saveLibraryPanel(panel, folderUid!).then((res: LibraryPanel | FetchError) => {
       if (!isFetchError(res)) {
         onDismiss?.();
+
+        if (vizPanel) {
+          // if we are coming from panel edit we have access to the panel manager
+          // else we are in the dashboard scene and need to modify the layout
+          if (vizPanel.parent instanceof VizPanelManager) {
+            vizPanel.parent.changeToLibraryPanel(res);
+          } else {
+            let layout;
+            try {
+              layout = sceneGraph.getAncestor(vizPanel, SceneGridLayout);
+            } catch (err) {
+              if (err instanceof Error) {
+                console.error(err.message);
+              }
+              return;
+            }
+
+            const newGridItem = buildGridItemForLibPanel(panel);
+            newGridItem?.setState({
+              key: vizPanel.parent!.state.key,
+            });
+
+            layout.setState({
+              children: layout.state.children.map((child) => {
+                if (child instanceof SceneGridRow) {
+                  const rowChildren = child.state.children.map((rowChild) =>
+                    rowChild.state.key === newGridItem!.state.key ? newGridItem! : rowChild
+                  );
+
+                  child.setState({ children: rowChildren });
+                  return child;
+                }
+
+                console.log(child.state.key === newGridItem!.state.key);
+                return child.state.key === newGridItem!.state.key ? newGridItem! : child;
+              }),
+            });
+          }
+        }
       } else {
         panel.libraryPanel = undefined;
       }
     });
-  }, [panel, panelName, folderUid, onDismiss, saveLibraryPanel]);
+  }, [panel, panelName, saveLibraryPanel, folderUid, onDismiss, vizPanel]);
 
   const isValidName = useAsync(async () => {
     try {
@@ -99,10 +147,15 @@ interface Props extends AddLibraryPanelContentsProps {
   isOpen?: boolean;
 }
 
-export const AddLibraryPanelModal = ({ isOpen = false, panel, initialFolderUid, ...props }: Props) => {
+export const AddLibraryPanelModal = ({ isOpen = false, panel, vizPanel, initialFolderUid, ...props }: Props) => {
   return (
     <Modal title="Create library panel" isOpen={isOpen} onDismiss={props.onDismiss}>
-      <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={props.onDismiss} />
+      <AddLibraryPanelContents
+        panel={panel}
+        initialFolderUid={initialFolderUid}
+        onDismiss={props.onDismiss}
+        vizPanel={vizPanel}
+      />
     </Modal>
   );
 };

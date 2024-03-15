@@ -26,6 +26,8 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery, vizPanelManager, 
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
   const [changeToPanel, setChangeToPanel] = useState<LibraryPanel | undefined>(undefined);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
+  const vizPanel = vizPanelManager?.state.panel;
+
   const onPanelFilterChange = useCallback(
     (plugins: PanelPluginMeta[]) => {
       setPanelFilter(plugins.map((p) => p.id));
@@ -80,6 +82,7 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery, vizPanelManager, 
           onDismiss={() => setShowingAddPanelModal(false)}
           initialFolderUid={dashboard?.meta.folderUid}
           isOpen={showingAddPanelModal}
+          vizPanel={vizPanel}
         />
       )}
 
