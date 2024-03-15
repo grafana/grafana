@@ -27,7 +27,6 @@ type stateStore interface {
 }
 
 // DecryptFn is a function that takes in an encrypted value and returns it decrypted.
-// It's used to decrypt secrets before sending a configuration to a remote Alertmanager.
 type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
 type Alertmanager struct {
@@ -192,32 +191,33 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	fn := func(payload []byte) ([]byte, error) {
 		return am.decrypt(ctx, payload)
 	}
-
 	decrypted, err := c.Decrypt(fn)
 	if err != nil {
 		return err
 	}
-
 	rawDecrypted, err := json.Marshal(decrypted)
 	if err != nil {
 		return err
 	}
 
-	if am.shouldSendConfig(ctx, rawDecrypted) {
-		am.metrics.ConfigSyncsTotal.Inc()
-		if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
-			ctx,
-			string(rawDecrypted),
-			config.ConfigurationHash,
-			config.ID,
-			config.CreatedAt,
-			config.Default,
-		); err != nil {
-			am.metrics.ConfigSyncErrorsTotal.Inc()
-			return err
-		}
-		am.metrics.LastConfigSync.SetToCurrentTime()
+	// Send the configuration only if we need to.
+	if !am.shouldSendConfig(ctx, rawDecrypted) {
+		return nil
 	}
+
+	am.metrics.ConfigSyncsTotal.Inc()
+	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
+		ctx,
+		string(rawDecrypted),
+		config.ConfigurationHash,
+		config.ID,
+		config.CreatedAt,
+		config.Default,
+	); err != nil {
+		am.metrics.ConfigSyncErrorsTotal.Inc()
+		return err
+	}
+	am.metrics.LastConfigSync.SetToCurrentTime()
 	return nil
 }
 
