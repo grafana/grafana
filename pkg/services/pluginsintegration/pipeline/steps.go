@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
@@ -167,7 +166,7 @@ type AsExternal struct {
 	cfg *config.PluginManagementCfg
 }
 
-// NewDisablePluginsStep returns a new DisablePlugins.
+// NewAsExternalStep returns a new DisablePlugins.
 func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 	return &AsExternal{
 		cfg: cfg,
@@ -177,7 +176,7 @@ func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 
 // Filter will filter out any plugins that are marked to be disabled.
 func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-	if c.cfg.Features == nil || !c.cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins) {
+	if !c.cfg.Features.ExternalCorePluginsEnabled {
 		return bundles, nil
 	}
 

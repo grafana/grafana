@@ -43,7 +43,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
 
     const items: PanelMenuItem[] = [];
     const moreSubMenu: PanelMenuItem[] = [];
-    const panelId = getPanelIdForVizPanel(panel);
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
     const exploreMenuItem = await getExploreMenuItem(panel);
@@ -56,15 +55,18 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       return;
     }
 
-    items.push({
-      text: t('panel.header-menu.view', `View`),
-      iconClassName: 'eye',
-      shortcut: 'v',
-      onClick: () => DashboardInteractions.panelMenuItemClicked('view'),
-      href: getViewPanelUrl(panel),
-    });
+    const isEditingPanel = Boolean(dashboard.state.editPanel);
+    if (!isEditingPanel) {
+      items.push({
+        text: t('panel.header-menu.view', `View`),
+        iconClassName: 'eye',
+        shortcut: 'v',
+        onClick: () => DashboardInteractions.panelMenuItemClicked('view'),
+        href: getViewPanelUrl(panel),
+      });
+    }
 
-    if (dashboard.canEditDashboard() && !isRepeat) {
+    if (dashboard.canEditDashboard() && !isRepeat && !isEditingPanel) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
@@ -72,7 +74,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         iconClassName: 'eye',
         shortcut: 'e',
         onClick: () => DashboardInteractions.panelMenuItemClicked('edit'),
-        href: getEditPanelUrl(panelId),
+        href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
       });
     }
 
@@ -86,7 +88,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       shortcut: 'p s',
     });
 
-    if (dashboard.state.isEditing && !isRepeat) {
+    if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),
         onClick: () => {
@@ -97,15 +99,17 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    moreSubMenu.push({
-      text: t('panel.header-menu.copy', `Copy`),
-      onClick: () => {
-        DashboardInteractions.panelMenuItemClicked('copy');
-        dashboard.copyPanel(panel);
-      },
-    });
+    if (!isEditingPanel) {
+      moreSubMenu.push({
+        text: t('panel.header-menu.copy', `Copy`),
+        onClick: () => {
+          DashboardInteractions.panelMenuItemClicked('copy');
+          dashboard.copyPanel(panel);
+        },
+      });
+    }
 
-    if (dashboard.state.isEditing && !isRepeat) {
+    if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
       if (parent instanceof LibraryVizPanel) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
@@ -140,7 +144,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       onClick: (e) => onCreateAlert(panel),
     });
 
-    if (hasLegendOptions(panel.state.options)) {
+    if (hasLegendOptions(panel.state.options) && !isEditingPanel) {
       moreSubMenu.push({
         text: panel.state.options.legend.showLegend
           ? t('panel.header-menu.hide-legend', 'Hide legend')
@@ -200,7 +204,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (dashboard.state.isEditing && !isRepeat) {
+    if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
       items.push({
         text: '',
         type: 'divider',
@@ -389,26 +393,11 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
 }
 
 export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
-  const vizPanelData = sceneGraph.getData(panel);
-  let panelHasAlert = false;
-
-  if (vizPanelData.state.data?.alertState) {
-    panelHasAlert = true;
-  }
-
-  const text2 =
-    panelHasAlert && !config.unifiedAlertingEnabled
-      ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
-      : undefined;
-  const confirmText = panelHasAlert ? 'YES' : undefined;
-
   appEvents.publish(
     new ShowConfirmModalEvent({
       title: 'Remove panel',
       text: 'Are you sure you want to remove this panel?',
-      text2: text2,
       icon: 'trash-alt',
-      confirmText: confirmText,
       yesText: 'Remove',
       onConfirm: () => dashboard.removePanel(panel),
     })

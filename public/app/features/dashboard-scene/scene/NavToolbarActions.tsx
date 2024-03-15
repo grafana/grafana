@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,16 +8,18 @@ import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButton
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
+import { PanelEditor } from '../panel-edit/PanelEditor';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
+import { LibraryVizPanel } from './LibraryVizPanel';
 
 interface Props {
   dashboard: DashboardScene;
@@ -56,6 +58,9 @@ export function ToolbarActions({ dashboard }: Props) {
   const buttonWithExtraMargin = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
+
+  const isEditingLibraryPanel = useEditingLibraryPanel(editPanel);
+
   const hasCopiedPanel = Boolean(copiedPanel);
 
   toolbarActions.push({
@@ -233,7 +238,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'back-button',
-    condition: isViewingPanel || isEditingPanel,
+    condition: (isViewingPanel || isEditingPanel) && !isEditingLibraryPanel,
     render: () => (
       <Button
         onClick={() => {
@@ -347,7 +352,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditingPanel && !editview && !meta.isNew && !isViewingPanel,
+    condition: isEditingPanel && !isEditingLibraryPanel && !editview && !meta.isNew && !isViewingPanel,
     render: () => (
       <Button
         onClick={editPanel?.onDiscard}
@@ -364,7 +369,58 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && (meta.canSave || canSaveAs),
+    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
+    render: () => (
+      <Button
+        onClick={editPanel?.onDiscard}
+        tooltip="Discard library panel changes"
+        size="sm"
+        key="discardLibraryPanel"
+        fill="outline"
+        variant="destructive"
+      >
+        Discard library panel changes
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
+    render: () => (
+      <Button
+        onClick={editPanel?.onUnlinkLibraryPanel}
+        tooltip="Unlink library panel"
+        size="sm"
+        key="unlinkLibraryPanel"
+        fill="outline"
+        variant="secondary"
+      >
+        Unlink library panel
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
+    render: () => (
+      <Button
+        onClick={editPanel?.onSaveLibraryPanel}
+        tooltip="Save library panel"
+        size="sm"
+        key="saveLibraryPanel"
+        fill="outline"
+        variant="primary"
+      >
+        Save library panel
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: isEditing && !isEditingLibraryPanel && (meta.canSave || canSaveAs),
     render: () => {
       // if we  only can save
       if (meta.isNew) {
@@ -464,6 +520,25 @@ export function ToolbarActions({ dashboard }: Props) {
   }
 
   return actionElements;
+}
+
+function useEditingLibraryPanel(panelEditor?: PanelEditor) {
+  const [isEditingLibraryPanel, setEditingLibraryPanel] = useState<Boolean>(false);
+
+  useEffect(() => {
+    if (panelEditor) {
+      const unsub = panelEditor.state.vizManager.subscribeToState((vizManagerState) =>
+        setEditingLibraryPanel(vizManagerState.sourcePanel.resolve().parent instanceof LibraryVizPanel)
+      );
+      return () => {
+        unsub.unsubscribe();
+      };
+    }
+    setEditingLibraryPanel(false);
+    return;
+  }, [panelEditor]);
+
+  return isEditingLibraryPanel;
 }
 
 interface ToolbarAction {
