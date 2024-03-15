@@ -1,9 +1,9 @@
 ---
 aliases:
-  - ../notifications/ # /docs/grafana/latest/alerting/notifications/
-  - ../old-alerting/notifications/ # /docs/grafana/latest/alerting/old-alerting/notifications/
-  - ../unified-alerting/notifications/ # /docs/grafana/latest/alerting/unified-alerting/notifications/
-  - ../alerting-rules/create-notification-policy/ # /docs/grafana/latest/alerting/alerting-rules/create-notification-policy/
+  - ../notifications/ # /docs/grafana/<GRAFANA_VERSION>/alerting/notifications/
+  - ../unified-alerting/notifications/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/notifications/
+  - ../alerting-rules/create-notification-policy/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-notification-policy/
+  - ../manage-notifications/create-notification-policy/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/create-notification-policy/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/create-notification-policy/
 description: Configure notification policies to determine how alerts are routed to contact points
 keywords:
@@ -18,7 +18,7 @@ labels:
     - enterprise
     - oss
 title: Configure notification policies
-weight: 430
+weight: 420
 ---
 
 # Configure notification policies
@@ -36,10 +36,6 @@ You can configure Grafana-managed notification policies as well as notification 
 For more information on notification policies, see [fundamentals of Notification Policies][notification-policies].
 
 ## Edit default notification policy
-
-{{% admonition type="note" %}}
-Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organizations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 Alerts only if they have one organization. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
-{{% /admonition %}}
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
@@ -112,6 +108,6 @@ An example of an alert configuration.
 - Create specific routes for particular teams that handle their own on-call rotations.
 
 {{% docs/reference %}}
-[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notification-policies/notifications"
-[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notification-policies/notifications"
+[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies"
+[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies"
 {{% /docs/reference %}}
