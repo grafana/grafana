@@ -126,6 +126,11 @@ describe('Table Migrations', () => {
         ],
       },
     };
+
+    // {
+    //   "id": "custom.hidden",
+    //   "value": true
+    // }
     const panel = {} as PanelModel;
     tablePanelChangedHandler(panel, 'table-old', oldStyles);
     expect(panel).toMatchInlineSnapshot(`
@@ -267,6 +272,38 @@ describe('Table Migrations', () => {
         "transformations": [],
       }
     `);
+  });
+
+  it('migrates hidden fields to override', () => {
+    const oldStyles = {
+      angular: {
+        columns: [],
+        styles: [
+          {
+            dateFormat: 'YYYY-MM-DD HH:mm:ss',
+            pattern: 'time',
+            type: 'hidden',
+          },
+        ],
+      },
+    };
+
+    const panel = {} as PanelModel;
+    tablePanelChangedHandler(panel, 'table-old', oldStyles);
+    expect(panel.fieldConfig.overrides).toEqual([
+      {
+        matcher: {
+          id: 'byName',
+          options: 'time',
+        },
+        properties: [
+          {
+            id: 'custom.hidden',
+            value: true,
+          },
+        ],
+      },
+    ]);
   });
 
   it('migrates DataFrame[] from format using meta.custom.parentRowIndex to format using FieldType.nestedFrames', () => {
