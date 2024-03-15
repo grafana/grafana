@@ -99,7 +99,14 @@ To add the contact point and integration you created to your default notificatio
 **Note:**
 
 {{< admonition type="note" >}}
-If you have more than one contact point, add a new notification policy rather than edit the default one, so you can route specific alerts to Slack. For more information, refer to Notification policies - [here](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-notification-policy/#add-new-nested-policy).
+If you have more than one contact point, add a new notification policy rather than edit the default one, so you can route specific alerts to Slack. For more information, refer to Notification policies - [slack-integration][here]
 {{< /admonition >}}
 
  
+
+{{% docs/reference %}}
+[slack-integration]: "/docs/grafana/ -> /docs/grafana/latest/alerting/alerting-rules/create-notification-policy/#add-new-nested-policy"
+
+[slack-integration]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#add-new-nested-policy"
+
+{{% /docs/reference %}}
