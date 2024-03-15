@@ -1,10 +1,10 @@
 {
-  "_comment": "Ce fichier est la source de vérité pour les chaînes anglaises. Modifiez-le dans la base de code pour adapter les pluriels et les autres phrases pour l'interface utilisateur.",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "Rôle",
-      "serviceaccount-label": "Compte de service",
-      "team-label": "Équipe",
+      "serviceaccount-label": "",
+      "team-label": "",
       "title": "Ajouter une autorisation pour",
       "user-label": "Utilisateur"
     },
