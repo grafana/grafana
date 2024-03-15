@@ -145,10 +145,13 @@ describe('VariablesEditView', () => {
     });
 
     it('should delete a variable', () => {
+      variableView.setState({ editIndex: 0 });
+      expect(variableView.state.editIndex).toBe(0);
       const variableIdentifier = 'customVar';
       variableView.onDelete(variableIdentifier);
       expect(variableView.getVariables()).toHaveLength(2);
       expect(variableView.getVariables()[0].state.name).toBe('customVar2');
+      expect(variableView.state.editIndex).toBeUndefined();
     });
 
     it('should change order of variables', () => {
