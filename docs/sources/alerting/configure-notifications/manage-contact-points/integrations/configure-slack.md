@@ -21,6 +21,7 @@ weight: 300
 Use the Grafana Alerting - Slack integration to send Slack notifications when your alerts are firing.
 
 There are two ways of integrating Slack into Grafana Alerting.
+
 1. Use a [Slack API token](https://api.slack.com/authentication/token-types)
 
 Enable your app to access the Slack API. If, for example, you are interested in more granular control over permissions, or your project is expected to regularly scale, resulting in new channels being created, this is the best option.
@@ -31,6 +32,7 @@ Webhooks is the simpler way to post messages into Slack. Slack automatically cre
 {{< admonition type="note" >}}
 Grafana Alerting only allows one Slack channel per contact point.
 {{< /admonition >}}
+
 ## Before you begin
 
 ### Slack API Token
@@ -44,9 +46,9 @@ If you are using a Slack API Token, complete the following steps.
 1. Right click the channel you want to receive notifications in.
 1. Click View channel details.
 1. Scroll down and copy the Channel ID.
-{{< admonition type="note" >}}
-While going through these steps, Slack may prompt you to Reinstall your app in order for the changes to take effect.
-{{< /admonition >}}
+   {{< admonition type="note" >}}
+   While going through these steps, Slack may prompt you to Reinstall your app in order for the changes to take effect.
+   {{< /admonition >}}
 
 ### Webhook URL
 
@@ -60,7 +62,7 @@ Make sure you copy the Slack app Webhook URL. You will need this when setting up
 
 To create your Slack integration in Grafana Alerting, complete the following steps.
 
-1. Navigate to Alerts&IRM ->  Alerting -> Contact points.
+1. Navigate to Alerts&IRM -> Alerting -> Contact points.
 1. Click **+ Add contact point**.
 1. Enter a contact point name.
 1. From the Integration list, select Slack.
@@ -69,14 +71,14 @@ To create your Slack integration in Grafana Alerting, complete the following ste
    - In the **Token** field, copy in the Bot User OAuth Token that starts with “xoxb-”.
 1. If you are using a Webhook URL, in the **Webhook** field, copy in your Slack app Webhook URL.
 1. Click **Test** to check that your integration works.
-1[]. Click **Save contact point**.
+   1[]. Click **Save contact point**.
 
 ## Next steps
 
 To add the contact point and integration you created to your default notification policy, complete the following steps.
 
 1. Navigate to **Alerts&IRM** -> **Alerting** -> **Notification policies**.
-1. In the **Default policy**, click  the ellipsis icon (…) and then **Edit**,
+1. In the **Default policy**, click the ellipsis icon (…) and then **Edit**,
 1. Change the default policy to the contact point you created.
 1. Click **Update default policy**.
 
