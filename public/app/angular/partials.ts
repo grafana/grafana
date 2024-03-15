@@ -8,7 +8,6 @@ import 'app/features/admin/partials/admin_home.html?inline';
 import 'app/features/admin/partials/edit_org.html?inline';
 import 'app/features/admin/partials/stats.html?inline';
 import 'app/features/admin/partials/styleguide.html?inline';
-import 'app/features/alerting/partials/alert_tab.html?inline';
 import 'app/features/annotations/partials/event_editor.html?inline';
 import 'app/partials/confirm_modal.html?inline';
 import 'app/partials/modal.html?inline';
