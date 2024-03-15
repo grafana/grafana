@@ -432,73 +432,75 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     libVizPanel.activate();
 
     // we need to update panel edit and dashboard with the new library panel after it's been loaded
-    libVizPanel.subscribeToState((lib) => {
-      let gridItem = vizPanel.parent;
-      let newGridItem;
+    libVizPanel.subscribeToState(() => this.updatePanelFromLibPanel(libPanel, libVizPanel, vizPanel));
+  }
 
-      // get the correct grid item parent
-      if (vizPanel.parent instanceof LibraryVizPanel) {
-        gridItem = vizPanel.parent.parent;
-      }
+  private updatePanelFromLibPanel(libPanel: LibraryPanel, libVizPanel: LibraryVizPanel, vizPanel: VizPanel) {
+    let gridItem = vizPanel.parent;
+    let newGridItem;
 
-      if (!(gridItem instanceof SceneGridItem) && !(gridItem instanceof PanelRepeaterGridItem)) {
-        throw new Error('GridItem not instance of SceneGridItem or PanelRepeaterGridItem');
-      }
+    // get the correct grid item parent
+    if (vizPanel.parent instanceof LibraryVizPanel) {
+      gridItem = vizPanel.parent.parent;
+    }
 
-      // take rows into account in getting the layout
-      const layout = gridItem.parent instanceof SceneGridRow ? gridItem.parent.parent : gridItem.parent;
+    if (!(gridItem instanceof SceneGridItem) && !(gridItem instanceof PanelRepeaterGridItem)) {
+      throw new Error('GridItem not instance of SceneGridItem or PanelRepeaterGridItem');
+    }
 
-      if (!(layout instanceof SceneGridLayout)) {
-        throw new Error('Layout not instance of SceneGridLayout');
-      }
+    // take rows into account in getting the layout
+    const layout = gridItem.parent instanceof SceneGridRow ? gridItem.parent.parent : gridItem.parent;
 
-      // if the replacement panel is a repeated one we need to create a panel repeater
-      // else we simply create a new grid item and replace the old one
-      if (libPanel.model.repeat) {
-        newGridItem = new PanelRepeaterGridItem({
-          key: gridItem.state.key,
-          x: gridItem.state.x,
-          y: gridItem.state.y,
-          width: libPanel.model.repeatDirection === 'h' ? 24 : gridItem.state.width,
-          height: gridItem.state.height,
-          itemHeight: gridItem.state.height,
-          source: libVizPanel,
-          variableName: libPanel.model.repeat,
-          repeatedPanels: [],
-          repeatDirection: libPanel.model.repeatDirection === 'h' ? 'h' : 'v',
-          maxPerRow: libPanel.model.maxPerRow,
-        });
+    if (!(layout instanceof SceneGridLayout)) {
+      throw new Error('Layout not instance of SceneGridLayout');
+    }
 
-        newGridItem.activate();
-      } else {
-        newGridItem = new SceneGridItem({
-          body: libVizPanel,
-          y: gridItem.state.y,
-          x: gridItem.state.x,
-          width: NEW_PANEL_WIDTH,
-          height: NEW_PANEL_HEIGHT,
-        });
-      }
-
-      // and then update the dashboard scene, taking rows into account
-      layout.setState({
-        children: layout.state.children.map((child) => {
-          if (child instanceof SceneGridRow) {
-            const rowChildren = child.state.children.map((rowChild) =>
-              rowChild.state.key === gridItem!.state.key ? newGridItem! : rowChild
-            );
-
-            child.setState({ children: rowChildren });
-            return child;
-          }
-
-          return child.state.key === gridItem!.state.key ? newGridItem! : child;
-        }),
+    // if the replacement panel is a repeated one we need to create a panel repeater
+    // else we simply create a new grid item and replace the old one
+    if (libPanel.model.repeat) {
+      newGridItem = new PanelRepeaterGridItem({
+        key: gridItem.state.key,
+        x: gridItem.state.x,
+        y: gridItem.state.y,
+        width: libPanel.model.repeatDirection === 'h' ? 24 : gridItem.state.width,
+        height: gridItem.state.height,
+        itemHeight: gridItem.state.height,
+        source: libVizPanel,
+        variableName: libPanel.model.repeat,
+        repeatedPanels: [],
+        repeatDirection: libPanel.model.repeatDirection === 'h' ? 'h' : 'v',
+        maxPerRow: libPanel.model.maxPerRow,
       });
 
-      // update panel edit also through vizPanelManager
-      this.setState({ sourcePanel: lib.panel!.getRef(), panel: lib.panel?.clone() });
+      newGridItem.activate();
+    } else {
+      newGridItem = new SceneGridItem({
+        body: libVizPanel,
+        y: gridItem.state.y,
+        x: gridItem.state.x,
+        width: NEW_PANEL_WIDTH,
+        height: NEW_PANEL_HEIGHT,
+      });
+    }
+
+    // and then update the dashboard scene, taking rows into account
+    layout.setState({
+      children: layout.state.children.map((child) => {
+        if (child instanceof SceneGridRow) {
+          const rowChildren = child.state.children.map((rowChild) =>
+            rowChild.state.key === gridItem!.state.key ? newGridItem! : rowChild
+          );
+
+          child.setState({ children: rowChildren });
+          return child;
+        }
+
+        return child.state.key === gridItem!.state.key ? newGridItem! : child;
+      }),
     });
+
+    // update panel edit also through vizPanelManager
+    this.setState({ sourcePanel: libVizPanel.state.panel!.getRef(), panel: libVizPanel.state.panel?.clone() });
   }
 
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
