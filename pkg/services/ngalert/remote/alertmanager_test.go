@@ -187,9 +187,9 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("content-type", "application/json")
 
-		defer r.Body.Close()
 		b, err := io.ReadAll(r.Body)
 		require.NoError(t, err)
+		require.NoError(t, r.Body.Close())
 		got = string(b)
 
 		_, err = w.Write([]byte(`{"status": "success"}`))
