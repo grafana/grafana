@@ -4063,8 +4063,8 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^3.11.0":
-  version: 3.13.1
-  resolution: "@grafana/scenes@npm:3.13.1"
+  version: 3.13.2
+  resolution: "@grafana/scenes@npm:3.13.2"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.3.3"
     react-grid-layout: "npm:1.3.4"
@@ -4078,7 +4078,7 @@ __metadata:
     "@grafana/ui": ^10.0.3
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/e71c2b8475c58c5d9f154fe33d82267721d8bb094cced07df9e1ec5c77aefbb63c97007a01158074241370929fea7ed6ebc003a2c325bf164abe09c05bb39612
+  checksum: 10/4678f3259f15f3692a576855f0edaa6454d41a1a39d0ad64bebf338aca33b9c1c56c830c2312bde4e2acc71bbd1a42957e0363549eb3404bfcf71c5293407d4b
   languageName: node
   linkType: hard
 
@@ -5064,12 +5064,12 @@ __metadata:
   linkType: hard
 
 "@manypkg/get-packages@npm:^2.2.0":
-  version: 2.2.0
-  resolution: "@manypkg/get-packages@npm:2.2.0"
+  version: 2.2.1
+  resolution: "@manypkg/get-packages@npm:2.2.1"
   dependencies:
     "@manypkg/find-root": "npm:^2.2.0"
     "@manypkg/tools": "npm:^1.1.0"
-  checksum: 10/2a78240d8d9cf32250204d02e7b693ad728129be0f01c6049593e0c90ad44eca0e3334521faca8eff42939219313517173b5c983be036ff7ef3218bc8b7f8f30
+  checksum: 10/648da51cf0bf301cfb133b51b816f04f7caf3c29c386c7fb38a106e6ffdc00823e6aa54b3f72eca49c7a64a1fdf00d55c85095ca9ebcbadfa02b89f6acd4fcdb
   languageName: node
   linkType: hard
 
