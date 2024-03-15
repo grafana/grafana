@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -20,6 +20,7 @@ export function PayloadEditor({
   setPayloadFormatError,
   payloadFormatError,
   onPayloadError,
+  className,
 }: {
   payload: string;
   defaultPayload: string;
@@ -27,6 +28,7 @@ export function PayloadEditor({
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
   payloadFormatError: string | null;
   onPayloadError: () => void;
+  className?: string;
 }) {
   const styles = useStyles2(getStyles);
   const onReset = () => {
@@ -79,14 +81,14 @@ export function PayloadEditor({
   const [isAlertSelectorOpen, setIsAlertSelectorOpen] = useState(false);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, className)}>
       <div className={styles.editor}>
-        <div className={styles.title}>
+        {/* <div className={styles.title}>
           Payload data
           <Tooltip placement="top" content={<AlertTemplateDataTable />} theme="info">
             <Icon name="info-circle" className={styles.tooltip} size="xl" />
           </Tooltip>
-        </div>
+        </div> */}
         <AutoSizer disableHeight>
           {({ width }) => (
             <div className={styles.editorWrapper}>
@@ -99,6 +101,7 @@ export function PayloadEditor({
                 value={payload}
                 readOnly={false}
                 onBlur={setPayload}
+                monacoOptions={{ wordWrap: 'on' }}
               />
             </div>
           )}
@@ -189,7 +192,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   wrapper: css`
     flex: 1;
-    min-width: 450px;
+    min-width: 350px;
   `,
   tooltip: css`
     padding-left: ${theme.spacing(1)};
