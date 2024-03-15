@@ -100,6 +100,9 @@ metadata:
   generateName: x # anything is ok here... except yes or true -- they become boolean!
   labels:
     foo: bar
+  annotations:
+    grafana.app/slug: "slugger"
+    grafana.app/updatedBy: "updater"
 spec:
   title: Playlist with auto generated UID
   interval: 5m
@@ -128,6 +131,13 @@ you should now see something like:
 NAME                                   TITLE                              INTERVAL   CREATED AT
 u394j4d3-s63j-2d74-g8hf-958773jtybf2   Playlist with auto generated UID   5m         2023-12-14T13:53:35Z 
 ```
+
+To update the playlist, update the `playlist-generate.yaml` file then run:
+```sh
+kubectl --kubeconfig=./grafana.kubeconfig patch playlist <NAME> --patch-file playlist-generate.yaml
+```
+
+In the example, `<NAME>` would be `u394j4d3-s63j-2d74-g8hf-958773jtybf2`.
 
 ### Use a separate database
 
