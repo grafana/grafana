@@ -338,6 +338,24 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     });
   }
 
+  public unlinkLibraryPanel() {
+    const sourcePanel = this.state.sourcePanel.resolve();
+    if (!(sourcePanel.parent instanceof LibraryVizPanel)) {
+      throw new Error('VizPanel is not a child of a library panel');
+    }
+
+    const gridItem = sourcePanel.parent.parent;
+    if (!(gridItem instanceof SceneGridItem)) {
+      throw new Error('Library panel not a child of a grid item');
+    }
+
+    const newSourcePanel = this.state.panel.clone({ $data: this.state.$data?.clone() });
+    gridItem.setState({
+      body: newSourcePanel,
+    });
+    this.setState({ sourcePanel: newSourcePanel.getRef() });
+  }
+
   public commitChanges() {
     const sourcePanel = this.state.sourcePanel.resolve();
 

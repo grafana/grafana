@@ -14,7 +14,20 @@ weight: 500
 
 # Angular support deprecation
 
-Angular plugin support is deprecated and will be removed in a future release. There are still many community plugins that rely on Grafana's Angular plugin support to work. The same is true for many internal (private) plugins that have been developed by Grafana users over the years. Grafana version 9 has a server configuration option that is global to the entire instance and controls whether Angular plugin support is available or not. By default, Angular support is still enabled, but that will change soon once we complete the migration of all Angular code in the core product.
+Angular plugin support is deprecated and will be removed in a future release.
+There are legacy core Grafana visualizations and external plugins that rely on Grafana's Angular plugin support to work. The same is likely true for [private plugins](https://grafana.com/legal/plugins/) that have been developed by Grafana users for use on their own instances over the years.
+From Grafana v9 and onwards, there is a [server configuration option](https://github.com/grafana/grafana/blob/d61bcdf4ca5e69489e0067c56fbe7f0bfdf84ee4/conf/defaults.ini#L362) that's global to the entire instance and controls whether Angular plugin support is available or not.
+In Grafana 11, we will change the default value for the configuration to remove support.
+
+Warning messages are displayed if a dashboard depends on an a panel visualization or data source which requires AngularJS as shown in the following video:
+
+{{< youtube id="XlEVs6g8dC8" >}}
+
+To avoid disruption:
+
+- Ensure that you are running the latest version of plugins by following this guide on [updating]({{< relref "../../administration/plugin-management/#update-a-plugin" >}}). Many panels and data sources have migrated from AngularJS.
+- If you are using legacy Core Grafana visualizations such as Graph or Table-old, migrate to their replacements using the provided [automatic migrations]({{< relref "./angular-plugins/#automatic-migration-of-plugins" >}}).
+- Review the [list of current Angular plugins]({{< relref "./angular-plugins/" >}}) to discover which Core and external plugins are impacted, and whether an update or alternative is required.
 
 ## Why are we deprecating Angular support?
 
@@ -29,6 +42,11 @@ New Grafana Cloud users will be unable to request for support to be added to the
 ## When will we remove Angular support completely?
 
 Our current plan is to completely remove any remaining support for Angular plugins in version 12. Including the removal of the [angular_support_enabled](https://github.com/grafana/grafana/blob/d61bcdf4ca5e69489e0067c56fbe7f0bfdf84ee4/conf/defaults.ini#L362) configuration parameter.
+
+## A dashboard I use is displaying a warning, what do I need to do?
+
+A dashboard displays warnings when one or more panel visualizations or data sources in the dashboard have a dependency on Angular.
+Contact your system administrator to advise them of the issue or follow the preceding guidance on avoiding disruption.
 
 ## How do I migrate an Angular plugin to React?
 

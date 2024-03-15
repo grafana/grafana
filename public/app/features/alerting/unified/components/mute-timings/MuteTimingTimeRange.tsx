@@ -6,8 +6,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Icon, IconButton, InlineField, InlineFieldRow, Input, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
+import ConditionalWrap from '../ConditionalWrap';
 
-import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { isValidStartAndEndTime, isvalidTimeFormat } from './util';
 
 interface Props {
