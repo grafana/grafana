@@ -1,6 +1,8 @@
 import { act, render, screen } from '@testing-library/react';
-import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
+
+import { Field } from '../Forms/Field';
 
 import { Cascader, CascaderOption, CascaderProps } from './Cascader';
 
@@ -118,9 +120,8 @@ describe('Cascader', () => {
     expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await userEvent.click(screen.getByText('First'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
-    await userEvent.click(screen.getByText('Second'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
+    await userEvent.click(screen.getByText('First'));
+    await userEvent.click(screen.getByText('Second'));
 
     expect(screen.getByDisplayValue('First / Second')).toBeInTheDocument();
   });
@@ -141,9 +142,8 @@ describe('Cascader', () => {
     expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await userEvent.click(screen.getByText('First'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
-    await userEvent.click(screen.getByText('Second'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
+    await userEvent.click(screen.getByText('First'));
+    await userEvent.click(screen.getByText('Second'));
 
     expect(screen.getByDisplayValue(`First${separator}Second`)).toBeInTheDocument();
   });
@@ -154,9 +154,8 @@ describe('Cascader', () => {
     );
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await userEvent.click(screen.getByText('First'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
-    await userEvent.click(screen.getByText('Second'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
+    await userEvent.click(screen.getByText('First'));
+    await userEvent.click(screen.getByText('Second'));
 
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });
@@ -165,10 +164,19 @@ describe('Cascader', () => {
     render(<Cascader placeholder={placeholder} options={options} onSelect={jest.fn()} />);
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await userEvent.click(screen.getByText('First'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
-    await userEvent.click(screen.getByText('Second'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
+    await userEvent.click(screen.getByText('First'));
+    await userEvent.click(screen.getByText('Second'));
 
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
+  });
+
+  it('should be properly associated with the Field label', () => {
+    render(
+      <Field label={'Cascader label'}>
+        <Cascader options={options} onSelect={jest.fn()} id={'cascader'} />
+      </Field>
+    );
+
+    expect(screen.getByRole('textbox', { name: 'Cascader label' })).toBeInTheDocument();
   });
 });

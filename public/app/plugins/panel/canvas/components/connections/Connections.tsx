@@ -276,7 +276,9 @@ export class Connections {
 
   // Handles mousemove and mouseup events when dragging an existing vertex
   vertexListener = (event: MouseEvent) => {
+
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
+
     event.preventDefault();
 
     if (!(this.connectionVertex && this.scene.div && this.scene.div.parentElement)) {
@@ -385,6 +387,7 @@ export class Connections {
           const currentConnections = [...currentSource.options.connections];
           if (currentConnections[connectionIndex].vertices) {
             const currentVertices = [...currentConnections[connectionIndex].vertices!];
+
             if (deleteVertex) {
               currentVertices.splice(vertexIndex, 1);
             } else {
@@ -395,6 +398,7 @@ export class Connections {
 
               currentVertices[vertexIndex] = currentVertex;
             }
+
             currentConnections[connectionIndex] = {
               ...currentConnections[connectionIndex],
               vertices: currentVertices,
@@ -413,6 +417,7 @@ export class Connections {
   // Handles mousemove and mouseup events when dragging a new vertex
   vertexAddListener = (event: MouseEvent) => {
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
+
     event.preventDefault();
 
     if (!(this.connectionVertex && this.scene.div && this.scene.div.parentElement)) {
