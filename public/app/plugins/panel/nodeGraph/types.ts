@@ -35,10 +35,12 @@ export type EdgeDatum = LinkDatum & {
   dataFrameRowIndex: number;
   sourceNodeRadius: number;
   targetNodeRadius: number;
+  /**
+   * @deprecated -- for edges use color instead
+   */
   highlighted: boolean;
   thickness: number;
   color?: string;
-  highlightedColor?: string;
   strokeDasharray?: string;
 };
 
