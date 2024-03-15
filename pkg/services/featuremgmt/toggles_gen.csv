@@ -69,7 +69,6 @@ frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,
 sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
 lokiFormatQuery,experimental,@grafana/observability-logs,false,false,true
 cloudWatchLogsMonacoEditor,GA,@grafana/aws-datasources,false,false,true
-exploreScrollableLogsContainer,experimental,@grafana/observability-logs,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
 pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,false,false,false
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,true
@@ -134,7 +133,6 @@ ssoSettingsApi,preview,@grafana/identity-access-team,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,true
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,true
-alertingDetailsViewV2,experimental,@grafana/alerting-squad,false,false,true
 datatrails,experimental,@grafana/dashboards-squad,false,false,true
 alertingSimplifiedRouting,preview,@grafana/alerting-squad,false,false,false
 logRowsPopoverMenu,GA,@grafana/observability-logs,false,false,true
@@ -143,7 +141,6 @@ tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
 regressionTransformation,preview,@grafana/dataviz-squad,false,false,true
 lokiQueryHints,GA,@grafana/observability-logs,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
-alertingPreviewUpgrade,GA,@grafana/alerting-squad,false,true,false
 enablePluginsTracingByDefault,experimental,@grafana/plugins-platform-backend,false,true,false
 cloudRBACRoles,experimental,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
@@ -160,6 +157,6 @@ kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true
 expressionParser,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 betterPageScrolling,GA,@grafana/grafana-frontend-platform,false,false,true
-alertingUpgradeDryrunOnStart,GA,@grafana/alerting-squad,false,true,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
 emailVerificationEnforcement,experimental,@grafana/identity-access-team,false,false,false
+ssoSettingsSAML,experimental,@grafana/identity-access-team,false,false,false

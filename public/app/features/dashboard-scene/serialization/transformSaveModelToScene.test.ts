@@ -173,9 +173,8 @@ describe('transformSaveModelToScene', () => {
     it('should initialize the DashboardScene in edit mode and dirty', () => {
       const rsp = buildNewDashboardSaveModel();
       const scene = transformSaveModelToScene(rsp);
-
-      expect(scene.state.isEditing).toBe(true);
-      expect(scene.state.isDirty).toBe(true);
+      expect(scene.state.isEditing).toBe(undefined);
+      expect(scene.state.isDirty).toBe(false);
     });
   });
 

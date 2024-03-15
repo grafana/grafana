@@ -360,9 +360,6 @@ type Cfg struct {
 
 	LocalFileSystemAvailable bool
 
-	// Deprecated
-	ForceMigration bool
-
 	// Analytics
 	CheckForGrafanaUpdates              bool
 	CheckForPluginUpdates               bool
@@ -503,12 +500,6 @@ type Cfg struct {
 	FeatureManagement FeatureMgmtSettings
 
 	// Alerting
-	AlertingEnabled            *bool
-	ExecuteAlerts              bool
-	AlertingRenderLimit        int
-	AlertingErrorOrTimeout     string
-	AlertingNoDataOrNullValues string
-
 	AlertingEvaluationTimeout   time.Duration
 	AlertingNotificationTimeout time.Duration
 	AlertingMaxAttempts         int
@@ -1068,8 +1059,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
 	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
 	cfg.LocalFileSystemAvailable = iniFile.Section("environment").Key("local_file_system_available").MustBool(true)
-	//nolint:staticcheck
-	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
@@ -1759,12 +1748,6 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 		return fmt.Errorf("invalid setting [alerting].enabled")
 	}
 	return nil
-}
-
-// IsLegacyAlertingEnabled returns whether the legacy alerting is enabled or not.
-// It's safe to be used only after readAlertingSettings() and ReadUnifiedAlertingSettings() are executed.
-func (cfg *Cfg) IsLegacyAlertingEnabled() bool {
-	return cfg.AlertingEnabled != nil && *(cfg.AlertingEnabled)
 }
 
 func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
