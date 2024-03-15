@@ -104,6 +104,10 @@ func (s *Service) GetForProviderWithRedactedSecrets(ctx context.Context, provide
 		return nil, ssosettings.ErrNotConfigurable
 	}
 
+	if provider == social.SAMLProviderName && !s.licensing.FeatureEnabled(social.SAMLProviderName) {
+		return nil, ssosettings.ErrNotConfigurable
+	}
+
 	storeSettings, err := s.GetForProvider(ctx, provider)
 	if err != nil {
 		return nil, err
