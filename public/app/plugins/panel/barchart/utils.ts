@@ -17,7 +17,6 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { config as runtimeConfig } from '@grafana/runtime';
 import {
   AxisColorMode,
   AxisPlacement,
@@ -137,9 +136,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
   builder.addHook('draw', config.draw);
-
-  const showNewVizTooltips = Boolean(runtimeConfig.featureToggles.newVizTooltips);
-  !showNewVizTooltips && builder.setTooltipInterpolator(config.interpolateTooltip);
 
   if (xTickLabelRotation !== 0) {
     // these are the amount of space we already have available between plot edge and first label

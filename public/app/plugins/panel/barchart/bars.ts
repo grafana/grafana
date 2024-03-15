@@ -10,7 +10,7 @@ import {
   VizTextDisplayOptions,
   VizLegendOptions,
 } from '@grafana/schema';
-import { measureText, PlotTooltipInterpolator } from '@grafana/ui';
+import { measureText } from '@grafana/ui';
 import { timeUnitSize } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
@@ -634,22 +634,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     u.ctx.restore();
   };
 
-  // handle hover interaction with quadtree probing
-  const interpolateTooltip: PlotTooltipInterpolator = (
-    updateActiveSeriesIdx,
-    updateActiveDatapointIdx,
-    updateTooltipPosition,
-    u
-  ) => {
-    if (hRect) {
-      updateActiveSeriesIdx(hRect.sidx);
-      updateActiveDatapointIdx(hRect.didx);
-      updateTooltipPosition();
-    } else {
-      updateTooltipPosition(true);
-    }
-  };
-
   let alignedTotals: AlignedData | null = null;
 
   function prepData(frames: DataFrame[], stackingGroups: StackingGroup[]) {
@@ -673,7 +657,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     init,
     drawClear,
     draw,
-    interpolateTooltip,
     prepData,
   };
 }

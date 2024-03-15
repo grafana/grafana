@@ -4,7 +4,7 @@ import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from
 import { DataFrame, DefaultTimeZone, Field, getTimeZoneInfo, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
 import { AxisPlacement, VizOrientation } from '@grafana/schema';
 
-import { FacetedData, PlotConfig, PlotTooltipInterpolator } from '../types';
+import { FacetedData, PlotConfig } from '../types';
 import { DEFAULT_PLOT_CONFIG, getStackingBands, pluginLog, StackingGroup } from '../utils';
 
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
@@ -46,8 +46,6 @@ export class UPlotConfigBuilder {
   private frames: DataFrame[] | undefined = undefined;
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
-  // Custom handler for closest datapoint and series lookup
-  private tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
   private padding?: Padding = undefined;
 
   private cachedConfig?: PlotConfig;
@@ -154,14 +152,6 @@ export class UPlotConfigBuilder {
 
   getStackingGroups() {
     return this.stackingGroups;
-  }
-
-  setTooltipInterpolator(interpolator: PlotTooltipInterpolator) {
-    this.tooltipInterpolator = interpolator;
-  }
-
-  getTooltipInterpolator() {
-    return this.tooltipInterpolator;
   }
 
   setPrepData(prepData: PreDataStacked) {

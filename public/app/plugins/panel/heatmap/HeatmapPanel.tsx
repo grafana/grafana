@@ -1,36 +1,32 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 
-import { DashboardCursorSync, DataFrameType, GrafanaTheme2, PanelProps, TimeRange } from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { DashboardCursorSync, PanelProps, TimeRange } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
-  Portal,
   ScaleDistribution,
   TooltipPlugin2,
   TooltipDisplayMode,
-  ZoomPlugin,
   UPlotChart,
   usePanelContext,
   useStyles2,
   useTheme2,
   VizLayout,
-  VizTooltipContainer,
   EventBusPlugin,
 } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
+import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 
-import { ExemplarModalHeader } from './ExemplarModalHeader';
-import { HeatmapHoverView } from './HeatmapHoverViewOld';
 import { HeatmapTooltip } from './HeatmapTooltip';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
 import { Options } from './types';
-import { HeatmapHoverEvent, prepConfig } from './utils';
+import { prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}
 
@@ -99,45 +95,16 @@ export const HeatmapPanel = ({
     return [null, info.heatmap?.fields.map((f) => f.values), [exemplarsXFacet, exemplarsYFacet]];
   }, [info.heatmap, info.exemplars]);
 
-  const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
-  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
-  const isToolTipOpen = useRef<boolean>(false);
-
-  const onCloseToolTip = () => {
-    isToolTipOpen.current = false;
-    setShouldDisplayCloseButton(false);
-    onhover(null);
-  };
-
-  const onclick = () => {
-    isToolTipOpen.current = !isToolTipOpen.current;
-
-    // Linking into useState required to re-render tooltip
-    setShouldDisplayCloseButton(isToolTipOpen.current);
-  };
-
-  const onhover = useCallback(
-    (evt?: HeatmapHoverEvent | null) => {
-      setHover(evt ?? undefined);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [options, data.structureRev, cursorSync]
-  );
-
   // ugh
   const dataRef = useRef(info);
   dataRef.current = info;
-  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
 
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
 
-    const builder = prepConfig({
+    return prepConfig({
       dataRef,
       theme,
-      onhover: !showNewVizTooltips ? onhover : null,
-      onclick: !showNewVizTooltips && options.tooltip.mode !== TooltipDisplayMode.None ? onclick : null,
-      isToolTipOpen,
       timeZone,
       getTimeRange: () => timeRangeRef.current,
       cellGap: options.cellGap,
@@ -148,34 +115,25 @@ export const HeatmapPanel = ({
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
     });
 
-    if (!showNewVizTooltips && cursorSync !== DashboardCursorSync.Off) {
-      builder.setCursor({
-        sync: {
-          key: eventsScope,
-          scales: ['x', null],
-        },
-      });
-    }
-
-    return builder;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, timeZone, data.structureRev, cursorSync]);
+  }, [options, timeZone, data.structureRev]);
 
   const renderLegend = () => {
     if (!info.heatmap || !options.legend.show) {
       return null;
     }
 
-    let heatmapType = dataRef.current?.heatmap?.meta?.type;
-    let isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
-    let countFieldIdx = !isSparseHeatmap ? 2 : 3;
-    const countField = info.heatmap.fields[countFieldIdx];
-
     let hoverValue: number | undefined = undefined;
+
+    // let heatmapType = dataRef.current?.heatmap?.meta?.type;
+    // let isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
+    // let countFieldIdx = !isSparseHeatmap ? 2 : 3;
+    // const countField = info.heatmap.fields[countFieldIdx];
+
     // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
-    if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
-      hoverValue = countField.values[hover.dataIdx];
-    }
+    // if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
+    //   hoverValue = countField.values[hover.dataIdx];
+    // }
 
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
@@ -214,89 +172,65 @@ export const HeatmapPanel = ({
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={builder} eventBus={eventBus} frame={info.series ?? info.heatmap} />
             )}
-            {!showNewVizTooltips && <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />}
-            {showNewVizTooltips && (
-              <>
-                {options.tooltip.mode !== TooltipDisplayMode.None && (
-                  <TooltipPlugin2
-                    config={builder}
-                    hoverMode={TooltipHoverMode.xyOne}
-                    queryZoom={onChangeTimeRange}
-                    syncMode={cursorSync}
-                    syncScope={eventsScope}
-                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
-                      if (enableAnnotationCreation && timeRange2 != null) {
-                        setNewAnnotationRange(timeRange2);
-                        dismiss();
-                        return;
-                      }
-
-                      const annotate = () => {
-                        let xVal = u.posToVal(u.cursor.left!, 'x');
-
-                        setNewAnnotationRange({ from: xVal, to: xVal });
-                        dismiss();
-                      };
-
-                      return (
-                        <HeatmapTooltip
-                          mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
-                          dataIdxs={dataIdxs}
-                          seriesIdx={seriesIdx}
-                          dataRef={dataRef}
-                          isPinned={isPinned}
-                          dismiss={dismiss}
-                          showHistogram={options.tooltip.yHistogram}
-                          showColorScale={options.tooltip.showColorScale}
-                          panelData={data}
-                          annotate={enableAnnotationCreation ? annotate : undefined}
-                        />
-                      );
-                    }}
-                    maxWidth={options.tooltip.maxWidth}
-                    maxHeight={options.tooltip.maxHeight}
-                  />
-                )}
-                <AnnotationsPlugin2
-                  annotations={data.annotations ?? []}
+            <>
+              {options.tooltip.mode !== TooltipDisplayMode.None && (
+                <TooltipPlugin2
                   config={builder}
-                  timeZone={timeZone}
-                  newRange={newAnnotationRange}
-                  setNewRange={setNewAnnotationRange}
-                  canvasRegionRendering={false}
+                  hoverMode={TooltipHoverMode.xyOne}
+                  queryZoom={onChangeTimeRange}
+                  syncMode={cursorSync}
+                  syncScope={eventsScope}
+                  render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
+                    if (enableAnnotationCreation && timeRange2 != null) {
+                      setNewAnnotationRange(timeRange2);
+                      dismiss();
+                      return;
+                    }
+
+                    const annotate = () => {
+                      let xVal = u.posToVal(u.cursor.left!, 'x');
+
+                      setNewAnnotationRange({ from: xVal, to: xVal });
+                      dismiss();
+                    };
+
+                    return (
+                      <HeatmapTooltip
+                        mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
+                        dataIdxs={dataIdxs}
+                        seriesIdx={seriesIdx}
+                        dataRef={dataRef}
+                        isPinned={isPinned}
+                        dismiss={dismiss}
+                        showHistogram={options.tooltip.yHistogram}
+                        showColorScale={options.tooltip.showColorScale}
+                        panelData={data}
+                        annotate={enableAnnotationCreation ? annotate : undefined}
+                      />
+                    );
+                  }}
+                  maxWidth={options.tooltip.maxWidth}
+                  maxHeight={options.tooltip.maxHeight}
                 />
-              </>
-            )}
+              )}
+              <AnnotationsPlugin2
+                annotations={data.annotations ?? []}
+                config={builder}
+                timeZone={timeZone}
+                newRange={newAnnotationRange}
+                setNewRange={setNewAnnotationRange}
+                canvasRegionRendering={false}
+              />
+              <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
+            </>
           </UPlotChart>
         )}
       </VizLayout>
-      {!showNewVizTooltips && (
-        <>
-          <Portal>
-            {hover && options.tooltip.mode !== TooltipDisplayMode.None && (
-              <VizTooltipContainer
-                position={{ x: hover.pageX, y: hover.pageY }}
-                offset={{ x: 10, y: 10 }}
-                allowPointerEvents={isToolTipOpen.current}
-              >
-                {shouldDisplayCloseButton && <ExemplarModalHeader onClick={onCloseToolTip} />}
-                <HeatmapHoverView
-                  timeRange={timeRange}
-                  data={info}
-                  hover={hover}
-                  showHistogram={options.tooltip.yHistogram}
-                  replaceVars={replaceVariables}
-                />
-              </VizTooltipContainer>
-            )}
-          </Portal>
-        </>
-      )}
     </>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   colorScaleWrapper: css({
     marginLeft: '25px',
     padding: '10px 0',
