@@ -1013,10 +1013,7 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	for i, tc := range testCases {
-		if i != 5 {
-			continue
-		}
+	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
 		tc := tc
