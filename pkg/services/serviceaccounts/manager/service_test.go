@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/extensions/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -117,9 +116,8 @@ func (f *SecretsCheckerFake) CheckTokens(ctx context.Context) error {
 }
 
 func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
-	acSvc := &actest.FakeService{}
 	storeMock := newServiceAccountStoreFake()
-	svc := ServiceAccountsService{acSvc, storeMock, log.New("test"), log.New("background.test"), &SecretsCheckerFake{}, false, 0}
+	svc := ServiceAccountsService{storeMock, log.New("test"), log.New("background.test"), &SecretsCheckerFake{}, false, 0}
 	testOrgId := 1
 
 	t.Run("should create service account", func(t *testing.T) {
