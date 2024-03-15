@@ -61,7 +61,7 @@ Make sure you copy the Slack app Webhook URL. You will need this when setting up
 To create your Slack integration in Grafana Alerting, complete the following steps.
 
 1. Navigate to Alerts&IRM ->  Alerting -> Contact points.
-1. Click + Add contact point.
+1. Click **+ Add contact point**.
 1. Enter a contact point name.
 1. From the Integration list, select Slack.
 1. If you are using a Slack API token:
