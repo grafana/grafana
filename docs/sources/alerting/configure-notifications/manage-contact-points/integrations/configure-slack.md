@@ -51,7 +51,6 @@ While going through these steps, Slack may prompt you to Reinstall your app in o
 If you are using a Webhook URL, follow steps 1 and 5 in the [Slack API Quickstart](https://api.slack.com/start/quickstart).
 
 
-**Note:**
 
 {{< admonition type="note" >}}
 Make sure you copy the Slack app Webhook URL. You will need this when setting up your contact point integration in Grafana Alerting. 
