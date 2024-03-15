@@ -196,7 +196,7 @@ function useLayoutStyle(direction: RepeatDirection, itemCount: number, maxPerRow
 
     if (direction === 'h') {
       const rowCount = Math.ceil(itemCount / maxPerRow);
-      const columnCount = Math.ceil(itemCount / rowCount);
+      const columnCount = Math.min(itemCount, maxPerRow);
 
       return css({
         display: 'grid',
