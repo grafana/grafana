@@ -116,7 +116,7 @@ export const HeatmapPanel = ({
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, timeZone, data.structureRev]);
+  }, [options, timeZone, data.structureRev, cursorSync]);
 
   const renderLegend = () => {
     if (!info.heatmap || !options.legend.show) {
@@ -172,57 +172,57 @@ export const HeatmapPanel = ({
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={builder} eventBus={eventBus} frame={info.series ?? info.heatmap} />
             )}
-            <>
-              {options.tooltip.mode !== TooltipDisplayMode.None && (
-                <TooltipPlugin2
-                  config={builder}
-                  hoverMode={TooltipHoverMode.xyOne}
-                  queryZoom={onChangeTimeRange}
-                  syncMode={cursorSync}
-                  syncScope={eventsScope}
-                  render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
-                    if (enableAnnotationCreation && timeRange2 != null) {
-                      setNewAnnotationRange(timeRange2);
-                      dismiss();
-                      return;
-                    }
-
-                    const annotate = () => {
-                      let xVal = u.posToVal(u.cursor.left!, 'x');
-
-                      setNewAnnotationRange({ from: xVal, to: xVal });
-                      dismiss();
-                    };
-
-                    return (
-                      <HeatmapTooltip
-                        mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
-                        dataIdxs={dataIdxs}
-                        seriesIdx={seriesIdx}
-                        dataRef={dataRef}
-                        isPinned={isPinned}
-                        dismiss={dismiss}
-                        showHistogram={options.tooltip.yHistogram}
-                        showColorScale={options.tooltip.showColorScale}
-                        panelData={data}
-                        annotate={enableAnnotationCreation ? annotate : undefined}
-                      />
-                    );
-                  }}
-                  maxWidth={options.tooltip.maxWidth}
-                  maxHeight={options.tooltip.maxHeight}
-                />
-              )}
-              <AnnotationsPlugin2
-                annotations={data.annotations ?? []}
+            {options.tooltip.mode !== TooltipDisplayMode.None && (
+              <TooltipPlugin2
                 config={builder}
-                timeZone={timeZone}
-                newRange={newAnnotationRange}
-                setNewRange={setNewAnnotationRange}
-                canvasRegionRendering={false}
+                hoverMode={
+                  options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+                }
+                queryZoom={onChangeTimeRange}
+                syncMode={cursorSync}
+                syncScope={eventsScope}
+                render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
+                  if (enableAnnotationCreation && timeRange2 != null) {
+                    setNewAnnotationRange(timeRange2);
+                    dismiss();
+                    return;
+                  }
+
+                  const annotate = () => {
+                    let xVal = u.posToVal(u.cursor.left!, 'x');
+
+                    setNewAnnotationRange({ from: xVal, to: xVal });
+                    dismiss();
+                  };
+
+                  return (
+                    <HeatmapTooltip
+                      mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
+                      dataIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      dataRef={dataRef}
+                      isPinned={isPinned}
+                      dismiss={dismiss}
+                      showHistogram={options.tooltip.yHistogram}
+                      showColorScale={options.tooltip.showColorScale}
+                      panelData={data}
+                      annotate={enableAnnotationCreation ? annotate : undefined}
+                    />
+                  );
+                }}
+                maxWidth={options.tooltip.maxWidth}
+                maxHeight={options.tooltip.maxHeight}
               />
-              <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
-            </>
+            )}
+            <AnnotationsPlugin2
+              annotations={data.annotations ?? []}
+              config={builder}
+              timeZone={timeZone}
+              newRange={newAnnotationRange}
+              setNewRange={setNewAnnotationRange}
+              canvasRegionRendering={false}
+            />
+            <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
           </UPlotChart>
         )}
       </VizLayout>
