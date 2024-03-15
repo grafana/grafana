@@ -2,7 +2,7 @@ import { isString } from 'lodash';
 
 import { PanelMenuItem, PanelModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
+import { SceneTimeRange, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { DashboardModel } from '../../dashboard/state';
@@ -76,7 +76,11 @@ function getEmbeddedTrailsState(
   return state;
 }
 
-function createClickHandler(item: QueryMetric, dashboard: DashboardScene | DashboardModel, ds: DataSourceRef) {
+function createCommonEmbeddedTrailStateProps(
+  item: QueryMetric,
+  dashboard: DashboardScene | DashboardModel,
+  ds: DataSourceRef
+) {
   const timeRange = getTimeRangeFromDashboard(dashboard);
   const trailState = getEmbeddedTrailsState(item, timeRange, ds.uid);
   const embeddedTrail: DataTrailEmbedded = new DataTrailEmbedded(trailState);
@@ -92,8 +96,13 @@ function createClickHandler(item: QueryMetric, dashboard: DashboardScene | Dashb
     title: 'Explore metrics',
   };
 
+  return commonProps;
+}
+
+function createClickHandler(item: QueryMetric, dashboard: DashboardScene | DashboardModel, ds: DataSourceRef) {
   if (dashboard instanceof DashboardScene) {
     return () => {
+      const commonProps = createCommonEmbeddedTrailStateProps(item, dashboard, ds);
       const drawerScene = new SceneDrawerAsScene({
         ...commonProps,
         onClose: () => dashboard.closeModal(),
@@ -101,6 +110,6 @@ function createClickHandler(item: QueryMetric, dashboard: DashboardScene | Dashb
       dashboard.showModal(drawerScene);
     };
   } else {
-    return () => launchSceneDrawerInGlobalModal(commonProps);
+    return () => launchSceneDrawerInGlobalModal(createCommonEmbeddedTrailStateProps(item, dashboard, ds));
   }
 }
