@@ -32,11 +32,9 @@ export enum NodeGraphDataFrameFieldNames {
   // Thickness of the edge [edges]
   thickness = 'thickness',
 
-  // Whether the node or edge should be highlighted (e.g., shown in red) in the UI
+  // Whether the node or edge should be highlighted (e.g., shown in red) in the UI [nodes + edges]
+  // @deprecated -- for edges use color instead
   highlighted = 'highlighted',
-
-  // Defines a single color (hex or html named value) to be used as the color of a highlighted edge [edges]
-  highlightedColor = 'highlightedColor',
 
   // Defines the stroke dash array for the edge [edges]
   strokeDasharray = 'strokeDasharray',

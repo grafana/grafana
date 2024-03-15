@@ -42,7 +42,10 @@ export const Edge = memo(function Edge(props: Props) {
   );
 
   const edgeColor = edge.color || defaultEdgeColor;
-  const highlightedEdgeColor = edge.highlightedColor || defaultHighlightedEdgeColor;
+
+  // @deprecated -- until 'highlighted' is removed we'll prioritize 'color'
+  // in case both are provided
+  const highlightedEdgeColor = edge.color || defaultHighlightedEdgeColor;
 
   const markerId = `triangle-${edge.id}`;
   const coloredMarkerId = `triangle-colored-${edge.id}`;

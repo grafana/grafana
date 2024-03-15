@@ -86,10 +86,12 @@ export type EdgeFields = {
   mainStat?: Field;
   secondaryStat?: Field;
   details: Field[];
+  /**
+   * @deprecated use `color` instead
+   */
   highlighted?: Field;
   thickness?: Field;
   color?: Field;
-  highlightedColor?: Field;
   strokeDasharray?: Field;
 };
 
@@ -106,10 +108,10 @@ export function getEdgeFields(edges: DataFrame): EdgeFields {
     mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
     secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
+    // @deprecated -- for edges use color instead
     highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
     thickness: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.thickness.toLowerCase()),
     color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color.toLowerCase()),
-    highlightedColor: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlightedColor.toLowerCase()),
     strokeDasharray: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.strokeDasharray.toLowerCase()),
   };
 }
@@ -240,10 +242,10 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id:
       secondaryStat: edgeFields.secondaryStat
         ? statToString(edgeFields.secondaryStat.config, edgeFields.secondaryStat.values[index])
         : '',
+      // @deprecated -- for edges use color instead
       highlighted: edgeFields.highlighted?.values[index] || false,
       thickness: edgeFields.thickness?.values[index] || 1,
       color: edgeFields.color?.values[index],
-      highlightedColor: edgeFields.highlightedColor?.values[index],
       strokeDasharray: edgeFields.strokeDasharray?.values[index],
     };
   });
