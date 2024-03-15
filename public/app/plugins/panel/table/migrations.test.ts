@@ -127,10 +127,6 @@ describe('Table Migrations', () => {
       },
     };
 
-    // {
-    //   "id": "custom.hidden",
-    //   "value": true
-    // }
     const panel = {} as PanelModel;
     tablePanelChangedHandler(panel, 'table-old', oldStyles);
     expect(panel).toMatchInlineSnapshot(`
