@@ -171,7 +171,6 @@
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk-folders/ @grafana/grafana-frontend-platform
-/devenv/bulk_alerting_dashboards/ @grafana/alerting-backend-product
 /devenv/create_docker_compose.sh @grafana/backend-platform
 /devenv/dashboards.yaml @grafana/dashboards-squad
 /devenv/datasources.yaml @grafana/backend-platform
@@ -283,7 +282,6 @@
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-backend-product
 /pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-backend-product
-/pkg/services/alerting/ @grafana/alerting-backend-product
 /pkg/tests/api/alerting/ @grafana/alerting-backend-product
 /public/app/features/alerting/ @grafana/alerting-frontend
 
@@ -436,7 +434,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/transformers/timeSeriesTable/ @grafana/dataviz-squad @grafana/app-o11y-visualizations
 /public/app/features/users/ @grafana/identity-access-team
 /public/app/features/variables/ @grafana/dashboards-squad
-/public/app/plugins/panel/alertGroups/ @grafana/alerting-frontend
 /public/app/plugins/panel/alertlist/ @grafana/alerting-frontend
 /public/app/plugins/panel/annolist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/barchart/ @grafana/dataviz-squad
@@ -711,5 +708,4 @@ embed.go @grafana/grafana-as-code
 /conf/provisioning/alerting/ @grafana/alerting-backend-product
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/plugins-platform-backend
-/conf/provisioning/notifiers/ @bergquist
 /conf/provisioning/plugins/ @grafana/plugins-platform-backend

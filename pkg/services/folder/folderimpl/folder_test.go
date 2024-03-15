@@ -24,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -423,7 +421,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				CanEditValue: true,
 			})
 
-			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nil)
+			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nil)
 			require.NoError(t, err)
 
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac)
@@ -502,7 +500,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				CanEditValue: true,
 			})
 
-			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOff,
+			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOff,
 				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff, nil)
 			require.NoError(t, err)
 
@@ -646,7 +644,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				tc.service.dashboardStore = dashStore
 				tc.service.store = nestedFolderStore
 
-				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, nil)
+				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, nil)
 				require.NoError(t, err)
 				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac)
 				require.NoError(t, err)
@@ -1301,7 +1299,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
-		cfg, dashStore, folderStore, &dummyDashAlertExtractor{},
+		cfg, dashStore, folderStore,
 		featuresFlagOn,
 		acmock.NewMockedPermissionsService(),
 		dashboardPermissions,
@@ -1924,15 +1922,4 @@ func createRule(t *testing.T, store *ngstore.DBstore, folderUID, title string) *
 	require.NoError(t, err)
 
 	return &rule
-}
-
-type dummyDashAlertExtractor struct {
-}
-
-func (d *dummyDashAlertExtractor) GetAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) ([]*alertmodels.Alert, error) {
-	return nil, nil
-}
-
-func (d *dummyDashAlertExtractor) ValidateAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) error {
-	return nil
 }

@@ -128,16 +128,6 @@ func GetComposableKinds() ([]ComposableKind, error) {
 		CueFile:  tempoCue,
 	})
 
-	alertgroupsCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/alertGroups/panelcfg.cue"))
-	if err != nil {
-		return nil, err
-	}
-	kinds = append(kinds, ComposableKind{
-		Name:     "alertgroups",
-		Filename: "panelcfg.cue",
-		CueFile:  alertgroupsCue,
-	})
-
 	annotationslistCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/annolist/panelcfg.cue"))
 	if err != nil {
 		return nil, err
