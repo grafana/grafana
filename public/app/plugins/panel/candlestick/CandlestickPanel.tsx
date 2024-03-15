@@ -273,46 +273,48 @@ export const CandlestickPanel = ({
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
             )}
-            <TooltipPlugin2
-              config={uplotConfig}
-              hoverMode={
-                options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
-              }
-              queryZoom={onChangeTimeRange}
-              clientZoom={true}
-              syncMode={cursorSync}
-              syncScope={eventsScope}
-              render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
-                if (enableAnnotationCreation && timeRange2 != null) {
-                  setNewAnnotationRange(timeRange2);
-                  dismiss();
-                  return;
+            {options.tooltip.mode !== TooltipDisplayMode.None && (
+              <TooltipPlugin2
+                config={uplotConfig}
+                hoverMode={
+                  options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
+                queryZoom={onChangeTimeRange}
+                clientZoom={true}
+                syncMode={cursorSync}
+                syncScope={eventsScope}
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
+                  if (enableAnnotationCreation && timeRange2 != null) {
+                    setNewAnnotationRange(timeRange2);
+                    dismiss();
+                    return;
+                  }
 
-                const annotate = () => {
-                  let xVal = u.posToVal(u.cursor.left!, 'x');
+                  const annotate = () => {
+                    let xVal = u.posToVal(u.cursor.left!, 'x');
 
-                  setNewAnnotationRange({ from: xVal, to: xVal });
-                  dismiss();
-                };
+                    setNewAnnotationRange({ from: xVal, to: xVal });
+                    dismiss();
+                  };
 
-                return (
-                  <TimeSeriesTooltip
-                    frames={[info.frame]}
-                    seriesFrame={alignedFrame}
-                    dataIdxs={dataIdxs}
-                    seriesIdx={seriesIdx}
-                    mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
-                    sortOrder={options.tooltip.sort}
-                    isPinned={isPinned}
-                    annotate={enableAnnotationCreation ? annotate : undefined}
-                    scrollable={isTooltipScrollable(options.tooltip)}
-                  />
-                );
-              }}
-              maxWidth={options.tooltip.maxWidth}
-              maxHeight={options.tooltip.maxHeight}
-            />
+                  return (
+                    <TimeSeriesTooltip
+                      frames={[info.frame]}
+                      seriesFrame={alignedFrame}
+                      dataIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
+                      sortOrder={options.tooltip.sort}
+                      isPinned={isPinned}
+                      annotate={enableAnnotationCreation ? annotate : undefined}
+                      scrollable={isTooltipScrollable(options.tooltip)}
+                    />
+                  );
+                }}
+                maxWidth={options.tooltip.maxWidth}
+                maxHeight={options.tooltip.maxHeight}
+              />
+            )}
             <AnnotationsPlugin2
               annotations={data.annotations ?? []}
               config={uplotConfig}
