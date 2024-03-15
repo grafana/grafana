@@ -44,7 +44,7 @@ export const palette = {
 
   cmLightNavBar: '#3C4650',
   cmLightIcons: '#0066A1',
-  cmLightTopBar: '#D2CDC8',
+  cmLightTopBar: '#D7D7D7',
   cmLightText: '#FFFFFF',
 
   cmDarkNavBar: '#141414',
