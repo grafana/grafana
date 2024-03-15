@@ -19,6 +19,11 @@ import {
 import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
 
+export const CONNECTION_VERTEX_ID = 'vertex';
+export const CONNECTION_VERTEX_ADD_ID = 'vertexAdd';
+const CONNECTION_VERTEX_ORTHO_TOLERANCE = 0.05; // Cartesian ratio against vertical or horizontal tolerance
+const CONNECTION_VERTEX_SNAP_TOLERANCE = 5; // Multi-segment snapping angle in degrees to trigger vertex removal
+
 export class Connections {
   scene: Scene;
   connectionAnchorDiv?: HTMLDivElement;
@@ -276,7 +281,6 @@ export class Connections {
 
   // Handles mousemove and mouseup events when dragging an existing vertex
   vertexListener = (event: MouseEvent) => {
-
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
 
     event.preventDefault();
@@ -328,36 +332,41 @@ export class Connections {
     }
 
     // Check if slope before vertex and after vertex is within snapping tolerance
-    const snapTolerance = 5;
-    const orthoTolerance = 0.05;
-    const angleOverall = calculateAngle(vx1, vy1, vx2, vy2);
-    const angleBefore = calculateAngle(vx1, vy1, x, y);
-    const deleteVertex = Math.abs(angleBefore - angleOverall) < snapTolerance;
-    const verticalBefore = Math.abs((x - vx1) / (y - vy1)) < orthoTolerance;
-    const verticalAfter = Math.abs((x - vx2) / (y - vy2)) < orthoTolerance;
-    const horizontalBefore = Math.abs((y - vy1) / (x - vx1)) < orthoTolerance;
-    const horizontalAfter = Math.abs((y - vy2) / (x - vx2)) < orthoTolerance;
-
     let xSnap = x;
     let ySnap = y;
-    if (verticalBefore) {
-      xSnap = vx1;
-    } else if (verticalAfter) {
-      xSnap = vx2;
-    }
-    if (horizontalBefore) {
-      ySnap = vy1;
-    } else if (horizontalAfter) {
-      ySnap = vy2;
+    let deleteVertex = false;
+    // Ignore if control key being held
+    if (!event.ctrlKey) {
+      // Check if segment before and after vertex are close to vertical or horizontal
+      const verticalBefore = Math.abs((x - vx1) / (y - vy1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const verticalAfter = Math.abs((x - vx2) / (y - vy2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const horizontalBefore = Math.abs((y - vy1) / (x - vx1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const horizontalAfter = Math.abs((y - vy2) / (x - vx2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+
+      if (verticalBefore) {
+        xSnap = vx1;
+      } else if (verticalAfter) {
+        xSnap = vx2;
+      }
+      if (horizontalBefore) {
+        ySnap = vy1;
+      } else if (horizontalAfter) {
+        ySnap = vy2;
+      }
+
+      if ((verticalBefore || verticalAfter) && (horizontalBefore || horizontalAfter)) {
+        this.scene.selecto!.rootContainer!.style.cursor = 'move';
+      } else if (verticalBefore || verticalAfter) {
+        this.scene.selecto!.rootContainer!.style.cursor = 'col-resize';
+      } else if (horizontalBefore || horizontalAfter) {
+        this.scene.selecto!.rootContainer!.style.cursor = 'row-resize';
+      }
+
+      const angleOverall = calculateAngle(vx1, vy1, vx2, vy2);
+      const angleBefore = calculateAngle(vx1, vy1, x, y);
+      deleteVertex = Math.abs(angleBefore - angleOverall) < CONNECTION_VERTEX_SNAP_TOLERANCE;
     }
 
-    if ((verticalBefore || verticalAfter) && (horizontalBefore || horizontalAfter)) {
-      this.scene.selecto!.rootContainer!.style.cursor = 'move';
-    } else if (verticalBefore || verticalAfter) {
-      this.scene.selecto!.rootContainer!.style.cursor = 'col-resize';
-    } else if (horizontalBefore || horizontalAfter) {
-      this.scene.selecto!.rootContainer!.style.cursor = 'row-resize';
-    }
     if (deleteVertex) {
       // Display temporary vertex removal
       this.scene.selecto!.rootContainer!.style.cursor = 'not-allowed';
@@ -463,8 +472,38 @@ export class Connections {
       }
     }
 
-    // Display temporary vertex during drag
-    this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${x} ${y} L${vx2} ${vy2}`);
+    // Check if slope before vertex and after vertex is within snapping tolerance
+    let xSnap = x;
+    let ySnap = y;
+    // Ignore if control key being held
+    if (!event.ctrlKey) {
+      // Check if segment before and after vertex are close to vertical or horizontal
+      const verticalBefore = Math.abs((x - vx1) / (y - vy1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const verticalAfter = Math.abs((x - vx2) / (y - vy2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const horizontalBefore = Math.abs((y - vy1) / (x - vx1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const horizontalAfter = Math.abs((y - vy2) / (x - vx2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+
+      if (verticalBefore) {
+        xSnap = vx1;
+      } else if (verticalAfter) {
+        xSnap = vx2;
+      }
+      if (horizontalBefore) {
+        ySnap = vy1;
+      } else if (horizontalAfter) {
+        ySnap = vy2;
+      }
+
+      if ((verticalBefore || verticalAfter) && (horizontalBefore || horizontalAfter)) {
+        this.scene.selecto!.rootContainer!.style.cursor = 'move';
+      } else if (verticalBefore || verticalAfter) {
+        this.scene.selecto!.rootContainer!.style.cursor = 'col-resize';
+      } else if (horizontalBefore || horizontalAfter) {
+        this.scene.selecto!.rootContainer!.style.cursor = 'row-resize';
+      }
+    }
+
+    this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${xSnap} ${ySnap} L${vx2} ${vy2}`);
     this.connectionSVGVertex!.style.display = 'block';
 
     // Handle mouseup

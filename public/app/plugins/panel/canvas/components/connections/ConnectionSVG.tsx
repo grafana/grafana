@@ -16,7 +16,7 @@ import {
   getParentBoundingClientRect,
 } from '../../utils';
 
-import { CONNECTION_VERTEX_ADD_ID, CONNECTION_VERTEX_ID } from './ConnectionAnchors';
+import { CONNECTION_VERTEX_ADD_ID, CONNECTION_VERTEX_ID } from './Connections';
 
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
