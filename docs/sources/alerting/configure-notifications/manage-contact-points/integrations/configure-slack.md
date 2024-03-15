@@ -18,7 +18,6 @@ weight: 300
 
 ## Configure Slack for Alerting
 
-
 Use the Grafana Alerting - Slack integration to send Slack notifications when your alerts are firing. 
 
 There are two ways of integrating Slack into Grafana Alerting. 
