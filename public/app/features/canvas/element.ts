@@ -49,7 +49,7 @@ export interface CanvasConnection {
   path: ConnectionPath;
   color?: ColorDimensionConfig;
   size?: ScaleDimensionConfig;
-  type?: string;
+  lineStyle?: string;
   vertices?: ConnectionCoordinates[];
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }

@@ -3,14 +3,14 @@ import { CanvasConnection, CanvasElementOptions } from 'app/features/canvas';
 import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 
-import { LineType } from '../types';
+import { LineStyle } from '../types';
 
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
   addColor: PanelOptionsSupplier<CanvasConnection>;
   addSize: PanelOptionsSupplier<CanvasConnection>;
-  addType: PanelOptionsSupplier<CanvasConnection>;
+  addLineStyle: PanelOptionsSupplier<CanvasConnection>;
 }
 
 const getCategoryName = (str: string, type: string | undefined) => {
@@ -124,19 +124,19 @@ export const optionBuilder: OptionSuppliers = {
     });
   },
 
-  addType: (builder, context) => {
+  addLineStyle: (builder, context) => {
     const category = ['Line style'];
     builder.addSelect({
       category,
-      path: 'type',
-      name: 'Type',
+      path: 'lineStyle',
+      name: 'LineStyle',
       settings: {
         options: [
-          { value: LineType.Solid, label: 'Solid' },
-          { value: LineType.Dashed, label: 'Dashed' },
+          { value: LineStyle.Solid, label: 'Solid' },
+          { value: LineStyle.Dashed, label: 'Dashed' },
         ],
       },
-      defaultValue: LineType.Solid,
+      defaultValue: LineStyle.Solid,
     });
   },
 };

@@ -44,7 +44,7 @@ export interface ConnectionState {
   vertices?: ConnectionCoordinates[];
 }
 
-export enum LineType {
+export enum LineStyle {
   Solid = 'solid',
   Dashed = 'dashed',
 }

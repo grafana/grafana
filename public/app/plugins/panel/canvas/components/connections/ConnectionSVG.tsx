@@ -134,7 +134,7 @@ export const ConnectionSVG = ({
       const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
       const midpoint = calculateMidpoint(x1, y1, x2, y2);
 
-      const { strokeColor, strokeWidth, strokeType } = getConnectionStyles(info, scene, defaultArrowSize);
+      const { strokeColor, strokeWidth, lineStyle } = getConnectionStyles(info, scene, defaultArrowSize);
 
       const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
 
@@ -199,7 +199,7 @@ export const ConnectionSVG = ({
                   d={pathString}
                   stroke={strokeColor}
                   strokeWidth={strokeWidth}
-                  strokeDasharray={strokeType}
+                  strokeDasharray={lineStyle}
                   fill={'none'}
                   markerEnd={`url(#${CONNECTION_HEAD_ID})`}
                 />
@@ -262,7 +262,7 @@ export const ConnectionSVG = ({
                   stroke={strokeColor}
                   pointerEvents="auto"
                   strokeWidth={strokeWidth}
-                  strokeDasharray={strokeType}
+                  strokeDasharray={lineStyle}
                   markerEnd={`url(#${CONNECTION_HEAD_ID})`}
                   x1={x1}
                   y1={y1}
