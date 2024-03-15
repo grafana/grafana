@@ -228,6 +228,8 @@ export interface GrafanaConfig {
   rootFolderUID?: string;
   localFileSystemAvailable?: boolean;
   cloudMigrationIsTarget?: boolean;
+  listDashboardScopesEndpoint?: string;
+  listScopesEndpoint?: string;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;
