@@ -46,7 +46,6 @@ If you are using a Slack API Token, complete the following steps.
 While going through these steps, Slack may prompt you to Reinstall your app in order for the changes to take effect.
 {{< /admonition >}}
 
-
 ### Webhook URL
 
 If you are using a Webhook URL, follow steps 1 and 5 in the [Slack API Quickstart](https://api.slack.com/start/quickstart).
