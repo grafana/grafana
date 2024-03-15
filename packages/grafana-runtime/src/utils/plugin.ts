@@ -14,11 +14,6 @@ export interface PluginCssOptions {
 }
 
 /**
- * @internal
- */
-const SystemJS = window.System;
-
-/**
  * Use this to load css for a Grafana plugin by specifying a {@link PluginCssOptions}
  * containing styling for the dark and the light theme.
  *
@@ -28,7 +23,7 @@ const SystemJS = window.System;
 export async function loadPluginCss(options: PluginCssOptions): Promise<System.Module | void> {
   try {
     const cssPath = config.bootData.user.theme === 'light' ? options.light : options.dark;
-    return SystemJS.import(cssPath);
+    return window.System.import(cssPath);
   } catch (err) {
     console.error(err);
   }
