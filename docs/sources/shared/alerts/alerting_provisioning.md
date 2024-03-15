@@ -157,12 +157,12 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 
 ### Templates
 
-| Method | URI                                  | Name                                            | Summary                                    |
-| ------ | ------------------------------------ | ----------------------------------------------- | ------------------------------------------ |
-| DELETE | /api/v1/provisioning/templates/:name | [route delete template](#route-delete-template) | Delete a template.                         |
-| GET    | /api/v1/provisioning/templates/:name | [route get template](#route-get-template)       | Get a notification template.               |
-| GET    | /api/v1/provisioning/templates       | [route get templates](#route-get-templates)     | Get all notification templates.            |
-| PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Updates an existing notification template. |
+| Method | URI                                  | Name                                            | Summary                                   |
+| ------ | ------------------------------------ | ----------------------------------------------- | ----------------------------------------- |
+| DELETE | /api/v1/provisioning/templates/:name | [route delete template](#route-delete-template) | Delete a template.                        |
+| GET    | /api/v1/provisioning/templates/:name | [route get template](#route-get-template)       | Get a notification template.              |
+| GET    | /api/v1/provisioning/templates       | [route get templates](#route-get-templates)     | Get all notification templates.           |
+| PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Create or update a notification template. |
 
 ## Edit resources in the Grafana UI
 
@@ -1200,7 +1200,7 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
-### <span id="route-put-template"></span> Updates an existing notification template. (_RoutePutTemplate_)
+### <span id="route-put-template"></span> Create or update a notification template. (_RoutePutTemplate_)
 
 ```
 PUT /api/v1/provisioning/templates/:name
