@@ -927,6 +927,14 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		return nil, err
 	}
 
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, fmt.Errorf("missing user in context")
+	}
+
 	if r.Key == "" {
 		return nil, fmt.Errorf("missing key")
 	}

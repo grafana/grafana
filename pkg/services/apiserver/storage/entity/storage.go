@@ -34,7 +34,7 @@ import (
 
 var _ storage.Interface = (*Storage)(nil)
 
-// Storage implements storage.Interface and storage resources as JSON files on disk.
+// Storage implements storage.Interface and stores resources in unified storage
 type Storage struct {
 	config       *storagebackend.ConfigForResource
 	store        entityStore.EntityStoreClient
@@ -46,8 +46,6 @@ type Storage struct {
 	getAttrsFunc storage.AttrFunc
 	// trigger      storage.IndexerFuncs
 	// indexers     *cache.Indexers
-
-	// watchSet *WatchSet
 }
 
 func NewStorage(
@@ -171,11 +169,25 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		Subresource: requestInfo.Subresource,
 	}
 
-	// check for metadata.name field selector
-	if k.Name == "" && opts.Predicate.Field != nil {
+	if opts.Predicate.Field != nil {
+		// check for metadata.name field selector
 		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.name"); ok {
+			if k.Name != "" && k.Name != v {
+				return nil, apierrors.NewBadRequest("name field selector does not match key")
+			}
+
 			// just watch the specific key if we have a name field selector
 			k.Name = v
+		}
+
+		// check for metadata.namespace field selector
+		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.namespace"); ok {
+			if k.Namespace != "" && k.Namespace != v {
+				return nil, apierrors.NewBadRequest("namespace field selector does not match key")
+			}
+
+			// just watch the specific namespace if we have a namespace field selector
+			k.Namespace = v
 		}
 	}
 
@@ -184,6 +196,9 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	if err != nil {
 		return nil, err
 	}
+
+	// Update the selector to remove the unneeded requirements
+	opts.Predicate.Label = newSelector
 
 	// if we got a listHistory label selector, watch the specified resource
 	if requirements.ListHistory != "" {
@@ -205,9 +220,6 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	if requirements.Folder != nil {
 		req.Folder = *requirements.Folder
 	}
-
-	// Update the selector to remove the unneeded requirements
-	opts.Predicate.Label = newSelector
 
 	// translate "equals" label selectors to storage label conditions
 	labelRequirements, selectable := opts.Predicate.Label.Requirements()
@@ -338,6 +350,9 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
+	// Update the selector to remove the unneeded requirements
+	opts.Predicate.Label = newSelector
+
 	if requirements.ListHistory != "" {
 		k.Name = requirements.ListHistory
 
@@ -361,6 +376,15 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 			err := entityToResource(r, res, s.codec)
 			if err != nil {
 				return apierrors.NewInternalError(err)
+			}
+
+			// apply any predicates not handled in storage
+			matches, err := opts.Predicate.Matches(res)
+			if err != nil {
+				return apierrors.NewInternalError(err)
+			}
+			if !matches {
+				continue
 			}
 
 			v.Set(reflect.Append(v, reflect.ValueOf(res).Elem()))
@@ -401,9 +425,6 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		req.Deleted = true
 	}
 
-	// Update the selector to remove the unneeded requirements
-	opts.Predicate.Label = newSelector
-
 	// translate "equals" label selectors to storage label conditions
 	labelRequirements, selectable := opts.Predicate.Label.Requirements()
 	if !selectable {
@@ -429,7 +450,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 			return apierrors.NewInternalError(err)
 		}
 
-		// TODO filter in storage
+		// apply any predicates not handled in storage
 		matches, err := opts.Predicate.Matches(res)
 		if err != nil {
 			return apierrors.NewInternalError(err)
@@ -592,8 +613,7 @@ func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err e
 		}
 
 		// apply any predicates not handled in storage
-		var matches bool
-		matches, err = d.opts.Predicate.Matches(obj)
+		matches, err := d.opts.Predicate.Matches(obj)
 		if err != nil {
 			log.Printf("error matching object: %s", err)
 			return watch.Error, nil, err
