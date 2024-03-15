@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
+	grafanaAPIServerOptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,6 +30,7 @@ const (
 type APIServerOptions struct {
 	factory            standalone.APIServerFactory
 	builders           []builder.APIGroupBuilder
+	ExtraOptions       *grafanaAPIServerOptions.ExtraOptions
 	RecommendedOptions *options.RecommendedOptions
 	AlternateDNS       []string
 
@@ -40,6 +42,11 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 	return &APIServerOptions{
 		StdOut: out,
 		StdErr: errOut,
+		RecommendedOptions: options.NewRecommendedOptions(
+			defaultEtcdPathPrefix,
+			grafanaAPIServer.Codecs.LegacyCodec(), // the codec is passed to etcd and not used
+		),
+		ExtraOptions: grafanaAPIServerOptions.NewExtraOptions(),
 	}
 }
 
@@ -183,7 +190,7 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 	delegationTarget := genericapiserver.NewEmptyDelegate()
 	completedConfig := config.Complete()
 
-	server, err := completedConfig.New("example-apiserver", delegationTarget)
+	server, err := completedConfig.New("standalone-apiserver", delegationTarget)
 	if err != nil {
 		return err
 	}
@@ -195,11 +202,13 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 	}
 
 	// write the local config to disk
-	if err = clientcmd.WriteToFile(
-		utils.FormatKubeConfig(server.LoopbackClientConfig),
-		path.Join(dataPath, "apiserver.kubeconfig"),
-	); err != nil {
-		return err
+	if o.ExtraOptions.DevMode {
+		if err = clientcmd.WriteToFile(
+			utils.FormatKubeConfig(server.LoopbackClientConfig),
+			path.Join(dataPath, "apiserver.kubeconfig"),
+		); err != nil {
+			return err
+		}
 	}
 
 	return server.PrepareRun().Run(stopCh)
