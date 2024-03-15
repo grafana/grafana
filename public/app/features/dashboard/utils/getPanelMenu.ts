@@ -1,16 +1,20 @@
 import {
-  getTimeZone,
   PanelMenuItem,
   PluginExtensionPoints,
+  getTimeZone,
   urlUtil,
   type PluginExtensionPanelContext,
 } from '@grafana/data';
 import { AngularComponent, getPluginLinkExtensions, locationService } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getMessageFromError } from 'app/core/utils/errors';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -28,7 +32,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
-import { store } from 'app/store/store';
+import { dispatch, store } from 'app/store/store';
 
 import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
 import { navigateToExplore } from '../../explore/state/main';
@@ -206,8 +210,14 @@ export function getPanelMenu(
   });
 
   const createAlert = async () => {
-    const formValues = await panelToRuleFormValues(panel, dashboard);
-
+    let formValues: Partial<RuleFormValues> | undefined;
+    try {
+      formValues = await panelToRuleFormValues(panel, dashboard);
+    } catch (err) {
+      const message = `Error getting rule values from the panel: ${getMessageFromError(err)}`;
+      dispatch(notifyApp(createErrorNotification(message)));
+      return;
+    }
     const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
       defaults: JSON.stringify(formValues),
       returnTo: location.pathname + location.search,
