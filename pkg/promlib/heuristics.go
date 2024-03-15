@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
 const (
@@ -85,10 +86,11 @@ func (s *Service) GetHeuristics(ctx context.Context, req HeuristicsRequest) (*He
 	if err != nil {
 		return nil, err
 	}
-	return getHeuristics(ctx, ds)
+	logger := s.logger.FromContext(ctx)
+	return getHeuristics(ctx, ds, logger)
 }
 
-func getHeuristics(ctx context.Context, i *instance) (*Heuristics, error) {
+func getHeuristics(ctx context.Context, i *instance, logger log.Logger) (*Heuristics, error) {
 	heuristics := Heuristics{
 		Application: "unknown",
 		Features: Features{

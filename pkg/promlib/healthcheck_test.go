@@ -82,8 +82,10 @@ func getMockProvider[T http.RoundTripper]() *sdkhttpclient.Provider {
 func Test_healthcheck(t *testing.T) {
 	t.Run("should do a successful health check", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckSuccessRoundTripper]()
+		logger := backend.NewLoggerWith("logger", "test")
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"), mockExtendClientOpts)),
+			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider, logger, mockExtendClientOpts)),
+			logger: logger,
 		}
 
 		req := &backend.CheckHealthRequest{
@@ -98,8 +100,10 @@ func Test_healthcheck(t *testing.T) {
 
 	t.Run("should return an error for an unsuccessful health check", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckFailRoundTripper]()
+		logger := backend.NewLoggerWith("logger", "test")
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"), mockExtendClientOpts)),
+			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider, logger, mockExtendClientOpts)),
+			logger: logger,
 		}
 
 		req := &backend.CheckHealthRequest{
