@@ -1,4 +1,4 @@
-import { BusEventBase, BusEventWithPayload } from '@grafana/data';
+import { BusEventWithPayload } from '@grafana/data';
 import { ConstantVariable, SceneObject } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 

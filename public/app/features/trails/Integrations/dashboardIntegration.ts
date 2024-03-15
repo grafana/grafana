@@ -105,7 +105,7 @@ function createClickHandler(item: QueryMetric, dashboard: DashboardScene | Dashb
       const commonProps = createCommonEmbeddedTrailStateProps(item, dashboard, ds);
       const drawerScene = new SceneDrawerAsScene({
         ...commonProps,
-        onClose: () => dashboard.closeModal(),
+        onDismiss: () => dashboard.closeModal(),
       });
       dashboard.showModal(drawerScene);
     };

@@ -8,12 +8,13 @@ import { ShowModalReactEvent } from 'app/types/events';
 export type SceneDrawerProps = {
   scene: SceneObject;
   title: string;
-  onClose: () => void;
+  onDismiss: () => void;
 };
 
-export function SceneDrawer({ onClose, scene, title }: SceneDrawerProps) {
+export function SceneDrawer(props: SceneDrawerProps) {
+  const { scene, title, onDismiss } = props;
   return (
-    <Drawer title={title} onClose={onClose} size="lg">
+    <Drawer title={title} onClose={onDismiss} size="lg">
       <div style={{ display: 'flex', height: '100%' }}>
         <scene.Component model={scene} />
       </div>
@@ -35,18 +36,10 @@ export class SceneDrawerAsScene extends SceneObjectBase<SceneDrawerAsSceneState>
   }
 }
 
-export function launchSceneDrawerInGlobalModal(props: Omit<SceneDrawerProps, 'onClose'>) {
-  const allProps: SceneDrawerProps = {
-    ...props,
-    onClose: () => {
-      const event = new ShowModalReactEvent({ component: () => null });
-      appEvents.publish(event);
-    },
-  };
-
+export function launchSceneDrawerInGlobalModal(props: Omit<SceneDrawerProps, 'onDismiss'>) {
   const payload = {
     component: SceneDrawer,
-    allProps,
+    props,
   };
 
   appEvents.publish(new ShowModalReactEvent(payload));
