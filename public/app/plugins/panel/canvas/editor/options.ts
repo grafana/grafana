@@ -122,7 +122,7 @@ export const optionBuilder: OptionSuppliers = {
     });
   },
 
-  addDirection: (builder) => {
+  addDirection: (builder, context) => {
     const category = ['Direction'];
     builder.addRadio({
       category,
@@ -130,10 +130,10 @@ export const optionBuilder: OptionSuppliers = {
       name: 'Direction',
       settings: {
         options: [
-          { label: ConnectionDirection.Forward, value: ConnectionDirection.Forward },
-          { label: ConnectionDirection.Reverse, value: ConnectionDirection.Reverse },
-          { label: ConnectionDirection.Both, value: ConnectionDirection.Both },
-          { label: ConnectionDirection.None, value: ConnectionDirection.None },
+          { value: undefined, label: ConnectionDirection.Forward },
+          { value: ConnectionDirection.Reverse, label: ConnectionDirection.Reverse },
+          { value: ConnectionDirection.Both, label: ConnectionDirection.Both },
+          { value: ConnectionDirection.None, label: ConnectionDirection.None },
         ],
       },
       defaultValue: ConnectionDirection.Forward,
