@@ -81,7 +81,12 @@ export interface CanvasConnection {
   source: ConnectionCoordinates;
   target: ConnectionCoordinates;
   targetName?: string;
+  vertices?: Array<ConnectionCoordinates>;
 }
+
+export const defaultCanvasConnection: Partial<CanvasConnection> = {
+  vertices: [],
+};
 
 export interface CanvasElementOptions {
   background?: BackgroundConfig;
