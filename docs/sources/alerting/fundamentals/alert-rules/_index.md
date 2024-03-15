@@ -49,11 +49,12 @@ The following diagram shows how Grafana-managed alerting works.
 
 ### Supported data sources
 
-Grafana-managed alert rules can query the following backend data sources that have alerting enabled:
+Grafana-managed alert rules can query backend data sources if Grafana Alerting enabled by specifying `{"backend": true, "alerting": true}` in the [plugin.json](/developers/plugin-tools/reference-plugin-json).
 
-- Built-in data sources or those developed and maintained by Grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
-  `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, `TestData`, and `Azure Monitor`.
-- Community data sources specifying `{"alerting": true, “backend”: true}` in the [plugin.json](https://grafana.com/developers/plugin-tools/reference-plugin-json)
+The following data sources are supported:
+
+- [Enterprise data source plugins](/grafana/plugins/data-source-plugins/?enterprise=1) and others maintained by Grafana such as [AWS Athena](/grafana/plugins/grafana-athena-datasource/), [AWS X-Ray](/grafana/plugins/grafana-x-ray-datasource/), [AWS Redshift](/grafana/plugins/grafana-redshift-datasource/), [AWS Timestream](/grafana/plugins/grafana-timestream-datasource/), [AWS IoT SiteWise](/grafana/plugins/grafana-iot-sitewise-datasource/), [Azure Data Explorer](/grafana/plugins/grafana-azure-data-explorer-datasource/), [Azure Monitor](/grafana/plugins/grafana-azure-monitor-datasource/), [ClickHouse](/grafana/plugins/grafana-clickhouse-datasource/), [Cloudwatch](/grafana/plugins/cloudwatch/), [CSV](/grafana/plugins/marcusolsson-csv-datasource/), [Elasticsearch](/grafana/plugins/elasticsearch/), [Falcon LogScale](/grafana/plugins/grafana-falconlogscale-datasource/), [GitHub](/grafana/plugins/grafana-github-datasource/), [Google BigQuery](/grafana/plugins/grafana-bigquery-datasource/), [Google Cloud Monitoring](/grafana/plugins/stackdriver/), [Graphite](/grafana/plugins/graphite/), [Loki](/grafana/plugins/loki/), [InfluxDB](/grafana/plugins/influxdb/), [Infinity](/grafana/plugins/yesoreyeram-infinity-datasource/), [MSSQL](/grafana/plugins/mssql/), [MySQL](/grafana/plugins/mysql/), [OpenSearch](/grafana/plugins/grafana-opensearch-datasource/), [OpenTSDB](/grafana/plugins/opentsdb/), [Oracle](/grafana/plugins/grafana-oracle-datasource/), [Orbit](/grafana/plugins/grafana-orbit-datasource/), [PostgreSQL](/grafana/plugins/postgres/), [Prometheus](/grafana/plugins/prometheus/), [Sentry](/grafana/plugins/grafana-sentry-datasource/), [SurrealDB](/grafana/plugins/grafana-surrealdb-datasource/), and [TestData](/grafana/plugins/grafana-testdata-datasource/).
+- Backend data sources maintained by the [community](/grafana/plugins/data-source-plugins/?signature=community) and [partners](/grafana/plugins/data-source-plugins/?signature=commercial) that enable alerting.
 
 ### Multi-dimensional alerts
 
