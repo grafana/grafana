@@ -319,6 +319,41 @@ describe('when performing testDataSource', () => {
   });
 });
 
+describe('Test behavior with unmocked time', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('getTimeRange()', async () => {
+    const ds = new JaegerDatasource(defaultSettings);
+    const timeRange = ds.getTimeRange();
+    const now = Date.now();
+    expect(timeRange.end).toBeCloseTo(now * 1000, -4);
+    expect(timeRange.start).toBeCloseTo((now - 6 * 3600 * 1000) * 1000, -4);
+  });
+
+  it("call for `query()` when `queryType === 'dependencyGraph'`", async () => {
+    const mock = setupFetchMock({ data: [testResponse] });
+    const ds = new JaegerDatasource(defaultSettings);
+
+    ds.query({ ...defaultQuery, targets: [{ queryType: 'dependencyGraph', refId: '1' }] });
+    const now = Date.now();
+
+    const url = mock.mock.calls[0][0].url;
+    const endTsMatch = url.match(/endTs=(\d+)/);
+    expect(endTsMatch).not.toBeNull();
+    expect(parseInt(endTsMatch![1], 10)).toBeCloseTo(now, -4);
+
+    const lookbackMatch = url.match(/lookback=(\d+)/);
+    expect(lookbackMatch).not.toBeNull();
+    expect(parseInt(lookbackMatch![1], 10)).toBe(21600000);
+  });
+});
+
 function setupFetchMock(response: unknown, mock?: ReturnType<typeof backendSrv.fetch>) {
   const defaultMock = () => mock ?? of(createFetchResponse(response));
 

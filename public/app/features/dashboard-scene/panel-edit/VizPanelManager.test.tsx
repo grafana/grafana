@@ -2,15 +2,18 @@ import { map, of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneGridItem, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
+import * as libAPI from 'app/features/library-panels/state/api';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../utils/utils';
 
@@ -205,6 +208,47 @@ describe('VizPanelManager', () => {
       //@ts-ignore
       expect(vizPanelManager.state.panel.state.options['customOption']).toBe('A');
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
+    });
+  });
+
+  describe('library panels', () => {
+    it('saves library panels on commit', () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+      });
+
+      const libraryPanelModel = {
+        title: 'title',
+        uid: 'uid',
+        name: 'libraryPanelName',
+        model: vizPanelToPanel(panel),
+        type: 'panel',
+        version: 1,
+      };
+
+      const libraryPanel = new LibraryVizPanel({
+        isLoaded: true,
+        title: libraryPanelModel.title,
+        uid: libraryPanelModel.uid,
+        name: libraryPanelModel.name,
+        panelKey: panel.state.key!,
+        panel: panel,
+        _loadedPanel: libraryPanelModel,
+      });
+
+      new SceneGridItem({ body: libraryPanel });
+
+      const panelManager = VizPanelManager.createFor(panel);
+
+      const apiCall = jest
+        .spyOn(libAPI, 'updateLibraryVizPanel')
+        .mockResolvedValue({ type: 'panel', ...libAPI.libraryVizPanelToSaveModel(libraryPanel) });
+
+      panelManager.state.panel.setState({ title: 'new title' });
+      panelManager.commitChanges();
+
+      expect(apiCall.mock.calls[0][0].state.panel?.state.title).toBe('new title');
     });
   });
 

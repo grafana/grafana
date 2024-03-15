@@ -136,7 +136,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		return NewConfig(aggregatorConfig, sharedInformerFactory, nil), nil
 	}
 
-	caBundlePEM, err := readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
+	_, err = readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
 	if err != nil {
 		return nil, err
 	}
@@ -146,11 +146,15 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 	}
 
 	remoteServicesConfig := &RemoteServicesConfig{
-		InsecureSkipTLSVerify:  commandOptions.ExtraOptions.DevMode,
+		// TODO: in practice, we should only use the insecure flag when commandOptions.ExtraOptions.DevMode == true
+		// But given the bug in K8s, we are forced to set it to true until the below PR is merged and available
+		// https://github.com/kubernetes/kubernetes/pull/123808
+		InsecureSkipTLSVerify:  true,
 		ExternalNamesNamespace: externalNamesNamespace,
-		CABundle:               caBundlePEM,
-		Services:               remoteServices,
-		serviceClientSet:       serviceClient,
+		// TODO: CABundle can't be set when insecure is true
+		// CABundle: caBundlePEM,
+		Services:         remoteServices,
+		serviceClientSet: serviceClient,
 	}
 
 	return NewConfig(aggregatorConfig, sharedInformerFactory, remoteServicesConfig), nil
