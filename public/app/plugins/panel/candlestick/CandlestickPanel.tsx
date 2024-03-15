@@ -70,7 +70,7 @@ export const CandlestickPanel = ({
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const cursorSync = useMemo(() => sync?.() ?? DashboardCursorSync.Off, [sync]);
+  const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const { renderers, tweakScale, tweakAxis, shouldRenderPrice } = useMemo(() => {
     let tweakScale = (opts: ScaleProps, forField: Field) => opts;
@@ -270,6 +270,7 @@ export const CandlestickPanel = ({
       options={options}
       replaceVariables={replaceVariables}
       dataLinkPostProcessor={dataLinkPostProcessor}
+      cursorSync={cursorSync}
     >
       {(uplotConfig, alignedFrame) => {
         return (

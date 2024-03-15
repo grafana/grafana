@@ -50,7 +50,7 @@ export const HeatmapPanel = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { sync, eventsScope, canAddAnnotations } = usePanelContext();
-  const cursorSync = useMemo(() => sync?.() ?? DashboardCursorSync.Off, [sync]);
+  const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
@@ -121,7 +121,7 @@ export const HeatmapPanel = ({
       setHover(evt ?? undefined);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [options, data.structureRev]
+    [options, data.structureRev, cursorSync]
   );
 
   // ugh
@@ -148,7 +148,7 @@ export const HeatmapPanel = ({
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, timeZone, data.structureRev]);
+  }, [options, timeZone, data.structureRev, cursorSync]);
 
   const renderLegend = () => {
     if (!info.heatmap || !options.legend.show) {
@@ -199,7 +199,7 @@ export const HeatmapPanel = ({
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
+          <UPlotChart key={builder.uid} config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={builder} eventBus={eventBus} frame={info.series ?? info.heatmap} />
             )}
@@ -261,7 +261,7 @@ export const HeatmapPanel = ({
       </VizLayout>
       {!showNewVizTooltips && (
         <>
-          <Portal>
+          <Portal key={builder.uid}>
             {hover && options.tooltip.mode !== TooltipDisplayMode.None && (
               <VizTooltipContainer
                 position={{ x: hover.pageX, y: hover.pageY }}

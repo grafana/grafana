@@ -30,6 +30,8 @@ type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
 type PreDataStacked = (frames: DataFrame[], stackingGroups: StackingGroup[]) => AlignedData | FacetedData;
 
 export class UPlotConfigBuilder {
+  readonly uid = Math.random().toString(36).slice(2);
+
   series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
   readonly scales: UPlotScaleBuilder[] = [];

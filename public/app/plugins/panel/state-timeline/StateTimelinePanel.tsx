@@ -65,7 +65,7 @@ export const StateTimelinePanel = ({
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const { sync, eventsScope, canAddAnnotations, dataLinkPostProcessor, eventBus } = usePanelContext();
-  const cursorSync = useMemo(() => sync?.() ?? DashboardCursorSync.Off, [sync]);
+  const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const onCloseToolTip = () => {
     isToolTipOpen.current = false;
@@ -181,6 +181,7 @@ export const StateTimelinePanel = ({
       mode={TimelineMode.Changes}
       replaceVariables={replaceVariables}
       dataLinkPostProcessor={dataLinkPostProcessor}
+      cursorSync={cursorSync}
     >
       {(builder, alignedFrame) => {
         if (oldConfig.current !== builder && !showNewVizTooltips) {

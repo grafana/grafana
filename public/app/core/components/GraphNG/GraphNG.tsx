@@ -13,7 +13,7 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { VizLegendOptions } from '@grafana/schema';
+import { DashboardCursorSync, VizLegendOptions } from '@grafana/schema';
 import { Themeable2, PanelContextRoot, VizLayout } from '@grafana/ui';
 import { UPlotChart } from '@grafana/ui/src/components/uPlot/Plot';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
@@ -49,6 +49,7 @@ export interface GraphNGProps extends Themeable2 {
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
   replaceVariables: InterpolateFunction;
   dataLinkPostProcessor?: DataLinkPostProcessor;
+  cursorSync?: DashboardCursorSync;
 
   /**
    * needed for propsToDiff to re-init the plot & config
@@ -173,17 +174,23 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { frames, structureRev, timeZone, propsToDiff } = this.props;
+    const { frames, structureRev, timeZone, cursorSync = DashboardCursorSync.Off, propsToDiff } = this.props;
 
     const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
-    if (frames !== prevProps.frames || propsChanged || timeZone !== prevProps.timeZone) {
+    if (
+      frames !== prevProps.frames ||
+      propsChanged ||
+      timeZone !== prevProps.timeZone ||
+      cursorSync !== prevProps.cursorSync
+    ) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
         const shouldReconfig =
           this.state.config === undefined ||
           timeZone !== prevProps.timeZone ||
+          cursorSync !== prevProps.cursorSync ||
           structureRev !== prevProps.structureRev ||
           !structureRev ||
           propsChanged;

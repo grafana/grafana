@@ -71,7 +71,7 @@ export const TimeSeriesPanel = ({
   const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const cursorSync = useMemo(() => sync?.() ?? DashboardCursorSync.Off, [sync]);
+  const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   if (!frames || suggestions) {
     return (
@@ -87,14 +87,6 @@ export const TimeSeriesPanel = ({
     );
   }
 
-  // which annotation are we editing?
-  // are we adding a new annotation? is annotating?
-  // console.log(data.annotations);
-
-  // annotations plugin includes the editor and the renderer
-  // its annotation state is managed here for now
-  // tooltipplugin2 receives render with annotate range, callback should setstate here that gets passed to annotationsplugin as newAnnotaton or editAnnotation
-
   return (
     <TimeSeries
       frames={frames}
@@ -107,6 +99,7 @@ export const TimeSeriesPanel = ({
       options={options}
       replaceVariables={replaceVariables}
       dataLinkPostProcessor={dataLinkPostProcessor}
+      cursorSync={cursorSync}
     >
       {(uplotConfig, alignedFrame) => {
         return (
