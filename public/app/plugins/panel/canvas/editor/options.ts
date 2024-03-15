@@ -1,5 +1,5 @@
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
-import { CanvasConnection, CanvasElementOptions } from 'app/features/canvas';
+import { CanvasConnection, CanvasElementOptions, ConnectionDirection } from 'app/features/canvas';
 import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 
@@ -8,6 +8,7 @@ interface OptionSuppliers {
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
   addColor: PanelOptionsSupplier<CanvasConnection>;
   addSize: PanelOptionsSupplier<CanvasConnection>;
+  addDirection: PanelOptionsSupplier<CanvasConnection>;
 }
 
 const getCategoryName = (str: string, type: string | undefined) => {
@@ -118,6 +119,24 @@ export const optionBuilder: OptionSuppliers = {
         min: 1,
         max: 10,
       },
+    });
+  },
+
+  addDirection: (builder) => {
+    const category = ['Direction'];
+    builder.addRadio({
+      category,
+      path: 'direction',
+      name: 'Direction',
+      settings: {
+        options: [
+          { label: ConnectionDirection.Forward, value: ConnectionDirection.Forward },
+          { label: ConnectionDirection.Reverse, value: ConnectionDirection.Reverse },
+          { label: ConnectionDirection.Both, value: ConnectionDirection.Both },
+          { label: ConnectionDirection.None, value: ConnectionDirection.None },
+        ],
+      },
+      defaultValue: ConnectionDirection.Forward,
     });
   },
 };

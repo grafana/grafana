@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { ConnectionDirection } from 'app/features/canvas';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionCoordinates } from '../../panelcfg.gen';
@@ -45,6 +46,7 @@ export const ConnectionSVG = ({
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
   const defaultArrowColor = config.theme2.colors.text.primary;
   const defaultArrowSize = 2;
+  const defaultArrowDirection = ConnectionDirection.Forward;
   const maximumVertices = 10;
 
   const [selectedConnection, setSelectedConnection] = useState<ConnectionState | undefined>(undefined);
@@ -134,14 +136,21 @@ export const ConnectionSVG = ({
       const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
       const midpoint = calculateMidpoint(x1, y1, x2, y2);
 
-      const { strokeColor, strokeWidth } = getConnectionStyles(info, scene, defaultArrowSize);
+      const { strokeColor, strokeWidth, arrowDirection } = getConnectionStyles(
+        info,
+        scene,
+        defaultArrowSize,
+        defaultArrowDirection
+      );
 
       const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
 
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
       const selectedStyles = { stroke: '#44aaff', strokeOpacity: 0.6, strokeWidth: strokeWidth + 5 };
 
-      const CONNECTION_HEAD_ID = `connectionHead-${headId + Math.random()}`;
+      //const CONNECTION_HEAD_ID = `connectionHead-${headId + Math.random()}`;
+      const CONNECTION_HEAD_ID_START = `connectionHeadStart-${headId + Math.random()}`;
+      const CONNECTION_HEAD_ID_END = `connectionHeadEnd-${headId + Math.random()}`;
 
       // Create vertex path and populate array of add vertex controls
       const addVertices: ConnectionCoordinates[] = [];
@@ -172,7 +181,18 @@ export const ConnectionSVG = ({
           <g onClick={() => selectConnection(v)}>
             <defs>
               <marker
-                id={CONNECTION_HEAD_ID}
+                id={CONNECTION_HEAD_ID_START}
+                markerWidth="10"
+                markerHeight="7"
+                refX="0"
+                refY="3.5"
+                orient="auto"
+                stroke={strokeColor}
+              >
+                <polygon points="10 0, 0 3.5, 10 7" fill={strokeColor} />
+              </marker>
+              <marker
+                id={CONNECTION_HEAD_ID_END}
                 markerWidth="10"
                 markerHeight="7"
                 refX="10"
@@ -200,7 +220,16 @@ export const ConnectionSVG = ({
                   stroke={strokeColor}
                   strokeWidth={strokeWidth}
                   fill={'none'}
-                  markerEnd={`url(#${CONNECTION_HEAD_ID})`}
+                  markerEnd={
+                    arrowDirection === ConnectionDirection.Forward || arrowDirection === ConnectionDirection.Both
+                      ? `url(#${CONNECTION_HEAD_ID_END})`
+                      : undefined
+                  }
+                  markerStart={
+                    arrowDirection === ConnectionDirection.Reverse || arrowDirection === ConnectionDirection.Both
+                      ? `url(#${CONNECTION_HEAD_ID_START})`
+                      : undefined
+                  }
                 />
                 {isSelected && (
                   <g>
@@ -261,7 +290,16 @@ export const ConnectionSVG = ({
                   stroke={strokeColor}
                   pointerEvents="auto"
                   strokeWidth={strokeWidth}
-                  markerEnd={`url(#${CONNECTION_HEAD_ID})`}
+                  markerEnd={
+                    arrowDirection === ConnectionDirection.Forward || arrowDirection === ConnectionDirection.Both
+                      ? `url(#${CONNECTION_HEAD_ID_END})`
+                      : undefined
+                  }
+                  markerStart={
+                    arrowDirection === ConnectionDirection.Reverse || arrowDirection === ConnectionDirection.Both
+                      ? `url(#${CONNECTION_HEAD_ID_START})`
+                      : undefined
+                  }
                   x1={x1}
                   y1={y1}
                   x2={x2}

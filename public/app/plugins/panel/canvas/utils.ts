@@ -10,6 +10,7 @@ import {
   canvasElementRegistry,
   CanvasElementOptions,
   CanvasConnection,
+  ConnectionDirection,
 } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { ElementState } from 'app/features/canvas/runtime/element';
@@ -374,12 +375,18 @@ export const getRowIndex = (fieldName: string | undefined, scene: Scene) => {
   return 0;
 };
 
-export const getConnectionStyles = (info: CanvasConnection, scene: Scene, defaultArrowSize: number) => {
+export const getConnectionStyles = (
+  info: CanvasConnection,
+  scene: Scene,
+  defaultArrowSize: number,
+  defaultArrowDirection: ConnectionDirection
+) => {
   const defaultArrowColor = config.theme2.colors.text.primary;
   const lastRowIndex = getRowIndex(info.size?.field, scene);
   const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
-  return { strokeColor, strokeWidth };
+  const arrowDirection = info.direction ? info.direction : defaultArrowDirection;
+  return { strokeColor, strokeWidth, arrowDirection };
 };
 
 export const getParentBoundingClientRect = (scene: Scene) => {
