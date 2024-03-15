@@ -1,5 +1,5 @@
 import { groupBy, identity, pick, pickBy, startCase } from 'lodash';
-import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
+import { EMPTY, from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 import semver from 'semver';
 
@@ -10,7 +10,6 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataQueryResponseData,
-  DataSourceApi,
   DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   dateTime,
@@ -38,7 +37,6 @@ import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@gr
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
-import { LokiOptions } from './_importedDependencies/datasources/loki/types';
 import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
@@ -60,7 +58,6 @@ import {
   formatTraceQLResponse,
   transformFromOTLP as transformFromOTEL,
   transformTrace,
-  transformTraceList,
 } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
 import { SearchQueryParams, TempoJsonData, TempoQuery } from './types';
@@ -107,9 +104,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     filters?: TraceqlFilter[];
   };
   nodeGraph?: NodeGraphOptions;
-  lokiSearch?: {
-    datasourceUid?: string;
-  };
   traceQuery?: {
     timeShiftEnabled?: boolean;
     spanStartTimeShift?: string;
@@ -132,7 +126,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.serviceMap = instanceSettings.jsonData.serviceMap;
     this.search = instanceSettings.jsonData.search;
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
-    this.lokiSearch = instanceSettings.jsonData.lokiSearch;
     this.traceQuery = instanceSettings.jsonData.traceQuery;
     this.languageProvider = new TempoLanguageProvider(this);
 
@@ -270,52 +263,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.clear) {
       return of({ data: [], state: LoadingState.Done });
-    }
-
-    const logsDatasourceUid = this.getLokiSearchDS();
-
-    // Run search queries on linked datasource
-    if (logsDatasourceUid && targets.search?.length > 0) {
-      reportInteraction('grafana_traces_loki_search_queried', {
-        datasourceType: 'tempo',
-        app: options.app ?? '',
-        grafana_version: config.buildInfo.version,
-        hasLinkedQueryExpr:
-          targets.search[0].linkedQuery?.expr && targets.search[0].linkedQuery?.expr !== '' ? true : false,
-      });
-
-      const dsSrv = getDataSourceSrv();
-      subQueries.push(
-        from(dsSrv.get(logsDatasourceUid)).pipe(
-          mergeMap((linkedDatasource: DataSourceApi) => {
-            // Wrap linked query into a data request based on original request
-            const linkedRequest: DataQueryRequest = { ...options, targets: targets.search.map((t) => t.linkedQuery!) };
-            // Find trace matchers in derived fields of the linked datasource that's identical to this datasource
-            const settings: DataSourceInstanceSettings<LokiOptions> = (linkedDatasource as TempoDatasource)
-              .instanceSettings;
-            const traceLinkMatcher: string[] =
-              settings.jsonData.derivedFields
-                ?.filter((field) => field.datasourceUid === this.uid && field.matcherRegex)
-                .map((field) => field.matcherRegex) || [];
-
-            if (!traceLinkMatcher || traceLinkMatcher.length === 0) {
-              return throwError(
-                () =>
-                  new Error(
-                    'No Loki datasource configured for search. Set up Derived Fields for traces in a Loki datasource settings and link it to this Tempo datasource.'
-                  )
-              );
-            } else {
-              const response = linkedDatasource.query(linkedRequest);
-              return from(response).pipe(
-                map((response) =>
-                  response.error ? response : transformTraceList(response, this.uid, this.name, traceLinkMatcher)
-                )
-              );
-            }
-          })
-        )
-      );
     }
 
     if (targets.nativeSearch?.length) {
@@ -533,13 +480,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   applyVariables(query: TempoQuery, scopedVars: ScopedVars) {
     const expandedQuery = { ...query };
-
-    if (query.linkedQuery) {
-      expandedQuery.linkedQuery = {
-        ...query.linkedQuery,
-        expr: this.templateSrv.replace(query.linkedQuery?.expr ?? '', scopedVars),
-      };
-    }
 
     if (query.filters) {
       expandedQuery.filters = query.filters.map((filter) => {
@@ -867,15 +807,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     return searchQuery;
   }
-
-  // Get linked loki search datasource. Fall back to legacy loki search/trace to logs config
-  getLokiSearchDS = (): string | undefined => {
-    const legacyLogsDatasourceUid =
-      this.tracesToLogs?.lokiSearch !== false && this.lokiSearch === undefined
-        ? this.tracesToLogs?.datasourceUid
-        : undefined;
-    return this.lokiSearch?.datasourceUid ?? legacyLogsDatasourceUid;
-  };
 }
 
 function queryPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {

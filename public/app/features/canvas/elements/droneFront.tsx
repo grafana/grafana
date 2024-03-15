@@ -7,7 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
-import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
 
 interface DroneFrontData {
   rollAngle?: number;
@@ -97,9 +97,11 @@ export const droneFrontItem: CanvasElementItem = {
   }),
 
   // Called when data changes
-  prepareData: (ctx: DimensionContext, cfg: DroneFrontConfig) => {
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<DroneFrontConfig>) => {
+    const droneFrontConfig = elementOptions.config;
+
     const data: DroneFrontData = {
-      rollAngle: cfg?.rollAngle ? ctx.getScalar(cfg.rollAngle).value() : 0,
+      rollAngle: droneFrontConfig?.rollAngle ? dimensionContext.getScalar(droneFrontConfig.rollAngle).value() : 0,
     };
 
     return data;
