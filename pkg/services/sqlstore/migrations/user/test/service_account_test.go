@@ -100,6 +100,80 @@ func TestIntegrationServiceAccountMigration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "duplicate logins across different orgs",
+			serviceAccounts: []*user.User{
+				{
+					ID:               5,
+					UID:              "u5",
+					Name:             "sa-common",
+					Login:            "sa-common@org1.com",
+					Email:            "sa-common@org1.com",
+					OrgID:            1,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+				{
+					ID:               6,
+					UID:              "u6",
+					Name:             "sa-common",
+					Login:            "sa-common@org2.com",
+					Email:            "sa-common@org2.com",
+					OrgID:            2,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+			},
+			wantServiceAccounts: []*user.User{
+				{
+					ID:    5,
+					Login: "sa-1-common@org1.com",
+				},
+				{
+					ID:    6,
+					Login: "sa-2-common@org2.com",
+				},
+			},
+		},
+		{
+			desc: "pre-existing sa- prefix",
+			serviceAccounts: []*user.User{
+				{
+					ID:               7,
+					UID:              "u7",
+					Name:             "sa-preexisting",
+					Login:            "sa-preexisting",
+					Email:            "sa-preexisting@org.com",
+					OrgID:            1,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+				{
+					ID:               8,
+					UID:              "u8",
+					Name:             "sa-sa-preexisting",
+					Login:            "sa-sa-preexisting",
+					Email:            "sa-sa-preexisting@org.com",
+					OrgID:            1,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+			},
+			wantServiceAccounts: []*user.User{
+				{
+					ID:    7,
+					Login: "sa-1-preexisting",
+				},
+				{
+					ID:    8,
+					Login: "sa-1-sa-preexisting", // Ensuring only the first 'sa-' is handled
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {

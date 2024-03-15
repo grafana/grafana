@@ -30,13 +30,11 @@ func (p *ServiceAccountsSameLoginCrossOrgs) SQL(dialect migrator.Dialect) string
 }
 
 func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	fmt.Printf("Executing migration %s\n", AllowSameLoginCrossOrgs)
 	p.sess = sess
 	p.dialect = mg.Dialect
 	var err error
 	switch p.dialect.DriverName() {
 	case migrator.Postgres:
-		fmt.Printf("SQLite not supported for migration %s\n", AllowSameLoginCrossOrgs)
 		_, err = p.sess.Exec(`UPDATE "user"
 		SET login = 'sa-' || org_id::text || '-' || 
 		CASE 
@@ -46,7 +44,6 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
 		WHERE login IS NOT NULL AND is_service_account = true;`,
 		)
 	case migrator.MySQL:
-		fmt.Printf("SQLite not supported for migration %s\n", AllowSameLoginCrossOrgs)
 		_, err = p.sess.Exec(`UPDATE user
 		SET login = CONCAT('sa-', CAST(org_id AS CHAR), '-',
 		CASE
@@ -56,7 +53,6 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
 		WHERE login IS NOT NULL AND is_service_account = 1;`,
 		)
 	case migrator.SQLite:
-		fmt.Printf("SQLite not supported for migration %s\n", AllowSameLoginCrossOrgs)
 		_, err = p.sess.Exec(`Update ` + p.dialect.Quote("user") + `
 		SET login = 'sa-' || CAST(org_id AS TEXT) || '-' ||
 		CASE
