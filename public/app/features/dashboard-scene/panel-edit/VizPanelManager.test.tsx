@@ -2,7 +2,7 @@ import { map, of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneGridItem, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneGridItem, SceneGridLayout, SceneGridRow, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
@@ -11,6 +11,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -283,6 +284,70 @@ describe('VizPanelManager', () => {
 
       const sourcePanel = panelManager.state.sourcePanel.resolve();
       expect(sourcePanel.parent?.state.key).toBe(gridItem.state.key);
+    });
+
+    it('changes a panel to a library panel', () => {
+      const { libraryPanelModel, panel, libVizPanel } = setupLibPanelChangeTest();
+      const { vizPanelManager } = setupTest('panel-1');
+
+      const layout = new SceneGridLayout({
+        children: [new SceneGridItem({ body: panel })],
+      });
+
+      // access to private method
+      vizPanelManager['updatePanelFromLibPanel'](libraryPanelModel, libVizPanel, panel);
+
+      const sourcePanel = vizPanelManager.state.sourcePanel.resolve();
+
+      expect(sourcePanel.parent).toBeInstanceOf(LibraryVizPanel);
+      expect(vizPanelManager.state.panel.state.title).toBe('newPanel');
+      expect((layout.state.children[0] as SceneGridItem).state.body).toBeInstanceOf(LibraryVizPanel);
+    });
+
+    it('changes a panel to a library panel in a row', () => {
+      const { libraryPanelModel, panel, libVizPanel } = setupLibPanelChangeTest();
+      const { vizPanelManager } = setupTest('panel-1');
+
+      const layout = new SceneGridLayout({
+        children: [
+          new SceneGridRow({
+            children: [new SceneGridItem({ body: panel })],
+          }),
+        ],
+      });
+
+      // access to private method
+      vizPanelManager['updatePanelFromLibPanel'](libraryPanelModel, libVizPanel, panel);
+
+      const sourcePanel = vizPanelManager.state.sourcePanel.resolve();
+
+      expect(sourcePanel.parent).toBeInstanceOf(LibraryVizPanel);
+      expect(vizPanelManager.state.panel.state.title).toBe('newPanel');
+      expect(((layout.state.children[0] as SceneGridRow).state.children[0] as SceneGridItem).state.body).toBeInstanceOf(
+        LibraryVizPanel
+      );
+    });
+
+    it('changes a panel to a repeated library panel', () => {
+      const { libraryPanelModel, panel, libVizPanel } = setupLibPanelChangeTest();
+      const { vizPanelManager } = setupTest('panel-1');
+
+      const layout = new SceneGridLayout({
+        children: [new SceneGridItem({ body: panel })],
+      });
+
+      libraryPanelModel.model.repeat = 'variable';
+      libraryPanelModel.model.repeatDirection = 'v';
+
+      // access to private method
+      vizPanelManager['updatePanelFromLibPanel'](libraryPanelModel, libVizPanel, panel);
+
+      const sourcePanel = vizPanelManager.state.sourcePanel.resolve();
+
+      expect(sourcePanel.parent).toBeInstanceOf(LibraryVizPanel);
+      expect(sourcePanel.parent?.parent).toBeInstanceOf(PanelRepeaterGridItem);
+      expect(vizPanelManager.state.panel.state.title).toBe('newPanel');
+      expect(layout.state.children[0]).toBeInstanceOf(PanelRepeaterGridItem);
     });
   });
 
@@ -695,6 +760,36 @@ describe('VizPanelManager', () => {
     });
   });
 });
+
+const setupLibPanelChangeTest = () => {
+  const panel = new VizPanel({
+    key: 'panel-1',
+    pluginId: 'text',
+    title: 'newPanel',
+  });
+
+  const libraryPanelModel = {
+    title: 'title',
+    uid: 'uid',
+    name: 'libraryPanelName',
+    model: vizPanelToPanel(panel),
+    type: 'panel',
+    version: 1,
+  };
+
+  const libVizPanel = new LibraryVizPanel({
+    title: panel.state.title,
+    uid: 'uid',
+    name: 'libPanel',
+    panelKey: panel.state.key!,
+  });
+
+  jest.spyOn(libAPI, 'getLibraryPanel').mockResolvedValue({ ...libraryPanelModel, ...panel });
+
+  libVizPanel.activate();
+
+  return { libraryPanelModel, panel, libVizPanel };
+};
 
 const setupTest = (panelId: string) => {
   const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
