@@ -12,33 +12,40 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 )
 
+const (
+	maxBufferedEvents = 256
+)
+
 // Keeps track of which watches need to be notified
 type WatchSet struct {
-	mu      sync.RWMutex
-	nodes   map[int]*watchNode
-	counter int
+	mu        sync.RWMutex
+	nodes     map[int]*watchNode
+	counter   int
+	versioner storage.Versioner
 }
 
-func NewWatchSet() *WatchSet {
+func NewWatchSet(versioner storage.Versioner) *WatchSet {
 	return &WatchSet{
-		nodes:   make(map[int]*watchNode, 20),
-		counter: 0,
+		nodes:     make(map[int]*watchNode, 20),
+		counter:   0,
+		versioner: versioner,
 	}
 }
 
 // Creates a new watch with a unique id, but
 // does not start sending events to it until start() is called.
-func (s *WatchSet) newWatch() *watchNode {
+func (s *WatchSet) newWatch(requestedRV uint64) *watchNode {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.counter++
 
 	return &watchNode{
-		id:       s.counter,
-		s:        s,
-		updateCh: make(chan watch.Event),
-		outCh:    make(chan watch.Event),
+		requestedRV: requestedRV,
+		id:          s.counter,
+		s:           s,
+		updateCh:    make(chan watch.Event),
+		outCh:       make(chan watch.Event),
 	}
 }
 
@@ -51,17 +58,23 @@ func (s *WatchSet) cleanupWatchers() {
 
 func (s *WatchSet) notifyWatchers(ev watch.Event) {
 	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if len(s.nodes) == 0 {
+		return
+	}
+
 	for _, w := range s.nodes {
 		w.updateCh <- ev
 	}
-	s.mu.RUnlock()
 }
 
 type watchNode struct {
-	s        *WatchSet
-	id       int
-	updateCh chan watch.Event
-	outCh    chan watch.Event
+	s           *WatchSet
+	id          int
+	updateCh    chan watch.Event
+	outCh       chan watch.Event
+	requestedRV uint64
 }
 
 // Start sending events to this watch.
