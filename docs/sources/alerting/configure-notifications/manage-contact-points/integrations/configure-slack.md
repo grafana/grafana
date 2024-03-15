@@ -42,9 +42,6 @@ If you are using a Slack API Token, complete the following steps.
 1. Right click the channel you want to receive notifications in.
 1. Click View channel details.
 1. Scroll down and copy the Channel ID.
-
-**Note:** 
-
 {{< admonition type="note" >}}
 While going through these steps, Slack may prompt you to Reinstall your app in order for the changes to take effect.
 {{< /admonition >}}
