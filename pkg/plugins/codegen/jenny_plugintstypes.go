@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/codejen"
@@ -12,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/build"
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var versionedPluginPath = filepath.Join("packages", "grafana-schema", "src", "raw", "composable")
@@ -89,13 +92,42 @@ func getPluginVersion(pluginVersion *string) string {
 
 func adaptToPipeline(j codejen.OneToOne[codegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
 	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) codegen.SchemaForGen {
-		name := strings.ReplaceAll(pd.PluginMeta.Name, " ", "") + pd.SchemaInterface.Name
+		name := strings.ReplaceAll(pd.PluginMeta.Name, " ", "")
 		return codegen.SchemaForGen{
-			Name:    name,
+			Name:    upperCamelCase(name) + pd.SchemaInterface.Name,
 			CueFile: pd.CueFile,
 			IsGroup: pd.SchemaInterface.IsGroup,
 		}
 	})
+}
+
+func upperCamelCase(s string) string {
+	s = lowerCamelCase(s)
+
+	// Uppercase the first letter
+	if len(s) > 0 {
+		s = strings.ToUpper(s[:1]) + s[1:]
+	}
+
+	return s
+}
+
+func lowerCamelCase(s string) string {
+	// Replace all non-alphanumeric characters by spaces
+	s = regexp.MustCompile("[^a-zA-Z0-9 ]+").ReplaceAllString(s, " ")
+
+	// Title case s
+	s = cases.Title(language.AmericanEnglish, cases.NoLower).String(s)
+
+	// Remove all spaces
+	s = strings.ReplaceAll(s, " ", "")
+
+	// Lowercase the first letter
+	if len(s) > 0 {
+		s = strings.ToLower(s[:1]) + s[1:]
+	}
+
+	return s
 }
 
 func getGrafanaVersion() string {
