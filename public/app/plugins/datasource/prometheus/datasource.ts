@@ -360,6 +360,7 @@ export class PrometheusDatasource
       ...target,
       exemplar: this.shouldRunExemplarQuery(target, request),
       requestId: request.panelId + target.refId,
+      scope: request.scope,
       // We need to pass utcOffsetSec to backend to calculate aligned range
       utcOffsetSec: request.range.to.utcOffset() * 60,
     };
@@ -386,6 +387,7 @@ export class PrometheusDatasource
   }
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
+    console.log('aici', request);
     if (this.access === 'direct') {
       return this.directAccessError();
     }
@@ -401,6 +403,8 @@ export class PrometheusDatasource
     } else {
       fullOrPartialRequest = request;
     }
+
+    console.log(fullOrPartialRequest);
 
     const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));
     const startTime = new Date();
@@ -421,6 +425,7 @@ export class PrometheusDatasource
   }
 
   createQuery(target: PromQuery, options: DataQueryRequest<PromQuery>, start: number, end: number) {
+    console.log('b', target, options, start, end);
     const query: PromQueryRequest = {
       hinting: target.hinting,
       instant: target.instant,
