@@ -5064,12 +5064,12 @@ __metadata:
   linkType: hard
 
 "@manypkg/get-packages@npm:^2.2.0":
-  version: 2.2.0
-  resolution: "@manypkg/get-packages@npm:2.2.0"
+  version: 2.2.1
+  resolution: "@manypkg/get-packages@npm:2.2.1"
   dependencies:
     "@manypkg/find-root": "npm:^2.2.0"
     "@manypkg/tools": "npm:^1.1.0"
-  checksum: 10/2a78240d8d9cf32250204d02e7b693ad728129be0f01c6049593e0c90ad44eca0e3334521faca8eff42939219313517173b5c983be036ff7ef3218bc8b7f8f30
+  checksum: 10/648da51cf0bf301cfb133b51b816f04f7caf3c29c386c7fb38a106e6ffdc00823e6aa54b3f72eca49c7a64a1fdf00d55c85095ca9ebcbadfa02b89f6acd4fcdb
   languageName: node
   linkType: hard
 
