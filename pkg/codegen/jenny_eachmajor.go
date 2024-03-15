@@ -36,7 +36,7 @@ func (j *lmox) Generate(sfg SchemaForGen) (codejen.Files, error) {
 		return nil, nil
 	}
 
-	f.RelativePath = filepath.Join(j.parentdir, sfg.Name, "x", f.RelativePath)
+	f.RelativePath = filepath.Join(j.parentdir, sfg.OutputName, "x", f.RelativePath)
 	f.From = append(f.From, j)
 	return codejen.Files{*f}, nil
 }
