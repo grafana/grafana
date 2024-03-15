@@ -174,6 +174,43 @@ func TestIntegrationServiceAccountMigration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "extSrv accounts also renamed",
+			serviceAccounts: []*user.User{
+				{
+					ID:               9,
+					UID:              "u9",
+					Name:             "sa-extsvc-slug",
+					Login:            "sa-extsvc-slug",
+					Email:            "sa-extsvc-slug@org.com",
+					OrgID:            1,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+				{
+					ID:               10,
+					UID:              "u10",
+					Name:             "sa-extsvc-slug2",
+					Login:            "sa-extsvc-slug2",
+					Email:            "sa-extsvc-slug2@org.com",
+					OrgID:            2,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+			},
+			wantServiceAccounts: []*user.User{
+				{
+					ID:    9,
+					Login: "sa-1-extsvc-slug",
+				},
+				{
+					ID:    10,
+					Login: "sa-2-extsvc-slug2",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
