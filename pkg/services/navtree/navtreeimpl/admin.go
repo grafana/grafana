@@ -135,7 +135,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		configNodes = append(configNodes, storage)
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) && c.SignedInUser.IsGrafanaAdmin {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) && hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) {
 		migrateToCloud := &navtree.NavLink{
 			Text:     "Migrate to Grafana Cloud",
 			Id:       "migrate-to-cloud",
