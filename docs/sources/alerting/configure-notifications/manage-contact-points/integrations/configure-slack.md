@@ -16,7 +16,6 @@ title: Configure Slack for Alerting
 weight: 300
 ---
 
-
 ## Configure Slack for Alerting
 
 
