@@ -8,11 +8,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"github.com/grafana/codejen"
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -20,6 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
+	"io/fs"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 var skipPlugins = map[string]bool{
@@ -47,10 +47,8 @@ func main() {
 	})
 
 	pluginKindGen.Append(
-		codegen.PluginTreeListJenny(),
 		codegen.PluginGoTypesJenny("pkg/tsdb"),
-		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
-		codegen.PluginTSEachMajor(rt),
+		codegen.PluginTSTypesJenny("public/app/plugins"),
 	)
 
 	schifs := kindsys.SchemaInterfaces(rt.Context())
@@ -71,6 +69,15 @@ func main() {
 		log.Fatalln(fmt.Errorf("error writing files to disk: %s", err))
 	}
 
+	rawResources, err := genRawResources()
+	if err != nil {
+		log.Fatalln(fmt.Errorf("error generating raw plugin resources: %s", err))
+	}
+
+	if err := jfs.Merge(rawResources); err != nil {
+		log.Fatalln(fmt.Errorf("Unable to merge raw resources: %s", err))
+	}
+
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		if err = jfs.Verify(context.Background(), groot); err != nil {
 			log.Fatal(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
@@ -78,16 +85,6 @@ func main() {
 	} else if err = jfs.Write(context.Background(), groot); err != nil {
 		log.Fatal(fmt.Errorf("error while writing generated code to disk:\n%s", err))
 	}
-}
-
-func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
-	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) corecodegen.SchemaForGen {
-		return corecodegen.SchemaForGen{
-			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
-			Schema:  pd.Lineage.Latest(),
-			IsGroup: pd.SchemaInterface.IsGroup,
-		}
-	})
 }
 
 func kind2pd(rt *thema.Runtime, j codejen.OneToOne[kindsys.Kind]) codejen.OneToOne[*pfs.PluginDecl] {
@@ -115,4 +112,29 @@ func splitSchiffer(names []string) codejen.FileMapper {
 		}
 		return f, nil
 	}
+}
+
+func genRawResources() (*codejen.FS, error) {
+	jennies := codejen.JennyListWithNamer(func(d []string) string {
+		return "PluginsRawResources"
+	})
+	jennies.Append(&codegen.PluginRegistryJenny{})
+
+	schemas := make([]string, 0)
+	filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+
+		if !strings.HasSuffix(d.Name(), ".cue") {
+			return nil
+		}
+
+		schemas = append(schemas, "./"+filepath.Join("public", "app", "plugins", path))
+		return nil
+	})
+
+	jennies.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"))
+
+	return jennies.GenerateFS(schemas)
 }

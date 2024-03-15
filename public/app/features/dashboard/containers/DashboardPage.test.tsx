@@ -306,10 +306,12 @@ describe('DashboardPage', () => {
   });
 
   describe('No kiosk mode tv', () => {
-    it('should render dashboard page toolbar and submenu', async () => {
-      setup({ dashboard: getTestDashboard() });
+    it('should render dashboard page toolbar with no submenu', async () => {
+      setup({
+        dashboard: getTestDashboard(),
+      });
       expect(await screen.findAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(1);
-      expect(screen.getAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(1);
+      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
     });
   });
 

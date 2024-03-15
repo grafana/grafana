@@ -21,5 +21,5 @@ type DatasourceInfo struct {
 	Timeout       time.Duration
 
 	// FlightSQL grpc connection
-	SecureGrpc bool `json:"secureGrpc"`
+	InsecureGrpc bool `json:"insecureGrpc"`
 }

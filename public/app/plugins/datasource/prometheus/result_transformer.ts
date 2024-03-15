@@ -359,7 +359,7 @@ function mergeHeatmapFrames(frames: DataFrame[]): DataFrame[] {
   ];
 }
 
-function transformToHistogramOverTime(seriesList: DataFrame[]) {
+function transformToHistogramOverTime(seriesList: DataFrame[]): DataFrame[] {
   /*      t1 = timestamp1, t2 = timestamp2 etc.
             t1  t2  t3          t1  t2  t3
     le10    10  10  0     =>    10  10  0
@@ -377,6 +377,10 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     for (let j = 0; j < topSeries.values.length; j++) {
       const bottomPoint = bottomSeries.values[j] || [0];
       topSeries.values[j] -= bottomPoint;
+
+      if (topSeries.values[j] < 1e-9) {
+        topSeries.values[j] = 0;
+      }
     }
   }
 

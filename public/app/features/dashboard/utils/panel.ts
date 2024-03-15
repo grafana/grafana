@@ -9,8 +9,8 @@ import store from 'app/core/store';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { UnlinkModal } from 'app/features/dashboard-scene/scene/UnlinkModal';
 import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
-import { UnlinkModal } from 'app/features/library-panels/components/UnlinkModal/UnlinkModal';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
 import { dispatch } from 'app/store/store';
 
@@ -19,17 +19,12 @@ import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/event
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
   if (ask !== false) {
-    const text2 =
-      panel.alert && !config.unifiedAlertingEnabled
-        ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
-        : undefined;
     const confirmText = panel.alert ? 'YES' : undefined;
 
     appEvents.publish(
       new ShowConfirmModalEvent({
         title: 'Remove panel',
         text: 'Are you sure you want to remove this panel?',
-        text2: text2,
         icon: 'trash-alt',
         confirmText: confirmText,
         yesText: 'Remove',
