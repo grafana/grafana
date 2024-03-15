@@ -8,7 +8,7 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { normalizeMatchers, parseMatcher, quoteWithEscape, unquoteWithUnescape } from './matchers';
+import { normalizeMatchers, parseMatcherToArray, quoteWithEscape, unquoteWithUnescape } from './matchers';
 import { findExistingRoute } from './routeTree';
 import { isValidPrometheusDuration, safeParseDurationstr } from './time';
 
@@ -94,9 +94,13 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
 
   const objectMatchers =
     route.object_matchers?.map((matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] })) ?? [];
+
   const matchers =
     route.matchers
-      ?.map((matcher) => matcherToMatcherField(parseMatcher(matcher)))
+      ?.flatMap((matcher) => {
+        const parsedMatchers = parseMatcherToArray(matcher);
+        return parsedMatchers.flatMap(matcherToMatcherField);
+      })
       .map(({ name, operator, value }) => ({
         name: unquoteWithUnescape(name),
         operator,

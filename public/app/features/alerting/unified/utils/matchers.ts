@@ -4,6 +4,8 @@ import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/data
 
 import { Labels } from '../../../../types/unified-alerting-dto';
 
+import { isPromQLStyleMatcher, matcherToObjectMatcher } from './alertmanager';
+
 const matcherOperators = [
   MatcherOperator.regex,
   MatcherOperator.notRegex,
@@ -11,10 +13,14 @@ const matcherOperators = [
   MatcherOperator.equal,
 ];
 
+// parse a single matcher: foo="bar" or bar!~baz
 export function parseMatcher(matcher: string): Matcher {
   if (matcher.startsWith('{') && matcher.endsWith('}')) {
-    throw new Error(`PromQL matchers not supported yet, sorry! PromQL matcher found: ${matcher}`);
+    throw new Error(
+      'this function does not support PromQL-style matcher syntax, call parsePromQLStyleMatcher() instead'
+    );
   }
+
   const operatorsFound = matcherOperators
     .map((op): [MatcherOperator, number] => [op, matcher.indexOf(op)])
     .filter(([_, idx]) => idx > -1)
@@ -36,6 +42,32 @@ export function parseMatcher(matcher: string): Matcher {
     isRegex: operator === MatcherOperator.regex || operator === MatcherOperator.notRegex,
     isEqual: operator === MatcherOperator.equal || operator === MatcherOperator.regex,
   };
+}
+
+// combines parseMatcher and parsePromQLStyleMatcher, always returning an array of Matcher[] regardless of input syntax
+export function parseMatcherToArray(matcher: string): Matcher[] {
+  return isPromQLStyleMatcher(matcher) ? parsePromQLStyleMatcher(matcher) : [parseMatcher(matcher)];
+}
+
+/**
+ * This function turns a PromQL-style matchers like { foo="bar", bar!=baz } in to an array of Matchers
+ */
+export function parsePromQLStyleMatcher(matcher: string): Matcher[] {
+  if (!isPromQLStyleMatcher(matcher)) {
+    throw new Error('not a PromQL style matcher');
+  }
+
+  return matcher
+    .replace(/^\{/, '')
+    .replace(/\}$/, '')
+    .trim()
+    .split(',')
+    .flatMap(parseMatcher)
+    .map((matcher) => ({
+      ...matcher,
+      name: unquoteWithUnescape(matcher.name),
+      value: unquoteWithUnescape(matcher.value),
+    }));
 }
 
 // Parses a list of entries like like "['foo=bar', 'baz=~bad*']" into SilenceMatcher[]
@@ -65,27 +97,12 @@ export const getMatcherQueryParams = (labels: Labels) => {
  * this function will normalize all of the different ways to define matchers in to a single one.
  */
 export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
-  const matchers: ObjectMatcher[] = [];
+  let matchers: ObjectMatcher[] = [];
 
   if (route.matchers) {
     route.matchers.forEach((matcher) => {
-      const { name, value, isEqual, isRegex } = parseMatcher(matcher);
-      let operator = MatcherOperator.equal;
-
-      if (isEqual && isRegex) {
-        operator = MatcherOperator.regex;
-      }
-      if (!isEqual && isRegex) {
-        operator = MatcherOperator.notRegex;
-      }
-      if (isEqual && !isRegex) {
-        operator = MatcherOperator.equal;
-      }
-      if (!isEqual && !isRegex) {
-        operator = MatcherOperator.notEqual;
-      }
-
-      matchers.push([name, operator, value]);
+      const parsedMatchers = parseMatcherToArray(matcher).map(matcherToObjectMatcher);
+      matchers = matchers.concat(parsedMatchers);
     });
   }
 

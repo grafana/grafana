@@ -101,6 +101,10 @@ export function matcherFieldToMatcher(field: MatcherFieldValue): Matcher {
   };
 }
 
+export function isPromQLStyleMatcher(input: string): boolean {
+  return input.startsWith('{') && input.endsWith('}');
+}
+
 export function matchersToString(matchers: Matcher[]) {
   const matcherFields = matchers.map(matcherToMatcherField);
 
