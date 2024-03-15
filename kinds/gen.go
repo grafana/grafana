@@ -187,10 +187,11 @@ func loadCueFiles(ctx *cue.Context, dirs []os.DirEntry) ([]codegen.SchemaForGen,
 		}
 
 		sch := codegen.SchemaForGen{
-			Name:     name,
-			FilePath: "./" + filepath.Join(CoreDefParentPath, entry),
-			CueFile:  v,
-			IsGroup:  false,
+			Name:       name,
+			FilePath:   "./" + filepath.Join(CoreDefParentPath, entry),
+			CueFile:    v,
+			IsGroup:    false,
+			OutputName: strings.ToLower(name),
 		}
 
 		values = append(values, sch)

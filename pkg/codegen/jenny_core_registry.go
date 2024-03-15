@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cuelang.org/go/cue"
 	"github.com/grafana/codejen"
 )
 
@@ -24,7 +23,7 @@ func (jenny *CoreRegistryJenny) JennyName() string {
 func (jenny *CoreRegistryJenny) Generate(cueFiles ...SchemaForGen) (codejen.Files, error) {
 	schemas := make([]Schema, len(cueFiles))
 	for i, v := range cueFiles {
-		name, err := getSchemaName(v.CueFile)
+		name, err := getSchemaName(v.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -51,12 +50,7 @@ func (jenny *CoreRegistryJenny) Generate(cueFiles ...SchemaForGen) (codejen.File
 	return codejen.Files{*file}, nil
 }
 
-func getSchemaName(v cue.Value) (string, error) {
-	name, err := getPackageName(v)
-	if err != nil {
-		return "", err
-	}
-
-	name = strings.Replace(name, "-", "_", -1)
-	return strings.ToLower(name), nil
+func getSchemaName(pkg string) (string, error) {
+	pkg = strings.Replace(pkg, "-", "_", -1)
+	return strings.ToLower(pkg), nil
 }

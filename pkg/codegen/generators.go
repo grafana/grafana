@@ -46,8 +46,9 @@ func SlashHeaderMapper(maingen string) codejen.FileMapper {
 }
 
 type SchemaForGen struct {
-	Name     string
-	CueFile  cue.Value
-	FilePath string
-	IsGroup  bool
+	Name       string
+	CueFile    cue.Value
+	FilePath   string
+	IsGroup    bool
+	OutputName string // Some TS output files are capitalised and others not.
 }
