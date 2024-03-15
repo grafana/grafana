@@ -3,17 +3,14 @@ import { CanvasConnection, CanvasElementOptions } from 'app/features/canvas';
 import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 
+import { LineType } from '../types';
+
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
   addColor: PanelOptionsSupplier<CanvasConnection>;
   addSize: PanelOptionsSupplier<CanvasConnection>;
   addType: PanelOptionsSupplier<CanvasConnection>;
-}
-
-enum LineType {
-  Solid = 'Solid',
-  Dashed = 'Dashed',
 }
 
 const getCategoryName = (str: string, type: string | undefined) => {
