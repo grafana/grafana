@@ -584,7 +584,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   return builder;
 };
 
-export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
+function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
   const originNames = new Map<string, number>();
   frame.fields.forEach((field, i) => {
     const origin = field.state?.origin;

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import {
   DataFrame,
   FALLBACK_COLOR,
@@ -34,7 +32,6 @@ import {
 } from '@grafana/schema';
 import {
   FIXED_UNIT,
-  SeriesVisibilityChangeMode,
   UPlotConfigBuilder,
   UPlotConfigPrepFn,
   VizLegendItem,
@@ -76,13 +73,6 @@ const defaultConfig: PanelFieldConfig = {
   lineWidth: 0,
   fillOpacity: 80,
 };
-
-export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityChangeMode {
-  if (event.ctrlKey || event.metaKey || event.shiftKey) {
-    return SeriesVisibilityChangeMode.AppendToSelection;
-  }
-  return SeriesVisibilityChangeMode.ToggleSelection;
-}
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = ({
   frame,
@@ -232,44 +222,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
   return builder;
 };
-
-export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
-  const names = new Map<string, number>();
-  for (let i = 0; i < frame.fields.length; i++) {
-    names.set(getFieldDisplayName(frame.fields[i], frame), i);
-  }
-  return names;
-}
-
-/**
- * If any sequential duplicate values exist, this will return a new array
- * with the future values set to undefined.
- *
- * in:  1,        1,undefined,        1,2,        2,null,2,3
- * out: 1,undefined,undefined,undefined,2,undefined,null,2,3
- */
-export function unsetSameFutureValues(values: unknown[]): unknown[] | undefined {
-  let prevVal = values[0];
-  let clone: unknown[] | undefined = undefined;
-
-  for (let i = 1; i < values.length; i++) {
-    let value = values[i];
-
-    if (value === null) {
-      prevVal = null;
-    } else {
-      if (value === prevVal) {
-        if (!clone) {
-          clone = [...values];
-        }
-        clone[i] = undefined;
-      } else if (value != null) {
-        prevVal = value;
-      }
-    }
-  }
-  return clone;
-}
 
 function getSpanNulls(field: Field) {
   let spanNulls = field.config.custom?.spanNulls;
