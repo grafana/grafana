@@ -20,9 +20,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	mssql "github.com/microsoft/go-mssqldb"
 	_ "github.com/microsoft/go-mssqldb/azuread"
+	_ "github.com/microsoft/go-mssqldb/integratedauth/krb5"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
@@ -34,9 +36,13 @@ type Service struct {
 }
 
 const (
-	azureAuthentication     = "Azure AD Authentication"
-	windowsAuthentication   = "Windows Authentication"
-	sqlServerAuthentication = "SQL Server Authentication"
+	azureAuthentication         = "Azure AD Authentication"
+	windowsAuthentication       = "Windows Authentication"
+	sqlServerAuthentication     = "SQL Server Authentication"
+	kerberosRaw                 = "Windows AD: Username + password"
+	kerberosKeytab              = "Windows AD: Keytab"
+	kerberosCredentialCache     = "Windows AD: Credential cache"
+	kerberosCredentialCacheFile = "Windows AD: Credential cache file"
 )
 
 func ProvideService(cfg *setting.Cfg) *Service {
@@ -78,6 +84,12 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		if err != nil {
 			return nil, fmt.Errorf("error reading azure credentials")
 		}
+
+		kerberosAuth, err := kerberos.GetKerberosSettings(settings)
+		if err != nil {
+			return nil, fmt.Errorf("error getting kerberos settings: %w", err)
+		}
+
 		err = json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
@@ -98,7 +110,7 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			UID:                     settings.UID,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
-		cnnstr, err := generateConnectionString(dsInfo, cfg, azureCredentials, logger)
+		cnnstr, err := generateConnectionString(dsInfo, cfg, azureCredentials, kerberosAuth, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -184,7 +196,7 @@ func ParseURL(u string, logger DebugOnlyLogger) (*url.URL, error) {
 	}, nil
 }
 
-func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, azureCredentials azcredentials.AzureCredentials, logger log.Logger) (string, error) {
+func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, azureCredentials azcredentials.AzureCredentials, kerberosAuth kerberos.KerberosAuth, logger log.Logger) (string, error) {
 	const dfltPort = "0"
 	var addr util.NetworkAddress
 	if dsInfo.URL != "" {
@@ -229,6 +241,8 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, az
 		connStr += azureCredentialDSNFragment
 	case windowsAuthentication:
 		// No user id or password. We're using windows single sign on.
+	case kerberosRaw, kerberosKeytab, kerberosCredentialCacheFile, kerberosCredentialCache:
+		connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, dsInfo.User, dsInfo.DecryptedSecureJSONData["password"], kerberosAuth)
 	default:
 		connStr += fmt.Sprintf("user id=%s;password=%s;", dsInfo.User, dsInfo.DecryptedSecureJSONData["password"])
 	}
