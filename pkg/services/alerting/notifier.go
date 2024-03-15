@@ -210,17 +210,19 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 	}
 
 	renderOpts := rendering.Opts{
-		TimeoutOpts: rendering.TimeoutOpts{
-			Timeout: timeout,
+		CommonOpts: rendering.CommonOpts{
+			TimeoutOpts: rendering.TimeoutOpts{
+				Timeout: timeout,
+			},
+			AuthOpts: rendering.AuthOpts{
+				OrgID:   evalCtx.Rule.OrgID,
+				OrgRole: org.RoleAdmin,
+			},
+			ConcurrentLimit: n.cfg.AlertingRenderLimit,
 		},
-		AuthOpts: rendering.AuthOpts{
-			OrgID:   evalCtx.Rule.OrgID,
-			OrgRole: org.RoleAdmin,
-		},
-		Width:           1000,
-		Height:          500,
-		ConcurrentLimit: n.cfg.AlertingRenderLimit,
-		Theme:           models.ThemeDark,
+		Width:  1000,
+		Height: 500,
+		Theme:  models.ThemeDark,
 	}
 
 	ref, err := evalCtx.GetDashboardUID()
