@@ -188,25 +188,26 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return err
 	}
 
-	// Inject the context into the function that decrypts the configuration.
+	// Decrypt the configuration before comparing.
 	fn := func(payload []byte) ([]byte, error) {
 		return am.decrypt(ctx, payload)
 	}
 
-	if err := c.AlertmanagerConfig.Decrypt(fn); err != nil {
-		return err
-	}
-
-	rawCfg, err := json.Marshal(c)
+	decrypted, err := c.Decrypt(fn)
 	if err != nil {
 		return err
 	}
 
-	if am.shouldSendConfig(ctx, rawCfg) {
+	rawDecrypted, err := json.Marshal(decrypted)
+	if err != nil {
+		return err
+	}
+
+	if am.shouldSendConfig(ctx, rawDecrypted) {
 		am.metrics.ConfigSyncsTotal.Inc()
 		if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 			ctx,
-			string(rawCfg),
+			string(rawDecrypted),
 			config.ConfigurationHash,
 			config.ID,
 			config.CreatedAt,

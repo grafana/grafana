@@ -594,6 +594,40 @@ func (c *PostableUserConfig) validate() error {
 	return nil
 }
 
+// Decrypt returns a copy of the configuration struct with decrypted secure settings in receivers.
+func (c *PostableUserConfig) Decrypt(decryptFn func(payload []byte) ([]byte, error)) (*PostableUserConfig, error) {
+	// Copy the configuration struct.
+	rawCfg, err := json.Marshal(c)
+	if err != nil {
+		return nil, err
+	}
+
+	var newCfg PostableUserConfig
+	if err := json.Unmarshal(rawCfg, &newCfg); err != nil {
+		return nil, err
+	}
+
+	// Iterate through receivers and decrypt secure settings.
+	for _, rcv := range newCfg.AlertmanagerConfig.Receivers {
+		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			for k, v := range gmr.SecureSettings {
+				decoded, err := base64.StdEncoding.DecodeString(v)
+				if err != nil {
+					return nil, fmt.Errorf("failed to decode value for key '%s': %w", k, err)
+				}
+
+				decrypted, err := decryptFn(decoded)
+				if err != nil {
+					return nil, fmt.Errorf("failed to decrypt value for key '%s': %w", k, err)
+				}
+
+				gmr.SecureSettings[k] = string(decrypted)
+			}
+		}
+	}
+	return &newCfg, nil
+}
+
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
 func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver {
 	UIDs := make(map[string]*PostableGrafanaReceiver)
@@ -984,29 +1018,6 @@ type PostableApiAlertingConfig struct {
 
 	// Override with our superset receiver type
 	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
-}
-
-// Decrypt decrypts secure fields in receivers.
-// Important: this method mutates the configuration struct.
-func (c *PostableApiAlertingConfig) Decrypt(decryptFn func(payload []byte) ([]byte, error)) error {
-	for _, rcv := range c.Receivers {
-		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			for k, v := range gmr.SecureSettings {
-				decoded, err := base64.StdEncoding.DecodeString(v)
-				if err != nil {
-					return fmt.Errorf("failed to decode value for key '%s': %w", k, err)
-				}
-
-				decrypted, err := decryptFn(decoded)
-				if err != nil {
-					return fmt.Errorf("failed to decrypt value for key '%s': %w", k, err)
-				}
-
-				gmr.SecureSettings[k] = string(decrypted)
-			}
-		}
-	}
-	return nil
 }
 
 func (c *PostableApiAlertingConfig) GetReceivers() []*PostableApiReceiver {
