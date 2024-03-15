@@ -261,7 +261,7 @@ The SurrealDB data source launches with just the basics today. You can write que
 
 You can find more information and how to configure the plugin [on Github](https://github.com/grafana/surrealdb-datasource).
 
-{{< figure src="/media/images/dashboards/surrealdb-dashboard-example.png" >}}
+{{< figure src="/media/images/dashboards/surrealdb-dashboard-example.png" alt="Grafana dashboard using SurrealDB data source" >}}
 
 [Documentation](https://grafana.com/grafana/plugins/grafana-surrealdb-datasource/)
 
