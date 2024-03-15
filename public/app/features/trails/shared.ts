@@ -44,6 +44,6 @@ export function getVariablesWithMetricConstant(metric: string) {
   ];
 }
 
-export class MetricSelectedEvent extends BusEventWithPayload<string> {
+export class MetricSelectedEvent extends BusEventWithPayload<string | undefined> {
   public static type = 'metric-selected-event';
 }

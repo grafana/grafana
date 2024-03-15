@@ -29,6 +29,7 @@ import {
   ActionViewType,
   getVariablesWithMetricConstant,
   MakeOptional,
+  MetricSelectedEvent,
   trailDS,
   VAR_GROUP_BY,
   VAR_METRIC_EXPR,
@@ -150,6 +151,13 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
       <Box paddingY={1}>
         <div className={styles.actions}>
           <Stack gap={1}>
+            <ToolbarButton
+              variant={'canvas'}
+              tooltip="Deselect current metric so a new metric can be chosen"
+              onClick={() => trail.publishEvent(new MetricSelectedEvent(undefined))}
+            >
+              Select new metric
+            </ToolbarButton>
             <ToolbarButton
               variant={'canvas'}
               icon="compass"
