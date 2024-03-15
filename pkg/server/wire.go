@@ -166,6 +166,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	legacydataservice "github.com/grafana/grafana/pkg/tsdb/legacydata/service"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
+	lokiTracing "github.com/grafana/grafana/pkg/tsdb/loki/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
@@ -264,6 +265,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
 	tempo.ProvideService,
 	loki.ProvideService,
+	lokiTracing.ProvideService,
+	wire.Bind(new(lokiTracing.Tracer), new(*lokiTracing.TracingService)),
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,

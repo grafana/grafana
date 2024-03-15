@@ -27,6 +27,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -58,7 +59,7 @@ type TracingService struct {
 	tracerProvider tracerProvider
 	trace.Tracer
 
-	Cfg *Cfg
+	Cfg *setting.Cfg
 }
 
 type tracerProvider interface {
@@ -82,7 +83,7 @@ type Tracer interface {
 	Inject(context.Context, http.Header, trace.Span)
 }
 
-func ProvideService(cfg *Cfg) (*TracingService, error) {
+func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 	ots, err := ParseSettings(cfg)
 	if err != nil {
 		return nil, err
@@ -102,7 +103,7 @@ func ProvideService(cfg *Cfg) (*TracingService, error) {
 	return ots, nil
 }
 
-func ParseSettings(cfg *Cfg) (*TracingService, error) {
+func ParseSettings(cfg *setting.Cfg) (*TracingService, error) {
 	ots := &TracingService{
 		Cfg: cfg,
 		log: backend.NewLoggerWith("logger", "tracing"),
