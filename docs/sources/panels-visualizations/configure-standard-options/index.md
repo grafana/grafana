@@ -65,7 +65,7 @@ To set a custom unit, enter the unit you want to use and then select it in the d
 
 You can further define a custom unit with specific syntax. For example, to set a custom currency unit called "Gems", enter `currency:Gems` in the field. The drop-down will include the option **Custom unit: currency:Gems**:
 
-![A custom currency unit called Gems in the Unit drop-down](custom_unit_currency_v11.0.png)
+![A custom currency unit called Gems in the Unit drop-down](/media/docs/grafana/panels-visualizations/custom_unit_currency_v11.0.png)
 
 The following table lists the special syntax options for custom units:
 
@@ -80,9 +80,9 @@ The following table lists the special syntax options for custom units:
 
 You can also paste a native emoji in the **Unit** drop-down and select it as a custom unit:
 
-![Custom unit emoji](custom_unit_thumbsup_v11.0.png)
+![A thumbs up emoji as a custom unit](/media/docs/grafana/panels-visualizations/custom_unit_thumbsup_v11.0.png)
 
-![Custom unit emoji](thumbsup_panel_v11.0.png)
+![A time series visualization using custom thumbs up emoji units](/media/docs/grafana/panels-visualizations/thumbsup_panel_v11.0.png)
 
 #### String units
 
