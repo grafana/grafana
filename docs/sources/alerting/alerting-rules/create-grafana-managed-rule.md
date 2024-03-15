@@ -275,7 +275,7 @@ This will open the alert rule form, allowing you to configure and create your al
 [add-a-query]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data#add-a-query"
 
 [alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions#alert-on-numeric-data"
-[alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alert-rules/queries-conditions#alert-on-numeric-data"
+[alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions#alert-on-numeric-data"
 
 [annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label"
 [annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label"
