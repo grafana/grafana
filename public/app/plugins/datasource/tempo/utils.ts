@@ -2,7 +2,7 @@ import { DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { generateId } from './SearchTraceQLEditor/TagsInput';
-import { SearchTableType, TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
+import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import { TempoQuery } from './types';
 
 export const getErrorMessage = (message: string | undefined, prefix?: string) => {
@@ -29,7 +29,7 @@ export const migrateFromSearchToTraceQLSearch = (query: TempoQuery) => {
   let filters: TraceqlFilter[] = [];
   if (query.spanName) {
     filters.push({
-      id: generateId(),
+      id: 'span-name',
       scope: TraceqlSearchScope.Span,
       tag: 'name',
       operator: '=',
@@ -39,12 +39,18 @@ export const migrateFromSearchToTraceQLSearch = (query: TempoQuery) => {
   }
   if (query.serviceName) {
     filters.push({
-      id: generateId(),
+      id: 'service-name',
       scope: TraceqlSearchScope.Resource,
       tag: 'service.name',
       operator: '=',
       value: [query.serviceName],
       valueType: 'string',
+    });
+  }
+  if (query.minDuration || query.maxDuration) {
+    filters.push({
+      id: 'duration-type',
+      value: 'trace',
     });
   }
   if (query.minDuration) {
@@ -82,7 +88,7 @@ export const migrateFromSearchToTraceQLSearch = (query: TempoQuery) => {
     }
   }
 
-  const migreatedQuery: TempoQuery = {
+  const migratedQuery: TempoQuery = {
     datasource: query.datasource,
     filters,
     groupBy: query.groupBy,
@@ -90,7 +96,6 @@ export const migrateFromSearchToTraceQLSearch = (query: TempoQuery) => {
     query: query.query,
     queryType: 'traceqlSearch',
     refId: query.refId,
-    tableType: SearchTableType.Traces,
   };
-  return migreatedQuery;
+  return migratedQuery;
 };
