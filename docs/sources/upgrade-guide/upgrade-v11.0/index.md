@@ -1,5 +1,5 @@
 ---
-description: Guide for upgrading to Grafana v10.4
+description: Guide for upgrading to Grafana v11.0-preview
 keywords:
   - grafana
   - configuration
