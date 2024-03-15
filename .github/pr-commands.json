@@ -118,7 +118,7 @@
   },
   {
     "type": "changedfiles",
-    "matches": [ "public/app/plugins/datasource/jaeger"],
+    "matches": [ "public/app/plugins/datasource/jaeger/**/*"],
     "action": "updateLabel",
     "addLabel": "datasource/Jaeger"
   },
