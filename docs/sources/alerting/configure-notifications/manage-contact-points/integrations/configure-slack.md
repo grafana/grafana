@@ -79,7 +79,7 @@ To create your Slack integration in Grafana Alerting, complete the following ste
 - In the Recipient field, copy in the channel ID in the Recipient field.
 - In the Token field, copy in the Bot User OAuth Token that starts with “xoxb-”.
 6. If you are using a Webhook URL, in the Webhook field, copy in your Slack app Webhook URL.
-7. Click Test to check that your integration works. 
+7. Click **Test** to check that your integration works. 
 8. Click Save contact point.
 
 ## Next steps
