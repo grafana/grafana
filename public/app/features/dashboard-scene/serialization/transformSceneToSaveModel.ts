@@ -101,9 +101,9 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const graphTooltip =
     state.$behaviors?.find((b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync)?.state.sync ??
     defaultDashboard.graphTooltip;
-  const liveNow = state.$behaviors?.find(
-    (b): b is behaviors.LiveNowTimer => b instanceof behaviors.LiveNowTimer
-  )?.isEnabled;
+  const liveNow =
+    state.$behaviors?.find((b): b is behaviors.LiveNowTimer => b instanceof behaviors.LiveNowTimer)?.isEnabled ||
+    undefined;
 
   const dashboard: Dashboard = {
     ...defaultDashboard,
