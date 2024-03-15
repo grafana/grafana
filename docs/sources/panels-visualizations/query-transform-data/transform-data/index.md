@@ -403,6 +403,11 @@ The available conditions for all fields are:
 - **Equal** - Match if the value is equal to the specified value.
 - **Different** - Match if the value is different than the specified value.
 
+The available conditions for string fields are:
+
+- **Contains Substring** - Match if the value contains the specified substring
+- **Does Not Contain Substrin** - Match if the value DOES NOT contain the specified substring.
+
 The available conditions for number fields are:
 
 - **Greater** - Match if the value is greater than the specified value.
