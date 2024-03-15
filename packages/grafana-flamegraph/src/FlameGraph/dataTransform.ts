@@ -272,7 +272,7 @@ export class FlameGraphDataContainer {
   }
 
   isDiffFlamegraph() {
-    return this.valueRightField && this.selfRightField;
+    return Boolean(this.valueRightField && this.selfRightField);
   }
 
   getLabel(index: number) {

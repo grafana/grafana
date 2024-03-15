@@ -250,6 +250,40 @@ describe('VizPanelManager', () => {
 
       expect(apiCall.mock.calls[0][0].state.panel?.state.title).toBe('new title');
     });
+
+    it('unlinks library panel', () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+      });
+
+      const libraryPanelModel = {
+        title: 'title',
+        uid: 'uid',
+        name: 'libraryPanelName',
+        model: vizPanelToPanel(panel),
+        type: 'panel',
+        version: 1,
+      };
+
+      const libraryPanel = new LibraryVizPanel({
+        isLoaded: true,
+        title: libraryPanelModel.title,
+        uid: libraryPanelModel.uid,
+        name: libraryPanelModel.name,
+        panelKey: panel.state.key!,
+        panel: panel,
+        _loadedPanel: libraryPanelModel,
+      });
+
+      const gridItem = new SceneGridItem({ body: libraryPanel });
+
+      const panelManager = VizPanelManager.createFor(panel);
+      panelManager.unlinkLibraryPanel();
+
+      const sourcePanel = panelManager.state.sourcePanel.resolve();
+      expect(sourcePanel.parent?.state.key).toBe(gridItem.state.key);
+    });
   });
 
   describe('query options', () => {
