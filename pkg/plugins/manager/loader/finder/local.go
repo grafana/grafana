@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -26,19 +25,17 @@ var (
 type Local struct {
 	log        log.Logger
 	production bool
-	features   featuremgmt.FeatureToggles
 }
 
-func NewLocalFinder(devMode bool, features featuremgmt.FeatureToggles) *Local {
+func NewLocalFinder(devMode bool) *Local {
 	return &Local{
 		production: !devMode,
 		log:        log.New("local.finder"),
-		features:   features,
 	}
 }
 
 func ProvideLocalFinder(cfg *config.PluginManagementCfg) *Local {
-	return NewLocalFinder(cfg.DevMode, cfg.Features)
+	return NewLocalFinder(cfg.DevMode)
 }
 
 func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
