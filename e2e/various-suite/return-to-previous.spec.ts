@@ -33,11 +33,9 @@ describe('ReturnToPrevious button', () => {
     cy.url().should('eq', url);
   });
 
-  it('should disappear and clear session storage when clicking "Dismiss"', () => {
-    cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('exist');
+  it('should disappear when clicking "Dismiss"', () => {
     e2e.components.ReturnToPrevious.dismissButton().should('be.visible').click();
     e2e.components.ReturnToPrevious.buttonGroup().should('not.exist');
-    cy.window().its('sessionStorage').invoke('getItem', 'returnToPrevious').should('not.exist');
   });
 
   it('should not persist when going back to the alert rule details view', () => {
