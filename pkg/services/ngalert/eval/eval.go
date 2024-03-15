@@ -73,6 +73,7 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 		defer cancel()
 		execCtx = timeoutCtx
 	}
+	logger.FromContext(ctx).Debug("Executing pipeline", "commands", strings.Join(r.pipeline.UniqueCommands(), ","))
 	return r.expressionService.ExecutePipeline(execCtx, now, r.pipeline)
 }
 

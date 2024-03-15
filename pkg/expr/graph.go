@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/exp/maps"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 
@@ -121,6 +123,38 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		vars[node.RefID()] = res
 	}
 	return vars, nil
+}
+
+// Commands returns a sorted unique list of all commands used in the pipeline.
+// Expression commands are encoded as `expr(CMD)`, for example `expr(reduce)`.
+// ML expressions are encoded as `ml(CMD)` (e.g. ml(outlier))
+func (dp *DataPipeline) UniqueCommands() []string {
+	if dp == nil {
+		return nil
+	}
+	m := make(map[string]struct{}, 5) // 5 is big enough to cover most of the cases
+	for _, node := range *dp {
+		name := ""
+		switch t := node.(type) {
+		case *CMDNode:
+			if t.Command != nil {
+				name = fmt.Sprintf("expr(%s)", t.Command)
+			}
+		case *DSNode:
+			if t.datasource != nil {
+				name = t.datasource.Type
+			}
+		case *MLNode:
+			name = fmt.Sprintf("ml(%s)", t.command)
+		}
+		if name == "" {
+			continue
+		}
+		m[name] = struct{}{}
+	}
+	result := maps.Keys(m)
+	slices.Sort(result)
+	return result
 }
 
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an

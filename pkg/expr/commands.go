@@ -17,6 +17,7 @@ import (
 
 // Command is an interface for all expression commands.
 type Command interface {
+	fmt.Stringer
 	NeedsVars() []string
 	Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error)
 }
@@ -73,6 +74,10 @@ func (gm *MathCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Va
 	span.SetAttributes(attribute.String("expression", gm.RawExpression))
 	defer span.End()
 	return gm.Expression.Execute(gm.refID, vars, tracer)
+}
+
+func (gm *MathCommand) String() string {
+	return TypeMath.String()
 }
 
 // ReduceCommand is an expression command for reduction of a timeseries such as a min, mean, or max.
@@ -201,6 +206,10 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 	return newRes, nil
 }
 
+func (gr *ReduceCommand) String() string {
+	return TypeReduce.String()
+}
+
 // ResampleCommand is an expression command for resampling of a timeseries.
 type ResampleCommand struct {
 	Window        time.Duration
@@ -312,6 +321,10 @@ func (gr *ResampleCommand) Execute(ctx context.Context, now time.Time, vars math
 	return newRes, nil
 }
 
+func (gr *ResampleCommand) String() string {
+	return TypeResample.String()
+}
+
 // CommandType is the type of the expression command.
 type CommandType int
 
@@ -342,6 +355,8 @@ func (gt CommandType) String() string {
 		return "resample"
 	case TypeClassicConditions:
 		return "classic_conditions"
+	case TypeThreshold:
+		return "threshold"
 	case TypeSQL:
 		return "sql"
 	default:
