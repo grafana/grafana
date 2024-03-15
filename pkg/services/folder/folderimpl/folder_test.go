@@ -1949,6 +1949,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	testCases := []struct {
 		name            string
 		q               folder.GetChildrenQuery
+		expectedErr     error
 		expectedFolders []string
 	}{
 		{
@@ -1996,16 +1997,14 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 				"with edit permission"},
 		},
 		{
-			name: "should return subfolders with edit permission",
+			name: "should fail returning subfolders with edit permission when parent folder has no edit permission",
 			q: folder.GetChildrenQuery{
 				OrgID:        orgID,
 				SignedInUser: &viewer,
 				Permission:   dashboardaccess.PERMISSION_EDIT,
 				UID:          noEditPermission.UID,
 			},
-			expectedFolders: []string{
-				"subfolder under no edit permission with edit permission",
-			},
+			expectedErr: dashboards.ErrFolderAccessDenied,
 		},
 		{
 			name: "should return shared with me folders with edit permission",
@@ -2025,13 +2024,18 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			folders, err := folderSvcOn.GetChildren(context.Background(), &tc.q)
-			require.NoError(t, err)
-			actual := make([]string, 0, len(folders))
-			for _, f := range folders {
-				actual = append(actual, f.Title)
-			}
-			if cmp.Diff(tc.expectedFolders, actual) != "" {
-				t.Fatalf("unexpected folders: %s", cmp.Diff(tc.expectedFolders, actual))
+			if tc.expectedErr != nil {
+				require.Error(t, err)
+				require.Equal(t, tc.expectedErr, err)
+			} else {
+				require.NoError(t, err)
+				actual := make([]string, 0, len(folders))
+				for _, f := range folders {
+					actual = append(actual, f.Title)
+				}
+				if cmp.Diff(tc.expectedFolders, actual) != "" {
+					t.Fatalf("unexpected folders: %s", cmp.Diff(tc.expectedFolders, actual))
+				}
 			}
 		})
 	}
