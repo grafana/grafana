@@ -16848,6 +16848,19 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Set to `Edit` to return folders that the user can edit",
+            "in": "query",
+            "name": "permission",
+            "schema": {
+              "default": "View",
+              "enum": [
+                "Edit",
+                "View"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
