@@ -48,6 +48,56 @@ jest.mock('@grafana/data', () => ({
   hasLogsContextSupport: (ds: MockDataSourceApi) => hasLogsContextSupport(ds),
 }));
 
+const defaultProps = {
+  data: {
+    error: undefined,
+    request: {
+      panelId: 4,
+      app: 'dashboard',
+      requestId: 'A',
+      timezone: 'browser',
+      interval: '30s',
+      intervalMs: 30000,
+      maxDataPoints: 823,
+      targets: [],
+      range: getDefaultTimeRange(),
+      scopedVars: {},
+      startTime: 1,
+    },
+    series: [],
+    state: LoadingState.Done,
+    timeRange: getDefaultTimeRange(),
+  },
+  timeZone: 'utc',
+  timeRange: getDefaultTimeRange(),
+  options: {
+    showLabels: false,
+    showTime: false,
+    wrapLogMessage: false,
+    showCommonLabels: false,
+    prettifyLogMessage: false,
+    sortOrder: LogsSortOrder.Descending,
+    dedupStrategy: LogsDedupStrategy.none,
+    enableLogDetails: false,
+    showLogContextToggle: false,
+  },
+  title: 'Logs panel',
+  id: 1,
+  transparent: false,
+  width: 400,
+  height: 100,
+  renderCounter: 0,
+  fieldConfig: {
+    defaults: {},
+    overrides: [],
+  },
+  eventBus: new EventBusSrv(),
+  onOptionsChange: jest.fn(),
+  onFieldConfigChange: jest.fn(),
+  replaceVariables: jest.fn(),
+  onChangeTimeRange: jest.fn(),
+};
+
 describe('LogsPanel', () => {
   describe('when returned series include common labels', () => {
     const seriesWithCommonLabels = [
@@ -75,7 +125,10 @@ describe('LogsPanel', () => {
     ];
 
     it('shows common labels when showCommonLabels is set to true', async () => {
-      setup({ data: { series: seriesWithCommonLabels }, options: { showCommonLabels: true } });
+      setup({
+        data: { ...defaultProps.data, series: seriesWithCommonLabels },
+        options: { ...defaultProps.options, showCommonLabels: true },
+      });
 
       expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
       expect(await screen.findByText(/common_app/i)).toBeInTheDocument();
@@ -83,22 +136,22 @@ describe('LogsPanel', () => {
     });
     it('shows common labels on top when descending sort order', async () => {
       const { container } = setup({
-        data: { series: seriesWithCommonLabels },
-        options: { showCommonLabels: true, sortOrder: LogsSortOrder.Descending },
+        data: { ...defaultProps.data, series: seriesWithCommonLabels },
+        options: { ...defaultProps.options, showCommonLabels: true, sortOrder: LogsSortOrder.Descending },
       });
       expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
       expect(container.firstChild?.childNodes[0].textContent).toMatch(/^Common labels:common_appcommon_job/);
     });
     it('shows common labels on bottom when ascending sort order', async () => {
       const { container } = setup({
-        data: { series: seriesWithCommonLabels },
-        options: { showCommonLabels: true, sortOrder: LogsSortOrder.Ascending },
+        data: { ...defaultProps.data, series: seriesWithCommonLabels },
+        options: { ...defaultProps.options, showCommonLabels: true, sortOrder: LogsSortOrder.Ascending },
       });
       expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
       expect(container.firstChild?.childNodes[0].textContent).toMatch(/Common labels:common_appcommon_job$/);
     });
     it('does not show common labels when showCommonLabels is set to false', async () => {
-      setup({ data: { series: seriesWithCommonLabels }, options: { showCommonLabels: false } });
+      setup({ data: { ...defaultProps.data, series: seriesWithCommonLabels } });
 
       await waitFor(async () => {
         expect(screen.queryByText(/common labels:/i)).toBeNull();
@@ -128,13 +181,16 @@ describe('LogsPanel', () => {
       }),
     ];
     it('shows (no common labels) when showCommonLabels is set to true', async () => {
-      setup({ data: { series: seriesWithoutCommonLabels }, options: { showCommonLabels: true } });
+      setup({
+        data: { ...defaultProps.data, series: seriesWithoutCommonLabels },
+        options: { ...defaultProps.options, showCommonLabels: true },
+      });
 
       expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
       expect(await screen.findByText(/(no common labels)/i)).toBeInTheDocument();
     });
     it('does not show common labels when showCommonLabels is set to false', async () => {
-      setup({ data: { series: seriesWithoutCommonLabels }, options: { showCommonLabels: false } });
+      setup({ data: { ...defaultProps.data, series: seriesWithoutCommonLabels } });
       await waitFor(async () => {
         expect(screen.queryByText(/common labels:/i)).toBeNull();
         expect(screen.queryByText(/(no common labels)/i)).toBeNull();
@@ -172,9 +228,10 @@ describe('LogsPanel', () => {
     it('should not show the toggle if the datasource does not support show context', async () => {
       setup({
         data: {
+          ...defaultProps.data,
           series,
-          options: { showCommonLabels: false },
           request: {
+            ...defaultProps.data.request,
             app: CoreApp.Dashboard,
             targets: [{ refId: 'A', datasource: { uid: 'no-show-context' } }],
           },
@@ -190,9 +247,10 @@ describe('LogsPanel', () => {
     it('should show the toggle if the datasource does support show context', async () => {
       setup({
         data: {
+          ...defaultProps.data,
           series,
-          options: { showCommonLabels: false },
           request: {
+            ...defaultProps.data.request,
             app: CoreApp.Dashboard,
             targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
           },
@@ -208,9 +266,10 @@ describe('LogsPanel', () => {
     it('should not show the toggle if the datasource does support show context but the app is not Dashboard', async () => {
       setup({
         data: {
+          ...defaultProps.data,
           series,
-          options: { showCommonLabels: false },
           request: {
+            ...defaultProps.data.request,
             app: CoreApp.CloudAlerting,
             targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
           },
@@ -226,9 +285,10 @@ describe('LogsPanel', () => {
     it('should render the mocked `LogRowContextModal` after click', async () => {
       setup({
         data: {
+          ...defaultProps.data,
           series,
-          options: { showCommonLabels: false },
           request: {
+            ...defaultProps.data.request,
             app: CoreApp.Dashboard,
             targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
           },
@@ -244,9 +304,10 @@ describe('LogsPanel', () => {
     it('should call `getLogRowContext` if the user clicks the show context toggle', async () => {
       setup({
         data: {
+          ...defaultProps.data,
           series,
-          options: { showCommonLabels: false },
           request: {
+            ...defaultProps.data.request,
             app: CoreApp.Dashboard,
             targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
           },
@@ -297,6 +358,7 @@ describe('LogsPanel', () => {
     it('does not rerender without changes', async () => {
       const { rerender, props } = setup({
         data: {
+          ...defaultProps.data,
           series,
         },
       });
@@ -306,12 +368,13 @@ describe('LogsPanel', () => {
       rerender(<LogsPanel {...props} />);
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
-      expect(styles.getLogRowStyles).toHaveBeenCalledTimes(3);
+      expect(styles.getLogRowStyles).toHaveBeenCalledTimes(4);
     });
 
     it('rerenders when prop changes', async () => {
       const { rerender, props } = setup({
         data: {
+          ...defaultProps.data,
           series,
         },
       });
@@ -321,61 +384,20 @@ describe('LogsPanel', () => {
       rerender(<LogsPanel {...props} data={{ ...props.data, series: [...series] }} />);
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
-      expect(jest.mocked(styles.getLogRowStyles).mock.calls.length).toBeGreaterThan(3);
+      expect(jest.mocked(styles.getLogRowStyles).mock.calls.length).toBeGreaterThan(4);
     });
   });
 });
 
-const setup = (propsOverrides?: {}) => {
+const setup = (propsOverrides?: Partial<LogsPanelProps>) => {
   const props: LogsPanelProps = {
+    ...defaultProps,
     data: {
-      error: undefined,
-      request: {
-        panelId: 4,
-        app: 'dashboard',
-        requestId: 'A',
-        timezone: 'browser',
-        interval: '30s',
-        intervalMs: 30000,
-        maxDataPoints: 823,
-        targets: [],
-        range: getDefaultTimeRange(),
-        scopedVars: {},
-        startTime: 1,
-      },
-      series: [],
-      state: LoadingState.Done,
-      timeRange: getDefaultTimeRange(),
+      ...(propsOverrides?.data || defaultProps.data),
     },
-    timeZone: 'utc',
-    timeRange: getDefaultTimeRange(),
     options: {
-      showLabels: false,
-      showTime: false,
-      wrapLogMessage: false,
-      showCommonLabels: false,
-      prettifyLogMessage: false,
-      sortOrder: LogsSortOrder.Descending,
-      dedupStrategy: LogsDedupStrategy.none,
-      enableLogDetails: false,
-      showLogContextToggle: false,
+      ...(propsOverrides?.options || defaultProps.options),
     },
-    title: 'Logs panel',
-    id: 1,
-    transparent: false,
-    width: 400,
-    height: 100,
-    renderCounter: 0,
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-    eventBus: new EventBusSrv(),
-    onOptionsChange: jest.fn(),
-    onFieldConfigChange: jest.fn(),
-    replaceVariables: jest.fn(),
-    onChangeTimeRange: jest.fn(),
-    ...propsOverrides,
   };
 
   return { ...render(<LogsPanel {...props} />), props };

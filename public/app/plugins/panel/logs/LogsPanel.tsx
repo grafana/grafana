@@ -1,11 +1,17 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { groupBy } from 'lodash';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
+  AbsoluteTimeRange,
   CoreApp,
+  DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
   DataQueryResponse,
+  DataSourceApi,
+  dateTimeForTimeZone,
   Field,
   GrafanaTheme2,
   hasLogsContextSupport,
@@ -14,20 +20,32 @@ import {
   LogRowContextOptions,
   LogRowModel,
   LogsSortOrder,
+  PanelData,
   PanelProps,
   TimeRange,
+  TimeZone,
   toUtc,
   urlUtil,
 } from '@grafana/data';
+import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
+import { combineResponses } from '@grafana/o11y-ds-frontend';
+import { config } from '@grafana/runtime';
 import { CustomScrollbar, usePanelContext, useStyles2 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
+import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
 
-import { createAndCopyShortLink } from '../../../core/utils/shortLinks';
+import { createAndCopyShortLink, getPermalinkRange } from '../../../core/utils/shortLinks';
 import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
-import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
+import {
+  COMMON_LABELS,
+  dataFrameToLogsModel,
+  dedupLogRows,
+  infiniteScrollRefId,
+} from '../../../features/logs/logsModel';
 
 import { Options } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
@@ -61,10 +79,14 @@ export const LogsPanel = ({
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
-  const timeRange = data.timeRange;
+  const closeCallback = useRef<() => void>();
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
-  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
-  let closeCallback = useRef<() => void>();
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | undefined>(undefined);
+  // Loading state to be passed as a prop to the <InfiniteScroll> component
+  const [infiniteScrolling, setInfiniteScrolling] = useState(false);
+  // Loading ref to prevent firing multiple requests
+  const loadingRef = useRef(false);
+  const [panelData, setPanelData] = useState(data);
 
   const { eventBus } = usePanelContext();
   const onLogRowHover = useCallback(
@@ -97,13 +119,6 @@ export const LogsPanel = ({
       closeCallback.current = onClose;
     },
     [closeCallback]
-  );
-
-  const onPermalinkClick = useCallback(
-    async (row: LogRowModel) => {
-      return await copyDashboardUrl(row, timeRange);
-    },
-    [timeRange]
   );
 
   const showContextToggle = useCallback(
@@ -181,14 +196,34 @@ export const LogsPanel = ({
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
-    const logs = data
-      ? dataFrameToLogsModel(data.series, data.request?.intervalMs, undefined, data.request?.targets)
+    const logs = panelData
+      ? dataFrameToLogsModel(
+          panelData.series,
+          data.request?.intervalMs,
+          undefined,
+          data.request?.targets.map((query) => ({
+            ...query,
+            // Needed to trigger de-duplication. Will be stripped by dataFrameToLogsModel()
+            refId: `${infiniteScrollRefId}${query.refId}`,
+          }))
+        )
       : null;
     const logRows = logs?.rows || [];
     const commonLabels = logs?.meta?.find((m) => m.label === COMMON_LABELS);
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
-  }, [data, dedupStrategy]);
+  }, [data.request?.intervalMs, data.request?.targets, dedupStrategy, panelData]);
+
+  const onPermalinkClick = useCallback(
+    async (row: LogRowModel) => {
+      return await copyDashboardUrl(row, logRows, data.timeRange);
+    },
+    [data.timeRange, logRows]
+  );
+
+  useEffect(() => {
+    setPanelData(data);
+  }, [data]);
 
   useLayoutEffect(() => {
     if (isAscending && logsContainerRef.current) {
@@ -218,6 +253,33 @@ export const LogsPanel = ({
     [scrollElement]
   );
 
+  const loadMoreLogs = useCallback(
+    async (scrollRange: AbsoluteTimeRange) => {
+      if (!data.request || !config.featureToggles.logsInfiniteScrolling || loadingRef.current) {
+        return;
+      }
+
+      loadingRef.current = true;
+      setInfiniteScrolling(true);
+
+      let newSeries: DataFrame[] = [];
+      try {
+        newSeries = await requestMoreLogs(dataSourcesMap, panelData, scrollRange, timeZone);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setInfiniteScrolling(false);
+        loadingRef.current = false;
+      }
+
+      setPanelData({
+        ...panelData,
+        series: newSeries,
+      });
+    },
+    [data.request, dataSourcesMap, panelData, timeZone]
+  );
+
   if (!data || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
@@ -245,32 +307,42 @@ export const LogsPanel = ({
       <CustomScrollbar
         autoHide
         scrollTop={scrollTop}
-        scrollRefCallback={(scrollElement) => setScrollElement(scrollElement)}
+        scrollRefCallback={(element) => setScrollElement(element || undefined)}
       >
         <div className={style.container} ref={logsContainerRef}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
-          <LogRows
-            containerRendered={logsContainerRef.current !== null}
-            scrollIntoView={scrollIntoView}
-            permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
-            onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
-            logRows={logRows}
-            showContextToggle={showContextToggle}
-            deduplicatedRows={deduplicatedRows}
-            dedupStrategy={dedupStrategy}
-            showLabels={showLabels}
-            showTime={showTime}
-            wrapLogMessage={wrapLogMessage}
-            prettifyLogMessage={prettifyLogMessage}
+          <InfiniteScroll
+            loading={infiniteScrolling}
+            loadMoreLogs={loadMoreLogs}
+            range={data.timeRange}
             timeZone={timeZone}
-            getFieldLinks={getFieldLinks}
-            logsSortOrder={sortOrder}
-            enableLogDetails={enableLogDetails}
-            previewLimit={isAscending ? logRows.length : undefined}
-            onLogRowHover={onLogRowHover}
-            app={CoreApp.Dashboard}
-            onOpenContext={onOpenContext}
-          />
+            rows={logRows}
+            scrollElement={scrollElement}
+            sortOrder={sortOrder}
+          >
+            <LogRows
+              containerRendered={logsContainerRef.current !== null}
+              scrollIntoView={scrollIntoView}
+              permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
+              onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
+              logRows={logRows}
+              showContextToggle={showContextToggle}
+              deduplicatedRows={deduplicatedRows}
+              dedupStrategy={dedupStrategy}
+              showLabels={showLabels}
+              showTime={showTime}
+              wrapLogMessage={wrapLogMessage}
+              prettifyLogMessage={prettifyLogMessage}
+              timeZone={timeZone}
+              getFieldLinks={getFieldLinks}
+              logsSortOrder={sortOrder}
+              enableLogDetails={enableLogDetails}
+              previewLimit={isAscending ? logRows.length : undefined}
+              onLogRowHover={onLogRowHover}
+              app={CoreApp.Dashboard}
+              onOpenContext={onOpenContext}
+            />
+          </InfiniteScroll>
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>
       </CustomScrollbar>
@@ -316,7 +388,7 @@ function getLogsPanelState(): LogsPermalinkUrlState | undefined {
   return undefined;
 }
 
-async function copyDashboardUrl(row: LogRowModel, timeRange: TimeRange) {
+async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange: TimeRange) {
   // this is an extra check, to be sure that we are not
   // creating permalinks for logs without an id-field.
   // normally it should never happen, because we do not
@@ -335,10 +407,65 @@ async function copyDashboardUrl(row: LogRowModel, timeRange: TimeRange) {
 
   // Add panel state containing the rowId, and absolute time range from the current query, but leave everything else the same, if the user is in edit mode when grabbing the link, that's what will be linked to, etc.
   currentURL.searchParams.set('panelState', JSON.stringify(panelState));
-  currentURL.searchParams.set('from', toUtc(timeRange.from).valueOf().toString(10));
-  currentURL.searchParams.set('to', toUtc(timeRange.to).valueOf().toString(10));
+  const range = getPermalinkRange(row, rows, {
+    from: toUtc(timeRange.from).valueOf(),
+    to: toUtc(timeRange.to).valueOf(),
+  });
+  currentURL.searchParams.set('from', range.from.toString(10));
+  currentURL.searchParams.set('to', range.to.toString(10));
 
   await createAndCopyShortLink(currentURL.toString());
 
   return Promise.resolve();
+}
+
+async function requestMoreLogs(
+  dataSourcesMap: Map<string, DataSourceApi>,
+  panelData: PanelData,
+  timeRange: AbsoluteTimeRange,
+  timeZone: TimeZone
+) {
+  if (!panelData.request) {
+    return [];
+  }
+
+  const range: TimeRange = convertRawToRange({
+    from: dateTimeForTimeZone(timeZone, timeRange.from),
+    to: dateTimeForTimeZone(timeZone, timeRange.to),
+  });
+
+  const targetGroups = groupBy(panelData.request.targets, 'datasource.uid');
+  const dataRequests = [];
+
+  for (const uid in targetGroups) {
+    const dataSource = dataSourcesMap.get(panelData.request.targets[0].refId);
+    if (!dataSource) {
+      console.log('no ds');
+      continue;
+    }
+    dataRequests.push(
+      dataSource.query({
+        ...panelData.request,
+        range,
+        targets: targetGroups[uid].map((query) => ({
+          ...query,
+          supportingQueryType: SupportingQueryType.InfiniteScroll,
+        })),
+      })
+    );
+  }
+
+  const responses = await Promise.all(dataRequests);
+  let newSeries = panelData.series;
+  for (const response of responses) {
+    const newData = isObservable(response) ? await lastValueFrom(response) : response;
+    newSeries = combineResponses(
+      {
+        data: newSeries,
+      },
+      { data: newData.data }
+    ).data;
+  }
+
+  return newSeries;
 }
