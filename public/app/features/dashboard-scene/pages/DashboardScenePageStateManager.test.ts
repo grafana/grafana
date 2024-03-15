@@ -108,8 +108,8 @@ describe('DashboardScenePageStateManager', () => {
         const dashboard = loader.state.dashboard!;
 
         expect(dashboard.state.meta.isNew).toBe(true);
-        expect(dashboard.state.isEditing).toBe(true);
-        expect(dashboard.state.isDirty).toBe(true);
+        expect(dashboard.state.isEditing).toBe(undefined);
+        expect(dashboard.state.isDirty).toBe(false);
 
         dashboard.setState({ title: 'Changed' });
 
