@@ -41,9 +41,9 @@ jest.mock('@grafana/runtime', () => ({
 describe('JaegerDatasource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     const fetchMock = jest.spyOn(Date, 'now');
-    fetchMock.mockImplementation(() => 1704106800000);  // milliseconds for 2024-01-01 at 11:00am UTC
+    fetchMock.mockImplementation(() => 1704106800000); // milliseconds for 2024-01-01 at 11:00am UTC
   });
 
   afterEach(() => {
@@ -343,7 +343,7 @@ describe('Test behavior with unmocked time', () => {
     const mock = setupFetchMock({ data: [testResponse] });
     const ds = new JaegerDatasource(defaultSettings);
     const now = Date.now();
-    
+
     ds.query({ ...defaultQuery, targets: [{ queryType: 'dependencyGraph', refId: '1' }] });
 
     const url = mock.mock.calls[0][0].url;
@@ -363,7 +363,7 @@ describe('Test behavior with unmocked time', () => {
     const query = JSON.parse(JSON.stringify(defaultQuery));
     // @ts-ignore
     query.range = undefined;
-    
+
     ds.query({ ...query, targets: [{ queryType: 'dependencyGraph', refId: '1' }] });
 
     const url = mock.mock.calls[0][0].url;
