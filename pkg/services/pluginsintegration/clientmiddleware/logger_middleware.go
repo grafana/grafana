@@ -10,30 +10,27 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	plog "github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NewLoggerMiddleware creates a new plugins.ClientMiddleware that will
 // log requests.
-func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger, features featuremgmt.FeatureToggles) plugins.ClientMiddleware {
+func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		if !cfg.PluginLogBackendRequests {
 			return next
 		}
 
 		return &LoggerMiddleware{
-			next:     next,
-			logger:   logger,
-			features: features,
+			next:   next,
+			logger: logger,
 		}
 	})
 }
 
 type LoggerMiddleware struct {
-	next     plugins.Client
-	logger   plog.Logger
-	features featuremgmt.FeatureToggles
+	next   plugins.Client
+	logger plog.Logger
 }
 
 func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.Context) (requestStatus, error)) error {
