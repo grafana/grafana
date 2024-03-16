@@ -9,23 +9,15 @@ import { useStyles2, PanelContainer, CustomScrollbar } from '@grafana/ui';
 import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 
-const INDENT_LEVELS = {
-  ROOT: '32px',
-  CHILD_COLLAPSED: '32px',
-  CHILD_EXPANDED: '66px',
-};
-
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(false);
-  const styles = useStyles2((theme) => getStyles(theme, contentOutlineExpanded));
+  const styles = useStyles2(getStyles, contentOutlineExpanded);
   const [sectionExpanded, toggleSectionExpanded] = useToggle(false);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
-  const [activeSectionId, setActiveSectionId] = useState<string | undefined>(outlineItems[0]?.id);
-  const [activeSectionChildId, setActiveSectionChildId] = useState<string | undefined>(
-    outlineItems[0]?.children?.[0]?.id
-  );
+  const [activeSectionId, setActiveSectionId] = useState(outlineItems[0]?.id);
+  const [activeSectionChildId, setActiveSectionChildId] = useState(outlineItems[0]?.children?.[0]?.id);
 
   const outlineItemsShouldIndent = outlineItems.some(
     (item) => item.children && !(item.mergeSingleChild && item.children?.length === 1) && item.children.length > 0
@@ -201,10 +193,10 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       marginRight: expanded ? theme.spacing(0.5) : undefined,
     }),
     indentRoot: css({
-      marginLeft: INDENT_LEVELS.ROOT,
+      marginLeft: theme.spacing(4),
     }),
     indentChildren: css({
-      marginLeft: expanded ? INDENT_LEVELS.CHILD_EXPANDED : INDENT_LEVELS.CHILD_COLLAPSED,
+      marginLeft: expanded ? theme.spacing(8.25) : theme.spacing(4),
     }),
     itemWrapper: css({
       display: 'flex',
