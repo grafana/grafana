@@ -41,6 +41,7 @@ jest.mock('@grafana/runtime', () => ({
 describe('JaegerDatasource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    
     const fetchMock = jest.spyOn(Date, 'now');
     fetchMock.mockImplementation(() => 1704106800000);  // milliseconds for 2024-01-01 at 11:00am UTC
   });
