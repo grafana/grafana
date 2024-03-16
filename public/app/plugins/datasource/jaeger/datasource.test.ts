@@ -353,7 +353,27 @@ describe('Test behavior with unmocked time', () => {
 
     const lookbackMatch = url.match(/lookback=(\d+)/);
     expect(lookbackMatch).not.toBeNull();
-    expect(parseInt(lookbackMatch![1], 10)).toBeCloseTo(21600000, numDigits);
+    expect(parseInt(lookbackMatch![1], 10)).toBeCloseTo(3600000, -1); // due to rounding, the least significant digit is not reliable
+  });
+
+  it("call for `query()` when `queryType === 'dependencyGraph'`, using default range", async () => {
+    const mock = setupFetchMock({ data: [testResponse] });
+    const ds = new JaegerDatasource(defaultSettings);
+    const now = Date.now();
+    const query = JSON.parse(JSON.stringify(defaultQuery));
+    // @ts-ignore
+    query.range = undefined;
+    
+    ds.query({ ...query, targets: [{ queryType: 'dependencyGraph', refId: '1' }] });
+
+    const url = mock.mock.calls[0][0].url;
+    const endTsMatch = url.match(/endTs=(\d+)/);
+    expect(endTsMatch).not.toBeNull();
+    expect(parseInt(endTsMatch![1], 10)).toBeCloseTo(now, numDigits);
+
+    const lookbackMatch = url.match(/lookback=(\d+)/);
+    expect(lookbackMatch).not.toBeNull();
+    expect(parseInt(lookbackMatch![1], 10)).toBeCloseTo(21600000, -1);
   });
 });
 
