@@ -20,7 +20,7 @@ export const ImageCell = (props: TableCellProps) => {
     <div {...cellProps} className={tableStyles.cellContainer}>
       {!hasLinks && <img src={displayValue.text} className={tableStyles.imageCell} alt="" />}
       {hasLinks && (
-        <DataLinksContextMenu style={{ height: '100%' }} links={() => getCellLinks(field, row) || []}>
+        <DataLinksContextMenu style={{ height: tableStyles.cellHeight - 2, width: 'auto' }} links={() => getCellLinks(field, row) || []}>
           {(api) => {
             const img = <img src={displayValue.text} className={tableStyles.imageCell} alt="" />;
             if (api.openMenu) {
