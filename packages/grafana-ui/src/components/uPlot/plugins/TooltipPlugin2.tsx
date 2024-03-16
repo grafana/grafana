@@ -413,8 +413,12 @@ export const TooltipPlugin2 = ({
       _someSeriesIdx = seriesIdxs.some((v, i) => i > 0 && v != null);
 
       viaSync = u.cursor.event == null;
+      let prevIsHovering = _isHovering;
       updateHovering();
-      scheduleRender();
+
+      if (_isHovering || _isHovering !== prevIsHovering) {
+        scheduleRender();
+      }
     });
 
     const scrollbarWidth = 16;
@@ -520,8 +524,29 @@ export const TooltipPlugin2 = ({
 
     if (domRef.current != null) {
       size.observer.observe(domRef.current);
+
+      // since the above observer is attached after container is in DOM, we need to manually update sizeRef
+      // and re-trigger a cursor move to do initial positioning math
+      const { width, height } = domRef.current.getBoundingClientRect();
+      size.width = width;
+      size.height = height;
+
+      const event = plot!.cursor.event;
+
+      // if not viaSync, re-dispatch real event
+      if (event != null) {
+        plot!.over.dispatchEvent(event);
+      } else {
+        plot!.setCursor({
+          left: plot!.cursor.left!,
+          top: plot!.cursor.top!,
+        }, true);
+      }
+    } else {
+      size.width = 0;
+      size.height = 0;
     }
-  }, [domRef.current]);
+  }, [isHovering]);
 
   if (plot && isHovering) {
     return createPortal(
