@@ -12,7 +12,6 @@ import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(false);
   const styles = useStyles2(getStyles, contentOutlineExpanded);
-  const [sectionExpanded, toggleSectionExpanded] = useToggle(false);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
@@ -22,6 +21,13 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   const outlineItemsShouldIndent = outlineItems.some(
     (item) => item.children && !(item.mergeSingleChild && item.children?.length === 1) && item.children.length > 0
   );
+
+  const [sectionsExpanded, setSectionsExpanded] = useState(() => {
+    return outlineItems.reduce((acc: { [key: string]: boolean }, item) => {
+      acc[item.id] = false;
+      return acc;
+    }, {});
+  });
 
   const scrollIntoView = (ref: HTMLElement | null, itemPanelId: string, customOffsetTop = 0) => {
     let scrollValue = 0;
@@ -51,11 +57,14 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     });
   };
 
-  const toggleSection = () => {
-    toggleSectionExpanded();
+  const toggleSection = (itemId: string) => {
+    setSectionsExpanded((prev) => ({
+      ...prev,
+      [itemId]: !prev[itemId],
+    }));
     reportInteraction('explore_toolbar_contentoutline_clicked', {
       item: 'section',
-      type: sectionExpanded ? 'minimize' : 'expand',
+      type: !sectionsExpanded[itemId] ? 'minimize' : 'expand',
     });
   };
 
@@ -89,7 +98,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
         break;
       }
     }
-  }, [outlineItems, verticalScroll, sectionExpanded]);
+  }, [outlineItems, verticalScroll]);
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
@@ -115,19 +124,23 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                 className={cx(styles.buttonStyles, {
                   [styles.indentRoot]: outlineItemsShouldIndent && item.children?.length === 0,
                   [styles.justifyCenter]: !contentOutlineExpanded,
+                  [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                 })}
                 icon={item.icon}
                 onClick={() => scrollIntoView(item.ref, item.panelId)}
                 tooltip={!contentOutlineExpanded ? item.title : undefined}
                 collapsible={isCollapsible(item)}
-                collapsed={!sectionExpanded}
-                toggleCollapsed={toggleSection}
-                isActive={activeSectionId === item.id}
+                collapsed={!sectionsExpanded[item.id]}
+                toggleCollapsed={() => toggleSection(item.id)}
+                isActive={
+                  (isChildActive(item, activeSectionChildId) && !sectionsExpanded[item.id]) ||
+                  (activeSectionId === item.id && !sectionsExpanded[item.id])
+                }
                 width={getRootWidth(contentOutlineExpanded, isCollapsible(item))}
               />
               {item.children &&
                 (!item.mergeSingleChild || item.children.length !== 1) &&
-                sectionExpanded &&
+                sectionsExpanded[item.id] &&
                 item.children.map((child, i) => (
                   <div key={child.id} className={styles.itemWrapper}>
                     {contentOutlineExpanded && (
@@ -144,6 +157,8 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                       icon={contentOutlineExpanded ? undefined : item.icon}
                       className={cx(styles.buttonStyles, styles.indentChildren, {
                         [styles.justifyCenter]: !contentOutlineExpanded,
+                        [styles.sectionHighlighter]:
+                          isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                       })}
                       onClick={() => scrollIntoView(child.ref, child.panelId, child.customTopOffset)}
                       tooltip={!contentOutlineExpanded ? child.title : undefined}
@@ -230,6 +245,9 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
     justifyCenter: css({
       justifyContent: 'center',
     }),
+    sectionHighlighter: css({
+      backgroundColor: theme.colors.background.secondary,
+    }),
   };
 };
 
@@ -247,4 +265,8 @@ function getRootWidth(contentOutlineExpanded: boolean, isCollapsible: boolean): 
   }
 
   return width;
+}
+
+function isChildActive(item: ContentOutlineItemContextProps, activeSectionChildId: string | undefined) {
+  return item.children?.some((child) => child.id === activeSectionChildId);
 }
