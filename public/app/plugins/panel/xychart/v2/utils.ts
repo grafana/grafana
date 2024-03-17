@@ -58,7 +58,6 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
         options: 'number',
       }
     );
-    let yExclude = seriesCfg.y?.exclude ? getFieldMatcher(seriesCfg.y.exclude) : null;
     let colorMatcher = seriesCfg.color ? getFieldMatcher(seriesCfg.color.matcher) : null;
     let sizeMatcher = seriesCfg.size ? getFieldMatcher(seriesCfg.size.matcher) : null;
     // let frameMatcher = seriesCfg.frame ? getFrameMatchers(seriesCfg.frame) : null;
@@ -102,7 +101,7 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
           }
 
           // if we match non-excluded y, create series
-          if (yMatcher(field, frame, frames) && (yExclude == null || !yExclude(field, frame, frames))) {
+          if (yMatcher(field, frame, frames) && !field.config.custom?.hideFrom?.viz) {
             let y = field;
             let name = getFieldDisplayName(y, frame, frames); // `Series ${seriesIdx + 1}`
 
@@ -251,10 +250,12 @@ function autoNameSeries(series: XYSeries[]) {
 
   if (commonPrefixLen < Infinity || commonSuffixLen < Infinity) {
     series.forEach((s, i) => {
-      s.name.value = names[i].slice(
-        commonPrefixLen < Infinity ? commonPrefixLen : 0,
-        commonSuffixLen < Infinity ? names[i].length - commonSuffixLen : undefined
-      ).join(' ');
+      s.name.value = names[i]
+        .slice(
+          commonPrefixLen < Infinity ? commonPrefixLen : 0,
+          commonSuffixLen < Infinity ? names[i].length - commonSuffixLen : undefined
+        )
+        .join(' ');
     });
   }
 }

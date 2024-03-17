@@ -34,8 +34,7 @@ export interface XYSeriesConfig {
     matcher: common.MatcherConfig;
   };
   y?: {
-    matcher?: common.MatcherConfig; // include
-    exclude?: common.MatcherConfig;
+    matcher?: common.MatcherConfig; // required?
   };
   color?: {
     matcher: common.MatcherConfig;
