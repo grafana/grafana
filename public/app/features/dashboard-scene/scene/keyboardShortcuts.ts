@@ -120,7 +120,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'p r',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      onRemovePanel(scene, vizPanel);
+      if (scene.state.isEditing) {
+        onRemovePanel(scene, vizPanel);
+      }
     }),
   });
 
@@ -128,7 +130,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'p d',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      scene.duplicatePanel(vizPanel);
+      if (scene.state.isEditing) {
+        scene.duplicatePanel(vizPanel);
+      }
     }),
   });
 

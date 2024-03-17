@@ -35,9 +35,16 @@ type FrontendSettingsAuthDTO struct {
 }
 
 type FrontendSettingsBuildInfoDTO struct {
-	HideVersion   bool   `json:"hideVersion"`
-	Version       string `json:"version"`
+	HideVersion bool `json:"hideVersion"`
+
+	// A semver-ish version string, such as "11.0.0-12345"
+	Version string `json:"version"`
+
+	// A branded version string to show in the UI, such as "Grafana v11.0.0-12345"
+	VersionString string `json:"versionString,omitempty"`
+
 	Commit        string `json:"commit"`
+	CommitShort   string `json:"commitShort"`
 	Buildstamp    int64  `json:"buildstamp"`
 	Edition       string `json:"edition"`
 	LatestVersion string `json:"latestVersion"`
@@ -141,24 +148,20 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 }
 
 type FrontendSettingsDTO struct {
-	DefaultDatasource          string                           `json:"defaultDatasource"`
-	Datasources                map[string]plugins.DataSourceDTO `json:"datasources"`
-	MinRefreshInterval         string                           `json:"minRefreshInterval"`
-	Panels                     map[string]plugins.PanelDTO      `json:"panels"`
-	Apps                       map[string]*plugins.AppDTO       `json:"apps"`
-	AppUrl                     string                           `json:"appUrl"`
-	AppSubUrl                  string                           `json:"appSubUrl"`
-	AllowOrgCreate             bool                             `json:"allowOrgCreate"`
-	AuthProxyEnabled           bool                             `json:"authProxyEnabled"`
-	LdapEnabled                bool                             `json:"ldapEnabled"`
-	JwtHeaderName              string                           `json:"jwtHeaderName"`
-	JwtUrlLogin                bool                             `json:"jwtUrlLogin"`
-	AlertingEnabled            bool                             `json:"alertingEnabled"`
-	AlertingErrorOrTimeout     string                           `json:"alertingErrorOrTimeout"`
-	AlertingNoDataOrNullValues string                           `json:"alertingNoDataOrNullValues"`
-	AlertingMinInterval        int64                            `json:"alertingMinInterval"`
-	LiveEnabled                bool                             `json:"liveEnabled"`
-	AutoAssignOrg              bool                             `json:"autoAssignOrg"`
+	DefaultDatasource  string                           `json:"defaultDatasource"`
+	Datasources        map[string]plugins.DataSourceDTO `json:"datasources"`
+	MinRefreshInterval string                           `json:"minRefreshInterval"`
+	Panels             map[string]plugins.PanelDTO      `json:"panels"`
+	Apps               map[string]*plugins.AppDTO       `json:"apps"`
+	AppUrl             string                           `json:"appUrl"`
+	AppSubUrl          string                           `json:"appSubUrl"`
+	AllowOrgCreate     bool                             `json:"allowOrgCreate"`
+	AuthProxyEnabled   bool                             `json:"authProxyEnabled"`
+	LdapEnabled        bool                             `json:"ldapEnabled"`
+	JwtHeaderName      string                           `json:"jwtHeaderName"`
+	JwtUrlLogin        bool                             `json:"jwtUrlLogin"`
+	LiveEnabled        bool                             `json:"liveEnabled"`
+	AutoAssignOrg      bool                             `json:"autoAssignOrg"`
 
 	VerifyEmailEnabled  bool `json:"verifyEmailEnabled"`
 	SigV4AuthEnabled    bool `json:"sigV4AuthEnabled"`
@@ -246,6 +249,8 @@ type FrontendSettingsDTO struct {
 
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 	PublicDashboardsEnabled    bool   `json:"publicDashboardsEnabled"`
+
+	CloudMigrationIsTarget bool `json:"cloudMigrationIsTarget"`
 
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 

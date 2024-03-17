@@ -1,7 +1,6 @@
 import { DataSourceJsonData } from '@grafana/data/src';
 import { NodeGraphOptions, TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 
-import { LokiQuery } from './_importedDependencies/datasources/loki/types';
 import { TempoQuery as TempoBase, TempoQueryType, TraceqlFilter } from './dataquery.gen';
 
 export interface SearchQueryParams {
@@ -23,9 +22,6 @@ export interface TempoJsonData extends DataSourceJsonData {
     filters?: TraceqlFilter[];
   };
   nodeGraph?: NodeGraphOptions;
-  lokiSearch?: {
-    datasourceUid?: string;
-  };
   spanBar?: {
     tag: string;
   };
@@ -37,9 +33,6 @@ export interface TempoJsonData extends DataSourceJsonData {
 }
 
 export interface TempoQuery extends TempoBase {
-  // Query to find list of traces, e.g., via Loki
-  // Improvement: change this field to the schema type when LokiQuery exists in the schema
-  linkedQuery?: LokiQuery;
   queryType: TempoQueryType;
 }
 

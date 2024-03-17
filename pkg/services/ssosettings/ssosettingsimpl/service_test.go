@@ -185,6 +185,42 @@ func TestService_GetForProvider(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "correctly merge the DB and system settings",
+			setup: func(env testEnv) {
+				env.store.ExpectedSSOSetting = &models.SSOSettings{
+					Provider: "github",
+					Settings: map[string]any{
+						"enabled":  true,
+						"auth_url": "",
+						"api_url":  "https://overwritten-api.com/user",
+						"team_ids": "",
+					},
+					Source: models.DB,
+				}
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"auth_url":  "https://github.com/login/oauth/authorize",
+						"token_url": "https://github.com/login/oauth/access_token",
+						"api_url":   "https://api.github.com/user",
+						"team_ids":  "10,11,12",
+					},
+				}
+			},
+			want: &models.SSOSettings{
+				Provider: "github",
+				Settings: map[string]any{
+					"enabled":   true,
+					"auth_url":  "https://github.com/login/oauth/authorize",
+					"token_url": "https://github.com/login/oauth/access_token",
+					"api_url":   "https://overwritten-api.com/user",
+					"team_ids":  "",
+				},
+				Source: models.DB,
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tc := range testCases {
