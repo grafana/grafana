@@ -30,7 +30,7 @@ import { djb2Hash } from '../utils/djb2Hash';
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
-import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
+import { DashboardGridItem } from './DashboardGridItem';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
@@ -483,7 +483,7 @@ describe('DashboardScene', () => {
         scene.setState({ hasCopiedPanel: true });
         jest.spyOn(JSON, 'parse').mockReturnValue({ libraryPanel: { uid: 'uid', name: 'libraryPanel' } });
         jest.mocked(buildGridItemForLibPanel).mockReturnValue(
-          new SceneGridItem({
+          new DashboardGridItem({
             body: new LibraryVizPanel({
               title: 'Library Panel',
               uid: 'uid',
@@ -590,7 +590,7 @@ describe('DashboardScene', () => {
         const scene = buildTestScene({
           body: new SceneGridLayout({
             children: [
-              new PanelRepeaterGridItem({
+              new DashboardGridItem({
                 key: `grid-item-1`,
                 width: 24,
                 height: 8,
@@ -601,7 +601,7 @@ describe('DashboardScene', () => {
                     pluginId: 'table',
                   }),
                 ],
-                source: new VizPanel({
+                body: new VizPanel({
                   title: 'Library Panel',
                   key: 'panel-1',
                   pluginId: 'table',
@@ -612,7 +612,7 @@ describe('DashboardScene', () => {
           }),
         });
 
-        const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as PanelRepeaterGridItem).state
+        const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
           .repeatedPanels![0];
 
         scene.duplicatePanel(vizPanel as VizPanel);

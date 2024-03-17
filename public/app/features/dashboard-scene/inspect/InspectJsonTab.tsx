@@ -28,8 +28,8 @@ import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { reportPanelInspectInteraction } from 'app/features/search/page/reporting';
 
 import { VizPanelManager } from '../panel-edit/VizPanelManager';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
@@ -205,7 +205,7 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
 
       const parent = panel.parent!;
 
-      if (parent instanceof SceneGridItem || parent instanceof PanelRepeaterGridItem) {
+      if (parent instanceof SceneGridItem || parent instanceof DashboardGridItem) {
         objToStringify = gridItemToPanel(parent);
       } else if (parent instanceof LibraryVizPanel) {
         objToStringify = libraryPanelChildToLegacyRepresentation(panel);

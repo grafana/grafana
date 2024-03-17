@@ -22,14 +22,15 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { getMultiVariableValues } from '../utils/utils';
 
+import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
-interface PanelRepeaterGridItemState extends SceneGridItemStateLike {
-  source: VizPanel | LibraryVizPanel;
+interface DashboardGridItemState extends SceneGridItemStateLike {
+  body: VizPanel | LibraryVizPanel | AddLibraryPanelWidget;
   repeatedPanels?: VizPanel[];
-  variableName: string;
+  variableName?: string;
   itemHeight?: number;
   repeatDirection?: RepeatDirection;
   maxPerRow?: number;
@@ -37,33 +38,37 @@ interface PanelRepeaterGridItemState extends SceneGridItemStateLike {
 
 export type RepeatDirection = 'v' | 'h';
 
-export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItemState> implements SceneGridItemLike {
+export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
   protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: [this.state.variableName],
+    variableNames: this.state.variableName ? [this.state.variableName] : [],
     onVariableUpdateCompleted: this._onVariableUpdateCompleted.bind(this),
   });
 
-  public constructor(state: PanelRepeaterGridItemState) {
+  public constructor(state: DashboardGridItemState) {
     super(state);
 
     this.addActivationHandler(() => this._activationHandler());
   }
 
   private _activationHandler() {
-    this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
-    this._performRepeat();
+    if (this.state.variableName) {
+      this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
+      this._performRepeat();
+    }
   }
 
   private _onVariableUpdateCompleted(): void {
-    this._performRepeat();
+    if (this.state.variableName) {
+      this._performRepeat();
+    }
   }
 
   /**
    * Uses the current repeat item count to calculate the user intended desired itemHeight
    */
-  private _handleGridResize(newState: PanelRepeaterGridItemState, prevState: PanelRepeaterGridItemState) {
+  private _handleGridResize(newState: DashboardGridItemState, prevState: DashboardGridItemState) {
     const itemCount = this.state.repeatedPanels?.length ?? 1;
-    const stateChange: Partial<PanelRepeaterGridItemState> = {};
+    const stateChange: Partial<DashboardGridItemState> = {};
 
     // Height changed
     if (newState.height === prevState.height) {
@@ -84,6 +89,9 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
   }
 
   private _performRepeat() {
+    if (!this.state.variableName) {
+      return;
+    }
     if (this._variableDependency.hasDependencyInLoadingState()) {
       return;
     }
@@ -99,12 +107,11 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
       });
 
     if (!(variable instanceof MultiValueVariable)) {
-      console.error('PanelRepeaterGridItem: Variable is not a MultiValueVariable');
+      console.error('DashboardGridItem: Variable is not a MultiValueVariable');
       return;
     }
 
-    let panelToRepeat =
-      this.state.source instanceof LibraryVizPanel ? this.state.source.state.panel! : this.state.source;
+    let panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
     const { values, texts } = getMultiVariableValues(variable);
     const repeatedPanels: VizPanel[] = [];
 
@@ -128,7 +135,7 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     }
 
     const direction = this.getRepeatDirection();
-    const stateChange: Partial<PanelRepeaterGridItemState> = { repeatedPanels: repeatedPanels };
+    const stateChange: Partial<DashboardGridItemState> = { repeatedPanels: repeatedPanels };
     const itemHeight = this.state.itemHeight ?? 10;
     const prevHeight = this.state.height;
     const maxPerRow = this.getMaxPerRow();
@@ -166,10 +173,24 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     return 'panel-repeater-grid-item';
   }
 
-  public static Component = ({ model }: SceneComponentProps<PanelRepeaterGridItem>) => {
-    const { repeatedPanels, itemHeight } = model.useState();
+  public static Component = ({ model }: SceneComponentProps<DashboardGridItem>) => {
+    const { repeatedPanels, itemHeight, variableName, body } = model.useState();
     const itemCount = repeatedPanels?.length ?? 0;
     const layoutStyle = useLayoutStyle(model.getRepeatDirection(), itemCount, model.getMaxPerRow(), itemHeight ?? 10);
+
+    if (!variableName) {
+      if (body instanceof VizPanel) {
+        return <body.Component model={body} key={body.state.key} />;
+      }
+
+      if (body instanceof LibraryVizPanel) {
+        return <body.Component model={body} key={body.state.key} />;
+      }
+
+      if (body instanceof AddLibraryPanelWidget) {
+        return <body.Component model={body} key={body.state.key} />;
+      }
+    }
 
     if (!repeatedPanels) {
       return null;

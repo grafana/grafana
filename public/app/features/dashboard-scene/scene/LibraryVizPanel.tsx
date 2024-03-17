@@ -2,7 +2,6 @@ import React from 'react';
 
 import {
   SceneComponentProps,
-  SceneGridItem,
   SceneGridLayout,
   SceneObjectBase,
   SceneObjectState,
@@ -16,10 +15,10 @@ import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
+import { DashboardGridItem } from './DashboardGridItem';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from './PanelMenuBehavior';
 import { PanelNotices } from './PanelNotices';
-import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
 
 interface LibraryVizPanelState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
@@ -81,16 +80,15 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
     const panel = new VizPanel(vizPanelState);
     const gridItem = this.parent;
 
-    if (libPanelModel.repeat && gridItem instanceof SceneGridItem && gridItem.parent instanceof SceneGridLayout) {
-      this._parent = undefined;
-      const repeater = new PanelRepeaterGridItem({
+    if (libPanelModel.repeat && gridItem instanceof DashboardGridItem && gridItem.parent instanceof SceneGridLayout) {
+      const repeater = new DashboardGridItem({
         key: gridItem.state.key,
         x: gridItem.state.x,
         y: gridItem.state.y,
         width: libPanelModel.repeatDirection === 'h' ? 24 : gridItem.state.width,
         height: gridItem.state.height,
         itemHeight: gridItem.state.height,
-        source: this,
+        body: this,
         variableName: libPanelModel.repeat,
         repeatedPanels: [],
         repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
@@ -112,6 +110,13 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
       this.setPanelFromLibPanel(libPanel);
+      if (this.parent instanceof DashboardGridItem) {
+        this.parent.setState({
+          variableName: libPanel.model.repeat,
+          repeatDirection: libPanel.model.repeatDirection === 'h' ? 'h' : 'v',
+          maxPerRow: libPanel.model.maxPerRow,
+        });
+      }
     } catch (err) {
       vizPanel.setState({
         _pluginLoadError: `Unable to load library panel: ${this.state.uid}`,

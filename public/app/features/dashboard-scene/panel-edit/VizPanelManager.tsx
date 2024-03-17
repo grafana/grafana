@@ -36,8 +36,8 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
+import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-import { PanelRepeaterGridItem, RepeatDirection } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
@@ -77,10 +77,15 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
    */
   public static createFor(sourcePanel: VizPanel) {
     let repeatOptions: Pick<VizPanelManagerState, 'repeat' | 'repeatDirection' | 'maxPerRow'> = {};
-    if (sourcePanel.parent instanceof PanelRepeaterGridItem) {
-      const { variableName: repeat, repeatDirection, maxPerRow } = sourcePanel.parent.state;
-      repeatOptions = { repeat, repeatDirection, maxPerRow };
+
+    const gridItem = sourcePanel.parent instanceof LibraryVizPanel ? sourcePanel.parent.parent : sourcePanel.parent;
+    if (!(gridItem instanceof DashboardGridItem)) {
+      console.error('VizPanel is not a child of a dashboard grid item');
+      throw new Error('VizPanel is not a child of a dashboard grid item');
     }
+
+    const { variableName: repeat, repeatDirection, maxPerRow } = gridItem.state;
+    repeatOptions = { repeat, repeatDirection, maxPerRow };
 
     return new VizPanelManager({
       panel: sourcePanel.clone({ $data: undefined }),
@@ -345,7 +350,8 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     const gridItem = sourcePanel.parent.parent;
-    if (!(gridItem instanceof SceneGridItem)) {
+
+    if (!(gridItem instanceof DashboardGridItem)) {
       throw new Error('Library panel not a child of a grid item');
     }
 
@@ -353,14 +359,21 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     gridItem.setState({
       body: newSourcePanel,
     });
+
     this.setState({ sourcePanel: newSourcePanel.getRef() });
   }
 
   public commitChanges() {
     const sourcePanel = this.state.sourcePanel.resolve();
 
-    if (sourcePanel.parent instanceof SceneGridItem) {
+    const repeatUpdate = {
+      variableName: this.state.repeat,
+      repeatDirection: this.state.repeatDirection,
+      maxPerRow: this.state.maxPerRow,
+    };
+    if (sourcePanel.parent instanceof DashboardGridItem) {
       sourcePanel.parent.setState({
+        ...repeatUpdate,
         body: this.state.panel.clone({
           $data: this.state.$data?.clone(),
         }),
@@ -368,7 +381,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     if (sourcePanel.parent instanceof LibraryVizPanel) {
-      if (sourcePanel.parent.parent instanceof SceneGridItem) {
+      if (sourcePanel.parent.parent instanceof DashboardGridItem) {
         const newLibPanel = sourcePanel.parent.clone({
           panel: this.state.panel.clone({
             $data: this.state.$data?.clone(),
@@ -376,6 +389,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         });
         sourcePanel.parent.parent.setState({
           body: newLibPanel,
+          ...repeatUpdate,
         });
         updateLibraryVizPanel(newLibPanel!).then((p) => {
           if (sourcePanel.parent instanceof LibraryVizPanel) {

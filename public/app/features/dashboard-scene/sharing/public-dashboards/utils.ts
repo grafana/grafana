@@ -11,9 +11,9 @@ import {
 import { supportedDatasources } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SupportedPubdashDatasources';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
+import { DashboardGridItem } from '../../scene/DashboardGridItem';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryVizPanel } from '../../scene/LibraryVizPanel';
-import { PanelRepeaterGridItem } from '../../scene/PanelRepeaterGridItem';
 
 export const getUnsupportedDashboardDatasources = async (types: string[]): Promise<string[]> => {
   let unsupportedDS = new Set<string>();
@@ -74,8 +74,8 @@ function panelDatasourceTypes(gridItem: SceneGridItemLike) {
     } else {
       throw new Error('SceneGridItem body expected to be VizPanel');
     }
-  } else if (gridItem instanceof PanelRepeaterGridItem) {
-    vizPanel = gridItem.state.source;
+  } else if (gridItem instanceof DashboardGridItem) {
+    vizPanel = gridItem.state.body;
   }
 
   if (!vizPanel) {

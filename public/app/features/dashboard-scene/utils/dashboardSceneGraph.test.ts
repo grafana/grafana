@@ -16,7 +16,7 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 
 import { dashboardSceneGraph, getNextPanelId } from './dashboardSceneGraph';
 import { findVizPanelByKey } from './utils';
@@ -152,8 +152,8 @@ describe('dashboardSceneGraph', () => {
                 pluginId: 'table',
               }),
             }),
-            new PanelRepeaterGridItem({
-              source: new VizPanel({
+            new DashboardGridItem({
+              body: new VizPanel({
                 title: 'Panel C',
                 key: 'panel-4',
                 pluginId: 'table',

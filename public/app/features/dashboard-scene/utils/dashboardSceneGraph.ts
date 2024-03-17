@@ -8,10 +8,10 @@ import {
   behaviors,
 } from '@grafana/scenes';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks } from '../scene/PanelLinks';
-import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 
 import { getPanelIdForLibraryVizPanel, getPanelIdForVizPanel } from './utils';
 
@@ -86,8 +86,8 @@ export function getNextPanelId(dashboard: DashboardScene): number {
   }
 
   for (const child of body.state.children) {
-    if (child instanceof PanelRepeaterGridItem) {
-      const vizPanel = child.state.source;
+    if (child instanceof DashboardGridItem) {
+      const vizPanel = child.state.body;
 
       if (vizPanel) {
         const panelId =
@@ -152,8 +152,8 @@ export const getLibraryVizPanelFromVizPanel = (vizPanel: VizPanel): LibraryVizPa
     return vizPanel.parent;
   }
 
-  if (vizPanel.parent instanceof PanelRepeaterGridItem && vizPanel.parent.state.source instanceof LibraryVizPanel) {
-    return vizPanel.parent.state.source;
+  if (vizPanel.parent instanceof DashboardGridItem && vizPanel.parent.state.body instanceof LibraryVizPanel) {
+    return vizPanel.parent.state.body;
   }
 
   return null;

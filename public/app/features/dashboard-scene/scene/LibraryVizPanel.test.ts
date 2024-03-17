@@ -10,7 +10,7 @@ import { LibraryPanel } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { LibraryVizPanel } from './LibraryVizPanel';
-import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
+import { DashboardGridItem } from './DashboardGridItem';
 
 describe('LibraryVizPanel', () => {
   const server = setupServer();
@@ -42,7 +42,7 @@ describe('LibraryVizPanel', () => {
     });
   });
 
-  it('should change parent from SceneGridItem to PanelRepeaterGridItem if repeat is set', async () => {
+  it('should change parent from SceneGridItem to DashboardGridItem if repeat is set', async () => {
     setUpApiMock(server, { model: { repeat: 'query0', repeatDirection: 'h' } });
     const libVizPanel = new LibraryVizPanel({
       name: 'My Library Panel',
@@ -57,7 +57,7 @@ describe('LibraryVizPanel', () => {
     layout.activate();
     libVizPanel.activate();
     await waitFor(() => {
-      expect(layout.state.children[0]).toBeInstanceOf(PanelRepeaterGridItem);
+      expect(layout.state.children[0]).toBeInstanceOf(DashboardGridItem);
     });
   });
 });
