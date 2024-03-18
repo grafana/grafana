@@ -26,10 +26,6 @@ import (
 )
 
 const (
-	NotificationLogFilename = "notifications"
-	SilencesFilename        = "silences"
-
-	workingDir = "alerting"
 	// maintenanceNotificationAndSilences how often should we flush and garbage collect notifications
 	notificationLogMaintenanceInterval = 15 * time.Minute
 )
@@ -45,10 +41,8 @@ type AlertingStore interface {
 }
 
 type stateStore interface {
-	CleanUp()                                                                             // TODO: Is this necessary? Maybe not once we've removed the disk-coupling.
-	FilepathFor(ctx context.Context, filename string) (string, error)                     // TODO: This would preferably not be on the interface so that we can avoid disk-coupling.
-	Persist(ctx context.Context, filename string, st alertingNotify.State) (int64, error) // TODO: Rename to something more agnostic, ex. WriteSilence, WriteNotificationLog
-	GetFullState(ctx context.Context, keys ...string) (string, error)                     // TODO: This should be more specific, ex. GetSilenceState, GetNotificationLogState
+	Persist(ctx context.Context, filename string, st alertingNotify.State) (int64, error)
+	ContentFor(ctx context.Context, filename string) (string, error)
 }
 
 type alertmanager struct {
@@ -70,14 +64,14 @@ type alertmanager struct {
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
 // It implements the alerting.MaintenanceOptions interface.
 type maintenanceOptions struct {
-	filepath             string
+	initialState         string
 	retention            time.Duration
 	maintenanceFrequency time.Duration
 	maintenanceFunc      func(alertingNotify.State) (int64, error)
 }
 
-func (m maintenanceOptions) Filepath() string {
-	return m.filepath
+func (m maintenanceOptions) InitialState() string {
+	return m.initialState
 }
 
 func (m maintenanceOptions) Retention() time.Duration {
@@ -96,17 +90,17 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager, withAutogen bool) (*alertmanager, error) {
 
-	nflogFilepath, err := fileStore.FilepathFor(ctx, NotificationLogFilename)
+	nflog, err := fileStore.ContentFor(ctx, NotificationLogFilename)
 	if err != nil {
 		return nil, err
 	}
-	silencesFilepath, err := fileStore.FilepathFor(ctx, SilencesFilename)
+	silences, err := fileStore.ContentFor(ctx, SilencesFilename)
 	if err != nil {
 		return nil, err
 	}
 
 	silencesOptions := maintenanceOptions{
-		filepath:             silencesFilepath,
+		initialState:         silences,
 		retention:            retentionNotificationsAndSilences,
 		maintenanceFrequency: silenceMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
@@ -116,7 +110,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}
 
 	nflogOptions := maintenanceOptions{
-		filepath:             nflogFilepath,
+		initialState:         nflog,
 		retention:            retentionNotificationsAndSilences,
 		maintenanceFrequency: notificationLogMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
@@ -421,10 +415,8 @@ func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.Po
 	return am.Base.PutAlerts(alerts)
 }
 
-// CleanUp removes the directory containing the alertmanager files from disk.
-func (am *alertmanager) CleanUp() {
-	am.fileStore.CleanUp()
-}
+// CleanUp no-ops as no files are stored on disk.
+func (am *alertmanager) CleanUp() {}
 
 // AlertValidationError is the error capturing the validation errors
 // faced on the alerts.

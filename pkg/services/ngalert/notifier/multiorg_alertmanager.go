@@ -3,9 +3,6 @@ package notifier
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strconv"
 	"sync"
 	"time"
 
@@ -135,10 +132,7 @@ func NewMultiOrgAlertmanager(
 	// Set up the default per tenant Alertmanager factory.
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
 		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
-
-		workingPath := filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID)))
-		stateStore := NewFileStore(orgID, kvStore, workingPath)
-
+		stateStore := NewFileStore(orgID, kvStore)
 		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting))
 	}
 
@@ -335,45 +329,14 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		am.CleanUp()
 	}
 
-	// We look for orphan directories and remove them. Orphan directories can
-	// occur when an organization is deleted and the node running Grafana is
-	// shutdown before the next sync is executed.
 	moa.cleanupOrphanLocalOrgState(ctx, orgsFound)
 }
 
-// cleanupOrphanLocalOrgState will check if there is any organization on
-// disk that is not part of the active organizations. If this is the case
-// it will delete the local state from disk.
+// cleanupOrphanLocalOrgState will remove all orphaned nflog and silence states in kvstore by existing to currently
+// active organizations. The original intention for this was the cleanup deleted orgs, that have had their states
+// saved to the kvstore after deletion on instance shutdown.
 func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
 	activeOrganizations map[int64]struct{}) {
-	dataDir := filepath.Join(moa.settings.DataPath, workingDir)
-	files, err := os.ReadDir(dataDir)
-	if err != nil {
-		moa.logger.Error("Failed to list local working directory", "dir", dataDir, "error", err)
-		return
-	}
-	for _, file := range files {
-		if !file.IsDir() {
-			moa.logger.Warn("Ignoring unexpected file while scanning local working directory", "filename", filepath.Join(dataDir, file.Name()))
-			continue
-		}
-		orgID, err := strconv.ParseInt(file.Name(), 10, 64)
-		if err != nil {
-			moa.logger.Error("Unable to parse orgID from directory name", "name", file.Name(), "error", err)
-			continue
-		}
-		_, exists := activeOrganizations[orgID]
-		if !exists {
-			moa.logger.Info("Found orphan organization directory", "orgID", orgID)
-			workingDirPath := filepath.Join(dataDir, strconv.FormatInt(orgID, 10))
-			fileStore := NewFileStore(orgID, moa.kvStore, workingDirPath)
-			// Clean up all the remaining resources from this alertmanager.
-			fileStore.CleanUp()
-		}
-	}
-	// Remove all orphaned items from kvstore by listing all existing items
-	// in our used namespace and comparing them to the currently active
-	// organizations.
 	storedFiles := []string{NotificationLogFilename, SilencesFilename}
 	for _, fileName := range storedFiles {
 		keys, err := moa.kvStore.Keys(ctx, kvstore.AllOrganizations, KVNamespace, fileName)
