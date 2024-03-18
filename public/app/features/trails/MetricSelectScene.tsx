@@ -354,14 +354,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               disabled={disableSearch}
             />
           </Field>
-          <Field label="Filter by prefix" className={styles.prefixField} error={prefixError} invalid={!!prefixError}>
-            <MetricCategoryCascader
-              metricNames={metricsAfterSearch || []}
-              onSelect={model.onPrefixFilterChange}
-              disabled={disableSearch}
-              initialValue={prefixFilter}
-            />
-          </Field>
           <InlineSwitch
             showLabel={true}
             label="Show previews"
@@ -428,9 +420,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     searchField: css({
       flexGrow: 1,
-      marginBottom: 0,
-    }),
-    prefixField: css({
       marginBottom: 0,
     }),
   };
