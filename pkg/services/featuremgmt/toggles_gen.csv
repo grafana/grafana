@@ -140,7 +140,7 @@ tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
 regressionTransformation,preview,@grafana/dataviz-squad,false,false,true
 lokiQueryHints,GA,@grafana/observability-logs,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
-enablePluginsTracingByDefault,experimental,@grafana/plugins-platform-backend,false,true,false
+enablePluginsTracingByDefault,GA,@grafana/plugins-platform-backend,false,true,false
 cloudRBACRoles,experimental,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 newFolderPicker,experimental,@grafana/grafana-frontend-platform,false,false,true
