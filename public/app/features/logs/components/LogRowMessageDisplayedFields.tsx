@@ -25,32 +25,28 @@ export interface Props {
 
 export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
   const { row, detectedFields, getFieldLinks, wrapLogMessage, styles, mouseIsOver, pinned, ...rest } = props;
-  const fields = getAllFields(row, getFieldLinks);
   const wrapClassName = wrapLogMessage ? '' : displayedFieldsStyles.noWrap;
+  const fields = useMemo(() => getAllFields(row, getFieldLinks), [getFieldLinks, row]);
   // only single key/value rows are filterable, so we only need the first field key for filtering
-  const line = useMemo(
-    () =>
-      detectedFields
-        .map((parsedKey) => {
-          const field = fields.find((field) => {
-            const { keys } = field;
-            return keys[0] === parsedKey;
-          });
+  const line = useMemo(() => {
+    let line = '';
+    for (let i = 0; i < detectedFields.length; i++) {
+      const parsedKey = detectedFields[i];
+      const field = fields.find((field) => {
+        const { keys } = field;
+        return keys[0] === parsedKey;
+      });
 
-          if (field !== undefined && field !== null) {
-            return `${parsedKey}=${field.values}`;
-          }
+      if (field) {
+        line += ` ${parsedKey}=${field.values}`;
+      }
 
-          if (row.labels[parsedKey] !== undefined && row.labels[parsedKey] !== null) {
-            return `${parsedKey}=${row.labels[parsedKey]}`;
-          }
-
-          return null;
-        })
-        .filter((s) => s !== null)
-        .join(' '),
-    [detectedFields, fields, row.labels]
-  );
+      if (row.labels[parsedKey] !== undefined && row.labels[parsedKey] !== null) {
+        line += ` ${parsedKey}=${row.labels[parsedKey]}`;
+      }
+    }
+    return line.trimStart();
+  }, [detectedFields, fields, row.labels]);
 
   const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
 
