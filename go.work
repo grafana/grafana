@@ -6,6 +6,7 @@ use (
 	./pkg/apiserver
 	./pkg/promlib
 	./pkg/util/xorm
+	./pkg/build/wire
 )
 
 // when we release xorm we would like to release it like github.com/grafana/grafana/pkg/util/xorm
