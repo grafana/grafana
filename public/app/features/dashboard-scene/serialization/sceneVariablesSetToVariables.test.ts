@@ -388,6 +388,91 @@ describe('sceneVariablesSetToVariables', () => {
         "type": "fake-std",
         "uid": "fake-std",
       },
+      "defaultKeys": undefined,
+      "description": "test-desc",
+      "filters": [
+        {
+          "key": "filterTest",
+          "operator": "=",
+          "value": "test",
+        },
+      ],
+      "label": "test-label",
+      "name": "test",
+      "type": "adhoc",
+    }
+    `);
+  });
+
+  it('should handle AdHocFiltersVariable with defaultKeys', () => {
+    const variable = new AdHocFiltersVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      datasource: { uid: 'fake-std', type: 'fake-std' },
+      defaultKeys: [
+        {
+          text: 'some',
+          value: '1',
+        },
+        {
+          text: 'static',
+          value: '2',
+        },
+        {
+          text: 'keys',
+          value: '3',
+        },
+      ],
+      filters: [
+        {
+          key: 'filterTest',
+          operator: '=',
+          value: 'test',
+        },
+      ],
+      baseFilters: [
+        {
+          key: 'baseFilterTest',
+          operator: '=',
+          value: 'test',
+        },
+      ],
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "baseFilters": [
+        {
+          "key": "baseFilterTest",
+          "operator": "=",
+          "value": "test",
+        },
+      ],
+      "datasource": {
+        "type": "fake-std",
+        "uid": "fake-std",
+      },
+      "defaultKeys": [
+        {
+          "text": "some",
+          "value": "1",
+        },
+        {
+          "text": "static",
+          "value": "2",
+        },
+        {
+          "text": "keys",
+          "value": "3",
+        },
+      ],
       "description": "test-desc",
       "filters": [
         {
