@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	awssdk "github.com/grafana/grafana-aws-sdk/pkg/sigv4"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/mwitkow/go-conntrack"
 
@@ -32,7 +33,7 @@ func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer 
 	}
 
 	if cfg.SigV4AuthEnabled {
-		middlewares = append(middlewares, SigV4Middleware(cfg.SigV4VerboseLogging))
+		middlewares = append(middlewares, awssdk.SigV4Middleware(cfg.SigV4VerboseLogging))
 	}
 
 	if httpLoggingEnabled(cfg.PluginSettings) {
