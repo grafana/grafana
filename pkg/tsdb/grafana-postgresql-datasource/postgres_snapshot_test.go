@@ -83,8 +83,8 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 					JSON:  queryBytes,
 					RefID: "A",
 					TimeRange: backend.TimeRange{
-						From: time.Date(2023, 12, 24, 14, 15, 0, 0, time.UTC),
-						To:   time.Date(2023, 12, 24, 14, 45, 0, 0, time.UTC),
+						From: time.Date(2023, 12, 24, 14, 15, 22, 123456, time.UTC),
+						To:   time.Date(2023, 12, 24, 14, 45, 13, 876543, time.UTC),
 					},
 				},
 			},
@@ -104,6 +104,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		{format: "time_series", name: "fill_null"},
 		{format: "time_series", name: "fill_previous"},
 		{format: "time_series", name: "fill_value"},
+		{format: "time_series", name: "fill_value_wide"},
 		{format: "table", name: "simple"},
 		{format: "table", name: "no_rows"},
 		{format: "table", name: "types_numeric"},
