@@ -256,6 +256,10 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, 
 		return nil, fmt.Errorf("error sending LabelNames request %v", err)
 	}
 
+	if resp.Msg.Names == nil {
+		return []string{}, nil
+	}
+
 	var filtered []string
 	for _, label := range resp.Msg.Names {
 		if !isPrivateLabel(label) {
@@ -280,6 +284,9 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSe
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
+	}
+	if resp.Msg.Names == nil {
+		return []string{}, nil
 	}
 	return resp.Msg.Names, nil
 }
