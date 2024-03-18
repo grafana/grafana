@@ -1,18 +1,11 @@
 package apiserver
 
 import (
-	"fmt"
 	"os"
-	"strconv"
-	"strings"
 
-	"github.com/go-logr/logr"
 	"github.com/spf13/cobra"
-	"gopkg.in/ini.v1"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/component-base/cli"
-	"k8s.io/component-base/logs"
-	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/server"
@@ -36,9 +29,12 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 			devAcknowledgementNotice,
 		Example: "grafana apiserver --runtime-config=example.grafana.app/v0alpha1=true",
 		RunE: func(c *cobra.Command, args []string) error {
-			// Setup logging as the very first thing after we have read the desired verbosity level
-			if err := setupLogging(o.ExtraOptions.Verbosity); err != nil {
+			if err := log.SetupConsoleLogger("debug"); err != nil {
 				return nil
+			}
+
+			if err := o.Validate(nil); err != nil {
+				return err
 			}
 
 			runtime, err := standalone.ReadRuntimeConfig(runtimeConfig)
@@ -86,47 +82,6 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 	return cmd
 }
 
-func setupLogging(logLevel int) error {
-	iniFile := ini.Empty()
-	sLog, err := iniFile.NewSection("log")
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	_, err = sLog.NewKey("level", "debug")
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	sLogConsole, err := iniFile.NewSection("log.console")
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	_, err = sLogConsole.NewKey("format", "console")
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	err = log.ReadLoggingConfig([]string{"console"}, "", iniFile)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	logger := logr.New(newLogAdapter(logLevel))
-	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
-	if _, err := logs.GlogSetter(strconv.Itoa(logLevel)); err != nil {
-		logger.Error(err, "failed to set log level")
-	}
-
-	return nil
-}
-
 func RunCLI() int {
 	stopCh := genericapiserver.SetupSignalHandler()
 
@@ -134,49 +89,4 @@ func RunCLI() int {
 	cmd := newCommandStartExampleAPIServer(options, stopCh)
 
 	return cli.Run(cmd)
-}
-
-var _ logr.LogSink = (*logAdapter)(nil)
-
-type logAdapter struct {
-	level int
-	log   log.Logger
-}
-
-func newLogAdapter(level int) *logAdapter {
-	return &logAdapter{log: log.New("grafana-apiserver"), level: level}
-}
-
-func (l *logAdapter) WithName(name string) logr.LogSink {
-	l.log = l.log.New("name", name)
-	return l
-}
-
-func (l *logAdapter) WithValues(keysAndValues ...any) logr.LogSink {
-	l.log = l.log.New(keysAndValues...)
-	return l
-}
-
-func (l *logAdapter) Init(_ logr.RuntimeInfo) {
-	// we aren't using the logr library for logging, so this is a no-op
-}
-
-func (l *logAdapter) Enabled(level int) bool {
-	return level <= l.level
-}
-
-func (l *logAdapter) Info(level int, msg string, keysAndValues ...any) {
-	msg = strings.TrimSpace(msg)
-	// kubernetes uses level 0 for critical messages, so map that to Info
-	if level == 0 {
-		l.log.Info(msg, keysAndValues...)
-		return
-	}
-	// every other level is mapped to Debug
-	l.log.Debug(msg, keysAndValues...)
-}
-
-func (l *logAdapter) Error(err error, msg string, keysAndValues ...any) {
-	msg = strings.TrimSpace(msg)
-	l.log.Error(msg, keysAndValues...)
 }

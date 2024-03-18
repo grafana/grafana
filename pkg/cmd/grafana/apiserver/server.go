@@ -155,6 +155,12 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		}
 	}
 
+	if o.ExtraOptions != nil {
+		if err := o.ExtraOptions.ApplyTo(serverConfig); err != nil {
+			return nil, err
+		}
+	}
+
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
 
@@ -172,12 +178,15 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 }
 
 // Validate validates APIServerOptions
-// NOTE: we don't call validate on the top level recommended options as it doesn't like skipping etcd-servers
-// the function is left here for troubleshooting any other config issues
 func (o *APIServerOptions) Validate(args []string) error {
 	errors := []error{}
-	errors = append(errors, o.RecommendedOptions.Validate()...)
-	errors = append(errors, o.factory.GetOptions().ValidateOptions()...)
+	// NOTE: we don't call validate on the top level recommended options as it doesn't like skipping etcd-servers
+	// the function is left here for troubleshooting any other config issues
+	// errors = append(errors, o.RecommendedOptions.Validate()...)
+	if factoryOptions := o.factory.GetOptions(); factoryOptions != nil {
+		errors = append(errors, factoryOptions.ValidateOptions()...)
+	}
+
 	return utilerrors.NewAggregate(errors)
 }
 
