@@ -11,11 +11,9 @@ const isSubstringMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
-      return (value 
-              && options.value 
-              && value.toLowerCase().includes(options.value.toLowerCase())
-              ) 
-              || options.value === '';
+      return (
+        (value && options.value && value.toLowerCase().includes(options.value.toLowerCase())) || options.value === ''
+      );
     };
   },
   getOptionsDisplayText: () => {
@@ -32,11 +30,13 @@ const isNotSubstringValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
-      return typeof value === 'string' 
-              && options.value 
-              && value
-              && options.value !== '' 
-              && !value.toLowerCase().includes(options.value.toLowerCase());
+      return (
+        typeof value === 'string' &&
+        options.value &&
+        value &&
+        options.value !== '' &&
+        !value.toLowerCase().includes(options.value.toLowerCase())
+      );
     };
   },
   getOptionsDisplayText: () => {
