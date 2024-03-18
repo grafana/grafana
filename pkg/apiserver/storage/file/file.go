@@ -438,7 +438,7 @@ func (s *Storage) getList(ctx context.Context, key string, opts storage.ListOpti
 		if err != nil {
 			return err
 		}
-	} else if maxRVFromItem == 0 { // we have an empty list, generate a snowflake
+	} else if maxRVFromItem == 0 { // we have an empty list, use current RV we are on, this will ensure any items added afterwards will use a fresher RV
 		resourceVersionInt = s.getCurrentResourceVersion()
 	} else {
 		resourceVersionInt = maxRVFromItem + uint64(1)
