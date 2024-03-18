@@ -125,7 +125,11 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                   [styles.justifyCenter]: !contentOutlineExpanded,
                   [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                 })}
-                indentStyle={outlineItemsShouldIndent && item.children?.length === 0 ? styles.indentRoot : undefined}
+                indentStyle={cx({
+                  [styles.indentRoot]: outlineItemsShouldIndent && item.children?.length === 0,
+                  [styles.sectionHighlighter]:
+                    isChildActive(item, activeSectionChildId) && !contentOutlineExpanded && sectionsExpanded[item.id],
+                })}
                 icon={item.icon}
                 onClick={() => scrollIntoView(item.ref, item.panelId)}
                 tooltip={item.title}
