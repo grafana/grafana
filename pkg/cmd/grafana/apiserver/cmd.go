@@ -33,7 +33,7 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 				return nil
 			}
 
-			if err := o.Validate(nil); err != nil {
+			if err := o.Validate(); err != nil {
 				return err
 			}
 

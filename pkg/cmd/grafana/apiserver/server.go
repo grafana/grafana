@@ -178,8 +178,8 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 }
 
 // Validate validates APIServerOptions
-func (o *APIServerOptions) Validate(args []string) error {
-	errors := []error{}
+func (o *APIServerOptions) Validate() error {
+	errors := make([]error, 0)
 	// NOTE: we don't call validate on the top level recommended options as it doesn't like skipping etcd-servers
 	// the function is left here for troubleshooting any other config issues
 	// errors = append(errors, o.RecommendedOptions.Validate()...)
