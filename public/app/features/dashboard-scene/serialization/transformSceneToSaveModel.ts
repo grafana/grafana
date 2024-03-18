@@ -4,7 +4,6 @@ import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
   behaviors,
   SceneDataLayers,
-  SceneGridItem,
   SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
@@ -433,6 +432,9 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
     });
   } else {
     panelsInsideRow = gridRow.state.children.map((c) => {
+      if (!(c instanceof DashboardGridItem)) {
+        throw new Error('Row child expected to be DashboardGridItem');
+      }
       return gridItemToPanel(c);
     });
   }

@@ -140,7 +140,11 @@ export async function getConnectedDashboards(uid: string): Promise<DashboardSear
 export function libraryVizPanelToSaveModel(libraryPanel: LibraryVizPanel) {
   const { panel, uid, name, _loadedPanel } = libraryPanel.state;
 
-  const gridItem = libraryPanel.parent! as DashboardGridItem;
+  const gridItem = libraryPanel.parent;
+
+  if (!gridItem || !(gridItem instanceof DashboardGridItem)) {
+    throw new Error('LibraryVizPanel must be a child of DashboardGridItem');
+  }
 
   const saveModel = {
     uid,

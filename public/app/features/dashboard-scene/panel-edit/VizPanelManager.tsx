@@ -17,7 +17,6 @@ import {
   PanelBuilders,
   SceneComponentProps,
   SceneDataTransformer,
-  SceneGridItem,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
@@ -407,17 +406,20 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   public getPanelSaveModel(): Panel | object {
     const sourcePanel = this.state.sourcePanel.resolve();
 
-    if (sourcePanel.parent instanceof SceneGridItem) {
-      const parentClone = sourcePanel.parent.clone({
-        body: this.state.panel.clone({
-          $data: this.state.$data?.clone(),
-        }),
-      });
+    const isLibraryPanel = sourcePanel.parent instanceof LibraryVizPanel;
+    const gridItem = isLibraryPanel ? sourcePanel.parent.parent : sourcePanel.parent;
 
-      return gridItemToPanel(parentClone);
+    if (!(gridItem instanceof DashboardGridItem)) {
+      return { error: 'Unsupported panel parent' };
     }
 
-    return { error: 'Unsupported panel parent' };
+    const parentClone = gridItem.clone({
+      body: this.state.panel.clone({
+        $data: this.state.$data?.clone(),
+      }),
+    });
+
+    return gridItemToPanel(parentClone);
   }
 
   public getPanelCloneWithData(): VizPanel {

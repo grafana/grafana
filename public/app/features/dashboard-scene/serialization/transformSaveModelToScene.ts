@@ -15,7 +15,6 @@ import {
   ConstantVariable,
   IntervalVariable,
   SceneRefreshPicker,
-  SceneGridItem,
   SceneObject,
   VizPanelMenu,
   behaviors,

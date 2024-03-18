@@ -8,7 +8,6 @@ import {
   SceneComponentProps,
   SceneDataTransformer,
   sceneGraph,
-  SceneGridItem,
   SceneGridItemStateLike,
   SceneObjectBase,
   SceneObjectRef,

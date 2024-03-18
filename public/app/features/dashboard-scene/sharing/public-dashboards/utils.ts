@@ -2,7 +2,6 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 import {
   SceneGridItemLike,
   VizPanel,
-  SceneGridItem,
   SceneQueryRunner,
   SceneDataTransformer,
   SceneGridLayout,
@@ -41,7 +40,7 @@ export function getPanelDatasourceTypes(scene: DashboardScene): string[] {
   }
 
   for (const child of body.state.children) {
-    if (child instanceof SceneGridItem) {
+    if (child instanceof DashboardGridItem) {
       const ts = panelDatasourceTypes(child);
       for (const t of ts) {
         types.add(t);
@@ -66,16 +65,15 @@ function rowTypes(gridRow: SceneGridRow) {
 
 function panelDatasourceTypes(gridItem: SceneGridItemLike) {
   let vizPanel: VizPanel | LibraryVizPanel | undefined;
-  if (gridItem instanceof SceneGridItem) {
+
+  if (gridItem instanceof DashboardGridItem) {
     if (gridItem.state.body instanceof LibraryVizPanel) {
       vizPanel = gridItem.state.body.state.panel;
     } else if (gridItem.state.body instanceof VizPanel) {
       vizPanel = gridItem.state.body;
     } else {
-      throw new Error('SceneGridItem body expected to be VizPanel');
+      throw new Error('DashboardGridItem body expected to be VizPanel');
     }
-  } else if (gridItem instanceof DashboardGridItem) {
-    vizPanel = gridItem.state.body;
   }
 
   if (!vizPanel) {

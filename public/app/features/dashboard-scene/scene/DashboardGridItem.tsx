@@ -89,10 +89,10 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   }
 
   private _performRepeat() {
-    if (!this.state.variableName) {
+    if (this.state.body instanceof AddLibraryPanelWidget) {
       return;
     }
-    if (this._variableDependency.hasDependencyInLoadingState()) {
+    if (!this.state.variableName || this._variableDependency.hasDependencyInLoadingState()) {
       return;
     }
 

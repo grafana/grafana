@@ -6,7 +6,6 @@ import {
   getUrlSyncManager,
   SceneFlexLayout,
   sceneGraph,
-  SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
   SceneObject,
@@ -568,6 +567,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       }
 
       gridItem = libraryVizPanel.parent;
+    }
+
+    if (!(gridItem instanceof DashboardGridItem)) {
+      console.error('Trying to copy a panel that is not DashboardGridItem child');
+      throw new Error('Trying to copy a panel that is not DashboardGridItem child');
     }
 
     const jsonData = gridItemToPanel(gridItem);

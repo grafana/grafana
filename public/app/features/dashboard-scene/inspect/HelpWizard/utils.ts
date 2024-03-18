@@ -11,9 +11,10 @@ import {
   DataTopic,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneGridItem, VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
+import { DashboardGridItem } from '../../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../../scene/LibraryVizPanel';
 import { gridItemToPanel, vizPanelToPanel } from '../../serialization/transformSceneToSaveModel';
 import { getQueryRunnerFor } from '../../utils/utils';
@@ -62,14 +63,16 @@ export function getGithubMarkdown(panel: VizPanel, snapshot: string): string {
 
 export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRange: TimeRange) {
   let saveModel;
+  const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
+  const gridItem = (isLibraryPanel ? panel.parent.parent : panel.parent) as DashboardGridItem;
 
-  if (panel.parent instanceof LibraryVizPanel && panel.parent.parent instanceof SceneGridItem) {
+  if (isLibraryPanel) {
     saveModel = {
-      ...gridItemToPanel(panel.parent.parent),
+      ...gridItemToPanel(gridItem),
       ...vizPanelToPanel(panel),
     };
   } else {
-    saveModel = gridItemToPanel(panel.parent as SceneGridItem);
+    saveModel = gridItemToPanel(gridItem);
   }
 
   const dashboard = cloneDeep(embeddedDataTemplate);

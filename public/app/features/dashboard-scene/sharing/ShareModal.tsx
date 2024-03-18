@@ -18,6 +18,7 @@ import { SharePanelEmbedTab } from './SharePanelEmbedTab';
 import { ShareSnapshotTab } from './ShareSnapshotTab';
 import { SharePublicDashboardTab } from './public-dashboards/SharePublicDashboardTab';
 import { ModalSceneObjectLike, SceneShareTab } from './types';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 
 interface ShareModalState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -56,9 +57,12 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
 
     if (panelRef) {
       tabs.push(new SharePanelEmbedTab({ panelRef, dashboardRef }));
-
-      if (panelRef.resolve() instanceof VizPanel) {
-        tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
+      const panel = panelRef.resolve();
+      const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
+      if (panel instanceof VizPanel) {
+        if (!isLibraryPanel) {
+          tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
+        }
       }
     }
 

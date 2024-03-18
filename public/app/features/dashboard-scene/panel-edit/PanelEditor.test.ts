@@ -120,7 +120,6 @@ describe('PanelEditor', () => {
   });
 
   describe('PanelDataPane', () => {
-    let gridItem: DashboardGridItem | undefined;
     it('should not exist if panel is skipDataQuery', () => {
       pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
 
@@ -128,7 +127,7 @@ describe('PanelEditor', () => {
         key: 'panel-1',
         pluginId: 'text',
       });
-      gridItem = new DashboardGridItem({
+      new DashboardGridItem({
         body: panel,
       });
 
@@ -150,7 +149,7 @@ describe('PanelEditor', () => {
         pluginId: 'timeseries',
       });
 
-      gridItem = new DashboardGridItem({
+      new DashboardGridItem({
         body: panel,
       });
       const editScene = buildPanelEditScene(panel);

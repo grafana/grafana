@@ -21,7 +21,6 @@ import { findVizPanelByKey } from '../utils/utils';
 import { buildPanelEditScene } from './PanelEditor';
 import { VizPanelManager } from './VizPanelManager';
 import { panelWithQueriesOnly, panelWithTransformations, testDashboard } from './testfiles/testDashboard';
-import { before } from 'lodash';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {
@@ -145,7 +144,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('VizPanelManager', () => {
-  let gridItem: DashboardGridItem | undefined;
   describe('When changing plugin', () => {
     it('Should successfully change from one viz type to another', () => {
       const { vizPanelManager } = setupTest('panel-1');
@@ -175,7 +173,7 @@ describe('VizPanelManager', () => {
         },
       });
 
-      gridItem = new DashboardGridItem({
+      new DashboardGridItem({
         body: vizPanel,
       });
 
@@ -203,7 +201,7 @@ describe('VizPanelManager', () => {
         fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
       });
 
-      gridItem = new DashboardGridItem({
+      new DashboardGridItem({
         body: vizPanel,
       });
 
