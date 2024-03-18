@@ -12,7 +12,7 @@ import {
   SceneVariableSet,
   QueryVariable,
 } from '@grafana/scenes';
-import { ToolbarButton, Stack, Icon, TabsBar, Tab, useStyles2, Box } from '@grafana/ui';
+import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2, LinkButton } from '@grafana/ui';
 
 import { getExploreUrl } from '../../core/utils/explore';
 
@@ -29,12 +29,11 @@ import {
   ActionViewType,
   getVariablesWithMetricConstant,
   MakeOptional,
-  OpenEmbeddedTrailEvent,
   trailDS,
   VAR_GROUP_BY,
   VAR_METRIC_EXPR,
 } from './shared';
-import { getDataSource, getTrailFor } from './utils';
+import { getDataSource, getTrailFor, getUrlForTrail } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
@@ -116,10 +115,6 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
 export interface MetricActionBarState extends SceneObjectState {}
 
 export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
-  public onOpenTrail = () => {
-    this.publishEvent(new OpenEmbeddedTrailEvent(), true);
-  };
-
   public getLinkToExplore = async () => {
     const metricScene = sceneGraph.getAncestor(this, MetricScene);
     const trail = getTrailFor(this);
@@ -175,9 +170,9 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
               onClick={toggleBookmark}
             />
             {trail.state.embedded && (
-              <ToolbarButton variant={'canvas'} onClick={model.onOpenTrail}>
+              <LinkButton href={getUrlForTrail(trail)} variant={'secondary'}>
                 Open
-              </ToolbarButton>
+              </LinkButton>
             )}
           </Stack>
         </div>
