@@ -42,15 +42,15 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 	}
 
 	if ident.Permissions == nil {
-		ident.Permissions = make(map[int64]map[string][]string, len(permissions))
+		ident.Permissions = make(map[int64]map[string][]string, 1)
 	}
 	grouped := accesscontrol.GroupScopesByAction(permissions)
 
 	// Restrict access to the list of actions
 	actionsLookup := ident.ClientParams.FetchPermissionsParams.ActionsLookup
 	if len(actionsLookup) > 0 {
-		filtered := make(map[string][]string, len(ident.ClientParams.FetchPermissionsParams.ActionsLookup))
-		for _, action := range ident.ClientParams.FetchPermissionsParams.ActionsLookup {
+		filtered := make(map[string][]string, len(actionsLookup))
+		for _, action := range actionsLookup {
 			if scopes, ok := grouped[action]; ok {
 				filtered[action] = scopes
 			}
@@ -67,12 +67,12 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 	roles := ident.ClientParams.FetchPermissionsParams.Roles
 	if len(roles) > 0 {
 		for _, role := range roles {
-			roles, err := s.ac.GetRoleByName(ctx, ident.GetOrgID(), role)
+			roleDTO, err := s.ac.GetRoleByName(ctx, ident.GetOrgID(), role)
 			if err != nil && !errors.Is(err, accesscontrol.ErrRoleNotFound) {
 				s.log.FromContext(ctx).Error("Failed to fetch role from db", "error", err, "role", role)
 				return nil, errSyncPermissionsForbidden
 			}
-			permissions = append(permissions, roles.Permissions...)
+			permissions = append(permissions, roleDTO.Permissions...)
 		}
 
 		return permissions, nil

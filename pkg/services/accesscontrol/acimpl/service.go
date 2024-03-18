@@ -517,6 +517,8 @@ func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName strin
 			role = &accesscontrol.RoleDTO{
 				Name:        registration.Role.Name,
 				Permissions: registration.Role.Permissions,
+				DisplayName: registration.Role.DisplayName,
+				Description: registration.Role.Description,
 			}
 			err = nil
 			return false
