@@ -347,6 +347,10 @@ func (s *testRenderService) HasCapability(_ context.Context, feature rendering.C
 	return rendering.CapabilitySupportRequestResult{}, nil
 }
 
+func (s *testRenderService) IsCapabilitySupported(ctx context.Context, capability rendering.CapabilityName) error {
+	return nil
+}
+
 func (s *testRenderService) IsAvailable(ctx context.Context) bool {
 	if s.isAvailableProvider != nil {
 		return s.isAvailableProvider(ctx)
