@@ -39,8 +39,12 @@ type ScopeDashboard struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	DashboardUID []string `json:"dashboardUid"`
-	ScopeUID     string   `json:"scopeUid"`
+	Spec ScopeDashboardSpec `json:"spec,omitempty"`
+}
+
+type ScopeDashboardSpec struct {
+	DashboardUIDs []string `json:"dashboardUids"`
+	ScopeUID      string   `json:"scopeUid"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

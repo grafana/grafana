@@ -19,6 +19,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.Scope":              schema_pkg_apis_scope_v0alpha1_Scope(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboard":     schema_pkg_apis_scope_v0alpha1_ScopeDashboard(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardList": schema_pkg_apis_scope_v0alpha1_ScopeDashboardList(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardSpec": schema_pkg_apis_scope_v0alpha1_ScopeDashboardSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeFilter":        schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeList":          schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeSpec":          schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
@@ -91,33 +92,17 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboard(ref common.ReferenceCallback)
 							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
-					"dashboardUid": {
+					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"scopeUid": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardSpec"),
 						},
 					},
 				},
-				Required: []string{"dashboardUid", "scopeUid"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -165,6 +150,40 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardList(ref common.ReferenceCallb
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboard", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_ScopeDashboardSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dashboardUids": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"scopeUid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"dashboardUids", "scopeUid"},
+			},
+		},
 	}
 }
 
