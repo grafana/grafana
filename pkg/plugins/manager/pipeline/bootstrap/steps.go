@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
@@ -163,8 +162,7 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 // ForwardHostEnvVars plugin ids list.
 func SkipHostEnvVarsDecorateFunc(cfg *config.PluginManagementCfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-		p.SkipHostEnvVars = cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) &&
-			!slices.Contains(cfg.ForwardHostEnvVars, p.ID)
+		p.SkipHostEnvVars = cfg.Features.SkipHostEnvVarsEnabled && !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
 		return p, nil
 	}
 }
