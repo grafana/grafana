@@ -39,13 +39,27 @@ The text element lets you easily add text to the canvas. The element also suppor
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-text-9-2-0.mp4" max-width="750px" caption="Text element demo" >}}
 
+<!--If all of these shapes (excluding icon) have the same functionality, can we just group them under a "Basic shapes" sub-heading?-->
+
+### Cloud
+
+The cloud element lets you add a basic cloud to the canvas. A cloud element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
+
 ### Ellipse
 
 The ellipse element lets you add a basic ellipse to the canvas. An ellipse element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
 
+### Parallelogram
+
+The parallelogram element lets you add a basic ellipse to the canvas. A parallelogram element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
+
 ### Rectangle
 
 The rectangle element lets you add a basic rectangle to the canvas. A rectangle element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
+
+### Triangle
+
+The triangle element lets you add a basic rectangle to the canvas. A triangle element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
 
 ### Icon
 
@@ -69,13 +83,23 @@ A button click will only trigger an API call when [inline editing](#inline-editi
 
 ## Connections
 
-When building a canvas, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas. Connection anchors are displayed when you hover over an element and inline editing is turned on. To remove a connection, simply click on the connection directly and then press the "Delete" or "Backspace" key.
+When building a canvas, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas. Connection anchors are displayed when you hover over an element and inline editing is turned on.
+
+To remove a connection, simply click on the connection directly and then press the "Delete" or "Backspace" key.
 
 {{< video-embed src="/media/docs/grafana/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
 
-You can set both the size and color of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
+You can adjust connectors to fit the canvas you're working in and when you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the element or connector until the midpoint controls disappear.
+
+<!--what do we want to call these vertices/midpoint controls?-->
+
+<!--video here? -->
+
+You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
+
+You can also change the shape of a connection anchor to a circle or remove the anchor entirely.
 
 ## Canvas editing
 
