@@ -12,6 +12,7 @@ import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/b
 import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
+import { PermissionLevelString } from 'app/types';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
@@ -31,6 +32,9 @@ export interface NestedFolderPickerProps {
   /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
 
+  /* Only show folders matching this permission, mainly for Save Dashboards to limit to folders user can write to. Defaults to View/unfiltered.  */
+  permission?: PermissionLevelString.View | PermissionLevelString.Edit;
+
   /* Callback for when the user selects a folder */
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
 
@@ -40,11 +44,12 @@ export interface NestedFolderPickerProps {
 
 const debouncedSearch = debounce(getSearchResults, 300);
 
-async function getSearchResults(searchQuery: string) {
+async function getSearchResults(searchQuery: string, permission?: PermissionLevelString) {
   const queryResponse = await getGrafanaSearcher().search({
     query: searchQuery,
     kind: ['folder'],
     limit: 100,
+    // permission: permission, // TODO: make grafana server support this
   });
 
   const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
@@ -57,6 +62,7 @@ export function NestedFolderPicker({
   showRootFolder = true,
   clearable = false,
   excludeUIDs,
+  permission,
   onChange,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
@@ -79,7 +85,7 @@ export function NestedFolderPicker({
     items: browseFlatTree,
     isLoading: isBrowseLoading,
     requestNextPage: fetchFolderPage,
-  } = useFoldersQuery(isBrowsing, foldersOpenState);
+  } = useFoldersQuery(isBrowsing, foldersOpenState, permission);
 
   useEffect(() => {
     if (!search) {
@@ -90,7 +96,7 @@ export function NestedFolderPicker({
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
 
-    debouncedSearch(search).then((queryResponse) => {
+    debouncedSearch(search, permission).then((queryResponse) => {
       // Only keep the results if it's was issued after the most recently resolved search.
       // This prevents results showing out of order if first request is slower than later ones.
       // We don't need to worry about clearing the isFetching state either - if there's a later
@@ -102,7 +108,7 @@ export function NestedFolderPicker({
         lastSearchTimestamp.current = timestamp;
       }
     });
-  }, [search]);
+  }, [search, permission]);
 
   // the order of middleware is important!
   const middleware = [

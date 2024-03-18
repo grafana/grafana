@@ -73,6 +73,19 @@ export function sharedWithMeFolder(seed = 1): DashboardsTreeItem<DashboardViewIt
   return folder;
 }
 
+export function treeViewersCanEdit() {
+  const [, { folderB, folderB_empty, folderC }] = wellFormedTree();
+
+  return [
+    [folderB, folderB_empty, folderC],
+    {
+      folderB,
+      folderB_empty,
+      folderC,
+    },
+  ] as const;
+}
+
 export function wellFormedTree() {
   let seed = 1;
 

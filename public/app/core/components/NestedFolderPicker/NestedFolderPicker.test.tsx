@@ -8,32 +8,22 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { PermissionLevelString } from 'app/types';
 
-import { wellFormedTree } from '../../../features/browse-dashboards/fixtures/dashboardsTreeItem.fixture';
+import {
+  treeViewersCanEdit,
+  wellFormedTree,
+} from '../../../features/browse-dashboards/fixtures/dashboardsTreeItem.fixture';
 
 import { NestedFolderPicker } from './NestedFolderPicker';
 
 const [mockTree, { folderA, folderB, folderC, folderA_folderA, folderA_folderB }] = wellFormedTree();
+const [mockTreeThatViewersCanEdit /* shares folders with wellFormedTree */] = treeViewersCanEdit();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
-
-jest.mock('app/features/browse-dashboards/api/services', () => {
-  const orig = jest.requireActual('app/features/browse-dashboards/api/services');
-
-  return {
-    ...orig,
-    listFolders(parentUID?: string) {
-      const childrenForUID = mockTree
-        .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
-
-      return Promise.resolve(childrenForUID);
-    },
-  };
-});
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
@@ -58,12 +48,15 @@ describe('NestedFolderPicker', () => {
       http.get('/api/folders', ({ request }) => {
         const url = new URL(request.url);
         const parentUid = url.searchParams.get('parentUid') ?? undefined;
+        const permission = url.searchParams.get('permission');
 
         const limit = parseInt(url.searchParams.get('limit') ?? '1000', 10);
         const page = parseInt(url.searchParams.get('page') ?? '1', 10);
 
+        const tree = permission === 'Edit' ? mockTreeThatViewersCanEdit : mockTree;
+
         // reconstruct a folder API response from the flat tree fixture
-        const folders = mockTree
+        const folders = tree
           .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUid)
           .map((folder) => {
             return {
@@ -182,6 +175,17 @@ describe('NestedFolderPicker', () => {
     await screen.findByLabelText(folderB.item.title);
 
     expect(screen.queryByLabelText(folderA.item.title)).not.toBeInTheDocument();
+  });
+
+  it('has a filter to show only folders that the user can edit', async () => {
+    render(<NestedFolderPicker permission={PermissionLevelString.Edit} onChange={mockOnChange} />);
+
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+
+    await screen.findByLabelText(folderB.item.title);
+    expect(screen.queryByLabelText(folderA.item.title)).not.toBeInTheDocument(); // folderA is not editable
+    expect(screen.queryByLabelText(folderB.item.title)).toBeInTheDocument(); // but folderB is
   });
 
   describe('when nestedFolders is enabled', () => {
