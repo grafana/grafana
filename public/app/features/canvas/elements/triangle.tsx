@@ -15,9 +15,9 @@ import {
   defaultBgColor,
   defaultTextColor,
 } from '../element';
-import { Align, TextConfig, TextData, VAlign } from '../types';
+import { Align, CanvasElementConfig, CanvasElementData, VAlign } from '../types';
 
-const Triangle = (props: CanvasElementProps<TextConfig, TextData>) => {
+const Triangle = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
   const { data } = props;
   const styles = getStyles(config.theme2, data);
 
@@ -26,18 +26,13 @@ const Triangle = (props: CanvasElementProps<TextConfig, TextData>) => {
       <svg
         xmlns="http://www.w3.org/2000/svg"
         xmlnsXlink="http://www.w3.org/1999/xlink"
-        viewBox="0 0 160 160"
+        viewBox="0 0 160 138"
         width="100%"
         height="100%"
-        style={{
-          stroke: defaultBgColor,
-          fill: defaultBgColor,
-          maxWidth: '100%',
-          height: 'intrinsic',
-        }}
+        className={styles.element}
         preserveAspectRatio="none"
       >
-        <polygon stroke={defaultBgColor} points="0,160 80,0 160,160 " />
+        <polygon points="0,138 80,0 160,138" />
       </svg>
       <span className={styles.text}>{data?.text}</span>
     </div>
@@ -53,14 +48,14 @@ export const triangleItem: CanvasElementItem = {
 
   defaultSize: {
     width: 160,
-    height: 160,
+    height: 138,
   },
 
   getNewOptions: (options) => ({
     ...options,
     background: {
       color: {
-        fixed: 'transparent',
+        fixed: defaultBgColor,
       },
     },
     config: {
@@ -72,17 +67,17 @@ export const triangleItem: CanvasElementItem = {
     },
     placement: {
       width: options?.placement?.width ?? 160,
-      height: options?.placement?.height ?? 160,
+      height: options?.placement?.height ?? 138,
       top: options?.placement?.top,
       left: options?.placement?.left,
     },
   }),
 
   // Called when data changes
-  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<TextConfig>) => {
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<CanvasElementConfig>) => {
     const textConfig = elementOptions.config;
 
-    const data: TextData = {
+    const data: CanvasElementData = {
       text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
       align: textConfig?.align ?? Align.Center,
       valign: textConfig?.valign ?? VAlign.Middle,
@@ -94,6 +89,11 @@ export const triangleItem: CanvasElementItem = {
     }
 
     data.links = getDataLinks(dimensionContext, elementOptions, data.text);
+
+    const { background, border } = elementOptions;
+    data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;
+    data.borderColor = border?.color ? dimensionContext.getColor(border.color).value() : defaultBgColor;
+    data.borderWidth = border?.width ?? 0;
 
     return data;
   },
@@ -154,7 +154,7 @@ export const triangleItem: CanvasElementItem = {
   },
 };
 
-const getStyles = (theme: GrafanaTheme2, data: TextData | undefined) => ({
+const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => ({
   container: css({
     height: '100%',
     width: '100%',
@@ -166,5 +166,10 @@ const getStyles = (theme: GrafanaTheme2, data: TextData | undefined) => ({
     transform: `translate(${data?.align === Align.Center ? '-50%' : data?.align === Align.Left ? '10%' : '-90%'}, ${data?.valign === VAlign.Middle ? '-50%' : data?.valign === VAlign.Top ? '10%' : '-90%'})`,
     fontSize: `${data?.size}px`,
     color: data?.color,
+  }),
+  element: css({
+    stroke: data?.borderColor,
+    strokeWidth: data?.borderWidth,
+    fill: data?.backgroundColor,
   }),
 });

@@ -20,6 +20,8 @@ import { Scene } from './scene';
 
 let counter = 0;
 
+const svgElements = ['parallelogram', 'triangle', 'cloud', 'ellipse'];
+
 export class ElementState implements LayerElement {
   // UID necessary for moveable to work (for now)
   readonly UID = counter++;
@@ -191,8 +193,11 @@ export class ElementState implements LayerElement {
         this.div.style[key as any] = (this.sizeStyle as any)[key];
       }
 
-      for (const key in this.dataStyle) {
-        this.div.style[key as any] = (this.dataStyle as any)[key];
+      const elementType = this.options.type;
+      if (!svgElements.includes(elementType)) {
+        for (const key in this.dataStyle) {
+          this.div.style[key as any] = (this.dataStyle as any)[key];
+        }
       }
     }
   }
