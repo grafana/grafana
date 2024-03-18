@@ -1,8 +1,16 @@
-import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import {
+  FieldColorModeId,
+  FieldConfigProperty,
+  FieldType,
+  identityOverrideProcessor,
+  PanelPlugin,
+} from '@grafana/data';
 import { histogramFieldInfo } from '@grafana/data/src/transformations/transformers/histogram';
-import { commonOptionsBuilder, graphFieldOptions, StackingMode } from '@grafana/ui';
+import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
+import { StackingEditor } from '@grafana/ui/src/options/builder';
 
 import { HistogramPanel } from './HistogramPanel';
+import { defaultHistogramConfig } from './config';
 import { changeToHistogramPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { originalDataHasHistogram } from './utils';
@@ -50,21 +58,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
         },
         showIf: (opts, data) => !originalDataHasHistogram(data),
       })
-      .addRadio({
-        path: 'stacking',
-        name: 'Stacking',
-        settings: {
-          options: graphFieldOptions.stacking,
-        },
-        defaultValue: defaultOptions.stacking,
-        showIf: (opts, data) => !originalDataHasHistogram(data),
-      })
       .addBooleanSwitch({
         path: 'combine',
         name: histogramFieldInfo.combine.name,
         description: histogramFieldInfo.combine.description,
         defaultValue: defaultOptions.combine,
-        showIf: (opts, data) => !originalDataHasHistogram(data) && opts.stacking === StackingMode.None,
+        showIf: (opts, data) => !originalDataHasHistogram(data),
       });
 
     // commonOptionsBuilder.addTooltipOptions(builder);
@@ -87,6 +86,21 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
       const cfg = defaultFieldConfig;
 
       builder
+        .addCustomEditor({
+          id: 'stacking',
+          path: 'stacking',
+          name: 'Stacking',
+          category: ['Histogram'],
+          defaultValue: defaultHistogramConfig.stacking,
+          editor: StackingEditor,
+          override: StackingEditor,
+          settings: {
+            options: graphFieldOptions.stacking,
+          },
+          process: identityOverrideProcessor,
+          shouldApply: (f) => f.type === FieldType.number,
+          showIf: (opts, data) => !originalDataHasHistogram(data),
+        })
         .addSliderInput({
           path: 'lineWidth',
           name: 'Line width',

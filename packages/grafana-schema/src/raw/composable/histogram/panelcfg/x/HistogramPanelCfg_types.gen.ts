@@ -29,16 +29,11 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    * Combines multiple series into a single histogram
    */
   combine?: boolean;
-  /**
-   * Controls whether the histogram is stacked or not
-   */
-  stacking: common.StackingMode;
 }
 
 export const defaultOptions: Partial<Options> = {
   bucketCount: 30,
   bucketOffset: 0,
-  stacking: common.StackingMode.None,
 };
 
 export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig {
@@ -55,6 +50,7 @@ export interface FieldConfig extends common.AxisConfig, common.HideableFieldConf
    * Controls line width of the bars.
    */
   lineWidth?: number;
+  stacking?: common.StackableFieldConfig;
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {

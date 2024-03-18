@@ -37,8 +37,6 @@ composableKinds: PanelCfg: {
 					bucketOffset?: float32 | *0
 					//Combines multiple series into a single histogram
 					combine?: bool
-					//Controls whether the histogram is stacked or not
-					stacking: common.StackingMode & (*"none" | _)
 				} @cuetsy(kind="interface")
 
 				FieldConfig: {
@@ -52,6 +50,7 @@ composableKinds: PanelCfg: {
 					// Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
 					// Gradient appearance is influenced by the Fill opacity setting.
 					gradientMode?: common.GraphGradientMode & (*"none" | _)
+					stacking?:     common.StackableFieldConfig
 				} @cuetsy(kind="interface")
 			}
 		}]
