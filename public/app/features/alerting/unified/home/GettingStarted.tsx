@@ -95,6 +95,7 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   svgContainer: css({
     '& svg': {
       maxWidth: '900px',
+      flex: 1,
     },
   }),
   list: css({
