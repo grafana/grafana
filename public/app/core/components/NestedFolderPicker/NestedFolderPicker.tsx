@@ -49,7 +49,7 @@ async function getSearchResults(searchQuery: string, permission?: PermissionLeve
     query: searchQuery,
     kind: ['folder'],
     limit: 100,
-    // permission: permission, // TODO: make grafana server support this
+    permission: permission,
   });
 
   const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
