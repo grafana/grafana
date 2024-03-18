@@ -1422,7 +1422,7 @@ func Test_ProviderService_ProvidersList(t *testing.T) {
 		strategiesLength      int
 	}{
 		{
-			name: "should return all OAuth providers but not saml becuase the licensing feature is not enabled",
+			name: "should return all OAuth providers but not saml because the licensing feature is not enabled",
 			expectedProvidersList: []string{
 				"github",
 				"gitlab",
