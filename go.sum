@@ -2210,8 +2210,6 @@ github.com/grafana/grafana/pkg/promlib v0.0.1 h1:R+z+xC4vhG3jgMjIJ2cbUjMQdc1HSJH
 github.com/grafana/grafana/pkg/promlib v0.0.1/go.mod h1:zkmF4NeKJs/y65xc3/XXc53LY0J8E7YUsZnn+FSrcq4=
 github.com/grafana/grafana/pkg/util/xorm v0.0.1 h1:72QZjxWIWpSeOF8ob4aMV058kfgZyeetkAB8dmeti2o=
 github.com/grafana/grafana/pkg/util/xorm v0.0.1/go.mod h1:eNfbB9f2jM8o9RfwqwjY8SYm5tvowJ8Ly+iE4P9rXII=
-github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 h1:1YNoeIhii4UIIQpCPU+EXidnqf449d0C3ZntAEt4KSo=
-github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20240208102907-e82436ce63e6 h1:CBm0rwLCPDyarg9/bHJ50rBLYmyMDoyCWpgRMITZhdA=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20240208102907-e82436ce63e6/go.mod h1:8Ia/R3urPmbzJ8OsdvmZvIprDwvwmYCmUbwBL+jlPOE=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.6 h1:nEdZ8louGAplSvIJi1HVp7kWvFvdiiYg3COLlTwJiFo=
@@ -2227,8 +2225,6 @@ github.com/grafana/sqlds/v3 v3.2.0 h1:WXuYEaFfiCvgm8kK2ixx44/zAEjFzCylA2+RF3GBqZ
 github.com/grafana/sqlds/v3 v3.2.0/go.mod h1:kH0WuHUR3j0Q7IEymbm2JiaPckUhRCbqjV9ajaBAnmM=
 github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b h1:mDlkqgTEJuK7vjPG44f3ZMtId5AAYLWHvBVbiGqIOOQ=
 github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b/go.mod h1:UK7kTP5llPeRcGBOe5mm4QTNTd0k/mAqTVSOFdDH6AU=
-github.com/grafana/thema v0.0.0-20230302221249-6952e4a999b7 h1:XOxaBjhozlleshff3mKNdp55ul74nXJEX3wz8ckjTpc=
-github.com/grafana/thema v0.0.0-20230302221249-6952e4a999b7/go.mod h1:T6q1RVzq5fzVbm+QBeIsTmVzuXlMaArp4wxfLvcaMV0=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-middleware v1.3.0/go.mod h1:z0ButlSOZa5vEBq9m2m2hlwIgKw+rp3sdCBRoJY+30Y=
@@ -3142,8 +3138,6 @@ github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 h1:zzrxE1FKn5ryB
 github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2/go.mod h1:hzfGeIUDq/j97IG+FhNqkowIyEcD88LrW6fyU3K3WqY=
 github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0 h1:6fRhSjgLCkTD3JnJxvaJ4Sj+TYblw757bqYgZaOq5ZY=
 github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0/go.mod h1:/LWChgwKmvncFJFHJ7Gvn9wZArjbV5/FppcK2fKk/tI=
-github.com/yalue/merged_fs v1.2.2 h1:vXHTpJBluJryju7BBpytr3PDIkzsPMpiEknxVGPhN/I=
-github.com/yalue/merged_fs v1.2.2/go.mod h1:WqqchfVYQyclV2tnR7wtRhBddzBvLVR83Cjw9BKQw0M=
 github.com/yosssi/ace v0.0.5 h1:tUkIP/BLdKqrlrPwcmH0shwEEhTRHoGnc1wFIWmaBUA=
 github.com/yosssi/ace v0.0.5/go.mod h1:ALfIzm2vT7t5ZE7uoIZqF3TQ7SAOyupFZnkrF5id+K0=
 github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d/go.mod h1:rHwXgn7JulP+udvsHwJoVG1YGAP6VLg4y9I5dyZdqmA=

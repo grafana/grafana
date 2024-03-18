@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/kindsys"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
@@ -900,13 +898,13 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 				CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
 					Region:     "us-east-1",
 					Namespace:  "ec2",
-					MetricName: kindsys.Ptr("CPUUtilization"),
-					Alias:      kindsys.Ptr(tc.inputAlias),
+					MetricName: ptr("CPUUtilization"),
+					Alias:      ptr(tc.inputAlias),
 					Dimensions: &dataquery.Dimensions{
 						"InstanceId": []any{"test"},
 					},
 					Statistic: &average,
-					Period:    kindsys.Ptr("600"),
+					Period:    ptr("600"),
 					Hide:      &false,
 				},
 			}
@@ -1271,4 +1269,8 @@ func TestGetEndpoint(t *testing.T) {
 			assert.Equal(t, ts.expectedEndpoint, actual)
 		})
 	}
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }
