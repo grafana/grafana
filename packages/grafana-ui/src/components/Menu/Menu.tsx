@@ -76,10 +76,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'inline-block',
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(0.5, 0),
-
-      '&:focus': {
-        outline: 'none',
-      },
     }),
   };
 };
