@@ -13,7 +13,11 @@ const matcherOperators = [
   MatcherOperator.equal,
 ];
 
-// parse a single matcher: foo="bar" or bar!~baz
+/**
+ * Parse a single matcher, examples:
+ *  foo="bar" => { name: foo, value: bar, isRegex: false, isEqual: true }
+ *  bar!~baz => { name: bar, value: baz, isRegex: true, isEqual: false }
+ */
 export function parseMatcher(matcher: string): Matcher {
   if (matcher.startsWith('{') && matcher.endsWith('}')) {
     throw new Error(
@@ -44,7 +48,9 @@ export function parseMatcher(matcher: string): Matcher {
   };
 }
 
-// combines parseMatcher and parsePromQLStyleMatcher, always returning an array of Matcher[] regardless of input syntax
+/**
+ * This function combines parseMatcher and parsePromQLStyleMatcher, always returning an array of Matcher[] regardless of input syntax
+ */
 export function parseMatcherToArray(matcher: string): Matcher[] {
   return isPromQLStyleMatcher(matcher) ? parsePromQLStyleMatcher(matcher) : [parseMatcher(matcher)];
 }
