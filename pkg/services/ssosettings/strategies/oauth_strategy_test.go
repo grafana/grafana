@@ -147,7 +147,7 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 		result, err := strategy.GetProviderConfig(context.Background(), social.AzureADProviderName)
 		require.NoError(t, err)
 
-		require.Equal(t, "true", result["force_use_graph_api"])
+		require.Equal(t, true, result["force_use_graph_api"])
 		require.Equal(t, "org1, org2", result["allowed_organizations"])
 	})
 
@@ -181,7 +181,7 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 		result, err := strategy.GetProviderConfig(context.Background(), social.GoogleProviderName)
 		require.NoError(t, err)
 
-		require.Equal(t, "true", result["validate_hd"])
+		require.Equal(t, true, result["validate_hd"])
 	})
 }
 

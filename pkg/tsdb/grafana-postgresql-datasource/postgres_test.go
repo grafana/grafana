@@ -2,22 +2,27 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
+	"net"
+	"net/http"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	backendproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/proxy"
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/tls"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 
-	"github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -227,25 +232,40 @@ func TestIntegrationPostgres(t *testing.T) {
 		return sql
 	}
 
+	host := os.Getenv("POSTGRES_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+	port := os.Getenv("POSTGRES_PORT")
+	if port == "" {
+		port = "5432"
+	}
+
 	jsonData := sqleng.JsonData{
 		MaxOpenConns:        0,
 		MaxIdleConns:        2,
 		ConnMaxLifetime:     14400,
 		Timescaledb:         false,
 		ConfigurationMethod: "file-path",
+		Mode:                "disable",
 	}
 
 	dsInfo := sqleng.DataSourceInfo{
-		JsonData:                jsonData,
-		DecryptedSecureJSONData: map[string]string{},
+		JsonData: jsonData,
+		DecryptedSecureJSONData: map[string]string{
+			"password": "grafanatest",
+		},
+		URL:      host + ":" + port,
+		Database: "grafanadstest",
+		User:     "grafanatest",
 	}
 
 	logger := backend.NewLoggerWith("logger", "postgres.test")
 
-	cnn, err := postgresTestDBConn()
+	settings := backend.DataSourceInstanceSettings{}
+	proxyClient, err := settings.ProxyClient(context.Background())
 	require.NoError(t, err)
-
-	db, exe, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnn, logger, backend.DataSourceInstanceSettings{})
+	db, exe, err := newPostgres("error", 10000, dsInfo, logger, proxyClient)
 
 	require.NoError(t, err)
 
@@ -1298,8 +1318,10 @@ func TestIntegrationPostgres(t *testing.T) {
 		})
 
 		t.Run("When row limit set to 1", func(t *testing.T) {
-			dsInfo := sqleng.DataSourceInfo{}
-			_, handler, err := newPostgres(context.Background(), "error", 1, dsInfo, cnn, logger, backend.DataSourceInstanceSettings{})
+			settings := backend.DataSourceInstanceSettings{}
+			proxyClient, err := settings.ProxyClient(context.Background())
+			require.NoError(t, err)
+			_, handler, err := newPostgres("error", 1, dsInfo, logger, proxyClient)
 
 			require.NoError(t, err)
 
@@ -1422,17 +1444,59 @@ func isTestDbPostgres() bool {
 	return false
 }
 
-func postgresTestDBConn() (*pgx.ConnConfig, error) {
-	host := os.Getenv("POSTGRES_HOST")
-	if host == "" {
-		host = "localhost"
-	}
-	port := os.Getenv("POSTGRES_PORT")
-	if port == "" {
-		port = "5432"
-	}
-	connStr := fmt.Sprintf("user=grafanatest password=grafanatest host=%s port=%s dbname=grafanadstest sslmode=disable",
-		host, port)
+type testNoResolveDialer struct {
+}
 
-	return pgx.ParseConfig(connStr)
+func (d *testNoResolveDialer) Dial(network, addr string) (c net.Conn, err error) {
+	return nil, fmt.Errorf("test-dialer: dialing to '%s'. not implemented", addr)
+}
+
+var _ proxy.Dialer = (&testNoResolveDialer{})
+
+type testNoResolveProxyClient struct {
+}
+
+var _ backendproxy.Client = (&testNoResolveProxyClient{})
+
+func (p *testNoResolveProxyClient) SecureSocksProxyEnabled() bool {
+	return true
+}
+
+func (p *testNoResolveProxyClient) ConfigureSecureSocksHTTPProxy(transport *http.Transport) error {
+	return errors.New("testNoResolveProxyClient.ConfigureSecureSocksHTTPProxy not implemented")
+}
+
+func (p *testNoResolveProxyClient) NewSecureSocksProxyContextDialer() (proxy.Dialer, error) {
+	return &testNoResolveDialer{}, nil
+}
+
+// we must make sure that pgx does not resolve hostnames:
+// if we say the hostname is `localhost`, then it should
+// instruct the socks-proxy to connect to `localhost`, not to `127.0.0.1`
+// this is important, becase some other socks-proxy-code relies on this behavior.
+func TestNoResolve(t *testing.T) {
+	jsonData := sqleng.JsonData{
+		MaxOpenConns:        0,
+		MaxIdleConns:        2,
+		ConnMaxLifetime:     14400,
+		Timescaledb:         false,
+		ConfigurationMethod: "file-path",
+	}
+
+	dsInfo := sqleng.DataSourceInfo{
+		JsonData: jsonData,
+		DecryptedSecureJSONData: map[string]string{
+			"password": "password",
+		},
+		URL:      "localhost:5432",
+		Database: "db",
+		User:     "user",
+	}
+
+	db, _, err := newPostgres("error", 10000, dsInfo, log.New(), &testNoResolveProxyClient{})
+	require.NoError(t, err)
+	require.NotNil(t, db)
+	err = db.Ping()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "test-dialer: dialing to 'localhost:5432'. not implemented")
 }

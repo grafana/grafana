@@ -25,6 +25,7 @@ type DatabaseConfig struct {
 	Pwd                         string
 	Path                        string
 	SslMode                     string
+	SSLSNI                      string
 	CaCertPath                  string
 	ClientKeyPath               string
 	ClientCertPath              string
@@ -101,6 +102,7 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	dbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
 
 	dbCfg.SslMode = sec.Key("ssl_mode").String()
+	dbCfg.SSLSNI = sec.Key("ssl_sni").String()
 	dbCfg.CaCertPath = sec.Key("ca_cert_path").String()
 	dbCfg.ClientKeyPath = sec.Key("client_key_path").String()
 	dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
@@ -168,12 +170,16 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 
 		args := []any{dbCfg.User, addr.Host, addr.Port, dbCfg.Name, dbCfg.SslMode, dbCfg.ClientCertPath,
 			dbCfg.ClientKeyPath, dbCfg.CaCertPath}
+
 		for i, arg := range args {
 			if arg == "" {
 				args[i] = "''"
 			}
 		}
 		cnnstr = fmt.Sprintf("user=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", args...)
+		if dbCfg.SSLSNI != "" {
+			cnnstr += fmt.Sprintf(" sslsni=%s", dbCfg.SSLSNI)
+		}
 		if dbCfg.Pwd != "" {
 			cnnstr += fmt.Sprintf(" password=%s", dbCfg.Pwd)
 		}

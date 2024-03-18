@@ -1,5 +1,5 @@
 {
-  "_comment": "Diese Datei ist die zuverlässige Quelle für englische Strings. Bearbeiten Sie diese in der Codebasis, um Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
+  "_comment": "Diese Datei ist die zuverlässige Quelle für englische Strings. Bearbeiten Sie diese im Code, um Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
   "access-control": {
     "add-permission": {
       "role-label": "Rolle",
@@ -697,9 +697,35 @@
       "link-title": "",
       "title": ""
     },
+    "connect-modal": {
+      "body-cloud-stack": "",
+      "body-get-started": "",
+      "body-paste-stack": "",
+      "body-sign-up": "",
+      "body-token": "",
+      "body-token-field": "",
+      "body-token-field-placeholder": "",
+      "body-token-instructions": "",
+      "body-url-field": "",
+      "body-view-stacks": "",
+      "cancel": "",
+      "connect": "",
+      "connecting": "",
+      "stack-required-error": "",
+      "title": "",
+      "token-required-error": ""
+    },
     "cta": {
       "button": "",
       "header": ""
+    },
+    "disconnect-modal": {
+      "body": "",
+      "cancel": "",
+      "disconnect": "",
+      "disconnecting": "",
+      "error": "",
+      "title": ""
     },
     "get-started": {
       "body": "",
@@ -750,6 +776,22 @@
       "body": "",
       "link-title": "",
       "title": ""
+    },
+    "resource-status": {
+      "error-details-button": "",
+      "failed": "",
+      "migrated": "",
+      "migrating": "",
+      "not-migrated": "",
+      "unknown": ""
+    },
+    "resource-type": {
+      "dashboard": "",
+      "datasource": "",
+      "unknown": ""
+    },
+    "resources": {
+      "disconnect": ""
     },
     "token-status": {
       "active": "",
@@ -1180,7 +1222,8 @@
       "new-password-same-as-old": "Neues Passwort kann nicht das gleiche sein wie das alte.",
       "old-password-label": "Altes Passwort",
       "old-password-required": "Altes Passwort ist erforderlich",
-      "passwords-must-match": "Passwörter müssen übereinstimmen"
+      "passwords-must-match": "Passwörter müssen übereinstimmen",
+      "strong-password-validation-register": ""
     }
   },
   "public-dashboard": {
