@@ -53,7 +53,6 @@ composableKinds: DataQuery: {
 					tableType?: #SearchTableType
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
-				// nativeSearch = Tempo search for backwards compatibility
 				#TempoQueryType: "traceql" | "traceqlSearch" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")
 
 				// The state of the TraceQL streaming search query
