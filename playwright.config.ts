@@ -68,7 +68,6 @@ export default defineConfig<PluginOptions>({
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
       },
-      repeatEach: 20,
       dependencies: ['authenticate'],
     },
   ],
