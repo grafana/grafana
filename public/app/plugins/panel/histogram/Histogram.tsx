@@ -331,11 +331,6 @@ export class Histogram extends React.Component<HistogramProps, State> {
 
       const newState = this.prepState(this.props, shouldReconfig);
 
-      console.log({
-        setState: true,
-        shouldReconfig
-      });
-
       this.setState(newState);
     }
   }
