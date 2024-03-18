@@ -6,8 +6,9 @@ import (
 	"sync"
 	"time"
 
-	alertingCluster "github.com/grafana/alerting/cluster"
 	"github.com/prometheus/client_golang/prometheus"
+
+	alertingCluster "github.com/grafana/alerting/cluster"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
@@ -41,6 +42,10 @@ type Alertmanager interface {
 	DeleteSilence(context.Context, string) error
 	GetSilence(context.Context, string) (apimodels.GettableSilence, error)
 	ListSilences(context.Context, []string) (apimodels.GettableSilences, error)
+
+	// SilenceState returns the current state of silences in the Alertmanager. This is used to persist the state
+	// to the kvstore.
+	SilenceState(context.Context) (alertingNotify.SilenceState, error)
 
 	// Alerts
 	GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
@@ -393,6 +398,73 @@ func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (Alertmanager, err
 	}
 
 	return orgAM, nil
+}
+
+// CreateSilence creates a silence in the Alertmanager for the organization provided, returning the silence ID. It will
+// also persist the silence state to the kvstore immediately after creating the silence.
+func (moa *MultiOrgAlertmanager) CreateSilence(ctx context.Context, orgID int64, ps *alertingNotify.PostableSilence) (string, error) {
+	moa.alertmanagersMtx.RLock()
+	defer moa.alertmanagersMtx.RUnlock()
+
+	orgAM, existing := moa.alertmanagers[orgID]
+	if !existing {
+		return "", ErrNoAlertmanagerForOrg
+	}
+
+	if !orgAM.Ready() {
+		return "", ErrAlertmanagerNotReady
+	}
+
+	// Need to create the silence in the AM first to get the silence ID.
+	silenceID, err := orgAM.CreateSilence(ctx, ps)
+	if err != nil {
+		return "", err
+	}
+
+	return silenceID, moa.updateSilenceState(ctx, orgAM, orgID)
+}
+
+// DeleteSilence deletes a silence in the Alertmanager for the organization provided. It will also persist the silence
+// state to the kvstore immediately after deleting the silence.
+func (moa *MultiOrgAlertmanager) DeleteSilence(ctx context.Context, orgID int64, silenceID string) error {
+	moa.alertmanagersMtx.RLock()
+	defer moa.alertmanagersMtx.RUnlock()
+
+	orgAM, existing := moa.alertmanagers[orgID]
+	if !existing {
+		return ErrNoAlertmanagerForOrg
+	}
+
+	if !orgAM.Ready() {
+		return ErrAlertmanagerNotReady
+	}
+
+	err := orgAM.DeleteSilence(ctx, silenceID)
+	if err != nil {
+		return err
+	}
+
+	return moa.updateSilenceState(ctx, orgAM, orgID)
+}
+
+// updateSilenceState persists the silence state to the kvstore immediately instead of waiting for the next maintenance
+// run. This is used after Create/Delete to prevent silences from being lost when a new Alertmanager is started before
+// the state has persisted. This can happen, for example, in a rolling deployment scenario.
+func (moa *MultiOrgAlertmanager) updateSilenceState(ctx context.Context, orgAM Alertmanager, orgID int64) error {
+	// Collect the internal silence state from the AM.
+	// TODO: Currently, we rely on the AM itself for the persisted silence state representation. Preferably, we would
+	//  define the state ourselves and persist it in a format that is easy to guarantee consistency for writes to
+	//  individual silences. In addition to the consistency benefits, this would also allow us to avoid the need for
+	//  a network request to the AM to get the state in the case of remote alertmanagers.
+	silences, err := orgAM.SilenceState(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Persist to kvstore.
+	fs := NewFileStore(orgID, moa.kvStore)
+	_, err = fs.SaveSilences(ctx, silences)
+	return err
 }
 
 // NilPeer and NilChannel implements the Alertmanager clustering interface.
