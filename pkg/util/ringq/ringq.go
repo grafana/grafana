@@ -1,7 +1,7 @@
 package ringq
 
 // RingQ is a ring buffer backed by a slice that rearranges itself to grow
-// dynamically, and can also be shrinked manually. It is not safe for concurrent
+// dynamically, and can also be shrunk manually. It is not safe for concurrent
 // use, and the zero value is ready for use. Dequeued and cleared items are
 // zeroed in the underlying slice to release references and allow garbage
 // collection.

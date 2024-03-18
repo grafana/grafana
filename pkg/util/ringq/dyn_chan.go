@@ -56,7 +56,6 @@ func DynChanMax[T any](minBufLen, maxBufLen int) (chan<- T, <-chan T, ChanStatsR
 		// (q.Len()>0) or that we have the possibility to receive new items to
 		// be queued (in != nil)
 		for stats.Len > 0 || in != nil {
-
 			// if we don't have anything in the queue, then make the dequeueing
 			// branch of the select block indefinitely by providing a nil
 			// channel, leaving only the queueing branch available
