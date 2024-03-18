@@ -75,7 +75,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/grafana': grafanaPlugin,
   'core:plugin/influxdb': influxdbPlugin,
   'core:plugin/loki': lokiPlugin,
-  'core:plugin/jaeger': jaegerPlugin,
   'core:plugin/mixed': mixedPlugin,
   'core:plugin/mysql': mysqlPlugin,
   'core:plugin/grafana-postgresql-datasource': postgresPlugin,
