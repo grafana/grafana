@@ -75,7 +75,7 @@ export interface SimulationQuery {
 export interface NodesQuery {
   count?: number;
   seed?: number;
-  type?: ('random' | 'response_small' | 'response_medium' | 'random edges');
+  type?: ('random' | 'response_small' | 'response_medium' | 'random edges' | 'feature_showcase');
 }
 
 export interface USAQuery {

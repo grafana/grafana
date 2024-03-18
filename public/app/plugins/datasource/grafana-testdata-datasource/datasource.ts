@@ -22,7 +22,7 @@ import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv
 
 import { Scenario, TestDataDataQuery, TestDataQueryType } from './dataquery.gen';
 import { queryMetricTree } from './metricTree';
-import { generateRandomEdges, generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
+import { generateRandomEdges, generateRandomNodes, generateShowcaseData, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';
 import { flameGraphData, flameGraphDataDiff } from './testData/flameGraphResponse';
 import { TestDataVariableSupport } from './variables';
@@ -237,6 +237,9 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
     const type = target.nodes?.type || 'random';
     let frames: DataFrame[];
     switch (type) {
+      case 'feature_showcase':
+        frames = generateShowcaseData();
+        break;
       case 'random':
         frames = generateRandomNodes(target.nodes?.count, target.nodes?.seed);
         break;
