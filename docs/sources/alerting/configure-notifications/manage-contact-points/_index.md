@@ -122,26 +122,25 @@ Once configured, you can use integrations as part of your contact points to rece
 
 ## List of supported integrations
 
-| Name                     | Type                      |
-| ------------------------ | ------------------------- |
-| DingDing                 | `dingding`                |
-| Discord                  | `discord`                 |
-| Email                    | `email`                   |
-| Google Chat              | `googlechat`              |
+| Name                         | Type                      |
+| ---------------------------- | ------------------------- |
+| DingDing                     | `dingding`                |
+| Discord                      | `discord`                 |
+| Email                        | `email`                   |
+| Google Chat                  | `googlechat`              |
 | [Grafana Oncall](ref:oncall) | `oncall`                  |
-| Hipchat                  | `hipchat`                 |
-| Kafka                    | `kafka`                   |
-| Line                     | `line`                    |
-| Microsoft Teams          | `teams`                   |
-| Opsgenie                 | `opsgenie`                |
+| Hipchat                      | `hipchat`                 |
+| Kafka                        | `kafka`                   |
+| Line                         | `line`                    |
+| Microsoft Teams              | `teams`                   |
+| Opsgenie                     | `opsgenie`                |
 | [Pagerduty](ref:pagerduty)   | `pagerduty`               |
-| Prometheus Alertmanager  | `prometheus-alertmanager` |
-| Pushover                 | `pushover`                |
-| Sensu                    | `sensu`                   |
-| Sensu Go                 | `sensugo`                 |
-| Slack                    | `slack`                   |
-| Telegram                 | `telegram`                |
-| Threema                  | `threema`                 |
-| VictorOps                | `victorops`               |
+| Prometheus Alertmanager      | `prometheus-alertmanager` |
+| Pushover                     | `pushover`                |
+| Sensu                        | `sensu`                   |
+| Sensu Go                     | `sensugo`                 |
+| Slack                        | `slack`                   |
+| Telegram                     | `telegram`                |
+| Threema                      | `threema`                 |
+| VictorOps                    | `victorops`               |
 | [Webhook](ref:webhook)       | `webhook`                 |
-

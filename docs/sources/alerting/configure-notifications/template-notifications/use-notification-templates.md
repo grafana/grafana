@@ -46,4 +46,3 @@ In the Contact points tab, you can see a list of your contact points.
    For more information on how to write and execute templates, refer to [Using Go's templating language](ref:using-go-templating-language) and [Create notification templates](ref:create-notification-templates).
 
 1. Click **Save contact point**.
-

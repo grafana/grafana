@@ -131,4 +131,3 @@ When choosing which alert rule type to use, consider the following comparison be
 **Note:**
 
 If you are using non-Prometheus data, we recommend choosing Grafana-managed alert rules. Otherwise, choose Grafana Mimir or Grafana Loki alert rules where possible.
-

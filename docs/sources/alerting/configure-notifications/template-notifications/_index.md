@@ -68,4 +68,3 @@ Use notification templates to send notifications to your contact points.
 [Reference](ref:reference)
 
 Data that is available when writing templates.
-

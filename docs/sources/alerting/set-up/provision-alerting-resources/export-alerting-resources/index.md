@@ -212,8 +212,8 @@ To export mute timings from the Grafana UI, complete the following steps.
 
 You can use the [Alerting HTTP API](ref:alerting_http_provisioning) to return existing alerting resources in JSON and import them to another Grafana instance using the same endpoint.
 
-| Resource                                                       | URI                                 |
-| -------------------------------------------------------------- | ----------------------------------- |
+| Resource                                                           | URI                                 |
+| ------------------------------------------------------------------ | ----------------------------------- |
 | [Alert rules](ref:alerting_http_alertrules)                        | /api/v1/provisioning/alert-rules    |
 | [Contact points](ref:alerting_http_contactpoints)                  | /api/v1/provisioning/contact-points |
 | [Notification policy tree](ref:alerting_http_notificationpolicies) | /api/v1/provisioning/policies       |
@@ -226,8 +226,8 @@ However, note the standard endpoints return a JSON format that is not compatible
 
 The **Alerting HTTP API** provides specific endpoints for exporting alerting resources in YAML or JSON formats, facilitating [provisioning via configuration files](ref:alerting_file_provisioning). Currently, Terraform format is not supported.
 
-| Resource                 | Method / URI                                                         | Summary                                                                                  |
-| ------------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Resource                 | Method / URI                                                         | Summary                                                                                      |
+| ------------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | Alert rules              | GET /api/v1/provisioning/alert-rules/export                          | [Export all alert rules in provisioning file format.](ref:export_rules)                      |
 | Alert rules              | GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [Export an alert rule group in provisioning file format.](ref:export_rule_group)             |
 | Alert rules              | GET /api/v1/provisioning/alert-rules/:uid/export                     | [Export an alert rule in provisioning file format.](ref:export_rule)                         |

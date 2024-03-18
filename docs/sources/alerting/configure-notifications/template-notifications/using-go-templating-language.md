@@ -296,4 +296,3 @@ The indentation and line breaks in the template are now absent from the text:
 alertname = "Test"
 grafana_folder = "Test alerts"
 ```
-

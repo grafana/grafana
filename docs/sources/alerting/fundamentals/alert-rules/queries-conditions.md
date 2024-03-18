@@ -222,4 +222,3 @@ When this query is used as the **condition** in an alert rule, then the non-zero
 | {Host=web1,disk=/etc} | Alerting |
 | {Host=web2,disk=/var} | Alerting |
 | {Host=web3,disk=/var} | Normal   |
-

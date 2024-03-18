@@ -88,4 +88,3 @@ To view your provisioned resources in Grafana, complete the following steps.
 1. Click an alerting resource folder, for example, Alert rules.
 
 Provisioned resources are labeled **Provisioned**, so that it is clear that they were not created manually.
-

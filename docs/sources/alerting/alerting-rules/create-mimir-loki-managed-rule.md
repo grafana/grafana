@@ -135,4 +135,3 @@ Annotations add metadata to provide more information on the alert in your alert 
    Links alerts to panels in a dashboard.
 
 1. Click **Save rule**.
-

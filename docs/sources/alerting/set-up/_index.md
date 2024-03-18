@@ -85,4 +85,3 @@ The following topics provide you with advanced configuration options for Grafana
 - [Provision alert rules using Terraform](ref:terraform-provisioning)
 - [Add an external Alertmanager](ref:configure-alertmanager)
 - [Configure high availability](ref:configure-high-availability)
-
