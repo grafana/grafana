@@ -155,6 +155,17 @@ describe('parsePromQLStyleMatcher', () => {
     ]);
   });
 
+  it('should split only on comma when not used as a label key or value', () => {
+    expect(parsePromQLStyleMatcher('{ "key1,key2"="value1,value2"}')).toStrictEqual([
+      {
+        name: 'key1,key2',
+        value: 'value1,value2',
+        isEqual: true,
+        isRegex: false,
+      },
+    ]);
+  });
+
   it('should throw when not using correct syntax', () => {
     expect(() => parsePromQLStyleMatcher('foo="bar"')).toThrow();
   });
