@@ -87,8 +87,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       try {
         //Enter edit mode
         e2e.components.NavToolbar.editDashboard.editButton().should('be.visible').click();
-        e2e.pages.AddDashboard.itemButton('Create new panel button').should('be.visible');
-        e2e.pages.AddDashboard.itemButton('Create new panel button').click();
+        e2e.components.NavToolbar.editDashboard.addVisualizationButton().should('be.visible').click();
       } catch (e) {
         // Depending on the screen size, the "Add" button might be hidden
         e2e.components.PageToolbar.item('Show more items').click();

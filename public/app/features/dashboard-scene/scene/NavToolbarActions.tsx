@@ -72,6 +72,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="add-visualization"
         tooltip={'Add visualization'}
         icon="graph-bar"
+        data-testid={selectors.components.NavToolbar.editDashboard.addVisualizationButton}
         onClick={() => {
           const id = dashboard.onCreateNewPanel();
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
@@ -89,6 +90,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="add-library-panel"
         tooltip={'Add library panel'}
         icon="library-panel"
+        data-testid={selectors.components.NavToolbar.editDashboard.addLibraryPanelButton}
         onClick={() => {
           dashboard.onCreateLibPanelWidget();
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
@@ -105,6 +107,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="add-row"
         tooltip={'Add row'}
         icon="wrap-text"
+        data-testid={selectors.components.NavToolbar.editDashboard.addRowButton}
         onClick={() => {
           dashboard.onCreateNewRow();
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
@@ -122,6 +125,7 @@ export function ToolbarActions({ dashboard }: Props) {
         disabled={!hasCopiedPanel}
         tooltip={'Paste panel'}
         icon="copy"
+        data-testid={selectors.components.NavToolbar.editDashboard.pastePanelButton}
         onClick={() => {
           dashboard.pastePanel();
           DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
@@ -144,6 +148,7 @@ export function ToolbarActions({ dashboard }: Props) {
             <Icon name={meta.isStarred ? 'favorite' : 'star'} size="lg" type={meta.isStarred ? 'mono' : 'default'} />
           }
           key="star-dashboard-button"
+          data-testid={selectors.components.NavToolbar.markAsFavorite}
           onClick={() => {
             DashboardInteractions.toolbarFavoritesClick();
             dashboard.onStarDashboard();
