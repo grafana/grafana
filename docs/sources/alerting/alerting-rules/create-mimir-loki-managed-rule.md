@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
-  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
-  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-rule/
+  - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
+  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-rule/
 description: Configure data source-managed alert rules alert for an external Grafana Mimir or Loki instance
 keywords:
@@ -129,6 +129,6 @@ Annotations add metadata to provide more information on the alert in your alert 
 [alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting"
 [alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting"
 
-[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label"
-[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label"
+[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label"
 {{% /docs/reference %}}

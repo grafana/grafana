@@ -52,9 +52,11 @@ func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Log
 			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}
 
-		err = extendOptions(ctx, settings, opts)
-		if err != nil {
-			return nil, fmt.Errorf("error extending transport options: %v", err)
+		if extendOptions != nil {
+			err = extendOptions(ctx, settings, opts)
+			if err != nil {
+				return nil, fmt.Errorf("error extending transport options: %v", err)
+			}
 		}
 
 		httpClient, err := httpClientProvider.New(*opts)
