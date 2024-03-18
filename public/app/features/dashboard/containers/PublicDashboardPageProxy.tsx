@@ -14,7 +14,7 @@ export type PublicDashboardPageProxyProps = GrafanaRouteComponentProps<
 >;
 
 function PublicDashboardPageProxy(props: PublicDashboardPageProxyProps) {
-  if (config.featureToggles.dashboardScene || props.queryParams.scenes) {
+  if (config.featureToggles.dashboardSceneForViewers || props.queryParams.scenes) {
     return <PublicDashboardScenePage {...props} />;
   }
 
