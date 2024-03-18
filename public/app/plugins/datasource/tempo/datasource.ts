@@ -1,4 +1,4 @@
-import { groupBy, identity, pick, pickBy, startCase } from 'lodash';
+import { groupBy, startCase } from 'lodash';
 import { EMPTY, from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 import semver from 'semver';
@@ -14,7 +14,6 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
-  isValidGoDuration,
   LoadingState,
   rangeUtil,
   ScopedVars,
@@ -53,15 +52,14 @@ import {
 import TempoLanguageProvider from './language_provider';
 import { createTableFrameFromMetricsSummaryQuery, emptyResponse, MetricsSummary } from './metricsSummary';
 import {
-  createTableFrameFromSearch,
   formatTraceQLMetrics,
   formatTraceQLResponse,
   transformFromOTLP as transformFromOTEL,
   transformTrace,
 } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
-import { SearchQueryParams, TempoJsonData, TempoQuery } from './types';
-import { getErrorMessage } from './utils';
+import { TempoJsonData, TempoQuery } from './types';
+import { getErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
 import { TempoVariableSupport } from './variables';
 
 export const DEFAULT_LIMIT = 20;
@@ -265,37 +263,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       return of({ data: [], state: LoadingState.Done });
     }
 
+    // Migrate user to new query type if they are using the old search query type
     if (targets.nativeSearch?.length) {
-      try {
-        reportInteraction('grafana_traces_search_queried', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          hasServiceName: targets.nativeSearch[0].serviceName ? true : false,
-          hasSpanName: targets.nativeSearch[0].spanName ? true : false,
-          resultLimit: targets.nativeSearch[0].limit ?? '',
-          hasSearch: targets.nativeSearch[0].search ? true : false,
-          minDuration: targets.nativeSearch[0].minDuration ?? '',
-          maxDuration: targets.nativeSearch[0].maxDuration ?? '',
-        });
-
-        const timeRange = { startTime: options.range.from.unix(), endTime: options.range.to.unix() };
-        const query = this.applyVariables(targets.nativeSearch[0], options.scopedVars);
-        const searchQuery = this.buildSearchQuery(query, timeRange);
-        subQueries.push(
-          this._request('/api/search', searchQuery).pipe(
-            map((response) => {
-              return {
-                data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
-              };
-            }),
-            catchError((err) => {
-              return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
-            })
-          )
-        );
-      } catch (error) {
-        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
+      if (
+        targets.nativeSearch[0].spanName ||
+        targets.nativeSearch[0].serviceName ||
+        targets.nativeSearch[0].search ||
+        targets.nativeSearch[0].maxDuration ||
+        targets.nativeSearch[0].minDuration ||
+        targets.nativeSearch[0].queryType === 'nativeSearch'
+      ) {
+        const migratedQuery = migrateFromSearchToTraceQLSearch(targets.nativeSearch[0]);
+        targets.traceqlSearch = [migratedQuery];
       }
     }
 
@@ -502,11 +481,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return {
       ...expandedQuery,
       query: this.templateSrv.replace(query.query ?? '', scopedVars, VariableFormatID.Pipe),
-      serviceName: this.templateSrv.replace(query.serviceName ?? '', scopedVars),
-      spanName: this.templateSrv.replace(query.spanName ?? '', scopedVars),
-      search: this.templateSrv.replace(query.search ?? '', scopedVars),
-      minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
-      maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
       serviceMapQuery: Array.isArray(query.serviceMapQuery)
         ? query.serviceMapQuery.map((query) => this.templateSrv.replace(query, scopedVars))
         : this.templateSrv.replace(query.serviceMapQuery ?? '', scopedVars),
@@ -757,55 +731,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       .filter((key) => query[key])
       .map((key) => `${startCase(key)}: ${query[key]}`)
       .join(', ');
-  }
-
-  buildSearchQuery(query: TempoQuery, timeRange?: { startTime: number; endTime?: number }): SearchQueryParams {
-    let tags = query.search ?? '';
-
-    let tempoQuery = pick(query, ['minDuration', 'maxDuration', 'limit']);
-    // Remove empty properties
-    tempoQuery = pickBy(tempoQuery, identity);
-
-    if (query.serviceName) {
-      tags += ` service.name="${query.serviceName}"`;
-    }
-    if (query.spanName) {
-      tags += ` name="${query.spanName}"`;
-    }
-
-    // Set default limit
-    if (!tempoQuery.limit) {
-      tempoQuery.limit = DEFAULT_LIMIT;
-    }
-
-    // Validate query inputs and remove spaces if valid
-    if (tempoQuery.minDuration) {
-      tempoQuery.minDuration = this.templateSrv.replace(tempoQuery.minDuration ?? '');
-      if (!isValidGoDuration(tempoQuery.minDuration)) {
-        throw new Error('Please enter a valid min duration.');
-      }
-      tempoQuery.minDuration = tempoQuery.minDuration.replace(/\s/g, '');
-    }
-    if (tempoQuery.maxDuration) {
-      tempoQuery.maxDuration = this.templateSrv.replace(tempoQuery.maxDuration ?? '');
-      if (!isValidGoDuration(tempoQuery.maxDuration)) {
-        throw new Error('Please enter a valid max duration.');
-      }
-      tempoQuery.maxDuration = tempoQuery.maxDuration.replace(/\s/g, '');
-    }
-
-    if (!Number.isInteger(tempoQuery.limit) || tempoQuery.limit <= 0) {
-      throw new Error('Please enter a valid limit.');
-    }
-
-    let searchQuery: SearchQueryParams = { tags, ...tempoQuery };
-
-    if (timeRange) {
-      searchQuery.start = timeRange.startTime;
-      searchQuery.end = timeRange.endTime;
-    }
-
-    return searchQuery;
   }
 }
 

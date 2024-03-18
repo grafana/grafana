@@ -67,9 +67,6 @@ export const defaultTempoQuery: Partial<TempoQuery> = {
   groupBy: [],
 };
 
-/**
- * nativeSearch = Tempo search for backwards compatibility
- */
 export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
 
 /**
