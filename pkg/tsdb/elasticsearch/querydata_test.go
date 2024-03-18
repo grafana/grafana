@@ -114,6 +114,9 @@ type queryDataTestResult struct {
 
 func queryDataTestWithResponseCode(queriesBytes []byte, responseStatusCode int, responseBytes []byte) (queryDataTestResult, error) {
 	queries, err := newFlowTestQueries(queriesBytes)
+	req := backend.QueryDataRequest{
+		Queries: queries,
+	}
 	if err != nil {
 		return queryDataTestResult{}, err
 	}
@@ -138,7 +141,7 @@ func queryDataTestWithResponseCode(queriesBytes []byte, responseStatusCode int, 
 		return nil
 	})
 
-	result, err := queryData(context.Background(), queries, dsInfo, log.New("test.logger"), tracing.InitializeTracerForTest())
+	result, err := queryData(context.Background(), &req, dsInfo, log.New("test.logger"), tracing.InitializeTracerForTest())
 	if err != nil {
 		return queryDataTestResult{}, err
 	}
