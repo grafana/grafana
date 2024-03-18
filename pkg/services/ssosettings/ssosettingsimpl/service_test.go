@@ -13,12 +13,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -26,7 +30,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestService_GetForProvider(t *testing.T) {
 	t.Parallel()
@@ -476,122 +485,6 @@ func TestService_List(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should return all sso providers successfully including saml",
-			setup: func(env testEnv) {
-				env.store.ExpectedSSOSettings = []*models.SSOSettings{
-					{
-						Provider: "github",
-						Settings: map[string]any{
-							"enabled":       true,
-							"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
-						},
-						Source: models.DB,
-					},
-					{
-						Provider: "okta",
-						Settings: map[string]any{
-							"enabled":      false,
-							"other_secret": base64.RawStdEncoding.EncodeToString([]byte("other_secret")),
-						},
-						Source: models.DB,
-					},
-				}
-				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
-				env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
-
-				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
-					"github": {
-						"enabled":       false,
-						"client_id":     "client_id",
-						"client_secret": "secret1",
-						"token_url":     "token_url",
-					},
-					"okta": {
-						"enabled":       false,
-						"client_id":     "client_id",
-						"client_secret": "coming-from-system",
-						"other_secret":  "secret2",
-						"token_url":     "token_url",
-					},
-					"gitlab": {
-						"enabled": false,
-					},
-					"generic_oauth": {
-						"enabled": false,
-					},
-					"google": {
-						"enabled": false,
-					},
-					"azuread": {
-						"enabled": false,
-					},
-					"grafana_com": {
-						"enabled": false,
-					},
-					"saml": {
-						"enabled": false,
-					},
-				}
-				license := licensingtest.NewFakeLicensing()
-				license.On("FeatureEnabled", "saml").Return(true)
-				env.service.licensing = license
-			},
-			want: []*models.SSOSettings{
-				{
-					Provider: "github",
-					Settings: map[string]any{
-						"enabled":       true,
-						"client_id":     "client_id",
-						"client_secret": "decrypted-client-secret", // client_secret is coming from the database, must be decrypted first
-						"token_url":     "token_url",
-					},
-					Source: models.DB,
-				},
-				{
-					Provider: "okta",
-					Settings: map[string]any{
-						"enabled":       false,
-						"client_id":     "client_id",
-						"client_secret": "coming-from-system", // client_secret is coming from the system, must not be decrypted
-						"other_secret":  "decrypted-other-secret",
-						"token_url":     "token_url",
-					},
-					Source: models.DB,
-				},
-				{
-					Provider: "gitlab",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
-				},
-				{
-					Provider: "generic_oauth",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
-				},
-				{
-					Provider: "google",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
-				},
-				{
-					Provider: "azuread",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
-				},
-				{
-					Provider: "grafana_com",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
-				},
-				{
-					Provider: "saml",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
-				},
-			},
-		},
-		{
 			name: "should return error if any of the fallback strategies was not found",
 			setup: func(env testEnv) {
 				env.store.ExpectedSSOSettings = []*models.SSOSettings{}
@@ -902,116 +795,58 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
-		{
-			name: "should not include saml provider if the provider is enabled but the licensing feature is not enabled",
-			setup: func(env testEnv) {
-				env.store.ExpectedSSOSettings = []*models.SSOSettings{
-					{
-						Provider: "github",
-						Settings: map[string]any{
-							"enabled":       true,
-							"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
-							"client_id":     "client_id",
-						},
-						Source: models.DB,
-					},
-				}
-				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+		// {
+		// 	name: "should include saml provider if the provider is enabled and the licensing feature is enabled",
+		// 	setup: func(env testEnv) {
+		// 		env.store.ExpectedSSOSettings = []*models.SSOSettings{
+		// 			{
+		// 				Provider: "github",
+		// 				Settings: map[string]any{
+		// 					"enabled":       true,
+		// 					"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+		// 					"client_id":     "client_id",
+		// 				},
+		// 				Source: models.DB,
+		// 			},
+		// 		}
+		// 		env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
 
-				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
-					"github": {
-						"enabled":       true,
-						"secret":        "secret",
-						"client_secret": "client_secret",
-						"client_id":     "client_id",
-					},
-				}
+		// 		env.fallbackStrategy.ExpectedIsMatch = true
+		// 		env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+		// 			"github": {
+		// 				"enabled":       true,
+		// 				"secret":        "secret",
+		// 				"client_secret": "client_secret",
+		// 				"client_id":     "client_id",
+		// 			},
+		// 		}
 
-				env.service.cfg.SSOSettingsConfigurableProviders = map[string]bool{
-					"github": true,
-					"saml":   true,
-				}
-
-				license := licensingtest.NewFakeLicensing()
-				license.On("FeatureEnabled", "saml").Return(false)
-				env.service.licensing = license
-			},
-			want: []*models.SSOSettings{
-				{
-					Provider: "github",
-					Settings: map[string]any{
-						"enabled":       true,
-						"secret":        "*********",
-						"client_secret": "*********",
-						"client_id":     "client_id",
-					},
-					Source: models.DB,
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "should include saml provider if the provider is enabled and the licensing feature is enabled",
-			setup: func(env testEnv) {
-				env.store.ExpectedSSOSettings = []*models.SSOSettings{
-					{
-						Provider: "github",
-						Settings: map[string]any{
-							"enabled":       true,
-							"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
-							"client_id":     "client_id",
-						},
-						Source: models.DB,
-					},
-				}
-				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
-
-				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
-					"github": {
-						"enabled":       true,
-						"secret":        "secret",
-						"client_secret": "client_secret",
-						"client_id":     "client_id",
-					},
-					"saml": {
-						"certificate_path": "/path/to/certificate",
-						"private_key_path": "/path/to/private/key",
-					},
-				}
-
-				env.service.cfg.SSOSettingsConfigurableProviders = map[string]bool{
-					"github": true,
-					"saml":   true,
-				}
-
-				license := licensingtest.NewFakeLicensing()
-				license.On("FeatureEnabled", "saml").Return(true)
-				env.service.licensing = license
-			},
-			want: []*models.SSOSettings{
-				{
-					Provider: "github",
-					Settings: map[string]any{
-						"enabled":       true,
-						"secret":        "*********",
-						"client_secret": "*********",
-						"client_id":     "client_id",
-					},
-					Source: models.DB,
-				},
-				{
-					Provider: "saml",
-					Settings: map[string]any{
-						"certificate_path": "*********",
-						"private_key_path": "*********",
-					},
-					Source: models.System,
-				},
-			},
-			wantErr: false,
-		},
+		// 		env.service.cfg.SSOSettingsConfigurableProviders = map[string]bool{
+		// 			"github": true,
+		// 		}
+		// 	},
+		// 	want: []*models.SSOSettings{
+		// 		{
+		// 			Provider: "github",
+		// 			Settings: map[string]any{
+		// 				"enabled":       true,
+		// 				"secret":        "*********",
+		// 				"client_secret": "*********",
+		// 				"client_id":     "client_id",
+		// 			},
+		// 			Source: models.DB,
+		// 		},
+		// 		{
+		// 			Provider: "saml",
+		// 			Settings: map[string]any{
+		// 				"certificate_path": "*********",
+		// 				"private_key_path": "*********",
+		// 			},
+		// 			Source: models.System,
+		// 		},
+		// 	},
+		// 	wantErr: false,
+		// },
 	}
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
@@ -1585,6 +1420,69 @@ func TestService_decryptSecrets(t *testing.T) {
 	}
 }
 
+func Test_ProviderService_ProvidersList(t *testing.T) {
+	tests := []struct {
+		name                  string
+		configurableProviders map[string]bool
+		expectedProvidersList []string
+		isSAMLLicenseEnabled  bool
+		setupProviders        func() []string
+		strategiesLength      int
+	}{
+		{
+			name: "should return all OAuth providers but not saml becuase the licensing feature is not enabled",
+			expectedProvidersList: []string{
+				"github",
+				"gitlab",
+				"google",
+				"generic_oauth",
+				"grafana_com",
+				"azuread",
+				"okta",
+			},
+			isSAMLLicenseEnabled: false,
+			strategiesLength:     1,
+		},
+		{
+			name: "should return all fallback strategies and it should return all OAuth providers but not saml because the licensing feature is enabled but the provider is not setup",
+			expectedProvidersList: []string{
+				"github",
+				"gitlab",
+				"google",
+				"generic_oauth",
+				"grafana_com",
+				"azuread",
+				"okta",
+			},
+			isSAMLLicenseEnabled: true,
+			strategiesLength:     2,
+		},
+		{
+			name:                  "should return all fallback strategies and it should return all OAuth providers and saml because the licensing feature is enabled and the provider is setup",
+			configurableProviders: map[string]bool{"saml": true},
+			expectedProvidersList: []string{
+				"github",
+				"gitlab",
+				"google",
+				"generic_oauth",
+				"grafana_com",
+				"azuread",
+				"okta",
+				"saml",
+			},
+			isSAMLLicenseEnabled: true,
+			strategiesLength:     2,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			service := setupProvideService(t, tc.isSAMLLicenseEnabled, tc.configurableProviders)
+			require.Equal(t, tc.expectedProvidersList, service.providersList)
+			require.Equal(t, tc.strategiesLength, len(service.fbStrategies))
+		})
+	}
+}
+
 func setupTestEnv(t *testing.T) testEnv {
 	t.Helper()
 
@@ -1593,7 +1491,6 @@ func setupTestEnv(t *testing.T) testEnv {
 	secrets := secretsFakes.NewMockService(t)
 	accessControl := acimpl.ProvideAccessControl(setting.NewCfg())
 	reloadables := make(map[string]ssosettings.Reloadable)
-	licensing := &licensing.OSSLicensingService{}
 
 	fallbackStrategy.ExpectedIsMatch = true
 
@@ -1609,16 +1506,20 @@ func setupTestEnv(t *testing.T) testEnv {
 	}
 
 	svc := &Service{
-		logger:       log.NewNopLogger(),
-		cfg:          cfg,
-		store:        store,
-		ac:           accessControl,
-		fbStrategies: []ssosettings.FallbackStrategy{fallbackStrategy},
-		reloadables:  reloadables,
-		metrics:      newMetrics(prometheus.NewRegistry()),
-		secrets:      secrets,
-		licensing:    licensing,
+		logger:        log.NewNopLogger(),
+		cfg:           cfg,
+		store:         store,
+		ac:            accessControl,
+		fbStrategies:  []ssosettings.FallbackStrategy{fallbackStrategy},
+		reloadables:   reloadables,
+		metrics:       newMetrics(prometheus.NewRegistry()),
+		secrets:       secrets,
+		providersList: ssosettings.AllOAuthProviders,
 	}
+
+	// by default, disable the saml provider
+	licensing := licensingtest.NewFakeLicensing()
+	licensing.On("FeatureEnabled", "saml").Return(false)
 
 	return testEnv{
 		cfg:              cfg,
@@ -1639,4 +1540,38 @@ type testEnv struct {
 	fallbackStrategy *ssosettingstests.FakeFallbackStrategy
 	secrets          *secretsFakes.MockService
 	reloadables      map[string]ssosettings.Reloadable
+}
+
+func setupProvideService(t *testing.T, isSAMLLicenseEnabled bool, configurableProviders map[string]bool) *Service {
+	t.Helper()
+
+	configFile := `
+	[sso_settings]
+	configurable_providers = okta
+	`
+	iniFile, err := ini.Load([]byte(configFile))
+	require.NoError(t, err)
+
+	cfg := setting.NewCfg()
+	cfg.Raw = iniFile
+	cfg.SSOSettingsConfigurableProviders = configurableProviders
+
+	// accessControl := acimpl.ProvideAccessControl(setting.NewCfg())
+	accessControl := acimpl.ProvideAccessControl(cfg)
+
+	licensing := licensingtest.NewFakeLicensing()
+	licensing.On("FeatureEnabled", "saml").Return(isSAMLLicenseEnabled)
+
+	return ProvideService(
+		cfg,
+		db.InitTestDB(t),
+		accessControl,
+		routing.NewRouteRegister(),
+		featuremgmt.WithManager(nil),
+		secretsFakes.NewMockService(t),
+		&usagestats.UsageStatsMock{},
+		prometheus.NewRegistry(),
+		&setting.OSSImpl{Cfg: cfg},
+		licensing,
+	)
 }

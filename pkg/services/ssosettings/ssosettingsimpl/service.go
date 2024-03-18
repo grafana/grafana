@@ -30,39 +30,47 @@ import (
 var _ ssosettings.Service = (*Service)(nil)
 
 type Service struct {
-	logger    log.Logger
-	cfg       *setting.Cfg
-	store     ssosettings.Store
-	ac        ac.AccessControl
-	secrets   secrets.Service
-	metrics   *metrics
-	licensing licensing.Licensing
+	logger  log.Logger
+	cfg     *setting.Cfg
+	store   ssosettings.Store
+	ac      ac.AccessControl
+	secrets secrets.Service
+	metrics *metrics
 
-	fbStrategies []ssosettings.FallbackStrategy
-	reloadables  map[string]ssosettings.Reloadable
+	fbStrategies  []ssosettings.FallbackStrategy
+	providersList []string
+	reloadables   map[string]ssosettings.Reloadable
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service, usageStats usagestats.Service, registerer prometheus.Registerer,
 	settingsProvider setting.Provider, licensing licensing.Licensing) *Service {
-	strategies := []ssosettings.FallbackStrategy{
+	fbStrategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
-		strategies.NewSAMLStrategy(settingsProvider),
+	}
+
+	providersList := ssosettings.AllOAuthProviders
+	if licensing.FeatureEnabled(social.SAMLProviderName) {
+		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(settingsProvider))
+
+		if cfg.SSOSettingsConfigurableProviders[social.SAMLProviderName] {
+			providersList = ssosettings.AllProviders
+		}
 	}
 
 	store := database.ProvideStore(sqlStore)
 
 	svc := &Service{
-		logger:       log.New("ssosettings.service"),
-		cfg:          cfg,
-		store:        store,
-		ac:           ac,
-		fbStrategies: strategies,
-		secrets:      secrets,
-		metrics:      newMetrics(registerer),
-		licensing:    licensing,
-		reloadables:  make(map[string]ssosettings.Reloadable),
+		logger:        log.New("ssosettings.service"),
+		cfg:           cfg,
+		store:         store,
+		ac:            ac,
+		fbStrategies:  fbStrategies,
+		secrets:       secrets,
+		metrics:       newMetrics(registerer),
+		providersList: providersList,
+		reloadables:   make(map[string]ssosettings.Reloadable),
 	}
 
 	usageStats.RegisterMetricsFunc(svc.getUsageStats)
@@ -104,7 +112,7 @@ func (s *Service) GetForProviderWithRedactedSecrets(ctx context.Context, provide
 		return nil, ssosettings.ErrNotConfigurable
 	}
 
-	if provider == social.SAMLProviderName && !s.licensing.FeatureEnabled(social.SAMLProviderName) {
+	if provider == social.SAMLProviderName {
 		return nil, ssosettings.ErrNotConfigurable
 	}
 
@@ -123,19 +131,14 @@ func (s *Service) GetForProviderWithRedactedSecrets(ctx context.Context, provide
 }
 
 func (s *Service) List(ctx context.Context) ([]*models.SSOSettings, error) {
-	availableProviders := ssosettings.AllOAuthProviders
-	if s.licensing.FeatureEnabled(social.SAMLProviderName) {
-		availableProviders = ssosettings.AllProviders
-	}
-
-	result := make([]*models.SSOSettings, 0, len(availableProviders))
+	result := make([]*models.SSOSettings, 0, len(s.providersList))
 	storedSettings, err := s.store.List(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, provider := range availableProviders {
+	for _, provider := range s.providersList {
 		dbSettings := getSettingByProvider(provider, storedSettings)
 		if dbSettings != nil {
 			// Settings are coming from the database thus secrets are encrypted
