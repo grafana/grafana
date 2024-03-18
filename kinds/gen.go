@@ -15,12 +15,9 @@ import (
 	"sort"
 	"strings"
 
-	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
-	"github.com/grafana/cuetsy/ts"
-	"github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/kindsys"
 
 	"github.com/grafana/grafana/pkg/codegen"
@@ -42,11 +39,7 @@ func main() {
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
 		&codegen.GoSpecJenny{},
-		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
-		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
-		codegen.LatestMajorsOrXJenny(
-			cuectx.TSCoreKindParentPath,
-			codegen.TSTypesJenny{ApplyFuncs: []codegen.ApplyFunc{renameSpecNode}}),
+		codegen.LatestMajorsOrXJenny(cuectx.TSCoreKindParentPath),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 	)
 
@@ -97,12 +90,12 @@ func main() {
 	}
 
 	// Merging k8 resources
-	k8Resources, err := genK8Resources(kinddirs)
+	rawResources, err := genRawResources(kinddirs)
 	if err != nil {
 		die(err)
 	}
 
-	if err = jfs.Merge(k8Resources); err != nil {
+	if err = jfs.Merge(rawResources); err != nil {
 		die(err)
 	}
 
@@ -193,12 +186,16 @@ func die(err error) {
 	os.Exit(1)
 }
 
-func genK8Resources(dirs []os.DirEntry) (*codejen.FS, error) {
-	jenny := codejen.JennyListWithNamer[[]cue.Value](func(_ []cue.Value) string {
-		return "K8Resources"
+// Resource generation without using Thema
+func genRawResources(dirs []os.DirEntry) (*codejen.FS, error) {
+	jenny := codejen.JennyListWithNamer[[]codegen.CueSchema](func(_ []codegen.CueSchema) string {
+		return "RawResources"
 	})
 
-	jenny.Append(&codegen.K8ResourcesJenny{})
+	jenny.Append(
+		&codegen.K8ResourcesJenny{},
+		&codegen.CoreRegistryJenny{},
+	)
 
 	header := codegen.SlashHeaderMapper("kinds/gen.go")
 	jenny.AddPostprocessors(header)
@@ -206,9 +203,9 @@ func genK8Resources(dirs []os.DirEntry) (*codejen.FS, error) {
 	return jenny.GenerateFS(loadCueFiles(dirs))
 }
 
-func loadCueFiles(dirs []os.DirEntry) []cue.Value {
+func loadCueFiles(dirs []os.DirEntry) []codegen.CueSchema {
 	ctx := cuectx.GrafanaCUEContext()
-	values := make([]cue.Value, 0)
+	values := make([]codegen.CueSchema, 0)
 	for _, dir := range dirs {
 		if !dir.IsDir() {
 			continue
@@ -228,53 +225,13 @@ func loadCueFiles(dirs []os.DirEntry) []cue.Value {
 			os.Exit(1)
 		}
 
-		values = append(values, ctx.CompileBytes(cueFile))
+		sch := codegen.CueSchema{
+			FilePath: "./" + filepath.Join(cuectx.CoreDefParentPath, entry),
+			CueFile:  ctx.CompileBytes(cueFile),
+		}
+
+		values = append(values, sch)
 	}
 
 	return values
-}
-
-// renameSpecNode rename spec node from the TS file result
-func renameSpecNode(sfg codegen.SchemaForGen, tf *ast.File) {
-	specidx, specdefidx := -1, -1
-	for idx, def := range tf.Nodes {
-		// Peer through export keywords
-		if ex, is := def.(ast.ExportKeyword); is {
-			def = ex.Decl
-		}
-
-		switch x := def.(type) {
-		case ast.TypeDecl:
-			if x.Name.Name == "spec" {
-				specidx = idx
-				x.Name.Name = sfg.Name
-				tf.Nodes[idx] = x
-			}
-		case ast.VarDecl:
-			// Before:
-			//   export const defaultspec: Partial<spec> = {
-			// After:
-			// /  export const defaultPlaylist: Partial<Playlist> = {
-			if x.Names.Idents[0].Name == "defaultspec" {
-				specdefidx = idx
-				x.Names.Idents[0].Name = "default" + sfg.Name
-				tt := x.Type.(ast.TypeTransformExpr)
-				tt.Expr = ts.Ident(sfg.Name)
-				x.Type = tt
-				tf.Nodes[idx] = x
-			}
-		}
-	}
-
-	if specidx != -1 {
-		decl := tf.Nodes[specidx]
-		tf.Nodes = append(append(tf.Nodes[:specidx], tf.Nodes[specidx+1:]...), decl)
-	}
-	if specdefidx != -1 {
-		if specdefidx > specidx {
-			specdefidx--
-		}
-		decl := tf.Nodes[specdefidx]
-		tf.Nodes = append(append(tf.Nodes[:specdefidx], tf.Nodes[specdefidx+1:]...), decl)
-	}
 }

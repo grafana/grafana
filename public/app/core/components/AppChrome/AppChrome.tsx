@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import React, { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationSearchToObject, locationService } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -66,6 +66,12 @@ export function AppChrome({ children }: Props) {
     // We only want to pay attention when the location changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chrome, url]);
+
+  // Sync updates from kiosk mode query string back into app chrome
+  useEffect(() => {
+    const queryParams = locationSearchToObject(search);
+    chrome.setKioskModeFromUrl(queryParams.kiosk);
+  }, [chrome, search]);
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}

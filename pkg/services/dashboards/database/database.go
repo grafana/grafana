@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -170,25 +169,6 @@ func (d *dashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveD
 		return nil, err
 	}
 	return result, err
-}
-
-func (d *dashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*alertmodels.Alert) error {
-	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
-		if err != nil {
-			return err
-		}
-
-		if err := d.updateAlerts(ctx, existingAlerts, alerts, d.log); err != nil {
-			return err
-		}
-
-		if err := d.deleteMissingAlerts(existingAlerts, alerts, sess); err != nil {
-			return err
-		}
-
-		return nil
-	})
 }
 
 // UnprovisionDashboard removes row in dashboard_provisioning for the dashboard making it seem as if manually created.
@@ -520,123 +500,6 @@ func saveProvisionedData(sess *db.Session, provisioning *dashboards.DashboardPro
 	return err
 }
 
-func GetAlertsByDashboardId2(dashboardId int64, sess *db.Session) ([]*alertmodels.Alert, error) {
-	alerts := make([]*alertmodels.Alert, 0)
-	err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
-
-	if err != nil {
-		return []*alertmodels.Alert{}, err
-	}
-
-	return alerts, nil
-}
-
-func (d *dashboardStore) updateAlerts(ctx context.Context, existingAlerts []*alertmodels.Alert, alertsIn []*alertmodels.Alert, log log.Logger) error {
-	return d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		for _, alert := range alertsIn {
-			update := false
-			var alertToUpdate *alertmodels.Alert
-
-			for _, k := range existingAlerts {
-				if alert.PanelID == k.PanelID {
-					update = true
-					alert.ID = k.ID
-					alertToUpdate = k
-					break
-				}
-			}
-
-			if update {
-				if alertToUpdate.ContainsUpdates(alert) {
-					alert.Updated = time.Now()
-					alert.State = alertToUpdate.State
-					sess.MustCols("message", "for")
-
-					_, err := sess.ID(alert.ID).Update(alert)
-					if err != nil {
-						return err
-					}
-
-					log.Debug("Alert updated", "name", alert.Name, "id", alert.ID)
-				}
-			} else {
-				alert.Updated = time.Now()
-				alert.Created = time.Now()
-				alert.State = alertmodels.AlertStateUnknown
-				alert.NewStateDate = time.Now()
-
-				_, err := sess.Insert(alert)
-				if err != nil {
-					return err
-				}
-
-				log.Debug("Alert inserted", "name", alert.Name, "id", alert.ID)
-			}
-			tags := alert.GetTagsFromSettings()
-			if _, err := sess.Exec("DELETE FROM alert_rule_tag WHERE alert_id = ?", alert.ID); err != nil {
-				return err
-			}
-			if tags != nil {
-				tags, err := d.tagService.EnsureTagsExist(ctx, tags)
-				if err != nil {
-					return err
-				}
-				for _, tag := range tags {
-					if _, err := sess.Exec("INSERT INTO alert_rule_tag (alert_id, tag_id) VALUES(?,?)", alert.ID, tag.Id); err != nil {
-						return err
-					}
-				}
-			}
-		}
-		return nil
-	})
-}
-
-func (d *dashboardStore) deleteMissingAlerts(alerts []*alertmodels.Alert, existingAlerts []*alertmodels.Alert, sess *db.Session) error {
-	for _, missingAlert := range alerts {
-		missing := true
-
-		for _, k := range existingAlerts {
-			if missingAlert.PanelID == k.PanelID {
-				missing = false
-				break
-			}
-		}
-
-		if missing {
-			if err := d.deleteAlertByIdInternal(missingAlert.ID, "Removed from dashboard", sess); err != nil {
-				// No use trying to delete more, since we're in a transaction and it will be
-				// rolled back on error.
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func (d *dashboardStore) deleteAlertByIdInternal(alertId int64, reason string, sess *db.Session) error {
-	d.log.Debug("Deleting alert", "id", alertId, "reason", reason)
-
-	if _, err := sess.Exec("DELETE FROM alert WHERE id = ?", alertId); err != nil {
-		return err
-	}
-
-	if _, err := sess.Exec("DELETE FROM annotation WHERE alert_id = ?", alertId); err != nil {
-		return err
-	}
-
-	if _, err := sess.Exec("DELETE FROM alert_notification_state WHERE alert_id = ?", alertId); err != nil {
-		return err
-	}
-
-	if _, err := sess.Exec("DELETE FROM alert_rule_tag WHERE alert_id = ?", alertId); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (d *dashboardStore) GetDashboardsByPluginID(ctx context.Context, query *dashboards.GetDashboardsByPluginIDQuery) ([]*dashboards.Dashboard, error) {
 	var dashboards = make([]*dashboards.Dashboard, 0)
 	err := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -699,10 +562,6 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		}
 	}
 
-	if err := d.deleteAlertDefinition(dashboard.ID, sess); err != nil {
-		return err
-	}
-
 	_, err = sess.Exec("DELETE FROM annotation WHERE dashboard_id = ? AND org_id = ?", dashboard.ID, dashboard.OrgID)
 	if err != nil {
 		return err
@@ -754,10 +613,6 @@ func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, d
 
 	if len(dashIds) > 0 {
 		for _, dash := range dashIds {
-			if err := d.deleteAlertDefinition(dash.Id, sess); err != nil {
-				return err
-			}
-
 			// remove all access control permission with child dashboard scopes
 			if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dash.Uid)); err != nil {
 				return err
@@ -803,23 +658,6 @@ func createEntityEvent(dashboard *dashboards.Dashboard, eventType store.EntityEv
 		}
 	}
 	return entityEvent
-}
-
-func (d *dashboardStore) deleteAlertDefinition(dashboardId int64, sess *db.Session) error {
-	alerts := make([]*alertmodels.Alert, 0)
-	if err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts); err != nil {
-		return err
-	}
-
-	for _, alert := range alerts {
-		if err := d.deleteAlertByIdInternal(alert.ID, "Dashboard deleted", sess); err != nil {
-			// If we return an error, the current transaction gets rolled back, so no use
-			// trying to delete more
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
