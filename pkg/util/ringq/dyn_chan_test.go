@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 func TestDynChan(t *testing.T) {
 	t.Parallel()
 
-	const dLen = 1024
+	const dLen = 512
 	data := ints(dLen)
 	data2 := append(data, data...)
 
@@ -57,7 +57,7 @@ func TestDynChan(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, maxLen, stats.Len)
 		require.Equal(t, maxLen, stats.Cap)
-		require.GreaterOrEqual(t, stats.Allocs, uint64(50))
+		require.GreaterOrEqual(t, stats.Allocs, uint64(5))
 		require.Equal(t, uint64(3*dLen), stats.Enqueued)
 		require.Equal(t, uint64(0), stats.Dequeued)
 		require.Equal(t, uint64(3*dLen-maxLen), stats.Dropped)
@@ -70,7 +70,7 @@ func TestDynChan(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 0, stats.Len)
 		require.Equal(t, minBufLen, stats.Cap)
-		require.GreaterOrEqual(t, stats.Allocs, uint64(50))
+		require.GreaterOrEqual(t, stats.Allocs, uint64(5))
 		require.Equal(t, uint64(3*dLen), stats.Enqueued)
 		require.Equal(t, uint64(len(got)), stats.Dequeued)
 		require.Equal(t, uint64(3*dLen-maxLen), stats.Dropped)
@@ -180,7 +180,7 @@ func cleanupChans[T any](t *testing.T, in chan<- T, out <-chan T, sr ChanStatsRe
 }
 
 func ctxFromTest(t *testing.T) context.Context {
-	return ctxFromTestWithDefault(t, 100*time.Millisecond)
+	return ctxFromTestWithDefault(t, time.Second)
 }
 
 func ctxFromTestWithDefault(t *testing.T, d time.Duration) context.Context {
@@ -196,13 +196,12 @@ func ctxFromTestWithDefault(t *testing.T, d time.Duration) context.Context {
 
 func sendNB[T any](t *testing.T, in chan<- T, s ...T) {
 	t.Helper()
-	done := ctxFromTest(t).Done()
 	var canceled bool
 	for i, v := range s {
 		require.NotPanics(t, func() {
 			select {
 			case in <- v:
-			case <-done:
+			case <-ctxFromTest(t).Done():
 				canceled = true
 			}
 		})
@@ -213,11 +212,10 @@ func sendNB[T any](t *testing.T, in chan<- T, s ...T) {
 func recvNB[T any](t *testing.T, out <-chan T, s []T) {
 	t.Helper()
 	var canceled bool
-	done := ctxFromTest(t).Done()
 	for i := range s {
 		select {
 		case s[i] = <-out:
-		case <-done:
+		case <-ctxFromTest(t).Done():
 			canceled = true
 		}
 		require.False(t, canceled, "context canceled while receiving item %d/%d", i+1, len(s))

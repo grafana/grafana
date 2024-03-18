@@ -83,13 +83,11 @@ func (rq *RingQ[T]) migrate(newFreeCap int) {
 	if len(rq.s) > 0 {
 		chunk1 := min(rq.back+rq.len, len(rq.s))
 		copied := copy(s, rq.s[rq.back:chunk1])
-		clear(rq.s[rq.back:chunk1])
 
 		if copied < rq.len {
 			// wrapped the slice
 			chunk2 := rq.len - copied
 			copy(s[copied:], rq.s[:chunk2])
-			clear(rq.s[:chunk2])
 		}
 	}
 
@@ -103,7 +101,10 @@ func (rq *RingQ[T]) migrate(newFreeCap int) {
 func (rq *RingQ[T]) Enqueue(v T) {
 	// try to add space if we're at capacity
 	if rq.len == len(rq.s) {
-		rq.migrate(1)
+		newCap := rq.len + 1
+		newCap = newCap*3/2 + 1 // classic append: https://go.dev/blog/slices
+		newCap -= rq.len        // rq.migrate only takes extra capacity
+		rq.migrate(newCap)
 
 		// if growing was capped at max, then overwrite the first item to be
 		// dequeued
