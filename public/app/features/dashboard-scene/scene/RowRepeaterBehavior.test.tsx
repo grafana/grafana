@@ -3,6 +3,7 @@ import {
   SceneCanvasText,
   SceneGridLayout,
   SceneGridRow,
+  SceneGridItem,
   SceneTimeRange,
   SceneVariableSet,
   TestVariable,
@@ -11,7 +12,7 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/co
 
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
+import { RepeatDirection } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 
 describe('RowRepeaterBehavior', () => {
@@ -26,7 +27,7 @@ describe('RowRepeaterBehavior', () => {
 
     it('Should repeat row', () => {
       // Verify that panel above row remains
-      expect(grid.state.children[0]).toBeInstanceOf(DashboardGridItem);
+      expect(grid.state.children[0]).toBeInstanceOf(SceneGridItem);
       // Verify that first row still has repeat behavior
       const row1 = grid.state.children[1] as SceneGridRow;
       expect(row1.state.$behaviors?.[0]).toBeInstanceOf(RowRepeaterBehavior);
@@ -36,7 +37,7 @@ describe('RowRepeaterBehavior', () => {
       expect(row2.state.$variables!.state.variables[0].getValueText?.()).toBe('B');
 
       // Should give repeated panels unique keys
-      const gridItem = row2.state.children[0] as DashboardGridItem;
+      const gridItem = row2.state.children[0] as SceneGridItem;
       expect(gridItem.state.body?.state.key).toBe('canvas-1-row-1');
     });
 
@@ -51,8 +52,8 @@ describe('RowRepeaterBehavior', () => {
 
     it('Should push row at the bottom down and also offset its children', () => {
       const rowAtTheBottom = grid.state.children[6] as SceneGridRow;
-      const rowChildOne = rowAtTheBottom.state.children[0] as DashboardGridItem;
-      const rowChildTwo = rowAtTheBottom.state.children[1] as DashboardGridItem;
+      const rowChildOne = rowAtTheBottom.state.children[0] as SceneGridItem;
+      const rowChildTwo = rowAtTheBottom.state.children[1] as SceneGridItem;
 
       expect(rowAtTheBottom.state.title).toBe('Row at the bottom');
 
@@ -85,7 +86,7 @@ interface SceneOptions {
 function buildScene(options: SceneOptions) {
   const grid = new SceneGridLayout({
     children: [
-      new DashboardGridItem({
+      new SceneGridItem({
         x: 0,
         y: 0,
         width: 24,
@@ -103,7 +104,7 @@ function buildScene(options: SceneOptions) {
           new RowRepeaterBehavior({
             variableName: 'server',
             sources: [
-              new DashboardGridItem({
+              new SceneGridItem({
                 x: 0,
                 y: 11,
                 width: 24,
@@ -124,7 +125,7 @@ function buildScene(options: SceneOptions) {
         height: 5,
         title: 'Row at the bottom',
         children: [
-          new DashboardGridItem({
+          new SceneGridItem({
             key: 'griditem-2',
             x: 0,
             y: 17,
@@ -133,7 +134,7 @@ function buildScene(options: SceneOptions) {
               text: 'Panel inside row, server = $server',
             }),
           }),
-          new DashboardGridItem({
+          new SceneGridItem({
             key: 'griditem-3',
             x: 0,
             y: 25,
