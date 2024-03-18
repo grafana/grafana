@@ -34,17 +34,11 @@ export function VariableQueryEditor(props: QueryEditorProps<PyroscopeDataSource,
                   refId: props.query.refId,
                 });
               }
-              if (value.value! === 'label') {
+              if (value.value! === 'label' || value.value! === 'labelValue') {
                 props.onChange({
                   type: value.value!,
                   refId: props.query.refId,
-                  profileTypeId: props.query.type !== 'profileType' ? props.query.profileTypeId : '',
-                });
-              }
-              if (value.value! === 'labelValue') {
-                props.onChange({
-                  type: value.value!,
-                  refId: props.query.refId,
+                  // Make sure we keep already selected values if they make sense for the variable type
                   profileTypeId: props.query.type !== 'profileType' ? props.query.profileTypeId : '',
                 });
               }
