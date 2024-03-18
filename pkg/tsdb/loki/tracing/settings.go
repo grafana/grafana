@@ -11,7 +11,8 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-// TODO
+// TODO move these settings into `grafana-plugin-sdk-go/backend/settings` package
+// TODO remove `any` type
 type AnnotationCleanupSettings struct {
 	MaxAge   time.Duration
 	MaxCount int64
@@ -93,7 +94,7 @@ type Cfg struct {
 	Raw    *ini.File
 	Logger log.Logger
 
-	// TODO
+	// TODO do we need these?
 	// for logging purposes
 	// configFiles                  []string
 	// appliedCommandLineProperties []string

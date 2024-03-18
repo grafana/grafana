@@ -89,14 +89,10 @@ func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 		return nil, err
 	}
 
-	// TODO
-	// log.RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
-	// 	if traceID := TraceIDFromContext(ctx, false); traceID != "" {
-	// 		return []any{"traceID", traceID}, true
-	// 	}
+	// The original code in `pkg/infra/tracing/tracing.go` here has code to register a contextual
+	// log provider using `RegisterContextualLogProvider` from `pkg/infra/log`. This is not supported 
+	// by `grafana-plugin-sdk-go/backend/log` and thus has been replaced by `DecorateLogger` in the plugin.
 
-	// 	return nil, false
-	// })
 	if err := ots.initOpentelemetryTracer(); err != nil {
 		return nil, err
 	}
@@ -386,12 +382,7 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 
 func (ots *TracingService) Run(ctx context.Context) error {
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
-		// TODO
-		// err = level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
-		// if err != nil {
-		// 	ots.log.Error("OpenTelemetry log returning error", err)
-		// }
-		ots.log.Error("OpenTelemetry log returning error", "msg", err)
+		ots.log.Error("OpenTelemetry handler returned an error", "msg", err)
 	}))
 	<-ctx.Done()
 
