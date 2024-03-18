@@ -151,17 +151,18 @@ const getStyles = (theme: GrafanaTheme2) => {
     confirmButtonContainer: css({
       overflow: 'visible',
       position: 'absolute',
+      pointerEvents: 'all',
       right: 0,
     }),
     confirmButtonContainerHide: css({
       overflow: 'hidden',
+      pointerEvents: 'none',
     }),
     confirmButton: css({
       alignItems: 'flex-start',
       background: theme.colors.background.primary,
       display: 'flex',
       opacity: 1,
-      pointerEvents: 'all',
       transform: 'translateX(0)',
       transition: theme.transitions.create(['opacity', 'transform'], {
         duration: theme.transitions.duration.shortest,
@@ -171,7 +172,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     confirmButtonHide: css({
       opacity: 0,
-      pointerEvents: 'none',
       transform: 'translateX(100%)',
       transition: theme.transitions.create(['opacity', 'transform', 'visibility'], {
         duration: theme.transitions.duration.shortest,
