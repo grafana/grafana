@@ -37,9 +37,9 @@ var (
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
-		Scopes:                []string{"profile", "groups"},
-		DelegatedEntitlements: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
-		Entitlements:          []string{"fixed:folders:reader"},
+		Scopes:               []string{"profile", "groups"},
+		DelegatedPermissions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+		Permissions:          []string{"fixed:folders:reader"},
 	}
 	validIDPayload = ExtendedJWTClaims{
 		Claims: jwt.Claims{
@@ -50,9 +50,9 @@ var (
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
-		Scopes:                []string{"profile", "groups"},
-		DelegatedEntitlements: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
-		Entitlements:          []string{"fixed:folders:reader"},
+		Scopes:               []string{"profile", "groups"},
+		DelegatedPermissions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+		Permissions:          []string{"fixed:folders:reader"},
 	}
 	pk, _ = rsa.GenerateKey(rand.Reader, 4096)
 )
@@ -211,7 +211,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				},
-				Entitlements: []string{"fixed:folders:reader"},
+				Permissions: []string{"fixed:folders:reader"},
 			},
 			orgID:   1,
 			want:    nil,
@@ -228,14 +228,14 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				},
-				Entitlements: []string{"fixed:folders:reader"},
+				Permissions: []string{"fixed:folders:reader"},
 			},
 			orgID:   0,
 			want:    nil,
 			wantErr: errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported"),
 		},
 		{
-			name: "should return error when entitlements claim is missing",
+			name: "should return error when permissions claim is missing",
 			payload: ExtendedJWTClaims{
 				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
@@ -245,7 +245,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				},
-				Entitlements: []string{},
+				Permissions: []string{},
 			},
 			orgID:   1,
 			want:    nil,

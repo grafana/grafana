@@ -55,9 +55,9 @@ type ExtendedJWTClaims struct {
 	// Access policy scopes
 	Scopes []string `json:"scopes"`
 	// Grafana roles
-	Entitlements []string `json:"entitlements"`
+	Permissions []string `json:"permissions"`
 	// On-behalf-of user
-	DelegatedEntitlements []string `json:"delegatedEntitlements"`
+	DelegatedPermissions []string `json:"delegatedPermissions"`
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -106,7 +106,7 @@ func (s *ExtendedJWT) authenticateAsUser(idTokenClaims,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
-				ActionsLookup: accessTokenClaims.DelegatedEntitlements,
+				ActionsLookup: accessTokenClaims.DelegatedPermissions,
 			},
 			FetchSyncedUser: true,
 		}}, nil
@@ -125,7 +125,7 @@ func (s *ExtendedJWT) authenticateService(ctx context.Context,
 		return nil, errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported")
 	}
 
-	if len(claims.Entitlements) == 0 {
+	if len(claims.Permissions) == 0 {
 		s.log.Error("Entitlements claim is missing")
 		return nil, errJWTInvalid.Errorf("Entitlements claim is missing")
 	}
@@ -138,7 +138,7 @@ func (s *ExtendedJWT) authenticateService(ctx context.Context,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
-				Roles: claims.Entitlements,
+				Roles: claims.Permissions,
 			},
 			FetchSyncedUser: false,
 		},
