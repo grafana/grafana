@@ -354,16 +354,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               disabled={disableSearch}
             />
           </Field>
-          <InlineSwitch
-            showLabel={true}
-            label="Show previews"
-            value={showPreviews}
-            onChange={model.onTogglePreviews}
-            disabled={disableSearch}
-          />
-        </div>
-        <div className={styles.header}>
-          <Field label="Filter by prefix" error={prefixError} invalid={!!prefixError}>
+          <Field label="Filter by prefix" className={styles.prefixField} error={prefixError} invalid={!!prefixError}>
             <MetricCategoryCascader
               metricNames={metricsAfterSearch || []}
               onSelect={model.onPrefixFilterChange}
@@ -371,6 +362,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               initialValue={prefixFilter}
             />
           </Field>
+          <InlineSwitch
+            showLabel={true}
+            label="Show previews"
+            value={showPreviews}
+            onChange={model.onTogglePreviews}
+            disabled={disableSearch}
+          />
         </div>
         {metricNamesStatus.error && (
           <Alert title="Unable to retrieve metric names" severity="error">
@@ -430,6 +428,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     searchField: css({
       flexGrow: 1,
+      marginBottom: 0,
+    }),
+    prefixField: css({
       marginBottom: 0,
     }),
   };
