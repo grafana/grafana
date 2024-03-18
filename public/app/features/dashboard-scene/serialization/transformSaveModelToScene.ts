@@ -38,7 +38,7 @@ import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
+import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -479,7 +479,14 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
 }
 
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
-  const repeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
+  const repeatDirection: RepeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
+  const repeatOptions = panel.repeat
+    ? {
+        variableName: panel.repeat,
+        repeatDirection,
+      }
+    : {};
+
   const titleItems: SceneObject[] = [];
 
   titleItems.push(
@@ -530,10 +537,8 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     height: panel.gridPos.h,
     itemHeight: panel.gridPos.h,
     body,
-    variableName: panel.repeat,
-    repeatedPanels: [],
-    repeatDirection,
     maxPerRow: panel.maxPerRow,
+    ...repeatOptions,
   });
 }
 

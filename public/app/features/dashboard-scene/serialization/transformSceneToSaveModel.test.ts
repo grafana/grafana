@@ -210,7 +210,9 @@ describe('transformSceneToSaveModel', () => {
   describe('Given a scene with rows', () => {
     it('Should transform back to persisted model', () => {
       const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+
       const saveModel = transformSceneToSaveModel(scene);
+
       const row2: RowPanel = saveModel.panels![2] as RowPanel;
 
       expect(row2.type).toBe('row');
