@@ -12,10 +12,6 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 )
 
-const (
-	maxBufferedEvents = 256
-)
-
 // Keeps track of which watches need to be notified
 type WatchSet struct {
 	mu        sync.RWMutex
