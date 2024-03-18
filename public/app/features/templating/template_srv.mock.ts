@@ -54,12 +54,7 @@ export class TemplateSrvMock implements TemplateSrv {
     this.regex.lastIndex = 0;
 
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
-      const variableName = var1 || var2 || var3;
-      if (!variableName) {
-        return this.variables.find((v) => v.name === variableName);
-      } else {
-        return variableName;
-      }
+      return var1 || var2 || var3;
     });
   }
 
