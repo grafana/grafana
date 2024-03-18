@@ -4,7 +4,8 @@ describe('makefile script tests', () => {
   // If these tests fail, refer to `./docs/README.md` "Content guidelines" for more information
   // about editing and building the Transformations docs.
 
-  // This test isn't playing well, and for the sake of time, I'm going to skip it.
+  // This test isn't playing well, it passes locally, but continues to fail in Drone.
+  // TODO: Investigate why this test is failing in Drone ONLY.
   it.skip('should execute without error and match the content written to index.md', () => {
     // Normalize and compare.
     expect(contentDoesMatch(getJavaScriptContent(), getMarkdownContent())).toBe(true);
