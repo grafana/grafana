@@ -98,7 +98,6 @@ func TestIntegrationPluginManager(t *testing.T) {
 
 	ctx := context.Background()
 	verifyCorePluginCatalogue(t, ctx, testCtx.PluginStore)
-	verifyBundledPlugins(t, ctx, testCtx.PluginStore)
 	verifyPluginStaticRoutes(t, ctx, testCtx.PluginStore, testCtx.PluginStore)
 	verifyBackendProcesses(t, testCtx.PluginRegistry.Plugins(ctx))
 	verifyPluginQuery(t, ctx, testCtx.PluginClient)
@@ -185,7 +184,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"grafana":                          {},
 		"alertmanager":                     {},
 		"dashboard":                        {},
-		"input":                            {},
 		"jaeger":                           {},
 		"mixed":                            {},
 		"zipkin":                           {},
@@ -225,30 +223,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 	}
 
 	require.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(ps.Plugins(ctx)))
-}
-
-func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *pluginstore.Service) {
-	t.Helper()
-
-	dsPlugins := make(map[string]struct{})
-	for _, p := range ps.Plugins(ctx, plugins.TypeDataSource) {
-		dsPlugins[p.ID] = struct{}{}
-	}
-
-	inputPlugin, exists := ps.Plugin(ctx, "input")
-	require.True(t, exists)
-	require.NotEqual(t, pluginstore.Plugin{}, inputPlugin)
-	require.NotNil(t, dsPlugins["input"])
-
-	pluginRoutes := make(map[string]*plugins.StaticRoute)
-	for _, r := range ps.Routes(ctx) {
-		pluginRoutes[r.PluginID] = r
-	}
-
-	for _, pluginID := range []string{"input"} {
-		require.Contains(t, pluginRoutes, pluginID)
-		require.Equal(t, pluginRoutes[pluginID].Directory, inputPlugin.Base())
-	}
 }
 
 func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, rr plugins.StaticRouteResolver, ps *pluginstore.Service) {
