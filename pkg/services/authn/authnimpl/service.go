@@ -147,7 +147,7 @@ func ProvideService(
 
 	// FIXME (jguer): move to User package
 	userSyncService := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
-	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
+	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg)
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
 	s.RegisterPostAuthHook(userSyncService.EnableUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
@@ -161,6 +161,8 @@ func ProvideService(
 	}
 
 	s.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
+
+	s.RegisterPostAuthHook(orgUserSyncService.SetDefaultOrgHook, 130)
 
 	return s
 }
@@ -387,6 +389,20 @@ Default:
 	}
 
 	return redirect, nil
+}
+
+func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
+	r := &authn.Request{}
+	r.OrgID = orgID
+	// hack to not update last seen
+	r.SetMeta(authn.MetaKeyIsLogin, "true")
+
+	identity, err := s.authenticate(ctx, clients.ProvideIdentity(namespaceID), r)
+	if err != nil {
+		return nil, err
+	}
+
+	return identity, nil
 }
 
 func (s *Service) RegisterClient(c authn.Client) {
