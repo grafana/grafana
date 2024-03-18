@@ -106,9 +106,9 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
 
-gen-go: $(WIRE)
+gen-go:
 	@echo "generate go files"
-	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags $(WIRE_TAGS) ./pkg/server
 
 fix-cue: $(CUE)
 	@echo "formatting cue files"
