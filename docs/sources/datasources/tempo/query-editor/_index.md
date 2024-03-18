@@ -101,6 +101,10 @@ To query a particular trace:
 
 ## Query Loki for traces
 
+{{< admonition type="caution" >}}
+Starting with Grafana v11.0, the Loki query tab will no longer be available.
+{{< /admonition >}}
+
 To find traces to visualize, you can use the [Loki query editor]({{< relref "../../loki#loki-query-editor" >}}).
 For results, you must configure [derived fields]({{< relref "../../loki#configure-derived-fields" >}}) in the Loki data source that point to this data source.
 
