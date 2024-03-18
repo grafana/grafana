@@ -346,12 +346,12 @@ export function RichHistoryCard(props: Props) {
     return dsUid !== undefined && isDifferentDatasource(dsUid, exploreId)
       ? {
           fallbackText: 'Switch data source and run query',
-          i18nKey: 'explore.rich-history-card.switch-datasource-button',
+          translation: t('explore.rich-history-card.switch-datasource-button', 'Switch data source and run query'),
         }
       : {
           fallbackText: 'Run query',
-          i18nKey: 'explore.rich-history-card.run-query-button',
-        }; //,
+          translation: t('explore.rich-history-card.run-query-button', 'Run query'),
+        };
   };
 
   const runButton = () => {
@@ -360,7 +360,7 @@ export function RichHistoryCard(props: Props) {
       const buttonText = runQueryText(exploreId, props.queryHistoryItem.datasourceUid);
       return (
         <ToolbarButton aria-label={buttonText.fallbackText} onClick={() => onRunQuery(exploreId)}>
-          <Trans i18nKey={buttonText.i18nKey}>${buttonText.fallbackText}</Trans>
+          ${buttonText.translation}
         </ToolbarButton>
       );
     } else {
@@ -379,7 +379,7 @@ export function RichHistoryCard(props: Props) {
                 onClick={() => {
                   onRunQuery(pane[0]);
                 }}
-                label={`${paneLabel}: ${t(buttonText.i18nKey, buttonText.fallbackText)}`}
+                label={`${paneLabel}: ${buttonText.translation}`}
               />
             );
           })}

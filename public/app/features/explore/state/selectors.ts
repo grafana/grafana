@@ -1,5 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { flatten, uniq, uniqBy } from 'lodash';
+import { flatten, uniqBy } from 'lodash';
 
 import { DataSourceRef } from '@grafana/schema';
 import { ExploreItemState, StoreState } from 'app/types';
