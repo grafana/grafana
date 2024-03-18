@@ -212,6 +212,11 @@ export const Components = {
       rcContentWrapper: () => '.rc-drawer-content-wrapper',
       subtitle: 'data-testid drawer subtitle',
     },
+    DashboardSaveDrawer: {
+      saveButton: 'data-testid Save dashboard drawer button',
+      saveAsButton: 'data-testid Save as dashboard drawer button',
+      saveAsTitleInput: 'Save dashboard title field',
+    },
   },
   PanelEditor: {
     General: {
@@ -356,7 +361,24 @@ export const Components = {
   },
   NavToolbar: {
     container: 'data-testid Nav toolbar',
+    shareDashboard: 'data-testid Share dashboard',
+    markAsFavorite: 'data-testid Mark as favorite',
+    editDashboard: {
+      editButton: 'data-testid Edit dashboard button',
+      saveButton: 'data-testid Save dashboard button',
+      exitButton: 'data-testid Exit edit mode button',
+      settingsButton: 'data-testid Dashboard settings',
+      addRowButton: 'data-testid Add row button',
+      addLibraryPanelButton: 'data-testid Add a panel from the panel library button',
+      addVisualizationButton: 'data-testid Add new visualization menu item',
+      pastePanelButton: 'data-testid Paste panel button',
+      discardChangesButton: 'data-testid Discard changes button',
+      discardLibraryPanelButton: 'data-testid Discard library panel button',
+      unlinkLibraryPanelButton: 'data-testid Unlink library panel button',
+      saveLibraryPanelButton: 'data-testid Save library panel button',
+    },
   },
+
   PageToolbar: {
     container: () => '.page-toolbar',
     item: (tooltip: string) => `${tooltip}`,

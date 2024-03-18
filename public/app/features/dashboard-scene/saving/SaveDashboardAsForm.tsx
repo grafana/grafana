@@ -2,6 +2,7 @@ import debounce from 'debounce-promise';
 import React from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Dashboard } from '@grafana/schema';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -99,6 +100,7 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
         <Input
           {...register('title', { required: 'Required', validate: validateDashboardName })}
           aria-label="Save dashboard title field"
+          data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
           onChange={debounce(async () => {
             trigger('title');
           }, 400)}

@@ -15,8 +15,10 @@ export const smokeTestScenario = () =>
     it('Login scenario, create test data source, dashboard, panel, and export scenario', () => {
       // wait for time to be set to account for any layout shift
       cy.contains('2020-01-01 00:00:00 to 2020-01-01 06:00:00').should('be.visible');
-      e2e.components.PageToolbar.itemButton('Add button').click();
-      e2e.components.PageToolbar.itemButton('Add new visualization menu item').click();
+      // e2e.components.PageToolbar.itemButton('Add button').click();
+      // e2e.components.PageToolbar.itemButton('Add new visualization menu item').click();
+      e2e.pages.AddDashboard.itemButton('Create new panel button').should('be.visible');
+      e2e.pages.AddDashboard.itemButton('Create new panel button').click();
 
       e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
         .should('be.visible')

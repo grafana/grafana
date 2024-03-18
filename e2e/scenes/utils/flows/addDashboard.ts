@@ -139,11 +139,9 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
 
   setDashboardTimeRange(timeRange);
 
-  //Use different selectors if dashboardScene feature flag is enabled
-
-  e2e.components.PageToolbar.itemButton('Save dashboard').click();
-  e2e.pages.SaveDashboardModal.newName().clear().type(title, { force: true });
-  e2e.pages.SaveDashboardModal.saveButtonDrawer().click();
+  e2e.components.NavToolbar.editDashboard.saveButton().click();
+  e2e.components.Drawer.DashboardSaveDrawer.saveAsTitleInput().clear().type(title, { force: true });
+  e2e.components.Drawer.DashboardSaveDrawer.saveButton().click();
   e2e.flows.assertSuccessNotification();
   e2e.pages.AddDashboard.itemButton('Create new panel button').should('be.visible');
 
