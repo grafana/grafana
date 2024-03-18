@@ -110,7 +110,7 @@ describe('NestedFolderPicker', () => {
     expect(screen.getByPlaceholderText('Search folders')).toBeInTheDocument();
     expect(screen.getByLabelText('Dashboards')).toBeInTheDocument();
     expect(screen.getByLabelText(folderA.item.title)).toBeInTheDocument();
-    expect(screen.getByLabelText(folderB.item.title)).toBeInTheDocument();
+    // expect(screen.getByLabelText(folderB.item.title)).toBeInTheDocument();
     expect(screen.getByLabelText(folderC.item.title)).toBeInTheDocument();
   });
 
@@ -167,25 +167,36 @@ describe('NestedFolderPicker', () => {
   });
 
   it('hides folders specififed by UID', async () => {
-    render(<NestedFolderPicker excludeUIDs={[folderA.item.uid]} onChange={mockOnChange} />);
+    render(<NestedFolderPicker excludeUIDs={[folderC.item.uid]} onChange={mockOnChange} />);
 
     // Open the picker and wait for children to load
     const button = await screen.findByRole('button', { name: 'Select folder' });
     await userEvent.click(button);
-    await screen.findByLabelText(folderB.item.title);
+    await screen.findByLabelText(folderA.item.title);
 
-    expect(screen.queryByLabelText(folderA.item.title)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(folderC.item.title)).not.toBeInTheDocument();
   });
 
-  it('has a filter to show only folders that the user can edit', async () => {
-    render(<NestedFolderPicker permission={PermissionLevelString.Edit} onChange={mockOnChange} />);
+  it('by default only shows items the user can edit', async () => {
+    render(<NestedFolderPicker onChange={mockOnChange} />);
 
     const button = await screen.findByRole('button', { name: 'Select folder' });
     await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
 
-    await screen.findByLabelText(folderB.item.title);
-    expect(screen.queryByLabelText(folderA.item.title)).not.toBeInTheDocument(); // folderA is not editable
-    expect(screen.queryByLabelText(folderB.item.title)).toBeInTheDocument(); // but folderB is
+    expect(screen.queryByLabelText(folderB.item.title)).not.toBeInTheDocument(); // folderB is not editable
+    expect(screen.queryByLabelText(folderC.item.title)).toBeInTheDocument(); // but folderC is
+  });
+
+  it('shows items the user can view, with the prop', async () => {
+    render(<NestedFolderPicker permission={PermissionLevelString.View} onChange={mockOnChange} />);
+
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
+
+    expect(screen.queryByLabelText(folderB.item.title)).toBeInTheDocument();
+    expect(screen.queryByLabelText(folderC.item.title)).toBeInTheDocument();
   });
 
   describe('when nestedFolders is enabled', () => {
@@ -200,7 +211,7 @@ describe('NestedFolderPicker', () => {
     });
 
     it('can expand and collapse a folder to show its children', async () => {
-      render(<NestedFolderPicker onChange={mockOnChange} />);
+      render(<NestedFolderPicker permission={PermissionLevelString.View} onChange={mockOnChange} />);
 
       // Open the picker and wait for children to load
       const button = await screen.findByRole('button', { name: 'Select folder' });
@@ -231,7 +242,7 @@ describe('NestedFolderPicker', () => {
     });
 
     it('can expand and collapse a folder to show its children with the keyboard', async () => {
-      render(<NestedFolderPicker onChange={mockOnChange} />);
+      render(<NestedFolderPicker permission={PermissionLevelString.View} onChange={mockOnChange} />);
       const button = await screen.findByRole('button', { name: 'Select folder' });
 
       await userEvent.click(button);

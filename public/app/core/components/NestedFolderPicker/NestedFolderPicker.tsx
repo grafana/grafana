@@ -32,7 +32,7 @@ export interface NestedFolderPickerProps {
   /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
 
-  /* Only show folders matching this permission, mainly for Save Dashboards to limit to folders user can write to. Defaults to View/unfiltered.  */
+  /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
   permission?: PermissionLevelString.View | PermissionLevelString.Edit;
 
   /* Callback for when the user selects a folder */
@@ -62,7 +62,7 @@ export function NestedFolderPicker({
   showRootFolder = true,
   clearable = false,
   excludeUIDs,
-  permission,
+  permission = PermissionLevelString.Edit,
   onChange,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
