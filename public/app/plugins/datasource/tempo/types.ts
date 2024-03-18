@@ -3,15 +3,6 @@ import { NodeGraphOptions, TraceToLogsOptions } from '@grafana/o11y-ds-frontend'
 
 import { TempoQuery as TempoBase, TempoQueryType, TraceqlFilter } from './dataquery.gen';
 
-export interface SearchQueryParams {
-  minDuration?: string;
-  maxDuration?: string;
-  limit?: number;
-  tags?: string;
-  start?: number;
-  end?: number;
-}
-
 export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {

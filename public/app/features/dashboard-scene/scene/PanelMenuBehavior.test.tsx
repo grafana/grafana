@@ -22,6 +22,8 @@ import {
 import { contextSrv } from 'app/core/services/context_srv';
 import { GetExploreUrlArguments } from 'app/core/utils/explore';
 
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelMenuBehavior } from './PanelMenuBehavior';
@@ -91,6 +93,30 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);
+  });
+
+  it('should have reduced menu options when panel editor is open', async () => {
+    const { scene, menu, panel } = await buildTestScene({});
+    scene.setState({ editPanel: buildPanelEditScene(panel) });
+    panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+    mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+    mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+    menu.activate();
+
+    await new Promise((r) => setTimeout(r, 1));
+
+    expect(menu.state.items?.length).toBe(4);
+    expect(menu.state.items?.[0].text).toBe('Share');
+    expect(menu.state.items?.[1].text).toBe('Explore');
+    expect(menu.state.items?.[2].text).toBe('Inspect');
+    expect(menu.state.items?.[3].text).toBe('More...');
+    expect(menu.state.items?.[3].subMenu).toBeDefined();
+
+    expect(menu.state.items?.[3].subMenu?.length).toBe(2);
+    expect(menu.state.items?.[3].subMenu?.[0].text).toBe('New alert rule');
+    expect(menu.state.items?.[3].subMenu?.[1].text).toBe('Get help');
   });
 
   describe('when extending panel menu from plugins', () => {

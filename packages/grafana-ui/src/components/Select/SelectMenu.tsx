@@ -50,7 +50,7 @@ export const VirtualizedSelectMenu = ({ children, maxHeight, options, getValue }
   const [value] = getValue();
 
   const valueIndex = value ? options.findIndex((option: SelectableValue<unknown>) => option.value === value.value) : 0;
-  const initialOffset = valueIndex * VIRTUAL_LIST_ITEM_HEIGHT;
+  const valueYOffset = valueIndex * VIRTUAL_LIST_ITEM_HEIGHT;
 
   if (!Array.isArray(children)) {
     return null;
@@ -60,6 +60,9 @@ export const VirtualizedSelectMenu = ({ children, maxHeight, options, getValue }
   const widthEstimate = longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER;
   const heightEstimate = Math.min(options.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
 
+  // Try to scroll to keep current value in the middle
+  const scrollOffset = Math.max(0, valueYOffset - heightEstimate / 2);
+
   return (
     <List
       className={styles.menu}
@@ -68,7 +71,7 @@ export const VirtualizedSelectMenu = ({ children, maxHeight, options, getValue }
       aria-label="Select options menu"
       itemCount={children.length}
       itemSize={VIRTUAL_LIST_ITEM_HEIGHT}
-      initialScrollOffset={initialOffset}
+      initialScrollOffset={scrollOffset}
     >
       {({ index, style }) => <div style={{ ...style, overflow: 'hidden' }}>{children[index]}</div>}
     </List>
