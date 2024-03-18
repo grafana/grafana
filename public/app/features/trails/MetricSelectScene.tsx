@@ -23,7 +23,6 @@ import { VariableHide } from '@grafana/schema';
 import { Input, InlineSwitch, Field, Alert, Icon, useStyles2 } from '@grafana/ui';
 
 import { getPreviewPanelFor } from './AutomaticMetricQueries/previewPanel';
-import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
 import { MetricScene } from './MetricScene';
 import { SelectMetricAction } from './SelectMetricAction';
 import { StatusWrapper } from './StatusWrapper';
@@ -380,7 +379,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       display: 'flex',
       gap: theme.spacing(2),
-      marginBottom: theme.spacing(1),
+      marginBottom: theme.spacing(2),
       alignItems: 'flex-end',
     }),
     searchField: css({
