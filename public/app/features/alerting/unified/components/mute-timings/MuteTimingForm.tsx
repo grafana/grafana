@@ -14,7 +14,7 @@ import { MuteTimingFields } from '../../types/mute-timing-form';
 import { renameMuteTimings } from '../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
-import { createMuteTiming, defaultTimeInterval } from '../../utils/mute-timings';
+import { createMuteTiming, defaultTimeInterval, isTimeIntervalDisabled } from '../../utils/mute-timings';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
@@ -38,12 +38,13 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
   }
 
   const intervals = muteTiming.time_intervals.map((interval) => ({
-    times: interval.times ?? defaultTimeInterval.times,
-    weekdays: interval.weekdays?.join(', ') ?? defaultTimeInterval.weekdays,
-    days_of_month: interval.days_of_month?.join(', ') ?? defaultTimeInterval.days_of_month,
-    months: interval.months?.join(', ') ?? defaultTimeInterval.months,
-    years: interval.years?.join(', ') ?? defaultTimeInterval.years,
+    times: interval.times,
+    weekdays: interval.weekdays?.join(', '),
+    days_of_month: interval.days_of_month?.join(', '),
+    months: interval.months?.join(', '),
+    years: interval.years?.join(', '),
     location: interval.location ?? defaultTimeInterval.location,
+    disable: isTimeIntervalDisabled(interval),
   }));
 
   return {
