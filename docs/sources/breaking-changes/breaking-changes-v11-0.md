@@ -42,6 +42,8 @@ For release highlights and deprecations, refer to our [v11.0-preview What’s ne
 
 You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
 
+<!-- Last copied from Google Doc March 18th -->
+
 ## Users and Operators
 
 ### AngularJS support is turned off by default
