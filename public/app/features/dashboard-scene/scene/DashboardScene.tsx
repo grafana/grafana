@@ -284,8 +284,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Stop url sync before updating url
     this.stopUrlSync();
 
-    this.state.scopes?.exitViewMode();
-
     // Now we can update urls
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,

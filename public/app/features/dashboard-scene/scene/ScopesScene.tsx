@@ -79,6 +79,7 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
             name="arrow-to-right"
             aria-label={isExpanded ? 'Collapse scope filters' : 'Expand scope filters'}
             className={cx(!isExpanded && styles.iconNotExpanded)}
+            data-testid="scopes-scene-toggle-expand-button"
             onClick={() => model.toggleIsExpanded()}
           />
         )}
@@ -86,7 +87,7 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
       </div>
 
       {isExpanded && (
-        <div className={styles.dashboardsContainer}>
+        <div className={styles.dashboardsContainer} data-testid="scopes-scene-dashboards-container">
           <dashboards.Component model={dashboards} />
         </div>
       )}
