@@ -33,7 +33,34 @@ The state timeline visualization is useful when you need to monitor and analyze 
 
 ## Configure a state timeline
 
+The following video shows you how to configure a state timeline:
+
 <!-- video TBA here -->
+
+1. Click the Grafana menu icon and, in the sidebar, click Dashboards.
+
+1. On the Dashboards page, click New in top right corner and select New Dashboard in the drop-down or select an existing dashboard.
+
+1. Click + Add visualization.
+
+1. Under the visualization type dropdown, change the visualization type from Time series to State timeline.
+
+1. In the Query tab below the graph, select your data source of choice. For example, if you have the [Grafana TestData data source](https://grafana.com/docs/grafana/latest/datasources/testdata/) configured, select CSV content from the scenario dropdown.
+
+1. Copy the following CSV data as an example:
+
+```
+Timestamps,Server A,Server B
+2024-02-29 8:00:00,Up,Up
+2024-02-29 8:15:00,null,Up
+2024-02-29 8:30:00,Down,null
+```
+
+1. Under Transform data tab, click + Add transformation and click [Convert field type](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#convert-field-type).
+
+1. Convert the Timestamps field to be of type time.
+
+1. Add customization to your state timeline by updating the different [state timeline options](#state-timeline-options).
 
 ## Supported data formats
 
