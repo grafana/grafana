@@ -151,5 +151,10 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		m[backend.ResponseLimit] = strconv.FormatInt(s.cfg.ResponseLimit, 10)
 	}
 
+	if s.cfg.SigV4AuthEnabled {
+		m[awsds.SigV4AuthEnabledEnvVarKeyName] = "true"
+		m[awsds.SigV4VerboseLoggingEnvVarKeyName] = strconv.FormatBool(s.cfg.SigV4VerboseLogging)
+	}
+
 	return m
 }
