@@ -21,6 +21,8 @@ var (
 	ErrMigratorIsUnlocked = fmt.Errorf("migrator is unlocked")
 )
 
+const PostgresUnifiedStorageChannel = "unifiedstorage"
+
 type Migrator struct {
 	DBEngine     *xorm.Engine
 	Dialect      Dialect

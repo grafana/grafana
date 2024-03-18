@@ -25,72 +25,133 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
-// Make sure we implement both store + admin
-var _ entity.EntityStoreServer = &sqlEntityServer{}
+// Make sure we implement both store + admin.
+var _ entity.EntityStoreServerWrapper = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
+// Package level errors.
+var (
+	ErrNilDB = errors.New("nil db provided")
+)
+
+func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (entity.EntityStoreServerWrapper, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	entityServer := &sqlEntityServer{
-		db:  db,
-		log: log.New("sql-entity-server"),
-		ctx: context.Background(),
+		db:                  db,
+		log:                 log.New("sql-entity-server"),
+		cancelServerContext: cancel,
+	}
+
+	err := entityServer.init(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	return entityServer, nil
 }
 
 type sqlEntityServer struct {
-	log         log.Logger
-	db          db.EntityDBInterface // needed to keep xorm engine in scope
-	sess        *session.SessionDB
-	dialect     migrator.Dialect
-	snowflake   *snowflake.Node
-	broadcaster Broadcaster[*entity.Entity]
-	ctx         context.Context
+	log                 log.Logger
+	db                  db.EntityDBInterface // needed to keep xorm engine in scope
+	sess                *session.SessionDB
+	dialect             migrator.Dialect
+	snowflake           *snowflake.Node
+	broadcaster         Broadcaster[*entity.Entity]
+	cancelServerContext context.CancelFunc
+	serverTerminated    <-chan struct{}
 }
 
-func (s *sqlEntityServer) Init() error {
-	if s.sess != nil {
+func (s *sqlEntityServer) Stop(ctx context.Context) error {
+	s.cancelServerContext()
+	select {
+	case <-ctx.Done():
+		err := ctx.Err()
+		s.log.Error("context canceled while terminating server",
+			"context_error", err, "context_cancel_cause", context.Cause(ctx))
+		return err
+	case <-s.serverTerminated:
+		s.log.Info("successfuly terminated")
 		return nil
 	}
+}
 
+func (s *sqlEntityServer) init(ctx context.Context) error {
 	if s.db == nil {
-		return errors.New("missing db")
+		return ErrNilDB
 	}
 
 	err := s.db.Init()
 	if err != nil {
-		return err
+		return fmt.Errorf("initialize db: %w", err)
 	}
 
 	sess, err := s.db.GetSession()
 	if err != nil {
-		return err
+		return fmt.Errorf("get session from db: %w", err)
 	}
 
 	engine, err := s.db.GetEngine()
 	if err != nil {
-		return err
+		return fmt.Errorf("get db engine: %w", err)
 	}
 
 	s.sess = sess
-	s.dialect = migrator.NewDialect(engine.DriverName())
+	driverName := engine.DriverName()
+	s.dialect = migrator.NewDialect(driverName)
 
 	// initialize snowflake generator
 	s.snowflake, err = snowflake.NewNode(rand.Int63n(1024))
 	if err != nil {
-		return err
+		return fmt.Errorf("initialize snowflake: %w", err)
+	}
+
+	// configure the watch implementation
+	var cf startWatcherFunc[*entity.Entity]
+
+	// attempt to use postgres listen/notify. If the postgres implementation
+	// does not support LISTEN SQL command (e.g. CockroachDB) then it will fail.
+	// In case of failure, it uses poller
+	/*
+		if driverName == migrator.Postgres {
+			params := postgresListenNotifyWatcherParams{
+				cfg:  s.db.GetCfg(),
+				sess: s.sess,
+				log:  s.log.New("watch_implem", "postgres_listen_notify"),
+			}
+			w, err := newPostgresListenNotifyWatcher(ctx, params)
+			if err == nil {
+				s.log.Info("using postgres listen/notify watcher")
+				cf = w.start
+
+			} else {
+				s.log.Error("could not start postgres listen/notify watcher, falling back to polling", "err", err)
+				sess, err := s.db.GetSession()
+				if err != nil {
+					return err
+				}
+				s.sess = sess
+			}
+		}
+	*/
+
+	// default to poll-based watcher
+	if cf == nil {
+		s.log.Info("using poller watcher", "db_driver", driverName)
+		w := pollWatcher{
+			log:       s.log.New("watch_implem", "poller"),
+			dialect:   s.dialect,
+			sess:      s.sess,
+			snowflake: s.snowflake,
+		}
+		cf = w.start
 	}
 
 	// set up the broadcaster
-	s.broadcaster, err = NewBroadcaster(s.ctx, func(stream chan *entity.Entity) error {
-		// start the poller
-		go s.poller(stream)
-
-		return nil
-	})
+	s.broadcaster, err = NewBroadcaster(ctx, cf)
 	if err != nil {
 		return err
 	}
+	s.serverTerminated = s.broadcaster.Done()
 
 	return nil
 }
@@ -100,7 +161,20 @@ type FieldSelectRequest interface {
 	GetWithStatus() bool
 }
 
-func (s *sqlEntityServer) getReadFields(r FieldSelectRequest) []string {
+type fieldSelectRequest struct {
+	withBody   bool
+	withStatus bool
+}
+
+func (r fieldSelectRequest) GetWithBody() bool {
+	return r.withBody
+}
+
+func (r fieldSelectRequest) GetWithStatus() bool {
+	return r.withStatus
+}
+
+func getReadFields(r FieldSelectRequest) []string {
 	fields := []string{
 		"guid",
 		"key",
@@ -126,11 +200,7 @@ func (s *sqlEntityServer) getReadFields(r FieldSelectRequest) []string {
 }
 
 func (s *sqlEntityServer) getReadSelect(r FieldSelectRequest) (string, error) {
-	if err := s.Init(); err != nil {
-		return "", err
-	}
-
-	fields := s.getReadFields(r)
+	fields := getReadFields(r)
 
 	quotedFields := make([]string, len(fields))
 	for i, f := range fields {
@@ -144,20 +214,33 @@ func rowToEntity(rows *sql.Rows, r FieldSelectRequest) (*entity.Entity, error) {
 		Origin: &entity.EntityOriginInfo{},
 	}
 
-	errors := ""
-	labels := ""
-	fields := ""
-
+	var errors, labels, fields string
 	args := []any{
 		&raw.Guid,
 		&raw.Key,
-		&raw.Namespace, &raw.Group, &raw.GroupVersion, &raw.Resource, &raw.Name, &raw.Folder,
-		&raw.ResourceVersion, &raw.Size, &raw.ETag, &errors,
-		&raw.CreatedAt, &raw.CreatedBy,
-		&raw.UpdatedAt, &raw.UpdatedBy,
-		&raw.Origin.Source, &raw.Origin.Key, &raw.Origin.Time,
+		&raw.Namespace,
+		&raw.Group,
+		&raw.GroupVersion,
+		&raw.Resource,
+		&raw.Name,
+		&raw.Folder,
+		&raw.ResourceVersion,
+		&raw.Size,
+		&raw.ETag,
+		&errors, // FIXME: this is not being used
+		&raw.CreatedAt,
+		&raw.CreatedBy,
+		&raw.UpdatedAt,
+		&raw.UpdatedBy,
+		&raw.Origin.Source,
+		&raw.Origin.Key,
+		&raw.Origin.Time,
 		&raw.Meta,
-		&raw.Title, &raw.Slug, &raw.Description, &labels, &fields,
+		&raw.Title,
+		&raw.Slug,
+		&raw.Description,
+		&labels,
+		&fields, // FIXME: this is not being used
 		&raw.Message,
 		&raw.Action,
 	}
@@ -195,10 +278,6 @@ func rowToEntity(rows *sql.Rows, r FieldSelectRequest) (*entity.Entity, error) {
 }
 
 func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
 	return s.read(ctx, s.sess, r)
 }
 
@@ -311,10 +390,6 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 
 //nolint:gocyclo
 func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequest) (*entity.CreateEntityResponse, error) {
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
 	createdAt := r.Entity.CreatedAt
 	if createdAt < 1000 {
 		createdAt = time.Now().UnixMilli()
@@ -523,10 +598,6 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 //nolint:gocyclo
 func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequest) (*entity.UpdateEntityResponse, error) {
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
 	updatedAt := r.Entity.UpdatedAt
 	if updatedAt < 1000 {
 		updatedAt = time.Now().UnixMilli()
@@ -781,10 +852,6 @@ func (s *sqlEntityServer) setLabels(ctx context.Context, tx *session.SessionTx, 
 }
 
 func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequest) (*entity.DeleteEntityResponse, error) {
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
 	rsp := &entity.DeleteEntityResponse{}
 
 	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
@@ -923,10 +990,6 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 }
 
 func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRequest) (*entity.EntityHistoryResponse, error) {
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
 	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, err
@@ -953,7 +1016,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		limit = r.Limit
 	}
 
-	fields := s.getReadFields(r)
+	fields := getReadFields(r)
 
 	entityQuery := selectQuery{
 		dialect:  s.dialect,
@@ -1104,10 +1167,6 @@ func ParseSortBy(sort string) (*SortBy, error) {
 }
 
 func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
 	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, err
@@ -1116,7 +1175,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		return nil, fmt.Errorf("missing user in context")
 	}
 
-	fields := s.getReadFields(r)
+	fields := getReadFields(r)
 
 	entityQuery := selectQuery{
 		dialect:  s.dialect,
@@ -1255,10 +1314,6 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 }
 
 func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
-	if err := s.Init(); err != nil {
-		return err
-	}
-
 	user, err := appcontext.User(w.Context())
 	if err != nil {
 		return err
@@ -1269,12 +1324,14 @@ func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntitySto
 
 	// collect and send any historical events
 	err = s.watchInit(r, w)
+	s.log.Info("running watchInit") // TODO [DEBUG]: remove
 	if err != nil {
 		return err
 	}
 
 	// subscribe to new events
 	err = s.watch(r, w)
+	s.log.Info("running watch") // TODO [DEBUG]: remove
 	if err != nil {
 		s.log.Error("watch error", "err", err)
 		return err
@@ -1285,7 +1342,7 @@ func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntitySto
 
 // watchInit is a helper function to send the initial set of entities to the client
 func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
-	fields := s.getReadFields(r)
+	fields := getReadFields(r)
 
 	entityQuery := selectQuery{
 		dialect:  s.dialect,
@@ -1425,83 +1482,6 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 	return nil
 }
 
-func (s *sqlEntityServer) poller(stream chan *entity.Entity) {
-	var err error
-	since := s.snowflake.Generate().Int64()
-
-	t := time.NewTicker(5 * time.Second)
-	defer t.Stop()
-
-	for range t.C {
-		since, err = s.poll(since, stream)
-		if err != nil {
-			s.log.Error("watch error", "err", err)
-		}
-	}
-}
-
-func (s *sqlEntityServer) poll(since int64, out chan *entity.Entity) (int64, error) {
-	rr := &entity.ReadEntityRequest{
-		WithBody:   true,
-		WithStatus: true,
-	}
-
-	fields := s.getReadFields(rr)
-
-	for hasmore := true; hasmore; {
-		err := func() error {
-			entityQuery := selectQuery{
-				dialect: s.dialect,
-				fields:  fields,
-				from:    "entity_history", // the table
-				args:    []any{},
-				limit:   100, // r.Limit,
-				// offset:   0,
-				oneExtra: true, // request one more than the limit (and show next token if it exists)
-				orderBy:  []string{"resource_version"},
-			}
-
-			entityQuery.addWhere("resource_version > ?", since)
-
-			query, args := entityQuery.toQuery()
-
-			rows, err := s.sess.Query(s.ctx, query, args...)
-			if err != nil {
-				return err
-			}
-			defer func() { _ = rows.Close() }()
-
-			found := int64(0)
-			for rows.Next() {
-				found++
-				if found > entityQuery.limit {
-					return nil
-				}
-
-				result, err := rowToEntity(rows, rr)
-				if err != nil {
-					return err
-				}
-
-				if result.ResourceVersion > since {
-					since = result.ResourceVersion
-				}
-
-				s.log.Debug("sending poll result", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
-				out <- result
-			}
-
-			hasmore = false
-			return nil
-		}()
-		if err != nil {
-			return since, err
-		}
-	}
-
-	return since, nil
-}
-
 func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
 	// Resource version too old
 	if result.ResourceVersion <= r.Since {
@@ -1573,7 +1553,11 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 		case <-w.Context().Done():
 			return nil
 		// got a raw result from the broadcaster
-		case result := <-evts:
+		case result, ok := <-evts:
+			if !ok {
+				return nil
+			}
+
 			// result doesn't match our watch params, skip it
 			if !watchMatches(r, result) {
 				s.log.Debug("watch result not matched", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
@@ -1604,10 +1588,6 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 }
 
 func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntityListResponse, error) {
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
 	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, err
