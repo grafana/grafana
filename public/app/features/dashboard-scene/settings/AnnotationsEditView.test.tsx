@@ -3,10 +3,11 @@ import { map, of } from 'rxjs';
 import { AnnotationQuery, DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneDataLayers, SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel, dataLayers } from '@grafana/scenes';
+import { SceneDataLayers, SceneGridLayout, SceneTimeRange, VizPanel, dataLayers } from '@grafana/scenes';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -190,7 +191,7 @@ async function buildTestScene() {
     }),
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           y: 0,

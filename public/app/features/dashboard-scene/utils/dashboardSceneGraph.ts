@@ -1,12 +1,4 @@
-import {
-  VizPanel,
-  SceneGridItem,
-  SceneGridRow,
-  SceneDataLayers,
-  sceneGraph,
-  SceneGridLayout,
-  behaviors,
-} from '@grafana/scenes';
+import { VizPanel, SceneGridRow, SceneDataLayers, sceneGraph, SceneGridLayout, behaviors } from '@grafana/scenes';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -39,13 +31,17 @@ function getVizPanels(scene: DashboardScene): VizPanel[] {
   const panels: VizPanel[] = [];
 
   scene.state.body.forEachChild((child) => {
-    if (child instanceof SceneGridItem) {
+    if (!(child instanceof DashboardGridItem) && !(child instanceof SceneGridRow)) {
+      throw new Error('Child is not a DashboardGridItem or SceneGridRow, invalid scene');
+    }
+
+    if (child instanceof DashboardGridItem) {
       if (child.state.body instanceof VizPanel) {
         panels.push(child.state.body);
       }
     } else if (child instanceof SceneGridRow) {
       child.forEachChild((child) => {
-        if (child instanceof SceneGridItem) {
+        if (child instanceof DashboardGridItem) {
           if (child.state.body instanceof VizPanel) {
             panels.push(child.state.body);
           }
@@ -101,21 +97,6 @@ export function getNextPanelId(dashboard: DashboardScene): number {
       }
     }
 
-    if (child instanceof SceneGridItem) {
-      const vizPanel = child.state.body;
-
-      if (vizPanel) {
-        const panelId =
-          vizPanel instanceof LibraryVizPanel
-            ? getPanelIdForLibraryVizPanel(vizPanel)
-            : getPanelIdForVizPanel(vizPanel);
-
-        if (panelId > max) {
-          max = panelId;
-        }
-      }
-    }
-
     if (child instanceof SceneGridRow) {
       //rows follow the same key pattern --- e.g.: `panel-6`
       const panelId = getPanelIdForVizPanel(child);
@@ -125,7 +106,7 @@ export function getNextPanelId(dashboard: DashboardScene): number {
       }
 
       for (const rowChild of child.state.children) {
-        if (rowChild instanceof SceneGridItem) {
+        if (rowChild instanceof DashboardGridItem) {
           const vizPanel = rowChild.state.body;
 
           if (vizPanel) {

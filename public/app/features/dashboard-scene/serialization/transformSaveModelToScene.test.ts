@@ -22,7 +22,6 @@ import {
   SceneDataLayerControls,
   SceneDataLayers,
   SceneDataTransformer,
-  SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
   SceneQueryRunner,
@@ -43,8 +42,8 @@ import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard
 import { DashboardDataDTO } from 'app/types';
 
 import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
@@ -344,7 +343,7 @@ describe('transformSaveModelToScene', () => {
       expect(panelOutOfRowWidget.state.body!).toBeInstanceOf(AddLibraryPanelWidget);
       // lib panel out of row
       expect(body.state.children[2]).toBeInstanceOf(DashboardGridItem);
-      const panelOutOfRowLibVizPanel = body.state.children[2] as SceneGridItem;
+      const panelOutOfRowLibVizPanel = body.state.children[2] as DashboardGridItem;
       expect(panelOutOfRowLibVizPanel.state.body!).toBeInstanceOf(LibraryVizPanel);
       // Row with panels
       expect(body.state.children[3]).toBeInstanceOf(SceneGridRow);
@@ -1245,5 +1244,5 @@ function buildGridItemForTest(saveModel: Partial<Panel>): { gridItem: DashboardG
     return { gridItem, vizPanel: gridItem.state.body as VizPanel };
   }
 
-  throw new Error('buildGridItemForPanel to return SceneGridItem');
+  throw new Error('buildGridItemForPanel to return DashboardGridItem');
 }

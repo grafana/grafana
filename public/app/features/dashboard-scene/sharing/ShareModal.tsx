@@ -8,6 +8,7 @@ import { t } from 'app/core/internationalization';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -18,7 +19,6 @@ import { SharePanelEmbedTab } from './SharePanelEmbedTab';
 import { ShareSnapshotTab } from './ShareSnapshotTab';
 import { SharePublicDashboardTab } from './public-dashboards/SharePublicDashboardTab';
 import { ModalSceneObjectLike, SceneShareTab } from './types';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 
 interface ShareModalState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;

@@ -1,6 +1,6 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -44,20 +44,7 @@ async function buildTestScene() {
       canEdit: true,
     },
     body: new SceneGridLayout({
-      children: [
-        new SceneGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: new VizPanel({
-            title: 'Panel A',
-            key: 'panel-1',
-            pluginId: 'table',
-          }),
-        }),
-      ],
+      children: [],
     }),
     editview: permissionsView,
   });

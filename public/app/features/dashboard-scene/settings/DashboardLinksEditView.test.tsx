@@ -4,10 +4,11 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
+import { SceneGridLayout, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
@@ -232,7 +233,7 @@ async function buildTestScene() {
     },
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           y: 0,

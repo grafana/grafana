@@ -187,7 +187,7 @@ export function gridItemToPanel(gridItem: DashboardGridItem, isSnapshot = false)
   }
 
   if (!(gridItem.state.body instanceof VizPanel)) {
-    throw new Error('SceneGridItem body expected to be VizPanel');
+    throw new Error('DashboardGridItem body expected to be VizPanel');
   }
 
   vizPanel = gridItem.state.body;
