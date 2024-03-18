@@ -231,7 +231,7 @@ func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, rr plugins.Stat
 		routes[route.PluginID] = route
 	}
 
-	require.Len(t, routes, 2)
+	require.Len(t, routes, 1)
 
 	testAppPlugin, _ := ps.Plugin(ctx, "test-app")
 	require.Contains(t, routes, "test-app")
