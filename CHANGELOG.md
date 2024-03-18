@@ -4,8 +4,6 @@
 
 ### Features and enhancements
 
-- **Chore:** Improve domain validation for Google OAuth - Backport 83229 to v10.4.x. [#83726](https://github.com/grafana/grafana/issues/83726), [@linoman](https://github.com/linoman)
-- **DataQuery:** Track panel plugin id not type. [#83164](https://github.com/grafana/grafana/issues/83164), [@torkelo](https://github.com/torkelo)
 - **AuthToken:** Remove client token rotation feature toggle. [#82886](https://github.com/grafana/grafana/issues/82886), [@kalleep](https://github.com/kalleep)
 - **Plugins:** Enable feature toggle angularDeprecationUI by default. [#82880](https://github.com/grafana/grafana/issues/82880), [@xnyo](https://github.com/xnyo)
 - **Table Component:** Improve text-wrapping behavior of cells. [#82872](https://github.com/grafana/grafana/issues/82872), [@ahuarte47](https://github.com/ahuarte47)
@@ -134,15 +132,6 @@
 
 ### Bug fixes
 
-- **GenAI:** Update the component only when the response is fully generated. [#83895](https://github.com/grafana/grafana/issues/83895), [@ivanortegaalba](https://github.com/ivanortegaalba)
-- **LDAP:** Fix LDAP users authenticated via auth proxy not being able to use LDAP active sync. [#83751](https://github.com/grafana/grafana/issues/83751), [@Jguer](https://github.com/Jguer)
-- **Tempo:** Better fallbacks for metrics query. [#83688](https://github.com/grafana/grafana/issues/83688), [@adrapereira](https://github.com/adrapereira)
-- **Tempo:** Add template variable interpolation for filters. [#83667](https://github.com/grafana/grafana/issues/83667), [@joey-grafana](https://github.com/joey-grafana)
-- **Elasticsearch:** Fix adhoc filters not applied in frontend mode. [#83597](https://github.com/grafana/grafana/issues/83597), [@svennergr](https://github.com/svennergr)
-- **AuthProxy:** Invalidate previous cached item for user when changes are made to any header. [#83287](https://github.com/grafana/grafana/issues/83287), [@klesh](https://github.com/klesh)
-- **Alerting:** Fix saving evaluation group. [#83234](https://github.com/grafana/grafana/issues/83234), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
-- **QueryVariableEditor:** Select a variable ds does not work. [#83181](https://github.com/grafana/grafana/issues/83181), [@ivanortegaalba](https://github.com/ivanortegaalba)
-- **Logs Panel:** Add option extra UI functionality for log context. [#83129](https://github.com/grafana/grafana/issues/83129), [@svennergr](https://github.com/svennergr)
 - **Auth:** Fix email verification bypass when using basic authentication. [#82914](https://github.com/grafana/grafana/issues/82914), [@volcanonoodle](https://github.com/volcanonoodle)
 - **LibraryPanels/RBAC:** Fix issue where folder scopes weren't being correctly inherited. [#82700](https://github.com/grafana/grafana/issues/82700), [@kaydelaney](https://github.com/kaydelaney)
 - **Table Panel:** Fix display of ad-hoc filter actions. [#82442](https://github.com/grafana/grafana/issues/82442), [@codeincarnate](https://github.com/codeincarnate)
