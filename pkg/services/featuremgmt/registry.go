@@ -515,15 +515,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:           "cloudWatchLogsMonacoEditor",
-			Description:    "Enables the Monaco editor for CloudWatch Logs queries",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
