@@ -5,6 +5,8 @@ import { BackgroundSizeEditor } from 'app/features/dimensions/editors/Background
 
 import { LineStyle } from '../types';
 
+import { LineStyleEditor } from './LineStyleEditor';
+
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
@@ -126,17 +128,14 @@ export const optionBuilder: OptionSuppliers = {
 
   addLineStyle: (builder, context) => {
     const category = ['Line style'];
-    builder.addSelect({
+    builder.addCustomEditor({
       category,
+      id: 'lineStyle',
       path: 'lineStyle',
       name: 'LineStyle',
-      settings: {
-        options: [
-          { value: LineStyle.Solid, label: 'Solid' },
-          { value: LineStyle.Dashed, label: 'Dashed' },
-        ],
-      },
-      defaultValue: LineStyle.Solid,
+      editor: LineStyleEditor,
+      settings: {},
+      defaultValue: { value: LineStyle.Solid, label: 'Solid' },
     });
   },
 };
