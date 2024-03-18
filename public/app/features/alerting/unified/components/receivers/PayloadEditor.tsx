@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
+import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Button, CodeEditor, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Button, CodeEditor, Drawer, Label, Stack, useStyles2 } from '@grafana/ui';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertInstanceModalSelector } from './AlertInstanceModalSelector';
@@ -19,7 +20,6 @@ export function PayloadEditor({
   defaultPayload,
   setPayloadFormatError,
   payloadFormatError,
-  onPayloadError,
   className,
 }: {
   payload: string;
@@ -27,7 +27,6 @@ export function PayloadEditor({
   setPayload: React.Dispatch<React.SetStateAction<string>>;
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
   payloadFormatError: string | null;
-  onPayloadError: () => void;
   className?: string;
 }) {
   const styles = useStyles2(getStyles);
@@ -35,6 +34,7 @@ export function PayloadEditor({
     setPayload(defaultPayload);
   };
 
+  const [cheatsheetOpened, toggleCheatsheetOpened] = useToggle(false);
   const [isEditingAlertData, setIsEditingAlertData] = useState(false);
 
   const onCloseEditAlertModal = () => {
@@ -50,7 +50,6 @@ export function PayloadEditor({
       setPayloadFormatError(null);
     } catch (e) {
       setPayloadFormatError(e instanceof Error ? e.message : 'Invalid JSON.');
-      onPayloadError();
       throw e;
     }
   };
@@ -81,20 +80,22 @@ export function PayloadEditor({
   const [isAlertSelectorOpen, setIsAlertSelectorOpen] = useState(false);
 
   return (
-    <div className={cx(styles.wrapper, className)}>
-      <div className={styles.editor}>
-        {/* <div className={styles.title}>
-          Payload data
-          <Tooltip placement="top" content={<AlertTemplateDataTable />} theme="info">
-            <Icon name="info-circle" className={styles.tooltip} size="xl" />
-          </Tooltip>
-        </div> */}
-        <AutoSizer disableHeight>
-          {({ width }) => (
-            <div className={styles.editorWrapper}>
+    <>
+      <div className={cx(styles.wrapper, className)}>
+        <Stack justifyContent="space-between" alignItems="center">
+          <Label className={styles.label}>Payload</Label>
+          <Button variant="secondary" fill="outline" size="sm" icon="info-circle" onClick={toggleCheatsheetOpened}>
+            Cheatsheet
+          </Button>
+        </Stack>
+
+        <div className={styles.editorWrapper}>
+          <AutoSizer>
+            {({ width, height }) => (
               <CodeEditor
+                containerStyles={styles.editorContainer}
                 width={width}
-                height={362}
+                height={height}
                 language={'json'}
                 showLineNumbers={true}
                 showMiniMap={false}
@@ -103,15 +104,14 @@ export function PayloadEditor({
                 onBlur={setPayload}
                 monacoOptions={{ wordWrap: 'on' }}
               />
-            </div>
-          )}
-        </AutoSizer>
+            )}
+          </AutoSizer>
+        </div>
 
-        <div className={styles.buttonsWrapper}>
+        <Stack wrap="wrap" gap={0.5}>
           <Button
             type="button"
             variant="secondary"
-            className={styles.button}
             icon="bell"
             disabled={errorInPayloadJson}
             onClick={onOpenAlertSelectorModal}
@@ -121,7 +121,6 @@ export function PayloadEditor({
 
           <Button
             onClick={onOpenEditAlertModal}
-            className={styles.button}
             icon="plus-circle"
             type="button"
             variant="secondary"
@@ -129,7 +128,7 @@ export function PayloadEditor({
           >
             Add custom alerts
           </Button>
-          <Button onClick={onReset} className={styles.button} icon="arrow-up" type="button" variant="destructive">
+          <Button onClick={onReset} icon="arrow-up" type="button" variant="destructive">
             {RESET_TO_DEFAULT}
           </Button>
 
@@ -141,8 +140,19 @@ export function PayloadEditor({
               tooltip={'Fix errors in payload, and click Refresh preview button'}
             />
           )}
-        </div>
+        </Stack>
       </div>
+
+      {cheatsheetOpened && (
+        <Drawer
+          title="Alert template payload"
+          subtitle="This is the list of alert data fields used in the preview."
+          onClose={toggleCheatsheetOpened}
+        >
+          <AlertTemplateDataTable />
+        </Drawer>
+      )}
+
       <GenerateAlertDataModal isOpen={isEditingAlertData} onDismiss={onCloseEditAlertModal} onAccept={onAddAlertList} />
 
       <AlertInstanceModalSelector
@@ -150,62 +160,33 @@ export function PayloadEditor({
         isOpen={isAlertSelectorOpen}
         onClose={() => setIsAlertSelectorOpen(false)}
       />
-    </div>
+    </>
   );
 }
 const AlertTemplateDataTable = () => {
-  const styles = useStyles2(getStyles);
-  return (
-    <TemplateDataTable
-      caption={
-        <h4 className={styles.templateDataDocsHeader}>
-          Alert template data <span>This is the list of alert data fields used in the preview.</span>
-        </h4>
-      }
-      dataItems={AlertTemplatePreviewData}
-    />
-  );
+  return <TemplateDataTable dataItems={AlertTemplatePreviewData} />;
 };
 const getStyles = (theme: GrafanaTheme2) => ({
-  jsonEditor: css`
-    width: 100%;
-    height: 100%;
-  `,
-  buttonsWrapper: css`
-    margin-top: ${theme.spacing(1)};
-    display: flex;
-    flex-wrap: wrap;
-  `,
-  button: css`
-    flex: none;
-    width: fit-content;
-    padding-right: ${theme.spacing(1)};
-    margin-right: ${theme.spacing(1)};
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  title: css`
-    font-weight: ${theme.typography.fontWeightBold};
-    heigth: 41px;
-    padding-top: 10px;
-    padding-left: ${theme.spacing(2)};
-    margin-top: 19px;
-  `,
   wrapper: css`
-    flex: 1;
-    min-width: 350px;
+    display: flex;
+    flex-direction: column;
+    gap: ${theme.spacing(1)};
+    height: 100%;
   `,
   tooltip: css`
     padding-left: ${theme.spacing(1)};
   `,
-  editorWrapper: css`
-    width: min-content;
-    padding-top: 7px;
-  `,
-  editor: css`
-    display: flex;
-    flex-direction: column;
-    margin-top: ${theme.spacing(-1)};
-  `,
+  label: css({
+    margin: 0,
+  }),
+  editorWrapper: css({
+    flex: 1,
+  }),
+  editorContainer: css({
+    width: 'fit-content',
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.components.input.borderColor}`,
+  }),
   templateDataDocsHeader: css`
     color: ${theme.colors.text.primary};
 

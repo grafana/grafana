@@ -12,7 +12,6 @@ import { isFetchError } from '@grafana/runtime';
 import {
   Alert,
   Button,
-  CollapsableSection,
   Field,
   FieldSet,
   Input,
@@ -20,9 +19,10 @@ import {
   useStyles2,
   Stack,
   LoadingPlaceholder,
-  Drawer,
   Label,
   IconButton,
+  Drawer,
+  InlineField,
 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -88,6 +88,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
 
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
+  const [cheatsheetOpened, toggleCheatsheetOpened] = useToggle(false);
   const [payloadOpened, togglePayloadOpened] = useToggle(true);
 
   const location = useLocation();
@@ -95,10 +96,6 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
 
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
-
-  const [view, setView] = useState<'content' | 'preview'>('content');
-
-  const onPayloadError = () => setView('preview');
 
   const submit = (values: TemplateFormValues) => {
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
@@ -177,97 +174,117 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   );
 
   return (
-    <FormProvider {...formApi}>
-      <AppChromeUpdate actions={actionButtons} />
-      <form onSubmit={handleSubmit(submit)} ref={formRef}>
-        <h4>{existing && !isduplicating ? 'Edit notification template' : 'Create notification template'}</h4>
-        {error && (
-          <Alert severity="error" title="Error saving template">
-            {error.message || (isFetchError(error) && error.data?.message) || String(error)}
-          </Alert>
-        )}
-        {provenance && <ProvisioningAlert resource={ProvisionedResource.Template} />}
-        <FieldSet disabled={Boolean(provenance)}>
-          <Field label="Template name" error={errors?.name?.message} invalid={!!errors.name?.message} required>
-            <Input
-              {...register('name', {
-                required: { value: true, message: 'Required.' },
-                validate: { nameIsUnique: validateNameIsUnique },
-              })}
-              placeholder="Give your template a name"
-              width={42}
-              autoFocus={true}
-            />
-          </Field>
-          <TemplatingGuideline />
-          {/* <AutoSizer disableHeight className={styles.contentEditorV2}> */}
-          {/* {({ width }) => ( */}
-          <Stack direction="row">
-            <Field
-              label="Template content"
-              error={errors?.content?.message}
-              invalid={!!errors.content?.message}
+    <>
+      <FormProvider {...formApi}>
+        <AppChromeUpdate actions={actionButtons} />
+        <form onSubmit={handleSubmit(submit)} ref={formRef}>
+          <h4>{existing && !isduplicating ? 'Edit notification template' : 'Create notification template'}</h4>
+          {error && (
+            <Alert severity="error" title="Error saving template">
+              {error.message || (isFetchError(error) && error.data?.message) || String(error)}
+            </Alert>
+          )}
+          {provenance && <ProvisioningAlert resource={ProvisionedResource.Template} />}
+          <FieldSet disabled={Boolean(provenance)}>
+            <InlineField
+              label="Template name"
+              error={errors?.name?.message}
+              invalid={!!errors.name?.message}
               required
-              className={styles.contentEditorV2}
+              className={styles.nameField}
             >
-              <AutoSizer disableHeight>
-                {({ width }) => (
-                  <TemplateEditor
-                    value={getValues('content')}
-                    onBlur={(value) => setValue('content', value)}
-                    width={width}
-                    height={450}
-                  />
-                )}
-              </AutoSizer>
-            </Field>
-            <div className={styles.templatePreview}>
-              <TemplatePreview
-                payload={payload}
-                templateName={watch('name')}
-                setPayloadFormatError={setPayloadFormatError}
-                payloadFormatError={payloadFormatError}
-                className={styles.templatePreviewComponent}
+              <Input
+                {...register('name', {
+                  required: { value: true, message: 'Required.' },
+                  validate: { nameIsUnique: validateNameIsUnique },
+                })}
+                placeholder="Give your template a name"
+                width={42}
+                autoFocus={true}
               />
+            </InlineField>
+            <div className={styles.contentContainer}>
+              <Field
+                label={
+                  <Stack justifyContent="space-between" alignItems="center">
+                    <Label className={styles.label}>Template content</Label>
+                    <Button
+                      icon="info-circle"
+                      size="sm"
+                      fill="outline"
+                      variant="secondary"
+                      onClick={toggleCheatsheetOpened}
+                    >
+                      Cheatsheet
+                    </Button>
+                  </Stack>
+                }
+                error={errors?.content?.message}
+                invalid={!!errors.content?.message}
+                required
+                className={styles.contentField}
+              >
+                <AutoSizer disableHeight>
+                  {({ width }) => (
+                    <TemplateEditor
+                      value={getValues('content')}
+                      onBlur={(value) => setValue('content', value)}
+                      containerStyles={styles.editorContainer}
+                      width={width}
+                      height={568}
+                    />
+                  )}
+                </AutoSizer>
+              </Field>
+              {isGrafanaAlertManager && (
+                <>
+                  <div className={styles.templatePreview}>
+                    <TemplatePreview
+                      payload={payload}
+                      templateName={watch('name')}
+                      setPayloadFormatError={setPayloadFormatError}
+                      payloadFormatError={payloadFormatError}
+                    />
+                  </div>
+                  <IconButton
+                    name={payloadOpened ? 'angle-double-right' : 'angle-double-left'}
+                    aria-label='Toggle "Payload" section'
+                    onClick={togglePayloadOpened}
+                    className={styles.payloadCollapseButton}
+                  >
+                    Payload
+                  </IconButton>
+                </>
+              )}
+              {payloadOpened && (
+                <div className={styles.templatePayload}>
+                  <PayloadEditor
+                    payload={payload}
+                    setPayload={setPayload}
+                    defaultPayload={DEFAULT_PAYLOAD}
+                    setPayloadFormatError={setPayloadFormatError}
+                    payloadFormatError={payloadFormatError}
+                  />
+                </div>
+              )}
             </div>
-            <IconButton
-              name={payloadOpened ? 'angle-double-right' : 'angle-double-left'}
-              aria-label='Toggle "Payload" section'
-              onClick={togglePayloadOpened}
-              className={styles.payloadCollapseButton}
-            >
-              Payload
-            </IconButton>
-            {payloadOpened && (
-              <div className={styles.templatePayload}>
-                <Label>Payload</Label>
-                <PayloadEditor
-                  payload={payload}
-                  setPayload={setPayload}
-                  defaultPayload={DEFAULT_PAYLOAD}
-                  setPayloadFormatError={setPayloadFormatError}
-                  payloadFormatError={payloadFormatError}
-                  onPayloadError={onPayloadError}
-                />
-              </div>
-            )}
-          </Stack>
-          {/* )} */}
-          {/* </AutoSizer> */}
-        </FieldSet>
-        <CollapsableSection label="Data cheat sheet" isOpen={false} className={styles.collapsableSection}>
-          <TemplateDataDocs />
-        </CollapsableSection>
-      </form>
-    </FormProvider>
+          </FieldSet>
+        </form>
+      </FormProvider>
+      {cheatsheetOpened && (
+        <Drawer title="Templating cheat sheet" onClose={toggleCheatsheetOpened} size="lg">
+          <TemplatingCheatSheet />
+        </Drawer>
+      )}
+    </>
   );
 };
 
-function TemplatingGuideline() {
+function TemplatingBasics() {
   const styles = useStyles2(getStyles);
 
   return (
-    <Alert title="Templating guideline" severity="info">
+    <Alert title="How to" severity="info">
       <Stack direction="row">
         <div>
           Grafana uses Go templating language to create notification messages.
@@ -295,6 +312,15 @@ function TemplatingGuideline() {
         </div>
       </div>
     </Alert>
+  );
+}
+
+function TemplatingCheatSheet() {
+  return (
+    <Stack direction="column" gap={1}>
+      <TemplatingBasics />
+      <TemplateDataDocs />
+    </Stack>
   );
 }
 
@@ -364,13 +390,11 @@ export function TemplatePreview({
   templateName,
   payloadFormatError,
   setPayloadFormatError,
-  className,
 }: {
   payload: string;
   templateName: string;
   payloadFormatError: string | null;
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
-  className?: string;
 }) {
   const styles = useStyles2(getStyles);
 
@@ -397,9 +421,18 @@ export function TemplatePreview({
 
   return (
     <div className={styles.preview.container}>
-      <Stack direction="row" justifyContent="space-between">
-        <Label>Preview</Label>
-        <IconButton name="sync" aria-label="Refresh preview" onClick={onPreview} size="sm" />
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Label className={styles.label}>Preview</Label>
+        <Button
+          icon="sync"
+          aria-label="Refresh preview"
+          onClick={onPreview}
+          size="sm"
+          variant="secondary"
+          fill="outline"
+        >
+          Refresh
+        </Button>
       </Stack>
       {isLoading && <LoadingPlaceholder text="Loading preview..." />}
       <pre className={styles.preview.result} data-testid="payloadJSON">
@@ -410,42 +443,38 @@ export function TemplatePreview({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  contentContainer: css`
-    flex: 1;
-    margin-bottom: ${theme.spacing(6)};
-  `,
-  contentEditorV2: css({
-    flex: 3,
+  label: css({
+    margin: 0,
+  }),
+  nameField: css({
+    marginBottom: theme.spacing(3),
+  }),
+  contentContainer: css({
+    display: 'flex',
+    flexDirection: 'row',
+    gap: theme.spacing(1),
+    height: theme.spacing(75),
     maxHeight: theme.spacing(75),
+  }),
+  contentField: css({
+    flex: 3,
+    gap: theme.spacing(1),
   }),
   templatePreview: css({
     flex: 2,
-    maxHeight: theme.spacing(75),
   }),
   templatePayload: css({
     flex: 2,
-    maxHeight: theme.spacing(75),
+  }),
+  editorContainer: css({
+    width: 'fit-content',
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.components.input.borderColor}`,
   }),
   payloadCollapseButton: css({
     backgroundColor: theme.colors.info.transparent,
     margin: 0,
-    // writingMode: 'vertical-lr',
-    // transform: 'rotate(90deg)',
   }),
-  contentContainerEditor: css`
-    flex: 1;
-    display: flex;
-    padding-top: 10px;
-    gap: ${theme.spacing(2)};
-    flex-direction: row;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    ${theme.breakpoints.up('xxl')} {
-      flex-wrap: nowrap;
-    }
-    min-width: 450px;
-    height: ${theme.spacing(75)};
-  `,
   snippets: css`
     margin-top: ${theme.spacing(2)};
     font-size: ${theme.typography.bodySmall.fontSize};
@@ -454,58 +483,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.text.secondary};
     font-weight: ${theme.typography.fontWeightBold};
   `,
-  buttons: css`
-    display: flex;
-    & > * + * {
-      margin-left: ${theme.spacing(1)};
-    }
-    margin-top: -7px;
-  `,
-  textarea: css`
-    max-width: 758px;
-  `,
-  editWrapper: css`
-    display: flex;
-    width: 100%;
-    height: 100%;
-    position: relative;
-  `,
-  toggle: css`
-    color: ${theme.colors.text.secondary};
-    margin-right: ${theme.spacing(1)};
-  `,
   preview: {
     container: css({
-      flex: 1,
       display: 'flex',
       flexDirection: 'column',
       maxHeight: '100%',
+      gap: theme.spacing(1),
     }),
-    wrapper: css`
-      display: flex;
-      width: 100%;
-      height: 100%;
-      position: relative;
-      flex-direction: column;
-    `,
-    result: css`
-      background-color: ${theme.colors.background.primary};
-      border-radius: ${theme.shape.radius.default};
-      margin: 0;
-    `,
-    button: css`
-      flex: none;
-      width: fit-content;
-      margin-top: -6px;
-    `,
+    result: css({
+      backgroundColor: theme.colors.background.primary,
+      margin: 0,
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.components.input.borderColor}`,
+    }),
   },
-  collapsableSection: css`
-    width: fit-content;
-  `,
-  editorsWrapper: css`
-    display: flex;
-    flex: 1;
-    flex-wrap: wrap;
-    gap: ${theme.spacing(1)};
-  `,
 });

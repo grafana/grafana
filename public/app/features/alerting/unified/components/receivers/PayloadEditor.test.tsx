@@ -48,7 +48,6 @@ const PayloadEditorWithState = () => {
       defaultPayload={DEFAULT_PAYLOAD}
       setPayloadFormatError={jest.fn()}
       payloadFormatError={null}
-      onPayloadError={jest.fn()}
     />
   );
 };

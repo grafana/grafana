@@ -45,7 +45,6 @@ describe('TemplatePreview component', () => {
   it('Should render error if payload has wrong format', async () => {
     render(
       <TemplatePreview
-        width={50}
         payload={'bla bla bla'}
         templateName="potato"
         payloadFormatError={'Unexpected token b in JSON at position 0'}
@@ -62,7 +61,6 @@ describe('TemplatePreview component', () => {
     const setError = jest.fn();
     render(
       <TemplatePreview
-        width={50}
         payload={'{"a":"b"}'}
         templateName="potato"
         payloadFormatError={'Unexpected token b in JSON at position 0'}
@@ -78,7 +76,6 @@ describe('TemplatePreview component', () => {
   it('Should render error if payload has wrong format rendering the preview', async () => {
     render(
       <TemplatePreview
-        width={50}
         payload={'potatos and cherries'}
         templateName="potato"
         payloadFormatError={'Unexpected token b in JSON at position 0'}
@@ -98,7 +95,6 @@ describe('TemplatePreview component', () => {
     mockPreviewTemplateResponseRejected(server);
     render(
       <TemplatePreview
-        width={50}
         payload={'[{"a":"b"}]'}
         templateName="potato"
         payloadFormatError={null}
@@ -122,7 +118,6 @@ describe('TemplatePreview component', () => {
     mockPreviewTemplateResponse(server, response);
     render(
       <TemplatePreview
-        width={50}
         payload={'[{"a":"b"}]'}
         templateName="potato"
         payloadFormatError={null}
@@ -148,7 +143,6 @@ describe('TemplatePreview component', () => {
     mockPreviewTemplateResponse(server, response);
     render(
       <TemplatePreview
-        width={50}
         payload={'[{"a":"b"}]'}
         templateName="potato"
         payloadFormatError={null}
