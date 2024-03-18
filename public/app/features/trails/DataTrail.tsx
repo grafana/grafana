@@ -172,7 +172,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history } = model.useState();
+    const { controls, topScene, history, settings } = model.useState();
     const styles = useStyles2(getStyles);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
@@ -185,6 +185,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             {controls.map((control) => (
               <control.Component key={control.state.key} model={control} />
             ))}
+            <settings.Component model={settings} />
           </div>
         )}
         <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>

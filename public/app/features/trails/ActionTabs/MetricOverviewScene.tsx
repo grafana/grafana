@@ -3,7 +3,6 @@ import React from 'react';
 import {
   QueryVariable,
   SceneComponentProps,
-  SceneFlexItem,
   sceneGraph,
   SceneObjectBase,
   SceneObjectState,
@@ -130,7 +129,5 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
 }
 
 export function buildMetricOverviewScene() {
-  return new SceneFlexItem({
-    body: new MetricOverviewScene({}),
-  });
+  return new MetricOverviewScene({});
 }

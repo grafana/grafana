@@ -6,31 +6,20 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana
 import { Dropdown, Switch, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 export interface DataTrailSettingsState extends SceneObjectState {
-  showQuery?: boolean;
-  showAdvanced?: boolean;
-  multiValueVars?: boolean;
+  stickyMainGraph?: boolean;
   isOpen?: boolean;
 }
 
 export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
   constructor(state: Partial<DataTrailSettingsState>) {
     super({
-      showQuery: state.showQuery ?? false,
-      showAdvanced: state.showAdvanced ?? false,
+      stickyMainGraph: state.stickyMainGraph ?? true,
       isOpen: state.isOpen ?? false,
     });
   }
 
-  public onToggleShowQuery = () => {
-    this.setState({ showQuery: !this.state.showQuery });
-  };
-
-  public onToggleAdvanced = () => {
-    this.setState({ showAdvanced: !this.state.showAdvanced });
-  };
-
-  public onToggleMultiValue = () => {
-    this.setState({ multiValueVars: !this.state.multiValueVars });
+  public onToggleStickyMainGraph = () => {
+    this.setState({ stickyMainGraph: !this.state.stickyMainGraph });
   };
 
   public onToggleOpen = (isOpen: boolean) => {
@@ -38,7 +27,7 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
   };
 
   static Component = ({ model }: SceneComponentProps<DataTrailSettings>) => {
-    const { showQuery, showAdvanced, multiValueVars, isOpen } = model.useState();
+    const { stickyMainGraph, isOpen } = model.useState();
     const styles = useStyles2(getStyles);
 
     const renderPopover = () => {
@@ -47,12 +36,8 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
         <div className={styles.popover} onClick={(evt) => evt.stopPropagation()}>
           <div className={styles.heading}>Settings</div>
           <div className={styles.options}>
-            <div>Multi value variables</div>
-            <Switch value={multiValueVars} onChange={model.onToggleMultiValue} />
-            <div>Advanced options</div>
-            <Switch value={showAdvanced} onChange={model.onToggleAdvanced} />
-            <div>Show query</div>
-            <Switch value={showQuery} onChange={model.onToggleShowQuery} />
+            <div>Always keep selected metric graph in-view</div>
+            <Switch value={stickyMainGraph} onChange={model.onToggleStickyMainGraph} />
           </div>
         </div>
       );
