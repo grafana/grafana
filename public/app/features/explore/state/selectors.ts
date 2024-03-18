@@ -48,12 +48,12 @@ export const selectExploreDSMaps = createSelector(selectPanesEntries, (panes) =>
     })
     .filter((pane): pane is { exploreId: string; datasources: DataSourceRef[] } => !!pane);
 
-  const uniqueDataSources = uniq(flatten(exploreDSMap.map((pane) => pane.datasources)));
+  const uniqueDataSources = uniqBy(flatten(exploreDSMap.map((pane) => pane.datasources)), (ds) => ds.uid);
 
   const dsToExploreMap = uniqueDataSources.map((ds) => {
     let exploreIds: string[] = [];
     exploreDSMap.forEach((eds) => {
-      if (eds.datasources.includes(ds)) {
+      if (eds.datasources.some((edsDs) => edsDs.uid === ds.uid)) {
         exploreIds.push(eds.exploreId);
       }
     });
