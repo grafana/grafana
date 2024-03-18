@@ -10,6 +10,7 @@ import * as libAPI from 'app/features/library-panels/state/api';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -20,7 +21,7 @@ import { findVizPanelByKey } from '../utils/utils';
 import { buildPanelEditScene } from './PanelEditor';
 import { VizPanelManager } from './VizPanelManager';
 import { panelWithQueriesOnly, panelWithTransformations, testDashboard } from './testfiles/testDashboard';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
+import { before } from 'lodash';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {
@@ -144,6 +145,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('VizPanelManager', () => {
+  let gridItem: DashboardGridItem | undefined;
   describe('When changing plugin', () => {
     it('Should successfully change from one viz type to another', () => {
       const { vizPanelManager } = setupTest('panel-1');
@@ -173,7 +175,7 @@ describe('VizPanelManager', () => {
         },
       });
 
-      const _ = new DashboardGridItem({
+      gridItem = new DashboardGridItem({
         body: vizPanel,
       });
 
@@ -201,7 +203,7 @@ describe('VizPanelManager', () => {
         fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
       });
 
-      const _ = new DashboardGridItem({
+      gridItem = new DashboardGridItem({
         body: vizPanel,
       });
 

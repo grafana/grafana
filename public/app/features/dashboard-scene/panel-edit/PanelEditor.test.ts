@@ -1,7 +1,8 @@
 import { PanelPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
-import { SceneGridItem, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 import * as libAPI from 'app/features/library-panels/state/api';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -38,8 +39,9 @@ describe('PanelEditor', () => {
         pluginId: 'text',
       });
 
+      const gridItem = new DashboardGridItem({ body: panel });
+
       const editScene = buildPanelEditScene(panel);
-      const gridItem = new SceneGridItem({ body: panel });
       const scene = new DashboardScene({
         editPanel: editScene,
         isEditing: true,
@@ -85,13 +87,13 @@ describe('PanelEditor', () => {
         panel: panel,
         _loadedPanel: libraryPanelModel,
       });
+      const gridItem = new DashboardGridItem({ body: libraryPanel });
 
       const apiCall = jest
         .spyOn(libAPI, 'updateLibraryVizPanel')
         .mockResolvedValue({ type: 'panel', ...libAPI.libraryVizPanelToSaveModel(libraryPanel), version: 2 });
 
       const editScene = buildPanelEditScene(panel);
-      const gridItem = new SceneGridItem({ body: libraryPanel });
       const scene = new DashboardScene({
         editPanel: editScene,
         isEditing: true,
@@ -118,6 +120,7 @@ describe('PanelEditor', () => {
   });
 
   describe('PanelDataPane', () => {
+    let gridItem: DashboardGridItem | undefined;
     it('should not exist if panel is skipDataQuery', () => {
       pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
 
@@ -125,6 +128,10 @@ describe('PanelEditor', () => {
         key: 'panel-1',
         pluginId: 'text',
       });
+      gridItem = new DashboardGridItem({
+        body: panel,
+      });
+
       const editScene = buildPanelEditScene(panel);
       const scene = new DashboardScene({
         editPanel: editScene,
@@ -141,6 +148,10 @@ describe('PanelEditor', () => {
       const panel = new VizPanel({
         key: 'panel-1',
         pluginId: 'timeseries',
+      });
+
+      gridItem = new DashboardGridItem({
+        body: panel,
       });
       const editScene = buildPanelEditScene(panel);
       const scene = new DashboardScene({

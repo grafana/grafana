@@ -173,6 +173,10 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
     return 'panel-repeater-grid-item';
   }
 
+  public isRepeated() {
+    return this.state.variableName !== undefined;
+  }
+
   public static Component = ({ model }: SceneComponentProps<DashboardGridItem>) => {
     const { repeatedPanels, itemHeight, variableName, body } = model.useState();
     const itemCount = repeatedPanels?.length ?? 0;

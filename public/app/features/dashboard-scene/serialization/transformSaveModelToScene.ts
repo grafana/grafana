@@ -478,7 +478,7 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
   });
 }
 
-export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
+export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   const repeatDirection: RepeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
   const repeatOptions = panel.repeat
     ? {
