@@ -1,7 +1,8 @@
 package pluginsintegration
 
 import (
-	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/build/wire"
+
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"

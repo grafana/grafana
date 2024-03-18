@@ -1,7 +1,7 @@
 package apiregistry
 
 import (
-	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/build/wire"
 
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
