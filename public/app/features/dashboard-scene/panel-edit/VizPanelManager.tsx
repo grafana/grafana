@@ -79,6 +79,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     let repeatOptions: Pick<VizPanelManagerState, 'repeat' | 'repeatDirection' | 'maxPerRow'> = {};
 
     const gridItem = sourcePanel.parent instanceof LibraryVizPanel ? sourcePanel.parent.parent : sourcePanel.parent;
+
     if (!(gridItem instanceof DashboardGridItem)) {
       console.error('VizPanel is not a child of a dashboard grid item');
       throw new Error('VizPanel is not a child of a dashboard grid item');

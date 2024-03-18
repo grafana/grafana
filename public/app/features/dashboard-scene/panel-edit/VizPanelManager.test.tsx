@@ -2,7 +2,7 @@ import { map, of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneGridItem, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
@@ -20,6 +20,7 @@ import { findVizPanelByKey } from '../utils/utils';
 import { buildPanelEditScene } from './PanelEditor';
 import { VizPanelManager } from './VizPanelManager';
 import { panelWithQueriesOnly, panelWithTransformations, testDashboard } from './testfiles/testDashboard';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {
@@ -172,6 +173,10 @@ describe('VizPanelManager', () => {
         },
       });
 
+      const _ = new DashboardGridItem({
+        body: vizPanel,
+      });
+
       const vizPanelManager = VizPanelManager.createFor(vizPanel);
 
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
@@ -194,6 +199,10 @@ describe('VizPanelManager', () => {
           customOption: 'A',
         },
         fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
+      });
+
+      const _ = new DashboardGridItem({
+        body: vizPanel,
       });
 
       const vizPanelManager = VizPanelManager.createFor(vizPanel);
@@ -237,7 +246,7 @@ describe('VizPanelManager', () => {
         _loadedPanel: libraryPanelModel,
       });
 
-      new SceneGridItem({ body: libraryPanel });
+      new DashboardGridItem({ body: libraryPanel });
 
       const panelManager = VizPanelManager.createFor(panel);
 
@@ -276,7 +285,7 @@ describe('VizPanelManager', () => {
         _loadedPanel: libraryPanelModel,
       });
 
-      const gridItem = new SceneGridItem({ body: libraryPanel });
+      const gridItem = new DashboardGridItem({ body: libraryPanel });
 
       const panelManager = VizPanelManager.createFor(panel);
       panelManager.unlinkLibraryPanel();
