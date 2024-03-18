@@ -55,6 +55,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
 | `alertingQueryOptimization`          | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
 | `betterPageScrolling`                | Removes CustomScrollbar from the UI, relying on native browser scrollbars                                                                                                                                                    | Yes                |
+| `dashgpt`                            | Enable AI powered features in dashboards                                                                                                                                                                                     | Yes                |
 
 ## Preview feature toggles
 
@@ -80,7 +81,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `faroDatasourceSelector`               | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                                                                               |
 | `enableDatagridEditing`                | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 | `sqlDatasourceDatabaseSelection`       | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
-| `dashgpt`                              | Enable AI powered features in dashboards                                                                                                                                                     |
 | `reportingRetries`                     | Enables rendering retries for the reporting feature                                                                                                                                          |
 | `externalServiceAccounts`              | Automatic service account and token setup for plugins                                                                                                                                        |
 | `formatString`                         | Enable format string transformer                                                                                                                                                             |
