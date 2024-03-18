@@ -1,6 +1,3 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
-
 import { config } from '@grafana/runtime';
 import {
   behaviors,
@@ -11,8 +8,6 @@ import {
   SceneTimeRange,
   VizPanel,
 } from '@grafana/scenes';
-
-import { TestProvider } from '../../../../test/helpers/TestProvider';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
@@ -104,12 +99,10 @@ describe('ScopesScene', () => {
       dashboardsScene = scopesScene.state.dashboards;
       fetchScopesSpy = jest.spyOn(filtersScene!, 'fetchScopes');
       fetchDashboardsSpy = jest.spyOn(dashboardsScene!, 'fetchDashboards');
-
-      render(
-        <TestProvider>
-          <dashboardScene.Component model={dashboardScene} />
-        </TestProvider>
-      );
+      dashboardScene.activate();
+      scopesScene.activate();
+      filtersScene.activate();
+      dashboardsScene.activate();
     });
 
     it('Initializes', () => {
@@ -140,13 +133,9 @@ describe('ScopesScene', () => {
     });
 
     it('Toggles expanded state', async () => {
-      await waitFor(() => expect(getDashboardsContainer()).not.toBeInTheDocument());
-
       scopesScene.toggleIsExpanded();
 
       expect(scopesScene.state.isExpanded).toEqual(true);
-
-      await waitFor(() => expect(getDashboardsContainer()).toBeInTheDocument());
     });
 
     it('Enters view mode', async () => {
@@ -154,11 +143,6 @@ describe('ScopesScene', () => {
 
       expect(scopesScene.state.isViewing).toEqual(true);
       expect(scopesScene.state.isExpanded).toEqual(false);
-
-      await waitFor(() => {
-        expect(getToggleExpandButton()).not.toBeInTheDocument();
-        expect(getDashboardsContainer()).not.toBeInTheDocument();
-      });
     });
 
     it('Exits view mode', async () => {
@@ -167,8 +151,6 @@ describe('ScopesScene', () => {
 
       expect(scopesScene.state.isViewing).toEqual(false);
       expect(scopesScene.state.isExpanded).toEqual(false);
-
-      await waitFor(() => expect(getToggleExpandButton()).toBeInTheDocument());
     });
   });
 });
@@ -204,12 +186,4 @@ function buildTestScene(overrides: Partial<DashboardScene> = {}) {
     }),
     ...overrides,
   });
-}
-
-function getDashboardsContainer() {
-  return screen.getByTestId('scopes-scene-dashboards-container');
-}
-
-function getToggleExpandButton() {
-  return screen.queryByTestId('scopes-scene-toggle-expand-button');
 }

@@ -5,7 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
-import { DashboardScene } from './DashboardScene';
 import { ScopesDashboardsScene } from './ScopesDashboardsScene';
 import { ScopesFiltersScene } from './ScopesFiltersScene';
 
@@ -37,9 +36,12 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
         }
       });
 
-      const dashboardEditModeSubscription = (this.parent as DashboardScene).subscribeToState((newState, prevState) => {
-        if (newState.isEditing !== prevState.isEditing) {
-          if (newState.isEditing) {
+      const dashboardEditModeSubscription = this.parent?.subscribeToState((newState, prevState) => {
+        const newIsEditing = 'isEditing' in newState ? !!newState.isEditing : false;
+        const prevIsEditing = 'isEditing' in prevState ? !!prevState.isEditing : false;
+
+        if (newIsEditing !== prevIsEditing) {
+          if (newIsEditing) {
             this.enterViewMode();
           } else {
             this.exitViewMode();
@@ -49,7 +51,7 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
 
       return () => {
         filtersValueSubscription.unsubscribe();
-        dashboardEditModeSubscription.unsubscribe();
+        dashboardEditModeSubscription?.unsubscribe();
       };
     });
   }

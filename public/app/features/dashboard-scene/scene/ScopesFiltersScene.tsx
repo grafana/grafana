@@ -11,8 +11,6 @@ import {
 } from '@grafana/scenes';
 import { Select } from '@grafana/ui';
 
-import { ScopesSceneState } from './ScopesScene';
-
 export interface ScopesFiltersSceneState extends SceneObjectState {
   isLoading: boolean;
   pendingValue: string | undefined;
@@ -41,7 +39,8 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
-    this.setScope(values.scope as string | undefined);
+    const scope = values.scope ?? undefined;
+    this.setScope(Array.isArray(scope) ? scope[0] : scope);
   }
 
   public getSelectedScope(): Scope | undefined {
@@ -99,7 +98,8 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
 export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<ScopesFiltersScene>) {
   const { scopes, isLoading, value } = model.useState();
-  const { isViewing } = model.parent!.useState() as ScopesSceneState;
+  const parentState = model.parent!.useState();
+  const isViewing = 'isViewing' in parentState ? !!parentState.isViewing : false;
 
   const options: Array<SelectableValue<string>> = scopes.map(({ uid, title, category }) => ({
     label: title,
