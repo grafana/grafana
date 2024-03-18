@@ -462,6 +462,18 @@ func TestBuildExternalURL(t *testing.T) {
 			expectedURL: "https://johndoe:123@localhost:9000",
 		},
 		{
+			name: "datasource with auth that needs escaping",
+			ds: &datasources.DataSource{
+				URL:           "https://localhost:9000",
+				BasicAuth:     true,
+				BasicAuthUser: "johndoe",
+				SecureJsonData: map[string][]byte{
+					"basicAuthPassword": []byte("123#!"),
+				},
+			},
+			expectedURL: "https://johndoe:123%23%21@localhost:9000",
+		},
+		{
 			name: "datasource with auth and path",
 			ds: &datasources.DataSource{
 				URL:           "https://localhost:9000/path/to/am",
