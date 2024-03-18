@@ -81,7 +81,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 
   return (
     <>
-      {controls && <controls.Component model={controls} />}
+      <div className={styles.controlsWrapper}>{controls && <controls.Component model={controls} />}</div>
       <div {...containerProps}>
         <div {...primaryProps}>
           <vizManager.Component model={vizManager} />
@@ -144,7 +144,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       minHeight: 0,
-      gap: '8px',
     }),
     optionsPane: css({
       flexDirection: 'column',
@@ -168,6 +167,12 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rotate180: css({
       rotate: '180deg',
+    }),
+    controlsWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 0,
+      paddingLeft: theme.spacing(2),
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),
