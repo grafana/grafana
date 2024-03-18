@@ -3,6 +3,7 @@ package sqlstash
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -123,7 +124,7 @@ func TestCreate(t *testing.T) {
 	}
 }
 
-func setUpTestServer(t *testing.T) entity.EntityStoreServer {
+func setUpTestServer(t *testing.T) entity.EntityStoreServerWrapper {
 	sqlStore := db.InitTestDB(t)
 
 	entityDB, err := dbimpl.ProvideEntityDB(
@@ -134,5 +135,15 @@ func setUpTestServer(t *testing.T) entity.EntityStoreServer {
 
 	s, err := ProvideSQLEntityServer(entityDB)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		deadline, ok := t.Deadline()
+		if !ok {
+			deadline = time.Now().Add(2 * time.Second)
+		}
+		ctx, cancel := context.WithDeadline(context.Background(), deadline)
+		defer cancel()
+		err := s.Stop(ctx)
+		require.NoError(t, err)
+	})
 	return s
 }
