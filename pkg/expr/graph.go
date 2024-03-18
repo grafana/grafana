@@ -125,10 +125,34 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 	return vars, nil
 }
 
-// Commands returns a sorted unique list of all commands used in the pipeline.
-// Expression commands are encoded as `expr(CMD)`, for example `expr(reduce)`.
-// ML expressions are encoded as `ml(CMD)` (e.g. ml(outlier))
-func (dp *DataPipeline) UniqueCommands() []string {
+// GetDatasourceTypes returns an unique list of data source types used in the query. Machine learning node is encoded as `ml_<type>`, e.g. ml_outlier
+func (dp *DataPipeline) GetDatasourceTypes() []string {
+	if dp == nil {
+		return nil
+	}
+	m := make(map[string]struct{}, 2)
+	for _, node := range *dp {
+		name := ""
+		switch t := node.(type) {
+		case *DSNode:
+			if t.datasource != nil {
+				name = t.datasource.Type
+			}
+		case *MLNode:
+			name = fmt.Sprintf("ml_%s", t.command.Type())
+		}
+		if name == "" {
+			continue
+		}
+		m[name] = struct{}{}
+	}
+	result := maps.Keys(m)
+	slices.Sort(result)
+	return result
+}
+
+// GetCommandTypes returns a sorted unique list of all server-side expression commands used in the pipeline.
+func (dp *DataPipeline) GetCommandTypes() []string {
 	if dp == nil {
 		return nil
 	}
@@ -138,14 +162,8 @@ func (dp *DataPipeline) UniqueCommands() []string {
 		switch t := node.(type) {
 		case *CMDNode:
 			if t.Command != nil {
-				name = fmt.Sprintf("expr(%s)", t.Command.Type())
+				name = t.Command.Type()
 			}
-		case *DSNode:
-			if t.datasource != nil {
-				name = t.datasource.Type
-			}
-		case *MLNode:
-			name = fmt.Sprintf("ml(%s)", t.command.Type())
 		}
 		if name == "" {
 			continue
