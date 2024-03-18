@@ -315,7 +315,6 @@ export const DashNav = React.memo<Props>((props) => {
                   onDismiss: hideModal,
                 });
               }}
-              data-testid={e2eSelectors.pages.SaveDashboardModal.saveDashboardToolbar}
             />
           )}
         </ModalsController>

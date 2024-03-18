@@ -222,10 +222,7 @@ export const Pages = {
     save: 'Save dashboard button',
   },
   SaveDashboardModal: {
-    newName: 'Save dashboard title field',
     save: 'Dashboard settings Save Dashboard Modal Save button',
-    saveDashboardToolbar: 'data-testid Save dashboard',
-    saveButtonDrawer: 'data-testid Save dashboard button',
     saveVariables: 'Dashboard settings Save Dashboard Modal Save variables checkbox',
     saveTimerange: 'Dashboard settings Save Dashboard Modal Save timerange checkbox',
   },
