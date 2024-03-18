@@ -113,7 +113,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
               [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsShouldIndent,
             })}
             aria-expanded={contentOutlineExpanded}
-            width={contentOutlineExpanded ? 160 : 40}
           />
 
           {outlineItems.map((item) => (
@@ -122,10 +121,10 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                 key={item.id}
                 title={contentOutlineExpanded ? item.title : undefined}
                 className={cx(styles.buttonStyles, {
-                  [styles.indentRoot]: outlineItemsShouldIndent && item.children?.length === 0,
                   [styles.justifyCenter]: !contentOutlineExpanded,
                   [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                 })}
+                indentStyle={outlineItemsShouldIndent && item.children?.length === 0 ? styles.indentRoot : undefined}
                 icon={item.icon}
                 onClick={() => scrollIntoView(item.ref, item.panelId)}
                 tooltip={!contentOutlineExpanded ? item.title : undefined}
@@ -136,7 +135,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                   (isChildActive(item, activeSectionChildId) && !sectionsExpanded[item.id]) ||
                   (activeSectionId === item.id && !sectionsExpanded[item.id])
                 }
-                width={getRootWidth(contentOutlineExpanded, isCollapsible(item))}
               />
               {item.children &&
                 (!item.mergeSingleChild || item.children.length !== 1) &&
@@ -155,15 +153,16 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                       key={child.id}
                       title={contentOutlineExpanded ? child.title : undefined}
                       icon={contentOutlineExpanded ? undefined : item.icon}
-                      className={cx(styles.buttonStyles, styles.indentChildren, {
+                      className={cx(styles.buttonStyles, {
                         [styles.justifyCenter]: !contentOutlineExpanded,
                         [styles.sectionHighlighter]:
                           isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                       })}
+                      indentStyle={styles.indentChild}
                       onClick={() => scrollIntoView(child.ref, child.panelId, child.customTopOffset)}
                       tooltip={!contentOutlineExpanded ? child.title : undefined}
                       isActive={activeSectionChildId === child.id}
-                      width={contentOutlineExpanded ? 88 : 40}
+                      // width={contentOutlineExpanded ? 88 : 40}
                     />
                   </div>
                 ))}
@@ -208,10 +207,10 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       marginRight: expanded ? theme.spacing(0.5) : undefined,
     }),
     indentRoot: css({
-      marginLeft: theme.spacing(4),
+      paddingLeft: theme.spacing(4),
     }),
-    indentChildren: css({
-      marginLeft: expanded ? theme.spacing(8.25) : theme.spacing(4),
+    indentChild: css({
+      paddingLeft: expanded ? theme.spacing(7) : theme.spacing(4),
     }),
     itemWrapper: css({
       display: 'flex',
@@ -253,18 +252,6 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
 
 function isCollapsible(item: ContentOutlineItemContextProps): boolean {
   return !!(item.children && item.children.length > 0 && (!item.mergeSingleChild || item.children.length !== 1));
-}
-
-function getRootWidth(contentOutlineExpanded: boolean, isCollapsible: boolean): number {
-  let width = 40;
-
-  if (contentOutlineExpanded && isCollapsible) {
-    width = 122;
-  } else if (contentOutlineExpanded) {
-    width = 160;
-  }
-
-  return width;
 }
 
 function isChildActive(item: ContentOutlineItemContextProps, activeSectionChildId: string | undefined) {

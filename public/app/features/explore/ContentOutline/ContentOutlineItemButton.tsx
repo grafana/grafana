@@ -11,11 +11,11 @@ type CommonProps = {
   tooltip?: string;
   tooltipPlacement?: TooltipPlacement;
   className?: string;
+  indentStyle?: string;
   collapsible?: boolean;
   collapsed?: boolean;
   toggleCollapsed?: () => void;
   isActive?: boolean;
-  width: number;
 };
 
 export type ContentOutlineItemButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -26,19 +26,19 @@ export function ContentOutlineItemButton({
   tooltip,
   tooltipPlacement = 'bottom',
   className,
+  indentStyle,
   collapsible,
   collapsed,
   toggleCollapsed,
   isActive,
-  width,
   ...rest
 }: ContentOutlineItemButtonProps) {
-  const styles = useStyles2(getStyles, width);
+  const styles = useStyles2(getStyles);
 
   const buttonStyles = cx(styles.button, className);
 
   const body = (
-    <div className={styles.buttonContainer}>
+    <div className={cx(styles.buttonContainer, indentStyle)}>
       {collapsible && (
         <button
           className={styles.collapseButton}
@@ -82,26 +82,28 @@ function renderIcon(icon: IconName | React.ReactNode, size: IconSize = 'lg', rot
   return icon;
 }
 
-const getStyles = (theme: GrafanaTheme2, width: number) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     buttonContainer: css({
       position: 'relative',
       display: 'flex',
       alignItems: 'center',
+      flexGrow: 1,
       gap: theme.spacing(1),
+      overflow: 'hidden',
+      width: '100%',
     }),
     button: css({
       label: 'content-outline-item-button',
       display: 'flex',
-      flexGrow: 1,
       alignItems: 'center',
       height: theme.spacing(theme.components.height.md),
       padding: theme.spacing(0, 1),
       gap: theme.spacing(1),
       color: theme.colors.text.secondary,
+      width: '100%',
       background: 'transparent',
       border: 'none',
-      width: `${width}px`,
     }),
     collapseButton: css({
       display: 'flex',
