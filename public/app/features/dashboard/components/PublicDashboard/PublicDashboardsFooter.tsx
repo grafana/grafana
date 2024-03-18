@@ -2,16 +2,19 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 
 import { useGetPublicDashboardConfig } from './usePublicDashboardConfig';
+
+const selectors = e2eSelectors.pages.PublicDashboard;
 
 export const PublicDashboardFooter = function () {
   const styles = useStyles2(getStyles);
   const conf = useGetPublicDashboardConfig();
 
   return conf.footerHide ? null : (
-    <div className={styles.footer}>
+    <div className={styles.footer} data-testid={selectors.footer}>
       <a className={styles.link} href={conf.footerLink} target="_blank" rel="noreferrer noopener">
         {conf.footerText} <img className={styles.logoImg} alt="" src={conf.footerLogo} />
       </a>

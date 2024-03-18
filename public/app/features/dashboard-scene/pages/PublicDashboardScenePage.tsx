@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -22,8 +23,11 @@ import { getDashboardScenePageStateManager } from './DashboardScenePageStateMana
 export interface Props
   extends GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams> {}
 
+const selectors = e2eSelectors.pages.PublicDashboardScene;
+
 export function PublicDashboardScenePage({ match, route }: Props) {
   const stateManager = getDashboardScenePageStateManager();
+  const styles = useStyles2(getStyles);
   const { dashboard, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {
@@ -36,7 +40,7 @@ export function PublicDashboardScenePage({ match, route }: Props) {
 
   if (!dashboard) {
     return (
-      <Page layout={PageLayoutType.Custom} data-testid={'public-dashboard-scene-page'}>
+      <Page layout={PageLayoutType.Custom} className={styles.loadingPage} data-testid={selectors.loadingPage}>
         {isLoading && <PageLoader />}
         {loadError && <h2>{loadError}</h2>}
       </Page>
@@ -71,7 +75,7 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
   }
 
   return (
-    <Page layout={PageLayoutType.Custom} className={styles.page}>
+    <Page layout={PageLayoutType.Custom} className={styles.page} data-testid={selectors.page}>
       <div className={styles.controls}>
         <Stack alignItems="center">
           <div className={styles.iconTitle}>
@@ -96,6 +100,9 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    loadingPage: css({
+      justifyContent: 'center',
+    }),
     page: css({
       padding: theme.spacing(0, 2),
     }),
