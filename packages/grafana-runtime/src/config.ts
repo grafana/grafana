@@ -176,6 +176,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
 
+  /**
+   * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
+   * Grafana's supported language.
+   */
+  language: string | undefined;
+
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
 
