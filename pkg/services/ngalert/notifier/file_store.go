@@ -33,8 +33,17 @@ func NewFileStore(orgID int64, store kvstore.KVStore) *FileStore {
 	}
 }
 
-// ContentFor returns the content for the given Alertmanager kvstore key.
-func (fileStore *FileStore) ContentFor(ctx context.Context, filename string) (string, error) {
+// GetSilences returns the content of the silences file from kvstore.
+func (fileStore *FileStore) GetSilences(ctx context.Context) (string, error) {
+	return fileStore.contentFor(ctx, SilencesFilename)
+}
+
+func (fileStore *FileStore) GetNotificationLog(ctx context.Context) (string, error) {
+	return fileStore.contentFor(ctx, NotificationLogFilename)
+}
+
+// contentFor returns the content for the given Alertmanager kvstore key.
+func (fileStore *FileStore) contentFor(ctx context.Context, filename string) (string, error) {
 	// Then, let's attempt to read it from the database.
 	content, exists, err := fileStore.kv.Get(ctx, filename)
 	if err != nil {
@@ -55,8 +64,18 @@ func (fileStore *FileStore) ContentFor(ctx context.Context, filename string) (st
 	return string(bytes), err
 }
 
-// Persist takes care of persisting the binary representation of internal state to the database as a base64 encoded string.
-func (fileStore *FileStore) Persist(ctx context.Context, filename string, st alertingNotify.State) (int64, error) {
+// SaveSilences saves the silences to the database and returns the size of the unencoded state.
+func (fileStore *FileStore) SaveSilences(ctx context.Context, st alertingNotify.State) (int64, error) {
+	return fileStore.persist(ctx, SilencesFilename, st)
+}
+
+// SaveNotificationLog saves the notification log to the database and returns the size of the unencoded state.
+func (fileStore *FileStore) SaveNotificationLog(ctx context.Context, st alertingNotify.State) (int64, error) {
+	return fileStore.persist(ctx, NotificationLogFilename, st)
+}
+
+// persist takes care of persisting the binary representation of internal state to the database as a base64 encoded string.
+func (fileStore *FileStore) persist(ctx context.Context, filename string, st alertingNotify.State) (int64, error) {
 	var size int64
 
 	bytes, err := st.MarshalBinary()

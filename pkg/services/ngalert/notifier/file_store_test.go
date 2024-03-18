@@ -34,7 +34,7 @@ func TestFileStore_Silences(t *testing.T) {
 	fs := NewFileStore(orgId, store)
 
 	// Load initial.
-	silences, err := fs.ContentFor(ctx, SilencesFilename)
+	silences, err := fs.GetSilences(ctx)
 	require.NoError(t, err)
 	decoded, err := decodeSilenceState(strings.NewReader(silences))
 	require.NoError(t, err)
@@ -47,12 +47,12 @@ func TestFileStore_Silences(t *testing.T) {
 		"a": createSilence("a", now, oneHour),
 		"b": createSilence("b", now, oneHour),
 	}
-	size, err := fs.Persist(ctx, SilencesFilename, newState)
+	size, err := fs.SaveSilences(ctx, newState)
 	require.NoError(t, err)
 	require.EqualValues(t, len(decodedState), size)
 
 	// Load new.
-	silences, err = fs.ContentFor(ctx, SilencesFilename)
+	silences, err = fs.GetSilences(ctx)
 	require.NoError(t, err)
 	decoded, err = decodeSilenceState(strings.NewReader(silences))
 	require.NoError(t, err)
@@ -81,7 +81,7 @@ func TestFileStore_NotificationLog(t *testing.T) {
 	fs := NewFileStore(orgId, store)
 
 	// Load initial.
-	nflog, err := fs.ContentFor(ctx, NotificationLogFilename)
+	nflog, err := fs.GetNotificationLog(ctx)
 	require.NoError(t, err)
 	decoded, err := decodeNflogState(strings.NewReader(nflog))
 	require.NoError(t, err)
@@ -93,12 +93,12 @@ func TestFileStore_NotificationLog(t *testing.T) {
 	k1, v1 = createNotificationLog("groupA", "receiverA", now, oneHour)
 	k2, v2 = createNotificationLog("groupB", "receiverB", now, oneHour)
 	newState := nflogState{k1: v1, k2: v2}
-	size, err := fs.Persist(ctx, NotificationLogFilename, newState)
+	size, err := fs.SaveNotificationLog(ctx, newState)
 	require.NoError(t, err)
 	require.EqualValues(t, len(decodedState), size)
 
 	// Load new.
-	nflog, err = fs.ContentFor(ctx, NotificationLogFilename)
+	nflog, err = fs.GetNotificationLog(ctx)
 	require.NoError(t, err)
 	decoded, err = decodeNflogState(strings.NewReader(nflog))
 	require.NoError(t, err)

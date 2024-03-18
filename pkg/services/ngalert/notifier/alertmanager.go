@@ -41,8 +41,10 @@ type AlertingStore interface {
 }
 
 type stateStore interface {
-	Persist(ctx context.Context, filename string, st alertingNotify.State) (int64, error)
-	ContentFor(ctx context.Context, filename string) (string, error)
+	SaveSilences(ctx context.Context, st alertingNotify.State) (int64, error)
+	SaveNotificationLog(ctx context.Context, st alertingNotify.State) (int64, error)
+	GetSilences(ctx context.Context) (string, error)
+	GetNotificationLog(ctx context.Context) (string, error)
 }
 
 type alertmanager struct {
@@ -90,11 +92,11 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager, withAutogen bool) (*alertmanager, error) {
 
-	nflog, err := fileStore.ContentFor(ctx, NotificationLogFilename)
+	nflog, err := fileStore.GetNotificationLog(ctx)
 	if err != nil {
 		return nil, err
 	}
-	silences, err := fileStore.ContentFor(ctx, SilencesFilename)
+	silences, err := fileStore.GetSilences(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +107,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		maintenanceFrequency: silenceMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-			return fileStore.Persist(context.Background(), SilencesFilename, state)
+			return fileStore.SaveSilences(context.Background(), state)
 		},
 	}
 
@@ -115,7 +117,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		maintenanceFrequency: notificationLogMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-			return fileStore.Persist(context.Background(), NotificationLogFilename, state)
+			return fileStore.SaveNotificationLog(context.Background(), state)
 		},
 	}
 

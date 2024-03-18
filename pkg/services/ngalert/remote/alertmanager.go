@@ -27,7 +27,8 @@ import (
 )
 
 type stateStore interface {
-	ContentFor(ctx context.Context, filename string) (string, error)
+	GetSilences(ctx context.Context) (string, error)
+	GetNotificationLog(ctx context.Context) (string, error)
 }
 
 // DecryptFn is a function that takes in an encrypted value and returns it decrypted.
@@ -407,13 +408,13 @@ func (am *Alertmanager) CleanUp() {}
 func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 	var parts []alertingClusterPB.Part
 
-	silences, err := am.state.ContentFor(ctx, notifier.SilencesFilename)
+	silences, err := am.state.GetSilences(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error getting silences: %w", err)
 	}
 	parts = append(parts, alertingClusterPB.Part{Key: notifier.SilencesFilename, Data: []byte(silences)})
 
-	notificationLog, err := am.state.ContentFor(ctx, notifier.NotificationLogFilename)
+	notificationLog, err := am.state.GetNotificationLog(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error getting notification log: %w", err)
 	}
