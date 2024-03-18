@@ -36,11 +36,13 @@ var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req 
 	fromExpression := req.GetHTTPHeader(headerFromExpression) != ""
 
 	return &elasticsearchDataQuery{
-		client:               client,
-		dataQueries:          req.Queries,
-		logger:               logger,
-		ctx:                  ctx,
-		tracer:               tracer,
+		client:      client,
+		dataQueries: req.Queries,
+		logger:      logger,
+		ctx:         ctx,
+		tracer:      tracer,
+		// To maintain backward compatibility, it is necessary to keep labels in responses for alerting and expressions queries.
+		// Historically, these labels have been essential in defining alerting rules and transformations.
 		keepLabelsInResponse: fromAlert || fromExpression,
 	}
 }
