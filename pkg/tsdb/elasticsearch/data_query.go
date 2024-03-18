@@ -42,7 +42,7 @@ var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req 
 		ctx:         ctx,
 		tracer:      tracer,
 		// To maintain backward compatibility, it is necessary to keep labels in responses for alerting and expressions queries.
-		// Historically, these labels have been essential in defining alerting rules and transformations.
+		// Historically, these labels have been used in alerting rules and transformations.
 		keepLabelsInResponse: fromAlert || fromExpression,
 	}
 }
