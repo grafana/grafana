@@ -757,14 +757,6 @@ var (
 			Owner:       identityAccessTeam,
 		},
 		{
-			Name:           "cloudWatchWildCardDimensionValues",
-			Description:    "Fetches dimension values from CloudWatch to correctly label wildcard dimensions",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:              "externalServiceAccounts",
 			Description:       "Automatic service account and token setup for plugins",
 			HideFromAdminPage: true,
@@ -992,14 +984,6 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
-			Name:         "alertingDetailsViewV2",
-			Description:  "Enables the preview of the new alert details view",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-		},
-		{
 			Name:         "datatrails",
 			Description:  "Enables the new core app datatrails",
 			Stage:        FeatureStageExperimental,
@@ -1061,15 +1045,6 @@ var (
 			Owner:             grafanaOperatorExperienceSquad,
 			AllowSelfServe:    false,
 			HideFromAdminPage: true,
-		},
-		{
-			Name:            "alertingPreviewUpgrade",
-			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "enablePluginsTracingByDefault",
@@ -1188,15 +1163,6 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 			Expression:   "true", // enabled by default
-		},
-		{
-			Name:            "alertingUpgradeDryrunOnStart",
-			Description:     "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:              "scopeFilters",
