@@ -6,7 +6,7 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { multiVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureAPIResponse, AzureDataSourceJsonData, Location } from '../types';
+import { AzureAPIResponse, AzureMonitorDataSourceJsonData, Location } from '../types';
 
 let replace = () => '';
 
@@ -24,7 +24,7 @@ jest.mock('@grafana/runtime', () => {
 });
 
 interface TestContext {
-  instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>;
+  instanceSettings: DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>;
   ds: AzureMonitorDatasource;
 }
 
@@ -36,8 +36,15 @@ describe('AzureMonitorDatasource', () => {
     ctx.instanceSettings = {
       name: 'test',
       url: 'http://azuremonitor.com',
-      jsonData: { subscriptionId: 'mock-subscription-id', cloudName: 'azuremonitor' },
-    } as unknown as DataSourceInstanceSettings<AzureDataSourceJsonData>;
+      jsonData: {
+        azureCredentials: {
+          authType: 'clientsecret',
+          tenantId: '37e8bef3-b319-44af-9e76-b7f2ea83e286',
+          clientId: '7169448f-5678-49f3-a9d3-c25d061e5147'
+        },
+        subscriptionId: 'mock-subscription-id'
+      },
+    } as unknown as DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>;
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
 
@@ -640,7 +647,6 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
         ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(response);
       });
 

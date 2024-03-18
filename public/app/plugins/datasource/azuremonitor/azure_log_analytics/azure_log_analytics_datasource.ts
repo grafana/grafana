@@ -1,13 +1,14 @@
 import { map } from 'lodash';
 
+import { AzureCredentials } from '@grafana/azure-sdk';
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import ResponseParser from '../azure_monitor/response_parser';
-import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+import { getCredentials } from '../components/AzureCredentialsConfig';
 import {
   AzureAPIResponse,
-  AzureDataSourceJsonData,
+  AzureMonitorDataSourceJsonData,
   AzureLogsVariable,
   AzureMonitorQuery,
   AzureQueryType,
@@ -21,10 +22,11 @@ import { transformMetadataToKustoSchema } from './utils';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
-  AzureDataSourceJsonData
+  AzureMonitorDataSourceJsonData
 > {
+  private readonly credentials: AzureCredentials;
+
   resourcePath: string;
-  azurePortalUrl: string;
   declare applicationId: string;
 
   defaultSubscriptionId?: string;
@@ -33,15 +35,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   firstWorkspace?: string;
 
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    private instanceSettings: DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    this.credentials = getCredentials(instanceSettings);
 
     this.resourcePath = `${routeNames.logAnalytics}`;
     this.azureMonitorPath = `${routeNames.azureMonitor}/subscriptions`;
-    const cloud = getAzureCloud(instanceSettings);
-    this.azurePortalUrl = getAzurePortalUrl(cloud);
 
     this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
   }
@@ -224,17 +225,15 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   private validateDatasource(): DatasourceValidationResult | undefined {
-    const authType = getAuthType(this.instanceSettings);
-
-    if (authType === 'clientsecret') {
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
+    if (this.credentials.authType === 'clientsecret') {
+      if (!this.isValidConfigField(this.credentials.tenantId)) {
         return {
           status: 'error',
           message: 'The Tenant Id field is required.',
         };
       }
 
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
+      if (!this.isValidConfigField(this.credentials.clientId)) {
         return {
           status: 'error',
           message: 'The Client Id field is required.',

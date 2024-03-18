@@ -14,84 +14,57 @@ import Datasource from '../datasource';
 import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
 import { AzureMonitorQuery, ResultFormat } from './query';
 
+export interface AzureDataSourceJsonData extends DataSourceJsonData {
+  // Azure credentials stored in datasource settings
+  azureCredentials?: {
+    authType?: string,
+    azureCloud?: string,
+    tenantId?: string,
+    clientId?: string,
+  },
+  // Legacy Azure credentials
+  cloudName?: string;
+  azureAuthType?: 'msi' | 'clientsecret' | 'workloadidentity';
+  tenantId?: string;
+  clientId?: string;
+}
+
+export interface AzureDataSourceSecureJsonData {
+  clientSecret?: string;
+  azureClientSecret?: string;
+}
+
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 export type AzureDataSourceInstanceSettings = DataSourceInstanceSettings<AzureDataSourceJsonData>;
+
+export type AzureMonitorDataSourceSettings = DataSourceSettings<AzureMonitorDataSourceJsonData, AzureMonitorDataSourceSecureJsonData>;
+export type AzureMonitorDataSourceInstanceSettings = DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>;
+
+export interface AzureMonitorDataSourceJsonData extends AzureDataSourceJsonData {
+  /** @deprecated Legacy Azure credentials */
+  subscriptionId?: string;
+  /** @deprecated Legacy Azure Logs Analytics setting */
+  azureLogAnalyticsSameAs?: boolean;
+  /** @deprecated Legacy Azure Logs Analytics setting */
+  logAnalyticsTenantId?: string;
+  /** @deprecated Legacy Azure Logs Analytics setting */
+  logAnalyticsClientId?: string;
+  /** @deprecated Legacy Azure Logs Analytics setting */
+  logAnalyticsSubscriptionId?: string;
+  /** @deprecated Legacy Azure Logs Analytics setting */
+  logAnalyticsDefaultWorkspace?: string;
+
+  enableSecureSocksProxy?: boolean;
+}
+
+export interface AzureMonitorDataSourceSecureJsonData extends AzureDataSourceSecureJsonData {
+  appInsightsApiKey?: string;
+}
 
 export interface DatasourceValidationResult {
   status: 'success' | 'error';
   message: string;
   title?: string;
-}
-
-/**
- * Azure clouds known to Azure Monitor.
- */
-export enum AzureCloud {
-  Public = 'AzureCloud',
-  China = 'AzureChinaCloud',
-  USGovernment = 'AzureUSGovernment',
-  None = '',
-}
-
-export type AzureAuthType = 'msi' | 'clientsecret' | 'workloadidentity';
-
-export type ConcealedSecret = symbol;
-
-interface AzureCredentialsBase {
-  authType: AzureAuthType;
-}
-
-export interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
-  authType: 'msi';
-}
-
-export interface AzureWorkloadIdentityCredentials extends AzureCredentialsBase {
-  authType: 'workloadidentity';
-}
-
-export interface AzureClientSecretCredentials extends AzureCredentialsBase {
-  authType: 'clientsecret';
-  azureCloud?: string;
-  tenantId?: string;
-  clientId?: string;
-  clientSecret?: string | ConcealedSecret;
-}
-
-export type AzureCredentials =
-  | AzureManagedIdentityCredentials
-  | AzureClientSecretCredentials
-  | AzureWorkloadIdentityCredentials;
-
-export interface AzureDataSourceJsonData extends DataSourceJsonData {
-  cloudName: string;
-  azureAuthType?: AzureAuthType;
-
-  // monitor
-  tenantId?: string;
-  clientId?: string;
-  subscriptionId?: string;
-
-  // logs
-  /** @deprecated Azure Logs credentials */
-  azureLogAnalyticsSameAs?: boolean;
-  /** @deprecated Azure Logs credentials */
-  logAnalyticsTenantId?: string;
-  /** @deprecated Azure Logs credentials */
-  logAnalyticsClientId?: string;
-  /** @deprecated Azure Logs credentials */
-  logAnalyticsSubscriptionId?: string;
-  /** @deprecated Azure Logs credentials */
-  logAnalyticsDefaultWorkspace?: string;
-
-  // App Insights
-  appInsightsAppId?: string;
-
-  enableSecureSocksProxy?: boolean;
-}
-
-export interface AzureDataSourceSecureJsonData {
-  clientSecret?: string;
-  appInsightsApiKey?: string;
 }
 
 // Represents an errors that come back from frontend requests.

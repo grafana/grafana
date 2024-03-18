@@ -15,7 +15,7 @@ import {
   resourceToString,
 } from '../components/ResourcePicker/utils';
 import {
-  AzureDataSourceJsonData,
+  AzureMonitorDataSourceJsonData,
   AzureGraphResponse,
   AzureMonitorResource,
   AzureMonitorQuery,
@@ -33,14 +33,14 @@ const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).j
 
 export type ResourcePickerQueryType = 'logs' | 'metrics' | 'traces';
 
-export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
+export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureMonitorDataSourceJsonData> {
   private resourcePath: string;
   resultLimit = 200;
   azureMonitorDatasource;
   supportedMetricNamespaces = '';
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    instanceSettings: DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>,
     azureMonitorDatasource: AzureMonitorDatasource
   ) {
     super(instanceSettings);
@@ -279,7 +279,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     | project subscriptionName=name, subscriptionId
 
     | join kind=leftouter (
-      resourcecontainers            
+      resourcecontainers
             | where type == "microsoft.resources/subscriptions/resourcegroups"
             | where id =~ "${resourceGroupURI}"
             | project resourceGroupName=name, resourceGroup, subscriptionId

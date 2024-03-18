@@ -1,23 +1,19 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 
+import { AzureCredentials } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getCredentials, updateCredentials } from '../credentials';
-import { AzureDataSourceSettings, AzureCredentials } from '../types';
+import { AzureMonitorDataSourceSettings } from '../types';
 
+import { KnownAzureClouds } from './AzureCredentials';
+import { getCredentials, getDefaultCredentials, hasCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { DefaultSubscription } from './DefaultSubscription';
 
-const azureClouds: SelectableValue[] = [
-  { value: 'azuremonitor', label: 'Azure' },
-  { value: 'govazuremonitor', label: 'Azure US Government' },
-  { value: 'chinaazuremonitor', label: 'Azure China' },
-];
-
 export interface Props {
-  options: AzureDataSourceSettings;
-  updateOptions: (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings) => void;
+  options: AzureMonitorDataSourceSettings;
+  updateOptions: (optionsFunc: (options: AzureMonitorDataSourceSettings) => AzureMonitorDataSourceSettings) => void;
   getSubscriptions: () => Promise<Array<SelectableValue<string>>>;
 }
 
@@ -30,9 +26,16 @@ export const MonitorConfig = (props: Props) => {
     if (!subscriptionId) {
       setSubscriptions([]);
     }
-    updateOptions((options) =>
-      updateCredentials({ ...options, jsonData: { ...options.jsonData, subscriptionId } }, credentials)
-    );
+    updateOptions((options) => {
+      const opt = {...options, jsonData: {
+        ...options.jsonData,
+        subscriptionId: subscriptionId,
+        logAnalyticsTenantId: undefined,
+        logAnalyticsClientId: undefined,
+        logAnalyticsSubscriptionId: undefined,
+      }}
+      return updateCredentials(opt, credentials)
+    });
   };
 
   const onSubscriptionsChange = (receivedSubscriptions: Array<SelectableValue<string>>) =>
@@ -41,13 +44,19 @@ export const MonitorConfig = (props: Props) => {
   const onSubscriptionChange = (subscriptionId?: string) =>
     updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, subscriptionId } }));
 
+  useEffect(() => {
+    if (!hasCredentials(options)) {
+      updateOptions((options) => updateCredentials(options, getDefaultCredentials()));
+    }
+  }, [options, updateOptions]);
+
   return (
     <>
       <AzureCredentialsForm
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
         workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
         credentials={credentials}
-        azureCloudOptions={azureClouds}
+        azureCloudOptions={KnownAzureClouds}
         onCredentialsChange={onCredentialsChange}
         disabled={props.options.readOnly}
       >

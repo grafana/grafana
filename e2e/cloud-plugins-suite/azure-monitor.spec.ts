@@ -4,8 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { selectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
 import {
-  AzureDataSourceJsonData,
-  AzureDataSourceSecureJsonData,
+  AzureMonitorDataSourceJsonData,
+  AzureMonitorDataSourceSecureJsonData,
   AzureQueryType,
 } from '../../public/app/plugins/datasource/azuremonitor/types';
 import { e2e } from '../utils';
@@ -14,8 +14,8 @@ const provisioningPath = `provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);
 
 type AzureMonitorConfig = {
-  secureJsonData: AzureDataSourceSecureJsonData;
-  jsonData: AzureDataSourceJsonData;
+  secureJsonData: AzureMonitorDataSourceSecureJsonData;
+  jsonData: AzureMonitorDataSourceJsonData;
 };
 
 type AzureMonitorProvision = { datasources: AzureMonitorConfig[] };
@@ -47,8 +47,8 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
     form: () => {
       e2eSelectors.configEditor.azureCloud.input().find('input').type('Azure').type('{enter}');
       // We set the log value to false here to ensure that secrets aren't printed to logs
-      e2eSelectors.configEditor.tenantID.input().find('input').type(datasource.jsonData.tenantId, { log: false });
-      e2eSelectors.configEditor.clientID.input().find('input').type(datasource.jsonData.clientId, { log: false });
+      e2eSelectors.configEditor.tenantID.input().find('input').type(datasource.jsonData.tenantId as string, { log: false });
+      e2eSelectors.configEditor.clientID.input().find('input').type(datasource.jsonData.clientId as string, { log: false });
       e2eSelectors.configEditor.clientSecret
         .input()
         .find('input')
