@@ -296,7 +296,7 @@ export class ElementState implements LayerElement {
 
   updateData(ctx: DimensionContext) {
     if (this.item.prepareData) {
-      this.data = this.item.prepareData(ctx, this.options.config);
+      this.data = this.item.prepareData(ctx, this.options);
       this.revId++; // rerender
     }
 

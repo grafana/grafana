@@ -29,3 +29,7 @@ type Service interface {
 	SetUserHelpFlag(context.Context, *SetUserHelpFlagCommand) error
 	GetProfile(context.Context, *GetUserProfileQuery) (*UserProfileDTO, error)
 }
+
+type Verifier interface {
+	VerifyEmail(ctx context.Context, cmd VerifyEmailCommand) error
+}
