@@ -4,3 +4,11 @@
   version: v0alpha1
   host: localhost
   port: 7443
+- group: query.grafana.app
+  version: v0alpha1
+  host: localhost
+  port: 7444
+- group: testdata.datasource.grafana.app
+  version: v0alpha1
+  host: localhost
+  port: 7445

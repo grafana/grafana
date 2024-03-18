@@ -114,11 +114,6 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 	)
 	serviceResolver := NewExternalNameResolver(sharedInformerFactory.Service().V0alpha1().ExternalNames().Lister())
 
-	sharedInformerFactory.Service().V0alpha1().ExternalNames().Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj interface{}) { klog.Infof("Externalname added: %v", obj) },
-		UpdateFunc: func(old, new interface{}) { klog.Infof("Externalname updated: %v", new) },
-	})
-
 	aggregatorConfig := &aggregatorapiserver.Config{
 		GenericConfig: &genericapiserver.RecommendedConfig{
 			Config:                sharedConfig.Config,
@@ -211,19 +206,10 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		return nil, err
 	}
 
-	externalNamesInformer := sharedInformerFactory.Service().V0alpha1().ExternalNames()
-
 	if remoteServicesConfig != nil {
 		addRemoteAPIServicesToRegister(remoteServicesConfig, autoRegistrationController)
 		externalNames := getRemoteExternalNamesToRegister(remoteServicesConfig)
-
-		err = aggregatorServer.GenericAPIServer.AddPostStartHook("grafana-apiserver-remote-autoregistration", func(ctx genericapiserver.PostStartHookContext) error {
-			// klog.Infof("HasSynced: %v", externalNamesInformer.Informer().HasSynced())
-			/* if !controllers.WaitForCacheSync("GrafanaExternalNamesSync", ctx.StopCh, externalNamesInformer.Informer().HasSynced) {
-				// TODO: determine if we should make this a failure condition, one which will stop Grafana from starting
-				klog.Warning("Could not wait successfully on external names informer sync")
-				return nil
-			} */
+		err = aggregatorServer.GenericAPIServer.AddPostStartHook("grafana-apiserver-remote-autoregistration", func(_ genericapiserver.PostStartHookContext) error {
 			namespacedClient := remoteServicesConfig.serviceClientSet.ServiceV0alpha1().ExternalNames(remoteServicesConfig.ExternalNamesNamespace)
 			for _, externalName := range externalNames {
 				_, err := namespacedClient.Apply(context.Background(), externalName, metav1.ApplyOptions{
@@ -259,7 +245,7 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 
 	availableController, err := NewAvailableConditionController(
 		aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(),
-		externalNamesInformer,
+		sharedInformerFactory.Service().V0alpha1().ExternalNames(),
 		apiregistrationClient.ApiregistrationV1(),
 		nil,
 		(func() ([]byte, []byte))(nil),
