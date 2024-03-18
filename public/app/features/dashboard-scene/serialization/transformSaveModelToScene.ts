@@ -274,16 +274,15 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   }
 
   const dashboardScene = new DashboardScene({
-    title: oldModel.title,
-    tags: oldModel.tags || [],
-    links: oldModel.links || [],
-    uid: oldModel.uid,
-    id: oldModel.id,
     description: oldModel.description,
     editable: oldModel.editable,
-    isDirty: oldModel.meta.isNew,
-    isEditing: oldModel.meta.isNew,
+    id: oldModel.id,
+    isDirty: false,
+    links: oldModel.links || [],
     meta: oldModel.meta,
+    tags: oldModel.tags || [],
+    title: oldModel.title,
+    uid: oldModel.uid,
     version: oldModel.version,
     body: new SceneGridLayout({
       isLazy: true,
