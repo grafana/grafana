@@ -91,6 +91,9 @@ func getCredentialCacheFromLookup(lookupFile string, host string, port string, d
 	}
 	// find cache file
 	for _, item := range lookups {
+		if port == "0" {
+			item.Address = host + ":0"
+		}
 		if item.Address == host+":"+port && item.DBName == dbName && item.User == user {
 			logger.Info(fmt.Sprintf("matched: %+v", item))
 			return item.CredentialCacheFilename
