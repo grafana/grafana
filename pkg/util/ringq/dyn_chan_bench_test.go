@@ -17,9 +17,9 @@ func BenchmarkDynChanBaseline(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		in <- 1
+		in <- i
 		val := <-out
-		if val != 1 {
+		if val != i {
 			b.Fatalf("expected 1, got %d", val)
 		}
 	}
