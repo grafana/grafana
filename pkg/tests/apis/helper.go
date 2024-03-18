@@ -152,6 +152,7 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 	delete(anno, "grafana.app/originTimestamp")
 	delete(anno, "grafana.app/createdBy")
 	delete(anno, "grafana.app/updatedBy")
+	delete(anno, "grafana.app/action")
 
 	deep.SetAnnotations(anno)
 	copy := deep.Object
