@@ -88,7 +88,7 @@ func DynChanMax[T any](minBufLen, maxBufLen int) (chan<- T, <-chan T, ChanStatsR
 					l := q.Len()
 					if l == stats.Len {
 						// if after enqueueing the length remains the same, it
-						// means we overwrote an item because we overflew the
+						// means we overwrote an item because we overflowed the
 						// the queue
 						stats.Dropped++
 					}
