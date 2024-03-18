@@ -68,7 +68,7 @@ export default function GettingStarted() {
               points.
             </li>
           </ul>
-          <TextLink href="https://grafana.com/docs/grafana/latest/alerting/" icon="angle-right" inline={false}>
+          <TextLink href="https://grafana.com/docs/grafana/latest/alerting/" icon="angle-right" inline={false} external>
             Read more in the docs
           </TextLink>
         </Stack>
