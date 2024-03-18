@@ -253,6 +253,7 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="secondary"
         size="sm"
         icon="arrow-left"
+        data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
       >
         Back to dashboard
       </Button>
@@ -273,6 +274,7 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="secondary"
         size="sm"
         icon="arrow-left"
+        data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
       >
         Back to dashboard
       </Button>

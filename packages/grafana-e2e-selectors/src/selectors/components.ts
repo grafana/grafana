@@ -376,6 +376,7 @@ export const Components = {
       discardLibraryPanelButton: 'data-testid Discard library panel button',
       unlinkLibraryPanelButton: 'data-testid Unlink library panel button',
       saveLibraryPanelButton: 'data-testid Save library panel button',
+      backToDashboardButton: 'data-testid Back to dashboard button',
     },
   },
 

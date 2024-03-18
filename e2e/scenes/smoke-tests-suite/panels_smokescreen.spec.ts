@@ -17,6 +17,7 @@ describe('Panels smokescreen', () => {
     e2e.flows.addPanel({
       dataSourceName: 'gdev-testdata',
       timeout: 10000,
+      visitDashboardAtStart: false,
     });
 
     cy.window().then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
