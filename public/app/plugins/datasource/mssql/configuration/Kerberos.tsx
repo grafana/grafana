@@ -85,6 +85,20 @@ export const KerberosConfig = (props: DataSourcePluginOptionsEditorProps<MssqlOp
       {jsonData.authenticationType === MSSQLAuthenticationType.kerberosCredentialCacheLookupFile && (
         <FieldSet label="Windows AD: Credential cache file">
           <Field
+            label="Username"
+            required
+            invalid={!settings.user}
+            error={'Username is required'}
+            description={UsernameMessage}
+          >
+            <Input
+              value={settings.user || ''}
+              placeholder="name@EXAMPLE.COM"
+              onChange={(e) => onOptionsChange({ ...settings, ...{ ['user']: e.currentTarget.value } })}
+              width={LONG_WIDTH}
+            />
+          </Field>
+          <Field
             label="Credential cache file path"
             required
             invalid={!credentialCacheLookupFile}
