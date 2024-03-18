@@ -123,7 +123,7 @@ Once configured, you can use integrations as part of your contact points to rece
 | Pushover                 | `pushover`                |
 | Sensu                    | `sensu`                   |
 | Sensu Go                 | `sensugo`                 |
-| Slack                    | `slack`                   |
+| [Slack][slack]           | `slack`                   |
 | Telegram                 | `telegram`                |
 | Threema                  | `threema`                 |
 | VictorOps                | `victorops`               |
@@ -135,6 +135,9 @@ Once configured, you can use integrations as part of your contact points to rece
 
 [oncall]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall"
 [oncall]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall"
+
+[slack]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-slack"
+[slack]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-slack"
 
 [webhook]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
 [webhook]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
