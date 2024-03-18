@@ -172,16 +172,7 @@ export const sectionFields: Section = {
     {
       name: 'General settings',
       id: 'general',
-      fields: [
-        'name',
-        'clientId',
-        'clientSecret',
-        'scopes',
-        'authStyle',
-        'allowSignUp',
-        'autoLogin',
-        'signoutRedirectUrl',
-      ],
+      fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
     },
     {
       name: 'User mapping',
@@ -207,17 +198,7 @@ export const sectionFields: Section = {
     {
       name: 'General settings',
       id: 'general',
-      fields: [
-        'name',
-        'clientId',
-        'clientSecret',
-        'scopes',
-        'authStyle',
-        'authUrl',
-        'tokenUrl',
-        'apiUrl',
-        'signoutRedirectUrl',
-      ],
+      fields: ['name', 'clientId', 'clientSecret', 'scopes', 'authUrl', 'tokenUrl', 'apiUrl', 'signoutRedirectUrl'],
     },
     {
       name: 'User mapping',
