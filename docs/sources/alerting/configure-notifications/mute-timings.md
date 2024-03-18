@@ -19,6 +19,17 @@ labels:
     - oss
 title: Configure mute timings
 weight: 450
+refs:
+  intro-alertmanager:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/alertmanager/
+  datasources/alertmanager:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/alertmanager/
 ---
 
 # Configure mute timings
@@ -27,7 +38,7 @@ A mute timing is a recurring interval of time when no new notifications for a po
 
 Similar to silences, mute timings do not prevent alert rules from being evaluated, nor do they stop alert instances from being shown in the user interface. They only prevent notifications from being created.
 
-You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager data source][datasources/alertmanager]. For more information, refer to [Alertmanager documentation][intro-alertmanager].
+You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager data source](ref:datasources/alertmanager). For more information, refer to [Alertmanager documentation](ref:intro-alertmanager).
 
 ## Mute timings vs silences
 
@@ -81,10 +92,3 @@ If you want to specify an exact duration, specify all the options. For example, 
 - Months: `3, 6, 9, 12`
 - Days of the month: `1:7`
 
-{{% docs/reference %}}
-[datasources/alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager"
-[datasources/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/alertmanager"
-
-[intro-alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/alertmanager"
-[intro-alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/alertmanager"
-{{% /docs/reference %}}

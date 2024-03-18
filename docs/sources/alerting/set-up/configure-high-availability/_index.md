@@ -62,10 +62,10 @@ As an alternative to Memberlist, you can use Redis for high availability. This i
 database for HA and cannot support the meshing of all Grafana servers.
 
 1. Make sure you have a redis server that supports pub/sub. If you use a proxy in front of your redis cluster, make sure the proxy supports pub/sub.
-1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the [unified_alerting] section.
+1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the `[unified_alerting]` section.
 1. Set `ha_redis_address` to the redis server address Grafana should connect to.
-1. [Optional] Set the username and password if authentication is enabled on the redis server using `ha_redis_username` and `ha_redis_password`.
-1. [Optional] Set `ha_redis_prefix` to something unique if you plan to share the redis server with multiple Grafana instances.
+1. Optional: Set the username and password if authentication is enabled on the redis server using `ha_redis_username` and `ha_redis_password`.
+1. Optional: Set `ha_redis_prefix` to something unique if you plan to share the redis server with multiple Grafana instances.
 
 The following metrics can be used for meta monitoring, exposed by Grafana's `/metrics` endpoint:
 

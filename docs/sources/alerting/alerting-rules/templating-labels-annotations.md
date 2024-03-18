@@ -16,6 +16,10 @@ labels:
     - oss
 title: Templating labels and annotations
 weight: 500
+refs:
+  explore:
+    - pattern: /docs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # Templating labels and annotations
@@ -294,7 +298,7 @@ https://example.com/grafana
 
 ### graphLink
 
-The `graphLink` function returns the path to the graphical view in [Explore][explore] for the given expression and data source:
+The `graphLink` function returns the path to the graphical view in [Explore](ref:explore) for the given expression and data source:
 
 ```
 {{ graphLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}
@@ -390,7 +394,7 @@ The `pathPrefix` function returns the path of the Grafana server as configured i
 
 ### tableLink
 
-The `tableLink` function returns the path to the tabular view in [Explore][explore] for the given expression and data source:
+The `tableLink` function returns the path to the tabular view in [Explore](ref:explore) for the given expression and data source:
 
 ```
 {{ tableLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}
@@ -448,6 +452,3 @@ The `reReplaceAll` function replaces text matching the regular expression:
 example.com:8080
 ```
 
-{{% docs/reference %}}
-[explore]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/explore"
-{{% /docs/reference %}}

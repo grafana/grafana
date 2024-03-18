@@ -15,6 +15,22 @@ labels:
     - oss
 title: Configure notification messages
 weight: 430
+refs:
+  use-notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/use-notification-templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/use-notification-templates/
+  using-go-templating-language:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/using-go-templating-language/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/using-go-templating-language/
+  reference:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
 ---
 
 # Configure notification messages
@@ -39,27 +55,17 @@ You cannot use notification templates to:
 - Customize the data in webhooks, including the fields or structure of the JSON data or send the data in other formats such as XML.
 - Add or remove HTTP headers in webhooks other than those in the contact point configuration.
 
-[Using Go's templating language][using-go-templating-language]
+[Using Go's templating language](ref:using-go-templating-language)
 
 Learn how to write the content of your notification templates in Go’s templating language.
 
 Create reusable notification templates for your contact points.
 
-[Use notification templates][use-notification-templates]
+[Use notification templates](ref:use-notification-templates)
 
 Use notification templates to send notifications to your contact points.
 
-[Reference][reference]
+[Reference](ref:reference)
 
 Data that is available when writing templates.
 
-{{% docs/reference %}}
-[reference]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference"
-[reference]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference"
-
-[use-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/use-notification-templates"
-[use-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/use-notification-templates"
-
-[using-go-templating-language]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/using-go-templating-language"
-[using-go-templating-language]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/using-go-templating-language"
-{{% /docs/reference %}}

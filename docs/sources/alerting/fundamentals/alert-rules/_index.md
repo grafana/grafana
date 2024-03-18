@@ -17,15 +17,31 @@ labels:
     - oss
 title: Alert rules
 weight: 100
+refs:
+  queries-and-conditions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/
+  create-recording-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+  alert-rule-evaluation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/rule-evaluation/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/rule-evaluation/
 ---
 
 # Alert rules
 
-An alert rule is a set of evaluation criteria for when an alert rule should fire. An alert rule consists of one or more [queries and expressions, a condition][queries-and-conditions], and the duration over which the condition needs to be met to start firing.
+An alert rule is a set of evaluation criteria for when an alert rule should fire. An alert rule consists of one or more [queries and expressions, a condition](ref:queries-and-conditions), and the duration over which the condition needs to be met to start firing.
 
 While queries and expressions select the data set to evaluate, a condition sets the threshold that an alert must meet or exceed to create an alert.
 
-An interval specifies how frequently an [alert rule is evaluated][alert-rule-evaluation]. Duration, when configured, indicates how long a condition must be met. The alert rules can also define alerting behavior in the absence of data.
+An interval specifies how frequently an [alert rule is evaluated](ref:alert-rule-evaluation). Duration, when configured, indicates how long a condition must be met. The alert rules can also define alerting behavior in the absence of data.
 
 Grafana supports two different alert rule types: [Grafana-managed alert rules](#grafana-managed-alert-rules) and [Data source-managed alert rules](#data-source-managed-alert-rules).
 
@@ -96,7 +112,7 @@ Querying this new time series is faster, especially for dashboards since they qu
 
 Grafana Enterprise offers an alternative to recorded rules in the form of recorded queries that can be executed against any data source.
 
-For more information on recording rules, refer to [Create recording rules][create-recording-rules].
+For more information on recording rules, refer to [Create recording rules](ref:create-recording-rules).
 
 ## Comparison between alert rule types
 
@@ -116,15 +132,3 @@ When choosing which alert rule type to use, consider the following comparison be
 
 If you are using non-Prometheus data, we recommend choosing Grafana-managed alert rules. Otherwise, choose Grafana Mimir or Grafana Loki alert rules where possible.
 
-{{% docs/reference %}}
-
-[create-recording-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-recording-rule"
-[create-recording-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-mimir-loki-managed-recording-rule"
-
-[alert-rule-evaluation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/rule-evaluation"
-[alert-rule-evaluation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/rule-evaluation"
-
-[queries-and-conditions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions"
-[queries-and-conditions]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions"
-
-{{% /docs/reference %}}

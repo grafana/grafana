@@ -19,6 +19,12 @@ labels:
     - oss
 title: Configure notification policies
 weight: 420
+refs:
+  notification-policies:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
 ---
 
 # Configure notification policies
@@ -33,7 +39,7 @@ If the **Continue matching subsequent sibling nodes** option is enabled for a ne
 
 You can configure Grafana-managed notification policies as well as notification policies for an external Alertmanager data source.
 
-For more information on notification policies, see [fundamentals of Notification Policies][notification-policies].
+For more information on notification policies, see [fundamentals of Notification Policies](ref:notification-policies).
 
 ## Edit default notification policy
 
@@ -107,7 +113,3 @@ An example of an alert configuration.
 - Create a specific route for alerts with "critical" severity with a more invasive contact point integration, like pager duty notification.
 - Create specific routes for particular teams that handle their own on-call rotations.
 
-{{% docs/reference %}}
-[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies"
-[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies"
-{{% /docs/reference %}}

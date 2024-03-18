@@ -17,6 +17,12 @@ labels:
     - oss
 title: Notification policies
 weight: 113
+refs:
+  labels-and-label-matchers:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#how-label-matching-works
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#how-label-matching-works
 ---
 
 # Notification policies
@@ -31,7 +37,7 @@ Notification policies are _not_ a list, but rather are structured according to a
 
 Each policy consists of a set of label matchers (0 or more) that specify which labels they are or aren't interested in handling.
 
-For more information on label matching, see [how label matching works][labels-and-label-matchers].
+For more information on label matching, see [how label matching works](ref:labels-and-label-matchers).
 
 {{% admonition type="note" %}}
 If you haven't configured any label matchers for your notification policy, your notification policy will match _all_ alert instances. This may prevent child policies from being evaluated unless you have enabled **Continue matching siblings** on the notification policy.
@@ -130,7 +136,3 @@ Repeat interval decides how often notifications are repeated if the group has no
 
 **Default** 4 hours
 
-{{% docs/reference %}}
-[labels-and-label-matchers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label#how-label-matching-works"
-[labels-and-label-matchers]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label#how-label-matching-works"
-{{% /docs/reference %}}
