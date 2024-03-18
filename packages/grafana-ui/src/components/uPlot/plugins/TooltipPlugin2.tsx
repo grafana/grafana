@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { DashboardCursorSync } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
 import { getPortalContainer } from '../../Portal/Portal';
@@ -30,8 +29,7 @@ interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
   hoverMode: TooltipHoverMode;
 
-  syncMode?: DashboardCursorSync;
-  syncScope?: string;
+  syncTooltip?: () => boolean;
 
   // x only
   queryZoom?: (range: { from: number; to: number }) => void;
@@ -111,8 +109,7 @@ export const TooltipPlugin2 = ({
   queryZoom,
   maxWidth,
   maxHeight,
-  syncMode = DashboardCursorSync.Off,
-  syncScope = 'global', // eventsScope
+  syncTooltip = () => false,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -162,20 +159,9 @@ export const TooltipPlugin2 = ({
 
     let plotVisible = false;
 
-    const syncTooltip = syncMode === DashboardCursorSync.Tooltip;
-
-    if (syncMode !== DashboardCursorSync.Off && config.scales[0].props.isTime) {
-      config.setCursor({
-        sync: {
-          key: syncScope,
-          scales: ['x', null],
-        },
-      });
-    }
-
     const updateHovering = () => {
       if (viaSync) {
-        _isHovering = plotVisible && _someSeriesIdx && syncTooltip;
+        _isHovering = plotVisible && _someSeriesIdx && syncTooltip();
       } else {
         _isHovering = closestSeriesIdx != null || (hoverMode === TooltipHoverMode.xAll && _someSeriesIdx);
       }
@@ -551,10 +537,13 @@ export const TooltipPlugin2 = ({
       if (event != null) {
         plot!.over.dispatchEvent(event);
       } else {
-        plot!.setCursor({
-          left: plot!.cursor.left!,
-          top: plot!.cursor.top!,
-        }, true);
+        plot!.setCursor(
+          {
+            left: plot!.cursor.left!,
+            top: plot!.cursor.top!,
+          },
+          true
+        );
       }
     } else {
       size.width = 0;
