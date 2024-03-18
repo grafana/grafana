@@ -1,6 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
@@ -19,6 +20,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteDashboard/DeleteDashboardButton';
+import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -160,9 +162,9 @@ export class GeneralSettingsEditView
                     <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
                   </Label>
                   {/* TODO: Make the component use persisted model */}
-                  {/* {config.featureToggles.dashgpt && (
-                  <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />
-                )} */}
+                  {config.featureToggles.dashgpt && (
+                    <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
+                  )}
                 </HorizontalGroup>
               }
             >

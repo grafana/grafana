@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
@@ -7,7 +8,6 @@ import { EventTrackingSrc } from './tracking';
 import { getDashboardPanelPrompt, Message, Role } from './utils';
 
 interface GenAIDashTitleButtonProps {
-  dashboard: DashboardModel;
   onGenerate: (description: string) => void;
 }
 
@@ -24,8 +24,9 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   `The title should be, at most, ${DASH_TITLE_CHAR_LIMIT} characters.\n` +
   'Respond with only the title of the dashboard.';
 
-export const GenAIDashTitleButton = ({ onGenerate, dashboard }: GenAIDashTitleButtonProps) => {
-  const messages = React.useMemo(() => getMessages(dashboard), [dashboard]);
+export const GenAIDashTitleButton = ({ onGenerate }: GenAIDashTitleButtonProps) => {
+  const dashboard = getDashboardSrv().getCurrent()!;
+  const messages = getMessages(dashboard);
 
   return (
     <GenAIButton
