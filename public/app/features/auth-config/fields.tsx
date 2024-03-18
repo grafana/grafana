@@ -122,7 +122,7 @@ export const sectionFields: Section = {
     {
       name: 'User mapping',
       id: 'user',
-      fields: ['allowAssignGrafanaAdmin', 'roleAttributePath', 'roleAttributeStrict', 'skipOrgRoleSync'],
+      fields: ['roleAttributePath', 'roleAttributeStrict', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
     },
     {
       name: 'Extra security measures',
@@ -150,7 +150,7 @@ export const sectionFields: Section = {
     {
       name: 'User mapping',
       id: 'user',
-      fields: ['allowAssignGrafanaAdmin', 'roleAttributePath', 'roleAttributeStrict', 'skipOrgRoleSync'],
+      fields: ['roleAttributePath', 'roleAttributeStrict', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
     },
     {
       name: 'Extra security measures',
@@ -186,7 +186,7 @@ export const sectionFields: Section = {
     {
       name: 'User mapping',
       id: 'user',
-      fields: ['allowAssignGrafanaAdmin', 'roleAttributePath', 'roleAttributeStrict', 'skipOrgRoleSync'],
+      fields: ['roleAttributePath', 'roleAttributeStrict', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
     },
     {
       name: 'Extra security measures',
@@ -222,7 +222,7 @@ export const sectionFields: Section = {
     {
       name: 'User mapping',
       id: 'user',
-      fields: ['allowAssignGrafanaAdmin', 'roleAttributePath', 'roleAttributeStrict', 'skipOrgRoleSync'],
+      fields: ['roleAttributePath', 'roleAttributeStrict', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
     },
     {
       name: 'Extra security measures',
