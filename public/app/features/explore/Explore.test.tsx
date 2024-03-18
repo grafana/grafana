@@ -99,7 +99,6 @@ const dummyProps: Props = {
   correlationEditorDetails: undefined,
   correlationEditorHelperData: undefined,
   showQueryHistory: false,
-  isHighlighted: false,
   changeShowQueryHistory: changeShowQueryHistory,
 };
 

@@ -567,7 +567,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       correlationEditorDetails,
       correlationEditorHelperData,
       showQueryHistory,
-      isHighlighted,
     } = this.props;
     const { openDrawer, contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
@@ -620,7 +619,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
               hideHorizontalTrack
             >
-              <div className={cx(styles.exploreContainer, { [styles.highlighted]: isHighlighted })}>
+              <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
                   <>
                     <ContentOutlineItem title="Queries" icon="arrow">
@@ -731,7 +730,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showRawPrometheus,
     supplementaryQueries,
     correlationEditorHelperData,
-    isHighlighted,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -765,7 +763,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
     showQueryHistory: explore.showQueryHistory,
-    isHighlighted,
   };
 }
 

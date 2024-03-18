@@ -19,7 +19,7 @@ export interface RichHistorySettingsProps {
   activeDatasourcesOnly: boolean;
   onChangeRetentionPeriod: (option: SelectableValue<number>) => void;
   toggleStarredTabAsFirstTab: () => void;
-  toggleactiveDatasourcesOnly: () => void;
+  toggleActiveDatasourcesOnly: () => void;
   deleteRichHistory: () => void;
 }
 
@@ -57,7 +57,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
     activeDatasourcesOnly,
     onChangeRetentionPeriod,
     toggleStarredTabAsFirstTab,
-    toggleactiveDatasourcesOnly,
+    toggleActiveDatasourcesOnly,
     deleteRichHistory,
   } = props;
   const styles = useStyles2(getStyles);
@@ -137,7 +137,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
           <InlineSwitch
             id="explore-query-history-settings-data-source-behavior"
             value={activeDatasourcesOnly}
-            onChange={toggleactiveDatasourcesOnly}
+            onChange={toggleActiveDatasourcesOnly}
           />
         </InlineField>
       )}

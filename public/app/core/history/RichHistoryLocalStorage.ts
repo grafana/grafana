@@ -124,8 +124,11 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
   }
 
   async getSettings() {
+    // get the new key without a default. If undefined, use the legacy key, or false as the default
+    const activeDatasource: boolean | undefined = store.getObject(RICH_HISTORY_SETTING_KEYS.activeDatasourcesOnly);
     return {
-      activeDatasourcesOnly: store.getObject(RICH_HISTORY_SETTING_KEYS.activeDatasourcesOnly, false),
+      activeDatasourcesOnly:
+        activeDatasource ?? store.getObject(RICH_HISTORY_SETTING_KEYS.legacyActiveDatasourceOnly, false),
       retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
       starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
       lastUsedDatasourceFilters: store

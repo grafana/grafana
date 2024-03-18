@@ -20,7 +20,6 @@ import { useSelector } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 import { RichHistoryQuery } from 'app/types/explore';
 
-import { setHighlightAction } from '../state/explorePane';
 import { isSplit, selectExploreDSMaps, selectPanesEntries } from '../state/selectors';
 
 const mapDispatchToProps = {
@@ -150,6 +149,8 @@ export function RichHistoryCard(props: Props) {
   const [comment, setComment] = useState<string | undefined>(queryHistoryItem.comment);
   const panesEntries = useSelector(selectPanesEntries);
   const exploreActiveDS = useSelector(selectExploreDSMaps);
+  const isPaneSplit = useSelector(isSplit);
+
   const styles = useStyles2(getStyles);
 
   const cardRootDatasource = datasourceInstances
@@ -354,7 +355,7 @@ export function RichHistoryCard(props: Props) {
   };
 
   const runButton = () => {
-    if (!isSplit) {
+    if (!isPaneSplit) {
       const exploreId = exploreActiveDS.exploreToDS[0].exploreId;
       const buttonText = runQueryText(exploreId, props.queryHistoryItem.datasourceUid);
       return (
@@ -367,17 +368,18 @@ export function RichHistoryCard(props: Props) {
         <Menu>
           {panesEntries.map((pane, i) => {
             const buttonText = runQueryText(pane[0], props.queryHistoryItem.datasourceUid);
+            const paneLabel =
+              i === 0
+                ? t('explore.rich-history-card.left-pane', 'Left pane')
+                : t('explore.rich-history-card.right-pane', 'Right pane');
             return (
               <Menu.Item
                 key={i}
                 ariaLabel={buttonText.fallbackText}
-                onMouseEnterEvt={() => dispatch(setHighlightAction({ exploreId: pane[0], isHighlighted: true }))}
-                onMouseLeaveEvt={() => dispatch(setHighlightAction({ exploreId: pane[0], isHighlighted: false }))}
                 onClick={() => {
-                  dispatch(setHighlightAction({ exploreId: pane[0], isHighlighted: false }));
                   onRunQuery(pane[0]);
                 }}
-                label={`${t(buttonText.i18nKey, buttonText.fallbackText)} on pane ${i}`}
+                label={`${paneLabel}: ${t(buttonText.i18nKey, buttonText.fallbackText)}`}
               />
             );
           })}

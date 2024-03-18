@@ -197,11 +197,6 @@ export interface ExploreItemState {
   isPaused: boolean;
 
   /**
-   * If true, highlight pane with overlay
-   */
-  isHighlighted: boolean;
-
-  /**
    * Index of the last item in the list of logs
    * when the live tailing views gets cleared.
    */

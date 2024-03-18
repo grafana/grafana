@@ -450,6 +450,8 @@
       "delete-starred-query-confirmation-text": "Are you sure you want to permanently delete your starred query?",
       "edit-comment-tooltip": "Edit comment",
       "loading-text": "loading...",
+      "left-pane": "Left pane",
+      "right-pane": "Right pane",
       "optional-description": "An optional description of what the query does.",
       "query-comment-label": "Query comment",
       "query-text-label": "Query text",

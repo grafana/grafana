@@ -81,7 +81,7 @@ export function RichHistory(props: RichHistoryProps) {
   const toggleStarredTabAsFirstTab = () =>
     updateSettings({ starredTabAsFirstTab: !props.richHistorySettings.starredTabAsFirstTab });
 
-  const toggleactiveDatasourcesOnly = () =>
+  const toggleActiveDatasourcesOnly = () =>
     updateSettings({ activeDatasourcesOnly: !props.richHistorySettings.activeDatasourcesOnly });
 
   useEffect(() => {
@@ -135,7 +135,7 @@ export function RichHistory(props: RichHistoryProps) {
         activeDatasourcesOnly={props.richHistorySettings.activeDatasourcesOnly}
         onChangeRetentionPeriod={onChangeRetentionPeriod}
         toggleStarredTabAsFirstTab={toggleStarredTabAsFirstTab}
-        toggleactiveDatasourcesOnly={toggleactiveDatasourcesOnly}
+        toggleActiveDatasourcesOnly={toggleActiveDatasourcesOnly}
         deleteRichHistory={deleteRichHistory}
       />
     ),

@@ -10,7 +10,7 @@ const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
     activeDatasourcesOnly: false,
     onChangeRetentionPeriod: jest.fn(),
     toggleStarredTabAsFirstTab: jest.fn(),
-    toggleactiveDatasourcesOnly: jest.fn(),
+    toggleActiveDatasourcesOnly: jest.fn(),
     deleteRichHistory: jest.fn(),
   };
 
