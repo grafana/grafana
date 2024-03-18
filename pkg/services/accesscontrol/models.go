@@ -524,6 +524,7 @@ var TeamsAccessEvaluator = EvalAny(
 		EvalAny(
 			EvalPermission(ActionTeamsWrite),
 			EvalPermission(ActionTeamsPermissionsWrite),
+			EvalPermission(ActionTeamsPermissionsRead),
 		),
 	),
 )
