@@ -36,7 +36,7 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
         <div className={styles.popover} onClick={(evt) => evt.stopPropagation()}>
           <div className={styles.heading}>Settings</div>
           <div className={styles.options}>
-            <div>Always keep metrics graph in-view</div>
+            <div>Always keep selected metric graph in-view</div>
             <Switch value={stickyMainGraph} onChange={model.onToggleStickyMainGraph} />
           </div>
         </div>
