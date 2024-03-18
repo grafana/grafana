@@ -128,7 +128,7 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mat
 	return mathCommand.Execute(ctx, now, vars, tracer)
 }
 
-func (tc *ThresholdCommand) String() string {
+func (tc *ThresholdCommand) Type() string {
 	return TypeThreshold.String()
 }
 

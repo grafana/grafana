@@ -19,7 +19,7 @@ type OutlierCommand struct {
 
 var _ Command = OutlierCommand{}
 
-func (c OutlierCommand) String() string {
+func (c OutlierCommand) Type() string {
 	return "outlier"
 }
 

@@ -216,7 +216,7 @@ func (cmd *ConditionsCmd) executeCond(_ context.Context, _ time.Time, cond condi
 	return isCondFiring, isCondNoData, matches, nil
 }
 
-func (cmd *ConditionsCmd) String() string {
+func (cmd *ConditionsCmd) Type() string {
 	return "classic_condition"
 }
 

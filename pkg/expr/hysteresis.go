@@ -77,7 +77,7 @@ func (h *HysteresisCommand) Execute(ctx context.Context, now time.Time, vars mat
 	return mathexp.Results{Values: append(loadingResults.Values, unloadingResults.Values...)}, nil
 }
 
-func (h HysteresisCommand) String() string {
+func (h HysteresisCommand) Type() string {
 	return "hysteresis"
 }
 

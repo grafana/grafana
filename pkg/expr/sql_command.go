@@ -104,6 +104,6 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	return rsp, nil
 }
 
-func (gr *SQLCommand) String() string {
+func (gr *SQLCommand) Type() string {
 	return TypeSQL.String()
 }

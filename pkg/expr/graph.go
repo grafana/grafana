@@ -138,14 +138,14 @@ func (dp *DataPipeline) UniqueCommands() []string {
 		switch t := node.(type) {
 		case *CMDNode:
 			if t.Command != nil {
-				name = fmt.Sprintf("expr(%s)", t.Command)
+				name = fmt.Sprintf("expr(%s)", t.Command.Type())
 			}
 		case *DSNode:
 			if t.datasource != nil {
 				name = t.datasource.Type
 			}
 		case *MLNode:
-			name = fmt.Sprintf("ml(%s)", t.command)
+			name = fmt.Sprintf("ml(%s)", t.command.Type())
 		}
 		if name == "" {
 			continue

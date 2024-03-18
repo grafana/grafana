@@ -17,9 +17,9 @@ import (
 
 // Command is an interface for all expression commands.
 type Command interface {
-	fmt.Stringer
 	NeedsVars() []string
 	Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error)
+	Type() string
 }
 
 // MathCommand is a command for a math expression such as "1 + $GA / 2"
@@ -76,7 +76,7 @@ func (gm *MathCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Va
 	return gm.Expression.Execute(gm.refID, vars, tracer)
 }
 
-func (gm *MathCommand) String() string {
+func (gm *MathCommand) Type() string {
 	return TypeMath.String()
 }
 
@@ -206,7 +206,7 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 	return newRes, nil
 }
 
-func (gr *ReduceCommand) String() string {
+func (gr *ReduceCommand) Type() string {
 	return TypeReduce.String()
 }
 
@@ -321,7 +321,7 @@ func (gr *ResampleCommand) Execute(ctx context.Context, now time.Time, vars math
 	return newRes, nil
 }
 
-func (gr *ResampleCommand) String() string {
+func (gr *ResampleCommand) Type() string {
 	return TypeResample.String()
 }
 
