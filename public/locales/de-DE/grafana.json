@@ -1,5 +1,5 @@
 {
-  "_comment": "Diese Datei ist die zuverlässige Quelle für englische Strings. Bearbeiten Sie diese in der Codebasis, um Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
+  "_comment": "Diese Datei ist die zuverlässige Quelle für englische Strings. Bearbeiten Sie diese im Code, um Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
   "access-control": {
     "add-permission": {
       "role-label": "Rolle",
@@ -724,6 +724,7 @@
       "cancel": "",
       "disconnect": "",
       "disconnecting": "",
+      "error": "",
       "title": ""
     },
     "get-started": {
@@ -775,6 +776,19 @@
       "body": "",
       "link-title": "",
       "title": ""
+    },
+    "resource-status": {
+      "error-details-button": "",
+      "failed": "",
+      "migrated": "",
+      "migrating": "",
+      "not-migrated": "",
+      "unknown": ""
+    },
+    "resource-type": {
+      "dashboard": "",
+      "datasource": "",
+      "unknown": ""
     },
     "resources": {
       "disconnect": ""
