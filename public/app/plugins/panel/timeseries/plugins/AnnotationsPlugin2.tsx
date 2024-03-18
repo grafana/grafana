@@ -26,10 +26,22 @@ interface AnnotationsPluginProps {
 }
 
 // TODO: batch by color, use Path2D objects
-const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: number, color: string) => {
+const renderLine = (
+  ctx: CanvasRenderingContext2D,
+  y0: number,
+  y1: number,
+  x: number,
+  color: string,
+  isHorizontalGraphOrientation = true
+) => {
   ctx.beginPath();
-  ctx.moveTo(x, y0);
-  ctx.lineTo(x, y1);
+  if (isHorizontalGraphOrientation) {
+    ctx.moveTo(x, y0);
+    ctx.lineTo(x, y1);
+  } else {
+    ctx.moveTo(y0, x);
+    ctx.lineTo(y1, x);
+  }
   ctx.strokeStyle = color;
   ctx.stroke();
 };
@@ -121,12 +133,13 @@ export const AnnotationsPlugin2 = ({
     });
 
     config.addHook('draw', (u) => {
+      const isHorizontalGraphOrientation = u.scales.x.ori === 0;
       let annos = annoRef.current;
 
       const ctx = u.ctx;
 
-      let y0 = u.bbox.top;
-      let y1 = y0 + u.bbox.height;
+      let y0 = isHorizontalGraphOrientation ? u.bbox.left : u.bbox.top;
+      let y1 = isHorizontalGraphOrientation ? y0 + u.bbox.width : y0 + u.bbox.height;
 
       ctx.save();
 
@@ -146,17 +159,21 @@ export const AnnotationsPlugin2 = ({
           let x0 = u.valToPos(vals.time[i], 'x', true);
 
           if (!vals.isRegion?.[i]) {
-            renderLine(ctx, y0, y1, x0, color);
+            renderLine(ctx, y0, y1, x0, color, isHorizontalGraphOrientation);
             // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
           } else if (canvasRegionRendering) {
-            renderLine(ctx, y0, y1, x0, color);
+            renderLine(ctx, y0, y1, x0, color, isHorizontalGraphOrientation);
 
             let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
 
-            renderLine(ctx, y0, y1, x1, color);
+            renderLine(ctx, y0, y1, x1, color, isHorizontalGraphOrientation);
 
             ctx.fillStyle = colorManipulator.alpha(color, 0.1);
-            ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+            if (isHorizontalGraphOrientation) {
+              ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+            } else {
+              ctx.fillRect(y0, x0, y1 - y0, x1 - x0);
+            }
           }
         }
       });

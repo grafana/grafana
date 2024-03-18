@@ -184,7 +184,7 @@ export const TimeSeriesPanel = ({
               </>
             )}
             {/* Renders annotation markers*/}
-            {!isVerticallyOriented && showNewVizTooltips ? (
+            {showNewVizTooltips ? (
               <AnnotationsPlugin2
                 annotations={data.annotations ?? []}
                 config={uplotConfig}
