@@ -22,7 +22,6 @@ import {
 import { config } from '@grafana/runtime';
 import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/ui';
 
-import { LokiSearchSettings } from './LokiSearchSettings';
 import { QuerySettings } from './QuerySettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
 import { TraceQLSearchSettings } from './TraceQLSearchSettings';
@@ -102,19 +101,6 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
             }
           >
             <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
-          </ConfigSubSection>
-
-          <ConfigSubSection
-            title="Loki search"
-            description={
-              <ConfigDescriptionLink
-                description="Select a Loki data source to search for traces. Derived fields must be configured in the Loki data source."
-                suffix="tempo/configure-tempo-data-source/#loki-search"
-                feature="Loki search"
-              />
-            }
-          >
-            <LokiSearchSettings options={options} onOptionsChange={onOptionsChange} />
           </ConfigSubSection>
 
           <ConfigSubSection

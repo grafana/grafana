@@ -34,7 +34,7 @@ import (
 
 var _ storage.Interface = (*Storage)(nil)
 
-// Storage implements storage.Interface and storage resources as JSON files on disk.
+// Storage implements storage.Interface and stores resources in unified storage
 type Storage struct {
 	config       *storagebackend.ConfigForResource
 	store        entityStore.EntityStoreClient
@@ -46,8 +46,6 @@ type Storage struct {
 	getAttrsFunc storage.AttrFunc
 	// trigger      storage.IndexerFuncs
 	// indexers     *cache.Indexers
-
-	// watchSet *WatchSet
 }
 
 func NewStorage(
@@ -171,11 +169,68 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		Subresource: requestInfo.Subresource,
 	}
 
+	if opts.Predicate.Field != nil {
+		// check for metadata.name field selector
+		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.name"); ok {
+			if k.Name != "" && k.Name != v {
+				return nil, apierrors.NewBadRequest("name field selector does not match key")
+			}
+
+			// just watch the specific key if we have a name field selector
+			k.Name = v
+		}
+
+		// check for metadata.namespace field selector
+		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.namespace"); ok {
+			if k.Namespace != "" && k.Namespace != v {
+				return nil, apierrors.NewBadRequest("namespace field selector does not match key")
+			}
+
+			// just watch the specific namespace if we have a namespace field selector
+			k.Namespace = v
+		}
+	}
+
+	// translate grafana.app/* label selectors into field requirements
+	requirements, newSelector, err := ReadLabelSelectors(opts.Predicate.Label)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the selector to remove the unneeded requirements
+	opts.Predicate.Label = newSelector
+
+	// if we got a listHistory label selector, watch the specified resource
+	if requirements.ListHistory != "" {
+		if k.Name != "" && k.Name != requirements.ListHistory {
+			return nil, apierrors.NewBadRequest("name field selector does not match listHistory")
+		}
+		k.Name = requirements.ListHistory
+	}
+
 	req := &entityStore.EntityWatchRequest{
 		Key: []string{
 			k.String(),
 		},
-		WithBody: true,
+		Labels:     map[string]string{},
+		WithBody:   true,
+		WithStatus: true,
+	}
+
+	if requirements.Folder != nil {
+		req.Folder = *requirements.Folder
+	}
+
+	// translate "equals" label selectors to storage label conditions
+	labelRequirements, selectable := opts.Predicate.Label.Requirements()
+	if !selectable {
+		return nil, apierrors.NewBadRequest("label selector is not selectable")
+	}
+
+	for _, r := range labelRequirements {
+		if r.Operator() == selection.Equals {
+			req.Labels[r.Key()] = r.Values().List()[0]
+		}
 	}
 
 	if opts.ResourceVersion != "" {
@@ -289,6 +344,66 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
+	// translate grafana.app/* label selectors into field requirements
+	requirements, newSelector, err := ReadLabelSelectors(opts.Predicate.Label)
+	if err != nil {
+		return err
+	}
+
+	// Update the selector to remove the unneeded requirements
+	opts.Predicate.Label = newSelector
+
+	if requirements.ListHistory != "" {
+		k.Name = requirements.ListHistory
+
+		req := &entityStore.EntityHistoryRequest{
+			Key:           k.String(),
+			WithBody:      true,
+			WithStatus:    true,
+			NextPageToken: opts.Predicate.Continue,
+			Limit:         opts.Predicate.Limit,
+			Sort:          requirements.SortBy,
+		}
+
+		rsp, err := s.store.History(ctx, req)
+		if err != nil {
+			return apierrors.NewInternalError(err)
+		}
+
+		for _, r := range rsp.Versions {
+			res := s.newFunc()
+
+			err := entityToResource(r, res, s.codec)
+			if err != nil {
+				return apierrors.NewInternalError(err)
+			}
+
+			// apply any predicates not handled in storage
+			matches, err := opts.Predicate.Matches(res)
+			if err != nil {
+				return apierrors.NewInternalError(err)
+			}
+			if !matches {
+				continue
+			}
+
+			v.Set(reflect.Append(v, reflect.ValueOf(res).Elem()))
+		}
+
+		listAccessor, err := meta.ListAccessor(listObj)
+		if err != nil {
+			return err
+		}
+
+		if rsp.NextPageToken != "" {
+			listAccessor.SetContinue(rsp.NextPageToken)
+		}
+
+		listAccessor.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
+
+		return nil
+	}
+
 	req := &entityStore.EntityListRequest{
 		Key: []string{
 			k.String(),
@@ -298,22 +413,17 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		NextPageToken: opts.Predicate.Continue,
 		Limit:         opts.Predicate.Limit,
 		Labels:        map[string]string{},
-		// TODO push label/field matching down to storage
 	}
 
-	// translate grafana.app/* label selectors into field requirements
-	requirements, newSelector, err := ReadLabelSelectors(opts.Predicate.Label)
-	if err != nil {
-		return err
-	}
 	if requirements.Folder != nil {
 		req.Folder = *requirements.Folder
 	}
 	if len(requirements.SortBy) > 0 {
 		req.Sort = requirements.SortBy
 	}
-	// Update the selector to remove the unneeded requirements
-	opts.Predicate.Label = newSelector
+	if requirements.ListDeleted {
+		req.Deleted = true
+	}
 
 	// translate "equals" label selectors to storage label conditions
 	labelRequirements, selectable := opts.Predicate.Label.Requirements()
@@ -340,7 +450,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 			return apierrors.NewInternalError(err)
 		}
 
-		// TODO filter in storage
+		// apply any predicates not handled in storage
 		matches, err := opts.Predicate.Matches(res)
 		if err != nil {
 			return apierrors.NewInternalError(err)
@@ -503,8 +613,7 @@ func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err e
 		}
 
 		// apply any predicates not handled in storage
-		var matches bool
-		matches, err = d.opts.Predicate.Matches(obj)
+		matches, err := d.opts.Predicate.Matches(obj)
 		if err != nil {
 			log.Printf("error matching object: %s", err)
 			return watch.Error, nil, err

@@ -1,4 +1,4 @@
-import { BusEventBase, BusEventWithPayload } from '@grafana/data';
+import { BusEventWithPayload } from '@grafana/data';
 import { ConstantVariable, SceneObject } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
@@ -46,8 +46,4 @@ export function getVariablesWithMetricConstant(metric: string) {
 
 export class MetricSelectedEvent extends BusEventWithPayload<string> {
   public static type = 'metric-selected-event';
-}
-
-export class OpenEmbeddedTrailEvent extends BusEventBase {
-  public static type = 'open-embedded-trail-event';
 }

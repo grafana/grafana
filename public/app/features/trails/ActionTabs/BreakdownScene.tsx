@@ -240,7 +240,8 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       new SceneCSSGridLayout({
         templateColumns: '1fr',
         autoRows: '200px',
-        children: children,
+        // Clone children since a scene object can only have one parent at a time
+        children: children.map((c) => c.clone()),
       }),
     ],
   });
@@ -312,24 +313,18 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
 }
 
 function getLabelValue(frame: DataFrame) {
-  const labels = frame.fields[1]?.labels;
-
-  if (!labels) {
-    return 'No labels';
-  }
+  const labels = frame.fields[1]?.labels || {};
 
   const keys = Object.keys(labels);
   if (keys.length === 0) {
-    return 'No labels';
+    return '<unspecified>';
   }
 
   return labels[keys[0]];
 }
 
 export function buildBreakdownActionScene() {
-  return new SceneFlexItem({
-    body: new BreakdownScene({}),
-  });
+  return new BreakdownScene({});
 }
 
 interface SelectLabelActionState extends SceneObjectState {
@@ -342,7 +337,7 @@ export class SelectLabelAction extends SceneObjectBase<SelectLabelActionState> {
 
   public static Component = ({ model }: SceneComponentProps<AddToFiltersGraphAction>) => {
     return (
-      <Button variant="primary" size="sm" fill="text" onClick={model.onClick}>
+      <Button variant="secondary" size="sm" fill="solid" onClick={model.onClick}>
         Select
       </Button>
     );

@@ -1,16 +1,15 @@
 ---
 aliases:
-  - ../contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/
   - ../contact-points/create-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/create-contact-point/
   - ../contact-points/delete-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/delete-contact-point/
   - ../contact-points/edit-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/edit-contact-point/
   - ../contact-points/test-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/test-contact-point/
   - ../manage-notifications/manage-contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/manage-contact-points/
   - ../alerting-rules/create-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-contact-point/
-  - ../alerting-rules/manage-contact-points/ # /docs/grafana/latest/alerting/alerting-rules/manage-contact-points/
-  - ../alerting-rules/create-notification-policy/ # /docs/grafana/latest/alerting/alerting-rules/create-notification-policy/
-  - ../alerting-rules/manage-contact-points/integrations/ # /docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/
-  - ../manage-notifications/manage-contact-points/ # /docs/grafana/latest/alerting/manage-notifications/manage-contact-points/
+  - ../alerting-rules/manage-contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/manage-contact-points/
+  - ../alerting-rules/create-notification-policy/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-notification-policy/
+  - ../alerting-rules/manage-contact-points/integrations/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/manage-contact-points/integrations/
+  - ../manage-notifications/manage-contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/manage-contact-points/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/
 description: Configure contact points to define how your contacts are notified when an alert rule fires
 keywords:
@@ -124,7 +123,7 @@ Once configured, you can use integrations as part of your contact points to rece
 | Pushover                 | `pushover`                |
 | Sensu                    | `sensu`                   |
 | Sensu Go                 | `sensugo`                 |
-| Slack                    | `slack`                   |
+| [Slack][slack]           | `slack`                   |
 | Telegram                 | `telegram`                |
 | Threema                  | `threema`                 |
 | VictorOps                | `victorops`               |
@@ -136,6 +135,9 @@ Once configured, you can use integrations as part of your contact points to rece
 
 [oncall]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall"
 [oncall]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall"
+
+[slack]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-slack"
+[slack]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-slack"
 
 [webhook]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
 [webhook]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
