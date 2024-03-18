@@ -98,8 +98,8 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
   const matchers =
     route.matchers
       ?.flatMap((matcher) => {
-        const parsedMatchers = parseMatcherToArray(matcher);
-        return parsedMatchers.flatMap(matcherToMatcherField);
+        // parse the matcher to an array of matchers, PromQL-style matchers can contain more than one matcher (in a matcher, yes it's confusing)
+        return parseMatcherToArray(matcher).flatMap(matcherToMatcherField);
       })
       .map(({ name, operator, value }) => ({
         name: unquoteWithUnescape(name),

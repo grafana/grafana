@@ -172,11 +172,11 @@ export const matcherFormatter = {
   },
 } as const;
 
-function isPromQLStyleMatcher(input: string): boolean {
+export function isPromQLStyleMatcher(input: string): boolean {
   return input.startsWith('{') && input.endsWith('}');
 }
 
-function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
+export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
   const operator = matcherToOperator(matcher);
   return [matcher.name, operator, matcher.value];
 }
