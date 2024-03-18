@@ -1,11 +1,10 @@
 import { noop } from 'lodash';
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { BehaviorSubject } from 'rxjs';
 
 import { DataFrame, InterpolateFunction, TimeRange } from '@grafana/data';
 import { VisibilityMode } from '@grafana/schema';
-import { LegendDisplayMode, UPlotConfigBuilder, useTheme2 } from '@grafana/ui';
+import { LegendDisplayMode, useTheme2 } from '@grafana/ui';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import { TimelineMode } from 'app/core/components/TimelineChart/utils';
 
@@ -20,7 +19,6 @@ const replaceVariables: InterpolateFunction = (v) => v;
 
 export const LogTimelineViewer = React.memo(({ frames, timeRange, onPointerMove = noop }: LogTimelineViewerProps) => {
   const theme = useTheme2();
-  const { setupCursorTracking } = useCursorTimelinePosition(onPointerMove);
 
   return (
     <AutoSizer disableHeight>
@@ -49,60 +47,10 @@ export const LogTimelineViewer = React.memo(({ frames, timeRange, onPointerMove 
             { label: 'Mixed', color: theme.colors.text.secondary, yAxis: 1 },
           ]}
           replaceVariables={replaceVariables}
-        >
-          {(builder) => {
-            setupCursorTracking(builder);
-            return null;
-          }}
-        </TimelineChart>
+        />
       )}
     </AutoSizer>
   );
 });
-
-function useCursorTimelinePosition(onPointerMove: (seriesIdx: number, pointIdx: number) => void) {
-  const pointerSubject = useRef(
-    new BehaviorSubject<{ seriesIdx: number; pointIdx: number }>({ seriesIdx: 0, pointIdx: 0 })
-  );
-
-  useEffect(() => {
-    const subscription = pointerSubject.current.subscribe(({ seriesIdx, pointIdx }) => {
-      onPointerMove && onPointerMove(seriesIdx, pointIdx);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [onPointerMove]);
-
-  // Applies cursor tracking to the UPlot chart
-  const setupCursorTracking = (builder: UPlotConfigBuilder) => {
-    const interpolator = builder.getTooltipInterpolator();
-
-    // I found this in TooltipPlugin.tsx
-    if (interpolator) {
-      builder.addHook('setCursor', (u) => {
-        interpolator(
-          (seriesIdx) => {
-            if (seriesIdx) {
-              const currentPointer = pointerSubject.current.getValue();
-              pointerSubject.current.next({ ...currentPointer, seriesIdx });
-            }
-          },
-          (pointIdx) => {
-            if (pointIdx) {
-              const currentPointer = pointerSubject.current.getValue();
-              pointerSubject.current.next({ ...currentPointer, pointIdx });
-            }
-          },
-          () => {},
-          u
-        );
-      });
-    }
-  };
-
-  return { setupCursorTracking };
-}
 
 LogTimelineViewer.displayName = 'LogTimelineViewer';
