@@ -59,22 +59,23 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 	encoding := queryReader.Get("encoding", "")
 
 	result, err := hs.RenderService.Render(c.Req.Context(), rendering.RenderPNG, rendering.Opts{
-		TimeoutOpts: rendering.TimeoutOpts{
-			Timeout: time.Duration(timeout) * time.Second,
-		},
-		AuthOpts: rendering.AuthOpts{
-			OrgID:   c.SignedInUser.GetOrgID(),
-			UserID:  userID,
-			OrgRole: c.SignedInUser.GetOrgRole(),
+		CommonOpts: rendering.CommonOpts{
+			TimeoutOpts: rendering.TimeoutOpts{
+				Timeout: time.Duration(timeout) * time.Second,
+			},
+			AuthOpts: rendering.AuthOpts{
+				OrgID:   c.SignedInUser.GetOrgID(),
+				UserID:  userID,
+				OrgRole: c.SignedInUser.GetOrgRole(),
+			},
+			Path:            web.Params(c.Req)["*"] + queryParams,
+			Timezone:        queryReader.Get("tz", ""),
+			ConcurrentLimit: hs.Cfg.RendererConcurrentRequestLimit,
+			Headers:         headers,
 		},
 		Width:             width,
 		Height:            height,
-		Path:              web.Params(c.Req)["*"] + queryParams,
-		Timezone:          queryReader.Get("tz", ""),
-		Encoding:          encoding,
-		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,
 		DeviceScaleFactor: scale,
-		Headers:           headers,
 		Theme:             models.ThemeDark,
 	}, nil)
 	if err != nil {

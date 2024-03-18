@@ -36,109 +36,112 @@ var (
 	remoteVersionRefreshInterval               = time.Minute * 15
 )
 
+// renderViaHTTP renders PNG or PDF via HTTP
 func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderType RenderType, renderKey string, opts Opts) (*RenderResult, error) {
-	if renderType == RenderPDF {
-		opts.Encoding = "pdf"
+	imageRendererURL, err := rs.generateImageRendererURL(renderType, opts, renderKey)
+	if err != nil {
+		return nil, err
 	}
 
+	result, err := rs.doRequestAndWriteToFile(ctx, renderType, imageRendererURL, opts.TimeoutOpts, opts.Headers)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RenderResult{FilePath: result.FilePath}, nil
+}
+
+// renderViaHTTP renders CSV via HTTP
+func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey string, csvOpts CSVOpts) (*RenderCSVResult, error) {
+	opts := Opts{CommonOpts: csvOpts.CommonOpts}
+
+	imageRendererURL, err := rs.generateImageRendererURL(RenderCSV, opts, renderKey)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := rs.doRequestAndWriteToFile(ctx, RenderCSV, imageRendererURL, opts.TimeoutOpts, opts.Headers)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RenderCSVResult{FilePath: result.FilePath, FileName: result.FileName}, nil
+}
+
+func (rs *RenderingService) generateImageRendererURL(renderType RenderType, opts Opts, renderKey string) (*url.URL, error) {
+	rendererUrl := rs.Cfg.RendererUrl
+	if renderType == RenderCSV {
+		rendererUrl += "/csv"
+	}
+
+	imageRendererURL, err := url.Parse(rendererUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	queryParams := imageRendererURL.Query()
+	url := rs.createURLForRendering(opts.Path)
+	queryParams.Add("url", url)
+	queryParams.Add("renderKey", renderKey)
+	queryParams.Add("domain", rs.domain)
+	queryParams.Add("timezone", isoTimeOffsetToPosixTz(opts.Timezone))
+	queryParams.Add("encoding", string(renderType))
+	queryParams.Add("timeout", strconv.Itoa(int(opts.Timeout.Seconds())))
+
+	if renderType != RenderCSV {
+		queryParams.Add("width", strconv.Itoa(opts.Width))
+		queryParams.Add("height", strconv.Itoa(opts.Height))
+		queryParams.Add("deviceScaleFactor", fmt.Sprintf("%f", opts.DeviceScaleFactor))
+	}
+
+	imageRendererURL.RawQuery = queryParams.Encode()
+	return imageRendererURL, nil
+}
+
+func (rs *RenderingService) doRequestAndWriteToFile(ctx context.Context, renderType RenderType, rendererURL *url.URL, timeoutOpts TimeoutOpts, headers map[string][]string) (*Result, error) {
 	filePath, err := rs.getNewFilePath(renderType)
 	if err != nil {
 		return nil, err
 	}
 
-	rendererURL, err := url.Parse(rs.Cfg.RendererUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	queryParams := rendererURL.Query()
-	url := rs.getURL(opts.Path)
-	queryParams.Add("url", url)
-	queryParams.Add("renderKey", renderKey)
-	queryParams.Add("width", strconv.Itoa(opts.Width))
-	queryParams.Add("height", strconv.Itoa(opts.Height))
-	queryParams.Add("domain", rs.domain)
-	queryParams.Add("timezone", isoTimeOffsetToPosixTz(opts.Timezone))
-	queryParams.Add("encoding", opts.Encoding)
-	queryParams.Add("timeout", strconv.Itoa(int(opts.Timeout.Seconds())))
-	queryParams.Add("deviceScaleFactor", fmt.Sprintf("%f", opts.DeviceScaleFactor))
-
-	rendererURL.RawQuery = queryParams.Encode()
-
 	// gives service some additional time to timeout and return possible errors.
-	reqContext, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
+	reqContext, cancel := context.WithTimeout(ctx, getRequestTimeout(timeoutOpts))
 	defer cancel()
 
-	resp, err := rs.doRequest(reqContext, rendererURL, opts.Headers)
+	resp, err := rs.doRequest(reqContext, rendererURL, headers)
 	if err != nil {
 		return nil, err
 	}
 
-	// save response to file
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			rs.log.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
-	err = rs.readFileResponse(reqContext, resp, filePath, url)
-	if err != nil {
-		return nil, err
-	}
-
-	return &RenderResult{FilePath: filePath}, nil
-}
-
-func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey string, opts CSVOpts) (*RenderCSVResult, error) {
-	filePath, err := rs.getNewFilePath(RenderCSV)
-	if err != nil {
-		return nil, err
-	}
-
-	rendererURL, err := url.Parse(rs.Cfg.RendererUrl + "/csv")
-	if err != nil {
-		return nil, err
-	}
-
-	queryParams := rendererURL.Query()
-	url := rs.getURL(opts.Path)
-	queryParams.Add("url", url)
-	queryParams.Add("renderKey", renderKey)
-	queryParams.Add("domain", rs.domain)
-	queryParams.Add("timezone", isoTimeOffsetToPosixTz(opts.Timezone))
-	queryParams.Add("encoding", opts.Encoding)
-	queryParams.Add("timeout", strconv.Itoa(int(opts.Timeout.Seconds())))
-
-	rendererURL.RawQuery = queryParams.Encode()
-
-	// gives service some additional time to timeout and return possible errors.
-	reqContext, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
-	defer cancel()
-
-	resp, err := rs.doRequest(reqContext, rendererURL, opts.Headers)
-	if err != nil {
-		return nil, err
+	// if we didn't get a 200 response, something went wrong.
+	if resp.StatusCode != http.StatusOK {
+		rs.log.Error("Remote rendering request failed", "error", resp.Status, "url", rendererURL.Query().Get("url"))
+		return nil, fmt.Errorf("remote rendering request failed, status code: %d, status: %s", resp.StatusCode,
+			resp.Status)
 	}
 
 	// save response to file
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			rs.log.Warn("Failed to close response body", "err", err)
+	err = rs.writeResponseToFile(reqContext, resp, filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var downloadFileName string
+	if renderType == RenderCSV {
+		_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
+		if err != nil {
+			return nil, err
 		}
-	}()
-
-	_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
-	if err != nil {
-		return nil, err
-	}
-	downloadFileName := params["filename"]
-
-	err = rs.readFileResponse(reqContext, resp, filePath, url)
-	if err != nil {
-		return nil, err
+		downloadFileName = params["filename"]
 	}
 
-	return &RenderCSVResult{FilePath: filePath, FileName: downloadFileName}, nil
+	return &Result{FilePath: filePath, FileName: downloadFileName}, nil
 }
 
 func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers map[string][]string) (*http.Response, error) {
@@ -171,18 +174,11 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 	return resp, nil
 }
 
-func (rs *RenderingService) readFileResponse(ctx context.Context, resp *http.Response, filePath string, url string) error {
+func (rs *RenderingService) writeResponseToFile(ctx context.Context, resp *http.Response, filePath string) error {
 	// check for timeout first
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		rs.log.Info("Rendering timed out")
 		return ErrTimeout
-	}
-
-	// if we didn't get a 200 response, something went wrong.
-	if resp.StatusCode != http.StatusOK {
-		rs.log.Error("Remote rendering request failed", "error", resp.Status, "url", url)
-		return fmt.Errorf("remote rendering request failed, status code: %d, status: %s", resp.StatusCode,
-			resp.Status)
 	}
 
 	//nolint:gosec
