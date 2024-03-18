@@ -13,7 +13,6 @@ const grafanaPlugin = async () =>
 const influxdbPlugin = async () =>
   await import(/* webpackChunkName: "influxdbPlugin" */ 'app/plugins/datasource/influxdb/module');
 const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */ 'app/plugins/datasource/loki/module');
-const jaegerPlugin = async () => await import(/* webpackChunkName: "jaegerPlugin" */ '@grafana-plugins/jaeger/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
 const mysqlPlugin = async () =>

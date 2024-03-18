@@ -3214,7 +3214,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana-plugins/grafana-azure-monitor-datasource@workspace:*, @grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor":
+"@grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor"
   dependencies:
@@ -3254,7 +3254,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/grafana-pyroscope-datasource@workspace:*, @grafana-plugins/grafana-pyroscope-datasource@workspace:public/app/plugins/datasource/grafana-pyroscope-datasource":
+"@grafana-plugins/grafana-pyroscope-datasource@workspace:public/app/plugins/datasource/grafana-pyroscope-datasource":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-pyroscope-datasource@workspace:public/app/plugins/datasource/grafana-pyroscope-datasource"
   dependencies:
@@ -3293,7 +3293,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/grafana-testdata-datasource@workspace:*, @grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource":
+"@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource"
   dependencies:
@@ -3352,7 +3352,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/jaeger@workspace:*, @grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger":
+"@grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger"
   dependencies:
@@ -3385,7 +3385,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/parca@workspace:*, @grafana-plugins/parca@workspace:public/app/plugins/datasource/parca":
+"@grafana-plugins/parca@workspace:public/app/plugins/datasource/parca":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/parca@workspace:public/app/plugins/datasource/parca"
   dependencies:
@@ -3412,7 +3412,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/stackdriver@workspace:*, @grafana-plugins/stackdriver@workspace:public/app/plugins/datasource/cloud-monitoring":
+"@grafana-plugins/stackdriver@workspace:public/app/plugins/datasource/cloud-monitoring":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/stackdriver@workspace:public/app/plugins/datasource/cloud-monitoring"
   dependencies:
@@ -3457,7 +3457,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/tempo@workspace:*, @grafana-plugins/tempo@workspace:public/app/plugins/datasource/tempo":
+"@grafana-plugins/tempo@workspace:public/app/plugins/datasource/tempo":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/tempo@workspace:public/app/plugins/datasource/tempo"
   dependencies:
@@ -3515,7 +3515,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/zipkin@workspace:*, @grafana-plugins/zipkin@workspace:public/app/plugins/datasource/zipkin":
+"@grafana-plugins/zipkin@workspace:public/app/plugins/datasource/zipkin":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/zipkin@workspace:public/app/plugins/datasource/zipkin"
   dependencies:
@@ -18532,14 +18532,6 @@ __metadata:
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
     "@floating-ui/react": "npm:0.26.9"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
-    "@grafana-plugins/grafana-azure-monitor-datasource": "workspace:*"
-    "@grafana-plugins/grafana-pyroscope-datasource": "workspace:*"
-    "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
-    "@grafana-plugins/jaeger": "workspace:*"
-    "@grafana-plugins/parca": "workspace:*"
-    "@grafana-plugins/stackdriver": "workspace:*"
-    "@grafana-plugins/tempo": "workspace:*"
-    "@grafana-plugins/zipkin": "workspace:*"
     "@grafana/aws-sdk": "npm:0.3.2"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
