@@ -14,17 +14,15 @@ import (
 
 // Keeps track of which watches need to be notified
 type WatchSet struct {
-	mu        sync.RWMutex
-	nodes     map[int]*watchNode
-	counter   int
-	versioner storage.Versioner
+	mu      sync.RWMutex
+	nodes   map[int]*watchNode
+	counter int
 }
 
-func NewWatchSet(versioner storage.Versioner) *WatchSet {
+func NewWatchSet() *WatchSet {
 	return &WatchSet{
-		nodes:     make(map[int]*watchNode, 20),
-		counter:   0,
-		versioner: versioner,
+		nodes:   make(map[int]*watchNode, 20),
+		counter: 0,
 	}
 }
 

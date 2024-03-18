@@ -83,7 +83,6 @@ func NewStorage(
 	if err := ensureDir(root); err != nil {
 		return nil, func() {}, fmt.Errorf("could not establish a writable directory at path=%s", root)
 	}
-	ws := NewWatchSet(&storage.APIObjectVersioner{})
 
 	rvGenerationNode, err := snowflake.NewNode(1)
 	if err != nil {
@@ -103,14 +102,14 @@ func NewStorage(
 		indexers:       indexers,
 
 		rvGenerationNode: rvGenerationNode,
-		watchSet:         ws,
+		watchSet:         NewWatchSet(),
 	}
 
 	// Initialize the RV stored in storage
 	s.getNewResourceVersion()
 
 	return s, func() {
-		ws.cleanupWatchers()
+		s.watchSet.cleanupWatchers()
 	}, nil
 }
 
