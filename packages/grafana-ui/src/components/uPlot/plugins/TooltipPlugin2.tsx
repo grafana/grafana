@@ -537,10 +537,13 @@ export const TooltipPlugin2 = ({
       if (event != null) {
         plot!.over.dispatchEvent(event);
       } else {
-        plot!.setCursor({
-          left: plot!.cursor.left!,
-          top: plot!.cursor.top!,
-        }, true);
+        plot!.setCursor(
+          {
+            left: plot!.cursor.left!,
+            top: plot!.cursor.top!,
+          },
+          true
+        );
       }
     } else {
       size.width = 0;
