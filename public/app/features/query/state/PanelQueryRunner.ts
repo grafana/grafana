@@ -479,15 +479,10 @@ export class PanelQueryRunner {
 
     //If datasource is a variable
     if (datasource?.uid?.startsWith('${')) {
-      const variableName = this.templateSrv.getVariableName(datasource.uid) ?? '';
       // we can access the raw datasource variable values inside the replace function if we pass a custom format function
       this.templateSrv.replace(datasource.uid, scopedVars, (value: string | string[]) => {
-        // if the variable has multiple values and it's does not have a scoped variable (meaning not being repeated by the variable)
-        if (
-          Array.isArray(value) &&
-          value.length > 1 &&
-          (scopedVars === undefined || (scopedVars && !scopedVars[variableName]))
-        ) {
+        // if the variable has multiple values it means it's not being repeated
+        if (Array.isArray(value) && value.length > 1) {
           addWarningMessageMultipleDatasourceVariable = true;
         }
         // return empty string to avoid replacing the variable
