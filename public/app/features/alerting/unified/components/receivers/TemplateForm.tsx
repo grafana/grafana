@@ -231,7 +231,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                       onBlur={(value) => setValue('content', value)}
                       containerStyles={styles.editorContainer}
                       width={width}
-                      height={568}
+                      height={622}
                     />
                   )}
                 </AutoSizer>
@@ -453,8 +453,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     gap: theme.spacing(1),
-    height: theme.spacing(75),
-    maxHeight: theme.spacing(75),
+    height: theme.spacing(82),
+    maxHeight: theme.spacing(82),
   }),
   contentField: css({
     flex: 3,
