@@ -80,7 +80,7 @@ func (rq *RingQ[T]) migrate(newFreeCap int) {
 		s = make([]T, total)
 	}
 
-	if len(rq.s) > 0 {
+	if rq.len > 0 {
 		chunk1 := min(rq.back+rq.len, len(rq.s))
 		copied := copy(s, rq.s[rq.back:chunk1])
 
