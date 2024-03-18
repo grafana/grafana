@@ -1,10 +1,15 @@
+/**
+ * Functions in this file are used by the routeGroupsMatcher.worker.ts file.
+ * This is a web worker that matches active alert instances to a policy in the notification policy tree.
+ *
+ * Please keep the references to other files here to a minimum, if we reference a file that uses GrafanaBootData from `window` the worker will fail to load.
+ */
+
 import { uniqBy } from 'lodash';
 
 import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { Labels } from '../../../../types/unified-alerting-dto';
-
-import { isPromQLStyleMatcher, matcherToObjectMatcher } from './alertmanager';
 
 const matcherOperators = [
   MatcherOperator.regex,
@@ -166,6 +171,29 @@ export const matcherFormatter = {
     return `${unquotedName} ${operator} ${unquotedValue}`;
   },
 } as const;
+
+function isPromQLStyleMatcher(input: string): boolean {
+  return input.startsWith('{') && input.endsWith('}');
+}
+
+function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
+  const operator = matcherToOperator(matcher);
+  return [matcher.name, operator, matcher.value];
+}
+
+function matcherToOperator(matcher: Matcher): MatcherOperator {
+  if (matcher.isEqual) {
+    if (matcher.isRegex) {
+      return MatcherOperator.regex;
+    } else {
+      return MatcherOperator.equal;
+    }
+  } else if (matcher.isRegex) {
+    return MatcherOperator.notRegex;
+  } else {
+    return MatcherOperator.notEqual;
+  }
+}
 
 export type MatcherFormatter = keyof typeof matcherFormatter;
 
