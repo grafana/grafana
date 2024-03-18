@@ -1,13 +1,10 @@
 import { map, of } from 'rxjs';
 
 import { AnnotationQuery, DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneDataLayers, SceneGridLayout, SceneTimeRange, VizPanel, dataLayers } from '@grafana/scenes';
+import { SceneDataLayers, SceneGridLayout, SceneTimeRange, dataLayers } from '@grafana/scenes';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -47,11 +44,6 @@ jest.mock('@grafana/runtime', () => ({
     publicDashboardAccessToken: 'ac123',
   },
 }));
-
-setPluginImportUtils({
-  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
-  getPanelPluginFromCache: (id: string) => undefined,
-});
 
 describe('AnnotationsEditView', () => {
   describe('Dashboard annotations state', () => {
@@ -190,20 +182,7 @@ async function buildTestScene() {
       ],
     }),
     body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: new VizPanel({
-            title: 'Panel A',
-            key: 'panel-1',
-            pluginId: 'table',
-          }),
-        }),
-      ],
+      children: [],
     }),
     editview: annotationsView,
   });
