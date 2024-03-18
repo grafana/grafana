@@ -5,7 +5,7 @@
  * Please keep the references to other files here to a minimum, if we reference a file that uses GrafanaBootData from `window` the worker will fail to load.
  */
 
-import { uniqBy } from 'lodash';
+import { compact, uniqBy } from 'lodash';
 
 import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
@@ -70,12 +70,9 @@ export function parsePromQLStyleMatcher(matcher: string): Matcher[] {
 
   // spit by `,` but not when it's used as a label value
   const commaUnlessQuoted = /,(?=(?:[^"]*"[^"]*")*[^"]*$)/;
+  const parts = matcher.replace(/^\{/, '').replace(/\}$/, '').trim().split(commaUnlessQuoted);
 
-  return matcher
-    .replace(/^\{/, '')
-    .replace(/\}$/, '')
-    .trim()
-    .split(commaUnlessQuoted)
+  return compact(parts)
     .flatMap(parseMatcher)
     .map((matcher) => ({
       ...matcher,

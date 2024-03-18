@@ -166,6 +166,12 @@ describe('parsePromQLStyleMatcher', () => {
     ]);
   });
 
+  it('should remove empty matchers from array', () => {
+    expect(parsePromQLStyleMatcher('{ foo=bar, }')).toStrictEqual([
+      { name: 'foo', value: 'bar', isEqual: true, isRegex: false },
+    ]);
+  });
+
   it('should throw when not using correct syntax', () => {
     expect(() => parsePromQLStyleMatcher('foo="bar"')).toThrow();
   });
