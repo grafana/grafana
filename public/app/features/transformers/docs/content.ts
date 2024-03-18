@@ -177,7 +177,7 @@ In the field mapping specify:
 | ----- | ----------------------- | ---------- |
 | Value | Value mappings / Value  | All values |
 | Text  | Value mappings / Text   | All values |
-| Color | Value mappings / Ciolor | All values |
+| Color | Value mappings / Color | All values |
 
 Grafana builds value mappings from your query result and applies them to the real data query results. You should see values being mapped and colored according to the config query results.
   `;
