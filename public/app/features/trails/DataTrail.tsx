@@ -207,7 +207,8 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
     variables: [
       new DataSourceVariable({
         name: VAR_DATASOURCE,
-        label: 'Prometheus data source',
+        label: 'Data source',
+        description: 'Only prometheus data sources are supported',
         value: initialDS,
         pluginId: 'prometheus',
       }),
