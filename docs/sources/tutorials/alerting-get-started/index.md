@@ -53,10 +53,13 @@ You will need to download the files to your local machine.
 1. Finally, the Grafana News app should be live on localhost:8081.
 
 ## Generate some data
+
 ### Grafana News
+
 Grafana News is a straightforward application created to demonstrate the observation of data using the Grafana stack. It achieves this by generating web traffic through activities such as posting links and voting for your preferred ones
 
 To add a link:
+
 1. In Title, enter Example.
 1. In the URL, enter https://example.com.
 1. Click Submit to add the link. The link will appear listed under the Grafana News heading.
@@ -73,9 +76,13 @@ Besides being an open-source observability tool, Grafana has its own built-in al
 Before we get started, it’s important to note that Grafana Alerting supports two alert rule types: Grafana-managed alert rules, which allow you to create alerts that can act on data from multiple data sources, and data source-managed alert rules, which are alert rules created and stored within the data source itself. In our case, our data source is Prometheus, so we will be creating a Grafana-managed alert rule. This is because Grafana uses Prometheus Alertmanager as the default Alertmanager, which handles alerts sent by client applications, such as the Prometheus server. Moreover, the exported metrics can be queried using the Prometheus Query language (PromQL)  
 
 1. In Grafana, toggle the menu at the top left side of the screen, and navigate to Alerting > Alert rules. Click on  + New alert rule.
+
 #### Enter alert rule name
+
 1. Give a name to the alert rule. For instance, server-requests-duration
+
 #### Define query and alert condition
+
 1. Choose the data source from the drop-down menu. Since our data source is Prometheus, the rule type should automatically switch to Grafana-managed alert. 
 
 
@@ -90,6 +97,7 @@ At this point, our alert should be working (it should be either in Firing or Nor
 Let’s fill in some other important details.
 
 #### Set evaluation behavior
+
 1. In Folder, click + New folder and enter a name. For example: grafana-news. This folder will contain our alerts. 
 1. In the Evaluation group, repeat the above step to create a new evaluation group. We will name it 1m-evaluation. 
 1. Choose an Evaluation interval (how often the alert will be evaluated). For example, every 1m (1 minute).
