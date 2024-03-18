@@ -25,6 +25,22 @@ labels:
     - oss
 title: Configure contact points
 weight: 410
+refs:
+  oncall:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall/
+  pagerduty:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/
+  webhook:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/
 ---
 
 # Configure contact points
@@ -106,36 +122,25 @@ Once configured, you can use integrations as part of your contact points to rece
 
 ## List of supported integrations
 
-| Name                     | Type                      |
-| ------------------------ | ------------------------- |
-| DingDing                 | `dingding`                |
-| Discord                  | `discord`                 |
-| Email                    | `email`                   |
-| Google Chat              | `googlechat`              |
-| [Grafana Oncall][oncall] | `oncall`                  |
-| Hipchat                  | `hipchat`                 |
-| Kafka                    | `kafka`                   |
-| Line                     | `line`                    |
-| Microsoft Teams          | `teams`                   |
-| Opsgenie                 | `opsgenie`                |
-| [Pagerduty][pagerduty]   | `pagerduty`               |
-| Prometheus Alertmanager  | `prometheus-alertmanager` |
-| Pushover                 | `pushover`                |
-| Sensu                    | `sensu`                   |
-| Sensu Go                 | `sensugo`                 |
-| Slack                    | `slack`                   |
-| Telegram                 | `telegram`                |
-| Threema                  | `threema`                 |
-| VictorOps                | `victorops`               |
-| [Webhook][webhook]       | `webhook`                 |
-
-{{% docs/reference %}}
-[pagerduty]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/pager-duty"
-[pagerduty]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/pager-duty"
-
-[oncall]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall"
-[oncall]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall"
-
-[webhook]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
-[webhook]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
-{{% /docs/reference %}}
+| Name                         | Type                      |
+| ---------------------------- | ------------------------- |
+| DingDing                     | `dingding`                |
+| Discord                      | `discord`                 |
+| Email                        | `email`                   |
+| Google Chat                  | `googlechat`              |
+| [Grafana Oncall](ref:oncall) | `oncall`                  |
+| Hipchat                      | `hipchat`                 |
+| Kafka                        | `kafka`                   |
+| Line                         | `line`                    |
+| Microsoft Teams              | `teams`                   |
+| Opsgenie                     | `opsgenie`                |
+| [Pagerduty](ref:pagerduty)   | `pagerduty`               |
+| Prometheus Alertmanager      | `prometheus-alertmanager` |
+| Pushover                     | `pushover`                |
+| Sensu                        | `sensu`                   |
+| Sensu Go                     | `sensugo`                 |
+| Slack                        | `slack`                   |
+| Telegram                     | `telegram`                |
+| Threema                      | `threema`                 |
+| VictorOps                    | `victorops`               |
+| [Webhook](ref:webhook)       | `webhook`                 |
