@@ -90,7 +90,7 @@ func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 	}
 
 	// The original code in `pkg/infra/tracing/tracing.go` here has code to register a contextual
-	// log provider using `RegisterContextualLogProvider` from `pkg/infra/log`. This is not supported 
+	// log provider using `RegisterContextualLogProvider` from `pkg/infra/log`. This is not supported
 	// by `grafana-plugin-sdk-go/backend/log` and thus has been replaced by `DecorateLogger` in the plugin.
 
 	if err := ots.initOpentelemetryTracer(); err != nil {

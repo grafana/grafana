@@ -88,17 +88,11 @@ type SmtpSettings struct {
 	TemplatesPatterns        []string
 	ContentTypes             []string
 }
-// TODO move all global vars to this struct
+
 type Cfg struct {
 	Target []string
 	Raw    *ini.File
 	Logger log.Logger
-
-	// TODO do we need these?
-	// for logging purposes
-	// configFiles                  []string
-	// appliedCommandLineProperties []string
-	// appliedEnvOverrides          []string
 
 	// HTTP Server Settings
 	CertFile         string

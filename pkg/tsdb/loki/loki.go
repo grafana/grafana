@@ -172,7 +172,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	logger := DecorateLoggerWithTraceID(logger, ctx).FromContext(ctx).New("fromAlert", fromAlert) 
+	logger := DecorateLoggerWithTraceID(logger, ctx).FromContext(ctx).New("fromAlert", fromAlert)
 	if err != nil {
 		logger.Error("Failed to get data source info", "err", err)
 		result := backend.NewQueryDataResponse()
