@@ -7,7 +7,7 @@
 package server
 
 import (
-	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/build/wire"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
