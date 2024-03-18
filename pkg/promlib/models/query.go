@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -11,8 +10,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/prometheus/prometheus/model/labels"
-	"github.com/prometheus/prometheus/promql/parser"
 
+	"github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 )
 
@@ -64,9 +63,7 @@ type PrometheusQueryProperties struct {
 	LegendFormat string `json:"legendFormat,omitempty"`
 
 	// ???
-	Scope *struct {
-		Matchers string `json:"matchers"`
-	} `json:"scope,omitempty"`
+	Scope *v0alpha1.ScopeSpec `json:"scope,omitempty"`
 }
 
 // Internal interval and range variables
@@ -139,7 +136,7 @@ type Query struct {
 	RangeQuery    bool
 	ExemplarQuery bool
 	UtcOffsetSec  int64
-	Scope         Scope
+	Scope         *v0alpha1.ScopeSpec
 }
 
 type Scope struct {
@@ -168,13 +165,8 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 		dsScrapeInterval,
 		timeRange,
 	)
-	var matchers []*labels.Matcher
-	if enableScope && model.Scope != nil && model.Scope.Matchers != "" {
-		matchers, err = parser.ParseMetricSelector(model.Scope.Matchers)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse metric selector %v in scope", model.Scope.Matchers)
-		}
-		expr, err = ApplyQueryScope(expr, matchers)
+	if enableScope && model.Scope != nil && len(model.Scope.Filters) > 0 {
+		expr, err = ApplyQueryScope(expr, *model.Scope)
 		if err != nil {
 			return nil, err
 		}
