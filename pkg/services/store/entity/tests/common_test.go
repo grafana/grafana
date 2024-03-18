@@ -3,6 +3,7 @@ package entity_server_tests
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -58,7 +59,7 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 
 type testContext struct {
 	authToken string
-	client    entity.EntityStoreServer
+	client    entity.EntityStoreServerWrapper
 	user      *user.SignedInUser
 	ctx       context.Context
 }
@@ -87,6 +88,16 @@ func createTestContext(t *testing.T) testContext {
 
 	store, err := sqlstash.ProvideSQLEntityServer(eDB)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		deadline, ok := t.Deadline()
+		if !ok {
+			deadline = time.Now().Add(2 * time.Second)
+		}
+		ctx, cancel := context.WithDeadline(context.Background(), deadline)
+		defer cancel()
+		err := s.Stop(ctx)
+		require.NoError(t, err)
+	})
 
 	return testContext{
 		authToken: authToken,

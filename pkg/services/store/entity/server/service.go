@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
@@ -25,10 +26,6 @@ var (
 	_ registry.CanBeDisabled     = (*service)(nil)
 )
 
-func init() {
-	// do nothing
-}
-
 type Service interface {
 	services.NamedService
 	registry.BackgroundService
@@ -43,8 +40,9 @@ type service struct {
 	cfg      *setting.Cfg
 	features featuremgmt.FeatureToggles
 
-	stopCh    chan struct{}
-	stoppedCh chan error
+	stopCh      chan struct{}
+	stoppedCh   chan error
+	cleanupFunc func()
 
 	handler grpcserver.Provider
 
@@ -109,6 +107,15 @@ func (s *service) start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	s.cleanupFunc = func() {
+		// FIXME: BackgroundService only has Run method, which is very limited
+		// and does not allow a more granular control in the shutdown sequence
+		// of a service, so we need to use a context.Background() to allow
+		// proper termination
+		if err := store.Stop(context.Background()); err != nil {
+			logger.Error("stop SQL Entity Server", "error", err)
+		}
+	}
 
 	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, s.authenticator, s.tracing, prometheus.DefaultRegisterer)
 	if err != nil {
@@ -126,6 +133,11 @@ func (s *service) start(ctx context.Context) error {
 }
 
 func (s *service) running(ctx context.Context) error {
+	defer func() {
+		if s.cleanupFunc != nil {
+			s.cleanupFunc()
+		}
+	}()
 	// skip waiting for the server in prod mode
 	if !s.config.devMode {
 		<-ctx.Done()
