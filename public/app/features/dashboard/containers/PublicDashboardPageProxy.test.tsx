@@ -39,12 +39,12 @@ function setup(props: Partial<PublicDashboardPageProxyProps>) {
 
 describe('PublicDashboardPageProxy', () => {
   beforeEach(() => {
-    config.featureToggles.dashboardScene = false;
+    config.featureToggles.dashboardSceneForViewers = false;
   });
 
   describe('when scene feature enabled', () => {
     it('should render PublicDashboardScenePage if dashboardScene is enabled', async () => {
-      config.featureToggles.dashboardScene = true;
+      config.featureToggles.dashboardSceneForViewers = true;
       setup({});
 
       await waitFor(() => {
