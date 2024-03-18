@@ -405,8 +405,8 @@ The available conditions for all fields are:
 
 The available conditions for string fields are:
 
-- **Contains substring** - Match if the value contains the specified substring.
-- **Does not contain substring** - Match if the value doesn't contain the specified substring.
+- **Contains substring** - Match if the value contains the specified substring (case insensitive).
+- **Does not contain substring** - Match if the value doesn't contain the specified substring (case insensitive).
 
 The available conditions for number fields are:
 
