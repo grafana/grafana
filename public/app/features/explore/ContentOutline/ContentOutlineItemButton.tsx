@@ -1,11 +1,12 @@
 import { cx, css } from '@emotion/css';
-import React, { ButtonHTMLAttributes } from 'react';
+import React, { ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
 
 import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2, Tooltip, IconSize } from '@grafana/ui';
 import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 
 type CommonProps = {
+  contentOutlineExpanded?: boolean;
   title?: string;
   icon?: IconName | React.ReactNode;
   tooltip?: string;
@@ -21,6 +22,7 @@ type CommonProps = {
 export type ContentOutlineItemButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export function ContentOutlineItemButton({
+  contentOutlineExpanded,
   title,
   icon,
   tooltip,
@@ -36,6 +38,15 @@ export function ContentOutlineItemButton({
   const styles = useStyles2(getStyles);
 
   const buttonStyles = cx(styles.button, className);
+
+  const textRef = useRef<HTMLElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    if (textRef.current) {
+      setIsOverflowing(textRef.current?.scrollWidth > textRef.current?.clientWidth);
+    }
+  }, []);
 
   const body = (
     <div className={cx(styles.buttonContainer, indentStyle)}>
@@ -56,12 +67,19 @@ export function ContentOutlineItemButton({
         {...rest}
       >
         {renderIcon(icon)}
-        {title && <span className={styles.textContainer}>{title}</span>}
+        {title && (
+          <span className={styles.textContainer} ref={textRef}>
+            {title}
+          </span>
+        )}
       </button>
     </div>
   );
 
-  return tooltip ? (
+  // if there's a tooltip we want to show it if the text is overflowing
+  const showTooltip = tooltip && (!contentOutlineExpanded || isOverflowing);
+
+  return showTooltip ? (
     <Tooltip content={tooltip} placement={tooltipPlacement}>
       {body}
     </Tooltip>

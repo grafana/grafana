@@ -120,6 +120,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
               <ContentOutlineItemButton
                 key={item.id}
                 title={contentOutlineExpanded ? item.title : undefined}
+                contentOutlineExpanded={contentOutlineExpanded}
                 className={cx(styles.buttonStyles, {
                   [styles.justifyCenter]: !contentOutlineExpanded,
                   [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
@@ -127,7 +128,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                 indentStyle={outlineItemsShouldIndent && item.children?.length === 0 ? styles.indentRoot : undefined}
                 icon={item.icon}
                 onClick={() => scrollIntoView(item.ref, item.panelId)}
-                tooltip={!contentOutlineExpanded ? item.title : undefined}
+                tooltip={item.title}
                 collapsible={isCollapsible(item)}
                 collapsed={!sectionsExpanded[item.id]}
                 toggleCollapsed={() => toggleSection(item.id)}
@@ -152,6 +153,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                     <ContentOutlineItemButton
                       key={child.id}
                       title={contentOutlineExpanded ? child.title : undefined}
+                      contentOutlineExpanded={contentOutlineExpanded}
                       icon={contentOutlineExpanded ? undefined : item.icon}
                       className={cx(styles.buttonStyles, {
                         [styles.justifyCenter]: !contentOutlineExpanded,
@@ -160,9 +162,8 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                       })}
                       indentStyle={styles.indentChild}
                       onClick={() => scrollIntoView(child.ref, child.panelId, child.customTopOffset)}
-                      tooltip={!contentOutlineExpanded ? child.title : undefined}
+                      tooltip={child.title}
                       isActive={activeSectionChildId === child.id}
-                      // width={contentOutlineExpanded ? 88 : 40}
                     />
                   </div>
                 ))}
