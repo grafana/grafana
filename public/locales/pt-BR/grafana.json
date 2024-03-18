@@ -1,24 +1,24 @@
 {
-  "_comment": "",
+  "_comment": "Esse arquivo é a fonte da verdade para strings em inglês. Edite isto na base de código para alterar os plurais e outras frases para a interface do usuário.",
   "access-control": {
     "add-permission": {
-      "role-label": "",
-      "serviceaccount-label": "",
-      "team-label": "",
-      "title": "",
-      "user-label": ""
+      "role-label": "Função",
+      "serviceaccount-label": "Conta de serviço",
+      "team-label": "Equipe",
+      "title": "Adicionar permissão para",
+      "user-label": "Usuário"
     },
     "add-permissions": {
-      "save": ""
+      "save": "Salvar"
     },
     "permission-list": {
-      "permission": ""
+      "permission": "Permissão"
     },
     "permissions": {
-      "add-label": "",
-      "no-permissions": "",
-      "permissions-change-warning": "",
-      "role": "",
+      "add-label": "Adicionar uma permissão",
+      "no-permissions": "Não há permissões",
+      "permissions-change-warning": "Isto irá alterar as permissões para este diretório e todos os seus descendentes. No total, isto afetará:",
+      "role": "Função",
       "serviceaccount": "",
       "team": "",
       "title": "",
