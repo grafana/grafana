@@ -348,6 +348,8 @@ func (hs *HTTPServer) registerRoutes() {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))
 			orgsRoute.Get("/", authorizeInOrg(ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgsRead)), routing.Wrap(hs.GetOrgByID))
 			orgsRoute.Put("/", authorizeInOrg(ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgsWrite)), routing.Wrap(hs.UpdateOrg))
+			orgsRoute.Get("/preferences", authorizeInOrg(ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgsRead)), routing.Wrap(hs.GetOrgPreferencesByID))
+			orgsRoute.Put("/preferences", authorizeInOrg(ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgsPreferencesWrite)), routing.Wrap(hs.UpdateOrgPreferencesByID))
 			orgsRoute.Put("/address", authorizeInOrg(ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgsWrite)), routing.Wrap(hs.UpdateOrgAddress))
 			orgsRoute.Delete("/", authorizeInOrg(ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgsDelete)), routing.Wrap(hs.DeleteOrgByID))
 			orgsRoute.Get("/users", requestmeta.SetOwner(requestmeta.TeamAuth), authorizeInOrg(ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRead)), routing.Wrap(hs.GetOrgUsers))
