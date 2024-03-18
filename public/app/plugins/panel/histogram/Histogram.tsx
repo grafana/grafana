@@ -24,6 +24,7 @@ import {
   measureText,
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
+import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
 
@@ -80,6 +81,10 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   let bucketFactor = bucketSize1 / bucketSize;
 
   let useLogScale = bucketSize1 !== bucketSize; // (imperfect floats)
+
+  builder.setPrepData((frames) => {
+    return preparePlotData2(frames[0], builder.getStackingGroups());
+  });
 
   // splits shifter, to ensure splits always start at first bucket
   let xSplits: uPlot.Axis.Splits = (u, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace) => {
@@ -207,6 +212,9 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     },
   });
 
+  let stackingGroups = getStackingGroups(frame);
+  builder.setStackingGroups(stackingGroups);
+
   let pathBuilder = uPlot.paths.bars!({ align: 1, size: [1, Infinity] });
 
   let seriesIndex = 0;
@@ -277,6 +285,7 @@ const preparePlotData = (frame: DataFrame) => {
 
 interface State {
   alignedData: AlignedData;
+  alignedFrame: DataFrame;
   config?: UPlotConfigBuilder;
 }
 
@@ -288,12 +297,14 @@ export class Histogram extends React.Component<HistogramProps, State> {
 
   prepState(props: HistogramProps, withConfig = true) {
     let state: State = {
+      alignedFrame: props.alignedFrame,
       alignedData: [],
     };
 
     const { alignedFrame } = props;
     if (alignedFrame) {
       state = {
+        alignedFrame: alignedFrame,
         alignedData: preparePlotData(alignedFrame),
       };
 
@@ -336,6 +347,8 @@ export class Histogram extends React.Component<HistogramProps, State> {
           newState.config = prepConfig(alignedFrame, this.props.theme);
         }
       }
+
+      newState.alignedData = newState.config!.prepData!([newState.alignedFrame]) as AlignedData;
 
       newState && this.setState(newState);
     }
