@@ -529,6 +529,10 @@ export const Components = {
   Annotations: {
     annotationsTypeInput: 'annotations-type-input',
     annotationsChoosePanelInput: 'choose-panels-input',
+    editor: {
+      testButton: 'data-testid annotations-test-button',
+      resultContainer: 'data-testid annotations-query-result-container',
+    },
   },
   Tooltip: {
     container: 'data-testid tooltip',
