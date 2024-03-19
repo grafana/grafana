@@ -1,22 +1,22 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
-import { PanelPluginMeta } from '@grafana/data';
+import { PanelModel, PanelPluginMeta } from '@grafana/data';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { Button, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel as LegacyPanelModel } from 'app/features/dashboard/state';
 import { VizPanelManager } from 'app/features/dashboard-scene/panel-edit/VizPanelManager';
 import { changeToLibraryPanel } from 'app/features/panel/state/actions';
 import { useDispatch } from 'app/types';
 
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
-import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
-import { ChangeLibraryPanelModal } from '../ChangeLibraryPanelModal/ChangeLibraryPanelModal';
+import { AddLibraryPanelModal, AddLibraryPanelModal2 } from '../AddLibraryPanelModal/AddLibraryPanelModal';
+import { ChangeLibraryPanelModal, ChangeLibraryPanelModal2 } from '../ChangeLibraryPanelModal/ChangeLibraryPanelModal';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 
 interface Props {
-  panel: PanelModel;
+  panel: LegacyPanelModel;
   searchQuery: string;
   isWidget?: boolean;
   vizPanelManager?: VizPanelManager;
@@ -85,6 +85,78 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery, vizPanelManager, 
 
       {changeToPanel && (
         <ChangeLibraryPanelModal panel={panel} onDismiss={onDismissChangeToPanel} onConfirm={useLibraryPanel} />
+      )}
+    </VerticalGroup>
+  );
+};
+
+// --------- dashboard scene ----------
+
+interface Props2 {
+  panel: PanelModel;
+  searchQuery: string;
+  vizPanelManager: VizPanelManager;
+  isWidget?: boolean;
+}
+
+export const PanelLibraryOptionsGroup2 = ({ panel, searchQuery, vizPanelManager, isWidget = false }: Props2) => {
+  const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
+  const [changeToPanel, setChangeToPanel] = useState<LibraryPanel | undefined>(undefined);
+  const [panelFilter, setPanelFilter] = useState<string[]>([]);
+  const onPanelFilterChange = useCallback(
+    (plugins: PanelPluginMeta[]) => {
+      setPanelFilter(plugins.map((p) => p.id));
+    },
+    [setPanelFilter]
+  );
+  const dashboard = getDashboardSrv().getCurrent();
+
+  const useLibraryPanel = async () => {
+    if (!changeToPanel) {
+      return;
+    }
+
+    setChangeToPanel(undefined);
+
+    vizPanelManager.changeToLibraryPanel(changeToPanel);
+  };
+
+  const onAddToPanelLibrary = () => setShowingAddPanelModal(true);
+  const onDismissChangeToPanel = () => setChangeToPanel(undefined);
+  return (
+    <VerticalGroup spacing="md">
+      {!panel.libraryPanel && (
+        <VerticalGroup align="center">
+          <Button icon="plus" onClick={onAddToPanelLibrary} variant="secondary" fullWidth>
+            Create new library panel
+          </Button>
+        </VerticalGroup>
+      )}
+
+      <PanelTypeFilter onChange={onPanelFilterChange} isWidget={isWidget} />
+
+      <div className={styles.libraryPanelsView}>
+        <LibraryPanelsView
+          currentPanelId={panel.libraryPanel?.uid}
+          searchString={searchQuery}
+          panelFilter={panelFilter}
+          onClickCard={setChangeToPanel}
+          showSecondaryActions
+          isWidget={isWidget}
+        />
+      </div>
+
+      {showingAddPanelModal && (
+        <AddLibraryPanelModal2
+          panel={panel}
+          onDismiss={() => setShowingAddPanelModal(false)}
+          initialFolderUid={dashboard?.meta.folderUid}
+          isOpen={showingAddPanelModal}
+        />
+      )}
+
+      {changeToPanel && (
+        <ChangeLibraryPanelModal2 panel={panel} onDismiss={onDismissChangeToPanel} onConfirm={useLibraryPanel} />
       )}
     </VerticalGroup>
   );

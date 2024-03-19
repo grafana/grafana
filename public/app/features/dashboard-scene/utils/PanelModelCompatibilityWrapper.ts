@@ -67,4 +67,16 @@ export class PanelModelCompatibilityWrapper implements PanelModel {
   public get pluginVersion() {
     return this._vizPanel.state.pluginVersion;
   }
+
+  public get libraryPanel() {
+    const libVizPanel = this._vizPanel.parent;
+    if (!(libVizPanel instanceof LibraryVizPanel)) {
+      return undefined;
+    }
+
+    return {
+      uid: libVizPanel.state.uid,
+      name: libVizPanel.state.name,
+    };
+  }
 }
