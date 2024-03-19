@@ -1,12 +1,13 @@
 package generators
 
 import (
-	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/ast"
-	"cuelang.org/go/cue/token"
 	"fmt"
 	"strconv"
 	"strings"
+
+	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/ast"
+	"cuelang.org/go/cue/token"
 )
 
 // sanitizeLabelString strips characters from a string that are not allowed for

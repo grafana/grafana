@@ -2,13 +2,13 @@ package generators
 
 import (
 	"bytes"
-	"cuelang.org/go/cue"
 	"fmt"
 	"go/parser"
 	"go/token"
 	"path/filepath"
 	"strings"
 
+	"cuelang.org/go/cue"
 	"cuelang.org/go/pkg/encoding/yaml"
 	"github.com/dave/dst/decorator"
 	"github.com/dave/dst/dstutil"

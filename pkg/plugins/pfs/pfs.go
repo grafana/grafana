@@ -1,6 +1,7 @@
 package pfs
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"strings"
@@ -8,7 +9,6 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/load"
-	"encoding/json"
 	"github.com/grafana/grafana/pkg/codegen"
 )
 
