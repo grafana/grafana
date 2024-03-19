@@ -64,8 +64,7 @@ func makeDependencyError(refID, depRefID string) error {
 
 var cyclicErrStr = "cyclic reference in expression [{{ .Public.refId }}]"
 
-var cyclicErr = errutil.NewBase(
-	errutil.StatusBadRequest, "sse.cyclic").MustTemplate(
+var cyclicErr = errutil.BadRequest("sse.cyclic").MustTemplate(
 	cyclicErrStr,
 	errutil.WithPublic(cyclicErrStr))
 
