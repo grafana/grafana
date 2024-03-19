@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
 	"github.com/grafana/grafana/pkg/plugins"
