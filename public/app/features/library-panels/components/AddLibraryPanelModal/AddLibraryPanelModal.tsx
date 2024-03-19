@@ -164,7 +164,7 @@ export const AddLibraryPanelContents2 = ({
             vizPanel.parent.changeToLibraryPanel(res);
           } else {
             const dashboard = getDashboardSceneFor(vizPanel);
-            dashboard.replaceWithLibraryPanel(vizPanel, panelModel);
+            dashboard.replaceWithLibraryPanel(vizPanel, res);
           }
         }
       }

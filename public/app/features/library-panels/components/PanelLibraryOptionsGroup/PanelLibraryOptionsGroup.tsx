@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 
 import { PanelModel, PanelPluginMeta } from '@grafana/data';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
-import { Button, VerticalGroup } from '@grafana/ui';
+import { Button, Stack, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel as LegacyPanelModel } from 'app/features/dashboard/state';
 import { VizPanelManager } from 'app/features/dashboard-scene/panel-edit/VizPanelManager';
@@ -99,6 +99,8 @@ export const PanelLibraryOptionsGroup2 = ({ panel, searchQuery, vizPanelManager,
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
   const [changeToPanel, setChangeToPanel] = useState<LibraryPanel | undefined>(undefined);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
+  const vizPanel = vizPanelManager?.state.panel;
+
   const onPanelFilterChange = useCallback(
     (plugins: PanelPluginMeta[]) => {
       setPanelFilter(plugins.map((p) => p.id));
@@ -120,13 +122,13 @@ export const PanelLibraryOptionsGroup2 = ({ panel, searchQuery, vizPanelManager,
   const onAddToPanelLibrary = () => setShowingAddPanelModal(true);
   const onDismissChangeToPanel = () => setChangeToPanel(undefined);
   return (
-    <VerticalGroup spacing="md">
+    <Stack direction="column" gap={2}>
       {!panel.libraryPanel && (
-        <VerticalGroup align="center">
+        <Stack alignItems="center">
           <Button icon="plus" onClick={onAddToPanelLibrary} variant="secondary" fullWidth>
             Create new library panel
           </Button>
-        </VerticalGroup>
+        </Stack>
       )}
 
       <PanelTypeFilter onChange={onPanelFilterChange} isWidget={isWidget} />
@@ -148,13 +150,14 @@ export const PanelLibraryOptionsGroup2 = ({ panel, searchQuery, vizPanelManager,
           onDismiss={() => setShowingAddPanelModal(false)}
           initialFolderUid={dashboard?.meta.folderUid}
           isOpen={showingAddPanelModal}
+          vizPanel={vizPanel}
         />
       )}
 
       {changeToPanel && (
         <ChangeLibraryPanelModal2 panel={panel} onDismiss={onDismissChangeToPanel} onConfirm={useLibraryPanel} />
       )}
-    </VerticalGroup>
+    </Stack>
   );
 };
 

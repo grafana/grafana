@@ -1,14 +1,6 @@
 import * as H from 'history';
 
-import {
-  AppEvents,
-  CoreApp,
-  DataQueryRequest,
-  NavIndex,
-  NavModelItem,
-  locationUtil,
-  PanelModel as NewPanelModel,
-} from '@grafana/data';
+import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -25,7 +17,7 @@ import {
   SceneVariableDependencyConfigLike,
   VizPanel,
 } from '@grafana/scenes';
-import { Dashboard, DashboardLink } from '@grafana/schema';
+import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -765,16 +757,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return getPanelIdForVizPanel(vizPanel);
   }
 
-  public replaceWithLibraryPanel(vizPanel: VizPanel, panelModel: NewPanelModel) {
-    if (!panelModel.libraryPanel) {
-      return;
-    }
-
+  public replaceWithLibraryPanel(vizPanel: VizPanel, libPanel: LibraryPanel) {
     const body = new LibraryVizPanel({
-      title: panelModel.title ?? 'Panel title',
-      uid: panelModel.libraryPanel.uid,
-      name: panelModel.libraryPanel.name,
-      panelKey: getVizPanelKeyForPanelId(panelModel.id),
+      title: libPanel.model.title ?? 'Panel title',
+      uid: libPanel.uid,
+      name: libPanel.name,
+      panelKey: vizPanel.state.key!,
     });
 
     if (!(vizPanel.parent instanceof SceneGridItem)) {

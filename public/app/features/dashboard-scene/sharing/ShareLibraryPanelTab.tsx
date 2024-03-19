@@ -2,13 +2,14 @@ import React from 'react';
 
 import { SceneComponentProps, SceneGridItem, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
-import { ShareLibraryPanel } from 'app/features/dashboard/components/ShareModal/ShareLibraryPanel';
+import { ShareLibraryPanel2 } from 'app/features/dashboard/components/ShareModal/ShareLibraryPanel';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
-import { gridItemToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { PanelModelCompatibilityWrapper } from '../utils/PanelModelCompatibilityWrapper';
 
 import { SceneShareTabState } from './types';
 
@@ -37,14 +38,13 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
 
   if (vizPanel.parent instanceof SceneGridItem || vizPanel.parent instanceof PanelRepeaterGridItem) {
     const dashboardScene = dashboardRef.resolve();
-    const panelJson = gridItemToPanel(vizPanel.parent);
-    const panelModel = new PanelModel(panelJson);
+    const panelModel = new PanelModelCompatibilityWrapper(vizPanel);
 
     const dashboardJson = transformSceneToSaveModel(dashboardScene);
     const dashboardModel = new DashboardModel(dashboardJson);
 
     return (
-      <ShareLibraryPanel
+      <ShareLibraryPanel2
         initialFolderUid={dashboardScene.state.meta.folderUid}
         dashboard={dashboardModel}
         panel={panelModel}
