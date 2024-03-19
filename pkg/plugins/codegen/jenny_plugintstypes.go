@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/grafana/codejen"
@@ -13,8 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/build"
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 var versionedPluginPath = filepath.Join("packages", "grafana-schema", "src", "raw", "composable")
@@ -92,42 +89,44 @@ func getPluginVersion(pluginVersion *string) string {
 
 func adaptToPipeline(j codejen.OneToOne[codegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
 	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) codegen.SchemaForGen {
-		name := strings.ReplaceAll(pd.PluginMeta.Name, " ", "")
 		return codegen.SchemaForGen{
-			Name:    upperCamelCase(name) + pd.SchemaInterface.Name,
+			Name:    derivePascalName(pd.PluginMeta.Id, pd.PluginMeta.Name) + pd.SchemaInterface.Name,
 			CueFile: pd.CueFile,
 			IsGroup: pd.SchemaInterface.IsGroup,
 		}
 	})
 }
 
-func upperCamelCase(s string) string {
-	s = lowerCamelCase(s)
-
-	// Uppercase the first letter
-	if len(s) > 0 {
-		s = strings.ToUpper(s[:1]) + s[1:]
+func derivePascalName(id string, name string) string {
+	sani := func(s string) string {
+		ret := strings.Title(strings.Map(func(r rune) rune {
+			switch {
+			case r >= 'a' && r <= 'z':
+				return r
+			case r >= 'A' && r <= 'Z':
+				return r
+			default:
+				return -1
+			}
+		}, strings.Title(strings.Map(func(r rune) rune {
+			switch r {
+			case '-', '_':
+				return ' '
+			default:
+				return r
+			}
+		}, s))))
+		if len(ret) > 63 {
+			return ret[:63]
+		}
+		return ret
 	}
 
-	return s
-}
-
-func lowerCamelCase(s string) string {
-	// Replace all non-alphanumeric characters by spaces
-	s = regexp.MustCompile("[^a-zA-Z0-9 ]+").ReplaceAllString(s, " ")
-
-	// Title case s
-	s = cases.Title(language.AmericanEnglish, cases.NoLower).String(s)
-
-	// Remove all spaces
-	s = strings.ReplaceAll(s, " ", "")
-
-	// Lowercase the first letter
-	if len(s) > 0 {
-		s = strings.ToLower(s[:1]) + s[1:]
+	fromname := sani(name)
+	if len(fromname) != 0 {
+		return fromname
 	}
-
-	return s
+	return sani(strings.Split(id, "-")[1])
 }
 
 func getGrafanaVersion() string {
