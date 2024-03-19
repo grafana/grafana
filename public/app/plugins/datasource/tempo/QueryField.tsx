@@ -15,13 +15,13 @@ import {
   withTheme2,
 } from '@grafana/ui';
 
-import NativeSearch from './NativeSearch/NativeSearch';
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
 import { TempoQueryType } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import { QueryEditor } from './traceql/QueryEditor';
 import { TempoQuery } from './types';
+import { migrateFromSearchToTraceQLSearch } from './utils';
 
 interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
 interface State {
@@ -74,7 +74,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       { value: 'serviceMap', label: 'Service Graph' },
     ];
 
-    // Show the deprecated search option if any of the deprecated search fields are set
+    // Migrate user to new query type if they are using the old search query type
     if (
       query.spanName ||
       query.serviceName ||
@@ -83,7 +83,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       query.minDuration ||
       query.queryType === 'nativeSearch'
     ) {
-      queryTypeOptions.unshift({ value: 'nativeSearch', label: '[Deprecated] Search' });
+      onChange(migrateFromSearchToTraceQLSearch(query));
     }
 
     return (
@@ -146,15 +146,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             </HorizontalGroup>
           </InlineField>
         </InlineFieldRow>
-        {query.queryType === 'nativeSearch' && (
-          <NativeSearch
-            datasource={this.props.datasource}
-            query={query}
-            onChange={onChange}
-            onBlur={this.props.onBlur}
-            onRunQuery={this.props.onRunQuery}
-          />
-        )}
         {query.queryType === 'traceqlSearch' && (
           <TraceQLSearch
             datasource={this.props.datasource}
