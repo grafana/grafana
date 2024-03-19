@@ -24,6 +24,11 @@
       "cache": true
     },
     "themes-generate": {
+      "inputs": [
+        "{workspaceRoot}/scripts/cli/generateSassVariableFiles.ts",
+        "{workspaceRoot}/packages/grafana-data/src/themes/**",
+        "{workspaceRoot}/packages/grafana-ui/src/themes/**"
+      ],
       "outputs": [
         "{workspaceRoot}/public/sass/_variables.generated.scss",
         "{workspaceRoot}/public/sass/_variables.dark.generated.scss",
