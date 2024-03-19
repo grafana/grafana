@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { sceneGraph } from '@grafana/scenes';
+import { PanelData } from '@grafana/data';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
@@ -17,12 +17,12 @@ interface Props {
   vizManager: VizPanelManager;
   searchQuery: string;
   listMode: OptionFilter;
+  data?: PanelData;
 }
 
-export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMode }) => {
+export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMode, data }) => {
   const { panel, sourcePanel, repeat } = vizManager.useState();
   const parent = sourcePanel.resolve().parent;
-  const { data } = sceneGraph.getData(panel).useState();
   const { options, fieldConfig } = panel.useState();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -39,6 +39,7 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
 
     return getVisualizationOptions2({
       panel,
+      data,
       plugin: plugin,
       eventBus: panel.getPanelContext().eventBus,
       instanceState: panel.getPanelContext().instanceState!,
