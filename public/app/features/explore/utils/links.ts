@@ -110,7 +110,7 @@ export const getFieldLinksForExplore = (options: {
   // if not provided, field.config.links are used
   linksToProcess?: DataLink[];
 }): ExploreFieldLinkModel[] => {
-  const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
+  const { field, vars, splitOpenFn, rowIndex, dataFrame } = options;
   const scopedVars: ScopedVars = { ...(vars || {}) };
   scopedVars['__value'] = {
     value: {
@@ -210,6 +210,7 @@ export const getFieldLinksForExplore = (options: {
         };
 
         if (variableData.allVariablesDefined) {
+          const range = link.internal.range || options.range;
           const internalLink = mapInternalLinkToExplore({
             link,
             internalLink: link.internal,
