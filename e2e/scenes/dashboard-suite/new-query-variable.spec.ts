@@ -9,7 +9,7 @@ describe('Variables - Query - Add variable', () => {
   });
 
   it('query variable should be default and default fields should be correct', () => {
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=variables` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();

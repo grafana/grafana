@@ -9,7 +9,7 @@ describe('Variables - Text box', () => {
   });
 
   it('can add a new text box variable', () => {
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=variables` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "text box" variable
@@ -25,8 +25,8 @@ describe('Variables - Text box', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().eq(0).should('have.text', 'cat-dog');
 
     // Navigate back to the homepage and change the selected variable value
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
-    e2e.pages.Dashboard.Settings.Actions.close().click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.applyButton().click();
+    e2e.components.NavToolbar.editDashboard.backToDashboardButton().click();
     cy.get('#var-VariableUnderTest').clear().type('dog-cat').blur();
 
     // Assert it was rendered
