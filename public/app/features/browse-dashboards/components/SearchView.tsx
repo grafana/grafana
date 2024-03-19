@@ -90,7 +90,7 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
   if (value.totalRows === 0) {
     return (
       <div style={{ width }}>
-        <EmptySearchState message={t('browse-dashboards.no-results.message', 'No results found for your query.')}>
+        <EmptySearchState message={t('browse-dashboards.no-results.text', 'No results found for your query.')}>
           <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
             <Trans i18nKey="browse-dashboards.no-results.clear">Clear search and filters</Trans>
           </Button>

@@ -40,13 +40,13 @@ export const EmptyState = ({
   return (
     <Box paddingY={4}>
       <Stack gap={2} direction="column" alignItems="center">
+        {showImage && <GrotNotFound width={300} />}
         <Text variant="h5">{message}</Text>
         {buttonLabel && (
           <ButtonElement href={buttonHref} icon="plus" size="lg" onClick={onButtonClick}>
             {buttonLabel}
           </ButtonElement>
         )}
-        {showImage && <GrotNotFound width={300} />}
         {children && <Text color="secondary">{children}</Text>}
       </Stack>
     </Box>

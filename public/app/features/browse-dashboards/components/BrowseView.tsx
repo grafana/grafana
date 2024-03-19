@@ -1,8 +1,9 @@
 import React, { useCallback } from 'react';
 
-import { CallToActionCard } from '@grafana/ui';
+import { CallToActionCard, TextLink } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 // import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { ProTip } from 'app/core/components/ProTip/ProTip';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
 
@@ -122,20 +123,19 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
             buttonHref={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
             buttonLabel="Create Dashboard"
             message={
-              folderUID ? "This folder doesn't have any dashboards yet" : 'No dashboards yet. Create your first!'
+              folderUID ? "This folder doesn't have any dashboards yet" : "You haven't created any dashboards yet."
             }
-          />
+          >
+            {folderUID && (
+              <ProTip>
+                Add/move dashboards to your folder at{' '}
+                <TextLink external={false} href="/dashboards">
+                  Browse dashboards
+                </TextLink>
+              </ProTip>
+            )}
+          </EmptyState>
         ) : (
-          // <EmptyListCTA
-          //   title={folderUID ? "This folder doesn't have any dashboards yet" : 'No dashboards yet. Create your first!'}
-          //   buttonIcon="plus"
-          //   buttonTitle="Create Dashboard"
-          //   buttonLink={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
-          //   proTip={folderUID && 'Add/move dashboards to your folder at ->'}
-          //   proTipLink={folderUID && 'dashboards'}
-          //   proTipLinkTitle={folderUID && 'Browse dashboards'}
-          //   proTipTarget=""
-          // />
           <CallToActionCard callToActionElement={<span>This folder is empty</span>} />
         )}
       </div>

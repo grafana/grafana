@@ -108,9 +108,6 @@
       "dark-theme": "Đäřĸ",
       "light-theme": "Ŀįģĥŧ"
     },
-    "empty-state": {
-      "title": "Ńő řęşūľŧş ƒőūŉđ"
-    },
     "search-box": {
       "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
@@ -1210,6 +1207,9 @@
       "pro-tip-link-title": "Ŀęäřŉ mőřę",
       "title": "Ŧĥęřę äřę ŉő pľäyľįşŧş čřęäŧęđ yęŧ"
     }
+  },
+  "pro-tip": {
+    "title": "PřőŦįp: <1></1>"
   },
   "profile": {
     "change-password": {

@@ -21,7 +21,7 @@ export const EmptySearchState = ({
     <Box paddingY={4}>
       <Stack gap={2} direction="column" alignItems="center">
         {showImage && <GrotNotFound width={300} />}
-        <Text variant="h4">{message}</Text>
+        <Text variant="h5">{message}</Text>
         {children && <Text color="secondary">{children}</Text>}
       </Stack>
     </Box>
