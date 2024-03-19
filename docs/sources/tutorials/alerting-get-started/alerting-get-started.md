@@ -134,7 +134,7 @@ Browse to localhost:8081.
 Add a new title and URL, repeatedly click the vote button, or refresh the page to generate a traffic spike.
 Once the query sum(rate(tns_request_duration_seconds_count[5m])) by(route) returns a value greater than 0.2 Grafana will trigger our alert. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
 
-### Receiving your first alert notification
+### Receive your first alert notification
 
 Once the alert rule condition is met, you should receive an alert.
 
