@@ -92,11 +92,9 @@ type TestDataQuery struct {
 	LevelColumn     bool      `json:"levelColumn,omitempty"`
 	StartValue      float64   `json:"startValue,omitempty"`
 	Spread          float64   `json:"spread,omitempty"`
-	Noise           float64   `json:"noise"`
-	Drop            float64   `json:"drop"`
 	Min             *float64  `json:"min,omitempty"`
 	Max             *float64  `json:"max,omitempty"`
-	WithNil         bool      `json:"withNil"`
+	WithNil         bool      `json:"withNil,omitempty"`
 	Lines           int64     `json:"lines,omitempty"`
 	Points          [][]any   `json:"points,omitempty"`
 	RawFrameContent string    `json:"rawFrameContent,omitempty"`

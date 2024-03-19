@@ -8,14 +8,14 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1710850048297",
+        "resourceVersion": "1710856835993",
         "creationTimestamp": "2024-03-01T02:53:35Z"
       },
       "spec": {
         "schema": {
           "$schema": "https://json-schema.org/draft-04/schema",
           "additionalProperties": false,
-          "description": "TestDataDataQuery defines model for TestDataDataQuery.",
+          "description": "TestDataQuery defines model for TestDataQuery.",
           "properties": {
             "alias": {
               "type": "string"
@@ -51,9 +51,6 @@
                 "type": "object"
               },
               "type": "array"
-            },
-            "drop": {
-              "type": "number"
             },
             "dropPercent": {
               "description": "Drop percentage (the chance we will lose a point 0-100)",
@@ -109,9 +106,6 @@
                 }
               },
               "type": "object"
-            },
-            "noise": {
-              "type": "number"
             },
             "points": {
               "items": {
@@ -298,28 +292,18 @@
               "type": "boolean"
             }
           },
-          "required": [
-            "noise",
-            "drop",
-            "withNil"
-          ],
           "type": "object"
         },
         "examples": [
           {
             "name": "simple random walk",
             "saveModel": {
-              "drop": 0,
-              "noise": 0,
-              "scenarioId": "random_walk",
-              "withNil": false
+              "scenarioId": "random_walk"
             }
           },
           {
             "name": "pulse wave example",
             "saveModel": {
-              "drop": 0,
-              "noise": 0,
               "pulseWave": {
                 "offCount": 20,
                 "offValue": 1.23,
@@ -327,8 +311,7 @@
                 "onValue": 4.56,
                 "timeStep": 1000
               },
-              "scenarioId": "predictable_pulse",
-              "withNil": false
+              "scenarioId": "predictable_pulse"
             }
           }
         ]

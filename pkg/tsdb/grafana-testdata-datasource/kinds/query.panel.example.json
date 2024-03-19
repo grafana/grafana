@@ -7,10 +7,7 @@
         "type": "grafana-testdata-datasource",
         "uid": "TheUID"
       },
-      "withNil": false,
-      "scenarioId": "random_walk",
-      "noise": 0,
-      "drop": 0
+      "scenarioId": "random_walk"
     },
     {
       "refId": "B",
@@ -25,10 +22,7 @@
         "onValue": 4.56,
         "timeStep": 1000
       },
-      "scenarioId": "predictable_pulse",
-      "noise": 0,
-      "drop": 0,
-      "withNil": false
+      "scenarioId": "predictable_pulse"
     }
   ]
 }

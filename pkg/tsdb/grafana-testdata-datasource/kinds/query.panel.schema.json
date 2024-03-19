@@ -8,13 +8,8 @@
     "targets": {
       "type": "array",
       "items": {
-        "description": "TestDataDataQuery defines model for TestDataDataQuery.",
+        "description": "TestDataQuery defines model for TestDataQuery.",
         "type": "object",
-        "required": [
-          "noise",
-          "drop",
-          "withNil"
-        ],
         "properties": {
           "alias": {
             "type": "string"
@@ -69,9 +64,6 @@
               }
             },
             "additionalProperties": false
-          },
-          "drop": {
-            "type": "number"
           },
           "dropPercent": {
             "description": "Drop percentage (the chance we will lose a point 0-100)",
@@ -139,9 +131,6 @@
               }
             },
             "additionalProperties": false
-          },
-          "noise": {
-            "type": "number"
           },
           "points": {
             "type": "array",
