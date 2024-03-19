@@ -14,7 +14,10 @@ import {
   lookUpConfigHandler as findConfigHandlerFor,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 
-import { FieldConfigMappingHandlerArgumentsEditor } from './FieldConfigMappingHandlerArgumentsEditor';
+import {
+  createsArgumentsEditor,
+  FieldConfigMappingHandlerArgumentsEditor,
+} from './FieldConfigMappingHandlerArgumentsEditor';
 
 export interface Props {
   frame: DataFrame;
@@ -30,6 +33,10 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
   const configProps = configMapHandlers.map((def) => configHandlerToSelectOption(def, false)) as Array<
     SelectableValue<string>
   >;
+  const hasAdditionalSettings = mappings.reduce(
+    (prev, mapping) => prev || createsArgumentsEditor(mapping.handlerKey),
+    false
+  );
 
   const onChangeConfigProperty = (row: FieldToConfigRowViewModel, value: SelectableValue<string | null>) => {
     const existingIdx = mappings.findIndex((x) => x.fieldName === row.fieldName);
@@ -82,7 +89,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
           <th>Field</th>
           <th>Use as</th>
           {withReducers && <th>Select</th>}
-          <th>Additional settings</th>
+          {hasAdditionalSettings && <th>Additional settings</th>}
         </tr>
       </thead>
       <tbody>
@@ -107,13 +114,13 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
                 />
               </td>
             )}
-            <td>
+            {hasAdditionalSettings && (
               <FieldConfigMappingHandlerArgumentsEditor
                 handlerKey={row.handlerKey}
                 handlerArguments={row.handlerArguments}
                 onChange={(args) => onChangeHandlerArguments(row, args)}
               />
-            </td>
+            )}
           </tr>
         ))}
       </tbody>

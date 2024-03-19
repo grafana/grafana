@@ -10,6 +10,15 @@ export interface Props {
   onChange: (args: HandlerArguments) => void;
 }
 
+export function createsArgumentsEditor(handlerKey: string | null) {
+  switch (handlerKey) {
+    case 'threshold1':
+      return true;
+    default:
+      return false;
+  }
+}
+
 export function FieldConfigMappingHandlerArgumentsEditor({ handlerArguments, handlerKey, onChange }: Props) {
   const onChangeThreshold = (color: string | null) => {
     if (color) {
