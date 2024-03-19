@@ -203,6 +203,7 @@ export const RowsList = (props: RowsListProps) => {
 
   let rowBg: Function | undefined = undefined;
   for (const field of data.fields) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const fieldOptions = field.config.custom as TableFieldOptions;
 
     if (
