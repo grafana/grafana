@@ -1,11 +1,13 @@
 import { fireEvent, render, screen, getByText, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { RichHistoryQuery } from 'app/types';
+import { configureStore } from 'app/store/configureStore';
+import { ExploreState, RichHistoryQuery } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { RichHistoryCard, Props } from './RichHistoryCard';
@@ -47,7 +49,7 @@ class MockDatasourceApi<T extends DataQuery> implements DataSourceApi<T> {
     throw new Error('Method not implemented.');
   }
   getRef(): DataSourceRef {
-    throw new Error('Method not implemented.');
+    return { uid: this.uid, type: this.type };
   }
 }
 
@@ -127,9 +129,28 @@ const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
     datasourceInstances: [dsStore.loki],
   };
 
+  const store = configureStore({
+    explore: {
+      panes: {
+        left: {
+          queries: [{ query: 'query1', refId: 'A' }],
+          datasourceInstance: dsStore.loki,
+          queryResponse: {},
+          range: {
+            raw: { from: 'now-1h', to: 'now' },
+          },
+        },
+      },
+    } as unknown as ExploreState,
+  });
+
   Object.assign(props, propOverrides);
 
-  render(<RichHistoryCard {...props} />);
+  render(
+    <TestProvider store={store}>
+      <RichHistoryCard {...props} />
+    </TestProvider>
+  );
 };
 
 const starredQueryWithComment: RichHistoryQuery<MockQuery> = {
