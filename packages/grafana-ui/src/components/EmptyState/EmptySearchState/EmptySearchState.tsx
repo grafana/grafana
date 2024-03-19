@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { t } from '../../../utils/i18n';
 import { Box } from '../../Layout/Box/Box';
 import { Stack } from '../../Layout/Stack/Stack';
 import { Text } from '../../Text/Text';
@@ -13,7 +14,7 @@ interface Props {
 
 export const EmptySearchState = ({
   children,
-  message = 'No results found',
+  message = t('grafana-ui.empty-search-state.message', 'No results found'),
   showImage = true,
 }: React.PropsWithChildren<Props>) => {
   return (

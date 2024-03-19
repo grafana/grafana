@@ -369,7 +369,6 @@
       "title-label": "Title"
     },
     "json-editor": {
-      "apply-button": "Apply changes",
       "save-button": "Save changes",
       "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on.",
       "title": "JSON Model"
@@ -563,6 +562,9 @@
   "grafana-ui": {
     "drawer": {
       "close": "Close"
+    },
+    "empty-search-state": {
+      "message": "No results found"
     },
     "modal": {
       "close-tooltip": "Close"
