@@ -25,7 +25,10 @@ type SecureSocksDSProxySettings struct {
 }
 
 func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettings, error) {
-	s := SecureSocksDSProxySettings{}
+	s := SecureSocksDSProxySettings{
+		RootCACerts:          []string{},
+		RootCACertsFilePaths: []string{},
+	}
 	secureSocksProxySection := iniFile.Section("secure_socks_datasource_proxy")
 	s.Enabled = secureSocksProxySection.Key("enabled").MustBool(false)
 	s.ProxyAddress = secureSocksProxySection.Key("proxy_address").MustString("")
@@ -54,9 +57,11 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 		} else if s.ServerName == "" {
 			return s, errors.New("server name required")
 		}
+	} else {
+		return s, nil
 	}
 
-	if s.ClientCertFilePath == "" {
+	if s.ClientCertFilePath != "" {
 		certPEMBlock, err := os.ReadFile(s.ClientCertFilePath)
 		if err != nil {
 			return s, err
@@ -64,7 +69,7 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 		s.ClientCert = string(certPEMBlock)
 	}
 
-	if s.ClientKeyFilePath == "" {
+	if s.ClientKeyFilePath != "" {
 		keyPEMBlock, err := os.ReadFile(s.ClientKeyFilePath)
 		if err != nil {
 			return s, err
@@ -72,7 +77,7 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 		s.ClientKey = string(keyPEMBlock)
 	}
 
-	rootCAs := make([]string, 0)
+	var rootCAs []string
 	for _, rootCAFile := range s.RootCACertsFilePaths {
 		// nolint:gosec
 		// The gosec G304 warning can be ignored because `rootCAFile` comes from config ini, and we check below if

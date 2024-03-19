@@ -60,7 +60,7 @@ func TestReadSecureSocksDSProxySettings(t *testing.T) {
 				ClientCert:           "",
 				ClientKey:            "",
 				ClientKeyFilePath:    "",
-				RootCACerts:          nil,
+				RootCACerts:          []string{},
 				RootCACertsFilePaths: []string{},
 				ProxyAddress:         "",
 				ServerName:           "",
@@ -150,12 +150,12 @@ allow_insecure = true
 		proxy_address = proxy_address
 		server_name = server_name
 		show_ui = false
-		allow_insecure = true
+		allow_insecure = false
 		`, testFilePath, testFilePath, rootCACertFilePath)),
 			expectedSettings: SecureSocksDSProxySettings{
 				Enabled:              true,
 				ShowUI:               false,
-				AllowInsecure:        true,
+				AllowInsecure:        false,
 				ClientCert:           testFileData,
 				ClientCertFilePath:   testFilePath,
 				ClientKey:            testFileData,
