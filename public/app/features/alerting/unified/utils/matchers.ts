@@ -68,7 +68,7 @@ export function parsePromQLStyleMatcher(matcher: string): Matcher[] {
     throw new Error('not a PromQL style matcher');
   }
 
-  // spit by `,` but not when it's used as a label value
+  // split by `,` but not when it's used as a label value
   const commaUnlessQuoted = /,(?=(?:[^"]*"[^"]*")*[^"]*$)/;
   const parts = matcher.replace(/^\{/, '').replace(/\}$/, '').trim().split(commaUnlessQuoted);
 
