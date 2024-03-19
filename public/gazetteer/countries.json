@@ -465,7 +465,7 @@
     "keys": ["GB", "GBR"],
     "latitude": 55.378051,
     "longitude": -3.435973,
-    "name": "United Kingdom"
+    "name": "United Kingdom of Great Britain and Northern Ireland"
   },
   {
     "keys": ["GD", "GRD"],
@@ -1401,7 +1401,7 @@
     "keys": ["US", "USA"],
     "latitude": 37.09024,
     "longitude": -95.712891,
-    "name": "United States"
+    "name": "United States of America"
   },
   {
     "keys": ["UY", "URY"],
