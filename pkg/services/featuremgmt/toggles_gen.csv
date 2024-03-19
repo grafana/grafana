@@ -69,7 +69,7 @@ frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,
 sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
 lokiFormatQuery,experimental,@grafana/observability-logs,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
-pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,false,false,false
+pluginsDynamicAngularDetectionPatterns,GA,@grafana/plugins-platform-backend,false,false,false
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,true
 prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-metrics,false,false,true
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
