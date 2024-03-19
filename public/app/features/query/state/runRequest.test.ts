@@ -67,7 +67,6 @@ class ScenarioCtx {
     } as DataQueryRequest;
 
     this.ds = {
-      filterQuery: (query: DataQuery) => true,
       query: (request: DataQueryRequest) => {
         return new Observable<DataQueryResponse>((subscriber) => {
           this.subscriber = subscriber;
