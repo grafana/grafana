@@ -55,6 +55,8 @@ export type SSOProviderSettingsBase = {
   tlsSkipVerifyInsecure?: boolean;
   // For Azure AD
   forceUseGraphApi?: boolean;
+  // For Google
+  validateHd?: boolean;
 };
 
 // SSO data received from the API and sent to it
