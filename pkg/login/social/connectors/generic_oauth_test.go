@@ -45,8 +45,8 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		{
 			Name: "Given a valid id_token, a valid role path, no API response, use id_token",
 			OAuth2Extra: map[string]any{
-				// { "role": "Admin", "email": "john.doe@example.com" }
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				// { "sub": "1", "role": "Admin", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6IkFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9._zLJ1QQLlccgzrWEjGc3UAfZ1EGOKPNADdyVLquP-SA",
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "john.doe@example.com",
@@ -55,8 +55,8 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		{
 			Name: "Given a valid id_token, no role path, no API response, use id_token",
 			OAuth2Extra: map[string]any{
-				// { "email": "john.doe@example.com" }
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+				// { "sub": "1", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.0WYhYzx04lVSlTszaHgMF5Wxg_36EZLobLQOlowejfU",
 			},
 			RoleAttributePath: "",
 			ExpectedEmail:     "john.doe@example.com",
@@ -66,7 +66,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			Name: "Given a valid id_token, an invalid role path, no API response, use id_token",
 			OAuth2Extra: map[string]any{
 				// { "role": "Admin", "email": "john.doe@example.com" }
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6IkFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9._zLJ1QQLlccgzrWEjGc3UAfZ1EGOKPNADdyVLquP-SA",
 			},
 			RoleAttributePath: "invalid_path",
 			ExpectedEmail:     "john.doe@example.com",
@@ -75,6 +75,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		{
 			Name: "Given no id_token, a valid role path, a valid API response, use API response",
 			ResponseBody: map[string]any{
+				"sub":   "1",
 				"role":  "Admin",
 				"email": "john.doe@example.com",
 			},
@@ -85,6 +86,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		{
 			Name: "Given no id_token, no role path, a valid API response, use API response",
 			ResponseBody: map[string]any{
+				"sub":   "1",
 				"email": "john.doe@example.com",
 			},
 			RoleAttributePath: "",
@@ -94,6 +96,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		{
 			Name: "Given no id_token, a role path, a valid API response without a role, use API response",
 			ResponseBody: map[string]any{
+				"sub":   "1",
 				"email": "john.doe@example.com",
 			},
 			RoleAttributePath: "role",
@@ -101,7 +104,10 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			ExpectedRole:      "Viewer",
 		},
 		{
-			Name:              "Given no id_token, a valid role path, no API response, no data",
+			Name: "Given no id_token, a valid role path, no role in API response, no data",
+			ResponseBody: map[string]any{
+				"sub": "1",
+			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "",
 			ExpectedRole:      "Viewer",
@@ -109,8 +115,8 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		{
 			Name: "Given a valid id_token, a valid role path, a valid API response, prefer id_token",
 			OAuth2Extra: map[string]any{
-				// { "role": "Admin", "email": "john.doe@example.com" }
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				// { "sub": "1", "role": "Admin", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwicm9sZSI6IkFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.iJ2qjHOr10benujXNrocwC2Mg71rg4ekr-aaBESLn9A",
 			},
 			ResponseBody: map[string]any{
 				"role":  "FromResponse",
@@ -128,6 +134,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.cQqMJpVjwdtJ8qEZLOo9RKNbAFfpkQcpnRG0nopmWEI",
 			},
 			ResponseBody: map[string]any{
+				"sub":   "1",
 				"role":  "FromResponse",
 				"email": "from_response@example.com",
 			},
@@ -144,6 +151,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.cQqMJpVjwdtJ8qEZLOo9RKNbAFfpkQcpnRG0nopmWEI",
 			},
 			ResponseBody: map[string]any{
+				"sub":   "1",
 				"role":  "FromResponse",
 				"email": "from_response@example.com",
 			},
@@ -159,6 +167,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 			},
 			ResponseBody: map[string]any{
+				"sub":   "1",
 				"role":  "FromResponse",
 				"email": "from_response@example.com",
 			},
@@ -173,6 +182,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4ifQ.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 			},
 			ResponseBody: map[string]any{
+				"sub":   "1",
 				"email": "from_response@example.com",
 			},
 			RoleAttributePath: "role",
@@ -186,6 +196,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 			},
 			ResponseBody: map[string]any{
+				"sub":  "1",
 				"role": "FromResponse",
 			},
 			RoleAttributePath: "role",
@@ -198,7 +209,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImluZm8iOnsicm9sZXMiOlsiZGV2IiwiZW5naW5lZXJpbmciXX19.NZtdxYmzMkHGg2A35yVkFU042JDxaJmJn35U2VsAe3A",
 			},
 			RoleAttributePath: "contains(info.roles[*], 'dev') && 'Editor'",
 			ExpectedEmail:     "john.doe@example.com",
@@ -211,6 +222,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 			},
 			ResponseBody: map[string]any{
+				"sub": "1",
 				"info": map[string]any{
 					"roles": []string{"engineering", "SRE"},
 				},
@@ -227,6 +239,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
 			},
 			ResponseBody: map[string]any{
+				"sub": "1",
 				"info": map[string]any{
 					"roles": []string{"engineering", "SRE"},
 				},
@@ -244,6 +257,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
 			},
 			ResponseBody: map[string]any{
+				"sub": "1",
 				"info": map[string]any{
 					"roles": []string{"engineering", "SRE"},
 				},
@@ -251,6 +265,17 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin' || contains(info.roles[*], 'dev') && 'Editor' || 'Viewer'",
 			ExpectedEmail:     "john.doe@example.com",
 			ExpectedRole:      "",
+		},
+		{
+			Name:            "Expect error when no sub claim is provided from either api or id token.",
+			SkipOrgRoleSync: true,
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com", "role": "Admin" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+			},
+			ResponseBody:      map[string]any{},
+			RoleAttributePath: "role",
+			ExpectedError:     errMissingRequiredSubClaim,
 		},
 	}
 
@@ -309,8 +334,8 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 			{
 				Name: "Given a valid id_token, a valid login path, no API response, use id_token",
 				OAuth2Extra: map[string]any{
-					// { "login": "johndoe", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.sg4sRJCNpax_76XMgr277fdxhjjtNSWXKIOFv4_GJN8",
+					// { "sub": "1", "login": "johndoe", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwibG9naW4iOiJqb2huZG9lIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.cmi2U_-QPOfe2hHxTovMFeTNyhtIiSM8SaGpuMQAEFk",
 				},
 				LoginAttributePath: "role",
 				ExpectedLogin:      "johndoe",
@@ -318,8 +343,8 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 			{
 				Name: "Given a valid id_token, no login path, no API response, use id_token",
 				OAuth2Extra: map[string]any{
-					// { "login": "johndoe", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.sg4sRJCNpax_76XMgr277fdxhjjtNSWXKIOFv4_GJN8",
+					// { "sub": "1", "login": "johndoe", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwibG9naW4iOiJqb2huZG9lIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.cmi2U_-QPOfe2hHxTovMFeTNyhtIiSM8SaGpuMQAEFk",
 				},
 				LoginAttributePath: "",
 				ExpectedLogin:      "johndoe",
@@ -327,6 +352,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 			{
 				Name: "Given no id_token, a valid login path, a valid API response, use API response",
 				ResponseBody: map[string]any{
+					"sub":      "1",
 					"user_uid": "johndoe",
 					"email":    "john.doe@example.com",
 				},
@@ -336,6 +362,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 			{
 				Name: "Given no id_token, no login path, a valid API response, use API response",
 				ResponseBody: map[string]any{
+					"sub":   "1",
 					"login": "johndoe",
 				},
 				LoginAttributePath: "",
@@ -344,13 +371,17 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 			{
 				Name: "Given no id_token, a login path, a valid API response without a login, use API response",
 				ResponseBody: map[string]any{
+					"sub":      "1",
 					"username": "john.doe",
 				},
 				LoginAttributePath: "login",
 				ExpectedLogin:      "john.doe",
 			},
 			{
-				Name:               "Given no id_token, a valid login path, no API response, no data",
+				Name: "Given no id_token, a valid login path, API response with only sub, no data",
+				ResponseBody: map[string]any{
+					"sub": "1",
+				},
 				LoginAttributePath: "login",
 				ExpectedLogin:      "",
 			},
@@ -403,8 +434,8 @@ func TestUserInfoSearchesForName(t *testing.T) {
 			{
 				Name: "Given a valid id_token, a valid name path, no API response, use id_token",
 				OAuth2Extra: map[string]any{
-					// { "name": "John Doe", "login": "johndoe", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwibmFtZSI6IkpvaG4gRG9lIn0.oMsXH0mHxUSYMXh6FonZIWh8LgNIcYbKRLSO1bwnfSI",
+					// { "sub": "1", "name": "John Doe", "login": "johndoe", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwibG9naW4iOiJqb2huZG9lIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsIm5hbWUiOiJKb2huIERvZSJ9.mI1ME6Lyu95gV0TG6LLb6_X6vajmPTagKsr7TSbwYqs",
 				},
 				NameAttributePath: "name",
 				ExpectedName:      "John Doe",
@@ -412,8 +443,8 @@ func TestUserInfoSearchesForName(t *testing.T) {
 			{
 				Name: "Given a valid id_token, no name path, no API response, use id_token",
 				OAuth2Extra: map[string]any{
-					// { "name": "John Doe", "login": "johndoe", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwibmFtZSI6IkpvaG4gRG9lIn0.oMsXH0mHxUSYMXh6FonZIWh8LgNIcYbKRLSO1bwnfSI",
+					// { "sub": "1", "name": "John Doe", "login": "johndoe", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwibG9naW4iOiJqb2huZG9lIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsIm5hbWUiOiJKb2huIERvZSJ9.mI1ME6Lyu95gV0TG6LLb6_X6vajmPTagKsr7TSbwYqs",
 				},
 				NameAttributePath: "",
 				ExpectedName:      "John Doe",
@@ -421,6 +452,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 			{
 				Name: "Given no id_token, a valid name path, a valid API response, use API response",
 				ResponseBody: map[string]any{
+					"sub":       "1",
 					"user_name": "John Doe",
 					"login":     "johndoe",
 					"email":     "john.doe@example.com",
@@ -431,6 +463,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 			{
 				Name: "Given no id_token, no name path, a valid API response, use API response",
 				ResponseBody: map[string]any{
+					"sub":          "1Doe",
 					"display_name": "John Doe",
 					"login":        "johndoe",
 				},
@@ -440,6 +473,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 			{
 				Name: "Given no id_token, a name path, a valid API response without a name, use API response",
 				ResponseBody: map[string]any{
+					"sub":          "1",
 					"display_name": "John Doe",
 					"username":     "john.doe",
 				},
@@ -447,9 +481,12 @@ func TestUserInfoSearchesForName(t *testing.T) {
 				ExpectedName:      "John Doe",
 			},
 			{
-				Name:              "Given no id_token, a valid name path, no API response, no data",
+				Name:              "Given no id_token, a valid name path, only sub in response, no data",
 				NameAttributePath: "name",
-				ExpectedName:      "",
+				ResponseBody: map[string]any{
+					"sub": "1",
+				},
+				ExpectedName: "",
 			},
 		}
 
@@ -491,7 +528,10 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 			expectedResult      []string
 		}{
 			{
-				name:                "If groups are not set, user groups are nil",
+				name: "If groups are not set, user groups are nil",
+				responseBody: map[string]any{
+					"sub": "1",
+				},
 				groupsAttributePath: "",
 				expectedResult:      nil,
 			},
@@ -499,6 +539,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 				name:                "If groups are empty, user groups are nil",
 				groupsAttributePath: "info.groups",
 				responseBody: map[string]any{
+					"sub": "1",
 					"info": map[string]any{
 						"groups": []string{},
 					},
@@ -509,6 +550,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 				name:                "If groups are set, user groups are set",
 				groupsAttributePath: "info.groups",
 				responseBody: map[string]any{
+					"sub": "1",
 					"info": map[string]any{
 						"groups": []string{"foo", "bar"},
 					},
