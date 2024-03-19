@@ -1,4 +1,4 @@
-# Alerting: Get started
+# Introduction
 
 In this guide, we'll walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as receiving alert notifications.
 
