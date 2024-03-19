@@ -256,7 +256,9 @@ describe('RichHistoryCard', () => {
           datasourceName: 'Test datasource',
           starred: false,
           comment: '',
-          queries: [{ query: 'query1', refId: 'A', queryText: 'query1' }],
+          queries: [
+            { query: 'query1', refId: 'A', queryText: 'query1', datasource: { uid: 'prometheus', type: 'prometheus' } },
+          ],
         },
       });
       const copyQueriesButton = await screen.findByRole('button', { name: 'Copy query to clipboard' });

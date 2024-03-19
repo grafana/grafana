@@ -184,7 +184,7 @@ export function RichHistoryCard(props: Props) {
     const queriesText = queryHistoryItem.queries
       .map((query) => {
         const queryDS = datasourceInstances?.find((di) => di.uid === queryHistoryItem.datasourceUid);
-        return queryDS ? createQueryText(query, queryDS) : '';
+        return createQueryText(query, queryDS);
       })
       .join('\n');
 
@@ -360,7 +360,7 @@ export function RichHistoryCard(props: Props) {
       const buttonText = runQueryText(exploreId, props.queryHistoryItem.datasourceUid);
       return (
         <ToolbarButton aria-label={buttonText.fallbackText} onClick={() => onRunQuery(exploreId)}>
-          ${buttonText.translation}
+          {buttonText.translation}
         </ToolbarButton>
       );
     } else {
@@ -389,7 +389,7 @@ export function RichHistoryCard(props: Props) {
       return (
         <Dropdown onVisibleChange={(state) => setOpenRunQueryButton(state)} placement="bottom-start" overlay={menu}>
           <ToolbarButton aria-label="run query options" variant="canvas" isOpen={openRunQueryButton}>
-            Run Query
+            {t('explore.rich-history-card.run-query-button', 'Run query')}
           </ToolbarButton>
         </Dropdown>
       );

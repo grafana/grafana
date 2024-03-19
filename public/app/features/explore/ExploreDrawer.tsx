@@ -5,7 +5,7 @@ import React from 'react';
 
 // Services & Utils
 import { GrafanaTheme2 } from '@grafana/data';
-import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
+import { getDragStyles, useTheme2 } from '@grafana/ui';
 
 export interface Props {
   width?: number;
@@ -16,7 +16,7 @@ export interface Props {
 export function ExploreDrawer(props: Props) {
   const { width, children, onResize } = props;
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
+  const styles = getStyles(theme, width === undefined); // if width is defined, it is not full-width
   const dragStyles = getDragStyles(theme);
   const drawerWidth = width ? `${width + 31.5}px` : '100%';
 
@@ -55,7 +55,7 @@ const drawerSlide = (theme: GrafanaTheme2) => keyframes`
   }
 `;
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, fullWidth: boolean) => ({
   // @ts-expect-error csstype doesn't allow !important. see https://github.com/frenic/csstype/issues/114
   fixed: css({
     position: 'fixed !important',
@@ -64,7 +64,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     bottom: 0,
     background: theme.colors.background.primary,
     borderTop: `1px solid ${theme.colors.border.weak}`,
-    margin: theme.spacing(0, -2, 0, -2),
+    margin: theme.spacing(0, fullWidth ? 0 : -2, 0, fullWidth ? 0 : -2),
     boxShadow: theme.shadows.z3,
     zIndex: theme.zIndex.navbarFixed,
   }),

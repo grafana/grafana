@@ -13,6 +13,7 @@ import { ExploreQueryParams } from 'app/types/explore';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
+import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
@@ -65,39 +66,33 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
       <ExploreActions />
       {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
       <SplitPaneWrapper
-        splitOrientation="horizontal"
-        paneSize={drawerHeight || theme.components.horizontalDrawer.defaultHeight}
-        splitVisible={showQueryHistory}
-        onDragFinished={(size) => size && setDrawerHeight(size)}
-        secondaryPaneStyle={{ overflow: 'scroll' }}
+        splitOrientation="vertical"
+        paneSize={widthCalc}
+        minSize={MIN_PANE_WIDTH}
+        maxSize={MIN_PANE_WIDTH * -1}
+        primary="second"
+        splitVisible={hasSplit}
+        parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)}` } : {}} // button = 4, padding = 1 x 2
+        paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
+        onDragFinished={(size) => size && updateSplitSize(size)}
       >
-        <SplitPaneWrapper
-          splitOrientation="vertical"
-          paneSize={widthCalc}
-          minSize={MIN_PANE_WIDTH}
-          maxSize={MIN_PANE_WIDTH * -1}
-          primary="second"
-          splitVisible={hasSplit}
-          parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)}` } : {}} // button = 4, padding = 1 x 2
-          paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
-          onDragFinished={(size) => size && updateSplitSize(size)}
-        >
-          {panes.map(([exploreId]) => {
-            return (
-              <ErrorBoundaryAlert key={exploreId} style="page">
-                <ExplorePaneContainer exploreId={exploreId} />
-              </ErrorBoundaryAlert>
-            );
-          })}
-        </SplitPaneWrapper>
-        {showQueryHistory && (
+        {panes.map(([exploreId]) => {
+          return (
+            <ErrorBoundaryAlert key={exploreId} style="page">
+              <ExplorePaneContainer exploreId={exploreId} />
+            </ErrorBoundaryAlert>
+          );
+        })}
+      </SplitPaneWrapper>
+      {showQueryHistory && (
+        <ExploreDrawer>
           <RichHistoryContainer
             onClose={() => {
               dispatch(changeShowQueryHistory(false));
             }}
           />
-        )}
-      </SplitPaneWrapper>
+        </ExploreDrawer>
+      )}
     </div>
   );
 }
