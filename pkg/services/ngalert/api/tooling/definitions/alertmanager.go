@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/alerting/definition"
+	"github.com/mohae/deepcopy"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
@@ -617,16 +618,10 @@ func (c *PostableUserConfig) validate() error {
 }
 
 // Decrypt returns a copy of the configuration struct with decrypted secure settings in receivers.
-func (c *PostableUserConfig) Decrypt(decryptFn func(payload []byte) ([]byte, error)) (*PostableUserConfig, error) {
-	// Copy the configuration struct.
-	rawCfg, err := json.Marshal(c)
-	if err != nil {
-		return nil, err
-	}
-
-	var newCfg PostableUserConfig
-	if err := json.Unmarshal(rawCfg, &newCfg); err != nil {
-		return nil, err
+func (c *PostableUserConfig) Decrypt(decryptFn func(payload []byte) ([]byte, error)) (PostableUserConfig, error) {
+	newCfg, ok := deepcopy.Copy(c).(*PostableUserConfig)
+	if !ok {
+		return PostableUserConfig{}, fmt.Errorf("failed to copy config")
 	}
 
 	// Iterate through receivers and decrypt secure settings.
@@ -635,19 +630,19 @@ func (c *PostableUserConfig) Decrypt(decryptFn func(payload []byte) ([]byte, err
 			for k, v := range gmr.SecureSettings {
 				decoded, err := base64.StdEncoding.DecodeString(v)
 				if err != nil {
-					return nil, fmt.Errorf("failed to decode value for key '%s': %w", k, err)
+					return PostableUserConfig{}, fmt.Errorf("failed to decode value for key '%s': %w", k, err)
 				}
 
 				decrypted, err := decryptFn(decoded)
 				if err != nil {
-					return nil, fmt.Errorf("failed to decrypt value for key '%s': %w", k, err)
+					return PostableUserConfig{}, fmt.Errorf("failed to decrypt value for key '%s': %w", k, err)
 				}
 
 				gmr.SecureSettings[k] = string(decrypted)
 			}
 		}
 	}
-	return &newCfg, nil
+	return *newCfg, nil
 }
 
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
