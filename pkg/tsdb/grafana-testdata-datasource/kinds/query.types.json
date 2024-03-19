@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1709594645494",
+        "resourceVersion": "1710850048297",
         "creationTimestamp": "2024-03-01T02:53:35Z"
       },
       "spec": {
@@ -21,6 +21,7 @@
               "type": "string"
             },
             "channel": {
+              "description": "Used for live query",
               "type": "string"
             },
             "csvContent": {
@@ -51,6 +52,9 @@
               },
               "type": "array"
             },
+            "drop": {
+              "type": "number"
+            },
             "dropPercent": {
               "description": "Drop percentage (the chance we will lose a point 0-100)",
               "type": "number"
@@ -77,6 +81,12 @@
             "lines": {
               "type": "integer"
             },
+            "max": {
+              "type": "number"
+            },
+            "min": {
+              "type": "number"
+            },
             "nodes": {
               "additionalProperties": false,
               "properties": {
@@ -99,6 +109,9 @@
                 }
               },
               "type": "object"
+            },
+            "noise": {
+              "type": "number"
             },
             "points": {
               "items": {
@@ -209,6 +222,12 @@
             "spanCount": {
               "type": "integer"
             },
+            "spread": {
+              "type": "number"
+            },
+            "startValue": {
+              "type": "number"
+            },
             "stream": {
               "additionalProperties": false,
               "properties": {
@@ -216,13 +235,13 @@
                   "type": "integer"
                 },
                 "noise": {
-                  "type": "integer"
+                  "type": "number"
                 },
                 "speed": {
-                  "type": "integer"
+                  "type": "number"
                 },
                 "spread": {
-                  "type": "integer"
+                  "type": "number"
                 },
                 "type": {
                   "description": "Possible enum values:\n - `\"fetch\"` \n - `\"logs\"` \n - `\"signal\"` \n - `\"traces\"` ",
@@ -248,6 +267,7 @@
               "type": "object"
             },
             "stringInput": {
+              "description": "common parameter used by many query types",
               "type": "string"
             },
             "usa": {
@@ -273,20 +293,33 @@
                 }
               },
               "type": "object"
+            },
+            "withNil": {
+              "type": "boolean"
             }
           },
+          "required": [
+            "noise",
+            "drop",
+            "withNil"
+          ],
           "type": "object"
         },
         "examples": [
           {
             "name": "simple random walk",
             "saveModel": {
-              "scenarioId": "random_walk"
+              "drop": 0,
+              "noise": 0,
+              "scenarioId": "random_walk",
+              "withNil": false
             }
           },
           {
             "name": "pulse wave example",
             "saveModel": {
+              "drop": 0,
+              "noise": 0,
               "pulseWave": {
                 "offCount": 20,
                 "offValue": 1.23,
@@ -294,7 +327,8 @@
                 "onValue": 4.56,
                 "timeStep": 1000
               },
-              "scenarioId": "predictable_pulse"
+              "scenarioId": "predictable_pulse",
+              "withNil": false
             }
           }
         ]

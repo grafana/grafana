@@ -6,13 +6,19 @@
       "refId": "A",
       "maxDataPoints": 1000,
       "intervalMs": 5,
-      "scenarioId": "random_walk"
+      "withNil": false,
+      "scenarioId": "random_walk",
+      "noise": 0,
+      "drop": 0
     },
     {
       "refId": "B",
       "maxDataPoints": 1000,
       "intervalMs": 5,
       "scenarioId": "predictable_pulse",
+      "noise": 0,
+      "drop": 0,
+      "withNil": false,
       "pulseWave": {
         "offCount": 20,
         "offValue": 1.23,

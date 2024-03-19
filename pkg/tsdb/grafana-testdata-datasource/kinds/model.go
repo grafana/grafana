@@ -71,10 +71,10 @@ const (
 
 // CSVWave defines model for CSVWave.
 type CSVWave struct {
-	Labels    string `json:"labels,omitempty"`
-	Name      string `json:"name,omitempty"`
 	TimeStep  int64  `json:"timeStep,omitempty"`
 	ValuesCSV string `json:"valuesCSV,omitempty"`
+	Labels    string `json:"labels,omitempty"`
+	Name      string `json:"name,omitempty"`
 }
 
 // NodesQuery defines model for NodesQuery.
@@ -117,39 +117,52 @@ type SimulationQuery struct {
 // StreamingQuery defines model for StreamingQuery.
 type StreamingQuery struct {
 	Bands  int32              `json:"bands,omitempty"`
-	Noise  int32              `json:"noise"`
-	Speed  int32              `json:"speed"`
-	Spread int32              `json:"spread"`
+	Noise  float64            `json:"noise"`
+	Speed  float64            `json:"speed"`
+	Spread float64            `json:"spread"`
 	Type   StreamingQueryType `json:"type"`
 	Url    string             `json:"url,omitempty"`
 }
 
 // TestDataDataQuery defines model for TestDataDataQuery.
 type TestDataDataQuery struct {
-	ScenarioId  TestDataQueryType `json:"scenarioId,omitempty"`
-	Alias       string            `json:"alias,omitempty"`
-	Channel     string            `json:"channel,omitempty"`
-	CsvContent  string            `json:"csvContent,omitempty"`
-	CsvFileName string            `json:"csvFileName,omitempty"`
-	CsvWave     []CSVWave         `json:"csvWave,omitempty"`
+	ScenarioId TestDataQueryType `json:"scenarioId,omitempty"`
+	Alias      string            `json:"alias,omitempty"`
+	Labels     string            `json:"labels,omitempty"`
+
+	// common parameter used by many query types
+	StringInput string `json:"stringInput,omitempty"`
+
+	CsvContent  string    `json:"csvContent,omitempty"`
+	CsvFileName string    `json:"csvFileName,omitempty"`
+	CsvWave     []CSVWave `json:"csvWave,omitempty"`
+
+	// Used for live query
+	Channel string `json:"channel,omitempty"`
 
 	// Drop percentage (the chance we will lose a point 0-100)
-	DropPercent     float64          `json:"dropPercent,omitempty"`
-	ErrorType       ErrorType        `json:"errorType,omitempty"`
-	FlamegraphDiff  bool             `json:"flamegraphDiff,omitempty"`
-	Labels          string           `json:"labels,omitempty"`
-	LevelColumn     bool             `json:"levelColumn,omitempty"`
-	Lines           int64            `json:"lines,omitempty"`
-	Nodes           *NodesQuery      `json:"nodes,omitempty"`
-	Points          [][]any          `json:"points,omitempty"`
-	PulseWave       *PulseWaveQuery  `json:"pulseWave,omitempty"`
-	RawFrameContent string           `json:"rawFrameContent,omitempty"`
-	SeriesCount     int32            `json:"seriesCount,omitempty"`
-	Sim             *SimulationQuery `json:"sim,omitempty"`
-	SpanCount       int32            `json:"spanCount,omitempty"`
-	Stream          *StreamingQuery  `json:"stream,omitempty"`
-	StringInput     string           `json:"stringInput,omitempty"`
-	Usa             *USAQuery        `json:"usa,omitempty"`
+	DropPercent     float64   `json:"dropPercent,omitempty"`
+	ErrorType       ErrorType `json:"errorType,omitempty"`
+	FlamegraphDiff  bool      `json:"flamegraphDiff,omitempty"`
+	LevelColumn     bool      `json:"levelColumn,omitempty"`
+	StartValue      float64   `json:"startValue,omitempty"`
+	Spread          float64   `json:"spread,omitempty"`
+	Noise           float64   `json:"noise"`
+	Drop            float64   `json:"drop"`
+	Min             *float64  `json:"min,omitempty"`
+	Max             *float64  `json:"max,omitempty"`
+	WithNil         bool      `json:"withNil"`
+	Lines           int64     `json:"lines,omitempty"`
+	Points          [][]any   `json:"points,omitempty"`
+	RawFrameContent string    `json:"rawFrameContent,omitempty"`
+	SeriesCount     int       `json:"seriesCount,omitempty"`
+	SpanCount       int       `json:"spanCount,omitempty"`
+
+	Nodes     *NodesQuery      `json:"nodes,omitempty"`
+	PulseWave *PulseWaveQuery  `json:"pulseWave,omitempty"`
+	Sim       *SimulationQuery `json:"sim,omitempty"`
+	Stream    *StreamingQuery  `json:"stream,omitempty"`
+	Usa       *USAQuery        `json:"usa,omitempty"`
 }
 
 // USAQuery defines model for USAQuery.

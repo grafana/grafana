@@ -10,11 +10,17 @@
       "items": {
         "description": "TestDataDataQuery defines model for TestDataDataQuery.",
         "type": "object",
+        "required": [
+          "noise",
+          "drop",
+          "withNil"
+        ],
         "properties": {
           "alias": {
             "type": "string"
           },
           "channel": {
+            "description": "Used for live query",
             "type": "string"
           },
           "csvContent": {
@@ -64,6 +70,9 @@
             },
             "additionalProperties": false
           },
+          "drop": {
+            "type": "number"
+          },
           "dropPercent": {
             "description": "Drop percentage (the chance we will lose a point 0-100)",
             "type": "number"
@@ -98,9 +107,15 @@
           "lines": {
             "type": "integer"
           },
+          "max": {
+            "type": "number"
+          },
           "maxDataPoints": {
             "description": "MaxDataPoints is the maximum number of data points that should be returned from a time series query.\nNOTE: the values for maxDataPoints is not saved in the query model.  It is typically calculated\nfrom the number of pixels visible in a visualization",
             "type": "integer"
+          },
+          "min": {
+            "type": "number"
           },
           "nodes": {
             "type": "object",
@@ -124,6 +139,9 @@
               }
             },
             "additionalProperties": false
+          },
+          "noise": {
+            "type": "number"
           },
           "points": {
             "type": "array",
@@ -283,6 +301,12 @@
           "spanCount": {
             "type": "integer"
           },
+          "spread": {
+            "type": "number"
+          },
+          "startValue": {
+            "type": "number"
+          },
           "stream": {
             "type": "object",
             "required": [
@@ -296,13 +320,13 @@
                 "type": "integer"
               },
               "noise": {
-                "type": "integer"
+                "type": "number"
               },
               "speed": {
-                "type": "integer"
+                "type": "number"
               },
               "spread": {
-                "type": "integer"
+                "type": "number"
               },
               "type": {
                 "description": "Possible enum values:\n - `\"fetch\"` \n - `\"logs\"` \n - `\"signal\"` \n - `\"traces\"` ",
@@ -322,6 +346,7 @@
             "additionalProperties": false
           },
           "stringInput": {
+            "description": "common parameter used by many query types",
             "type": "string"
           },
           "timeRange": {
@@ -374,6 +399,9 @@
               }
             },
             "additionalProperties": false
+          },
+          "withNil": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false,
