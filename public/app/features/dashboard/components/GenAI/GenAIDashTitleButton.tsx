@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
@@ -25,12 +24,9 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   'Respond with only the title of the dashboard.';
 
 export const GenAIDashTitleButton = ({ onGenerate }: GenAIDashTitleButtonProps) => {
-  const dashboard = getDashboardSrv().getCurrent()!;
-  const messages = getMessages(dashboard);
-
   return (
     <GenAIButton
-      messages={messages}
+      messages={getMessages}
       onGenerate={onGenerate}
       eventTrackingSrc={EventTrackingSrc.dashboardTitle}
       toggleTipTitle={'Improve your dashboard title'}
@@ -38,7 +34,9 @@ export const GenAIDashTitleButton = ({ onGenerate }: GenAIDashTitleButtonProps) 
   );
 };
 
-function getMessages(dashboard: DashboardModel): Message[] {
+function getMessages(): Message[] {
+  const dashboard = getDashboardSrv().getCurrent()!;
+
   return [
     {
       content: TITLE_GENERATION_STANDARD_PROMPT,

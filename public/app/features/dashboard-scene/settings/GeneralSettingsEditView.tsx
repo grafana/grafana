@@ -1,4 +1,5 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -8,10 +9,10 @@ import {
   Box,
   CollapsableSection,
   Field,
-  HorizontalGroup,
   Input,
   Label,
   RadioButtonGroup,
+  Stack,
   TagsInput,
   TextArea,
 } from '@grafana/ui';
@@ -20,6 +21,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteDashboard/DeleteDashboardButton';
+import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -150,6 +152,9 @@ export class GeneralSettingsEditView
     const { intervals } = model.getRefreshPicker().useState();
     const { hideTimeControls } = model.getDashboardControls().useState();
 
+    const [titleKey, setTitleKey] = useState(uuidv4());
+    const [descriptionKey, setDescriptionKey] = useState(uuidv4());
+
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
         <NavToolbarActions dashboard={model.getDashboard()} />
@@ -157,40 +162,50 @@ export class GeneralSettingsEditView
           <Box marginBottom={5}>
             <Field
               label={
-                <HorizontalGroup justify="space-between">
+                <Stack justifyContent="space-between">
                   <Label htmlFor="title-input">
                     <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
                   </Label>
-                  {/* TODO: Make the component use persisted model */}
                   {config.featureToggles.dashgpt && (
-                    <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
+                    <GenAIDashTitleButton
+                      onGenerate={(title) => {
+                        model.onTitleChange(title);
+                        setTitleKey(uuidv4());
+                      }}
+                    />
                   )}
-                </HorizontalGroup>
+                </Stack>
               }
             >
               <Input
                 id="title-input"
                 name="title"
                 defaultValue={title}
+                key={titleKey}
                 onBlur={(e: ChangeEvent<HTMLInputElement>) => model.onTitleChange(e.target.value)}
               />
             </Field>
             <Field
               label={
-                <HorizontalGroup justify="space-between">
+                <Stack justifyContent="space-between">
                   <Label htmlFor="description-input">
                     {t('dashboard-settings.general.description-label', 'Description')}
                   </Label>
-
-                  {/* {config.featureToggles.dashgpt && (
-                  <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />
-                )} */}
-                </HorizontalGroup>
+                  {config.featureToggles.dashgpt && (
+                    <GenAIDashDescriptionButton
+                      onGenerate={(description) => {
+                        model.onDescriptionChange(description);
+                        setDescriptionKey(uuidv4());
+                      }}
+                    />
+                  )}
+                </Stack>
               }
             >
               <TextArea
                 id="description-input"
                 name="description"
+                key={descriptionKey}
                 defaultValue={description}
                 onBlur={(e: ChangeEvent<HTMLTextAreaElement>) => model.onDescriptionChange(e.target.value)}
               />
