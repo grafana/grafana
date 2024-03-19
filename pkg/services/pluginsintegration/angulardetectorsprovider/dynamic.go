@@ -23,7 +23,7 @@ var errNotModified = errors.New("not modified")
 
 // backgroundJobInterval is the interval that passes between background job runs.
 // It can be overwritten in tests.
-var backgroundJobInterval = time.Hour * 1
+var backgroundJobInterval = time.Hour * 24
 
 // Dynamic is an angulardetector.DetectorsProvider that calls GCOM to get Angular detection patterns,
 // converts them to detectors and caches them for all future calls.
