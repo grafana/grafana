@@ -740,7 +740,6 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_CLIENT_ID=mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET=mock_user_identity_client_secret",
 			"GFAZPL_USER_IDENTITY_ASSERTION=username",
-			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED=false",
 		}, envVars)
 	})
 }
