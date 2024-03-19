@@ -46,10 +46,7 @@ func (b *QueryAPIBuilder) doQuery(w http.ResponseWriter, r *http.Request) {
 				errutil.WithPublicMessage(err.Error())), w)
 			return
 		}
-		errhttp.Write(ctx, errutil.BadRequest(
-			"query.parse",
-			errutil.WithPublicMessage("Error parsing query")).
-			Errorf("error parsing: %w", err), w)
+		errhttp.Write(ctx, err, w)
 		return
 	}
 
@@ -63,6 +60,7 @@ func (b *QueryAPIBuilder) doQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(query.GetResponseCode(rsp))
 	_ = json.NewEncoder(w).Encode(rsp)
 }
@@ -112,7 +110,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return &backend.QueryDataResponse{}, nil
 	}
 
-	// headers?
+	// Add user headers... here or in client.QueryData
 	client, err := b.client.GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
 		Type: req.PluginId,
 		UID:  req.UID,
@@ -121,9 +119,8 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return nil, err
 	}
 
-	// headers?
 	_, rsp, err := client.QueryData(ctx, *req.Request)
-	if err == nil {
+	if err == nil && rsp != nil {
 		for _, q := range req.Request.Queries {
 			if q.ResultAssertions != nil {
 				result, ok := rsp.Responses[q.RefID]
