@@ -140,3 +140,10 @@ export type TableFieldOptions = Omit<schema.TableFieldOptions, 'cellOptions'> & 
   cellOptions: TableCellOptions;
   headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
 };
+
+// Cell background and text colors
+// Can also be used for table rows
+export interface CellColors {
+  textColor?: string;
+  bgColor?: string;
+}
