@@ -98,6 +98,12 @@ If thresholds are set, then the field background is displayed in the appropriate
 
 {{< figure src="/static/img/docs/tables/color-background.png" max-width="500px" caption="Color background" class="docs-image--no-shadow" >}}
 
+By selecting the **Apply to entire row** option, the entire row will be colored with the background color configured for this cell.
+
+{{< figure src="/static/img/docs/tables/apply-to-row.png" max-width="500px" caption="Apply to entire row" class="docs-image--no-shadow" >}}
+
+{{< figure src="/static/img/docs/tables/colored-rows.png" max-width="500px" caption="Colored row background" class="docs-image--no-shadow" >}}
+
 ### Gauge
 
 Cells can be displayed as a graphical gauge, with several different presentation types.
