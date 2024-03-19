@@ -44,6 +44,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		dashSnapSvc.On("DeleteDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.DeleteDashboardSnapshotCommand")).Return(nil).Maybe()
 		res := &dashboardsnapshots.DashboardSnapshot{
 			ID:        1,
+			OrgID:     1,
 			Key:       "12345",
 			DeleteKey: "54321",
 			Dashboard: jsonModel,
