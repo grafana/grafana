@@ -42,6 +42,7 @@ composableKinds: PanelCfg: {
 				FieldConfig: {
 					common.AxisConfig
 					common.HideableFieldConfig
+					common.StackableFieldConfig
 
 					// Controls line width of the bars.
 					lineWidth?: uint32 & <=10 | *1
@@ -50,7 +51,6 @@ composableKinds: PanelCfg: {
 					// Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
 					// Gradient appearance is influenced by the Fill opacity setting.
 					gradientMode?: common.GraphGradientMode & (*"none" | _)
-					stacking?:     common.StackableFieldConfig
 				} @cuetsy(kind="interface")
 			}
 		}]
