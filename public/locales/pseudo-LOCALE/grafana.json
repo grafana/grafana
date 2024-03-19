@@ -369,7 +369,6 @@
       "title-label": "Ŧįŧľę"
     },
     "json-editor": {
-      "apply-button": "Åppľy čĥäŉģęş",
       "save-button": "Ŝävę čĥäŉģęş",
       "subtitle": "Ŧĥę ĴŜØŃ mőđęľ þęľőŵ įş ŧĥę đäŧä şŧřūčŧūřę ŧĥäŧ đęƒįŉęş ŧĥę đäşĥþőäřđ. Ŧĥįş įŉčľūđęş đäşĥþőäřđ şęŧŧįŉģş, päŉęľ şęŧŧįŉģş, ľäyőūŧ, qūęřįęş, äŉđ şő őŉ.",
       "title": "ĴŜØŃ Mőđęľ"
@@ -1344,7 +1343,7 @@
     "header": {
       "collapse-row": "Cőľľäpşę qūęřy řőŵ",
       "datasource-help": "Ŝĥőŵ đäŧä şőūřčę ĥęľp",
-      "hide-query": "Ħįđę qūęřy",
+      "disable-query": "Ħįđę qūęřy",
       "drag-and-drop": "Đřäģ äŉđ đřőp ŧő řęőřđęř",
       "duplicate-query": "Đūpľįčäŧę qūęřy",
       "expand-row": "Ēχpäŉđ qūęřy řőŵ",
