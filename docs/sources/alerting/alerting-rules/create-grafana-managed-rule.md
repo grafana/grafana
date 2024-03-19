@@ -115,37 +115,7 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    Use the guidelines in [No data and error handling](#configure-no-data-and-error-handling).
 
-## Configure notifications
-
-{{< admonition type="note" >}}
-To try out a simplified version of routing your alerts, enable the alertingSimplifiedRouting feature toggle and refer to the following section Configure notifications (simplified).
-{{< /admonition >}}
-
-1. Add labels to your alert rules to set which notification policy should handle your firing alert instances.
-
-   All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
-
-   Add labels if you want to change the way your notifications are routed.
-
-   Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
-
-1. Preview your alert instance routing set up.
-
-   Based on the labels added, alert instances are routed to the following notification policies displayed.
-
-   Expand each notification policy below to view more details.
-
-1. Click See details to view alert routing details and an email preview.
-
-1. Click **Save rule**.
-
-## Configure notifications (simplified)
-
-{{< admonition type="note" >}}
-To try this out, enable the alertingSimplifiedRouting feature toggle.
-
-This feature is currently not available for Grafana Cloud.
-{{< /admonition >}}
+## Configure labels and notifications
 
 In the **Labels** section, you can optionally choose whether to add labels to organize your alert rules, make searching easier, as well as set which notification policy should handle your firing alert instance.
 
@@ -157,7 +127,7 @@ Complete the following steps to set up labels and notifications.
 
    Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 
-2. Configure who receives a notification when an alert rule fires by either choosing **Select contact point** or **Use notification policy**.
+1. Configure who receives a notification when an alert rule fires by either choosing **Select contact point** or **Use notification policy**.
 
    **Select contact point**
 
@@ -165,26 +135,26 @@ Complete the following steps to set up labels and notifications.
 
       All notifications for this alert rule are sent to this contact point automatically and notification policies are not used.
 
-   2. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
+   1. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
 
       {{< admonition type="note" >}}
       An auto-generated notification policy is generated. Only admins can view these auto-generated policies from the **Notification policies** list view. Any changes have to be made in the alert rules form. {{< /admonition >}}
 
    **Use notification policy**
 
-   3. Choose this option to use the notification policy tree to direct your notifications.
+   1. Choose this option to use the notification policy tree to direct your notifications.
 
       {{< admonition type="note" >}}
       All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
       {{< /admonition >}}
 
-   4. Preview your alert instance routing set up.
+   1. Preview your alert instance routing set up.
 
       Based on the labels added, alert instances are routed to the following notification policies displayed.
 
-   5. Expand each notification policy below to view more details.
+   1. Expand each notification policy below to view more details.
 
-   6. Click **See details** to view alert routing details and an email preview.
+   1. Click **See details** to view alert routing details and an email preview.
 
 ## Add annotations
 
