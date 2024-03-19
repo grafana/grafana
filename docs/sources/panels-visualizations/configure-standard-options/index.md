@@ -86,7 +86,7 @@ You can also paste a native emoji in the **Unit** drop-down and select it as a c
 
 #### String units
 
-Sometimes Grafana is too aggressive in parsing strings and displaying them as numbers. To configure Grafana to show the original string value, select **Misc > String** in the **Unit** drop-down.
+Sometimes Grafana is too aggressive in interpreting strings and displaying them as numbers. To configure Grafana to show the original string value, select **Misc > String** in the **Unit** drop-down.
 
 ### Min
 
