@@ -1,5 +1,4 @@
-import React, { ChangeEvent, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -152,9 +151,6 @@ export class GeneralSettingsEditView
     const { intervals } = model.getRefreshPicker().useState();
     const { hideTimeControls } = model.getDashboardControls().useState();
 
-    const [titleKey, setTitleKey] = useState(uuidv4());
-    const [descriptionKey, setDescriptionKey] = useState(uuidv4());
-
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
         <NavToolbarActions dashboard={model.getDashboard()} />
@@ -167,12 +163,7 @@ export class GeneralSettingsEditView
                     <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
                   </Label>
                   {config.featureToggles.dashgpt && (
-                    <GenAIDashTitleButton
-                      onGenerate={(title) => {
-                        model.onTitleChange(title);
-                        setTitleKey(uuidv4());
-                      }}
-                    />
+                    <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
                   )}
                 </Stack>
               }
@@ -180,9 +171,8 @@ export class GeneralSettingsEditView
               <Input
                 id="title-input"
                 name="title"
-                defaultValue={title}
-                key={titleKey}
-                onBlur={(e: ChangeEvent<HTMLInputElement>) => model.onTitleChange(e.target.value)}
+                value={title}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => model.onTitleChange(e.target.value)}
               />
             </Field>
             <Field
@@ -192,12 +182,7 @@ export class GeneralSettingsEditView
                     {t('dashboard-settings.general.description-label', 'Description')}
                   </Label>
                   {config.featureToggles.dashgpt && (
-                    <GenAIDashDescriptionButton
-                      onGenerate={(description) => {
-                        model.onDescriptionChange(description);
-                        setDescriptionKey(uuidv4());
-                      }}
-                    />
+                    <GenAIDashDescriptionButton onGenerate={(description) => model.onDescriptionChange(description)} />
                   )}
                 </Stack>
               }
@@ -205,9 +190,8 @@ export class GeneralSettingsEditView
               <TextArea
                 id="description-input"
                 name="description"
-                key={descriptionKey}
-                defaultValue={description}
-                onBlur={(e: ChangeEvent<HTMLTextAreaElement>) => model.onDescriptionChange(e.target.value)}
+                value={description}
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => model.onDescriptionChange(e.target.value)}
               />
             </Field>
             <Field label={t('dashboard-settings.general.tags-label', 'Tags')}>
