@@ -26,7 +26,7 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
     case ExpressionQueryType.resample:
       return 'Resample';
     case ExpressionQueryType.classic:
-      return 'Classic condition';
+      return 'Classic condition (legacy)';
     case ExpressionQueryType.threshold:
       return 'Threshold';
     case ExpressionQueryType.sql:
@@ -53,7 +53,7 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   },
   {
     value: ExpressionQueryType.classic,
-    label: 'Classic condition',
+    label: 'Classic condition (legacy)',
     description:
       'Takes one or more time series returned from a query or an expression and checks if any of the series match the condition. Disables multi-dimensional alerts for this rule.',
   },
