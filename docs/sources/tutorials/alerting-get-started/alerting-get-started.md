@@ -2,14 +2,14 @@
 
 In this guide, we'll walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as receiving alert notifications.
 
-## Before you begin
+# Before you begin
 
 Before you can get your alert up and running in just a few minutes, you need the following software:
 
 - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
 
-### Set up the sample application
+## Set up the sample application
 
 In order to provide a more hands-on experience, you will use a real-world web application to generate real data. The app will expose metrics, which will be stored in Prometheus, a popular time series database (TSDB). And finally, in Grafana Alerting, you will build an alert rule based on the data generated. 
 
@@ -70,23 +70,23 @@ To add a link:
 1. Click **Submit** to add the link. The link will appear listed under the Grafana News heading.
 To vote for a link, click the triangle icon next to the name of the link.
 
-### Log in to Grafana
+## Log in to Grafana
 
 Besides being an open-source observability tool, Grafana has its own built-in alerting service.   This means that you can receive notifications whenever there is an event of interest in your data, and even see these events graphed in your visualizations.
 
 In your browser, simply navigate to [localhost:3000](http://localhost:3000). You should get logged in automatically
 
-### Create an Alert
+## Create an Alert
 
 Next, we'll establish an alert within Grafana Alerting to notify us whenever our sample app experiences a specific volume of requests.
 
 In Grafana, toggle the menu at the top left side of the screen, and **navigate to Alerting** > **Alert rules**. Click on  **+ New alert rule**.
 
-#### Enter alert rule name
+## Enter alert rule name
 
 1. Make it short and descriptive as this will appear in your alert notification. For instance, server-requests-duration
 
-#### Define query and alert condition
+## Define query and alert condition
 
 In this section we define the conditions that trigger alerts. 
 
@@ -106,7 +106,7 @@ At this point, our alert should be working (it should be either in [Firing or No
 
 Let’s fill in some other important details.
 
-#### Set evaluation behavior
+## Set evaluation behavior
 
 Define how often the rule is checked.
 
@@ -115,15 +115,15 @@ Define how often the rule is checked.
 1. Choose an **Evaluation interval** (how often the alert will be evaluated). For example, every 1m (1 minute).
 1. Set the **pending period** (aka, the “for” period). This is the time that a condition has to be met until the alert enters into a Firing state and a notification is sent. For example, 0s so the alert rule fires the moment the condition is met.
 
-#### Configure labels and notifications
+## Configure labels and notifications
 
 In order to ease searching or route notifications to a policy, you should add a label.
 
-##### Labels
+### Labels
 
 1. Add `app` as the label key, and `grafana-news` as the value
 
-##### Notifications
+### Notifications
 
 Here you can select who should receive a notification when an alert rule fires.
 
@@ -134,24 +134,24 @@ Here you can select who should receive a notification when an alert rule fires.
 1. Switch back to the other tab to **continue creating the Alert rule**.
 
 
-#### Add Annotations
+## Add Annotations
 
 In this section, we can Link a dashboard and panel to our Alert. For that, click **Link Dashboard and panel** button.
 
 Linking an alert to a panel will add an annotation to the panel when the status of your alert changes. If you don’t have a panel already, and since this is optional, you can skip this step for now and link it after you have finished configuring the alert.
 
-#### Trigger an alert
+## Trigger an alert
 We have now configured an alert rule and a contact point. Now let’s see if we can trigger our Alert by generating some traffic on our sample application.
 Browse to [localhost:8081](http://localhost:8081/).
 Add a new title and URL, repeatedly click the vote button, or refresh the page to generate a traffic spike.
 
 Once the query `sum(rate(tns_request_duration_seconds_count[5m])) by(route)` returns a value greater than 0.2 Grafana will trigger our alert. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
 
-### Receive your first alert notification
+## Receive your first alert notification
 
 Once the alert rule condition is met, you should receive an alert to your email.
 
 The alert comes with additional information besides the annotation summary we wrote, such as links to perform actions like [silencing](https://grafana.com/docs/grafana/latest/alerting/manage-notifications/create-silence/) your alert or visiting the panel to which the alert is linked.
 
 
-### Next steps
+# Next steps
