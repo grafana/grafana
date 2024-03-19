@@ -14,8 +14,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var netTransport = &http.Transport{
@@ -40,10 +38,6 @@ var (
 
 func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderType RenderType, renderKey string, opts Opts) (*RenderResult, error) {
 	if renderType == RenderPDF {
-		if !rs.features.IsEnabled(ctx, featuremgmt.FlagNewPDFRendering) {
-			return nil, fmt.Errorf("feature 'newPDFRendering' disabled")
-		}
-
 		opts.Encoding = "pdf"
 	}
 
