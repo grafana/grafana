@@ -2,8 +2,6 @@ import React from 'react';
 
 import { Dashboard, Panel } from '@grafana/schema';
 
-import { getDashboardSrv } from '../../services/DashboardSrv';
-
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
 import { Message, Role, getFilteredPanelString } from './utils';
