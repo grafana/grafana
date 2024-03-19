@@ -34,7 +34,7 @@ function updatePanelModelWithUpdate(panel: PanelModel, updated: LibraryElementDT
   panel.refresh();
 }
 
-function saveOrUpdateLibraryPanel(panel: any, folderUid: string): Promise<LibraryElementDTO> {
+export function saveOrUpdateLibraryPanel(panel: any, folderUid: string): Promise<LibraryElementDTO> {
   if (!panel.libraryPanel) {
     return Promise.reject();
   }

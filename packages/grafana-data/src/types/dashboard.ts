@@ -1,4 +1,4 @@
-import { DataTransformerConfig } from '@grafana/schema';
+import { DataTransformerConfig, LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 
 import { FieldConfigSource } from './fieldOverrides';
 import { DataQuery, DataSourceRef } from './query';
@@ -45,4 +45,7 @@ export interface PanelModel<TOptions = any, TCustomFieldConfig = any> {
 
   /** alerting v1 object */
   alert?: any;
+
+  /** library panel  */
+  libraryPanel?: LibraryPanelRef | LibraryPanel;
 }

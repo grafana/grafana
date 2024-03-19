@@ -1,6 +1,14 @@
 import * as H from 'history';
 
-import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
+import {
+  AppEvents,
+  CoreApp,
+  DataQueryRequest,
+  NavIndex,
+  NavModelItem,
+  locationUtil,
+  PanelModel as NewPanelModel,
+} from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -757,16 +765,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return getPanelIdForVizPanel(vizPanel);
   }
 
-  public replaceWithLibraryPanel(vizPanel: VizPanel, panelModel: PanelModel) {
+  public replaceWithLibraryPanel(vizPanel: VizPanel, panelModel: NewPanelModel) {
     if (!panelModel.libraryPanel) {
       return;
     }
 
-    const gridLibItem = buildGridItemForLibPanel(panelModel);
-    gridLibItem?.setState({
+    const body = new LibraryVizPanel({
+      title: panelModel.title ?? 'Panel title',
+      uid: panelModel.libraryPanel.uid,
+      name: panelModel.libraryPanel.name,
+      panelKey: getVizPanelKeyForPanelId(panelModel.id),
+    });
+
+    if (!(vizPanel.parent instanceof SceneGridItem)) {
+      return;
+    }
+
+    const newGridItem = new SceneGridItem({
+      body,
+      y: vizPanel.parent.state.y,
+      x: vizPanel.parent.state.x,
+      width: vizPanel.parent.state.width,
+      height: vizPanel.parent.state.height,
       key: vizPanel.parent!.state.key,
     });
-    const newGridItem = gridLibItem?.clone();
 
     const sceneGridLayout = this.state.body;
 

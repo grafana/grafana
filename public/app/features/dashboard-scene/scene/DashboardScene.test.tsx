@@ -1,4 +1,4 @@
-import { CoreApp } from '@grafana/data';
+import { CoreApp, PanelModel } from '@grafana/data';
 import {
   sceneGraph,
   SceneGridItem,
@@ -14,7 +14,6 @@ import {
 import { Dashboard, DashboardCursorSync } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PanelModel } from 'app/features/dashboard/state';
 import { VariablesChanged } from 'app/features/variables/types';
 
 import { createWorker } from '../saving/createDetectChangesWorker';
@@ -711,16 +710,22 @@ describe('DashboardScene', () => {
         const gridItem = layout.state.children[0] as SceneGridItem;
         const panel = gridItem.state.body as VizPanel;
 
-        const panelModel = {
+        const panelModel: PanelModel = {
           title: 'newLibPanel',
           libraryPanel: {
             uid: 'uid',
             name: 'newLibPanel',
           },
           id: 1,
+          type: 'timeseries',
+          options: {},
+          fieldConfig: {
+            defaults: {},
+            overrides: [],
+          },
         };
 
-        scene.replaceWithLibraryPanel(panel, new PanelModel(panelModel));
+        scene.replaceWithLibraryPanel(panel, panelModel);
 
         expect((layout.state.children[0] as SceneGridItem).state.body).toBeInstanceOf(LibraryVizPanel);
       });
@@ -731,16 +736,22 @@ describe('DashboardScene', () => {
         const gridItem = gridRow.state.children[0] as SceneGridItem;
         const panel = gridItem.state.body as VizPanel;
 
-        const panelModel = {
+        const panelModel: PanelModel = {
           title: 'newLibPanel',
           libraryPanel: {
             uid: 'uid',
             name: 'newLibPanel',
           },
           id: 1,
+          type: 'timeseries',
+          options: {},
+          fieldConfig: {
+            defaults: {},
+            overrides: [],
+          },
         };
 
-        scene.replaceWithLibraryPanel(panel, new PanelModel(panelModel));
+        scene.replaceWithLibraryPanel(panel, panelModel);
 
         expect(
           ((layout.state.children[2] as SceneGridRow).state.children[0] as SceneGridItem).state.body

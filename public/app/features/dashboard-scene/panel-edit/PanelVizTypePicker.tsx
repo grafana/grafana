@@ -3,19 +3,14 @@ import React, { useMemo, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
-import { SceneGridItem, VizPanel } from '@grafana/scenes';
 import { CustomScrollbar, Field, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
-import { PanelModel } from 'app/features/dashboard/state';
-import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
+import { PanelLibraryOptionsGroup2 } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypePicker } from 'app/features/panel/components/VizTypePicker/VizTypePicker';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
-import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { PanelModelCompatibilityWrapper } from '../utils/PanelModelCompatibilityWrapper';
 
 import { VizPanelManager } from './VizPanelManager';
@@ -27,16 +22,15 @@ export interface Props {
 }
 
 export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
-  const { panel, sourcePanel } = vizManager.useState();
+  const { sourcePanel } = vizManager.useState();
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
 
   const isWidgetEnabled = false;
   const tabKey = isWidgetEnabled ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
   const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
+  const panel = sourcePanel.resolve();
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
-  const vizPanel = sourcePanel.resolve();
-  const oldPanelModel = getOldPanelModel(vizPanel);
 
   const [listMode, setListMode] = useLocalStorage(tabKey, defaultTab);
 
@@ -83,9 +77,9 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
           />
         )}
         {listMode === VisualizationSelectPaneTab.LibraryPanels && (
-          <PanelLibraryOptionsGroup
+          <PanelLibraryOptionsGroup2
             searchQuery={searchQuery}
-            panel={oldPanelModel}
+            panel={panelModel}
             key="Panel Library"
             vizPanelManager={vizManager}
           />
@@ -93,18 +87,6 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
       </CustomScrollbar>
     </div>
   );
-}
-
-function getOldPanelModel(vizPanel: VizPanel) {
-  const parent = vizPanel.parent instanceof LibraryVizPanel ? vizPanel.parent?.parent : vizPanel.parent;
-
-  if (!(parent instanceof SceneGridItem) && !(parent instanceof PanelRepeaterGridItem)) {
-    throw new Error('Parent is not a SceneGridItem or PanelRepeaterGridItem');
-  }
-
-  const panelJson = gridItemToPanel(parent);
-
-  return new PanelModel(panelJson);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
