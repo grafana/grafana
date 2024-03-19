@@ -133,13 +133,12 @@ export const AnnotationsPlugin2 = ({
     });
 
     config.addHook('draw', (u) => {
-      const isHorizontalGraphOrientation = u.scales.x.ori === 0;
       let annos = annoRef.current;
 
       const ctx = u.ctx;
 
-      let y0 = isHorizontalGraphOrientation ? u.bbox.left : u.bbox.top;
-      let y1 = isHorizontalGraphOrientation ? y0 + u.bbox.width : y0 + u.bbox.height;
+      let y0 = u.bbox.left;
+      let y1 = y0 + u.bbox.width;
 
       ctx.save();
 
@@ -149,6 +148,8 @@ export const AnnotationsPlugin2 = ({
 
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
+
+      const isHorizontalGraphOrientation = u.scales.x.ori === 0;
 
       annos.forEach((frame) => {
         let vals = getVals(frame);
@@ -201,54 +202,55 @@ export const AnnotationsPlugin2 = ({
       let vals = getVals(frame);
 
       let markers: React.ReactNode[] = [];
+      const isHorizontalGraphOrientation = plot.scales.x.orientation === 0;
+      if (isHorizontalGraphOrientation) {
+        for (let i = 0; i < vals.time.length; i++) {
+          let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
+          let left = plot.valToPos(vals.time[i], 'x');
+          let style: React.CSSProperties | null = null;
+          let className = '';
+          let isVisible = true;
 
-      for (let i = 0; i < vals.time.length; i++) {
-        let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
-        let left = plot.valToPos(vals.time[i], 'x');
-        let style: React.CSSProperties | null = null;
-        let className = '';
-        let isVisible = true;
+          if (vals.isRegion?.[i]) {
+            let right = plot.valToPos(vals.timeEnd?.[i], 'x');
 
-        if (vals.isRegion?.[i]) {
-          let right = plot.valToPos(vals.timeEnd?.[i], 'x');
+            isVisible = left < plot.rect.width && right > 0;
 
-          isVisible = left < plot.rect.width && right > 0;
+            if (isVisible) {
+              let clampedLeft = Math.max(0, left);
+              let clampedRight = Math.min(plot.rect.width, right);
 
-          if (isVisible) {
-            let clampedLeft = Math.max(0, left);
-            let clampedRight = Math.min(plot.rect.width, right);
+              style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft };
+              className = styles.annoRegion;
+            }
+          } else {
+            isVisible = left > 0 && left <= plot.rect.width;
 
-            style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft };
-            className = styles.annoRegion;
+            if (isVisible) {
+              style = { left, borderBottomColor: color };
+              className = styles.annoMarker;
+            }
           }
-        } else {
-          isVisible = left > 0 && left <= plot.rect.width;
 
+          // @TODO: Reset newRange after annotation is saved
           if (isVisible) {
-            style = { left, borderBottomColor: color };
-            className = styles.annoMarker;
+            let isWip = frame.meta?.custom?.isWip;
+
+            markers.push(
+              <AnnotationMarker2
+                annoIdx={i}
+                annoVals={vals}
+                className={className}
+                style={style}
+                timeZone={timeZone}
+                key={`${frameIdx}:${i}`}
+                exitWipEdit={isWip ? exitWipEdit : null}
+                portalRoot={portalRoot}
+              />
+            );
           }
-        }
-
-        // @TODO: Reset newRange after annotation is saved
-        if (isVisible) {
-          let isWip = frame.meta?.custom?.isWip;
-
-          markers.push(
-            <AnnotationMarker2
-              annoIdx={i}
-              annoVals={vals}
-              className={className}
-              style={style}
-              timeZone={timeZone}
-              key={`${frameIdx}:${i}`}
-              exitWipEdit={isWip ? exitWipEdit : null}
-              portalRoot={portalRoot}
-            />
-          );
         }
       }
-
       return markers;
     });
 
@@ -263,6 +265,7 @@ const getStyles = () => ({
     position: 'absolute',
     width: 0,
     height: 0,
+    // Todo this is where the triangle is created
     borderLeft: '5px solid transparent',
     borderRight: '5px solid transparent',
     borderBottomWidth: '5px',
