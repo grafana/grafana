@@ -148,7 +148,7 @@
     "@types/react-dom": "18.2.22",
     "@types/react-highlight-words": "0.16.7",
     "@types/react-router-dom": "5.3.3",
-    "@types/react-table": "7.7.19",
+    "@types/react-table": "7.7.20",
     "@types/react-test-renderer": "18.0.7",
     "@types/react-transition-group": "4.4.10",
     "@types/react-window": "1.8.8",
