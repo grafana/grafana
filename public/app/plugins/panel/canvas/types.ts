@@ -43,3 +43,13 @@ export interface ConnectionState {
   info: CanvasConnection;
   vertices?: ConnectionCoordinates[];
 }
+
+export enum LineStyle {
+  Solid = 'solid',
+  Dashed = 'dashed',
+}
+
+export enum StrokeDasharray {
+  Solid = '0',
+  Dashed = '8 8',
+}
