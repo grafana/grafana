@@ -1,4 +1,7 @@
-import { GroupByVariable, MultiValueVariable, sceneGraph } from '@grafana/scenes';
+import { LoadingState, TypedVariableModel } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { AdHocFiltersVariable, GroupByVariable, MultiValueVariable, sceneGraph } from '@grafana/scenes';
+import { VariableModel } from '@grafana/schema';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -6,7 +9,6 @@ import { transformSceneToSaveModel } from '../serialization/transformSceneToSave
 import { findVizPanelByKey } from '../utils/utils';
 
 import { getDashboardChangesFromScene } from './getDashboardChangesFromScene';
-import { config } from '@grafana/runtime';
 
 describe('getDashboardChangesFromScene', () => {
   it('Can detect no changes', () => {
@@ -117,6 +119,63 @@ describe('getDashboardChangesFromScene', () => {
 
         const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
         variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
+        const result = getDashboardChangesFromScene(dashboard, false, false);
+
+        expect(result.hasVariableValueChanges).toBe(false);
+        expect(result.hasChanges).toBe(true);
+        expect(result.diffCount).toBe(1);
+      });
+
+      it('Can detect adhoc filter static options change', () => {
+        const adhocVar = {
+          id: 'adhoc',
+          name: 'adhoc',
+          label: 'Adhoc Label',
+          description: 'Adhoc Description',
+          type: 'adhoc',
+          datasource: {
+            uid: 'gdev-prometheus',
+            type: 'prometheus',
+          },
+          filters: [],
+          baseFilters: [],
+          defaultKeys: [
+            {
+              text: 'Host',
+              value: 'host',
+            },
+            {
+              text: 'Region',
+              value: 'region',
+            },
+          ],
+        } as VariableModel;
+
+        const dashboard = transformSaveModelToScene({
+          dashboard: {
+            title: 'hello',
+            uid: 'my-uid',
+            schemaVersion: 30,
+            panels: [
+              {
+                id: 1,
+                title: 'Panel 1',
+                type: 'text',
+              },
+            ],
+            version: 10,
+            templating: {
+              list: [adhocVar],
+            },
+          },
+          meta: {},
+        });
+
+        const initialSaveModel = transformSceneToSaveModel(dashboard);
+        dashboard.setInitialSaveModel(initialSaveModel);
+
+        const variable = sceneGraph.lookupVariable('adhoc', dashboard) as AdHocFiltersVariable;
+        variable.setState({ defaultKeys: [{ text: 'Host', value: 'host' }] });
         const result = getDashboardChangesFromScene(dashboard, false, false);
 
         expect(result.hasVariableValueChanges).toBe(false);
