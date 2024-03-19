@@ -877,7 +877,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: us.gcr.io/kubernetes-dev/mimir-distroless:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
+  image: us.gcr.io/kubernetes-dev/mimir:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -1325,7 +1325,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: us.gcr.io/kubernetes-dev/mimir-distroless:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
+  image: us.gcr.io/kubernetes-dev/mimir:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -2326,7 +2326,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: us.gcr.io/kubernetes-dev/mimir-distroless:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
+  image: us.gcr.io/kubernetes-dev/mimir:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -4124,7 +4124,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: us.gcr.io/kubernetes-dev/mimir-distroless:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
+  image: us.gcr.io/kubernetes-dev/mimir:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -4642,7 +4642,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us.gcr.io/kubernetes-dev/mimir-distroless:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us.gcr.io/kubernetes-dev/mimir:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
@@ -4677,7 +4677,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL us.gcr.io/kubernetes-dev/mimir-distroless:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
+  - trivy --exit-code 1 --severity HIGH,CRITICAL us.gcr.io/kubernetes-dev/mimir:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
@@ -4922,6 +4922,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: baaab5ea090f8a9d886448aa69480869ca3c625ef88511af994a80b2091b6887
+hmac: 474420078e68f3b51a76abb99ba723671130f524ed00c42e66169c6912b6fbba
 
 ...
