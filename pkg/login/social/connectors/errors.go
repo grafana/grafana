@@ -10,6 +10,10 @@ var (
 	ErrIDTokenNotFound = errors.New("id_token not found")
 	ErrEmailNotFound   = errors.New("error getting user info: no email found in access token")
 
+	errMissingRequiredSubClaim = errutil.Unauthorized(
+		"oauth.missing_sub_claim",
+		errutil.WithPublicMessage("Missing required sub claim."),
+	)
 	errRoleAttributePathNotSet = errutil.BadRequest("oauth.role_attribute_path_not_set",
 		errutil.WithPublicMessage("Instance role_attribute_path misconfigured, please contact your administrator"))
 

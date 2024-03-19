@@ -259,6 +259,10 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		}
 	}
 
+	if userInfo.Id == "" {
+		return nil, errMissingRequiredSubClaim.Errorf("missing required sub claim")
+	}
+
 	if userInfo.Role == "" && !s.info.SkipOrgRoleSync {
 		if s.info.RoleAttributeStrict {
 			return nil, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute")
