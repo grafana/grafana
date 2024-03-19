@@ -109,7 +109,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     if (gridItem instanceof DashboardGridItem) {
       this.handleRepeatOptionChanges(gridItem);
-      // }
     } else {
       console.error('Unsupported scene object type');
     }
