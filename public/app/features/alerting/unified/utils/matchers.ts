@@ -76,8 +76,8 @@ export function parsePromQLStyleMatcher(matcher: string): Matcher[] {
     .flatMap(parseMatcher)
     .map((matcher) => ({
       ...matcher,
-      name: unquoteWithUnescape(matcher.name),
-      value: unquoteWithUnescape(matcher.value),
+      name: matcher.name,
+      value: matcher.value,
     }));
 }
 
