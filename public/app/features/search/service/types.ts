@@ -1,5 +1,6 @@
 import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { PermissionLevelString } from 'app/types';
 
 export interface FacetField {
   field: string;
@@ -25,6 +26,7 @@ export interface SearchQuery {
   limit?: number;
   from?: number;
   starred?: boolean;
+  permission?: PermissionLevelString;
 }
 
 export interface DashboardQueryResult {
