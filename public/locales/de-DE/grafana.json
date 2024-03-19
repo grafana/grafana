@@ -1344,7 +1344,7 @@
     "header": {
       "collapse-row": "Abfragezeile einklappen",
       "datasource-help": "Datenquellen-Hilfe anzeigen",
-      "hide-query": "Abfrage deaktivieren",
+      "disable-query": "Abfrage deaktivieren",
       "drag-and-drop": "Ziehen und Ablegen zum Neuordnen",
       "duplicate-query": "Abfrage duplizieren",
       "expand-row": "Suchzeile erweitern",

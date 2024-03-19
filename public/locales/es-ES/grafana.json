@@ -1344,7 +1344,7 @@
     "header": {
       "collapse-row": "Contraer la fila de la consulta",
       "datasource-help": "Mostrar la ayuda de la fuente de datos",
-      "hide-query": "Deshabilitar consulta",
+      "disable-query": "Deshabilitar consulta",
       "drag-and-drop": "Arrastrar y soltar para reordenar",
       "duplicate-query": "Duplicar consulta",
       "expand-row": "Expandir la fila de la consulta",
