@@ -46,7 +46,6 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const { data } = sceneGraph.getData(vizManager).useState();
     const styles = useStyles2(getStyles);
 
-    console.log('structurREv', data?.structureRev);
 
     return (
       <>
