@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
@@ -21,18 +22,33 @@ const Cloud = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>
   const { data } = props;
   const styles = getStyles(config.theme2, data);
 
+  // uuid needed to avoid id conflicts when multiple elements are rendered
+  const [uniqueId] = useState(() => uuidv4());
+
   return (
     <div className={styles.container}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        xmlnsXlink="http://www.w3.org/1999/xlink"
         viewBox="0 0 110 70"
         width="100%"
         height="100%"
-        className={styles.element}
         preserveAspectRatio="none"
       >
-        <path d="M 23 13 C -1 13 -7 33 12.2 37 C -7 45.8 14.6 65 30.2 57 C 41 73 77 73 89 57 C 113 57 113 41 98 33 C 113 17 89 1 68 9 C 53 -3 29 -3 23 13 Z" />
+        <defs>
+          <pattern id={`image-${uniqueId}`} patternUnits="userSpaceOnUse" width="110" height="70">
+            <image xlinkHref={data?.backgroundImage} x="-50" y="-50" width="300" height="300"></image>
+          </pattern>
+          <clipPath id={`triangleClip-${uniqueId}`}>
+            <path d="M 23 13 C -1 13 -7 33 12.2 37 C -7 45.8 14.6 65 30.2 57 C 41 73 77 73 89 57 C 113 57 113 41 98 33 C 113 17 89 1 68 9 C 53 -3 29 -3 23 13 Z" />
+          </clipPath>
+        </defs>
+        {/* Apply background image within the clipping area */}
+        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#triangleClip-${uniqueId})`} />
+        <path
+          d="M 23 13 C -1 13 -7 33 12.2 37 C -7 45.8 14.6 65 30.2 57 C 41 73 77 73 89 57 C 113 57 113 41 98 33 C 113 17 89 1 68 9 C 53 -3 29 -3 23 13 Z"
+          className={styles.element}
+          style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
+        />
       </svg>
       <span className={styles.text}>{data?.text}</span>
     </div>
@@ -94,6 +110,8 @@ export const cloudItem: CanvasElementItem = {
     data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;
     data.borderColor = border?.color ? dimensionContext.getColor(border.color).value() : defaultBgColor;
     data.borderWidth = border?.width ?? 0;
+
+    data.backgroundImage = background?.image ? dimensionContext.getResource(background.image).value() : undefined;
 
     return data;
   },
@@ -170,6 +188,5 @@ const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) =>
   element: css({
     stroke: data?.borderColor,
     strokeWidth: data?.borderWidth,
-    fill: data?.backgroundColor,
   }),
 });

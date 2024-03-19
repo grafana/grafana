@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
@@ -21,18 +22,33 @@ const Parallelogram = (props: CanvasElementProps<CanvasElementConfig, CanvasElem
   const { data } = props;
   const styles = getStyles(config.theme2, data);
 
+  // uuid needed to avoid id conflicts when multiple elements are rendered
+  const [uniqueId] = useState(() => uuidv4());
+
   return (
     <div className={styles.container}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        xmlnsXlink="http://www.w3.org/1999/xlink"
-        viewBox="0 0 120 60"
+        viewBox="0 0 250 150"
         width="100%"
         height="100%"
-        className={styles.element}
         preserveAspectRatio="none"
       >
-        <path d="M 0 60 L 20 0 L 120 0 L 100 60 Z" />
+        <defs>
+          <pattern id={`image-${uniqueId}`} patternUnits="userSpaceOnUse" width="250" height="150">
+            <image xlinkHref={data?.backgroundImage} x="-50" y="-50" width="350" height="200"></image>
+          </pattern>
+          <clipPath id={`triangleClip-${uniqueId}`}>
+            <polygon points="0,150 50,0 250,0 200,150" />
+          </clipPath>
+        </defs>
+        {/* Apply background image within the clipping area */}
+        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#triangleClip-${uniqueId})`} />
+        <polygon
+          points="0,150 50,0 250,0 200,150"
+          className={styles.element}
+          style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
+        />
       </svg>
       <span className={styles.text}>{data?.text}</span>
     </div>
@@ -47,8 +63,8 @@ export const parallelogramItem: CanvasElementItem = {
   display: Parallelogram,
 
   defaultSize: {
-    width: 120,
-    height: 60,
+    width: 250,
+    height: 150,
   },
 
   getNewOptions: (options) => ({
@@ -66,8 +82,8 @@ export const parallelogramItem: CanvasElementItem = {
       },
     },
     placement: {
-      width: options?.placement?.width ?? 120,
-      height: options?.placement?.height ?? 60,
+      width: options?.placement?.width ?? 250,
+      height: options?.placement?.height ?? 150,
       top: options?.placement?.top,
       left: options?.placement?.left,
     },
@@ -94,6 +110,8 @@ export const parallelogramItem: CanvasElementItem = {
     data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;
     data.borderColor = border?.color ? dimensionContext.getColor(border.color).value() : defaultBgColor;
     data.borderWidth = border?.width ?? 0;
+
+    data.backgroundImage = background?.image ? dimensionContext.getResource(background.image).value() : undefined;
 
     return data;
   },
@@ -170,6 +188,5 @@ const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) =>
   element: css({
     stroke: data?.borderColor,
     strokeWidth: data?.borderWidth,
-    fill: data?.backgroundColor,
   }),
 });

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
@@ -21,19 +22,35 @@ const Triangle = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDa
   const { data } = props;
   const styles = getStyles(config.theme2, data);
 
+  // uuid needed to avoid id conflicts when multiple elements are rendered
+  const [uniqueId] = useState(() => uuidv4());
+
   return (
     <div className={styles.container}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        xmlnsXlink="http://www.w3.org/1999/xlink"
-        viewBox="0 0 160 138"
+        viewBox="0 0 200 200"
         width="100%"
         height="100%"
-        className={styles.element}
         preserveAspectRatio="none"
       >
-        <polygon points="0,138 80,0 160,138" />
+        <defs>
+          <pattern id={`image-${uniqueId}`} patternUnits="userSpaceOnUse" width="200" height="200">
+            <image xlinkHref={data?.backgroundImage} x="-50" y="-50" width="300" height="300"></image>
+          </pattern>
+          <clipPath id={`triangleClip-${uniqueId}`}>
+            <polygon points="100,0 200,200 0,200" />
+          </clipPath>
+        </defs>
+        {/* Apply background image within the clipping area */}
+        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#triangleClip-${uniqueId})`} />
+        <polygon
+          points="100,0 200,200 0,200"
+          className={styles.element}
+          style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
+        />
       </svg>
+
       <span className={styles.text}>{data?.text}</span>
     </div>
   );
@@ -94,6 +111,8 @@ export const triangleItem: CanvasElementItem = {
     data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;
     data.borderColor = border?.color ? dimensionContext.getColor(border.color).value() : defaultBgColor;
     data.borderWidth = border?.width ?? 0;
+
+    data.backgroundImage = background?.image ? dimensionContext.getResource(background.image).value() : undefined;
 
     return data;
   },
@@ -170,6 +189,5 @@ const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) =>
   element: css({
     stroke: data?.borderColor,
     strokeWidth: data?.borderWidth,
-    fill: data?.backgroundColor,
   }),
 });

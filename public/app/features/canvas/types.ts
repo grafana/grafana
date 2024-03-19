@@ -1,5 +1,5 @@
 import { LinkModel } from '@grafana/data/src';
-import { ColorDimensionConfig, TextDimensionConfig } from '@grafana/schema';
+import { ColorDimensionConfig, ResourceDimensionConfig, TextDimensionConfig } from '@grafana/schema';
 import {
   BackgroundImageSize,
   Constraint,
@@ -50,12 +50,16 @@ export interface TextConfig {
 
 export interface CanvasElementConfig extends TextConfig {
   backgroundColor?: ColorDimensionConfig;
+  backgroundImage?: ResourceDimensionConfig;
+  backgroundSize?: BackgroundImageSize;
   borderColor?: ColorDimensionConfig;
   borderWidth?: number;
 }
 
 export interface CanvasElementData extends TextData {
   backgroundColor?: string;
+  backgroundImage?: string;
+  backgroundSize?: string;
   borderColor?: string;
   borderWidth?: number;
 }
