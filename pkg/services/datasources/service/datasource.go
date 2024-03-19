@@ -525,20 +525,17 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 	}
 
 	if ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false) {
+		sdkProxyClientCfg, err := s.cfg.SecureSocksDSProxy.SDK()
+		if err != nil {
+			return nil, err
+		}
 		proxyOpts := &sdkproxy.Options{
 			Enabled: true,
 			Auth: &sdkproxy.AuthOptions{
 				Username: ds.JsonData.Get("secureSocksProxyUsername").MustString(ds.UID),
 			},
-			Timeouts: &sdkproxy.DefaultTimeoutOptions,
-			ClientCfg: &sdkproxy.ClientCfg{
-				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCert,
-				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKey,
-				RootCA:        s.cfg.SecureSocksDSProxy.RootCA,
-				ProxyAddress:  s.cfg.SecureSocksDSProxy.ProxyAddress,
-				ServerName:    s.cfg.SecureSocksDSProxy.ServerName,
-				AllowInsecure: s.cfg.SecureSocksDSProxy.AllowInsecure,
-			},
+			Timeouts:  &sdkproxy.DefaultTimeoutOptions,
+			ClientCfg: sdkProxyClientCfg,
 		}
 
 		if val, exists, err := s.DecryptedValue(ctx, ds, "secureSocksProxyPassword"); err == nil && exists {
