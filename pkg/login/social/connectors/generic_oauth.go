@@ -138,23 +138,6 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	return nil
 }
 
-// TODOD: remove this in the next PR and use the isGroupMember from social.go
-func (s *SocialGenericOAuth) isGroupMember(groups []string) bool {
-	if len(s.info.AllowedGroups) == 0 {
-		return true
-	}
-
-	for _, allowedGroup := range s.info.AllowedGroups {
-		for _, group := range groups {
-			if group == allowedGroup {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
 func (s *SocialGenericOAuth) isTeamMember(ctx context.Context, client *http.Client) bool {
 	if len(s.teamIds) == 0 {
 		return true
