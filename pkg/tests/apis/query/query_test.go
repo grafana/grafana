@@ -152,6 +152,6 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 		result.ContentType(&contentType)
 		result.StatusCode(&statusCode)
 		require.Equal(t, "application/json", contentType)
-		require.Equal(t, 400, statusCode)
+		require.Equal(t, http.StatusBadRequest, statusCode)
 	})
 }
