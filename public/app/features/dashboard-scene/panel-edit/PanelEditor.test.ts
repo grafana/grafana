@@ -60,9 +60,10 @@ describe('PanelEditor', () => {
   });
 
   describe('Handling library panels', () => {
-    it('should call the api with the updated panel', async () => {
+    it('should save and commit the updated panel to the dashboard', async () => {
       pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
       const panel = new VizPanel({
+        title: 'Title',
         key: 'panel-1',
         pluginId: 'text',
       });
@@ -86,9 +87,13 @@ describe('PanelEditor', () => {
         _loadedPanel: libraryPanelModel,
       });
 
-      const apiCall = jest
-        .spyOn(libAPI, 'updateLibraryVizPanel')
-        .mockResolvedValue({ type: 'panel', ...libAPI.libraryVizPanelToSaveModel(libraryPanel), version: 2 });
+      const apiCall = jest.spyOn(libAPI, 'updateLibraryVizPanel').mockResolvedValue({
+        type: 'panel',
+        ...libAPI.libraryVizPanelToSaveModel(
+          libraryPanel.clone({ name: 'changed name', panel: panel.clone({ title: 'changed title' }) })
+        ),
+        version: 2,
+      });
 
       const editScene = buildPanelEditScene(panel);
       const gridItem = new SceneGridItem({ body: libraryPanel });
@@ -106,14 +111,16 @@ describe('PanelEditor', () => {
       (editScene.state.vizManager.state.sourcePanel.resolve().parent as LibraryVizPanel).setState({
         name: 'changed name',
       });
-      editScene.state.vizManager.commitChanges();
+
+      await editScene.onConfirmSaveLibraryPanel();
 
       const calledWith = apiCall.mock.calls[0][0].state;
       expect(calledWith.panel?.state.title).toBe('changed title');
       expect(calledWith.name).toBe('changed name');
 
-      await new Promise(process.nextTick); // Wait for mock api to return and update the library panel
       expect((gridItem.state.body as LibraryVizPanel).state._loadedPanel?.version).toBe(2);
+      expect((gridItem.state.body as LibraryVizPanel).state.panel?.state.title).toBe('changed title');
+      expect((gridItem.state.body as LibraryVizPanel).state.name).toBe('changed name');
     });
   });
 

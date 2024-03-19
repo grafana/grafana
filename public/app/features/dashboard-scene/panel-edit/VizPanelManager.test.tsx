@@ -6,7 +6,6 @@ import { SceneGridItem, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
-import * as libAPI from 'app/features/library-panels/state/api';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
@@ -212,45 +211,6 @@ describe('VizPanelManager', () => {
   });
 
   describe('library panels', () => {
-    it('saves library panels on commit', () => {
-      const panel = new VizPanel({
-        key: 'panel-1',
-        pluginId: 'text',
-      });
-
-      const libraryPanelModel = {
-        title: 'title',
-        uid: 'uid',
-        name: 'libraryPanelName',
-        model: vizPanelToPanel(panel),
-        type: 'panel',
-        version: 1,
-      };
-
-      const libraryPanel = new LibraryVizPanel({
-        isLoaded: true,
-        title: libraryPanelModel.title,
-        uid: libraryPanelModel.uid,
-        name: libraryPanelModel.name,
-        panelKey: panel.state.key!,
-        panel: panel,
-        _loadedPanel: libraryPanelModel,
-      });
-
-      new SceneGridItem({ body: libraryPanel });
-
-      const panelManager = VizPanelManager.createFor(panel);
-
-      const apiCall = jest
-        .spyOn(libAPI, 'updateLibraryVizPanel')
-        .mockResolvedValue({ type: 'panel', ...libAPI.libraryVizPanelToSaveModel(libraryPanel) });
-
-      panelManager.state.panel.setState({ title: 'new title' });
-      panelManager.commitChanges();
-
-      expect(apiCall.mock.calls[0][0].state.panel?.state.title).toBe('new title');
-    });
-
     it('unlinks library panel', () => {
       const panel = new VizPanel({
         key: 'panel-1',
