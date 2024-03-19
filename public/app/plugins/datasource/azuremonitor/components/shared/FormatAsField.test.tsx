@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import createMockDatasource from '../__mocks__/datasource';
-import createMockQuery from '../__mocks__/query';
-import { ResultFormat } from '../types';
+import createMockDatasource from '../../__mocks__/datasource';
+import createMockQuery from '../../__mocks__/query';
+import { ResultFormat } from '../../types';
+import { setFormatAs } from '../TracesQueryEditor/setQueryValue';
 
 import FormatAsField from './FormatAsField';
-import { setFormatAs } from './TracesQueryEditor/setQueryValue';
 
 const options = [
   { label: 'Table', value: ResultFormat.Table },

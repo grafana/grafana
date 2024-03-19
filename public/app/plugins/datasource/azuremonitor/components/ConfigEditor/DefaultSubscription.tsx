@@ -3,9 +3,9 @@ import React, { useEffect, useReducer } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select, Button, Field } from '@grafana/ui';
 
-import { isCredentialsComplete } from '../credentials';
-import { selectors } from '../e2e/selectors';
-import { AzureCredentials, AzureDataSourceJsonData } from '../types';
+import { isCredentialsComplete } from '../../credentials';
+import { selectors } from '../../e2e/selectors';
+import { AzureCredentials, AzureDataSourceJsonData } from '../../types';
 
 export interface Props {
   options: AzureDataSourceJsonData;
