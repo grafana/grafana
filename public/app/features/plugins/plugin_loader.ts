@@ -12,8 +12,10 @@ import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
 import { registerPluginInCache } from './loader/cache';
-import { sharedDependenciesMap } from './loader/sharedDependencies';
+// SystemJS has to be imported before the sharedDependenciesMap
 import { SystemJS } from './loader/systemjs';
+// eslint-disable-next-line import/order
+import { sharedDependenciesMap } from './loader/sharedDependencies';
 import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemjsHooks';
 import { SystemJSWithLoaderHooks } from './loader/types';
 import { buildImportMap, resolveModulePath } from './loader/utils';
