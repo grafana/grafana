@@ -60,7 +60,8 @@
     "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
     "plugin:build": "nx run-many -t build --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
     "plugin:build:commit": "nx run-many -t build:commit --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
-    "plugin:build:dev": "nx run-many -t dev --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\""
+    "plugin:build:dev": "nx run-many -t dev --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
+    "generate-icons": "cd packages/grafana-icons && yarn generate"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v11-0/",

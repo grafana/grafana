@@ -26,7 +26,6 @@
     "./LICENSE_APACHE2"
   ],
   "scripts": {
-    "postinstall": "yarn generate",
     "clean": "rimraf ./dist ./compiled ./package.tgz ./src/icons-gen",
     "generate": "yarn clean && npx @svgr/cli ./svg && mv ./src/icons-gen/index.ts ./src",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
