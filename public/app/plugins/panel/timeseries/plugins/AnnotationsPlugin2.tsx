@@ -136,9 +136,10 @@ export const AnnotationsPlugin2 = ({
       let annos = annoRef.current;
 
       const ctx = u.ctx;
+      const isHorizontalGraphOrientation = u.scales.x.ori === 0;
 
-      let y0 = u.bbox.left;
-      let y1 = y0 + u.bbox.width;
+      let y0 = isHorizontalGraphOrientation ? u.bbox.top : u.bbox.left;
+      let y1 = isHorizontalGraphOrientation ? y0 + u.bbox.height : y0 + u.bbox.width;
 
       ctx.save();
 
@@ -148,8 +149,6 @@ export const AnnotationsPlugin2 = ({
 
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
-
-      const isHorizontalGraphOrientation = u.scales.x.ori === 0;
 
       annos.forEach((frame) => {
         let vals = getVals(frame);
@@ -203,7 +202,7 @@ export const AnnotationsPlugin2 = ({
 
       let markers: React.ReactNode[] = [];
       // annotation markers are not rendered in vertical orientation, yet
-      const isHorizontalGraphOrientation = plot.scales.x.orientation === 0;
+      const isHorizontalGraphOrientation = plot.scales.x.ori === 0;
       if (isHorizontalGraphOrientation) {
         for (let i = 0; i < vals.time.length; i++) {
           let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
