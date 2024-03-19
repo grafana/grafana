@@ -30,6 +30,7 @@ func TestReadSecureSocksDSProxySettings(t *testing.T) {
 	require.NoError(t, err)
 
 	rootCACertFilePath := filepath.Join(tempDir, "ca.cert")
+	// nolint:gosec
 	caCertFile, err := os.Create(rootCACertFilePath)
 	require.NoError(t, err)
 	defer func() {
@@ -202,6 +203,7 @@ func createTestRootCAFile(t *testing.T, path string) string {
 	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivKey.PublicKey, caPrivKey)
 	require.NoError(t, err)
 
+	// nolint:gosec
 	caCertFile, err := os.Create(path)
 	require.NoError(t, err)
 
