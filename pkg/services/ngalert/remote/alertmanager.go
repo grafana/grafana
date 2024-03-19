@@ -251,7 +251,6 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		ctx,
 		string(rawConfig),
 		fmt.Sprintf("%x", md5.Sum(rawConfig)),
-		1, // TODO: remove
 		time.Now().Unix(),
 		false,
 	)
