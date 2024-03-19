@@ -125,8 +125,12 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remo
 				semverConstraint: ">= 3.4.0",
 			},
 			{
-				name:             SvgSanitization,
+				name:             SVGSanitization,
 				semverConstraint: ">= 3.5.0",
+			},
+			{
+				name:             PDFRendering,
+				semverConstraint: ">= 3.10.0",
 			},
 		},
 		Cfg:                   cfg,
@@ -292,6 +296,16 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		return rs.renderUnavailableImage(), nil
 	}
 
+	if renderType == RenderPDF || opts.Encoding == "pdf" {
+		if !rs.features.IsEnabled(ctx, featuremgmt.FlagNewPDFRendering) {
+			return nil, fmt.Errorf("feature 'newPDFRendering' disabled")
+		}
+
+		if err := rs.IsCapabilitySupported(ctx, PDFRendering); err != nil {
+			return nil, err
+		}
+	}
+
 	rs.log.Info("Rendering", "path", opts.Path)
 	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor == 0 {
 		opts.DeviceScaleFactor = 1
@@ -327,7 +341,7 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session
 }
 
 func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
-	capability, err := rs.HasCapability(ctx, SvgSanitization)
+	capability, err := rs.HasCapability(ctx, SVGSanitization)
 	if err != nil {
 		return nil, err
 	}
