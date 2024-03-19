@@ -104,8 +104,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const panelManager = this.state.vizManager;
     const sourcePanel = panelManager.state.sourcePanel.resolve();
     const sourcePanelParent = sourcePanel!.parent;
+    const isLibraryPanel = sourcePanelParent instanceof LibraryVizPanel;
 
-    const gridItem = sourcePanelParent instanceof LibraryVizPanel ? sourcePanelParent.parent : sourcePanelParent;
+    const gridItem = isLibraryPanel ? sourcePanelParent.parent : sourcePanelParent;
+
+    if (isLibraryPanel) {
+      // Library panels handled separately
+      return;
+    }
 
     if (gridItem instanceof DashboardGridItem) {
       this.handleRepeatOptionChanges(gridItem);
