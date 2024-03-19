@@ -274,7 +274,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         targets.nativeSearch[0].queryType === 'nativeSearch'
       ) {
         const migratedQuery = migrateFromSearchToTraceQLSearch(targets.nativeSearch[0]);
-        targets.traceqlSearch = [migratedQuery];
+        if (targets.traceqlSearch?.length) {
+          targets.traceqlSearch.push(migratedQuery);
+        } else {
+          targets.traceqlSearch = [migratedQuery];
+        }
       }
     }
 
