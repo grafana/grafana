@@ -193,6 +193,7 @@ func (s *service) start(ctx context.Context) error {
 
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 	// Install schemas
+	initialSize := len(aggregator.APIVersionPriorities)
 	for i, b := range builders {
 		groupVersions = append(groupVersions, b.GetGroupVersion())
 		if err := b.InstallSchema(Scheme); err != nil {
@@ -201,7 +202,7 @@ func (s *service) start(ctx context.Context) error {
 
 		if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
 			// set the priority for the group+version
-			aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: int32(i + 1)}
+			aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
 		}
 
 		auth := b.GetAuthorizer()
@@ -261,8 +262,7 @@ func (s *service) start(ctx context.Context) error {
 
 	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
 		// Create a connection to the gRPC server
-		// TODO: support configuring the gRPC server address
-		conn, err := grpc.Dial("localhost:10000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
@@ -379,7 +379,7 @@ func (s *service) startAggregator(
 		return nil, err
 	}
 
-	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig.KubeAggregatorConfig, aggregatorConfig.Informers, aggregatorConfig.RemoteServicesConfig, server)
+	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, server)
 	if err != nil {
 		return nil, err
 	}

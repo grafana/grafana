@@ -111,7 +111,7 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 		return nil
 	}
 	namespace, id := identity.GetNamespacedID()
-	if namespace != authn.NamespaceUser {
+	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
 		return nil
 	}
 
