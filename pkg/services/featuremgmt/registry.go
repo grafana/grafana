@@ -906,9 +906,10 @@ var (
 		},
 		{
 			Name:            "annotationPermissionUpdate",
-			Description:     "Separate annotation permissions from dashboard permissions to allow for more granular control.",
-			Stage:           FeatureStageExperimental,
+			Description:     "Change the way annotation permissions work by scoping them to folders.",
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresDevMode: false,
+			Expression:      "true", // enabled by default
 			Owner:           identityAccessTeam,
 		},
 		{
