@@ -108,32 +108,32 @@ export const getMatcherQueryParams = (labels: Labels) => {
  * this function will normalize all of the different ways to define matchers in to a single one.
  */
 export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
-  let matchers: ObjectMatcher[] = [];
+  let routeMatchers: ObjectMatcher[] = [];
 
   if (route.matchers) {
     route.matchers.forEach((matcher) => {
       const parsedMatchers = parseMatcherToArray(matcher).map(matcherToObjectMatcher);
-      matchers = matchers.concat(parsedMatchers);
+      routeMatchers = routeMatchers.concat(parsedMatchers);
     });
   }
 
   if (route.object_matchers) {
-    matchers.push(...route.object_matchers);
+    routeMatchers.push(...route.object_matchers);
   }
 
   if (route.match_re) {
     Object.entries(route.match_re).forEach(([label, value]) => {
-      matchers.push([label, MatcherOperator.regex, value]);
+      routeMatchers.push([label, MatcherOperator.regex, value]);
     });
   }
 
   if (route.match) {
     Object.entries(route.match).forEach(([label, value]) => {
-      matchers.push([label, MatcherOperator.equal, value]);
+      routeMatchers.push([label, MatcherOperator.equal, value]);
     });
   }
 
-  return matchers;
+  return routeMatchers;
 };
 
 /**
