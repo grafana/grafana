@@ -235,7 +235,6 @@ export function getPanelFrameCategory2(
     .addItem(
       new OptionsPaneItemDescriptor({
         title: 'Description',
-        description: panel.state.description,
         value: panel.state.description,
         render: function renderDescription() {
           const { description } = panel.useState();

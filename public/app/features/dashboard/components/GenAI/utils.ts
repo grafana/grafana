@@ -124,7 +124,7 @@ export function getDashboardPanelPrompt(dashboard: DashboardModel): string {
 }
 
 export function getFilteredPanelString(panel: Panel): string {
-  const keysToKeep: Array<keyof Panel> = ['id', 'datasource', 'title', 'description', 'targets', 'type', 'datasource'];
+  const keysToKeep: Array<keyof Panel> = ['datasource', 'title', 'description', 'targets', 'type', 'datasource'];
 
   const filteredPanel: Partial<Panel> = {
     ...pick(panel, keysToKeep),
