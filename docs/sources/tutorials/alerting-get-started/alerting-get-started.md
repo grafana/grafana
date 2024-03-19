@@ -39,7 +39,7 @@ You will need to download the files to your local machine.
     docker compose up -d
     ```
 
-    The first time you run docker compose up -d, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
+    The first time you run docker `compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
     {{< admonition type="note" >}}
     If you already have Grafana, Loki, or Prometheus running on your system, then you might see errors because the Docker image is trying to use ports that your local installations are already using. Stop the services, then run the command again.
     {{< /admonition >}}
