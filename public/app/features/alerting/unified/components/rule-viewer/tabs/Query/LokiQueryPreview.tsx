@@ -8,7 +8,11 @@ interface Props {
 }
 
 const LokiQueryPreview = ({ query }: Props) => {
-  return <RawQuery query={query} language={{ grammar: lokiGrammar, name: 'promql' }} />;
+  return (
+    <pre>
+      <RawQuery query={query} language={{ grammar: lokiGrammar, name: 'promql' }} />
+    </pre>
+  );
 };
 
 export default LokiQueryPreview;
