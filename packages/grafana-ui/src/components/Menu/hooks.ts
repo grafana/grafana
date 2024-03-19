@@ -8,8 +8,6 @@ const UNFOCUSED = -1;
 export interface UseMenuFocusProps {
   localRef: RefObject<HTMLDivElement>;
   isMenuOpen?: boolean;
-  openedWithArrow?: boolean;
-  setOpenedWithArrow?: (openedWithArrow: boolean) => void;
   close?: () => void;
   onOpen?: (focusOnItem: (itemId: number) => void) => void;
   onClose?: () => void;
@@ -23,8 +21,6 @@ export type UseMenuFocusReturn = [(event: React.KeyboardEvent) => void];
 export const useMenuFocus = ({
   localRef,
   isMenuOpen,
-  openedWithArrow,
-  setOpenedWithArrow,
   close,
   onOpen,
   onClose,
@@ -33,11 +29,10 @@ export const useMenuFocus = ({
   const [focusedItem, setFocusedItem] = useState(UNFOCUSED);
 
   useEffect(() => {
-    if (isMenuOpen && openedWithArrow) {
+    if (isMenuOpen) {
       setFocusedItem(0);
-      setOpenedWithArrow?.(false);
     }
-  }, [isMenuOpen, openedWithArrow, setOpenedWithArrow]);
+  }, [isMenuOpen]);
 
   useEffect(() => {
     const menuItems = localRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
