@@ -1335,7 +1335,7 @@ func TestTransformQueryError(t *testing.T) {
 func TestGenerateConnectionString(t *testing.T) {
 	kerberosLookup := []kerberos.KerberosLookup{
 		{
-			Address:                 "example.host:0",
+			Address:                 "example.host",
 			DBName:                  "testDB",
 			User:                    "testUser",
 			CredentialCacheFilename: "/tmp/cache",
