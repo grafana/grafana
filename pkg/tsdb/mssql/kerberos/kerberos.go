@@ -55,9 +55,9 @@ func Krb5ParseAuthCredentials(host string, port string, db string, user string, 
 	// - realm, user, pass
 	if krb5CacheCredsFile != "" {
 		krb5DriverParams += fmt.Sprintf("server=%s;database=%s;krb5-credcachefile=%s;", host, db, krb5CacheCredsFile)
-	} else if kerberosAuth.KeytabFilePath != "" { // don't think I need realm
+	} else if kerberosAuth.KeytabFilePath != "" {
 		krb5DriverParams += fmt.Sprintf("server=%s;database=%s;user id=%s;krb5-keytabfile=%s;", host, db, user, kerberosAuth.KeytabFilePath)
-	} else if kerberosAuth.KeytabFilePath == "" { // don't think I need realm
+	} else if kerberosAuth.KeytabFilePath == "" {
 		krb5DriverParams += fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;", host, db, user, pass)
 	} else {
 		logger.Error("invalid kerberos configuration")
