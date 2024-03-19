@@ -1873,10 +1873,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@braintree/sanitize-url@npm:7.0.0":
-  version: 7.0.0
-  resolution: "@braintree/sanitize-url@npm:7.0.0"
-  checksum: 10/670e218cf1dbda1ceeedbb06487f4178848c681f0612468574688e02dcddd54456e85f94bc4a531faf2caaf01e3dbe164b0ef57188f9df21a4d4d58db099f0a5
+"@braintree/sanitize-url@npm:7.0.1":
+  version: 7.0.1
+  resolution: "@braintree/sanitize-url@npm:7.0.1"
+  checksum: 10/5e01e6faf81b2289c8e7829aed185c834a88d501c51f569a9f2bc72549d4f2367eeb6f8a9e8039fbe3ef52b094c6afc32dc8272185c687ab6812340b1249cf4d
   languageName: node
   linkType: hard
 
@@ -3525,7 +3525,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
-    "@braintree/sanitize-url": "npm:7.0.0"
+    "@braintree/sanitize-url": "npm:7.0.1"
     "@grafana/schema": "npm:11.0.0-pre"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
