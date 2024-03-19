@@ -473,7 +473,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         />
         {!hideDisableQuery ? (
           <QueryOperationToggleAction
-            title={t('query-operation.header.disable-query', 'Hide query response')}
+            title={t('query-operation.header.disable-query', 'Hide query')}
             icon={isDisabled ? 'eye-slash' : 'eye'}
             active={isDisabled}
             onClick={this.onDisableQuery}
