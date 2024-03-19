@@ -33,7 +33,7 @@ export function ContentOutlineContextProvider({ children }: { children: ReactNod
     setOutlineItems((prevItems) => {
       if (outlineItem.level === 'root') {
         const mergeSingleChild = checkMergeSingleChild(parentlessItemsRef, outlineItem);
-        return [
+        const updatedItems = [
           ...prevItems,
           {
             ...outlineItem,
@@ -42,6 +42,8 @@ export function ContentOutlineContextProvider({ children }: { children: ReactNod
             mergeSingleChild,
           },
         ];
+
+        return updatedItems.sort(sortElementsByDocumentPosition);
       }
 
       if (outlineItem.level === 'child') {
