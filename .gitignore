@@ -214,3 +214,5 @@ public/app/plugins/**/dist/
 /public/app/features/transformers/docs/*.js
 /scripts/docs/generate-transformations.js
 
+# Go coverage files created with go test -cover -coverprogile=something.out ...
+*.out
