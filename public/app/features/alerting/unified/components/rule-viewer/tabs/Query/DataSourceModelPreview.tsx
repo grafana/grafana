@@ -19,11 +19,19 @@ interface DatasourceModelPreviewProps {
 
 function DatasourceModelPreview({ model, dataSource: datasource }: DatasourceModelPreviewProps): React.ReactNode {
   if (datasource.type === DataSourceType.Prometheus && isPromOrLokiQuery(model)) {
-    return <PrometheusQueryPreview query={model.expr} />;
+    return (
+      <pre>
+        <PrometheusQueryPreview query={model.expr} />
+      </pre>
+    );
   }
 
   if (datasource.type === DataSourceType.Loki && isPromOrLokiQuery(model)) {
-    return <LokiQueryPreview query={model.expr ?? ''} />;
+    return (
+      <pre>
+        <LokiQueryPreview query={model.expr ?? ''} />
+      </pre>
+    );
   }
 
   if (isSQLLikeQuery(model)) {
