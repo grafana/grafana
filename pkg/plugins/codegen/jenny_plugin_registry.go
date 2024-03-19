@@ -3,12 +3,12 @@ package codegen
 import (
 	"bytes"
 	"fmt"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"go/format"
 	"path/filepath"
 	"strings"
 
 	"github.com/grafana/codejen"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
 var registryPath = filepath.Join("pkg", "registry", "schemas")

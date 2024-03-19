@@ -28,7 +28,9 @@ func (j *pgoJenny) JennyName() string {
 
 func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 	hasBackend := decl.PluginMeta.Backend
-	if hasBackend == nil || !*hasBackend {
+	// We skip elasticsearch since we have problems with the generated file.
+	// This is temporal until we migrate to the new system.
+	if hasBackend == nil || !*hasBackend || decl.PluginMeta.Id == "elasticsearch" {
 		return nil, nil
 	}
 

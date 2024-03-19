@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/xlab/treeprint"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -53,8 +52,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 		return response
 	}
 
-	profileTypeId := util.Depointerizer(qm.ProfileTypeId)
-	labelSelector := util.Depointerizer(qm.LabelSelector)
+	profileTypeId := depointerizer(qm.ProfileTypeId)
+	labelSelector := depointerizer(qm.LabelSelector)
 
 	responseMutex := sync.Mutex{}
 	g, gCtx := errgroup.WithContext(ctx)
@@ -453,4 +452,13 @@ func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
 		frames = append(frames, frame)
 	}
 	return frames
+}
+
+func depointerizer[T any](v *T) T {
+	var emptyValue T
+	if v != nil {
+		emptyValue = *v
+	}
+
+	return emptyValue
 }

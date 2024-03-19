@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -37,9 +37,9 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 			logsQuery.QueryString = *logsQuery.Expression
 		}
 
-		region := util.Depointerizer(logsQuery.Region)
+		region := utils.Depointerizer(logsQuery.Region)
 		if region == "" || region == defaultRegion {
-			logsQuery.Region = util.Pointer(instance.Settings.Region)
+			logsQuery.Region = utils.Pointer(instance.Settings.Region)
 		}
 
 		logsClient, err := e.getCWLogsClient(ctx, req.PluginContext, region)
