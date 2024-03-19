@@ -57,6 +57,7 @@ COPY .bingo .bingo
 COPY pkg/util/xorm/go.* pkg/util/xorm/
 COPY pkg/apiserver/go.* pkg/apiserver/
 COPY pkg/apimachinery/go.* pkg/apimachinery/
+COPY pkg/promlib/go.* pkg/promlib/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \
