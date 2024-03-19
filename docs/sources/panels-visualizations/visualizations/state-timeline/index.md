@@ -33,7 +33,7 @@ The state timeline visualization is useful when you need to monitor and analyze 
 
 ## Configure a state timeline
 
-The following video shows you how to configure a state timeline:
+Once you have created a [dashboard](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a state timeline:
 
 {{< youtube id="a9wZHM0mdxo" >}}
 
