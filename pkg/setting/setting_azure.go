@@ -1,7 +1,7 @@
 package setting
 
 import (
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana/pkg/util"
 )
 
