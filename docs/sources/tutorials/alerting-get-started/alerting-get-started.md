@@ -52,7 +52,7 @@ You will need to download the files to your local machine.
 
     In the State column, it should say Up for all services.
 
-1. Finally, the Grafana News app should be live on localhost:8081.
+1. Finally, the Grafana News app should be live on [localhost:8081](http://localhost:8081/).
 
 ## Generate some data
 
