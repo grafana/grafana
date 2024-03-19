@@ -63,7 +63,7 @@ describe('Panel edit tests - queries', () => {
     });
 
     // Disable row with refId A
-    e2e.components.QueryEditorRow.actionButton('Disable query').eq(1).should('be.visible').click();
+    e2e.components.QueryEditorRow.actionButton('Hide query').eq(1).should('be.visible').click();
 
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
@@ -71,7 +71,7 @@ describe('Panel edit tests - queries', () => {
     });
 
     // Enable row with refId B
-    e2e.components.QueryEditorRow.actionButton('Disable query').eq(1).should('be.visible').click();
+    e2e.components.QueryEditorRow.actionButton('Hide query').eq(1).should('be.visible').click();
 
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
