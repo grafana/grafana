@@ -336,7 +336,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	}
 
 	var userAuth *login.UserAuth
-	// Special case for generic oauth: generic oauth does not store authID,
+	// Special case for generic oauth: generic oauth did not use to store authID,
 	// so we need to find the user first then check for the userAuth connection by module and userID
 	if identity.AuthenticatedBy == login.GenericOAuthModule {
 		query := &login.GetAuthInfoQuery{AuthModule: identity.AuthenticatedBy, UserId: usr.ID}
