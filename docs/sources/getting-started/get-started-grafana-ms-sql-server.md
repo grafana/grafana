@@ -66,7 +66,7 @@ Below are the four possible ways to authenticate via Windows Active Directory/Ke
 ```json
 [
   {
-    "user": "usera@GF.LAB",
+    "user": "grot@GF.LAB",
     "database": "dbone",
     "address": "mysql1.mydomain.com:3306",
     "credentialCache": "/tmp/krb5cc_1000"

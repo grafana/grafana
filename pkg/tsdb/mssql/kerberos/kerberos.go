@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -79,7 +80,7 @@ func Krb5ParseAuthCredentials(host string, port string, db string, user string, 
 
 func getCredentialCacheFromLookup(lookupFile string, host string, port string, dbName string, user string) string {
 	logger.Info(fmt.Sprintf("reading credential cache lookup: %s", lookupFile))
-	content, err := os.ReadFile(lookupFile)
+	content, err := os.ReadFile(filepath.Clean(lookupFile))
 	if err != nil {
 		logger.Error(fmt.Sprintf("error reading: %s, %v", lookupFile, err))
 		return ""

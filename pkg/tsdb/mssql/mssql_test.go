@@ -1342,7 +1342,12 @@ func TestGenerateConnectionString(t *testing.T) {
 		},
 	}
 	tmpFile := genTempCacheFile(t, kerberosLookup)
-	defer os.Remove(tmpFile)
+	defer func() {
+		err := os.Remove(tmpFile)
+		if err != nil {
+			t.Log(err)
+		}
+	}()
 
 	testCases := []struct {
 		desc        string
