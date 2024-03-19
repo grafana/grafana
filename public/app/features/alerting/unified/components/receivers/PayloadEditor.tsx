@@ -174,7 +174,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
     flex-direction: column;
-    gap: ${theme.spacing(1)};
     height: 100%;
   `,
   tooltip: css`

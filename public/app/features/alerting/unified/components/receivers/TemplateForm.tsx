@@ -4,7 +4,7 @@ import { Location } from 'history';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm, useFormContext, Validate } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
-import { useToggle } from 'react-use';
+import { useMeasure, useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -22,6 +22,7 @@ import {
   IconButton,
   Drawer,
   InlineField,
+  FieldValidationMessage,
 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -204,40 +205,34 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
               />
             </InlineField>
             <div className={styles.contentContainer}>
-              <Field
-                label={
-                  <EditorColumnHeader
-                    label="Template content"
-                    actions={
-                      <Button
-                        icon="info-circle"
-                        size="sm"
-                        fill="outline"
-                        variant="secondary"
-                        onClick={toggleCheatsheetOpened}
-                      >
-                        Cheatsheet
-                      </Button>
-                    }
-                  />
-                }
-                error={errors?.content?.message}
-                invalid={!!errors.content?.message}
-                required
-                className={styles.contentField}
-              >
+              <div className={styles.contentField}>
+                <EditorColumnHeader
+                  label="Template content"
+                  actions={
+                    <Button
+                      icon="info-circle"
+                      size="sm"
+                      fill="outline"
+                      variant="secondary"
+                      onClick={toggleCheatsheetOpened}
+                    >
+                      Cheatsheet
+                    </Button>
+                  }
+                />
                 <AutoSizer disableHeight>
                   {({ width }) => (
                     <TemplateEditor
                       value={getValues('content')}
                       onBlur={(value) => setValue('content', value)}
                       containerStyles={styles.editorContainer}
-                      width={width}
+                      width={width - 2}
                       height={598}
                     />
                   )}
                 </AutoSizer>
-              </Field>
+                {errors.content?.message && <FieldValidationMessage>{errors?.content?.message}</FieldValidationMessage>}
+              </div>
               {isGrafanaAlertManager && (
                 <>
                   <div className={styles.templatePreview}>
@@ -465,6 +460,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   contentField: css({
+    display: 'flex',
+    flexDirection: 'column',
     flex: 3,
     marginBottom: 0,
   }),
