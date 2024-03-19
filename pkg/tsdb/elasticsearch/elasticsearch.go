@@ -71,7 +71,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *es.Da
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange, logger, tracer)
+	client, err := es.NewClient(ctx, dsInfo, req.Queries[0].TimeRange, logger, tracer)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
