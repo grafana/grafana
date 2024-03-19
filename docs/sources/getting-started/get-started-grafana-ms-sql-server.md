@@ -28,18 +28,57 @@ If you are on a Windows host but want to use Grafana and MS SQL data source on a
 
 #### Add the MS SQL data source
 
+There are several ways to authenticate in MSSQL. Start by:
+
 1. Click **Connections** in the left-side menu and filter by `mssql`.
 1. Select the **Microsoft SQL Server** option.
 1. Click **Create a Microsoft SQL Server data source** in the top right corner to open the configuration page.
-1. Enter the information specified in the table below, then click **Save & test**.
+1. Select the desired authentication method and fill in the right information as detailed below.
+1. Click **Save & test**.
+
+##### General configuration
 
 | Name       | Description                                                                                                           |
 | ---------- | --------------------------------------------------------------------------------------------------------------------- |
 | `Name`     | The data source name. This is how you refer to the data source in panels and queries.                                 |
 | `Host`     | The IP address/hostname and optional port of your MS SQL instance. If port is omitted, the default 1433 will be used. |
 | `Database` | Name of your MS SQL database.                                                                                         |
-| `User`     | Database user's login/username.                                                                                       |
-| `Password` | Database user's password.                                                                                             |
+
+##### SQL Server Authentication
+
+| Name       | Description                     |
+| ---------- | ------------------------------- |
+|            |
+| `User`     | Database user's login/username. |
+| `Password` | Database user's password.       |
+
+##### Windows Active Directory (Kerberos)
+
+Below are the four possible ways to authenticate via Windows Active Directory/Kerberos.
+
+| Method                    | Description                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Username + password**   | Enter the domain user and password                                                                                                                           |
+| **Keytab file**           | Specify the path to a valid keytab file to use that for authentication.                                                                                      |
+| **Credential cache**      | Log in on the host via `kinit` and pass the path to the credential cache. The cache path can be found by running `klist` on the host in question.            |
+| **Credential cache file** | This option allows multiple valid configurations to be present and matching is performed on host, database, and user. See the example JSON below this table. |
+
+```json
+[
+  {
+    "user": "usera@GF.LAB",
+    "database": "dbone",
+    "address": "mysql1.mydomain.com:3306",
+    "credentialCache": "/tmp/krb5cc_1000"
+  },
+  {
+    "user": "grot@GF.LAB",
+    "database": "dbtwo",
+    "address": "mysql2.gf.lab",
+    "credentialCache": "/tmp/krb5cc_1000"
+  }
+]
+```
 
 For installations from the [grafana/grafana](https://github.com/grafana/grafana/tree/main) repository, `gdev-mssql` data source is available. Once you add this data source, you can use the `Datasource tests - MSSQL` dashboard with three panels showing metrics generated from a test database.
 
