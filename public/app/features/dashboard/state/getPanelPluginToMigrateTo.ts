@@ -21,7 +21,8 @@ export function getPanelPluginToMigrateTo(panel: any, forceMigration?: boolean):
     forceMigration ||
     !config.angularSupportEnabled ||
     config.featureToggles.autoMigrateOldPanels ||
-    isUrlFeatureFlagEnabled('autoMigrateOldPanels');
+    isUrlFeatureFlagEnabled('autoMigrateOldPanels') ||
+    isUrlFeatureFlagEnabled('disableAngular');
 
   // Graph needs special logic as it can be migrated to multiple panels
   if (
