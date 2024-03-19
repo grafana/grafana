@@ -202,6 +202,7 @@ export const AnnotationsPlugin2 = ({
       let vals = getVals(frame);
 
       let markers: React.ReactNode[] = [];
+      // annotation markers are not rendered in vertical orientation, yet
       const isHorizontalGraphOrientation = plot.scales.x.orientation === 0;
       if (isHorizontalGraphOrientation) {
         for (let i = 0; i < vals.time.length; i++) {
@@ -265,7 +266,6 @@ const getStyles = () => ({
     position: 'absolute',
     width: 0,
     height: 0,
-    // Todo this is where the triangle is created
     borderLeft: '5px solid transparent',
     borderRight: '5px solid transparent',
     borderBottomWidth: '5px',
