@@ -17,9 +17,9 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, LoadingBar, useStyles2 } from '@grafana/ui';
+import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
 import { t } from 'app/core/internationalization';
 
-import { EmptyState } from './EmptyState';
 import { KBarResults } from './KBarResults';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
@@ -122,7 +122,7 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
 
   return showEmptyState ? (
-    <EmptyState />
+    <EmptySearchState />
   ) : (
     <KBarResults
       items={items}

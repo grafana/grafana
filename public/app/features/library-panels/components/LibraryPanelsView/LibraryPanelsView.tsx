@@ -4,6 +4,7 @@ import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { Pagination, Stack, useStyles2 } from '@grafana/ui';
+import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
 
 import { LibraryElementDTO } from '../../types';
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
@@ -83,7 +84,7 @@ export const LibraryPanelsView = ({
           <LibraryPanelCard.Skeleton showSecondaryActions={showSecondaryActions} />
         </>
       ) : libraryPanels.length < 1 ? (
-        <p className={styles.noPanelsFound}>No library panels found.</p>
+        <EmptySearchState message="No library panels found." />
       ) : (
         libraryPanels?.map((item, i) => (
           <LibraryPanelCard

@@ -18,10 +18,10 @@ export const EmptySearchState = ({
   showImage = true,
 }: React.PropsWithChildren<Props>) => {
   return (
-    <Box padding={2}>
+    <Box paddingY={4}>
       <Stack gap={2} direction="column" alignItems="center">
         {showImage && <GrotNotFound width={300} />}
-        <Text variant="h3">{message}</Text>
+        <Text variant="h4">{message}</Text>
         {children && <Text color="secondary">{children}</Text>}
       </Stack>
     </Box>

@@ -5,6 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { LinkButton, RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
+import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 
@@ -35,6 +36,7 @@ const mapDispatchToProps = {
 
 const mapStateToProps = (state: StoreState) => ({
   users: state.userListAdmin.users,
+  isLoading: state.userListAdmin.isLoading,
   query: state.userListAdmin.query,
   showPaging: state.userListAdmin.showPaging,
   totalPages: state.userListAdmin.totalPages,
@@ -53,6 +55,7 @@ const UserListAdminPageUnConnected = ({
   query,
   changeQuery,
   users,
+  isLoading,
   showPaging,
   changeFilter,
   filters,
@@ -96,14 +99,18 @@ const UserListAdminPageUnConnected = ({
           )}
         </div>
       </div>
-      <UsersTable
-        users={users}
-        showPaging={showPaging}
-        totalPages={totalPages}
-        onChangePage={changePage}
-        currentPage={page}
-        fetchData={changeSort}
-      />
+      {!isLoading && users.length === 0 ? (
+        <EmptySearchState />
+      ) : (
+        <UsersTable
+          users={users}
+          showPaging={showPaging}
+          totalPages={totalPages}
+          onChangePage={changePage}
+          currentPage={page}
+          fetchData={changeSort}
+        />
+      )}
     </Page.Contents>
   );
 };

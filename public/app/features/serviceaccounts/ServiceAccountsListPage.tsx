@@ -14,6 +14,7 @@ import {
   Pagination,
   Stack,
 } from '@grafana/ui';
+import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
@@ -219,19 +220,22 @@ export const ServiceAccountsListPageUnconnected = ({
             className={styles.filter}
           />
         </div>
-        {!isLoading && noServiceAccountsCreated && (
+        {!isLoading && (
           <>
-            <EmptyListCTA
-              title="You haven't created any service accounts yet."
-              buttonIcon="key-skeleton-alt"
-              buttonLink="org/serviceaccounts/create"
-              buttonTitle="Add service account"
-              buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate)}
-              proTip="Remember, you can provide specific permissions for API access to other applications."
-              proTipLink=""
-              proTipLinkTitle=""
-              proTipTarget="_blank"
-            />
+            {noServiceAccountsCreated && (
+              <EmptyListCTA
+                title="You haven't created any service accounts yet."
+                buttonIcon="key-skeleton-alt"
+                buttonLink="org/serviceaccounts/create"
+                buttonTitle="Add service account"
+                buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate)}
+                proTip="Remember, you can provide specific permissions for API access to other applications."
+                proTipLink=""
+                proTipLinkTitle=""
+                proTipTarget="_blank"
+              />
+            )}
+            {serviceAccounts.length === 0 && !noServiceAccountsCreated && <EmptySearchState />}
           </>
         )}
 
