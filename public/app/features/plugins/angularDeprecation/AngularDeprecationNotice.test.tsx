@@ -64,17 +64,16 @@ describe('AngularDeprecationNotice', () => {
     expect(reportInteraction).toHaveBeenCalledWith('angular_deprecation_notice_dismissed');
   });
 
-  describe('auto migrate link', () => {
-    const autoMigrateText = 'Auto-migrate compatible panels.';
+  describe('auto migrate button', () => {
+    const autoMigrateText = 'Try migration';
 
-    it('should display auto migrate link if showAutoMigrateLink is true', () => {
+    it('should display auto migrate button if showAutoMigrateLink is true', () => {
       render(<AngularDeprecationNotice dashboardUid={dsUid} showAutoMigrateLink={true} />);
-      const autoMigrateLink = screen.getByText(autoMigrateText);
-      expect(autoMigrateLink).toBeInTheDocument();
-      expect(autoMigrateLink).toHaveAttribute('href', expect.stringContaining('__feature.autoMigrateOldPanels=true'));
+      const autoMigrateButton = screen.getByRole('button', { name: /Try migration/i });
+      expect(autoMigrateButton).toBeInTheDocument();
     });
 
-    it('should not display auto migrate link if showAutoMigrateLink is false', () => {
+    it('should not display auto migrate button if showAutoMigrateLink is false', () => {
       render(<AngularDeprecationNotice dashboardUid={dsUid} showAutoMigrateLink={false} />);
       expect(screen.queryByText(autoMigrateText)).not.toBeInTheDocument();
     });
