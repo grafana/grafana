@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1710856835993",
+        "resourceVersion": "1710865412747",
         "creationTimestamp": "2024-03-01T02:53:35Z"
       },
       "spec": {
@@ -106,6 +106,9 @@
                 }
               },
               "type": "object"
+            },
+            "noise": {
+              "type": "number"
             },
             "points": {
               "items": {

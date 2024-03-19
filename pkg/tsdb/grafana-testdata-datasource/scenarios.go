@@ -672,7 +672,7 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *
 	startValue := model.StartValue
 	spread := model.Spread
 	noise := model.Noise
-	drop := model.Drop / 100.0 // value is 0-100
+	drop := model.DropPercent / 100.0 // value is 0-100
 
 	min := float64(0)
 	hasMin := false

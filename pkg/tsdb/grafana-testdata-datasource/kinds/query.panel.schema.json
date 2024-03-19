@@ -132,6 +132,9 @@
             },
             "additionalProperties": false
           },
+          "noise": {
+            "type": "number"
+          },
           "points": {
             "type": "array",
             "items": {
