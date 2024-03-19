@@ -9,29 +9,6 @@
 
 package dataquery
 
-// Defines values for AverageType.
-const (
-	AverageTypeAvg           AverageType = "avg"
-	AverageTypeBucketScript  AverageType = "bucket_script"
-	AverageTypeCardinality   AverageType = "cardinality"
-	AverageTypeCount         AverageType = "count"
-	AverageTypeCumulativeSum AverageType = "cumulative_sum"
-	AverageTypeDerivative    AverageType = "derivative"
-	AverageTypeExtendedStats AverageType = "extended_stats"
-	AverageTypeLogs          AverageType = "logs"
-	AverageTypeMax           AverageType = "max"
-	AverageTypeMin           AverageType = "min"
-	AverageTypeMovingAvg     AverageType = "moving_avg"
-	AverageTypeMovingFn      AverageType = "moving_fn"
-	AverageTypePercentiles   AverageType = "percentiles"
-	AverageTypeRate          AverageType = "rate"
-	AverageTypeRawData       AverageType = "raw_data"
-	AverageTypeRawDocument   AverageType = "raw_document"
-	AverageTypeSerialDiff    AverageType = "serial_diff"
-	AverageTypeSum           AverageType = "sum"
-	AverageTypeTopMetrics    AverageType = "top_metrics"
-)
-
 // Defines values for BucketAggregationType.
 const (
 	BucketAggregationTypeDateHistogram BucketAggregationType = "date_histogram"
@@ -40,16 +17,6 @@ const (
 	BucketAggregationTypeHistogram     BucketAggregationType = "histogram"
 	BucketAggregationTypeNested        BucketAggregationType = "nested"
 	BucketAggregationTypeTerms         BucketAggregationType = "terms"
-)
-
-// Defines values for BucketScriptType.
-const (
-	BucketScriptTypeBucketScript  BucketScriptType = "bucket_script"
-	BucketScriptTypeCumulativeSum BucketScriptType = "cumulative_sum"
-	BucketScriptTypeDerivative    BucketScriptType = "derivative"
-	BucketScriptTypeMovingAvg     BucketScriptType = "moving_avg"
-	BucketScriptTypeMovingFn      BucketScriptType = "moving_fn"
-	BucketScriptTypeSerialDiff    BucketScriptType = "serial_diff"
 )
 
 // Defines values for ExtendedStatMetaType.
@@ -62,52 +29,6 @@ const (
 	ExtendedStatMetaTypeStdDeviationBoundsLower ExtendedStatMetaType = "std_deviation_bounds_lower"
 	ExtendedStatMetaTypeStdDeviationBoundsUpper ExtendedStatMetaType = "std_deviation_bounds_upper"
 	ExtendedStatMetaTypeSum                     ExtendedStatMetaType = "sum"
-)
-
-// Defines values for ExtendedStatsType.
-const (
-	ExtendedStatsTypeAvg           ExtendedStatsType = "avg"
-	ExtendedStatsTypeBucketScript  ExtendedStatsType = "bucket_script"
-	ExtendedStatsTypeCardinality   ExtendedStatsType = "cardinality"
-	ExtendedStatsTypeCount         ExtendedStatsType = "count"
-	ExtendedStatsTypeCumulativeSum ExtendedStatsType = "cumulative_sum"
-	ExtendedStatsTypeDerivative    ExtendedStatsType = "derivative"
-	ExtendedStatsTypeExtendedStats ExtendedStatsType = "extended_stats"
-	ExtendedStatsTypeLogs          ExtendedStatsType = "logs"
-	ExtendedStatsTypeMax           ExtendedStatsType = "max"
-	ExtendedStatsTypeMin           ExtendedStatsType = "min"
-	ExtendedStatsTypeMovingAvg     ExtendedStatsType = "moving_avg"
-	ExtendedStatsTypeMovingFn      ExtendedStatsType = "moving_fn"
-	ExtendedStatsTypePercentiles   ExtendedStatsType = "percentiles"
-	ExtendedStatsTypeRate          ExtendedStatsType = "rate"
-	ExtendedStatsTypeRawData       ExtendedStatsType = "raw_data"
-	ExtendedStatsTypeRawDocument   ExtendedStatsType = "raw_document"
-	ExtendedStatsTypeSerialDiff    ExtendedStatsType = "serial_diff"
-	ExtendedStatsTypeSum           ExtendedStatsType = "sum"
-	ExtendedStatsTypeTopMetrics    ExtendedStatsType = "top_metrics"
-)
-
-// Defines values for MaxType.
-const (
-	MaxTypeAvg           MaxType = "avg"
-	MaxTypeBucketScript  MaxType = "bucket_script"
-	MaxTypeCardinality   MaxType = "cardinality"
-	MaxTypeCount         MaxType = "count"
-	MaxTypeCumulativeSum MaxType = "cumulative_sum"
-	MaxTypeDerivative    MaxType = "derivative"
-	MaxTypeExtendedStats MaxType = "extended_stats"
-	MaxTypeLogs          MaxType = "logs"
-	MaxTypeMax           MaxType = "max"
-	MaxTypeMin           MaxType = "min"
-	MaxTypeMovingAvg     MaxType = "moving_avg"
-	MaxTypeMovingFn      MaxType = "moving_fn"
-	MaxTypePercentiles   MaxType = "percentiles"
-	MaxTypeRate          MaxType = "rate"
-	MaxTypeRawData       MaxType = "raw_data"
-	MaxTypeRawDocument   MaxType = "raw_document"
-	MaxTypeSerialDiff    MaxType = "serial_diff"
-	MaxTypeSum           MaxType = "sum"
-	MaxTypeTopMetrics    MaxType = "top_metrics"
 )
 
 // Defines values for MetricAggregationType.
@@ -133,29 +54,6 @@ const (
 	MetricAggregationTypeTopMetrics    MetricAggregationType = "top_metrics"
 )
 
-// Defines values for MinType.
-const (
-	MinTypeAvg           MinType = "avg"
-	MinTypeBucketScript  MinType = "bucket_script"
-	MinTypeCardinality   MinType = "cardinality"
-	MinTypeCount         MinType = "count"
-	MinTypeCumulativeSum MinType = "cumulative_sum"
-	MinTypeDerivative    MinType = "derivative"
-	MinTypeExtendedStats MinType = "extended_stats"
-	MinTypeLogs          MinType = "logs"
-	MinTypeMax           MinType = "max"
-	MinTypeMin           MinType = "min"
-	MinTypeMovingAvg     MinType = "moving_avg"
-	MinTypeMovingFn      MinType = "moving_fn"
-	MinTypePercentiles   MinType = "percentiles"
-	MinTypeRate          MinType = "rate"
-	MinTypeRawData       MinType = "raw_data"
-	MinTypeRawDocument   MinType = "raw_document"
-	MinTypeSerialDiff    MinType = "serial_diff"
-	MinTypeSum           MinType = "sum"
-	MinTypeTopMetrics    MinType = "top_metrics"
-)
-
 // Defines values for MovingAverageModel.
 const (
 	MovingAverageModelEwma        MovingAverageModel = "ewma"
@@ -163,39 +61,6 @@ const (
 	MovingAverageModelHoltWinters MovingAverageModel = "holt_winters"
 	MovingAverageModelLinear      MovingAverageModel = "linear"
 	MovingAverageModelSimple      MovingAverageModel = "simple"
-)
-
-// Defines values for NestedType.
-const (
-	NestedTypeDateHistogram NestedType = "date_histogram"
-	NestedTypeFilters       NestedType = "filters"
-	NestedTypeGeohashGrid   NestedType = "geohash_grid"
-	NestedTypeHistogram     NestedType = "histogram"
-	NestedTypeNested        NestedType = "nested"
-	NestedTypeTerms         NestedType = "terms"
-)
-
-// Defines values for PercentilesType.
-const (
-	PercentilesTypeAvg           PercentilesType = "avg"
-	PercentilesTypeBucketScript  PercentilesType = "bucket_script"
-	PercentilesTypeCardinality   PercentilesType = "cardinality"
-	PercentilesTypeCount         PercentilesType = "count"
-	PercentilesTypeCumulativeSum PercentilesType = "cumulative_sum"
-	PercentilesTypeDerivative    PercentilesType = "derivative"
-	PercentilesTypeExtendedStats PercentilesType = "extended_stats"
-	PercentilesTypeLogs          PercentilesType = "logs"
-	PercentilesTypeMax           PercentilesType = "max"
-	PercentilesTypeMin           PercentilesType = "min"
-	PercentilesTypeMovingAvg     PercentilesType = "moving_avg"
-	PercentilesTypeMovingFn      PercentilesType = "moving_fn"
-	PercentilesTypePercentiles   PercentilesType = "percentiles"
-	PercentilesTypeRate          PercentilesType = "rate"
-	PercentilesTypeRawData       PercentilesType = "raw_data"
-	PercentilesTypeRawDocument   PercentilesType = "raw_document"
-	PercentilesTypeSerialDiff    PercentilesType = "serial_diff"
-	PercentilesTypeSum           PercentilesType = "sum"
-	PercentilesTypeTopMetrics    PercentilesType = "top_metrics"
 )
 
 // Defines values for PipelineMetricAggregationType.
@@ -231,16 +96,6 @@ const (
 	RateTypeTopMetrics    RateType = "top_metrics"
 )
 
-// Defines values for TermsType.
-const (
-	TermsTypeDateHistogram TermsType = "date_histogram"
-	TermsTypeFilters       TermsType = "filters"
-	TermsTypeGeohashGrid   TermsType = "geohash_grid"
-	TermsTypeHistogram     TermsType = "histogram"
-	TermsTypeNested        TermsType = "nested"
-	TermsTypeTerms         TermsType = "terms"
-)
-
 // Defines values for TermsOrder.
 const (
 	TermsOrderAsc  TermsOrder = "asc"
@@ -273,14 +128,13 @@ const (
 // Average defines model for Average.
 type Average struct {
 	Field    *string `json:"field,omitempty"`
+	Hide     *bool   `json:"hide,omitempty"`
+	Id       *string `json:"id,omitempty"`
 	Settings *struct {
 		Script *any `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
-	Type *AverageType `json:"type,omitempty"`
+	Type *MetricAggregationType `json:"type,omitempty"`
 }
-
-// AverageType defines model for Average.Type.
-type AverageType string
 
 // BaseBucketAggregation defines model for BaseBucketAggregation.
 type BaseBucketAggregation struct {
@@ -305,11 +159,9 @@ type BaseMovingAverageModelSettings struct {
 
 // BasePipelineMetricAggregation defines model for BasePipelineMetricAggregation.
 type BasePipelineMetricAggregation struct {
-	Field       *string                `json:"field,omitempty"`
-	Hide        *bool                  `json:"hide,omitempty"`
-	Id          *string                `json:"id,omitempty"`
-	PipelineAgg *string                `json:"pipelineAgg,omitempty"`
-	Type        *MetricAggregationType `json:"type,omitempty"`
+	Field       *string                        `json:"field,omitempty"`
+	PipelineAgg *string                        `json:"pipelineAgg,omitempty"`
+	Type        *PipelineMetricAggregationType `json:"type,omitempty"`
 }
 
 // BucketAggregationType defines model for BucketAggregationType.
@@ -325,15 +177,14 @@ type BucketAggregationWithField struct {
 
 // BucketScript defines model for BucketScript.
 type BucketScript struct {
+	Hide              *bool              `json:"hide,omitempty"`
+	Id                *string            `json:"id,omitempty"`
 	PipelineVariables []PipelineVariable `json:"pipelineVariables,omitempty"`
 	Settings          *struct {
 		Script *any `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
-	Type *BucketScriptType `json:"type,omitempty"`
+	Type *MetricAggregationType `json:"type,omitempty"`
 }
-
-// BucketScriptType defines model for BucketScript.Type.
-type BucketScriptType string
 
 // Count defines model for Count.
 type Count struct {
@@ -344,6 +195,7 @@ type Count struct {
 
 // CumulativeSum defines model for CumulativeSum.
 type CumulativeSum struct {
+	Field       *string `json:"field,omitempty"`
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Format *string `json:"format,omitempty"`
@@ -396,13 +248,11 @@ type DateHistogramSettings struct {
 // Derivative defines model for Derivative.
 type Derivative struct {
 	Field       *string `json:"field,omitempty"`
-	Hide        *bool   `json:"hide,omitempty"`
-	Id          *string `json:"id,omitempty"`
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Unit *string `json:"unit,omitempty"`
 	} `json:"settings,omitempty"`
-	Type *MetricAggregationType `json:"type,omitempty"`
+	Type *PipelineMetricAggregationType `json:"type,omitempty"`
 }
 
 // ElasticsearchDataQuery defines model for ElasticsearchDataQuery.
@@ -455,15 +305,14 @@ type ExtendedStatMetaType string
 // ExtendedStats defines model for ExtendedStats.
 type ExtendedStats struct {
 	Field    *string        `json:"field,omitempty"`
+	Hide     *bool          `json:"hide,omitempty"`
+	Id       *string        `json:"id,omitempty"`
 	Meta     map[string]any `json:"meta,omitempty"`
 	Settings *struct {
 		Script *any `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
-	Type *ExtendedStatsType `json:"type,omitempty"`
+	Type *MetricAggregationType `json:"type,omitempty"`
 }
-
-// ExtendedStatsType defines model for ExtendedStats.Type.
-type ExtendedStatsType string
 
 // Filter defines model for Filter.
 type Filter struct {
@@ -523,14 +372,16 @@ type Logs struct {
 // Max defines model for Max.
 type Max struct {
 	Field    *string `json:"field,omitempty"`
+	Hide     *bool   `json:"hide,omitempty"`
+	Id       *string `json:"id,omitempty"`
 	Settings *struct {
 		Script *any `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
-	Type *MaxType `json:"type,omitempty"`
+	Type *MetricAggregationType `json:"type,omitempty"`
 }
 
-// MaxType defines model for Max.Type.
-type MaxType string
+// MetricAggregationType defines model for MetricAggregationType.
+type MetricAggregationType string
 
 // MetricAggregationWithField defines model for MetricAggregationWithField.
 type MetricAggregationWithField struct {
@@ -563,14 +414,13 @@ type MetricAggregationWithMissingSupport struct {
 // Min defines model for Min.
 type Min struct {
 	Field    *string `json:"field,omitempty"`
+	Hide     *bool   `json:"hide,omitempty"`
+	Id       *string `json:"id,omitempty"`
 	Settings *struct {
 		Script *any `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
-	Type *MinType `json:"type,omitempty"`
+	Type *MetricAggregationType `json:"type,omitempty"`
 }
-
-// MinType defines model for Min.Type.
-type MinType string
 
 // #MovingAverage's settings are overridden in types.ts
 type MovingAverage struct {
@@ -653,25 +503,22 @@ type MovingFunction struct {
 
 // Nested defines model for Nested.
 type Nested struct {
-	Field    *string        `json:"field,omitempty"`
-	Settings map[string]any `json:"settings,omitempty"`
-	Type     *NestedType    `json:"type,omitempty"`
+	Field    *string                `json:"field,omitempty"`
+	Id       *string                `json:"id,omitempty"`
+	Settings *any                   `json:"settings,omitempty"`
+	Type     *BucketAggregationType `json:"type,omitempty"`
 }
-
-// NestedType defines model for Nested.Type.
-type NestedType string
 
 // Percentiles defines model for Percentiles.
 type Percentiles struct {
 	Field    *string `json:"field,omitempty"`
+	Hide     *bool   `json:"hide,omitempty"`
+	Id       *string `json:"id,omitempty"`
 	Settings *struct {
 		Script *any `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
-	Type *PercentilesType `json:"type,omitempty"`
+	Type *MetricAggregationType `json:"type,omitempty"`
 }
-
-// PercentilesType defines model for Percentiles.Type.
-type PercentilesType string
 
 // PipelineMetricAggregationType defines model for PipelineMetricAggregationType.
 type PipelineMetricAggregationType string
@@ -745,13 +592,11 @@ type Sum struct {
 
 // Terms defines model for Terms.
 type Terms struct {
-	Field    *string        `json:"field,omitempty"`
-	Settings *TermsSettings `json:"settings,omitempty"`
-	Type     *TermsType     `json:"type,omitempty"`
+	Field    *string                `json:"field,omitempty"`
+	Id       *string                `json:"id,omitempty"`
+	Settings *any                   `json:"settings,omitempty"`
+	Type     *BucketAggregationType `json:"type,omitempty"`
 }
-
-// TermsType defines model for Terms.Type.
-type TermsType string
 
 // TermsOrder defines model for TermsOrder.
 type TermsOrder string
@@ -789,5 +634,3 @@ type UniqueCount struct {
 
 // UniqueCountType defines model for UniqueCount.Type.
 type UniqueCountType string
-
-type MetricAggregationType string

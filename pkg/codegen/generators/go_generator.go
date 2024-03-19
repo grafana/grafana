@@ -28,7 +28,7 @@ func GenerateTypesGo(v cue.Value, cfg *GoConfig) ([]byte, error) {
 		return nil, fmt.Errorf("configuration cannot be nil")
 	}
 
-	applyFuncs := []dstutil.ApplyFunc{depointerizer(), fixRawData(), fixUnderscoreInTypeName(), fixTODOComments(), fixElasticGeneration()}
+	applyFuncs := []dstutil.ApplyFunc{depointerizer(), fixRawData(), fixUnderscoreInTypeName(), fixTODOComments()}
 	applyFuncs = append(applyFuncs, cfg.ApplyFuncs...)
 
 	f, err := generateOpenAPI(v, cfg.Config)
