@@ -1,13 +1,11 @@
 package navtreeimpl
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -136,16 +134,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.SignedInUser.GetOrgID()]
 	uaVisibleForOrg := s.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
-	if s.cfg.AlertingEnabled != nil && *(s.cfg.AlertingEnabled) {
-		if legacyAlertSection := s.buildLegacyAlertNavLinks(c); legacyAlertSection != nil {
-			treeRoot.AddSection(legacyAlertSection)
-		}
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingPreviewUpgrade) && !uaIsDisabledForOrg {
-			if alertingSection := s.buildAlertNavLinks(c); alertingSection != nil {
-				treeRoot.AddSection(alertingSection)
-			}
-		}
-	} else if uaVisibleForOrg {
+	if uaVisibleForOrg {
 		if alertingSection := s.buildAlertNavLinks(c); alertingSection != nil {
 			treeRoot.AddSection(alertingSection)
 		}
@@ -198,25 +187,11 @@ func isSupportBundlesEnabled(s *ServiceImpl) bool {
 	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
-// don't need to show the full commit hash in the UI
-// let's substring to 10 chars like local git does automatically
-func getShortCommitHash(commitHash string, maxLength int) string {
-	if len(commitHash) > maxLength {
-		return commitHash[:maxLength]
-	}
-	return commitHash
-}
-
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
 	if s.cfg.HelpEnabled {
-		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, getShortCommitHash(setting.BuildCommit, 10))
-		if s.cfg.AnonymousHideVersion && !c.IsSignedIn {
-			helpVersion = setting.ApplicationName
-		}
-
+		// The version subtitle is set later by NavTree.ApplyHelpVersion
 		helpNode := &navtree.NavLink{
 			Text:       "Help",
-			SubTitle:   helpVersion,
 			Id:         "help",
 			Url:        "#",
 			Icon:       "question-circle",
@@ -387,40 +362,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	}
 
 	return dashboardChildNavs
-}
-
-func (s *ServiceImpl) buildLegacyAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
-	var alertChildNavs []*navtree.NavLink
-	alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-		Text: "Alert rules", Id: "alert-list-legacy", Url: s.cfg.AppSubURL + "/alerting-legacy/list", Icon: "list-ul",
-	})
-
-	if c.SignedInUser.HasRole(roletype.RoleEditor) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Notification channels", Id: "channels", Url: s.cfg.AppSubURL + "/alerting-legacy/notifications",
-			Icon: "comment-alt-share",
-		})
-	}
-
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingPreviewUpgrade) && c.HasRole(org.RoleAdmin) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Upgrade Alerting", Id: "alerting-upgrade", Url: s.cfg.AppSubURL + "/alerting-legacy/upgrade",
-			SubTitle: "Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting",
-			Icon:     "cog",
-		})
-	}
-
-	var alertNav = navtree.NavLink{
-		Text:       "Alerting",
-		SubTitle:   "Learn about problems in your systems moments after they occur",
-		Id:         "alerting-legacy",
-		Icon:       "bell",
-		Children:   alertChildNavs,
-		SortWeight: navtree.WeightAlerting,
-		Url:        s.cfg.AppSubURL + "/alerting-legacy",
-	}
-
-	return &alertNav
 }
 
 func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {

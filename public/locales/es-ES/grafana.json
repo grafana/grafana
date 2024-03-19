@@ -691,6 +691,123 @@
       "new-to-question": ""
     }
   },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "connect-modal": {
+      "body-cloud-stack": "",
+      "body-get-started": "",
+      "body-paste-stack": "",
+      "body-sign-up": "",
+      "body-token": "",
+      "body-token-field": "",
+      "body-token-field-placeholder": "",
+      "body-token-instructions": "",
+      "body-url-field": "",
+      "body-view-stacks": "",
+      "cancel": "",
+      "connect": "",
+      "connecting": "",
+      "stack-required-error": "",
+      "title": "",
+      "token-required-error": ""
+    },
+    "cta": {
+      "button": "",
+      "header": ""
+    },
+    "disconnect-modal": {
+      "body": "",
+      "cancel": "",
+      "disconnect": "",
+      "disconnecting": "",
+      "error": "",
+      "title": ""
+    },
+    "get-started": {
+      "body": "",
+      "configure-pdc-link": "",
+      "link-title": "",
+      "step-1": "",
+      "step-2": "",
+      "step-3": "",
+      "step-4": "",
+      "step-5": "",
+      "title": ""
+    },
+    "is-it-secure": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "migrate-to-this-stack": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "migration-token": {
+      "body": "",
+      "delete-button": "",
+      "delete-modal-body": "",
+      "delete-modal-cancel": "",
+      "delete-modal-confirm": "",
+      "delete-modal-deleting": "",
+      "delete-modal-title": "",
+      "generate-button": "",
+      "generate-button-loading": "",
+      "modal-close": "",
+      "modal-copy-and-close": "",
+      "modal-copy-button": "",
+      "modal-field-description": "",
+      "modal-field-label": "",
+      "modal-title": "",
+      "status": "",
+      "title": ""
+    },
+    "pdc": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "pricing": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "resource-status": {
+      "error-details-button": "",
+      "failed": "",
+      "migrated": "",
+      "migrating": "",
+      "not-migrated": "",
+      "unknown": ""
+    },
+    "resource-type": {
+      "dashboard": "",
+      "datasource": "",
+      "unknown": ""
+    },
+    "resources": {
+      "disconnect": ""
+    },
+    "token-status": {
+      "active": "",
+      "no-active": ""
+    },
+    "what-is-cloud": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "why-host": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    }
+  },
   "nav": {
     "add-new-connections": {
       "title": "Añadir nueva conexión"
@@ -1105,7 +1222,8 @@
       "new-password-same-as-old": "La nueva contraseña no puede ser la misma que la antigua.",
       "old-password-label": "Contraseña antigua",
       "old-password-required": "Se requiere la contraseña antigua",
-      "passwords-must-match": "Las contraseñas deben coincidir"
+      "passwords-must-match": "Las contraseñas deben coincidir",
+      "strong-password-validation-register": ""
     }
   },
   "public-dashboard": {
@@ -1340,10 +1458,10 @@
       "expire-day": "1 día",
       "expire-hour": "1 hora",
       "expire-never": "Nunca",
-      "expire-week": "7 días",
+      "expire-week": "",
       "info-text-1": "Una instantánea es una forma inmediata de compartir un panel interactivo públicamente. Cuando se crean, eliminamos datos confidenciales como consultas (métricas, plantilla y anotación) y enlaces de panel, dejando solo los datos de métricas visibles y los nombres de serie incrustados en el panel.",
       "info-text-2": "Tenga en cuenta que su instantánea <1>puede ser vista por cualquiera</1> que tenga el enlace y pueda acceder a la URL. Comparta sus instantáneas con cautela.",
-      "local-button": "Instantánea local",
+      "local-button": "",
       "mistake-message": "¿Ha cometido un error? ",
       "name": "Nombre de la instantánea",
       "timeout": "Tiempo de espera (segundos)",
@@ -1356,7 +1474,7 @@
       "library-panel": "Panel de librería",
       "link": "Enlace",
       "panel-embed": "Incrustar",
-      "public-dashboard": "Tablero público",
+      "public-dashboard": "",
       "public-dashboard-title": "Tablero público",
       "snapshot": "Instantánea"
     },

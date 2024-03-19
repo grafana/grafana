@@ -57,6 +57,11 @@ export const Pages = {
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
       shareButton: 'data-testid share-button',
+      playlistControls: {
+        prev: 'data-testid playlist previous dashboard button',
+        stop: 'data-testid playlist stop dashboard button',
+        next: 'data-testid playlist next dashboard button',
+      },
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
@@ -190,6 +195,7 @@ export const Pages = {
           AdHocFiltersVariable: {
             datasourceSelect: Components.DataSourcePicker.inputV2,
             infoText: 'data-testid ad-hoc filters variable info text',
+            modeToggle: 'data-testid ad-hoc filters variable mode toggle',
           },
         },
       },

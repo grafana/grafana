@@ -15,6 +15,8 @@ type Props = {
 export const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
 export const CONNECTION_ANCHOR_ALT = 'connection anchor';
 export const CONNECTION_ANCHOR_HIGHLIGHT_OFFSET = 8;
+export const CONNECTION_VERTEX_ID = 'vertex';
+export const CONNECTION_VERTEX_ADD_ID = 'vertexAdd';
 
 const ANCHOR_PADDING = 3;
 

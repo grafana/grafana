@@ -14,7 +14,10 @@ import { GrafanaTheme, IconName, NavLinkDTO, OrgRole } from '.';
  * @public
  */
 export interface BuildInfo {
+  // This MUST be a semver-ish version string, such as "11.0.0-54321"
   version: string;
+  // Version to show in the UI instead of version
+  versionString: string;
   commit: string;
   env: string;
   edition: GrafanaEdition;
@@ -166,10 +169,6 @@ export interface GrafanaConfig {
   allowOrgCreate: boolean;
   disableLoginForm: boolean;
   defaultDatasource: string;
-  alertingEnabled: boolean;
-  alertingErrorOrTimeout: string;
-  alertingNoDataOrNullValues: string;
-  alertingMinInterval: number;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
   queryHistoryEnabled: boolean;
@@ -226,9 +225,17 @@ export interface GrafanaConfig {
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
+  localFileSystemAvailable?: boolean;
+  cloudMigrationIsTarget?: boolean;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;
+
+  /**
+   * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
+   * Grafana's supported language.
+   */
+  language: string | undefined;
 }
 
 export interface SqlConnectionLimits {
@@ -263,4 +270,5 @@ export interface AuthSettings {
   GenericOAuthSkipOrgRoleSync?: boolean;
 
   disableLogin?: boolean;
+  basicAuthStrongPasswordPolicy?: boolean;
 }

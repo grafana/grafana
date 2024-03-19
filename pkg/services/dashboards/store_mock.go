@@ -5,10 +5,8 @@ package dashboards
 import (
 	context "context"
 
-	models "github.com/grafana/grafana/pkg/services/alerting/models"
-	mock "github.com/stretchr/testify/mock"
-
 	quota "github.com/grafana/grafana/pkg/services/quota"
+	mock "github.com/stretchr/testify/mock"
 
 	time "time"
 )
@@ -403,20 +401,6 @@ func (_m *FakeDashboardStore) RestoreDashboard(ctx context.Context, orgID int64,
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
 		r0 = rf(ctx, orgID, dashboardUid)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// SaveAlerts provides a mock function with given fields: ctx, dashID, alerts
-func (_m *FakeDashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
-	ret := _m.Called(ctx, dashID, alerts)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, []*models.Alert) error); ok {
-		r0 = rf(ctx, dashID, alerts)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -685,6 +685,123 @@
       "new-to-question": ""
     }
   },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "connect-modal": {
+      "body-cloud-stack": "",
+      "body-get-started": "",
+      "body-paste-stack": "",
+      "body-sign-up": "",
+      "body-token": "",
+      "body-token-field": "",
+      "body-token-field-placeholder": "",
+      "body-token-instructions": "",
+      "body-url-field": "",
+      "body-view-stacks": "",
+      "cancel": "",
+      "connect": "",
+      "connecting": "",
+      "stack-required-error": "",
+      "title": "",
+      "token-required-error": ""
+    },
+    "cta": {
+      "button": "",
+      "header": ""
+    },
+    "disconnect-modal": {
+      "body": "",
+      "cancel": "",
+      "disconnect": "",
+      "disconnecting": "",
+      "error": "",
+      "title": ""
+    },
+    "get-started": {
+      "body": "",
+      "configure-pdc-link": "",
+      "link-title": "",
+      "step-1": "",
+      "step-2": "",
+      "step-3": "",
+      "step-4": "",
+      "step-5": "",
+      "title": ""
+    },
+    "is-it-secure": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "migrate-to-this-stack": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "migration-token": {
+      "body": "",
+      "delete-button": "",
+      "delete-modal-body": "",
+      "delete-modal-cancel": "",
+      "delete-modal-confirm": "",
+      "delete-modal-deleting": "",
+      "delete-modal-title": "",
+      "generate-button": "",
+      "generate-button-loading": "",
+      "modal-close": "",
+      "modal-copy-and-close": "",
+      "modal-copy-button": "",
+      "modal-field-description": "",
+      "modal-field-label": "",
+      "modal-title": "",
+      "status": "",
+      "title": ""
+    },
+    "pdc": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "pricing": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "resource-status": {
+      "error-details-button": "",
+      "failed": "",
+      "migrated": "",
+      "migrating": "",
+      "not-migrated": "",
+      "unknown": ""
+    },
+    "resource-type": {
+      "dashboard": "",
+      "datasource": "",
+      "unknown": ""
+    },
+    "resources": {
+      "disconnect": ""
+    },
+    "token-status": {
+      "active": "",
+      "no-active": ""
+    },
+    "what-is-cloud": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "why-host": {
+      "body": "",
+      "link-title": "",
+      "title": ""
+    }
+  },
   "nav": {
     "add-new-connections": {
       "title": "添加新连接"
@@ -1099,7 +1216,8 @@
       "new-password-same-as-old": "新密码不能和旧密码相同。",
       "old-password-label": "旧密码",
       "old-password-required": "旧密码是必需项",
-      "passwords-must-match": "密码必须一致"
+      "passwords-must-match": "密码必须一致",
+      "strong-password-validation-register": ""
     }
   },
   "public-dashboard": {
@@ -1334,10 +1452,10 @@
       "expire-day": "1 天",
       "expire-hour": "1 小时",
       "expire-never": "从不",
-      "expire-week": "7 天",
+      "expire-week": "",
       "info-text-1": "可通过快照即时、公开地分享交互式仪表板。创建后，我们会剥离敏感数据，如查询（指标、模板和注释）和面板链接，仅将可见指标数据和系列名称嵌入到仪表板中。",
       "info-text-2": "请注意，知晓该链接并能够访问该网址的<1>任何人都可以</1>查看您的快照。分享需谨慎。",
-      "local-button": "本地快照",
+      "local-button": "",
       "mistake-message": "是不是弄错了什么？",
       "name": "快照名称",
       "timeout": "超时（秒）",
@@ -1350,7 +1468,7 @@
       "library-panel": "库面板",
       "link": "链接",
       "panel-embed": "嵌入",
-      "public-dashboard": "公共仪表板",
+      "public-dashboard": "",
       "public-dashboard-title": "公共仪表板",
       "snapshot": "快照"
     },

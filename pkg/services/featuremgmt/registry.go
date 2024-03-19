@@ -195,14 +195,6 @@ var (
 			Owner:       hostedGrafanaTeam,
 		},
 		{
-			Name:           "dataConnectionsConsole",
-			Description:    "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // turned on by default
-			Owner:          grafanaPluginsPlatformSquad,
-			AllowSelfServe: true,
-		},
-		{
 			// Some plugins rely on topnav feature flag being enabled, so we cannot remove this until we
 			// can afford the breaking change, or we've detemined no one else is relying on it
 			Name:        "topnav",
@@ -523,22 +515,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:           "cloudWatchLogsMonacoEditor",
-			Description:    "Enables the Monaco editor for CloudWatch Logs queries",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
-		},
-		{
-			Name:         "exploreScrollableLogsContainer",
-			Description:  "Improves the scrolling behavior of logs in Explore",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
@@ -600,7 +576,7 @@ var (
 		{
 			Name:         "traceQLStreaming",
 			Description:  "Enables response streaming of TraceQL queries of the Tempo data source",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
@@ -700,6 +676,13 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
+			Name:         "aiGeneratedDashboardChanges",
+			Description:  "Enable AI powered features for dashboards to auto-summary changes when saving",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:            "reportingRetries",
 			Description:     "Enables rendering retries for the reporting feature",
 			Stage:           FeatureStagePublicPreview,
@@ -763,14 +746,6 @@ var (
 			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
-		},
-		{
-			Name:           "cloudWatchWildCardDimensionValues",
-			Description:    "Fetches dimension values from CloudWatch to correctly label wildcard dimensions",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
 		},
 		{
 			Name:              "externalServiceAccounts",
@@ -855,8 +830,8 @@ var (
 		},
 		{
 			Name:         "teamHttpHeaders",
-			Description:  "Enables datasources to apply team headers to the client requests",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables Team LBAC for datasources to apply team headers to the client requests",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        identityAccessTeam,
 		},
@@ -1000,14 +975,6 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
-			Name:         "alertingDetailsViewV2",
-			Description:  "Enables the preview of the new alert details view",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-		},
-		{
 			Name:         "datatrails",
 			Description:  "Enables the new core app datatrails",
 			Stage:        FeatureStageExperimental,
@@ -1071,15 +1038,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "alertingPreviewUpgrade",
-			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
-		},
-		{
 			Name:            "enablePluginsTracingByDefault",
 			Description:     "Enable plugin tracing for all external plugins",
 			FrontendOnly:    false,
@@ -1140,6 +1098,13 @@ var (
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "sqlExpressions",
+			Description:  "Enables using SQL and DuckDB functions as Expressions.",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAppPlatformSquad,
+		},
+		{
 			Name:         "nodeGraphDotLayout",
 			Description:  "Changed the layout algorithm for the node graph",
 			Stage:        FeatureStageExperimental,
@@ -1183,13 +1148,39 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "alertingUpgradeDryrunOnStart",
-			Description:     "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
+			Name:         "betterPageScrolling",
+			Description:  "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
+			Stage:        FeatureStageGeneralAvailability,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "true", // enabled by default
+		},
+		{
+			Name:              "scopeFilters",
+			Description:       "Enables the use of scope filters in Grafana",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "emailVerificationEnforcement",
+			Description:       "Force email verification for users, even when authenticating through sso.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "ssoSettingsSAML",
+			Description:       "Use the new SSO Settings API to configure the SAML connector",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:              "dashboardRestore",

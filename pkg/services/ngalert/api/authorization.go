@@ -64,24 +64,6 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
 		)
 
-	// Grafana unified alerting upgrade paths
-	case http.MethodGet + "/api/v1/upgrade/org":
-		return middleware.ReqOrgAdmin
-	case http.MethodPost + "/api/v1/upgrade/org":
-		return middleware.ReqOrgAdmin
-	case http.MethodDelete + "/api/v1/upgrade/org":
-		return middleware.ReqOrgAdmin
-	case http.MethodPost + "/api/v1/upgrade/dashboards":
-		return middleware.ReqOrgAdmin
-	case http.MethodPost + "/api/v1/upgrade/dashboards/{DashboardID}":
-		return middleware.ReqOrgAdmin
-	case http.MethodPost + "/api/v1/upgrade/dashboards/{DashboardID}/panels/{PanelID}":
-		return middleware.ReqOrgAdmin
-	case http.MethodPost + "/api/v1/upgrade/channels":
-		return middleware.ReqOrgAdmin
-	case http.MethodPost + "/api/v1/upgrade/channels/{ChannelID}":
-		return middleware.ReqOrgAdmin
-
 	// Grafana, Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
@@ -253,7 +235,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodPost + "/api/v1/provisioning/alert-rules",
 		http.MethodPut + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}",
-		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
+		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
+		http.MethodDelete + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		eval = ac.EvalPermission(ac.ActionAlertingProvisioningWrite) // organization scope
 	case http.MethodGet + "/api/v1/notifications/time-intervals/{name}",
 		http.MethodGet + "/api/v1/notifications/time-intervals":

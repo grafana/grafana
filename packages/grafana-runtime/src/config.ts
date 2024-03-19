@@ -21,9 +21,15 @@ import {
 
 export interface AzureSettings {
   cloud?: string;
+  clouds?: AzureCloudInfo[];
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
+}
+
+export interface AzureCloudInfo {
+  name: string;
+  displayName: string;
 }
 
 export type AppPluginConfig = {
@@ -57,10 +63,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   feedbackLinksEnabled = true;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
-  alertingEnabled = false;
-  alertingErrorOrTimeout = '';
-  alertingNoDataOrNullValues = '';
-  alertingMinInterval = 1;
   angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
@@ -171,6 +173,14 @@ export class GrafanaBootConfig implements GrafanaConfig {
   disableFrontendSandboxForPlugins: string[] = [];
   sharedWithMeFolderUID: string | undefined;
   rootFolderUID: string | undefined;
+  localFileSystemAvailable: boolean | undefined;
+  cloudMigrationIsTarget: boolean | undefined;
+
+  /**
+   * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
+   * Grafana's supported language.
+   */
+  language: string | undefined;
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
@@ -202,10 +212,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    if (this.buildInfo.env === 'development') {
-      overrideFeatureTogglesFromUrl(this);
-    }
-
+    overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
     if (this.featureToggles.disableAngular) {
@@ -242,11 +249,28 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     return;
   }
 
+  const isLocalDevEnv = config.buildInfo.env === 'development';
+
+  const prodUrlAllowedFeatureFlags = new Set([
+    'autoMigrateOldPanels',
+    'autoMigrateGraphPanel',
+    'autoMigrateTablePanel',
+    'autoMigratePiechartPanel',
+    'autoMigrateWorldmapPanel',
+    'autoMigrateStatPanel',
+    'disableAngular',
+  ]);
+
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
+
+      if (!isLocalDevEnv && !prodUrlAllowedFeatureFlags.has(featureName)) {
+        return;
+      }
+
       const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
       if (toggleState !== featureToggles[key]) {
         featureToggles[featureName] = toggleState;
