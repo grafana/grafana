@@ -21,9 +21,15 @@ import {
 
 export interface AzureSettings {
   cloud?: string;
+  clouds?: AzureCloudInfo[];
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
+}
+
+export interface AzureCloudInfo {
+  name: string;
+  displayName: string;
 }
 
 export type AppPluginConfig = {
@@ -57,10 +63,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   feedbackLinksEnabled = true;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
-  alertingEnabled = false;
-  alertingErrorOrTimeout = '';
-  alertingNoDataOrNullValues = '';
-  alertingMinInterval = 1;
   angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
@@ -173,6 +175,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
+
+  /**
+   * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
+   * Grafana's supported language.
+   */
+  language: string | undefined;
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;

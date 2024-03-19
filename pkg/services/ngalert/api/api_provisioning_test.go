@@ -26,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -270,6 +272,39 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 400, response.Status())
 				require.NotEmpty(t, response.Body())
 				require.Contains(t, string(response.Body()), "invalid alert rule")
+			})
+
+			t.Run("POST returns 400 when folderUID not set", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+				rule.FolderUID = ""
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+				require.Contains(t, string(response.Body()), "folderUID must be set")
+			})
+
+			t.Run("POST returns 400 if folder does not exist", func(t *testing.T) {
+				testEnv := createTestEnv(t, testConfig)
+				// Create a fake folder service that will return an error when trying to get a folder.
+				folderService := foldertest.NewFakeService()
+				folderService.ExpectedError = dashboards.ErrFolderNotFound
+				testEnv.folderService = folderService
+				sut := createProvisioningSrvSutFromEnv(t, &testEnv)
+
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+				require.Contains(t, string(response.Body()), "folder does not exist")
 			})
 		})
 
@@ -1571,6 +1606,7 @@ type testEnvironment struct {
 	secrets          secrets.Service
 	log              log.Logger
 	store            store.DBstore
+	folderService    folder.Service
 	dashboardService dashboards.DashboardService
 	configs          provisioning.AMConfigStore
 	xact             provisioning.TransactionManager
@@ -1602,12 +1638,18 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 			AlertmanagerConfiguration: string(raw),
 		})
 	sqlStore := db.InitTestDB(t)
+
+	// init folder service with default folder
+	folderService := foldertest.NewFakeService()
+	folderService.ExpectedFolder = &folder.Folder{}
+
 	store := store.DBstore{
 		Logger:   log,
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Second * 10,
 		},
+		FolderService: folderService,
 	}
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
@@ -1637,6 +1679,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		log:              log,
 		configs:          configs,
 		store:            store,
+		folderService:    folderService,
 		dashboardService: dashboardService,
 		xact:             xact,
 		prov:             prov,
@@ -1662,7 +1705,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
-		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.dashboardService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}),
+		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.dashboardService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}),
 	}
 }
 

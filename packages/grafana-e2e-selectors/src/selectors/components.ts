@@ -221,6 +221,7 @@ export const Components = {
       content: 'Panel editor option pane content',
       select: 'Panel editor option pane select',
       fieldLabel: (type: string) => `${type} field property editor`,
+      fieldInput: (title: string) => `data-testid Panel editor option pane field input ${title}`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
@@ -528,6 +529,10 @@ export const Components = {
   Annotations: {
     annotationsTypeInput: 'annotations-type-input',
     annotationsChoosePanelInput: 'choose-panels-input',
+    editor: {
+      testButton: 'data-testid annotations-test-button',
+      resultContainer: 'data-testid annotations-query-result-container',
+    },
   },
   Tooltip: {
     container: 'data-testid tooltip',
