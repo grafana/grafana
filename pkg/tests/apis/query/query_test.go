@@ -105,4 +105,51 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 		require.Equal(t, int64(1), vX)
 		require.Equal(t, float64(3), vY) // 1 + 2, but always float64
 	})
+
+	t.Run("Gets an error with invalid queries", func(t *testing.T) {
+		client := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
+			Group:   "query.grafana.app",
+			Version: "v0alpha1",
+		})
+
+		body, err := json.Marshal(&data.QueryDataRequest{
+			Queries: []data.DataQuery{
+				data.NewDataQuery(map[string]any{
+					"refId": "Y",
+					"datasource": data.DataSourceRef{
+						UID: "__expr__",
+					},
+					"type":       "math",
+					"expression": "$X + 2", // invalid X does not exit
+				}),
+			},
+		})
+		require.NoError(t, err)
+
+		result := client.Post().
+			Namespace("default").
+			Suffix("query").
+			SetHeader("Content-type", "application/json").
+			Body(body).
+			Do(context.Background())
+
+		body, err = result.Raw()
+		//fmt.Printf("OUT: %s", string(body))
+
+		require.Error(t, err, "expecting a 400")
+		require.JSONEq(t, `{
+			"metadata": {},
+			"message": "did not execute expression [Y] due to a failure to of the dependent expression or query [X]",
+			"reason": "BadRequest",
+			"details": { "group": "query.grafana.app" },
+			"code": 400
+		  }`, string(body))
+
+		statusCode := -1
+		contentType := "?"
+		result.ContentType(&contentType)
+		result.StatusCode(&statusCode)
+		require.Equal(t, "application/json", contentType)
+		require.Equal(t, 400, statusCode)
+	})
 }

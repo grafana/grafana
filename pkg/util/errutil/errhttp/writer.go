@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"reflect"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -43,10 +46,44 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 
 	logError(ctx, gErr, opt)
 
+	var rsp any
 	pub := gErr.Public()
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(pub.StatusCode)
-	err = json.NewEncoder(w).Encode(pub)
+	rsp = pub
+
+	// When running in k8s, this will return a v1 status
+	// Typically, k8s handlers should directly support error negotiation, however
+	// when implementing handlers directly this will maintain compatibility with client-go
+	info, ok := request.RequestInfoFrom(ctx)
+	if ok {
+		// Missing "extra" and "message.id"
+		status := &metav1.Status{
+			Code:    int32(pub.StatusCode),
+			Message: pub.Message,
+			Details: &metav1.StatusDetails{
+				Name:  info.Name,
+				Group: info.APIGroup,
+			},
+		}
+		switch pub.StatusCode {
+		case 400:
+			status.Reason = metav1.StatusReasonBadRequest
+		case 401:
+			status.Reason = metav1.StatusReasonUnauthorized
+		case 403:
+			status.Reason = metav1.StatusReasonForbidden
+		case 404:
+			status.Reason = metav1.StatusReasonNotFound
+		case 500: // many reasons things could map here
+			status.Reason = metav1.StatusReasonInternalError
+		case 504:
+			status.Reason = metav1.StatusReasonTimeout
+		}
+		rsp = status
+	}
+
+	err = json.NewEncoder(w).Encode(rsp)
 	if err != nil {
 		defaultLogger.FromContext(ctx).Error("error while writing error", "error", err)
 	}
