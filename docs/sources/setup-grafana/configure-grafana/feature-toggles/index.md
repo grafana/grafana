@@ -60,6 +60,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `enablePluginsTracingByDefault`          | Enable plugin tracing for all external plugins                                                                                                                                                                               | Yes                |
 | `alertingQueryOptimization`              | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
 | `betterPageScrolling`                    | Removes CustomScrollbar from the UI, relying on native browser scrollbars                                                                                                                                                    | Yes                |
+| `cloudWatchNewLabelParsing`              | Updates CloudWatch label parsing to be more accurate                                                                                                                                                                         | Yes                |
 
 ## Preview feature toggles
 

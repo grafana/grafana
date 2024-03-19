@@ -178,4 +178,5 @@ export interface FeatureToggles {
   usePrometheusFrontendPackage?: boolean;
   oauthRequireSubClaim?: boolean;
   newDashboardWithFiltersAndGroupBy?: boolean;
+  cloudWatchNewLabelParsing?: boolean;
 }
