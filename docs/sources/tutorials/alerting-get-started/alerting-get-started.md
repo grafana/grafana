@@ -71,7 +71,7 @@ To vote for a link, click the triangle icon next to the name of the link.
 
 Besides being an open-source observability tool, Grafana has its own built-in alerting service.   This means that you can receive notifications whenever there is an event of interest in your data, and even see these events graphed in your visualizations.
 
-1. In your browser, simply navigate to localhost:3000. You should get logged in automatically
+1. In your browser, simply navigate to [localhost:3000](http://localhost:3000). You should get logged in automatically
 
 ### Create the Alert
 
