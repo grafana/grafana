@@ -48,7 +48,6 @@ There are several ways to authenticate in MSSQL. Start by:
 
 | Name       | Description                     |
 | ---------- | ------------------------------- |
-|            |
 | `User`     | Database user's login/username. |
 | `Password` | Database user's password.       |
 
