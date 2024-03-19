@@ -201,7 +201,10 @@ export function callQueryMethod(
       : t
   );
 
-  request.targets = request.targets.filter((t) => datasource.filterQuery?.(t) ?? true);
+  // do not filter queries in case a custom query function is provided (for example in variable queries)
+  if (!queryFunction) {
+    request.targets = request.targets.filter((t) => datasource.filterQuery?.(t) ?? true);
+  }
 
   // If its a public datasource, just return the result. Expressions will be handled on the backend.
   if (config.publicDashboardAccessToken) {
