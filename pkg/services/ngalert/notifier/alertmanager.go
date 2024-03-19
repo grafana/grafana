@@ -91,7 +91,6 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, fileStore stateStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager, withAutogen bool) (*alertmanager, error) {
-
 	nflog, err := fileStore.GetNotificationLog(ctx)
 	if err != nil {
 		return nil, err

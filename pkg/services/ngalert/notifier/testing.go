@@ -228,14 +228,6 @@ func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
 }
 
-type fakeState struct {
-	data string
-}
-
-func (fs *fakeState) MarshalBinary() ([]byte, error) {
-	return []byte(fs.data), nil
-}
-
 type NoValidation struct {
 }
 
