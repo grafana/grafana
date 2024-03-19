@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -897,15 +896,15 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 
 			queryToMigrate := metricsDataQuery{
 				CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
-					Region:     util.Pointer("us-east-1"),
-					Namespace:  util.Pointer("ec2"),
-					MetricName: util.Pointer("CPUUtilization"),
-					Alias:      util.Pointer(tc.inputAlias),
+					Region:     utils.Pointer("us-east-1"),
+					Namespace:  utils.Pointer("ec2"),
+					MetricName: utils.Pointer("CPUUtilization"),
+					Alias:      utils.Pointer(tc.inputAlias),
 					Dimensions: &dataquery.Dimensions{
 						"InstanceId": []any{"test"},
 					},
 					Statistic: &average,
-					Period:    util.Pointer("600"),
+					Period:    utils.Pointer("600"),
 					Hide:      &false,
 				},
 			}

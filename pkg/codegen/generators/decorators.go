@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
-	
+
 	"github.com/dave/dst"
 	"github.com/dave/dst/dstutil"
 )
