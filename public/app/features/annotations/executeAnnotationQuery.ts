@@ -37,10 +37,6 @@ export function executeAnnotationQuery(
     return of({});
   }
 
-  if (datasource.filterQuery?.(query)) {
-    return of({});
-  }
-
   // No more points than pixels
   const maxDataPoints = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 
