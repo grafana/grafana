@@ -33,7 +33,7 @@ export enum AzureCloud {
   None = '',
 }
 
-export type AzureAuthType = 'msi' | 'clientsecret' | 'workloadidentity';
+export type AzureAuthType = 'msi' | 'clientsecret' | 'workloadidentity' | 'currentuser';
 
 export type ConcealedSecret = symbol;
 
@@ -56,8 +56,17 @@ export interface AzureClientSecretCredentials extends AzureCredentialsBase {
   clientId?: string;
   clientSecret?: string | ConcealedSecret;
 }
+export interface AadCurrentUserCredentials extends AzureCredentialsBase {
+  authType: 'currentuser';
+  serviceCredentials?:
+    | AzureClientSecretCredentials
+    | AzureManagedIdentityCredentials
+    | AzureWorkloadIdentityCredentials;
+  serviceCredentialsEnabled?: boolean;
+}
 
 export type AzureCredentials =
+  | AadCurrentUserCredentials
   | AzureManagedIdentityCredentials
   | AzureClientSecretCredentials
   | AzureWorkloadIdentityCredentials;
@@ -70,6 +79,8 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   tenantId?: string;
   clientId?: string;
   subscriptionId?: string;
+  oauthPassThru?: boolean;
+  azureCredentials?: AzureCredentials;
 
   // logs
   /** @deprecated Azure Logs credentials */

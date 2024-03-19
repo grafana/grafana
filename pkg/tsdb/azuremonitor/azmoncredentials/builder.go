@@ -62,6 +62,27 @@ func getFromLegacy(data map[string]interface{}, secureData map[string]string) (a
 		credentials := &azcredentials.AzureWorkloadIdentityCredentials{}
 		return credentials, nil
 
+	case azcredentials.AzureAuthCurrentUserIdentity:
+		legacyCloud, err := maputil.GetStringOptional(data, "cloudName")
+		if err != nil {
+			return nil, err
+		}
+		cloud, err := resolveLegacyCloudName(legacyCloud)
+		if err != nil {
+			return nil, err
+		}
+		clientSecret := secureData["clientSecret"]
+
+		credentials := &azcredentials.AadCurrentUserCredentials{
+			ServiceCredentials: &azcredentials.AzureClientSecretCredentials{
+				AzureCloud:   cloud,
+				TenantId:     tenantId,
+				ClientId:     clientId,
+				ClientSecret: clientSecret,
+			},
+		}
+
+		return credentials, nil
 	case azcredentials.AzureAuthClientSecret:
 		legacyCloud, err := maputil.GetStringOptional(data, "cloudName")
 		if err != nil {

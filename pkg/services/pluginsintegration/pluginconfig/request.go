@@ -101,6 +101,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 
 		if azureSettings.UserIdentityEnabled {
 			m[azsettings.UserIdentityEnabled] = "true"
+			m[azsettings.UserIdentityFallbackCredentialsEnabled] = strconv.FormatBool(azureSettings.UserIdentityFallbackCredentialsEnabled)
 
 			if azureSettings.UserIdentityTokenEndpoint != nil {
 				if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {

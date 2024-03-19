@@ -4,8 +4,8 @@ import { useEffectOnce } from 'react-use';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { selectors } from '../e2e/selectors';
-import { FormatAsFieldProps, ResultFormat } from '../types';
+import { selectors } from '../../e2e/selectors';
+import { FormatAsFieldProps, ResultFormat } from '../../types';
 
 import { Field } from './Field';
 

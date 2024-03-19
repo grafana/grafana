@@ -109,6 +109,32 @@ func TestAzureSettings(t *testing.T) {
 
 			assert.True(t, cfg.Azure.UserIdentityEnabled)
 		})
+		t.Run("enables service credentials by default", func(t *testing.T) {
+			cfg := NewCfg()
+
+			azureSection, err := cfg.Raw.NewSection("azure")
+			require.NoError(t, err)
+			_, err = azureSection.NewKey("user_identity_enabled", "true")
+			require.NoError(t, err)
+
+			cfg.readAzureSettings()
+
+			assert.True(t, cfg.Azure.UserIdentityFallbackCredentialsEnabled)
+		})
+		t.Run("disables service credentials", func(t *testing.T) {
+			cfg := NewCfg()
+
+			azureSection, err := cfg.Raw.NewSection("azure")
+			require.NoError(t, err)
+			_, err = azureSection.NewKey("user_identity_enabled", "true")
+			require.NoError(t, err)
+			_, err = azureSection.NewKey("user_identity_fallback_credentials_enabled", "false")
+			require.NoError(t, err)
+
+			cfg.readAzureSettings()
+
+			assert.False(t, cfg.Azure.UserIdentityFallbackCredentialsEnabled)
+		})
 
 		t.Run("should use token endpoint from Azure AD if enabled", func(t *testing.T) {
 			cfg := NewCfg()

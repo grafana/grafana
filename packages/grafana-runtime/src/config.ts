@@ -25,6 +25,7 @@ export interface AzureSettings {
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
+  userIdentityFallbackCredentialsEnabled: boolean;
 }
 
 export interface AzureCloudInfo {
@@ -129,6 +130,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
+    userIdentityFallbackCredentialsEnabled: false,
   };
   caching = {
     enabled: false,
