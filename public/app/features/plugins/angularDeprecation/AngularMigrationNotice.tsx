@@ -52,7 +52,7 @@ export function AngularMigrationNotice({ dashboardUid }: Props) {
           <div>
             <Alert
               severity="info"
-              title="This dashboard was migrated from Angular. Please make sure everything is behaving as expected and save this dashboard to persist the migration."
+              title="This dashboard was migrated from Angular. Please make sure everything is behaving as expected and save and refresh this dashboard to persist the migration."
               onRemove={() => onDismiss(true)}
             >
               <div className="markdown-html">
