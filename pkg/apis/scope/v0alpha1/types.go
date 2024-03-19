@@ -26,15 +26,31 @@ type ScopeFilter struct {
 	Operator string `json:"operator"`
 }
 
-type ScopeDashboard struct {
-	DashboardUID string `json:"dashboardUid"`
-	ScopeUID     string `json:"scopeUid"`
-}
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ScopeList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []Scope `json:"items,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ScopeDashboard struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec ScopeDashboardSpec `json:"spec,omitempty"`
+}
+
+type ScopeDashboardSpec struct {
+	DashboardUIDs []string `json:"dashboardUids"`
+	ScopeUID      string   `json:"scopeUid"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ScopeDashboardList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []ScopeDashboard `json:"items,omitempty"`
 }

@@ -1558,7 +1558,8 @@
       "metadata": {
         "name": "cloudWatchLogsMonacoEditor",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-13T18:21:47Z"
       },
       "spec": {
         "description": "Enables the Monaco editor for CloudWatch Logs queries",
