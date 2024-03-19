@@ -1,16 +1,17 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
   CollapsableSection,
   Field,
-  HorizontalGroup,
   Input,
   Label,
   RadioButtonGroup,
+  Stack,
   TagsInput,
   TextArea,
 } from '@grafana/ui';
@@ -19,6 +20,8 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteDashboard/DeleteDashboardButton';
+import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
+import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -155,42 +158,40 @@ export class GeneralSettingsEditView
           <Box marginBottom={5}>
             <Field
               label={
-                <HorizontalGroup justify="space-between">
+                <Stack justifyContent="space-between">
                   <Label htmlFor="title-input">
                     <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
                   </Label>
-                  {/* TODO: Make the component use persisted model */}
-                  {/* {config.featureToggles.dashgpt && (
-                  <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />
-                )} */}
-                </HorizontalGroup>
+                  {config.featureToggles.dashgpt && (
+                    <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
+                  )}
+                </Stack>
               }
             >
               <Input
                 id="title-input"
                 name="title"
-                defaultValue={title}
-                onBlur={(e: ChangeEvent<HTMLInputElement>) => model.onTitleChange(e.target.value)}
+                value={title}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => model.onTitleChange(e.target.value)}
               />
             </Field>
             <Field
               label={
-                <HorizontalGroup justify="space-between">
+                <Stack justifyContent="space-between">
                   <Label htmlFor="description-input">
                     {t('dashboard-settings.general.description-label', 'Description')}
                   </Label>
-
-                  {/* {config.featureToggles.dashgpt && (
-                  <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />
-                )} */}
-                </HorizontalGroup>
+                  {config.featureToggles.dashgpt && (
+                    <GenAIDashDescriptionButton onGenerate={(description) => model.onDescriptionChange(description)} />
+                  )}
+                </Stack>
               }
             >
               <TextArea
                 id="description-input"
                 name="description"
-                defaultValue={description}
-                onBlur={(e: ChangeEvent<HTMLTextAreaElement>) => model.onDescriptionChange(e.target.value)}
+                value={description}
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => model.onDescriptionChange(e.target.value)}
               />
             </Field>
             <Field label={t('dashboard-settings.general.tags-label', 'Tags')}>
