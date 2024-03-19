@@ -1324,7 +1324,7 @@
     "header": {
       "collapse-row": "折叠查询行",
       "datasource-help": "显示数据源帮助",
-      "disable-query": "禁用查询",
+      "hide-query": "禁用查询",
       "drag-and-drop": "拖放以重新排序",
       "duplicate-query": "复制查询",
       "expand-row": "展开查询行",

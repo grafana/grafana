@@ -1330,7 +1330,7 @@
     "header": {
       "collapse-row": "Abfragezeile einklappen",
       "datasource-help": "Datenquellen-Hilfe anzeigen",
-      "disable-query": "Abfrage deaktivieren",
+      "hide-query": "Abfrage deaktivieren",
       "drag-and-drop": "Ziehen und Ablegen zum Neuordnen",
       "duplicate-query": "Abfrage duplizieren",
       "expand-row": "Suchzeile erweitern",
