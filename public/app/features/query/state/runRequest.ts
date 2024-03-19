@@ -206,6 +206,10 @@ export function callQueryMethod(
     request.targets = request.targets.filter((t) => datasource.filterQuery?.(t) ?? true);
   }
 
+  if (request.targets.length === 0) {
+    return of<DataQueryResponse>({ data: [] });
+  }
+
   // If its a public datasource, just return the result. Expressions will be handled on the backend.
   if (config.publicDashboardAccessToken) {
     return from(datasource.query(request));
