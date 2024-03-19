@@ -201,7 +201,7 @@ export const AnnotationsPlugin2 = ({
       let vals = getVals(frame);
 
       let markers: React.ReactNode[] = [];
-      // annotation markers are not rendered in vertical orientation, yet
+      // TODO: annotation markers are not rendered in vertical orientation, yet
       const isHorizontalGraphOrientation = plot.scales.x.ori === 0;
       if (isHorizontalGraphOrientation) {
         for (let i = 0; i < vals.time.length; i++) {
