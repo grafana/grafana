@@ -172,21 +172,29 @@ export const parallelogramItem: CanvasElementItem = {
   },
 };
 
-const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => ({
-  container: css({
-    height: '100%',
-    width: '100%',
-  }),
-  text: css({
-    position: 'absolute',
-    top: data?.valign === VAlign.Middle ? '50%' : data?.valign === VAlign.Top ? '10%' : '90%',
-    left: data?.align === Align.Center ? '50%' : data?.align === Align.Left ? '10%' : '90%',
-    transform: `translate(${data?.align === Align.Center ? '-50%' : data?.align === Align.Left ? '10%' : '-90%'}, ${data?.valign === VAlign.Middle ? '-50%' : data?.valign === VAlign.Top ? '10%' : '-90%'})`,
-    fontSize: `${data?.size}px`,
-    color: data?.color,
-  }),
-  element: css({
-    stroke: data?.borderColor,
-    strokeWidth: data?.borderWidth,
-  }),
-});
+const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => {
+  const textTop = data?.valign === VAlign.Middle ? '50%' : data?.valign === VAlign.Top ? '10%' : '90%';
+  const textLeft = data?.align === Align.Center ? '50%' : data?.align === Align.Left ? '10%' : '90%';
+  const textTransform = `translate(${data?.align === Align.Center ? '-50%' : data?.align === Align.Left ? '10%' : '-90%'}, ${
+    data?.valign === VAlign.Middle ? '-50%' : data?.valign === VAlign.Top ? '10%' : '-90%'
+  })`;
+
+  return {
+    container: css({
+      height: '100%',
+      width: '100%',
+    }),
+    text: css({
+      position: 'absolute',
+      top: textTop,
+      left: textLeft,
+      transform: textTransform,
+      fontSize: `${data?.size}px`,
+      color: data?.color,
+    }),
+    element: css({
+      stroke: data?.borderColor,
+      strokeWidth: data?.borderWidth,
+    }),
+  };
+};
