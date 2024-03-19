@@ -1342,6 +1342,8 @@ func TestGenerateConnectionString(t *testing.T) {
 		},
 	}
 	tmpFile := genTempCacheFile(t, kerberosLookup)
+	defer os.Remove(tmpFile)
+
 	testCases := []struct {
 		desc        string
 		kerberosCfg kerberos.KerberosAuth
@@ -1546,7 +1548,6 @@ func TestGenerateConnectionString(t *testing.T) {
 			assert.Equal(t, tc.expConnStr, connStr)
 		})
 	}
-	defer os.Remove(tmpFile)
 }
 
 func initMSSQLTestDB(t *testing.T, jsonData sqleng.JsonData) *sql.DB {
