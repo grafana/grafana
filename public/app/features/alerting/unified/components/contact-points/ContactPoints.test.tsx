@@ -126,6 +126,8 @@ describe('contact points', () => {
         await userEvent.click(button);
         const deleteButton = await screen.queryByRole('menuitem', { name: 'delete' });
         expect(deleteButton).toBeDisabled();
+        // click outside the menu to close it otherwise we can't interact with the rest of the page
+        await userEvent.click(document.body);
       }
 
       // check buttons in Notification Templates
