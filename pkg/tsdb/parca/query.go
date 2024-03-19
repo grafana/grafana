@@ -84,7 +84,7 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 			Mode: v1alpha1.QueryRequest_MODE_MERGE,
 			Options: &v1alpha1.QueryRequest_Merge{
 				Merge: &v1alpha1.MergeProfile{
-					Query: fmt.Sprintf("%s%s", qm.ProfileTypeId, qm.LabelSelector),
+					Query: fmt.Sprintf("%s%s", util.Depointerizer(qm.ProfileTypeId), util.Depointerizer(qm.LabelSelector)),
 					Start: &timestamppb.Timestamp{
 						Seconds: query.TimeRange.From.Unix(),
 					},
@@ -103,7 +103,7 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 func makeMetricRequest(qm queryModel, query backend.DataQuery) *connect.Request[v1alpha1.QueryRangeRequest] {
 	return &connect.Request[v1alpha1.QueryRangeRequest]{
 		Msg: &v1alpha1.QueryRangeRequest{
-			Query: fmt.Sprintf("%s%s", qm.ProfileTypeId, qm.LabelSelector),
+			Query: fmt.Sprintf("%s%s", util.Depointerizer(qm.ProfileTypeId), util.Depointerizer(qm.LabelSelector)),
 			Start: &timestamppb.Timestamp{
 				Seconds: query.TimeRange.From.Unix(),
 			},

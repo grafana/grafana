@@ -39,7 +39,7 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 
 		region := util.Depointerizer(logsQuery.Region)
 		if region == "" || region == defaultRegion {
-			*logsQuery.Region = instance.Settings.Region
+			logsQuery.Region = util.Pointer(instance.Settings.Region)
 		}
 
 		logsClient, err := e.getCWLogsClient(ctx, req.PluginContext, region)
