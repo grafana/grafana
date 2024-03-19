@@ -126,7 +126,7 @@ Here you can select who should receive a notification when an alert rule fires.
 
 #### Add Annotations
 
-In this section, we can Link a dashboard and panel to our Alert. For that, click **Link Dashboard and panel** button t
+In this section, we can Link a dashboard and panel to our Alert. For that, click **Link Dashboard and panel** button.
 
 Linking an alert to a panel will add an annotation to the panel when the status of your alert changes. If you don’t have a panel already, and since this is optional, you can skip this step for now and link it after you have finished configuring the alert.
 
