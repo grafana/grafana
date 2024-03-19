@@ -515,15 +515,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:           "cloudWatchLogsMonacoEditor",
-			Description:    "Enables the Monaco editor for CloudWatch Logs queries",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
@@ -755,14 +746,6 @@ var (
 			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
-		},
-		{
-			Name:           "cloudWatchWildCardDimensionValues",
-			Description:    "Fetches dimension values from CloudWatch to correctly label wildcard dimensions",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
 		},
 		{
 			Name:              "externalServiceAccounts",

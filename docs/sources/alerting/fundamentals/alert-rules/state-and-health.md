@@ -1,6 +1,7 @@
 ---
 aliases:
-  - ../unified-alerting/alerting-rules/state-and-health/
+  - ../../fundamentals/state-and-health/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/state-and-health/
+  - ../../unified-alerting/alerting-rules/state-and-health/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/state-and-health
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/state-and-health/
 description: Learn about the state and health of alert rules to understand several key status indicators about your alerts
 keywords:
@@ -14,7 +15,7 @@ labels:
     - enterprise
     - oss
 title: State and health of alert rules
-weight: 405
+weight: 109
 ---
 
 # State and health of alert rules
