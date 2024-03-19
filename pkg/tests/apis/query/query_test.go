@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -138,6 +139,7 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 
 		require.Error(t, err, "expecting a 400")
 		require.JSONEq(t, `{
+			"status": "Failure",
 			"metadata": {},
 			"message": "did not execute expression [Y] due to a failure to of the dependent expression or query [X]",
 			"reason": "BadRequest",
