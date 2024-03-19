@@ -31,6 +31,8 @@ type Command interface {
 	// Execute creates a payload send request to the ML API by calling the function argument sendRequest, and then parses response.
 	// Function sendRequest is supposed to abstract the client configuration such creating http request, adding authorization parameters, host etc.
 	Execute(from, to time.Time, sendRequest func(method string, path string, payload []byte) (response.Response, error)) (*backend.QueryDataResponse, error)
+
+	Type() string
 }
 
 // UnmarshalCommand parses a config parameters and creates a command. Requires key `type` to be specified.
