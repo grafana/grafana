@@ -136,7 +136,7 @@ type TempoQuery struct {
 	TableType *SearchTableType `json:"tableType,omitempty"`
 }
 
-// TempoQueryType nativeSearch = Tempo search for backwards compatibility
+// TempoQueryType defines model for TempoQueryType.
 type TempoQueryType string
 
 // TraceqlFilter defines model for TraceqlFilter.
