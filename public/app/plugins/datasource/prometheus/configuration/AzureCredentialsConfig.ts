@@ -1,12 +1,12 @@
 import { DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredentials';
+import { AzureCredentials, ConcealedSecret } from './AzureCredentials';
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 
 function getDefaultAzureCloud(): string {
-  return config.azure.cloud || AzureCloud.Public;
+  return config.azure.cloud || 'AzureCloud';
 }
 
 function getSecret(options: DataSourceSettings<any, any>): undefined | string | ConcealedSecret {

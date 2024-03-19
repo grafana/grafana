@@ -1,13 +1,18 @@
 import { cx } from '@emotion/css';
 import React, { FormEvent, useMemo, useState } from 'react';
 
-import { config } from '@grafana/runtime';
+import { AzureSettings, config } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineSwitch, Input } from '@grafana/ui';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-import { KnownAzureClouds, AzureCredentials } from './AzureCredentials';
+import { AzureCredentials } from './AzureCredentials';
 import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
+import { SelectableValue } from "@grafana/data";
+
+interface AzureSettings2 extends AzureSettings {
+  clouds: Array<{ name: string; displayName: string }>;
+}
 
 export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const { dataSourceConfig, onChange } = props;
@@ -15,6 +20,13 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const [overrideAudienceChecked, setOverrideAudienceChecked] = useState<boolean>(
     !!dataSourceConfig.jsonData.azureEndpointResourceId
   );
+
+  const clouds = useMemo(() => {
+    const settingsEx = (config.azure as unknown as AzureSettings2)
+    return settingsEx.clouds.map<SelectableValue>(c => {
+      return { value: c.name, label: c.displayName }
+    });
+  }, [config.azure]);
 
   const credentials = useMemo(() => getCredentials(dataSourceConfig), [dataSourceConfig]);
 
@@ -52,7 +64,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
         workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
         credentials={credentials}
-        azureCloudOptions={KnownAzureClouds}
+        azureCloudOptions={clouds}
         onCredentialsChange={onCredentialsChange}
         disabled={dataSourceConfig.readOnly}
       />
