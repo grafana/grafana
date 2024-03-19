@@ -88,7 +88,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           );
         },
         addon: config.featureToggles.dashgpt && (
-          <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel} />
+          <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel.getSaveModel()} />
         ),
       })
     )
@@ -238,17 +238,21 @@ export function getPanelFrameCategory2(
         description: panel.state.description,
         value: panel.state.description,
         render: function renderDescription() {
+          const { description } = panel.useState();
           return (
             <TextArea
               id="description-text-area"
-              defaultValue={panel.state.description}
-              onBlur={(e) => panel.setState({ description: e.currentTarget.value })}
+              value={description}
+              onChange={(e) => panel.setState({ description: e.currentTarget.value })}
             />
           );
         },
-        // addon: config.featureToggles.dashgpt && (
-        //   <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel} />
-        // ),
+        addon: config.featureToggles.dashgpt && (
+          <GenAIPanelDescriptionButton
+            onGenerate={(description) => panel.setState({ description })}
+            panel={vizPanelToPanel(panel)}
+          />
+        ),
       })
     )
     .addItem(
