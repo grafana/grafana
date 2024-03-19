@@ -111,7 +111,7 @@ In order to ease searching or route notifications to a policy, you should add a 
 
 ##### Labels
 
-1. Add app as the label key, and grafana-news as the value
+1. Add `app` as the label key, and `grafana-news` as the value
 
 ##### Notifications
 
