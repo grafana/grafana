@@ -647,7 +647,7 @@ func TestIntegrationGetSoftDeletedDashboard(t *testing.T) {
 		assert.Equal(t, savedDash.ID, dash.ID)
 		assert.Equal(t, savedDash.UID, dash.UID)
 		assert.Equal(t, savedDash.Title, dash.Title)
-		assert.Equal(t, int64(0), dash.FolderID) // root folder
+		assert.Empty(t, dash.FolderUID) // root folder
 	})
 }
 
