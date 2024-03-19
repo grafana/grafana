@@ -19,7 +19,6 @@ import {
   useStyles2,
   Stack,
   LoadingPlaceholder,
-  Label,
   IconButton,
   Drawer,
   InlineField,
@@ -43,6 +42,7 @@ import { makeAMLink } from '../../utils/misc';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { ensureDefine } from '../../utils/templates';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
+import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 
 import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
@@ -206,18 +206,20 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
             <div className={styles.contentContainer}>
               <Field
                 label={
-                  <Stack justifyContent="space-between" alignItems="center">
-                    <Label className={styles.label}>Template content</Label>
-                    <Button
-                      icon="info-circle"
-                      size="sm"
-                      fill="outline"
-                      variant="secondary"
-                      onClick={toggleCheatsheetOpened}
-                    >
-                      Cheatsheet
-                    </Button>
-                  </Stack>
+                  <EditorColumnHeader
+                    label="Template content"
+                    actions={
+                      <Button
+                        icon="info-circle"
+                        size="sm"
+                        fill="outline"
+                        variant="secondary"
+                        onClick={toggleCheatsheetOpened}
+                      >
+                        Cheatsheet
+                      </Button>
+                    }
+                  />
                 }
                 error={errors?.content?.message}
                 invalid={!!errors.content?.message}
@@ -231,7 +233,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                       onBlur={(value) => setValue('content', value)}
                       containerStyles={styles.editorContainer}
                       width={width}
-                      height={622}
+                      height={598}
                     />
                   )}
                 </AutoSizer>
@@ -421,19 +423,21 @@ export function TemplatePreview({
 
   return (
     <div className={styles.preview.container}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Label className={styles.label}>Preview</Label>
-        <Button
-          icon="sync"
-          aria-label="Refresh preview"
-          onClick={onPreview}
-          size="sm"
-          variant="secondary"
-          fill="outline"
-        >
-          Refresh
-        </Button>
-      </Stack>
+      <EditorColumnHeader
+        label="Template preview"
+        actions={
+          <Button
+            icon="sync"
+            aria-label="Refresh preview"
+            onClick={onPreview}
+            size="sm"
+            variant="secondary"
+            fill="outline"
+          >
+            Refresh
+          </Button>
+        }
+      />
       {isLoading && <LoadingPlaceholder text="Loading preview..." />}
       <pre className={styles.preview.result} data-testid="payloadJSON">
         {previewToRender}
@@ -455,10 +459,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     height: theme.spacing(82),
     maxHeight: theme.spacing(82),
+    '& > *': {
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.strong}`,
+    },
   }),
   contentField: css({
     flex: 3,
-    gap: theme.spacing(1),
+    marginBottom: 0,
   }),
   templatePreview: css({
     flex: 2,
@@ -468,8 +476,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   editorContainer: css({
     width: 'fit-content',
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.components.input.borderColor}`,
+    border: 'none',
   }),
   payloadCollapseButton: css({
     backgroundColor: theme.colors.info.transparent,
@@ -488,13 +495,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       display: 'flex',
       flexDirection: 'column',
       maxHeight: '100%',
-      gap: theme.spacing(1),
     }),
     result: css({
       backgroundColor: theme.colors.background.primary,
       margin: 0,
-      borderRadius: theme.shape.radius.default,
-      border: `1px solid ${theme.components.input.borderColor}`,
+      border: 'none',
     }),
   },
 });

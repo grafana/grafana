@@ -4,8 +4,10 @@ import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Button, CodeEditor, Drawer, Label, Stack, useStyles2 } from '@grafana/ui';
+import { Badge, Button, CodeEditor, Drawer, Stack, useStyles2 } from '@grafana/ui';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+
+import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 
 import { AlertInstanceModalSelector } from './AlertInstanceModalSelector';
 import { AlertTemplatePreviewData } from './TemplateData';
@@ -82,12 +84,14 @@ export function PayloadEditor({
   return (
     <>
       <div className={cx(styles.wrapper, className)}>
-        <Stack justifyContent="space-between" alignItems="center">
-          <Label className={styles.label}>Payload</Label>
-          <Button variant="secondary" fill="outline" size="sm" icon="info-circle" onClick={toggleCheatsheetOpened}>
-            Cheatsheet
-          </Button>
-        </Stack>
+        <EditorColumnHeader
+          label="Payload"
+          actions={
+            <Button variant="secondary" fill="outline" size="sm" icon="info-circle" onClick={toggleCheatsheetOpened}>
+              Cheatsheet
+            </Button>
+          }
+        />
 
         <div className={styles.editorWrapper}>
           <AutoSizer>
@@ -184,8 +188,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   editorContainer: css({
     width: 'fit-content',
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.components.input.borderColor}`,
+    border: 'none',
   }),
   templateDataDocsHeader: css`
     color: ${theme.colors.text.primary};
