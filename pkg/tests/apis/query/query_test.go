@@ -48,50 +48,25 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 			Version: "v0alpha1",
 		})
 
-		q1 := data.DataQuery{
-			CommonQueryProperties: data.CommonQueryProperties{
-				RefID: "X",
-				Datasource: &data.DataSourceRef{
-					Type: "grafana-testdata-datasource",
-					UID:  ds.UID,
-				},
-			},
-		}
-		q1.Set("scenarioId", "csv_content")
-		q1.Set("csvContent", "a\n1")
-
-		q2 := data.DataQuery{
-			CommonQueryProperties: data.CommonQueryProperties{
-				RefID: "Y",
-				Datasource: &data.DataSourceRef{
-					UID: "__expr__",
-				},
-			},
-		}
-		q2.Set("type", "math")
-		q2.Set("expression", "$X + 2")
-
 		body, err := json.Marshal(&data.QueryDataRequest{
 			Queries: []data.DataQuery{
-				q1, q2,
-				// https://github.com/grafana/grafana-plugin-sdk-go/pull/921
-				// data.NewDataQuery(map[string]any{
-				// 	"refId": "X",
-				// 	"datasource": data.DataSourceRef{
-				// 		Type: "grafana-testdata-datasource",
-				// 		UID:  ds.UID,
-				// 	},
-				// 	"scenarioId": "csv_content",
-				// 	"csvContent": "a\n1",
-				// }),
-				// data.NewDataQuery(map[string]any{
-				// 	"refId": "Y",
-				// 	"datasource": data.DataSourceRef{
-				// 		UID: "__expr__",
-				// 	},
-				// 	"type":       "math",
-				// 	"expression": "$X + 2",
-				// }),
+				data.NewDataQuery(map[string]any{
+					"refId": "X",
+					"datasource": data.DataSourceRef{
+						Type: "grafana-testdata-datasource",
+						UID:  ds.UID,
+					},
+					"scenarioId": "csv_content",
+					"csvContent": "a\n1",
+				}),
+				data.NewDataQuery(map[string]any{
+					"refId": "Y",
+					"datasource": data.DataSourceRef{
+						UID: "__expr__",
+					},
+					"type":       "math",
+					"expression": "$X + 2",
+				}),
 			},
 		})
 
