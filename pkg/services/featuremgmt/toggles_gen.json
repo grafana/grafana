@@ -1911,12 +1911,15 @@
     {
       "metadata": {
         "name": "managedPluginsInstall",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710846414600",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-19 11:06:54.600063936 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Install managed plugins directly from plugins catalog",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
