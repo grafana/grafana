@@ -10,6 +10,7 @@ export * from './scrollbar';
 export * from './table';
 export * from './measureText';
 export * from './useForceUpdate';
+export * from './useMousePosition';
 export { SearchFunctionType } from './searchFunctions';
 export { ansicolor } from 'ansicolor';
 
