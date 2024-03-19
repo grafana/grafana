@@ -12,7 +12,7 @@ export function getPluginJson() {
 }
 
 export async function getEntries(): Promise<Record<string, string>> {
-  const pluginModules = await glob(path.resolve(process.cwd(), `module.{ts,tsx}`));
+  const pluginModules = await glob(path.resolve(process.cwd(), `module.{ts,tsx}`), { absolute: true });
   if (pluginModules.length > 0) {
     return {
       module: pluginModules[0],
