@@ -185,7 +185,7 @@ describe('NestedFolderPicker', () => {
     await screen.findByLabelText(folderA.item.title);
 
     expect(screen.queryByLabelText(folderB.item.title)).not.toBeInTheDocument(); // folderB is not editable
-    expect(screen.queryByLabelText(folderC.item.title)).toBeInTheDocument(); // but folderC is
+    expect(screen.getByLabelText(folderC.item.title)).toBeInTheDocument(); // but folderC is
   });
 
   it('shows items the user can view, with the prop', async () => {
@@ -195,8 +195,8 @@ describe('NestedFolderPicker', () => {
     await userEvent.click(button);
     await screen.findByLabelText(folderA.item.title);
 
-    expect(screen.queryByLabelText(folderB.item.title)).toBeInTheDocument();
-    expect(screen.queryByLabelText(folderC.item.title)).toBeInTheDocument();
+    expect(screen.getByLabelText(folderB.item.title)).toBeInTheDocument();
+    expect(screen.getByLabelText(folderC.item.title)).toBeInTheDocument();
   });
 
   describe('when nestedFolders is enabled', () => {
