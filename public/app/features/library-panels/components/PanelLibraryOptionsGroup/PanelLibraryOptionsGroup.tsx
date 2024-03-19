@@ -11,6 +11,7 @@ import { changeToLibraryPanel } from 'app/features/panel/state/actions';
 import { useDispatch } from 'app/types';
 
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
+import { LibraryElementDTO } from '../../types';
 import { AddLibraryPanelModal, AddLibraryPanelModal2 } from '../AddLibraryPanelModal/AddLibraryPanelModal';
 import { ChangeLibraryPanelModal, ChangeLibraryPanelModal2 } from '../ChangeLibraryPanelModal/ChangeLibraryPanelModal';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
@@ -19,12 +20,11 @@ interface Props {
   panel: LegacyPanelModel;
   searchQuery: string;
   isWidget?: boolean;
-  vizPanelManager?: VizPanelManager;
 }
 
-export const PanelLibraryOptionsGroup = ({ panel, searchQuery, vizPanelManager, isWidget = false }: Props) => {
+export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false }: Props) => {
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
-  const [changeToPanel, setChangeToPanel] = useState<LibraryPanel | undefined>(undefined);
+  const [changeToPanel, setChangeToPanel] = useState<LibraryElementDTO | undefined>(undefined);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
   const onPanelFilterChange = useCallback(
     (plugins: PanelPluginMeta[]) => {
@@ -42,11 +42,7 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery, vizPanelManager, 
 
     setChangeToPanel(undefined);
 
-    if (vizPanelManager) {
-      vizPanelManager.changeToLibraryPanel(changeToPanel);
-    } else {
-      dispatch(changeToLibraryPanel(panel, changeToPanel));
-    }
+    dispatch(changeToLibraryPanel(panel, changeToPanel));
   };
 
   const onAddToPanelLibrary = () => setShowingAddPanelModal(true);
