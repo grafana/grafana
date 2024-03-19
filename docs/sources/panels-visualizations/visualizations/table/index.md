@@ -31,6 +31,10 @@ Tables are very flexible, supporting multiple modes for time series and for tabl
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
+The following video provides a visual walkthrough of the options you can set in a table visualization. If you want to see a configuration in action, check out the video:
+
+{{< youtube id="PCY7O8EJeJY" >}}
+
 ## Annotation and alert support
 
 Annotations and alerts are not currently supported in tables.
