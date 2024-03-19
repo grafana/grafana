@@ -150,6 +150,12 @@ export function runRequest(
         throw new Error(`Expected response data to be array, got ${typeof packet.data}.`);
       }
 
+      // filter out responses for hidden queries
+      const hiddenQueries = request.targets.filter((q) => q.hide);
+      for (const query of hiddenQueries) {
+        packet.data = packet.data.filter((d) => d.refId !== query.refId);
+      }
+
       request.endTime = Date.now();
 
       state = processResponsePacket(packet, state);
@@ -185,7 +191,7 @@ export function callQueryMethod(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ) {
-  // If the datasource has defined a default query, make sure it's applied
+  // // If the datasource has defined a default query, make sure it's applied
   request.targets = request.targets.map((t) =>
     queryIsEmpty(t)
       ? {
@@ -194,6 +200,8 @@ export function callQueryMethod(
         }
       : t
   );
+
+  request.targets = request.targets.filter((t) => datasource.filterQuery?.(t));
 
   // If its a public datasource, just return the result. Expressions will be handled on the backend.
   if (config.publicDashboardAccessToken) {

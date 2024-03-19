@@ -1330,7 +1330,7 @@
     "header": {
       "collapse-row": "Collapse query row",
       "datasource-help": "Show data source help",
-      "disable-query": "Disable query",
+      "disable-query": "Hide query response",
       "drag-and-drop": "Drag and drop to reorder",
       "duplicate-query": "Duplicate query",
       "expand-row": "Expand query row",

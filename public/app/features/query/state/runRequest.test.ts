@@ -1,6 +1,7 @@
 import { Observable, Subscriber, Subscription } from 'rxjs';
 
 import {
+  CoreApp,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -9,14 +10,17 @@ import {
   dateTime,
   LoadingState,
   PanelData,
+  ScopedVars,
 } from '@grafana/data';
 import { setEchoSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 
 import { deepFreeze } from '../../../../test/core/redux/reducerTester';
 import { Echo } from '../../../core/services/echo/Echo';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 
-import { runRequest } from './runRequest';
+import { getMockDataSource, TestQuery } from './__mocks/mockDataSource';
+import { callQueryMethod, runRequest } from './runRequest';
 
 jest.mock('app/core/services/backend_srv');
 
@@ -370,6 +374,115 @@ describe('runRequest', () => {
       expect(ctx.results[1].annotations?.length).toBe(1);
       expect(ctx.results[1].series.length).toBe(1);
     });
+  });
+});
+
+describe('callQueryMethod', () => {
+  let request: DataQueryRequest<TestQuery>;
+  let filterQuerySpy: jest.SpyInstance;
+  let querySpy: jest.SpyInstance;
+  let defaultQuerySpy: jest.SpyInstance;
+  let ds: DataSourceApi;
+
+  const setup = ({
+    targets,
+    filterQuery,
+    getDefaultQuery,
+  }: {
+    targets: TestQuery[];
+    getDefaultQuery?: (app: CoreApp) => Partial<TestQuery>;
+    filterQuery?: typeof ds.filterQuery;
+  }) => {
+    request = {
+      range: {
+        from: dateTime(),
+        to: dateTime(),
+        raw: { from: '1h', to: 'now' },
+      },
+      targets,
+      requestId: '',
+      interval: '',
+      intervalMs: 0,
+      scopedVars: {},
+      timezone: '',
+      app: '',
+      startTime: 0,
+    };
+
+    const ds = getMockDataSource();
+    if (filterQuery) {
+      ds.filterQuery = filterQuery;
+      filterQuerySpy = jest.spyOn(ds, 'filterQuery');
+    }
+    if (getDefaultQuery) {
+      ds.getDefaultQuery = getDefaultQuery;
+      defaultQuerySpy = jest.spyOn(ds, 'getDefaultQuery');
+    }
+    querySpy = jest.spyOn(ds, 'query');
+    callQueryMethod(ds, request);
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('Should call filterQuery and exclude them from the request', async () => {
+    setup({
+      targets: [
+        {
+          refId: 'A',
+          q: 'SUM(foo)',
+        },
+        {
+          refId: 'B',
+          q: 'SUM(foo2)',
+        },
+        {
+          refId: 'C',
+          q: 'SUM(foo3)',
+        },
+      ],
+      filterQuery: (query: DataQuery) => query.refId !== 'A',
+    });
+    expect(filterQuerySpy).toHaveBeenCalledTimes(3);
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: [
+          { q: 'SUM(foo2)', refId: 'B' },
+          { q: 'SUM(foo3)', refId: 'C' },
+        ],
+      })
+    );
+  });
+
+  it('Should get ds default query when query is empty', async () => {
+    setup({
+      targets: [
+        {
+          refId: 'A',
+        },
+        {
+          refId: 'B',
+        },
+        {
+          refId: 'C',
+          q: 'SUM(foo3)',
+        },
+      ],
+      getDefaultQuery: (_: CoreApp) => ({
+        q: 'SUM(foo2)',
+      }),
+    });
+    expect(defaultQuerySpy).toHaveBeenCalledTimes(2);
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: [
+          { q: 'SUM(foo2)', refId: 'A' },
+          { q: 'SUM(foo2)', refId: 'B' },
+          { q: 'SUM(foo3)', refId: 'C' },
+        ],
+      })
+    );
   });
 });
 
