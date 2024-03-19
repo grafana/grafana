@@ -46,8 +46,7 @@ func MakePublicQueryError(refID, err string) error {
 
 var depErrStr = "did not execute expression [{{ .Public.refId }}] due to a failure to of the dependent expression or query [{{.Public.depRefId}}]"
 
-var dependencyError = errutil.NewBase(
-	errutil.StatusBadRequest, "sse.dependencyError").MustTemplate(
+var dependencyError = errutil.BadRequest("sse.dependencyError").MustTemplate(
 	depErrStr,
 	errutil.WithPublic(depErrStr))
 
