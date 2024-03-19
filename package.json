@@ -156,7 +156,7 @@
     "chrome-remote-interface": "0.33.0",
     "codeowners": "^5.1.1",
     "copy-webpack-plugin": "12.0.2",
-    "core-js": "3.36.0",
+    "core-js": "3.36.1",
     "css-loader": "6.10.0",
     "css-minimizer-webpack-plugin": "6.0.0",
     "cypress": "13.1.0",
