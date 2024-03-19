@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -20,14 +21,14 @@ import (
 // limit which namespace/tenant/org we are talking to
 type PluginDatasourceProvider interface {
 	// Get gets a specific datasource (that the user in context can see)
-	Get(ctx context.Context, pluginID, uid string) (*v0alpha1.DataSourceConnection, error)
+	Get(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error)
 
 	// List lists all data sources the user in context can see
-	List(ctx context.Context, pluginID string) (*v0alpha1.DataSourceConnectionList, error)
+	List(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error)
 
 	// Return settings (decrypted!) for a specific plugin
 	// This will require "query" permission for the user in context
-	GetInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error)
+	GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error)
 }
 
 // PluginContext requires adding system settings (feature flags, etc) to the datasource config
@@ -47,6 +48,7 @@ func ProvideDefaultPluginConfigs(
 }
 
 type defaultPluginDatasourceProvider struct {
+	plugin          plugins.JSONData
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
 	contextProvider *plugincontext.Provider
@@ -56,7 +58,7 @@ var (
 	_ PluginDatasourceProvider = (*defaultPluginDatasourceProvider)(nil)
 )
 
-func (q *defaultPluginDatasourceProvider) Get(ctx context.Context, pluginID, uid string) (*v0alpha1.DataSourceConnection, error) {
+func (q *defaultPluginDatasourceProvider) Get(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -72,15 +74,16 @@ func (q *defaultPluginDatasourceProvider) Get(ctx context.Context, pluginID, uid
 	return asConnection(ds, info.Value)
 }
 
-func (q *defaultPluginDatasourceProvider) List(ctx context.Context, pluginID string) (*v0alpha1.DataSourceConnectionList, error) {
+func (q *defaultPluginDatasourceProvider) List(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
 	dss, err := q.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
-		OrgID: info.OrgID,
-		Type:  pluginID,
+		OrgID:    info.OrgID,
+		Type:     q.plugin.ID,
+		AliasIDs: q.plugin.AliasIDs,
 	})
 	if err != nil {
 		return nil, err
@@ -95,7 +98,7 @@ func (q *defaultPluginDatasourceProvider) List(ctx context.Context, pluginID str
 	return result, nil
 }
 
-func (q *defaultPluginDatasourceProvider) GetInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error) {
+func (q *defaultPluginDatasourceProvider) GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
 	if q.contextProvider == nil {
 		// NOTE!!! this is only here for the standalone example
 		// if we cleanup imports this can throw an error
