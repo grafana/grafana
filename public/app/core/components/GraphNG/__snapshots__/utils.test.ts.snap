@@ -80,9 +80,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       "width": [Function],
     },
     "sync": {
-      "filters": {
-        "pub": [Function],
-      },
       "key": "__global_",
       "scales": [
         "x",

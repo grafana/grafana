@@ -43,10 +43,13 @@ type Service interface {
 }
 
 var mailTemplates *template.Template
-var tmplResetPassword = "reset_password"
-var tmplSignUpStarted = "signup_started"
-var tmplWelcomeOnSignUp = "welcome_on_signup"
-var tmplVerifyEmail = "verify_email_update"
+
+const (
+	tmplResetPassword   = "reset_password"
+	tmplSignUpStarted   = "signup_started"
+	tmplWelcomeOnSignUp = "welcome_on_signup"
+	tmplVerifyEmail     = "verify_email"
+)
 
 func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUserStore) (*NotificationService, error) {
 	ns := &NotificationService{

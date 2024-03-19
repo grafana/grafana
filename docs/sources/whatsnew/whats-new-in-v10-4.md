@@ -180,7 +180,7 @@ _Generally available in all editions of Grafana_
 
 Users looking to migrate to the new Grafana Alerting product can do so with confidence with the Grafana Alerting migration preview tool. The migration preview tool allows users to view, edit, and delete migrated rules prior cutting over, with the option to roll back to Legacy Alerting.
 
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/migrating-alerts/#upgrade-with-preview-recommended)
+[Documentation](https://grafana.com/docs/grafana/v10.4/alerting/set-up/migrating-alerts/#upgrade-with-preview-recommended)
 
 ### Rule evaluation spread over the entire evaluation interval
 
@@ -261,6 +261,22 @@ The SurrealDB data source launches with just the basics today. You can write que
 
 You can find more information and how to configure the plugin [on Github](https://github.com/grafana/surrealdb-datasource).
 
-{{< figure src="/media/images/dashboards/surrealdb-dashboard-example.png" >}}
+{{< figure src="/media/images/dashboards/surrealdb-dashboard-example.png" alt="Grafana dashboard using SurrealDB data source" >}}
 
 [Documentation](https://grafana.com/grafana/plugins/grafana-surrealdb-datasource/)
+
+## Table Visualization for Logs
+
+<!-- #observability-logs -->
+
+_Generally available in all editions of Grafana_
+
+The table visualization for logs, announced in public preview for Grafana 10.3, is generally available in Cloud (all editions) and with Grafana 10.4.
+
+New to the table visualization with 10.4:
+
+- the ability to sort columns
+- data type autodetection of fields
+- autodetection and clean formatting of json fields
+
+Try it out today!
