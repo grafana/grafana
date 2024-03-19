@@ -283,10 +283,6 @@ const (
 	// Enables the ability to format Loki queries
 	FlagLokiFormatQuery = "lokiFormatQuery"
 
-	// FlagCloudWatchLogsMonacoEditor
-	// Enables the Monaco editor for CloudWatch Logs queries
-	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
@@ -410,10 +406,6 @@ const (
 	// FlagIdForwarding
 	// Generate signed id token for identity that can be forwarded to plugins and external services
 	FlagIdForwarding = "idForwarding"
-
-	// FlagCloudWatchWildCardDimensionValues
-	// Fetches dimension values from CloudWatch to correctly label wildcard dimensions
-	FlagCloudWatchWildCardDimensionValues = "cloudWatchWildCardDimensionValues"
 
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins

@@ -139,7 +139,9 @@ export function EditDataSourceView({
   const extensions = useMemo(() => {
     const allowedPluginIds = ['grafana-pdc-app', 'grafana-auth-app'];
     const extensionPointId = PluginExtensionPoints.DataSourceConfig;
-    const { extensions } = getPluginComponentExtensions({ extensionPointId });
+    const { extensions } = getPluginComponentExtensions<{
+      context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
+    }>({ extensionPointId });
 
     return extensions.filter((e) => allowedPluginIds.includes(e.pluginId));
   }, []);
@@ -202,9 +204,7 @@ export function EditDataSourceView({
 
       {/* Extension point */}
       {extensions.map((extension) => {
-        const Component = extension.component as React.ComponentType<{
-          context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
-        }>;
+        const Component = extension.component;
 
         return (
           <div key={extension.id}>

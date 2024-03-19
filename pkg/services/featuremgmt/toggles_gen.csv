@@ -68,7 +68,6 @@ dashboardEmbed,experimental,@grafana/grafana-as-code,false,false,true
 frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
 lokiFormatQuery,experimental,@grafana/observability-logs,false,false,true
-cloudWatchLogsMonacoEditor,GA,@grafana/aws-datasources,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
 pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,false,false,false
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,true
@@ -100,7 +99,6 @@ alertingInsights,GA,@grafana/alerting-squad,false,false,true
 externalCorePlugins,experimental,@grafana/plugins-platform-backend,false,false,false
 pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,true
 idForwarding,experimental,@grafana/identity-access-team,false,false,false
-cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false
