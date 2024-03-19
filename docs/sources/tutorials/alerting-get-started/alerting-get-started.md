@@ -2,7 +2,7 @@
 
 In this guide, we'll walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as receiving alert notifications.
 
-## Requirements
+## Before you begin
 
 Docker Compose (included in Docker for Desktop for macOS and Windows)
 Git
