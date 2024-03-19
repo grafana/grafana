@@ -42,7 +42,8 @@ func Krb5ParseAuthCredentials(host string, port string, db string, user string, 
 	if krb5CCLookupFile != "" {
 		krb5CacheCredsFile = getCredentialCacheFromLookup(krb5CCLookupFile, host, port, db, user)
 		if krb5CacheCredsFile == "" {
-			krb5CacheCredsFile = kerberosAuth.CredentialCacheLookupFile
+			logger.Error("No valid credential cache file found in lookup.")
+			return ""
 		}
 	}
 
