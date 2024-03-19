@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 
-import { GrafanaTheme2, ScopeDashboard } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, ScopeDashboard } from '@grafana/data';
+import { config, getAppEvents, getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
 
@@ -14,6 +16,9 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
 
 export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsSceneState> {
   static Component = ScopesDashboardsSceneRenderer;
+
+  private _url =
+    config.bootData.settings.listDashboardScopesEndpoint || '/apis/scope.grafana.app/v0alpha1/scopedashboards';
 
   constructor() {
     super({
@@ -31,24 +36,36 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 
     this.setState({ isLoading: true });
 
-    setTimeout(() => {
-      const dashboards = [
-        {
-          uid: '20a5aec7-8381-4c91-94b7-4e8d17c75672',
-          title: `My Dashboard ${Math.floor(Math.random() * 10) + 1}`,
-        },
-        {
-          uid: 'c677f72a-ab93-4442-b50f-367f4a2849c7',
-          title: `My Dashboard ${Math.floor(Math.random() * 10) + 1}`,
-        },
-      ];
+    try {
+      const response = await getBackendSrv().get<{
+        items: Array<{ spec: { dashboardUids: null | string[]; scopeUid: string } }>;
+      }>(this._url, { scope });
+
+      const dashboardUids =
+        response.items.find((item) => !!item.spec.dashboardUids && item.spec.scopeUid === scope)?.spec.dashboardUids ??
+        [];
+      const dashboardsRaw = await Promise.all(
+        dashboardUids.map((dashboardUid) => getBackendSrv().get(`/api/dashboards/uid/${dashboardUid}`))
+      );
+      const dashboards = dashboardsRaw.map((dashboard) => ({
+        uid: dashboard.dashboard.uid,
+        title: dashboard.dashboard.title,
+        url: dashboard.meta.url,
+      }));
 
       this.setState({
         dashboards,
         filteredDashboards: this.filterDashboards(dashboards, this.state.searchQuery),
         isLoading: false,
       });
-    }, 500);
+    } catch (error) {
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: ['Failed to fetch suggested dashboards'],
+      });
+    } finally {
+      this.setState({ isLoading: false });
+    }
   }
 
   public changeSearchQuery(searchQuery: string) {
@@ -70,12 +87,6 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
   const { filteredDashboards, isLoading } = model.useState();
   const styles = useStyles2(getStyles);
 
-  const ac = [];
-
-  for (let i = 0; i < 100; i++) {
-    ac.push(...filteredDashboards);
-  }
-
   return (
     <>
       <div className={styles.searchInputContainer}>
@@ -87,9 +98,9 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
       </div>
 
       <CustomScrollbar>
-        {ac.map((dashboard, idx) => (
+        {filteredDashboards.map((dashboard, idx) => (
           <div key={idx} className={styles.dashboardItem}>
-            {dashboard.title}
+            <NavLink to={dashboard.url}>{dashboard.title}</NavLink>
           </div>
         ))}
       </CustomScrollbar>

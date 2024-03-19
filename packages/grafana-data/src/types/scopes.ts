@@ -1,6 +1,7 @@
 export interface ScopeDashboard {
   uid: string;
   title: string;
+  url: string;
 }
 
 export interface ScopeFilter {
