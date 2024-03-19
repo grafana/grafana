@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/util"
 	"strings"
 	"time"
 
@@ -56,7 +57,8 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 			span.SetStatus(codes.Error, response.Error.Error())
 			return response
 		}
-		response.Frames = append(response.Frames, seriesToDataFrame(seriesResp, qm.ProfileTypeId)...)
+
+		response.Frames = append(response.Frames, seriesToDataFrame(seriesResp, util.Depointerizer(qm.ProfileTypeId))...)
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {

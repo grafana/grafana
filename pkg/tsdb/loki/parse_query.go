@@ -2,6 +2,7 @@ package loki
 
 import (
 	"fmt"
+	"github.com/grafana/grafana/pkg/util"
 	"math"
 	"strconv"
 	"strings"
@@ -149,7 +150,7 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			return nil, err
 		}
 
-		expr := interpolateVariables(model.Expr, interval, timeRange, queryType, step)
+		expr := interpolateVariables(util.Depointerizer(model.Expr), interval, timeRange, queryType, step)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {

@@ -6,9 +6,7 @@ import (
 	"strings"
 
 	copenapi "cuelang.org/go/encoding/openapi"
-	"github.com/dave/dst/dstutil"
 	"github.com/grafana/codejen"
-	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/codegen/generators"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
@@ -43,7 +41,6 @@ func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 			IsGroup: decl.SchemaInterface.IsGroup,
 		},
 		PackageName: slotname,
-		ApplyFuncs:  []dstutil.ApplyFunc{corecodegen.PrefixDropper(decl.PluginMeta.Name)},
 	})
 	if err != nil {
 		return nil, err

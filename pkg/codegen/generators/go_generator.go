@@ -28,7 +28,7 @@ func GenerateTypesGo(v cue.Value, cfg *GoConfig) ([]byte, error) {
 		return nil, fmt.Errorf("configuration cannot be nil")
 	}
 
-	applyFuncs := []dstutil.ApplyFunc{depointerizer(), fixRawData(), fixUnderscoreInTypeName(), fixTODOComments()}
+	applyFuncs := []dstutil.ApplyFunc{depointerizer(), fixRawData(), fixUnderscoreInTypeName(), fixTODOComments(), fixElasticGeneration()}
 	applyFuncs = append(applyFuncs, cfg.ApplyFuncs...)
 
 	f, err := generateOpenAPI(v, cfg.Config)
@@ -54,6 +54,12 @@ func GenerateTypesGo(v cue.Value, cfg *GoConfig) ([]byte, error) {
 
 	if cfg.PackageName == "" {
 		cfg.PackageName = schemaName
+	}
+
+	// Hack to fix https://github.com/grafana/thema/pull/127 issue without importing
+	// to avoid to add the whole vendor in Grafana code
+	if cfg.PackageName == "dataquery" {
+		fixDataQuery(oT)
 	}
 
 	ccfg := codegen.Configuration{
@@ -131,6 +137,24 @@ func postprocessGoFile(cfg genGoFile) ([]byte, error) {
 		return nil, fmt.Errorf("goimports added the following import statements to %s: \n\t%s\nRelying on goimports to find imports significantly slows down code generation. Either add these imports with an AST manipulation in cfg.ApplyFuncs, or set cfg.IgnoreDiscoveredImports to true", cfg.path, strings.Join(added, "\n\t"))
 	}
 	return byt, nil
+}
+
+// fixDataQuery extends the properties for the AllOf schemas when a DataQuery exists.
+// deep/oapi-codegen library ignores the properties of the models and only ones have references.
+// It doesn't apply this change https://github.com/grafana/thema/pull/154 since it modifies the
+// vendor implementation, and we don't import it.
+func fixDataQuery(spec *openapi3.T) *openapi3.T {
+	for _, sch := range spec.Components.Schemas {
+		if sch.Value != nil && len(sch.Value.AllOf) > 0 {
+			for _, allOf := range sch.Value.AllOf {
+				for n, p := range allOf.Value.Properties {
+					sch.Value.Properties[n] = p
+				}
+			}
+			sch.Value.AllOf = nil
+		}
+	}
+	return spec
 }
 
 // Almost all of the below imports are eliminated by dst transformers and calls

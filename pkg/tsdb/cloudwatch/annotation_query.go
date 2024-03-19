@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/util"
 	"strconv"
 	"time"
 
@@ -50,7 +51,12 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 	actionPrefix := model.ActionPrefix
 	alarmNamePrefix := model.AlarmNamePrefix
 
-	cli, err := e.getCWClient(ctx, pluginCtx, model.Region)
+	region := ""
+	if model.Region != nil {
+		region = *model.Region
+	}
+
+	cli, err := e.getCWClient(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -76,9 +82,9 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 		if err != nil {
 			return nil, fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarms", err)
 		}
-		alarmNames = filterAlarms(resp, model.Namespace, metricName, dimensions, statistic, period)
+		alarmNames = filterAlarms(resp, util.Depointerizer(model.Namespace), metricName, dimensions, statistic, period)
 	} else {
-		if model.Region == "" || model.Namespace == "" || metricName == "" || statistic == "" {
+		if model.Region == nil || model.Namespace == nil || metricName == "" || statistic == "" {
 			return result, errors.New("invalid annotations query")
 		}
 
@@ -96,7 +102,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 			}
 		}
 		params := &cloudwatch.DescribeAlarmsForMetricInput{
-			Namespace:  aws.String(model.Namespace),
+			Namespace:  aws.String(util.Depointerizer(model.Namespace)),
 			MetricName: aws.String(metricName),
 			Dimensions: qd,
 			Statistic:  aws.String(statistic),

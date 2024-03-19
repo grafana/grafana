@@ -2,6 +2,7 @@ package generators
 
 import (
 	"fmt"
+	"go/token"
 	"regexp"
 	"strings"
 	"unicode"
@@ -196,6 +197,49 @@ func fixUnderscoreInTypeName() dstutil.ApplyFunc {
 		case *dst.Field:
 			findFieldsWithUnderscores(x)
 		}
+		return true
+	}
+}
+
+func fixElasticGeneration() dstutil.ApplyFunc {
+	return func(c *dstutil.Cursor) bool {
+		isElasticSearch := false
+		f, ok := c.Node().(*dst.File)
+		if !ok {
+			return false
+		}
+
+		for _, decl := range f.Decls {
+			genDecl, ok := decl.(*dst.GenDecl)
+			if !ok {
+				continue
+			}
+
+			for _, spec := range genDecl.Specs {
+				if ts, ok := spec.(*dst.TypeSpec); ok {
+					if ts.Name.Name == "ElasticsearchDataQuery" {
+						isElasticSearch = true
+						break
+					}
+				}
+			}
+		}
+
+		if isElasticSearch {
+			dstutil.Apply(f, func(cursor *dstutil.Cursor) bool {
+				f.Decls = append(f.Decls, &dst.GenDecl{
+					Tok: token.TYPE,
+					Specs: []dst.Spec{
+						&dst.TypeSpec{
+							Name: dst.NewIdent("MetricAggregationType"),
+							Type: dst.NewIdent("string"),
+						},
+					},
+				})
+				return false
+			}, nil)
+		}
+
 		return true
 	}
 }
