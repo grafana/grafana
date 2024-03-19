@@ -132,7 +132,7 @@ export const optionBuilder: OptionSuppliers = {
       category,
       id: 'lineStyle',
       path: 'lineStyle',
-      name: 'LineStyle',
+      name: 'Line style',
       editor: LineStyleEditor,
       settings: {},
       defaultValue: { value: LineStyle.Solid, label: 'Solid' },
