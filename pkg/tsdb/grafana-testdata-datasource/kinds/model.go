@@ -22,7 +22,7 @@ const (
 	StreamingQueryTypeTraces StreamingQueryType = "traces"
 )
 
-// ErrorType defines model for TestDataDataQuery.ErrorType.
+// ErrorType defines model for TestDataQuery.ErrorType.
 // +enum
 type ErrorType string
 
@@ -69,63 +69,8 @@ const (
 	TestDataQueryTypeVariablesQuery               TestDataQueryType = "variables-query"
 )
 
-// CSVWave defines model for CSVWave.
-type CSVWave struct {
-	TimeStep  int64  `json:"timeStep,omitempty"`
-	ValuesCSV string `json:"valuesCSV,omitempty"`
-	Labels    string `json:"labels,omitempty"`
-	Name      string `json:"name,omitempty"`
-}
-
-// NodesQuery defines model for NodesQuery.
-type NodesQuery struct {
-	Count int64          `json:"count,omitempty"`
-	Seed  int64          `json:"seed,omitempty"`
-	Type  NodesQueryType `json:"type,omitempty"`
-}
-
-// PulseWaveQuery defines model for PulseWaveQuery.
-type PulseWaveQuery struct {
-	OffCount int64   `json:"offCount,omitempty"`
-	OffValue float64 `json:"offValue,omitempty"`
-	OnCount  int64   `json:"onCount,omitempty"`
-	OnValue  float64 `json:"onValue,omitempty"`
-	TimeStep int64   `json:"timeStep,omitempty"`
-}
-
-// TODO: Should this live here given it's not used in the dataquery?
-type Scenario struct {
-	Description    string `json:"description,omitempty"`
-	HideAliasField bool   `json:"hideAliasField,omitempty"`
-	Id             string `json:"id"`
-	Name           string `json:"name"`
-	StringInput    string `json:"stringInput"`
-}
-
-// SimulationQuery defines model for SimulationQuery.
-type SimulationQuery struct {
-	Config map[string]any `json:"config,omitempty"`
-	Key    struct {
-		Tick float64 `json:"tick"`
-		Type string  `json:"type"`
-		Uid  *string `json:"uid,omitempty"`
-	} `json:"key"`
-	Last   bool `json:"last,omitempty"`
-	Stream bool `json:"stream,omitempty"`
-}
-
-// StreamingQuery defines model for StreamingQuery.
-type StreamingQuery struct {
-	Bands  int32              `json:"bands,omitempty"`
-	Noise  float64            `json:"noise"`
-	Speed  float64            `json:"speed"`
-	Spread float64            `json:"spread"`
-	Type   StreamingQueryType `json:"type"`
-	Url    string             `json:"url,omitempty"`
-}
-
-// TestDataDataQuery defines model for TestDataDataQuery.
-type TestDataDataQuery struct {
+// TestDataQuery defines model for TestDataQuery.
+type TestDataQuery struct {
 	ScenarioId TestDataQueryType `json:"scenarioId,omitempty"`
 	Alias      string            `json:"alias,omitempty"`
 	Labels     string            `json:"labels,omitempty"`
@@ -163,6 +108,52 @@ type TestDataDataQuery struct {
 	Sim       *SimulationQuery `json:"sim,omitempty"`
 	Stream    *StreamingQuery  `json:"stream,omitempty"`
 	Usa       *USAQuery        `json:"usa,omitempty"`
+}
+
+// CSVWave defines model for CSVWave.
+type CSVWave struct {
+	TimeStep  int64  `json:"timeStep,omitempty"`
+	ValuesCSV string `json:"valuesCSV,omitempty"`
+	Labels    string `json:"labels,omitempty"`
+	Name      string `json:"name,omitempty"`
+}
+
+// NodesQuery defines model for NodesQuery.
+type NodesQuery struct {
+	Count int64          `json:"count,omitempty"`
+	Seed  int64          `json:"seed,omitempty"`
+	Type  NodesQueryType `json:"type,omitempty"`
+}
+
+// PulseWaveQuery defines model for PulseWaveQuery.
+type PulseWaveQuery struct {
+	OffCount int64   `json:"offCount,omitempty"`
+	OffValue float64 `json:"offValue,omitempty"`
+	OnCount  int64   `json:"onCount,omitempty"`
+	OnValue  float64 `json:"onValue,omitempty"`
+	TimeStep int64   `json:"timeStep,omitempty"`
+}
+
+// SimulationQuery defines model for SimulationQuery.
+type SimulationQuery struct {
+	Config map[string]any `json:"config,omitempty"`
+	Key    struct {
+		Tick float64 `json:"tick"`
+		Type string  `json:"type"`
+		Uid  *string `json:"uid,omitempty"`
+	} `json:"key"`
+	Last   bool `json:"last,omitempty"`
+	Stream bool `json:"stream,omitempty"`
+}
+
+// StreamingQuery defines model for StreamingQuery.
+type StreamingQuery struct {
+	Bands  int32              `json:"bands,omitempty"`
+	Noise  float64            `json:"noise"`
+	Speed  float64            `json:"speed"`
+	Spread float64            `json:"spread"`
+	Type   StreamingQueryType `json:"type"`
+	Url    string             `json:"url,omitempty"`
 }
 
 // USAQuery defines model for USAQuery.

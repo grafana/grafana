@@ -28,12 +28,12 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	err = builder.AddQueries(
 		schemabuilder.QueryTypeInfo{
 			Name:   "default",
-			GoType: reflect.TypeOf(&TestDataDataQuery{}),
+			GoType: reflect.TypeOf(&TestDataQuery{}),
 			Examples: []data.QueryExample{
 				{
 					Name: "simple random walk",
 					SaveModel: data.AsUnstructured(
-						TestDataDataQuery{
+						TestDataQuery{
 							ScenarioId: TestDataQueryTypeRandomWalk,
 						},
 					),
@@ -41,7 +41,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				{
 					Name: "pulse wave example",
 					SaveModel: data.AsUnstructured(
-						TestDataDataQuery{
+						TestDataQuery{
 							ScenarioId: TestDataQueryTypePredictablePulse,
 							PulseWave: &PulseWaveQuery{
 								TimeStep: int64(1000),

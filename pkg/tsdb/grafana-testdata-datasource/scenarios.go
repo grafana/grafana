@@ -221,8 +221,8 @@ func instrumentScenarioHandler(logger log.Logger, scenario kinds.TestDataQueryTy
 	})
 }
 
-func GetJSONModel(j json.RawMessage) (kinds.TestDataDataQuery, error) {
-	model := kinds.TestDataDataQuery{
+func GetJSONModel(j json.RawMessage) (kinds.TestDataQuery, error) {
+	model := kinds.TestDataQuery{
 		// Default values
 		ScenarioId:  kinds.TestDataQueryTypeRandomWalk,
 		SeriesCount: 1,
@@ -665,7 +665,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 	return resp, nil
 }
 
-func RandomWalk(query backend.DataQuery, model kinds.TestDataDataQuery, index int) *data.Frame {
+func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *data.Frame {
 	rand := rand.New(rand.NewSource(time.Now().UnixNano() + int64(index)))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
@@ -734,7 +734,7 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataDataQuery, index in
 	return frame
 }
 
-func randomWalkTable(query backend.DataQuery, model kinds.TestDataDataQuery) *data.Frame {
+func randomWalkTable(query backend.DataQuery, model kinds.TestDataQuery) *data.Frame {
 	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
@@ -807,7 +807,7 @@ func randomWalkTable(query backend.DataQuery, model kinds.TestDataDataQuery) *da
 	return frame
 }
 
-func predictableCSVWave(query backend.DataQuery, model kinds.TestDataDataQuery) ([]*data.Frame, error) {
+func predictableCSVWave(query backend.DataQuery, model kinds.TestDataQuery) ([]*data.Frame, error) {
 	queries := model.CsvWave
 
 	frames := make([]*data.Frame, 0, len(queries))
@@ -896,7 +896,7 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 	}, nil
 }
 
-func predictablePulse(query backend.DataQuery, model kinds.TestDataDataQuery) (*data.Frame, error) {
+func predictablePulse(query backend.DataQuery, model kinds.TestDataQuery) (*data.Frame, error) {
 	// Process Input
 	var timeStep int64
 	var onCount int64
@@ -966,7 +966,7 @@ func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) floa
 	return frame
 }
 
-func doArrowQuery(query backend.DataQuery, model kinds.TestDataDataQuery) (*data.Frame, error) {
+func doArrowQuery(query backend.DataQuery, model kinds.TestDataQuery) (*data.Frame, error) {
 	encoded := model.StringInput
 	if encoded == "" {
 		return nil, nil
@@ -978,7 +978,7 @@ func doArrowQuery(query backend.DataQuery, model kinds.TestDataDataQuery) (*data
 	return data.UnmarshalArrowFrame(arrow)
 }
 
-func newSeriesForQuery(query backend.DataQuery, model kinds.TestDataDataQuery, index int) *data.Frame {
+func newSeriesForQuery(query backend.DataQuery, model kinds.TestDataQuery, index int) *data.Frame {
 	alias := model.Alias
 	suffix := ""
 
@@ -1006,7 +1006,7 @@ func newSeriesForQuery(query backend.DataQuery, model kinds.TestDataDataQuery, i
  *
  * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
  */
-func parseLabels(model kinds.TestDataDataQuery, seriesIndex int) data.Labels {
+func parseLabels(model kinds.TestDataQuery, seriesIndex int) data.Labels {
 	return parseLabelsString(model.Labels, seriesIndex)
 }
 
@@ -1034,7 +1034,7 @@ func parseLabelsString(labelText string, seriesIndex int) data.Labels {
 	return tags
 }
 
-func frameNameForQuery(query backend.DataQuery, model kinds.TestDataDataQuery, index int) string {
+func frameNameForQuery(query backend.DataQuery, model kinds.TestDataQuery, index int) string {
 	name := model.Alias
 	suffix := ""
 

@@ -186,32 +186,32 @@ func TestParseLabels(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		model    kinds.TestDataDataQuery
+		model    kinds.TestDataQuery
 		expected data.Labels
 	}{
 		{
 			name:     "wrapped in {} and quoted value ",
-			model:    kinds.TestDataDataQuery{Labels: `{job="foo", instance="bar"}`},
+			model:    kinds.TestDataQuery{Labels: `{job="foo", instance="bar"}`},
 			expected: expectedTags,
 		},
 		{
 			name:     "comma-separated non-quoted",
-			model:    kinds.TestDataDataQuery{Labels: `job=foo, instance=bar`},
+			model:    kinds.TestDataQuery{Labels: `job=foo, instance=bar`},
 			expected: expectedTags,
 		},
 		{
 			name:     "comma-separated quoted",
-			model:    kinds.TestDataDataQuery{Labels: `job="foo"", instance="bar"`},
+			model:    kinds.TestDataQuery{Labels: `job="foo"", instance="bar"`},
 			expected: expectedTags,
 		},
 		{
 			name:     "comma-separated with spaces, non quoted",
-			model:    kinds.TestDataDataQuery{Labels: `job = foo,instance = bar`},
+			model:    kinds.TestDataQuery{Labels: `job = foo,instance = bar`},
 			expected: expectedTags,
 		},
 		{
 			name:  "expands $seriesIndex",
-			model: kinds.TestDataDataQuery{Labels: `job=series-$seriesIndex,instance=bar`},
+			model: kinds.TestDataQuery{Labels: `job=series-$seriesIndex,instance=bar`},
 			expected: data.Labels{
 				"job":      fmt.Sprintf("series-%d", seriesIndex),
 				"instance": "bar",
