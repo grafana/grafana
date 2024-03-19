@@ -128,7 +128,7 @@ In this section, we can Link a dashboard and panel to our Alert. For that, click
 
 Linking an alert to a panel will add an annotation to the panel when the status of your alert changes. If you don’t have a panel already, and since this is optional, you can skip this step for now and link it after you have finished configuring the alert.
 
-#### Trigger the Alert
+#### Trigger an alert
 We have now configured an alert rule and a contact point. Now let’s see if we can trigger our Alert by generating some traffic on our sample application.
 Browse to localhost:8081.
 Add a new title and URL, repeatedly click the vote button, or refresh the page to generate a traffic spike.
