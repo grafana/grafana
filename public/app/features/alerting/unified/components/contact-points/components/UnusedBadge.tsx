@@ -8,6 +8,7 @@ export const UnusedContactPointBadge = () => (
     aria-label="unused"
     color="orange"
     icon="exclamation-triangle"
-    tooltip="This contact point is not used in any notification policy and it will not receive any alerts"
+    // is not used in any policy, but it can receive notifications from an auto auto generated policy. Non admin users can't see auto generated policies.
+    tooltip="This contact point is not used in any notification policy"
   />
 );
