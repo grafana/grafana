@@ -134,7 +134,7 @@ describe('PublicDashboardScenePage', () => {
     getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
   });
 
-  it('Can render public dashboard', async () => {
+  it('can render public dashboard', async () => {
     setup();
 
     await waitForDashboardGridToRender();
@@ -148,7 +148,7 @@ describe('PublicDashboardScenePage', () => {
     expect(await screen.findByTestId(publicDashboardSelector.footer)).toBeInTheDocument();
   });
 
-  it('Cannot see menu panel', async () => {
+  it('cannot see menu panel', async () => {
     setup();
 
     await waitForDashboardGridToRender();
@@ -157,7 +157,7 @@ describe('PublicDashboardScenePage', () => {
     expect(screen.queryByTestId(componentsSelector.Panels.Panel.menu('Panel B'))).not.toBeInTheDocument();
   });
 
-  it('Shows time controls when it is not hidden', async () => {
+  it('shows time controls when it is not hidden', async () => {
     setup();
 
     await waitForDashboardGridToRender();
@@ -167,7 +167,7 @@ describe('PublicDashboardScenePage', () => {
     expect(screen.queryByTestId(componentsSelector.RefreshPicker.intervalButtonV2)).toBeInTheDocument();
   });
 
-  it('Does not render paused or deleted screen', async () => {
+  it('does not render paused or deleted screen', async () => {
     setup();
 
     await waitForDashboardGridToRender();
@@ -175,7 +175,7 @@ describe('PublicDashboardScenePage', () => {
     expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.container)).not.toBeInTheDocument();
   });
 
-  it('Does not show time controls when it is hidden', async () => {
+  it('does not show time controls when it is hidden', async () => {
     const accessToken = 'hidden-time-picker-pubdash-access-token';
     config.publicDashboardAccessToken = accessToken;
     setupLoadDashboardMock({
@@ -194,8 +194,8 @@ describe('PublicDashboardScenePage', () => {
   });
 });
 
-describe('Given unavailable public dashboard', () => {
-  it('Renders public dashboard paused screen when it is paused', async () => {
+describe('given unavailable public dashboard', () => {
+  it('renders public dashboard paused screen when it is paused', async () => {
     const accessToken = 'paused-pubdash-access-token';
     config.publicDashboardAccessToken = accessToken;
     setupLoadDashboardMock({
@@ -211,7 +211,7 @@ describe('Given unavailable public dashboard', () => {
     expect(screen.getByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).toBeInTheDocument();
   });
 
-  it('Renders public dashboard not available screen when it is deleted', async () => {
+  it('renders public dashboard not available screen when it is deleted', async () => {
     const accessToken = 'deleted-pubdash-access-token';
     config.publicDashboardAccessToken = accessToken;
     setupLoadDashboardMock({

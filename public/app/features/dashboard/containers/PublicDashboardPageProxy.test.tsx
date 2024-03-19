@@ -15,6 +15,16 @@ import PublicDashboardPageProxy, { PublicDashboardPageProxyProps } from './Publi
 
 const { PublicDashboardScene, PublicDashboard } = e2eSelectors.pages;
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn().mockReturnValue({
+    getInstanceSettings: () => {
+      return { name: 'Grafana' };
+    },
+    get: jest.fn().mockResolvedValue({}),
+  }),
+}));
+
 function setup(props: Partial<PublicDashboardPageProxyProps>) {
   const context = getGrafanaContextMock();
   const store = configureStore({});
@@ -43,7 +53,7 @@ describe('PublicDashboardPageProxy', () => {
   });
 
   describe('when scene feature enabled', () => {
-    it('should render PublicDashboardScenePage if dashboardScene is enabled', async () => {
+    it('should render PublicDashboardScenePage if dashboardSceneForViewers is enabled', async () => {
       config.featureToggles.dashboardSceneForViewers = true;
       setup({});
 
@@ -61,7 +71,7 @@ describe('PublicDashboardPageProxy', () => {
   });
 
   describe('when scene feature disabled', () => {
-    it('should render PublicDashboardPage if dashboardScene is disabled', async () => {
+    it('should render PublicDashboardPage if dashboardSceneForViewers is disabled', async () => {
       setup({});
 
       await waitFor(() => {
