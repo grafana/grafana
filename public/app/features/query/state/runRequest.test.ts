@@ -10,7 +10,6 @@ import {
   dateTime,
   LoadingState,
   PanelData,
-  ScopedVars,
 } from '@grafana/data';
 import { setEchoSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -68,6 +67,7 @@ class ScenarioCtx {
     } as DataQueryRequest;
 
     this.ds = {
+      filterQuery: (query: DataQuery) => true,
       query: (request: DataQueryRequest) => {
         return new Observable<DataQueryResponse>((subscriber) => {
           this.subscriber = subscriber;
@@ -373,6 +373,28 @@ describe('runRequest', () => {
     it('should separate annotations results', () => {
       expect(ctx.results[1].annotations?.length).toBe(1);
       expect(ctx.results[1].series.length).toBe(1);
+    });
+  });
+
+  runRequestScenario('When some queries are hidden', (ctx) => {
+    ctx.setup(() => {
+      ctx.request.targets = [{ refId: 'A', hide: true }, { refId: 'B' }];
+      ctx.start();
+      ctx.emitPacket({
+        data: [
+          { name: 'DataA-1', refId: 'A' },
+          { name: 'DataA-2', refId: 'A' },
+          { name: 'DataB-1', refId: 'B' },
+          { name: 'DataB-2', refId: 'B' },
+        ],
+        key: 'A',
+      });
+    });
+
+    it('should filter out responses that are associated with the hidden queries', () => {
+      expect(ctx.results[0].series.length).toBe(2);
+      expect(ctx.results[0].series[0].name).toBe('DataB-1');
+      expect(ctx.results[0].series[1].name).toBe('DataB-2');
     });
   });
 });
