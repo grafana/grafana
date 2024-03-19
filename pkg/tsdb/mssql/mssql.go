@@ -41,8 +41,8 @@ const (
 	sqlServerAuthentication     = "SQL Server Authentication"
 	kerberosRaw                 = "Windows AD: Username + password"
 	kerberosKeytab              = "Windows AD: Keytab"
-	kerberosCredentialCache     = "Windows AD: Credential cache"
-	kerberosCredentialCacheFile = "Windows AD: Credential cache file"
+	kerberosCredentialCache     = "Windows AD: Credential cache"      // #nosec G101
+	kerberosCredentialCacheFile = "Windows AD: Credential cache file" // #nosec G101
 )
 
 func ProvideService(cfg *setting.Cfg) *Service {
