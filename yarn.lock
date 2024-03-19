@@ -4234,7 +4234,7 @@ __metadata:
     "@types/react-dom": "npm:18.2.22"
     "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-router-dom": "npm:5.3.3"
-    "@types/react-table": "npm:7.7.19"
+    "@types/react-table": "npm:7.7.20"
     "@types/react-test-renderer": "npm:18.0.7"
     "@types/react-transition-group": "npm:4.4.10"
     "@types/react-window": "npm:1.8.8"
@@ -4248,7 +4248,7 @@ __metadata:
     calculate-size: "npm:1.1.1"
     classnames: "npm:2.5.1"
     common-tags: "npm:1.8.2"
-    core-js: "npm:3.36.0"
+    core-js: "npm:3.36.1"
     css-loader: "npm:6.10.0"
     csstype: "npm:3.1.3"
     d3: "npm:7.9.0"
@@ -9905,12 +9905,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-table@npm:7.7.19":
-  version: 7.7.19
-  resolution: "@types/react-table@npm:7.7.19"
+"@types/react-table@npm:7.7.20":
+  version: 7.7.20
+  resolution: "@types/react-table@npm:7.7.20"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 10/00ade23df17d1e6b4cd94dbf127268178f7daab9e5c823c9aa915458d99817814dfdbede9d37068c0d913e4706697dc8904e34987db16cb80ce2e41ad8a6cc10
+  checksum: 10/adf86958dd5b2e044d23fc7896f758b5ec59987891b41e9b02d935d666e999a518b0bdd8ba5bd60d644f20147de0ec3cf5f6a12b75516f1fad43fb3b4fd8361f
   languageName: node
   linkType: hard
 
@@ -13668,10 +13668,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.36.0, core-js@npm:^3.6.0, core-js@npm:^3.8.3":
-  version: 3.36.0
-  resolution: "core-js@npm:3.36.0"
-  checksum: 10/896326c6391c1607dc645293c214cd31c6c535d4a77a88b15fc29e787199f9b06dc15986ddfbc798335bf7a7afd1e92152c94aa5a974790a7f97a98121774302
+"core-js@npm:3.36.1, core-js@npm:^3.6.0, core-js@npm:^3.8.3":
+  version: 3.36.1
+  resolution: "core-js@npm:3.36.1"
+  checksum: 10/ce1e1bfc1034b6f2ff7c91077319e8abdd650ee606ffe6e80073e64ab9d8aad2d6a6d953461b01f331a6f796ad2fd766a3386b88aa371b45d44fa7c0b9913ce6
   languageName: node
   linkType: hard
 
@@ -18376,7 +18376,7 @@ __metadata:
     "@types/react-resizable": "npm:3.0.7"
     "@types/react-router": "npm:5.1.20"
     "@types/react-router-dom": "npm:5.3.3"
-    "@types/react-table": "npm:7.7.19"
+    "@types/react-table": "npm:7.7.20"
     "@types/react-test-renderer": "npm:18.0.7"
     "@types/react-transition-group": "npm:4.4.10"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
@@ -18424,7 +18424,7 @@ __metadata:
     comlink: "npm:4.4.1"
     common-tags: "npm:1.8.2"
     copy-webpack-plugin: "npm:12.0.2"
-    core-js: "npm:3.36.0"
+    core-js: "npm:3.36.1"
     css-loader: "npm:6.10.0"
     css-minimizer-webpack-plugin: "npm:6.0.0"
     cypress: "npm:13.1.0"
