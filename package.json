@@ -438,7 +438,7 @@
       "packages/grafana-e2e-selectors/",
       "packages/grafana-icons/",
       "packages/grafana-prometheus/",
-      "packages/grafana-sql/",
+      "packages/grafana-sql/*",
       "plugins-bundled/internal/*",
       "public/app/plugins/*/*"
     ]
