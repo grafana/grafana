@@ -534,6 +534,123 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	})
 }
 
+func TestIntegrationGetSoftDeletedDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	var sqlStore *sqlstore.SQLStore
+	var cfg *setting.Cfg
+	var savedFolder, savedDash *dashboards.Dashboard
+	var dashboardStore dashboards.Store
+
+	setup := func() {
+		sqlStore, cfg = db.InitTestDBwithCfg(t)
+		quotaService := quotatest.New(false, nil)
+		var err error
+		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
+		require.NoError(t, err)
+		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
+		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
+		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.ID, savedFolder.UID, false, "prod")
+	}
+
+	t.Run("Should soft delete a dashboard", func(t *testing.T) {
+		setup()
+
+		// Confirm there are 2 dashboards in the folder
+		amount, err := dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, int64(2), amount)
+
+		// Soft delete the dashboard
+		err = dashboardStore.SoftDeleteDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+
+		// There is only 1 dashboard in the folder after soft delete
+		amount, err = dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), amount)
+
+		// Get the soft deleted dashboard should be empty
+		dash, err := dashboardStore.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: savedDash.UID, OrgID: savedDash.OrgID})
+		assert.Error(t, err)
+		assert.Nil(t, dash)
+
+		// Get the soft deleted dashboard
+		dash, err = dashboardStore.GetSoftDeletedDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+		assert.Equal(t, savedDash.ID, dash.ID)
+		assert.Equal(t, savedDash.UID, dash.UID)
+		assert.Equal(t, savedDash.Title, dash.Title)
+	})
+
+	t.Run("Should not fail when trying to soft delete a soft deleted dashboard", func(t *testing.T) {
+		setup()
+
+		// Soft delete the dashboard
+		err := dashboardStore.SoftDeleteDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+
+		// Soft delete the dashboard
+		err = dashboardStore.SoftDeleteDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+
+		// Get the soft deleted dashboard
+		dash, err := dashboardStore.GetSoftDeletedDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+		assert.Equal(t, savedDash.ID, dash.ID)
+		assert.Equal(t, savedDash.UID, dash.UID)
+		assert.Equal(t, savedDash.Title, dash.Title)
+	})
+
+	t.Run("Should restore a dashboard", func(t *testing.T) {
+		setup()
+
+		// Confirm there are 2 dashboards in the folder
+		amount, err := dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, int64(2), amount)
+
+		// Soft delete the dashboard
+		err = dashboardStore.SoftDeleteDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+
+		// There is only 1 dashboard in the folder after soft delete
+		amount, err = dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), amount)
+
+		// Get the soft deleted dashboard
+		dash, err := dashboardStore.GetSoftDeletedDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+		assert.Equal(t, savedDash.ID, dash.ID)
+		assert.Equal(t, savedDash.UID, dash.UID)
+		assert.Equal(t, savedDash.Title, dash.Title)
+
+		// Restore deleted dashboard
+		err = dashboardStore.RestoreDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+
+		// Restore shouldn't change the amount of dashboards in the folder
+		amount, err = dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), amount)
+
+		// Get the soft deleted dashboard should be empty
+		dash, err = dashboardStore.GetSoftDeletedDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		assert.Error(t, err)
+		assert.Nil(t, dash)
+
+		// Get the restored dashboard
+		dash, err = dashboardStore.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: savedDash.UID, OrgID: savedDash.OrgID})
+		require.NoError(t, err)
+		assert.Equal(t, savedDash.ID, dash.ID)
+		assert.Equal(t, savedDash.UID, dash.UID)
+		assert.Equal(t, savedDash.Title, dash.Title)
+		assert.Equal(t, int64(0), dash.FolderID) // root folder
+	})
+}
+
 func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
