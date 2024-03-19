@@ -25,7 +25,11 @@ func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, con
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	return nil
+	if err := fam.internal.SaveAndApplyConfig(ctx, config); err != nil {
+		return err
+	}
+
+	return fam.remote.SaveAndApplyConfig(ctx, config)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
