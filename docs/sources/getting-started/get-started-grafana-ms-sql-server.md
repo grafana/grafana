@@ -56,6 +56,10 @@ There are several ways to authenticate in MSSQL. Start by:
 
 Below are the four possible ways to authenticate via Windows Active Directory/Kerberos.
 
+{{< admonition type="note" >}}
+Windows Active Directory (Kerberos) authentication is not supported in Grafana Cloud at the moment.
+{{< /admonition >}}
+
 | Method                    | Description                                                                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Username + password**   | Enter the domain user and password                                                                                                                           |
