@@ -23,6 +23,14 @@ type ErrorOptions struct {
 	logger   log.Logger
 }
 
+type k8sError struct {
+	metav1.Status `json:",inline"`
+
+	// Internal values that do not have a clean home in the standard Status object
+	MessageID string         `json:"messageId"`
+	Extra     map[string]any `json:"extra,omitempty"`
+}
+
 // Write writes an error to the provided [http.ResponseWriter] with the
 // appropriate HTTP status and JSON payload from [errutil.Error].
 // Write also logs the provided error to either the "request-errors"
@@ -57,14 +65,18 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 	// when implementing handlers directly this will maintain compatibility with client-go
 	info, ok := request.RequestInfoFrom(ctx)
 	if ok {
-		// Missing "extra" and "message.id"
-		status := &metav1.Status{
-			Code:    int32(pub.StatusCode),
-			Message: pub.Message,
-			Details: &metav1.StatusDetails{
-				Name:  info.Name,
-				Group: info.APIGroup,
+		status := &k8sError{
+			Status: metav1.Status{
+				Code:    int32(pub.StatusCode),
+				Message: pub.Message,
+				Details: &metav1.StatusDetails{
+					Name:  info.Name,
+					Group: info.APIGroup,
+				},
 			},
+			// Add the internal values into
+			MessageID: pub.MessageID,
+			Extra:     pub.Extra,
 		}
 		switch pub.StatusCode {
 		case 400:

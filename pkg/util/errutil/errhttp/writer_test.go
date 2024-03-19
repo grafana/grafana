@@ -25,6 +25,7 @@ func TestWrite(t *testing.T) {
 	assert.Equal(t, http.StatusGatewayTimeout, recorder.Code)
 	assert.JSONEq(t, `{
 		"metadata": {},
+		"messageId": "test.thisIsExpected",
 		"message": "Timeout",
 		"reason": "Timeout",
 		"details": { "group": "TestGroup" },

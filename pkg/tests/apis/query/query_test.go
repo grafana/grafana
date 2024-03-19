@@ -142,7 +142,9 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 			"message": "did not execute expression [Y] due to a failure to of the dependent expression or query [X]",
 			"reason": "BadRequest",
 			"details": { "group": "query.grafana.app" },
-			"code": 400
+			"code": 400,
+			"messageId": "sse.dependencyError",
+			"extra": { "depRefId": "X", "refId": "Y" }
 		  }`, string(body))
 
 		statusCode := -1
