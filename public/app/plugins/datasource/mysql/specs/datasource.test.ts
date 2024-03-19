@@ -3,9 +3,7 @@ import { of } from 'rxjs';
 import {
   dataFrameToJSON,
   getDefaultTimeRange,
-  DataQueryRequest,
   DataSourceInstanceSettings,
-  dateTime,
   FieldType,
   createDataFrame,
 } from '@grafana/data';

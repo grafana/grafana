@@ -18,7 +18,7 @@ import { deepFreeze } from '../../../../test/core/redux/reducerTester';
 import { Echo } from '../../../core/services/echo/Echo';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 
-import { getMockDataSource, TestQuery } from './__mocks/mockDataSource';
+import { getMockDataSource, TestQuery } from './__mocks__/mockDataSource';
 import { callQueryMethod, runRequest } from './runRequest';
 
 jest.mock('app/core/services/backend_srv');
