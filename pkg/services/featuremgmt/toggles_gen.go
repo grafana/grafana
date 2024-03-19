@@ -496,7 +496,7 @@ const (
 	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
 
 	// FlagAnnotationPermissionUpdate
-	// Change the way annotation permissions work by scoping them to folders.
+	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
 	// FlagExtractFieldsNameDeduplication

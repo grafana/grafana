@@ -906,7 +906,7 @@ var (
 		},
 		{
 			Name:            "annotationPermissionUpdate",
-			Description:     "Change the way annotation permissions work by scoping them to folders.",
+			Description:     "Change the way annotation permissions work by scoping them to folders and dashboards.",
 			Stage:           FeatureStageGeneralAvailability,
 			RequiresDevMode: false,
 			Expression:      "true", // enabled by default

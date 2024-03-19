@@ -776,14 +776,14 @@
     {
       "metadata": {
         "name": "annotationPermissionUpdate",
-        "resourceVersion": "1710885589536",
+        "resourceVersion": "1710885868422",
         "creationTimestamp": "2024-03-05T14:17:16Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-03-19 21:59:49.536849 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-03-19 22:04:28.422555 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Change the way annotation permissions work by scoping them to folders.",
+        "description": "Change the way annotation permissions work by scoping them to folders and dashboards.",
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team"
       }
