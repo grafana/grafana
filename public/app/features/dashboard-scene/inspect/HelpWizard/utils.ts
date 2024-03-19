@@ -46,7 +46,7 @@ export function getGithubMarkdown(panel: VizPanel, snapshot: string): string {
     panelType: panel.state.pluginId,
     datasource: '??',
   };
-  const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
+  const grafanaVersion = config.buildInfo.versionString;
 
   let md = `| Key | Value |
 |--|--|
@@ -89,7 +89,7 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
 
   const dsref = queryRunner?.state.datasource;
   const frames = randomizeData(getPanelDataFrames(data), rand);
-  const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
+  const grafanaVersion = config.buildInfo.versionString;
   const queries = queryRunner.state.queries ?? [];
   const annotationsCount = data.annotations ? data.annotations.reduce((acc, c) => c.length + acc, 0) : 0;
   const html = `<table width="100%">

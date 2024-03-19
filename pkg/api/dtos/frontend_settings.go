@@ -35,9 +35,16 @@ type FrontendSettingsAuthDTO struct {
 }
 
 type FrontendSettingsBuildInfoDTO struct {
-	HideVersion   bool   `json:"hideVersion"`
-	Version       string `json:"version"`
+	HideVersion bool `json:"hideVersion"`
+
+	// A semver-ish version string, such as "11.0.0-12345"
+	Version string `json:"version"`
+
+	// A branded version string to show in the UI, such as "Grafana v11.0.0-12345"
+	VersionString string `json:"versionString,omitempty"`
+
 	Commit        string `json:"commit"`
+	CommitShort   string `json:"commitShort"`
 	Buildstamp    int64  `json:"buildstamp"`
 	Edition       string `json:"edition"`
 	LatestVersion string `json:"latestVersion"`

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -150,6 +150,11 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 
 	if s.cfg.ResponseLimit > 0 {
 		m[backend.ResponseLimit] = strconv.FormatInt(s.cfg.ResponseLimit, 10)
+	}
+
+	if s.cfg.SigV4AuthEnabled {
+		m[awsds.SigV4AuthEnabledEnvVarKeyName] = "true"
+		m[awsds.SigV4VerboseLoggingEnvVarKeyName] = strconv.FormatBool(s.cfg.SigV4VerboseLogging)
 	}
 
 	return m
