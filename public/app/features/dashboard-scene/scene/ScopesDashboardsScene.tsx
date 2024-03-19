@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { AppEvents, GrafanaTheme2, ScopeDashboard } from '@grafana/data';
-import { config, getAppEvents, getBackendSrv } from '@grafana/runtime';
+import { config, getAppEvents, getBackendSrv, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
 
@@ -100,7 +100,9 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
       <CustomScrollbar>
         {filteredDashboards.map((dashboard, idx) => (
           <div key={idx} className={styles.dashboardItem}>
-            <NavLink to={dashboard.url}>{dashboard.title}</NavLink>
+            <Link to={{ pathname: dashboard.url, search: locationService.getLocation().search }}>
+              {dashboard.title}
+            </Link>
           </div>
         ))}
       </CustomScrollbar>
