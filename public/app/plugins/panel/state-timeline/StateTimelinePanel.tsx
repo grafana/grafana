@@ -4,6 +4,7 @@ import { CartesianCoords2D, DashboardCursorSync, DataFrame, FieldType, PanelProp
 import { getLastStreamingDataFramePacket } from '@grafana/data/src/dataframe/StreamingDataFrame';
 import { config } from '@grafana/runtime';
 import {
+  EventBusPlugin,
   Portal,
   TooltipDisplayMode,
   TooltipPlugin2,
@@ -59,6 +60,12 @@ export const StateTimelinePanel = ({
     []
   );
 
+  const syncAny = useCallback(
+    () => sync?.() !== DashboardCursorSync.Off,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
   const isToolTipOpen = useRef<boolean>(false);
 
@@ -70,7 +77,7 @@ export const StateTimelinePanel = ({
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const { sync, canAddAnnotations, dataLinkPostProcessor } = usePanelContext();
+  const { sync, canAddAnnotations, dataLinkPostProcessor, eventBus } = usePanelContext();
 
   const onCloseToolTip = () => {
     isToolTipOpen.current = false;
@@ -205,6 +212,7 @@ export const StateTimelinePanel = ({
 
         return (
           <>
+            <EventBusPlugin config={builder} sync={syncAny} eventBus={eventBus} frame={alignedFrame} />
             {showNewVizTooltips ? (
               <>
                 {options.tooltip.mode !== TooltipDisplayMode.None && (

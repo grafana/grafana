@@ -121,14 +121,20 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (!this.logRowsRef.current) {
       return false;
     }
-    const parentBounds = this.logRowsRef.current?.getBoundingClientRect();
+
+    const MENU_WIDTH = 270;
+    const MENU_HEIGHT = 105;
+    const x = e.clientX + MENU_WIDTH > window.innerWidth ? window.innerWidth - MENU_WIDTH : e.clientX;
+    const y = e.clientY + MENU_HEIGHT > window.innerHeight ? window.innerHeight - MENU_HEIGHT : e.clientY;
+
     this.setState({
       selection,
-      popoverMenuCoordinates: { x: e.clientX - parentBounds.left, y: e.clientY - parentBounds.top },
+      popoverMenuCoordinates: { x, y },
       selectedRow: row,
     });
     document.addEventListener('click', this.handleDeselection);
     document.addEventListener('contextmenu', this.handleDeselection);
+    document.addEventListener('selectionchange', this.handleDeselection);
     return true;
   };
 
@@ -141,12 +147,17 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (document.getSelection()?.toString()) {
       return;
     }
-    this.closePopoverMenu();
+    // Give time to the browser to process click events originating from the menu before closing it.
+    // Otherwise selectionchange fires before other click listeners, potentially skipping user actions.
+    setTimeout(() => {
+      this.closePopoverMenu();
+    }, 100);
   };
 
   closePopoverMenu = () => {
     document.removeEventListener('click', this.handleDeselection);
     document.removeEventListener('contextmenu', this.handleDeselection);
+    document.removeEventListener('selectionchange', this.handleDeselection);
     this.setState({
       selection: '',
       popoverMenuCoordinates: { x: 0, y: 0 },
@@ -170,6 +181,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   componentWillUnmount() {
     document.removeEventListener('click', this.handleDeselection);
     document.removeEventListener('contextmenu', this.handleDeselection);
+    document.removeEventListener('selectionchange', this.handleDeselection);
     if (this.renderAllTimer) {
       clearTimeout(this.renderAllTimer);
     }
